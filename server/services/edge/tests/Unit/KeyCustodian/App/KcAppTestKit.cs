@@ -129,7 +129,9 @@ internal static class KcAppTestKit
     {
         var material = KeyGeneration.Generate(
             keyType, options.RsaKeySizeBits, options.SecretLengthBytes).Data!;
+
         byte[] wrapped;
+
         try
         {
             wrapped = rootCrypto.Encrypt(material.Plaintext);
@@ -215,6 +217,137 @@ internal static class KcAppTestKit
         db.Keys.Add(record);
         await db.SaveChangesAsync(CancellationToken.None).ConfigureAwait(false);
         return kid;
+    }
+
+    /// <summary>
+    /// Seeds a CA hierarchy (self-signed root + intermediate signed by it) into the
+    /// test context and returns the intermediate as a managed <c>X509CaCertificate</c>
+    /// key in the requested lifecycle state in the <c>mtls-ca-intermediate</c> domain.
+    /// The intermediate's private key is generated + root-wrapped via the supplied
+    /// <paramref name="rootCrypto"/> exactly like the real handler, so the issuance
+    /// path unwraps + reconstructs it correctly. The root certificate is returned
+    /// (DER) so chain-building assertions can use it as the trust anchor.
+    /// </summary>
+    /// <param name="db">The test context to seed.</param>
+    /// <param name="rootCrypto">The root crypto used to wrap the intermediate's private key.</param>
+    /// <param name="createdAt">The creation instant.</param>
+    /// <param name="status">The lifecycle status to seed the intermediate in.</param>
+    /// <returns>The seeded intermediate kid + the root certificate DER (trust anchor).</returns>
+    public static async Task<(string IntermediateKid, byte[] RootCertificateDer)> SeedCaAsync(
+        IKeyCustodianDbContext db,
+        IPayloadCrypto rootCrypto,
+        Instant createdAt,
+        KeyStatus status = KeyStatus.Active)
+    {
+        var clock = new TestClock(createdAt);
+
+        var rootResult = CaCertificateGeneration.GenerateRootCa(
+            "D2 Test Root CA", Duration.FromDays(3650), clock);
+
+        var root = rootResult.Data!;
+
+        byte[] intermediatePkcs8;
+        byte[] intermediateCertDer;
+        byte[] rootCertDer = root.CertificateDer;
+
+        using (var rootKey = ECDsa.Create())
+        {
+            rootKey.ImportPkcs8PrivateKey(root.PrivateKeyPkcs8, out _);
+
+            using var rootCert = System.Security.Cryptography.X509Certificates.X509CertificateLoader
+                .LoadCertificate(root.CertificateDer);
+
+            var intermediateResult = CaCertificateGeneration.GenerateIntermediateCa(
+                "D2 Test Issuing CA", rootCert, rootKey, Duration.FromDays(365), clock);
+
+            var intermediate = intermediateResult.Data!;
+            intermediatePkcs8 = intermediate.PrivateKeyPkcs8;
+            intermediateCertDer = intermediate.CertificateDer;
+        }
+
+        root.Zero();
+
+        var wrapped = rootCrypto.Encrypt(intermediatePkcs8);
+        CryptographicOperations.ZeroMemory(intermediatePkcs8);
+
+        var kid = KidMinting.Mint();
+        var record = new KeyRecord
+        {
+            Kid = kid,
+            KeyDomain = KeyDomain.MTLS_CA_INTERMEDIATE,
+            KeyType = KeyType.X509CaCertificate,
+            KeyMaterialEncrypted = wrapped,
+            PublicKeyMaterial = null,
+            CaCertificate = intermediateCertDer,
+            CreatedAt = createdAt,
+            Status = status,
+            ActivatedAt = status is KeyStatus.Active or KeyStatus.Retiring or KeyStatus.Retired
+                ? createdAt
+                : null,
+            RetiringAt = status is KeyStatus.Retiring or KeyStatus.Retired ? createdAt : null,
+            RetiredAt = status == KeyStatus.Retired ? createdAt : null,
+            CompromisedAt = status == KeyStatus.Compromised ? createdAt : null,
+            CompromiseReason = status == KeyStatus.Compromised ? "seed" : null,
+        };
+
+        db.Keys.Add(record);
+        await db.SaveChangesAsync(CancellationToken.None).ConfigureAwait(false);
+        return (kid, rootCertDer);
+    }
+
+    /// <summary>
+    /// Seeds a self-signed root CA as a managed <c>X509CaCertificate</c> key in the
+    /// <c>mtls-ca-root</c> domain, in the requested lifecycle state. The root's
+    /// private key is generated + root-wrapped via <paramref name="rootCrypto"/>
+    /// (exactly like the real seeder) so the CA-successor path can unwrap +
+    /// reconstruct it to sign an intermediate. Returns the seeded kid + the root
+    /// certificate DER (trust anchor for chain assertions).
+    /// </summary>
+    /// <param name="db">The test context to seed.</param>
+    /// <param name="rootCrypto">The root crypto used to wrap the root's private key.</param>
+    /// <param name="createdAt">The creation instant.</param>
+    /// <param name="status">The lifecycle status to seed the root in.</param>
+    /// <returns>The seeded root kid + the root certificate DER.</returns>
+    public static async Task<(string RootKid, byte[] RootCertificateDer)> SeedCaRootAsync(
+        IKeyCustodianDbContext db,
+        IPayloadCrypto rootCrypto,
+        Instant createdAt,
+        KeyStatus status = KeyStatus.Active)
+    {
+        var clock = new TestClock(createdAt);
+
+        var rootResult = CaCertificateGeneration.GenerateRootCa(
+            "D2 Test Root CA", Duration.FromDays(3650), clock);
+
+        var root = rootResult.Data!;
+
+        var rootCertDer = root.CertificateDer;
+        var wrapped = rootCrypto.Encrypt(root.PrivateKeyPkcs8);
+        root.Zero();
+
+        var kid = KidMinting.Mint();
+        var record = new KeyRecord
+        {
+            Kid = kid,
+            KeyDomain = KeyDomain.MTLS_CA_ROOT,
+            KeyType = KeyType.X509CaCertificate,
+            KeyMaterialEncrypted = wrapped,
+            PublicKeyMaterial = null,
+            CaCertificate = rootCertDer,
+            CreatedAt = createdAt,
+            Status = status,
+            ActivatedAt = status is KeyStatus.Active or KeyStatus.Retiring or KeyStatus.Retired
+                ? createdAt
+                : null,
+            RetiringAt = status is KeyStatus.Retiring or KeyStatus.Retired ? createdAt : null,
+            RetiredAt = status == KeyStatus.Retired ? createdAt : null,
+            CompromisedAt = status == KeyStatus.Compromised ? createdAt : null,
+            CompromiseReason = status == KeyStatus.Compromised ? "seed" : null,
+        };
+
+        db.Keys.Add(record);
+        await db.SaveChangesAsync(CancellationToken.None).ConfigureAwait(false);
+        return (kid, rootCertDer);
     }
 
     private sealed class NullDbExceptionClassifier : IDbExceptionClassifier

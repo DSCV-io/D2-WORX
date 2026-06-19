@@ -8,9 +8,10 @@ namespace D2.Edge.KeyCustodian.Infra.Persistence.Postgres;
 
 /// <summary>
 /// The concrete PostgreSQL <see cref="DbContext"/> backing
-/// <see cref="IKeyCustodianDbContext"/>. Maps the two flat persistence records
-/// (<see cref="KeyRecord"/> / <see cref="KeyAuditRecord"/>) to the
-/// <c>keycustodian_db</c> relational schema.
+/// <see cref="IKeyCustodianDbContext"/>. Maps the three flat persistence records
+/// (<see cref="KeyRecord"/> / <see cref="KeyAuditRecord"/> /
+/// <see cref="LeafIssuanceAuditRecord"/>) to the <c>keycustodian_db</c>
+/// relational schema.
 /// </summary>
 /// <remarks>
 /// The relational model — snake_case columns, the <c>Instant</c> ↔
@@ -38,11 +39,15 @@ public sealed class KeyCustodianDbContext : DbContext, IKeyCustodianDbContext
     public DbSet<KeyAuditRecord> Audit => Set<KeyAuditRecord>();
 
     /// <inheritdoc/>
+    public DbSet<LeafIssuanceAuditRecord> LeafIssuanceAudit => Set<LeafIssuanceAuditRecord>();
+
+    /// <inheritdoc/>
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         ArgumentNullException.ThrowIfNull(modelBuilder);
 
         modelBuilder.ApplyConfiguration(new KeyRecordConfiguration());
         modelBuilder.ApplyConfiguration(new KeyAuditRecordConfiguration());
+        modelBuilder.ApplyConfiguration(new LeafIssuanceAuditRecordConfiguration());
     }
 }

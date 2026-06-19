@@ -7,8 +7,10 @@
 namespace D2.Edge.Tests.Unit.KeyCustodian;
 
 /// <summary>
-/// Tests that enforce the RSA↔public-key material shape invariant and the
-/// <see cref="PendingKey.Create"/> null-argument preconditions. Precondition
+/// Tests that enforce the per-type material shape invariant and the
+/// <see cref="PendingKey.Create"/> null-argument preconditions. <c>RsaSigning</c>
+/// keys carry public material only; <c>X509CaCertificate</c> keys carry CA
+/// certificate material only; symmetric keys carry neither. Precondition
 /// violations (null arguments, inconsistent material shape) surface as flagged
 /// <c>KEYCUSTODIAN_PRECONDITION_VIOLATED</c> internal-error results rather than
 /// thrown exceptions.
@@ -23,41 +25,108 @@ public sealed class EncryptionKeyMaterialShapeTests
     private static readonly PublicKeyMaterial sr_pub =
         PublicKeyMaterial.FromTrusted(new byte[] { 4, 5, 6 });
 
+    private static readonly CaCertificateMaterial sr_caCert =
+        CaCertificateMaterial.FromTrusted(new byte[] { 7, 8, 9 });
+
     private static readonly Instant sr_created = Instant.FromUtc(2026, 1, 1, 0, 0, 0);
 
     // -----------------------------------------------------------------------
-    // RSA key — public material required
+    // RSA key — public material required, no CA cert
     // -----------------------------------------------------------------------
 
     [Fact]
     public void Create_RsaWithPublicMaterial_Succeeds()
     {
         var result = PendingKey.Create(
-            sr_kid, sr_domain, KeyType.RsaSigning, sr_mat, sr_pub, sr_created);
+            sr_kid, sr_domain, KeyType.RsaSigning, sr_mat, sr_pub, null, sr_created);
 
         result.Success.Should().BeTrue();
         result.Data!.KeyType.Should().Be(KeyType.RsaSigning);
         result.Data!.PublicKeyMaterial.Should().Be(sr_pub);
+        result.Data!.CaCertificateMaterial.Should().BeNull();
     }
 
     [Fact]
     public void Create_RsaWithoutPublicMaterial_FailsPreconditionViolated()
     {
         var result = PendingKey.Create(
-            sr_kid, sr_domain, KeyType.RsaSigning, sr_mat, null, sr_created);
+            sr_kid, sr_domain, KeyType.RsaSigning, sr_mat, null, null, sr_created);
+
+        AssertPreconditionViolated(result);
+    }
+
+    [Fact]
+    public void Create_RsaWithCaCertificate_FailsPreconditionViolated()
+    {
+        // An RSA key carrying CA certificate material (wrong slot) is an invalid shape.
+        var result = PendingKey.Create(
+            sr_kid, sr_domain, KeyType.RsaSigning, sr_mat, sr_pub, sr_caCert, sr_created);
 
         AssertPreconditionViolated(result);
     }
 
     // -----------------------------------------------------------------------
-    // Symmetric keys — must NOT have public material
+    // X509CaCertificate key — CA cert material required, no public material
+    // -----------------------------------------------------------------------
+
+    [Fact]
+    public void Create_CaWithCertificateMaterial_Succeeds()
+    {
+        var result = PendingKey.Create(
+            sr_kid, sr_domain, KeyType.X509CaCertificate, sr_mat, null, sr_caCert, sr_created);
+
+        result.Success.Should().BeTrue();
+        result.Data!.KeyType.Should().Be(KeyType.X509CaCertificate);
+        result.Data!.CaCertificateMaterial.Should().Be(sr_caCert);
+        result.Data!.PublicKeyMaterial.Should().BeNull();
+    }
+
+    [Fact]
+    public void Create_CaWithoutCertificateMaterial_FailsPreconditionViolated()
+    {
+        var result = PendingKey.Create(
+            sr_kid, sr_domain, KeyType.X509CaCertificate, sr_mat, null, null, sr_created);
+
+        AssertPreconditionViolated(result);
+    }
+
+    [Fact]
+    public void Create_CaWithPublicMaterial_FailsPreconditionViolated()
+    {
+        // A CA key carrying JWKS-scoped public material (wrong slot) is an invalid shape.
+        var result = PendingKey.Create(
+            sr_kid, sr_domain, KeyType.X509CaCertificate, sr_mat, sr_pub, sr_caCert, sr_created);
+
+        AssertPreconditionViolated(result);
+    }
+
+    [Fact]
+    public void Create_CaWithPublicMaterialAndNoCert_FailsPreconditionViolated()
+    {
+        var result = PendingKey.Create(
+            sr_kid, sr_domain, KeyType.X509CaCertificate, sr_mat, sr_pub, null, sr_created);
+
+        AssertPreconditionViolated(result);
+    }
+
+    // -----------------------------------------------------------------------
+    // Symmetric keys — must NOT have public material or CA cert
     // -----------------------------------------------------------------------
 
     [Fact]
     public void Create_AesWithPublicMaterial_FailsPreconditionViolated()
     {
         var result = PendingKey.Create(
-            sr_kid, sr_domain, KeyType.AesPayload, sr_mat, sr_pub, sr_created);
+            sr_kid, sr_domain, KeyType.AesPayload, sr_mat, sr_pub, null, sr_created);
+
+        AssertPreconditionViolated(result);
+    }
+
+    [Fact]
+    public void Create_AesWithCaCertificate_FailsPreconditionViolated()
+    {
+        var result = PendingKey.Create(
+            sr_kid, sr_domain, KeyType.AesPayload, sr_mat, null, sr_caCert, sr_created);
 
         AssertPreconditionViolated(result);
     }
@@ -66,7 +135,16 @@ public sealed class EncryptionKeyMaterialShapeTests
     public void Create_SecretWithPublicMaterial_FailsPreconditionViolated()
     {
         var result = PendingKey.Create(
-            sr_kid, sr_domain, KeyType.Secret, sr_mat, sr_pub, sr_created);
+            sr_kid, sr_domain, KeyType.Secret, sr_mat, sr_pub, null, sr_created);
+
+        AssertPreconditionViolated(result);
+    }
+
+    [Fact]
+    public void Create_SecretWithCaCertificate_FailsPreconditionViolated()
+    {
+        var result = PendingKey.Create(
+            sr_kid, sr_domain, KeyType.Secret, sr_mat, null, sr_caCert, sr_created);
 
         AssertPreconditionViolated(result);
     }
@@ -75,20 +153,22 @@ public sealed class EncryptionKeyMaterialShapeTests
     public void Create_AesWithoutPublicMaterial_Succeeds()
     {
         var result = PendingKey.Create(
-            sr_kid, sr_domain, KeyType.AesPayload, sr_mat, null, sr_created);
+            sr_kid, sr_domain, KeyType.AesPayload, sr_mat, null, null, sr_created);
 
         result.Success.Should().BeTrue();
         result.Data!.PublicKeyMaterial.Should().BeNull();
+        result.Data!.CaCertificateMaterial.Should().BeNull();
     }
 
     [Fact]
     public void Create_SecretWithoutPublicMaterial_Succeeds()
     {
         var result = PendingKey.Create(
-            sr_kid, sr_domain, KeyType.Secret, sr_mat, null, sr_created);
+            sr_kid, sr_domain, KeyType.Secret, sr_mat, null, null, sr_created);
 
         result.Success.Should().BeTrue();
         result.Data!.PublicKeyMaterial.Should().BeNull();
+        result.Data!.CaCertificateMaterial.Should().BeNull();
     }
 
     // -----------------------------------------------------------------------
@@ -99,7 +179,7 @@ public sealed class EncryptionKeyMaterialShapeTests
     public void Create_NullKid_FailsPreconditionViolated()
     {
         var result = PendingKey.Create(
-            null, sr_domain, KeyType.AesPayload, sr_mat, null, sr_created);
+            null, sr_domain, KeyType.AesPayload, sr_mat, null, null, sr_created);
 
         AssertPreconditionViolated(result);
     }
@@ -107,7 +187,8 @@ public sealed class EncryptionKeyMaterialShapeTests
     [Fact]
     public void Create_NullDomain_FailsPreconditionViolated()
     {
-        var result = PendingKey.Create(sr_kid, null, KeyType.AesPayload, sr_mat, null, sr_created);
+        var result = PendingKey.Create(
+            sr_kid, null, KeyType.AesPayload, sr_mat, null, null, sr_created);
 
         AssertPreconditionViolated(result);
     }
@@ -116,7 +197,7 @@ public sealed class EncryptionKeyMaterialShapeTests
     public void Create_NullEncryptedMaterial_FailsPreconditionViolated()
     {
         var result = PendingKey.Create(
-            sr_kid, sr_domain, KeyType.AesPayload, null, null, sr_created);
+            sr_kid, sr_domain, KeyType.AesPayload, null, null, null, sr_created);
 
         AssertPreconditionViolated(result);
     }

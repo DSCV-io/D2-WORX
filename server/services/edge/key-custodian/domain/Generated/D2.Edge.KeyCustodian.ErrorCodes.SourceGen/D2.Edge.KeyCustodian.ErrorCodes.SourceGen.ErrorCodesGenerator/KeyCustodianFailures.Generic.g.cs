@@ -174,4 +174,40 @@ public static class KeyCustodianFailures<T>
             category: ErrorCategory.InternalError);
     }
 
+    /// <summary>The workload identity is null, empty, whitespace, exceeds the maximum length, contains characters outside the allowed lowercase charset [a-z0-9-], or (when parsed from a certificate subject-alternative-name) does not match the spiffe://d2.internal/workload/&lt;service&gt; grammar. Coarse on purpose so the peer-validation surface does not leak which check failed. Typed result.</summary>
+    /// <param name="messages">Optional translation messages; defaults to <c>[TK.Keycustodian.Validation.INVALID_WORKLOAD_IDENTITY]</c>. Pass a message bound via <c>TKMessage.With(...)</c> to name the offending argument.</param>
+    /// <returns>A pre-built typed <see cref="D2Result{T}"/> failure.</returns>
+    public static D2Result<T> InvalidWorkloadIdentity(IReadOnlyList<TKMessage>? messages = null)
+    {
+        messages ??= [TK.Keycustodian.Validation.INVALID_WORKLOAD_IDENTITY];
+        return D2Result<T>.ValidationFailed(
+            messages: messages,
+            errorCode: KeyCustodianErrorCodes.KEYCUSTODIAN_INVALID_WORKLOAD_IDENTITY,
+            category: ErrorCategory.ValidationFailure);
+    }
+
+    /// <summary>A certificate-generation precondition was violated (empty subject name, non-positive validity) or a cryptographic build operation failed. This is a programmer/precondition error surfaced as a flagged 500 result (carrying telemetry) rather than a thrown exception, the same way a failed smoke test is. Typed result.</summary>
+    /// <param name="messages">Optional translation messages; defaults to <c>[TK.Keycustodian.Internal.INVALID_CERTIFICATE_REQUEST]</c>. Pass a message bound via <c>TKMessage.With(...)</c> to name the offending argument.</param>
+    /// <returns>A pre-built typed <see cref="D2Result{T}"/> failure.</returns>
+    public static D2Result<T> InvalidCertificateRequest(IReadOnlyList<TKMessage>? messages = null)
+    {
+        messages ??= [TK.Keycustodian.Internal.INVALID_CERTIFICATE_REQUEST];
+        return D2Result<T>.UnhandledException(
+            messages: messages,
+            errorCode: KeyCustodianErrorCodes.KEYCUSTODIAN_INVALID_CERTIFICATE_REQUEST,
+            category: ErrorCategory.InternalError);
+    }
+
+    /// <summary>No active issuing intermediate certificate authority is available to sign a workload leaf certificate. A retryable not-ready-yet condition: the CA either has not been seeded yet or is between rotations. Surfaced as a 503 service-unavailable result so callers retry rather than treat it as a client-side conflict. Typed result.</summary>
+    /// <param name="messages">Optional translation messages; defaults to <c>[TK.Keycustodian.Infrastructure.NO_ACTIVE_ISSUING_CA]</c>. Pass a message bound via <c>TKMessage.With(...)</c> to name the offending argument.</param>
+    /// <returns>A pre-built typed <see cref="D2Result{T}"/> failure.</returns>
+    public static D2Result<T> NoActiveIssuingCa(IReadOnlyList<TKMessage>? messages = null)
+    {
+        messages ??= [TK.Keycustodian.Infrastructure.NO_ACTIVE_ISSUING_CA];
+        return D2Result<T>.ServiceUnavailable(
+            messages: messages,
+            errorCode: KeyCustodianErrorCodes.KEYCUSTODIAN_NO_ACTIVE_ISSUING_CA,
+            category: ErrorCategory.InfrastructureUnavailable);
+    }
+
 }

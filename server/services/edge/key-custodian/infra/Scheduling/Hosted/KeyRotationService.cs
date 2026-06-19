@@ -55,18 +55,40 @@ public sealed class KeyRotationService(
     /// domains that have no live keys yet. Derived from the closed
     /// <see cref="KeyDomain.All"/> catalog: the signing domain gets an RSA key,
     /// the payload-encryption domains get AES keys, and the opaque-secret domains
-    /// get symmetric secrets. A domain absent from this map is skipped by
-    /// <c>RunDueRotations</c> without error.
+    /// get symmetric secrets. CA domains are excluded — they are seeded by the
+    /// <c>CaSeedingService</c> on startup, not auto-bootstrapped here. A domain
+    /// absent from this map is skipped by <c>RunDueRotations</c> without error.
     /// </summary>
     /// <returns>The domain-keyed bootstrap key-type map (ordinal comparer).</returns>
     internal static IReadOnlyDictionary<string, KeyType> BuildBootstrapKeyTypes()
     {
         var map = new Dictionary<string, KeyType>(StringComparer.Ordinal);
+
         foreach (var domain in KeyDomain.All)
+        {
+            // CA-certificate domains are seeded by the CaSeedingService on startup,
+            // not by the standard auto-bootstrap generator. Excluding them here
+            // ensures they are never silently bootstrapped as AES keys.
+            if (IsCaDomain(domain.Value))
+                continue;
+
             map[domain.Value] = KeyTypeForDomain(domain.Value);
+        }
 
         return map;
     }
+
+    /// <summary>
+    /// Returns <see langword="true"/> when <paramref name="domainValue"/> identifies
+    /// a CA-certificate key domain (<c>mtls-ca-root</c> or
+    /// <c>mtls-ca-intermediate</c>). CA domains are excluded from the auto-bootstrap
+    /// map because their keys are seeded by the <c>CaSeedingService</c> on startup,
+    /// not by the standard key-generation generator.
+    /// </summary>
+    /// <param name="domainValue">The domain wire value to test.</param>
+    /// <returns><see langword="true"/> if the domain is a CA domain.</returns>
+    internal static bool IsCaDomain(string domainValue) =>
+        domainValue is KeyDomain.MTLS_CA_ROOT or KeyDomain.MTLS_CA_INTERMEDIATE;
 
     /// <summary>
     /// Maps a domain wire value to the <see cref="KeyType"/> used to bootstrap
@@ -95,6 +117,7 @@ public sealed class KeyRotationService(
 
         // Bootstrap rides the FIRST tick — run immediately, then on the interval.
         using var timer = new PeriodicTimer(interval);
+
         do
         {
             await RunTickAsync(stoppingToken).ConfigureAwait(false);
@@ -166,6 +189,7 @@ public sealed class KeyRotationService(
         }
 
         var output = result.Data!;
+
         KeyCustodianInfraLog.RotationRunCompleted(
             logger,
             output.Bootstrapped.Count,

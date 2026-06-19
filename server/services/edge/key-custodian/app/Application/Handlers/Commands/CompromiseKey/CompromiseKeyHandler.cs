@@ -67,6 +67,7 @@ public sealed class CompromiseKeyHandler(
         }
 
         var kidResult = Kid.Create(input.Kid);
+
         if (kidResult.BubbleOnFailure<Kid, CompromiseKeyOutput>(out var bubbled, out var kid))
             return bubbled;
 
@@ -74,33 +75,42 @@ public sealed class CompromiseKeyHandler(
             .Live()
             .FirstOrDefaultAsync(k => k.Kid == kid!.Value, ct)
             .ConfigureAwait(false);
+
         if (record is null)
             return KeyCustodianFailures<CompromiseKeyOutput?>.KeyNotFound();
 
         var compromiseResult = CompromiseLiveKey(record.ToDomain(), input.Reason!);
+
         if (compromiseResult.BubbleOnFailure<CompromisedKey, CompromiseKeyOutput>(
             out var compBubble, out var compromised))
             return compBubble;
 
         compromised!.ProjectOnto(record);
+
         db.Audit.Add(
             EncryptionKeyAudit.Record(
                 kid!, KeyAuditAction.Compromised, KeyStatus.Compromised, clock, _AUDIT_DETAIL)
             .ToRecord());
 
         string? replacementKid = null;
+
         if (input.GenerateReplacement)
         {
-            var replacementResult = TryBuildReplacement(compromised!, clock.GetCurrentInstant());
+            var replacementResult = await BuildReplacementAsync(compromised!, ct)
+                .ConfigureAwait(false);
+
             if (replacementResult.BubbleOnFailure<PendingKey, CompromiseKeyOutput>(
-                out var replBubble, out var replacement))
+                out var replBubble, out var replacementNullable))
                 return replBubble;
 
-            db.Keys.Add(replacement!.ToNewRecord());
+            var replacement = replacementNullable!;
+            db.Keys.Add(replacement.ToNewRecord());
+
             db.Audit.Add(
                 EncryptionKeyAudit.Record(
-                    replacement!.Kid, KeyAuditAction.Generated, KeyStatus.Pending, clock)
+                    replacement.Kid, KeyAuditAction.Generated, KeyStatus.Pending, clock)
                 .ToRecord());
+
             replacementKid = replacement.Kid.Value;
         }
 
@@ -119,6 +129,7 @@ public sealed class CompromiseKeyHandler(
             .AnnounceAsync(
                 compromised!.KeyDomain, compromised.Kid, KeyStatus.Compromised, urgent: true, ct)
             .ConfigureAwait(false);
+
         if (!announceResult.Success)
         {
             KeyCustodianLog.AnnounceFailed(
@@ -146,17 +157,30 @@ public sealed class CompromiseKeyHandler(
             _ => KeyCustodianFailures<CompromisedKey>.KeyStateConflict(),
         };
 
-    private D2Result<PendingKey> TryBuildReplacement(
-        CompromisedKey compromised, NodaTime.Instant now)
+    private async Task<D2Result<PendingKey>> BuildReplacementAsync(
+        CompromisedKey compromised, CancellationToken ct)
     {
+        // CA-certificate keys take the dedicated CA-generation path (subject +
+        // issuer are not expressible through the symmetric/RSA KeyGeneration rule).
+        // A compromised intermediate gets a real root-signed replacement; a
+        // compromised root gets a real self-signed replacement — the re-anchor case.
+        if (compromised.KeyType == KeyType.X509CaCertificate)
+        {
+            return await CaSuccessorFactory
+                .BuildAsync(db, rootCrypto, options.Value, clock, compromised.KeyDomain, ct)
+                .ConfigureAwait(false);
+        }
+
         var genResult = KeyGeneration.Generate(
             compromised.KeyType, options.Value.RsaKeySizeBits, options.Value.SecretLengthBytes);
+
         if (!genResult.Success)
             return D2Result<PendingKey>.BubbleFail(genResult);
 
         var generated = genResult.Data!;
 
         byte[] wrapped;
+
         try
         {
             wrapped = rootCrypto.Encrypt(generated.Plaintext);
@@ -178,6 +202,7 @@ public sealed class CompromiseKeyHandler(
             compromised.KeyType,
             encryptedMaterial,
             publicMaterial,
-            now);
+            caCertificateMaterial: null,
+            clock.GetCurrentInstant());
     }
 }

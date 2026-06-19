@@ -39,6 +39,19 @@ public sealed class KeyCustodianTkRoundTripTests
     [InlineData(
         "TK.Keycustodian.Internal.PRECONDITION_VIOLATED",
         "keycustodian_internal_PRECONDITION_VIOLATED")]
+
+    // Certificate-authority TK paths — pins the workload-identity / cert-request /
+    // no-active-CA keys and proves the Keycustodian.Infrastructure sub-namespace tier
+    // round-trips bijectively.
+    [InlineData(
+        "TK.Keycustodian.Validation.INVALID_WORKLOAD_IDENTITY",
+        "keycustodian_validation_INVALID_WORKLOAD_IDENTITY")]
+    [InlineData(
+        "TK.Keycustodian.Internal.INVALID_CERTIFICATE_REQUEST",
+        "keycustodian_internal_INVALID_CERTIFICATE_REQUEST")]
+    [InlineData(
+        "TK.Keycustodian.Infrastructure.NO_ACTIVE_ISSUING_CA",
+        "keycustodian_infrastructure_NO_ACTIVE_ISSUING_CA")]
     public void ToSnakeKey_KeyCustodianTkPath_RoundTripsToRenamedSnakeKey(
         string tkPath, string expectedSnake)
     {

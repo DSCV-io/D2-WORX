@@ -11,11 +11,11 @@ using Microsoft.EntityFrameworkCore;
 /// <summary>
 /// Test-owned <see cref="IKeyCustodianDbContext"/> over the provider-free
 /// InMemory database. Minimal model — <see cref="KeyRecord"/> keyed on
-/// <c>Kid</c>, <see cref="KeyAuditRecord"/> on an identity <c>Id</c>. Relational
-/// specifics (the <c>xmin</c> concurrency token, <c>Instant</c> value
-/// converters, real SQL translation) are deliberately absent; Infra +
-/// Testcontainers own those. The InMemory provider stores CLR objects
-/// directly, so <c>Instant</c> persists without a converter here.
+/// <c>Kid</c>, <see cref="KeyAuditRecord"/> + <see cref="LeafIssuanceAuditRecord"/>
+/// on an identity <c>Id</c>. Relational specifics (the <c>xmin</c> concurrency
+/// token, <c>Instant</c> value converters, real SQL translation) are deliberately
+/// absent; Infra + Testcontainers own those. The InMemory provider stores CLR
+/// objects directly, so <c>Instant</c> persists without a converter here.
 /// </summary>
 public sealed class KeyCustodianTestDbContext : DbContext, IKeyCustodianDbContext
 {
@@ -34,6 +34,9 @@ public sealed class KeyCustodianTestDbContext : DbContext, IKeyCustodianDbContex
     /// <inheritdoc/>
     public DbSet<KeyAuditRecord> Audit => Set<KeyAuditRecord>();
 
+    /// <inheritdoc/>
+    public DbSet<LeafIssuanceAuditRecord> LeafIssuanceAudit => Set<LeafIssuanceAuditRecord>();
+
     /// <summary>
     /// Builds a fresh context backed by a uniquely-named InMemory database so each
     /// test is isolated.
@@ -45,6 +48,7 @@ public sealed class KeyCustodianTestDbContext : DbContext, IKeyCustodianDbContex
             .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString("N"))
             .EnableServiceProviderCaching(false)
             .Options;
+
         return new KeyCustodianTestDbContext(options);
     }
 
@@ -53,5 +57,6 @@ public sealed class KeyCustodianTestDbContext : DbContext, IKeyCustodianDbContex
     {
         modelBuilder.Entity<KeyRecord>().HasKey(k => k.Kid);
         modelBuilder.Entity<KeyAuditRecord>().HasKey(a => a.Id);
+        modelBuilder.Entity<LeafIssuanceAuditRecord>().HasKey(a => a.Id);
     }
 }

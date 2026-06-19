@@ -42,13 +42,26 @@ public abstract record EncryptionKey
 
     /// <summary>
     /// Gets the unencrypted public key bytes for asymmetric (<c>RsaSigning</c>)
-    /// keys; <see langword="null"/> for symmetric keys.
+    /// keys; <see langword="null"/> for symmetric and certificate-authority keys.
     /// </summary>
     /// <remarks>
     /// Public keys are intentionally NOT redacted — they are published via the
     /// JWKS endpoint and must be visible in logs and telemetry.
     /// </remarks>
     public PublicKeyMaterial? PublicKeyMaterial { get; init; }
+
+    /// <summary>
+    /// Gets the DER-encoded CA certificate for certificate-authority
+    /// (<c>X509CaCertificate</c>) keys; <see langword="null"/> for all other key
+    /// types.
+    /// </summary>
+    /// <remarks>
+    /// A CA certificate is intentionally NOT redacted — it is pinned as a trust
+    /// anchor and presented on the wire during the TLS handshake, so it must be
+    /// visible in logs and telemetry, the same treatment the JWKS signing key's
+    /// public material receives.
+    /// </remarks>
+    public CaCertificateMaterial? CaCertificateMaterial { get; init; }
 
     /// <summary>
     /// Gets the UTC instant at which this key was generated.
@@ -67,28 +80,40 @@ public abstract record EncryptionKey
     public abstract KeyStatus Status { get; }
 
     /// <summary>
-    /// Validates the asymmetric/symmetric material shape invariant.
-    /// <c>RsaSigning</c> keys require a non-null <see cref="PublicKeyMaterial"/>;
-    /// symmetric keys (<c>AesPayload</c>, <c>Secret</c>) must have a null one.
+    /// Validates the per-type material shape invariant.
+    /// <c>RsaSigning</c> keys carry a non-null <see cref="PublicKeyMaterial"/> and
+    /// no <see cref="CaCertificateMaterial"/>; <c>X509CaCertificate</c> keys carry
+    /// a non-null <see cref="CaCertificateMaterial"/> and no
+    /// <see cref="PublicKeyMaterial"/>; symmetric keys (<c>AesPayload</c>,
+    /// <c>Secret</c>) carry neither.
     /// </summary>
     /// <param name="type">The key type being validated.</param>
     /// <param name="pub">The public key material (may be null).</param>
+    /// <param name="caCert">The CA certificate material (may be null).</param>
     /// <returns>
     /// <c>Ok</c> when the shape is consistent; a flagged
     /// <c>KEYCUSTODIAN_PRECONDITION_VIOLATED</c> failure when it is not. A
     /// mismatched material shape is a programmer/precondition error surfaced as a
     /// telemetry-flagged internal-error result rather than a thrown exception.
     /// </returns>
-    private protected static D2Result EnsureMaterialShape(KeyType type, PublicKeyMaterial? pub)
-    {
-        if (type == KeyType.RsaSigning && pub is null)
-            return KeyCustodianFailures.PreconditionViolated();
-
-        if (type != KeyType.RsaSigning && pub is not null)
-            return KeyCustodianFailures.PreconditionViolated();
-
-        return D2Result.Ok();
-    }
+    private protected static D2Result EnsureMaterialShape(
+        KeyType type, PublicKeyMaterial? pub, CaCertificateMaterial? caCert) =>
+        type switch
+        {
+            KeyType.RsaSigning =>
+                pub is not null && caCert is null
+                    ? D2Result.Ok()
+                    : KeyCustodianFailures.PreconditionViolated(),
+            KeyType.X509CaCertificate =>
+                caCert is not null && pub is null
+                    ? D2Result.Ok()
+                    : KeyCustodianFailures.PreconditionViolated(),
+            KeyType.AesPayload or KeyType.Secret =>
+                pub is null && caCert is null
+                    ? D2Result.Ok()
+                    : KeyCustodianFailures.PreconditionViolated(),
+            _ => KeyCustodianFailures.PreconditionViolated(),
+        };
 
     /// <summary>
     /// Constructs a <see cref="CompromisedKey"/> from the current key's core
@@ -119,6 +144,7 @@ public abstract record EncryptionKey
             KeyType = KeyType,
             KeyMaterialEncrypted = KeyMaterialEncrypted,
             PublicKeyMaterial = PublicKeyMaterial,
+            CaCertificateMaterial = CaCertificateMaterial,
             CreatedAt = CreatedAt,
             CompromisedAt = at,
             Reason = reason,

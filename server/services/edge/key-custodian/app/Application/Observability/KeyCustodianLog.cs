@@ -133,4 +133,51 @@ internal static partial class KeyCustodianLog
             + "between plan classification and re-query (TOCTOU); counting as error.")]
     public static partial void RecordGoneFromPlan(
         ILogger logger, string action, string domain);
+
+    /// <summary>
+    /// Logs that a workload-certificate issuance request found no active issuing
+    /// intermediate CA. The workload id is loggable (a non-PII service label); no
+    /// certificate or key material is logged.
+    /// </summary>
+    /// <param name="logger">The logger.</param>
+    /// <param name="workloadServiceId">The workload that requested a leaf.</param>
+    // long log template — cannot wrap
+    [LoggerMessage(
+        EventId = 9507,
+        Level = LogLevel.Error,
+        Message =
+            "Workload certificate issuance for {workloadServiceId} found no active issuing CA; "
+            + "the mTLS mesh cannot form until an intermediate CA is seeded or rotated in.")]
+    public static partial void NoActiveIssuingCa(ILogger logger, string workloadServiceId);
+
+    /// <summary>
+    /// Logs that the certificate-authority hierarchy was seeded on startup: the
+    /// root + intermediate were loaded from the CA provider and persisted as active
+    /// managed keys. No certificate or key material is logged.
+    /// </summary>
+    /// <param name="logger">The logger.</param>
+    /// <param name="rootKid">The seeded root CA key's kid.</param>
+    /// <param name="intermediateKid">The seeded intermediate CA key's kid.</param>
+    // long log template — cannot wrap
+    [LoggerMessage(
+        EventId = 9510,
+        Level = LogLevel.Information,
+        Message =
+            "Certificate-authority hierarchy seeded: root {rootKid} and intermediate "
+            + "{intermediateKid} are now active managed keys.")]
+    public static partial void CaSeeded(
+        ILogger logger, string rootKid, string intermediateKid);
+
+    /// <summary>
+    /// Logs that CA seeding found an existing active hierarchy and made no change
+    /// (idempotent re-run). No certificate or key material is logged.
+    /// </summary>
+    /// <param name="logger">The logger.</param>
+    [LoggerMessage(
+        EventId = 9511,
+        Level = LogLevel.Debug,
+        Message =
+            "Certificate-authority hierarchy already seeded (active root + intermediate "
+            + "present); seeding is a no-op.")]
+    public static partial void CaSeedSkippedAlreadyActive(ILogger logger);
 }

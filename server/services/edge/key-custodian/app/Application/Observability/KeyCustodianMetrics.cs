@@ -92,4 +92,29 @@ public static class KeyCustodianMetrics
             description:
                 "Total GetJwks requests that found zero signing keys and returned 503. "
                 + "Any non-zero value is critical — JWT verification is broken cluster-wide.");
+
+    /// <summary>
+    /// Counter — total workload leaf certificates issued by
+    /// <c>IssueWorkloadCertificate</c>. Incremented after a successful durable
+    /// commit of the issuance audit row.
+    /// </summary>
+    public static readonly Counter<long> SR_LeafCertificatesIssuedTotal =
+        SR_Meter.CreateCounter<long>(
+            name: "d2.keycustodian.leaf_certificates_issued",
+            unit: "{certificate}",
+            description: "Total workload leaf certificates issued.");
+
+    /// <summary>
+    /// Counter — total <c>IssueWorkloadCertificate</c> requests that found no
+    /// active issuing intermediate CA and returned <c>503 Service Unavailable</c>.
+    /// A sustained non-zero rate means the CA has not been seeded or is between
+    /// rotations — no workload can obtain a leaf, so the mTLS mesh cannot form.
+    /// </summary>
+    public static readonly Counter<long> SR_NoActiveIssuingCaTotal =
+        SR_Meter.CreateCounter<long>(
+            name: "d2.keycustodian.no_active_issuing_ca",
+            unit: "{response}",
+            description:
+                "Total IssueWorkloadCertificate requests that found no active issuing CA "
+                + "and returned 503. A sustained non-zero rate blocks the entire mTLS mesh.");
 }

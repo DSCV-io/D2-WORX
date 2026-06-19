@@ -9,9 +9,11 @@ namespace D2.Edge.KeyCustodian.App.Application;
 using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.ActivateKey;
 using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.CompromiseKey;
 using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.GenerateKey;
+using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.IssueWorkloadCertificate;
 using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.RetireKey;
 using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.RotateKey;
 using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.RunDueRotations;
+using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.SeedCertificateAuthority;
 using D2.Edge.KeyCustodian.App.Application.Handlers.Queries.GetJwks;
 using D2.Edge.KeyCustodian.App.Application.Handlers.Queries.GetRotationPlan;
 
@@ -50,6 +52,10 @@ public static class KeyCustodianAppServiceCollectionExtensions
             services.AddTransient<IRetireKeyHandler, RetireKeyHandler>();
             services.AddTransient<ICompromiseKeyHandler, CompromiseKeyHandler>();
             services.AddTransient<IRunDueRotationsHandler, RunDueRotationsHandler>();
+            services.AddTransient<
+                IIssueWorkloadCertificateHandler, IssueWorkloadCertificateHandler>();
+            services.AddTransient<
+                ISeedCertificateAuthorityHandler, SeedCertificateAuthorityHandler>();
 
             // Query handlers.
             services.AddTransient<IGetJwksHandler, GetJwksHandler>();

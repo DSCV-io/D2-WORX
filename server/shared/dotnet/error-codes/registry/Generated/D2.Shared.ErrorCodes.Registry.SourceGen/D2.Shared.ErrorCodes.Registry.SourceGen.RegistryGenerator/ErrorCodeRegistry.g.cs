@@ -448,6 +448,33 @@ public static class ErrorCodeRegistry
                 FactoryShape: "standard",
                 Doc: "The cryptographic smoke test for the key material did not pass; the key cannot be activated. Surfaced as a flagged internal-error result so the failed material never enters service.",
                 Domain: "keycustodian"),
+            ["KEYCUSTODIAN_INVALID_WORKLOAD_IDENTITY"] = new ErrorCodeInfo(
+                Code: "KEYCUSTODIAN_INVALID_WORKLOAD_IDENTITY",
+                HttpStatus: 400,
+                Category: ErrorCategory.ValidationFailure,
+                UserMessageKey: TK.Keycustodian.Validation.INVALID_WORKLOAD_IDENTITY,
+                FactoryName: "InvalidWorkloadIdentity",
+                FactoryShape: "standard",
+                Doc: "The workload identity is null, empty, whitespace, exceeds the maximum length, contains characters outside the allowed lowercase charset [a-z0-9-], or (when parsed from a certificate subject-alternative-name) does not match the spiffe://d2.internal/workload/<service> grammar. Coarse on purpose so the peer-validation surface does not leak which check failed.",
+                Domain: "keycustodian"),
+            ["KEYCUSTODIAN_INVALID_CERTIFICATE_REQUEST"] = new ErrorCodeInfo(
+                Code: "KEYCUSTODIAN_INVALID_CERTIFICATE_REQUEST",
+                HttpStatus: 500,
+                Category: ErrorCategory.InternalError,
+                UserMessageKey: TK.Keycustodian.Internal.INVALID_CERTIFICATE_REQUEST,
+                FactoryName: "InvalidCertificateRequest",
+                FactoryShape: "standard",
+                Doc: "A certificate-generation precondition was violated (empty subject name, non-positive validity) or a cryptographic build operation failed. This is a programmer/precondition error surfaced as a flagged 500 result (carrying telemetry) rather than a thrown exception, the same way a failed smoke test is.",
+                Domain: "keycustodian"),
+            ["KEYCUSTODIAN_NO_ACTIVE_ISSUING_CA"] = new ErrorCodeInfo(
+                Code: "KEYCUSTODIAN_NO_ACTIVE_ISSUING_CA",
+                HttpStatus: 503,
+                Category: ErrorCategory.InfrastructureUnavailable,
+                UserMessageKey: TK.Keycustodian.Infrastructure.NO_ACTIVE_ISSUING_CA,
+                FactoryName: "NoActiveIssuingCa",
+                FactoryShape: "standard",
+                Doc: "No active issuing intermediate certificate authority is available to sign a workload leaf certificate. A retryable not-ready-yet condition: the CA either has not been seeded yet or is between rotations. Surfaced as a 503 service-unavailable result so callers retry rather than treat it as a client-side conflict.",
+                Domain: "keycustodian"),
         }.ToFrozenDictionary(StringComparer.Ordinal);
 
     /// <summary>
@@ -498,6 +525,9 @@ public static class ErrorCodeRegistry
                 sr_lookup["KEYCUSTODIAN_KEY_STATE_CONFLICT"],
                 sr_lookup["KEYCUSTODIAN_PENDING_KEY_ALREADY_EXISTS"],
                 sr_lookup["KEYCUSTODIAN_SMOKE_TEST_FAILED"],
+                sr_lookup["KEYCUSTODIAN_INVALID_WORKLOAD_IDENTITY"],
+                sr_lookup["KEYCUSTODIAN_INVALID_CERTIFICATE_REQUEST"],
+                sr_lookup["KEYCUSTODIAN_NO_ACTIVE_ISSUING_CA"],
             ]);
 
     /// <summary>

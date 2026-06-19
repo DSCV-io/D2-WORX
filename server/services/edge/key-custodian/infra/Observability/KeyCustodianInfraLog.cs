@@ -96,6 +96,46 @@ internal static partial class KeyCustodianInfraLog
     public static partial void RootKeyFileWrongLength(
         ILogger logger, string kid, string path, int actualBytes, int expectedBytes);
 
+    /// <summary>
+    /// Logs that a required CA chain file was not found (fail-fast). Certificate /
+    /// key bytes are NEVER logged — only the missing file's path.
+    /// </summary>
+    /// <param name="logger">The logger.</param>
+    /// <param name="path">The path that was probed.</param>
+    [LoggerMessage(
+        EventId = 9536,
+        Level = LogLevel.Critical,
+        Message = "CA chain file not found at {path}; host cannot start.")]
+    public static partial void CaFileMissing(ILogger logger, string path);
+
+    /// <summary>
+    /// Logs that the loaded CA chain failed to parse or validate (malformed PEM,
+    /// wrong curve, or an intermediate that does not chain to the root). Fail-fast.
+    /// Certificate / key bytes are NEVER logged — only the directory + reason.
+    /// </summary>
+    /// <param name="logger">The logger.</param>
+    /// <param name="directory">The CA directory.</param>
+    /// <param name="reason">A sanitized, content-free reason.</param>
+    [LoggerMessage(
+        EventId = 9537,
+        Level = LogLevel.Critical,
+        Message = "CA chain in {directory} is invalid ({reason}); host cannot start.")]
+    public static partial void CaChainInvalid(ILogger logger, string directory, string reason);
+
+    /// <summary>
+    /// Logs that a loaded CA certificate is outside its validity window (expired or
+    /// not yet valid). Fail-fast. No certificate bytes are logged.
+    /// </summary>
+    /// <param name="logger">The logger.</param>
+    /// <param name="directory">The CA directory.</param>
+    /// <param name="tier">Which tier failed (<c>root</c> or <c>intermediate</c>).</param>
+    [LoggerMessage(
+        EventId = 9538,
+        Level = LogLevel.Critical,
+        Message = "CA {tier} certificate in {directory} is outside its validity window; "
+            + "host cannot start.")]
+    public static partial void CaCertExpired(ILogger logger, string directory, string tier);
+
     // =========================================================================
     // Scheduling — rotation service (9540–9546).
     // =========================================================================
@@ -170,6 +210,65 @@ internal static partial class KeyCustodianInfraLog
             + "will retry on the next tick.")]
     public static partial void RotationTickFailed(
         ILogger logger, string exceptionType, string firstFrame);
+
+    /// <summary>
+    /// Logs that CA seeding skipped because another instance holds the seed lock.
+    /// </summary>
+    /// <param name="logger">The logger.</param>
+    [LoggerMessage(
+        EventId = 9545,
+        Level = LogLevel.Debug,
+        Message = "CA seeding skipped; another instance holds the CA-seed advisory lock.")]
+    public static partial void CaSeedSkippedLockHeld(ILogger logger);
+
+    /// <summary>
+    /// Logs that the startup CA-seeding run failed (the host survives — issuance
+    /// fails loud later if no CA was seeded). The exception is rendered PII-safely.
+    /// </summary>
+    /// <param name="logger">The logger.</param>
+    /// <param name="exceptionType">The PII-safe exception type name.</param>
+    /// <param name="firstFrame">The PII-safe first stack frame.</param>
+    [LoggerMessage(
+        EventId = 9546,
+        Level = LogLevel.Error,
+        Message = "CA seeding threw {exceptionType} at {firstFrame}; "
+            + "the mTLS mesh cannot form until a CA is seeded.")]
+    public static partial void CaSeedFailed(
+        ILogger logger, string exceptionType, string firstFrame);
+
+    /// <summary>
+    /// Logs that the CA-seeding command returned a failure result (non-throw). The
+    /// host survives; issuance fails loud later if no CA was seeded.
+    /// </summary>
+    /// <param name="logger">The logger.</param>
+    /// <param name="errorCode">The error code from the failed seed.</param>
+    [LoggerMessage(
+        EventId = 9547,
+        Level = LogLevel.Error,
+        Message = "CA seeding returned a failure (errorCode {errorCode}); "
+            + "the mTLS mesh cannot form until a CA is seeded.")]
+    public static partial void CaSeedRunFailed(ILogger logger, string? errorCode);
+
+    /// <summary>
+    /// Logs that the mTLS CA chain could not be loaded from the configured directory
+    /// (missing files, malformed PEM, wrong curve, invalid chain, or expired
+    /// certificate). The host continues in a degraded posture: workload-certificate
+    /// issuance returns a 503 until a valid CA chain is installed and the seeder
+    /// re-runs. The operator must run <c>gen-dev-keys.sh</c> to supply the four CA
+    /// files (ca-root.crt, ca-root.key, ca-intermediate.crt, ca-intermediate.key).
+    /// No certificate or key bytes are logged — only the error category.
+    /// </summary>
+    /// <param name="logger">The logger.</param>
+    /// <param name="category">A sanitized, content-free description of the failure category.</param>
+    // long log template — cannot wrap
+    [LoggerMessage(
+        EventId = 9548,
+        Level = LogLevel.Warning,
+        Message =
+            "mTLS CA chain could not be loaded ({category}); the host is starting in a degraded "
+            + "posture — workload-certificate issuance will return 503 until a valid CA chain is "
+            + "installed and the CA seeder re-runs. Run gen-dev-keys.sh to supply the CA files.")]
+    public static partial void CaLoadDegraded(ILogger logger, string category);
 
     // =========================================================================
     // Messaging — post-commit announce (9550–9551).

@@ -34,16 +34,22 @@ public sealed record PendingKey : EncryptionKey
     /// <param name="keyType">The cryptographic algorithm category.</param>
     /// <param name="encryptedMaterial">The root-key-wrapped key material.</param>
     /// <param name="publicMaterial">
-    /// Public key bytes for <c>RsaSigning</c> keys; <see langword="null"/> for symmetric keys.
+    /// Public key bytes for <c>RsaSigning</c> keys; <see langword="null"/> for
+    /// symmetric and certificate-authority keys.
+    /// </param>
+    /// <param name="caCertificateMaterial">
+    /// CA certificate bytes for <c>X509CaCertificate</c> keys; <see langword="null"/>
+    /// for all other key types.
     /// </param>
     /// <param name="createdAt">The UTC instant of key generation.</param>
     /// <returns>
     /// <c>Ok(<see cref="PendingKey"/>)</c> on success; a flagged
     /// <c>KEYCUSTODIAN_PRECONDITION_VIOLATED</c> failure when <paramref name="kid"/>,
     /// <paramref name="keyDomain"/>, or <paramref name="encryptedMaterial"/> is
-    /// <see langword="null"/>, or when the <paramref name="publicMaterial"/> shape
-    /// is inconsistent with <paramref name="keyType"/> (RSA must have public,
-    /// symmetric must not). Null arguments and shape mismatches are
+    /// <see langword="null"/>, or when the material shape is inconsistent with
+    /// <paramref name="keyType"/> (RSA must carry public material only;
+    /// <c>X509CaCertificate</c> must carry CA certificate material only; symmetric
+    /// must carry neither). Null arguments and shape mismatches are
     /// programmer/precondition errors surfaced as telemetry-flagged internal-error
     /// results rather than thrown exceptions.
     /// </returns>
@@ -53,6 +59,7 @@ public sealed record PendingKey : EncryptionKey
         KeyType keyType,
         KeyMaterialEncrypted? encryptedMaterial,
         PublicKeyMaterial? publicMaterial,
+        CaCertificateMaterial? caCertificateMaterial,
         Instant createdAt)
     {
         if (kid is null)
@@ -64,9 +71,10 @@ public sealed record PendingKey : EncryptionKey
         if (encryptedMaterial is null)
             return KeyCustodianFailures<PendingKey>.PreconditionViolated();
 
-        // Enforce RSA⇒pub non-null; symmetric⇒pub null. Propagate the
-        // PreconditionViolated result from EnsureMaterialShape directly.
-        var shape = EnsureMaterialShape(keyType, publicMaterial);
+        // Enforce the per-type material shape. Propagate the PreconditionViolated
+        // result from EnsureMaterialShape directly.
+        var shape = EnsureMaterialShape(keyType, publicMaterial, caCertificateMaterial);
+
         if (!shape.Success)
             return KeyCustodianFailures<PendingKey>.PreconditionViolated(messages: shape.Messages);
 
@@ -77,6 +85,7 @@ public sealed record PendingKey : EncryptionKey
             KeyType = keyType,
             KeyMaterialEncrypted = encryptedMaterial,
             PublicKeyMaterial = publicMaterial,
+            CaCertificateMaterial = caCertificateMaterial,
             CreatedAt = createdAt,
         });
     }
@@ -129,6 +138,7 @@ public sealed record PendingKey : EncryptionKey
             KeyType = KeyType,
             KeyMaterialEncrypted = KeyMaterialEncrypted,
             PublicKeyMaterial = PublicKeyMaterial,
+            CaCertificateMaterial = CaCertificateMaterial,
             CreatedAt = CreatedAt,
             ActivatedAt = now,
         });

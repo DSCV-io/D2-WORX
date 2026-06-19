@@ -312,6 +312,97 @@ public sealed class CompromiseKeyTests
             k => k.Status == KeyStatus.Pending, because: "a replacement was generated");
     }
 
+    // -----------------------------------------------------------------------
+    // CA-certificate key: compromise generates a REAL CA replacement
+    // -----------------------------------------------------------------------
+
+    // A compromised intermediate CA gets a REAL root-signed replacement (a pending
+    // CA in the same domain that chains to the active root) — not a skipped/null
+    // replacement.
+    [Fact]
+    public async Task Compromise_CaIntermediate_GenerateReplacement_CreatesRealReplacementChainingToRoot()
+    {
+        await using var db = KeyCustodianTestDbContext.CreateEmpty();
+        var created = KcAppTestKit.SR_BaseInstant;
+        var (_, rootCertDer) = await KcAppTestKit.SeedCaRootAsync(db, r_crypto, created);
+        var (caKid, _) = await KcAppTestKit.SeedCaAsync(db, r_crypto, created);
+
+        var announcer = new RecordingAnnouncer();
+        var result = await Build(db, new TestClock(created + Duration.FromHours(3)), announcer)
+            .HandleAsync(new CompromiseKeyInput
+            {
+                Kid = caKid,
+                Reason = "CA private key exposed",
+                GenerateReplacement = true,
+            });
+
+        result.Success.Should().BeTrue(because: "the CA compromise + replacement must succeed");
+        result.Data!.CompromisedKid.Should().Be(caKid);
+        result.Data!.ReplacementKid.Should().NotBeNullOrEmpty(
+            because: "a real CA replacement is generated, not skipped");
+
+        db.Keys.Single(k => k.Kid == caKid).Status.Should().Be(KeyStatus.Compromised);
+
+        var replacement = db.Keys.Single(k =>
+            k.KeyDomain == KeyDomain.MTLS_CA_INTERMEDIATE && k.Status == KeyStatus.Pending);
+        replacement.KeyType.Should().Be(KeyType.X509CaCertificate);
+        replacement.CaCertificate.Should().NotBeNullOrEmpty();
+        CaTestAssertions.AssertChainsToRoot(replacement.CaCertificate!, rootCertDer);
+
+        announcer.Calls.Should().ContainSingle().Which.Urgent.Should().BeTrue(
+            because: "a compromise announce is urgent");
+    }
+
+    // GenerateReplacement=false leaves the compromised CA with no replacement.
+    [Fact]
+    public async Task Compromise_CaIntermediate_NoReplacementRequested_CompromisesOnly()
+    {
+        await using var db = KeyCustodianTestDbContext.CreateEmpty();
+        var created = KcAppTestKit.SR_BaseInstant;
+        await KcAppTestKit.SeedCaRootAsync(db, r_crypto, created);
+        var (caKid, _) = await KcAppTestKit.SeedCaAsync(db, r_crypto, created);
+
+        var result = await Build(db, new TestClock(created + Duration.FromHours(3)), new RecordingAnnouncer())
+            .HandleAsync(new CompromiseKeyInput
+            {
+                Kid = caKid,
+                Reason = "CA private key exposed",
+                GenerateReplacement = false,
+            });
+
+        result.Success.Should().BeTrue();
+        result.Data!.ReplacementKid.Should().BeNull();
+        db.Keys.Should().NotContain(
+            k => k.Status == KeyStatus.Pending, because: "no replacement was requested");
+        db.Keys.Single(k => k.Kid == caKid).Status.Should().Be(KeyStatus.Compromised);
+    }
+
+    // Root compromise → a real self-signed replacement root (the re-anchor case).
+    [Fact]
+    public async Task Compromise_CaRoot_GenerateReplacement_CreatesSelfSignedReplacementRoot()
+    {
+        await using var db = KeyCustodianTestDbContext.CreateEmpty();
+        var created = KcAppTestKit.SR_BaseInstant;
+        var (rootKid, _) = await KcAppTestKit.SeedCaRootAsync(db, r_crypto, created);
+
+        var result = await Build(db, new TestClock(created + Duration.FromHours(3)), new RecordingAnnouncer())
+            .HandleAsync(new CompromiseKeyInput
+            {
+                Kid = rootKid,
+                Reason = "root key exposed",
+                GenerateReplacement = true,
+            });
+
+        result.Success.Should().BeTrue();
+        result.Data!.ReplacementKid.Should().NotBeNullOrEmpty();
+        db.Keys.Single(k => k.Kid == rootKid).Status.Should().Be(KeyStatus.Compromised);
+
+        var replacement = db.Keys.Single(k =>
+            k.KeyDomain == KeyDomain.MTLS_CA_ROOT && k.Status == KeyStatus.Pending);
+        replacement.KeyType.Should().Be(KeyType.X509CaCertificate);
+        replacement.CaCertificate.Should().NotBeNullOrEmpty();
+    }
+
     private CompromiseKeyHandler Build(
         KeyCustodianTestDbContext db, TestClock clock, RecordingAnnouncer announcer) =>
         new(

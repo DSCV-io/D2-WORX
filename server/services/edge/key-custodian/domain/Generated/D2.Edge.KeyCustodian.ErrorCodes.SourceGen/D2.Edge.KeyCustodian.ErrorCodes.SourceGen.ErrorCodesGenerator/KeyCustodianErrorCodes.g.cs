@@ -60,6 +60,15 @@ public static class KeyCustodianErrorCodes
     /// <summary>The cryptographic smoke test for the key material did not pass; the key cannot be activated. Surfaced as a flagged internal-error result so the failed material never enters service.</summary>
     public const string KEYCUSTODIAN_SMOKE_TEST_FAILED = "KEYCUSTODIAN_SMOKE_TEST_FAILED";
 
+    /// <summary>The workload identity is null, empty, whitespace, exceeds the maximum length, contains characters outside the allowed lowercase charset [a-z0-9-], or (when parsed from a certificate subject-alternative-name) does not match the spiffe://d2.internal/workload/&lt;service&gt; grammar. Coarse on purpose so the peer-validation surface does not leak which check failed.</summary>
+    public const string KEYCUSTODIAN_INVALID_WORKLOAD_IDENTITY = "KEYCUSTODIAN_INVALID_WORKLOAD_IDENTITY";
+
+    /// <summary>A certificate-generation precondition was violated (empty subject name, non-positive validity) or a cryptographic build operation failed. This is a programmer/precondition error surfaced as a flagged 500 result (carrying telemetry) rather than a thrown exception, the same way a failed smoke test is.</summary>
+    public const string KEYCUSTODIAN_INVALID_CERTIFICATE_REQUEST = "KEYCUSTODIAN_INVALID_CERTIFICATE_REQUEST";
+
+    /// <summary>No active issuing intermediate certificate authority is available to sign a workload leaf certificate. A retryable not-ready-yet condition: the CA either has not been seeded yet or is between rotations. Surfaced as a 503 service-unavailable result so callers retry rather than treat it as a client-side conflict.</summary>
+    public const string KEYCUSTODIAN_NO_ACTIVE_ISSUING_CA = "KEYCUSTODIAN_NO_ACTIVE_ISSUING_CA";
+
     /// <summary>
     /// All declared <c>KEYCUSTODIAN_*</c> codes in spec order. Useful for
     /// registry membership checks and cross-spec consistency tests.
@@ -80,6 +89,9 @@ public static class KeyCustodianErrorCodes
         "KEYCUSTODIAN_KEY_STATE_CONFLICT",
         "KEYCUSTODIAN_PENDING_KEY_ALREADY_EXISTS",
         "KEYCUSTODIAN_SMOKE_TEST_FAILED",
+        "KEYCUSTODIAN_INVALID_WORKLOAD_IDENTITY",
+        "KEYCUSTODIAN_INVALID_CERTIFICATE_REQUEST",
+        "KEYCUSTODIAN_NO_ACTIVE_ISSUING_CA",
     };
 
     /// <summary>
@@ -104,6 +116,9 @@ public static class KeyCustodianErrorCodes
         "KEYCUSTODIAN_KEY_STATE_CONFLICT" => 409,
         "KEYCUSTODIAN_PENDING_KEY_ALREADY_EXISTS" => 409,
         "KEYCUSTODIAN_SMOKE_TEST_FAILED" => 500,
+        "KEYCUSTODIAN_INVALID_WORKLOAD_IDENTITY" => 400,
+        "KEYCUSTODIAN_INVALID_CERTIFICATE_REQUEST" => 500,
+        "KEYCUSTODIAN_NO_ACTIVE_ISSUING_CA" => 503,
         _ => 500,
     };
 }

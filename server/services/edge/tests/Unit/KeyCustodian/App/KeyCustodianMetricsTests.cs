@@ -176,6 +176,10 @@ public sealed class KeyCustodianMetricsTests
             .Should().Be("d2.keycustodian.smoke_test_failures");
         KeyCustodianMetrics.SR_EmptyJwksServed.Name
             .Should().Be("d2.keycustodian.empty_jwks_served");
+        KeyCustodianMetrics.SR_LeafCertificatesIssuedTotal.Name
+            .Should().Be("d2.keycustodian.leaf_certificates_issued");
+        KeyCustodianMetrics.SR_NoActiveIssuingCaTotal.Name
+            .Should().Be("d2.keycustodian.no_active_issuing_ca");
     }
 
     [Fact]
@@ -333,6 +337,7 @@ public sealed class KeyCustodianMetricsTests
         listener.SetMeasurementEventCallback<long>((_, value, tags, _) =>
         {
             string? urgentTag = null;
+
             foreach (var tag in tags)
             {
                 if (tag.Key == "urgent")
@@ -411,6 +416,7 @@ public sealed class KeyCustodianMetricsTests
         listener.SetMeasurementEventCallback<long>((_, value, tags, _) =>
         {
             string? urgentTag = null;
+
             foreach (var tag in tags)
             {
                 if (tag.Key == "urgent")

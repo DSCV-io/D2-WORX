@@ -281,7 +281,7 @@ public sealed class EncryptionKeyTransitionTests
         // Successor in a different domain
         var wrongDomain = KeyDomain.FromTrusted("courier");
         var successor = PendingKey.Create(
-            sr_kid, wrongDomain, KeyType.AesPayload, sr_mat, null, instant + sr_soak).Data!;
+            sr_kid, wrongDomain, KeyType.AesPayload, sr_mat, null, null, instant + sr_soak).Data!;
 
         var result = active.Rotate(successor, clock);
 
@@ -297,7 +297,7 @@ public sealed class EncryptionKeyTransitionTests
 
         // Successor is Secret type, but key is AesPayload
         var successor = PendingKey.Create(
-            sr_kid, sr_domain, KeyType.Secret, sr_mat, null, instant + sr_soak).Data!;
+            sr_kid, sr_domain, KeyType.Secret, sr_mat, null, null, instant + sr_soak).Data!;
 
         var result = active.Rotate(successor, clock);
 
@@ -576,7 +576,7 @@ public sealed class EncryptionKeyTransitionTests
     }
 
     private static PendingKey MakePending(Instant createdAt) =>
-        PendingKey.Create(sr_kid, sr_domain, KeyType.AesPayload, sr_mat, null, createdAt).Data!;
+        PendingKey.Create(sr_kid, sr_domain, KeyType.AesPayload, sr_mat, null, null, createdAt).Data!;
 
     private static ActiveKey MakeActive(Instant createdAt, Instant activatedAt)
     {

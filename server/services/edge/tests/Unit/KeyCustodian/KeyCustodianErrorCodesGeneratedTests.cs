@@ -49,6 +49,15 @@ public sealed class KeyCustodianErrorCodesGeneratedTests
     [InlineData(
         KeyCustodianErrorCodes.KEYCUSTODIAN_SMOKE_TEST_FAILED,
         "KEYCUSTODIAN_SMOKE_TEST_FAILED")]
+    [InlineData(
+        KeyCustodianErrorCodes.KEYCUSTODIAN_INVALID_WORKLOAD_IDENTITY,
+        "KEYCUSTODIAN_INVALID_WORKLOAD_IDENTITY")]
+    [InlineData(
+        KeyCustodianErrorCodes.KEYCUSTODIAN_INVALID_CERTIFICATE_REQUEST,
+        "KEYCUSTODIAN_INVALID_CERTIFICATE_REQUEST")]
+    [InlineData(
+        KeyCustodianErrorCodes.KEYCUSTODIAN_NO_ACTIVE_ISSUING_CA,
+        "KEYCUSTODIAN_NO_ACTIVE_ISSUING_CA")]
     public void Constant_ValueEqualsWireLiteral(string constant, string expected_wire_literal)
     {
         constant.Should().Be(expected_wire_literal);
@@ -75,6 +84,9 @@ public sealed class KeyCustodianErrorCodesGeneratedTests
             "KEYCUSTODIAN_KEY_STATE_CONFLICT",
             "KEYCUSTODIAN_PENDING_KEY_ALREADY_EXISTS",
             "KEYCUSTODIAN_SMOKE_TEST_FAILED",
+            "KEYCUSTODIAN_INVALID_WORKLOAD_IDENTITY",
+            "KEYCUSTODIAN_INVALID_CERTIFICATE_REQUEST",
+            "KEYCUSTODIAN_NO_ACTIVE_ISSUING_CA",
         ];
 
         KeyCustodianErrorCodes.AllCodes.Should().BeEquivalentTo(
@@ -83,9 +95,9 @@ public sealed class KeyCustodianErrorCodesGeneratedTests
     }
 
     [Fact]
-    public void AllCodes_CountIsTwelveCodes()
+    public void AllCodes_CountIsFifteenCodes()
     {
-        KeyCustodianErrorCodes.AllCodes.Should().HaveCount(12);
+        KeyCustodianErrorCodes.AllCodes.Should().HaveCount(15);
     }
 
     // -----------------------------------------------------------------------
@@ -103,6 +115,9 @@ public sealed class KeyCustodianErrorCodesGeneratedTests
     [InlineData("KEYCUSTODIAN_KEY_STATE_CONFLICT", 409)]
     [InlineData("KEYCUSTODIAN_PENDING_KEY_ALREADY_EXISTS", 409)]
     [InlineData("KEYCUSTODIAN_SMOKE_TEST_FAILED", 500)]
+    [InlineData("KEYCUSTODIAN_INVALID_WORKLOAD_IDENTITY", 400)]
+    [InlineData("KEYCUSTODIAN_INVALID_CERTIFICATE_REQUEST", 500)]
+    [InlineData("KEYCUSTODIAN_NO_ACTIVE_ISSUING_CA", 503)]
     public void GetHttpStatus_KnownCode_ReturnsDeclaredStatus(string code, int expected_status)
     {
         KeyCustodianErrorCodes.GetHttpStatus(code).Should().Be(expected_status);
@@ -145,6 +160,9 @@ public sealed class KeyCustodianErrorCodesGeneratedTests
             ["KEYCUSTODIAN_KEY_STATE_CONFLICT"] = 409,
             ["KEYCUSTODIAN_PENDING_KEY_ALREADY_EXISTS"] = 409,
             ["KEYCUSTODIAN_SMOKE_TEST_FAILED"] = 500,
+            ["KEYCUSTODIAN_INVALID_WORKLOAD_IDENTITY"] = 400,
+            ["KEYCUSTODIAN_INVALID_CERTIFICATE_REQUEST"] = 500,
+            ["KEYCUSTODIAN_NO_ACTIVE_ISSUING_CA"] = 503,
         };
 
         foreach (var code in KeyCustodianErrorCodes.AllCodes)
@@ -385,5 +403,73 @@ public sealed class KeyCustodianErrorCodesGeneratedTests
         message.Parameters["arg"].Should().Be("proof");
         result.ErrorCode.Should().Be(KeyCustodianErrorCodes.KEYCUSTODIAN_PRECONDITION_VIOLATED);
         result.Category.Should().Be(ErrorCategory.InternalError);
+    }
+
+    // -----------------------------------------------------------------------
+    // mTLS CA / workload-issuance factories (the 0022 additions)
+    // -----------------------------------------------------------------------
+
+    [Fact]
+    public void InvalidWorkloadIdentity_NonGeneric_ReturnsValidationFailure()
+    {
+        var result = KeyCustodianFailures.InvalidWorkloadIdentity();
+
+        result.Success.Should().BeFalse();
+        result.StatusCode.Should().Be(System.Net.HttpStatusCode.BadRequest);
+        result.ErrorCode.Should().Be(KeyCustodianErrorCodes.KEYCUSTODIAN_INVALID_WORKLOAD_IDENTITY);
+        result.Category.Should().Be(ErrorCategory.ValidationFailure);
+        result.Messages.Should().Contain(
+            m => m.Key == "keycustodian_validation_INVALID_WORKLOAD_IDENTITY");
+    }
+
+    [Fact]
+    public void InvalidWorkloadIdentity_Generic_ReturnsTypedValidationFailure()
+    {
+        var result = KeyCustodianFailures<int>.InvalidWorkloadIdentity();
+
+        result.Success.Should().BeFalse();
+        result.StatusCode.Should().Be(System.Net.HttpStatusCode.BadRequest);
+        result.ErrorCode.Should().Be(KeyCustodianErrorCodes.KEYCUSTODIAN_INVALID_WORKLOAD_IDENTITY);
+        result.Category.Should().Be(ErrorCategory.ValidationFailure);
+    }
+
+    [Fact]
+    public void InvalidCertificateRequest_NonGeneric_ReturnsInternalErrorFailure()
+    {
+        var result = KeyCustodianFailures.InvalidCertificateRequest();
+
+        result.Success.Should().BeFalse();
+        result.StatusCode.Should().Be(System.Net.HttpStatusCode.InternalServerError);
+        result.ErrorCode.Should().Be(
+            KeyCustodianErrorCodes.KEYCUSTODIAN_INVALID_CERTIFICATE_REQUEST);
+        result.Category.Should().Be(ErrorCategory.InternalError);
+        result.Messages.Should().Contain(
+            m => m.Key == "keycustodian_internal_INVALID_CERTIFICATE_REQUEST");
+    }
+
+    [Fact]
+    public void NoActiveIssuingCa_NonGeneric_ReturnsServiceUnavailableFailure()
+    {
+        var result = KeyCustodianFailures.NoActiveIssuingCa();
+
+        result.Success.Should().BeFalse();
+        result.StatusCode.Should().Be(
+            System.Net.HttpStatusCode.ServiceUnavailable,
+            "no active issuing CA is a retryable not-ready-yet condition, not a client error");
+        result.ErrorCode.Should().Be(KeyCustodianErrorCodes.KEYCUSTODIAN_NO_ACTIVE_ISSUING_CA);
+        result.Category.Should().Be(ErrorCategory.InfrastructureUnavailable);
+        result.Messages.Should().Contain(
+            m => m.Key == "keycustodian_infrastructure_NO_ACTIVE_ISSUING_CA");
+    }
+
+    [Fact]
+    public void NoActiveIssuingCa_Generic_ReturnsTypedServiceUnavailableFailure()
+    {
+        var result = KeyCustodianFailures<int>.NoActiveIssuingCa();
+
+        result.Success.Should().BeFalse();
+        result.StatusCode.Should().Be(System.Net.HttpStatusCode.ServiceUnavailable);
+        result.ErrorCode.Should().Be(KeyCustodianErrorCodes.KEYCUSTODIAN_NO_ACTIVE_ISSUING_CA);
+        result.Category.Should().Be(ErrorCategory.InfrastructureUnavailable);
     }
 }

@@ -78,8 +78,10 @@ public sealed class KeyCustodianHealthCheckTests
     public async Task CheckHealth_AllDomainsHaveActive_ReturnsHealthy()
     {
         var db = SeededContext();
+
         foreach (var domain in KeyDomain.All)
             AddActiveKey(db, domain.Value);
+
         await db.SaveChangesAsync();
 
         var check = new KeyCustodianHealthCheck(
@@ -144,6 +146,9 @@ public sealed class KeyCustodianHealthCheckTests
             throw new InvalidOperationException("database unreachable");
 
         public DbSet<KeyAuditRecord> Audit =>
+            throw new InvalidOperationException("database unreachable");
+
+        public DbSet<LeafIssuanceAuditRecord> LeafIssuanceAudit =>
             throw new InvalidOperationException("database unreachable");
 
         public Task<int> SaveChangesAsync(CancellationToken cancellationToken = default) =>

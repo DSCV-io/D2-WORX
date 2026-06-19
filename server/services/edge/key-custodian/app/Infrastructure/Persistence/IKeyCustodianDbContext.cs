@@ -26,8 +26,11 @@ public interface IKeyCustodianDbContext
     /// <summary>Gets the managed-key rows.</summary>
     DbSet<KeyRecord> Keys { get; }
 
-    /// <summary>Gets the append-only audit records.</summary>
+    /// <summary>Gets the append-only managed-key lifecycle audit records.</summary>
     DbSet<KeyAuditRecord> Audit { get; }
+
+    /// <summary>Gets the append-only workload leaf-certificate issuance audit records.</summary>
+    DbSet<LeafIssuanceAuditRecord> LeafIssuanceAudit { get; }
 
     /// <summary>
     /// Persists all tracked changes in a single transaction.
