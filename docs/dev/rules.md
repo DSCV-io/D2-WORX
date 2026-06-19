@@ -50,7 +50,7 @@ The complete, verbose, authoritative requirements for ANY code change in this re
 2. [Bug-Fix Regression Testing](#2-bug-fix-regression-testing)
 3. [PII / Logging Safety](#3-pii--logging-safety)
 4. [Concurrency / Race Conditions](#4-concurrency--race-conditions)
-5. [C# Code Conventions](#5-c-code-conventions)
+5. [C# Code Conventions](#5-c-code-conventions) — incl. §5.8a (blank-line padding around control-flow blocks and multi-line statements)
 6. [TypeScript / SvelteKit Code Conventions](#6-typescript--sveltekit-code-conventions)
 7. [Naming, File Headers, Folder Casing](#7-naming-file-headers-folder-casing)
 8. [Build & Tooling Hygiene](#8-build--tooling-hygiene)
@@ -535,6 +535,37 @@ The set of in-language rules that show up everywhere. Memory of these is the dif
     - **Form B — two-liner with `if` on its own line**: permitted ONLY with blank lines BOTH above AND below the if-block. The brace-less body needs visual breathing room; without padding, the body reads as a continuation of the surrounding sequential code.
     - Three-or-more-line bodies (or wrapped/multi-line bodies) MUST have braces — SA1519 already enforces this.
   - Evidence: spot-check new control flow; `grep -rEn '^[[:space:]]+if[[:space:]]\([^)]+\)[[:space:]]*$' <scope>` finds Form-B candidates whose padding then needs visual verification.
+
+- **5.8a** Does every C# method body place a single blank line **before AND after** every control-flow block and every multi-line statement?
+  - **Scope**: applies to hand-authored `.cs` files. Does NOT apply to generated files (`*.g.cs`, files under `Generated/`) or EF migration files.
+  - **Required blank-line padding on both sides for**:
+    - Every `if` / `else if` / `else` / `while` / `for` / `foreach` / `switch` block and `using`-statement.
+    - Every **multi-line statement** — a single statement spanning ≥2 physical lines (a wrapped extension-method chain, a multi-line method call, a multi-line `return` / object-initializer used as a statement).
+  - **Consecutive simple single-line statements** (sequential assignments, simple `return`s, simple method calls that each fit on one line) do NOT require padding between them — group them naturally.
+  - **StyleCop interaction** (never violate these constraints while adding padding):
+    - SA1505 — no blank line after an opening brace.
+    - SA1507 — no double blank lines anywhere (single blank line ONLY).
+    - SA1508 — no blank line before a closing brace.
+    - SA1516 — member separator (blank line between type members) is pre-existing; the per-method body padding adds blank lines WITHIN a method body and does not conflict with SA1516.
+  - **Cross-ref**: §5.8 (brace rules) is the sibling predicate. §5.8 Form-B already mandates blank lines above AND below a brace-less two-liner `if` — §5.8a generalizes that requirement to every control-flow block and every multi-line statement inside a method body.
+  - **Why**: control-flow blocks and wrapped statements create visual noise when packed against surrounding sequential code. Blank lines on both sides make the boundary between "decision / complex expression" and "simple sequential flow" scannable at a glance — the eye can parse the method in one pass without counting keywords. The pattern also naturally exposes when a method does too much (dense padding is a signal to extract).
+  - **How** — gold-standard example (from KeyCustodian `CompromiseKeyHandler`, adopted 2026-06-18, deliverable 0022):
+    ```csharp
+    var kidResult = Kid.Create(input.Kid);
+
+    if (kidResult.BubbleOnFailure<Kid, CompromiseKeyOutput>(out var bubbled, out var kid))
+        return bubbled;
+
+    var record = await db.Keys
+        .Live()
+        .FirstOrDefaultAsync(k => k.Kid == kid!.Value, ct)
+        .ConfigureAwait(false);
+
+    if (record is null)
+        return KeyCustodianFailures<CompromiseKeyOutput?>.KeyNotFound();
+    ```
+    Note: the `await db.Keys…` chain is a multi-line statement → blank line before AND after. Each `if` block → blank line before AND after. Simple single-liners (`var kidResult = …`) do NOT get padding against each other.
+  - Evidence: read each new or modified `.cs` file in scope (not grep — tool-invisible); confirm every `if`/loop/switch/`using`-statement and every wrapped statement has a blank line on both sides; no doubles (SA1507), no blanks at block start/end (SA1505/SA1508).
 
 - **5.9** Is `this.` qualifier absent? (Codebase doesn't use it; field prefixes already disambiguate.)
   - Evidence: `grep -rEn 'this\.' <scope C# files>` → expect zero in introduced code.
