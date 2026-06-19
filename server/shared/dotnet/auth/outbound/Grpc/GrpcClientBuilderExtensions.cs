@@ -76,12 +76,13 @@ public static class GrpcClientBuilderExtensions
         }
 
         /// <summary>
-        /// Attaches this workload's mutual-TLS leaf certificate to the gRPC channel
-        /// under construction. Every connection through the resulting channel
-        /// presents the current live leaf from <see cref="WorkloadLeafCache"/>
-        /// (read at connect time via the TLS handshake's
-        /// <see cref="SslClientAuthenticationOptions.LocalCertificateSelectionCallback"/>),
-        /// so a rotated leaf is picked up without rebuilding the channel.
+        /// Attaches this workload's mutual-TLS leaf certificate — together with its
+        /// issuing intermediate, where the platform supports it — to the gRPC channel
+        /// under construction. The channel presents the full <c>leaf → intermediate</c>
+        /// chain from <see cref="WorkloadLeafCache"/> via the handshake's
+        /// <see cref="SslClientAuthenticationOptions.ClientCertificateContext"/>, so a
+        /// strict peer can rebuild a root-anchored chain without a machine-store-resident
+        /// intermediate or a network (AIA) fetch.
         /// </summary>
         /// <remarks>
         /// <para>
@@ -96,7 +97,28 @@ public static class GrpcClientBuilderExtensions
         /// certificate (the same posture as <see cref="AddD2ServiceIdentity"/>).
         /// Compose-don't-clobber: an existing <see cref="SocketsHttpHandler"/> set on
         /// the channel options is augmented (its <c>SslOptions</c> /
-        /// selection-callback are set) rather than replaced.
+        /// client-certificate context are set) rather than replaced.
+        /// </para>
+        /// <para>
+        /// <b>The presented chain is captured at channel construction.</b> Unlike a
+        /// per-connection selection callback, a
+        /// <see cref="SslClientAuthenticationOptions.ClientCertificateContext"/> is
+        /// resolved once, when the channel is built, and reused for every connection
+        /// the channel opens. The refresh-ahead leaf source keeps the cache holding a
+        /// current chain, but a consumer holding a long-lived channel does NOT
+        /// automatically adopt a rotated leaf — to present a freshly-rotated leaf it
+        /// must rebuild the channel. Rebuilding a long-lived channel on rotation is the
+        /// consumer's responsibility; presenting the full chain is the prerequisite for
+        /// a strict peer to validate it at all.
+        /// </para>
+        /// <para>
+        /// <b>Windows fallback.</b> On Linux/OpenSSL (the deployment target) the chain
+        /// context is always present and the full chain is sent. On Windows, where
+        /// Schannel will not construct a chain context for a leaf whose internal-CA root
+        /// is not installed in the OS trust store, the cache holds no context and this
+        /// falls back to presenting the bare leaf at connect time — Windows cannot
+        /// transmit an application-supplied intermediate without store residency
+        /// regardless, so the bare leaf is the only in-process option there.
         /// </para>
         /// </remarks>
         /// <returns>The same <paramref name="builder"/> instance for chaining.</returns>
@@ -115,18 +137,28 @@ public static class GrpcClientBuilderExtensions
                 var handler = options.HttpHandler as SocketsHttpHandler
                     ?? new SocketsHttpHandler();
 
-                handler.SslOptions.LocalCertificateSelectionCallback =
-                    (_, _, _, _, _) =>
-                    {
-                        // Read the current live leaf at connect time; a rotated leaf
-                        // is picked up without rebuilding the channel. Returns null
-                        // when no current leaf exists (the handshake then presents
-                        // no client certificate — the callee's RequireCertificate
-                        // rejects it, which is the correct fail-closed behavior).
-                        var leaf = leafCache.GetCurrentLeaf(clock.GetUtcNow());
+                // Capture the current snapshot at channel build. A rotated leaf is NOT
+                // auto-picked-up: the captured chain / leaf is fixed for the channel's
+                // lifetime, so the consumer rebuilds the channel to adopt a fresh leaf
+                // (see remarks). When there is no current snapshot the handshake
+                // presents no client certificate, and the callee's RequireCertificate
+                // rejects it (the correct fail-closed behavior).
+                var snapshot = leafCache.TryGet(clock.GetUtcNow());
 
-                        return leaf!;
-                    };
+                if (snapshot?.ChainContext is not null)
+                {
+                    // The deployment path: present the full leaf -> intermediate chain.
+                    handler.SslOptions.ClientCertificateContext = snapshot.ChainContext;
+                }
+                else if (snapshot is not null)
+                {
+                    // Windows fallback: no chain context could be built, so present the
+                    // bare leaf via the selection callback (Schannel cannot transmit an
+                    // application-supplied intermediate without OS-store residency).
+                    var leaf = snapshot.Leaf;
+                    handler.SslOptions.LocalCertificateSelectionCallback =
+                        (_, _, _, _, _) => leaf;
+                }
 
                 options.HttpHandler = handler;
             });

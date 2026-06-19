@@ -151,6 +151,56 @@ public sealed class WorkloadLeafClientTests
     }
 
     [Fact]
+    public async Task GetCurrentLeafAsync_BuiltSnapshot_RetainsIntermediate()
+    {
+        // The reissue path retains the issuing intermediate (from the material's
+        // IssuerCertificateDer) so the full chain can be presented. The intermediate is
+        // the public issuer cert (no private key).
+        using var harness = new Harness();
+
+        await harness.Client.GetCurrentLeafAsync();
+
+        var snapshot = harness.Cache.PeekRaw();
+        snapshot.Should().NotBeNull();
+        snapshot.Intermediate.Should().NotBeNull("the issuing intermediate is retained");
+        snapshot.Intermediate.HasPrivateKey.Should().BeFalse(
+            "the presented intermediate is the public issuer cert, not a key-bearing one");
+    }
+
+    [Fact]
+    public async Task GetCurrentLeafAsync_BuiltSnapshot_PresentsChainOrFallsBackToLeaf()
+    {
+        // On Linux/OpenSSL (the deployment target) the snapshot carries a pre-built
+        // leaf -> intermediate chain context (the full chain is presented). On Windows,
+        // where Schannel will not build a chain context for a leaf whose internal-CA
+        // root is not in the OS trust store, the context is tolerated-null and the
+        // presentation falls back to the bare leaf — either way the leaf is cached and
+        // GetCurrentLeafAsync succeeds (it never hard-fails on the chain-context build).
+        using var harness = new Harness();
+
+        var result = await harness.Client.GetCurrentLeafAsync();
+
+        result.Success.Should().BeTrue(
+            "the live leaf is cached regardless of whether the chain context could be built");
+
+        var snapshot = harness.Cache.PeekRaw();
+        snapshot.Should().NotBeNull();
+
+        if (OperatingSystem.IsWindows())
+        {
+            // The bare-leaf fallback path is acceptable on Windows (dev), not the
+            // deployment target; the leaf is still present for presentation.
+            snapshot.Leaf.HasPrivateKey.Should().BeTrue(
+                "the bare leaf is presented when no chain context can be built on Windows");
+        }
+        else
+        {
+            snapshot.ChainContext.Should().NotBeNull(
+                "on the deployment target the channel presents the full leaf -> intermediate chain");
+        }
+    }
+
+    [Fact]
     public async Task GetCurrentLeafAsync_BuildLiveLeaf_ZeroesPkcs8BufferAfterImport()
     {
         // M-4 regression pin — WorkloadLeafClient.BuildLiveLeaf MUST call

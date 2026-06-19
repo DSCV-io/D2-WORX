@@ -165,6 +165,10 @@ The SPIFFE trust domain is fixed at `d2.internal` — enforced by the `SpiffeWor
 
 Fail-loud, not fail-open: the options are validated at host build via `ValidateOnStart()`. The host owns trust-anchor sourcing through `TrustAnchorsProvider` — the dev harness loads the public root locally; a real host supplies it from KeyCustodian's certificate-authority provider. This lib reads no files, no `secrets/`, and never references a service domain.
 
+#### Real-socket proof runs on Linux/OpenSSL
+
+The end-to-end real-socket harness for this path (`MutualTlsSignerHarnessTests`, in the Edge test project) binds a real Kestrel HTTPS endpoint on a loopback ephemeral port and drives the require-and-validate path over a genuine TLS handshake — the valid leaf round-trips, every bad-cert variant (wrong CA, expired, foreign trust domain, unknown workload) is rejected at the handshake, and a no-client-certificate connection is refused by `RequireCertificate`. The six client-cert-PRESENTING cases run on **Linux/OpenSSL** (the deployment target) and SKIP on Windows: Windows-Schannel cannot build an `SslStreamCertificateContext` for a leaf chaining to a private CA without first installing the root into the OS trust store (Microsoft-documented; even a bare leaf, even with the intermediate supplied), and the harness deliberately performs zero OS-store mutation. Run the Linux proof with `bash tools/scripts/run-mtls-proof.sh` (a `.NET 10 SDK` Linux container; needs no Postgres/Redis/RabbitMQ — the harness is self-contained loopback). The validator's full conjunct matrix is proven cross-platform by the `SpiffeSanPeerValidator` unit suite, which drives the same validator with in-memory chains and needs no socket.
+
 ### Constants — `D2AspNetCoreConstants`
 
 | Constant                               | Value                                                                                          |

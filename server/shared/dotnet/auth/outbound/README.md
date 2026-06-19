@@ -87,11 +87,15 @@ services
 
 `AddD2WorkloadCertificateOutbound()` registers:
 
-- `WorkloadLeafCache` — single per-process slot holding the live leaf `X509Certificate2` (atomic-ref swap; disposes the superseded leaf on swap, the current leaf on cache disposal).
-- `WorkloadLeafClient` + `IWorkloadLeafSource` — the refresh-ahead leaf source. Reissues through the host-supplied `IWorkloadCertificateIssuer`, builds a live private-key-bearing certificate from the returned DER + PKCS#8 (zeroing the PKCS#8 once the cert owns the key), caches it, and serves-stale-on-transient (singleflight + circuit-breaker, same shape as the service-identity client).
+- `WorkloadLeafCache` — single per-process slot holding the live leaf `X509Certificate2`, its issuing intermediate, and the pre-built `SslStreamCertificateContext` chain (atomic-ref swap; disposes the superseded leaf + intermediate on swap, the current pair on cache disposal — the leaf carries the secret key, the intermediate is public).
+- `WorkloadLeafClient` + `IWorkloadLeafSource` — the refresh-ahead leaf source. Reissues through the host-supplied `IWorkloadCertificateIssuer`, builds a live private-key-bearing leaf from the returned DER + PKCS#8 (zeroing the PKCS#8 once the cert owns the key), decodes the issuing intermediate, builds the presentable chain context, caches it, and serves-stale-on-transient (singleflight + circuit-breaker, same shape as the service-identity client).
 - `WorkloadLeafRefreshHostedService` — polls every 30 s and reissues when `NotAfter - now <= WorkloadLeafRefreshLeadTime` (default 5 min; leaf TTLs are hours).
 
-`AddD2WorkloadCertificate()` on the gRPC builder sets the channel handler's `SslClientAuthenticationOptions.LocalCertificateSelectionCallback` to read the current leaf from the cache at connect time — a rotated leaf is picked up without rebuilding the channel. It composes alongside `AddD2ServiceIdentity()` (the leaf is set on the channel handler's `SslOptions`; the token is set on `options.Credentials` — orthogonal, compose-don't-clobber on `options.HttpHandler`). Safe-by-default: a channel that does not call it presents no client certificate.
+`AddD2WorkloadCertificate()` on the gRPC builder sets the channel handler's `SslClientAuthenticationOptions.ClientCertificateContext` to the cache's current chain context (the full `leaf → intermediate` chain) at channel build — presenting the chain lets a strict peer rebuild a root-anchored chain without a machine-store-resident intermediate or a network (AIA) fetch. It composes alongside `AddD2ServiceIdentity()` (the leaf chain is set on the channel handler's `SslOptions`; the token is set on `options.Credentials` — orthogonal, compose-don't-clobber on `options.HttpHandler`). Safe-by-default: a channel that does not call it presents no client certificate.
+
+The chain context is resolved **once, at channel construction** (a `ClientCertificateContext` is not a per-connection selection callback). The refresh-ahead loop keeps the cache holding a current chain, but a consumer holding a long-lived channel does not automatically adopt a rotated leaf — it must rebuild the channel to present the freshly-rotated leaf. Rebuilding a long-lived channel on rotation is the consumer's responsibility; the channel's lifecycle is the natural home for it.
+
+> **Platform note.** On Linux/OpenSSL (the deployment target) the chain context is always built and the full chain is presented. On Windows, Schannel builds the chain outside the process and refuses to construct a chain context for a leaf whose internal-CA root is not installed in the OS trust store (and cannot transmit an application-supplied intermediate without store residency — a documented Schannel limitation). On that path the leaf source caches no chain context and the per-channel opt-in falls back to presenting the bare leaf; a Windows host that needs the chain transmitted installs the CA into the OS store (operator action), which is outside this in-process presentation path. This mirrors the platform split already used for the leaf's private-key handling.
 
 The cross-process "a separate service obtains its first leaf from KeyCustodian over the wire" bootstrap (the gRPC issuance contract + bootstrap-identity provisioning) is documented future work — not the `IWorkloadCertificateIssuer` port, which is the in-process / harness seam that proves the full refresh-ahead + presentation path locally.
 
@@ -105,7 +109,7 @@ auth/outbound/
 ├── AuthOutboundServiceCollectionExtensions.cs        # AddD2AuthOutbound composition root
 ├── Grpc/
 │   ├── ServiceIdentityCallCredentials.cs             # gRPC CallCredentials sourcing the bearer from IServiceIdentityClient
-│   └── GrpcClientBuilderExtensions.cs                # .AddD2ServiceIdentity() + .AddD2WorkloadCertificate() per-channel opt-ins
+│   └── GrpcClientBuilderExtensions.cs                # .AddD2ServiceIdentity() (bearer) + .AddD2WorkloadCertificate() (leaf-chain context) per-channel opt-ins
 ├── ServiceIdentity/
 │   ├── IServiceIdentityClient.cs                     # interface
 │   ├── HttpServiceIdentityClient.cs                  # POST /oauth/token grant_type=client_credentials
@@ -117,9 +121,9 @@ auth/outbound/
 │   ├── IWorkloadLeafSource.cs                        # interface — current live leaf accessor
 │   ├── IWorkloadCertificateIssuer.cs                 # host-supplied reissue port (BCL DER+PKCS#8 boundary)
 │   ├── WorkloadLeafMaterial.cs                       # (CertificateDer, PrivateKeyPkcs8, IssuerCertificateDer, NotAfter) record
-│   ├── WorkloadLeafClient.cs                         # refresh-ahead reissue + live-cert build (singleflight + breaker)
-│   ├── WorkloadLeafCache.cs                          # atomic-ref single-value live-cert cache (disposes superseded leaf)
-│   ├── WorkloadLeafSnapshot.cs                       # (Leaf, NotAfter) record
+│   ├── WorkloadLeafClient.cs                         # refresh-ahead reissue + live-chain build (singleflight + breaker)
+│   ├── WorkloadLeafCache.cs                          # atomic-ref single-value live-chain cache (disposes superseded leaf + intermediate)
+│   ├── WorkloadLeafSnapshot.cs                       # (Leaf, Intermediate, ChainContext, NotAfter) record
 │   └── WorkloadLeafRefreshHostedService.cs           # background proactive reissue
 ├── TokenExchange/
 │   ├── ITokenExchangeClient.cs                       # interface

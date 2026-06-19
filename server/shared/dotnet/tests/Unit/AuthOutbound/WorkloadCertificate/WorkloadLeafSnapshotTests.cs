@@ -6,6 +6,7 @@
 
 namespace D2.Shared.Tests.Unit.AuthOutbound.WorkloadCertificate;
 
+using System.Net.Security;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using AwesomeAssertions;
@@ -15,9 +16,9 @@ using Xunit;
 /// <summary>
 /// Value-semantics and construction coverage for <see cref="WorkloadLeafSnapshot"/>.
 /// The snapshot is a <c>sealed record</c> — these tests pin the equality semantics,
-/// the immutability contract (members do not mutate after construction), and the
-/// refresh-due boundary helpers used by <see cref="WorkloadLeafCache"/> and the
-/// refresh hosted service.
+/// the immutability contract (members do not mutate after construction), and that the
+/// snapshot carries the leaf, its issuing intermediate, and the pre-built chain
+/// context the gRPC channel presents.
 /// </summary>
 public sealed class WorkloadLeafSnapshotTests
 {
@@ -25,24 +26,31 @@ public sealed class WorkloadLeafSnapshotTests
         new(2026, 1, 1, 0, 0, 0, TimeSpan.Zero);
 
     [Fact]
-    public void Construction_PopulatesLeafAndNotAfter()
+    public void Construction_PopulatesAllMembers()
     {
         using var leaf = ASelfSignedCert();
+        using var intermediate = ASelfSignedCert();
+        var context = SslStreamCertificateContext.Create(leaf, [intermediate], offline: true);
         var notAfter = SR_Base.AddHours(24);
-        var snapshot = new WorkloadLeafSnapshot(leaf, notAfter);
+
+        var snapshot = new WorkloadLeafSnapshot(leaf, intermediate, context, notAfter);
 
         snapshot.Leaf.Should().BeSameAs(leaf);
+        snapshot.Intermediate.Should().BeSameAs(intermediate);
+        snapshot.ChainContext.Should().BeSameAs(context);
         snapshot.NotAfter.Should().Be(notAfter);
     }
 
     [Fact]
-    public void RecordEquality_SameLeafAndNotAfter_AreEqual()
+    public void RecordEquality_SameMembers_AreEqual()
     {
         using var leaf = ASelfSignedCert();
+        using var intermediate = ASelfSignedCert();
+        var context = SslStreamCertificateContext.Create(leaf, [intermediate], offline: true);
         var notAfter = SR_Base.AddHours(24);
 
-        var a = new WorkloadLeafSnapshot(leaf, notAfter);
-        var b = new WorkloadLeafSnapshot(leaf, notAfter);
+        var a = new WorkloadLeafSnapshot(leaf, intermediate, context, notAfter);
+        var b = new WorkloadLeafSnapshot(leaf, intermediate, context, notAfter);
 
         a.Should().Be(b);
         (a == b).Should().BeTrue();
@@ -52,9 +60,11 @@ public sealed class WorkloadLeafSnapshotTests
     public void RecordEquality_DifferentNotAfter_AreNotEqual()
     {
         using var leaf = ASelfSignedCert();
+        using var intermediate = ASelfSignedCert();
+        var context = SslStreamCertificateContext.Create(leaf, [intermediate], offline: true);
 
-        var a = new WorkloadLeafSnapshot(leaf, SR_Base.AddHours(24));
-        var b = new WorkloadLeafSnapshot(leaf, SR_Base.AddHours(48));
+        var a = new WorkloadLeafSnapshot(leaf, intermediate, context, SR_Base.AddHours(24));
+        var b = new WorkloadLeafSnapshot(leaf, intermediate, context, SR_Base.AddHours(48));
 
         a.Should().NotBe(b);
     }
@@ -65,8 +75,10 @@ public sealed class WorkloadLeafSnapshotTests
         // WorkloadLeafCache.TryGet uses snapshot.NotAfter > now (strict), so a
         // snapshot whose NotAfter == now is considered expired and returns null.
         using var leaf = ASelfSignedCert();
+        using var intermediate = ASelfSignedCert();
+        var context = SslStreamCertificateContext.Create(leaf, [intermediate], offline: true);
         var expiresAt = SR_Base.AddMinutes(30);
-        var snapshot = new WorkloadLeafSnapshot(leaf, expiresAt);
+        var snapshot = new WorkloadLeafSnapshot(leaf, intermediate, context, expiresAt);
 
         // One tick before expiry — not yet expired.
         (snapshot.NotAfter > expiresAt.AddTicks(-1)).Should().BeTrue();
@@ -76,27 +88,35 @@ public sealed class WorkloadLeafSnapshotTests
     }
 
     [Fact]
-    public void Leaf_IsImmutable_AfterConstruction()
+    public void Members_AreImmutable_AfterConstruction()
     {
-        // The snapshot record is immutable — the Leaf reference cannot be reassigned
-        // after construction; the cert itself is a reference to the live handle.
+        // The snapshot record is immutable — the member references cannot be
+        // reassigned after construction; each is a reference to the live handle.
         using var leaf = ASelfSignedCert();
-        var snapshot = new WorkloadLeafSnapshot(leaf, SR_Base.AddHours(24));
+        using var intermediate = ASelfSignedCert();
+        var context = SslStreamCertificateContext.Create(leaf, [intermediate], offline: true);
+        var snapshot = new WorkloadLeafSnapshot(leaf, intermediate, context, SR_Base.AddHours(24));
 
         // Re-reading always returns the same reference.
         snapshot.Leaf.Should().BeSameAs(snapshot.Leaf);
+        snapshot.Intermediate.Should().BeSameAs(snapshot.Intermediate);
+        snapshot.ChainContext.Should().BeSameAs(snapshot.ChainContext);
     }
 
     [Fact]
-    public void Deconstruct_YieldsLeafAndNotAfter()
+    public void Deconstruct_YieldsAllMembers()
     {
         using var leaf = ASelfSignedCert();
+        using var intermediate = ASelfSignedCert();
+        var context = SslStreamCertificateContext.Create(leaf, [intermediate], offline: true);
         var notAfter = SR_Base.AddHours(12);
-        var snapshot = new WorkloadLeafSnapshot(leaf, notAfter);
+        var snapshot = new WorkloadLeafSnapshot(leaf, intermediate, context, notAfter);
 
-        var (actualLeaf, actualNotAfter) = snapshot;
+        var (actualLeaf, actualIntermediate, actualContext, actualNotAfter) = snapshot;
 
         actualLeaf.Should().BeSameAs(leaf);
+        actualIntermediate.Should().BeSameAs(intermediate);
+        actualContext.Should().BeSameAs(context);
         actualNotAfter.Should().Be(notAfter);
     }
 

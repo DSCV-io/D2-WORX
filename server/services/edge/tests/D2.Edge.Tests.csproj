@@ -193,6 +193,25 @@ Copyright (c) DCSV. All rights reserved.
       (only the KC shell is referenced) so there is no CS0433 ambiguity.
     -->
     <ProjectReference Include="..\key-custodian\error-codes-source-gen\D2.Edge.KeyCustodian.ErrorCodes.SourceGen.csproj" />
+    <!--
+      D2.Shared.AspNetCore — the shipped mutual-TLS host wiring (AddD2MutualTls +
+      D2MutualTlsOptions). The end-to-end mTLS harness binds a real Kestrel HTTPS
+      endpoint configured via AddD2MutualTls and hosts the generated Signer gRPC
+      service over it, proving the require-and-validate path gates a real TLS
+      handshake. A service test project referencing a shared lib is the correct
+      dependency direction.
+    -->
+    <ProjectReference Include="..\..\..\shared\dotnet\aspnetcore\D2.Shared.AspNetCore.csproj" />
+    <!--
+      D2.Shared.Auth.Outbound — the shipped client-side workload-leaf presentation
+      stack (AddD2WorkloadCertificateOutbound + AddD2WorkloadCertificate +
+      IWorkloadCertificateIssuer + IWorkloadLeafSource + WorkloadLeafMaterial). The
+      harness's valid-leaf case dials through this client plumbing to prove the
+      real present-from-cache path end-to-end. Also pulls D2.Shared.WorkloadIdentity
+      transitively (the SPIFFE grammar both the server validator + KeyCustodian's
+      issuance path share).
+    -->
+    <ProjectReference Include="..\..\..\shared\dotnet\auth\outbound\D2.Shared.Auth.Outbound.csproj" />
   </ItemGroup>
 
   <!--
