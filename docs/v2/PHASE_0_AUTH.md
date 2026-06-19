@@ -200,7 +200,7 @@ the `d2_` prefix (§3.1).
 | ----- | -------- | ------------------ | -------------------- | ----- |
 | `iss` | RFC 7519 | Edge issuer (e.g. `https://edge.internal`) | yes | Validated as `iss` at every hop. Minted, not surfaced as an `IAuthContext` property. |
 | `sub` | RFC 7519 | Acting principal: user Guid for a user token; the OAuth `client_id` for a pure service-identity token; the impersonated user's id under impersonation | yes | `Subject` / `UserId`. |
-| `aud` | RFC 7519 | **`d2.internal`** — the single broad internal audience (`D2InternalAudience`) | yes | The broad audience is what makes forward-unchanged work; validated `aud == d2.internal` at every hop. `Audience`. |
+| `aud` | RFC 7519 | **`d2.internal`** — the single broad internal audience (`D2_INTERNAL_AUDIENCE`) | yes | The broad audience is what makes forward-unchanged work; validated `aud == d2.internal` at every hop. `Audience`. |
 | `iat` | RFC 7519 | Mint instant (Unix seconds) | yes | `TokenIssuedAt`. |
 | `exp` | RFC 7519 | Short TTL (~15 min user / ~5 min service, §3.1) — bounds the whole chain's revocation lag | yes | `TokenExpiresAt`; lifetime checked with clock skew at every hop. |
 | `nbf` | RFC 7519 | Mint instant (or mint − skew) | yes | Part of the lifetime check. Minted, not surfaced as an `IAuthContext` property. |
