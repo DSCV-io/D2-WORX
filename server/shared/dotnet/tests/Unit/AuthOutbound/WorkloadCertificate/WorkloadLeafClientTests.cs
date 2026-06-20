@@ -16,9 +16,8 @@ using Xunit;
 /// <summary>
 /// The refresh-ahead leaf-client matrix — first-call issuance, cache-hit reuse,
 /// serve-stale on transient failure, hard-fail when expired-and-unreachable,
-/// singleflight dedup, and the private-key-zeroize contract. Mirrors
-/// <c>HttpServiceIdentityClientTests</c> with a certificate reissue instead of a
-/// token fetch.
+/// singleflight dedup, and the private-key-zeroize contract — exercised over a
+/// certificate reissue.
 /// </summary>
 [Trait("Category", "Unit")]
 public sealed class WorkloadLeafClientTests

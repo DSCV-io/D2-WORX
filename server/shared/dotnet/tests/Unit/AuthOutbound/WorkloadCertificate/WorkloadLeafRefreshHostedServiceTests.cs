@@ -17,8 +17,7 @@ using Xunit;
 /// <summary>
 /// Background-service coverage for <see cref="WorkloadLeafRefreshHostedService"/>:
 /// startup acquisition, the reissue-due (refresh-ahead) loop, transient-failure
-/// survival, and clean cancellation. Mirrors
-/// <c>ServiceIdentityRefreshHostedServiceTests</c>.
+/// survival, and clean cancellation.
 /// </summary>
 [Trait("Category", "Unit")]
 public sealed class WorkloadLeafRefreshHostedServiceTests

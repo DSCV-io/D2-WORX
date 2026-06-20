@@ -72,7 +72,7 @@ public static class HttpHeaders
     public const string IDEMPOTENCY_KEY = "Idempotency-Key";
 
     /// <summary>
-    /// Service-identity JWT minted by KeyCustodian (audience d2.edge, 15-min TTL). BFF forwards on outbound calls so Edge can distinguish BFF-originated SSR traffic from browser-direct traffic in audit + telemetry tags.
+    /// The BFF's boundary token for its calls to Edge — an OAuth client_credentials JWT (audience d2.edge, 15-min TTL) the BFF acquires as an external client of Edge. Sent on outbound BFF-&gt;Edge calls so Edge can distinguish BFF-originated SSR traffic from browser-direct traffic in audit + telemetry tags.
     /// </summary>
     /// <remarks>Convention: <c>d2</c>. Applicability: <c>http</c>.</remarks>
     public const string INTERNAL_TOKEN = "X-D2-Internal-Token";

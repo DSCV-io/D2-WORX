@@ -56,10 +56,10 @@ expands to, and exposes the `/oauth/token` endpoint. This lib never holds a sign
 a token, never authoritatively decides whether a session is alive.
 
 What this lib does is **mirror Edge state into local caches with backplane-driven invalidation**,
-and **authenticate outbound calls by requesting tokens from Edge**. Every "fetch" / "request" verb
-in §1 means "ask Edge over HTTP or gRPC; cache the answer." When the doc says
-`IServiceIdentityClient`, the word "Client" is load-bearing — it's a client that calls Edge, not an
-issuer.
+and **authenticate outbound calls by requesting tokens from Edge** on the retained exception paths.
+Every "fetch" / "request" verb in §1 means "ask Edge over HTTP or gRPC; cache the answer." When the
+doc names an outbound type whose name ends in `Client` — `ITokenExchangeClient`, `IKeyringClient`,
+`IJwksProvider` — the word "Client" is load-bearing: it's a client that calls Edge, not an issuer.
 
 ### What this lib explicitly does NOT do
 
@@ -116,8 +116,9 @@ The split is: **Edge produces auth signal; D2.Shared.Auth consumes it everywhere
 **Downstream consumers** (after this lib lands):
 
 - **Edge** (Phase 3) — uses every part of this lib + adds the issuer side.
-- **Every backend service** (Phase 3+) — uses inbound JWT validation + ServiceIdentityClient +
-  KeyringClient.
+- **Every backend service** (Phase 3+) — uses inbound JWT validation + the forwarded
+  transaction-token (re-attached unchanged on outbound calls, with mTLS authenticating the workload)
+  + KeyringClient; `ITokenExchangeClient` only on the retained RFC 8693 exception paths.
 - **D2.Shared.Messaging** (Wave 6) — uses `IPayloadCrypto` keyed-by-domain (which the KeyringClient
   registers).
 
@@ -507,7 +508,7 @@ All on `nova`, all merged.
 - `ITieredCache` (L1 + L2 composition) — exactly the shape JWKS + session caching need.
 - `ICacheInvalidationBackplane` — Redis pub/sub with universal "everyone acts" rule. Exactly the
   shape `d2.security.key-rotated` and `d2.security.session-revoked` need.
-- `ILocalCache` — for service-identity tokens and any per-instance state.
+- `ILocalCache` — for the token-exchange cache (shared singleton per Q17) and any per-instance state.
 
 ### 4.5 Handler / context infrastructure — `D2.Shared.Handler*`
 
@@ -618,25 +619,28 @@ server/shared/dotnet/
 │   │   └── AuthLog.cs                   # LoggerMessage delegates
 │   └── AuthServiceCollectionExtensions.cs   # services.AddD2Auth(opts)
 │
-├── auth-outbound/                       # NEW — outbound token requests
+├── auth-outbound/                       # NEW — outbound auth factors
 │   ├── D2.Shared.Auth.Outbound.csproj
 │   ├── README.md
-│   ├── ServiceIdentity/
-│   │   ├── IServiceIdentityClient.cs    # transport-level (client_credentials)
-│   │   ├── HttpServiceIdentityClient.cs # calls Edge /oauth/token
-│   │   ├── ServiceIdentityOptions.cs    # client_id, client_secret (env vars)
-│   │   ├── ServiceIdentityRefreshHostedService.cs  # background pre-expiry refresh
-│   │   └── ServiceIdentityCache.cs      # in-memory token + Singleflight
-│   ├── TokenExchange/
-│   │   ├── ITokenExchangeClient.cs      # user-context (RFC 8693)
+│   ├── WorkloadCertificate/             # internal workload identity = mTLS (ADR-0023)
+│   │   ├── IWorkloadCertificateIssuer.cs # KeyCustodian CA leaf-issuance contract
+│   │   ├── IWorkloadLeafSource.cs        # current-leaf source contract
+│   │   ├── WorkloadLeafClient.cs         # requests a leaf from the issuing CA
+│   │   ├── WorkloadLeafCache.cs          # holds the current leaf → intermediate chain
+│   │   ├── WorkloadLeafRefreshHostedService.cs  # refresh-ahead before leaf expiry
+│   │   ├── WorkloadLeafSnapshot.cs       # immutable cached chain snapshot
+│   │   └── WorkloadLeafMaterial.cs       # leaf + chain material
+│   ├── TokenExchange/                   # retained RFC 8693 exception paths only
+│   │   ├── ITokenExchangeClient.cs      # user-context exchange (RFC 8693)
 │   │   ├── HttpTokenExchangeClient.cs   # calls Edge /oauth/token grant_type=token-exchange
-│   │   ├── TokenExchangeOptions.cs
-│   │   └── TokenExchangeCache.cs        # ILocalCache-backed (Q17), keyed by
-│   │                                      (sessionId, audience, scope-set) per Q16,
-│   │                                      with reverse-index + session-revoked subscription
+│   │   ├── TokenExchangeCache.cs        # ILocalCache-backed (Q17), keyed by
+│   │   │                                  (sessionId, audience, scope-set) per Q16,
+│   │   │                                  with reverse-index + session-revoked subscription
+│   │   └── TokenExchangeException.cs
 │   ├── Grpc/
-│   │   ├── ServiceIdentityCallCredentials.cs  # gRPC CallCredentials
-│   │   └── GrpcClientBuilderExtensions.cs    # .AddD2ServiceIdentity() per-channel opt-in (Q21)
+│   │   ├── ForwardedJwtCallCredentials.cs  # re-attaches the forwarded transaction-token
+│   │   └── GrpcClientBuilderExtensions.cs  # .AddD2ForwardedJwt() + .AddD2WorkloadCertificate()
+│   │                                        # per-channel opt-ins (forward-unchanged + mTLS)
 │   ├── Telemetry/
 │   │   └── OutboundTelemetry.cs         # static Meter + ActivitySource ("D2.Shared.Auth.Outbound") (Q22)
 │   └── AuthOutboundServiceCollectionExtensions.cs   # services.AddD2AuthOutbound(opts)
@@ -665,7 +669,8 @@ server/shared/dotnet/
 - `auth` → `auth-abstractions`, `auth-context-abstractions`, `context-abstractions`,
   `caching-abstractions`, `caching-tiered`, `result`, `i18n-abstractions`,
   `Microsoft.AspNetCore.Authentication.JwtBearer`, `Microsoft.IdentityModel.Tokens`
-- `auth-keyring` → `auth-outbound` (uses `IServiceIdentityClient` to authn its gRPC calls),
+- `auth-keyring` → `auth-outbound` (uses the workload-certificate leaf source to authn its gRPC
+  calls to Edge over mTLS per ADR-0023),
   `caching-abstractions`, `caching-tiered`, `encryption`, `messaging` (Wave 6 prerequisite per
   Q3 — now shipped), `result`
 
@@ -828,9 +833,11 @@ public interface IKeyringClient
 **Backing**:
 
 - `ITieredCache` keyed by `keyring:{domain}` for the keyring snapshot.
-- gRPC channel to Edge's `internal/keys/{domain}` endpoint (auth: service-identity token from
-  `IServiceIdentityClient` — see §6.5; this internal workload-auth role is superseded by mTLS per
-  [ADR-0023](../adrs/0023-mtls-workload-identity.md) / §6.5 — the line documents the as-built client).
+- gRPC channel to Edge's `internal/keys/{domain}` endpoint — the calling workload authenticates over
+  mutually-authenticated TLS with a KeyCustodian-issued leaf
+  ([ADR-0023](../adrs/0023-mtls-workload-identity.md) / §6.5); the cross-process mTLS issuance + Edge
+  host wiring is a later deliverable (a domain keyring is supplied directly via `AddD2EncryptionFor`
+  until then).
 - TTL: 1 hour (per V2.md §5.4).
 - RMQ subscription (Q3): on `d2.security.key-rotated` event for `domain X`, force-invalidate
   `keyring:X` in cache, drop in-memory `PayloadCryptoKeyring` reference, next `GetKeyringAsync`
@@ -884,27 +891,29 @@ internal sealed class KeyringBackedPayloadCrypto : IPayloadCrypto, IAsyncDisposa
 Wired via `services.AddD2EncryptionForViaKeyring("audit")` (sibling helper to Encryption lib's
 `AddD2EncryptionFor`).
 
-### 6.5 ServiceIdentityClient (outbound service-identity token from Edge)
+### 6.5 ServiceIdentityClient — SUPERSEDED (outbound service-identity token from Edge)
 
-> **Superseded for internal hops by mTLS
+> **Replaced for internal hops by mTLS
 > ([ADR-0023](../adrs/0023-mtls-workload-identity.md)).** Workload identity on internal
-> service-to-service hops — *which service is calling* — now comes from **mutually-authenticated TLS**
+> service-to-service hops — *which service is calling* — comes from **mutually-authenticated TLS**
 > (KeyCustodian-issued per-workload certificates), not from a forwarded `client_credentials`
 > service-identity JWT. A service-identity token carried as a second forwarded JWT is the wrong shape
 > under forward-unchanged: it reintroduces a per-hop service-token mint and hits the audience-targeting
 > problem at a strict receiver (ADR-0023 §Context). The internal `client_credentials` service-identity
-> layer described below (and the `ServiceIdentityCallCredentials` gRPC attach) is therefore on the
-> path to removal — its code removal is a later deliverable. The **BFF → Edge boundary token** is a
-> *different* `client_credentials` use (the BFF is an external client of Edge) and **survives**. What
-> follows documents the as-built client, which is built but unwired.
+> client described below has been removed from the caller-side lib; the **BFF → Edge boundary token** is
+> a *different* `client_credentials` use (the BFF is an external client of Edge) and **survives**. The
+> design below is retained as a record of the original mechanism mTLS replaces — read it as the
+> superseded design, not a current surface.
 
 This was conceived as the **transport-level auth** for service-to-service calls — proving "I am the
 Files service" to whoever's on the other end — for KeyringClient + JwksProvider (authenticating gRPC
 calls to Edge) and any other backend-to-backend call needing to identify the caller. Under the pivot
 that workload-identity role is mTLS's; the forwarded transaction-token carries the *user* identity and
-the receiver re-validates it (see §6.6's note on the forward-unchanged default).
+the receiver re-validates it (see §6.6's note on the forward-unchanged default). The current outbound
+lib carries the workload-certificate surface (`WorkloadCertificate/` — leaf cache, refresh-ahead,
+`.AddD2WorkloadCertificate()`) in place of the client below.
 
-**Interface**:
+**Interface** (the superseded shape — the type below no longer exists in the lib):
 
 ```csharp
 public interface IServiceIdentityClient
@@ -941,9 +950,11 @@ public interface IServiceIdentityClient
 - Rotation: 180-day cadence, requires service restart on this rung of the maturity ladder. Future:
   SPIFFE / mTLS layer on top without rewriting (V2.md §5.4).
 
-**Plug into gRPC**: `ServiceIdentityCallCredentials` wraps every outbound gRPC call to attach
-`Authorization: Bearer <current-token>` automatically. Channels register the credentials once at
-construction.
+**Plug into gRPC (superseded shape)**: the original design had a `ServiceIdentityCallCredentials`
+wrap every outbound gRPC call to attach `Authorization: Bearer <current-token>` automatically. In the
+current lib that per-channel attachment is split into `ForwardedJwtCallCredentials` (re-attaches the
+forwarded transaction-token — the *user* identity) and the `.AddD2WorkloadCertificate()` channel
+opt-in (presents the mTLS leaf — the *workload* identity).
 
 ### 6.6 TokenExchangeClient (the boundary-mint + exception tool — NOT the per-hop business default)
 
@@ -1039,19 +1050,21 @@ not the per-hop default.)
 This ordering matters — if any step fails, the host should crash (fail-loud at startup is far
 better than silent degradation):
 
-1. `IServiceIdentityClient` initializes (uses static `client_secret` to request first JWT from
-   Edge).
-2. `IKeyringClient` + `IJwksProvider` register (use the JWT from #1 to authenticate gRPC / HTTP
-   calls to Edge).
+1. The workload-certificate leaf source initializes (requests this workload's first mTLS leaf from
+   the KeyCustodian CA; refresh-ahead thereafter).
+2. `IKeyringClient` + `IJwksProvider` register (their gRPC / HTTP calls to Edge run over the
+   mutually-authenticated channel from #1 — the leaf is the calling workload's identity).
 
-   > **Steps 1–2 are the as-built bootstrap, superseded for internal hops by mTLS.** That
-   > internal-workload auth on the Edge-bound gRPC / HTTP calls — `IServiceIdentityClient` minting a
-   > service-identity JWT and `IKeyringClient` / `IJwksProvider` forwarding it to authenticate
-   > themselves to Edge — is the same internal-workload role §6.4 / §6.5 flag superseded by mTLS
-   > ([ADR-0023](../adrs/0023-mtls-workload-identity.md)). The service-identity-JWT bootstrap remains
-   > the as-shipped path until that PKI subsystem lands (a later deliverable); the **BFF → Edge
-   > boundary `client_credentials`** is a separate, surviving use (the BFF is an external client of
-   > Edge).
+   > **Steps 1–2 are the intended bootstrap; the cross-process piece is a later deliverable.** The
+   > internal-workload auth on the Edge-bound gRPC / HTTP calls is **mTLS**
+   > ([ADR-0023](../adrs/0023-mtls-workload-identity.md)) — the calling workload presents a
+   > KeyCustodian-issued leaf, never a forwarded service-identity JWT (the original
+   > service-identity-client bootstrap is superseded and removed from the lib — §6.4 / §6.5). The
+   > in-process leaf-presentation path (cache + refresh-ahead + per-channel opt-in) is built; the
+   > **cross-process leaf issuance + first-leaf bootstrap + Edge host wiring** that makes this run
+   > end-to-end is a later deliverable, so a domain keyring is supplied directly via
+   > `AddD2EncryptionFor` until then. The **BFF → Edge boundary `client_credentials`** is a separate,
+   > surviving use (the BFF is an external client of Edge).
 
 3. `ISessionLivenessTracker` initializes (no-op at startup — cache populates lazily on first
    request per session).
@@ -1082,9 +1095,9 @@ Picking the right cache marker comes down to the read/write pattern of the data 
   lib but worth
   flagging for design symmetry: rate-limit explicitly chooses `IDistributedCache` for the same
   reason this lib explicitly chooses `ITieredCache`.
-- **Single-writer-per-process + ephemeral** → in-memory (no cache marker). Service-identity tokens
-  fit here — each service process holds one current token, refreshed in a single background task
-  with Singleflight; no other process needs to coordinate.
+- **Single-writer-per-process + ephemeral** → in-memory (no cache marker). The workload-leaf cache
+  fits here — each process holds one current mTLS leaf (volatile-fenced atomic-reference slot),
+  reissued refresh-ahead in a single background task; no other process needs to coordinate.
 - **Compile-time constants** → no cache. `Scopes.GrantedScopes` is a codegen'd
   `IReadOnlyDictionary`; zero runtime allocation, zero TTL, zero invalidation logic.
 
@@ -1109,9 +1122,9 @@ Invalidation: backplane `session-revoked` event + TTL expire.
 Why: read-heavy + revocation-driven invalidation = canonical tiered + backplane fit.
 Cache value shape (snapshot vs liveness flag) is Q15.
 
-**Service-identity token** — in-memory only, TTL−60s, no L2.
-Invalidation: TTL expire + background refresh.
-Why: per-process identity; no coordination needed; Singleflight on refresh path.
+**Workload mTLS leaf** — in-memory only (single volatile-fenced slot), no L2.
+Invalidation: reissue refresh-ahead before the leaf's `NotAfter`.
+Why: per-process workload identity; no cross-process coordination needed.
 
 **TokenExchange tokens** — `ILocalCache` (shared singleton per Q17), key prefix `tokenexchange:`,
 key shape `tokenexchange:{sessionId}:{audience}:{scopeSetHash}`, TTL 5min.
@@ -1399,7 +1412,8 @@ Q, it's flagged.
   clock skew tolerance
 - `ClaimsToContextMapper` — every claim → property mapping; `act` chain parsing; scope parsing;
   missing optional claims
-- `ServiceIdentityCache` — TTL respect, Singleflight dedup, refresh-on-miss
+- `WorkloadLeafCache` — single-slot atomic swap, freshness filtering (expired leaf → empty),
+  refresh-ahead reissue before `NotAfter`
 - `JwksKeySetSnapshot` — kid lookup, version-mismatch handling
 - `SessionLivenessTracker` — `IsAliveAsync` alive case, revoked case, L2 fallback when L1 expires;
   cache outage → `ServiceUnavailable` (fail-closed); `Guid.Empty` → `ValidationFailed`. Sentinel-only
@@ -1421,8 +1435,8 @@ Q, it's flagged.
 - `JwksProvider` — fetch from in-process HTTP fixture; reactive refresh on unknown kid
 - `SessionLivenessTracker` — receive `session:{id}` revocation event → next `IsAliveAsync` returns
   false; backplane delivery → L1 invalidation across replicas
-- `ServiceIdentityClient` — initial fetch from `client_credentials` fixture; background refresh;
-  Edge unreachable → keep current token
+- `WorkloadLeafClient` + `WorkloadLeafRefreshHostedService` — initial leaf issuance from the CA
+  fixture; refresh-ahead reissue before expiry; issuance unreachable → keep the still-valid leaf
 - `HttpTokenExchangeClient` — built + unit-tested against the mocked-Edge `/oauth/token` fixture;
   wired into no request flow (test-only callers); backs the retained RFC 8693 exception paths
 - `Backplane subscribers` — receive `keyring:{domain}` event → refresh that domain only; receive
@@ -1460,10 +1474,11 @@ questions surfaced during implementation will be appended here as they come up.
 
 **Surfaced 2026-06-17**, **resolved 2026-06-18** by the mint-once-at-the-Edge + forward-unchanged
 decision. Build-state context (unchanged, still true): the inbound side (`JwtAuthMiddleware` /
-`JwtValidator`) is **built and strict**; the outbound clients (`IServiceIdentityClient`,
-`ITokenExchangeClient`) are **built as clients but wired into no request flow** — `ExchangeAsync` has
-test-only callers, the gRPC interceptor attaches service-identity only; and Edge's `/oauth/token`
-**issuer is unbuilt (Phase 3)** (§1, §6.6 Build-state, §10). The worked, build-state-annotated traces +
+`JwtValidator`) is **built and strict**; the outbound `ITokenExchangeClient` is **built as a client but
+wired into no request flow** — `ExchangeAsync` has test-only callers — and backs the retained RFC 8693
+exception paths; the cross-service business default forwards the inbound transaction-token unchanged
+(workload identity = mTLS); and Edge's `/oauth/token` **issuer is unbuilt (Phase 3)** (§1, §6.6
+Build-state, §10). The worked, build-state-annotated traces +
 the resolved contradiction record (C1–C7) are in **§13**. The three coupled items, resolved:
 
 1. **Mode for a cross-service _business_ call → FORWARD the once-minted transaction-token unchanged
@@ -1518,7 +1533,8 @@ the resolved contradiction record (C1–C7) are in **§13**. The three coupled i
 - `D2.Shared.Auth.Abstractions` — vocabulary (already shipped — Wave 2; nothing new here)
 - `D2.Shared.Auth` — inbound: middleware + interceptor + JwksProvider + SessionLivenessTracker +
   fingerprint scoring + ProblemDetails converter
-- `D2.Shared.Auth.Outbound` — outbound: ServiceIdentityClient + TokenExchangeClient
+- `D2.Shared.Auth.Outbound` — outbound: workload-certificate leaf source (mTLS) + forwarded-token
+  call-credentials + TokenExchangeClient (the RFC 8693 exception paths)
 - `D2.Shared.Auth.Keyring` — KeyringClient + KeyringBackedPayloadCrypto wrapper (depends on
   Encryption + Messaging)
 
@@ -1666,8 +1682,10 @@ Wired via `services.AddD2EncryptionForViaKeyring("audit")` (sibling to Encryptio
 > / narrowing / async scope-reduction / impersonation cases). Internal workload identity is **mTLS**
 > ([ADR-0023](../adrs/0023-mtls-workload-identity.md)), not a forwarded service-identity JWT; the
 > **BFF → Edge `client_credentials` boundary token survives** (the BFF is an external client of Edge).
-> The "both fully implemented" claim below also over-stated build-state: both are built as clients but
-> wired into **no request flow** (test-only callers), and the Edge `/oauth/token` issuer is unbuilt.
+> The "both fully implemented" claim below also over-stated build-state: the service-identity client
+> has since been **removed from the lib** entirely (workload identity is mTLS), and the token-exchange
+> client is built but wired into **no request flow** (test-only callers), with the Edge `/oauth/token`
+> issuer still unbuilt.
 
 **Original rationale (historical)**: distinct semantics, both needed. Two interfaces in
 `D2.Shared.Auth.Outbound`:
@@ -1918,15 +1936,22 @@ constants). Spec entries: `name + url + description` per audience.
 
 **Implication for this lib**:
 
-- `services.AddHttpClient<HttpServiceIdentityClient>("d2-auth-service-identity", c => c.BaseAddress = ...)`
-  with circuit breaker + retry attached.
 - `services.AddHttpClient<HttpTokenExchangeClient>("d2-auth-token-exchange", c => c.BaseAddress = ...)`
-  same shape.
-- Both clients wrap their cache-miss path in `Singleflight<TKey, TResult>` keyed appropriately.
+  with circuit breaker + retry attached. (The original design registered a second named client for
+  the service-identity fetch — `"d2-auth-service-identity"` — which has since been removed: internal
+  workload identity is mTLS, not an HTTP token fetch.)
+- The token-exchange client wraps its cache-miss path in `Singleflight<TKey, TResult>` keyed
+  appropriately.
 
-### Q21 — gRPC interceptor opt-in → **(a) per-channel via `.AddD2ServiceIdentity()` extension**
+### Q21 — gRPC interceptor opt-in → **(a) per-channel extension (originally `.AddD2ServiceIdentity()`)**
 
 **Decided**: 2026-05-09.
+
+> **Decision in force; the extension was renamed/split.** The opt-in-not-auto-apply principle below
+> is unchanged and governs the current lib. The single `.AddD2ServiceIdentity()` opt-in named below
+> is now **`.AddD2ForwardedJwt()`** (the forwarded transaction-token call-credentials) **+
+> `.AddD2WorkloadCertificate()`** (the mTLS leaf) — same per-channel, explicit, safe-by-default
+> shape, applied to both outbound auth factors.
 
 **Rationale**:
 
@@ -1940,10 +1965,10 @@ constants). Spec entries: `name + url + description` per audience.
   attaches the credential. Calls without `.AddD2ServiceIdentity()` (e.g. SeaweedFS) get no D²
   auth header.
 
-**Implication for this lib**: `ServiceIdentityCallCredentials` lives in `D2.Shared.Auth.Outbound`.
-Extension method `AddD2ServiceIdentity()` on `IHttpClientBuilder` (technically
-`IGrpcClientBuilder` from `Grpc.Net.ClientFactory`) attaches the credentials to the channel
-under construction. Per-channel; explicit; safe-by-default.
+**Implication for this lib**: `ForwardedJwtCallCredentials` lives in `D2.Shared.Auth.Outbound`.
+The extension methods `AddD2ForwardedJwt()` + `AddD2WorkloadCertificate()` on `IHttpClientBuilder`
+(the gRPC client builder from `Grpc.Net.ClientFactory`) attach the forwarded-token credentials and
+the mTLS leaf to the channel under construction. Per-channel; explicit; safe-by-default.
 
 ### Q22 — Telemetry source naming → **(b) separate `D2.Shared.Auth.Outbound` `ActivitySource` + `Meter`**
 
@@ -2035,7 +2060,7 @@ lowercase to match existing `act.d2_kind` value casing).
 | Tag | Meaning |
 | --- | --- |
 | **✅ built** | Code exists in this lib AND is exercised on a real request/processing path (or by the transport middleware that runs on every request). |
-| **⚠ designed, NOT built** | The behavior is decided (forward-unchanged wiring, the propagated call-path, the build-time scope check, mTLS) but **no code wires it on a request flow** yet. Where a primitive exists but is unwired, it is noted: `ITokenExchangeClient.ExchangeAsync` is built + unit-tested but called **only** by `HttpTokenExchangeClientTests.cs` (verified: grep `\.ExchangeAsync\(` returns test-only hits); `ServiceIdentityCallCredentials` is built but no service registers a D²-targeted gRPC channel yet (and internal service-identity is superseded by mTLS — ADR-0023). |
+| **⚠ designed, NOT built** | The behavior is decided (forward-unchanged wiring, the propagated call-path, the build-time scope check, mTLS) but **no code wires it on a request flow** yet. Where a primitive exists but is unwired, it is noted: `ITokenExchangeClient.ExchangeAsync` is built + unit-tested but called **only** by `HttpTokenExchangeClientTests.cs` (verified: grep `\.ExchangeAsync\(` returns test-only hits); the cross-process mTLS issuance + Edge host wiring that supplies internal workload identity (ADR-0023) is future work. |
 | **❌ issuer/endpoint unbuilt (Phase 3)** | Depends on Edge's `POST /oauth/token` issuer (or anon-JWT minting), which is **Phase-3, not built** (§1 "this lib never mints a token"; §6.6 Build-state; §10). The token is *requested+cached* here; it is *minted* nowhere yet. |
 
 ### Terminology — `PropagatedContext`, not `ContextEnvelope` (settled; applied throughout the doc)
@@ -2102,19 +2127,16 @@ that mints the inbound token).
 
 ### Scenario 4 — service-identity / workload-auth fetch (KeyringClient / JwksProvider TO Edge) [§6.5]
 
-> **Workload identity on internal hops is now mTLS ([ADR-0023](../adrs/0023-mtls-workload-identity.md)),
-> not a forwarded service-identity JWT.** "Which workload is calling" — including this
-> KeyringClient/JwksProvider fetch to Edge — is established by the verified mTLS client certificate.
-> The internal `client_credentials` service-identity layer below (and `ServiceIdentityCallCredentials`)
-> is superseded for internal hops and on the path to removal (a later deliverable). The separate
-> **BFF → Edge** `client_credentials` boundary token (the BFF is an external client of Edge)
-> **survives**. The row content below documents the as-built (unwired) service-identity client; read it
-> as the layer being replaced, not the target design.
+> **Workload identity on internal hops is mTLS ([ADR-0023](../adrs/0023-mtls-workload-identity.md)).**
+> "Which workload is calling" — including this KeyringClient/JwksProvider fetch to Edge — is established
+> by the verified mTLS client certificate on a mutually-authenticated channel. No second bearer is
+> forwarded to identify the workload. The separate **BFF → Edge** `client_credentials` boundary token
+> (the BFF is an external client of Edge) is a distinct, surviving mechanism. The row below shows the
+> mTLS workload-auth target for this fetch.
 
 | Step | Token | aud + claims | Issued by / how | Mint callback? | Receiver validates | Build-state |
 | --- | --- | --- | --- | --- | --- | --- |
-| bootstrap service token (superseded for internal hops) | service-identity JWT | `aud=` **Edge default** — client sends **NO `audience` param** (only `grant_type=client_credentials`, `HttpServiceIdentityClient.cs:255-258`); `sub=client_id`, no user, narrow service `scope` | `IServiceIdentityClient.GetCurrentTokenAsync` → Edge `/oauth/token` HTTP Basic `client_id:client_secret` | **network** on cold/expired; then **in-memory per-process cache**, refreshed ~60 s pre-expiry by `ServiceIdentityRefreshHostedService`, singleflighted, breaker-guarded (`HttpServiceIdentityClient.cs:110-143`, §6.5, Q11/Q20) | Edge (the issuer) validates `client_id`/`client_secret`. | **⚠ designed/superseded** — client (`HttpServiceIdentityClient` + cache + refresh + `ServiceIdentityCallCredentials`) is built but **wired onto no live channel**; internal workload auth is mTLS (ADR-0023), so this internal use is superseded. **❌ issuer unbuilt** — Edge `/oauth/token`. |
-| workload auth on the channel | mTLS client certificate (was: `Authorization: Bearer <svc>`) | mTLS peer = the calling workload (was: `aud` Edge default) | KeyCustodian-issued per-workload leaf (ADR-0023). (Legacy: `ServiceIdentityCallCredentials.FromServiceIdentityClient` `:47-71` via `.AddD2ServiceIdentity()`, Q21) | per-RPC cert presentation (~0 I/O) | receiver verifies the mTLS peer cert against the internal CA → workload identity (the old `AUDIENCE_MISMATCH` footgun for a cross-service service-identity token — old C2 — does not arise; workload identity is the channel, not a second JWT) | **⚠ designed, NOT built** — the mTLS PKI subsystem is a new KeyCustodian capability (ADR-0023, designed). No `.AddD2ServiceIdentity()` channel is registered in any service. |
+| workload auth on the channel | mTLS client certificate | mTLS peer = the calling workload | KeyCustodian-issued per-workload leaf (ADR-0023) | per-RPC cert presentation (~0 I/O) | receiver verifies the mTLS peer cert against the internal CA → workload identity (no cross-service-bearer `AUDIENCE_MISMATCH` footgun — old C2 — arises; workload identity is the channel, not a second JWT) | **⚠ designed, NOT built** — the cross-process mTLS issuance + Edge host wiring is a new KeyCustodian capability (ADR-0023). The in-process leaf-presentation path (cache + refresh-ahead + per-channel opt-in) is built in `D2.Shared.Auth.Outbound`; the cross-process gRPC issuance + first-leaf bootstrap is future work. |
 
 ### Scenario 5 — async AMQP hop (Edge → Notifications) [encrypted PropagatedContext is the trust boundary; NO JWT, §8 Scenario C]
 
@@ -2135,7 +2157,7 @@ that mints the inbound token).
 | # | Was | Resolution (one line) — and where the fix landed |
 | --- | --- | --- |
 | **C1** | §8 Scenario B (service-identity+envelope, "RequiredScopes from envelope") **vs** the old Q10 token-exchange lean — different tokens on the wire **and** different scope sources. | **RESOLVED — forward the once-minted JWT.** Both readings superseded: the receiver validates the forwarded transaction-token's **own** scopes; the envelope-scope step is deleted. Fixed in §8 Scenario B, §13 Scenario 1 A/B rows + the scope-authority note, and §11 Q24 #1. |
-| **C2** | Service-identity client sends **no `audience`** so a forwarded service-identity token hits `AUDIENCE_MISMATCH` at a non-Edge receiver (`HttpServiceIdentityClient.cs:255-258`, `JwtValidator.cs:277-278`). | **RESOLVED by the single broad `aud=d2.internal` (D1).** Every internal service accepts the one audience; cross-service business hops send **no** service-identity token (workload identity = mTLS). The over-the-wire mint↔validate parity test is a **code follow-up** (§11 Q24 #2). Fixed in §6.5 (superseded note), §13 Scenario 4, §11 Q24 #2. |
+| **C2** | A second forwarded service-token sent with **no `audience`** would hit `AUDIENCE_MISMATCH` at a non-Edge receiver (`JwtValidator.cs:277-278`). | **RESOLVED — no second workload bearer exists.** Workload identity is mTLS (ADR-0023): cross-service business hops forward only the one transaction-token (broad `aud=d2.internal`, D1), which every internal service accepts. The over-the-wire mint↔validate parity test is a **code follow-up** (§11 Q24 #2). Fixed in §6.5, §13 Scenario 4, §11 Q24 #2. |
 | **C3** | Doc used a non-existent **"ContextEnvelope"** type and called it "encrypted" on the sync gRPC path. | **FIXED — global rename to `PropagatedContext` (`x-d2-context`).** Encryption applies to the **AMQP path only**; sync gRPC relies on transport TLS/mTLS + the forwarded JWT. Applied in §3.6, §4.2, §6, §8 (Scenarios B/C), §9, and the §13 terminology note. |
 | **C4** | Scenario B said the .NET gRPC client injects `x-d2-context` and the server "reconstructs identity from the envelope" — neither is wired in .NET (only TS injects; the .NET server maps from JWT claims). | **RESOLVED — identity comes from the forwarded JWT** (which .NET already does ✅); the "server reconstructs from envelope" step is **deleted**. Operational-subset propagation on .NET→.NET sync hops is **new plumbing / a code follow-up**. Fixed in §8 Scenario B, §13 Scenario 1 A/B rows. |
 | **C5** | §6.1/§3.8 implied a graceful "no-JWT → anonymous pass-through"; the built middleware only bypasses `[D2HarmlessEndpoint]`, else 401. | **FIXED — the only no-token bypass is `[D2HarmlessEndpoint]`.** "Anonymous" traffic requires the not-yet-built anon-JWT (Pattern A, §3.8). Clarified in §6.1 step 1 — doc precision, no code change. |
@@ -2148,11 +2170,13 @@ that mints the inbound token).
 transaction-token, the propagated service call-path, the build-time caller-scopes ⊇ callee-scopes check,
 and **mTLS** workload identity (a new KeyCustodian PKI subsystem) — is **designed, not built** (code
 follow-ups of the pivot). The outbound `ITokenExchangeClient` is **built as a client but wired into no
-request flow** (test-only callers) and now backs the **retained RFC 8693 exception paths**, not the
-per-hop business default; the internal `IServiceIdentityClient` / `ServiceIdentityCallCredentials`
-service-identity layer is **superseded by mTLS** (the BFF → Edge boundary `client_credentials` token
-survives). The **issuer** (Edge `/oauth/token`) + anon-JWT minting + `auth-keyring` are **Phase-3 /
-unbuilt** — so end-to-end cross-service auth does not yet run anywhere.
+request flow** (test-only callers) and backs the **retained RFC 8693 exception paths**, not the per-hop
+business default. The forwarded-transaction-token `CallCredentials` and the workload-certificate
+leaf-presentation path are built in `D2.Shared.Auth.Outbound`; the calling workload's identity is the
+mTLS channel (ADR-0023), and the user's identity rides in the forwarded token (ADR-0022). The BFF → Edge
+boundary `client_credentials` token survives (the BFF is an external client of Edge). The **issuer**
+(Edge `/oauth/token`) + anon-JWT minting + `auth-keyring` + the cross-process mTLS issuance are
+**Phase-3 / unbuilt** — so end-to-end cross-service auth does not yet run anywhere.
 
 ---
 
@@ -2229,17 +2253,28 @@ Each csproj lands as its own buildable unit; tests pass at every checkpoint; zer
 
 #### Step 1 — `D2.Shared.Auth.Outbound` (no Messaging dep, simplest) — IMPLEMENTED (tests pending)
 
+> **Historical build-log — the service-identity client (items 2 + 4 below) was subsequently
+> RETIRED.** Internal workload identity moved to mTLS (ADR-0023): `IServiceIdentityClient`,
+> `HttpServiceIdentityClient`, `ServiceIdentityCache`, `ServiceIdentityRefreshHostedService`,
+> `ServiceIdentityCallCredentials`, and `.AddD2ServiceIdentity()` were removed and replaced by the
+> workload-certificate leaf source + `ForwardedJwtCallCredentials` + `.AddD2ForwardedJwt()` /
+> `.AddD2WorkloadCertificate()`. The ✅ marks below record the build state at the time of this step
+> and are left intact; only the listed types' subsequent retirement is annotated.
+
 1. ✅ csproj skeleton + DI extension stub
 2. ✅ `IServiceIdentityClient` + `HttpServiceIdentityClient` + `ServiceIdentityCache` +
    `ServiceIdentityRefreshHostedService` (atomic-ref cache, IHttpClientFactory named client,
    Singleflight on refresh path, OIDC discovery via
    `ConfigurationManager<OpenIdConnectConfiguration>`). **Tests pending — Step 1.6.**
+   _(Retired — superseded by mTLS workload identity, ADR-0023.)_
 3. ✅ `ITokenExchangeClient` + `HttpTokenExchangeClient` + `TokenExchangeCache`
    (ILocalCache-backed with `tokenexchange:` prefix per Q17, keyed by
    `(sessionId, audience, scope-set-hash)` per Q16, sessionId reverse-index for backplane
    invalidation, fail-fast on Edge unreachable per Q18). **Tests pending — Step 1.6.**
 4. ✅ `ServiceIdentityCallCredentials` + `.AddD2ServiceIdentity()` per-channel opt-in on
    `IHttpClientBuilder` (Q21). **Tests pending — Step 1.6.**
+   _(Retired — replaced by `ForwardedJwtCallCredentials` + `.AddD2ForwardedJwt()` /
+   `.AddD2WorkloadCertificate()`, ADR-0022 / ADR-0023.)_
 5. ✅ `services.AddD2AuthOutbound(opts)` composition root + `OutboundTelemetry` static
    (Q22 — separate `D2.Shared.Auth.Outbound` ActivitySource + Meter) + `OutboundLog` +
    README. **Tests pending — Step 1.6.**

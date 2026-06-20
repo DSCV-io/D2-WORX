@@ -40,8 +40,9 @@ export interface TryGetResult {
 }
 
 /**
- * Single-slot cache for the BFF's service-identity (internal) token,
- * with proactive refresh-ahead to avoid expiry latency on hot paths.
+ * Single-slot cache for the BFF's internal boundary token (its OAuth
+ * `client_credentials` token for calls to Edge), with proactive
+ * refresh-ahead to avoid expiry latency on hot paths.
  *
  * **Three states per read** (see {@link tryGet}):
  * - **Fresh** (`now < expiresAtMs − refreshLeadMs`): serve the token; no
@@ -52,8 +53,7 @@ export interface TryGetResult {
  * - **Expired** (`now ≥ expiresAtMs − skewMs`): cache miss → caller mints
  *   synchronously.
  *
- * Mirrors the .NET `ServiceIdentityCache`'s `Volatile.Write` semantics:
- * the JS event loop's single-threaded property serializes reads + writes,
+ * The JS event loop's single-threaded property serializes reads + writes,
  * so no atomic primitive is needed — assigning the snapshot in one
  * statement IS atomic from JS's perspective.
  *

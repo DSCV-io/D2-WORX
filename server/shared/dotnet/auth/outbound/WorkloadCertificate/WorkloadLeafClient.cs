@@ -22,9 +22,10 @@ using Microsoft.Extensions.Logging;
 /// workload's leaf through the host-supplied <see cref="IWorkloadCertificateIssuer"/>,
 /// builds a live private-key-bearing leaf + its issuing intermediate into a
 /// presentable chain context, caches it in-memory until it nears expiry, and reissues
-/// via the background <see cref="WorkloadLeafRefreshHostedService"/>. Mirrors
-/// <c>HttpServiceIdentityClient</c>'s singleflight + circuit-breaker + serve-stale
-/// shape, swapping the OAuth token-fetch for a certificate reissue.
+/// via the background <see cref="WorkloadLeafRefreshHostedService"/>. Concurrent callers
+/// (on-demand + the refresh service) dedup to a single reissue via <c>Singleflight</c>;
+/// a <c>CircuitBreaker</c> fast-fails after repeated issuer-unreachable failures; a
+/// still-valid cached leaf is served stale while a reissue is attempted.
 /// </summary>
 /// <remarks>
 /// The refresh-ahead loop keeps <see cref="WorkloadLeafCache"/> holding a current
@@ -73,8 +74,8 @@ internal sealed class WorkloadLeafClient : IWorkloadLeafSource, IDisposable
         r_logger = logger;
         r_clock = clock;
 
-        // 5 consecutive transient-failure ReissueResults → 30 s open, matching the
-        // service-identity client breaker config. Value-based predicate required
+        // 5 consecutive transient-failure ReissueResults → 30 s open (the shared
+        // AuthOutboundResilienceDefaults thresholds). Value-based predicate required
         // because ReissueAsync catches exceptions internally and returns
         // ReissueResult.TransientFailure().
         r_circuitBreaker = new CircuitBreaker<ReissueResult>(

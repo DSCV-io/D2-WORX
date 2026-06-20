@@ -6,31 +6,23 @@ Copyright (c) DCSV. All rights reserved.
 
 > Parent: [`server/shared/dotnet/`](../../README.md)
 
-> ## ⚠ Status — this lib predates the auth pivot; read before relying on any flow below
->
-> The service-to-service auth model changed. Two of this lib's surfaces no longer describe the intended runtime:
->
-> - **`client_credentials` service identity (`IServiceIdentityClient` / `ServiceIdentityCallCredentials` / `AddD2ServiceIdentity()`) is superseded by mTLS workload identity** ([ADR-0023](../../../../../docs/adrs/0023-mtls-workload-identity.md)). Which workload is calling is established by a mutually-authenticated TLS channel — a verified client certificate — not by a service-identity bearer threaded onto every hop. Threading a second JWT through each hop would reintroduce a per-hop mint and an audience-targeting problem at a strict receiver; mTLS supplies workload identity without either.
-> - **RFC 8693 token exchange (`ITokenExchangeClient`) is repurposed off the per-hop path** ([ADR-0022](../../../../../docs/adrs/0022-service-auth-mint-once-forward.md)). Edge mints exactly one internal transaction-token at the trust boundary; every downstream cross-process hop **forwards that token unchanged and re-validates it** rather than exchanging for a narrowed one. Exchange is retained for the single boundary mint and the deliberate exceptions — cross-trust-domain calls, justified narrowing, asynchronous scope reduction, and establishing/extending an impersonation `act` chain — not as the per-hop business default.
->
-> **This lib is built but wired into no request flow today** — its clients have test-only callers and the Edge issuer endpoint they target is not built. The code disposition (remove the service-identity surface, keep the repurposed token-exchange surface) is a later deliverable; nothing here is removed yet. The sections below describe the lib **as it currently exists**, not the intended steady-state runtime.
+The caller-side companion to the inbound auth runtime. A host that makes internal cross-process calls reaches for three outbound factors here, each opt-in and independent:
 
-Outbound auth runtime — an RFC 8693 `token-exchange` client (`ITokenExchangeClient`) plus the now-superseded `client_credentials` service-identity client (`IServiceIdentityClient`) and a per-channel gRPC opt-in that attaches a service-identity bearer to outbound D² calls. Pure consumer of Edge's OAuth `token_endpoint`; this lib does NOT issue tokens. See the status note above for which surfaces are superseded (service identity → mTLS) versus repurposed (token exchange → boundary mint + exceptions).
+- **Forwarded transaction-token** (`AddD2ForwardedJwt` / `ForwardedJwtCallCredentials`) — the per-request gRPC `CallCredentials` that re-attaches the current inbound request's validated transaction-token unchanged on each outbound hop ([ADR-0022](../../../../../docs/adrs/0022-service-auth-mint-once-forward.md)). This is the service-to-service business default: the downstream receiver re-validates the same token and reads the user's identity *and* scopes straight from it.
+- **Workload certificate** (`AddD2WorkloadCertificate` / `AddD2WorkloadCertificateOutbound`) — the mTLS leaf the calling workload presents on outbound gRPC channels. The mutually-authenticated TLS channel is what establishes *which workload is calling* ([ADR-0023](../../../../../docs/adrs/0023-mtls-workload-identity.md)).
+- **RFC 8693 token exchange** (`ITokenExchangeClient`) — the boundary mint plus the deliberate exception cases. Edge mints exactly one internal transaction-token at the trust boundary; exchange is the explicit tool for the single boundary mint and the enumerated exceptions — cross-trust-domain calls, justified narrowing, asynchronous scope reduction, and establishing/extending an impersonation `act` chain — never the per-hop business default.
 
-OIDC discovery is canonical: a single `D2_AUTH_ISSUER` env var drives `<issuer>/.well-known/openid-configuration`, and `token_endpoint` is read from the discovery doc — no separate URL knobs.
+Pure consumer of Edge's OAuth `token_endpoint`; this lib does NOT issue tokens. OIDC discovery is canonical: a single `D2_AUTH_ISSUER` env var drives `<issuer>/.well-known/openid-configuration`, and `token_endpoint` is read from the discovery doc — no separate URL knobs.
 
 ---
 
 ## Public API surface
 
-### Outbound clients
-
-> Per the status note above: `IServiceIdentityClient` is superseded by mTLS workload identity, and `ITokenExchangeClient` is repurposed to the boundary mint + exception cases (not the per-hop default). The shapes below document the lib as it currently exists.
+### Token-exchange client
 
 | Type                                                                                    | Role                                                                                                                                     |
 | --------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
-| `IServiceIdentityClient.GetCurrentTokenAsync(ct)`                                       | Returns the current service-identity JWT for outbound calls (cached in-process; refreshed proactively by the background hosted service). |
-| `ITokenExchangeClient.ExchangeAsync(subjectToken, targetAudience, narrowedScopes?, ct)` | Exchanges a subject JWT for a token addressed to `targetAudience` (RFC 8693). Cached per `(sessionId, audience, scope-set)` in `ILocalCache`.  |
+| `ITokenExchangeClient.ExchangeAsync(subjectToken, targetAudience, narrowedScopes?, ct)` | Exchanges a subject JWT for a token addressed to `targetAudience` (RFC 8693) — the boundary mint + the exception cases. Cached per `(sessionId, audience, scope-set)` in `ILocalCache`. |
 
 ### Composition root
 
@@ -47,25 +39,10 @@ Registers:
 
 - `AuthOutboundOptions` (configured)
 - `IConfigurationManager<OpenIdConnectConfiguration>` (single per-process, auto-refreshes discovery doc; uses our `IHttpClientFactory`-managed client so the configured timeout / TLS / connection-pool settings apply)
-- `ServiceIdentityCache` + `IServiceIdentityClient` + `HttpServiceIdentityClient`
 - `TokenExchangeCache` + `ITokenExchangeClient` + `HttpTokenExchangeClient`
-- Three named `HttpClient`s (`d2-auth-oidc-discovery`, `d2-auth-service-identity`, `d2-auth-token-exchange`)
-- `ServiceIdentityRefreshHostedService` (proactive refresh ~60 s before token expiry)
+- Two named `HttpClient`s (`d2-auth-oidc-discovery`, `d2-auth-token-exchange`)
 
-### Per-channel gRPC opt-in (service-identity attachment — superseded)
-
-> The service-identity bearer this section attaches is superseded by mTLS workload identity ([ADR-0023](../../../../../docs/adrs/0023-mtls-workload-identity.md)) — under the steady-state model the calling workload is identified by the mutually-authenticated TLS channel, and the bearer a downstream gRPC call carries is the single Edge-minted transaction-token forwarded unchanged ([ADR-0022](../../../../../docs/adrs/0022-service-auth-mint-once-forward.md)), not a separate service-identity token. The opt-in below describes the lib as it currently stands; its disposition is a later deliverable.
-
-```csharp
-services
-    .AddGrpcClient<FilesGrpc.FilesGrpcClient>(o =>
-        o.Address = new Uri(D2.Shared.Auth.Abstractions.Audiences.Files))
-    .AddD2ServiceIdentity();   // ← attaches Bearer <service-identity-token>
-
-// Non-D² gRPC channels (SeaweedFS, third-party gRPC) omit .AddD2ServiceIdentity().
-```
-
-Per-channel opt-in is the safe default — auto-applying to every gRPC channel would leak our internal Edge JWT to non-D² services.
+The forwarded-JWT and workload-certificate factors have their own composition roots (`AddD2ForwardedJwtOutbound()` and `AddD2WorkloadCertificateOutbound()`), each independent of `AddD2AuthOutbound()` — a host wires only the factors it needs.
 
 ### Forwarded transaction-token — per-request `CallCredentials` (the forward-unchanged rail of ADR-0022)
 
@@ -97,7 +74,7 @@ services
 
 ### Workload certificate — mTLS leaf presentation (the caller half of ADR-0023)
 
-This is the **caller (client) half** of the internal-mTLS workload-identity layer; the callee (server) half — Kestrel require-and-validate — lives in `D2.Shared.AspNetCore` (`AddD2MutualTls`). A workload holds its current leaf certificate in memory and proactively reissues it before expiry, on the same refresh-ahead pattern the service-identity client uses, then presents it on outbound gRPC channels that opt in.
+This is the **caller (client) half** of the internal-mTLS workload-identity layer; the callee (server) half — Kestrel require-and-validate — lives in `D2.Shared.AspNetCore` (`AddD2MutualTls`). A workload holds its current leaf certificate in memory and proactively reissues it before expiry on a refresh-ahead loop, then presents it on outbound gRPC channels that opt in.
 
 ```csharp
 // Composition root (opt-in, independent of AddD2AuthOutbound):
@@ -107,7 +84,7 @@ services.AddD2WorkloadCertificateOutbound();
 // the shared lib defines only the port, never referencing a service domain:
 services.AddSingleton<IWorkloadCertificateIssuer, MyInProcessWorkloadCertificateIssuer>();
 
-// Per-channel opt-in — composes ALONGSIDE .AddD2ServiceIdentity():
+// Per-channel opt-in — composes alongside .AddD2ForwardedJwt():
 services
     .AddGrpcClient<FilesGrpc.FilesGrpcClient>(o => o.Address = new Uri("https://files.internal"))
     .AddD2WorkloadCertificate();   // ← presents the current leaf on the mTLS handshake
@@ -116,10 +93,10 @@ services
 `AddD2WorkloadCertificateOutbound()` registers:
 
 - `WorkloadLeafCache` — single per-process slot holding the live leaf `X509Certificate2`, its issuing intermediate, and the pre-built `SslStreamCertificateContext` chain (atomic-ref swap; disposes the superseded leaf + intermediate on swap, the current pair on cache disposal — the leaf carries the secret key, the intermediate is public).
-- `WorkloadLeafClient` + `IWorkloadLeafSource` — the refresh-ahead leaf source. Reissues through the host-supplied `IWorkloadCertificateIssuer`, builds a live private-key-bearing leaf from the returned DER + PKCS#8 (zeroing the PKCS#8 once the cert owns the key), decodes the issuing intermediate, builds the presentable chain context, caches it, and serves-stale-on-transient (singleflight + circuit-breaker, same shape as the service-identity client).
+- `WorkloadLeafClient` + `IWorkloadLeafSource` — the refresh-ahead leaf source. Reissues through the host-supplied `IWorkloadCertificateIssuer`, builds a live private-key-bearing leaf from the returned DER + PKCS#8 (zeroing the PKCS#8 once the cert owns the key), decodes the issuing intermediate, builds the presentable chain context, caches it, and serves-stale-on-transient (singleflight + circuit-breaker).
 - `WorkloadLeafRefreshHostedService` — polls every 30 s and reissues when `NotAfter - now <= WorkloadLeafRefreshLeadTime` (default 5 min; leaf TTLs are hours).
 
-`AddD2WorkloadCertificate()` on the gRPC builder sets the channel handler's `SslClientAuthenticationOptions.ClientCertificateContext` to the cache's current chain context (the full `leaf → intermediate` chain) at channel build — presenting the chain lets a strict peer rebuild a root-anchored chain without a machine-store-resident intermediate or a network (AIA) fetch. It composes alongside `AddD2ServiceIdentity()` (the leaf chain is set on the channel handler's `SslOptions`; the token is set on `options.Credentials` — orthogonal, compose-don't-clobber on `options.HttpHandler`). Safe-by-default: a channel that does not call it presents no client certificate.
+`AddD2WorkloadCertificate()` on the gRPC builder sets the channel handler's `SslClientAuthenticationOptions.ClientCertificateContext` to the cache's current chain context (the full `leaf → intermediate` chain) at channel build — presenting the chain lets a strict peer rebuild a root-anchored chain without a machine-store-resident intermediate or a network (AIA) fetch. It composes alongside `AddD2ForwardedJwt()` (the leaf chain is set on the channel handler's `SslOptions`; the forwarded token is set on `options.Credentials` — orthogonal, compose-don't-clobber on `options.HttpHandler`). Safe-by-default: a channel that does not call it presents no client certificate.
 
 The chain context is resolved **once, at channel construction** (a `ClientCertificateContext` is not a per-connection selection callback). The refresh-ahead loop keeps the cache holding a current chain, but a consumer holding a long-lived channel does not automatically adopt a rotated leaf — it must rebuild the channel to present the freshly-rotated leaf. Rebuilding a long-lived channel on rotation is the consumer's responsibility; the channel's lifecycle is the natural home for it.
 
@@ -137,15 +114,7 @@ auth/outbound/
 ├── AuthOutboundServiceCollectionExtensions.cs        # AddD2AuthOutbound + AddD2WorkloadCertificateOutbound + AddD2ForwardedJwtOutbound composition roots
 ├── Grpc/
 │   ├── ForwardedJwtCallCredentials.cs                # per-request CallCredentials — reveals the request-scoped ForwardedJwt + attaches Bearer (the sole reveal caller)
-│   ├── ServiceIdentityCallCredentials.cs             # gRPC CallCredentials sourcing the bearer from IServiceIdentityClient
-│   └── GrpcClientBuilderExtensions.cs                # .AddD2ForwardedJwt() (forwarded token) + .AddD2ServiceIdentity() (bearer) + .AddD2WorkloadCertificate() (leaf-chain context) per-channel opt-ins
-├── ServiceIdentity/
-│   ├── IServiceIdentityClient.cs                     # interface
-│   ├── HttpServiceIdentityClient.cs                  # POST /oauth/token grant_type=client_credentials
-│   ├── ServiceIdentityCache.cs                       # atomic-ref single-value cache
-│   ├── ServiceIdentitySnapshot.cs                    # (Token, ExpiresAt) record
-│   ├── ServiceIdentityException.cs                   # internal parse-failure exception
-│   └── ServiceIdentityRefreshHostedService.cs        # background proactive refresh
+│   └── GrpcClientBuilderExtensions.cs                # .AddD2ForwardedJwt() (forwarded token) + .AddD2WorkloadCertificate() (leaf-chain context) per-channel opt-ins
 ├── WorkloadCertificate/
 │   ├── IWorkloadLeafSource.cs                        # interface — current live leaf accessor
 │   ├── IWorkloadCertificateIssuer.cs                 # host-supplied reissue port (BCL DER+PKCS#8 boundary)
@@ -168,13 +137,13 @@ auth/outbound/
 
 ## Caching model
 
-### ServiceIdentity cache
+### Workload-leaf cache
 
-Single per-process slot. Atomic reference swap of an immutable `(Token, ExpiresAt)` snapshot — readers never observe a torn state, and there is no lock on the read path. No `ILocalCache` involvement (single value, no key namespace).
+Single per-process slot. Atomic reference swap of an immutable snapshot holding the live leaf `X509Certificate2`, its issuing intermediate, and the pre-built chain context — readers never observe a torn state, and there is no lock on the read path. No `ILocalCache` involvement (single value, no key namespace). The cache owns disposal of the certificate handles: the superseded leaf + intermediate are disposed on swap, the current pair on cache disposal.
 
-The `ServiceIdentityRefreshHostedService` polls every 5 s and proactively refreshes when `ExpiresAt - now <= ServiceIdentityRefreshLeadTime` (default 60 s). On refresh failure with a still-valid cached token, the warning logs but the existing token continues to be served until it actually expires; only when no still-valid token exists AND the fetch fails does `GetCurrentTokenAsync` hard-fail with `D2Result.ServiceUnavailable`.
+The `WorkloadLeafRefreshHostedService` polls every 30 s and proactively reissues when `NotAfter - now <= WorkloadLeafRefreshLeadTime`. On reissue failure with a still-valid cached leaf, the warning logs but the existing leaf continues to be presented until it actually expires.
 
-Concurrent first-callers (on-demand + the hosted service) dedup to a single HTTP fetch via `Singleflight` from `D2.Shared.Resilience`. Each fetch also passes through a `CircuitBreaker` (5 consecutive transient failures → 30 s open) — after the threshold, callers receive `ServiceUnavailable` immediately without waiting for an HTTP timeout, stopping the hammering of a down Edge.
+Concurrent first-callers (on-demand + the refresh hosted service) dedup to a single reissue via `Singleflight` from `D2.Shared.Resilience`. Each reissue also passes through a `CircuitBreaker` (5 consecutive transient failures → 30 s open) — after the threshold, callers fast-fail without waiting for an issuer timeout, stopping the hammering of a down issuer.
 
 ### TokenExchange cache
 
@@ -192,27 +161,26 @@ The backplane subscription is OPTIONAL. If `ICacheInvalidationBackplane` isn't r
 
 ## Configuration
 
-| Option                           | Env var                 | Default                  | Purpose                                                                           |
-| -------------------------------- | ----------------------- | ------------------------ | --------------------------------------------------------------------------------- |
-| `Issuer`                         | `D2_AUTH_ISSUER`        | (required)               | OIDC issuer URL — drives discovery doc fetch.                                     |
-| `ClientId`                       | `D2_AUTH_CLIENT_ID`     | (required)               | This service's OAuth client id.                                                   |
-| `ClientSecret`                   | `D2_AUTH_CLIENT_SECRET` | (required, NEVER logged) | This service's OAuth client secret.                                               |
-| `ServiceIdentityRefreshLeadTime` | —                       | 60 s                     | How early before expiry to proactively refresh the cached service-identity token. |
-| `HttpRequestTimeout`             | —                       | 5 s                      | Per-request timeout on outbound HTTP calls to Edge.                               |
-| `TokenExchangeCacheKeyPrefix`    | —                       | `tokenexchange:`         | Prefix for token-exchange cache entries in the shared `ILocalCache`.              |
-| `TokenExchangeCacheFallbackTtl`  | —                       | 5 min                    | Fallback TTL when the OAuth response's `expires_in` is missing or unparseable.    |
+| Option                          | Env var                 | Default                  | Purpose                                                                           |
+| ------------------------------- | ----------------------- | ------------------------ | --------------------------------------------------------------------------------- |
+| `Issuer`                        | `D2_AUTH_ISSUER`        | (required)               | OIDC issuer URL — drives discovery doc fetch.                                     |
+| `ClientId`                      | `D2_AUTH_CLIENT_ID`     | (required)               | This service's OAuth client id.                                                   |
+| `ClientSecret`                  | `D2_AUTH_CLIENT_SECRET` | (required, NEVER logged) | This service's OAuth client secret.                                               |
+| `WorkloadLeafRefreshLeadTime`   | —                       | 5 min                    | How early before expiry to proactively reissue the cached workload leaf.          |
+| `HttpRequestTimeout`            | —                       | 5 s                      | Per-request timeout on outbound HTTP calls to Edge.                               |
+| `TokenExchangeCacheKeyPrefix`   | —                       | `tokenexchange:`         | Prefix for token-exchange cache entries in the shared `ILocalCache`.              |
+| `TokenExchangeCacheFallbackTtl` | —                       | 5 min                    | Fallback TTL when the OAuth response's `expires_in` is missing or unparseable.    |
 
 ---
 
 ## Telemetry
 
-Tag-key + tag-value constants are emitted by [`D2.Shared.Telemetry.Tags.SourceGen`](../../telemetry/tags-source-gen/README.md) into `OutboundTelemetryTags.g.cs` from [`contracts/telemetry/telemetry.spec.json`](../../../../../contracts/telemetry/telemetry.spec.json). Counter call sites reference `OutboundTelemetryTags.ServiceIdentityFetches.Outcome.CACHE_HIT` / etc. instead of bare string literals. The emitted file lands in the tracked `Generated/` directory (committed for inspection, IDE navigation, and PR diff review; re-emitted on every `dotnet build`; do not hand-edit).
+Tag-key + tag-value constants are emitted by [`D2.Shared.Telemetry.Tags.SourceGen`](../../telemetry/tags-source-gen/README.md) into `OutboundTelemetryTags.g.cs` from [`contracts/telemetry/telemetry.spec.json`](../../../../../contracts/telemetry/telemetry.spec.json). Counter call sites reference `OutboundTelemetryTags.TokenExchangeRequests.Outcome.CACHE_HIT` / etc. instead of bare string literals. The emitted file lands in the tracked `Generated/` directory (committed for inspection, IDE navigation, and PR diff review; re-emitted on every `dotnet build`; do not hand-edit).
 
 | Counter                                          | Tags                                                                                                                                                                                          | Purpose                                                                                                                                             |
 | ------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `d2.auth.outbound.service_identity.fetches`      | `outcome` (`OutboundTelemetryTags.ServiceIdentityFetches.Outcome.*`: `cache_hit` / `cache_hit_after_singleflight` / `fetch_success` / `fetch_failure` / `http_failure` / `discovery_failure`) | Service-identity token resolutions. One increment per `GetCurrentTokenAsync` / `ForceRefreshAsync` call.                                            |
-| `d2.auth.outbound.token_exchange.requests`       | `outcome` (`OutboundTelemetryTags.TokenExchangeRequests.Outcome.*`; same six values)                                                                                                          | Token-exchange requests. One increment per `ExchangeAsync` call (input-validation failures aren't counted — caller bug, not auth-runtime traffic).  |
-| `d2.auth.outbound.token_exchange.revoked_purges` | —                                                                                                                                                                                             | Cache entries purged by session-revoked backplane events; one increment per purged key. Useful for verifying cluster-wide invalidation propagation. |
+| `d2.auth.outbound.token_exchange.requests`       | `outcome` (`OutboundTelemetryTags.TokenExchangeRequests.Outcome.*`: `cache_hit` / `cache_hit_after_singleflight` / `fetch_success` / `fetch_failure` / `http_failure` / `discovery_failure`) | Token-exchange requests. One increment per `ExchangeAsync` call (input-validation failures aren't counted — caller bug, not auth-runtime traffic).  |
+| `d2.auth.outbound.token_exchange.revoked_purges` | —                                                                                                                                                                                           | Cache entries purged by session-revoked backplane events; one increment per purged key. Useful for verifying cluster-wide invalidation propagation. |
 
 `ActivitySource` and `Meter` both named `D2.Shared.Auth.Outbound`. Hosts wire via `.AddSource(OutboundTelemetry.ACTIVITY_SOURCE_NAME)` / `.AddMeter(OutboundTelemetry.METER_NAME)`.
 
@@ -220,25 +188,16 @@ Tag-key + tag-value constants are emitted by [`D2.Shared.Telemetry.Tags.SourceGe
 
 ## Bootstrap order
 
-> The bootstrap chain below reflects the superseded `client_credentials` service-identity model, where a service-identity bearer was acquired first and then used to authenticate a host's own outbound calls to Edge. Under the current model that chain dissolves: cross-process calls authenticate their workload by mTLS ([ADR-0023](../../../../../docs/adrs/0023-mtls-workload-identity.md)) — a host's keyring / JWKS calls to Edge present a client certificate, not a service-identity JWT — so the "acquire a service-identity token first" ordering requirement falls away. The bootstrap ordering for the mTLS path (certificate material available before the first outbound call) is part of the subsystem the implementing deliverable builds. This section is retained as a description of the lib as it currently stands.
-
-This lib's pieces depend on standard .NET hosting infrastructure but produce a strict bootstrap-order requirement for downstream auth components:
-
-1. `IServiceIdentityClient` initializes (the refresh hosted service acquires the first token at startup).
-2. `IKeyringClient` + `IJwksProvider` (in the inbound `D2.Shared.Auth` lib) use the JWT from #1 to authenticate their own gRPC / HTTP calls to Edge.
-3. `JwtAuthMiddleware` / `JwtAuthInterceptor` (also in the inbound lib) start accepting requests.
-
-Hosts that deploy the inbound `D2.Shared.Auth` lib alongside this one MUST register this lib first.
+The three outbound factors are independent composition roots — a host wires whichever it needs, in any order relative to each other. Cross-process workload identity is supplied by the mTLS channel (`AddD2WorkloadCertificateOutbound` + the refresh-ahead leaf), so a host's outbound calls to Edge (keyring / JWKS fetches) present a client certificate; the forwarded transaction-token is ambient on each request (no acquire step). Neither factor imposes a startup-ordering requirement on the inbound `D2.Shared.Auth` lib.
 
 ---
 
 ## References
 
 - [`D2.Shared.Auth`](../core/README.md) — inbound auth runtime (JWT validator + session liveness + `AddD2Auth` composition root); transport bindings in `D2.Shared.Auth.Http` + `D2.Shared.Auth.Grpc` siblings
-- [`D2.Shared.Auth.Abstractions`](../abstractions/README.md) — `Audiences.*` / `JwtClaimTypes.*` constants
+- [`D2.Shared.Auth.Abstractions`](../abstractions/README.md) — `Audiences.*` / `JwtClaimTypes.*` constants + the `IForwardedJwtAccessor` holder + the `IAmbientRequestScopeAccessor` port
 - [`D2.Shared.Caching.Abstractions`](../../caching/abstractions/README.md) — `ILocalCache` + `ICacheInvalidationBackplane` interfaces
-- [`D2.Shared.Resilience`](../../resilience/README.md) — `Singleflight` for fetch-path deduplication + `CircuitBreaker` to fast-fail during sustained Edge outage
+- [`D2.Shared.Resilience`](../../resilience/README.md) — `Singleflight` for fetch-path deduplication + `CircuitBreaker` to fast-fail during sustained outage
 - [ADR-0022](../../../../../docs/adrs/0022-service-auth-mint-once-forward.md) — mint-once-at-the-Edge, forward-unchanged service-to-service model; token exchange repurposed to the boundary mint + exceptions
-- [ADR-0023](../../../../../docs/adrs/0023-mtls-workload-identity.md) — mTLS workload identity that supersedes the `client_credentials` service-identity layer
-- [RFC 6749 §4.4](https://datatracker.ietf.org/doc/html/rfc6749#section-4.4) — `client_credentials` grant (the basis of the superseded service-identity client)
+- [ADR-0023](../../../../../docs/adrs/0023-mtls-workload-identity.md) — mTLS workload identity for cross-process hops
 - [RFC 8693](https://datatracker.ietf.org/doc/html/rfc8693) — token-exchange grant (the boundary mint + the exception cases)

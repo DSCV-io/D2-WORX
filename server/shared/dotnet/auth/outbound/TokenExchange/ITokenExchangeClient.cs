@@ -10,9 +10,13 @@ using D2.Shared.Result;
 
 /// <summary>
 /// Per-process client that exchanges an inbound user JWT for a downstream-
-/// audience JWT via the OAuth Token Exchange grant (RFC 8693). The downstream
-/// service receives the user's identity directly — no separate user-context
-/// envelope needed for sync gRPC / HTTP calls.
+/// audience JWT via the OAuth Token Exchange grant (RFC 8693). This is the
+/// boundary-mint and exception tool — cross-trust-domain calls, deliberate
+/// scope narrowing, asynchronous scope reduction, and establishing an
+/// impersonation <c>act</c> chain. The ordinary cross-process business hop does
+/// not exchange: it forwards the inbound transaction-token unchanged
+/// (<see cref="D2Result"/> rail, ADR-0022), and the receiver reads the user's
+/// identity and scopes straight from that forwarded token.
 /// </summary>
 /// <remarks>
 /// <para>

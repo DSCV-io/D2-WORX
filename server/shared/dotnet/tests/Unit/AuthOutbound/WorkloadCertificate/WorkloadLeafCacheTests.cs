@@ -15,9 +15,8 @@ using Xunit;
 
 /// <summary>
 /// Adversarial coverage for the per-process live-leaf cache. Probes empty /
-/// freshness / atomic-swap / boundary semantics + the chain-context accessor — mirrors
-/// <c>ServiceIdentityCacheTests</c>, with the leaf + intermediate disposal-on-swap
-/// addition.
+/// freshness / atomic-swap / boundary semantics + the chain-context accessor, plus the
+/// leaf + intermediate disposal on swap and on cache dispose.
 /// </summary>
 [Trait("Category", "Unit")]
 public sealed class WorkloadLeafCacheTests

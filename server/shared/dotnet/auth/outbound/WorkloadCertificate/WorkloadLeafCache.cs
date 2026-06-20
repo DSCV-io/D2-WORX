@@ -19,9 +19,9 @@ using JetBrains.Annotations;
 /// <remarks>
 /// <para>
 /// Not backed by <c>ILocalCache</c>: this is one slot per process, no eviction, no
-/// key namespace. A <c>volatile</c>-fenced field reference is the right tool. Mirrors
-/// <c>ServiceIdentityCache</c>, with one addition — the cached value owns live
-/// <see cref="X509Certificate2"/> handles, so the cache owns disposal: the superseded
+/// key namespace. A <c>volatile</c>-fenced field reference is the right tool — a single
+/// per-process slot with atomic-reference swap and no read-path lock. The cached value
+/// owns live <see cref="X509Certificate2"/> handles, so the cache owns disposal: the superseded
 /// snapshot's leaf AND intermediate are disposed on <see cref="Set"/> (a refresh-ahead
 /// reissue publishes well before expiry, so connections using the old chain context
 /// are already established — the certificates are consulted only at handshake), and the

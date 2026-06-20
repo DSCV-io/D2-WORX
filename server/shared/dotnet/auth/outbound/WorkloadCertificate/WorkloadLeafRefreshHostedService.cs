@@ -17,8 +17,7 @@ using Microsoft.Extensions.Options;
 /// certificate before it expires. Aims to keep <see cref="WorkloadLeafCache"/>
 /// always populated so on-demand callers never trigger a synchronous reissue on the
 /// hot path. On the issuer being unreachable, the warning logs but the existing
-/// still-valid leaf continues to be presented until it actually expires. Mirrors
-/// <c>ServiceIdentityRefreshHostedService</c>.
+/// still-valid leaf continues to be presented until it actually expires.
 /// </summary>
 [MustDisposeResource(false)]
 internal sealed class WorkloadLeafRefreshHostedService : BackgroundService

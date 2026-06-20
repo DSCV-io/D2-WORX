@@ -29,11 +29,10 @@ public sealed class AuthOutboundServiceCollectionExtensionsTests
     [Fact]
     public void AddD2AuthOutbound_RegistersTokenExchangeClient_AndSharedOidcSurface()
     {
-        // Retirement regression gate: after the service-identity surface was
-        // removed, the SHARED OIDC discovery + options + token-exchange client
-        // must still wire. token-exchange's HTTP Basic auth reads ClientId /
-        // ClientSecret and its fetch resolves token_endpoint through the OIDC
-        // ConfigurationManager — a wrongly-removed shared registration would
+        // Regression gate: the SHARED OIDC discovery + options + token-exchange
+        // client must resolve independently. token-exchange's HTTP Basic auth reads
+        // ClientId / ClientSecret and its fetch resolves token_endpoint through the
+        // OIDC ConfigurationManager — a wrongly-removed shared registration would
         // surface here (resolvability), not silently on the first exchange.
         var services = new ServiceCollection();
         services.AddLogging();
