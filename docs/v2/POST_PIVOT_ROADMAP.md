@@ -2,17 +2,30 @@
 Copyright (c) DCSV. All rights reserved.
 -->
 
-# POST_PIVOT_ROADMAP.md — Remaining work after the auth pivot + to finish the contract-IDL emitters
+# POST_PIVOT_ROADMAP.md — The single source of truth for all deferred / remaining / Edge-wire-up work
 
-**Status**: living roadmap — consolidates the work that the auth pivot (ADR-0022 / ADR-0023) and the
-unfinished contract-IDL emitter fleet (ADR-0021 / C0) leave open. The work is real and scattered across
-~6 docs; this is the single place to see *what is left, in what order, and what each item is blocked on*.
+**Status**: living roadmap — **THE canonical, committed tracker for ALL deferred, remaining, and
+must-wire-up-later work** across the framework. If a piece of work is deferred (specified-but-not-built,
+host-gated, design-pending, or built-as-a-seam awaiting a real consumer), it has a row HERE. The Edge /
+middleware build runs off this ONE checklist — nothing deferred is allowed to live only in a per-deliverable
+ledger, a phase-doc deferral section, or a code comment, where the eventual builder would never find it.
+
+**The "post-pivot" name is historical.** The file was born to track the auth-pivot (ADR-0022 / ADR-0023) +
+the contract-IDL emitter fleet (ADR-0021 / C0) remainder, but its scope is now the full deferred-work
+surface. The filename is kept as-is to preserve inbound links; the framing is broadened.
+
+**This doc is the INDEX of record; detail sources are DETAIL, never the sole home.** Per-deliverable
+ledgers (e.g. the 0019 `VALIDATION.md` replace-trigger ledger, the 0021 "Deferred to code" list) and
+phase-doc deferral sections ([PHASE_3_EDGE.md §3](PHASE_3_EDGE.md), [PHASE_0_AUTH.md](PHASE_0_AUTH.md)
+build-state, the [PHASE_3.md](PHASE_3.md) DAG) carry the deep detail and stay the canonical *owner* of
+each item's design — but no deferral may be reachable ONLY from one of them. This roadmap consolidates and
+points at them. If you defer work anywhere, you add (or confirm) a row here in the same change.
 
 **This doc LINKS, it does not DUPLICATE.** Every row points at the canonical source that owns the detail
 (an ADR, a phase tracking doc, a deliverable record, or the active deliverable workspace). When a source
 says something different from a row here, the source wins and this row is stale — fix the row. The value
-here is the cross-cutting *sequencing + blocked-on* view that no single source carries, not a re-statement
-of any of them.
+here is the cross-cutting *complete-inventory + sequencing + blocked-on* view that no single source carries,
+not a re-statement of any of them.
 
 **How to read the status column** (one vocabulary across all four areas):
 
@@ -23,10 +36,14 @@ of any of them.
 | 📐 specified-deferred | The design is locked (an ADR / deliverable decided it) but the code is deliberately deferred, with a tracked to-be-done note. |
 | ✍ not-yet-specified | Needs a design decision before it can be built — no locked spec yet. Flagged in [§E](#e--items-that-still-need-a-design-decision). |
 
-**Scope boundary.** This roadmap covers the auth-pivot reconciliation, the mTLS cross-process remainder,
-and the contract-IDL (C0) emitter completion. It does NOT re-plan the rest of Phase 3 (the auth track
-A1–A6, the Edge-pipeline track E1–E5) — that DAG lives in [PHASE_3.md](PHASE_3.md). Where an item here is
-*blocked on* a Phase-3 deliverable, the row names it.
+**Scope boundary — inventory vs DAG.** This roadmap is the complete *inventory* of deferred / remaining /
+seam-binding work: the auth-pivot reconciliation, the mTLS cross-process remainder, the contract-IDL (C0)
+emitter completion, the Edge / middleware seam-bindings, and the 0019 emitter-fleet finish-list. It does
+NOT *re-plan* the forward Phase-3 build DAG (the auth track, the Edge-pipeline track) — that sequencing
+plan lives in [PHASE_3.md](PHASE_3.md). The two are complementary: PHASE_3.md is the *build order*; this is
+the *deferred-work checklist* the build must drain. Where an item here is *blocked on* a Phase-3 deliverable,
+the row names it. New deliverables that are forward-build (not draining a deferral) belong in PHASE_3.md,
+not here.
 
 ---
 
@@ -35,9 +52,11 @@ A1–A6, the Edge-pipeline track E1–E5) — that DAG lives in [PHASE_3.md](PHA
 - [A — mTLS remaining (Phase-3, host-gated)](#a--mtls-remaining-phase-3-host-gated)
 - [B — Auth-pivot existing-code reconciliation](#b--auth-pivot-existing-code-reconciliation)
 - [C — Contract-IDL emitter / C0 completion](#c--contract-idl-emitter--c0-completion)
+- [F — Edge / middleware seam-binding (generated markers awaiting their real consumer)](#f--edge--middleware-seam-binding-generated-markers-awaiting-their-real-consumer)
+- [G — Edge / middleware wire-up checklist (the seam→real-consumer master list)](#g--edge--middleware-wire-up-checklist-the-seamreal-consumer-master-list)
 - [D — Sequencing, dependencies, and the coupling points](#d--sequencing-dependencies-and-the-coupling-points)
 - [E — Items that still need a design decision](#e--items-that-still-need-a-design-decision)
-- [See also (adjacent loose ends — pointers only)](#see-also-adjacent-loose-ends--pointers-only)
+- [H — Cross-cutting deferrals tracked outside this index (pointers)](#h--cross-cutting-deferrals-tracked-outside-this-index-pointers-deep-tracked-elsewhere)
 
 ---
 
@@ -121,6 +140,13 @@ façade, route-policy, and idempotency-store-seam emitters — but **not** the O
 parity-test emitter, and several scalar/type and binding gaps are deliberately deferred (loud `D2TSP*`
 diagnostics, not silent gaps).
 
+The emitter work was tracked as deliverable 0019 (`@d2/typespec-emitters`) but **never reached
+FINAL-REVIEW or SHIP** — its remaining steps (the .NET gRPC-client validation harness, the TS client
+emitter, the `@d2Resilience` custom-predicate emitter, the over-the-wire tests, the harness + parity
+consolidation, and the FINAL-REVIEW/SHIP/record) lived only in the gitignored 0019 workspace journal until
+rescued into the rows below ([C10–C16](#c--contract-idl-emitter--c0-completion)). They are **host-independent**
+and are the active completion front for C0.
+
 **Canonical detail**: [ADR-0021 "The D² emitter fleet — seven emitters"](../adrs/0021-unified-operation-contract-idl.md)
 + the emitter package itself (`server/shared/typescript/typespec-emitters/` — `src/emitter.ts` `$onEmit`,
 `src/lib.ts` D2TSP* catalog, `src/lib/scalar-registry.ts`, `VALIDATION.md` deferral ledger) +
@@ -128,15 +154,84 @@ diagnostics, not silent gaps).
 
 | # | Item | Status | Canonical source | Blocked on |
 | - | ---- | ------ | ---------------- | ---------- |
-| C1 | Built emitters: C# DTO, TS DTO, proto, gRPC service + transport mappers, handler interface, façade, route+policy, idempotency-gate seam (+ the `@d2*` decorator vocabulary + the proven dual REST+gRPC binding) | ✅ done (on branch) | emitter package `src/emitter.ts` + `src/lib/` | — |
+| C1 | Built + validated emitters: C# DTO, TS DTO, proto, gRPC service + transport mappers, handler interface, façade, route+policy, idempotency-gate seam (+ the `@d2*` decorator vocabulary + the proven dual REST+gRPC binding) — eight emitters, each with byte-gate fixtures, C# harness validation, and a `VALIDATION.md` ledger row | ✅ done (on branch) | emitter package `src/emitter.ts` + `src/lib/` + `VALIDATION.md` | — |
+| C1a | **.NET gRPC-client emitter — source built + wired but VALIDATION INCOMPLETE.** The emitter source (`grpc-client-emitter.ts`, ~1091 lines, 4 files/module) is written and dispatched at `emitter.ts:459`, AND it already auto-chains `.AddD2ForwardedJwt().AddD2WorkloadCertificate()` (the [C7](#c--contract-idl-emitter--c0-completion) auto-wire) — but the Step-9b validation harness does NOT exist: no committed C# fixtures (`IKeyCustodianGrpcClient.g.cs` / `KeyCustodianGrpcClient.g.cs` / `SignClientMappers.g.cs` / `…GrpcClientsGenerated.g.cs` / `SignClientKeys.g.cs`), no `GrpcClientTests.cs`, no byte-gate constants, no `VALIDATION.md` row, no `Clients.csproj` MUT-1 mutation. **C1's "done" was OVERSTATED for this emitter** — it is source-complete, not validated. | 📐 specified-deferred | `src/lib/grpc-client-emitter.ts` (source) + the missing `D2.Edge.Tests/TypeSpecGrpc/Generated/` fixtures + [PHASE_3.md C0 row](PHASE_3.md) | nothing — host-independent (the in-memory gRPC `TestServer` harness already exists; Grpc.Tools stub compiles) |
 | C2 | OpenAPI (D² extension layer) emitter — the `x-d2-*` policy extensions the stock `@typespec/openapi3` emitter cannot surface (ADR-0021 names it as one of the seven; not present in `$onEmit`) | ✍ not-yet-specified→build | [ADR-0021 emitter table](../adrs/0021-unified-operation-contract-idl.md) | nothing — buildable now (dev-first, no host) |
 | C3 | Parity-test emitter — generates the cross-language + registry-existence validation tests (scope-exists, error-code-exists, C#↔TS field/optionality/casing parity, REST↔gRPC same-type, route uniqueness, handler-resolves, known audience/tier). ADR-0021 calls this "a primary justification for the whole system"; not present in `$onEmit` | ✍ not-yet-specified→build | [ADR-0021 "Parity / validation tests are a first-class output"](../adrs/0021-unified-operation-contract-idl.md) | nothing — buildable now |
 | C4 | SSE / `@d2ServerPush` binding emission — today `@d2ServerPush` is read only as an exposure marker (routes DTOs); there is no `text/event-stream` (`data:`/`event:`) binding emitter. ADR-0021 keeps the SSE *binding* in the named hand-written fringe, so decide emit-vs-fringe | ✍ not-yet-specified | [ADR-0021 "named, non-growing hand-written fringe"](../adrs/0021-unified-operation-contract-idl.md) + `src/emitter.ts:526` | a design decision (see [§E](#e--items-that-still-need-a-design-decision)) |
 | C5 | Temporal scalars (`utcDateTime` / `plainDate` / `plainTime` / `offsetDateTime` / `duration`) — currently loud `D2TSP001`; the registry defers them pending NodaTime ↔ `DateTimeOffset` mapping decisions | 📐 specified-deferred | `src/lib/scalar-registry.ts:5-15` (the deferral is documented in code) | a NodaTime/`DateTimeOffset`/TS mapping decision (see [§E](#e--items-that-still-need-a-design-decision)) |
 | C6 | Enum / union property types — currently loud `D2TSP002` ("not yet supported by the DTO emitter") | 📐 specified-deferred | `src/lib.ts` D2TSP002 + `src/lib/model-walk.ts:220,246` | nothing structural — buildable now (the deferral is a capability gap, not a blocked one) |
-| C7 | Emitter auto-wire of the outbound forwarded-JWT + workload-cert DI chain (replaces the dead "host MUST chain `.AddD2ServiceIdentity()`" docstring at `grpc-client-emitter.ts:631-639`) — **this is 0023 [B4](#b--auth-pivot-existing-code-reconciliation), landed in the emitter; it is a C0-correctness fix AND a 0023 deliverable** | 🔄 active | [0023 Step 4](../wip/0023-forwarded-token-auth/README.md) + `src/lib/grpc-client-emitter.ts:631-639` | — (in flight under 0023) |
+| C7 | Emitter auto-wire of the outbound forwarded-JWT + workload-cert DI chain (replaced the dead "host MUST chain `.AddD2ServiceIdentity()`" docstring) — **this is 0023 [B4](#b--auth-pivot-existing-code-reconciliation), landed in the emitter; it is a C0-correctness fix AND a 0023 deliverable.** The generated DI extension now emits `.AddD2ForwardedJwt()` + `.AddD2WorkloadCertificate()` (`grpc-client-emitter.ts` ~lines 595/672/676) | ✅ done in 0023 (`c7264318`) | [0023 record S4](../dev/deliverables/0023-forwarded-token-auth.md) + `src/lib/grpc-client-emitter.ts` | — |
 | C8 | Real Edge HTTP-idempotency-store impl behind the generated seam (the emitter generates `D2GeneratedIdempotencyStore.g.cs`; "the real Edge HTTP-idempotency middleware will implement this seam") | 📐 specified-deferred | `src/lib/idempotency-gate-emitter.ts:5-10` + [PHASE_3_EDGE.md §1](PHASE_3_EDGE.md) | a running Edge host (PHASE_3 E2 — cross-cutting middleware) |
-| C9 | Formal C0 deliverable CLOSEOUT — the emitter work accumulated on `n/typespec-emitters` without a PLAN→SHIP deliverable record; PHASE_3.md still lists C0 as ☐ Next. Reconcile: a deliverable record + a SHIP, OR re-scope C0 to "remaining emitter gaps (C2/C3/C4/C5/C6) + closeout" | ✍ not-yet-specified | [PHASE_3.md C0 row](PHASE_3.md) (status reconciliation) | an orchestrator/user decision on how to record the already-built work |
+| C9 | Formal C0 deliverable CLOSEOUT — the emitter work accumulated on `n/typespec-emitters` without a PLAN→SHIP deliverable record; PHASE_3.md still lists C0 as ☐ Next. Reconcile: a deliverable record + a SHIP, OR re-scope C0 to "remaining emitter gaps + closeout". Couples with the FINAL-REVIEW/SHIP/record steps in [C16](#c--contract-idl-emitter--c0-completion) | ✍ not-yet-specified | [PHASE_3.md C0 row](PHASE_3.md) (status reconciliation) | an orchestrator/user decision on how to record the already-built work |
+| C10 | **TS client emitter (0019 Step 9c)** — generate per-op typed fns for BOTH surfaces: browser REST client (`lib/client/…`, `fetch` over `apiCall`/`executeFetch`, ProblemDetails → `D2Result`, light resilience) for `@route` ops + server/SSR gRPC client (`lib/server/…`, gRPC over `handleGrpcCall`/`unaryCall` + `retryAsync(isTransientGrpcError)`) for `@d2GrpcMethod` ops. No `ts-client-emitter.ts` exists; not dispatched from `$onEmit`. **Was tracked only in the gitignored 0019 workspace journal.** | 📐 specified-deferred | [ADR-0021 emitter table](../adrs/0021-unified-operation-contract-idl.md) + `src/emitter.ts` (`$onEmit` — missing dispatch) | nothing — host-independent (`@d2/grpc-client` `handleGrpcCall`/`unaryCall`/`isTransientGrpcError` + `apiCall`/`executeFetch` are the seams) |
+| C11 | **`@d2Resilience` custom-predicate emitter (0019 Step 9d)** — reopen the 0018 `@d2/typespec-decorators` `@d2Resilience` decorator to accept a `retryWhen`/`failWhen` arg over the op's output fields / error codes, compile-time-validated, folded into the generated resilience-pipeline config + keyed-DI registration. The 0018 `@d2Resilience` ships simple tunable params only. **Was tracked only in the 0019 workspace journal.** | 📐 specified-deferred | [ADR-0021](../adrs/0021-unified-operation-contract-idl.md) + 0018 `@d2/typespec-decorators` `@d2Resilience` | nothing — host-independent (`D2.Shared.Resilience` `RetryOptions.IsTransient` is the custom-predicate seam); may split to its own deliverable |
+| C12 | **Over-the-wire integration tests (0019 Step 9e)** — two-process, real gRPC, self-managed Testcontainers / child-process — prove transient-recovery (retry), breaker open/half-open, no amplification (callee `ValidationFailed` NOT retried), byte-fidelity. The in-memory `TestServer` harness proves correctness in-process only; the `T-WIRE` assertion proves byte-unchanged but not two-process. **Was tracked only in the 0019 workspace journal.** | 📐 specified-deferred | [ADR-0021](../adrs/0021-unified-operation-contract-idl.md) + `D2.Edge.Tests` (new `GrpcOverTheWireTests.cs`) | [C1a](#c--contract-idl-emitter--c0-completion) (9b validation) + [C10](#c--contract-idl-emitter--c0-completion) (9c) — gated on a real generated client to exercise |
+| C13 | **Transport integration-harness consolidation (0019 Step 11)** — consolidate the per-step `TestServer` / in-memory-gRPC harness paths (Steps 7a/7b/9b each spawned their own) into one cross-path end-to-end across REST + gRPC + in-process-leaf, validating generated transport against real middleware. **Was tracked only in the 0019 workspace journal.** | 📐 specified-deferred | [ADR-0021](../adrs/0021-unified-operation-contract-idl.md) + `D2.Edge.Tests` harness | [C1a](#c--contract-idl-emitter--c0-completion) (9b) — needs the gRPC-client fixtures present |
+| C14 | **Parity + byte-gate consolidation + `VALIDATION.md` finalization (0019 Step 12)** — extend regeneration byte-identity coverage to EVERY emitted file (incl. the 9b gRPC-client output + the 9c TS-client output + any SSE output); finalize the per-emitter `VALIDATION.md` replace-trigger ledger with the 9b–11 rows. `VALIDATION.md` covers Steps 1–9a today; the gRPC-client + TS-client + consolidated-harness rows are missing. **Was tracked only in the 0019 workspace journal.** | 📐 specified-deferred | `server/shared/typescript/typespec-emitters/VALIDATION.md` (ledger to finalize) | [C1a](#c--contract-idl-emitter--c0-completion) + [C10](#c--contract-idl-emitter--c0-completion) (the emitters whose rows it finalizes) |
+| C15 | **Enum / union + temporal scalar gaps** — placeholder cross-ref: the two loud-deferral capability gaps that also block full 0019 completion are tracked as [C6](#c--contract-idl-emitter--c0-completion) (enum/union, `D2TSP002`, buildable now) and [C5](#c--contract-idl-emitter--c0-completion) (temporal scalars, `D2TSP001`, mapping-decision-gated). No separate row — listed here so the 0019 finish-list reads complete. | (see C5 / C6) | [C5](#c--contract-idl-emitter--c0-completion) + [C6](#c--contract-idl-emitter--c0-completion) | (per C5 / C6) |
+| C16 | **0019 FINAL-REVIEW + SHIP + deliverable record** — the whole-deliverable audit loop (fresh Final-reviewer rounds to convergence), the completeness-attestation block (currently BLANK in the 0019 workspace README), and the SHIP snapshot to `docs/dev/deliverables/0019-typespec-emitters.md`. **Was tracked only in the gitignored 0019 workspace journal — if that journal is deleted before completion, these steps evaporate with no committed record.** This is the concrete execution of the [C9](#c--contract-idl-emitter--c0-completion) closeout decision. | 📐 specified-deferred | [C9](#c--contract-idl-emitter--c0-completion) (the closeout decision that frames it) + `docs/dev/deliverables/` (where the record lands) | [C1a](#c--contract-idl-emitter--c0-completion) + [C10](#c--contract-idl-emitter--c0-completion)–[C14](#c--contract-idl-emitter--c0-completion) (the finish-list it reviews + ships) + the [C9](#c--contract-idl-emitter--c0-completion) bookkeeping decision |
+
+---
+
+## F — Edge / middleware seam-binding (generated markers awaiting their real consumer)
+
+The emitter fleet already stamps **faithful, inert seam markers** onto every generated route and seam — the
+markers are present and asserted-present in tests today, but **nothing reads them yet**. When the Edge
+middleware exists it MUST be wired to read each marker, or the build ships routes with correct metadata and
+zero enforcement (a silent security/operability hole). These were tracked ONLY in emitter source comments /
+the 0019 `VALIDATION.md` replace-trigger ledger — not in any committed cross-cutting tracker — so they are
+rescued here as committed rows. The actionable seam→consumer view is consolidated in [§G](#g--edge--middleware-wire-up-checklist-the-seamreal-consumer-master-list).
+
+**Canonical detail**: the 0019 `VALIDATION.md` "replace-trigger" ledger + the emitter source replace-trigger
+comments (`route-policy-emitter.ts`, `idempotency-gate-emitter.ts`) + [PHASE_3_EDGE.md](PHASE_3_EDGE.md)
+(the Edge middleware that becomes the real consumer) + [PHASE_0_AUTH.md §3.8](PHASE_0_AUTH.md) (the anon-JWT
+algorithm gap).
+
+| # | Item | Status | Canonical source | Blocked on |
+| - | ---- | ------ | ---------------- | ---------- |
+| F1 | **Anon-JWT `EffectiveScopes` algorithm gap (CRITICAL — security path).** The shipped `JwtAuthMiddleware` + `JwtAuthInterceptor` scope check is `RequiredScopes.Any(s => ctx.Scopes.Contains(s))` — JWT-scopes-only. Pattern A (anon visitors) requires `EffectiveScopes(ctx) = ctx.Scopes ∪ Scopes.AllAnonymousScopes` and the check changed to `RequiredScopes.Any(s => EffectiveScopes.Contains(s))`. ALSO: `ClaimsToContextMapper` must map the anon claims `d2_kind` / `d2_whois_id` / `d2_fingerprint_score` into the request context. Until this lands, **anon-JWT Pattern A cannot function** — anon visitors with a valid anon token would be denied every anon-scoped op. (Today tokenless non-harmless requests are correctly rejected because Pattern A is unbuilt.) | 📐 specified-deferred | [PHASE_0_AUTH.md §3.8 "Algorithm gap (Phase 3 followup)"](PHASE_0_AUTH.md) (the `EffectiveScopes` formula + the `ClaimsToContextMapper` additions) | the anon-JWT mint ([B8](#b2--beyond-0023-edge-gated--c0-gated)) so a real anon token exists to evaluate; `Scopes.AllAnonymousScopes` is already codegen-emitted from the scopes spec |
+| F2 | **Edge rate-limit middleware must READ the generated `D2GeneratedRateLimitTier` marker.** Every generated route carries a faithful `D2GeneratedRateLimitTier` sealed-record metadata marker (asserted PRESENT on endpoint metadata in tests) but with NO enforcement logic. The 18-bucket rate-limiter must call `GetMetadata<D2GeneratedRateLimitTier>()` per route and enforce the tier. Replace-trigger lived only in `route-policy-emitter.ts` source comments. | 📐 specified-deferred | `src/lib/route-policy-emitter.ts` (marker + replace-trigger comment) + the 0019 `VALIDATION.md` replace-trigger ledger + [PHASE_3_EDGE.md](PHASE_3_EDGE.md) / [PHASE_3_RATE_LIMITING.md](PHASE_3_RATE_LIMITING.md) | the Edge rate-limit middleware (PHASE_3 E2) |
+| F3 | **Edge CSRF middleware must READ the generated `D2GeneratedCsrfPosture` marker.** Every generated route carries a faithful `D2GeneratedCsrfPosture` sealed-record metadata marker (asserted PRESENT in tests) with NO enforcement. The CSRF middleware must call `GetMetadata<D2GeneratedCsrfPosture>()` per route and enforce the posture. Replace-trigger lived only in `route-policy-emitter.ts` source comments. | 📐 specified-deferred | `src/lib/route-policy-emitter.ts` (marker + replace-trigger comment) + the 0019 `VALIDATION.md` replace-trigger ledger + [PHASE_3_EDGE.md](PHASE_3_EDGE.md) | the Edge CSRF middleware (PHASE_3 E2) |
+| F4 | **Keyring distribution endpoint + its consumer wiring.** `D2.Shared.Auth.Keyring` ships consumer-side types (`IKeyringClient`, `GrpcKeyringClient`, `RabbitMqRotationEventChannel`) but they have NO endpoint to talk to: the KeyCustodian gRPC `internal/keys/{domain}` distribution endpoint (PHASE_3 E5) does not exist, and `GrpcKeyringClient` is not wired to it (and `RabbitMqRotationEventChannel` needs messaging). PHASE_3.md mentions E5 but the specific keyring-distribution wiring was untracked here. | 📐 specified-deferred | [PHASE_0_AUTH.md §3.5](PHASE_0_AUTH.md) (the keyring-distribution design) + [PHASE_3.md E5 row](PHASE_3.md) + `server/shared/dotnet/auth/keyring/` README | the KeyCustodian gRPC `internal/keys/{domain}` endpoint (PHASE_3 E5) — needs a running Edge/KeyCustodian gRPC host + messaging |
+
+---
+
+## G — Edge / middleware wire-up checklist (the seam→real-consumer master list)
+
+**This is THE actionable list the Edge / middleware build consumes.** Every emitter output and shared-lib
+seam that exists today as a faithful test-double / inert marker, the real consumer that must wire it, and
+the exact replace-trigger. When the Edge host + middleware land, walk this table top-to-bottom — each row is
+"this seam is inert until you wire it." Rows here are the *consumer-binding* view of items tracked in
+[§A](#a--mtls-remaining-phase-3-host-gated) / [§B](#b--auth-pivot-existing-code-reconciliation) /
+[§C](#c--contract-idl-emitter--c0-completion) / [§F](#f--edge--middleware-seam-binding-generated-markers-awaiting-their-real-consumer);
+the `Tracked as` column points back at the owning row so nothing is duplicated as a separate work item — this
+is a *cross-cut*, not a new backlog.
+
+**Source**: the 0019 `VALIDATION.md` replace-trigger ledger (the per-emitter "test double → real consumer"
+rows) + the seam markers in the emitter sources.
+
+| Seam / test-double / marker that exists TODAY | Real consumer that must wire it | Replace-trigger (when to do it) | Tracked as |
+| --------------------------------------------- | ------------------------------- | ------------------------------- | ---------- |
+| `D2GeneratedRateLimitTier` metadata marker on every generated route (faithful, asserted-present, no enforcement) | Edge 18-bucket rate-limit middleware — `GetMetadata<D2GeneratedRateLimitTier>()` per route + enforce | Edge rate-limit middleware lands (PHASE_3 E2) | [F2](#f--edge--middleware-seam-binding-generated-markers-awaiting-their-real-consumer) |
+| `D2GeneratedCsrfPosture` metadata marker on every generated route (faithful, asserted-present, no enforcement) | Edge CSRF middleware — `GetMetadata<D2GeneratedCsrfPosture>()` per route + enforce | Edge CSRF middleware lands (PHASE_3 E2) | [F3](#f--edge--middleware-seam-binding-generated-markers-awaiting-their-real-consumer) |
+| `D2GeneratedIdempotencyStore` generated seam + in-memory `FakeIdempotencyStore` (injectable `TimeProvider`; `TryGetAsync<TStored>` + `StoreAsync<TStored>`) | Edge HTTP-idempotency middleware — real `D2GeneratedIdempotencyStore` impl (Redis `SET NX`, 24h TTL) | Edge `Idempotency.*` middleware lands (PHASE_3 E2) | [C8](#c--contract-idl-emitter--c0-completion) |
+| `JwtAuthMiddleware` / `JwtAuthInterceptor` scope check = JWT-scopes-only; `ClaimsToContextMapper` does not map `d2_kind` / `d2_whois_id` / `d2_fingerprint_score` | Edge auth — change check to `EffectiveScopes = ctx.Scopes ∪ Scopes.AllAnonymousScopes`; map the anon claims | anon-JWT mint exists (PHASE_3 A3 / [B8](#b2--beyond-0023-edge-gated--c0-gated)) | [F1](#f--edge--middleware-seam-binding-generated-markers-awaiting-their-real-consumer) |
+| `D2.Shared.Auth.Keyring` `IKeyringClient` / `GrpcKeyringClient` / `RabbitMqRotationEventChannel` (client types, no endpoint) | KeyCustodian gRPC `internal/keys/{domain}` endpoint + `GrpcKeyringClient` wired to it + messaging for the rotation channel | the keyring distribution endpoint is built (PHASE_3 E5) | [F4](#f--edge--middleware-seam-binding-generated-markers-awaiting-their-real-consumer) |
+| In-process `IWorkloadCertificateIssuer` delegate (harness seam); `WorkloadLeafClient` wired to it | Cross-process `IssueWorkloadCertificate` gRPC endpoint exposing the in-process issuer over the wire | a running Edge gRPC host + the C0 gRPC contract for the issuance op | [A2](#a--mtls-remaining-phase-3-host-gated) |
+| `D2MutualTlsOptions.Enabled = off` by default; loopback harness proof only | Edge host — Kestrel `RequireCertificate` + SPIFFE validator + leaf-refresh client wired in; replace the in-process issuer delegate with the cross-process gRPC call | a running Edge host (PHASE_3 A1) | [A4](#a--mtls-remaining-phase-3-host-gated) |
+| `AddD2WorkloadCertificate` captures the leaf at channel construction (no rebuild-on-rotation) | Edge host-lifetime policy — invalidate + rebuild long-lived gRPC channels when `WorkloadLeafRefreshHostedService` rotates the leaf | Edge host channel-lifetime policy lands (A4) | [A5](#a--mtls-remaining-phase-3-host-gated) |
+| `ForwardedJwtCallCredentials` + `.AddD2ForwardedJwt()` + `AddD2ForwardedJwtOutbound()` (in-memory-proven; Edge `api/` is `.gitkeep`) | Edge host composition root — attach the outbound forwarded-JWT rails; dual-transport with the mTLS rails on the same channel | a running Edge host (PHASE_3 A1) | [B15](#b2--beyond-0023-edge-gated--c0-gated) |
+| `<Module>GrpcClientOptions.Address` (required, host-supplied; the generated DI ext embeds no literal address) | Edge host composition root — supply `AddD2KeyCustodianGrpcClients(new KeyCustodianGrpcClientOptions { Address = … })` | the host composition root exists (PHASE_3 A1) | [C1a](#c--contract-idl-emitter--c0-completion) (generated client) + [A4](#a--mtls-remaining-phase-3-host-gated) |
+| The generated gRPC-client DI ext auto-chains the per-channel `.AddD2ForwardedJwt()` + `.AddD2WorkloadCertificate()`; the ONE-TIME `AddD2ForwardedJwtOutbound()` + `AddD2WorkloadCertificateOutbound()` composition-root registrations are NOT auto-called | Edge host composition root — call the ONE-TIME outbound registrations the per-channel interceptors depend on | the host composition root exists (PHASE_3 A1) | [B15](#b2--beyond-0023-edge-gated--c0-gated) + [C7](#c--contract-idl-emitter--c0-completion) |
+| The generated TS SSR gRPC client fns (once [C10](#c--contract-idl-emitter--c0-completion) builds them) run against a hand-written BFF composition root (`getChannel`, context-propagation interceptor, boundary-token cache) | BFF gRPC composition root — wire the generated TS server client fns against the real channel + interceptors | BFF rebuild (Phase 7) | [C10](#c--contract-idl-emitter--c0-completion) + [B11](#b2--beyond-0023-edge-gated--c0-gated) |
+| The generated TS browser REST client fns (once [C10](#c--contract-idl-emitter--c0-completion) builds them) call `apiCall`/`executeFetch` from the BFF client lib | BFF browser integration — wire the generated typed REST client fns to the real fetch substrate | BFF browser integration (Phase 7) | [C10](#c--contract-idl-emitter--c0-completion) |
+| The `text/event-stream` SSE binding is NOT generated; `@d2ServerPush` is an exposure marker only; an `ISseEmitSink` test double is the planned seam (IF the SSE emitter is built) | Edge channel gateway (the real SSE fan-out engine) — only relevant if [C4](#c--contract-idl-emitter--c0-completion) resolves "emit" | the SSE emit-vs-fringe decision ([C4](#c--contract-idl-emitter--c0-completion)) resolves "emit" AND the Edge channel gateway lands (PHASE_3 E4) | [C4](#c--contract-idl-emitter--c0-completion) |
+| `PropagatedContext` (operational `x-d2-context`) is read/written on AMQP only; sync .NET hops build context from JWT claims; the call-path interceptor is not wired | A real .NET → .NET sync hop — wire `x-d2-context` read/write + the call-path interceptor (service-id + timestamp per hop) | a service-to-service .NET call path exists (Edge → backend, or a second .NET service) | [B9](#b2--beyond-0023-edge-gated--c0-gated) |
+
+**Note on the JWKS route** — `/.well-known/jwks.json` is deliberately NOT generated (ADR-0021 keeps it in the
+named hand-written fringe); only the `sign` route is generated. There is no replace-trigger — it stays
+hand-written. Listed here so its absence from the generated set is not mistaken for a gap.
 
 ---
 
@@ -146,12 +241,14 @@ diagnostics, not silent gaps).
 
 - **[B1–B6](#b1--the-active-deliverable-0023-forwarded-jwt-plumbing--service-identity-retirement) (0023)** — ✅ SHIPPED 2026-06-20. These items are done; the active front moves forward.
 - **The host-independent C0 emitter gaps** — [C2](#c--contract-idl-emitter--c0-completion) (OpenAPI extension), [C3](#c--contract-idl-emitter--c0-completion) (parity-test), [C6](#c--contract-idl-emitter--c0-completion) (enum/union) are buildable now with no host dependency. [C5](#c--contract-idl-emitter--c0-completion) (temporal scalars) is buildable once its mapping decision is made. Resolve [C9](#c--contract-idl-emitter--c0-completion) (how to record the already-built fleet) to close out C0. **These are the active host-independent front.**
+- **The 0019 emitter-fleet finish-list** — [C1a](#c--contract-idl-emitter--c0-completion) (complete the .NET gRPC-client validation harness), [C10](#c--contract-idl-emitter--c0-completion) (TS client emitter), [C11](#c--contract-idl-emitter--c0-completion) (`@d2Resilience` predicates), then [C13](#c--contract-idl-emitter--c0-completion)/[C14](#c--contract-idl-emitter--c0-completion) (harness + parity consolidation) and [C16](#c--contract-idl-emitter--c0-completion) (FINAL-REVIEW + SHIP + record) — all host-independent. [C12](#c--contract-idl-emitter--c0-completion) (over-the-wire tests) is host-independent (self-managed Testcontainers) but gated on [C1a](#c--contract-idl-emitter--c0-completion) + [C10](#c--contract-idl-emitter--c0-completion).
 - **[B12](#b2--beyond-0023-edge-gated--c0-gated)** (spec docstring + `ts-codegen` fixes) is host-independent codegen, though it pairs naturally with B9.
 
 ### What is BLOCKED on a running Edge host (PHASE_3 A1 stands the host up)
 
 - **All of [A2–A5](#a--mtls-remaining-phase-3-host-gated)** (the four mTLS cross-process items).
 - **[B7](#b2--beyond-0023-edge-gated--c0-gated)** (boundary minter — PHASE_3 A2), **[B8](#b2--beyond-0023-edge-gated--c0-gated)** (anon-mint — A3), **[B13](#b2--beyond-0023-edge-gated--c0-gated)** (over-the-wire parity test — needs a live minter+validator), **[C8](#c--contract-idl-emitter--c0-completion)** (real idempotency store — E2).
+- **The [§F](#f--edge--middleware-seam-binding-generated-markers-awaiting-their-real-consumer) seam-bindings** — [F2](#f--edge--middleware-seam-binding-generated-markers-awaiting-their-real-consumer) (rate-limit middleware reads the tier marker — E2), [F3](#f--edge--middleware-seam-binding-generated-markers-awaiting-their-real-consumer) (CSRF middleware reads the posture marker — E2), [F4](#f--edge--middleware-seam-binding-generated-markers-awaiting-their-real-consumer) (keyring distribution endpoint + consumer wiring — E5). [F1](#f--edge--middleware-seam-binding-generated-markers-awaiting-their-real-consumer) (anon-`EffectiveScopes` algorithm — CRITICAL) is gated on the anon-mint ([B8](#b2--beyond-0023-edge-gated--c0-gated) / PHASE_3 A3).
 - **[B15](#b2--beyond-0023-edge-gated--c0-gated)** (wire the forwarded-JWT outbound plumbing into the running Edge host — the forwarded-token sibling of the mTLS [A4](#a--mtls-remaining-phase-3-host-gated) host-wiring; both land when the Edge host exists).
 - **[B9](#b2--beyond-0023-edge-gated--c0-gated)** (sync .NET operational-subset, now also absorbing the call-path interceptor deferred out of 0023) needs an actual service-to-service .NET call path to exist. ([B16](#b2--beyond-0023-edge-gated--c0-gated) — the gRPC-inbound ambient-scope adapter — was its sibling here but is now **done in 0023** dev-first: the adapter + its `AddD2AuthGrpc()` registration are proven in isolation by an in-process gRPC `TestServer` e2e; only the live forwarding into a running gRPC-inbound host rides B15 host-wiring.)
 - **[B11](#b2--beyond-0023-edge-gated--c0-gated)** (BFF token rename + forwarding) is Phase-7 (BFF rebuild).
@@ -166,9 +263,9 @@ diagnostics, not silent gaps).
 ### Recommended next-deliverable order
 
 1. ✅ **0023** — forwarded-JWT plumbing + service-identity retirement. SHIPPED 2026-06-20. Landed the auth-reconciliation debt and the emitter auto-wire (B4/C7). No further action.
-2. **C0 closeout + remaining host-independent emitter gaps** — decide [C9](#c--contract-idl-emitter--c0-completion) (how to record the already-built fleet), then build [C2](#c--contract-idl-emitter--c0-completion) (OpenAPI extension), [C3](#c--contract-idl-emitter--c0-completion) (parity-test), [C6](#c--contract-idl-emitter--c0-completion) (enum/union), and [C5](#c--contract-idl-emitter--c0-completion) (temporal scalars, once mapped). This is the "complete the emitters entirely" path and it needs no host. Resolve [C4](#c--contract-idl-emitter--c0-completion) (SSE emit-vs-fringe) as part of the closeout. **This is the current active host-independent front.**
+2. **C0 closeout + the full emitter-fleet finish-list** — decide [C9](#c--contract-idl-emitter--c0-completion) (how to record the already-built fleet), complete the 0019 finish-list ([C1a](#c--contract-idl-emitter--c0-completion) gRPC-client validation → [C10](#c--contract-idl-emitter--c0-completion) TS client → [C11](#c--contract-idl-emitter--c0-completion) `@d2Resilience` predicates → [C12](#c--contract-idl-emitter--c0-completion) over-the-wire tests → [C13](#c--contract-idl-emitter--c0-completion)/[C14](#c--contract-idl-emitter--c0-completion) harness + parity consolidation → [C16](#c--contract-idl-emitter--c0-completion) FINAL-REVIEW + SHIP), and build the remaining gaps [C2](#c--contract-idl-emitter--c0-completion) (OpenAPI extension), [C3](#c--contract-idl-emitter--c0-completion) (parity-test), [C6](#c--contract-idl-emitter--c0-completion) (enum/union), [C5](#c--contract-idl-emitter--c0-completion) (temporal scalars, once mapped). This is the "complete the emitters entirely" path and it needs no host. Resolve [C4](#c--contract-idl-emitter--c0-completion) (SSE emit-vs-fringe) as part of the closeout. **This is the current active host-independent front.**
 3. **PHASE_3 A1** (Edge host shell) — the gate that unblocks everything host-dependent. Tracked in [PHASE_3.md](PHASE_3.md), not here.
-4. **Then, host-gated, in PHASE_3 order**: A2 (→ B7 boundary minter; A2 mTLS issuance endpoint), A3 (→ B8 anon-mint), E1/E2 (→ C8 idempotency store), and the mTLS host wiring [A4/A5](#a--mtls-remaining-phase-3-host-gated). [B9](#b2--beyond-0023-edge-gated--c0-gated)/[B13](#b2--beyond-0023-edge-gated--c0-gated) fall out once a real call path + minter exist. [B10](#b2--beyond-0023-edge-gated--c0-gated) rides C0's call-edge emission whenever a declared A-calls-B edge first appears.
+4. **Then, host-gated, in PHASE_3 order**: A2 (→ B7 boundary minter; A2 mTLS issuance endpoint), A3 (→ B8 anon-mint → [F1](#f--edge--middleware-seam-binding-generated-markers-awaiting-their-real-consumer) anon-`EffectiveScopes`), E2 (→ C8 idempotency store + [F2](#f--edge--middleware-seam-binding-generated-markers-awaiting-their-real-consumer)/[F3](#f--edge--middleware-seam-binding-generated-markers-awaiting-their-real-consumer) rate-limit + CSRF marker reads), E5 (→ [F4](#f--edge--middleware-seam-binding-generated-markers-awaiting-their-real-consumer) keyring distribution endpoint), and the mTLS host wiring [A4/A5](#a--mtls-remaining-phase-3-host-gated). **Walk [§G](#g--edge--middleware-wire-up-checklist-the-seamreal-consumer-master-list) when the host + middleware land** — it is the seam→consumer master list. [B9](#b2--beyond-0023-edge-gated--c0-gated)/[B13](#b2--beyond-0023-edge-gated--c0-gated) fall out once a real call path + minter exist. [B10](#b2--beyond-0023-edge-gated--c0-gated) rides C0's call-edge emission whenever a declared A-calls-B edge first appears.
 5. **Phase 7**: [B11](#b2--beyond-0023-edge-gated--c0-gated) (BFF token rename + forwarding) with the BFF rebuild.
 
 ---
@@ -187,14 +284,18 @@ locked, code deferred"). Each needs a decision before it can be planned.
 
 ---
 
-## See also (adjacent loose ends — pointers only, NOT absorbed here)
+## H — Cross-cutting deferrals tracked outside this index (pointers, deep-tracked elsewhere)
 
-These are tracked elsewhere and are *not* part of the auth-pivot / emitter scope; listed so the roadmap is
-not mistaken for the whole open-work picture:
+These ARE deferred work and so are surfaced here per the single-source-of-truth principle — but their deep
+tracking lives in another canonical owner (a deliverable record's honest-caveats section + the project
+follow-up tracker), and they are NOT auth-pivot / emitter / Edge-seam items. Listed so the index is complete
+without re-homing them: the pointer is here; the owner is named.
 
 - **Pre-existing `D2.Shared.Tests` OTel/CORS flake** — a MeterProvider registration race under the full
-  parallel suite (passes isolated). Tracked in the [0022 record §Honest caveats](../dev/deliverables/0022-mtls-workload-identity.md);
-  not a pivot/emitter item.
+  parallel suite (passes isolated). **Owner**: the [0022 record §Honest caveats](../dev/deliverables/0022-mtls-workload-identity.md)
+  + the project follow-up tracker. Fix the parallel-suite race; not a pivot/emitter/Edge-seam item.
 - **`server/web` `D2Result.<factory>` static-call gap** — latent BFF type errors (v2 factories are module
-  functions, not statics); unsurfaced because `server/web` isn't host-typechecked yet. Tracked as its own
-  follow-up (sweep when the web container is stood up); not a pivot/emitter item.
+  functions, not statics); unsurfaced because `server/web` isn't host-typechecked yet. **Owner**: the project
+  follow-up tracker. Sweep all `D2Result.fail/ok/...` static-call sites when the `d2-web` compose service is
+  stood up; the `gateway-response.ts` site was already fixed, the rest remain. Not a pivot/emitter/Edge-seam
+  item.
