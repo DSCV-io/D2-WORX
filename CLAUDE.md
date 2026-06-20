@@ -335,6 +335,7 @@ _Canonical form (full service-structure standard with rationale + carve-outs): [
 ### Architectural layer hygiene
 
 - **JWT validations at TRANSPORT layer (auth middleware), NOT per-handler `HandlerOptions`.** `RequiredScopes` IS per-handler; `ValidateAudience` is NOT. [rules.md §9.2]
+- **A captured live credential enters request-scoped state ONLY after ALL inbound auth gates pass (incl. session-liveness / revocation) — symmetrically across every transport.** Capture into the holder is the last pre-continuation op; a holder-state test per failing gate per transport pins that the holder stays unset on every reject path. [rules.md §9.39]
 - **Handlers validate input via `Domain.Create(input) → D2Result<Domain>` at the TOP of `ExecuteAsync`** — never let Redis / DB be the first to reject invalid data. [rules.md §9.4]
 - **EF-as-DDD — CQRS handlers use `I<Service>DbContext` + aggregates + LINQ directly; the per-op Repository handler layer is retired.** `BaseHandler`/`BaseRepoHandler` retain all cross-cutting. No `I<Op>Repository` wrapper between handler and EF. [rules.md §9.37]
 - **Stateful domain aggregates use abstract base + sealed per-state types — illegal transitions are uncompilable.** The `Status` enum is a derived persistence discriminator only; domain logic branches on type, not enum value. For entities not yet migrated to sum-type shape, an explicit valid-transitions table is mandatory. [rules.md §9.31]
