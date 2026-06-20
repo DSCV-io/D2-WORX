@@ -428,6 +428,36 @@ const _entries: readonly ErrorCodeInfo[] = [
     doc: "The cryptographic smoke test for the key material did not pass; the key cannot be activated. Surfaced as a flagged internal-error result so the failed material never enters service.",
     domain: "keycustodian",
   },
+  {
+    code: "KEYCUSTODIAN_INVALID_WORKLOAD_IDENTITY",
+    httpStatus: 400,
+    category: "validation_failure",
+    userMessageKey: TK.keycustodian.validation.INVALID_WORKLOAD_IDENTITY,
+    factoryName: "InvalidWorkloadIdentity",
+    factoryShape: "standard",
+    doc: "The workload identity is null, empty, whitespace, exceeds the maximum length, contains characters outside the allowed lowercase charset [a-z0-9-], or (when parsed from a certificate subject-alternative-name) does not match the spiffe://d2.internal/workload/<service> grammar. Coarse on purpose so the peer-validation surface does not leak which check failed.",
+    domain: "keycustodian",
+  },
+  {
+    code: "KEYCUSTODIAN_INVALID_CERTIFICATE_REQUEST",
+    httpStatus: 500,
+    category: "internal_error",
+    userMessageKey: TK.keycustodian.internal.INVALID_CERTIFICATE_REQUEST,
+    factoryName: "InvalidCertificateRequest",
+    factoryShape: "standard",
+    doc: "A certificate-generation precondition was violated (empty subject name, non-positive validity) or a cryptographic build operation failed. This is a programmer/precondition error surfaced as a flagged 500 result (carrying telemetry) rather than a thrown exception, the same way a failed smoke test is.",
+    domain: "keycustodian",
+  },
+  {
+    code: "KEYCUSTODIAN_NO_ACTIVE_ISSUING_CA",
+    httpStatus: 503,
+    category: "infrastructure_unavailable",
+    userMessageKey: TK.keycustodian.infrastructure.NO_ACTIVE_ISSUING_CA,
+    factoryName: "NoActiveIssuingCa",
+    factoryShape: "standard",
+    doc: "No active issuing intermediate certificate authority is available to sign a workload leaf certificate. A retryable not-ready-yet condition: the CA either has not been seeded yet or is between rotations. Surfaced as a 503 service-unavailable result so callers retry rather than treat it as a client-side conflict.",
+    domain: "keycustodian",
+  },
 ];
 
 /**
