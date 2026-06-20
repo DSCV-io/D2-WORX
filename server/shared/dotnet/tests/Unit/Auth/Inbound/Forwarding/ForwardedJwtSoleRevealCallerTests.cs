@@ -20,10 +20,11 @@ using Xunit;
 /// </summary>
 /// <remarks>
 /// <para>
-/// The holder is populated by the inbound auth surface in this step but has no
-/// production READER yet — the outbound forwarding credential is the one allowed
-/// caller, added later. So the expected production-caller set here is EMPTY; a
-/// later step adds the single allowed file to <see cref="sr_allowedCallerFiles"/>.
+/// The holder is populated by the inbound auth surface and has exactly one
+/// production READER: the outbound forwarding credential
+/// (<c>ForwardedJwtCallCredentials</c>), the sole allowed caller in
+/// <see cref="sr_allowedCallerFiles"/>. Any other production file referencing the
+/// reveal symbol is a new, unreviewed reveal caller and fails this scan.
 /// </para>
 /// <para>
 /// A compiled-IL scan (via a Cecil-style reader) would be stronger, but the
@@ -44,9 +45,14 @@ public sealed class ForwardedJwtSoleRevealCallerTests
         "ForwardedJwt.cs",
     ];
 
-    // Production files allowed to CALL the reveal seam. Empty in this step —
-    // a later step adds the single outbound-credential file.
-    private static readonly string[] sr_allowedCallerFiles = [];
+    // Production files allowed to CALL the reveal seam. Exactly one: the outbound
+    // forwarding credential, which reveals the held bearer bytes to attach them
+    // as Authorization: Bearer on each outbound RPC. Any further addition is a
+    // deliberate, reviewed widening of the reveal surface.
+    private static readonly string[] sr_allowedCallerFiles =
+    [
+        "ForwardedJwtCallCredentials.cs",
+    ];
 
     [Fact]
     public void RevealForForwarding_HasNoUnexpectedProductionCaller()

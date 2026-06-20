@@ -67,6 +67,34 @@ services
 
 Per-channel opt-in is the safe default — auto-applying to every gRPC channel would leak our internal Edge JWT to non-D² services.
 
+### Forwarded transaction-token — per-request `CallCredentials` (the forward-unchanged rail of ADR-0022)
+
+The forward-unchanged service-to-service model ([ADR-0022 §Realization](../../../../../docs/adrs/0022-service-auth-mint-once-forward.md)): Edge mints exactly one internal transaction-token at the trust boundary, and every downstream cross-process gRPC hop **re-attaches that same token unchanged**. The outbound half of that rail lives here.
+
+```csharp
+// Composition root (one-time host setup; pair with AddD2WorkloadCertificateOutbound):
+services.AddD2ForwardedJwtOutbound();
+
+// Per-channel attach — the GENERATED gRPC-client DI extension AUTO-CHAINS this
+// (alongside .AddD2WorkloadCertificate()); a host never calls it directly:
+services
+    .AddGrpcClient<FilesGrpc.FilesGrpcClient>(o => o.Address = new Uri("https://files.internal"))
+    .AddD2ForwardedJwt();          // ← attaches Bearer <the current request's forwarded JWT>
+```
+
+`ForwardedJwtCallCredentials.FromAmbientRequestScope(...)` produces a `CallCredentials` that, **per outbound RPC**, resolves the current inbound request's request-scoped `IForwardedJwtAccessor` (the [redacting `ForwardedJwt` holder](../abstractions/README.md)), reveals the held bearer bytes, and attaches `Authorization: Bearer <bytes>`. It does **not** capture a token at channel construction:
+
+- **Per-channel singleton, per-request token.** A `CallCredentials` is one object bound to the channel and reused for every RPC, but the forwarded token is the _current_ request's token — different on every concurrent request sharing a long-lived channel. So the credential closes over the **ambient-scope port** (a stateless singleton), never a resolved holder or token; per call it re-derives the current request's scope and reads that scope's holder. Because the port is backed by an `AsyncLocal`-flowed accessor, two concurrent requests each observe their own scope, holder, and token — no cross-request bleed. A capture-at-construction credential would forward the first request's token to every later request; resolving per call is what prevents that.
+- **Hard-fail on absent token.** No ambient request scope, no registered holder, or an empty/absent `Current` all raise `RpcException(StatusCode.Unauthenticated)` with a fixed, token-free message — never a silent no-header send. A genuinely system-initiated call (a future scheduled job with no inbound request) hard-fails here (the correct fail-loud behavior); such callers carry their own identity when they exist.
+- **The sole reveal seam.** This credential is the single production caller of `ForwardedJwt.RevealForForwarding()` — a source-text scan pins that no other production type reveals the raw bearer. The revealed bytes flow ONLY into the metadata write; the credential holds no logger, declares no `[LoggerMessage]`, and logs nothing — the reveal-and-attach is structurally leak-free at the transmission point.
+- **Composes alongside mTLS.** `.AddD2ForwardedJwt().AddD2WorkloadCertificate()` is compose-don't-clobber: the forwarded JWT is set on `options.Credentials`, the mTLS leaf chain on the channel handler's `SslOptions` — orthogonal axes, neither clobbers the other. An existing `options.Credentials` is composed with (`ChannelCredentials.Create(existing, ours)`), not replaced; `SecureSsl` is the default when none is set yet.
+
+#### The ambient-scope port + adapter (how the credential reaches the request holder)
+
+`ForwardedJwtCallCredentials` depends on the framework-free **`IAmbientRequestScopeAccessor`** port (declared in `D2.Shared.Auth.Abstractions`), which abstracts "get the current ambient request scope's `IServiceProvider`." The port living in abstractions — referenced by BOTH `D2.Shared.Auth.Outbound` and `D2.Shared.Auth.Http` — is what keeps this lib free of any AspNetCore framework reference (no `auth/http → auth/outbound` edge is needed). The concrete `IHttpContextAccessor`-backed adapter (`HttpContextAmbientRequestScopeAccessor`) lives in the **`D2.Shared.Auth.Http`** transport binding (which already references the framework) and is registered by **`AddD2AuthHttp()`** alongside the request-scoped holder — symmetric: the inbound surface writes the validated bearer into `HttpContext.RequestServices`; the credential reads it back through the same door. A forwarding host is HTTP-inbound in the current architecture (Edge: HTTP from the BFF in, gRPC to backends out), so registering the adapter on the inbound HTTP transport covers it; a future gRPC-inbound-only forwarding host wires its own adapter when it exists.
+
+`AddD2ForwardedJwtOutbound()` registers **neither** the holder nor the ambient adapter (the inbound transport owns both); it is the documented one-time host hook that pairs with `AddD2WorkloadCertificateOutbound()`. The credential reads no configuration (the token is ambient), so it adds no `AuthOutboundOptions` fields.
+
 ### Workload certificate — mTLS leaf presentation (the caller half of ADR-0023)
 
 This is the **caller (client) half** of the internal-mTLS workload-identity layer; the callee (server) half — Kestrel require-and-validate — lives in `D2.Shared.AspNetCore` (`AddD2MutualTls`). A workload holds its current leaf certificate in memory and proactively reissues it before expiry, on the same refresh-ahead pattern the service-identity client uses, then presents it on outbound gRPC channels that opt in.
@@ -106,10 +134,11 @@ The cross-process "a separate service obtains its first leaf from KeyCustodian o
 ```
 auth/outbound/
 ├── AuthOutboundOptions.cs                            # config
-├── AuthOutboundServiceCollectionExtensions.cs        # AddD2AuthOutbound composition root
+├── AuthOutboundServiceCollectionExtensions.cs        # AddD2AuthOutbound + AddD2WorkloadCertificateOutbound + AddD2ForwardedJwtOutbound composition roots
 ├── Grpc/
+│   ├── ForwardedJwtCallCredentials.cs                # per-request CallCredentials — reveals the request-scoped ForwardedJwt + attaches Bearer (the sole reveal caller)
 │   ├── ServiceIdentityCallCredentials.cs             # gRPC CallCredentials sourcing the bearer from IServiceIdentityClient
-│   └── GrpcClientBuilderExtensions.cs                # .AddD2ServiceIdentity() (bearer) + .AddD2WorkloadCertificate() (leaf-chain context) per-channel opt-ins
+│   └── GrpcClientBuilderExtensions.cs                # .AddD2ForwardedJwt() (forwarded token) + .AddD2ServiceIdentity() (bearer) + .AddD2WorkloadCertificate() (leaf-chain context) per-channel opt-ins
 ├── ServiceIdentity/
 │   ├── IServiceIdentityClient.cs                     # interface
 │   ├── HttpServiceIdentityClient.cs                  # POST /oauth/token grant_type=client_credentials

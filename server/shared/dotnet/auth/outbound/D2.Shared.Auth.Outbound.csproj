@@ -26,9 +26,19 @@ Copyright (c) DCSV. All rights reserved.
   </ItemGroup>
 
   <!--
-    Outbound auth runtime — service-identity (client_credentials) + token-exchange
-    (RFC 8693) + the per-channel gRPC opt-in (.AddD2ServiceIdentity()) for attaching
-    a service-identity Bearer to outbound D² gRPC calls.
+    Outbound auth runtime — the forward-unchanged transaction-token rail
+    (.AddD2ForwardedJwt() per-channel opt-in + ForwardedJwtCallCredentials, which
+    replays the inbound request's forwarded JWT on each outbound gRPC hop via the
+    framework-free IAmbientRequestScopeAccessor port) + service-identity
+    (client_credentials) + token-exchange (RFC 8693).
+
+    This lib stays framework-free (plain Microsoft.NET.Sdk, gRPC CLIENT factory
+    only): the forwarding credential reaches the request-scoped holder through the
+    IAmbientRequestScopeAccessor PORT (declared in D2.Shared.Auth.Abstractions,
+    already referenced here), whose IHttpContextAccessor-backed adapter lives in
+    D2.Shared.Auth.Http — so no FrameworkReference is needed here, and no
+    auth/http → auth/outbound ProjectReference edge is needed there (both sides
+    share the port via the abstractions slice).
 
     Discovery is OIDC-canonical: D2_AUTH_ISSUER → /.well-known/openid-configuration →
     token_endpoint via Microsoft.IdentityModel.Protocols.OpenIdConnect's

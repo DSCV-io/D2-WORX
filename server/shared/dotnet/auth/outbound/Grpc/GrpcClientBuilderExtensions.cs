@@ -7,6 +7,7 @@
 namespace D2.Shared.Auth.Outbound.Grpc;
 
 using System.Net.Security;
+using D2.Shared.Auth.Abstractions;
 using D2.Shared.Auth.Outbound.ServiceIdentity;
 using D2.Shared.Auth.Outbound.WorkloadCertificate;
 using Microsoft.Extensions.DependencyInjection;
@@ -161,6 +162,72 @@ public static class GrpcClientBuilderExtensions
                 }
 
                 options.HttpHandler = handler;
+            });
+        }
+
+        /// <summary>
+        /// Attaches the forwarded transaction-token to the gRPC channel under
+        /// construction. Every RPC made through the resulting channel auto-attaches
+        /// an <c>Authorization: Bearer &lt;token&gt;</c> header sourced — per call —
+        /// from the CURRENT inbound request's request-scoped
+        /// <see cref="IForwardedJwtAccessor"/>, resolved through the ambient-scope
+        /// <see cref="IAmbientRequestScopeAccessor"/> port.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// <b>Per-request resolution happens inside the credential, not here.</b>
+        /// This method runs once at channel build and resolves only the SINGLETON
+        /// <see cref="IAmbientRequestScopeAccessor"/> from the channel-root provider
+        /// — never the request-scoped holder (that would forward the first request's
+        /// token to every later request). The returned
+        /// <see cref="global::Grpc.Core.CallCredentials"/> re-derives the current
+        /// request's scope and reads its holder on EACH RPC, so one long-lived
+        /// channel correctly forwards each concurrent request's own token.
+        /// </para>
+        /// <para>
+        /// Composes ALONGSIDE <see cref="AddD2WorkloadCertificate"/>: the forwarded
+        /// JWT is set on <c>options.Credentials</c>; the mTLS leaf chain is set on
+        /// the channel handler's <c>SslOptions</c> — orthogonal axes that never
+        /// collide. Compose-don't-clobber: an existing <c>options.Credentials</c>
+        /// (a prior call or a sibling extension) is composed with via
+        /// <c>ChannelCredentials.Create(existing, ours)</c>, never replaced. When
+        /// none is set yet the channel defaults to <c>SecureSsl</c> — gRPC rejects
+        /// sending <see cref="global::Grpc.Core.CallCredentials"/> over an insecure
+        /// channel by default, so this is intended for TLS deployments (a dev /
+        /// loopback plaintext channel must set <c>options.Credentials</c> explicitly
+        /// with <c>UnsafeUseInsecureChannelCallCredentials</c> beforehand).
+        /// </para>
+        /// <para>
+        /// This is the host-facing surface the generated gRPC-client DI extension
+        /// AUTO-CHAINS on every internal client (alongside
+        /// <see cref="AddD2WorkloadCertificate"/>) — a host never calls it directly,
+        /// so it can never forget to attach the outbound forwarded token. It stays
+        /// public so the generated code and manual-chaining tests can call it.
+        /// </para>
+        /// </remarks>
+        /// <returns>The same <paramref name="builder"/> instance for chaining.</returns>
+        public IHttpClientBuilder AddD2ForwardedJwt()
+        {
+            ArgumentNullException.ThrowIfNull(builder);
+
+            return builder.ConfigureChannel((sp, options) =>
+            {
+                // The channel-root provider resolves the SINGLETON ambient-scope
+                // accessor (correct — singletons resolve from root). We do NOT
+                // resolve the scoped holder here; the credential does, per call.
+                var ambientRequestScopeAccessor =
+                    sp.GetRequiredService<IAmbientRequestScopeAccessor>();
+                var ours = ForwardedJwtCallCredentials.FromAmbientRequestScope(
+                    ambientRequestScopeAccessor);
+
+                // Compose-don't-clobber: set the forwarded JWT on options.Credentials,
+                // composing with any existing CallCredentials (a sibling extension or
+                // a prior call). mTLS's AddD2WorkloadCertificate touches the handler
+                // SslOptions, NOT options.Credentials, so the two never collide.
+                options.Credentials = options.Credentials is null
+                    ? global::Grpc.Core.ChannelCredentials.Create(
+                        global::Grpc.Core.ChannelCredentials.SecureSsl, ours)
+                    : global::Grpc.Core.ChannelCredentials.Create(options.Credentials, ours);
             });
         }
     }
