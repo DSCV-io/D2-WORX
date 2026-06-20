@@ -516,6 +516,27 @@ public sealed class JwtAuthInterceptorTests
     }
 
     [Fact]
+    public async Task UnaryServerHandler_BearerMissing_LeavesHolderUnset()
+    {
+        // Parity (L-1): mirrors InvokeAsync_BearerMissing_LeavesHolderUnset on
+        // the HTTP middleware. Bearer-missing short-circuits before capture — the
+        // holder must stay empty after the RpcException is thrown.
+        using var builder = new TestJwtBuilder();
+        var holder = new MutableForwardedJwtAccessor();
+        var interceptor = MakeInterceptor(builder);
+        var ctx = MakeContextWithHolder(
+            authorization: null,
+            holder: holder);
+
+        var act = async () =>
+            await interceptor.UnaryServerHandler<string, string>(
+                "req", ctx, (_, _) => Task.FromResult("reply"));
+
+        await act.Should().ThrowAsync<RpcException>();
+        holder.Current.Should().BeNull();
+    }
+
+    [Fact]
     public async Task UnaryServerHandler_SuccessPath_NoHolderRegistered_NoOpsAndStillSucceeds()
     {
         // A host that does not register the holder must not crash inbound — the

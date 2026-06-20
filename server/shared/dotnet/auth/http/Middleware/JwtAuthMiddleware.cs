@@ -49,6 +49,11 @@ using Microsoft.Extensions.Primitives;
 ///   <item>If the validated context carries a session id, check liveness via
 ///     <see cref="ISessionLivenessTracker.IsAliveAsync"/>. Revoked → 401.
 ///     ServiceUnavailable → 503 (fail-closed).</item>
+///   <item>Stash the raw bearer in the request-scoped
+///     <see cref="IForwardedJwtAccessor"/> (best-effort). Capture is the LAST
+///     guard-passing operation before request continuation — a token that fails
+///     harmless, bearer-missing, validation, or liveness checks never enters the
+///     holder.</item>
 ///   <item>Enforce per-endpoint scope set (any-of or all-of, per
 ///     <see cref="EndpointScopeMetadata.Match"/>). Mismatch →
 ///     <see cref="AuthFailures.ScopeInsufficient"/> 401 (NOT 403; see
@@ -164,21 +169,6 @@ internal sealed class JwtAuthMiddleware
 
         var requestContext = validationResult.Data!;
 
-        // Stash the validated raw bearer in the request-scoped forwarded-JWT
-        // holder so an outbound hop can replay it byte-for-byte. Captured AFTER
-        // validation success — only a validator-accepted token reaches here (the
-        // harmless, bearer-missing, and validation-failure paths all return
-        // earlier), so a forged/malformed token never enters the holder.
-        // Best-effort: a host that does not register the holder (does not
-        // forward) simply no-ops; a null RequestServices (outside a DI scope)
-        // also no-ops rather than throwing. The bearer is never logged.
-        // RequestServices is non-null-annotated but can be null at runtime
-        // (e.g. resolution outside a DI scope), so guard explicitly.
-        var serviceProvider = (IServiceProvider?)context.RequestServices;
-
-        if (serviceProvider is not null)
-            serviceProvider.GetService<IForwardedJwtAccessor>()?.Capture(bearerResult.Data!);
-
         // Session liveness — only when the validated context surfaces a
         // session id. RequireSessionIdClaim defaults to true on the
         // validator, so absence here is a service-identity-token-style
@@ -208,6 +198,22 @@ internal sealed class JwtAuthMiddleware
                 return;
             }
         }
+
+        // Stash the validated raw bearer in the request-scoped forwarded-JWT
+        // holder so an outbound hop can replay it byte-for-byte. Captured AFTER
+        // validation success AND liveness pass — only a token that cleared the
+        // harmless, bearer-missing, validation-failure, and liveness-failure gates
+        // ever reaches this point, so a revoked or otherwise rejected token never
+        // enters the holder, preventing transient holder population during the
+        // error-response phase. Best-effort: a host that does not register the
+        // holder (does not forward) simply no-ops; a null RequestServices (outside
+        // a DI scope) also no-ops rather than throwing. The bearer is never logged.
+        // RequestServices is non-null-annotated but can be null at runtime
+        // (e.g. resolution outside a DI scope), so guard explicitly.
+        var serviceProvider = (IServiceProvider?)context.RequestServices;
+
+        if (serviceProvider is not null)
+            serviceProvider.GetService<IForwardedJwtAccessor>()?.Capture(bearerResult.Data!);
 
         // Per-endpoint scope enforcement (any-of or all-of, per meta.Match).
         // Empty / null required set = "any authenticated caller passes."

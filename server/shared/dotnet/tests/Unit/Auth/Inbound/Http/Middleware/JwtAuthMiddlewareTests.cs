@@ -340,6 +340,76 @@ public sealed class JwtAuthMiddlewareTests
     }
 
     [Fact]
+    public async Task InvokeAsync_LivenessRevoked_LeavesHolderUnset()
+    {
+        // Regression (M-1): capture is AFTER liveness — a revoked-session token
+        // must NOT enter the holder. Without the fix (capture-before-liveness),
+        // the holder would be populated THEN the liveness check fires → the
+        // revoked token would transiently sit in the holder during the error
+        // phase. With the fix the holder is never touched.
+        using var builder = new TestJwtBuilder();
+        var token = builder.MintToken(_ISSUER, _AUDIENCE);
+        var holder = new MutableForwardedJwtAccessor();
+        var liveness = new FakeSessionLivenessTracker
+        {
+            OutcomeForSession = _ => FakeSessionLivenessTracker.Revoked(),
+        };
+        var (mw, nextCalled) = MakeMiddleware(builder, liveness);
+        var ctx = MakeContext(authorization: $"{_BEARER_PREFIX}{token}");
+        ctx.RequestServices = BuildServicesWithHolder(holder);
+
+        await mw.InvokeAsync(ctx);
+
+        nextCalled().Should().BeFalse();
+        ctx.Response.StatusCode.Should().Be(401);
+        holder.Current.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task InvokeAsync_LivenessUnavailable_LeavesHolderUnset()
+    {
+        // Regression (M-1): a liveness-unavailable path returns 503 — the token
+        // must not be captured before that return path executes.
+        using var builder = new TestJwtBuilder();
+        var token = builder.MintToken(_ISSUER, _AUDIENCE);
+        var holder = new MutableForwardedJwtAccessor();
+        var liveness = new FakeSessionLivenessTracker
+        {
+            OutcomeForSession = _ => FakeSessionLivenessTracker.Unavailable(),
+        };
+        var (mw, _) = MakeMiddleware(builder, liveness);
+        var ctx = MakeContext(authorization: $"{_BEARER_PREFIX}{token}");
+        ctx.RequestServices = BuildServicesWithHolder(holder);
+
+        await mw.InvokeAsync(ctx);
+
+        ctx.Response.StatusCode.Should().Be(503);
+        holder.Current.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task InvokeAsync_LivenessValidationFailed_LeavesHolderUnset()
+    {
+        // Regression (M-1): defensive fail-closed — even an unexpected
+        // ValidationFailed liveness result must not leave the token in the holder.
+        using var builder = new TestJwtBuilder();
+        var token = builder.MintToken(_ISSUER, _AUDIENCE);
+        var holder = new MutableForwardedJwtAccessor();
+        var liveness = new FakeSessionLivenessTracker
+        {
+            OutcomeForSession = _ => FakeSessionLivenessTracker.ValidationFailed(),
+        };
+        var (mw, _) = MakeMiddleware(builder, liveness);
+        var ctx = MakeContext(authorization: $"{_BEARER_PREFIX}{token}");
+        ctx.RequestServices = BuildServicesWithHolder(holder);
+
+        await mw.InvokeAsync(ctx);
+
+        ctx.Response.StatusCode.Should().Be(401);
+        holder.Current.Should().BeNull();
+    }
+
+    [Fact]
     public async Task InvokeAsync_SuccessPath_NoHolderRegistered_NoOpsAndStillSucceeds()
     {
         // A host that does not register the holder (does not forward) must not
