@@ -160,6 +160,7 @@
   "common_errors_UNIQUE_VIOLATION": "この値は既に使用されています。",
   "common_errors_UNKNOWN": "エラーが発生しました。もう一度お試しください。",
   "common_errors_VALIDATION_FAILED": "バリデーションに失敗しました。",
+  "common_time_INVALID_DURATION": "期間の値は有効なISO-8601期間ではありません。",
   "common_time_INVALID_IANA_IDENTIFIER": "タイムゾーン識別子は有効なIANAゾーンではありません。",
   "common_time_INVALID_LOCAL_DATE_TIME": "ローカル日時の値は有効なカレンダーの日付または時刻ではありません。",
   "common_ui_account": "アカウント",

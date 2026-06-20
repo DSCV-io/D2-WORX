@@ -405,10 +405,10 @@ describe("emitProto_NestedMessage_EmittedAndFieldUsesModelName", () => {
 describe("emitProto_UnmappedScalar_LoudFailure", () => {
   it("field with unmapped C# type → onError called + returns undefined", () => {
     const badField: FieldInfo = {
-      name: "createdAt",
-      csName: "CreatedAt",
-      csType: "DateTimeOffset", // not in the cs-to-proto map
-      tsName: "createdAt",
+      name: "correlationId",
+      csName: "CorrelationId",
+      csType: "Guid", // not in the cs-to-proto map (a genuinely-unmapped C# type)
+      tsName: "correlationId",
       tsType: "string",
       protoType: undefined, // no proto column (would fail)
       repeated: false,
@@ -445,10 +445,10 @@ describe("emitProto_UnmappedScalar_LoudFailure", () => {
 describe("emitProto_UnmappedArrayElementScalar_LoudFailure", () => {
   it("repeated field with unmapped element type → onError called + returns undefined", () => {
     const badField: FieldInfo = {
-      name: "timestamps",
-      csName: "Timestamps",
-      csType: "IReadOnlyList<DateTimeOffset>", // not in map
-      tsName: "timestamps",
+      name: "ids",
+      csName: "Ids",
+      csType: "IReadOnlyList<Guid>", // not in map (genuinely-unmapped element type)
+      tsName: "ids",
       tsType: "readonly string[]",
       protoType: undefined,
       repeated: true,
@@ -523,6 +523,78 @@ describe("emitProto_DecimalScalar_MapsToProtoString", () => {
     expect(result).toBeDefined();
     expect(errors).toHaveLength(0);
     expect(result!.content).toContain("string amount = 1;");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Test 15b: temporal C# type (DateTimeOffset) → proto string via reverse-map
+// ---------------------------------------------------------------------------
+
+describe("emitProto_DateTimeOffset_MapsToProtoString", () => {
+  it("DateTimeOffset (required) → string in proto (utcDateTime / offsetDateTime wire)", () => {
+    const field: FieldInfo = {
+      name: "createdAt",
+      csName: "CreatedAt",
+      csType: "DateTimeOffset",
+      tsName: "createdAt",
+      tsType: "string",
+      protoType: "string",
+      repeated: false,
+      optional: false,
+      redact: false,
+    };
+    const errors: string[] = [];
+    const result = emitProto(
+      "test",
+      "Svc",
+      "Do",
+      "unary",
+      SIGN_PKG,
+      SIGN_CS_NS,
+      SIGN_SOURCE,
+      "Req",
+      [field],
+      "Resp",
+      [],
+      [],
+      (_, m) => errors.push(m),
+    );
+    expect(result).toBeDefined();
+    expect(errors).toHaveLength(0);
+    expect(result!.content).toContain("string created_at = 1;");
+  });
+
+  it("DateTimeOffset? (optional) → string in proto (the ?-strip covers optional)", () => {
+    const field: FieldInfo = {
+      name: "nextFireUtc",
+      csName: "NextFireUtc",
+      csType: "DateTimeOffset?",
+      tsName: "nextFireUtc",
+      tsType: "string",
+      protoType: "string",
+      repeated: false,
+      optional: true,
+      redact: false,
+    };
+    const errors: string[] = [];
+    const result = emitProto(
+      "test",
+      "Svc",
+      "Do",
+      "unary",
+      SIGN_PKG,
+      SIGN_CS_NS,
+      SIGN_SOURCE,
+      "Req",
+      [field],
+      "Resp",
+      [],
+      [],
+      (_, m) => errors.push(m),
+    );
+    expect(result).toBeDefined();
+    expect(errors).toHaveLength(0);
+    expect(result!.content).toContain("string next_fire_utc = 1;");
   });
 });
 
@@ -608,10 +680,10 @@ describe("emitProto_FileName_DerivedFromServiceMethod", () => {
 describe("emitProto_UnmappedResponseField_EarlyReturn", () => {
   it("response model with unmapped C# type → onError called + returns undefined", () => {
     const badRespField: FieldInfo = {
-      name: "when",
-      csName: "When",
-      csType: "DateTimeOffset", // not in the cs-to-proto map
-      tsName: "when",
+      name: "owner",
+      csName: "Owner",
+      csType: "Guid", // not in the cs-to-proto map (genuinely-unmapped C# type)
+      tsName: "owner",
       tsType: "string",
       protoType: undefined,
       repeated: false,
@@ -647,10 +719,10 @@ describe("emitProto_UnmappedResponseField_EarlyReturn", () => {
 describe("emitProto_NestedModel_UnmappedField_EarlyReturn", () => {
   it("nested model containing unmapped scalar → onError called + returns undefined", () => {
     const badNestedField: FieldInfo = {
-      name: "when",
-      csName: "When",
-      csType: "DateTimeOffset",
-      tsName: "when",
+      name: "owner",
+      csName: "Owner",
+      csType: "Guid", // genuinely-unmapped C# type
+      tsName: "owner",
       tsType: "string",
       protoType: undefined,
       repeated: false,

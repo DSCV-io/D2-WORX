@@ -203,6 +203,7 @@ export const TK = {
       VALIDATION_FAILED: tk("common_errors_VALIDATION_FAILED")
     },
     time: {
+      INVALID_DURATION: tk("common_time_INVALID_DURATION"),
       INVALID_IANA_IDENTIFIER: tk("common_time_INVALID_IANA_IDENTIFIER"),
       INVALID_LOCAL_DATE_TIME: tk("common_time_INVALID_LOCAL_DATE_TIME")
     },

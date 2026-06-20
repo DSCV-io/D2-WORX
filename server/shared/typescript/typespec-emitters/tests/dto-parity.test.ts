@@ -93,6 +93,62 @@ describe("dtoParity_OneWalkModel_CsAndTsFieldSetIdentical", () => {
     expect(fields.map((f) => f.optional)).toEqual([false, true, false]);
   });
 
+  it("temporal scalars + optional → same name/type/optionality in C# and TS", () => {
+    const model = makeModel([
+      ["pastInstant", { type: makeScalar("utcDateTime"), optional: false }],
+      ["withOffset", { type: makeScalar("offsetDateTime"), optional: false }],
+      ["birthday", { type: makeScalar("plainDate"), optional: false }],
+      ["alarmTime", { type: makeScalar("plainTime"), optional: false }],
+      ["wallClock", { type: makeScalar("plainDateTime"), optional: false }],
+      ["elapsed", { type: makeScalar("duration"), optional: false }],
+      ["optionalInstant", { type: makeScalar("utcDateTime"), optional: true }],
+    ]);
+
+    const errors: string[] = [];
+    const { fields } = walkModel(makeProgram(), model, (_, m) =>
+      errors.push(m),
+    );
+    expect(errors).toHaveLength(0);
+
+    const csFiles = emitCsharpDtos("t", "D2.Test", "t.tsp", fields, [], []);
+    const tsFile = emitTsDtos("t", "t.tsp", fields, [], []);
+    const cs = csFiles[0]!.content;
+    const ts = tsFile.content;
+
+    // Instant-bearing → DateTimeOffset (C#) / string (TS).
+    expect(cs).toContain("DateTimeOffset PastInstant");
+    expect(cs).toContain("DateTimeOffset WithOffset");
+    expect(cs).toContain("DateTimeOffset? OptionalInstant"); // optional → T?
+    // Offset-free → string (C#) / string (TS).
+    expect(cs).toContain("string Birthday");
+    expect(cs).toContain("string WallClock");
+    expect(cs).toContain("string Elapsed");
+
+    expect(ts).toContain("readonly pastInstant: string;");
+    expect(ts).toContain("readonly optionalInstant?: string;"); // optional → ?:
+    expect(ts).toContain("readonly wallClock: string;");
+
+    // Field set + optionality identical across both emitters.
+    expect(fields.map((f) => f.name)).toEqual([
+      "pastInstant",
+      "withOffset",
+      "birthday",
+      "alarmTime",
+      "wallClock",
+      "elapsed",
+      "optionalInstant",
+    ]);
+    expect(fields.map((f) => f.optional)).toEqual([
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      true,
+    ]);
+  });
+
   it("empty model → both emitters produce empty field body", () => {
     const model = makeModel([]);
     const program = makeProgram();

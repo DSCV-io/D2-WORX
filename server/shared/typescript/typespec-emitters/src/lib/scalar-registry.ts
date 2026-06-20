@@ -5,10 +5,15 @@
 // Scalar registry — maps TypeSpec built-in scalar names to their
 // equivalent types in C#, proto3, and TypeScript.
 //
-// Only the unambiguous core set is seeded here. Temporal scalars
-// (utcDateTime, plainDate, plainTime, offsetDateTime, duration) require
-// NodaTime / DateTimeOffset decisions that belong to the DTO emitter step;
-// they are deferred to prevent premature mapping commits.
+// The core set plus the six temporal scalars are seeded here. Temporal scalars
+// (utcDateTime, offsetDateTime, plainDate, plainTime, plainDateTime, duration)
+// map to their lossless wire forms: the two instant-bearing scalars become
+// DateTimeOffset (ISO-8601 "O", offset preserved); the offset-free scalars
+// (plainDate / plainTime / plainDateTime) and duration become string
+// (offset-free ISO / ISO-8601 P…T…). The wire form is NOT the domain form —
+// the handler body maps wire ↔ NodaTime / Temporal at the boundary, never the
+// emitter. Zone-bearing values (IANA name must survive) use the composite wire
+// records declared in contracts/typespec/common/temporal.tsp, NOT a scalar.
 //
 // Unmapped scalars ALWAYS fail loud. resolveScalar() throws when a scalar is
 // not in the registry; callers convert this to a D2TSP001 diagnostic so tsp
@@ -67,6 +72,27 @@ const REGISTRY: Readonly<Record<string, ScalarMapping>> = Object.freeze({
 
   // ---- URL -------------------------------------------------------------------
   url: { cs: "string", proto: "string", ts: "string" },
+
+  // ---- Temporal --------------------------------------------------------------
+  // Instant-bearing scalars → DateTimeOffset on the C# wire (System.Text.Json
+  // serializes with the "O" round-trip format — offset preserved, lossless to
+  // 100ns ticks). proto3 + TS carry the ISO-8601 string. The NodaTime domain
+  // target is Instant (utcDateTime) / OffsetDateTime (offsetDateTime); IANA-
+  // bearing values use the ZonedInstantWire composite, not offsetDateTime.
+  utcDateTime: { cs: "DateTimeOffset", proto: "string", ts: "string" },
+  offsetDateTime: { cs: "DateTimeOffset", proto: "string", ts: "string" },
+  // Offset-FREE scalars → string. Inventing a +00:00 offset on a wall-clock /
+  // date-only / time-only value silently corrupts its meaning, so the lossless
+  // wire shape is an offset-free ISO string round-tripped by NodaTime's
+  // LocalDatePattern.Iso / LocalTimePattern.ExtendedIso /
+  // LocalDateTimePattern.ExtendedIso (and Temporal's PlainDate/PlainTime/
+  // PlainDateTime on the TS side).
+  plainDate: { cs: "string", proto: "string", ts: "string" },
+  plainTime: { cs: "string", proto: "string", ts: "string" },
+  plainDateTime: { cs: "string", proto: "string", ts: "string" },
+  // Elapsed interval → ISO-8601 "P…T…" string (DurationPattern.Roundtrip ↔
+  // Temporal.Duration). NodaTime Duration, never the BCL TimeSpan.
+  duration: { cs: "string", proto: "string", ts: "string" },
 });
 
 /**

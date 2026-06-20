@@ -384,6 +384,9 @@ const CS_TO_PROTO = new Map<string, string>([
   ["double", "double"], // float64 + float + numeric
   ["float", "float"], // float32
   ["decimal", "string"], // decimal + decimal128 → string (lossless wire)
+  ["DateTimeOffset", "string"], // utcDateTime + offsetDateTime → string (ISO-8601 "O"; the
+  // ?-strip at resolveOneField covers DateTimeOffset?). The offset-free temporal scalars
+  // (plainDate / plainTime / plainDateTime) and duration map cs:"string" → already covered above.
   // NOTE: the `url` TypeSpec scalar maps to cs:"string" in scalar-registry.ts, so the
   // lookup key here is "string" (already above). A separate ["url","string"] entry
   // would be unreachable — the resolver receives the C# type string, not the TS scalar name.

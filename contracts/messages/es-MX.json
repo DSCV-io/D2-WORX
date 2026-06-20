@@ -160,6 +160,7 @@
   "common_errors_UNIQUE_VIOLATION": "Este valor ya está en uso.",
   "common_errors_UNKNOWN": "Algo salió mal. Por favor, inténtalo de nuevo.",
   "common_errors_VALIDATION_FAILED": "La validación falló.",
+  "common_time_INVALID_DURATION": "El valor de duración no es una duración ISO-8601 válida.",
   "common_time_INVALID_IANA_IDENTIFIER": "El identificador de zona horaria no es una zona IANA válida.",
   "common_time_INVALID_LOCAL_DATE_TIME": "El valor de fecha y hora local no es una fecha u hora de calendario válida.",
   "common_ui_account": "Cuenta",

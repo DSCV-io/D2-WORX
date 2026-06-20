@@ -105,9 +105,18 @@ resolveScalar("unknownScalar");
 registry. There is no silent fallback. The emitter catches the throw and
 reports a `D2TSP001` diagnostic, causing `tsp compile` to exit non-zero.
 
-Temporal scalars (`utcDateTime`, `plainDate`, `plainTime`, `offsetDateTime`,
-`duration`) are intentionally deferred — their C# mappings involve NodaTime
-type decisions that belong to the DTO emitter step.
+Temporal scalars are mapped to their lossless wire forms: `utcDateTime` and
+`offsetDateTime` → `DateTimeOffset` (ISO-8601 `"O"`, offset preserved); the
+offset-free scalars `plainDate` / `plainTime` / `plainDateTime` (the last a
+string-shaped custom scalar declared in `contracts/typespec/common/temporal.tsp`,
+since TypeSpec ships no plain date-TIME built-in) and `duration` → `string`
+(offset-free ISO / ISO-8601 `P…T…`). The wire form is NOT the domain form — the
+handler body maps wire ↔ NodaTime (`Instant` / `OffsetDateTime` / `LocalDate` /
+`LocalTime` / `LocalDateTime` / `Duration`) / Temporal at the boundary, never the
+emitter. Zone-bearing values (the IANA name must survive — a bare offset cannot
+carry it) use the composite wire records `ZonedInstantWire` /
+`LocalAnchoredEventWire` in `temporal.tsp`, which the walker emits as ordinary
+nested records (no temporal special-case in the walk).
 
 ### Name transforms (`src/lib/name-transforms.ts`)
 
@@ -519,7 +528,7 @@ pnpm run test:coverage
 pnpm run type-check:test
 ```
 
-25 test files, 472 tests. Coverage: 100% lines / branches / functions / statements
+26 test files, 582 tests. Coverage: 100% lines / branches / functions / statements
 on all `src/**` files (excluding the barrel `src/index.ts`).
 
 ---
@@ -534,6 +543,7 @@ server/services/edge/key-custodian/app/Application/                   ← façad
 server/services/edge/key-custodian/app/Application/Handlers/…/GetJwks/ ← GetJwks handler interface (app CQRS namespace)
 server/services/edge/tests/Unit/KeyCustodian/TypeSpecGrpc/Generated/  ← gRPC service + mapper fixtures
 server/services/edge/tests/Unit/KeyCustodian/TypeSpecGrpc/Protos/     ← .proto fixture
+server/services/edge/tests/Unit/KeyCustodian/TypeSpecDto/Generated/   ← sign + temporal fixture DTOs (TemporalInput/Output.g.cs + temporal-dto.g.ts)
 ```
 
 The Sign operation DTOs live in the gRPC generated directory because they are emitted
@@ -558,7 +568,8 @@ the fixtures as follows:
    to `clients/`, façade impl + DI extension to `app/Application/`, handler interface
    to the per-op CQRS handler folder, gRPC fixtures to `Generated/`).
    Copy the updated `.g.proto` file into the `Protos/` directory.
-3. Update the fixture constants in `tests/byte-parity.test.ts`,
+3. Update the fixture constants in `tests/byte-parity.test.ts` (DTO fixtures —
+   GetJwks, Sign, and the Temporal `TemporalInput`/`TemporalOutput` constants),
    `tests/facade-emitter.test.ts`, and `tests/proto-grpc-byte-parity.test.ts`
    to match the new content.
 4. Run `pnpm run test:coverage` to confirm all byte-parity tests pass with 100%

@@ -737,6 +737,10 @@ public static partial class TK
         public static partial class Time
         {
             /// <summary>
+            /// Translation key <c>common_time_INVALID_DURATION</c>.
+            /// </summary>
+            public static readonly global::D2.Shared.I18n.TKMessage INVALID_DURATION = new("common_time_INVALID_DURATION");
+            /// <summary>
             /// Translation key <c>common_time_INVALID_IANA_IDENTIFIER</c>.
             /// </summary>
             public static readonly global::D2.Shared.I18n.TKMessage INVALID_IANA_IDENTIFIER = new("common_time_INVALID_IANA_IDENTIFIER");

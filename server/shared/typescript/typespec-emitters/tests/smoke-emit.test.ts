@@ -224,12 +224,12 @@ describe("$onEmit_directUnit_DtoPairEmission", () => {
   });
 
   it("reportDiagnostic is called and no DTO files emitted for an unmapped scalar", async () => {
-    const utcDateTimeScalar = {
+    const unmappedScalar = {
       kind: "Scalar",
-      name: "utcDateTime",
+      name: "notARealScalar",
     } as unknown as Scalar;
     const badProp = {
-      type: utcDateTimeScalar,
+      type: unmappedScalar,
       optional: false,
     } as unknown as ModelProperty;
 
@@ -740,12 +740,12 @@ describe("$onEmit_directUnit_DtoPairEmission", () => {
 
   it("op with @d2GrpcMethod + unmapped scalar → reportDiagnostic called, no proto emitted", async () => {
     // Exercise the onError path inside emitProtoAndGrpcService.
-    const utcScalar = {
+    const unmappedScalar = {
       kind: "Scalar",
-      name: "utcDateTime",
+      name: "notARealScalar",
     } as unknown as Scalar;
     const badProp = {
-      type: utcScalar,
+      type: unmappedScalar,
       optional: false,
     } as unknown as ModelProperty;
 
@@ -1353,12 +1353,12 @@ describe("$onEmit_directUnit_NamespaceRouting", () => {
     // toPascalFromCamel(opName) at line 304 fires before emitHandlerInterface's own guard.
     // We force dtoEmitSucceeded=false (unmapped scalar) so emitHandlerInterface is never
     // reached, which would otherwise throw for opName="".
-    const utcDateTimeScalar = {
+    const unmappedScalar = {
       kind: "Scalar",
-      name: "utcDateTime",
+      name: "notARealScalar",
     } as unknown as Scalar;
     const badProp = {
-      type: utcDateTimeScalar,
+      type: unmappedScalar,
       optional: false,
     } as unknown as ModelProperty;
     const outputModel = {

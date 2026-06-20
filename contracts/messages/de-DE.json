@@ -160,6 +160,7 @@
   "common_errors_UNIQUE_VIOLATION": "Dieser Wert wird bereits verwendet.",
   "common_errors_UNKNOWN": "Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut.",
   "common_errors_VALIDATION_FAILED": "Validierung fehlgeschlagen.",
+  "common_time_INVALID_DURATION": "Der Dauerwert ist keine gültige ISO-8601-Dauer.",
   "common_time_INVALID_IANA_IDENTIFIER": "Die Zeitzonenkennung ist keine gültige IANA-Zone.",
   "common_time_INVALID_LOCAL_DATE_TIME": "Der lokale Datums-/Zeitwert ist kein gültiges Kalenderdatum bzw. keine gültige Uhrzeit.",
   "common_ui_account": "Konto",

@@ -257,7 +257,7 @@ describe("walkModel_EmptyModel_EmptyFieldList", () => {
 
 describe("walkModel_UnmappedScalar_D2TSP001Loud", () => {
   it("unknown scalar → onError called with D2TSP001 code, field omitted", () => {
-    const { prop, redactMap } = makeProp(makeScalar("utcDateTime"));
+    const { prop, redactMap } = makeProp(makeScalar("notARealScalar"));
     const model = makeModel([["createdAt", prop]]);
     const errors: Array<{ code: string; message: string }> = [];
 
@@ -272,9 +272,146 @@ describe("walkModel_UnmappedScalar_D2TSP001Loud", () => {
     expect(errors).toHaveLength(1);
     expect(errors[0]!.code).toBe("unmapped-scalar");
     expect(errors[0]!.message).toContain("D2TSP001");
-    expect(errors[0]!.message).toContain("utcDateTime");
+    expect(errors[0]!.message).toContain("notARealScalar");
     // Field is omitted on error.
     expect(fields).toHaveLength(0);
+  });
+});
+
+describe("walkModel_TemporalScalars_ResolveCorrectly", () => {
+  it("utcDateTime / offsetDateTime → DateTimeOffset; plain-local + duration → string", () => {
+    const cases: Array<[string, string]> = [
+      ["utcDateTime", "DateTimeOffset"],
+      ["offsetDateTime", "DateTimeOffset"],
+      ["plainDate", "string"],
+      ["plainTime", "string"],
+      ["plainDateTime", "string"],
+      ["duration", "string"],
+    ];
+    for (const [scalar, expectedCs] of cases) {
+      const { prop, redactMap } = makeProp(makeScalar(scalar));
+      const model = makeModel([["v", prop]]);
+      const errors: string[] = [];
+      const { fields } = walkModel(makeProgram(redactMap), model, (_, m) =>
+        errors.push(m),
+      );
+
+      expect(
+        errors,
+        `scalar '${scalar}' must resolve (no D2TSP001)`,
+      ).toHaveLength(0);
+      expect(fields[0]!.csType).toBe(expectedCs);
+      expect(fields[0]!.tsType).toBe("string");
+      expect(fields[0]!.protoType).toBe("string");
+    }
+  });
+
+  it("optional utcDateTime → DateTimeOffset? (C#) + optional flag", () => {
+    const { prop, redactMap } = makeProp(makeScalar("utcDateTime"), true);
+    const model = makeModel([["optionalInstant", prop]]);
+    const { fields } = walkModel(makeProgram(redactMap), model, () => {});
+
+    expect(fields[0]!.csType).toBe("DateTimeOffset?");
+    expect(fields[0]!.optional).toBe(true);
+  });
+
+  it("composite (ZonedInstantWire / LocalAnchoredEventWire) → walked as nested via the EXISTING nested branch (no temporal special-case)", () => {
+    // The composites are ordinary nested models whose fields are temporal scalars;
+    // they flow through the SAME nested-model walk as Jwk — no walker change.
+    const zonedInstantWire: Model = {
+      kind: "Model",
+      name: "ZonedInstantWire",
+      properties: new Map<string, ModelProperty>([
+        [
+          "instant",
+          {
+            type: makeScalar("utcDateTime"),
+            optional: false,
+          } as unknown as ModelProperty,
+        ],
+        [
+          "zoneId",
+          {
+            type: makeScalar("string"),
+            optional: false,
+          } as unknown as ModelProperty,
+        ],
+      ]),
+    } as unknown as Model;
+
+    const localAnchoredEventWire: Model = {
+      kind: "Model",
+      name: "LocalAnchoredEventWire",
+      properties: new Map<string, ModelProperty>([
+        [
+          "scheduledLocal",
+          {
+            type: makeScalar("plainDateTime"),
+            optional: false,
+          } as unknown as ModelProperty,
+        ],
+        [
+          "ianaZone",
+          {
+            type: makeScalar("string"),
+            optional: false,
+          } as unknown as ModelProperty,
+        ],
+        [
+          "nextFireUtc",
+          {
+            type: makeScalar("utcDateTime"),
+            optional: true,
+          } as unknown as ModelProperty,
+        ],
+      ]),
+    } as unknown as Model;
+
+    const model = makeModel([
+      [
+        "zoned",
+        { type: zonedInstantWire, optional: false } as unknown as ModelProperty,
+      ],
+      [
+        "schedule",
+        {
+          type: localAnchoredEventWire,
+          optional: false,
+        } as unknown as ModelProperty,
+      ],
+    ]);
+
+    const { fields, nestedModels } = walkModel(makeProgram(), model, () => {});
+
+    // Both composites collected as nested siblings; field types are the model names.
+    expect(fields.map((f) => f.csType)).toEqual([
+      "ZonedInstantWire",
+      "LocalAnchoredEventWire",
+    ]);
+    expect(nestedModels.map((n) => n.name)).toEqual([
+      "ZonedInstantWire",
+      "LocalAnchoredEventWire",
+    ]);
+
+    const zonedNested = nestedModels.find(
+      (n) => n.name === "ZonedInstantWire",
+    )!;
+    expect(zonedNested.fields.find((f) => f.name === "instant")!.csType).toBe(
+      "DateTimeOffset",
+    );
+    expect(zonedNested.fields.find((f) => f.name === "zoneId")!.csType).toBe(
+      "string",
+    );
+
+    const laeNested = nestedModels.find(
+      (n) => n.name === "LocalAnchoredEventWire",
+    )!;
+    expect(
+      laeNested.fields.find((f) => f.name === "scheduledLocal")!.csType,
+    ).toBe("string");
+    const nextFire = laeNested.fields.find((f) => f.name === "nextFireUtc")!;
+    expect(nextFire.csType).toBe("DateTimeOffset?");
+    expect(nextFire.optional).toBe(true);
   });
 });
 
@@ -316,9 +453,9 @@ describe("walkModel_UnsupportedPropertyType_D2TSP002Loud", () => {
 });
 
 describe("walkModel_ArrayElement_UnmappedScalar_D2TSP001", () => {
-  it("array of unmapped scalar (utcDateTime[]) → D2TSP001 fired for array element", () => {
+  it("array of unmapped scalar (notARealScalar[]) → D2TSP001 fired for array element", () => {
     // Build an Array model whose indexer.value is an unmapped scalar.
-    const badElementScalar = makeScalar("utcDateTime");
+    const badElementScalar = makeScalar("notARealScalar");
     const arrayModel: Model = {
       kind: "Model",
       name: "Array",
@@ -341,7 +478,7 @@ describe("walkModel_ArrayElement_UnmappedScalar_D2TSP001", () => {
     expect(errors).toHaveLength(1);
     expect(errors[0]!.code).toBe("unmapped-scalar");
     expect(errors[0]!.message).toContain("D2TSP001");
-    expect(errors[0]!.message).toContain("utcDateTime");
+    expect(errors[0]!.message).toContain("notARealScalar");
     // Field omitted on error.
     expect(fields).toHaveLength(0);
   });
@@ -537,7 +674,7 @@ describe("walkModel_NestedModel_UnmappedScalarSkippedSilently", () => {
         [
           "badField",
           {
-            type: makeScalar("utcDateTime"),
+            type: makeScalar("notARealScalar"),
             optional: false,
           } as unknown as ModelProperty,
         ],

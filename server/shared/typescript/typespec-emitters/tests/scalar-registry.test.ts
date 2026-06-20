@@ -47,6 +47,18 @@ const EXPECTED_MAPPINGS: Array<{
   { name: "decimal128", cs: "decimal", proto: "string", ts: "string" },
   // URL
   { name: "url", cs: "string", proto: "string", ts: "string" },
+  // Temporal — instant-bearing → DateTimeOffset; offset-free → string.
+  { name: "utcDateTime", cs: "DateTimeOffset", proto: "string", ts: "string" },
+  {
+    name: "offsetDateTime",
+    cs: "DateTimeOffset",
+    proto: "string",
+    ts: "string",
+  },
+  { name: "plainDate", cs: "string", proto: "string", ts: "string" },
+  { name: "plainTime", cs: "string", proto: "string", ts: "string" },
+  { name: "plainDateTime", cs: "string", proto: "string", ts: "string" },
+  { name: "duration", cs: "string", proto: "string", ts: "string" },
 ];
 
 describe("resolveScalar_MappedScalars", () => {
@@ -71,15 +83,15 @@ describe("resolveScalar_UnmappedScalar_ThrowsLoudly", () => {
     expect(() => resolveScalar("")).toThrow("D2TSP001");
   });
 
-  it("throws for a TypeSpec temporal scalar (deferred — no mapping seeded yet)", () => {
-    // utcDateTime mapping is deferred to the DTO emitter step where NodaTime
-    // decisions are made. Asserting it throws proves the deferred-scalar
-    // contract is enforced (no silent fallback).
-    expect(() => resolveScalar("utcDateTime")).toThrow("D2TSP001");
+  it("throws for a genuinely-unknown scalar — the loud-fail mechanism is intact after temporal was added", () => {
+    // The temporal scalars are now mapped; the loud-fail contract must STILL fire
+    // for any genuinely-unknown scalar (the registry ADDS entries; it must not
+    // silence D2TSP001). This is the NV-3 regression guard.
+    expect(() => resolveScalar("notARealScalar")).toThrow("D2TSP001");
   });
 
   it("never returns a silent fallback — throw message includes the scalar name", () => {
-    const unknownName = "plainDate";
+    const unknownName = "totallyBogusScalar";
     let caught: unknown;
     try {
       resolveScalar(unknownName);
@@ -105,9 +117,12 @@ describe("hasScalar", () => {
     expect(hasScalar("")).toBe(false);
   });
 
-  it("returns false for deferred temporal scalars", () => {
-    expect(hasScalar("utcDateTime")).toBe(false);
-    expect(hasScalar("plainDate")).toBe(false);
-    expect(hasScalar("plainTime")).toBe(false);
+  it("returns true for the now-mapped temporal scalars", () => {
+    expect(hasScalar("utcDateTime")).toBe(true);
+    expect(hasScalar("offsetDateTime")).toBe(true);
+    expect(hasScalar("plainDate")).toBe(true);
+    expect(hasScalar("plainTime")).toBe(true);
+    expect(hasScalar("plainDateTime")).toBe(true);
+    expect(hasScalar("duration")).toBe(true);
   });
 });

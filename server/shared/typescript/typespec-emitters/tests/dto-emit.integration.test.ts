@@ -344,6 +344,102 @@ describe("dtoEmitIntegration_HandlerInterface_EmittedForEveryOp", () => {
   });
 });
 
+describe("dtoEmitIntegration_Temporal_EmitsScalarsAndComposites", () => {
+  let host: Awaited<ReturnType<typeof createTestHost>>;
+
+  beforeAll(async () => {
+    host = await createTestHost({
+      libraries: [D2DecoratorTestLibrary, D2EmitterTestLibrary],
+    });
+  });
+
+  it("temporal fixture (end-to-end real compile) → every temporal scalar + both composite records", async () => {
+    host.addTypeSpecFile(
+      "main.tsp",
+      `
+      import "@d2/typespec-decorators";
+      using D2;
+      namespace D2.Fixtures;
+
+      scalar plainDateTime extends string;
+
+      model ZonedInstantWire { instant: utcDateTime; zoneId: string; }
+      model LocalAnchoredEventWire { scheduledLocal: plainDateTime; ianaZone: string; nextFireUtc?: utcDateTime; }
+
+      model TemporalInput {
+        pastInstant: utcDateTime;
+        withOffset: offsetDateTime;
+        birthday: plainDate;
+        alarmTime: plainTime;
+        wallClock: plainDateTime;
+        elapsed: duration;
+        optionalInstant?: utcDateTime;
+        zoned: ZonedInstantWire;
+        schedule: LocalAnchoredEventWire;
+      }
+      model TemporalOutput {
+        pastInstant: utcDateTime;
+        zoned: ZonedInstantWire;
+        schedule: LocalAnchoredEventWire;
+      }
+
+      @d2Query
+      @d2InProcess
+      @d2ServedBy("Fixtures")
+      op temporal(input: TemporalInput): TemporalOutput;
+      `,
+    );
+
+    await host.compile("main.tsp", {
+      emit: ["@d2/typespec-emitters"],
+      options: {
+        "@d2/typespec-emitters": {
+          "csharp-namespace": "D2.Edge.Tests.TypeSpecDto.Generated",
+        },
+      },
+      outputDir: "testing:/out",
+    });
+
+    const errors = host.program.diagnostics.filter(
+      (d) => d.severity === "error",
+    );
+    expect(errors).toHaveLength(0);
+
+    // C# input — instant scalars → DateTimeOffset, plain/duration → string, optional → T?.
+    const inputContent = getEmittedFile(host, "TemporalInput.g.cs");
+    expect(inputContent).toBeDefined();
+    expect(inputContent).toContain("DateTimeOffset PastInstant");
+    expect(inputContent).toContain("DateTimeOffset WithOffset");
+    expect(inputContent).toContain("string Birthday");
+    expect(inputContent).toContain("string WallClock");
+    expect(inputContent).toContain("string Elapsed");
+    expect(inputContent).toContain("DateTimeOffset? OptionalInstant");
+    expect(inputContent).toContain("ZonedInstantWire Zoned");
+    expect(inputContent).toContain("LocalAnchoredEventWire Schedule");
+
+    // C# output — the two composite records emitted as nested siblings.
+    const outputContent = getEmittedFile(host, "TemporalOutput.g.cs");
+    expect(outputContent).toBeDefined();
+    expect(outputContent).toContain("public sealed record ZonedInstantWire(");
+    expect(outputContent).toContain("DateTimeOffset Instant");
+    expect(outputContent).toContain("string ZoneId");
+    expect(outputContent).toContain(
+      "public sealed record LocalAnchoredEventWire(",
+    );
+    expect(outputContent).toContain("string ScheduledLocal");
+    expect(outputContent).toContain("DateTimeOffset? NextFireUtc");
+
+    // TS DTO — every temporal field is string; composites are interfaces; no null union.
+    const tsContent = getEmittedFile(host, "temporal-dto.g.ts");
+    expect(tsContent).toBeDefined();
+    expect(tsContent).toContain("export interface ZonedInstantWire {");
+    expect(tsContent).toContain("export interface LocalAnchoredEventWire {");
+    expect(tsContent).toContain("readonly nextFireUtc?: string;");
+    expect(tsContent).toContain("readonly optionalInstant?: string;");
+    expect(tsContent).not.toContain("| null");
+  });
+});
+
 describe("dtoEmitIntegration_UnmappedScalar_D2TSP001Diagnostic", () => {
   let host: Awaited<ReturnType<typeof createTestHost>>;
 
@@ -353,7 +449,10 @@ describe("dtoEmitIntegration_UnmappedScalar_D2TSP001Diagnostic", () => {
     });
   });
 
-  it("op with unmapped scalar (utcDateTime) → error diagnostic fires", async () => {
+  it("op with unmapped scalar → error diagnostic fires", async () => {
+    // `unixTimestamp32` is a built-in TypeSpec temporal scalar that is NOT in the
+    // registry (only utcDateTime/offsetDateTime/plainDate/plainTime/plainDateTime/
+    // duration are mapped) — so it still trips the D2TSP001 loud failure.
     host.addTypeSpecFile(
       "main.tsp",
       `
@@ -361,7 +460,7 @@ describe("dtoEmitIntegration_UnmappedScalar_D2TSP001Diagnostic", () => {
       using D2;
       namespace D2.Test;
 
-      model BadInput { timestamp: utcDateTime; }
+      model BadInput { timestamp: unixTimestamp32; }
       op badOp(input: BadInput): void;
       `,
     );

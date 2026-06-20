@@ -16,6 +16,8 @@ Each row maps a committed fixture to its regeneration guarantee.
 | `clients/GetJwksInput.g.cs` (ns `D2.Edge.KeyCustodian.Clients`)                                 | `emitCsharpDtos("getJwks", "D2.Edge.KeyCustodian.Clients", "contracts/typespec/key-custodian/key-custodian.tsp", [], [], [])`                                                                                     | Byte-identical to `GET_JWKS_INPUT_FIXTURE`                                               | `tests/byte-parity.test.ts`            | `byteParity_GetJwksInput_CommittedFixtureIdentical`                                                                             |
 | `clients/GetJwksOutput.g.cs` (ns `D2.Edge.KeyCustodian.Clients`)                                | `emitCsharpDtos("getJwks", "D2.Edge.KeyCustodian.Clients", ..., [], outputFields, [nested("Jwk", ...)])`                                                                                                          | Byte-identical to `GET_JWKS_OUTPUT_FIXTURE`                                              | `tests/byte-parity.test.ts`            | `byteParity_GetJwksOutput_CommittedFixtureIdentical`                                                                            |
 | `SignInput.g.cs`                                                                                | `emitCsharpDtos("sign", ..., inputFields, [], [])`                                                                                                                                                                | Byte-identical to `SIGN_INPUT_FIXTURE`                                                   | `tests/byte-parity.test.ts`            | `byteParity_SignInput_CommittedFixtureIdentical`                                                                                |
+| `TemporalInput.g.cs`                                                                            | `emitCsharpDtos("temporal", "D2.Edge.Tests.TypeSpecDto.Generated", "contracts/typespec/fixtures/temporal-shaped.tsp", inputFields, outputFields, nested)`                                                         | Byte-identical to `TEMPORAL_INPUT_FIXTURE` (every temporal scalar + 2 composite refs)    | `tests/byte-parity.test.ts`            | `byteParity_TemporalInput_CommittedFixtureIdentical`                                                                            |
+| `TemporalOutput.g.cs`                                                                           | `emitCsharpDtos("temporal", ..., inputFields, outputFields, [nested(ZonedInstantWire), nested(LocalAnchoredEventWire)])`                                                                                          | Byte-identical to `TEMPORAL_OUTPUT_FIXTURE` (mirror + 2 nested composite records)        | `tests/byte-parity.test.ts`            | `byteParity_TemporalOutput_CommittedFixtureIdentical`                                                                           |
 | `key_custodian_signer_sign.g.proto`                                                             | `emitProto("sign", "KeyCustodianSigner", "Sign", "unary", "d2.keycustodian.v1", "D2.Services.Protos.KeyCustodian.V1", ...)`                                                                                       | Byte-identical to `SIGN_PROTO_FIXTURE`                                                   | `tests/proto-grpc-byte-parity.test.ts` | `byteParity_SignProto_CommittedFixtureIdentical`                                                                                |
 | `KeyCustodianSignerService.g.cs`                                                                | `emitGrpcService("sign", "KeyCustodianSigner", "Sign", ..., { kind: "facade", typeName: "IKeyCustodianSignerFacade", methodName: "SignAsync", targetNamespace: "D2.Edge.Tests.TypeSpecRoute.Generated.Facade" })` | Byte-identical to `SIGN_SERVICE_FIXTURE` (façade delegation — op carries `@d2InProcess`) | `tests/proto-grpc-byte-parity.test.ts` | `byteParity_KeyCustodianSignerService_FacadeDelegation_CommittedFixtureIdentical`                                               |
 | `SignTransportMappers.g.cs`                                                                     | `emitGrpcService(...)` (mappers file)                                                                                                                                                                             | Byte-identical to `SIGN_MAPPER_FIXTURE`                                                  | `tests/proto-grpc-byte-parity.test.ts` | `byteParity_SignTransportMappers_CommittedFixtureIdentical`                                                                     |
@@ -26,8 +28,9 @@ Each row maps a committed fixture to its regeneration guarantee.
 **Deliberate-drift non-vacuity guard**: each byte-parity describe block contains a second
 test that mutates the respective fixture by one byte and asserts the regenerated content
 does NOT match (`not.toBe(driftedFixture)`). This proves the byte gate is not a tautology
-comparing a buffer to itself — the guard covers `GetJwksInput`, `GetJwksOutput`, and
-`SignInput`.
+comparing a buffer to itself — the guard covers `GetJwksInput`, `GetJwksOutput`, `SignInput`,
+`TemporalInput` (mutates `DateTimeOffset PastInstant`), and `TemporalOutput` (mutates the
+`ZonedInstantWire` composite record).
 
 ---
 
@@ -79,11 +82,56 @@ the same field names, optionality, and field count.
 `tests/dto-emit.integration.test.ts` compiles inline `.tsp` programs through the
 TypeSpec test-host and asserts emitted file content in the in-memory FS:
 
-| Scenario                        | What is verified                                                                                            |
-| ------------------------------- | ----------------------------------------------------------------------------------------------------------- |
-| `getJwks` op                    | `GetJwksInput.g.cs` parameterless record + `GetJwksOutput.g.cs` with `Jwk` + `get-jwks-dto.g.ts`            |
-| `sign` op with `@d2Redact`      | `SignInput.g.cs` carries `[property: RedactData(Reason = RedactReason.PersonalInformation)] byte[] Payload` |
-| Unmapped scalar (`utcDateTime`) | D2TSP001 diagnostic fires; `host.compile()` throws or `programErrors.length > 0`                            |
+| Scenario                             | What is verified                                                                                                                                                                                                                                                 |
+| ------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `getJwks` op                         | `GetJwksInput.g.cs` parameterless record + `GetJwksOutput.g.cs` with `Jwk` + `get-jwks-dto.g.ts`                                                                                                                                                                 |
+| `sign` op with `@d2Redact`           | `SignInput.g.cs` carries `[property: RedactData(Reason = RedactReason.PersonalInformation)] byte[] Payload`                                                                                                                                                      |
+| `temporal` op (scalars + composites) | `TemporalInput.g.cs`/`TemporalOutput.g.cs` emit every temporal scalar (instant→`DateTimeOffset`, plain/duration→`string`, optional→`T?`) + the two composite records as nested siblings; `temporal-dto.g.ts` mirrors (all `string`, `?:` optional, no `\| null`) |
+| Unmapped scalar (`unixTimestamp32`)  | D2TSP001 diagnostic fires; `host.compile()` throws or `programErrors.length > 0` (the mapped temporal scalars no longer trip it — a genuinely-unmapped built-in does)                                                                                            |
+
+---
+
+## Temporal scalar + composite validation (real `D2.Shared.Time` / `@d2/time` seams)
+
+The temporal DTO emission is validated against the REAL temporal domain libraries — NOT test
+doubles — via an adversarial round-trip matrix driven by the shared cross-language fixture
+`contracts/temporal/temporal-adversarial.fixture.json` (extended with a `scalarRoundTripFixtures`
+section). The SAME wire value materializes to the equivalent domain value in BOTH languages.
+
+| Concern                                     | C# (`D2.Edge.Tests` `TemporalRoundTripTests`)                                                                                    | TS (`@d2/time` `temporal-round-trip.test.ts`)                                            |
+| ------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| RT-1..6 per-type round-trip                 | `Instant` / `OffsetDateTime` / `LocalDate` / `LocalTime` / `LocalDateTime` / `Duration` ↔ wire ↔ domain (REAL NodaTime patterns) | `Temporal.Instant`/`PlainDate`/`PlainTime`/`PlainDateTime`/`Duration` ↔ wire ↔ domain    |
+| RT-7 ZonedInstant — **IANA NAME survives**  | `ZonedInstant.Create` → `ZonedInstantWire` → `Create`; asserts the canonical IANA NAME (not just the offset) survives            | `ZonedInstant.create` → wire → `create`; same IANA-name-survival assertion               |
+| RT-8 LocalAnchoredEvent composite           | `LocalAnchoredEvent.Create` + `ComputeNextFire` round-trip through `LocalAnchoredEventWire` (all 3 fields agree)                 | `LocalAnchoredEvent.create` + `computeNextFire` round-trip                               |
+| AD-1..3 DST gap/overlap (US/EU/AU)          | `ComputeNextFire` matches the fixture `expectedUtc` (NodaTime `LenientResolver`)                                                 | `computeNextFire` matches (Temporal `disambiguation:"compatible"`)                       |
+| AD-4 invalid IANA → `ValidationFailed`      | `Create` returns `ValidationFailed(INVALID_IANA_IDENTIFIER)` — never throws                                                      | `create` returns `validationFailed(TK…INVALID_IANA_IDENTIFIER)`                          |
+| AD-5 fixed-offset rejected as IANA          | `+05:00` / `-08:00` / `UTC+5` → `ValidationFailed` (the core reason the composite exists)                                        | same rejection                                                                           |
+| AD-6 IANA alias normalization survives      | `US/Pacific`→`America/Los_Angeles`, `Asia/Saigon`→`Asia/Ho_Chi_Minh` survive the wire                                            | same canonicalization survives                                                           |
+| AD-7 leap day / impossible date             | Feb 29 leap valid; Feb 29 non-leap → `ArgumentOutOfRangeException` at the ctor (documented C#/TS divergence)                     | Feb 29 non-leap → `RangeError` (documented divergence — each asserts its own)            |
+| AD-8 year boundary / min-max instant        | boundary + `DateTimeOffset.Min/Max` survive the wire                                                                             | boundary instant survives                                                                |
+| AD-9 sub-second precision (Duration)        | `Duration` nanosecond value lossless; sub-second ISO decimal-fraction seconds round-trip LOSSLESSLY via `D2.Shared.Time.IsoDuration` (int64-ns, no float) — `"PT0.123456789S"` → `Duration` → `"PT0.123456789S"` exact | `Temporal.Duration` round-trips the SAME shared-fixture ISO decimal seconds losslessly — cross-language value parity |
+| AD-10 no-invented-offset (plain-local)      | `plainDate`/`plainTime`/`plainDateTime` wire strings carry no `+`/`Z`                                                            | same — offset-free assertion                                                             |
+| AD-11 optional `nextFireUtc` null→undefined | `DateTimeOffset?` null round-trips to `null`                                                                                     | absent → `undefined` (prefer-undefined boundary)                                         |
+| AD-12 historical tzdb offset                | 1950 New York date uses the tzdb-correct historical offset (tzdb-version-sensitive)                                              | same via Temporal tzdb                                                                   |
+| NV-1 byte-gate deliberate-drift             | (TS) `byte-parity.test.ts` mutates `TemporalInput`/`TemporalOutput` fixtures by one byte → regenerated output must NOT match     | —                                                                                        |
+| NV-2 comparator non-tautology               | 1-second / DST-policy / IANA-canonicalization divergences are DETECTED                                                           | same three divergence guards                                                             |
+| NV-3 loud-fail intact                       | (TS) `scalar-registry.test.ts` — a genuinely-unknown scalar STILL throws D2TSP001 after temporal was added                       | —                                                                                        |
+
+**Sub-second `duration` (lossless, both languages)**: ISO-8601 permits a decimal fraction on the
+seconds field (`PT0.123456789S`). `Temporal.Duration` round-trips that notation natively to
+nanoseconds; NodaTime ships NO built-in pattern that parses decimal-fraction ISO seconds
+(`DurationPattern.Roundtrip` is the colon form; `PeriodPattern` uses explicit unit fields). The .NET
+side therefore uses the `D2.Shared.Time.IsoDuration` helper (`Parse`/`Format`) — it computes total
+nanoseconds as an `Int128`/int64 integer (a 9-digit right-pad of the fraction; NO `double`/`float`),
+so the wire stays an ISO-8601 STRING and sub-second durations round-trip LOSSLESSLY:
+`"PT0.123456789S"` → `Duration` → `"PT0.123456789S"` exact in C#, the same value in TS. Whole-unit
+durations (`PT1H30M`, `P1DT2H3M4S`, `PT45S`) and unbalanced Temporal-emitted forms (`PT90M`,
+`PT3600S`) round-trip by VALUE in both. The shared fixture
+(`temporal-adversarial.fixture.json`, with sub-second entries added) drives both halves;
+`AD9_Duration_SubSecondIsoDecimalNotation_RoundTripsLossless_BothLanguages` (C#) +
+`AD9_duration_subSecondNanos_roundTripsLossless_bothLanguages` (TS) assert cross-language parity.
+Malformed / out-of-range ISO → `ValidationFailed(common_time_INVALID_DURATION)` (error-as-value,
+never a throw). The helper's own adversarial suite is `IsoDurationTests` (D2.Shared.Tests).
 
 ---
 
@@ -189,12 +237,13 @@ Committed C# fixture files exercised by the in-memory gRPC harness in `D2.Edge.T
 
 ## Coverage summary
 
-| Metric                            | Result                                                                                                                        |
-| --------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
-| Lines                             | 100%                                                                                                                          |
-| Branches                          | 100%                                                                                                                          |
-| Functions                         | 100%                                                                                                                          |
-| Statements                        | 100%                                                                                                                          |
-| Test files                        | 25                                                                                                                            |
-| Total tests                       | 474                                                                                                                           |
-| C# behavior tests (D2.Edge.Tests) | 625 (includes 2 new status-fidelity tests: `SignRoute_Created_Returns201WithBody` + `SignRoute_SomeFound_Returns206WithBody`) |
+| Metric                            | Result                                                                         |
+| --------------------------------- | ------------------------------------------------------------------------------ |
+| Lines                             | 100%                                                                           |
+| Branches                          | 100%                                                                           |
+| Functions                         | 100%                                                                           |
+| Statements                        | 100%                                                                           |
+| Test files                        | 26                                                                             |
+| Total tests                       | 582                                                                            |
+| C# behavior tests (D2.Edge.Tests) | 853 passing (includes the temporal round-trip matrix `TemporalRoundTripTests`) |
+| TS temporal round-trip (@d2/time) | 32 (`temporal-round-trip.test.ts`, drives the shared cross-language fixture)   |
