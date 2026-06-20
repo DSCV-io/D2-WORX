@@ -6,6 +6,7 @@
 
 namespace D2.Shared.Auth.Http;
 
+using D2.Shared.Auth.Abstractions;
 using D2.Shared.Auth.Abstractions.Http;
 using D2.Shared.Auth.Validation;
 using D2.Shared.Context.Abstractions;
@@ -113,6 +114,14 @@ public static class AuthHttpServiceCollectionExtensions
                             + "interceptor (for gRPC) has run before resolving "
                             + "IRequestContext.");
             });
+
+            // Request-scoped forwarded-JWT holder — structurally isolated from
+            // IRequestContext (a different type with a different registration,
+            // never projected by the request-context enricher). JwtAuthMiddleware
+            // populates it after successful validation; the outbound forwarding
+            // credential reads it. TryAdd keeps it idempotent and harmless under
+            // dual-transport hosts (the gRPC extension registers the same holder).
+            services.TryAddScoped<IForwardedJwtAccessor, MutableForwardedJwtAccessor>();
 
             return services;
         }

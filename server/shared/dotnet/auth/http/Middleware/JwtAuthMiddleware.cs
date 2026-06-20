@@ -22,6 +22,7 @@ using D2.Shared.ProblemDetails;
 using D2.Shared.Result;
 using D2.Shared.Utilities.Extensions;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Primitives;
 
@@ -162,6 +163,21 @@ internal sealed class JwtAuthMiddleware
         }
 
         var requestContext = validationResult.Data!;
+
+        // Stash the validated raw bearer in the request-scoped forwarded-JWT
+        // holder so an outbound hop can replay it byte-for-byte. Captured AFTER
+        // validation success — only a validator-accepted token reaches here (the
+        // harmless, bearer-missing, and validation-failure paths all return
+        // earlier), so a forged/malformed token never enters the holder.
+        // Best-effort: a host that does not register the holder (does not
+        // forward) simply no-ops; a null RequestServices (outside a DI scope)
+        // also no-ops rather than throwing. The bearer is never logged.
+        // RequestServices is non-null-annotated but can be null at runtime
+        // (e.g. resolution outside a DI scope), so guard explicitly.
+        var serviceProvider = (IServiceProvider?)context.RequestServices;
+
+        if (serviceProvider is not null)
+            serviceProvider.GetService<IForwardedJwtAccessor>()?.Capture(bearerResult.Data!);
 
         // Session liveness — only when the validated context surfaces a
         // session id. RequireSessionIdClaim defaults to true on the

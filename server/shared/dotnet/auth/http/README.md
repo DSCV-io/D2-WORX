@@ -32,7 +32,9 @@ app.MapGet("/files/{id}", H).RequireAnyScope("files.read");
 app.MapGet("/healthz", () => "ok").MarkAsD2HarmlessEndpoint();
 ```
 
-`AddD2AuthHttp()` registers `IHttpContextAccessor` and a scoped `IRequestContext` resolver that reads from `HttpContext.Items` (populated by the middleware). `AddD2Auth(...)` MUST be called first — fail-fast `InvalidOperationException` otherwise.
+`AddD2AuthHttp()` registers `IHttpContextAccessor`, a scoped `IRequestContext` resolver that reads from `HttpContext.Items` (populated by the middleware), and a scoped `IForwardedJwtAccessor` holder (the same registration `AddD2AuthGrpc()` makes). `AddD2Auth(...)` MUST be called first — fail-fast `InvalidOperationException` otherwise.
+
+The middleware ALSO captures the validated raw bearer into the request-scoped `IForwardedJwtAccessor` (the [redacting forwarded-JWT holder](../abstractions/README.md#forwarded-jwt-credential--forwardedjwt--iforwardedjwtaccessor)) after validation success — so an outbound hop can replay it byte-for-byte ([ADR-0022 §Realization](../../../../../docs/adrs/0022-service-auth-mint-once-forward.md)). Capture is best-effort: a host that does not register the holder (does not forward) no-ops; only a validator-accepted token is ever captured (the harmless / bearer-missing / validation-failure paths leave the holder unset). The raw bearer is never logged.
 
 `UseD2Auth()` MUST sit AFTER `UseRouting()` (so endpoint metadata is matched) and BEFORE the endpoint dispatcher (`UseEndpoints` / `MapXxx`) so the middleware can short-circuit before handlers run.
 

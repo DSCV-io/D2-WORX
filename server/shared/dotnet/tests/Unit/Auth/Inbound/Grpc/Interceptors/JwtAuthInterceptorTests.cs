@@ -19,6 +19,7 @@ using D2.Shared.Context.Abstractions;
 using D2.Shared.Tests.Unit.Auth.Inbound.Grpc.Fixtures;
 using global::Grpc.Core;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using Xunit;
@@ -444,6 +445,129 @@ public sealed class JwtAuthInterceptorTests
         httpItemsStored.Should().NotBeNull();
         httpItemsStored.Should().BeSameAs(userStateStored);
         httpItemsStored.SessionId.Should().Be(sessionId);
+    }
+
+    // ---- Forwarded-JWT capture wiring ----
+
+    [Fact]
+    public async Task UnaryServerHandler_SuccessPath_CapturesRawBearerVerbatimInHolder()
+    {
+        // The interceptor stashes the validated raw bearer in the request-scoped
+        // forwarded-JWT holder (resolved from httpContext.RequestServices)
+        // alongside its IRequestContext dual-write. (Step-scoped note: no
+        // production reader yet — this test plays the future consumer.)
+        using var builder = new TestJwtBuilder();
+        var token = builder.MintToken(
+            _ISSUER,
+            _AUDIENCE,
+            extraClaims: new Dictionary<string, object>
+            {
+                [D2.Shared.Auth.Abstractions.JwtClaimTypes.SCOPE] = "any.scope",
+            });
+        var holder = new MutableForwardedJwtAccessor();
+        var interceptor = MakeInterceptor(builder);
+        var ctx = MakeContextWithHolder(
+            authorization: $"{_BEARER_PREFIX}{token}",
+            holder: holder,
+            metadata: MethodScopeMetadata.ForScopes(["any.scope"], ScopeMatch.Any));
+
+        await interceptor.UnaryServerHandler<string, string>(
+            "req", ctx, (_, _) => Task.FromResult("reply"));
+
+        holder.Current.Should().NotBeNull();
+        holder.Current!.Value.RevealForForwarding().Should().Be(token);
+    }
+
+    [Fact]
+    public async Task UnaryServerHandler_HarmlessEndpoint_LeavesHolderUnset()
+    {
+        // Harmless short-circuits before bearer extraction — holder stays empty.
+        using var builder = new TestJwtBuilder();
+        var holder = new MutableForwardedJwtAccessor();
+        var interceptor = MakeInterceptor(builder);
+        var ctx = MakeContextWithHolder(
+            authorization: null,
+            holder: holder,
+            metadata: MethodScopeMetadata.HarmlessEndpoint);
+
+        await interceptor.UnaryServerHandler<string, string>(
+            "req", ctx, (_, _) => Task.FromResult("reply"));
+
+        holder.Current.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task UnaryServerHandler_ValidationFailure_LeavesHolderUnset()
+    {
+        // A malformed token fails validation BEFORE the capture point.
+        using var builder = new TestJwtBuilder();
+        var holder = new MutableForwardedJwtAccessor();
+        var interceptor = MakeInterceptor(builder);
+        var ctx = MakeContextWithHolder(
+            authorization: $"{_BEARER_PREFIX}not.a.jwt.too.many.parts",
+            holder: holder);
+
+        var act = async () =>
+            await interceptor.UnaryServerHandler<string, string>(
+                "req", ctx, (_, _) => Task.FromResult("reply"));
+
+        await act.Should().ThrowAsync<RpcException>();
+        holder.Current.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task UnaryServerHandler_SuccessPath_NoHolderRegistered_NoOpsAndStillSucceeds()
+    {
+        // A host that does not register the holder must not crash inbound — the
+        // capture is best-effort (GetService + ?.). The HttpContext is present
+        // (so the capture path runs) but its RequestServices holds no holder.
+        using var builder = new TestJwtBuilder();
+        var token = builder.MintToken(_ISSUER, _AUDIENCE);
+        var interceptor = MakeInterceptor(builder);
+        var ctx = MakeContextWithHolder(
+            authorization: $"{_BEARER_PREFIX}{token}", holder: null);
+
+        var continuationCalled = false;
+        var act = async () =>
+            await interceptor.UnaryServerHandler<string, string>(
+                "req",
+                ctx,
+                (_, _) =>
+                {
+                    continuationCalled = true;
+                    return Task.FromResult("reply");
+                });
+
+        await act.Should().NotThrowAsync();
+        continuationCalled.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task UnaryServerHandler_SuccessPath_NullRequestServices_NoOpsAndStillSucceeds()
+    {
+        // Regression: capture must tolerate a null httpContext.RequestServices —
+        // GetService<T>() throws ArgumentNullException on a null provider, so the
+        // capture null-conditionals RequestServices itself.
+        using var builder = new TestJwtBuilder();
+        var token = builder.MintToken(_ISSUER, _AUDIENCE);
+        var interceptor = MakeInterceptor(builder);
+        var httpContext = new DefaultHttpContext { RequestServices = null! };
+        var headers = new Metadata { { "authorization", $"{_BEARER_PREFIX}{token}" } };
+        var ctx = new TestServerCallContext(requestHeaders: headers, httpContext: httpContext);
+
+        var continuationCalled = false;
+        var act = async () =>
+            await interceptor.UnaryServerHandler<string, string>(
+                "req",
+                ctx,
+                (_, _) =>
+                {
+                    continuationCalled = true;
+                    return Task.FromResult("reply");
+                });
+
+        await act.Should().NotThrowAsync();
+        continuationCalled.Should().BeTrue();
     }
 
     [Fact]
@@ -1206,6 +1330,48 @@ public sealed class JwtAuthInterceptorTests
                 requestDelegate: _ => Task.CompletedTask,
                 metadata: new EndpointMetadataCollection(metadata),
                 displayName: "test-grpc-endpoint");
+            httpContext.SetEndpoint(endpoint);
+        }
+
+        return new TestServerCallContext(
+            requestHeaders: headers,
+            cancellationToken: cancellationToken,
+            httpContext: httpContext);
+    }
+
+    /// <summary>
+    /// Creates a <see cref="TestServerCallContext"/> whose per-call
+    /// <see cref="HttpContext"/> has a populated <see cref="HttpContext.RequestServices"/>
+    /// — optionally holding the forwarded-JWT <paramref name="holder"/> — so the
+    /// interceptor's capture path (which resolves the holder from
+    /// <c>httpContext.RequestServices</c>) is exercised. When
+    /// <paramref name="holder"/> is null the scope has no holder registered,
+    /// exercising the best-effort no-op path.
+    /// </summary>
+    private static TestServerCallContext MakeContextWithHolder(
+        string? authorization,
+        IForwardedJwtAccessor? holder,
+        MethodScopeMetadata? metadata = null,
+        CancellationToken cancellationToken = default)
+    {
+        var headers = new Metadata();
+        if (authorization is not null)
+            headers.Add("authorization", authorization);
+
+        var services = new ServiceCollection();
+        if (holder is not null)
+            services.AddSingleton(holder);
+
+        var httpContext = new DefaultHttpContext
+        {
+            RequestServices = services.BuildServiceProvider(),
+        };
+        if (metadata is not null)
+        {
+            var endpoint = new Endpoint(
+                requestDelegate: _ => Task.CompletedTask,
+                metadata: new EndpointMetadataCollection(metadata),
+                displayName: "test-grpc-endpoint-holder");
             httpContext.SetEndpoint(endpoint);
         }
 

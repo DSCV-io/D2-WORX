@@ -25,6 +25,9 @@ The runtime piece (`AddD2Auth`, JWT validation, JWKS HTTP fetcher, session liven
 | `Scopes.g.cs` (codegen, in `Generated/D2.Shared.Auth.Scopes.SourceGen/...`)                    | Static partial class — OAuth-canonical scope string constants emitted from `contracts/auth-scopes/scopes.spec.json` by the sibling `D2.Shared.Auth.Scopes.SourceGen` analyzer. Single source of truth for the platform's scope catalog.                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
 | `Audiences.g.cs` (codegen, in `Generated/D2.Shared.Auth.Audiences.SourceGen/...`)              | Static partial class — JWT `aud`-claim audience constants emitted from `contracts/auth-audiences/audiences.spec.json` by the sibling `D2.Shared.Auth.Audiences.SourceGen` analyzer. Single source of truth for the inbound `aud`-claim check at every hop — under the forward-unchanged model ([ADR-0022](../../../../../docs/adrs/0022-service-auth-mint-once-forward.md)) that check is the broad internal audience every internal service accepts — and for the `targetAudience` argument of the retained boundary-mint / exception token exchanges (`TokenExchangeClient.ExchangeAsync`). Provides `IsKnown(url)`, `Resolve(name)`, `ResolveByUrl(url)` helpers, plus `AllUrls` (read-only set of every audience URL) and `ByName` (read-only name → URL map) collection projections for enumeration.                                                                                                                                                     |
 | `WellKnownAudiences.cs`                                                                         | Static class (hand-declared, NOT codegen) — well-known JWT `aud` audiences deliberately absent from `audiences.spec.json`. Holds `D2_INTERNAL_AUDIENCE` (`"d2.internal"`), the single broad internal *receive* audience every hop validates and the Edge minter sets under the forward-unchanged model ([ADR-0022](../../../../../docs/adrs/0022-service-auth-mint-once-forward.md)). Hand-declared because it is a protocol constant, not a token-exchange *target* like the spec-generated `Audiences` entries — so it is not a spec-mirror DTO.                                                                                                                                                                                                                                                                                              |
+| `ForwardedJwt.cs`                                                                               | `readonly struct` — redacting wrapper around the raw internal transaction-token (an RS256 JWT bearer string) a hop retains to replay byte-for-byte on an outbound cross-process gRPC hop. Unloggable by construction ([ADR-0022 §Realization](../../../../../docs/adrs/0022-service-auth-mint-once-forward.md)): carries `[RedactData(SecretInformation)]`, a self-redacting `ToString()`, the raw bytes in a PRIVATE field (invisible to the Serilog destructuring policy, which reflects only public properties), and a single reveal seam `RevealForForwarding()`. `Create(string?) → D2Result<ForwardedJwt>` validates a blank credential away (no JWT-format re-check — the token is pre-validated at the capture site).                                                                                                                |
+| `IForwardedJwtAccessor.cs`                                                                      | Interface — request-scoped holder for the inbound forwarded JWT (`Current` read + `Capture(rawBearer)` write). Structurally isolated from `IRequestContext` (a distinct type with a distinct DI registration, never projected by the request-context enricher) so the live credential cannot leak through the broadly-projected log/telemetry surface. Registered request-scoped by both `AddD2AuthHttp()` and `AddD2AuthGrpc()`; populated by the HTTP middleware / gRPC interceptor after successful validation; read by the outbound forwarding credential.                                                                                                                                                                                                                                                                          |
+| `MutableForwardedJwtAccessor.cs`                                                                | `public sealed class` — default `IForwardedJwtAccessor` impl, a plain per-request mutable cell with no static state (request isolation = the scoped DI lifetime). Public because the DI registration sites live in the separate transport assemblies. Capture routes through `ForwardedJwt.Create` (blank input validated away, never stored); a second capture in one scope is last-write-wins.                                                                                                                                                                                                                                                                                                                                                                                                                                  |
 | `JwtClaimTypes.g.cs` (codegen, in `Generated/D2.Shared.Auth.JwtClaims.SourceGen/...`)          | Static class — claim name constants emitted from `contracts/jwt-claims/jwt-claims.spec.json` by the sibling `D2.Shared.Auth.JwtClaims.SourceGen` analyzer. Standard claims (`sub`, `aud`, `act`, `scope`, ...) keep canonical names; D² custom claims use the `d2_` prefix. The `act.d2_kind` claim discriminates impersonation flavor (Consent vs Force) — see `ImpersonationKind` for the values. Same spec drives the TS-side `@d2/auth-abstractions` `JwtClaimTypes` catalog.                                                                                                                                                                                                               |
 | `Jwks/IJwksProvider.cs`                                                                        | Interface — `GetKeysAsync` / `RefreshAsync` returning `D2Result<JwksKeySetSnapshot>` / `D2Result`. The contract every consumer-side service uses to look up JWT verify keys by `kid`. Impl lives in `D2.Shared.Auth/Jwks/HttpJwksProvider.cs`; Edge supplies its own issuer-side impl.                                                                                                                                                                                                                                                                                                                                                                                                          |
 | `Jwks/JwksKeySetSnapshot.cs`                                                                   | Sealed record — immutable snapshot of the verify-key set (kid → `SecurityKey` dictionary + fetched-at timestamp + source URL). Returned by `IJwksProvider.GetKeysAsync`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
@@ -107,12 +110,38 @@ WellKnownAudiences.D2_INTERNAL_AUDIENCE    // "d2.internal" (hand-declared, NOT 
                                            //  the universal internal receive audience every hop validates)
 ```
 
+### Forwarded-JWT credential — `ForwardedJwt` + `IForwardedJwtAccessor`
+
+The in-process realization of the forward-unchanged rule ([ADR-0022 §Realization](../../../../../docs/adrs/0022-service-auth-mint-once-forward.md)) — how a hop *holds* the forwarded transaction-token so it can re-attach it outbound.
+
+```csharp
+// Smart constructor — validates a blank credential away; NO JWT-format re-check
+// (the token is already validated at the capture site).
+D2Result<ForwardedJwt> result = ForwardedJwt.Create(rawBearer);
+
+// THE sole reveal seam — the only path to the raw bytes (used by the outbound
+// forwarding credential). Throws on an empty wrapper.
+string raw = forwardedJwt.RevealForForwarding();
+
+// Unloggable by construction — every log/serialization path yields the placeholder.
+forwardedJwt.ToString();                   // "[REDACTED: ForwardedJwt]"
+// {@x} destructuring → "[REDACTED: SecretInformation]" via the [RedactData] policy.
+
+// Request-scoped holder — populated by the inbound auth surface, read by the
+// outbound forwarding credential. Registered by AddD2AuthHttp() + AddD2AuthGrpc().
+ForwardedJwt? current = accessor.Current;
+accessor.Capture(rawBearer);
+```
+
+**Four-layer never-logged guarantee** (proven by tests, not asserted): self-redacting (`ToString` + `[RedactData]` + private backing field), single reveal seam (`RevealForForwarding`), enrichment-isolated (held off `IRequestContext`, so the request-context enricher cannot reach it), and never a `[LoggerMessage]` parameter.
+
 ---
 
 ## Dependencies
 
-- `D2.Shared.Result` — `D2Result<T>` returns on the consumer-side contracts (`IJwksProvider`, `ISessionLivenessTracker`).
+- `D2.Shared.Result` — `D2Result<T>` returns on the consumer-side contracts (`IJwksProvider`, `ISessionLivenessTracker`) and `ForwardedJwt.Create`. Transitively re-exposes `ErrorCategory` (used by `ForwardedJwt.Create`'s generic `ValidationFailed`).
 - `D2.Shared.I18n.Abstractions` — `TKMessage` parameters via `D2Result.Messages` / `InputErrors` shape.
+- `D2.Shared.Utilities` — `[RedactData]` + `RedactReason` for the `ForwardedJwt` redacting wrapper, and `ToNullIfEmpty()` for its smart constructor. A leaf (references only result/i18n), so no cycle.
 - `Microsoft.IdentityModel.Tokens` — `SecurityKey` type used on `JwksKeySetSnapshot.Keys`. The de-facto BCL-adjacent abstraction (ASP.NET Core's `TokenValidationParameters.IssuerSigningKeys` takes it; `ConfigurationManager<OpenIdConnectConfiguration>` emits it). No deeper abstraction layer adds value here.
 - Analyzer-only project references to `D2.Shared.Auth.Scopes.SourceGen` and `D2.Shared.Auth.Audiences.SourceGen` for the codegen output.
 
@@ -186,6 +215,18 @@ The scope catalog, audience catalog, JWT claim names, HTTP header names, and in-
 `server/shared/dotnet/tests/Unit/Auth/Sessions/`:
 
 - `ISessionLivenessTrackerContractTests.cs` — same reflection-based shape pinning so accidental method additions / removals fire at the abstractions test layer first.
+
+`server/shared/dotnet/tests/Unit/Auth/Inbound/Forwarding/` — the forwarded-JWT credential:
+
+- `ForwardedJwtTests.cs` — `Create` (valid / null / empty / whitespace / oversized / control-chars-verbatim); `RevealForForwarding` (exact bytes / empty-throws / sole raw accessor / no public raw property); the never-logged proofs (`ToString` / interpolation / JSON-serialize / `[RedactData]`-attribute / real-destructuring-policy all yield the placeholder, never the bytes); equality / hashcode / `HasValue`.
+- `MutableForwardedJwtAccessorTests.cs` — `Current` / `Capture` / double-capture (last-write-wins) / blank-input-no-op / no-shared-state.
+- `ForwardedJwtAccessorResolutionTests.cs` — `AddD2AuthHttp()` + `AddD2AuthGrpc()` each register a RESOLVABLE scoped holder (resolve, not descriptor-presence); scoped-lifetime + cross-request-bleed + cross-transport parity + dual-transport.
+- `ForwardedJwtLogDelegateContractTests.cs` — scans every auth `*Log` class; asserts no `[LoggerMessage]` delegate takes a `ForwardedJwt` parameter (mirrors `MtlsLogDelegateContractTests`).
+- `ForwardedJwtSoleRevealCallerTests.cs` — source-text scan over `server/`; asserts no unexpected production caller of `RevealForForwarding` (the single controlled reveal seam).
+
+`server/shared/dotnet/tests/Unit/Logging/Internal/ForwardedJwtEnrichmentExclusionTests.cs` — structural-isolation pin: no `ForwardedJwt`-typed / credential-named property on `IRequestContext` / `IAuthContext`, and the request-context enricher records no credential field/bytes even with a populated holder in scope.
+
+`server/shared/dotnet/tests/Integration/Logging/ForwardedJwtLogCaptureTests.cs` — end-to-end Serilog log-capture across a capture-then-reveal cycle; asserts the raw bytes surface in NO event across both the `{@x}` and `{x}` paths.
 
 Run: `dotnet test server/shared/dotnet/tests`.
 

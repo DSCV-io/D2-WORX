@@ -20,6 +20,7 @@ using D2.Shared.Context.Abstractions;
 using D2.Shared.Tests.Unit.Auth.Inbound.Http.Fixtures;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Features;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Primitives;
@@ -265,6 +266,113 @@ public sealed class JwtAuthMiddlewareTests
         stored.Should().NotBeNull();
         stored.IsAuthenticated.Should().BeTrue();
         stored.SessionId.Should().Be(sessionId);
+    }
+
+    // ── Forwarded-JWT capture wiring ───────────────────────────────────────
+
+    [Fact]
+    public async Task InvokeAsync_SuccessPath_CapturesRawBearerVerbatimInHolder()
+    {
+        // The middleware stashes the validated raw bearer in the request-scoped
+        // forwarded-JWT holder so an outbound hop can replay it byte-for-byte.
+        // (Step-scoped note: the holder has no production reader yet — this test
+        // plays the future consumer, reading it back via RevealForForwarding.)
+        using var builder = new TestJwtBuilder();
+        var token = builder.MintToken(_ISSUER, _AUDIENCE);
+        var holder = new MutableForwardedJwtAccessor();
+        var (mw, nextCalled) = MakeMiddleware(builder);
+        var ctx = MakeContext(authorization: $"{_BEARER_PREFIX}{token}");
+        ctx.RequestServices = BuildServicesWithHolder(holder);
+
+        await mw.InvokeAsync(ctx);
+
+        nextCalled().Should().BeTrue();
+        holder.Current.Should().NotBeNull();
+        holder.Current!.Value.RevealForForwarding().Should().Be(token);
+    }
+
+    [Fact]
+    public async Task InvokeAsync_HarmlessEndpoint_LeavesHolderUnset()
+    {
+        // Harmless endpoints short-circuit before bearer extraction — the holder
+        // stays empty (no forged/absent token is ever captured).
+        using var builder = new TestJwtBuilder();
+        var holder = new MutableForwardedJwtAccessor();
+        var (mw, _) = MakeMiddleware(builder);
+        var ctx = MakeContext(
+            authorization: null, metadata: EndpointScopeMetadata.HarmlessEndpoint);
+        ctx.RequestServices = BuildServicesWithHolder(holder);
+
+        await mw.InvokeAsync(ctx);
+
+        holder.Current.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task InvokeAsync_BearerMissing_LeavesHolderUnset()
+    {
+        using var builder = new TestJwtBuilder();
+        var holder = new MutableForwardedJwtAccessor();
+        var (mw, _) = MakeMiddleware(builder);
+        var ctx = MakeContext(authorization: null);
+        ctx.RequestServices = BuildServicesWithHolder(holder);
+
+        await mw.InvokeAsync(ctx);
+
+        holder.Current.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task InvokeAsync_ValidationFailure_LeavesHolderUnset()
+    {
+        // A malformed/forged token fails validation BEFORE the capture point —
+        // the holder must never receive an unvalidated bearer.
+        using var builder = new TestJwtBuilder();
+        var holder = new MutableForwardedJwtAccessor();
+        var (mw, _) = MakeMiddleware(builder);
+        var ctx = MakeContext(authorization: $"{_BEARER_PREFIX}not.a.jwt.too.many.parts");
+        ctx.RequestServices = BuildServicesWithHolder(holder);
+
+        await mw.InvokeAsync(ctx);
+
+        ctx.Response.StatusCode.Should().Be(401);
+        holder.Current.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task InvokeAsync_SuccessPath_NoHolderRegistered_NoOpsAndStillSucceeds()
+    {
+        // A host that does not register the holder (does not forward) must not
+        // crash inbound — the capture is best-effort (GetService + ?.).
+        using var builder = new TestJwtBuilder();
+        var token = builder.MintToken(_ISSUER, _AUDIENCE);
+        var (mw, nextCalled) = MakeMiddleware(builder);
+        var ctx = MakeContext(authorization: $"{_BEARER_PREFIX}{token}");
+        ctx.RequestServices = new ServiceCollection().BuildServiceProvider();
+
+        var act = async () => await mw.InvokeAsync(ctx);
+
+        await act.Should().NotThrowAsync();
+        nextCalled().Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task InvokeAsync_SuccessPath_NullRequestServices_NoOpsAndStillSucceeds()
+    {
+        // Regression: capture must tolerate a null HttpContext.RequestServices
+        // (outside a DI scope) — GetService<T>() throws ArgumentNullException on
+        // a null provider, so the capture null-conditionals RequestServices
+        // itself. Without the guard the success path NREs.
+        using var builder = new TestJwtBuilder();
+        var token = builder.MintToken(_ISSUER, _AUDIENCE);
+        var (mw, nextCalled) = MakeMiddleware(builder);
+        var ctx = MakeContext(authorization: $"{_BEARER_PREFIX}{token}");
+        ctx.RequestServices = null!;
+
+        var act = async () => await mw.InvokeAsync(ctx);
+
+        await act.Should().NotThrowAsync();
+        nextCalled().Should().BeTrue();
     }
 
     [Fact]
@@ -651,6 +759,13 @@ public sealed class JwtAuthMiddlewareTests
             Options.Create(options),
             new ClaimsToContextMapper(),
             NullLogger<JwtValidator>.Instance);
+    }
+
+    private static ServiceProvider BuildServicesWithHolder(IForwardedJwtAccessor holder)
+    {
+        var services = new ServiceCollection();
+        services.AddSingleton(holder);
+        return services.BuildServiceProvider();
     }
 
     private static DefaultHttpContext MakeContext(
