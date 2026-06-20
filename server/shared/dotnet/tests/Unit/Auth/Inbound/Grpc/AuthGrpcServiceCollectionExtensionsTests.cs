@@ -8,9 +8,12 @@ namespace D2.Shared.Tests.Unit.Auth.Inbound.Grpc;
 
 using AwesomeAssertions;
 using D2.Shared.Auth;
+using D2.Shared.Auth.Abstractions;
 using D2.Shared.Auth.Abstractions.Http;
 using D2.Shared.Auth.Grpc;
+using D2.Shared.Auth.Grpc.Ambient;
 using D2.Shared.Auth.Grpc.Interceptors;
+using D2.Shared.Auth.Http;
 using D2.Shared.Caching;
 using D2.Shared.Caching.Local.Default;
 using D2.Shared.Context.Abstractions;
@@ -93,6 +96,119 @@ public sealed class AuthGrpcServiceCollectionExtensionsTests
         var resolved = scope.ServiceProvider.GetRequiredService<IRequestContext>();
 
         resolved.Should().BeSameAs(requestContext);
+    }
+
+    [Fact]
+    public void AddD2AuthGrpc_RegistersAmbientRequestScopeAccessor()
+    {
+        var sp = BuildProvider();
+
+        // §1.3 — actual resolution, not descriptor-presence. The outbound
+        // forwarding credential's channel build does a hard
+        // GetRequiredService<IAmbientRequestScopeAccessor>(), so the port MUST
+        // resolve on a gRPC-inbound forwarding host.
+        var accessor = sp.GetRequiredService<IAmbientRequestScopeAccessor>();
+
+        accessor.Should().BeOfType<GrpcHttpContextAmbientRequestScopeAccessor>();
+    }
+
+    [Fact]
+    public void AddD2AuthGrpc_RegistersAmbientRequestScopeAccessorAsSingleton()
+    {
+        var sp = BuildProvider();
+
+        var first = sp.GetRequiredService<IAmbientRequestScopeAccessor>();
+        var second = sp.GetRequiredService<IAmbientRequestScopeAccessor>();
+
+        first.Should().BeSameAs(second);
+    }
+
+    [Fact]
+    public void AddD2AuthGrpc_AmbientRequestScopeAccessor_ReadsRequestScope()
+    {
+        // Integration of the adapter with its DI registration: the resolved port
+        // reads the current call's HttpContext.RequestServices end-to-end. Set a
+        // DefaultHttpContext (under gRPC this is the per-call gRPC context) with a
+        // known RequestServices on the resolved IHttpContextAccessor, then assert
+        // the resolved IAmbientRequestScopeAccessor.Current surfaces that scope.
+        var sp = BuildProvider();
+        var requestScope = new ServiceCollection().BuildServiceProvider();
+        var httpContextAccessor = sp.GetRequiredService<IHttpContextAccessor>();
+        httpContextAccessor.HttpContext = new DefaultHttpContext { RequestServices = requestScope };
+
+        var accessor = sp.GetRequiredService<IAmbientRequestScopeAccessor>();
+
+        accessor.Current.Should().BeSameAs(requestScope);
+    }
+
+    [Fact]
+    public void AddD2AuthGrpc_CalledTwice_AmbientRequestScopeAccessorStillResolvesOnce()
+    {
+        var services = BuildServices();
+        services.AddD2AuthGrpc();
+        services.AddD2AuthGrpc();
+        var sp = services.BuildServiceProvider();
+
+        // Idempotent: TryAddSingleton means the second call does not change
+        // resolvability and there is exactly one registration.
+        var accessor = sp.GetRequiredService<IAmbientRequestScopeAccessor>();
+        accessor.Should().BeOfType<GrpcHttpContextAmbientRequestScopeAccessor>();
+
+        var descriptors = services
+            .Where(d => d.ServiceType == typeof(IAmbientRequestScopeAccessor))
+            .ToList();
+        descriptors.Should().HaveCount(1);
+    }
+
+    [Fact]
+    public void DualTransport_HttpThenGrpc_AmbientPortResolvesAndReadsScope()
+    {
+        // A dual-transport host (HTTP endpoints + gRPC services on one Kestrel
+        // host) calls BOTH AddD2AuthHttp() and AddD2AuthGrpc(). TryAddSingleton is
+        // first-wins, so the HTTP adapter wins here — harmless because both impls
+        // read IHttpContextAccessor.HttpContext.RequestServices identically. The
+        // port must still resolve AND behave. This is the new cross-extension seam
+        // the §1.3 "every seam" discipline demands now the port has TWO registrars.
+        var services = BuildServices();
+        services.AddD2AuthHttp();
+        services.AddD2AuthGrpc();
+        var sp = services.BuildServiceProvider();
+
+        var requestScope = new ServiceCollection().BuildServiceProvider();
+        var httpContextAccessor = sp.GetRequiredService<IHttpContextAccessor>();
+        httpContextAccessor.HttpContext = new DefaultHttpContext { RequestServices = requestScope };
+
+        var accessor = sp.GetRequiredService<IAmbientRequestScopeAccessor>();
+        accessor.Current.Should().BeSameAs(requestScope);
+
+        services
+            .Where(d => d.ServiceType == typeof(IAmbientRequestScopeAccessor))
+            .Should().HaveCount(1, "TryAddSingleton first-wins — a single registration across both transports");
+    }
+
+    [Fact]
+    public void DualTransport_GrpcThenHttp_AmbientPortResolvesAndReadsScope()
+    {
+        // Reverse registration order — the gRPC adapter wins. Identical behavior:
+        // the port resolves, reads the request scope, and is registered exactly
+        // once. Proves the dual-transport host is correct regardless of order.
+        var services = BuildServices();
+        services.AddD2AuthGrpc();
+        services.AddD2AuthHttp();
+        var sp = services.BuildServiceProvider();
+
+        var requestScope = new ServiceCollection().BuildServiceProvider();
+        var httpContextAccessor = sp.GetRequiredService<IHttpContextAccessor>();
+        httpContextAccessor.HttpContext = new DefaultHttpContext { RequestServices = requestScope };
+
+        var accessor = sp.GetRequiredService<IAmbientRequestScopeAccessor>();
+        accessor.Current.Should().BeSameAs(requestScope);
+        accessor.Should().BeOfType<GrpcHttpContextAmbientRequestScopeAccessor>(
+            "gRPC registered first, so TryAddSingleton keeps the gRPC adapter");
+
+        services
+            .Where(d => d.ServiceType == typeof(IAmbientRequestScopeAccessor))
+            .Should().HaveCount(1, "TryAddSingleton first-wins — a single registration across both transports");
     }
 
     [Fact]

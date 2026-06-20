@@ -183,14 +183,15 @@ public static class AuthOutboundServiceCollectionExtensions
         /// outbound RPC, the current request's request-scoped
         /// <c>IForwardedJwtAccessor</c> through the framework-free
         /// <c>IAmbientRequestScopeAccessor</c> port. Both of those services are
-        /// registered by the INBOUND auth transport (<c>AddD2AuthHttp()</c> registers
-        /// the holder AND the <c>IHttpContextAccessor</c>-backed ambient adapter; the
-        /// holder is also registered by <c>AddD2AuthGrpc()</c>). A forwarding host is
-        /// by definition an inbound host — it received an inbound request to have a
-        /// token to forward — so those registrations are already present. This call
-        /// therefore deliberately registers NEITHER the holder NOR the ambient adapter
-        /// (the inbound transport owns them) and keeps the outbound lib free of any
-        /// AspNetCore framework reference.
+        /// registered by the INBOUND auth transport: <c>AddD2AuthHttp()</c> and
+        /// <c>AddD2AuthGrpc()</c> each register the holder AND their own
+        /// <c>IHttpContextAccessor</c>-backed ambient adapter, so the read-back door
+        /// is wired whether the host is HTTP-inbound or gRPC-inbound. A forwarding
+        /// host is by definition an inbound host — it received an inbound request to
+        /// have a token to forward — so those registrations are already present. This
+        /// call therefore deliberately registers NEITHER the holder NOR the ambient
+        /// adapter (the inbound transport owns them) and keeps the outbound lib free
+        /// of any AspNetCore framework reference.
         /// </para>
         /// <para>
         /// The credential reads no configuration (no TTL, no endpoint — the token is
