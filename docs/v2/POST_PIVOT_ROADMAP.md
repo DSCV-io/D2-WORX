@@ -74,20 +74,20 @@ the §2 re-track findings, §4 locked decisions L1–L13, §5 step breakdown) + 
 [PHASE_0_AUTH per-hop validator sequence](PHASE_0_AUTH.md) (checks 0–9, layer-annotated) and minted-claim
 set.
 
-### B.1 — The active deliverable: 0023 (forwarded-JWT plumbing + service-identity retirement)
+### B.1 — The active deliverable: 0023 (forwarded-JWT plumbing + service-identity retirement) <sup>✅ SHIPPED</sup>
 
-🔄 active on `n/forwarded-token-auth` (PLAN drafted; awaiting sign-off). **The single source of truth for these
-items is the [0023 README](../wip/0023-forwarded-token-auth/README.md) — do not duplicate its step detail
-here.** Rows below are the headline scope so the roadmap stays scannable.
+✅ SHIPPED 2026-06-20 on `n/forwarded-token-auth` (converged + governed; FINAL-REVIEW converged in 2 rounds). **The
+single source of truth for these items is the [0023 deliverable record](../dev/deliverables/0023-forwarded-token-auth.md) —
+do not duplicate its step detail here.** Rows below are the headline scope so the roadmap stays scannable.
 
 | # | Item (0023 scope) | Status | Canonical source |
 | - | ----------------- | ------ | ---------------- |
-| B1 | `D2_INTERNAL_AUDIENCE` constant in `D2.Shared.Auth.Abstractions` (decided in ADR-0022/0022-D8; NOT yet in code — zero code hits today; built in 0023 Step 1) | 🔄 active | [0023 §2b G1 + Step 1](../wip/0023-forwarded-token-auth/README.md) |
-| B2 | Request-scoped raw-JWT holder (`IForwardedJwtAccessor`) + the never-logged `ForwardedJwt` wrapper + inbound capture at both transports | 🔄 active | [0023 Step 2](../wip/0023-forwarded-token-auth/README.md) |
-| B3 | Per-request `CallCredentials` forwarding-attach (the per-channel-singleton-vs-per-request crux), resolved via the framework-free `IAmbientRequestScopeAccessor` port + its `IHttpContextAccessor`-backed HTTP adapter. **The call-path client interceptor that was originally part of this step is DEFERRED to [B9](#b2--beyond-0023-edge-gated--c0-gated)** (the wire-format needs a real .NET→.NET hop) | 🔄 active | [0023 Step 3](../wip/0023-forwarded-token-auth/README.md) |
-| B4 | Emitter auto-wire of `.AddD2ForwardedJwt().AddD2WorkloadCertificate()` into the generated DI registration + KeyCustodian client regen (**couples with [C7](#c--contract-idl-emitter--c0-completion)**) | 🔄 active | [0023 Step 4](../wip/0023-forwarded-token-auth/README.md) |
-| B5 | Retire the `client_credentials` service-identity surface (client / call-creds / hosted-service / cache / snapshot / exception / `AddD2ServiceIdentity` / its options + telemetry); PRESERVE token-exchange + workload-certificate | 🔄 active | [0023 Step 5](../wip/0023-forwarded-token-auth/README.md) |
-| B6 | Doc / comment reconciliation off the "predates the pivot" framing to steady-state forwarded-token | 🔄 active | [0023 Step 6](../wip/0023-forwarded-token-auth/README.md) |
+| B1 | `D2_INTERNAL_AUDIENCE` constant in `D2.Shared.Auth.Abstractions` (decided in ADR-0022/0022-D8; built in 0023 Step 1 as the hand-declared UPPER_CASE receive-audience constant) | ✅ done in 0023 (`63ace1ef`) | [0023 record S1](../dev/deliverables/0023-forwarded-token-auth.md) |
+| B2 | Request-scoped raw-JWT holder (`IForwardedJwtAccessor`) + the never-logged `ForwardedJwt` wrapper + inbound capture at both transports | ✅ done in 0023 (`d0de85ec`) | [0023 record S2](../dev/deliverables/0023-forwarded-token-auth.md) |
+| B3 | Per-request `CallCredentials` forwarding-attach (the per-channel-singleton-vs-per-request crux), resolved via the framework-free `IAmbientRequestScopeAccessor` port + its `IHttpContextAccessor`-backed HTTP adapter. **The call-path client interceptor that was originally part of this step is DEFERRED to [B9](#b2--beyond-0023-edge-gated--c0-gated)** (the wire-format needs a real .NET→.NET hop) | ✅ done in 0023 (`198ad482`) | [0023 record S3](../dev/deliverables/0023-forwarded-token-auth.md) |
+| B4 | Emitter auto-wire of `.AddD2ForwardedJwt().AddD2WorkloadCertificate()` into the generated DI registration + KeyCustodian client regen (**couples with [C7](#c--contract-idl-emitter--c0-completion)**) | ✅ done in 0023 (`c7264318`) | [0023 record S4](../dev/deliverables/0023-forwarded-token-auth.md) |
+| B5 | Retire the `client_credentials` service-identity surface (client / call-creds / hosted-service / cache / snapshot / exception / `AddD2ServiceIdentity` / its options + telemetry); PRESERVE token-exchange + workload-certificate | ✅ done in 0023 (`538b9bc3`) | [0023 record S5](../dev/deliverables/0023-forwarded-token-auth.md) |
+| B6 | Doc / comment reconciliation off the "predates the pivot" framing to steady-state forwarded-token | ✅ done in 0023 (`7335ae80`) | [0023 record S6](../dev/deliverables/0023-forwarded-token-auth.md) |
 
 ### B.2 — Beyond 0023 (Edge-gated / C0-gated)
 
@@ -144,8 +144,8 @@ diagnostics, not silent gaps).
 
 ### What can go NOW (dev-first, no running Edge host)
 
-- **0023** in full ([B1–B6](#b1--the-active-deliverable-0023-forwarded-jwt-plumbing--service-identity-retirement)) — it is *defined* as the dev-first half (build + unit-test + loopback in isolation; Edge wiring explicitly out of scope).
-- **The host-independent C0 emitter gaps** — [C2](#c--contract-idl-emitter--c0-completion) (OpenAPI extension), [C3](#c--contract-idl-emitter--c0-completion) (parity-test), [C6](#c--contract-idl-emitter--c0-completion) (enum/union). [C5](#c--contract-idl-emitter--c0-completion) (temporal scalars) is buildable once its mapping decision is made. These are pure codegen — no host.
+- **[B1–B6](#b1--the-active-deliverable-0023-forwarded-jwt-plumbing--service-identity-retirement) (0023)** — ✅ SHIPPED 2026-06-20. These items are done; the active front moves forward.
+- **The host-independent C0 emitter gaps** — [C2](#c--contract-idl-emitter--c0-completion) (OpenAPI extension), [C3](#c--contract-idl-emitter--c0-completion) (parity-test), [C6](#c--contract-idl-emitter--c0-completion) (enum/union) are buildable now with no host dependency. [C5](#c--contract-idl-emitter--c0-completion) (temporal scalars) is buildable once its mapping decision is made. Resolve [C9](#c--contract-idl-emitter--c0-completion) (how to record the already-built fleet) to close out C0. **These are the active host-independent front.**
 - **[B12](#b2--beyond-0023-edge-gated--c0-gated)** (spec docstring + `ts-codegen` fixes) is host-independent codegen, though it pairs naturally with B9.
 
 ### What is BLOCKED on a running Edge host (PHASE_3 A1 stands the host up)
@@ -165,8 +165,8 @@ diagnostics, not silent gaps).
 
 ### Recommended next-deliverable order
 
-1. **0023** — finish the active forwarded-JWT plumbing + service-identity retirement (in flight). Unblocks the auth-reconciliation debt and lands the emitter auto-wire (B4/C7).
-2. **C0 closeout + remaining host-independent emitter gaps** — decide [C9](#c--contract-idl-emitter--c0-completion) (how to record the already-built fleet), then build [C2](#c--contract-idl-emitter--c0-completion) (OpenAPI extension), [C3](#c--contract-idl-emitter--c0-completion) (parity-test), [C6](#c--contract-idl-emitter--c0-completion) (enum/union), and [C5](#c--contract-idl-emitter--c0-completion) (temporal scalars, once mapped). This is the "complete the emitters entirely" path and it needs no host. Resolve [C4](#c--contract-idl-emitter--c0-completion) (SSE emit-vs-fringe) as part of the closeout.
+1. ✅ **0023** — forwarded-JWT plumbing + service-identity retirement. SHIPPED 2026-06-20. Landed the auth-reconciliation debt and the emitter auto-wire (B4/C7). No further action.
+2. **C0 closeout + remaining host-independent emitter gaps** — decide [C9](#c--contract-idl-emitter--c0-completion) (how to record the already-built fleet), then build [C2](#c--contract-idl-emitter--c0-completion) (OpenAPI extension), [C3](#c--contract-idl-emitter--c0-completion) (parity-test), [C6](#c--contract-idl-emitter--c0-completion) (enum/union), and [C5](#c--contract-idl-emitter--c0-completion) (temporal scalars, once mapped). This is the "complete the emitters entirely" path and it needs no host. Resolve [C4](#c--contract-idl-emitter--c0-completion) (SSE emit-vs-fringe) as part of the closeout. **This is the current active host-independent front.**
 3. **PHASE_3 A1** (Edge host shell) — the gate that unblocks everything host-dependent. Tracked in [PHASE_3.md](PHASE_3.md), not here.
 4. **Then, host-gated, in PHASE_3 order**: A2 (→ B7 boundary minter; A2 mTLS issuance endpoint), A3 (→ B8 anon-mint), E1/E2 (→ C8 idempotency store), and the mTLS host wiring [A4/A5](#a--mtls-remaining-phase-3-host-gated). [B9](#b2--beyond-0023-edge-gated--c0-gated)/[B13](#b2--beyond-0023-edge-gated--c0-gated) fall out once a real call path + minter exist. [B10](#b2--beyond-0023-edge-gated--c0-gated) rides C0's call-edge emission whenever a declared A-calls-B edge first appears.
 5. **Phase 7**: [B11](#b2--beyond-0023-edge-gated--c0-gated) (BFF token rename + forwarding) with the BFF rebuild.
