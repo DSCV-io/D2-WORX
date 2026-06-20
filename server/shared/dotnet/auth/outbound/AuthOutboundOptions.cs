@@ -7,9 +7,9 @@
 namespace D2.Shared.Auth.Outbound;
 
 /// <summary>
-/// Configuration for <c>D2.Shared.Auth.Outbound</c>'s service-identity +
-/// token-exchange clients. The single <c>D2_AUTH_ISSUER</c> URL drives OIDC
-/// discovery; <c>token_endpoint</c> is read from
+/// Configuration for <c>D2.Shared.Auth.Outbound</c>'s token-exchange client and
+/// workload-certificate presentation. The single <c>D2_AUTH_ISSUER</c> URL drives
+/// OIDC discovery; <c>token_endpoint</c> is read from
 /// <c>{Issuer}/.well-known/openid-configuration</c> at startup.
 /// </summary>
 public sealed class AuthOutboundOptions
@@ -18,37 +18,26 @@ public sealed class AuthOutboundOptions
     /// Gets or sets the OIDC issuer URL (e.g. <c>https://edge.internal</c>).
     /// The lib fetches <c>{Issuer}/.well-known/openid-configuration</c> via
     /// <c>ConfigurationManager&lt;OpenIdConnectConfiguration&gt;</c> and
-    /// reads <c>token_endpoint</c> from there for both
-    /// <c>client_credentials</c> (service identity) and
-    /// <c>token-exchange</c> (RFC 8693) requests. Maps to env var
-    /// <c>D2_AUTH_ISSUER</c>.
+    /// reads <c>token_endpoint</c> from there for <c>token-exchange</c>
+    /// (RFC 8693) requests. Maps to env var <c>D2_AUTH_ISSUER</c>.
     /// </summary>
     public string Issuer { get; set; } = string.Empty;
 
     /// <summary>
     /// Gets or sets this service's OAuth client identifier registered at
-    /// Edge. Used as the username in HTTP Basic auth for the
-    /// <c>client_credentials</c> grant. Maps to env var
-    /// <c>D2_AUTH_CLIENT_ID</c>.
+    /// Edge. Used as the username in HTTP Basic auth on the
+    /// <c>token-exchange</c> (RFC 8693) request to <c>token_endpoint</c>. Maps
+    /// to env var <c>D2_AUTH_CLIENT_ID</c>.
     /// </summary>
     public string ClientId { get; set; } = string.Empty;
 
     /// <summary>
     /// Gets or sets this service's OAuth client secret. Used as the password
-    /// in HTTP Basic auth for the <c>client_credentials</c> grant. Mounted
-    /// via Docker secret in production; env var in dev. Maps to env var
+    /// in HTTP Basic auth on the <c>token-exchange</c> (RFC 8693) request.
+    /// Mounted via Docker secret in production; env var in dev. Maps to env var
     /// <c>D2_AUTH_CLIENT_SECRET</c>. NEVER logged.
     /// </summary>
     public string ClientSecret { get; set; } = string.Empty;
-
-    /// <summary>
-    /// Gets or sets how far in advance of token expiry the
-    /// <c>ServiceIdentityRefreshHostedService</c> proactively refreshes the
-    /// cached service-identity token. Default 60 s. Set lower for
-    /// short-TTL test scenarios; higher to reduce refresh churn at the
-    /// cost of a wider not-yet-expired-but-stale window.
-    /// </summary>
-    public TimeSpan ServiceIdentityRefreshLeadTime { get; set; } = TimeSpan.FromSeconds(60);
 
     /// <summary>
     /// Gets or sets the per-request timeout applied to outbound HTTP calls

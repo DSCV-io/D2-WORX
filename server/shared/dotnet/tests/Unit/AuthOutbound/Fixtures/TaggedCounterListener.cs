@@ -22,7 +22,7 @@ internal sealed class TaggedCounterListener : IDisposable
 
     /// <summary>Initializes the listener for a named counter on the outbound meter.</summary>
     /// <param name="instrumentName">
-    /// The instrument name (e.g. <c>d2.auth.outbound.service_identity.fetches</c>).
+    /// The instrument name (e.g. <c>d2.auth.outbound.token_exchange.requests</c>).
     /// </param>
     public TaggedCounterListener(string instrumentName)
     {

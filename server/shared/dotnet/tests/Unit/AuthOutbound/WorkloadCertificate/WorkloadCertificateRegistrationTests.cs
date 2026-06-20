@@ -9,7 +9,6 @@ namespace D2.Shared.Tests.Unit.AuthOutbound.WorkloadCertificate;
 using AwesomeAssertions;
 using D2.Shared.Auth.Outbound;
 using D2.Shared.Auth.Outbound.Grpc;
-using D2.Shared.Auth.Outbound.ServiceIdentity;
 using D2.Shared.Auth.Outbound.WorkloadCertificate;
 using D2.Shared.Result;
 using Microsoft.Extensions.DependencyInjection;
@@ -19,9 +18,10 @@ using Xunit;
 /// <summary>
 /// DI-resolution + per-channel-opt-in coverage for the workload-certificate
 /// outbound stack — every registered seam resolves via
-/// <c>GetRequiredService&lt;&gt;</c>, the gRPC builder opt-in compiles + guards
-/// null, and the two channel opt-ins (<c>AddD2ServiceIdentity</c> +
-/// <c>AddD2WorkloadCertificate</c>) coexist (compose-don't-clobber).
+/// <c>GetRequiredService&lt;&gt;</c>, and the gRPC builder opt-in compiles +
+/// guards null. The compose-don't-clobber coexistence of the leaf opt-in with
+/// the forwarded-JWT credential opt-in is covered by
+/// <c>AddD2ForwardedJwtExtensionTests</c>.
 /// </summary>
 [Trait("Category", "Unit")]
 public sealed class WorkloadCertificateRegistrationTests
@@ -91,24 +91,6 @@ public sealed class WorkloadCertificateRegistrationTests
         act.Should().Throw<ArgumentNullException>();
     }
 
-    [Fact]
-    public void BothChannelOptIns_Coexist_OnTheSameBuilder()
-    {
-        // The leaf opt-in (handler SslOptions) and the token opt-in (call
-        // credentials) are orthogonal; chaining both must not throw at registration.
-        var services = new ServiceCollection();
-        services.AddSingleton<WorkloadLeafCache>();
-        services.AddSingleton(TimeProvider.System);
-        services.AddSingleton<IServiceIdentityClient, NoopServiceIdentityClient>();
-        var builder = services.AddHttpClient("composed");
-
-        var act = () => builder.AddD2ServiceIdentity().AddD2WorkloadCertificate();
-
-        // Both ConfigureChannel registrations apply; the throw (if any) only comes
-        // from the gRPC infra at channel-build time, not from a clobber here.
-        act.Should().Throw<InvalidOperationException>().WithMessage("*gRPC client*");
-    }
-
     private static ServiceProvider BuildProvider()
     {
         var services = new ServiceCollection();
@@ -123,11 +105,5 @@ public sealed class WorkloadCertificateRegistrationTests
     {
         public ValueTask<D2Result<WorkloadLeafMaterial>> IssueAsync(CancellationToken ct = default) =>
             ValueTask.FromResult(D2Result<WorkloadLeafMaterial>.ServiceUnavailable());
-    }
-
-    private sealed class NoopServiceIdentityClient : IServiceIdentityClient
-    {
-        public ValueTask<D2Result<string>> GetCurrentTokenAsync(CancellationToken ct = default) =>
-            ValueTask.FromResult(D2Result<string>.Ok("noop-token"));
     }
 }

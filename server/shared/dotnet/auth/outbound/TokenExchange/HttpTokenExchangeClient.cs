@@ -382,8 +382,10 @@ internal sealed class HttpTokenExchangeClient : ITokenExchangeClient, IDisposabl
     }
 
     /// <summary>
-    /// Fetch outcome — see <see cref="ServiceIdentity.HttpServiceIdentityClient"/>
-    /// for the shape rationale.
+    /// Fetch outcome — a success/token pair carried out of <see cref="FetchAsync"/>.
+    /// A boolean-plus-nullable-token shape (rather than a thrown exception) lets the
+    /// value-based <see cref="CircuitBreaker{T}"/> predicate observe a transient
+    /// failure without an exception crossing the breaker boundary.
     /// <para>
     /// <c>internal</c> (not <c>private</c>) so the assembly-level
     /// <see cref="CircuitBreaker{T}"/> generic can be instantiated with this

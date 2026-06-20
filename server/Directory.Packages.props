@@ -63,7 +63,8 @@ Copyright (c) DCSV. All rights reserved.
     <PackageVersion Include="Microsoft.IdentityModel.Protocols.OpenIdConnect" Version="8.16.0" />
 
     <!-- Grpc.Net.ClientFactory — gRPC client typed-builder + ConfigureChannel for the
-         D2.Shared.Auth.Outbound .AddD2ServiceIdentity() per-channel opt-in extension. -->
+         D2.Shared.Auth.Outbound .AddD2ForwardedJwt() / .AddD2WorkloadCertificate()
+         per-channel opt-in extensions. -->
     <PackageVersion Include="Grpc.Net.ClientFactory" Version="2.71.0" />
     <!-- Grpc.AspNetCore.Server — server-side gRPC binding for D2.Shared.Auth.Grpc
          (the JwtAuthInterceptor + per-method scope metadata on ServerCallContext).

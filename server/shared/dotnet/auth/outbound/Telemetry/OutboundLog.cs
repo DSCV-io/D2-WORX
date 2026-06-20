@@ -27,36 +27,6 @@ internal static partial class OutboundLog
         string issuer);
 
     [LoggerMessage(
-        EventId = 1002,
-        Level = LogLevel.Warning,
-        Message = "Service-identity token request to Edge returned HTTP {StatusCode}.")]
-    public static partial void ServiceIdentityHttpFailure(this ILogger logger, int statusCode);
-
-    [LoggerMessage(
-        EventId = 1003,
-        Level = LogLevel.Warning,
-        Message = "Service-identity token fetch failed: {ExceptionType} ({FirstFrame}).")]
-    public static partial void ServiceIdentityFetchFailed(
-        this ILogger logger,
-        string exceptionType,
-        string firstFrame);
-
-    [LoggerMessage(
-        EventId = 1004,
-        Level = LogLevel.Warning,
-        Message = "Initial service-identity token acquisition failed at startup; "
-                + "will retry on the polling cadence ({PollInterval}).")]
-    public static partial void ServiceIdentityStartupAcquireFailed(
-        this ILogger logger,
-        TimeSpan pollInterval);
-
-    [LoggerMessage(
-        EventId = 1005,
-        Level = LogLevel.Warning,
-        Message = "Service-identity proactive refresh failed; will retry on next tick.")]
-    public static partial void ServiceIdentityRefreshTickFailed(this ILogger logger);
-
-    [LoggerMessage(
         EventId = 2001,
         Level = LogLevel.Warning,
         Message = "TokenExchangeCache: ICacheInvalidationBackplane is not registered. "

@@ -29,8 +29,9 @@ Copyright (c) DCSV. All rights reserved.
     Outbound auth runtime — the forward-unchanged transaction-token rail
     (.AddD2ForwardedJwt() per-channel opt-in + ForwardedJwtCallCredentials, which
     replays the inbound request's forwarded JWT on each outbound gRPC hop via the
-    framework-free IAmbientRequestScopeAccessor port) + service-identity
-    (client_credentials) + token-exchange (RFC 8693).
+    framework-free IAmbientRequestScopeAccessor port) + the workload mutual-TLS
+    leaf presentation (.AddD2WorkloadCertificate()) + token-exchange (RFC 8693,
+    the boundary-mint + exception tool).
 
     This lib stays framework-free (plain Microsoft.NET.Sdk, gRPC CLIENT factory
     only): the forwarding credential reaches the request-scoped holder through the
@@ -78,14 +79,12 @@ Copyright (c) DCSV. All rights reserved.
     -->
     <ProjectReference Include="..\..\caching\abstractions\D2.Shared.Caching.Abstractions.csproj" />
     <!--
-      resilience — each token client (HttpServiceIdentityClient,
-      HttpTokenExchangeClient) composes a CircuitBreaker<FetchResult> + Singleflight
-      from this lib directly around its fetch path. The named HttpClient provides
-      only the transport + its Timeout. No retry layer: a transient failure on
-      the background-refreshed service-identity path is acceptable; on the
-      token-exchange path it fails one user request acceptably. The breaker
-      (5 failures → 30 s open) is the real resilience win — it stops hammering
-      a down Edge.
+      resilience — the token-exchange client (HttpTokenExchangeClient) composes a
+      CircuitBreaker<FetchResult> + Singleflight from this lib directly around its
+      fetch path. The named HttpClient provides only the transport + its Timeout.
+      No retry layer: a transient failure on the token-exchange path fails one user
+      request acceptably. The breaker (5 failures → 30 s open) is the real
+      resilience win — it stops hammering a down Edge.
     -->
     <ProjectReference Include="..\..\resilience\D2.Shared.Resilience.csproj" />
     <ProjectReference Include="..\..\result\core\D2.Shared.Result.csproj" />
@@ -94,8 +93,8 @@ Copyright (c) DCSV. All rights reserved.
     <!--
       headers-grpc — codegen-emitted gRPC metadata-key constants
       (GrpcHeaders.AUTHORIZATION etc.). Consumed by
-      ServiceIdentityCallCredentials when attaching the service-identity
-      Bearer token to outbound RPCs. Single spec-driven catalog shared with
+      ForwardedJwtCallCredentials when attaching the forwarded transaction-token
+      Bearer to outbound RPCs. Single spec-driven catalog shared with
       the TS-side @d2/grpc-* packages so wire-protocol header names are
       byte-identical across .NET and Node.
     -->

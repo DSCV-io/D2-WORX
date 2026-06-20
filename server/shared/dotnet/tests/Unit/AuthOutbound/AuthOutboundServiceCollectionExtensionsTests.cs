@@ -8,7 +8,6 @@ namespace D2.Shared.Tests.Unit.AuthOutbound;
 
 using AwesomeAssertions;
 using D2.Shared.Auth.Outbound;
-using D2.Shared.Auth.Outbound.ServiceIdentity;
 using D2.Shared.Auth.Outbound.TokenExchange;
 using D2.Shared.Caching.Local.Default;
 using Microsoft.Extensions.DependencyInjection;
@@ -21,15 +20,21 @@ using Xunit;
 
 /// <summary>
 /// Smoke tests for the <c>AddD2AuthOutbound</c> composition root —
-/// verifies the public DI surface (interfaces resolvable, named clients
-/// registered with configured timeouts, hosted service registered) and pins
-/// the public name constants that hosts grep / reference by string.
+/// verifies the public DI surface (the token-exchange client resolvable, named
+/// clients registered with configured timeouts) and pins the public name
+/// constants that hosts grep / reference by string.
 /// </summary>
 public sealed class AuthOutboundServiceCollectionExtensionsTests
 {
     [Fact]
-    public void AddD2AuthOutbound_RegistersBothPublicClients()
+    public void AddD2AuthOutbound_RegistersTokenExchangeClient_AndSharedOidcSurface()
     {
+        // Retirement regression gate: after the service-identity surface was
+        // removed, the SHARED OIDC discovery + options + token-exchange client
+        // must still wire. token-exchange's HTTP Basic auth reads ClientId /
+        // ClientSecret and its fetch resolves token_endpoint through the OIDC
+        // ConfigurationManager — a wrongly-removed shared registration would
+        // surface here (resolvability), not silently on the first exchange.
         var services = new ServiceCollection();
         services.AddLogging();
         services.AddD2LocalCache();
@@ -42,8 +47,12 @@ public sealed class AuthOutboundServiceCollectionExtensionsTests
 
         var sp = services.BuildServiceProvider();
 
-        sp.GetService<IServiceIdentityClient>().Should().NotBeNull();
         sp.GetService<ITokenExchangeClient>().Should().NotBeNull();
+        sp.GetService<IConfigurationManager<OpenIdConnectConfiguration>>().Should().NotBeNull();
+
+        var factory = sp.GetRequiredService<IHttpClientFactory>();
+        factory.CreateClient(AuthOutboundHttpClientNames.OIDC_DISCOVERY).Should().NotBeNull();
+        factory.CreateClient(AuthOutboundHttpClientNames.TOKEN_EXCHANGE).Should().NotBeNull();
     }
 
     [Fact]
@@ -65,36 +74,16 @@ public sealed class AuthOutboundServiceCollectionExtensionsTests
         configManager.Should().NotBeNull();
     }
 
-    [Fact]
-    public void AddD2AuthOutbound_RegistersRefreshHostedService()
-    {
-        var services = new ServiceCollection();
-        services.AddLogging();
-        services.AddD2LocalCache();
-        services.AddD2AuthOutbound(opts =>
-        {
-            opts.Issuer = "https://edge.internal";
-            opts.ClientId = "test";
-            opts.ClientSecret = "test";
-        });
-
-        var sp = services.BuildServiceProvider();
-        var hosted = sp.GetServices<IHostedService>().ToList();
-
-        hosted.Should().Contain(h => h is ServiceIdentityRefreshHostedService);
-    }
-
     [Theory]
     [InlineData(AuthOutboundHttpClientNames.OIDC_DISCOVERY)]
-    [InlineData(AuthOutboundHttpClientNames.SERVICE_IDENTITY)]
     [InlineData(AuthOutboundHttpClientNames.TOKEN_EXCHANGE)]
     public void AddD2AuthOutbound_RegistersNamedHttpClientWithConfiguredTimeout(string name)
     {
-        // OIDC discovery + service-identity + token-exchange all route through
-        // IHttpClientFactory, so the configured HttpRequestTimeout applies to
-        // every outbound HTTP call (the alternative — using the static default
-        // HttpClient inside OpenIdConnectConfigurationRetriever — would silently
-        // ignore the configured timeout).
+        // OIDC discovery + token-exchange both route through IHttpClientFactory,
+        // so the configured HttpRequestTimeout applies to every outbound HTTP call
+        // (the alternative — using the static default HttpClient inside
+        // OpenIdConnectConfigurationRetriever — would silently ignore the
+        // configured timeout).
         var services = new ServiceCollection();
         services.AddD2AuthOutbound(opts =>
         {
@@ -118,14 +107,11 @@ public sealed class AuthOutboundServiceCollectionExtensionsTests
         // by string; renames here would silently detach a host's resilience
         // pipeline / tracing handler from our clients.
         AuthOutboundHttpClientNames.OIDC_DISCOVERY.Should().Be("d2-auth-oidc-discovery");
-        AuthOutboundHttpClientNames.SERVICE_IDENTITY.Should().Be("d2-auth-service-identity");
         AuthOutboundHttpClientNames.TOKEN_EXCHANGE.Should().Be("d2-auth-token-exchange");
 
-        // Per-client constants on the client classes must agree with the
-        // centralized names — drift would mean AddHttpClient registers under
+        // The per-client constant on the client class must agree with the
+        // centralized name — drift would mean AddHttpClient registers under
         // one name but the client requests another.
-        HttpServiceIdentityClient.HTTP_CLIENT_NAME
-            .Should().Be(AuthOutboundHttpClientNames.SERVICE_IDENTITY);
         HttpTokenExchangeClient.HTTP_CLIENT_NAME
             .Should().Be(AuthOutboundHttpClientNames.TOKEN_EXCHANGE);
     }

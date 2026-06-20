@@ -8,37 +8,39 @@ namespace D2.Shared.Auth.Outbound.Grpc;
 
 using System.Net.Security;
 using D2.Shared.Auth.Abstractions;
-using D2.Shared.Auth.Outbound.ServiceIdentity;
 using D2.Shared.Auth.Outbound.WorkloadCertificate;
 using Microsoft.Extensions.DependencyInjection;
 
 /// <summary>
-/// Per-channel opt-in extension for attaching D² service-identity bearer
-/// credentials to a registered gRPC client. Channels that DON'T call
-/// <see cref="AddD2ServiceIdentity"/> get no D² auth header — the
-/// safe-by-default posture so a non-D² gRPC channel (SeaweedFS,
-/// third-party gRPC) never accidentally receives our internal Edge JWT.
+/// Per-channel opt-in extensions for attaching D²'s outbound auth factors —
+/// the forwarded transaction-token (<see cref="AddD2ForwardedJwt"/>) and the
+/// workload mutual-TLS leaf (<see cref="AddD2WorkloadCertificate"/>) — to a
+/// registered gRPC client. Channels that opt into neither get no D² auth header
+/// and present no client certificate — the safe-by-default posture so a non-D²
+/// gRPC channel (SeaweedFS, third-party gRPC) never accidentally receives our
+/// internal token or leaf.
 /// </summary>
 /// <remarks>
 /// <para>
-/// Usage:
+/// Usage — the generated gRPC-client DI extension auto-chains both factors on
+/// every internal client, so a host never calls these directly:
 /// <code>
 /// services
 ///     .AddGrpcClient&lt;FilesGrpc.FilesGrpcClient&gt;(
 ///         o => o.Address = new Uri("https://files.internal"))
-///     .AddD2ServiceIdentity();
+///     .AddD2ForwardedJwt()
+///     .AddD2WorkloadCertificate();
 /// </code>
 /// </para>
 /// <para>
-/// Channel security: when <c>options.Credentials</c> is null at the time this
-/// extension runs, the extension defaults to <c>SecureSsl</c> + composes the
-/// service-identity <c>CallCredentials</c>. gRPC rejects sending
-/// <c>CallCredentials</c> over an insecure channel by default, so this
-/// extension is intended for production / TLS deployments. Hosts that need
-/// to attach D² credentials to a plaintext-HTTP channel (dev / loopback)
-/// must set <c>options.Credentials</c> explicitly to a composed credential
-/// using <c>UnsafeUseInsecureChannelCallCredentials</c> before calling this
-/// extension.
+/// Channel security: the credential-bearing factor
+/// (<see cref="AddD2ForwardedJwt"/>) defaults the channel to <c>SecureSsl</c>
+/// when <c>options.Credentials</c> is null at the time it runs. gRPC rejects
+/// sending <c>CallCredentials</c> over an insecure channel by default, so these
+/// extensions are intended for production / TLS deployments. Hosts that need to
+/// attach D² credentials to a plaintext-HTTP channel (dev / loopback) must set
+/// <c>options.Credentials</c> explicitly to a composed credential using
+/// <c>UnsafeUseInsecureChannelCallCredentials</c> before calling them.
 /// </para>
 /// </remarks>
 public static class GrpcClientBuilderExtensions
@@ -46,36 +48,6 @@ public static class GrpcClientBuilderExtensions
     /// <param name="builder">The gRPC client builder being configured.</param>
     extension(IHttpClientBuilder builder)
     {
-        /// <summary>
-        /// Attaches D² service-identity <see cref="global::Grpc.Core.CallCredentials"/>
-        /// to the gRPC channel under construction. Every RPC made through the
-        /// resulting channel auto-attaches an
-        /// <c>Authorization: Bearer &lt;token&gt;</c> header sourced from
-        /// <see cref="IServiceIdentityClient"/>.
-        /// </summary>
-        /// <returns>The same <paramref name="builder"/> instance for chaining.</returns>
-        public IHttpClientBuilder AddD2ServiceIdentity()
-        {
-            ArgumentNullException.ThrowIfNull(builder);
-
-            return builder.ConfigureChannel((sp, options) =>
-            {
-                var identityClient = sp.GetRequiredService<IServiceIdentityClient>();
-
-                // Compose with any existing CallCredentials (e.g. a prior
-                // AddD2ServiceIdentity() call or another auth extension) so we
-                // don't clobber sibling credentials. Composition order doesn't
-                // matter for header-attachment use cases since metadata keys
-                // are last-write-wins on the wire.
-                var ours = ServiceIdentityCallCredentials.FromServiceIdentityClient(
-                    identityClient);
-                options.Credentials = options.Credentials is null
-                    ? global::Grpc.Core.ChannelCredentials.Create(
-                        global::Grpc.Core.ChannelCredentials.SecureSsl, ours)
-                    : global::Grpc.Core.ChannelCredentials.Create(options.Credentials, ours);
-            });
-        }
-
         /// <summary>
         /// Attaches this workload's mutual-TLS leaf certificate — together with its
         /// issuing intermediate, where the platform supports it — to the gRPC channel
@@ -87,7 +59,7 @@ public static class GrpcClientBuilderExtensions
         /// </summary>
         /// <remarks>
         /// <para>
-        /// Composes ALONGSIDE <see cref="AddD2ServiceIdentity"/>: a channel can have
+        /// Composes ALONGSIDE <see cref="AddD2ForwardedJwt"/>: a channel can have
         /// both — the leaf for workload mTLS (set on the channel handler's
         /// <c>SslOptions</c>) and the call-credentials for the forwarded token (set
         /// on <c>options.Credentials</c>). Both factors are required, neither
@@ -95,7 +67,7 @@ public static class GrpcClientBuilderExtensions
         /// </para>
         /// <para>
         /// Safe-by-default: a channel that does NOT call this presents no client
-        /// certificate (the same posture as <see cref="AddD2ServiceIdentity"/>).
+        /// certificate (the same posture as <see cref="AddD2ForwardedJwt"/>).
         /// Compose-don't-clobber: an existing <see cref="SocketsHttpHandler"/> set on
         /// the channel options is augmented (its <c>SslOptions</c> /
         /// client-certificate context are set) rather than replaced.

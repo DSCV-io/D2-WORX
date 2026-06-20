@@ -18,54 +18,6 @@ namespace D2.Shared.Auth.Outbound.Telemetry
             }
         }
         [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.Extensions.Logging.Generators", "10.0.14.21808")]
-        private static readonly global::System.Action<global::Microsoft.Extensions.Logging.ILogger, global::System.Int32, global::System.Exception?> __ServiceIdentityHttpFailureCallback =
-            global::Microsoft.Extensions.Logging.LoggerMessage.Define<global::System.Int32>(global::Microsoft.Extensions.Logging.LogLevel.Warning, new global::Microsoft.Extensions.Logging.EventId(1002, nameof(ServiceIdentityHttpFailure)), "Service-identity token request to Edge returned HTTP {StatusCode}.", new global::Microsoft.Extensions.Logging.LogDefineOptions() { SkipEnabledCheck = true }); 
-
-        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.Extensions.Logging.Generators", "10.0.14.21808")]
-        public static partial void ServiceIdentityHttpFailure(this global::Microsoft.Extensions.Logging.ILogger logger, global::System.Int32 statusCode)
-        {
-            if (logger.IsEnabled(global::Microsoft.Extensions.Logging.LogLevel.Warning))
-            {
-                __ServiceIdentityHttpFailureCallback(logger, statusCode, null);
-            }
-        }
-        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.Extensions.Logging.Generators", "10.0.14.21808")]
-        private static readonly global::System.Action<global::Microsoft.Extensions.Logging.ILogger, global::System.String, global::System.String, global::System.Exception?> __ServiceIdentityFetchFailedCallback =
-            global::Microsoft.Extensions.Logging.LoggerMessage.Define<global::System.String, global::System.String>(global::Microsoft.Extensions.Logging.LogLevel.Warning, new global::Microsoft.Extensions.Logging.EventId(1003, nameof(ServiceIdentityFetchFailed)), "Service-identity token fetch failed: {ExceptionType} ({FirstFrame}).", new global::Microsoft.Extensions.Logging.LogDefineOptions() { SkipEnabledCheck = true }); 
-
-        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.Extensions.Logging.Generators", "10.0.14.21808")]
-        public static partial void ServiceIdentityFetchFailed(this global::Microsoft.Extensions.Logging.ILogger logger, global::System.String exceptionType, global::System.String firstFrame)
-        {
-            if (logger.IsEnabled(global::Microsoft.Extensions.Logging.LogLevel.Warning))
-            {
-                __ServiceIdentityFetchFailedCallback(logger, exceptionType, firstFrame, null);
-            }
-        }
-        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.Extensions.Logging.Generators", "10.0.14.21808")]
-        private static readonly global::System.Action<global::Microsoft.Extensions.Logging.ILogger, global::System.TimeSpan, global::System.Exception?> __ServiceIdentityStartupAcquireFailedCallback =
-            global::Microsoft.Extensions.Logging.LoggerMessage.Define<global::System.TimeSpan>(global::Microsoft.Extensions.Logging.LogLevel.Warning, new global::Microsoft.Extensions.Logging.EventId(1004, nameof(ServiceIdentityStartupAcquireFailed)), "Initial service-identity token acquisition failed at startup; will retry on the polling cadence ({PollInterval}).", new global::Microsoft.Extensions.Logging.LogDefineOptions() { SkipEnabledCheck = true }); 
-
-        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.Extensions.Logging.Generators", "10.0.14.21808")]
-        public static partial void ServiceIdentityStartupAcquireFailed(this global::Microsoft.Extensions.Logging.ILogger logger, global::System.TimeSpan pollInterval)
-        {
-            if (logger.IsEnabled(global::Microsoft.Extensions.Logging.LogLevel.Warning))
-            {
-                __ServiceIdentityStartupAcquireFailedCallback(logger, pollInterval, null);
-            }
-        }
-        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.Extensions.Logging.Generators", "10.0.14.21808")]
-        private static readonly global::System.Action<global::Microsoft.Extensions.Logging.ILogger, global::System.Exception?> __ServiceIdentityRefreshTickFailedCallback =
-            global::Microsoft.Extensions.Logging.LoggerMessage.Define(global::Microsoft.Extensions.Logging.LogLevel.Warning, new global::Microsoft.Extensions.Logging.EventId(1005, nameof(ServiceIdentityRefreshTickFailed)), "Service-identity proactive refresh failed; will retry on next tick.", new global::Microsoft.Extensions.Logging.LogDefineOptions() { SkipEnabledCheck = true }); 
-
-        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.Extensions.Logging.Generators", "10.0.14.21808")]
-        public static partial void ServiceIdentityRefreshTickFailed(this global::Microsoft.Extensions.Logging.ILogger logger)
-        {
-            if (logger.IsEnabled(global::Microsoft.Extensions.Logging.LogLevel.Warning))
-            {
-                __ServiceIdentityRefreshTickFailedCallback(logger, null);
-            }
-        }
-        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.Extensions.Logging.Generators", "10.0.14.21808")]
         private static readonly global::System.Action<global::Microsoft.Extensions.Logging.ILogger, global::System.Exception?> __TokenExchangeBackplaneAbsentCallback =
             global::Microsoft.Extensions.Logging.LoggerMessage.Define(global::Microsoft.Extensions.Logging.LogLevel.Warning, new global::Microsoft.Extensions.Logging.EventId(2001, nameof(TokenExchangeBackplaneAbsent)), "TokenExchangeCache: ICacheInvalidationBackplane is not registered. Session-revoke events will not propagate cross-instance; falling back to TTL-only invalidation. Register a backplane for cluster coherency.", new global::Microsoft.Extensions.Logging.LogDefineOptions() { SkipEnabledCheck = true }); 
 

@@ -6,7 +6,6 @@
 
 namespace D2.Shared.Auth.Outbound;
 
-using D2.Shared.Auth.Outbound.ServiceIdentity;
 using D2.Shared.Auth.Outbound.TokenExchange;
 using D2.Shared.Auth.Outbound.WorkloadCertificate;
 using D2.Shared.Utilities.Extensions;
@@ -18,10 +17,11 @@ using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 
 /// <summary>
 /// DI registration entry-point for the outbound auth runtime —
-/// <c>IServiceIdentityClient</c> + <c>ITokenExchangeClient</c> plus the
-/// supporting refresh hosted service, named <c>HttpClient</c>s, and shared
-/// caches. Composition root only; per-channel gRPC opt-in lives in the
-/// <c>GrpcClientBuilderExtensions.AddD2ServiceIdentity()</c> extension.
+/// <c>ITokenExchangeClient</c> (RFC 8693 boundary-mint) plus its supporting
+/// OIDC <c>ConfigurationManager</c>, named <c>HttpClient</c>s, and shared cache.
+/// Composition root only; the per-channel forwarded-JWT opt-in lives in the
+/// <c>GrpcClientBuilderExtensions.AddD2ForwardedJwt()</c> extension, which the
+/// generated gRPC-client DI extension auto-chains on every internal client.
 /// </summary>
 public static class AuthOutboundServiceCollectionExtensions
 {
@@ -88,21 +88,6 @@ public static class AuthOutboundServiceCollectionExtensions
                     new OpenIdConnectConfigurationRetriever(),
                     httpClient);
             });
-
-            // ServiceIdentity stack — single per-process token cache, HTTP client,
-            // proactive refresh hosted service.
-            services.TryAddSingleton<ServiceIdentityCache>();
-            services.TryAddSingleton<HttpServiceIdentityClient>();
-            services.TryAddSingleton<IServiceIdentityClient>(sp =>
-                sp.GetRequiredService<HttpServiceIdentityClient>());
-
-            services.AddHttpClient(HttpServiceIdentityClient.HTTP_CLIENT_NAME, (sp, client) =>
-            {
-                var opts = sp.GetRequiredService<IOptions<AuthOutboundOptions>>().Value;
-                client.Timeout = opts.HttpRequestTimeout;
-            });
-
-            services.AddHostedService<ServiceIdentityRefreshHostedService>();
 
             // TokenExchange stack — ILocalCache-backed cache + reverse-index +
             // backplane subscription (when ICacheInvalidationBackplane is

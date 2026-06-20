@@ -28,12 +28,6 @@ public static class AuthOutboundHttpClientNames
     public const string OIDC_DISCOVERY = "d2-auth-oidc-discovery";
 
     /// <summary>
-    /// Named client used by <c>HttpServiceIdentityClient</c> for OAuth
-    /// <c>client_credentials</c> grant requests against Edge.
-    /// </summary>
-    public const string SERVICE_IDENTITY = "d2-auth-service-identity";
-
-    /// <summary>
     /// Named client used by <c>HttpTokenExchangeClient</c> for OAuth
     /// <c>token-exchange</c> (RFC 8693) requests against Edge.
     /// </summary>
