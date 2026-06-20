@@ -558,11 +558,42 @@ describe("emitGrpcClient_DiExtensionFile", () => {
     expect(content).toContain("extension(IServiceCollection services)");
   });
 
-  it("generated DI extension does NOT call services.AddD2ServiceIdentity()", () => {
+  it("generated DI extension carries no AddD2ServiceIdentity residue (call or guidance)", () => {
     const content = getDi();
-    // The doc comment explains the host must chain it — but the generated code itself
-    // must NOT call it (would break plaintext in-process channels).
-    expect(content).not.toContain("services.AddD2ServiceIdentity");
+    // AddD2ServiceIdentity is the retired client_credentials surface — the auto-wire model
+    // replaced it. Neither the body nor the doc-comment may mention it, and the old
+    // "host MUST chain" guidance is gone too (the auto-wire IS the chain now).
+    expect(content).not.toContain("AddD2ServiceIdentity");
+    expect(content).not.toContain("host MUST chain");
+  });
+
+  it("auto-wires .AddD2ForwardedJwt().AddD2WorkloadCertificate() onto the gRPC channel", () => {
+    const content = getDi();
+    // The generated DI registration AUTO-CHAINS the per-channel outbound auth so the host
+    // can never forget it (fail-safe). Both extensions must chain off the AddGrpcClient<…>
+    // registration, in that order. (The chained CALL — leading-`.` line — is distinct from
+    // the docstring's <c>.AddD2ForwardedJwt()</c> mention; assert on the chained statement.)
+    const chainedJwt = "\n                .AddD2ForwardedJwt()";
+    const chainedCert = "\n                .AddD2WorkloadCertificate();";
+    expect(content).toContain(chainedJwt);
+    expect(content).toContain(chainedCert);
+
+    const addGrpcIdx = content.indexOf("services.AddGrpcClient<");
+    const forwardedJwtIdx = content.indexOf(chainedJwt);
+    const workloadCertIdx = content.indexOf(chainedCert);
+    expect(addGrpcIdx).toBeGreaterThan(-1);
+    expect(forwardedJwtIdx).toBeGreaterThan(addGrpcIdx);
+    expect(workloadCertIdx).toBeGreaterThan(forwardedJwtIdx);
+
+    // The AddGrpcClient(...) statement is no longer self-terminated — the chain
+    // continues onto the next line (no ";" closing the AddGrpcClient call directly).
+    expect(content).toContain("o.Address = options.Address)\n");
+    expect(content).not.toContain("o.Address = options.Address);");
+  });
+
+  it("includes the D2.Shared.Auth.Outbound.Grpc using for the auto-wired extensions", () => {
+    const content = getDi();
+    expect(content).toContain("using D2.Shared.Auth.Outbound.Grpc;");
   });
 });
 
@@ -708,6 +739,29 @@ describe("emitGrpcClient_MultiOp", () => {
     );
     expect(di!.content).toContain("SignClientKeys.PIPELINE");
     expect(di!.content).toContain("FetchClientKeys.PIPELINE");
+  });
+
+  it("two DISTINCT services each get their own auto-wired outbound-auth chain", () => {
+    // The byte-parity fixture is single-service, so this is the only place the
+    // per-distinct-service auto-wire is proven: each AddGrpcClient<…> channel chains
+    // its OWN .AddD2ForwardedJwt().AddD2WorkloadCertificate(). Count the chained
+    // STATEMENTS (leading-`.` lines), not the per-method docstring mention.
+    const [, , , di] = emitGrpcClient(
+      "KeyCustodian",
+      [makeSignOp(), makeFetchOp()],
+      CLIENTS_NS,
+    );
+    const channelCount = (di!.content.match(/services\.AddGrpcClient</g) ?? [])
+      .length;
+    const forwardedJwtCount = (
+      di!.content.match(/\n {16}\.AddD2ForwardedJwt\(\)/g) ?? []
+    ).length;
+    const workloadCertCount = (
+      di!.content.match(/\n {16}\.AddD2WorkloadCertificate\(\);/g) ?? []
+    ).length;
+    expect(channelCount).toBe(2);
+    expect(forwardedJwtCount).toBe(2);
+    expect(workloadCertCount).toBe(2);
   });
 
   // Two ops on the SAME gRPC service — exercises the per-service dedup in the impl

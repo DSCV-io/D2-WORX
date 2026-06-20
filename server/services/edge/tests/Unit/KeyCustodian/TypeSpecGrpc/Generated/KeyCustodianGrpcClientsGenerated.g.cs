@@ -11,6 +11,7 @@ namespace D2.Edge.Tests.TypeSpecGrpc.Generated;
 
 using SignInput = global::D2.Edge.Tests.TypeSpecDto.Generated.SignInput;
 using SignOutput = global::D2.Edge.Tests.TypeSpecDto.Generated.SignOutput;
+using D2.Shared.Auth.Outbound.Grpc;
 using D2.Shared.Resilience.Pipeline;
 using D2.Shared.Resilience.Retry;
 using D2.Shared.Result.Grpc;
@@ -35,15 +36,22 @@ public static class KeyCustodianGrpcClientsGeneratedServiceCollectionExtensions
         /// <summary>
         /// Registers the KeyCustodian gRPC client: channel, per-op resilience pipelines,
         /// and the <see cref="IKeyCustodianGrpcClient"/> → <see cref="KeyCustodianGrpcClient"/> binding.
-        /// The host MUST chain <c>.AddD2ServiceIdentity()</c> on the returned builder
-        /// for production use (omitted here — plaintext in-process channels reject SecureSsl
-        /// CallCredentials; the interceptor is proven by its own tests).
+        /// Auto-chains <c>.AddD2ForwardedJwt().AddD2WorkloadCertificate()</c> on the gRPC
+        /// client builder so every internal call forwards the request-scoped transaction-token
+        /// and presents the workload mTLS leaf — the host never chains the per-channel outbound
+        /// auth and so can never forget it. The TLS channel (SecureSsl default) carries the
+        /// forwarded-JWT credential, which the inbound transport's ambient holder resolves per
+        /// call. The host supplies only the one-time config the generator cannot invent:
+        /// <c>AddD2ForwardedJwtOutbound()</c> + <c>AddD2WorkloadCertificateOutbound()</c>.
         /// </summary>
         public IServiceCollection AddD2KeyCustodianGrpcClients(KeyCustodianGrpcClientOptions options)
         {
             // KeyCustodianSigner channel — address from host-supplied options.
             services.AddGrpcClient<global::D2.Services.Protos.KeyCustodian.V1.KeyCustodianSigner.KeyCustodianSignerClient>(o =>
-                o.Address = options.Address);
+                o.Address = options.Address)
+                // Auto-wired outbound auth — host never chains this (fail-safe).
+                .AddD2ForwardedJwt()
+                .AddD2WorkloadCertificate();
 
             // Sign resilience pipeline — retry on gRPC transport transients only.
             // Replace with ResilientPipeline<…>.PassThrough in tests that do not need retry.

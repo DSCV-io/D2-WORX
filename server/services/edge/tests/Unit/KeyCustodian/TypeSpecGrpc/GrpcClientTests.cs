@@ -11,6 +11,8 @@ using System.Threading;
 using System.Threading.Tasks;
 using D2.Edge.Tests.TypeSpecGrpc.Generated;
 using D2.Services.Protos.KeyCustodian.V1;
+using D2.Shared.Auth.Abstractions;
+using D2.Shared.Auth.Outbound;
 using D2.Shared.Resilience.Pipeline;
 using D2.Shared.Resilience.Retry;
 using D2.Shared.Result;
@@ -41,10 +43,11 @@ using ProtoSignOutput = D2.Services.Protos.KeyCustodian.V1.SignOutput;
 ///   is never retried (nesting-safety);</item>
 ///   <item>the per-call <c>pipelineOverride</c> mechanism + DI resolution.</item>
 /// </list>
-/// BOUNDARY: 9b is IN-MEMORY only. Real two-process over-the-wire validation (real sockets,
-/// TLS, service-identity token issuance) is a later step. The fixture DI registration omits
-/// <c>.AddD2ServiceIdentity()</c> — the plaintext in-process channel rejects SecureSsl
-/// CallCredentials; the interceptor is proven by its own tests.
+/// BOUNDARY: these are IN-MEMORY only. Real two-process over-the-wire validation (real
+/// sockets, TLS, forwarded-token issuance) is a later step. The call-path cases construct
+/// <see cref="KeyCustodianGrpcClient"/> directly over a plaintext in-process channel, so the
+/// auto-wired outbound-auth chain is not exercised by them; the DI-resolution case wires the
+/// host config the generated extension auto-chains and asserts the registration resolves.
 /// </summary>
 public sealed class GrpcClientTests
 {
@@ -369,8 +372,15 @@ public sealed class GrpcClientTests
 
     // ---------------------------------------------------------------------------
     // Case 16: DI resolution — AddD2KeyCustodianGrpcClients resolves the client + every
-    // registered seam (the keyed pipeline + the stub) without throwing. F-5 boundary: the
-    // fixture DI omits .AddD2ServiceIdentity() (plaintext in-process channel).
+    // registered seam (the keyed pipeline + the stub) without throwing. The generated DI
+    // extension AUTO-CHAINS .AddD2ForwardedJwt().AddD2WorkloadCertificate() on the channel,
+    // so resolving the typed stub eagerly runs both ConfigureChannel callbacks — they
+    // resolve the IAmbientRequestScopeAccessor port (owned by the inbound transport) plus
+    // the WorkloadLeafCache + TimeProvider (from AddD2WorkloadCertificateOutbound). The host's
+    // one-time config registrations supply exactly those: AddD2ForwardedJwtOutbound() +
+    // AddD2WorkloadCertificateOutbound() (the un-inventable config the emitter documents),
+    // and the inbound transport supplies the ambient accessor (here a no-inbound-scope stub,
+    // since this isolated DI-resolution test makes no RPC).
     // ---------------------------------------------------------------------------
 
     [Fact]
@@ -380,10 +390,32 @@ public sealed class GrpcClientTests
         var httpClient = host.GetTestClient();
 
         var services = new ServiceCollection();
+
+        // The host's one-time config the auto-wired chain resolves at channel build:
+        // AddD2WorkloadCertificateOutbound() registers WorkloadLeafCache + TimeProvider;
+        // AddD2ForwardedJwtOutbound() keeps the options pipeline symmetric. The ambient
+        // accessor is owned by the inbound transport — supplied here as a no-inbound-scope
+        // stub (this DI-resolution test makes no RPC, so the credential never runs).
+        services.AddD2ForwardedJwtOutbound();
+        services.AddD2WorkloadCertificateOutbound();
+        services.AddSingleton<IAmbientRequestScopeAccessor>(new NoAmbientScopeAccessor());
+
         services.AddD2KeyCustodianGrpcClients(new KeyCustodianGrpcClientOptions
         {
             Address = httpClient.BaseAddress!,
         });
+
+        // Test-only: the auto-wired .AddD2ForwardedJwt() sets the channel to SecureSsl
+        // ChannelCredentials, which gRPC refuses to pair with this harness's plaintext
+        // (http-scheme) in-process TestServer channel at construction. A trailing
+        // ConfigureChannel on the SAME named client runs LAST and downgrades the channel to
+        // Insecure so it builds — this case asserts DI RESOLVABILITY only (no RPC is made),
+        // so the forwarded-JWT CallCredentials are not exercised here (their per-request
+        // attach + forward-unchanged behavior is covered by the ForwardedJwtCallCredentials
+        // tests). Production stays secure via real mTLS/TLS; this downgrade is never shipped.
+        services
+            .AddGrpcClient<KeyCustodianSigner.KeyCustodianSignerClient>()
+            .ConfigureChannel(o => o.Credentials = ChannelCredentials.Insecure);
 
         await using var sp = services.BuildServiceProvider();
 
@@ -581,5 +613,17 @@ public sealed class GrpcClientTests
             var result = D2Result<DtoSignOutput?>.Ok(new DtoSignOutput("echo-sig"));
             return Task.FromResult(new SignResponse { Result = result.ToProto() });
         }
+    }
+
+    /// <summary>
+    /// A no-inbound-scope <see cref="IAmbientRequestScopeAccessor"/> for the DI-resolution
+    /// case: the inbound transport owns this port in production, but this isolated test
+    /// makes no RPC, so the auto-wired forwarded-JWT credential never reads it — the channel
+    /// build only needs the singleton to RESOLVE. Returning null mirrors a hop with no
+    /// inbound request on the execution context.
+    /// </summary>
+    private sealed class NoAmbientScopeAccessor : IAmbientRequestScopeAccessor
+    {
+        public IServiceProvider? Current => null;
     }
 }

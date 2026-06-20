@@ -29,14 +29,16 @@
 //
 //   4. <Module>GrpcClientsGenerated.g.cs  → Clients namespace
 //      The generated DI extension (C# 14 extension member form):
-//        AddGrpcClient<Stub>(opts) with channel address from <Module>GrpcClientOptions.
+//        AddGrpcClient<Stub>(opts) with channel address from <Module>GrpcClientOptions,
+//          AUTO-CHAINING .AddD2ForwardedJwt().AddD2WorkloadCertificate() on every channel.
 //        AddResilientPipeline<string, <Op>Output?> with the gRPC-only IsTransient.
 //        AddTransient<I<Module>GrpcClient, <Module>GrpcClient>.
 //      Called from a hand-written composition root (regen-safe, like the façade DI ext).
-//      OMITS .AddD2ServiceIdentity() unconditionally — the in-memory TestServer channel
-//      is plaintext; SecureSsl rejects CallCredentials on insecure channels. Production
-//      wiring chains .AddD2ServiceIdentity() separately in the hand-written root.
-//      (ServiceIdentity is proven by GrpcClientBuilderExtensionsTests — not re-proven here.)
+//      AUTO-WIRES the per-channel outbound auth — .AddD2ForwardedJwt() forwards the
+//      request-scoped transaction-token and .AddD2WorkloadCertificate() presents the
+//      workload mTLS leaf — so a host can never forget to attach it to a generated
+//      internal client (fail-safe). The host supplies only the one-time config the
+//      generator cannot invent: AddD2ForwardedJwtOutbound() + AddD2WorkloadCertificateOutbound().
 //
 // Load-bearing body discipline (D-3 captured-envelope, §E):
 //   The pipeline op CANNOT express a business D2Result failure as:
@@ -588,6 +590,9 @@ function emitGrpcClientsDiExtension(
   // / RetryOptions generic args resolves when the DTO namespace differs from the client
   // namespace. Omitted when the DTO type lives in this namespace.
   for (const alias of collectDtoAliasUsings(ops, clientsNs)) lines.push(alias);
+  // D2.Shared.Auth.Outbound.Grpc supplies the per-channel .AddD2ForwardedJwt() /
+  // .AddD2WorkloadCertificate() extensions auto-chained onto each registered client.
+  lines.push("using D2.Shared.Auth.Outbound.Grpc;");
   lines.push("using D2.Shared.Resilience.Pipeline;");
   lines.push("using D2.Shared.Resilience.Retry;");
   lines.push("using D2.Shared.Result.Grpc;");
@@ -629,13 +634,25 @@ function emitGrpcClientsDiExtension(
     `        /// and the <see cref="${interfaceName}"/> → <see cref="${implName}"/> binding.`,
   );
   lines.push(
-    `        /// The host MUST chain <c>.AddD2ServiceIdentity()</c> on the returned builder`,
+    `        /// Auto-chains <c>.AddD2ForwardedJwt().AddD2WorkloadCertificate()</c> on the gRPC`,
   );
   lines.push(
-    `        /// for production use (omitted here — plaintext in-process channels reject SecureSsl`,
+    `        /// client builder so every internal call forwards the request-scoped transaction-token`,
   );
   lines.push(
-    `        /// CallCredentials; the interceptor is proven by its own tests).`,
+    `        /// and presents the workload mTLS leaf — the host never chains the per-channel outbound`,
+  );
+  lines.push(
+    `        /// auth and so can never forget it. The TLS channel (SecureSsl default) carries the`,
+  );
+  lines.push(
+    `        /// forwarded-JWT credential, which the inbound transport's ambient holder resolves per`,
+  );
+  lines.push(
+    `        /// call. The host supplies only the one-time config the generator cannot invent:`,
+  );
+  lines.push(
+    `        /// <c>AddD2ForwardedJwtOutbound()</c> + <c>AddD2WorkloadCertificateOutbound()</c>.`,
   );
   lines.push(`        /// </summary>`);
   lines.push(
@@ -643,7 +660,8 @@ function emitGrpcClientsDiExtension(
   );
   lines.push("        {");
 
-  // Register the gRPC channel per distinct service.
+  // Register the gRPC channel per distinct service, auto-chaining the per-channel
+  // outbound auth onto each so the host never wires it (fail-safe).
   for (const { grpcService, protoCsharpNs } of services.values()) {
     lines.push(
       `            // ${grpcService} channel — address from host-supplied options.`,
@@ -651,7 +669,12 @@ function emitGrpcClientsDiExtension(
     lines.push(
       `            services.AddGrpcClient<global::${protoCsharpNs}.${grpcService}.${grpcService}Client>(o =>`,
     );
-    lines.push(`                o.Address = options.Address);`);
+    lines.push(`                o.Address = options.Address)`);
+    lines.push(
+      `                // Auto-wired outbound auth — host never chains this (fail-safe).`,
+    );
+    lines.push(`                .AddD2ForwardedJwt()`);
+    lines.push(`                .AddD2WorkloadCertificate();`);
     lines.push("");
   }
 
