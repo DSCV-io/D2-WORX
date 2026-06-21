@@ -24,7 +24,7 @@ using Xunit;
 /// behavior, Prometheus scrape body) lives in
 /// <c>Integration.Telemetry.PrometheusEndpointIpRestrictionTests</c>.
 /// </summary>
-[Collection("OtelStaticState")]
+[Collection("LogLoggerStaticState")]
 public sealed class WebApplicationTelemetryExtensionsTests
 {
     [Fact]

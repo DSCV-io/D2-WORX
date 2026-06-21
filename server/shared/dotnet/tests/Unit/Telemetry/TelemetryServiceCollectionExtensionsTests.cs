@@ -22,7 +22,7 @@ using Xunit;
 /// AddD2Telemetry registers — pin into a dedicated collection that
 /// serializes against integration tests touching the same surface.
 /// </summary>
-[Collection("OtelStaticState")]
+[Collection("LogLoggerStaticState")]
 public sealed class TelemetryServiceCollectionExtensionsTests
 {
     [Fact]

@@ -10,7 +10,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using System.Runtime.Serialization;
+using System.Text.Json.Serialization;
 using D2.Shared.Geo.Abstractions;
 using D2.Shared.Utilities.Extensions;
 using Xunit;
@@ -81,13 +81,13 @@ public sealed class GeoEnumsFixtureEmitter
     /// <summary>
     /// Reflect every member of a string-wire enum (the wire form is the
     /// member name via <c>JsonStringEnumConverter</c> — OR the value
-    /// declared on <see cref="EnumMemberAttribute"/> when present) into a
-    /// sorted <c>{ wireValue: wireValue }</c> map keyed by the on-the-wire
-    /// string (the canonical identity used cross-runtime). For most geo
-    /// enums the wire form equals the C# member name
+    /// declared on <see cref="JsonStringEnumMemberNameAttribute"/> when
+    /// present) into a sorted <c>{ wireValue: wireValue }</c> map keyed by
+    /// the on-the-wire string (the canonical identity used cross-runtime).
+    /// For most geo enums the wire form equals the C# member name
     /// (<c>{ AD: "AD", AE: "AE" }</c>); for <see cref="Language"/> the
-    /// wire form is the lowercase ISO 639-1 code carried on the
-    /// <c>[EnumMember]</c> attribute (<c>{ en: "en", fr: "fr" }</c>).
+    /// wire form is the lowercase ISO 639-1 code declared on
+    /// <c>[JsonStringEnumMemberName]</c> (<c>{ en: "en", fr: "fr" }</c>).
     /// Keying by the wire form matches the TS-side const-object shape
     /// (TS object keys ARE the wire-form strings) — the parity test
     /// compares fixture keys vs TS keys directly.
@@ -107,8 +107,8 @@ public sealed class GeoEnumsFixtureEmitter
 
     /// <summary>
     /// Resolves the wire-form string for an enum member: returns the value of
-    /// <see cref="EnumMemberAttribute.Value"/> when one is declared on the
-    /// field, otherwise the C# member name itself (matches
+    /// <see cref="JsonStringEnumMemberNameAttribute"/> when one is declared on
+    /// the field, otherwise the C# member name itself (matches
     /// <c>JsonStringEnumConverter</c>'s default behavior).
     /// </summary>
     private static string GetWireName(Type enumType, string memberName)
@@ -117,11 +117,11 @@ public sealed class GeoEnumsFixtureEmitter
         if (field is null)
             return memberName;
 
-        var attribute = field.GetCustomAttribute<EnumMemberAttribute>(inherit: false);
-        if (attribute is null || attribute.Value.Falsey())
+        var attribute = field.GetCustomAttribute<JsonStringEnumMemberNameAttribute>(inherit: false);
+        if (attribute is null || attribute.Name.Falsey())
             return memberName;
 
-        return attribute.Value!;
+        return attribute.Name;
     }
 
     /// <summary>

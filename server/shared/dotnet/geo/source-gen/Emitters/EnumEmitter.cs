@@ -407,7 +407,6 @@ internal static class EnumEmitter
         var sb = new StringBuilder();
         AppendFileHeader(sb);
         sb.AppendLine();
-        sb.AppendLine("using System.Runtime.Serialization;");
         sb.AppendLine("using System.Text.Json.Serialization;");
         sb.AppendLine();
         sb.AppendLine($"namespace {_NAMESPACE};");
@@ -428,15 +427,17 @@ internal static class EnumEmitter
         sb.AppendLine("/// </summary>");
         sb.AppendLine("/// <remarks>");
         sb.AppendLine(
-            "/// Each member carries an explicit <c>[EnumMember(Value = \"&lt;code&gt;\")]</c>");
+            "/// Each member carries <c>[JsonStringEnumMemberName(\"&lt;code&gt;\")]</c>");
         sb.AppendLine(
-            "/// attribute so the JSON wire form is the canonical lowercase ISO 639-1");
+            "/// so the JSON wire form is the canonical lowercase ISO 639-1 code");
         sb.AppendLine(
-            "/// code (e.g. <c>\"en\"</c>) rather than the PascalCased C# member name");
+            "/// (e.g. <c>\"en\"</c>) rather than the PascalCased C# member name");
         sb.AppendLine(
-            "/// (<c>\"En\"</c>). <c>JsonStringEnumConverter</c> honors <c>[EnumMember]</c>");
+            "/// (<c>\"En\"</c>). <c>JsonStringEnumConverter</c> honors");
         sb.AppendLine(
-            "/// on serialize + deserialize — keeps wire-form parity with the TS-side");
+            "/// <c>[JsonStringEnumMemberName]</c> (the .NET 9+ attribute) on both");
+        sb.AppendLine(
+            "/// serialize and deserialize — keeps wire-form parity with the TS-side");
         sb.AppendLine(
             "/// <c>LanguageCode</c> const-object (which uses lowercase string values).");
         sb.AppendLine(
@@ -461,13 +462,15 @@ internal static class EnumEmitter
             if (!emittedMembers.Add(memberName))
                 continue;
 
-            // JsonStringEnumConverter honors [EnumMember(Value="...")] —
-            // wire form = the ISO 639-1 lowercase code (matches TS-side).
+            // [JsonStringEnumMemberName] is the .NET 9+ attribute that
+            // JsonStringEnumConverter honors for a custom wire name — NOT
+            // [EnumMember] (DataContract), which System.Text.Json ignores.
+            // Wire form = the ISO 639-1 lowercase code (matches TS-side).
             var wireValue = entry.Iso6391Code.ToLowerInvariant();
             sb.AppendLine(
                 $"    /// <summary>{EscapeXmlDoc(entry.Name)} "
                 + $"({entry.Iso6391Code}).</summary>");
-            sb.AppendLine($"    [EnumMember(Value = \"{wireValue}\")]");
+            sb.AppendLine($"    [JsonStringEnumMemberName(\"{wireValue}\")]");
             sb.AppendLine($"    {memberName} = {sequential},");
             sb.AppendLine();
             sequential = (ushort)(sequential + 1);

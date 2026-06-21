@@ -14,10 +14,10 @@ using Xunit;
 /// <summary>
 /// Process-wide env-var mutation — every test wraps the mutation in a
 /// try/finally that restores the prior value to avoid cross-test
-/// contamination. Pinned into the <c>OtelStaticState</c> collection
+/// contamination. Pinned into the <c>LogLoggerStaticState</c> collection
 /// alongside the integration tests that touch the same env var.
 /// </summary>
-[Collection("OtelStaticState")]
+[Collection("LogLoggerStaticState")]
 public sealed class OtelSdkDisabledGateTests
 {
     [Fact]

@@ -4,7 +4,7 @@
 
 import { TK } from "@d2/i18n-keys";
 import { vi, describe, it, expect, beforeEach } from "vitest";
-import { D2Result } from "@d2/result";
+import { D2Result, ok, fail } from "@d2/result";
 
 vi.mock("$lib/shared/rest/gateway-response.js", () => ({
   executeFetch: vi.fn(),
@@ -205,7 +205,7 @@ describe("authApiCall", () => {
   // ---------------------------------------------------------------------------
   describe("return value", () => {
     it("returns the D2Result from executeFetch on success", async () => {
-      const expected = D2Result.ok({ data: { id: "abc-123" } });
+      const expected = ok({ id: "abc-123" });
       mockExecuteFetch.mockResolvedValue(expected);
 
       const result = await authApiCall<{ id: string }>("/api/auth/test");
@@ -216,7 +216,7 @@ describe("authApiCall", () => {
     });
 
     it("returns the D2Result from executeFetch on failure", async () => {
-      const expected = D2Result.fail({
+      const expected = fail({
         messages: [{ key: TK.common.errors.NOT_FOUND }],
         statusCode: 404,
       });

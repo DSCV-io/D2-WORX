@@ -19,7 +19,7 @@ using Xunit;
 /// Spoofs <c>HttpContext.Connection.RemoteIpAddress</c> via custom
 /// middleware before the endpoint filter runs.
 /// </summary>
-[Collection("OtelStaticState")]
+[Collection("LogLoggerStaticState")]
 public sealed class PrometheusEndpointIpRestrictionTests
 {
     [Fact]

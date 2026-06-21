@@ -18,7 +18,7 @@ using Xunit;
 /// <c>AddD2Telemetry</c> registers, eventually reaching the in-memory
 /// log exporter.
 /// </summary>
-[Collection("OtelStaticState")]
+[Collection("LogLoggerStaticState")]
 public sealed class LogsExporterTests
 {
     [Fact]

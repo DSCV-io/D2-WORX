@@ -19,7 +19,7 @@ using Xunit;
 /// wired through the OTel SDK by emitting a synthetic activity / counter
 /// per name and asserting capture in the in-memory exporter.
 /// </summary>
-[Collection("OtelStaticState")]
+[Collection("LogLoggerStaticState")]
 public sealed class AggregatedSourceRegistrationTests
 {
     public static IEnumerable<TheoryDataRow<string>> ActivitySourceNames =>

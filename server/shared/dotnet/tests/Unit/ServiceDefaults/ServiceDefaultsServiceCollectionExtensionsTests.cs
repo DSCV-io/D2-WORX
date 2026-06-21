@@ -30,7 +30,7 @@ using Xunit;
 /// (resolution requires a full set of cross-lib dependencies that the
 /// per-step Integration tests cover via a test host fixture).
 /// </summary>
-[Collection("OtelStaticState")]
+[Collection("LogLoggerStaticState")]
 public sealed class ServiceDefaultsServiceCollectionExtensionsTests
 {
     [Fact]
