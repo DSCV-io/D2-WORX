@@ -23,10 +23,7 @@ import {
   D2_RESILIENCE_FAIL_WHEN_KEY,
   parseResultPredicate,
 } from "@d2/typespec-decorators";
-import type {
-  IdempotentPayload,
-  PredicateNode,
-} from "@d2/typespec-decorators";
+import type { IdempotentPayload, PredicateNode } from "@d2/typespec-decorators";
 import { emitGeneratedFile, resolveOutputPath } from "./lib/emit-file.js";
 import { walkModel } from "./lib/model-walk.js";
 import { emitCsharpDtos } from "./lib/csharp-dto-emitter.js";

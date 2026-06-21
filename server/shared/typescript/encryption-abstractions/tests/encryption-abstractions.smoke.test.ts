@@ -13,7 +13,12 @@ import {
 // The four closed domain identifiers — spec source of truth is
 // contracts/encryption-domains/encryption-domains.spec.json.
 // Mirrors .NET D2.Shared.Encryption.EncryptionDomains wire values.
-const EXPECTED_DOMAINS = ["audit", "notifications", "courier", "plaintext"] as const;
+const EXPECTED_DOMAINS = [
+  "audit",
+  "notifications",
+  "courier",
+  "plaintext",
+] as const;
 
 // The five logical frame fields declared in the spec (variable-length fields
 // are represented by the field name only, without offset/length constants).

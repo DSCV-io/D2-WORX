@@ -28,3 +28,11 @@ old/**
 
 # Lockfiles.
 pnpm-lock.yaml
+
+# Markdown is NOT Prettier-formatted. Prettier's markdown emphasis-normalization
+# (* <-> _) cannot distinguish an emphasis marker from an underscore inside an
+# identifier or an asterisk in a glob, so it corrupts this identifier-heavy docs
+# tree (e.g. SCREAMING_SNAKE -> SCREAMING*SNAKE, *.json -> _.json,
+# PHASE_3.md -> PHASE*3.md). There is no Prettier option to disable that, so
+# Markdown is governed by the doc conventions in rules.md §11, not Prettier.
+**/*.md

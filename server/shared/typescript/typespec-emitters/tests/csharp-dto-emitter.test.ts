@@ -317,7 +317,12 @@ const LEVEL: NestedEnum = {
   name: "Level",
   members: [
     { csName: "Low", wireValue: "Low", needsEnumMember: false, intValue: 0 },
-    { csName: "Medium", wireValue: "Medium", needsEnumMember: false, intValue: 5 },
+    {
+      csName: "Medium",
+      wireValue: "Medium",
+      needsEnumMember: false,
+      intValue: 5,
+    },
     { csName: "High", wireValue: "High", needsEnumMember: false, intValue: 10 },
   ],
 };
@@ -381,7 +386,7 @@ describe("emitCsharpDtos_ExplicitIntEnum_BackingPreserved", () => {
 });
 
 describe("emitCsharpDtos_NonIdentifierLiteral_JsonStringEnumMemberName", () => {
-  it("S-3 third-party → ThirdParty + [JsonStringEnumMemberName(\"third-party\")]", () => {
+  it('S-3 third-party → ThirdParty + [JsonStringEnumMemberName("third-party")]', () => {
     const [, outputFile] = emitCsharpDtos(
       "op",
       TEST_NAMESPACE,

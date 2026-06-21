@@ -190,7 +190,10 @@ describe("dtoParity_OneWalkModel_CsAndTsFieldSetIdentical", () => {
       kind: "Model",
       name: "TestModel",
       properties: new Map<string, ModelProperty>([
-        ["accountKind", { type: e, optional: false } as unknown as ModelProperty],
+        [
+          "accountKind",
+          { type: e, optional: false } as unknown as ModelProperty,
+        ],
       ]),
     } as unknown as Model;
 
@@ -237,9 +240,11 @@ describe("dtoParity_OneWalkModel_CsAndTsFieldSetIdentical", () => {
     expect(ts).toContain("readonly accountKind: AccountKind;");
 
     // The member identity (csName + wireValue) is shared — one source.
-    expect(nestedEnums[0]!.members.map((m) => [m.csName, m.wireValue])).toEqual([
-      ["Internal", "internal"],
-      ["ThirdParty", "third-party"],
-    ]);
+    expect(nestedEnums[0]!.members.map((m) => [m.csName, m.wireValue])).toEqual(
+      [
+        ["Internal", "internal"],
+        ["ThirdParty", "third-party"],
+      ],
+    );
   });
 });

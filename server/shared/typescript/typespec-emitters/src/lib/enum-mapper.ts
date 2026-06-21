@@ -96,7 +96,9 @@ export function emitEnumMapperHelpers(
     pushLine(
       `        /// <summary>Parses a wire string to <see cref="${e.name}"/>; an unknown value fails loud (400 ValidationFailed).</summary>`,
     );
-    pushLine(`        internal static D2Result<${e.name}> Parse${e.name}Wire(string? value)`);
+    pushLine(
+      `        internal static D2Result<${e.name}> Parse${e.name}Wire(string? value)`,
+    );
     pushLine("        {");
     pushLine("            return value switch");
     pushLine("            {");
@@ -104,9 +106,7 @@ export function emitEnumMapperHelpers(
       pushLine(
         `                "${m.wireValue}" => D2Result<${e.name}>.Ok(${e.name}.${m.csName}),`,
       );
-    pushLine(
-      `                _ => D2Result<${e.name}>.ValidationFailed(`,
-    );
+    pushLine(`                _ => D2Result<${e.name}>.ValidationFailed(`);
     pushLine(
       `                    inputErrors: [new InputError(nameof(value), [TK.Common.Errors.VALIDATION_FAILED])]),`,
     );

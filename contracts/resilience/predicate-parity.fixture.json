@@ -37,7 +37,11 @@
       "statusCode": 200,
       "errorCode": null,
       "category": null,
-      "data": { "orderCode": "o1", "itemStatuses": ["SHIPPED", "PENDING"], "partial": false },
+      "data": {
+        "orderCode": "o1",
+        "itemStatuses": ["SHIPPED", "PENDING"],
+        "partial": false
+      },
       "expectedRetry": true,
       "expectedFail": false
     },
@@ -47,7 +51,11 @@
       "statusCode": 206,
       "errorCode": null,
       "category": null,
-      "data": { "orderCode": "o2", "itemStatuses": ["SHIPPED"], "partial": true },
+      "data": {
+        "orderCode": "o2",
+        "itemStatuses": ["SHIPPED"],
+        "partial": true
+      },
       "expectedRetry": true,
       "expectedFail": false
     },
@@ -77,7 +85,11 @@
       "statusCode": 503,
       "errorCode": "VALIDATION_FAILED",
       "category": "infrastructure_unavailable",
-      "data": { "orderCode": "o4", "itemStatuses": ["SHIPPED"], "partial": true },
+      "data": {
+        "orderCode": "o4",
+        "itemStatuses": ["SHIPPED"],
+        "partial": true
+      },
       "expectedRetry": true,
       "expectedFail": true
     },
@@ -87,7 +99,11 @@
       "statusCode": 200,
       "errorCode": null,
       "category": null,
-      "data": { "orderCode": "o5", "itemStatuses": ["SHIPPED"], "partial": false },
+      "data": {
+        "orderCode": "o5",
+        "itemStatuses": ["SHIPPED"],
+        "partial": false
+      },
       "expectedRetry": false,
       "expectedFail": false
     },
@@ -107,7 +123,11 @@
       "statusCode": 503,
       "errorCode": null,
       "category": "infrastructure_unavailable",
-      "data": { "orderCode": "o6", "itemStatuses": ["SHIPPED"], "partial": false },
+      "data": {
+        "orderCode": "o6",
+        "itemStatuses": ["SHIPPED"],
+        "partial": false
+      },
       "expectedRetry": true,
       "expectedFail": false
     },
@@ -117,7 +137,11 @@
       "statusCode": 409,
       "errorCode": "CONFLICT",
       "category": "conflict",
-      "data": { "orderCode": "o7", "itemStatuses": ["SHIPPED"], "partial": false },
+      "data": {
+        "orderCode": "o7",
+        "itemStatuses": ["SHIPPED"],
+        "partial": false
+      },
       "expectedRetry": false,
       "expectedFail": false
     }

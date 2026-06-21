@@ -11,9 +11,7 @@ import type { Subdivision } from "../generated/subdivision.g.js";
 import type { Timezone } from "../generated/timezone.g.js";
 import type { CountryCode } from "../generated/typed-codes/country-code.g.js";
 import type { CurrencyCode } from "../generated/typed-codes/currency-code.g.js";
-import type {
-  GeopoliticalEntityCode,
-} from "../generated/typed-codes/geopolitical-entity-code.g.js";
+import type { GeopoliticalEntityCode } from "../generated/typed-codes/geopolitical-entity-code.g.js";
 import type { LanguageCode } from "../generated/typed-codes/language-code.g.js";
 import type { LocaleCode } from "../generated/typed-codes/locale-code.g.js";
 import type { SubdivisionCode } from "../generated/typed-codes/subdivision-code.g.js";

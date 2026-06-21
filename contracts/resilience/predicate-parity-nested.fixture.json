@@ -95,7 +95,11 @@
       "success": true,
       "statusCode": 206,
       "errorCode": null,
-      "data": { "orderCode": "o6", "lines": [], "customer": { "tier": "TRIAL" } },
+      "data": {
+        "orderCode": "o6",
+        "lines": [],
+        "customer": { "tier": "TRIAL" }
+      },
       "expectedRetry": true,
       "expectedFail": true
     },

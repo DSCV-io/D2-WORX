@@ -282,10 +282,9 @@ describe("byteParity_PlaceOrderResiliencePredicatesTs", () => {
   });
 
   it("deliberate-drift detection: a mutated fixture does NOT match", () => {
-    const drifted = readFixture("place-order-resilience-predicates.g.ts").replace(
-      "placeOrderRetryWhen",
-      "placeOrderRetryWhenDRIFTED",
-    );
+    const drifted = readFixture(
+      "place-order-resilience-predicates.g.ts",
+    ).replace("placeOrderRetryWhen", "placeOrderRetryWhenDRIFTED");
     expect(emitPredicateFiles().ts).not.toBe(drifted);
   });
 });

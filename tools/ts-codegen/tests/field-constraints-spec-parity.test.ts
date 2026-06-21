@@ -81,7 +81,9 @@ const DOTNET_TAXONOMY_PATH = resolve(
 // Load spec
 // ---------------------------------------------------------------------------
 
-const spec = JSON.parse(readFileSync(SPEC_PATH, "utf8")) as FieldConstraintsSpec;
+const spec = JSON.parse(
+  readFileSync(SPEC_PATH, "utf8"),
+) as FieldConstraintsSpec;
 
 // ---------------------------------------------------------------------------
 // TS emitter output — generated fresh from the in-repo spec
@@ -128,9 +130,7 @@ describe("TS emitter output ↔ spec (field-constraints.spec.json)", () => {
     for (const enumEntry of spec.enums) {
       describe(`enum ${enumEntry.name}`, () => {
         it(`exports const ${enumEntry.name}`, () => {
-          expect(result.source).toContain(
-            `export const ${enumEntry.name} = {`,
-          );
+          expect(result.source).toContain(`export const ${enumEntry.name} = {`);
         });
 
         for (const member of enumEntry.members) {
@@ -238,9 +238,9 @@ describe(".NET committed emitter output ↔ spec (field-constraints.spec.json)",
     }
 
     it("enum count matches spec (no extra enums not in spec)", () => {
-      const matches = [
-        ...dotnetSrc.matchAll(/public enum (\w+)/g),
-      ].map((m) => m[1]);
+      const matches = [...dotnetSrc.matchAll(/public enum (\w+)/g)].map(
+        (m) => m[1],
+      );
       const specNames = spec.enums.map((e) => e.name).sort();
       expect([...matches].sort()).toEqual(specNames);
     });

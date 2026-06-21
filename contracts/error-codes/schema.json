@@ -64,10 +64,7 @@
         },
         "factoryShape": {
           "type": "string",
-          "enum": [
-            "standard",
-            "none"
-          ],
+          "enum": ["standard", "none"],
           "description": "Closed enum that drives the generated factory's signature variant. standard: the one universal error-factory shape (messages?, inputErrors?, errorCode?, category?, traceId?) — ALL optional. Every error factory can stamp a more specific code + category on the base status and optionally carry inputErrors; the overrides are how callers / delegating domain factories specialize the base factory. none: no factory generated for this code; only the constant + boolean are emitted — used by codes with no current constructing factory (the data-carrying SOME_FOUND / PARTIAL_SUCCESS 206/207 factories stay hand-rolled, plus IDEMPOTENCY_IN_FLIGHT / the serialization codes)."
         },
         "doc": {

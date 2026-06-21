@@ -10,8 +10,8 @@
   "scripts": {
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
-    "format": "prettier --write \"**/*.{ts,js,mjs,cjs,json,svelte,html,css,md,yaml,yml}\"",
-    "format:check": "prettier --check \"**/*.{ts,js,mjs,cjs,json,svelte,html,css,md,yaml,yml}\"",
+    "format": "prettier --write \"**/*.{ts,js,mjs,cjs,json,svelte,html,css,yaml,yml}\"",
+    "format:check": "prettier --check \"**/*.{ts,js,mjs,cjs,json,svelte,html,css,yaml,yml}\"",
     "test": "vitest run",
     "test:contracts": "pnpm --filter @d2/contract-tests test",
     "type-check:test": "pnpm -r run type-check:test",
@@ -25,8 +25,8 @@
     "eslint-config-prettier": "10.1.8",
     "globals": "16.4.0",
     "prettier": "3.8.1",
-    "prettier-plugin-svelte": "3.4.0",
-    "prettier-plugin-tailwindcss": "0.6.14",
+    "prettier-plugin-svelte": "4.1.1",
+    "prettier-plugin-tailwindcss": "0.8.0",
     "typescript": "5.9.3",
     "typescript-eslint": "8.56.1",
     "vitest": "4.0.18"

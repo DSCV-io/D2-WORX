@@ -258,7 +258,7 @@ describe("emitTsDtos_ExplicitIntEnum_ValueIsMemberName", () => {
 });
 
 describe("emitTsDtos_NonIdentifierLiteral_ValueIsLiteral", () => {
-  it("S-3 → const key is PascalCase, value is the literal (ThirdParty: \"third-party\")", () => {
+  it('S-3 → const key is PascalCase, value is the literal (ThirdParty: "third-party")', () => {
     const file = emitTsDtos(
       "op",
       TEST_SPEC,

@@ -507,12 +507,18 @@ describe("protoGrpcEmitIntegration_Resilience_PredicateAndSentinelEmitted", () =
     expect(predCs).toContain("SR_FailWhen");
 
     // Predicate TS parity twin emitted.
-    const predTs = getEmittedFile(host, "place-order-resilience-predicates.g.ts");
+    const predTs = getEmittedFile(
+      host,
+      "place-order-resilience-predicates.g.ts",
+    );
     expect(predTs).toBeDefined();
     expect(predTs).toContain("export const placeOrderRetryWhen");
 
     // Emitter-owned sentinel emitted once for the module.
-    const sentinel = getEmittedFile(host, "D2GeneratedBusinessRetrySignal.g.cs");
+    const sentinel = getEmittedFile(
+      host,
+      "D2GeneratedBusinessRetrySignal.g.cs",
+    );
     expect(sentinel).toBeDefined();
     expect(sentinel).toContain(
       "internal sealed class D2GeneratedBusinessRetrySignal : Exception",
@@ -521,7 +527,10 @@ describe("protoGrpcEmitIntegration_Resilience_PredicateAndSentinelEmitted", () =
     // The client impl gains the predicate arm; the DI-ext gains the sentinel IsTransient arm.
     // Match the IMPL with a leading '/' so the suffix does not also match the INTERFACE
     // file (IPredicateFixturesGrpcClient.g.cs ends with the same bare name).
-    const clientImpl = getEmittedFile(host, "/PredicateFixturesGrpcClient.g.cs");
+    const clientImpl = getEmittedFile(
+      host,
+      "/PredicateFixturesGrpcClient.g.cs",
+    );
     expect(clientImpl).toContain(
       "throw new D2GeneratedBusinessRetrySignal(businessResult.ToProto());",
     );
@@ -533,8 +542,13 @@ describe("protoGrpcEmitIntegration_Resilience_PredicateAndSentinelEmitted", () =
 
     // The PLAIN module (no @d2Resilience) emits NO predicate files and its client stays
     // byte-identical — no sentinel arm, no predicate class for that module's op.
-    expect(getEmittedFile(host, "PingResiliencePredicates.g.cs")).toBeUndefined();
-    const pingDi = getEmittedFile(host, "PlainFixturesGrpcClientsGenerated.g.cs");
+    expect(
+      getEmittedFile(host, "PingResiliencePredicates.g.cs"),
+    ).toBeUndefined();
+    const pingDi = getEmittedFile(
+      host,
+      "PlainFixturesGrpcClientsGenerated.g.cs",
+    );
     expect(pingDi).toBeDefined();
     expect(pingDi).not.toContain("D2GeneratedBusinessRetrySignal");
     const pingImpl = getEmittedFile(host, "/PlainFixturesGrpcClient.g.cs");

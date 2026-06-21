@@ -93,7 +93,10 @@ function model(name: string, props: Record<string, Type>): Model {
 }
 
 function wrappedOp(name: string, input: Model, output: Model): Operation {
-  const inputProp = { type: input, optional: false } as unknown as ModelProperty;
+  const inputProp = {
+    type: input,
+    optional: false,
+  } as unknown as ModelProperty;
   const wrappedParams = {
     kind: "Model",
     name: "",
@@ -115,10 +118,7 @@ function program(stateMapFn: (key: symbol) => Map<object, unknown>): Program {
   } as unknown as Program;
 }
 
-function context(
-  prog: Program,
-  options: Record<string, string>,
-): EmitContext {
+function context(prog: Program, options: Record<string, string>): EmitContext {
   return {
     program: prog,
     emitterOutputDir: "/out",
@@ -158,7 +158,14 @@ describe("$onEmit_predicateEmitDirect_PredicateBearingOp", () => {
         return new Map<object, unknown>([[op, "PredicateFixtures"]]);
       if (key === D2_GRPC_METHOD_KEY)
         return new Map<object, unknown>([
-          [op, { service: "PredicateFixturesOrders", method: "PlaceOrder", streaming: "unary" }],
+          [
+            op,
+            {
+              service: "PredicateFixturesOrders",
+              method: "PlaceOrder",
+              streaming: "unary",
+            },
+          ],
         ]);
       if (key === D2_COMMAND_KEY) return new Map<object, unknown>([[op, true]]);
       if (key === D2_RESILIENCE_RETRY_WHEN_KEY)
@@ -170,7 +177,10 @@ describe("$onEmit_predicateEmitDirect_PredicateBearingOp", () => {
         ]);
       if (key === D2_RESILIENCE_FAIL_WHEN_KEY)
         return new Map<object, unknown>([
-          [op, 'result.data.itemStatuses.count == 0 || result.errorCode == "VALIDATION_FAILED"'],
+          [
+            op,
+            'result.data.itemStatuses.count == 0 || result.errorCode == "VALIDATION_FAILED"',
+          ],
         ]);
 
       return new Map<object, unknown>();
@@ -181,9 +191,15 @@ describe("$onEmit_predicateEmitDirect_PredicateBearingOp", () => {
 
     const predCs = find("PlaceOrderResiliencePredicates.g.cs");
     expect(predCs).toBeDefined();
-    expect(predCs).toContain("internal static readonly Func<D2Result<PlaceOrderOutput?>, bool> SR_RetryWhen");
-    expect(predCs).toContain('r.Category?.ToWire() == "infrastructure_unavailable"');
-    expect(predCs).toContain('(r.Data?.ItemStatuses?.Contains("PENDING") ?? false)');
+    expect(predCs).toContain(
+      "internal static readonly Func<D2Result<PlaceOrderOutput?>, bool> SR_RetryWhen",
+    );
+    expect(predCs).toContain(
+      'r.Category?.ToWire() == "infrastructure_unavailable"',
+    );
+    expect(predCs).toContain(
+      '(r.Data?.ItemStatuses?.Contains("PENDING") ?? false)',
+    );
 
     const predTs = find("place-order-resilience-predicates.g.ts");
     expect(predTs).toBeDefined();
@@ -191,15 +207,21 @@ describe("$onEmit_predicateEmitDirect_PredicateBearingOp", () => {
 
     const sentinel = find("D2GeneratedBusinessRetrySignal.g.cs");
     expect(sentinel).toBeDefined();
-    expect(sentinel).toContain("internal sealed class D2GeneratedBusinessRetrySignal : Exception");
+    expect(sentinel).toContain(
+      "internal sealed class D2GeneratedBusinessRetrySignal : Exception",
+    );
 
     // The AST threaded onto the client → the impl gains the sentinel throw arm.
-    const impl = find("/PlaceOrderResiliencePredicatesGrpcClient.g.cs")
-      ?? directUnitEmitted.find(
-        (e) => e.path.endsWith("PredicateFixturesGrpcClient.g.cs")
-          && !e.path.endsWith("IPredicateFixturesGrpcClient.g.cs"),
+    const impl =
+      find("/PlaceOrderResiliencePredicatesGrpcClient.g.cs") ??
+      directUnitEmitted.find(
+        (e) =>
+          e.path.endsWith("PredicateFixturesGrpcClient.g.cs") &&
+          !e.path.endsWith("IPredicateFixturesGrpcClient.g.cs"),
       )?.content;
-    expect(impl).toContain("throw new D2GeneratedBusinessRetrySignal(businessResult.ToProto());");
+    expect(impl).toContain(
+      "throw new D2GeneratedBusinessRetrySignal(businessResult.ToProto());",
+    );
   });
 });
 
@@ -218,7 +240,14 @@ describe("$onEmit_predicateEmitDirect_NoPredicateOp", () => {
         return new Map<object, unknown>([[op, "PlainFixtures"]]);
       if (key === D2_GRPC_METHOD_KEY)
         return new Map<object, unknown>([
-          [op, { service: "PlainFixturesPinger", method: "Ping", streaming: "unary" }],
+          [
+            op,
+            {
+              service: "PlainFixturesPinger",
+              method: "Ping",
+              streaming: "unary",
+            },
+          ],
         ]);
       if (key === D2_COMMAND_KEY) return new Map<object, unknown>([[op, true]]);
 

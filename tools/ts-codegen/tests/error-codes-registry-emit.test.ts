@@ -480,7 +480,8 @@ describe("emitErrorCodeRegistry — source output", () => {
         {
           ...genericEntry,
           code: "NOT_FOUND",
-          category: "completely_made_up" as unknown as typeof genericEntry.category,
+          category:
+            "completely_made_up" as unknown as typeof genericEntry.category,
         },
       ],
     };
@@ -595,7 +596,9 @@ describe("discoverCatalogs — malformed spec files fire D2ERC006 (not silently 
       const { catalogs, diagnostics } = discoverCatalogs(tmpDir);
       expect(catalogs).toHaveLength(0);
       expect(diagnostics).toHaveLength(1);
-      expect(diagnostics[0]?.id).toBe(DiagnosticIds.ERC_MALFORMED_REGISTRY_SPEC);
+      expect(diagnostics[0]?.id).toBe(
+        DiagnosticIds.ERC_MALFORMED_REGISTRY_SPEC,
+      );
       expect(diagnostics[0]?.severity).toBe("error");
       expect(diagnostics[0]?.message).toContain("D2ERC006");
       expect(diagnostics[0]?.message).toContain("bad.spec.json");
@@ -622,7 +625,9 @@ describe("discoverCatalogs — malformed spec files fire D2ERC006 (not silently 
       // D2ERC006 fires — the discovery result must carry an error diagnostic.
       expect(diagnostics.some((d) => d.severity === "error")).toBe(true);
       expect(
-        diagnostics.some((d) => d.id === DiagnosticIds.ERC_MALFORMED_REGISTRY_SPEC),
+        diagnostics.some(
+          (d) => d.id === DiagnosticIds.ERC_MALFORMED_REGISTRY_SPEC,
+        ),
       ).toBe(true);
       // The runner guard: if any discovery diagnostic is an error, return them
       // immediately (no writeGeneratedFile called). Simulate the guard directly.

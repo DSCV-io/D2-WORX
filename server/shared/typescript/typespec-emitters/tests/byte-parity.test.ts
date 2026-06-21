@@ -627,10 +627,7 @@ function makeEnumStub(
   } as unknown as Scalar;
 }
 
-function makeUnionStub(
-  name: string | undefined,
-  literals: string[],
-): Scalar {
+function makeUnionStub(name: string | undefined, literals: string[]): Scalar {
   return {
     kind: "Union",
     name,
@@ -669,9 +666,15 @@ function buildEnumsWalks() {
       kind: "Model",
       name: modelName,
       properties: new Map<string, ModelProperty>([
-        ["keyKind", { type: keyKind, optional: false } as unknown as ModelProperty],
+        [
+          "keyKind",
+          { type: keyKind, optional: false } as unknown as ModelProperty,
+        ],
         ["level", { type: level, optional: false } as unknown as ModelProperty],
-        ["status", { type: status, optional: false } as unknown as ModelProperty],
+        [
+          "status",
+          { type: status, optional: false } as unknown as ModelProperty,
+        ],
         [
           "accountKind",
           { type: accountKind, optional: false } as unknown as ModelProperty,

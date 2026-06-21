@@ -23,5 +23,4 @@ Copyright (c) DCSV. All rights reserved.
     className,
   )}
   bind:value
-  {...restProps}
-></textarea>
+  {...restProps}></textarea>

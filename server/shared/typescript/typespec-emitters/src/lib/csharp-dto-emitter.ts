@@ -264,7 +264,9 @@ function emitEnumBlock(lines: string[], en: NestedEnum): void {
     const m = en.members[i]!;
     if (i > 0) lines.push("");
 
-    lines.push(`    /// <summary>The <c>${m.wireValue}</c> wire value.</summary>`);
+    lines.push(
+      `    /// <summary>The <c>${m.wireValue}</c> wire value.</summary>`,
+    );
     if (m.needsEnumMember)
       lines.push(`    [JsonStringEnumMemberName("${m.wireValue}")]`);
 

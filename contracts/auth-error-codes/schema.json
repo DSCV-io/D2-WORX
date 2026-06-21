@@ -58,10 +58,7 @@
         },
         "factoryShape": {
           "type": "string",
-          "enum": [
-            "standard",
-            "none"
-          ],
+          "enum": ["standard", "none"],
           "description": "Closed enum that drives the generated factory's signature variant. standard: the one universal error-factory shape (messages?, inputErrors?, errorCode?, category?, traceId?) — ALL optional; the errorCode / category overrides are how a delegating domain factory stamps a specific code + category on its base status. none: no factory generated for this code. Every auth entry is standard (both 401 Unauthorized and 503 ServiceUnavailable delegate through it); the typed <T> overload on the 503 factories is an httpStatus-driven emitter rule, not a factoryShape value."
         },
         "doc": {

@@ -60,10 +60,7 @@
         },
         "factoryShape": {
           "type": "string",
-          "enum": [
-            "standard",
-            "none"
-          ],
+          "enum": ["standard", "none"],
           "description": "Closed enum that drives the generated factory's signature variant. standard: the one universal error-factory shape (messages?, inputErrors?, errorCode?, category?, traceId?) — ALL optional; the errorCode / category overrides are how a delegating domain factory stamps a specific code + category on its base status. none: no factory generated for this code. Every keycustodian entry is standard (the delegating emitter implements standard + none; a 400 standard entry delegates to D2Result.ValidationFailed, a 500 standard entry delegates to D2Result.UnhandledException)."
         },
         "doc": {

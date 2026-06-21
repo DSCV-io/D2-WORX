@@ -81,8 +81,7 @@ async function compileModel(
 /** Parse a predicate string into its AST (the parser is the C-3 gate; ok here). */
 function ast(expr: string): PredicateNode {
   const parsed = parseResultPredicate(expr);
-  if (!parsed.ok)
-    throw new Error(`fixture predicate failed to parse: ${expr}`);
+  if (!parsed.ok) throw new Error(`fixture predicate failed to parse: ${expr}`);
 
   return parsed.root;
 }
@@ -129,19 +128,34 @@ describe("resultPredicateEmitter_EnvelopeAccessors", () => {
   });
 
   it("result.success → r.Success / r.success", () => {
-    const { cs, ts } = emit(model, "Thing", ast("result.success == true"), undefined);
+    const { cs, ts } = emit(
+      model,
+      "Thing",
+      ast("result.success == true"),
+      undefined,
+    );
     expect(cs).toContain("r.Success == true");
     expect(ts).toContain("r.success === true");
   });
 
   it("result.statusCode → (int)r.StatusCode / r.statusCode", () => {
-    const { cs, ts } = emit(model, "Thing", ast("result.statusCode == 503"), undefined);
+    const { cs, ts } = emit(
+      model,
+      "Thing",
+      ast("result.statusCode == 503"),
+      undefined,
+    );
     expect(cs).toContain("(int)r.StatusCode == 503");
     expect(ts).toContain("r.statusCode === 503");
   });
 
   it("result.errorCode → r.ErrorCode / r.errorCode (string compare)", () => {
-    const { cs, ts } = emit(model, "Thing", ast('result.errorCode == "X"'), undefined);
+    const { cs, ts } = emit(
+      model,
+      "Thing",
+      ast('result.errorCode == "X"'),
+      undefined,
+    );
     expect(cs).toContain('r.ErrorCode == "X"');
     expect(ts).toContain('r.errorCode === "X"');
   });
@@ -158,7 +172,12 @@ describe("resultPredicateEmitter_EnvelopeAccessors", () => {
   });
 
   it("!= operator maps to != / !==", () => {
-    const { cs, ts } = emit(model, "Thing", ast('result.errorCode != "X"'), undefined);
+    const { cs, ts } = emit(
+      model,
+      "Thing",
+      ast('result.errorCode != "X"'),
+      undefined,
+    );
     expect(cs).toContain('r.ErrorCode != "X"');
     expect(ts).toContain('r.errorCode !== "X"');
   });
@@ -186,7 +205,12 @@ describe("resultPredicateEmitter_EnvelopeAccessors", () => {
   });
 
   it("bool literal false emits false", () => {
-    const { cs, ts } = emit(model, "Thing", ast("result.success == false"), undefined);
+    const { cs, ts } = emit(
+      model,
+      "Thing",
+      ast("result.success == false"),
+      undefined,
+    );
     expect(cs).toContain("r.Success == false");
     expect(ts).toContain("r.success === false");
   });
@@ -211,7 +235,12 @@ describe("resultPredicateEmitter_DataPathAccessors", () => {
       `model Flat { partial: boolean; }`,
       "Flat",
     );
-    const { cs, ts } = emit(model, "Flat", ast("result.data.partial == true"), undefined);
+    const { cs, ts } = emit(
+      model,
+      "Flat",
+      ast("result.data.partial == true"),
+      undefined,
+    );
     expect(cs).toContain("r.Data?.Partial == true");
     expect(ts).toContain("r.data?.partial === true");
   });
@@ -268,7 +297,12 @@ describe("resultPredicateEmitter_ArrayAccessors", () => {
       `model Out { items: string[]; }`,
       "Out",
     );
-    const { cs, ts } = emit(model, "Out", undefined, ast("result.data.items.count == 0"));
+    const { cs, ts } = emit(
+      model,
+      "Out",
+      undefined,
+      ast("result.data.items.count == 0"),
+    );
     expect(cs).toContain("(r.Data?.Items?.Count ?? 0) == 0");
     expect(ts).toContain("(r.data?.items?.length ?? 0) === 0");
   });
@@ -321,9 +355,7 @@ describe("resultPredicateEmitter_ArrayAccessors", () => {
       ast("result.data.batches.all(b => b.ok == true)"),
       undefined,
     );
-    expect(cs).toContain(
-      "(r.Data?.Batches?.All(b => b.Ok == true) ?? false)",
-    );
+    expect(cs).toContain("(r.Data?.Batches?.All(b => b.Ok == true) ?? false)");
     expect(ts).toContain(
       "(r.data?.batches?.every((b) => b.ok === true) ?? false)",
     );
@@ -416,7 +448,12 @@ describe("resultPredicateEmitter_FieldShapeAndSentinel", () => {
   });
 
   it("only retryWhen present → only SR_RetryWhen emitted", () => {
-    const { cs, ts } = emit(model, "Thing", ast("result.success == true"), undefined);
+    const { cs, ts } = emit(
+      model,
+      "Thing",
+      ast("result.success == true"),
+      undefined,
+    );
     expect(cs).toContain("SR_RetryWhen");
     expect(cs).not.toContain("SR_FailWhen");
     expect(ts).toContain("doThingRetryWhen");
@@ -424,7 +461,12 @@ describe("resultPredicateEmitter_FieldShapeAndSentinel", () => {
   });
 
   it("only failWhen present → only SR_FailWhen emitted", () => {
-    const { cs, ts } = emit(model, "Thing", undefined, ast("result.success == false"));
+    const { cs, ts } = emit(
+      model,
+      "Thing",
+      undefined,
+      ast("result.success == false"),
+    );
     expect(cs).toContain("SR_FailWhen");
     expect(cs).not.toContain("SR_RetryWhen");
     expect(ts).toContain("doThingFailWhen");
@@ -469,13 +511,15 @@ describe("resultPredicateEmitter_FieldShapeAndSentinel", () => {
     expect(sentinel.content).toContain(
       "internal D2GeneratedBusinessRetrySignal(D2ResultProto envelope)",
     );
-    expect(sentinel.content).toContain("internal D2ResultProto Envelope { get; }");
+    expect(sentinel.content).toContain(
+      "internal D2ResultProto Envelope { get; }",
+    );
     // PII: the sentinel must NOT log; no [LoggerMessage], no ILogger.
     expect(sentinel.content).not.toContain("LoggerMessage");
     expect(sentinel.content).not.toContain("ILogger");
   });
 
-  it("emitted C# / TS carry no `tk(\"TK.…\")` path literal (§26.7)", () => {
+  it('emitted C# / TS carry no `tk("TK.…")` path literal (§26.7)', () => {
     const { cs, ts } = emit(
       model,
       "Thing",

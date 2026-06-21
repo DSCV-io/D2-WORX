@@ -121,8 +121,7 @@ Copyright (c) DCSV. All rights reserved.
       // Prefer the first top-level message; fall back to the first
       // input-error's first TKMessage (object shape per
       // contracts/input-error spec — NOT tuple indexing).
-      const message =
-        result.messages?.[0] ?? result.inputErrors?.[0]?.errors?.[0];
+      const message = result.messages?.[0] ?? result.inputErrors?.[0]?.errors?.[0];
       throw new Error(translateMessage(message, undefined, m.common_errors_UNKNOWN()));
     }
     toast.success(m.common_ui_changes_saved());
@@ -134,8 +133,7 @@ Copyright (c) DCSV. All rights reserved.
       // Prefer the first top-level message; fall back to the first
       // input-error's first TKMessage (object shape per
       // contracts/input-error spec — NOT tuple indexing).
-      const message =
-        result.messages?.[0] ?? result.inputErrors?.[0]?.errors?.[0];
+      const message = result.messages?.[0] ?? result.inputErrors?.[0]?.errors?.[0];
       throw new Error(translateMessage(message, undefined, m.common_errors_UNKNOWN()));
     }
     toast.success(m.common_ui_changes_saved());

@@ -113,10 +113,11 @@ export function emitTsDtos(
  */
 function emitEnumConst(en: NestedEnum): string {
   const lines: string[] = [];
-  lines.push(`/** Generated wire enum \`${en.name}\` (value === the wire string). */`);
+  lines.push(
+    `/** Generated wire enum \`${en.name}\` (value === the wire string). */`,
+  );
   lines.push(`export const ${en.name} = {`);
-  for (const m of en.members)
-    lines.push(`  ${m.csName}: "${m.wireValue}",`);
+  for (const m of en.members) lines.push(`  ${m.csName}: "${m.wireValue}",`);
   lines.push("} as const;");
   lines.push("");
   lines.push(

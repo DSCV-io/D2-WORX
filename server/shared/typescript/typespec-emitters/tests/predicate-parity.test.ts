@@ -226,7 +226,10 @@ function loadFixtureV2(): FixtureFileV2 {
   return JSON.parse(readFileSync(path, "utf8")) as FixtureFileV2;
 }
 
-function loadEmittedPredicatesV2(): { retryWhen: Predicate; failWhen: Predicate } {
+function loadEmittedPredicatesV2(): {
+  retryWhen: Predicate;
+  failWhen: Predicate;
+} {
   const here = dirname(fileURLToPath(import.meta.url));
   const file = join(
     here,

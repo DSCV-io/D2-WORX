@@ -82,15 +82,14 @@ export interface ResultPredicateEmitInput {
  * @returns `[csFile, tsFile]`. Empty array when the op carries neither predicate
  *          (the caller emits nothing — the no-predicate path stays byte-identical).
  */
-export function emitResultPredicates(input: ResultPredicateEmitInput): EmittedFile[] {
+export function emitResultPredicates(
+  input: ResultPredicateEmitInput,
+): EmittedFile[] {
   if (input.retryWhen === undefined && input.failWhen === undefined) return [];
 
   const banner = buildBanner(input.sourceSpec);
 
-  return [
-    emitCsharpPredicates(input, banner),
-    emitTsPredicates(input, banner),
-  ];
+  return [emitCsharpPredicates(input, banner), emitTsPredicates(input, banner)];
 }
 
 /**
@@ -134,20 +133,22 @@ export function emitBusinessRetrySignal(
     "/// resilience-library change (it rides the existing <c>RetryOptions.IsTransient</c> seam).",
   );
   lines.push(
-    "/// Carries the captured <see cref=\"D2ResultProto\"/> envelope so the client restores the",
+    '/// Carries the captured <see cref="D2ResultProto"/> envelope so the client restores the',
   );
   lines.push(
     "/// business result verbatim on retry-budget exhaust. Never escapes the generated client;",
   );
   lines.push("/// never logs the payload.");
   lines.push("/// </summary>");
-  lines.push("internal sealed class D2GeneratedBusinessRetrySignal : Exception");
+  lines.push(
+    "internal sealed class D2GeneratedBusinessRetrySignal : Exception",
+  );
   lines.push("{");
   lines.push(
     "    /// <summary>Initializes the sentinel with the captured business-result envelope.</summary>",
   );
   lines.push(
-    "    /// <param name=\"envelope\">The captured <see cref=\"D2ResultProto\"/> envelope to restore on give-up.</param>",
+    '    /// <param name="envelope">The captured <see cref="D2ResultProto"/> envelope to restore on give-up.</param>',
   );
   lines.push(
     "    internal D2GeneratedBusinessRetrySignal(D2ResultProto envelope)",
@@ -223,14 +224,26 @@ function emitCsharpPredicates(
   const emitted: string[] = [];
   if (input.retryWhen !== undefined) {
     emitted.push(
-      ...buildCsharpField("SR_RetryWhen", "retryWhen", input.retryWhen, outputAlias, input.outputModel),
+      ...buildCsharpField(
+        "SR_RetryWhen",
+        "retryWhen",
+        input.retryWhen,
+        outputAlias,
+        input.outputModel,
+      ),
     );
   }
 
   if (input.failWhen !== undefined) {
     if (emitted.length > 0) emitted.push("");
     emitted.push(
-      ...buildCsharpField("SR_FailWhen", "failWhen", input.failWhen, outputAlias, input.outputModel),
+      ...buildCsharpField(
+        "SR_FailWhen",
+        "failWhen",
+        input.failWhen,
+        outputAlias,
+        input.outputModel,
+      ),
     );
   }
 
@@ -291,7 +304,11 @@ function emitCsharpNode(
 
   // ComparisonNode.
   if (node.access.kind === "envelope") {
-    return emitCsharpComparison(emitCsharpEnvelope(node.access), node.op, node.rhs);
+    return emitCsharpComparison(
+      emitCsharpEnvelope(node.access),
+      node.op,
+      node.rhs,
+    );
   }
 
   const accessExpr = emitCsharpDataPathScalar(node.access, model, receiver);
@@ -488,14 +505,24 @@ function emitTsPredicates(
 
   if (input.retryWhen !== undefined) {
     lines.push(
-      ...buildTsConst(`${input.opName}RetryWhen`, input.retryWhen, input.responseModelName, input.outputModel),
+      ...buildTsConst(
+        `${input.opName}RetryWhen`,
+        input.retryWhen,
+        input.responseModelName,
+        input.outputModel,
+      ),
     );
   }
 
   if (input.failWhen !== undefined) {
     if (input.retryWhen !== undefined) lines.push("");
     lines.push(
-      ...buildTsConst(`${input.opName}FailWhen`, input.failWhen, input.responseModelName, input.outputModel),
+      ...buildTsConst(
+        `${input.opName}FailWhen`,
+        input.failWhen,
+        input.responseModelName,
+        input.outputModel,
+      ),
     );
   }
 

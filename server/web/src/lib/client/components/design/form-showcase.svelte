@@ -49,7 +49,8 @@ Copyright (c) DCSV. All rights reserved.
   ];
 
   const selectedFrameworkLabel = $derived(
-    frameworks.find((f) => f.value === comboValue)?.label ?? m.webclient_design_form_select_framework(),
+    frameworks.find((f) => f.value === comboValue)?.label ??
+      m.webclient_design_form_select_framework(),
   );
 </script>
 
@@ -60,7 +61,9 @@ Copyright (c) DCSV. All rights reserved.
   <div class="grid gap-6 md:grid-cols-2">
     <!-- Text inputs -->
     <div class="flex flex-col gap-4 rounded-lg border p-6">
-      <h3 class="text-muted-foreground text-sm font-medium">{m.webclient_design_form_text_inputs()}</h3>
+      <h3 class="text-muted-foreground text-sm font-medium">
+        {m.webclient_design_form_text_inputs()}
+      </h3>
 
       <div class="flex flex-col gap-2">
         <Label for="email">{m.webclient_forms_email_label()}</Label>
@@ -100,7 +103,9 @@ Copyright (c) DCSV. All rights reserved.
 
     <!-- Selection controls -->
     <div class="flex flex-col gap-4 rounded-lg border p-6">
-      <h3 class="text-muted-foreground text-sm font-medium">{m.webclient_design_form_selection_controls()}</h3>
+      <h3 class="text-muted-foreground text-sm font-medium">
+        {m.webclient_design_form_selection_controls()}
+      </h3>
 
       <div class="flex flex-col gap-3">
         <Label>{m.webclient_design_form_select()}</Label>
@@ -140,7 +145,9 @@ Copyright (c) DCSV. All rights reserved.
           for="notifications"
           class="text-sm"
         >
-          {switchChecked ? m.webclient_design_form_notifications_on() : m.webclient_design_form_notifications_off()}
+          {switchChecked
+            ? m.webclient_design_form_notifications_on()
+            : m.webclient_design_form_notifications_off()}
         </Label>
       </div>
 
@@ -194,7 +201,9 @@ Copyright (c) DCSV. All rights reserved.
 
     <!-- Calendar -->
     <div class="flex flex-col gap-4 rounded-lg border p-6">
-      <h3 class="text-muted-foreground text-sm font-medium">{m.webclient_design_form_calendar()}</h3>
+      <h3 class="text-muted-foreground text-sm font-medium">
+        {m.webclient_design_form_calendar()}
+      </h3>
       <div class="flex flex-col items-center gap-3">
         <Calendar
           type="single"
@@ -202,7 +211,9 @@ Copyright (c) DCSV. All rights reserved.
           class="rounded-md border"
         />
         <p class="text-muted-foreground text-sm">
-          {m.webclient_design_form_select_date({ date: calendarValue ? calendarValue.toString() : "none" })}
+          {m.webclient_design_form_select_date({
+            date: calendarValue ? calendarValue.toString() : "none",
+          })}
         </p>
       </div>
     </div>
@@ -211,7 +222,9 @@ Copyright (c) DCSV. All rights reserved.
     <div class="flex flex-col gap-6 rounded-lg border p-6">
       <!-- Combobox (Command + Popover) -->
       <div class="flex flex-col gap-3">
-        <h3 class="text-muted-foreground text-sm font-medium">{m.webclient_design_form_combobox()}</h3>
+        <h3 class="text-muted-foreground text-sm font-medium">
+          {m.webclient_design_form_combobox()}
+        </h3>
         <Popover.Root bind:open={comboOpen}>
           <Popover.Trigger>
             <Button
@@ -258,7 +271,9 @@ Copyright (c) DCSV. All rights reserved.
 
       <!-- Toggle Group -->
       <div class="flex flex-col gap-3">
-        <h3 class="text-muted-foreground text-sm font-medium">{m.webclient_design_form_toggle_single()}</h3>
+        <h3 class="text-muted-foreground text-sm font-medium">
+          {m.webclient_design_form_toggle_single()}
+        </h3>
         <ToggleGroup.Root
           type="single"
           bind:value={alignValue}
@@ -291,7 +306,9 @@ Copyright (c) DCSV. All rights reserved.
       </div>
 
       <div class="flex flex-col gap-3">
-        <h3 class="text-muted-foreground text-sm font-medium">{m.webclient_design_form_toggle_multi()}</h3>
+        <h3 class="text-muted-foreground text-sm font-medium">
+          {m.webclient_design_form_toggle_multi()}
+        </h3>
         <ToggleGroup.Root
           type="multiple"
           bind:value={connectivityValues}
@@ -323,7 +340,9 @@ Copyright (c) DCSV. All rights reserved.
 
     <!-- Full form example -->
     <div class="flex flex-col gap-4 rounded-lg border p-6 md:col-span-2">
-      <h3 class="text-muted-foreground text-sm font-medium">{m.webclient_design_form_combined_example()}</h3>
+      <h3 class="text-muted-foreground text-sm font-medium">
+        {m.webclient_design_form_combined_example()}
+      </h3>
       <div class="grid gap-4 sm:grid-cols-2">
         <div class="flex flex-col gap-2">
           <Label for="first-name">{m.webclient_forms_first_name_label()}</Label>

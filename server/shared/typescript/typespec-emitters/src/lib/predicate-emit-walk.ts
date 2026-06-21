@@ -82,7 +82,9 @@ function arrayElement(arrayType: Model): Type | undefined {
 
 /** The Model a type resolves to for a deeper walk, or undefined for non-models / arrays. */
 function asNestedModel(t: Type | undefined): Model | undefined {
-  return t !== undefined && t.kind === "Model" && !isArrayType(t) ? t : undefined;
+  return t !== undefined && t.kind === "Model" && !isArrayType(t)
+    ? t
+    : undefined;
 }
 
 // ---------------------------------------------------------------------------
