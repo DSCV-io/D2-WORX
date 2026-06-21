@@ -11,24 +11,24 @@ Edge routing config, and structured-log redaction markers.
 
 ## Public API
 
-| Decorator             | Target          | Args                                                         | State key                   |
-| --------------------- | --------------- | ------------------------------------------------------------ | --------------------------- |
-| `@d2RequireAnyScope`  | `op`            | `...scopes: string[]`                                        | `D2_REQUIRE_ANY_SCOPE_KEY`  |
-| `@d2RequireAllScopes` | `op`            | `...scopes: string[]`                                        | `D2_REQUIRE_ALL_SCOPES_KEY` |
-| `@d2RateLimitTier`    | `op`            | `tier: string`                                               | `D2_RATE_LIMIT_TIER_KEY`    |
-| `@d2Audience`         | `op`            | `audience: string`                                           | `D2_AUDIENCE_KEY`           |
-| `@d2ServedBy`         | `op`            | `owner: string`                                              | `D2_SERVED_BY_KEY`          |
-| `@d2GrpcMethod`       | `op`            | `service: string, method: string, streaming?: string`        | `D2_GRPC_METHOD_KEY`        |
-| `@d2Redact`           | `ModelProperty` | _(none)_                                                     | `D2_REDACT_KEY`             |
-| `@d2ServerPush`       | `op`            | `pushTarget: string`                                         | `D2_SERVER_PUSH_KEY`        |
-| `@d2Idempotent`       | `op`            | `keySource: string, ttlSeconds: number, ...fields: string[]` | `D2_IDEMPOTENT_KEY`         |
-| `@d2Resilience`       | `op`            | `pipeline: string`                                           | `D2_RESILIENCE_KEY`         |
-| `@d2Csrf`             | `op`            | `posture: string`                                            | `D2_CSRF_KEY`               |
-| `@d2Harmless`         | `op`            | _(none)_                                                     | `D2_HARMLESS_KEY`           |
-| `@d2InProcess`        | `op`            | _(none)_                                                     | `D2_IN_PROCESS_KEY`         |
-| `@d2Command`          | `op`            | _(none)_                                                     | `D2_COMMAND_KEY`            |
-| `@d2Query`            | `op`            | _(none)_                                                     | `D2_QUERY_KEY`              |
-| `@d2Internal`         | `op`            | _(none)_                                                     | `D2_INTERNAL_KEY`           |
+| Decorator             | Target          | Args                                                         | State key                                                                              |
+| --------------------- | --------------- | ------------------------------------------------------------ | -------------------------------------------------------------------------------------- |
+| `@d2RequireAnyScope`  | `op`            | `...scopes: string[]`                                        | `D2_REQUIRE_ANY_SCOPE_KEY`                                                             |
+| `@d2RequireAllScopes` | `op`            | `...scopes: string[]`                                        | `D2_REQUIRE_ALL_SCOPES_KEY`                                                            |
+| `@d2RateLimitTier`    | `op`            | `tier: string`                                               | `D2_RATE_LIMIT_TIER_KEY`                                                               |
+| `@d2Audience`         | `op`            | `audience: string`                                           | `D2_AUDIENCE_KEY`                                                                      |
+| `@d2ServedBy`         | `op`            | `owner: string`                                              | `D2_SERVED_BY_KEY`                                                                     |
+| `@d2GrpcMethod`       | `op`            | `service: string, method: string, streaming?: string`        | `D2_GRPC_METHOD_KEY`                                                                   |
+| `@d2Redact`           | `ModelProperty` | _(none)_                                                     | `D2_REDACT_KEY`                                                                        |
+| `@d2ServerPush`       | `op`            | `pushTarget: string`                                         | `D2_SERVER_PUSH_KEY`                                                                   |
+| `@d2Idempotent`       | `op`            | `keySource: string, ttlSeconds: number, ...fields: string[]` | `D2_IDEMPOTENT_KEY`                                                                    |
+| `@d2Resilience`       | `op`            | `pipeline: string, predicates?: { retryWhen?, failWhen? }`   | `D2_RESILIENCE_KEY` (+ `D2_RESILIENCE_RETRY_WHEN_KEY` / `D2_RESILIENCE_FAIL_WHEN_KEY`) |
+| `@d2Csrf`             | `op`            | `posture: string`                                            | `D2_CSRF_KEY`                                                                          |
+| `@d2Harmless`         | `op`            | _(none)_                                                     | `D2_HARMLESS_KEY`                                                                      |
+| `@d2InProcess`        | `op`            | _(none)_                                                     | `D2_IN_PROCESS_KEY`                                                                    |
+| `@d2Command`          | `op`            | _(none)_                                                     | `D2_COMMAND_KEY`                                                                       |
+| `@d2Query`            | `op`            | _(none)_                                                     | `D2_QUERY_KEY`                                                                         |
+| `@d2Internal`         | `op`            | _(none)_                                                     | `D2_INTERNAL_KEY`                                                                      |
 
 ### Scope decorators
 
@@ -121,6 +121,92 @@ if (result.ok) {
 }
 ```
 
+#### Custom result-predicates — `retryWhen` / `failWhen`
+
+`@d2Resilience` takes an optional second options-model arg supplying two custom
+**result-predicate** strings. Each is a minimal result-expression DSL — a SECOND grammar, distinct
+from the pipeline DSL — reaching both the `D2Result` envelope and the wrapped `TOutput` fields. The
+existing single-positional form keeps compiling unchanged (the options arg is optional).
+
+- **`retryWhen`** — opts a business result INTO the retry decision (true ⇒ retry).
+- **`failWhen`** — forces a terminal fail, suppressing retry (true ⇒ return verbatim). **`failWhen`
+  takes precedence over `retryWhen`.**
+
+```typespec
+@d2Resilience(
+  "retry(3) | circuitBreaker",
+  #{
+    retryWhen: "result.category == \"infrastructure_unavailable\" || result.data.items.any(i => i.status == \"PENDING\")",
+    failWhen:  "result.data.items.count == 0"
+  }
+)
+op placeOrder(input: PlaceOrderInput): PlaceOrderOutput;
+```
+
+**Grammar** (EBNF, condensed):
+
+```ebnf
+expression    := orExpr
+orExpr        := andExpr ( "||" andExpr )*
+andExpr       := comparison ( "&&" comparison )*
+comparison    := accessor ( ( "==" | "!=" ) literal | "in" "(" literal ( "," literal )* ")" )
+               | "(" orExpr ")"
+accessor      := "result" "." ( "success" | "statusCode" | "errorCode" | "category"
+                              | "data" "." dataPath )
+dataPath      := pathSegment ( "." ( pathSegment | arrayAccessor ) )*
+arrayAccessor := "count"
+               | ( "any" | "all" ) "(" elemVar "=>" subPredicate ")"
+               | "contains" "(" literal ")"
+literal       := stringLit | intLit | boolLit
+```
+
+Operators: `==` `!=` `in(...)` `&&` `||`, grouping `(...)`, and the four array accessors
+(`count` / `any` / `all` / `contains`). There are **no** ordered comparators (`< > <= >=`).
+
+**Quantifier nesting + element scoping.** `any` / `all` quantifiers nest to arbitrary depth; inside a
+quantifier the bound element variable roots the sub-predicate. Each quantifier must bind a **distinct**
+element-variable name — re-binding a name already in scope is a compile error
+(`resilience-predicate-shadowed-elem-var`). The guard is **name-based and precise**: it rejects only the
+same-name re-bind, not nested quantifiers in general.
+
+```text
+result.data.items.any(i => i.subs.any(j => j.x == "y"))   // ✅ distinct i / j
+result.data.items.any(i => i.subs.any(i => i.x == "y"))   // ❌ resilience-predicate-shadowed-elem-var (inner reuses i)
+```
+
+**Element-access shape.** Inside a sub-predicate the bound element variable is always followed by a
+field — `elem.field` — never compared bare (`elem == …` is not valid). A quantifier attaches to a
+**collection-typed field** of the element (`elem.things.any(…)`), not to the element variable directly
+(`elem.any(…)` is not valid — a path cannot start with an array accessor). A collection of **scalars**
+uses `.contains(literal)` instead of a quantifier:
+
+```text
+result.data.tags.contains("urgent")   // scalar collection — quantifier would have no element field
+```
+
+Each predicate is **compile-validated**: the grammar (parser), the `result.errorCode` /
+`result.category` literals against the closed `*-error-codes` and `error-category` registries
+(decorator body), and the `result.data.<path>` segments against the op's resolved `TOutput` graph
+(`$onValidate` — unknown output / element field, non-collection array accessor, terminal type
+mismatch). A nullable intermediate path segment is permitted (it records the nullable boundary; the
+predicate short-circuits to `false`, not an exception). Every violation is an **error-severity
+diagnostic** that fails the build.
+
+Emitters read the raw predicate strings back and re-parse them via `parseResultPredicate`:
+
+```ts
+import {
+  D2_RESILIENCE_RETRY_WHEN_KEY,
+  D2_RESILIENCE_FAIL_WHEN_KEY,
+  parseResultPredicate,
+} from "@d2/typespec-decorators";
+const retryRaw = program.stateMap(D2_RESILIENCE_RETRY_WHEN_KEY).get(op); // string | undefined
+if (retryRaw !== undefined) {
+  const parsed = parseResultPredicate(retryRaw);
+  // parsed.root: PredicateNode — bool / comparison / booleanAccess tree
+}
+```
+
 ## Validation
 
 All 16 decorators carry build-time validation. Every diagnostic is **severity "error"** —
@@ -144,15 +230,15 @@ invalid configurations fail the TypeSpec compile rather than emitting a warning.
 
 ### `$onValidate` cross-decorator checks (run after all decorators apply)
 
-| Code                           | Trigger                                                                                                           |
-| ------------------------------ | ----------------------------------------------------------------------------------------------------------------- |
-| `rate-tier-requires-route`     | `@d2RateLimitTier` on an op with no `@route` — internal ops bypass Edge rate-limiting                             |
-| `harmless-scope-conflict`      | `@d2Harmless` combined with `@d2RequireAnyScope` or `@d2RequireAllScopes` — auth-exempt ops cannot require scopes |
-| `inprocess-requires-served-by` | `@d2InProcess` without `@d2ServedBy` — an in-process leaf needs a named owner to generate its interface           |
-| `category-required`            | Operation declares neither `@d2Command` nor `@d2Query` — exactly one CQRS category is required on every op        |
-| `category-exclusive`           | Operation declares both `@d2Command` and `@d2Query` — categories are mutually exclusive                           |
-| `internal-op-exposed`          | `@d2Internal` combined with `@route`, `@d2GrpcMethod`, `@d2InProcess`, or `@d2ServerPush` — an internal op is not callable across any boundary |
-| `exposure-or-internal-required`| Operation has no transport exposure (`@route` / `@d2GrpcMethod` / `@d2InProcess` / `@d2ServerPush`) and is not `@d2Internal` |
+| Code                            | Trigger                                                                                                                                        |
+| ------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| `rate-tier-requires-route`      | `@d2RateLimitTier` on an op with no `@route` — internal ops bypass Edge rate-limiting                                                          |
+| `harmless-scope-conflict`       | `@d2Harmless` combined with `@d2RequireAnyScope` or `@d2RequireAllScopes` — auth-exempt ops cannot require scopes                              |
+| `inprocess-requires-served-by`  | `@d2InProcess` without `@d2ServedBy` — an in-process leaf needs a named owner to generate its interface                                        |
+| `category-required`             | Operation declares neither `@d2Command` nor `@d2Query` — exactly one CQRS category is required on every op                                     |
+| `category-exclusive`            | Operation declares both `@d2Command` and `@d2Query` — categories are mutually exclusive                                                        |
+| `internal-op-exposed`           | `@d2Internal` combined with `@route`, `@d2GrpcMethod`, `@d2InProcess`, or `@d2ServerPush` — an internal op is not callable across any boundary |
+| `exposure-or-internal-required` | Operation has no transport exposure (`@route` / `@d2GrpcMethod` / `@d2InProcess` / `@d2ServerPush`) and is not `@d2Internal`                   |
 
 ### CQRS category + internal marker
 
@@ -179,10 +265,14 @@ op recomputeCache(): void; // in-app-only mutating op — no cross-boundary surf
 Emitters read these as presence checks:
 
 ```ts
-import { D2_COMMAND_KEY, D2_QUERY_KEY, D2_INTERNAL_KEY } from "@d2/typespec-decorators";
-const isCommand  = program.stateMap(D2_COMMAND_KEY).has(op);   // → Commands/ folder
-const isQuery    = program.stateMap(D2_QUERY_KEY).has(op);     // → Queries/ folder
-const isInternal = program.stateMap(D2_INTERNAL_KEY).has(op);  // suppress cross-boundary surface
+import {
+  D2_COMMAND_KEY,
+  D2_QUERY_KEY,
+  D2_INTERNAL_KEY,
+} from "@d2/typespec-decorators";
+const isCommand = program.stateMap(D2_COMMAND_KEY).has(op); // → Commands/ folder
+const isQuery = program.stateMap(D2_QUERY_KEY).has(op); // → Queries/ folder
+const isInternal = program.stateMap(D2_INTERNAL_KEY).has(op); // suppress cross-boundary surface
 ```
 
 ### `@d2Resilience` DSL parser
@@ -222,6 +312,24 @@ DSL-specific diagnostic codes:
 | `resilience-multiple-inner`         | More than one nested policy call in a single policy's arg list        |
 | `resilience-positional-after-named` | Positional argument appears after a named argument                    |
 
+### `@d2Resilience` result-predicate DSL (`retryWhen` / `failWhen`)
+
+The result-predicate grammar has its own parser (`parseResultPredicate`) + a native-TypeSpec
+model-graph walk. Its diagnostic codes map 1:1 to `$lib.diagnostics` — the catalog-integrity drift
+guard asserts the parser's `ResultPredicateDiagnosticCode` union ⇔ the `$lib` keys in both directions.
+
+| Code                                         | Trigger                                                                        |
+| -------------------------------------------- | ------------------------------------------------------------------------------ |
+| `resilience-predicate-malformed`             | Syntactically invalid predicate (bad operator, unbalanced paren, empty, etc.)  |
+| `resilience-predicate-unknown-field`         | `result.<x>` accessor outside {success, statusCode, errorCode, category, data} |
+| `resilience-predicate-unknown-output-field`  | A `result.data.<path>` segment is not a field on the op's output model         |
+| `resilience-predicate-unknown-error-code`    | A `result.errorCode` literal is not declared in any `*-error-codes` spec       |
+| `resilience-predicate-unknown-category`      | A `result.category` literal is not a declared `ErrorCategory` wire string      |
+| `resilience-predicate-type-mismatch`         | A comparison / `contains` literal does not match the accessor's resolved type  |
+| `resilience-predicate-not-a-collection`      | `count` / `any` / `all` / `contains` applied to a non-collection field         |
+| `resilience-predicate-unknown-element-field` | A field inside an `any` / `all` sub-predicate is not on the element type       |
+| `resilience-predicate-shadowed-elem-var`     | A nested quantifier re-binds an element variable already in scope              |
+
 ### How `tspMain` / `main` split works
 
 - **`lib/main.tsp`** (via `tspMain`) — declares `extern dec` under `namespace D2`; imported by
@@ -229,11 +337,15 @@ DSL-specific diagnostic codes:
 - **`dist/index.js`** (via `main`) — emitter-facing barrel: re-exports state-key symbols
   (`D2_REQUIRE_ANY_SCOPE_KEY`, `D2_REQUIRE_ALL_SCOPES_KEY`, `D2_RATE_LIMIT_TIER_KEY`,
   `D2_AUDIENCE_KEY`, `D2_SERVED_BY_KEY`, `D2_GRPC_METHOD_KEY`, `D2_REDACT_KEY`,
-  `D2_SERVER_PUSH_KEY`, `D2_IDEMPOTENT_KEY`, `D2_RESILIENCE_KEY`, `D2_CSRF_KEY`,
+  `D2_SERVER_PUSH_KEY`, `D2_IDEMPOTENT_KEY`, `D2_RESILIENCE_KEY`,
+  `D2_RESILIENCE_RETRY_WHEN_KEY`, `D2_RESILIENCE_FAIL_WHEN_KEY`, `D2_CSRF_KEY`,
   `D2_HARMLESS_KEY`, `D2_IN_PROCESS_KEY`, `D2_COMMAND_KEY`, `D2_QUERY_KEY`, `D2_INTERNAL_KEY`),
-  payload types (`GrpcMethodPayload`, `IdempotentPayload`), the resilience parser (`parse`,
+  payload types (`GrpcMethodPayload`, `IdempotentPayload`), the resilience pipeline parser (`parse`,
   `ResiliencePolicyNode`, `ResilienceParseResult`, `ResilienceParseError`,
-  `ResilienceDiagnosticCode`), `$lib`, and `$decorators`.
+  `ResilienceDiagnosticCode`), the result-predicate parser + AST + validation surface
+  (`parseResultPredicate`, the `PredicateNode` AST family, `ResultPredicateDiagnosticCode`,
+  `validateResultPredicate`, `walkPredicateModel`, `loadErrorCodeNames`, `loadErrorCategoryNames`),
+  `$lib`, and `$decorators`.
 - **`$onValidate`** is exported from `dist/tsp-index.js` (the module `lib/main.tsp` imports);
   the TypeSpec compiler discovers and runs it after all decorators have applied.
 
@@ -272,34 +384,36 @@ is an emitter-fleet responsibility, not encoded in the AST. The emitter must der
 
 ### Per-decorator read pattern
 
-| Decorator | Emitter read pattern | Notes |
-|---|---|---|
-| `@d2RequireAnyScope` | `program.stateMap(D2_REQUIRE_ANY_SCOPE_KEY).get(op) as string[]` | Any-match guard |
-| `@d2RequireAllScopes` | `program.stateMap(D2_REQUIRE_ALL_SCOPES_KEY).get(op) as string[]` | All-match guard |
-| `@d2RateLimitTier` | `program.stateMap(D2_RATE_LIMIT_TIER_KEY).get(op) as string` | Validated value in `Standard \| Elevated \| Restricted` |
-| `@d2Audience` | `program.stateMap(D2_AUDIENCE_KEY).get(op) as string` | Validated against spec at compile time |
-| `@d2ServedBy` | `program.stateMap(D2_SERVED_BY_KEY).get(op) as string` | Capability name; transport (leaf vs gRPC) is deployment-resolved |
-| `@d2GrpcMethod` | `program.stateMap(D2_GRPC_METHOD_KEY).get(op) as GrpcMethodPayload` | `{ service, method, streaming }` |
-| `@d2Redact` | `program.stateMap(D2_REDACT_KEY).has(prop)` | Presence check on `ModelProperty` |
-| `@d2ServerPush` | `program.stateMap(D2_SERVER_PUSH_KEY).get(op) as string` | `user \| session`; event-type is derived from the op name by the emitter |
-| `@d2Idempotent` | `program.stateMap(D2_IDEMPOTENT_KEY).get(op) as IdempotentPayload` | `{ keySource, ttlSeconds, fields }` |
-| `@d2Resilience` | call `parse(program.stateMap(D2_RESILIENCE_KEY).get(op))` | Re-parse the stored raw string via the exported `parse()` to get the AST |
-| `@d2Csrf` | `program.stateMap(D2_CSRF_KEY).get(op) as string` | `required \| exempt` |
-| `@d2Harmless` | `program.stateMap(D2_HARMLESS_KEY).has(op)` | Presence check; mutually exclusive with scope decorators (enforced at compile time) |
-| `@d2InProcess` | `program.stateMap(D2_IN_PROCESS_KEY).has(op)` | Presence check; the explicit leaf-vs-gRPC trigger; requires `@d2ServedBy` (enforced at compile time) |
-| `@d2Command`   | `program.stateMap(D2_COMMAND_KEY).has(op)` | Presence check; drives `Commands/` folder placement in generated handler scaffolding |
-| `@d2Query`     | `program.stateMap(D2_QUERY_KEY).has(op)` | Presence check; drives `Queries/` folder placement in generated handler scaffolding |
-| `@d2Internal`  | `program.stateMap(D2_INTERNAL_KEY).has(op)` | Presence check; when true, suppress all cross-boundary surface generation for this op |
+| Decorator             | Emitter read pattern                                                                                                                                                                                      | Notes                                                                                                |
+| --------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| `@d2RequireAnyScope`  | `program.stateMap(D2_REQUIRE_ANY_SCOPE_KEY).get(op) as string[]`                                                                                                                                          | Any-match guard                                                                                      |
+| `@d2RequireAllScopes` | `program.stateMap(D2_REQUIRE_ALL_SCOPES_KEY).get(op) as string[]`                                                                                                                                         | All-match guard                                                                                      |
+| `@d2RateLimitTier`    | `program.stateMap(D2_RATE_LIMIT_TIER_KEY).get(op) as string`                                                                                                                                              | Validated value in `Standard \| Elevated \| Restricted`                                              |
+| `@d2Audience`         | `program.stateMap(D2_AUDIENCE_KEY).get(op) as string`                                                                                                                                                     | Validated against spec at compile time                                                               |
+| `@d2ServedBy`         | `program.stateMap(D2_SERVED_BY_KEY).get(op) as string`                                                                                                                                                    | Capability name; transport (leaf vs gRPC) is deployment-resolved                                     |
+| `@d2GrpcMethod`       | `program.stateMap(D2_GRPC_METHOD_KEY).get(op) as GrpcMethodPayload`                                                                                                                                       | `{ service, method, streaming }`                                                                     |
+| `@d2Redact`           | `program.stateMap(D2_REDACT_KEY).has(prop)`                                                                                                                                                               | Presence check on `ModelProperty`                                                                    |
+| `@d2ServerPush`       | `program.stateMap(D2_SERVER_PUSH_KEY).get(op) as string`                                                                                                                                                  | `user \| session`; event-type is derived from the op name by the emitter                             |
+| `@d2Idempotent`       | `program.stateMap(D2_IDEMPOTENT_KEY).get(op) as IdempotentPayload`                                                                                                                                        | `{ keySource, ttlSeconds, fields }`                                                                  |
+| `@d2Resilience`       | call `parse(program.stateMap(D2_RESILIENCE_KEY).get(op))` for the pipeline; `parseResultPredicate(program.stateMap(D2_RESILIENCE_RETRY_WHEN_KEY).get(op))` / `…FAIL_WHEN_KEY` for the optional predicates | Re-parse each stored raw string via the exported `parse()` / `parseResultPredicate()` to get the AST |
+| `@d2Csrf`             | `program.stateMap(D2_CSRF_KEY).get(op) as string`                                                                                                                                                         | `required \| exempt`                                                                                 |
+| `@d2Harmless`         | `program.stateMap(D2_HARMLESS_KEY).has(op)`                                                                                                                                                               | Presence check; mutually exclusive with scope decorators (enforced at compile time)                  |
+| `@d2InProcess`        | `program.stateMap(D2_IN_PROCESS_KEY).has(op)`                                                                                                                                                             | Presence check; the explicit leaf-vs-gRPC trigger; requires `@d2ServedBy` (enforced at compile time) |
+| `@d2Command`          | `program.stateMap(D2_COMMAND_KEY).has(op)`                                                                                                                                                                | Presence check; drives `Commands/` folder placement in generated handler scaffolding                 |
+| `@d2Query`            | `program.stateMap(D2_QUERY_KEY).has(op)`                                                                                                                                                                  | Presence check; drives `Queries/` folder placement in generated handler scaffolding                  |
+| `@d2Internal`         | `program.stateMap(D2_INTERNAL_KEY).has(op)`                                                                                                                                                               | Presence check; when true, suppress all cross-boundary surface generation for this op                |
 
-`@d2Resilience` note: the decorator stores the validated raw DSL string. Emitters must call the
-exported `parse()` function to obtain the `ResiliencePolicyNode` AST for code generation. The
-`parse()` function is pure (no side effects) and safe to call at emit time.
+`@d2Resilience` note: the decorator stores the validated raw pipeline string and, when supplied, the
+raw `retryWhen` / `failWhen` predicate strings on their own state keys. Emitters call the exported
+`parse()` (pipeline) and `parseResultPredicate()` (predicates) to obtain the `ResiliencePolicyNode`
+and `PredicateNode` ASTs for code generation. Both parsers are pure (no side effects) and safe to
+call at emit time. `failWhen` takes precedence over `retryWhen` at runtime.
 
 ## Build
 
 ```bash
 pnpm --filter @d2/typespec-decorators build            # tsc -b → dist/
-pnpm --filter @d2/typespec-decorators test             # vitest run (236 tests across decorators + resilience-dsl suites)
+pnpm --filter @d2/typespec-decorators test             # vitest run (380 tests across decorators + resilience-dsl + result-predicate suites)
 pnpm --filter @d2/typespec-decorators run test:coverage  # vitest run --coverage (100% threshold, requires dist/)
 ```
 

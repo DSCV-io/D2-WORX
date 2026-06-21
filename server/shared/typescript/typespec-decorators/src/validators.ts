@@ -14,8 +14,15 @@
 
 import type { DecoratorContext, Operation } from "@typespec/compiler";
 import { $lib } from "./lib.js";
-import { loadScopeNames, loadAudienceNames } from "./spec-registry.js";
+import {
+  loadScopeNames,
+  loadAudienceNames,
+  loadErrorCodeNames,
+  loadErrorCategoryNames,
+} from "./spec-registry.js";
 import { parse } from "./resilience-dsl.js";
+import { parseResultPredicate } from "./result-predicate-dsl.js";
+import type { LiteralNode, PredicateNode } from "./result-predicate-dsl.js";
 
 // ----------------------------------------------------------------
 // Value-set / registry / shape checks (run in each $fn body)
@@ -264,4 +271,96 @@ function extractPolicyArgDetail(msg: string): [string, string, string] {
   // resilience-bad-arg errors; the non-null assertion is safe by construction.
   const m = /'([^.]+)\.([^']+)' is invalid: (.+)/.exec(msg)!;
   return [m[1]!, m[2]!, m[3]!];
+}
+
+// ----------------------------------------------------------------
+// @d2Resilience result-predicate (retryWhen / failWhen) parse + report
+// ----------------------------------------------------------------
+
+/**
+ * Parse a retryWhen / failWhen result-predicate string, reporting parser errors
+ * (malformed / unknown-field / type-mismatch / shadowed-elem-var) AND the
+ * registry-value errors (unknown-error-code / unknown-category) as diagnostics.
+ *
+ * The model-dependent checks (unknown output / element field, not-a-collection,
+ * terminal data type-mismatch) need the op's resolved TOutput graph and run in
+ * $onValidate. Report-and-continue per the package convention (this does not
+ * block the caller's stateMap().set).
+ *
+ * @param which - "retryWhen" | "failWhen" — surfaced in every diagnostic so the
+ *                author knows which predicate failed.
+ */
+export function validateResultPredicate(
+  context: DecoratorContext,
+  target: Operation,
+  expr: string,
+  which: string,
+): void {
+  const result = parseResultPredicate(expr);
+
+  if (!result.ok) {
+    // The parser emits only `{ which, detail }`-shaped codes (malformed /
+    // unknown-field / type-mismatch / shadowed-elem-var). The value-shaped
+    // registry codes are produced exclusively by checkRegistryLiterals below.
+    for (const err of result.errors)
+      $lib.reportDiagnostic(context.program, {
+        code: err.code,
+        format: { which, detail: err.message },
+        target,
+      });
+
+    return;
+  }
+
+  // Registry-value arm (eager — the registries are available without the model).
+  checkRegistryLiterals(context, target, result.root, which);
+}
+
+/**
+ * Walk the parsed predicate for `result.errorCode` / `result.category` literals
+ * and check each against the closed registries. Reports unknown-error-code /
+ * unknown-category. (Both checks need only the registries — not the op model —
+ * so they run here in the decorator body, matching validateScopes/Audience.)
+ */
+function checkRegistryLiterals(
+  context: DecoratorContext,
+  target: Operation,
+  node: PredicateNode,
+  which: string,
+): void {
+  if (node.kind === "bool") {
+    checkRegistryLiterals(context, target, node.left, which);
+    checkRegistryLiterals(context, target, node.right, which);
+    return;
+  }
+
+  // A standalone boolean data path (any/all/contains) cannot reach an envelope
+  // errorCode/category accessor, so there is nothing to check here.
+  if (node.kind === "booleanAccess") return;
+
+  if (node.access.kind !== "envelope") return;
+
+  const field = node.access.field;
+  if (field !== "errorCode" && field !== "category") return;
+
+  const literals: readonly LiteralNode[] = Array.isArray(node.rhs)
+    ? node.rhs
+    : [node.rhs];
+  const known =
+    field === "errorCode" ? loadErrorCodeNames() : loadErrorCategoryNames();
+  const code =
+    field === "errorCode"
+      ? "resilience-predicate-unknown-error-code"
+      : "resilience-predicate-unknown-category";
+
+  for (const lit of literals) {
+    // Only string literals address the closed registries; a non-string literal
+    // is a type-mismatch already caught by the parser, so skip it here.
+    if (lit.kind === "string" && !known.has(lit.value))
+      $lib.reportDiagnostic(context.program, {
+        code,
+        format: { which, detail: `'${lit.value}'` },
+        target,
+      });
+  }
 }

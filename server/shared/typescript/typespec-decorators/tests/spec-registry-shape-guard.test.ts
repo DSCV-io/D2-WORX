@@ -23,9 +23,12 @@ vi.mock("fs");
 import {
   loadScopeNames,
   loadAudienceNames,
+  loadErrorCodeNames,
+  loadErrorCategoryNames,
   _resetSpecRegistryCache,
 } from "../src/spec-registry.js";
 import * as fsModule from "fs";
+import type { Dirent } from "fs";
 
 describe("specRegistry_ShapeGuard_Scopes", () => {
   afterEach(() => {
@@ -64,6 +67,59 @@ describe("specRegistry_ShapeGuard_Audiences", () => {
     );
     expect(() => loadAudienceNames()).toThrow(
       "contracts/auth-audiences/audiences.spec.json has unexpected shape",
+    );
+  });
+});
+
+// Build a minimal Dirent-like for the readdirSync mock.
+function dir(name: string): Dirent {
+  return { name, isDirectory: () => true } as unknown as Dirent;
+}
+
+describe("specRegistry_ShapeGuard_ErrorCodes", () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+    _resetSpecRegistryCache();
+  });
+
+  it("loadErrorCodeNames() throws descriptive Error when a spec has the wrong key", () => {
+    // First readdir: contracts/ → one *-error-codes dir. Second readdir: the
+    // spec files in that dir. Then readFileSync returns a wrong-shaped spec.
+    // readdirSync is overloaded; cast the mocked returns to `never` so the
+    // overload resolution does not constrain the test-only stub shapes.
+    vi.spyOn(fsModule, "readdirSync")
+      .mockReturnValueOnce([dir("error-codes")] as never)
+      .mockReturnValueOnce(["error-codes.spec.json"] as never);
+    vi.spyOn(fsModule, "readFileSync").mockReturnValueOnce(
+      JSON.stringify({ errorCode: [{ code: "X" }] }), // wrong key: 'errorCode' not 'errorCodes'
+    );
+    expect(() => loadErrorCodeNames()).toThrow(
+      "contracts/error-codes/error-codes.spec.json has unexpected shape",
+    );
+  });
+});
+
+describe("specRegistry_ShapeGuard_ErrorCategory", () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+    _resetSpecRegistryCache();
+  });
+
+  it("loadErrorCategoryNames() throws descriptive Error when categories key is wrong", () => {
+    vi.spyOn(fsModule, "readFileSync").mockReturnValueOnce(
+      JSON.stringify({ category: [{ wire: "not_found" }] }), // wrong key: 'category' not 'categories'
+    );
+    expect(() => loadErrorCategoryNames()).toThrow(
+      "contracts/error-category/error-category.spec.json has unexpected shape",
+    );
+  });
+
+  it("loadErrorCategoryNames() throws when the spec is a plain array", () => {
+    vi.spyOn(fsModule, "readFileSync").mockReturnValueOnce(
+      JSON.stringify([{ wire: "not_found" }]),
+    );
+    expect(() => loadErrorCategoryNames()).toThrow(
+      "contracts/error-category/error-category.spec.json has unexpected shape",
     );
   });
 });

@@ -21,6 +21,8 @@ export {
   D2_SERVER_PUSH_KEY,
   D2_IDEMPOTENT_KEY,
   D2_RESILIENCE_KEY,
+  D2_RESILIENCE_RETRY_WHEN_KEY,
+  D2_RESILIENCE_FAIL_WHEN_KEY,
   D2_CSRF_KEY,
   D2_HARMLESS_KEY,
   D2_IN_PROCESS_KEY,
@@ -43,3 +45,36 @@ export {
   type ResilienceParseError,
   type ResilienceDiagnosticCode,
 } from "./resilience-dsl.js";
+
+// Result-predicate (retryWhen / failWhen) parser + AST types + diagnostic
+// codes — consumed by the C# / TS predicate emitter.
+export {
+  parseResultPredicate,
+  type ResultPredicateParseResult,
+  type ResultPredicateParseError,
+  type ResultPredicateDiagnosticCode,
+  type PredicateNode,
+  type BoolNode,
+  type ComparisonNode,
+  type BooleanAccessNode,
+  type AccessNode,
+  type EnvelopeAccessNode,
+  type EnvelopeField,
+  type DataPathNode,
+  type PathSegment,
+  type FieldSegment,
+  type ArrayAccessorSegment,
+  type LiteralNode,
+} from "./result-predicate-dsl.js";
+
+// Result-predicate validation surface — the decorator-body validator and the
+// native-TypeSpec model-graph walk (the $onValidate model arm).
+export { validateResultPredicate } from "./validators.js";
+export {
+  walkPredicateModel,
+  type ModelWalkError,
+} from "./predicate-model-walk.js";
+
+// Error-code / error-category registry loaders — used by the result-predicate
+// validator and re-exported for emitter / test access.
+export { loadErrorCodeNames, loadErrorCategoryNames } from "./spec-registry.js";

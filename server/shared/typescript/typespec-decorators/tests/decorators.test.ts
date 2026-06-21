@@ -39,12 +39,17 @@ import {
   D2_INTERNAL_KEY,
   $lib,
   $decorators,
+  D2_RESILIENCE_RETRY_WHEN_KEY,
+  D2_RESILIENCE_FAIL_WHEN_KEY,
   type ResilienceDiagnosticCode,
+  type ResultPredicateDiagnosticCode,
 } from "../src/index.js";
 import type { GrpcMethodPayload, IdempotentPayload } from "../src/index.js";
 import {
   loadScopeNames,
   loadAudienceNames,
+  loadErrorCodeNames,
+  loadErrorCategoryNames,
   _resetSpecRegistryCache,
 } from "../src/spec-registry.js";
 import {
@@ -57,6 +62,7 @@ import {
   validateAudience,
   validateServedBy,
   validateResilience,
+  validateResultPredicate,
 } from "../src/validators.js";
 import { $onValidate } from "../src/onvalidate.js";
 import {
@@ -238,6 +244,57 @@ describe("directUnit_$d2Resilience", () => {
       "retry(3, circuitBreaker(threshold: 5))",
     );
   });
+
+  it("stores retryWhen + failWhen predicate strings on their dedicated keys", () => {
+    const { ctx, maps } = makeMockContext();
+    $d2Resilience(ctx, mockTarget, "retry()", {
+      retryWhen: "result.success == false",
+      failWhen: 'result.errorCode == "VALIDATION_FAILED"',
+    });
+    expect(maps.get(D2_RESILIENCE_KEY)!.get(mockTarget)).toBe("retry()");
+    expect(maps.get(D2_RESILIENCE_RETRY_WHEN_KEY)!.get(mockTarget)).toBe(
+      "result.success == false",
+    );
+    expect(maps.get(D2_RESILIENCE_FAIL_WHEN_KEY)!.get(mockTarget)).toBe(
+      'result.errorCode == "VALIDATION_FAILED"',
+    );
+  });
+
+  it("stores only retryWhen when failWhen is omitted", () => {
+    const { ctx, maps } = makeMockContext();
+    $d2Resilience(ctx, mockTarget, "retry()", {
+      retryWhen: "result.success == false",
+    });
+    expect(maps.get(D2_RESILIENCE_RETRY_WHEN_KEY)!.get(mockTarget)).toBe(
+      "result.success == false",
+    );
+    // The failWhen key map is never written to.
+    const failMap = maps.get(D2_RESILIENCE_FAIL_WHEN_KEY);
+    expect(failMap === undefined || failMap.get(mockTarget) === undefined).toBe(
+      true,
+    );
+  });
+
+  it("stores only failWhen when retryWhen is omitted", () => {
+    const { ctx, maps } = makeMockContext();
+    $d2Resilience(ctx, mockTarget, "retry()", {
+      failWhen: "result.success == true",
+    });
+    expect(maps.get(D2_RESILIENCE_FAIL_WHEN_KEY)!.get(mockTarget)).toBe(
+      "result.success == true",
+    );
+    const retryMap = maps.get(D2_RESILIENCE_RETRY_WHEN_KEY);
+    expect(
+      retryMap === undefined || retryMap.get(mockTarget) === undefined,
+    ).toBe(true);
+  });
+
+  it("writes neither predicate key when predicates is omitted entirely", () => {
+    const { ctx, maps } = makeMockContext();
+    $d2Resilience(ctx, mockTarget, "retry()");
+    expect(maps.get(D2_RESILIENCE_RETRY_WHEN_KEY)).toBeUndefined();
+    expect(maps.get(D2_RESILIENCE_FAIL_WHEN_KEY)).toBeUndefined();
+  });
 });
 
 describe("directUnit_$d2Csrf", () => {
@@ -357,6 +414,18 @@ describe("stateKeys_AreProcessGlobalSymbolFor", () => {
 
   it("D2_RESILIENCE_KEY equals Symbol.for('D2.d2Resilience')", () => {
     expect(D2_RESILIENCE_KEY).toBe(Symbol.for("D2.d2Resilience"));
+  });
+
+  it("D2_RESILIENCE_RETRY_WHEN_KEY equals Symbol.for('D2.d2Resilience.retryWhen')", () => {
+    expect(D2_RESILIENCE_RETRY_WHEN_KEY).toBe(
+      Symbol.for("D2.d2Resilience.retryWhen"),
+    );
+  });
+
+  it("D2_RESILIENCE_FAIL_WHEN_KEY equals Symbol.for('D2.d2Resilience.failWhen')", () => {
+    expect(D2_RESILIENCE_FAIL_WHEN_KEY).toBe(
+      Symbol.for("D2.d2Resilience.failWhen"),
+    );
   });
 
   it("D2_CSRF_KEY equals Symbol.for('D2.d2Csrf')", () => {
@@ -838,6 +907,61 @@ describe("specRegistry_LoadsKnownAudience", () => {
   });
 });
 
+describe("specRegistry_LoadsErrorCodes", () => {
+  afterEach(() => _resetSpecRegistryCache());
+
+  it("loadErrorCodeNames() contains a generic code SERVICE_UNAVAILABLE — proves the anchor", () => {
+    const names = loadErrorCodeNames();
+    expect(names.has("SERVICE_UNAVAILABLE")).toBe(true);
+  });
+
+  it("loadErrorCodeNames() contains a per-domain KEYCUSTODIAN code (proves multi-dir aggregation)", () => {
+    const names = loadErrorCodeNames();
+    expect(names.has("KEYCUSTODIAN_KID_INVALID")).toBe(true);
+  });
+
+  it("loadErrorCodeNames() contains an auth-domain code (3-dir aggregation)", () => {
+    const names = loadErrorCodeNames();
+    expect(names.has("AUTH_JWKS_UNAVAILABLE")).toBe(true);
+  });
+
+  it("loadErrorCodeNames() does NOT contain a made-up code", () => {
+    const names = loadErrorCodeNames();
+    expect(names.has("DEFINITELY_NOT_A_REAL_CODE")).toBe(false);
+  });
+
+  it("loadErrorCodeNames() returns the SAME cached set on a second call", () => {
+    const first = loadErrorCodeNames();
+    const second = loadErrorCodeNames();
+    expect(second).toBe(first);
+  });
+});
+
+describe("specRegistry_LoadsErrorCategories", () => {
+  afterEach(() => _resetSpecRegistryCache());
+
+  it("loadErrorCategoryNames() contains the wire string 'infrastructure_unavailable'", () => {
+    const names = loadErrorCategoryNames();
+    expect(names.has("infrastructure_unavailable")).toBe(true);
+  });
+
+  it("loadErrorCategoryNames() contains 'partial_success'", () => {
+    const names = loadErrorCategoryNames();
+    expect(names.has("partial_success")).toBe(true);
+  });
+
+  it("loadErrorCategoryNames() returns the 9 declared wire strings", () => {
+    const names = loadErrorCategoryNames();
+    expect(names.size).toBe(9);
+  });
+
+  it("loadErrorCategoryNames() returns the SAME cached set on a second call", () => {
+    const first = loadErrorCategoryNames();
+    const second = loadErrorCategoryNames();
+    expect(second).toBe(first);
+  });
+});
+
 // ===========================================================================
 // CATALOG INTEGRITY (drift guard — every ResilienceDiagnosticCode in $lib)
 // ===========================================================================
@@ -1119,6 +1243,134 @@ describe("directUnit_validateResilience", () => {
   });
 });
 
+describe("directUnit_validateResultPredicate", () => {
+  afterEach(() => _resetSpecRegistryCache());
+
+  it("no diagnostic for a valid envelope-only predicate (real error code + category)", () => {
+    const { ctx, target, diags } = makeMockCtxWithDiags();
+    validateResultPredicate(
+      ctx,
+      target,
+      'result.errorCode == "SERVICE_UNAVAILABLE" && result.category == "infrastructure_unavailable"',
+      "retryWhen",
+    );
+    expect(diags).toHaveLength(0);
+  });
+
+  it("reports the parser error for a malformed predicate (unknown-field)", () => {
+    const { ctx, target, diags } = makeMockCtxWithDiags();
+    validateResultPredicate(ctx, target, "result.bogus == 1", "retryWhen");
+    expect(
+      diags.some((d) => d.code.endsWith("resilience-predicate-unknown-field")),
+    ).toBe(true);
+  });
+
+  it('reports a parser type-mismatch (envelope arm) for result.success == "x"', () => {
+    const { ctx, target, diags } = makeMockCtxWithDiags();
+    validateResultPredicate(ctx, target, 'result.success == "x"', "failWhen");
+    expect(
+      diags.some((d) => d.code.endsWith("resilience-predicate-type-mismatch")),
+    ).toBe(true);
+  });
+
+  it("emits unknown-error-code for an undeclared error code", () => {
+    const { ctx, target, diags } = makeMockCtxWithDiags();
+    validateResultPredicate(
+      ctx,
+      target,
+      'result.errorCode == "NOT_A_REAL_CODE"',
+      "retryWhen",
+    );
+    expect(
+      diags.some((d) =>
+        d.code.endsWith("resilience-predicate-unknown-error-code"),
+      ),
+    ).toBe(true);
+  });
+
+  it("emits unknown-error-code for an undeclared code inside an in()-list", () => {
+    const { ctx, target, diags } = makeMockCtxWithDiags();
+    validateResultPredicate(
+      ctx,
+      target,
+      'result.errorCode in ("SERVICE_UNAVAILABLE", "ALSO_NOT_REAL")',
+      "retryWhen",
+    );
+    expect(
+      diags.some((d) =>
+        d.code.endsWith("resilience-predicate-unknown-error-code"),
+      ),
+    ).toBe(true);
+  });
+
+  it("emits unknown-category for an undeclared category", () => {
+    const { ctx, target, diags } = makeMockCtxWithDiags();
+    validateResultPredicate(
+      ctx,
+      target,
+      'result.category == "not_a_category"',
+      "failWhen",
+    );
+    expect(
+      diags.some((d) =>
+        d.code.endsWith("resilience-predicate-unknown-category"),
+      ),
+    ).toBe(true);
+  });
+
+  it("recurses both sides of a boolean tree for registry checks", () => {
+    const { ctx, target, diags } = makeMockCtxWithDiags();
+    validateResultPredicate(
+      ctx,
+      target,
+      'result.errorCode == "SERVICE_UNAVAILABLE" || result.category == "not_a_category"',
+      "retryWhen",
+    );
+    expect(
+      diags.some((d) =>
+        d.code.endsWith("resilience-predicate-unknown-category"),
+      ),
+    ).toBe(true);
+  });
+
+  it("does not run registry checks on a non-errorCode/category envelope field (statusCode)", () => {
+    const { ctx, target, diags } = makeMockCtxWithDiags();
+    validateResultPredicate(
+      ctx,
+      target,
+      "result.statusCode == 503",
+      "retryWhen",
+    );
+    expect(diags).toHaveLength(0);
+  });
+
+  it("does not run registry checks on a data-path access (result.data.partial)", () => {
+    // A data-path accessor is not an envelope errorCode/category, so the
+    // registry arm is a no-op (the model walk handles data paths elsewhere).
+    const { ctx, target, diags } = makeMockCtxWithDiags();
+    validateResultPredicate(
+      ctx,
+      target,
+      "result.data.partial == true",
+      "retryWhen",
+    );
+    expect(diags).toHaveLength(0);
+  });
+
+  it("does not run registry checks on a standalone boolean-access predicate", () => {
+    // result.data.items.any(...) is a booleanAccess node — no envelope literal
+    // to validate against the registries.
+    const { ctx, target, diags } = makeMockCtxWithDiags();
+    validateResultPredicate(
+      ctx,
+      target,
+      'result.data.items.any(i => i.status == "X")',
+      "retryWhen",
+    );
+    expect(diags).toHaveLength(0);
+  });
+});
+
 // ===========================================================================
 // DIRECT UNIT TESTS for $onValidate — exercises src/onvalidate.ts for coverage
 // ===========================================================================
@@ -1131,7 +1383,8 @@ describe("directUnit_validateResilience", () => {
 function makeGlobalNamespaceStub(op?: Operation): object {
   const emptyMap = new Map();
   const opsMap = new Map<string, unknown>();
-  if (op !== undefined) opsMap.set((op as unknown as { name: string }).name ?? "op", op);
+  if (op !== undefined)
+    opsMap.set((op as unknown as { name: string }).name ?? "op", op);
   return {
     models: emptyMap,
     scalars: emptyMap,
@@ -1532,7 +1785,13 @@ describe("directUnit_$onValidate", () => {
     // isFinished: true passes navigateProgram's shouldNavigateTemplatableType guard.
     // returnType uses entityKind + kind = "Intrinsic" so navigateTypeInternal returns early safely.
     const voidType = { entityKind: "Type", kind: "Intrinsic" };
-    const op = { name: "noCategoryOp", isFinished: true, parameters: { properties: new Map() }, returnType: voidType, sourceOperation: undefined } as unknown as Operation;
+    const op = {
+      name: "noCategoryOp",
+      isFinished: true,
+      parameters: { properties: new Map() },
+      returnType: voidType,
+      sourceOperation: undefined,
+    } as unknown as Operation;
     const stateMaps = new Map<symbol, Map<object, unknown>>();
 
     const mockProgram = {
@@ -1557,7 +1816,13 @@ describe("directUnit_$onValidate", () => {
     // isFinished: true passes navigateProgram's shouldNavigateTemplatableType guard.
     // returnType uses entityKind + kind = "Intrinsic" so navigateTypeInternal returns early safely.
     const voidType = { entityKind: "Type", kind: "Intrinsic" };
-    const op = { name: "bothCategoryOp", isFinished: true, parameters: { properties: new Map() }, returnType: voidType, sourceOperation: undefined } as unknown as Operation;
+    const op = {
+      name: "bothCategoryOp",
+      isFinished: true,
+      parameters: { properties: new Map() },
+      returnType: voidType,
+      sourceOperation: undefined,
+    } as unknown as Operation;
     const stateMaps = new Map<symbol, Map<object, unknown>>();
 
     const D2_COMMAND_KEY_SYM = Symbol.for("D2.d2Command");
@@ -1593,7 +1858,13 @@ describe("directUnit_$onValidate", () => {
     // isFinished: true passes navigateProgram's shouldNavigateTemplatableType guard.
     // returnType uses entityKind + kind = "Intrinsic" so navigateTypeInternal returns early safely.
     const voidType = { entityKind: "Type", kind: "Intrinsic" };
-    const op = { name: "noExposureOp", isFinished: true, parameters: { properties: new Map() }, returnType: voidType, sourceOperation: undefined } as unknown as Operation;
+    const op = {
+      name: "noExposureOp",
+      isFinished: true,
+      parameters: { properties: new Map() },
+      returnType: voidType,
+      sourceOperation: undefined,
+    } as unknown as Operation;
     const stateMaps = new Map<symbol, Map<object, unknown>>();
 
     const D2_COMMAND_KEY_SYM = Symbol.for("D2.d2Command");
@@ -1625,7 +1896,13 @@ describe("directUnit_$onValidate", () => {
     // where hasInternal=true so the condition is false and no diagnostic is emitted.
     const diags: Array<{ code: string }> = [];
     const voidType = { entityKind: "Type", kind: "Intrinsic" };
-    const op = { name: "internalAcceptOp", isFinished: true, parameters: { properties: new Map() }, returnType: voidType, sourceOperation: undefined } as unknown as Operation;
+    const op = {
+      name: "internalAcceptOp",
+      isFinished: true,
+      parameters: { properties: new Map() },
+      returnType: voidType,
+      sourceOperation: undefined,
+    } as unknown as Operation;
     const stateMaps = new Map<symbol, Map<object, unknown>>();
 
     // Give it a category (category-required acceptance)
@@ -1731,6 +2008,127 @@ describe("directUnit_$onValidate", () => {
       true,
     );
   });
+
+  // ----------------------------------------------------------------
+  // @d2Resilience retryWhen / failWhen model-graph arm — direct unit.
+  // These exercise the $onValidate predicate-model walk over the two new
+  // state maps (src coverage of validateResiliencePredicateModel).
+  // ----------------------------------------------------------------
+
+  function modelReturnOp(): Operation {
+    const itemsType = {
+      kind: "Model",
+      name: "Array",
+      indexer: { value: { kind: "Scalar", name: "string" } },
+    };
+    const properties = new Map<string, unknown>();
+    properties.set("orderId", {
+      type: { kind: "Scalar", name: "string" },
+      optional: false,
+    });
+    properties.set("items", { type: itemsType, optional: false });
+    const outModel = { kind: "Model", name: "Out", properties };
+    return { name: "predOp", returnType: outModel } as unknown as Operation;
+  }
+
+  function runPredicateOnValidate(
+    op: Operation,
+    keySym: symbol,
+    expr: string,
+  ): Array<{ code: string }> {
+    const diags: Array<{ code: string }> = [];
+    const stateMaps = new Map<symbol, Map<object, unknown>>();
+    const m = new Map<object, unknown>();
+    m.set(op, expr);
+    stateMaps.set(keySym, m as Map<object, unknown>);
+
+    const mockProgram = {
+      stateMap(key: symbol): Map<object, unknown> {
+        return stateMaps.get(key) ?? new Map();
+      },
+      reportDiagnostic(diag: { code: string }): void {
+        diags.push(diag);
+      },
+      hasError(): boolean {
+        return diags.length > 0;
+      },
+      getGlobalNamespaceType: makeEmptyGlobalNamespace,
+    };
+
+    $onValidate(mockProgram as unknown as Program);
+    return diags;
+  }
+
+  it("emits unknown-output-field for a retryWhen data path absent from the Model return", () => {
+    const diags = runPredicateOnValidate(
+      modelReturnOp(),
+      Symbol.for("D2.d2Resilience.retryWhen"),
+      "result.data.bogus == 1",
+    );
+    expect(
+      diags.some((d) =>
+        d.code.endsWith("resilience-predicate-unknown-output-field"),
+      ),
+    ).toBe(true);
+  });
+
+  it("emits a model diagnostic for a failWhen predicate too (both keys walked)", () => {
+    const diags = runPredicateOnValidate(
+      modelReturnOp(),
+      Symbol.for("D2.d2Resilience.failWhen"),
+      "result.data.items.count == 0 && result.data.bogus == 1",
+    );
+    expect(
+      diags.some((d) =>
+        d.code.endsWith("resilience-predicate-unknown-output-field"),
+      ),
+    ).toBe(true);
+  });
+
+  it("does NOT walk the model when the stored predicate is malformed (parse-fail → continue)", () => {
+    const diags = runPredicateOnValidate(
+      modelReturnOp(),
+      Symbol.for("D2.d2Resilience.retryWhen"),
+      "result.bogus == 1", // unknown field → not parseable as a clean predicate
+    );
+    // The malformed string was reported in the decorator body; the model arm
+    // skips it (no model-walk diagnostics from this arm).
+    expect(
+      diags.some((d) =>
+        d.code.endsWith("resilience-predicate-unknown-output-field"),
+      ),
+    ).toBe(false);
+  });
+
+  it("treats a non-Model return as having no output model (result.data path → unknown-output-field)", () => {
+    const voidReturnOp = {
+      name: "voidPredOp",
+      returnType: { entityKind: "Type", kind: "Intrinsic" },
+    } as unknown as Operation;
+    const diags = runPredicateOnValidate(
+      voidReturnOp,
+      Symbol.for("D2.d2Resilience.retryWhen"),
+      "result.data.x == 1",
+    );
+    expect(
+      diags.some((d) =>
+        d.code.endsWith("resilience-predicate-unknown-output-field"),
+      ),
+    ).toBe(true);
+  });
+
+  it("produces no model diagnostics for an envelope-only predicate (no data path)", () => {
+    const diags = runPredicateOnValidate(
+      modelReturnOp(),
+      Symbol.for("D2.d2Resilience.retryWhen"),
+      'result.category == "infrastructure_unavailable"',
+    );
+    expect(
+      diags.some((d) =>
+        d.code.startsWith("@d2/typespec-decorators/resilience-predicate-"),
+      ),
+    ).toBe(false);
+  });
 });
 
 it("lib_DiagnosticsCatalogCoversAllResilienceCodes", () => {
@@ -1747,6 +2145,41 @@ it("lib_DiagnosticsCatalogCoversAllResilienceCodes", () => {
   ];
   const catalog = $lib.diagnostics as Record<string, unknown>;
   for (const code of resilienceCodes) expect(catalog).toHaveProperty(code);
+});
+
+// The result-predicate DSL drift guard — the parser's ResultPredicateDiagnosticCode
+// union ⇔ the $lib `resilience-predicate-*` keys, asserted in BOTH directions so
+// neither side can add a code without the other (the same guarantee the pipeline
+// DSL has). The annotated-tuple type forces a compile error if a union member is
+// dropped from this list.
+const RESULT_PREDICATE_CODES: readonly ResultPredicateDiagnosticCode[] = [
+  "resilience-predicate-malformed",
+  "resilience-predicate-unknown-field",
+  "resilience-predicate-unknown-output-field",
+  "resilience-predicate-unknown-error-code",
+  "resilience-predicate-unknown-category",
+  "resilience-predicate-type-mismatch",
+  "resilience-predicate-not-a-collection",
+  "resilience-predicate-unknown-element-field",
+  "resilience-predicate-shadowed-elem-var",
+];
+
+it("lib_DiagnosticsCatalogCoversAllResultPredicateCodes", () => {
+  // Forward: every union member has a $lib entry (reportDiagnostic never throws).
+  const catalog = $lib.diagnostics as Record<string, unknown>;
+  for (const code of RESULT_PREDICATE_CODES)
+    expect(catalog).toHaveProperty(code);
+});
+
+it("lib_NoExtraResultPredicateDiagnosticsBeyondTheUnion", () => {
+  // Reverse: every $lib `resilience-predicate-*` key is in the union — a $lib
+  // entry with no parser/validator code would be dead catalog drift.
+  const union = new Set<string>(RESULT_PREDICATE_CODES);
+  const catalogKeys = Object.keys($lib.diagnostics).filter((k) =>
+    k.startsWith("resilience-predicate-"),
+  );
+  expect(catalogKeys.length).toBe(RESULT_PREDICATE_CODES.length);
+  for (const key of catalogKeys) expect(union.has(key)).toBe(true);
 });
 
 it("lib_AllDiagnosticsHaveErrorSeverity", () => {
@@ -2657,9 +3090,7 @@ describe("category_DoubleApplyIsIdempotent", () => {
     expect(getHttpDiagCodes()).not.toContain(
       "@d2/typespec-decorators/category-exclusive",
     );
-    const values = [
-      ...httpRunner.program.stateMap(D2_COMMAND_KEY).values(),
-    ];
+    const values = [...httpRunner.program.stateMap(D2_COMMAND_KEY).values()];
     expect(values).toContain(true);
   });
 });

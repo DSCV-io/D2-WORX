@@ -224,5 +224,81 @@ export const $lib = createTypeSpecLibrary({
         default: paramMessage`'${"policy"}' has a positional argument after a named one — positional args must come first`,
       },
     },
+
+    // ----------------------------------------------------------------
+    // @d2Resilience result-predicate DSL diagnostics (retryWhen / failWhen)
+    // ----------------------------------------------------------------
+
+    /** A retryWhen / failWhen predicate string is syntactically malformed. */
+    "resilience-predicate-malformed": {
+      severity: "error",
+      messages: {
+        default: paramMessage`@d2Resilience ${"which"} predicate is malformed: ${"detail"}`,
+      },
+    },
+
+    /** A `result.<x>` accessor uses a field outside {success, statusCode, errorCode, category, data}. */
+    "resilience-predicate-unknown-field": {
+      severity: "error",
+      messages: {
+        default: paramMessage`@d2Resilience ${"which"} predicate uses an unknown accessor: ${"detail"}`,
+      },
+    },
+
+    /** A `result.data.<path>` segment is not a field on the operation's output model. */
+    "resilience-predicate-unknown-output-field": {
+      severity: "error",
+      messages: {
+        default: paramMessage`@d2Resilience ${"which"} predicate references an unknown output field: ${"detail"}`,
+      },
+    },
+
+    /** A `result.errorCode` literal is not declared in any *-error-codes spec. */
+    "resilience-predicate-unknown-error-code": {
+      severity: "error",
+      messages: {
+        default: paramMessage`@d2Resilience ${"which"} predicate references an unknown error code: ${"detail"}`,
+      },
+    },
+
+    /** A `result.category` literal is not a declared ErrorCategory wire string. */
+    "resilience-predicate-unknown-category": {
+      severity: "error",
+      messages: {
+        default: paramMessage`@d2Resilience ${"which"} predicate references an unknown error category: ${"detail"}`,
+      },
+    },
+
+    /** A comparison literal's type does not match the accessor's type. */
+    "resilience-predicate-type-mismatch": {
+      severity: "error",
+      messages: {
+        default: paramMessage`@d2Resilience ${"which"} predicate has a type mismatch: ${"detail"}`,
+      },
+    },
+
+    /** An array accessor (count / any / all / contains) was applied to a non-collection field. */
+    "resilience-predicate-not-a-collection": {
+      severity: "error",
+      messages: {
+        default: paramMessage`@d2Resilience ${"which"} predicate applies an array accessor to a non-collection: ${"detail"}`,
+      },
+    },
+
+    /** A field referenced inside an any/all sub-predicate is not on the element type. */
+    "resilience-predicate-unknown-element-field": {
+      severity: "error",
+      messages: {
+        default: paramMessage`@d2Resilience ${"which"} predicate references an unknown element field: ${"detail"}`,
+      },
+    },
+
+    /** A nested quantifier re-binds an element variable already in scope. */
+    "resilience-predicate-shadowed-elem-var": {
+      severity: "error",
+      messages: {
+        default: paramMessage`@d2Resilience ${"which"} predicate shadows an element variable: ${"detail"}`,
+      },
+    },
   },
 });

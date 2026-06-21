@@ -21,7 +21,9 @@ import {
   D2_REDACT_KEY,
   D2_REQUIRE_ALL_SCOPES_KEY,
   D2_REQUIRE_ANY_SCOPE_KEY,
+  D2_RESILIENCE_FAIL_WHEN_KEY,
   D2_RESILIENCE_KEY,
+  D2_RESILIENCE_RETRY_WHEN_KEY,
   D2_SERVED_BY_KEY,
   D2_SERVER_PUSH_KEY,
 } from "./state-keys.js";
@@ -33,6 +35,7 @@ import {
   validatePushTarget,
   validateRateLimitTier,
   validateResilience,
+  validateResultPredicate,
   validateScopes,
   validateServedBy,
 } from "./validators.js";
@@ -184,14 +187,39 @@ export function $d2Idempotent(
  * The expression is parsed and validated at compile time; the parsed AST is
  * consumed by the emitter. Emitters read back:
  * program.stateMap(D2_RESILIENCE_KEY).get(op) → string.
+ *
+ * The optional `predicates` options arg supplies custom `retryWhen` / `failWhen`
+ * result-predicate strings. Each is shape- and registry-validated here
+ * (`validateResultPredicate`) and model-validated against the op's TOutput in
+ * `$onValidate`; the raw strings are stored on the dedicated state keys for the
+ * emitter to re-parse. `failWhen` takes precedence over `retryWhen`. The
+ * single-positional form (no `predicates`) is unchanged and back-compatible.
+ * Emitters read back:
+ * program.stateMap(D2_RESILIENCE_RETRY_WHEN_KEY).get(op) → string,
+ * program.stateMap(D2_RESILIENCE_FAIL_WHEN_KEY).get(op) → string.
  */
 export function $d2Resilience(
   context: DecoratorContext,
   target: Operation,
   pipeline: string,
+  predicates?: { readonly retryWhen?: string; readonly failWhen?: string },
 ): void {
   validateResilience(context, target, pipeline);
   context.program.stateMap(D2_RESILIENCE_KEY).set(target, pipeline);
+
+  if (predicates?.retryWhen !== undefined) {
+    validateResultPredicate(context, target, predicates.retryWhen, "retryWhen");
+    context.program
+      .stateMap(D2_RESILIENCE_RETRY_WHEN_KEY)
+      .set(target, predicates.retryWhen);
+  }
+
+  if (predicates?.failWhen !== undefined) {
+    validateResultPredicate(context, target, predicates.failWhen, "failWhen");
+    context.program
+      .stateMap(D2_RESILIENCE_FAIL_WHEN_KEY)
+      .set(target, predicates.failWhen);
+  }
 }
 
 /**
@@ -240,10 +268,7 @@ export function $d2InProcess(
  * Stores `true` on the operation; emitters check for presence.
  * Mutually exclusive with @d2Query (exactly one category required) — enforced by $onValidate.
  */
-export function $d2Command(
-  context: DecoratorContext,
-  target: Operation,
-): void {
+export function $d2Command(context: DecoratorContext, target: Operation): void {
   context.program.stateMap(D2_COMMAND_KEY).set(target, true);
 }
 
@@ -254,10 +279,7 @@ export function $d2Command(
  * Stores `true` on the operation; emitters check for presence.
  * Mutually exclusive with @d2Command (exactly one category required) — enforced by $onValidate.
  */
-export function $d2Query(
-  context: DecoratorContext,
-  target: Operation,
-): void {
+export function $d2Query(context: DecoratorContext, target: Operation): void {
   context.program.stateMap(D2_QUERY_KEY).set(target, true);
 }
 

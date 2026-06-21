@@ -39,6 +39,24 @@ export const D2_IDEMPOTENT_KEY = Symbol.for("D2.d2Idempotent");
 /** State key for @d2Resilience — stores the raw pipeline-expression string. */
 export const D2_RESILIENCE_KEY = Symbol.for("D2.d2Resilience");
 
+/**
+ * State key for @d2Resilience's `retryWhen` predicate — stores the raw
+ * result-predicate string (opts a business result INTO the retry decision).
+ * The emitter re-parses it via the exported `parseResultPredicate`.
+ */
+export const D2_RESILIENCE_RETRY_WHEN_KEY = Symbol.for(
+  "D2.d2Resilience.retryWhen",
+);
+
+/**
+ * State key for @d2Resilience's `failWhen` predicate — stores the raw
+ * result-predicate string (forces a terminal fail, suppressing retry).
+ * The emitter re-parses it via the exported `parseResultPredicate`.
+ */
+export const D2_RESILIENCE_FAIL_WHEN_KEY = Symbol.for(
+  "D2.d2Resilience.failWhen",
+);
+
 /** State key for @d2Csrf — stores the CSRF posture override string. */
 export const D2_CSRF_KEY = Symbol.for("D2.d2Csrf");
 

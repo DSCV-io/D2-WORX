@@ -66,13 +66,37 @@ extern dec d2Idempotent(
 );
 
 /**
+ * Optional custom result-predicates for @d2Resilience. Both are minimal
+ * result-expression DSL strings reaching the D2Result envelope + the wrapped
+ * TOutput fields, compile-validated against the op's output shape and the closed
+ * error-code / error-category registries.
+ */
+model D2ResiliencePredicates {
+  /** Opt a business result INTO the retry decision (true ⇒ retry). */
+  retryWhen?: string;
+
+  /** Force a terminal fail — suppress retry (true ⇒ return verbatim, no retry). `failWhen` wins over `retryWhen`. */
+  failWhen?: string;
+}
+
+/**
  * Wraps an operation's outbound call in a resilience pipeline expressed as a
  * composable DSL string (e.g. `"retry(circuitBreaker(singleflight()))"`).
  * The DSL is parsed and validated at TypeSpec compile time by `validateResilience()`.
  * The raw expression is stored in the program state map; emitters re-parse it via the
  * exported `parse()` function to walk the `ResiliencePolicyNode` AST at code-gen time.
+ *
+ * The optional `predicates` arg supplies custom `retryWhen` / `failWhen`
+ * result-predicate strings (TypeSpec has no call-site named args, so they ride a
+ * single options-model value). Each is parsed by `validateResultPredicate()` and
+ * model-validated against the op's TOutput in $onValidate. The existing
+ * single-positional form `@d2Resilience("retry()")` keeps compiling unchanged.
  */
-extern dec d2Resilience(target: Operation, pipeline: valueof string);
+extern dec d2Resilience(
+  target: Operation,
+  pipeline: valueof string,
+  predicates?: valueof D2ResiliencePredicates
+);
 
 /** CSRF posture override for an operation; browser-facing mutations are protected by default. */
 extern dec d2Csrf(target: Operation, posture: valueof string);

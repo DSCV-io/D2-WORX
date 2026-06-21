@@ -22,8 +22,12 @@
 //       An internal op is not callable across any boundary.
 //   Exposure or internal required: every op must carry an exposure decorator or @d2Internal → error.
 //       Enforces exposure ⇔ ¬internal as a total, compile-checked invariant.
+//   @d2Resilience retryWhen / failWhen model walk: each predicate's result.data.<path>
+//       segments are validated against the op's resolved TOutput graph (unknown
+//       output / element field, non-collection array accessor, terminal type mismatch).
+//       Shape + registry checks already ran eagerly in the decorator body.
 
-import type { Operation, Program } from "@typespec/compiler";
+import type { Model, Operation, Program } from "@typespec/compiler";
 import { navigateProgram } from "@typespec/compiler";
 import { getRoutePath } from "@typespec/http";
 import { $lib } from "./lib.js";
@@ -37,9 +41,13 @@ import {
   D2_RATE_LIMIT_TIER_KEY,
   D2_REQUIRE_ALL_SCOPES_KEY,
   D2_REQUIRE_ANY_SCOPE_KEY,
+  D2_RESILIENCE_FAIL_WHEN_KEY,
+  D2_RESILIENCE_RETRY_WHEN_KEY,
   D2_SERVED_BY_KEY,
   D2_SERVER_PUSH_KEY,
 } from "./state-keys.js";
+import { parseResultPredicate } from "./result-predicate-dsl.js";
+import { walkPredicateModel } from "./predicate-model-walk.js";
 
 /** Program-level cross-decorator validation. Runs after all decorators apply. */
 export function $onValidate(program: Program): void {
@@ -156,6 +164,59 @@ export function $onValidate(program: Program): void {
       $lib.reportDiagnostic(program, {
         code: "internal-op-exposed",
         format: { op: typedOp.name, decorator: "@d2ServerPush" },
+        target: typedOp,
+      });
+  }
+
+  // ----------------------------------------------------------------
+  // @d2Resilience retryWhen / failWhen — model-graph validation.
+  // The model graph is fully resolved only at $onValidate time, so the
+  // data-path arm (unknown output / element field, not-a-collection, terminal
+  // type-mismatch) runs here against op.returnType. Shape + registry checks
+  // already ran eagerly in the decorator body (validateResultPredicate).
+  // ----------------------------------------------------------------
+  validateResiliencePredicateModel(
+    program,
+    D2_RESILIENCE_RETRY_WHEN_KEY,
+    "retryWhen",
+  );
+  validateResiliencePredicateModel(
+    program,
+    D2_RESILIENCE_FAIL_WHEN_KEY,
+    "failWhen",
+  );
+}
+
+/**
+ * Run the model-graph walk for every op carrying the given predicate state key.
+ * Resolves the op's output Model from `op.returnType` (undefined when the return
+ * is not a Model — e.g. `void` or a scalar — so any `result.data.<path>` becomes
+ * an unknown-output-field error), re-parses the stored predicate string, and
+ * reports each model-dependent diagnostic. Envelope-only predicates produce no
+ * walk work.
+ */
+function validateResiliencePredicateModel(
+  program: Program,
+  key: symbol,
+  which: string,
+): void {
+  for (const [op, expr] of program.stateMap(key)) {
+    const typedOp = op as Operation;
+    const parsed = parseResultPredicate(expr as string);
+
+    // A malformed string was already reported in the decorator body; the model
+    // walk only runs on a clean parse.
+    if (!parsed.ok) continue;
+
+    const returnType = typedOp.returnType;
+    const outputModel: Model | undefined =
+      returnType.kind === "Model" ? returnType : undefined;
+
+    const errors = walkPredicateModel(program, outputModel, parsed.root);
+    for (const err of errors)
+      $lib.reportDiagnostic(program, {
+        code: err.code,
+        format: { which, detail: err.message },
         target: typedOp,
       });
   }
