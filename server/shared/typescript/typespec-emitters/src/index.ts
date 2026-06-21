@@ -45,3 +45,13 @@ export type {
   IdempotencyGateWeave,
   IdempotencyKeySource,
 } from "./lib/idempotency-gate-emitter.js";
+
+export {
+  emitOpenApiDocuments,
+  injectD2Extensions,
+} from "./lib/openapi-emitter.js";
+export type {
+  D2ScopeExtension,
+  D2GeneratedByExtension,
+  OpenApiHttpMethod,
+} from "./lib/openapi-emitter.js";

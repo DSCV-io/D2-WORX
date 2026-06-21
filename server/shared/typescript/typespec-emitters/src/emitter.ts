@@ -56,6 +56,7 @@ import {
   emitBusinessRetrySignal,
 } from "./lib/result-predicate-emitter.js";
 import { emitRoutePolicy } from "./lib/route-policy-emitter.js";
+import { emitOpenApiDocuments } from "./lib/openapi-emitter.js";
 import { emitIdempotencyStoreSeam } from "./lib/idempotency-gate-emitter.js";
 import type {
   DelegationTarget,
@@ -88,6 +89,11 @@ import { $lib } from "./lib.js";
 //   9. <module>-rest-client.g.ts — the TS browser REST client (per @d2ServedBy
 //      module): per-@route typed fns delegating to the $lib apiCall/apiCallAnon
 //      substrate (ProblemDetails / envelope → D2Result).
+//  10. <service>[.<version>].openapi.g.json — the OpenAPI 3.0 document per
+//      @service namespace (one per version when @versioned), produced by the
+//      stock @typespec/openapi3 getOpenAPI3 seam with the four x-d2-* policy
+//      extensions (x-d2-scope / x-d2-tier / x-d2-audience / x-d2-csrf) layered
+//      on top from the @d2* stateMaps. Only emitted when a @service exists.
 //
 // Namespace routing for C# DTOs:
 //   EXPOSED op (@d2InProcess / @d2GrpcMethod / @d2ServerPush / @route):
@@ -648,6 +654,17 @@ export async function $onEmit(context: EmitContext): Promise<void> {
     const seamFile = emitIdempotencyStoreSeam(ns, specHint);
     const seamPath = resolveOutputPath(context, seamFile.fileName);
     void emitGeneratedFile(program, seamPath, seamFile.content);
+  }
+
+  // ---- OpenAPI x-d2-* document(s) — one per @service namespace × version --------------------
+  // Runs the genuine stock @typespec/openapi3 emitter (getOpenAPI3) for the HTTP
+  // shape, then layers the four x-d2-* policy extensions read from the @d2*
+  // stateMaps. Emits one file per (service × version); returns no files when the
+  // program declares no @service namespace.
+  const openApiFiles = await emitOpenApiDocuments(program);
+  for (const f of openApiFiles) {
+    const openApiPath = resolveOutputPath(context, f.fileName);
+    await emitGeneratedFile(program, openApiPath, f.content);
   }
 
   // ---- Smoke manifest (kept so the operations-manifest integration test stays green) --------

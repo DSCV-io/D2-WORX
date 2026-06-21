@@ -1,0 +1,152 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "OpenApi Versioned Fixtures",
+    "version": "2.0"
+  },
+  "tags": [],
+  "paths": {
+    "/v1/openapi/report": {
+      "get": {
+        "operationId": "report",
+        "description": "Fetch a report — present from v1; carries a tier so x-d2-tier is exercised per version.",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "The request has succeeded.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OpenApiReportOutput"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "input": {
+                    "$ref": "#/components/schemas/OpenApiReportInput"
+                  }
+                },
+                "required": [
+                  "input"
+                ]
+              }
+            }
+          }
+        },
+        "x-d2-scope": {
+          "mode": "any",
+          "scopes": [
+            "self.read"
+          ]
+        },
+        "x-d2-tier": "Standard"
+      }
+    },
+    "/v1/openapi/report/export": {
+      "post": {
+        "operationId": "exportReport",
+        "description": "Export a report —",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "The request has succeeded.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OpenApiExportOutput"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "input": {
+                    "$ref": "#/components/schemas/OpenApiReportInput"
+                  }
+                },
+                "required": [
+                  "input"
+                ]
+              }
+            }
+          }
+        },
+        "x-d2-scope": {
+          "mode": "any",
+          "scopes": [
+            "self.write"
+          ]
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "OpenApiReportOutput": {
+        "type": "object",
+        "required": [
+          "body"
+        ],
+        "properties": {
+          "body": {
+            "type": "string",
+            "description": "The rendered report body."
+          }
+        },
+        "description": "Output of a report fetch: the report body."
+      },
+      "OpenApiReportInput": {
+        "type": "object",
+        "required": [
+          "reportId"
+        ],
+        "properties": {
+          "reportId": {
+            "type": "string",
+            "description": "The report identifier."
+          }
+        },
+        "description": "Input for a report fetch: the report identifier."
+      },
+      "OpenApiExportOutput": {
+        "type": "object",
+        "required": [
+          "location"
+        ],
+        "properties": {
+          "location": {
+            "type": "string",
+            "description": "The location of the exported report artifact."
+          }
+        },
+        "description": "Output of a report export: the export location."
+      },
+      "OpenApiVersions": {
+        "type": "string",
+        "enum": [
+          "1.0",
+          "2.0"
+        ],
+        "description": "Versions enum driving the"
+      }
+    }
+  },
+  "x-d2-generated-by": {
+    "emitter": "@d2/typespec-emitters",
+    "note": "x-d2-* policy extensions layered on the stock @typespec/openapi3 document. Manual edits will be lost on rebuild."
+  }
+}

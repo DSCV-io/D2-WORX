@@ -10,6 +10,7 @@
 
 # Codegen-emitted source — formatting is the emitter's responsibility.
 **/*.g.ts
+**/*.g.json
 server/shared/typescript/protos/src/generated/**
 server/shared/typescript/typespec-emitters/tests/grpc-fixtures/generated/**
 server/web/src/lib/paraglide/**

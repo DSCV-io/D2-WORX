@@ -471,6 +471,65 @@ Both seams exist, so both emitters are BUILT + validated now; the ONLY deferrals
 
 ---
 
+## OpenAPI `x-d2-*` extension emitter — real `getOpenAPI3` + `@d2*` stateMap seams
+
+The OpenAPI emitter (`src/lib/openapi-emitter.ts`) produces one OpenAPI 3.0
+document per `@service` namespace × version. The HTTP shape comes VERBATIM from
+the **genuine stock `@typespec/openapi3` emitter** via its programmatic
+`getOpenAPI3(program)` API — the emitter reimplements NO part of the OpenAPI
+document (no paths / schemas / components / requestBody are built here). It
+layers ONLY the four `x-d2-*` policy extensions that stock OpenAPI cannot
+express, read directly from the `@d2*` decorator `stateMap`s (the same reads the
+route-policy emitter performs), plus a document-level `x-d2-generated-by`
+traceability marker.
+
+| Seam                                                       | Real or fake | Notes                                                                                                                                                       |
+| ---------------------------------------------------------- | ------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `@typespec/openapi3` `getOpenAPI3(program)`                | **Real**     | The genuine stock emitter produces the OpenAPI 3.0 document object(s) — `paths` / `components/schemas` / `requestBody` / `$ref` responses — NO reimplementation |
+| `@typespec/http` `getAllHttpServices`                      | **Real**     | Builds the `(verb, path) → Operation` correlation index from the same HTTP-library walk the stock emitter uses, so the path keys align                       |
+| `@typespec/compiler` `listServices`                        | **Real**     | The emit gate — `getOpenAPI3` runs only when ≥1 `@service` exists (also prevents the `no-service-found` HTTP warning on routed-but-serviceless programs)     |
+| `@d2*` decorator `stateMap`s (any/all/harmless scope, tier, audience, csrf) | **Real**     | `x-d2-scope` / `x-d2-tier` / `x-d2-audience` / `x-d2-csrf` are read from the genuine decorator state — never a test double                                  |
+
+| Concern                                                                | Test                                                                                                                                                   |
+| ---------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| REAL stock OpenAPI 3.0 shape (paths + components + requestBody + `$ref`) | `openapi-emitter.test.ts > openApiEmitter_Integration_StockShapePlusExtensions > emits the genuine stock OpenAPI 3.0 shape …`                          |
+| ALL FOUR `x-d2-*` present-and-correct on a fully-decorated op           | `… > injects ALL FOUR x-d2-* extensions, present-and-correct, on the fully-decorated op` (scope any + tier `Standard` + audience `d2-edge` + csrf `exempt`) |
+| **ADVERSARIAL** — absence: op with only the required auth intent carries `x-d2-scope` but NOT tier/csrf/audience | `… > ADVERSARIAL: an op with only the required auth intent carries x-d2-scope but NOT tier/csrf/audience`                                              |
+| `x-d2-scope` all-scopes arm `{ mode: "all", scopes }`                  | `… > encodes the all-scopes arm as x-d2-scope { mode: 'all', scopes }`                                                                                |
+| `x-d2-scope` harmless arm `{ mode: "harmless" }`                       | `… > encodes the harmless arm as x-d2-scope { mode: 'harmless' }`                                                                                     |
+| Doc-level `x-d2-generated-by` traceability marker                      | `… > emits a document-level x-d2-generated-by traceability marker`                                                                                    |
+| **No PII leak** — no `@d2Redact` field VALUE / payload content in the doc | `… > NO PII LEAK: the emitted document never contains a @d2Redact field VALUE or payload content`                                                      |
+| **Versioned fan-out is REAL** (one doc per version, non-vacuous)       | `openApiEmitter_Integration_VersionedFanOutIsReal > emits one file per (service × version): 1 unversioned + 2 versions = 3 documents`                  |
+| **NON-VACUOUS version delta** — v1 vs v2 genuinely differ (`exportReport` `@added` in v2 only) | `… > NON-VACUOUS: v1 and v2 documents genuinely differ (exportReport is @added in v2 only)`                                                            |
+| Each version document carries the `x-d2-*` extensions                  | `… > each version document carries the x-d2-* extensions on its ops`                                                                                  |
+| `$onEmit` dispatch — the OpenAPI file is written through the emit loop  | `openapi-emit.direct.test.ts > openApiEmitDirect_OnEmitDispatch` (instrumented `src` `$onEmit`, real program)                                          |
+| Pure `injectD2Extensions` branch coverage (scope arms + object-form tier/csrf + op-not-in-index skip) | `openapi-emitter.test.ts > openApiEmitter_Unit_injectD2Extensions` (synthetic documents + mocked `getAllHttpServices`)                                 |
+| `emitOpenApiDocuments` record-arm handling (versioned / unversioned / empty-records / unnamed-service / empty-version) | `openapi-emitter.test.ts > openApiEmitter_Unit_emitOpenApiDocuments` (mocked `getOpenAPI3` + `listServices`)                                           |
+
+**Byte-parity + non-vacuity** — `openapi-byte-parity.test.ts`:
+
+| Committed fixture                                          | Emitter call                                                | Key assertion                                  |
+| --------------------------------------------------------- | ---------------------------------------------------------- | ---------------------------------------------- |
+| `TypeSpecOpenApi/Generated/open-api-fixtures.openapi.g.json`               | regenerate (compile `openapi-shaped.tsp` → `emitOpenApiDocuments`) | byte-identical to the committed fixture |
+| `TypeSpecOpenApi/Generated/open-api-versioned-fixtures.1-0.openapi.g.json` | regenerate (versioned arm, v1)                              | byte-identical to the committed fixture         |
+| `TypeSpecOpenApi/Generated/open-api-versioned-fixtures.2-0.openapi.g.json` | regenerate (versioned arm, v2)                              | byte-identical to the committed fixture         |
+
+**Deliberate-drift non-vacuity guards**: two tests mutate a committed fixture by
+one token and assert the regenerated output does NOT match — `open-api-fixtures`
+mutates `self.write` → `self.writeDRIFTED` (inside `x-d2-scope`);
+`open-api-versioned-fixtures.2-0` mutates `exportReport` → `exportReportDRIFTED`.
+This proves the gate FAILS on real divergence (never a buffer-vs-itself
+tautology). The committed `.g.json` documents are generated output: never
+hand-edited (fixes land at the emitter), byte-gated, and `.prettierignore`d
+(`**/*.g.json`) so Prettier never reformats them.
+
+**Replace-trigger**: N/A — the emitted OpenAPI document is a build artifact with
+no unbuilt runtime consumer (no Swagger UI / doc host wiring in scope). When a
+future Edge/BFF OpenAPI consumer reads the doc, it reads the `x-d2-*` extension
+shapes pinned here.
+
+---
+
 ## Coverage summary
 
 | Metric                            | Result                                                                                                                                                                                                                                                                                                                                           |
@@ -479,8 +538,8 @@ Both seams exist, so both emitters are BUILT + validated now; the ONLY deferrals
 | Branches                          | 100%                                                                                                                                                                                                                                                                                                                                             |
 | Functions                         | 100%                                                                                                                                                                                                                                                                                                                                             |
 | Statements                        | 100%                                                                                                                                                                                                                                                                                                                                             |
-| Test files                        | 37                                                                                                                                                                                                                                                                                                                                               |
-| Total tests                       | 832                                                                                                                                                                                                                                                                                                                                              |
+| Test files                        | 40                                                                                                                                                                                                                                                                                                                                               |
+| Total tests                       | 855                                                                                                                                                                                                                                                                                                                                              |
 | C# behavior tests (D2.Edge.Tests) | 906 passing (includes the temporal round-trip matrix `TemporalRoundTripTests` + the enum-wire round-trip matrix `EnumWireRoundTripTests` + the `@d2Resilience` predicate retry matrix `PredicateRetryTests` + the predicate parity matrix `PredicateParityTests` — the flat `placeOrder` rows AND the nested/array-of-model `placeOrderV2` rows) |
 | TS temporal round-trip (@d2/time) | 32 (`temporal-round-trip.test.ts`, drives the shared cross-language fixture)                                                                                                                                                                                                                                                                     |
 | TS enum-wire round-trip           | 7 (`enum-wire-round-trip.test.ts`, drives the shared `contracts/enum/enum-parity.fixture.json`)                                                                                                                                                                                                                                                  |
