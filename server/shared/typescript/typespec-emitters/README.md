@@ -501,14 +501,48 @@ catalog entry in `src/lib.ts`.
 | ID       | Named code                  | Trigger                                                                                                                                                                                                                                                                                                           |
 | -------- | --------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | D2TSP001 | `unmapped-scalar`           | A TypeSpec scalar has no entry in the scalar registry. Emitter cannot proceed without a C#/proto/TS mapping.                                                                                                                                                                                                      |
-| D2TSP002 | `unsupported-property-type` | A model property has an enum, union, or anonymous-model type that the DTO emitter does not yet support.                                                                                                                                                                                                           |
+| D2TSP002 | `unsupported-property-type` | A model property has an anonymous-model, model-variant, or otherwise-unrecognized type. Named enums + closed string-literal unions ARE supported (they map to a cross-language enum — a C# `public enum` + `[JsonConverter(typeof(JsonStringEnumConverter))]`, a TS const-object, and a proto `string` field carrying the member-name wire string). |
 | D2TSP003 | `missing-cqrs-category`     | An operation carries neither `@d2Command` nor `@d2Query`. The façade emitter cannot determine the handler namespace without a CQRS category.                                                                                                                                                                      |
 | D2TSP004 | `route-missing-auth-intent` | A routed operation (`@route`) carries none of `@d2RequireAnyScope`, `@d2RequireAllScopes`, or `@d2Harmless`. Every public route must declare an auth intent. The route emitter loud-fails at compile time rather than emitting a boot-failing unprotected endpoint — strictly stronger than a runtime boot guard. |
 | D2TSP005 | `unsupported-http-verb`     | An HTTP verb other than get/post/put/delete/patch (e.g. `head`, `options`) has no `Map*` mapping in the route emitter.                                                                                                                                                                                            |
 | D2TSP006 | `idempotent-requires-route` | `@d2Idempotent` is present on an operation that has no `@route`. Idempotency gating is REST-only; it is meaningless without a public HTTP route. Add `@route` + a supported HTTP verb to the operation, or remove `@d2Idempotent` if the operation is not intended to have a REST surface.                        |
+| D2TSP007 | `unsupported-union-shape`   | A union property's variants are NOT a closed set of string literals (mixed-primitive, mixed-literal-kind, numeric-literal-only, discriminated, or model unions). There is no single cross-language enum representation, so the emitter loud-fails rather than guessing. Replace with a named enum or a closed string-literal union. |
 
 All diagnostics have `severity: "error"` — every violation fails `tsp compile`
 with a non-zero exit code.
+
+### Enum / string-literal-union support
+
+A named `enum`, a named string-literal `union`, and an inline anonymous
+string-literal union all map to a cross-language enum whose **wire form is the
+member-name string, identical across C#, proto, and TS**:
+
+- **C#** — a sibling `public enum` carrying
+  `[JsonConverter(typeof(JsonStringEnumConverter))]`; a member whose wire literal
+  is not a valid C# identifier (or differs from the PascalCase member name)
+  carries `[JsonStringEnumMemberName("…")]` — the .NET 9+ attribute
+  `JsonStringEnumConverter` honors (NOT `[EnumMember]`, which the converter
+  ignores). STRICT — there is no `Unknown` sentinel; an unknown wire value throws
+  `JsonException` at deserialization (mapped to 400 `ValidationFailed` at the
+  boundary).
+- **TS** — a `const X = { Member: "wire", … } as const` + a derived union type
+  (`type X = (typeof X)[keyof typeof X]`). NEVER the TS `enum` keyword; no Zod
+  schema. The const value is the member-name wire string (matching the C# wire).
+- **proto** — a proto `string` field (the member-name wire string). NOT a proto
+  `enum`, NOT `int32`, NO `_UNSPECIFIED` sentinel. The generated proto↔DTO
+  mappers parse the wire string back to the C# enum, failing loud
+  (`ValidationFailed`) on an unknown value — exactly the JSON policy. The parse is
+  symmetric across both directions: the SERVER transport mapper parses a REQUEST
+  enum inbound (short-circuiting before the handler), and the CLIENT mapper parses
+  a RESPONSE enum inbound (`To<Output>()` returns `D2Result<<Output>>`; the client
+  surfaces a parse failure as the business result). Outbound, each side maps the
+  enum → its wire string via `ToWire()`. So enums are fully supported on
+  `@d2GrpcMethod` ops in request AND response position.
+
+An explicit-int enum (`Level { Low: 0 }`) keeps its integer backing C#-side, but
+the wire form is STILL the member-name string in all three languages. Unsupported
+union shapes (mixed-primitive, numeric-literal, discriminated, model variants)
+fire `D2TSP007`.
 
 ---
 
@@ -543,7 +577,9 @@ server/services/edge/key-custodian/app/Application/                   ← façad
 server/services/edge/key-custodian/app/Application/Handlers/…/GetJwks/ ← GetJwks handler interface (app CQRS namespace)
 server/services/edge/tests/Unit/KeyCustodian/TypeSpecGrpc/Generated/  ← gRPC service + mapper fixtures
 server/services/edge/tests/Unit/KeyCustodian/TypeSpecGrpc/Protos/     ← .proto fixture
-server/services/edge/tests/Unit/KeyCustodian/TypeSpecDto/Generated/   ← sign + temporal fixture DTOs (TemporalInput/Output.g.cs + temporal-dto.g.ts)
+server/services/edge/tests/Unit/KeyCustodian/TypeSpecDto/Generated/   ← sign + temporal + enum fixture DTOs (TemporalInput/Output.g.cs + temporal-dto.g.ts; EnumsInput/Output.g.cs + enums-dto.g.ts)
+server/services/edge/tests/Unit/KeyCustodian/TypeSpecGrpcEnum/Generated/ ← enum gRPC fixtures (SignWithKind DTOs + service + transport/client mappers + client interface/impl/DI/keys; the proto string ↔ enum bridge)
+server/services/edge/tests/Unit/KeyCustodian/TypeSpecGrpcEnum/Protos/  ← enum gRPC fixture .proto (enum_fixtures_signer_sign_with_kind.g.proto)
 ```
 
 The Sign operation DTOs live in the gRPC generated directory because they are emitted
@@ -571,7 +607,12 @@ the fixtures as follows:
 3. Update the fixture constants in `tests/byte-parity.test.ts` (DTO fixtures —
    GetJwks, Sign, and the Temporal `TemporalInput`/`TemporalOutput` constants),
    `tests/facade-emitter.test.ts`, and `tests/proto-grpc-byte-parity.test.ts`
-   to match the new content.
+   to match the new content. The enum-shaped byte-gates in `tests/byte-parity.test.ts`
+   (`byteParity_EnumsDto_CommittedFixtures` + `byteParity_SignWithKindEnumGrpc_CommittedFixtures`
+   + `byteParity_SignWithKindEnumGrpcClient_CommittedFixtures`) read the committed
+   `Enums*.g.cs` / `enums-dto.g.ts` / the enum `.proto` + transport mapper + the
+   client mapper/impl from disk and compare them to fresh emitter output, so they
+   refresh automatically when you recommit the regenerated files — no in-test constant to edit.
 4. Run `pnpm run test:coverage` to confirm all byte-parity tests pass with 100%
    coverage.
 5. Run `dotnet build` + `dotnet test` (scoped to `D2.Edge.Tests`) to confirm the C#

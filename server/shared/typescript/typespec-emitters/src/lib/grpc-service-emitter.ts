@@ -34,6 +34,11 @@ import { buildBanner } from "./banner.js";
 import { toPascal } from "./name-transforms.js";
 import type { FieldInfo } from "./model-walk.js";
 import type { EmittedFile } from "./csharp-dto-emitter.js";
+import {
+  collectFieldEnums,
+  emitEnumMapperHelpers,
+  enumAliasUsings,
+} from "./enum-mapper.js";
 
 // ---------------------------------------------------------------------------
 // Public types
@@ -127,6 +132,11 @@ export function emitGrpcService(
   // a ProtoOutput alias (global:: root) is added in the mapper to disambiguate.
   const protoDataMsgName = responseModelName;
 
+  // When the request DTO carries ≥1 enum field, the proto→DTO request mapper
+  // returns D2Result<<Input>> (parsing each enum string, fail-loud on unknown),
+  // so the service must check .Success before delegating.
+  const requestHasEnums = requestFields.some((f) => f.enumRef !== undefined);
+
   const serviceFile = emitServiceClass(
     opName,
     grpcService,
@@ -142,6 +152,7 @@ export function emitGrpcService(
     responseModelName,
     protoDataMsgName,
     effectiveTarget,
+    requestHasEnums,
   );
 
   const mapperFile = emitTransportMappers(
@@ -181,6 +192,7 @@ function emitServiceClass(
   responseModelName: string,
   protoDataMsgName: string,
   target: GrpcDelegationTarget,
+  requestHasEnums: boolean,
 ): EmittedFile {
   const serviceClassName = `${grpcService}Service`;
   const baseClassFq = `global::${protoCsharpNs}.${grpcService}.${grpcService}Base`;
@@ -209,12 +221,21 @@ function emitServiceClass(
   lines.push(
     `using ${protoResponseName} = global::${protoCsharpNs}.${protoResponseName};`,
   );
-  lines.push(
-    `using ${requestModelName} = global::${dtoCsharpNs}.${requestModelName};`,
-  );
-  lines.push(
-    `using ${responseModelName} = global::${dtoCsharpNs}.${responseModelName};`,
-  );
+  // DTO aliases are emitted ONLY when the DTO namespace differs from the service-impl
+  // namespace; a self-referential `using X = …Ns.X;` for a type in THIS namespace
+  // conflicts with the type declaration (CS0576).
+  if (dtoCsharpNs !== serviceImplNs) {
+    lines.push(
+      `using ${requestModelName} = global::${dtoCsharpNs}.${requestModelName};`,
+    );
+    lines.push(
+      `using ${responseModelName} = global::${dtoCsharpNs}.${responseModelName};`,
+    );
+  }
+
+  // D2.Shared.Result is needed only when the request mapper returns D2Result<Input>
+  // (enum-bearing request) so the service can short-circuit a parse failure.
+  if (requestHasEnums) lines.push("using D2.Shared.Result;");
   lines.push("using D2.Shared.Result.Grpc;");
   lines.push("using Grpc.Core;");
   // When delegating through a façade whose interface lives in a different namespace,
@@ -247,19 +268,47 @@ function emitServiceClass(
     `    public override async Task<${protoResponseName}> ${grpcMethod}(${protoRequestName} request, ServerCallContext context)`,
   );
   lines.push("    {");
-  lines.push(
-    `        ${requestModelName} input = request.To${requestModelName}();`,
-  );
   // Delegation call — façade uses 2-arg transport-neutral signature; handler uses HandleAsync.
   const callExpr =
     target.kind === "facade"
       ? `facade.${target.methodName}(input, context.CancellationToken)`
       : `handler.${target.methodName}(input, context.CancellationToken)`;
-  lines.push(`        var result = await ${callExpr}.ConfigureAwait(false);`);
-  // Populate the envelope from the handler result (success OR failure).
-  // RpcException is NEVER thrown for business results — it is reserved for genuine
-  // transport/infra faults. gRPC status stays OK for all business results.
-  lines.push(`        return result.ToProtoResponse();`);
+
+  if (requestHasEnums) {
+    // The request DTO carries ≥1 enum field — the proto→DTO mapper parses each
+    // enum string and returns D2Result<Input>, failing loud (400 ValidationFailed)
+    // on an unknown wire value. Short-circuit that failure to the Response envelope
+    // WITHOUT delegating; gRPC status stays OK for the business validation result.
+    lines.push(
+      `        var inputResult = request.To${requestModelName}();`,
+    );
+    lines.push(`        if (!inputResult.Success)`);
+    lines.push("        {");
+    lines.push(
+      `            var failure = D2Result<${responseModelName}?>.ValidationFailed(`,
+    );
+    lines.push(
+      `                inputResult.Messages, inputResult.InputErrors, inputResult.ErrorCode, inputResult.Category, inputResult.TraceId);`,
+    );
+    lines.push(`            return failure.ToProtoResponse();`);
+    lines.push("        }");
+    lines.push("");
+    lines.push(`        ${requestModelName} input = inputResult.Data!;`);
+    lines.push(
+      `        var result = await ${callExpr}.ConfigureAwait(false);`,
+    );
+    lines.push(`        return result.ToProtoResponse();`);
+  } else {
+    lines.push(
+      `        ${requestModelName} input = request.To${requestModelName}();`,
+    );
+    lines.push(`        var result = await ${callExpr}.ConfigureAwait(false);`);
+    // Populate the envelope from the handler result (success OR failure).
+    // RpcException is NEVER thrown for business results — it is reserved for genuine
+    // transport/infra faults. gRPC status stays OK for all business results.
+    lines.push(`        return result.ToProtoResponse();`);
+  }
+
   lines.push("    }");
   lines.push("}");
   lines.push("");
@@ -315,15 +364,32 @@ function emitTransportMappers(
   lines.push(
     `using ${protoDataAlias} = global::${protoCsharpNs}.${protoDataMsgName};`,
   );
-  lines.push(
-    `using ${requestModelName} = global::${dtoCsharpNs}.${requestModelName};`,
-  );
-  lines.push(
-    `using ${responseModelName} = global::${dtoCsharpNs}.${responseModelName};`,
-  );
+  // The DTO + enum types resolve namespace-locally when the DTO namespace equals
+  // the mapper (service-impl) namespace; emitting a `using X = …Ns.X;` alias for a
+  // type that lives in THIS namespace conflicts with the type declaration (CS0576).
+  // So the DTO/enum aliases are emitted ONLY when the DTO namespace differs.
+  const dtoIsLocal = dtoCsharpNs === serviceImplNs;
+  if (!dtoIsLocal) {
+    lines.push(
+      `using ${requestModelName} = global::${dtoCsharpNs}.${requestModelName};`,
+    );
+    lines.push(
+      `using ${responseModelName} = global::${dtoCsharpNs}.${responseModelName};`,
+    );
+  }
+
+  // Enum types live in the DTO namespace; alias them so the ToWire / Parse<Enum>Wire
+  // helpers + the field maps resolve unambiguously. Collect the distinct enums across
+  // both request + response field lists. enumAliasUsings already skips same-namespace.
+  const allEnums = collectFieldEnums([...requestFields, ...responseFields]);
+  for (const alias of enumAliasUsings(allEnums, dtoCsharpNs, serviceImplNs))
+    lines.push(alias);
+
   lines.push("using D2.Shared.Result;");
   lines.push("using D2.Shared.Result.Grpc;");
   lines.push("using Google.Protobuf;");
+  // TK lives in D2.Shared.I18n — needed by the inbound Parse<Enum>Wire fail-loud path.
+  if (allEnums.length > 0) lines.push("using D2.Shared.I18n;");
   lines.push("");
 
   lines.push(
@@ -333,20 +399,28 @@ function emitTransportMappers(
   lines.push("{");
 
   // Extension block: proto request → DTO input.
+  // When the request carries ≥1 enum field, the proto string is parsed back to the
+  // C# enum (fail-loud ValidationFailed on an unknown value), so the mapper returns
+  // D2Result<<Input>> instead of a bare <Input>.
+  const requestHasEnums = requestFields.some((f) => f.enumRef !== undefined);
   lines.push(`    extension(${protoRequestName} request)`);
   lines.push("    {");
-  lines.push(`        internal ${requestModelName} To${requestModelName}()`);
-  lines.push("        {");
 
-  if (requestFields.length === 0) {
-    lines.push(`            return new ${requestModelName}();`);
+  if (requestHasEnums) {
+    emitRequestMapperWithEnums(lines, requestModelName, requestFields);
   } else {
-    const args = requestFields.map((f) => buildProtoToDto(f));
-    lines.push(
-      `            return new ${requestModelName}(${args.join(", ")});`,
-    );
+    lines.push(`        internal ${requestModelName} To${requestModelName}()`);
+    lines.push("        {");
+    if (requestFields.length === 0) {
+      lines.push(`            return new ${requestModelName}();`);
+    } else {
+      const args = requestFields.map((f) => buildProtoToDto(f));
+      lines.push(
+        `            return new ${requestModelName}(${args.join(", ")});`,
+      );
+    }
+    lines.push("        }");
   }
-  lines.push("        }");
   lines.push("    }");
   lines.push("");
 
@@ -393,13 +467,61 @@ function emitTransportMappers(
   lines.push("        }");
   lines.push("    }");
 
+  // Per-enum ToWire / Parse<Enum>Wire helper blocks (the proto-string ↔ enum bridge).
+  emitEnumMapperHelpers((l) => lines.push(l), allEnums);
+
   lines.push("}");
   lines.push("");
 
-  void dtoCsharpNs; // suppress unused-var
-
   const fileName = `${pascalOp}TransportMappers.g.cs`;
   return { fileName, content: lines.join("\n") };
+}
+
+/**
+ * Emit the proto→DTO request mapper for a request carrying ≥1 enum field. Each
+ * enum field's proto string is parsed via Parse<Enum>Wire (fail-loud on unknown);
+ * the mapper short-circuits to ValidationFailed and otherwise constructs the DTO.
+ * The mapper returns D2Result<<Input>> instead of a bare <Input>.
+ *
+ * Enum request fields are emitted as a single required scalar enum (the gRPC enum
+ * fixture's request carries exactly one) — the parse + short-circuit is per field.
+ */
+function emitRequestMapperWithEnums(
+  lines: string[],
+  requestModelName: string,
+  requestFields: readonly FieldInfo[],
+): void {
+  lines.push(
+    `        internal D2Result<${requestModelName}> To${requestModelName}()`,
+  );
+  lines.push("        {");
+
+  // Parse each enum field; bind its local on success, short-circuit on failure.
+  const ctorArgs: string[] = [];
+  for (const f of requestFields) {
+    if (f.enumRef !== undefined) {
+      const local = `${f.name}Result`;
+      lines.push(
+        `            var ${local} = string.Parse${f.enumRef.name}Wire(request.${toPascal(f.name)});`,
+      );
+      lines.push(`            if (!${local}.Success)`);
+      lines.push(
+        `                return D2Result<${requestModelName}>.ValidationFailed(`,
+      );
+      lines.push(
+        `                    ${local}.Messages, ${local}.InputErrors, ${local}.ErrorCode, ${local}.Category, ${local}.TraceId);`,
+      );
+      lines.push("");
+      ctorArgs.push(`${local}.Data`);
+    } else {
+      ctorArgs.push(buildProtoToDto(f));
+    }
+  }
+
+  lines.push(
+    `            return D2Result<${requestModelName}>.Ok(new ${requestModelName}(${ctorArgs.join(", ")}));`,
+  );
+  lines.push("        }");
 }
 
 /**
@@ -416,11 +538,13 @@ function buildProtoToDto(f: FieldInfo): string {
 
 /**
  * Build the assignment RHS for mapping one DTO output field to proto response.
- * byte[] → ByteString.CopyFrom(output.PascalName); all others → output.PascalName.
+ * byte[] → ByteString.CopyFrom(output.PascalName); enum → output.PascalName.ToWire()
+ * (DTO enum → proto member-name wire string); all others → output.PascalName.
  */
 function buildDtoToProto(f: FieldInfo): string {
   const propName = toPascal(f.name);
   if (f.csType === "byte[]" || f.csType === "byte[]?")
     return `ByteString.CopyFrom(output.${propName})`;
+  if (f.enumRef !== undefined) return `output.${propName}.ToWire()`;
   return `output.${propName}`;
 }

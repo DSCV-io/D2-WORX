@@ -11,11 +11,18 @@
 // (comparing a buffer to itself, never catching real drift).
 
 import { describe, it, expect } from "vitest";
+import { readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import type { Model, ModelProperty, Program, Scalar } from "@typespec/compiler";
 import { D2_REDACT_KEY } from "@d2/typespec-decorators";
 import { walkModel } from "../src/lib/model-walk.js";
 import { emitCsharpDtos } from "../src/lib/csharp-dto-emitter.js";
 import { emitTsDtos } from "../src/lib/ts-dto-emitter.js";
+import { emitProto } from "../src/lib/proto-emitter.js";
+import { emitGrpcService } from "../src/lib/grpc-service-emitter.js";
+import { emitGrpcClient } from "../src/lib/grpc-client-emitter.js";
+import type { FieldInfo, NestedEnum } from "../src/lib/model-walk.js";
 
 // ---------------------------------------------------------------------------
 // Fixture definitions — the canonical committed content
@@ -568,5 +575,424 @@ describe("byteParity_GetJwksDto_TsFile", () => {
     expect(tsFile.content).toContain("export interface GetJwksInput {");
     expect(tsFile.content).toContain("export interface GetJwksOutput {");
     expect(tsFile.content).toContain("readonly keys: readonly Jwk[];");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Enum-shaped byte-gates (the enum-shaped.tsp committed fixtures)
+// ---------------------------------------------------------------------------
+
+const REPO = join(
+  dirname(fileURLToPath(import.meta.url)),
+  "..",
+  "..",
+  "..",
+  "..",
+  "..",
+);
+const DTO_HOME = join(
+  REPO,
+  "server/services/edge/tests/Unit/KeyCustodian/TypeSpecDto/Generated",
+);
+const GRPC_ENUM_HOME = join(
+  REPO,
+  "server/services/edge/tests/Unit/KeyCustodian/TypeSpecGrpcEnum/Generated",
+);
+const GRPC_ENUM_PROTOS = join(
+  REPO,
+  "server/services/edge/tests/Unit/KeyCustodian/TypeSpecGrpcEnum/Protos",
+);
+
+function readFixture(absPath: string): string {
+  // Committed generated files are LF; the emitter joins with "\n". Normalize the
+  // on-disk read defensively (git working-tree may have CRLF) before comparing.
+  return readFileSync(absPath, "utf8").replace(/\r\n/g, "\n");
+}
+
+const ENUM_SHAPED_SRC = "contracts/typespec/fixtures/enum-shaped.tsp";
+const ENUM_DTO_NS = "D2.Edge.Tests.TypeSpecDto.Generated";
+
+// The enum-shaped `enums` op model (Input mirrors Output) — synthetic stubs that
+// produce the SAME walk result the real .tsp compile produces.
+function makeEnumStub(
+  name: string,
+  members: Array<{ name: string; value?: string | number }>,
+): Scalar {
+  return {
+    kind: "Enum",
+    name,
+    members: new Map(
+      members.map((m) => [m.name, { name: m.name, value: m.value }]),
+    ),
+  } as unknown as Scalar;
+}
+
+function makeUnionStub(
+  name: string | undefined,
+  literals: string[],
+): Scalar {
+  return {
+    kind: "Union",
+    name,
+    variants: new Map(
+      literals.map((lit, i) => [
+        Symbol(`v${i}`),
+        { type: { kind: "String", value: lit } },
+      ]),
+    ),
+  } as unknown as Scalar;
+}
+
+function buildEnumsWalks() {
+  const keyKind = makeEnumStub("KeyKind", [
+    { name: "Rsa" },
+    { name: "Aes" },
+    { name: "Secret" },
+  ]);
+  const level = makeEnumStub("Level", [
+    { name: "Low", value: 0 },
+    { name: "Medium", value: 5 },
+    { name: "High", value: 10 },
+  ]);
+  const status = makeUnionStub("Status", ["active", "inactive", "pending"]);
+  const accountKind = makeUnionStub("AccountKind", ["internal", "third-party"]);
+  const inline = makeUnionStub(undefined, ["draft", "published", "archived"]);
+  const keyKindArray: Model = {
+    kind: "Model",
+    name: "Array",
+    indexer: { value: keyKind },
+    properties: new Map(),
+  } as unknown as Model;
+
+  const fields = (modelName: string): Model =>
+    ({
+      kind: "Model",
+      name: modelName,
+      properties: new Map<string, ModelProperty>([
+        ["keyKind", { type: keyKind, optional: false } as unknown as ModelProperty],
+        ["level", { type: level, optional: false } as unknown as ModelProperty],
+        ["status", { type: status, optional: false } as unknown as ModelProperty],
+        [
+          "accountKind",
+          { type: accountKind, optional: false } as unknown as ModelProperty,
+        ],
+        [
+          "inlineState",
+          { type: inline, optional: false } as unknown as ModelProperty,
+        ],
+        [
+          "optionalKind",
+          { type: keyKind, optional: true } as unknown as ModelProperty,
+        ],
+        [
+          "kinds",
+          { type: keyKindArray, optional: false } as unknown as ModelProperty,
+        ],
+      ]),
+    }) as unknown as Model;
+
+  return {
+    input: walkModel(makeProgram(), fields("EnumInput"), () => {}),
+    output: walkModel(makeProgram(), fields("EnumOutput"), () => {}),
+  };
+}
+
+describe("byteParity_EnumsDto_CommittedFixtures", () => {
+  it("regenerated EnumsOutput.g.cs is byte-identical to the committed fixture", () => {
+    const { input, output } = buildEnumsWalks();
+    const [, outputFile] = emitCsharpDtos(
+      "enums",
+      ENUM_DTO_NS,
+      ENUM_SHAPED_SRC,
+      input.fields,
+      output.fields,
+      output.nestedModels,
+      input.nestedEnums,
+      output.nestedEnums,
+    );
+
+    expect(outputFile!.content).toBe(
+      readFixture(join(DTO_HOME, "EnumsOutput.g.cs")),
+    );
+  });
+
+  it("regenerated EnumsInput.g.cs is byte-identical to the committed fixture", () => {
+    const { input, output } = buildEnumsWalks();
+    const [inputFile] = emitCsharpDtos(
+      "enums",
+      ENUM_DTO_NS,
+      ENUM_SHAPED_SRC,
+      input.fields,
+      output.fields,
+      output.nestedModels,
+      input.nestedEnums,
+      output.nestedEnums,
+    );
+
+    expect(inputFile!.content).toBe(
+      readFixture(join(DTO_HOME, "EnumsInput.g.cs")),
+    );
+  });
+
+  it("regenerated enums-dto.g.ts is byte-identical to the committed fixture", () => {
+    const { input, output } = buildEnumsWalks();
+    const tsFile = emitTsDtos(
+      "enums",
+      ENUM_SHAPED_SRC,
+      input.fields,
+      output.fields,
+      output.nestedModels,
+      input.nestedEnums,
+      output.nestedEnums,
+    );
+
+    expect(tsFile.content).toBe(readFixture(join(DTO_HOME, "enums-dto.g.ts")));
+  });
+
+  it("deliberate-drift detection: mutated EnumsOutput fixture does NOT match", () => {
+    const drifted = readFixture(join(DTO_HOME, "EnumsOutput.g.cs")).replace(
+      "public enum KeyKind",
+      "public enum KeyKindDRIFTED",
+    );
+    const { input, output } = buildEnumsWalks();
+    const [, outputFile] = emitCsharpDtos(
+      "enums",
+      ENUM_DTO_NS,
+      ENUM_SHAPED_SRC,
+      input.fields,
+      output.fields,
+      output.nestedModels,
+      input.nestedEnums,
+      output.nestedEnums,
+    );
+
+    expect(outputFile!.content).not.toBe(drifted);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// gRPC enum byte-gates (proto string-field + transport mapper enum bridge)
+// ---------------------------------------------------------------------------
+
+const GRPC_ENUM_NS = "D2.Edge.Tests.TypeSpecGrpcEnum.Generated";
+const ENUM_PROTO_NS = "D2.Services.Protos.EnumFixtures.V1";
+
+const SIGN_WITH_KIND_KEY_KIND: NestedEnum = {
+  name: "KeyKind",
+  members: [
+    { csName: "Rsa", wireValue: "Rsa", needsEnumMember: false },
+    { csName: "Aes", wireValue: "Aes", needsEnumMember: false },
+    { csName: "Secret", wireValue: "Secret", needsEnumMember: false },
+  ],
+};
+
+function signWithKindReqFields(): readonly FieldInfo[] {
+  return [
+    {
+      name: "kid",
+      csName: "Kid",
+      csType: "string",
+      tsName: "kid",
+      tsType: "string",
+      protoType: "string",
+      repeated: false,
+      optional: false,
+      redact: false,
+    },
+    {
+      name: "keyKind",
+      csName: "KeyKind",
+      csType: "KeyKind",
+      tsName: "keyKind",
+      tsType: "KeyKind",
+      protoType: "string",
+      repeated: false,
+      optional: false,
+      redact: false,
+      enumRef: SIGN_WITH_KIND_KEY_KIND,
+    },
+  ];
+}
+
+function signWithKindRespFields(): readonly FieldInfo[] {
+  return [
+    {
+      name: "signature",
+      csName: "Signature",
+      csType: "string",
+      tsName: "signature",
+      tsType: "string",
+      protoType: "string",
+      repeated: false,
+      optional: false,
+      redact: false,
+    },
+    {
+      // Response enum (S-1) — exercises the client proto-string -> DTO-enum parse.
+      name: "keyKind",
+      csName: "KeyKind",
+      csType: "KeyKind",
+      tsName: "keyKind",
+      tsType: "KeyKind",
+      protoType: "string",
+      repeated: false,
+      optional: false,
+      redact: false,
+      enumRef: SIGN_WITH_KIND_KEY_KIND,
+    },
+  ];
+}
+
+describe("byteParity_SignWithKindEnumGrpc_CommittedFixtures", () => {
+  it("regenerated enum-proto carries `string key_kind` + is byte-identical", () => {
+    const proto = emitProto(
+      "signWithKind",
+      "EnumFixturesSigner",
+      "SignWithKind",
+      "unary",
+      "d2.enumfixtures.v1",
+      ENUM_PROTO_NS,
+      ENUM_SHAPED_SRC,
+      "SignWithKindRequest",
+      signWithKindReqFields(),
+      "SignWithKindOutput",
+      signWithKindRespFields(),
+      [],
+      () => {},
+    );
+
+    expect(proto!.content).toContain("string key_kind = 2;");
+    expect(proto!.content).toBe(
+      readFixture(
+        join(GRPC_ENUM_PROTOS, "enum_fixtures_signer_sign_with_kind.g.proto"),
+      ),
+    );
+  });
+
+  it("regenerated SignWithKindTransportMappers.g.cs (the enum-string bridge) is byte-identical", () => {
+    const [, mapper] = emitGrpcService(
+      "signWithKind",
+      "EnumFixturesSigner",
+      "SignWithKind",
+      ENUM_PROTO_NS,
+      GRPC_ENUM_NS,
+      GRPC_ENUM_NS,
+      ENUM_SHAPED_SRC,
+      "SignWithKindRequest",
+      "SignWithKindResponse",
+      "SignWithKindInput",
+      signWithKindReqFields(),
+      "SignWithKindOutput",
+      signWithKindRespFields(),
+      {
+        kind: "handler",
+        typeName: "ISignWithKindHandler",
+        methodName: "HandleAsync",
+        targetNamespace: undefined,
+      },
+    );
+
+    expect(mapper.content).toContain(
+      "internal static D2Result<KeyKind> ParseKeyKindWire(string? value)",
+    );
+    expect(mapper.content).toContain("internal string ToWire()");
+    expect(mapper.content).toBe(
+      readFixture(join(GRPC_ENUM_HOME, "SignWithKindTransportMappers.g.cs")),
+    );
+  });
+
+  it("deliberate-drift detection: mutated mapper fixture does NOT match", () => {
+    const drifted = readFixture(
+      join(GRPC_ENUM_HOME, "SignWithKindTransportMappers.g.cs"),
+    ).replace("ParseKeyKindWire", "ParseKeyKindWireDRIFTED");
+    const [, mapper] = emitGrpcService(
+      "signWithKind",
+      "EnumFixturesSigner",
+      "SignWithKind",
+      ENUM_PROTO_NS,
+      GRPC_ENUM_NS,
+      GRPC_ENUM_NS,
+      ENUM_SHAPED_SRC,
+      "SignWithKindRequest",
+      "SignWithKindResponse",
+      "SignWithKindInput",
+      signWithKindReqFields(),
+      "SignWithKindOutput",
+      signWithKindRespFields(),
+      {
+        kind: "handler",
+        typeName: "ISignWithKindHandler",
+        methodName: "HandleAsync",
+        targetNamespace: undefined,
+      },
+    );
+
+    expect(mapper.content).not.toBe(drifted);
+  });
+});
+
+// The CLIENT-side gRPC enum fixtures (mapper + impl) carry the F-3 response-enum
+// parse (To<Output>() returns D2Result<<Output>> + the impl surfaces a parse
+// failure via BubbleFail). Pin them byte-identical so the committed fixtures stay
+// emitter-determined (never hand-edited, §26.5).
+const GRPC_ENUM_CLIENTS_NS = "D2.Edge.Tests.TypeSpecGrpcEnum.Clients";
+
+function signWithKindClientOp() {
+  return {
+    opName: "signWithKind",
+    grpcService: "EnumFixturesSigner",
+    grpcMethod: "SignWithKind",
+    protoCsharpNs: ENUM_PROTO_NS,
+    dtoCsharpNs: GRPC_ENUM_NS,
+    sourceSpec: ENUM_SHAPED_SRC,
+    requestModelName: "SignWithKindInput",
+    requestFields: signWithKindReqFields(),
+    responseModelName: "SignWithKindOutput",
+    responseFields: signWithKindRespFields(),
+  };
+}
+
+describe("byteParity_SignWithKindEnumGrpcClient_CommittedFixtures", () => {
+  it("regenerated SignWithKindClientMappers.g.cs (response-enum parse) is byte-identical", () => {
+    const [, , clientMappers] = emitGrpcClient(
+      "EnumFixtures",
+      [signWithKindClientOp()],
+      GRPC_ENUM_CLIENTS_NS,
+    );
+
+    expect(clientMappers!.content).toContain(
+      "var keyKindResult = string.ParseKeyKindWire(data.KeyKind);",
+    );
+    expect(clientMappers!.content).toBe(
+      readFixture(join(GRPC_ENUM_HOME, "SignWithKindClientMappers.g.cs")),
+    );
+  });
+
+  it("regenerated EnumFixturesGrpcClient.g.cs (response-parse surfacing) is byte-identical", () => {
+    const [, impl] = emitGrpcClient(
+      "EnumFixtures",
+      [signWithKindClientOp()],
+      GRPC_ENUM_CLIENTS_NS,
+    );
+
+    expect(impl!.content).toContain(
+      "return D2Result<SignWithKindOutput?>.BubbleFail(responseParseFailure);",
+    );
+    expect(impl!.content).toBe(
+      readFixture(join(GRPC_ENUM_HOME, "EnumFixturesGrpcClient.g.cs")),
+    );
+  });
+
+  it("deliberate-drift detection: mutated client mapper fixture does NOT match", () => {
+    const drifted = readFixture(
+      join(GRPC_ENUM_HOME, "SignWithKindClientMappers.g.cs"),
+    ).replace("ParseKeyKindWire", "ParseKeyKindWireDRIFTED");
+    const [, , clientMappers] = emitGrpcClient(
+      "EnumFixtures",
+      [signWithKindClientOp()],
+      GRPC_ENUM_CLIENTS_NS,
+    );
+
+    expect(clientMappers!.content).not.toBe(drifted);
   });
 });

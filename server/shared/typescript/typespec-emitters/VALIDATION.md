@@ -87,6 +87,9 @@ TypeSpec test-host and asserts emitted file content in the in-memory FS:
 | `getJwks` op                         | `GetJwksInput.g.cs` parameterless record + `GetJwksOutput.g.cs` with `Jwk` + `get-jwks-dto.g.ts`                                                                                                                                                                 |
 | `sign` op with `@d2Redact`           | `SignInput.g.cs` carries `[property: RedactData(Reason = RedactReason.PersonalInformation)] byte[] Payload`                                                                                                                                                      |
 | `temporal` op (scalars + composites) | `TemporalInput.g.cs`/`TemporalOutput.g.cs` emit every temporal scalar (instant→`DateTimeOffset`, plain/duration→`string`, optional→`T?`) + the two composite records as nested siblings; `temporal-dto.g.ts` mirrors (all `string`, `?:` optional, no `\| null`) |
+| `enums` op (every enum/union shape)  | `EnumsOutput.g.cs` emits sibling `public enum` blocks with `[JsonConverter(typeof(JsonStringEnumConverter))]` + `[JsonStringEnumMemberName("third-party")]` (NOT `[EnumMember]`/`System.Runtime.Serialization`) + the `Low = 0` int backing + the `EnumOutputInlineState` synthetic enum; `enums-dto.g.ts` emits `const`-objects + derived types (no TS `enum` keyword, no Zod, S-2 value === member name) |
+| mixed-primitive union (in-process)   | D2TSP007 fires; no partial DTO file emitted                                                                                                                                                                                                                       |
+| mixed-primitive union (`@d2GrpcMethod`) | D2TSP007 fires on the proto path; no partial `.proto` file emitted                                                                                                                                                                                             |
 | Unmapped scalar (`unixTimestamp32`)  | D2TSP001 diagnostic fires; `host.compile()` throws or `programErrors.length > 0` (the mapped temporal scalars no longer trip it — a genuinely-unmapped built-in does)                                                                                            |
 
 ---
@@ -132,6 +135,50 @@ durations (`PT1H30M`, `P1DT2H3M4S`, `PT45S`) and unbalanced Temporal-emitted for
 `AD9_duration_subSecondNanos_roundTripsLossless_bothLanguages` (TS) assert cross-language parity.
 Malformed / out-of-range ISO → `ValidationFailed(common_time_INVALID_DURATION)` (error-as-value,
 never a throw). The helper's own adversarial suite is `IsoDurationTests` (D2.Shared.Tests).
+
+---
+
+## Enum / string-literal-union validation (real `JsonStringEnumConverter` / `SerializerOptions.SR_Web` + the proto-string bridge)
+
+Enum/union DTO emission is validated against the REAL `JsonStringEnumConverter`
+(via `SerializerOptions.SR_Web` — `D2.Shared.Utilities.Serialization`) + the REAL
+Grpc.Tools-generated proto types + the REAL generated transport mappers — no test
+doubles — driven by the shared cross-language fixture
+`contracts/enum/enum-parity.fixture.json`. The single load-bearing claim: the
+SAME wire string materializes to the SAME enum member across C# JSON, the proto
+`string`-field path, and TS; an unknown wire value fails LOUD on all three (NO
+fallback sentinel).
+
+| Concern                                              | C# (`D2.Edge.Tests` `EnumWireRoundTripTests`)                                                                                      | TS (`enum-wire-round-trip.test.ts`)                                             |
+| ---------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
+| P-1 bare-member enum (S-1)                           | `KeyKind.Rsa` ⇄ `"Rsa"` via `SR_Web`                                                                                               | const-object value === `"Rsa"`; reverse-lookup hits                            |
+| P-2 explicit-int enum (S-2) — **wire is the NAME**   | `Level.High` → `"High"` (NOT `10`); asserts no digit in the wire                                                                   | `Level.High === "High"`; const values never contain `0`/`10`                   |
+| P-3 string-literal union (S-3)                       | `Status.Active` ⇄ `"active"` (lowercase literal via `[JsonStringEnumMemberName]`)                                                  | `Status.Active === "active"`                                                    |
+| P-4 non-identifier literal (S-3 + member-name attr)  | `AccountKind.ThirdParty` ⇄ `"third-party"` via `[JsonStringEnumMemberName("third-party")]`                                         | `AccountKind.ThirdParty === "third-party"`                                      |
+| **AD-1 unknown wire value → fail-loud (all 3)**      | JSON: `"Quantum"` → `JsonException`. proto mapper: `ParseKeyKindWire("Quantum")` → `ValidationFailed` (400). NO `Unknown` sentinel | const-object membership MISSES (`memberForWire` → undefined); no fallback      |
+| AD-2 case-insensitivity (documented divergence)      | `JsonStringEnumConverter` is case-INSENSITIVE on read (`"rsa"`/`"RSA"` → `Rsa`) — pinned                                           | TS reverse-lookup is case-SENSITIVE → `"rsa"`/`"RSA"` MISS (divergence pinned) |
+| AD-3 null for required enum                          | JSON `null` into non-nullable `KeyKind` → `JsonException`                                                                          | —                                                                              |
+| AD-4 empty/whitespace wire value                     | `""`/`" "` → `JsonException`                                                                                                       | covered by the unknown-value membership-miss sweep                             |
+| gRPC end-to-end success — proto string ⇄ enum (request + response) | `SignWithKindAsync(key_kind: "Aes")` → handler receives `KeyKind.Aes`; the response `KeyKind.Secret` serializes back to `reply.Data.KeyKind == "Secret"` (server `ToWire`) | —                                                                              |
+| **gRPC inbound fail-loud — handler NEVER invoked**   | `SignWithKindAsync(key_kind: "Quantum")` → 400 rides the envelope; `handler.CallCount == 0` (the mapper rejected the request)     | —                                                                              |
+| **gRPC RESPONSE-enum parse — client inbound (symmetric)** | client `ToSignWithKindOutput()` returns `D2Result<<Output>>`: valid `key_kind` → parsed enum; `"Quantum"/"rsa"/""/" "` → `ValidationFailed` (400), null data (NO fallback) — the inbound CLIENT analogue of the server request parse | —                                                                              |
+| Cross-language parity                                | every shared-fixture member's wire round-trips through `ParseKeyKindWire` here                                                     | const-object values === the SAME fixture wire strings                          |
+
+**The `[JsonStringEnumMemberName]` finding**: System.Text.Json's
+`JsonStringEnumConverter` honors `[JsonStringEnumMemberName("…")]` (the .NET 9+
+attribute) for a custom wire name — it does NOT honor `[EnumMember]` (a
+`DataContract`/Newtonsoft attribute the converter silently ignores). The C# DTO
+emitter therefore emits `[JsonStringEnumMemberName]`; P-3/P-4 above pin that the
+lowercase/hyphenated literal is the actual JSON wire form (these tests caught an
+initial `[EnumMember]` emission that produced the WRONG wire string — the member
+name instead of the literal).
+
+| Byte-gate                                                     | Emitter call                                                                          | Test                                                                              |
+| ------------------------------------------------------------- | ------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
+| `EnumsInput/Output.g.cs` + `enums-dto.g.ts`                   | `emitCsharpDtos`/`emitTsDtos` over the `enums`-op walk (with `nestedEnums`)            | `byte-parity.test.ts > byteParity_EnumsDto_CommittedFixtures` (+ deliberate-drift) |
+| `enum_fixtures_signer_sign_with_kind.g.proto` (`string` enum) | `emitProto` over the `signWithKind` fields                                             | `byte-parity.test.ts > byteParity_SignWithKindEnumGrpc_CommittedFixtures`           |
+| `SignWithKindTransportMappers.g.cs` (the enum bridge)         | `emitGrpcService` over the `signWithKind` fields                                       | `byte-parity.test.ts > byteParity_SignWithKindEnumGrpc_CommittedFixtures` (+ drift) |
+| `SignWithKindClientMappers.g.cs` + `EnumFixturesGrpcClient.g.cs` (the response-enum client parse + `BubbleFail` surfacing) | `emitGrpcClient` over the `signWithKind` op (response carries an enum) | `byte-parity.test.ts > byteParity_SignWithKindEnumGrpcClient_CommittedFixtures` (+ drift) |
 
 ---
 
@@ -243,7 +290,8 @@ Committed C# fixture files exercised by the in-memory gRPC harness in `D2.Edge.T
 | Branches                          | 100%                                                                           |
 | Functions                         | 100%                                                                           |
 | Statements                        | 100%                                                                           |
-| Test files                        | 26                                                                             |
-| Total tests                       | 582                                                                            |
-| C# behavior tests (D2.Edge.Tests) | 853 passing (includes the temporal round-trip matrix `TemporalRoundTripTests`) |
+| Test files                        | 27                                                                             |
+| Total tests                       | 643                                                                            |
+| C# behavior tests (D2.Edge.Tests) | 878 passing (includes the temporal round-trip matrix `TemporalRoundTripTests` + the enum-wire round-trip matrix `EnumWireRoundTripTests`) |
 | TS temporal round-trip (@d2/time) | 32 (`temporal-round-trip.test.ts`, drives the shared cross-language fixture)   |
+| TS enum-wire round-trip           | 7 (`enum-wire-round-trip.test.ts`, drives the shared `contracts/enum/enum-parity.fixture.json`) |

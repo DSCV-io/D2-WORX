@@ -801,3 +801,113 @@ describe("emitProto_ModelTypedCollection_RepeatedWithModelName", () => {
     expect(result!.content).toContain("string id = 1;");
   });
 });
+
+// ---------------------------------------------------------------------------
+// Enum field → proto `string` field (the cross-language enum wire is a string)
+// ---------------------------------------------------------------------------
+
+describe("emitProto_EnumField_EmitsStringField", () => {
+  const KEY_KIND = {
+    name: "KeyKind",
+    members: [
+      { csName: "Rsa", wireValue: "Rsa", needsEnumMember: false },
+      { csName: "Aes", wireValue: "Aes", needsEnumMember: false },
+    ],
+  };
+
+  function enumField(name: string, repeated = false): FieldInfo {
+    return {
+      name,
+      csName: name.charAt(0).toUpperCase() + name.slice(1),
+      csType: repeated ? "IReadOnlyList<KeyKind>" : "KeyKind",
+      tsName: name,
+      tsType: repeated ? "readonly KeyKind[]" : "KeyKind",
+      protoType: "string",
+      repeated,
+      optional: false,
+      redact: false,
+      enumRef: KEY_KIND,
+    };
+  }
+
+  it("a non-array enum field → `string <name> = N;` (NOT a proto enum decl)", () => {
+    const errors: string[] = [];
+    const result = emitProto(
+      "op",
+      "Svc",
+      "Do",
+      "unary",
+      SIGN_PKG,
+      SIGN_CS_NS,
+      SIGN_SOURCE,
+      "Req",
+      [makeStringField("kid"), enumField("keyKind")],
+      "Resp",
+      [makeStringField("signature")],
+      [],
+      (_, m) => errors.push(m),
+    );
+
+    expect(errors).toHaveLength(0);
+    expect(result!.content).toContain("string key_kind = 2;");
+    // No proto `enum` declaration + no _UNSPECIFIED sentinel.
+    expect(result!.content).not.toContain("enum KeyKind");
+    expect(result!.content).not.toContain("UNSPECIFIED");
+  });
+
+  it("a repeated enum field → `repeated string <name> = N;`", () => {
+    const errors: string[] = [];
+    const result = emitProto(
+      "op",
+      "Svc",
+      "Do",
+      "unary",
+      SIGN_PKG,
+      SIGN_CS_NS,
+      SIGN_SOURCE,
+      "Req",
+      [enumField("kinds", true)],
+      "Resp",
+      [makeStringField("signature")],
+      [],
+      (_, m) => errors.push(m),
+    );
+
+    expect(errors).toHaveLength(0);
+    expect(result!.content).toContain("repeated string kinds = 1;");
+  });
+
+  it("an enum field with an absent protoType falls back to `string` (defensive `?? string`)", () => {
+    const errors: string[] = [];
+    const field: FieldInfo = {
+      name: "keyKind",
+      csName: "KeyKind",
+      csType: "KeyKind",
+      tsName: "keyKind",
+      tsType: "KeyKind",
+      // protoType deliberately omitted — the resolver must fall back to "string".
+      repeated: false,
+      optional: false,
+      redact: false,
+      enumRef: KEY_KIND,
+    };
+    const result = emitProto(
+      "op",
+      "Svc",
+      "Do",
+      "unary",
+      SIGN_PKG,
+      SIGN_CS_NS,
+      SIGN_SOURCE,
+      "Req",
+      [field],
+      "Resp",
+      [makeStringField("signature")],
+      [],
+      (_, m) => errors.push(m),
+    );
+
+    expect(errors).toHaveLength(0);
+    expect(result!.content).toContain("string key_kind = 1;");
+  });
+});

@@ -440,6 +440,177 @@ describe("dtoEmitIntegration_Temporal_EmitsScalarsAndComposites", () => {
   });
 });
 
+describe("dtoEmitIntegration_Enum_EmitsSiblingEnumsAndConstObjects", () => {
+  let host: Awaited<ReturnType<typeof createTestHost>>;
+
+  beforeAll(async () => {
+    host = await createTestHost({
+      libraries: [D2DecoratorTestLibrary, D2EmitterTestLibrary],
+    });
+  });
+
+  it("enum fixture (end-to-end real compile) → C# sibling enums + TS const-objects, correct attribute", async () => {
+    host.addTypeSpecFile(
+      "main.tsp",
+      `
+      import "@d2/typespec-decorators";
+      using D2;
+      namespace D2.Fixtures;
+
+      enum KeyKind { Rsa, Aes, Secret }
+      enum Level { Low: 0, Medium: 5, High: 10 }
+      union Status { active: "active", inactive: "inactive", pending: "pending" }
+      union AccountKind { internal: "internal", thirdParty: "third-party" }
+
+      model EnumInput {
+        keyKind: KeyKind;
+        level: Level;
+        status: Status;
+        accountKind: AccountKind;
+        inlineState: "draft" | "published" | "archived";
+        optionalKind?: KeyKind;
+        kinds: KeyKind[];
+      }
+      model EnumOutput {
+        keyKind: KeyKind;
+        level: Level;
+        status: Status;
+        accountKind: AccountKind;
+        inlineState: "draft" | "published" | "archived";
+        optionalKind?: KeyKind;
+        kinds: KeyKind[];
+      }
+
+      @d2Query
+      @d2InProcess
+      @d2ServedBy("EnumFixtures")
+      op enums(input: EnumInput): EnumOutput;
+      `,
+    );
+
+    await host.compile("main.tsp", {
+      emit: ["@d2/typespec-emitters"],
+      options: { "@d2/typespec-emitters": { "csharp-namespace": "D2.Test" } },
+      outputDir: "testing:/out",
+    });
+
+    const errors = host.program.diagnostics.filter(
+      (d) => d.severity === "error",
+    );
+    expect(errors).toHaveLength(0);
+
+    // C# output — sibling enums with the correct [JsonStringEnumMemberName].
+    const cs = getEmittedFile(host, "EnumsOutput.g.cs");
+    expect(cs).toBeDefined();
+    expect(cs).toContain("[JsonConverter(typeof(JsonStringEnumConverter))]");
+    expect(cs).toContain("public enum KeyKind");
+    expect(cs).toContain("    Low = 0,"); // S-2 backing preserved
+    expect(cs).toContain('[JsonStringEnumMemberName("third-party")]');
+    expect(cs).toContain("    ThirdParty,");
+    expect(cs).toContain("public enum EnumOutputInlineState"); // S-4 synthetic
+    expect(cs).toContain("using System.Text.Json.Serialization;");
+    // The wrong attribute / namespace must NOT appear.
+    expect(cs).not.toContain("System.Runtime.Serialization");
+    expect(cs).not.toContain("EnumMember(Value");
+    // Field types reference the enum names.
+    expect(cs).toContain("KeyKind KeyKind");
+    expect(cs).toContain("KeyKind? OptionalKind");
+    expect(cs).toContain("IReadOnlyList<KeyKind> Kinds");
+
+    // TS output — const-objects + derived types (NOT the TS enum keyword, no Zod).
+    const ts = getEmittedFile(host, "enums-dto.g.ts");
+    expect(ts).toBeDefined();
+    expect(ts).toContain("export const KeyKind = {");
+    expect(ts).toContain('  Rsa: "Rsa",');
+    expect(ts).toContain('  Low: "Low",'); // S-2 value is the NAME, not 0
+    expect(ts).toContain('  ThirdParty: "third-party",');
+    expect(ts).toContain(
+      "export type KeyKind = (typeof KeyKind)[keyof typeof KeyKind];",
+    );
+    expect(ts).not.toContain('from "zod"');
+    expect(ts).not.toMatch(/\benum\s+KeyKind/);
+    expect(ts).toContain("readonly kinds: readonly KeyKind[];");
+  });
+
+  it("loud-fail: a mixed-primitive union → D2TSP007 error diagnostic", async () => {
+    const badHost = await createTestHost({
+      libraries: [D2DecoratorTestLibrary, D2EmitterTestLibrary],
+    });
+    badHost.addTypeSpecFile(
+      "main.tsp",
+      `
+      import "@d2/typespec-decorators";
+      using D2;
+      namespace D2.Test;
+
+      model BadInput { mixed: string | int32; }
+      @d2Query @d2InProcess @d2ServedBy("X")
+      op badEnum(input: BadInput): BadInput;
+      `,
+    );
+
+    let compileError: unknown = undefined;
+    try {
+      await badHost.compile("main.tsp", {
+        emit: ["@d2/typespec-emitters"],
+        options: { "@d2/typespec-emitters": { "csharp-namespace": "D2.Test" } },
+        outputDir: "testing:/out",
+      });
+    } catch (err) {
+      compileError = err;
+    }
+
+    const programErrors = badHost.program.diagnostics.filter(
+      (d) => d.severity === "error",
+    );
+    expect(compileError !== undefined || programErrors.length > 0).toBe(true);
+  });
+
+  it("loud-fail on a @d2GrpcMethod op: a mixed-primitive union → error (proto path)", async () => {
+    const badHost = await createTestHost({
+      libraries: [D2DecoratorTestLibrary, D2EmitterTestLibrary],
+    });
+    badHost.addTypeSpecFile(
+      "main.tsp",
+      `
+      import "@d2/typespec-decorators";
+      using D2;
+      namespace D2.Fixtures;
+
+      model BadGrpcInput { kid: string; mixed: string | int32; }
+      model BadGrpcOutput { signature: string; }
+      @d2Command @d2ServedBy("X")
+      @d2GrpcMethod("XSigner", "Bad")
+      op badGrpc(input: BadGrpcInput): BadGrpcOutput;
+      `,
+    );
+
+    let compileError: unknown = undefined;
+    try {
+      await badHost.compile("main.tsp", {
+        emit: ["@d2/typespec-emitters"],
+        options: {
+          "@d2/typespec-emitters": {
+            "csharp-namespace": "D2.Test",
+            "proto-package": "d2.x.v1",
+            "proto-csharp-namespace": "D2.Services.Protos.X.V1",
+          },
+        },
+        outputDir: "testing:/out",
+      });
+    } catch (err) {
+      compileError = err;
+    }
+
+    const programErrors = badHost.program.diagnostics.filter(
+      (d) => d.severity === "error",
+    );
+    expect(compileError !== undefined || programErrors.length > 0).toBe(true);
+    // No partial proto is emitted for the failing op.
+    expect(getEmittedFile(badHost, "x_signer_bad.g.proto")).toBeUndefined();
+  });
+});
+
 describe("dtoEmitIntegration_UnmappedScalar_D2TSP001Diagnostic", () => {
   let host: Awaited<ReturnType<typeof createTestHost>>;
 

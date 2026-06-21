@@ -57,3 +57,4 @@ imports:
   - "./key-custodian/key-custodian.tsp"
   - "./fixtures/sign-shaped.tsp"
   - "./fixtures/temporal-shaped.tsp"
+  - "./fixtures/enum-shaped.tsp"

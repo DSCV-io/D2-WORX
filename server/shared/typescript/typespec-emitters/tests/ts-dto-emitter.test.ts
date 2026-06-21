@@ -8,7 +8,11 @@
 
 import { describe, it, expect } from "vitest";
 import { emitTsDtos } from "../src/lib/ts-dto-emitter.js";
-import type { FieldInfo, NestedModel } from "../src/lib/model-walk.js";
+import type {
+  FieldInfo,
+  NestedEnum,
+  NestedModel,
+} from "../src/lib/model-walk.js";
 
 const TEST_SPEC = "contracts/typespec/test.tsp";
 
@@ -160,5 +164,146 @@ describe("emitTsDtos_EmptyOpName_Passthrough", () => {
     expect(file.fileName).toBe("-dto.g.ts");
     expect(file.content).toContain("export interface Input {");
     expect(file.content).toContain("export interface Output {");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Enum / string-literal-union emission (C-2)
+// ---------------------------------------------------------------------------
+
+const KEY_KIND: NestedEnum = {
+  name: "KeyKind",
+  members: [
+    { csName: "Rsa", wireValue: "Rsa", needsEnumMember: false },
+    { csName: "Aes", wireValue: "Aes", needsEnumMember: false },
+    { csName: "Secret", wireValue: "Secret", needsEnumMember: false },
+  ],
+};
+
+const LEVEL: NestedEnum = {
+  name: "Level",
+  members: [
+    { csName: "Low", wireValue: "Low", needsEnumMember: false, intValue: 0 },
+    { csName: "High", wireValue: "High", needsEnumMember: false, intValue: 10 },
+  ],
+};
+
+const ACCOUNT_KIND: NestedEnum = {
+  name: "AccountKind",
+  members: [
+    { csName: "Internal", wireValue: "internal", needsEnumMember: true },
+    { csName: "ThirdParty", wireValue: "third-party", needsEnumMember: true },
+  ],
+};
+
+function enumField(name: string, enumRef: NestedEnum): FieldInfo {
+  return {
+    name,
+    csName: name[0]!.toUpperCase() + name.slice(1),
+    csType: enumRef.name,
+    tsName: name,
+    tsType: enumRef.name,
+    protoType: "string",
+    optional: false,
+    redact: false,
+    repeated: false,
+    enumRef,
+  };
+}
+
+describe("emitTsDtos_BareEnum_ConstObjectAndDerivedType", () => {
+  it("S-1 → const-object `as const` + derived union type (NOT the TS enum keyword)", () => {
+    const file = emitTsDtos(
+      "op",
+      TEST_SPEC,
+      [],
+      [enumField("keyKind", KEY_KIND)],
+      [],
+      [],
+      [KEY_KIND],
+    );
+
+    expect(file.content).toContain("export const KeyKind = {");
+    expect(file.content).toContain('  Rsa: "Rsa",');
+    expect(file.content).toContain('  Secret: "Secret",');
+    expect(file.content).toContain("} as const;");
+    expect(file.content).toContain(
+      "export type KeyKind = (typeof KeyKind)[keyof typeof KeyKind];",
+    );
+    // NEVER the TS `enum` keyword; NO Zod.
+    expect(file.content).not.toMatch(/\benum\s+KeyKind/);
+    expect(file.content).not.toContain('from "zod"');
+    expect(file.content).not.toContain("z.enum");
+  });
+});
+
+describe("emitTsDtos_ExplicitIntEnum_ValueIsMemberName", () => {
+  it("S-2 → the const VALUE is the member-NAME string (matching the C# string wire), NOT the int", () => {
+    const file = emitTsDtos(
+      "op",
+      TEST_SPEC,
+      [],
+      [enumField("level", LEVEL)],
+      [],
+      [],
+      [LEVEL],
+    );
+
+    // The value is "Low"/"High" (member name), never 0/10.
+    expect(file.content).toContain('  Low: "Low",');
+    expect(file.content).toContain('  High: "High",');
+    expect(file.content).not.toContain("Low: 0");
+    expect(file.content).not.toContain("High: 10");
+  });
+});
+
+describe("emitTsDtos_NonIdentifierLiteral_ValueIsLiteral", () => {
+  it("S-3 → const key is PascalCase, value is the literal (ThirdParty: \"third-party\")", () => {
+    const file = emitTsDtos(
+      "op",
+      TEST_SPEC,
+      [],
+      [enumField("accountKind", ACCOUNT_KIND)],
+      [],
+      [],
+      [ACCOUNT_KIND],
+    );
+
+    expect(file.content).toContain('  Internal: "internal",');
+    expect(file.content).toContain('  ThirdParty: "third-party",');
+  });
+});
+
+describe("emitTsDtos_EnumSiblingAboveInterfaces", () => {
+  it("the enum const is emitted ABOVE the interface that references it", () => {
+    const file = emitTsDtos(
+      "op",
+      TEST_SPEC,
+      [],
+      [enumField("keyKind", KEY_KIND)],
+      [],
+      [],
+      [KEY_KIND],
+    );
+
+    const enumPos = file.content.indexOf("export const KeyKind");
+    const ifacePos = file.content.indexOf("export interface OpOutput");
+    expect(enumPos).toBeGreaterThanOrEqual(0);
+    expect(enumPos).toBeLessThan(ifacePos);
+  });
+
+  it("an enum on both input + output is emitted exactly once (dedup)", () => {
+    const file = emitTsDtos(
+      "op",
+      TEST_SPEC,
+      [enumField("keyKind", KEY_KIND)],
+      [enumField("keyKind", KEY_KIND)],
+      [],
+      [KEY_KIND],
+      [KEY_KIND],
+    );
+
+    const count = (file.content.match(/export const KeyKind =/g) ?? []).length;
+    expect(count).toBe(1);
   });
 });

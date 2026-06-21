@@ -18,11 +18,18 @@
 //     every @d2Redact-bearing parameter (the [property:] target is MANDATORY —
 //     a bare positional-param attribute would NOT be seen by the property-
 //     reflecting RedactDataDestructuringPolicy).
+//   - Sibling `public enum` declarations for every collected enum, each carrying
+//     [JsonConverter(typeof(JsonStringEnumConverter))] so the JSON wire form is
+//     the member-name string (never the numeric backing). A member whose wire
+//     literal differs from its C# identifier carries [JsonStringEnumMemberName("…")]
+//     (the .NET 9+ attribute JsonStringEnumConverter honors — NOT [EnumMember],
+//     which System.Text.Json's JsonStringEnumConverter ignores). STRICT — no
+//     Unknown sentinel; an unknown wire value throws JsonException.
 //   - Auto-generated banner (not the hand-authored copyright header).
 //   - No phase/step/deliverable/audit-round identifiers in emitted code.
 
 import { buildBanner } from "./banner.js";
-import type { FieldInfo, NestedModel } from "./model-walk.js";
+import type { FieldInfo, NestedEnum, NestedModel } from "./model-walk.js";
 
 // ---------------------------------------------------------------------------
 // Public types
@@ -45,12 +52,19 @@ export interface EmittedFile {
  * operation. Pure function — no I/O; returns `EmittedFile[]` so tests
  * can assert content directly.
  *
+ * Sibling enum declarations are co-located in the Output file when the enum is
+ * referenced by the output walk; an enum referenced ONLY by the input walk is
+ * co-located in the Input file. Each enum type is therefore declared exactly
+ * once across the pair (a duplicate declaration would be a C# compile error).
+ *
  * @param opName       - Operation name in lowerCamelCase (e.g. "getJwks").
  * @param namespace    - Target C# namespace (from tspconfig csharp-namespace option).
  * @param sourceSpec   - Relative path to the .tsp spec file (interpolated into banner).
  * @param inputFields  - Resolved field list for the input model (empty → parameterless record).
  * @param outputFields - Resolved field list for the output model.
  * @param outputNested - Distinct nested models collected from the output walk.
+ * @param inputEnums   - Distinct enums collected from the input walk (default []).
+ * @param outputEnums  - Distinct enums collected from the output walk (default []).
  * @returns Array of EmittedFile (always [inputFile, outputFile]).
  */
 export function emitCsharpDtos(
@@ -60,17 +74,32 @@ export function emitCsharpDtos(
   inputFields: readonly FieldInfo[],
   outputFields: readonly FieldInfo[],
   outputNested: readonly NestedModel[],
+  inputEnums: readonly NestedEnum[] = [],
+  outputEnums: readonly NestedEnum[] = [],
 ): EmittedFile[] {
   const pascalOp = toPascalFromCamel(opName);
   const banner = buildBanner(sourceSpec);
 
-  const inputFile = emitInput(pascalOp, namespace, banner, inputFields);
+  // An enum present in the output walk is emitted in the Output file; an enum
+  // present ONLY in the input walk is emitted in the Input file — each enum type
+  // is declared exactly once across the pair.
+  const outputEnumNames = new Set(outputEnums.map((e) => e.name));
+  const inputOnlyEnums = inputEnums.filter((e) => !outputEnumNames.has(e.name));
+
+  const inputFile = emitInput(
+    pascalOp,
+    namespace,
+    banner,
+    inputFields,
+    inputOnlyEnums,
+  );
   const outputFile = emitOutput(
     pascalOp,
     namespace,
     banner,
     outputFields,
     outputNested,
+    outputEnums,
   );
 
   return [inputFile, outputFile];
@@ -85,6 +114,7 @@ function emitInput(
   namespace: string,
   banner: string,
   fields: readonly FieldInfo[],
+  enums: readonly NestedEnum[],
 ): EmittedFile {
   const typeName = `${pascalOp}Input`;
   const needsRedactUsings = fields.some((f) => f.redact);
@@ -95,6 +125,7 @@ function emitInput(
     fields,
     needsRedactUsings,
     [],
+    enums,
   );
   return { fileName: `${typeName}.g.cs`, content };
 }
@@ -105,6 +136,7 @@ function emitOutput(
   banner: string,
   fields: readonly FieldInfo[],
   nested: readonly NestedModel[],
+  enums: readonly NestedEnum[],
 ): EmittedFile {
   const typeName = `${pascalOp}Output`;
   const needsRedactUsings = fields.some((f) => f.redact);
@@ -115,6 +147,7 @@ function emitOutput(
     fields,
     needsRedactUsings,
     nested,
+    enums,
   );
   return { fileName: `${typeName}.g.cs`, content };
 }
@@ -137,6 +170,7 @@ function emitRecord(
   fields: readonly FieldInfo[],
   needsRedactUsings: boolean,
   nested: readonly NestedModel[],
+  enums: readonly NestedEnum[],
 ): string {
   const lines: string[] = [];
 
@@ -151,10 +185,20 @@ function emitRecord(
   lines.push(`namespace ${namespace};`);
   lines.push("");
 
-  // Conditional using directives for [RedactData].
+  // Conditional using directives (SA1210-sorted: D2.* before System.*).
+  // [RedactData] needs the attribute + enum namespaces; an emitted enum needs
+  // System.Text.Json.Serialization — which supplies BOTH [JsonConverter] /
+  // JsonStringEnumConverter AND [JsonStringEnumMemberName] (the .NET 9+ attribute
+  // JsonStringEnumConverter honors for a custom wire name). No second using is
+  // needed for the member-name attribute.
+  const usings: string[] = [];
   if (needsRedactUsings) {
-    lines.push("using D2.Shared.Utilities.Attributes;");
-    lines.push("using D2.Shared.Utilities.Enums;");
+    usings.push("using D2.Shared.Utilities.Attributes;");
+    usings.push("using D2.Shared.Utilities.Enums;");
+  }
+  if (enums.length > 0) usings.push("using System.Text.Json.Serialization;");
+  if (usings.length > 0) {
+    for (const u of usings) lines.push(u);
     lines.push("");
   }
 
@@ -189,8 +233,45 @@ function emitRecord(
     }
   }
 
+  // Sibling enum declarations, co-located below the record(s).
+  for (const en of enums) {
+    lines.push("");
+    emitEnumBlock(lines, en);
+  }
+
   lines.push("");
   return lines.join("\n");
+}
+
+/**
+ * Emit one `public enum` block carrying
+ * [JsonConverter(typeof(JsonStringEnumConverter))] so the JSON wire form is the
+ * member-name string. A member whose wire literal differs from its C# identifier
+ * carries [JsonStringEnumMemberName("<literal>")] so the literal is the wire form
+ * (the .NET 9+ attribute JsonStringEnumConverter honors — NOT [EnumMember], which
+ * System.Text.Json's JsonStringEnumConverter ignores). An explicit integer backing
+ * (`= 0`) is preserved when the source declared one (the wire is still the name).
+ * STRICT — no Unknown sentinel; an unknown wire value throws JsonException.
+ */
+function emitEnumBlock(lines: string[], en: NestedEnum): void {
+  lines.push(
+    `/// <summary>Generated wire enum <c>${en.name}</c> (JSON wire form is the member-name string).</summary>`,
+  );
+  lines.push("[JsonConverter(typeof(JsonStringEnumConverter))]");
+  lines.push(`public enum ${en.name}`);
+  lines.push("{");
+  for (let i = 0; i < en.members.length; i++) {
+    const m = en.members[i]!;
+    if (i > 0) lines.push("");
+
+    lines.push(`    /// <summary>The <c>${m.wireValue}</c> wire value.</summary>`);
+    if (m.needsEnumMember)
+      lines.push(`    [JsonStringEnumMemberName("${m.wireValue}")]`);
+
+    const assignment = m.intValue !== undefined ? ` = ${m.intValue}` : "";
+    lines.push(`    ${m.csName}${assignment},`);
+  }
+  lines.push("}");
 }
 
 /**

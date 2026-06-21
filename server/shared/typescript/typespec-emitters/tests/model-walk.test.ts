@@ -415,40 +415,473 @@ describe("walkModel_TemporalScalars_ResolveCorrectly", () => {
   });
 });
 
-describe("walkModel_UnsupportedPropertyType_D2TSP002Loud", () => {
-  it("union type → onError called with D2TSP002 code", () => {
-    const unionType = { kind: "Union" } as unknown as Type;
+// ---------------------------------------------------------------------------
+// Enum / string-literal-union recognition (the C-2 SUPPORTED shapes)
+// ---------------------------------------------------------------------------
+
+/** Build a synthetic TypeSpec Enum stub with the given members. */
+function makeEnum(
+  name: string,
+  members: Array<{ name: string; value?: string | number }>,
+): Type {
+  return {
+    kind: "Enum",
+    name,
+    members: new Map(members.map((m) => [m.name, { name: m.name, value: m.value }])),
+  } as unknown as Type;
+}
+
+/** Build a synthetic TypeSpec Union stub with the given variant types. */
+function makeUnion(name: string | undefined, variantTypes: Type[]): Type {
+  return {
+    kind: "Union",
+    name,
+    variants: new Map(
+      variantTypes.map((t, i) => [Symbol(`v${i}`), { type: t }]),
+    ),
+  } as unknown as Type;
+}
+
+function strLit(value: string): Type {
+  return { kind: "String", value } as unknown as Type;
+}
+
+function numLit(value: number): Type {
+  return { kind: "Number", value } as unknown as Type;
+}
+
+const NULL_INTRINSIC = { kind: "Intrinsic", name: "null" } as unknown as Type;
+
+describe("walkModel_NamedEnum_Supported", () => {
+  it("S-1 bare-member named enum → enum collected, field type = enum name, proto string", () => {
+    const e = makeEnum("KeyKind", [
+      { name: "Rsa" },
+      { name: "Aes" },
+      { name: "Secret" },
+    ]);
+    const prop = { type: e, optional: false } as unknown as ModelProperty;
+    const model = makeModel([["keyKind", prop]]);
+    const errors: string[] = [];
+
+    const { fields, nestedEnums } = walkModel(makeProgram(), model, (_, m) =>
+      errors.push(m),
+    );
+
+    expect(errors).toHaveLength(0);
+    expect(fields[0]!.csType).toBe("KeyKind");
+    expect(fields[0]!.tsType).toBe("KeyKind");
+    expect(fields[0]!.protoType).toBe("string");
+    expect(fields[0]!.enumRef!.name).toBe("KeyKind");
+    expect(nestedEnums).toHaveLength(1);
+    expect(nestedEnums[0]!.members.map((m) => m.csName)).toEqual([
+      "Rsa",
+      "Aes",
+      "Secret",
+    ]);
+    expect(nestedEnums[0]!.members.every((m) => !m.needsEnumMember)).toBe(true);
+  });
+
+  it("S-2 explicit-int named enum → intValue preserved, wireValue is the NAME", () => {
+    const e = makeEnum("Level", [
+      { name: "Low", value: 0 },
+      { name: "Medium", value: 5 },
+      { name: "High", value: 10 },
+    ]);
+    const prop = { type: e, optional: false } as unknown as ModelProperty;
+    const { nestedEnums } = walkModel(
+      makeProgram(),
+      makeModel([["level", prop]]),
+      () => {},
+    );
+
+    const m = nestedEnums[0]!.members;
+    expect(m.map((x) => x.intValue)).toEqual([0, 5, 10]);
+    // The wire value is the member NAME (string wire), NOT the int.
+    expect(m.map((x) => x.wireValue)).toEqual(["Low", "Medium", "High"]);
+    expect(m.every((x) => !x.needsEnumMember)).toBe(true);
+  });
+
+  it("optional named enum (S-5) → csType KeyKind?, optional true, enum collected once", () => {
+    const e = makeEnum("KeyKind", [{ name: "Rsa" }, { name: "Aes" }]);
+    const prop = { type: e, optional: true } as unknown as ModelProperty;
+    const { fields, nestedEnums } = walkModel(
+      makeProgram(),
+      makeModel([["optionalKind", prop]]),
+      () => {},
+    );
+
+    expect(fields[0]!.csType).toBe("KeyKind?");
+    expect(fields[0]!.optional).toBe(true);
+    expect(nestedEnums).toHaveLength(1);
+  });
+
+  it("array of a supported enum (L-6 positive) → IReadOnlyList<KeyKind>, repeated, proto string", () => {
+    const e = makeEnum("KeyKind", [{ name: "Rsa" }]);
+    const arrayModel: Model = {
+      kind: "Model",
+      name: "Array",
+      indexer: { value: e },
+      properties: new Map(),
+    } as unknown as Model;
     const prop = {
-      type: unionType,
+      type: arrayModel,
       optional: false,
     } as unknown as ModelProperty;
-    const model = makeModel([["status", prop]]);
+
+    const { fields, nestedEnums } = walkModel(
+      makeProgram(),
+      makeModel([["kinds", prop]]),
+      () => {},
+    );
+
+    expect(fields[0]!.csType).toBe("IReadOnlyList<KeyKind>");
+    expect(fields[0]!.tsType).toBe("readonly KeyKind[]");
+    expect(fields[0]!.protoType).toBe("string");
+    expect(fields[0]!.repeated).toBe(true);
+    expect(nestedEnums).toHaveLength(1);
+  });
+
+  it("enum dedup across two fields referencing the SAME enum → collected once", () => {
+    const e = makeEnum("KeyKind", [{ name: "Rsa" }]);
+    const model = makeModel([
+      ["a", { type: e, optional: false } as unknown as ModelProperty],
+      ["b", { type: e, optional: false } as unknown as ModelProperty],
+    ]);
+    const { nestedEnums } = walkModel(makeProgram(), model, () => {});
+
+    expect(nestedEnums).toHaveLength(1);
+  });
+
+  it("empty named enum (no members) → loud D2TSP002", () => {
+    const e = makeEnum("Empty", []);
     const errors: Array<{ code: string; message: string }> = [];
+    const { fields } = walkModel(
+      makeProgram(),
+      makeModel([["x", { type: e, optional: false } as unknown as ModelProperty]]),
+      (code, message) => errors.push({ code, message }),
+    );
 
-    const { fields } = walkModel(makeProgram(), model, (code, message) => {
-      errors.push({ code, message });
-    });
-
-    expect(errors).toHaveLength(1);
     expect(errors[0]!.code).toBe("unsupported-property-type");
-    expect(errors[0]!.message).toContain("D2TSP002");
+    expect(errors[0]!.message).toContain("no members");
+    expect(fields).toHaveLength(0);
+  });
+});
+
+describe("walkModel_StringLiteralUnion_Supported", () => {
+  it("S-3 named string-literal union → enum, lowercase literal needs no rename", () => {
+    const u = makeUnion("Status", [
+      strLit("active"),
+      strLit("inactive"),
+      strLit("pending"),
+    ]);
+    const { fields, nestedEnums } = walkModel(
+      makeProgram(),
+      makeModel([["status", { type: u, optional: false } as unknown as ModelProperty]]),
+      () => {},
+    );
+
+    expect(fields[0]!.csType).toBe("Status");
+    expect(fields[0]!.protoType).toBe("string");
+    const m = nestedEnums[0]!.members;
+    expect(m.map((x) => x.csName)).toEqual(["Active", "Inactive", "Pending"]);
+    expect(m.map((x) => x.wireValue)).toEqual(["active", "inactive", "pending"]);
+    // PascalCase member differs from lowercase literal → needs the attribute.
+    expect(m.every((x) => x.needsEnumMember)).toBe(true);
+  });
+
+  it("S-3 non-identifier literal → sanitized member + needsEnumMember true", () => {
+    const u = makeUnion("AccountKind", [
+      strLit("internal"),
+      strLit("third-party"),
+    ]);
+    const { nestedEnums } = walkModel(
+      makeProgram(),
+      makeModel([["accountKind", { type: u, optional: false } as unknown as ModelProperty]]),
+      () => {},
+    );
+
+    const tp = nestedEnums[0]!.members.find((x) => x.wireValue === "third-party")!;
+    expect(tp.csName).toBe("ThirdParty");
+    expect(tp.needsEnumMember).toBe(true);
+  });
+
+  it("S-4 inline anonymous string-literal union → synthetic <Model><Field> enum", () => {
+    const u = makeUnion(undefined, [
+      strLit("draft"),
+      strLit("published"),
+      strLit("archived"),
+    ]);
+    const { fields, nestedEnums } = walkModel(
+      makeProgram(),
+      makeModel([["inlineState", { type: u, optional: false } as unknown as ModelProperty]]),
+      () => {},
+    );
+
+    // Model name in the helper is "TestModel" → synthetic "TestModelInlineState".
+    expect(fields[0]!.csType).toBe("TestModelInlineState");
+    expect(nestedEnums[0]!.name).toBe("TestModelInlineState");
+  });
+
+  it("S-6 <literals> | null union → non-null set + optional true", () => {
+    const u = makeUnion("Status", [
+      strLit("active"),
+      strLit("inactive"),
+      NULL_INTRINSIC,
+    ]);
+    const { fields, nestedEnums } = walkModel(
+      makeProgram(),
+      makeModel([["status", { type: u, optional: false } as unknown as ModelProperty]]),
+      () => {},
+    );
+
+    // The null variant ⇒ optional; the member set is the non-null literals.
+    expect(fields[0]!.optional).toBe(true);
+    expect(fields[0]!.csType).toBe("Status?");
+    expect(nestedEnums[0]!.members.map((m) => m.wireValue)).toEqual([
+      "active",
+      "inactive",
+    ]);
+  });
+
+  it("enum name collision with a DIFFERENT member set → loud D2TSP007", () => {
+    const u1 = makeUnion("Status", [strLit("a")]);
+    const u2 = makeUnion("Status", [strLit("b")]); // same name, different members
+    const errors: Array<{ code: string }> = [];
+    walkModel(
+      makeProgram(),
+      makeModel([
+        ["x", { type: u1, optional: false } as unknown as ModelProperty],
+        ["y", { type: u2, optional: false } as unknown as ModelProperty],
+      ]),
+      (code) => errors.push({ code }),
+    );
+
+    expect(errors.some((e) => e.code === "unsupported-union-shape")).toBe(true);
+  });
+
+  it("enum name collision with a DIFFERENT-LENGTH member set → loud (sameMembers length guard)", () => {
+    const u1 = makeUnion("Status", [strLit("a"), strLit("b")]);
+    const u2 = makeUnion("Status", [strLit("a")]); // same name, fewer members
+    const errors: Array<{ code: string }> = [];
+    walkModel(
+      makeProgram(),
+      makeModel([
+        ["x", { type: u1, optional: false } as unknown as ModelProperty],
+        ["y", { type: u2, optional: false } as unknown as ModelProperty],
+      ]),
+      (code) => errors.push({ code }),
+    );
+
+    expect(errors.some((e) => e.code === "unsupported-union-shape")).toBe(true);
+  });
+
+  it("identical enum reused (SAME member set) across two fields → no collision (dedup)", () => {
+    const u1 = makeUnion("Status", [strLit("a"), strLit("b")]);
+    const u2 = makeUnion("Status", [strLit("a"), strLit("b")]); // identical
+    const errors: string[] = [];
+    const { nestedEnums } = walkModel(
+      makeProgram(),
+      makeModel([
+        ["x", { type: u1, optional: false } as unknown as ModelProperty],
+        ["y", { type: u2, optional: false } as unknown as ModelProperty],
+      ]),
+      (_, m) => errors.push(m),
+    );
+
+    expect(errors).toHaveLength(0);
+    expect(nestedEnums).toHaveLength(1);
+  });
+
+  it("leading-digit + all-separator literals → sanitized to valid identifiers", () => {
+    // "3d" is one segment → first char uppercased (a digit stays a digit) → "3d"
+    // → leading digit → "_3d". "--" is all separators → "_".
+    const u = makeUnion("Weird", [strLit("3d"), strLit("--")]);
+    const { nestedEnums } = walkModel(
+      makeProgram(),
+      makeModel([["v", { type: u, optional: false } as unknown as ModelProperty]]),
+      () => {},
+    );
+
+    const names = nestedEnums[0]!.members.map((m) => m.csName);
+    expect(names[0]).toBe("_3d");
+    expect(names[1]).toBe("_");
+    // The wire values are preserved verbatim (the literal).
+    expect(nestedEnums[0]!.members.map((m) => m.wireValue)).toEqual(["3d", "--"]);
+    expect(nestedEnums[0]!.members.every((m) => m.needsEnumMember)).toBe(true);
+  });
+});
+
+describe("walkModel_UnsupportedUnionShape_D2TSP007Loud", () => {
+  it("NV-1 mixed-primitive union (string | int32) → D2TSP007", () => {
+    const u = makeUnion(undefined, [
+      { kind: "Scalar", name: "string" } as unknown as Type,
+      { kind: "Scalar", name: "int32" } as unknown as Type,
+    ]);
+    const errors: Array<{ code: string; message: string }> = [];
+    const { fields } = walkModel(
+      makeProgram(),
+      makeModel([["v", { type: u, optional: false } as unknown as ModelProperty]]),
+      (code, message) => errors.push({ code, message }),
+    );
+
+    expect(errors[0]!.code).toBe("unsupported-union-shape");
+    expect(errors[0]!.message).toContain("D2TSP007");
     expect(fields).toHaveLength(0);
   });
 
-  it("enum type → onError called with D2TSP002 code", () => {
-    const enumType = { kind: "Enum" } as unknown as Type;
-    const prop = {
-      type: enumType,
-      optional: false,
-    } as unknown as ModelProperty;
-    const model = makeModel([["kind", prop]]);
+  it("NV-2 numeric-literal-only union (1 | 2 | 3) → D2TSP007", () => {
+    const u = makeUnion(undefined, [numLit(1), numLit(2), numLit(3)]);
     const errors: Array<{ code: string }> = [];
+    walkModel(
+      makeProgram(),
+      makeModel([["v", { type: u, optional: false } as unknown as ModelProperty]]),
+      (code) => errors.push({ code }),
+    );
 
-    walkModel(makeProgram(), model, (code) => {
-      errors.push({ code });
-    });
+    expect(errors[0]!.code).toBe("unsupported-union-shape");
+  });
+
+  it("NV mixed-literal-kind union (\"a\" | 1) → D2TSP007", () => {
+    const u = makeUnion(undefined, [strLit("a"), numLit(1)]);
+    const errors: Array<{ code: string }> = [];
+    walkModel(
+      makeProgram(),
+      makeModel([["v", { type: u, optional: false } as unknown as ModelProperty]]),
+      (code) => errors.push({ code }),
+    );
+
+    expect(errors[0]!.code).toBe("unsupported-union-shape");
+  });
+
+  it("NV-3 model-variant union (Circle | Square) → loud", () => {
+    const circle = { kind: "Model", name: "Circle", properties: new Map() } as unknown as Type;
+    const square = { kind: "Model", name: "Square", properties: new Map() } as unknown as Type;
+    const u = makeUnion(undefined, [circle, square]);
+    const errors: Array<{ code: string }> = [];
+    walkModel(
+      makeProgram(),
+      makeModel([["shape", { type: u, optional: false } as unknown as ModelProperty]]),
+      (code) => errors.push({ code }),
+    );
+
+    expect(errors).toHaveLength(1);
+    expect(errors[0]!.code).toBe("unsupported-union-shape");
+  });
+
+  it("null-only union → D2TSP007 (no string literals)", () => {
+    const u = makeUnion(undefined, [NULL_INTRINSIC]);
+    const errors: Array<{ code: string; message: string }> = [];
+    walkModel(
+      makeProgram(),
+      makeModel([["v", { type: u, optional: false } as unknown as ModelProperty]]),
+      (code, message) => errors.push({ code, message }),
+    );
+
+    expect(errors[0]!.code).toBe("unsupported-union-shape");
+    expect(errors[0]!.message).toContain("no string-literal variants");
+  });
+
+  it("malformed union (no variants map) → loud, no crash", () => {
+    const u = { kind: "Union" } as unknown as Type;
+    const errors: Array<{ code: string }> = [];
+    const { fields } = walkModel(
+      makeProgram(),
+      makeModel([["v", { type: u, optional: false } as unknown as ModelProperty]]),
+      (code) => errors.push({ code }),
+    );
+
+    expect(errors[0]!.code).toBe("unsupported-union-shape");
+    expect(fields).toHaveLength(0);
+  });
+
+  it("malformed enum (no members map) → loud D2TSP002, no crash", () => {
+    const e = { kind: "Enum", name: "Bad" } as unknown as Type;
+    const errors: Array<{ code: string }> = [];
+    const { fields } = walkModel(
+      makeProgram(),
+      makeModel([["v", { type: e, optional: false } as unknown as ModelProperty]]),
+      (code) => errors.push({ code }),
+    );
 
     expect(errors[0]!.code).toBe("unsupported-property-type");
+    expect(fields).toHaveLength(0);
+  });
+
+  it("a bare intrinsic property (not scalar/model/enum/union) → loud D2TSP002 fallthrough", () => {
+    const intrinsic = { kind: "Intrinsic", name: "unknown" } as unknown as Type;
+    const errors: Array<{ code: string; message: string }> = [];
+    const { fields } = walkModel(
+      makeProgram(),
+      makeModel([
+        ["v", { type: intrinsic, optional: false } as unknown as ModelProperty],
+      ]),
+      (code, message) => errors.push({ code, message }),
+    );
+
+    expect(errors[0]!.code).toBe("unsupported-property-type");
+    expect(errors[0]!.message).toContain("D2TSP002");
+    expect(errors[0]!.message).toContain("Intrinsic");
+    expect(fields).toHaveLength(0);
+  });
+
+  it("NV-5 array of a mixed union element → loud", () => {
+    const u = makeUnion(undefined, [
+      { kind: "Scalar", name: "string" } as unknown as Type,
+      { kind: "Scalar", name: "int32" } as unknown as Type,
+    ]);
+    const arrayModel: Model = {
+      kind: "Model",
+      name: "Array",
+      indexer: { value: u },
+      properties: new Map(),
+    } as unknown as Model;
+    const errors: Array<{ code: string }> = [];
+    const { fields } = walkModel(
+      makeProgram(),
+      makeModel([["vs", { type: arrayModel, optional: false } as unknown as ModelProperty]]),
+      (code) => errors.push({ code }),
+    );
+
+    expect(errors[0]!.code).toBe("unsupported-union-shape");
+    expect(fields).toHaveLength(0);
+  });
+
+  it("array of a string-literal union element → supported", () => {
+    const u = makeUnion("Tag", [strLit("a"), strLit("b")]);
+    const arrayModel: Model = {
+      kind: "Model",
+      name: "Array",
+      indexer: { value: u },
+      properties: new Map(),
+    } as unknown as Model;
+    const { fields, nestedEnums } = walkModel(
+      makeProgram(),
+      makeModel([["tags", { type: arrayModel, optional: false } as unknown as ModelProperty]]),
+      () => {},
+    );
+
+    expect(fields[0]!.csType).toBe("IReadOnlyList<Tag>");
+    expect(fields[0]!.repeated).toBe(true);
+    expect(nestedEnums[0]!.name).toBe("Tag");
+  });
+
+  it("array of a string-literal union with a null variant → loud (no nullable array element)", () => {
+    const u = makeUnion("Tag", [strLit("a"), NULL_INTRINSIC]);
+    const arrayModel: Model = {
+      kind: "Model",
+      name: "Array",
+      indexer: { value: u },
+      properties: new Map(),
+    } as unknown as Model;
+    const errors: Array<{ code: string; message: string }> = [];
+    walkModel(
+      makeProgram(),
+      makeModel([["tags", { type: arrayModel, optional: false } as unknown as ModelProperty]]),
+      (code, message) => errors.push({ code, message }),
+    );
+
+    expect(errors[0]!.code).toBe("unsupported-union-shape");
+    expect(errors[0]!.message).toContain("array-element position");
   });
 });
 
@@ -484,8 +917,10 @@ describe("walkModel_ArrayElement_UnmappedScalar_D2TSP001", () => {
   });
 });
 
-describe("walkModel_ArrayElement_UnsupportedKind_D2TSP002", () => {
-  it("array of enum (Enum[]) → D2TSP002 for unsupported array element kind", () => {
+describe("walkModel_ArrayElement_EmptyEnum_D2TSP002", () => {
+  it("array of an empty enum (no members) → D2TSP002 (an array of a VALID enum is supported elsewhere)", () => {
+    // A members-less enum element is malformed → loud (the no-members guard).
+    // A well-formed enum array element is covered by the S-1 array-of-enum test.
     const enumType = { kind: "Enum", name: "Status" } as unknown as Type;
     const arrayModel: Model = {
       kind: "Model",

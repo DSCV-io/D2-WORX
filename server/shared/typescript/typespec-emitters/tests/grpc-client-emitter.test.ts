@@ -890,3 +890,288 @@ describe("emitGrpcClient_DtoNamespaceNotSelf", () => {
     expect(mapper!.content).toContain("using D2.Edge.SomeOtherModule.Clients;");
   });
 });
+
+// ---------------------------------------------------------------------------
+// Enum client op — DTO enum → proto string via .ToWire() + the helper blocks
+// ---------------------------------------------------------------------------
+
+describe("emitGrpcClient_EnumRequestField_AliasAndToWire", () => {
+  const KEY_KIND = {
+    name: "KeyKind",
+    members: [
+      { csName: "Rsa", wireValue: "Rsa", needsEnumMember: false },
+      { csName: "Aes", wireValue: "Aes", needsEnumMember: false },
+    ],
+  };
+
+  function enumOp(): GrpcClientOp {
+    return {
+      opName: "signWithKind",
+      grpcService: "EnumFixturesSigner",
+      grpcMethod: "SignWithKind",
+      protoCsharpNs: "D2.Services.Protos.EnumFixtures.V1",
+      // DTO namespace distinct from the clients namespace → enum alias IS emitted.
+      dtoCsharpNs: "D2.Edge.Tests.EnumDto.Generated",
+      sourceSpec: SOURCE,
+      requestModelName: "SignWithKindInput",
+      requestFields: [
+        {
+          name: "kid",
+          csName: "Kid",
+          csType: "string",
+          tsName: "kid",
+          tsType: "string",
+          protoType: "string",
+          repeated: false,
+          optional: false,
+          redact: false,
+        },
+        {
+          name: "keyKind",
+          csName: "KeyKind",
+          csType: "KeyKind",
+          tsName: "keyKind",
+          tsType: "KeyKind",
+          protoType: "string",
+          repeated: false,
+          optional: false,
+          redact: false,
+          enumRef: KEY_KIND,
+        },
+      ],
+      responseModelName: "SignWithKindOutput",
+      responseFields: [
+        {
+          name: "signature",
+          csName: "Signature",
+          csType: "string",
+          tsName: "signature",
+          tsType: "string",
+          protoType: "string",
+          repeated: false,
+          optional: false,
+          redact: false,
+        },
+      ],
+    };
+  }
+
+  it("the client mapper emits the enum alias + I18n/Result usings + ToWire on the outbound DTO field", () => {
+    const [, , mapper] = emitGrpcClient(
+      "EnumFixtures",
+      [enumOp()],
+      CLIENTS_NS,
+    );
+
+    expect(mapper!.content).toContain(
+      "using KeyKind = global::D2.Edge.Tests.EnumDto.Generated.KeyKind;",
+    );
+    expect(mapper!.content).toContain("using D2.Shared.I18n;");
+    expect(mapper!.content).toContain("using D2.Shared.Result;");
+    // Outbound DTO enum → proto string via .ToWire().
+    expect(mapper!.content).toContain("KeyKind = input.KeyKind.ToWire(),");
+    // The per-enum helper blocks are emitted (symmetric with the server mapper).
+    expect(mapper!.content).toContain("internal string ToWire()");
+    expect(mapper!.content).toContain(
+      "internal static D2Result<KeyKind> ParseKeyKindWire(string? value)",
+    );
+  });
+
+  it("two DISTINCT enum fields → one alias each (the dedup .some predicate runs on the 2nd)", () => {
+    const ROLE = {
+      name: "Role",
+      members: [
+        { csName: "Admin", wireValue: "admin", needsEnumMember: true },
+        { csName: "User", wireValue: "user", needsEnumMember: true },
+      ],
+    };
+    const op = enumOp();
+    const opTwoEnums: GrpcClientOp = {
+      ...op,
+      requestFields: [
+        ...op.requestFields,
+        {
+          name: "role",
+          csName: "Role",
+          csType: "Role",
+          tsName: "role",
+          tsType: "Role",
+          protoType: "string",
+          repeated: false,
+          optional: false,
+          redact: false,
+          enumRef: ROLE,
+        },
+      ],
+    };
+
+    const [, , mapper] = emitGrpcClient("EnumFixtures", [opTwoEnums], CLIENTS_NS);
+
+    expect(mapper!.content).toContain(
+      "using KeyKind = global::D2.Edge.Tests.EnumDto.Generated.KeyKind;",
+    );
+    expect(mapper!.content).toContain(
+      "using Role = global::D2.Edge.Tests.EnumDto.Generated.Role;",
+    );
+  });
+
+  it("the SAME enum referenced twice across fields → one alias (dedup .some returns true)", () => {
+    const op = enumOp();
+    const dupOp: GrpcClientOp = {
+      ...op,
+      responseFields: [
+        op.responseFields[0]!,
+        {
+          name: "echoedKind",
+          csName: "EchoedKind",
+          csType: "KeyKind",
+          tsName: "echoedKind",
+          tsType: "KeyKind",
+          protoType: "string",
+          repeated: false,
+          optional: false,
+          redact: false,
+          enumRef: op.requestFields[1]!.enumRef,
+        },
+      ],
+    };
+
+    const [, , mapper] = emitGrpcClient("EnumFixtures", [dupOp], CLIENTS_NS);
+
+    const aliasCount = (
+      mapper!.content.match(/using KeyKind = global::/g) ?? []
+    ).length;
+    expect(aliasCount).toBe(1);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Response enum — the client proto-string -> DTO-enum inbound parse (symmetric
+// with the server request parse): To<Output>() returns D2Result<<Output>> and
+// the impl surfaces a client-side parse failure as ValidationFailed.
+// ---------------------------------------------------------------------------
+
+describe("emitGrpcClient_EnumResponseField_ParseAndSurface", () => {
+  const KEY_KIND = {
+    name: "KeyKind",
+    members: [
+      { csName: "Rsa", wireValue: "Rsa", needsEnumMember: false },
+      { csName: "Aes", wireValue: "Aes", needsEnumMember: false },
+    ],
+  };
+
+  function respEnumOp(): GrpcClientOp {
+    return {
+      opName: "signWithKind",
+      grpcService: "EnumFixturesSigner",
+      grpcMethod: "SignWithKind",
+      protoCsharpNs: "D2.Services.Protos.EnumFixtures.V1",
+      dtoCsharpNs: "D2.Edge.Tests.EnumDto.Generated",
+      sourceSpec: SOURCE,
+      requestModelName: "SignWithKindInput",
+      requestFields: [
+        {
+          name: "kid",
+          csName: "Kid",
+          csType: "string",
+          tsName: "kid",
+          tsType: "string",
+          protoType: "string",
+          repeated: false,
+          optional: false,
+          redact: false,
+        },
+      ],
+      responseModelName: "SignWithKindOutput",
+      responseFields: [
+        {
+          name: "signature",
+          csName: "Signature",
+          csType: "string",
+          tsName: "signature",
+          tsType: "string",
+          protoType: "string",
+          repeated: false,
+          optional: false,
+          redact: false,
+        },
+        {
+          name: "keyKind",
+          csName: "KeyKind",
+          csType: "KeyKind",
+          tsName: "keyKind",
+          tsType: "KeyKind",
+          protoType: "string",
+          repeated: false,
+          optional: false,
+          redact: false,
+          enumRef: KEY_KIND,
+        },
+      ],
+    };
+  }
+
+  it("the response mapper returns D2Result<<Output>> and parses the enum fail-loud", () => {
+    const [, , mapper] = emitGrpcClient(
+      "EnumFixtures",
+      [respEnumOp()],
+      CLIENTS_NS,
+    );
+
+    // Mapper signature now returns D2Result<<Output>> (not a bare <Output>).
+    expect(mapper!.content).toContain(
+      "internal D2Result<global::D2.Edge.Tests.EnumDto.Generated.SignWithKindOutput> ToSignWithKindOutput()",
+    );
+    // Inbound parse via the shared Parse<Enum>Wire helper.
+    expect(mapper!.content).toContain(
+      "var keyKindResult = string.ParseKeyKindWire(data.KeyKind);",
+    );
+    // Fail-loud short-circuit on an unknown wire value.
+    expect(mapper!.content).toContain(
+      "return D2Result<global::D2.Edge.Tests.EnumDto.Generated.SignWithKindOutput>.ValidationFailed(",
+    );
+    // Success constructs the DTO with the parsed enum (and the plain signature).
+    expect(mapper!.content).toContain(
+      "return D2Result<global::D2.Edge.Tests.EnumDto.Generated.SignWithKindOutput>.Ok(new global::D2.Edge.Tests.EnumDto.Generated.SignWithKindOutput(data.Signature, keyKindResult.Data));",
+    );
+  });
+
+  it("the impl captures the response-parse failure and surfaces it via BubbleFail", () => {
+    const [, impl] = emitGrpcClient("EnumFixtures", [respEnumOp()], CLIENTS_NS);
+
+    // The parse-failure capture local is declared out of the closure.
+    expect(impl!.content).toContain(
+      "D2Result<SignWithKindOutput>? responseParseFailure = null;",
+    );
+    // The closure parses then captures + returns default on failure.
+    expect(impl!.content).toContain(
+      "var dataResult = response.Data.ToSignWithKindOutput();",
+    );
+    expect(impl!.content).toContain("responseParseFailure = dataResult;");
+    expect(impl!.content).toContain("return dataResult.Data;");
+    // After the pipeline, a captured parse failure becomes the business result.
+    expect(impl!.content).toContain(
+      "if (responseParseFailure is not null)",
+    );
+    expect(impl!.content).toContain(
+      "return D2Result<SignWithKindOutput?>.BubbleFail(responseParseFailure);",
+    );
+  });
+
+  it("an enum-FREE response keeps the bare <Output> mapper (no D2Result, no capture)", () => {
+    // The sign op (string-only response) must NOT gain the D2Result response path.
+    const [, impl, mapper] = emitGrpcClient(
+      "KeyCustodian",
+      [makeSignOp()],
+      CLIENTS_NS,
+    );
+    expect(mapper!.content).toContain(
+      "internal global::D2.Edge.KeyCustodian.Clients.SignOutput ToSignOutput()",
+    );
+    expect(mapper!.content).not.toContain("D2Result<");
+    expect(impl!.content).not.toContain("responseParseFailure");
+    expect(impl!.content).toContain(
+      "return response.Data is null ? default : response.Data.ToSignOutput();",
+    );
+  });
+});

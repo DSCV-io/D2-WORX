@@ -370,11 +370,11 @@ export async function $onEmit(context: EmitContext): Promise<void> {
           const clientInputWalk =
             inputModel !== undefined
               ? walkModel(program, inputModel, () => undefined)
-              : { fields: [], nestedModels: [] };
+              : { fields: [], nestedModels: [], nestedEnums: [] };
           const clientOutputWalk =
             outputModel !== undefined
               ? walkModel(program, outputModel, () => undefined)
-              : { fields: [], nestedModels: [] };
+              : { fields: [], nestedModels: [], nestedEnums: [] };
 
           const requestModelName =
             (inputModel?.name?.length ?? 0) > 0
@@ -640,7 +640,10 @@ function emitDtoPair(
 ): boolean {
   const errors: string[] = [];
   const onError = (
-    code: "unmapped-scalar" | "unsupported-property-type",
+    code:
+      | "unmapped-scalar"
+      | "unsupported-property-type"
+      | "unsupported-union-shape",
     message: string,
   ): void => {
     errors.push(message);
@@ -651,6 +654,12 @@ function emitDtoPair(
       $lib.reportDiagnostic(program, {
         code: "unmapped-scalar",
         format: { scalar: message },
+        target: NoTarget,
+      });
+    else if (code === "unsupported-union-shape")
+      $lib.reportDiagnostic(program, {
+        code: "unsupported-union-shape",
+        format: { property: message },
         target: NoTarget,
       });
     else
@@ -666,13 +675,13 @@ function emitDtoPair(
   const inputWalk =
     inputModel !== undefined
       ? walkModel(program, inputModel, onError)
-      : { fields: [], nestedModels: [] };
+      : { fields: [], nestedModels: [], nestedEnums: [] };
 
   // Walk output model (empty when op returns void).
   const outputWalk =
     outputModel !== undefined
       ? walkModel(program, outputModel, onError)
-      : { fields: [], nestedModels: [] };
+      : { fields: [], nestedModels: [], nestedEnums: [] };
 
   if (errors.length > 0) return false; // Diagnostics already reported; don't emit partial files.
 
@@ -684,6 +693,8 @@ function emitDtoPair(
     inputWalk.fields,
     outputWalk.fields,
     outputWalk.nestedModels,
+    inputWalk.nestedEnums,
+    outputWalk.nestedEnums,
   );
 
   for (const f of csFiles) {
@@ -698,6 +709,8 @@ function emitDtoPair(
     inputWalk.fields,
     outputWalk.fields,
     outputWalk.nestedModels,
+    inputWalk.nestedEnums,
+    outputWalk.nestedEnums,
   );
 
   const tsPath = resolveOutputPath(context, tsFile.fileName);
@@ -724,6 +737,7 @@ function emitProtoAndGrpcService(
     code:
       | "unmapped-scalar"
       | "unsupported-property-type"
+      | "unsupported-union-shape"
       | "invalid-streaming-mode",
     message: string,
   ): void => {
@@ -740,6 +754,12 @@ function emitProtoAndGrpcService(
         format: { scalar: message },
         target: NoTarget,
       });
+    else if (code === "unsupported-union-shape")
+      $lib.reportDiagnostic(program, {
+        code: "unsupported-union-shape",
+        format: { property: message },
+        target: NoTarget,
+      });
     else
       $lib.reportDiagnostic(program, {
         code: "unsupported-property-type",
@@ -751,12 +771,12 @@ function emitProtoAndGrpcService(
   const inputWalk =
     inputModel !== undefined
       ? walkModel(program, inputModel, onError)
-      : { fields: [], nestedModels: [] };
+      : { fields: [], nestedModels: [], nestedEnums: [] };
 
   const outputWalk =
     outputModel !== undefined
       ? walkModel(program, outputModel, onError)
-      : { fields: [], nestedModels: [] };
+      : { fields: [], nestedModels: [], nestedEnums: [] };
 
   if (errors.length > 0) return;
 
@@ -781,7 +801,11 @@ function emitProtoAndGrpcService(
     specHint,
     protoRequestName,
     inputWalk.fields,
-    protoResponseName,
+    // The proto DATA message is named after the DTO output model (<Op>Output) —
+    // distinct from the <Method>Response envelope wrapper (proto-emitter derives
+    // that name itself). Passing protoResponseName here would name the data message
+    // <Method>Response too, colliding with the wrapper and failing protoc.
+    dtoResponseName,
     outputWalk.fields,
     outputWalk.nestedModels,
     onError,

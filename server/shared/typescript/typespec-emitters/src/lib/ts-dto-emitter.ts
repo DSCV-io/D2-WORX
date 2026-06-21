@@ -5,20 +5,25 @@
 // TypeScript DTO emitter — pure string-template emission of TS interface pairs.
 //
 // For each operation emits one `<op>-dto.g.ts` file containing:
+//   - export const <Enum> = { Member: "wire", … } as const + derived type (co-located, deduped)
+//   - export interface <NestedModel> { ... } (co-located, deduped)
 //   - export interface <Op>Input  { ... }
 //   - export interface <Op>Output { ... }
-//   - export interface <NestedModel> { ... } (co-located, deduped)
 //
 // Conventions:
 //   - Optional field → `name?: T` (never `T | null`).
 //   - Collection    → `readonly T[]`.
 //   - Nested model  → its own interface, emitted once.
+//   - Enum / string-literal union → `const X = { … } as const` + derived union
+//     type (the codebase idiom — NEVER the TS `enum` keyword). The const value
+//     is the member-name wire string, matching the C# JsonStringEnumConverter
+//     wire form (so the SAME string crosses C#/proto/TS). NO Zod schema.
 //   - @d2Redact fields are emitted normally — redaction is a server-log
 //     concern; the TS DTO is a wire-shape only (documented behavior).
 //   - Auto-generated banner via buildBanner().
 
 import { buildBanner } from "./banner.js";
-import type { FieldInfo, NestedModel } from "./model-walk.js";
+import type { FieldInfo, NestedEnum, NestedModel } from "./model-walk.js";
 
 // ---------------------------------------------------------------------------
 // Public types
@@ -45,6 +50,8 @@ export interface EmittedTsFile {
  * @param inputFields  - Resolved field list for the input model.
  * @param outputFields - Resolved field list for the output model.
  * @param outputNested - Distinct nested models from the output walk.
+ * @param inputEnums   - Distinct enums from the input walk (default []).
+ * @param outputEnums  - Distinct enums from the output walk (default []).
  * @returns One EmittedTsFile.
  */
 export function emitTsDtos(
@@ -53,6 +60,8 @@ export function emitTsDtos(
   inputFields: readonly FieldInfo[],
   outputFields: readonly FieldInfo[],
   outputNested: readonly NestedModel[],
+  inputEnums: readonly NestedEnum[] = [],
+  outputEnums: readonly NestedEnum[] = [],
 ): EmittedTsFile {
   const pascalOp = toPascalFromCamel(opName);
   const banner = buildBanner(sourceSpec);
@@ -60,7 +69,17 @@ export function emitTsDtos(
 
   lines.push(banner);
 
-  // Nested model interfaces first (referenced by Output).
+  // Enum const-objects first (referenced by interfaces). Dedup the union of
+  // input + output enums by name (an enum on both sides is emitted once).
+  const seenEnums = new Set<string>();
+  for (const en of [...outputEnums, ...inputEnums]) {
+    if (seenEnums.has(en.name)) continue;
+    seenEnums.add(en.name);
+    lines.push(emitEnumConst(en));
+    lines.push("");
+  }
+
+  // Nested model interfaces (referenced by Output).
   for (const nm of outputNested) {
     lines.push(emitInterface(nm.name, nm.fields));
     lines.push("");
@@ -83,6 +102,28 @@ export function emitTsDtos(
 // ---------------------------------------------------------------------------
 // Internal helpers
 // ---------------------------------------------------------------------------
+
+/**
+ * Emit one enum as a `const`-object-`as const` + derived union type (the
+ * codebase idiom — NEVER the TS `enum` keyword). Each member's value is the
+ * member-name wire string, matching the C# JsonStringEnumConverter wire form so
+ * the SAME string crosses C#/proto/TS. The const key is the PascalCase C#
+ * identifier; the value is the wire literal (e.g. `ThirdParty: "third-party"`).
+ * NO Zod schema (consistent with the existing TS DTO surface).
+ */
+function emitEnumConst(en: NestedEnum): string {
+  const lines: string[] = [];
+  lines.push(`/** Generated wire enum \`${en.name}\` (value === the wire string). */`);
+  lines.push(`export const ${en.name} = {`);
+  for (const m of en.members)
+    lines.push(`  ${m.csName}: "${m.wireValue}",`);
+  lines.push("} as const;");
+  lines.push("");
+  lines.push(
+    `export type ${en.name} = (typeof ${en.name})[keyof typeof ${en.name}];`,
+  );
+  return lines.join("\n");
+}
 
 function emitInterface(typeName: string, fields: readonly FieldInfo[]): string {
   const lines: string[] = [];

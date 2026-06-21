@@ -9,7 +9,11 @@
 
 import { describe, it, expect } from "vitest";
 import { emitCsharpDtos } from "../src/lib/csharp-dto-emitter.js";
-import type { FieldInfo, NestedModel } from "../src/lib/model-walk.js";
+import type {
+  FieldInfo,
+  NestedEnum,
+  NestedModel,
+} from "../src/lib/model-walk.js";
 
 const TEST_NAMESPACE = "D2.Test.Application";
 const TEST_SPEC = "contracts/typespec/test.tsp";
@@ -34,6 +38,21 @@ function field(
     optional,
     redact,
     repeated: false,
+  };
+}
+
+function enumField(name: string, enumRef: NestedEnum): FieldInfo {
+  return {
+    name,
+    csName: name[0]!.toUpperCase() + name.slice(1),
+    csType: enumRef.name,
+    tsName: name,
+    tsType: enumRef.name,
+    protoType: "string",
+    optional: false,
+    redact: false,
+    repeated: false,
+    enumRef,
   };
 }
 
@@ -278,5 +297,145 @@ describe("emitCsharpDtos_EmptyNestedModel_ParameterlessRecord", () => {
     // The parameterless nested record uses semicolon form.
     expect(outputFile!.content).toContain("public sealed record Inner;");
     expect(outputFile!.content).not.toContain("Inner(");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Enum / string-literal-union emission (C-2)
+// ---------------------------------------------------------------------------
+
+const KEY_KIND: NestedEnum = {
+  name: "KeyKind",
+  members: [
+    { csName: "Rsa", wireValue: "Rsa", needsEnumMember: false },
+    { csName: "Aes", wireValue: "Aes", needsEnumMember: false },
+    { csName: "Secret", wireValue: "Secret", needsEnumMember: false },
+  ],
+};
+
+const LEVEL: NestedEnum = {
+  name: "Level",
+  members: [
+    { csName: "Low", wireValue: "Low", needsEnumMember: false, intValue: 0 },
+    { csName: "Medium", wireValue: "Medium", needsEnumMember: false, intValue: 5 },
+    { csName: "High", wireValue: "High", needsEnumMember: false, intValue: 10 },
+  ],
+};
+
+const ACCOUNT_KIND: NestedEnum = {
+  name: "AccountKind",
+  members: [
+    { csName: "Internal", wireValue: "internal", needsEnumMember: true },
+    { csName: "ThirdParty", wireValue: "third-party", needsEnumMember: true },
+  ],
+};
+
+describe("emitCsharpDtos_BareEnum_SiblingDeclaration", () => {
+  it("S-1 bare enum → sibling public enum + [JsonConverter], no [JsonStringEnumMemberName], correct using", () => {
+    const [, outputFile] = emitCsharpDtos(
+      "op",
+      TEST_NAMESPACE,
+      TEST_SPEC,
+      [],
+      [enumField("keyKind", KEY_KIND)],
+      [],
+      [],
+      [KEY_KIND],
+    );
+
+    expect(outputFile!.content).toContain(
+      "[JsonConverter(typeof(JsonStringEnumConverter))]",
+    );
+    expect(outputFile!.content).toContain("public enum KeyKind");
+    expect(outputFile!.content).toContain("    Rsa,");
+    expect(outputFile!.content).toContain("    Secret,");
+    // Bare members carry NO member-name attribute.
+    expect(outputFile!.content).not.toContain("JsonStringEnumMemberName");
+    expect(outputFile!.content).toContain(
+      "using System.Text.Json.Serialization;",
+    );
+    // The NET 9+ attribute namespace is System.Text.Json.Serialization — NOT the
+    // old [EnumMember] / System.Runtime.Serialization (which the converter ignores).
+    expect(outputFile!.content).not.toContain("System.Runtime.Serialization");
+    expect(outputFile!.content).not.toContain("EnumMember");
+  });
+});
+
+describe("emitCsharpDtos_ExplicitIntEnum_BackingPreserved", () => {
+  it("S-2 explicit-int enum → '= 0/5/10' backing preserved (wire is still the name)", () => {
+    const [, outputFile] = emitCsharpDtos(
+      "op",
+      TEST_NAMESPACE,
+      TEST_SPEC,
+      [],
+      [enumField("level", LEVEL)],
+      [],
+      [],
+      [LEVEL],
+    );
+
+    expect(outputFile!.content).toContain("    Low = 0,");
+    expect(outputFile!.content).toContain("    Medium = 5,");
+    expect(outputFile!.content).toContain("    High = 10,");
+  });
+});
+
+describe("emitCsharpDtos_NonIdentifierLiteral_JsonStringEnumMemberName", () => {
+  it("S-3 third-party → ThirdParty + [JsonStringEnumMemberName(\"third-party\")]", () => {
+    const [, outputFile] = emitCsharpDtos(
+      "op",
+      TEST_NAMESPACE,
+      TEST_SPEC,
+      [],
+      [enumField("accountKind", ACCOUNT_KIND)],
+      [],
+      [],
+      [ACCOUNT_KIND],
+    );
+
+    expect(outputFile!.content).toContain(
+      '[JsonStringEnumMemberName("internal")]',
+    );
+    expect(outputFile!.content).toContain(
+      '[JsonStringEnumMemberName("third-party")]',
+    );
+    expect(outputFile!.content).toContain("    ThirdParty,");
+    // STRICT — no Unknown sentinel emitted.
+    expect(outputFile!.content).not.toContain("Unknown");
+  });
+});
+
+describe("emitCsharpDtos_InputOnlyEnum_LandsInInputFile", () => {
+  it("an enum referenced only by the input walk is emitted in the Input file (not duplicated in Output)", () => {
+    const [inputFile, outputFile] = emitCsharpDtos(
+      "op",
+      TEST_NAMESPACE,
+      TEST_SPEC,
+      [enumField("keyKind", KEY_KIND)],
+      [field("signature", "string", "string")],
+      [],
+      [KEY_KIND], // input enums
+      [], // output enums
+    );
+
+    // The enum is declared exactly once — in the Input file.
+    expect(inputFile!.content).toContain("public enum KeyKind");
+    expect(outputFile!.content).not.toContain("public enum KeyKind");
+  });
+
+  it("an enum on BOTH input + output is emitted ONLY in the Output file (no duplicate type)", () => {
+    const [inputFile, outputFile] = emitCsharpDtos(
+      "op",
+      TEST_NAMESPACE,
+      TEST_SPEC,
+      [enumField("keyKind", KEY_KIND)],
+      [enumField("keyKind", KEY_KIND)],
+      [],
+      [KEY_KIND],
+      [KEY_KIND],
+    );
+
+    expect(outputFile!.content).toContain("public enum KeyKind");
+    expect(inputFile!.content).not.toContain("public enum KeyKind");
   });
 });

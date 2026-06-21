@@ -171,4 +171,75 @@ describe("dtoParity_OneWalkModel_CsAndTsFieldSetIdentical", () => {
     // No field declarations.
     expect(tsFile.content).not.toContain("readonly ");
   });
+
+  it("enum field → C# enum member-set ≡ TS enum member-set (same wire strings); field type parity", () => {
+    // One walkModel feeds both emitters; the SAME walked NestedEnum drives the C#
+    // sibling enum + the TS const-object, so the member set + wire strings are
+    // identical by construction. This pins that cross-language identity for the
+    // [JsonStringEnumMemberName]-vs-const-value case (the load-bearing P-4 claim).
+    const e = {
+      kind: "Enum",
+      name: "AccountKind",
+      members: new Map([
+        ["internal", { name: "internal", value: "internal" }],
+        ["thirdParty", { name: "thirdParty", value: "third-party" }],
+      ]),
+    } as unknown as Scalar;
+
+    const model = {
+      kind: "Model",
+      name: "TestModel",
+      properties: new Map<string, ModelProperty>([
+        ["accountKind", { type: e, optional: false } as unknown as ModelProperty],
+      ]),
+    } as unknown as Model;
+
+    const errors: string[] = [];
+    const { fields, nestedEnums } = walkModel(makeProgram(), model, (_, m) =>
+      errors.push(m),
+    );
+    expect(errors).toHaveLength(0);
+
+    const csFiles = emitCsharpDtos(
+      "op",
+      "D2.Test",
+      "test.tsp",
+      [],
+      fields,
+      [],
+      [],
+      nestedEnums,
+    );
+    const tsFile = emitTsDtos(
+      "op",
+      "test.tsp",
+      [],
+      fields,
+      [],
+      [],
+      nestedEnums,
+    );
+
+    const cs = csFiles[1]!.content;
+    const ts = tsFile.content;
+
+    // C# member names + the wire attribute carry the SAME wire strings the TS
+    // const-object values carry.
+    expect(cs).toContain('[JsonStringEnumMemberName("internal")]');
+    expect(cs).toContain('[JsonStringEnumMemberName("third-party")]');
+    expect(cs).toContain("    Internal,");
+    expect(cs).toContain("    ThirdParty,");
+    expect(ts).toContain('  Internal: "internal",');
+    expect(ts).toContain('  ThirdParty: "third-party",');
+
+    // Field-type parity: C# uses the enum name, TS uses the enum name.
+    expect(cs).toContain("AccountKind AccountKind");
+    expect(ts).toContain("readonly accountKind: AccountKind;");
+
+    // The member identity (csName + wireValue) is shared — one source.
+    expect(nestedEnums[0]!.members.map((m) => [m.csName, m.wireValue])).toEqual([
+      ["Internal", "internal"],
+      ["ThirdParty", "third-party"],
+    ]);
+  });
 });

@@ -245,5 +245,20 @@ Copyright (c) DCSV. All rights reserved.
               GrpcServices="Both"
               ProtoRoot="$(MSBuildThisFileDirectory)"
               AdditionalImportDirs="$(D2ContractsRoot)protos" />
+    <!--
+      Second TypeSpec gRPC fixture proto — the enum-string-field bridge fixture
+      (enum-shaped.tsp signWithKind op). An enum DTO field maps to a proto `string`
+      field; the generated SignWithKindTransportMappers.g.cs parses the wire string
+      back to the C# enum, failing loud (400 ValidationFailed) on an unknown value.
+      Compiled in Both mode so the EnumWireRoundTripTests can host the service via
+      MapGrpcService<T>() and dial it via the generated stub. The D2ResultProto type
+      still comes solely from the D2.Shared.Result.Grpc ProjectReference above
+      (this proto's import "common/v1/d2_result.proto" resolves via the same
+      AdditionalImportDirs proto_path; no second d2_result.proto Protobuf include).
+    -->
+    <Protobuf Include="$(MSBuildThisFileDirectory)Unit/KeyCustodian/TypeSpecGrpcEnum/Protos/enum_fixtures_signer_sign_with_kind.g.proto"
+              GrpcServices="Both"
+              ProtoRoot="$(MSBuildThisFileDirectory)"
+              AdditionalImportDirs="$(D2ContractsRoot)protos" />
   </ItemGroup>
 </Project>

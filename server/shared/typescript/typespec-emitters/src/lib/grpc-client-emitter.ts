@@ -65,6 +65,7 @@ import { buildBanner } from "./banner.js";
 import { toPascal } from "./name-transforms.js";
 import type { FieldInfo } from "./model-walk.js";
 import type { EmittedFile } from "./csharp-dto-emitter.js";
+import { collectFieldEnums, emitEnumMapperHelpers } from "./enum-mapper.js";
 
 // ---------------------------------------------------------------------------
 // Public types
@@ -325,6 +326,14 @@ function emitImpl(
     void fqDto;
     void protoDataAlias;
 
+    // When the response carries ≥1 enum field, the client mapper To<Output>()
+    // returns D2Result<<Output>> (it parses each proto enum string back to the C#
+    // enum, fail-loud on unknown). The closure captures any parse failure out of
+    // band; the post-pipeline path surfaces it as the business result.
+    const responseHasEnums = op.responseFields.some(
+      (f) => f.enumRef !== undefined,
+    );
+
     // Public interface impl — thin dispatcher; uses override or injected pipeline.
     lines.push(`    /// <inheritdoc/>`);
     lines.push(
@@ -357,6 +366,13 @@ function emitImpl(
     lines.push(
       `        RpcException? transportFault = null;             // captured out of the closure`,
     );
+
+    if (responseHasEnums) {
+      lines.push(
+        `        D2Result<${op.responseModelName}>? responseParseFailure = null;  // client-side enum parse failure`,
+      );
+    }
+
     lines.push(`        var pipelineResult = await pipeline.ExecuteAsync(`);
     lines.push(`            ${toPascal(op.opName)}ClientKeys.PIPELINE_KEY,`);
     lines.push(`            async innerCt =>`);
@@ -369,9 +385,33 @@ function emitImpl(
     lines.push(
       `                    envelope = response.Result;          // business result (gRPC status OK)`,
     );
-    lines.push(
-      `                    return response.Data is null ? default : response.Data.To${op.responseModelName}();`,
-    );
+
+    if (responseHasEnums) {
+      // The response mapper returns D2Result<<Output>> (it parses each enum string,
+      // fail-loud on unknown). A parse failure of a server SUCCESS payload is a
+      // client-side ValidationFailed — capture it out of band and complete the op
+      // with null data so the post-pipeline path can surface the parse failure.
+      lines.push(`                    if (response.Data is null)`);
+      lines.push(`                        return default;`);
+      lines.push("");
+      lines.push(
+        `                    var dataResult = response.Data.To${op.responseModelName}();`,
+      );
+      lines.push(`                    if (!dataResult.Success)`);
+      lines.push("                    {");
+      lines.push(
+        `                        responseParseFailure = dataResult;  // capture; surface after the pipeline`,
+      );
+      lines.push(`                        return default;`);
+      lines.push("                    }");
+      lines.push("");
+      lines.push(`                    return dataResult.Data;`);
+    } else {
+      lines.push(
+        `                    return response.Data is null ? default : response.Data.To${op.responseModelName}();`,
+      );
+    }
+
     lines.push("                }");
     lines.push("                catch (RpcException ex)");
     lines.push("                {");
@@ -397,6 +437,19 @@ function emitImpl(
     lines.push(
       `            return transportFault.ToTransportFaultResult<${op.responseModelName}?>();`,
     );
+
+    if (responseHasEnums) {
+      // A client-side enum parse failure overrides the (successful) transport result:
+      // the server's payload carried a wire value this client cannot map.
+      lines.push(
+        `        // Client could not map a response enum wire value → ValidationFailed (strict, no fallback).`,
+      );
+      lines.push(`        if (responseParseFailure is not null)`);
+      lines.push(
+        `            return D2Result<${op.responseModelName}?>.BubbleFail(responseParseFailure);`,
+      );
+    }
+
     lines.push(
       `        // Business result: reconstruct the full D2Result from the captured envelope. Other`,
     );
@@ -468,8 +521,35 @@ function emitClientMappers(
     if (op.dtoCsharpNs !== clientsNs) usingSet.add(op.dtoCsharpNs);
   usingSet.add("Google.Protobuf");
 
+  // Collect the distinct enums referenced by any op's input fields (the client
+  // maps DTO enum → proto string via .ToWire() on the outbound request). TK +
+  // D2Result come into play only for the inbound Parse<Enum>Wire helper, which is
+  // still emitted for symmetry with the server mapper.
+  const allClientEnums = collectFieldEnums(
+    ops.flatMap((op) => [...op.requestFields, ...op.responseFields]),
+  );
+  // Enum aliases are emitted ONLY when the DTO namespace differs from the clients
+  // namespace; a self-referential `using X = …Ns.X;` for a type in THIS namespace
+  // conflicts with the type declaration (CS0576).
+  const enumAliasLines: string[] = [];
+  for (const op of ops)
+    if (op.dtoCsharpNs !== clientsNs)
+      for (const f of [...op.requestFields, ...op.responseFields])
+        if (
+          f.enumRef !== undefined &&
+          !enumAliasLines.some((l) => l.includes(` ${f.enumRef!.name} =`))
+        )
+          enumAliasLines.push(
+            `using ${f.enumRef.name} = global::${op.dtoCsharpNs}.${f.enumRef.name};`,
+          );
+
   const sortedUsings = [...usingSet].sort();
   for (const ns of sortedUsings) lines.push(`using ${ns};`);
+  for (const alias of enumAliasLines.sort()) lines.push(alias);
+  if (allClientEnums.length > 0) {
+    lines.push("using D2.Shared.I18n;");
+    lines.push("using D2.Shared.Result;");
+  }
   lines.push("");
 
   // Per-op mapper class.
@@ -520,20 +600,49 @@ function emitClientMappers(
     // Extension block 2: proto data message → DTO output (<Op>Output proto → DTO).
     // The proto data message name is the same as the DTO name (<Op>Output); use the
     // global:: alias (Proto<Op>Output) to disambiguate.
+    //
+    // When the response carries ≥1 enum field, the proto string is parsed back to
+    // the C# enum via Parse<Enum>Wire (fail-loud ValidationFailed on an unknown
+    // value), so the mapper returns D2Result<<Output>> — symmetric with the server
+    // request mapper's inbound parse. The client impl checks .Success and surfaces a
+    // parse failure as the business result (the server sent a value the client cannot
+    // map → ValidationFailed).
+    const responseHasEnums = op.responseFields.some(
+      (f) => f.enumRef !== undefined,
+    );
     lines.push(`    extension(${fqProtoData} data)`);
     lines.push("    {");
-    lines.push(`        internal ${fqDtoOutput} To${op.responseModelName}()`);
-    lines.push("        {");
-    if (op.responseFields.length === 0) {
-      lines.push(`            return new ${fqDtoOutput}();`);
-    } else {
-      const args = op.responseFields.map((f) =>
-        buildClientProtoToDto(f, "data"),
+
+    if (responseHasEnums) {
+      emitClientResponseMapperWithEnums(
+        lines,
+        op.responseModelName,
+        fqDtoOutput,
+        op.responseFields,
       );
-      lines.push(`            return new ${fqDtoOutput}(${args.join(", ")});`);
+    } else {
+      lines.push(`        internal ${fqDtoOutput} To${op.responseModelName}()`);
+      lines.push("        {");
+      if (op.responseFields.length === 0) {
+        lines.push(`            return new ${fqDtoOutput}();`);
+      } else {
+        const args = op.responseFields.map((f) =>
+          buildClientProtoToDto(f, "data"),
+        );
+        lines.push(`            return new ${fqDtoOutput}(${args.join(", ")});`);
+      }
+      lines.push("        }");
     }
-    lines.push("        }");
     lines.push("    }");
+
+    // Per-enum ToWire / Parse<Enum>Wire helper blocks (inverse-symmetric with the
+    // server mapper). The client maps DTO enum → proto string via .ToWire() on the
+    // outbound request; Parse<Enum>Wire is emitted for symmetry + the inbound path.
+    const opEnums = collectFieldEnums([
+      ...op.requestFields,
+      ...op.responseFields,
+    ]);
+    emitEnumMapperHelpers((l) => lines.push(l), opEnums);
 
     lines.push("}");
     if (oi < ops.length - 1) lines.push("");
@@ -781,26 +890,83 @@ export function emitClientKeys(
  * Build the expression for mapping one DTO input field to the proto request property.
  * INVERSE of buildProtoToDto in grpc-service-emitter.ts:
  *   byte[] → ByteString.CopyFrom(input.PascalName)
+ *   enum   → input.PascalName.ToWire()  (DTO enum → proto member-name wire string)
  *   others → input.PascalName
  */
 function buildClientDtoToProto(f: FieldInfo, source: string): string {
   const propName = toPascal(f.name);
   if (f.csType === "byte[]" || f.csType === "byte[]?")
     return `global::Google.Protobuf.ByteString.CopyFrom(${source}.${propName})`;
+  if (f.enumRef !== undefined) return `${source}.${propName}.ToWire()`;
   return `${source}.${propName}`;
 }
 
 /**
- * Build the argument for mapping one proto data message field to the DTO constructor.
+ * Build the argument for mapping one proto data message field to the DTO constructor
+ * in the NON-enum response path (the mapper returns a bare <Output>).
  * INVERSE of buildDtoToProto in grpc-service-emitter.ts:
  *   bytes → data.PascalName.ToByteArray()
  *   others → data.PascalName
+ *
+ * A RESPONSE enum field is handled by emitClientResponseMapperWithEnums instead
+ * (the mapper returns D2Result<<Output>> and parses each enum via Parse<Enum>Wire);
+ * this builder is only reached for the enum-free fields of an enum-free response.
  */
 function buildClientProtoToDto(f: FieldInfo, source: string): string {
   const propName = toPascal(f.name);
   if (f.csType === "byte[]" || f.csType === "byte[]?")
     return `${source}.${propName}.ToByteArray()`;
   return `${source}.${propName}`;
+}
+
+/**
+ * Emit the proto→DTO response mapper for a response carrying ≥1 enum field. Each
+ * enum field's proto string is parsed via Parse<Enum>Wire (fail-loud on unknown);
+ * the mapper short-circuits to ValidationFailed and otherwise constructs the DTO.
+ * The mapper returns D2Result<<Output>> instead of a bare <Output>.
+ *
+ * This is the inbound CLIENT analogue of the server's emitRequestMapperWithEnums
+ * (grpc-service-emitter.ts): a proto string the client cannot map back to the C#
+ * enum is a 400 ValidationFailed — strict, NO fallback sentinel, symmetric with the
+ * server-side request parse and the JSON JsonStringEnumConverter policy.
+ */
+function emitClientResponseMapperWithEnums(
+  lines: string[],
+  responseModelName: string,
+  fqDtoOutput: string,
+  responseFields: readonly FieldInfo[],
+): void {
+  lines.push(
+    `        internal D2Result<${fqDtoOutput}> To${responseModelName}()`,
+  );
+  lines.push("        {");
+
+  // Parse each enum field; bind its local on success, short-circuit on failure.
+  const ctorArgs: string[] = [];
+  for (const f of responseFields) {
+    if (f.enumRef !== undefined) {
+      const local = `${f.name}Result`;
+      lines.push(
+        `            var ${local} = string.Parse${f.enumRef.name}Wire(data.${toPascal(f.name)});`,
+      );
+      lines.push(`            if (!${local}.Success)`);
+      lines.push(
+        `                return D2Result<${fqDtoOutput}>.ValidationFailed(`,
+      );
+      lines.push(
+        `                    ${local}.Messages, ${local}.InputErrors, ${local}.ErrorCode, ${local}.Category, ${local}.TraceId);`,
+      );
+      lines.push("");
+      ctorArgs.push(`${local}.Data`);
+    } else {
+      ctorArgs.push(buildClientProtoToDto(f, "data"));
+    }
+  }
+
+  lines.push(
+    `            return D2Result<${fqDtoOutput}>.Ok(new ${fqDtoOutput}(${ctorArgs.join(", ")}));`,
+  );
+  lines.push("        }");
 }
 
 /**

@@ -13,6 +13,12 @@
 //   - Message names = TypeSpec model names verbatim (e.g. SignInput, SignOutput).
 //   - Field names are lower_snake_case; field numbers assigned 1-based in order.
 //   - `repeated` for collection fields (IReadOnlyList<T> / readonly T[] in C#/TS).
+//   - Enum / string-literal-union field → a proto `string` field carrying the
+//     member-name wire string (the cross-language enum wire is always a string;
+//     NO proto `enum` declaration, NO `_UNSPECIFIED` sentinel). The proto↔DTO
+//     transport mapper parses the string back to the C# enum, failing loud on an
+//     unknown value (matching the JSON deserialization policy). A repeated enum
+//     field is `repeated string`.
 //   - Auto-generated banner (not the copyright header) per §26.5.
 //   - Unmapped scalar → D2TSP001 loud failure; returns undefined (no partial file).
 //   - Unknown streaming mode → loud failure (belt-and-suspenders for stale state maps).
@@ -263,6 +269,19 @@ function resolveOneField(
   ) => void,
 ): ProtoFieldInfo | undefined {
   const protoName = toSnake(f.name);
+
+  // Enum / string-literal-union field → a proto `string` field (the member-name
+  // wire string). Handled before the csType-based scalar resolution because the
+  // field's csType is the enum NAME (e.g. "KeyKind"), not a registry scalar. A
+  // repeated enum field is `repeated string`. f.protoType is "string" (set by
+  // the walker for enum fields).
+  if (f.enumRef !== undefined)
+    return {
+      protoName,
+      protoType: f.protoType ?? "string",
+      fieldNumber,
+      repeated: f.repeated,
+    };
 
   // Collection field: csType = "IReadOnlyList<T>" → repeated T
   if (f.csType.startsWith("IReadOnlyList<")) {

@@ -27,6 +27,14 @@ import { createTypeSpecLibrary, paramMessage } from "@typespec/compiler";
 //   D2TSP006  idempotent-requires-route — @d2Idempotent present on an op with no @route;
 //                                         idempotency gating is REST-only, so an in-process-only
 //                                         or gRPC-only op must not carry the gate annotation
+//   D2TSP007  unsupported-union-shape   — a union property whose variants are NOT a closed set
+//                                         of string literals (mixed-primitive, mixed-literal-kind,
+//                                         numeric-literal-only, or otherwise non-string-literal).
+//                                         Named/inline string-literal unions and named enums ARE
+//                                         supported (mapped to a cross-language enum); these
+//                                         ambiguous shapes are not — there is no single C#/proto/TS
+//                                         representation. Replace with a named enum or a closed
+//                                         string-literal union.
 // -----------------------------------------------------------------------
 
 /**
@@ -49,15 +57,17 @@ export const $lib = createTypeSpecLibrary({
     },
 
     /**
-     * D2TSP002 — A model property has a type the DTO emitter cannot yet express
-     * (enum, union, anonymous-model, or unrecognized kind). Enum/union support
-     * is deferred; these properties must be replaced with a scalar or a named
-     * model before the emitter can generate a DTO.
+     * D2TSP002 — A model property has a type the DTO emitter cannot express
+     * (an anonymous model, a model-variant union, or an otherwise unrecognized
+     * kind). Named enums and closed string-literal unions ARE supported (mapped
+     * to a cross-language enum); use D2TSP007 for ambiguous union shapes. Replace
+     * the property with a scalar, a named model, a named enum, or a closed
+     * string-literal union before the emitter can generate a DTO.
      */
     "unsupported-property-type": {
       severity: "error",
       messages: {
-        default: paramMessage`unsupported property type '${"kind"}' on '${"property"}' — enum, union, and anonymous-model properties are not yet supported by the DTO emitter`,
+        default: paramMessage`unsupported property type '${"kind"}' on '${"property"}' — expected a scalar, a named model, a supported enum/string-literal union, or an array thereof`,
       },
     },
 
@@ -114,6 +124,21 @@ export const $lib = createTypeSpecLibrary({
       severity: "error",
       messages: {
         default: paramMessage`@d2Idempotent on '${"op"}' requires a public HTTP route (@route) — idempotency gating is REST-only and is meaningless without a route`,
+      },
+    },
+
+    /**
+     * D2TSP007 — A union property has a shape the emitter cannot map to a
+     * cross-language enum. Only a closed set of string literals (or a named
+     * enum) maps to a C#/proto/TS enum convention. Mixed-primitive, mixed-
+     * literal-kind, numeric-literal-only, discriminated, or model unions have no
+     * single cross-language representation and are rejected. Replace the property
+     * with a named enum or a closed string-literal union.
+     */
+    "unsupported-union-shape": {
+      severity: "error",
+      messages: {
+        default: paramMessage`union property '${"property"}' has an unsupported shape — only a closed set of string literals (or a named enum) maps to a cross-language enum; mixed-primitive, numeric-literal, discriminated, or model unions are not supported`,
       },
     },
   },

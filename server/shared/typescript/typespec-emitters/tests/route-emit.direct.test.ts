@@ -1165,3 +1165,109 @@ describe("$onEmit_routeEmitDirect_IdempotentWithRoute_SeamAndGate", () => {
     expect(seamFile).toBeDefined();
   });
 });
+
+// ---------------------------------------------------------------------------
+// Test: a mixed-primitive union DTO field → D2TSP007 via the DTO onError path
+// (covers the emitter.ts unsupported-union-shape branch in emitDtoPair).
+// ---------------------------------------------------------------------------
+
+describe("$onEmit_unionShape_DtoPath_D2TSP007", () => {
+  it("an in-process op with a string|int32 union field → unsupported-union-shape diagnostic, no DTO file", async () => {
+    const mixedUnion = {
+      kind: "Union",
+      variants: new Map<string | symbol, { type: unknown }>([
+        [Symbol("a"), { type: { kind: "Scalar", name: "string" } }],
+        [Symbol("b"), { type: { kind: "Scalar", name: "int32" } }],
+      ]),
+    } as unknown as Model;
+    const inputModel = makeModel("BadInput", {
+      mixed: mixedUnion,
+    });
+    const outputModel = makeModel("BadOutput", { ok: makeStringScalar() });
+    const op = makeWrappedOp("badUnion", inputModel, outputModel);
+
+    const servedBy = new Map<object, unknown>([[op, "X"]]);
+    const inProcess = new Map<object, unknown>([[op, true]]);
+    const command = new Map<object, unknown>([[op, true]]);
+    directUnitOps.push(op);
+
+    const reportedCodes: string[] = [];
+    const libModule = await import("../src/lib.js");
+    vi.spyOn(libModule.$lib, "reportDiagnostic").mockImplementation(
+      (_prog, diag: { code: string }) => {
+        reportedCodes.push(diag.code);
+      },
+    );
+
+    const program = makeMockProgram((key: symbol) => {
+      if (key === D2_SERVED_BY_KEY) return servedBy;
+      if (key === D2_IN_PROCESS_KEY) return inProcess;
+      if (key === D2_COMMAND_KEY) return command;
+      return new Map();
+    });
+
+    await $onEmit(makeBaseContext(program, FIXTURE_OPTS));
+
+    expect(reportedCodes).toContain("unsupported-union-shape");
+    // No partial DTO file for the failing op.
+    expect(
+      directUnitEmitted.find((e) => e.path.includes("BadInput.g.cs")),
+    ).toBeUndefined();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Test: a mixed-primitive union on a @d2GrpcMethod op → D2TSP007 via the proto
+// onError path (covers the emitter.ts unsupported-union-shape branch in
+// emitProtoAndGrpcService).
+// ---------------------------------------------------------------------------
+
+describe("$onEmit_unionShape_ProtoPath_D2TSP007", () => {
+  it("a @d2GrpcMethod op with a string|int32 union field → unsupported-union-shape, no proto file", async () => {
+    const mixedUnion = {
+      kind: "Union",
+      variants: new Map<string | symbol, { type: unknown }>([
+        [Symbol("a"), { type: { kind: "Scalar", name: "string" } }],
+        [Symbol("b"), { type: { kind: "Scalar", name: "int32" } }],
+      ]),
+    } as unknown as Model;
+    const inputModel = makeModel("BadGrpcInput", {
+      kid: makeStringScalar(),
+      mixed: mixedUnion,
+    });
+    const outputModel = makeModel("BadGrpcOutput", {
+      signature: makeStringScalar(),
+    });
+    const op = makeWrappedOp("badGrpcUnion", inputModel, outputModel);
+
+    const servedBy = new Map<object, unknown>([[op, "X"]]);
+    const command = new Map<object, unknown>([[op, true]]);
+    const grpc = new Map<object, unknown>([
+      [op, { service: "XSigner", method: "Bad", streaming: "unary" }],
+    ]);
+    directUnitOps.push(op);
+
+    const reportedCodes: string[] = [];
+    const libModule = await import("../src/lib.js");
+    vi.spyOn(libModule.$lib, "reportDiagnostic").mockImplementation(
+      (_prog, diag: { code: string }) => {
+        reportedCodes.push(diag.code);
+      },
+    );
+
+    const program = makeMockProgram((key: symbol) => {
+      if (key === D2_SERVED_BY_KEY) return servedBy;
+      if (key === D2_COMMAND_KEY) return command;
+      if (key === D2_GRPC_METHOD_KEY) return grpc;
+      return new Map();
+    });
+
+    await $onEmit(makeBaseContext(program, FIXTURE_OPTS));
+
+    expect(reportedCodes).toContain("unsupported-union-shape");
+    // No partial proto for the failing op.
+    expect(
+      directUnitEmitted.find((e) => e.path.includes("x_signer_bad.g.proto")),
+    ).toBeUndefined();
+  });
+});

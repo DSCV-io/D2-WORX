@@ -119,6 +119,18 @@ describe("protoGrpcEmitIntegration_Sign_EmitsProtoAndService", () => {
     expect(protoContent).toContain("string kid = 1;");
     expect(protoContent).toContain("bytes payload = 2;");
 
+    // The live $onEmit proto path must name the DATA message after the DTO output
+    // model (<Op>Output), NOT the <Method>Response envelope wrapper. Passing the
+    // wrapper name as emitProto's responseModelName produced TWO `message
+    // SignResponse` blocks (envelope + data) — a duplicate proto message that
+    // protoc rejects. Pin: the data message is `message SignOutput`, and
+    // `message SignResponse` appears EXACTLY ONCE (the wrapper, no collision).
+    expect(protoContent).toContain("message SignOutput {");
+    const responseMsgDecls = (
+      protoContent!.match(/message SignResponse \{/g) ?? []
+    ).length;
+    expect(responseMsgDecls).toBe(1);
+
     // gRPC service class emitted.
     // The sign op has @d2InProcess → the service delegates through the fixture façade,
     // not ISignHandler directly. The façade type name in fixture mode (no csAppNamespaceBase)

@@ -10,7 +10,7 @@
 // and absence of phase/step/audit-round identifiers in emitted content.
 
 import { describe, it, expect } from "vitest";
-import type { FieldInfo } from "../src/lib/model-walk.js";
+import type { FieldInfo, NestedEnum } from "../src/lib/model-walk.js";
 import { emitGrpcService } from "../src/lib/grpc-service-emitter.js";
 import type { GrpcDelegationTarget } from "../src/lib/grpc-service-emitter.js";
 
@@ -580,5 +580,127 @@ describe("emitGrpcService_FacadeDelegation_NoPhaseAuditIdentifiers", () => {
     expect(svc.content).not.toContain("0019");
     expect(svc.content).not.toMatch(/\bR[0-9]\b/);
     expect(svc.content).not.toMatch(/\bF[0-9]\b/);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Enum request field — the proto-string ↔ DTO-enum bridge (cross-namespace)
+// ---------------------------------------------------------------------------
+
+describe("emitGrpcService_EnumRequestField_ParseBridgeAndAlias", () => {
+  const KEY_KIND: NestedEnum = {
+    name: "KeyKind",
+    members: [
+      { csName: "Rsa", wireValue: "Rsa", needsEnumMember: false },
+      { csName: "Aes", wireValue: "Aes", needsEnumMember: false },
+    ],
+  };
+
+  function reqWithEnum(): FieldInfo[] {
+    return [
+      {
+        name: "kid",
+        csName: "Kid",
+        csType: "string",
+        tsName: "kid",
+        tsType: "string",
+        protoType: "string",
+        repeated: false,
+        optional: false,
+        redact: false,
+      },
+      {
+        name: "keyKind",
+        csName: "KeyKind",
+        csType: "KeyKind",
+        tsName: "keyKind",
+        tsType: "KeyKind",
+        protoType: "string",
+        repeated: false,
+        optional: false,
+        redact: false,
+        enumRef: KEY_KIND,
+      },
+    ];
+  }
+
+  it("emits the enum alias (cross-namespace DTO) + ToWire/ParseWire helpers + D2Result<Input> request mapper", () => {
+    const [svc, mapper] = emitGrpcService(
+      "op",
+      "Svc",
+      "Do",
+      PROTO_NS,
+      IMPL_NS,
+      DTO_NS, // distinct from IMPL_NS → the enum alias IS emitted
+      SOURCE,
+      "DoReq",
+      "DoResp",
+      "DoIn",
+      reqWithEnum(),
+      "DoOut",
+      [],
+    );
+
+    // Cross-namespace enum alias (the enumAliasUsings non-empty branch).
+    expect(mapper.content).toContain(
+      `using KeyKind = global::${DTO_NS}.KeyKind;`,
+    );
+    expect(mapper.content).toContain("using D2.Shared.I18n;");
+
+    // The fail-loud inbound parse helper + the outbound ToWire helper.
+    expect(mapper.content).toContain(
+      "internal static D2Result<KeyKind> ParseKeyKindWire(string? value)",
+    );
+    expect(mapper.content).toContain('KeyKind.Rsa => "Rsa",');
+    expect(mapper.content).toContain("internal string ToWire()");
+    expect(mapper.content).toContain(
+      "TK.Common.Errors.VALIDATION_FAILED",
+    );
+
+    // The request mapper returns D2Result<DoIn> (parse can fail).
+    expect(mapper.content).toContain("internal D2Result<DoIn> ToDoIn()");
+    expect(mapper.content).toContain(
+      "var keyKindResult = string.ParseKeyKindWire(request.KeyKind);",
+    );
+    expect(mapper.content).toContain("if (!keyKindResult.Success)");
+
+    // The service checks .Success and short-circuits to the envelope on failure.
+    expect(svc.content).toContain("var inputResult = request.ToDoIn();");
+    expect(svc.content).toContain("if (!inputResult.Success)");
+    expect(svc.content).toContain("using D2.Shared.Result;");
+    expect(svc.content).toContain("DoIn input = inputResult.Data!;");
+  });
+
+  it("an enum OUTPUT field maps outbound via .ToWire()", () => {
+    const [, mapper] = emitGrpcService(
+      "op",
+      "Svc",
+      "Do",
+      PROTO_NS,
+      IMPL_NS,
+      DTO_NS,
+      SOURCE,
+      "DoReq",
+      "DoResp",
+      "DoIn",
+      [],
+      "DoOut",
+      [
+        {
+          name: "kind",
+          csName: "Kind",
+          csType: "KeyKind",
+          tsName: "kind",
+          tsType: "KeyKind",
+          protoType: "string",
+          repeated: false,
+          optional: false,
+          redact: false,
+          enumRef: KEY_KIND,
+        },
+      ],
+    );
+
+    expect(mapper.content).toContain("Kind = output.Kind.ToWire(),");
   });
 });
