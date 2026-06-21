@@ -39,6 +39,13 @@ import {
   emitEnumMapperHelpers,
   enumAliasUsings,
 } from "./enum-mapper.js";
+import {
+  buildDtoToProtoNested,
+  buildProtoToDtoNested,
+  collectFieldNestedModels,
+  emitNestedModelMapperHelpers,
+  type OutboundAssign,
+} from "./nested-model-mapper.js";
 
 // ---------------------------------------------------------------------------
 // Public types
@@ -279,9 +286,7 @@ function emitServiceClass(
     // enum string and returns D2Result<Input>, failing loud (400 ValidationFailed)
     // on an unknown wire value. Short-circuit that failure to the Response envelope
     // WITHOUT delegating; gRPC status stays OK for the business validation result.
-    lines.push(
-      `        var inputResult = request.To${requestModelName}();`,
-    );
+    lines.push(`        var inputResult = request.To${requestModelName}();`);
     lines.push(`        if (!inputResult.Success)`);
     lines.push("        {");
     lines.push(
@@ -294,9 +299,7 @@ function emitServiceClass(
     lines.push("        }");
     lines.push("");
     lines.push(`        ${requestModelName} input = inputResult.Data!;`);
-    lines.push(
-      `        var result = await ${callExpr}.ConfigureAwait(false);`,
-    );
+    lines.push(`        var result = await ${callExpr}.ConfigureAwait(false);`);
     lines.push(`        return result.ToProtoResponse();`);
   } else {
     lines.push(
@@ -385,11 +388,35 @@ function emitTransportMappers(
   for (const alias of enumAliasUsings(allEnums, dtoCsharpNs, serviceImplNs))
     lines.push(alias);
 
+  // Nested models (transitive closure, deduped) referenced by request OR response.
+  // Each needs a Proto<Model> alias (the proto nested-message name collides with the
+  // DTO nested-record name, exactly like the top-level <Op>Output collision) and — when
+  // the DTO namespace differs — a bare-name DTO alias so the sub-mapper extension blocks
+  // + the recursion resolve unambiguously.
+  const nestedModels = collectFieldNestedModels([
+    ...requestFields,
+    ...responseFields,
+  ]);
+  for (const nm of nestedModels)
+    lines.push(`using Proto${nm.name} = global::${protoCsharpNs}.${nm.name};`);
+  if (!dtoIsLocal)
+    for (const nm of nestedModels)
+      lines.push(`using ${nm.name} = global::${dtoCsharpNs}.${nm.name};`);
+
+  // System.Linq is needed for the .Select(...) projection of an array-of-model field
+  // (top-level OR inside any nested sub-mapper). A non-array nested model never needs it.
+  const hasArrayOfModel = [
+    ...requestFields,
+    ...responseFields,
+    ...nestedModels.flatMap((nm) => nm.fields),
+  ].some((f) => f.nested !== undefined && f.repeated);
+
   lines.push("using D2.Shared.Result;");
   lines.push("using D2.Shared.Result.Grpc;");
   lines.push("using Google.Protobuf;");
   // TK lives in D2.Shared.I18n — needed by the inbound Parse<Enum>Wire fail-loud path.
   if (allEnums.length > 0) lines.push("using D2.Shared.I18n;");
+  if (hasArrayOfModel) lines.push("using System.Linq;");
   lines.push("");
 
   lines.push(
@@ -458,10 +485,13 @@ function emitTransportMappers(
   } else {
     lines.push(`            return new ${protoDataAlias}`);
     lines.push("            {");
-    const assignments = responseFields.map(
-      (f) => `                ${toPascal(f.name)} = ${buildDtoToProto(f)}`,
-    );
-    for (const assignment of assignments) lines.push(`${assignment},`);
+    for (const f of responseFields) {
+      const propName = toPascal(f.name);
+      const assign = buildDtoToProtoAssign(f);
+      if (assign.kind === "collectionInit")
+        lines.push(`                ${propName} = { ${assign.expr} },`);
+      else lines.push(`                ${propName} = ${assign.expr},`);
+    }
     lines.push("            };");
   }
   lines.push("        }");
@@ -469,6 +499,14 @@ function emitTransportMappers(
 
   // Per-enum ToWire / Parse<Enum>Wire helper blocks (the proto-string ↔ enum bridge).
   emitEnumMapperHelpers((l) => lines.push(l), allEnums);
+
+  // Per-nested-model sub-mapper blocks (proto ↔ DTO), recursive for depth-N. The
+  // server mapper references the proto nested-message via its Proto<Model> alias and
+  // the DTO nested-record via its bare (namespace-local or aliased) name.
+  emitNestedModelMapperHelpers((l) => lines.push(l), nestedModels, {
+    dtoTypeName: (m) => m,
+    protoTypeName: (m) => `Proto${m}`,
+  });
 
   lines.push("}");
   lines.push("");
@@ -526,9 +564,13 @@ function emitRequestMapperWithEnums(
 
 /**
  * Build the expression for mapping one proto request field to the DTO constructor arg.
+ * nested model / array-of-model → recurse through the per-model To<Model> sub-mapper;
  * bytes → ByteString.ToByteArray(); all others → request.PascalName.
  */
 function buildProtoToDto(f: FieldInfo): string {
+  const nested = buildProtoToDtoNested(f, "request");
+  if (nested !== undefined) return nested;
+
   const propName = toPascal(f.name);
   // bytes type in C# DTO = byte[], in proto = Google.Protobuf.ByteString.
   if (f.csType === "byte[]" || f.csType === "byte[]?")
@@ -537,14 +579,29 @@ function buildProtoToDto(f: FieldInfo): string {
 }
 
 /**
- * Build the assignment RHS for mapping one DTO output field to proto response.
- * byte[] → ByteString.CopyFrom(output.PascalName); enum → output.PascalName.ToWire()
- * (DTO enum → proto member-name wire string); all others → output.PascalName.
+ * Build the outbound assignment for mapping one DTO output field to proto response.
+ * nested model / array-of-model → recurse through the per-model ToProto<Model>
+ * sub-mapper (an array-of-model uses the `Field = { … }` collection-init form
+ * because a proto3 `repeated` field has no setter); byte[] → ByteString.CopyFrom;
+ * enum → output.PascalName.ToWire() (DTO enum → proto member-name wire string);
+ * all others → output.PascalName.
  */
-function buildDtoToProto(f: FieldInfo): string {
+function buildDtoToProtoAssign(f: FieldInfo): OutboundAssign {
+  const nested = buildDtoToProtoNested(f, "output");
+  if (nested !== undefined) {
+    // The sub-mapper helper emits a `global::Google.Protobuf.ByteString` literal
+    // for a nested bytes field, but the server mapper imports Google.Protobuf and
+    // uses the short ByteString name — re-root the helper output is unnecessary
+    // because the nested arm only ever references the sub-mapper + Select, never
+    // ByteString (a top-level bytes field is handled below, not here).
+    return nested;
+  }
+
   const propName = toPascal(f.name);
   if (f.csType === "byte[]" || f.csType === "byte[]?")
-    return `ByteString.CopyFrom(output.${propName})`;
-  if (f.enumRef !== undefined) return `output.${propName}.ToWire()`;
-  return `output.${propName}`;
+    return { kind: "assign", expr: `ByteString.CopyFrom(output.${propName})` };
+  if (f.enumRef !== undefined)
+    return { kind: "assign", expr: `output.${propName}.ToWire()` };
+
+  return { kind: "assign", expr: `output.${propName}` };
 }

@@ -292,9 +292,7 @@ function resolveProperty(
     return {
       name: propName,
       csName,
-      csType: resolved.optional
-        ? `${resolved.enum.name}?`
-        : resolved.enum.name,
+      csType: resolved.optional ? `${resolved.enum.name}?` : resolved.enum.name,
       tsName: propName,
       tsType: resolved.enum.name,
       protoType: "string",
@@ -308,7 +306,7 @@ function resolveProperty(
 
   // ---- Nested model (non-array) --------------------------------------------
   if (t.kind === "Model") {
-    const nested = collectNested(t, nestedByName);
+    const nested = collectNested(t, nestedByName, enumsByName, onError);
     return {
       name: propName,
       csName,
@@ -428,7 +426,12 @@ function resolveArrayProperty(
 
   if (elementType?.kind === "Model" && elementType.name !== "Array") {
     // Collection of nested models — recurse to collect the nested model.
-    const nested = collectNested(elementType, nestedByName);
+    const nested = collectNested(
+      elementType,
+      nestedByName,
+      enumsByName,
+      onError,
+    );
     return {
       name: propName,
       csName,
@@ -661,9 +664,7 @@ function isNullIntrinsic(t: Type): boolean {
 function sanitizeIdentifier(literal: string): string {
   // Split on any run of non-alphanumeric characters, PascalCase each segment.
   const segments = literal.split(/[^A-Za-z0-9]+/).filter((s) => s.length > 0);
-  const pascal = segments
-    .map((s) => s[0]!.toUpperCase() + s.slice(1))
-    .join("");
+  const pascal = segments.map((s) => s[0]!.toUpperCase() + s.slice(1)).join("");
   // A literal that is already a valid identifier with no separators round-trips
   // through the segment join unchanged (e.g. "active" → "Active", "Rsa" → "Rsa").
   if (pascal.length === 0) return "_";
@@ -672,54 +673,56 @@ function sanitizeIdentifier(literal: string): string {
 
 /**
  * Collect a nested model into the dedup map. Returns the NestedModel (which
- * may have been seen before — same object from the map). Nested models are NOT
- * themselves walked for @d2Redact (they carry no op-level redact state).
+ * may have been seen before — same object from the map). Nested models carry NO
+ * op-level @d2Redact state (they are transport containers, not direct op-context
+ * objects), so each is walked against an EMPTY redact map → every nested field's
+ * `redact` is false.
+ *
+ * Depth-N: a nested model's own fields are resolved by the SAME `resolveProperty`
+ * logic the top-level op model uses — so a nested model that itself references a
+ * deeper nested model (or an array of one), an enum, a union, a scalar, or a
+ * scalar/model array all resolve identically and recurse to arbitrary depth. The
+ * dedup map is registered BEFORE the field walk (with a placeholder), so a cyclic
+ * or self-referential model terminates: the recursive `collectNested` for the same
+ * name finds the in-progress entry and returns it instead of recursing forever.
+ *
+ * Strict fail-loud: an unmapped nested scalar / unsupported nested type fires the
+ * SAME loud diagnostic (D2TSP001 / D2TSP002 / D2TSP007) as a top-level field — it
+ * is NEVER silently omitted. The field is dropped only AFTER the loud diagnostic,
+ * exactly like a top-level field.
  */
 function collectNested(
   model: Model,
   nestedByName: Map<string, NestedModel>,
+  enumsByName: Map<string, NestedEnum>,
+  onError: (code: WalkErrorCode, message: string) => void,
 ): NestedModel {
   const existing = nestedByName.get(model.name);
   if (existing !== undefined) return existing;
 
-  // Recurse: walk nested model's own fields (no redact state — nested models
-  // are transport containers, not direct op-context objects; redact is set on
-  // the top-level op's input/output properties).
+  // Register a mutable placeholder BEFORE walking the fields so a self-reference
+  // (or a cycle through deeper models) sees an in-progress entry and terminates.
   const nestedFields: FieldInfo[] = [];
-  for (const [propName, prop] of model.properties) {
-    // For nested models we resolve types only; redact is false (no stateMap
-    // context — the nested model is not itself an op parameter).
-    const t = prop.type;
-    const csName = toPascal(propName);
-    const optional = prop.optional;
-
-    if (t.kind === "Scalar") {
-      let mapping;
-      try {
-        mapping = resolveScalar(t.name);
-      } catch {
-        // Skip unmapped nested scalar silently in nested context —
-        // the parent walk will surface the same issue at the top level
-        // if the parent field is the problem; here we just omit the field.
-        continue;
-      }
-      nestedFields.push({
-        name: propName,
-        csName,
-        csType: optional ? `${mapping.cs}?` : mapping.cs,
-        tsName: propName,
-        tsType: mapping.ts,
-        protoType: mapping.proto,
-        repeated: false,
-        optional,
-        redact: false,
-      });
-    }
-    // Non-scalar nested fields inside a nested model are intentionally not
-    // recursed further at this step (no deep nesting in the GetJwks/sign shape).
-  }
-
   const nested: NestedModel = { name: model.name, fields: nestedFields };
   nestedByName.set(model.name, nested);
+
+  // Nested models carry no redact state — walk against an empty redact map so every
+  // resolved field's `redact` is false. Resolution is otherwise identical to a
+  // top-level field (scalars, optionals, arrays, deeper nested models, enums/unions),
+  // which is what makes nested support depth-agnostic + uniformly loud.
+  const emptyRedactMap = new Map<object, unknown>();
+  for (const [propName, prop] of model.properties) {
+    const fieldInfo = resolveProperty(
+      model.name,
+      propName,
+      prop,
+      emptyRedactMap,
+      nestedByName,
+      enumsByName,
+      onError,
+    );
+    if (fieldInfo !== undefined) nestedFields.push(fieldInfo);
+  }
+
   return nested;
 }

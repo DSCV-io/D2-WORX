@@ -66,6 +66,13 @@ import { toPascal } from "./name-transforms.js";
 import type { FieldInfo } from "./model-walk.js";
 import type { EmittedFile } from "./csharp-dto-emitter.js";
 import { collectFieldEnums, emitEnumMapperHelpers } from "./enum-mapper.js";
+import {
+  buildDtoToProtoNested,
+  buildProtoToDtoNested,
+  collectFieldNestedModels,
+  emitNestedModelMapperHelpers,
+  type OutboundAssign,
+} from "./nested-model-mapper.js";
 import type { PredicateNode } from "@d2/typespec-decorators";
 
 // ---------------------------------------------------------------------------
@@ -440,7 +447,9 @@ function emitImpl(
       lines.push(
         `                    var data = response.Data is null ? default : response.Data.To${op.responseModelName}();`,
       );
-      lines.push(`                    capturedData = data;  // for the budget-exhaust restore`);
+      lines.push(
+        `                    capturedData = data;  // for the budget-exhaust restore`,
+      );
       lines.push(
         `                    var businessResult = response.Result is not null`,
       );
@@ -451,9 +460,7 @@ function emitImpl(
         `                        : D2Result<${op.responseModelName}?>.Ok(data);`,
       );
       lines.push("");
-      lines.push(
-        `                    if (${retryGuard})`,
-      );
+      lines.push(`                    if (${retryGuard})`);
       lines.push(
         `                        throw new D2GeneratedBusinessRetrySignal(businessResult.ToProto());`,
       );
@@ -609,6 +616,21 @@ function emitClientMappers(
             `using ${f.enumRef.name} = global::${op.dtoCsharpNs}.${f.enumRef.name};`,
           );
 
+  // System.Linq is needed for the .Select(...).ToList() projection of an
+  // array-of-model field (top-level OR inside any nested sub-mapper, transitively).
+  // The client mapper references nested types fully-qualified (global::<ns>.<Model>),
+  // so no nested type alias is emitted — only System.Linq when an array-of-model exists.
+  const allClientNested = collectFieldNestedModels(
+    ops.flatMap((op) => [...op.requestFields, ...op.responseFields]),
+  );
+  const clientHasArrayOfModel = ops
+    .flatMap((op) => [
+      ...op.requestFields,
+      ...op.responseFields,
+      ...allClientNested.flatMap((nm) => nm.fields),
+    ])
+    .some((f) => f.nested !== undefined && f.repeated);
+
   const sortedUsings = [...usingSet].sort();
   for (const ns of sortedUsings) lines.push(`using ${ns};`);
   for (const alias of enumAliasLines.sort()) lines.push(alias);
@@ -616,6 +638,8 @@ function emitClientMappers(
     lines.push("using D2.Shared.I18n;");
     lines.push("using D2.Shared.Result;");
   }
+
+  if (clientHasArrayOfModel) lines.push("using System.Linq;");
   lines.push("");
 
   // Per-op mapper class.
@@ -654,8 +678,10 @@ function emitClientMappers(
       lines.push("            {");
       for (const f of op.requestFields) {
         const propName = toPascal(f.name);
-        const rhs = buildClientDtoToProto(f, "input");
-        lines.push(`                ${propName} = ${rhs},`);
+        const assign = buildClientDtoToProto(f, "input");
+        if (assign.kind === "collectionInit")
+          lines.push(`                ${propName} = { ${assign.expr} },`);
+        else lines.push(`                ${propName} = ${assign.expr},`);
       }
       lines.push("            };");
     }
@@ -695,7 +721,9 @@ function emitClientMappers(
         const args = op.responseFields.map((f) =>
           buildClientProtoToDto(f, "data"),
         );
-        lines.push(`            return new ${fqDtoOutput}(${args.join(", ")});`);
+        lines.push(
+          `            return new ${fqDtoOutput}(${args.join(", ")});`,
+        );
       }
       lines.push("        }");
     }
@@ -709,6 +737,18 @@ function emitClientMappers(
       ...op.responseFields,
     ]);
     emitEnumMapperHelpers((l) => lines.push(l), opEnums);
+
+    // Per-nested-model sub-mapper blocks (proto ↔ DTO), recursive for depth-N.
+    // The client references both the DTO nested-record and the proto nested-message
+    // fully-qualified (global::<ns>.<Model>) — no using-alias needed.
+    const opNested = collectFieldNestedModels([
+      ...op.requestFields,
+      ...op.responseFields,
+    ]);
+    emitNestedModelMapperHelpers((l) => lines.push(l), opNested, {
+      dtoTypeName: (m) => `global::${op.dtoCsharpNs}.${m}`,
+      protoTypeName: (m) => `global::${op.protoCsharpNs}.${m}`,
+    });
 
     lines.push("}");
     if (oi < ops.length - 1) lines.push("");
@@ -968,32 +1008,48 @@ export function emitClientKeys(
 // ---------------------------------------------------------------------------
 
 /**
- * Build the expression for mapping one DTO input field to the proto request property.
- * INVERSE of buildProtoToDto in grpc-service-emitter.ts:
+ * Build the outbound assignment for mapping one DTO input field to the proto
+ * request property. INVERSE of buildProtoToDto in grpc-service-emitter.ts:
+ *   nested model / array-of-model → recurse through the per-model ToProto<Model>
+ *     sub-mapper (an array-of-model uses the `Field = { … }` collection-init form
+ *     because a proto3 `repeated` field has no setter)
  *   byte[] → ByteString.CopyFrom(input.PascalName)
  *   enum   → input.PascalName.ToWire()  (DTO enum → proto member-name wire string)
  *   others → input.PascalName
  */
-function buildClientDtoToProto(f: FieldInfo, source: string): string {
+function buildClientDtoToProto(f: FieldInfo, source: string): OutboundAssign {
+  const nested = buildDtoToProtoNested(f, source);
+  if (nested !== undefined) return nested;
+
   const propName = toPascal(f.name);
   if (f.csType === "byte[]" || f.csType === "byte[]?")
-    return `global::Google.Protobuf.ByteString.CopyFrom(${source}.${propName})`;
-  if (f.enumRef !== undefined) return `${source}.${propName}.ToWire()`;
-  return `${source}.${propName}`;
+    return {
+      kind: "assign",
+      expr: `global::Google.Protobuf.ByteString.CopyFrom(${source}.${propName})`,
+    };
+  if (f.enumRef !== undefined)
+    return { kind: "assign", expr: `${source}.${propName}.ToWire()` };
+
+  return { kind: "assign", expr: `${source}.${propName}` };
 }
 
 /**
  * Build the argument for mapping one proto data message field to the DTO constructor
  * in the NON-enum response path (the mapper returns a bare <Output>).
  * INVERSE of buildDtoToProto in grpc-service-emitter.ts:
+ *   nested model / array-of-model → recurse through the per-model To<Model> sub-mapper
  *   bytes → data.PascalName.ToByteArray()
  *   others → data.PascalName
  *
  * A RESPONSE enum field is handled by emitClientResponseMapperWithEnums instead
  * (the mapper returns D2Result<<Output>> and parses each enum via Parse<Enum>Wire);
- * this builder is only reached for the enum-free fields of an enum-free response.
+ * this builder is reached for the enum-free fields of any response (including the
+ * non-enum nested fields of an enum-bearing response).
  */
 function buildClientProtoToDto(f: FieldInfo, source: string): string {
+  const nested = buildProtoToDtoNested(f, source);
+  if (nested !== undefined) return nested;
+
   const propName = toPascal(f.name);
   if (f.csType === "byte[]" || f.csType === "byte[]?")
     return `${source}.${propName}.ToByteArray()`;

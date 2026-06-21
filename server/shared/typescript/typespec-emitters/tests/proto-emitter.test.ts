@@ -911,3 +911,179 @@ describe("emitProto_EnumField_EmitsStringField", () => {
     expect(result!.content).toContain("string key_kind = 1;");
   });
 });
+
+// ---------------------------------------------------------------------------
+// Nested-model wire shape — nullable nested (no `optional`), array-of-model,
+// depth-N message emission, two-distinct + dedup.
+// ---------------------------------------------------------------------------
+
+describe("emitProto_NestedModel_WireShape", () => {
+  it("a nullable nested-model field → a BARE message field (proto3 implicit presence, NO `optional`)", () => {
+    const customer: NestedModel = {
+      name: "Customer",
+      fields: [makeStringField("tier")],
+    };
+    const field: FieldInfo = {
+      name: "customer",
+      csName: "Customer",
+      csType: "Customer?",
+      tsName: "customer",
+      tsType: "Customer",
+      protoType: undefined,
+      repeated: false,
+      optional: true,
+      redact: false,
+      nested: customer,
+    };
+    const errors: string[] = [];
+    const result = emitProto(
+      "op",
+      "Svc",
+      "Do",
+      "unary",
+      SIGN_PKG,
+      SIGN_CS_NS,
+      SIGN_SOURCE,
+      "Req",
+      [],
+      "Out",
+      [field],
+      [customer],
+      (_, m) => errors.push(m),
+    );
+    expect(errors).toHaveLength(0);
+    // Bare message field — no `optional` keyword (message fields carry implicit presence).
+    expect(result!.content).toContain("  Customer customer = 1;");
+    expect(result!.content).not.toContain("optional Customer");
+    expect(result!.content).toContain("message Customer {");
+  });
+
+  it("array-of-model field → `repeated <Message>` + the element message", () => {
+    const line: NestedModel = {
+      name: "Line",
+      fields: [makeStringField("status")],
+    };
+    const field: FieldInfo = {
+      name: "lines",
+      csName: "Lines",
+      csType: "IReadOnlyList<Line>",
+      tsName: "lines",
+      tsType: "readonly Line[]",
+      protoType: undefined,
+      repeated: true,
+      optional: false,
+      redact: false,
+      nested: line,
+    };
+    const errors: string[] = [];
+    const result = emitProto(
+      "op",
+      "Svc",
+      "Do",
+      "unary",
+      SIGN_PKG,
+      SIGN_CS_NS,
+      SIGN_SOURCE,
+      "Req",
+      [],
+      "Out",
+      [field],
+      [line],
+      (_, m) => errors.push(m),
+    );
+    expect(errors).toHaveLength(0);
+    expect(result!.content).toContain("  repeated Line lines = 1;");
+    expect(result!.content).toContain("message Line {");
+  });
+
+  it("depth-N: a nested model referencing a deeper model → a message at EVERY level + repeated-inside-nested", () => {
+    // The caller passes the FULL transitive nested list (the walker dedups it);
+    // the proto emitter emits a message per entry, and a nested-model field INSIDE
+    // a nested message resolves to that model's name (incl. `repeated` for arrays).
+    const part: NestedModel = {
+      name: "Part",
+      fields: [makeStringField("code")],
+    };
+    const widget: NestedModel = {
+      name: "Widget",
+      fields: [
+        makeStringField("name"),
+        {
+          name: "parts",
+          csName: "Parts",
+          csType: "IReadOnlyList<Part>",
+          tsName: "parts",
+          tsType: "readonly Part[]",
+          protoType: undefined,
+          repeated: true,
+          optional: false,
+          redact: false,
+          nested: part,
+        },
+      ],
+    };
+    const outputField: FieldInfo = {
+      name: "widget",
+      csName: "Widget",
+      csType: "Widget?",
+      tsName: "widget",
+      tsType: "Widget",
+      protoType: undefined,
+      repeated: false,
+      optional: true,
+      redact: false,
+      nested: widget,
+    };
+    const errors: string[] = [];
+    const result = emitProto(
+      "op",
+      "Svc",
+      "Do",
+      "unary",
+      SIGN_PKG,
+      SIGN_CS_NS,
+      SIGN_SOURCE,
+      "Req",
+      [],
+      "Out",
+      [makeStringField("id"), outputField],
+      [widget, part],
+      (_, m) => errors.push(m),
+    );
+    expect(errors).toHaveLength(0);
+    // Top output references the depth-2 message.
+    expect(result!.content).toContain("  Widget widget = 2;");
+    // The depth-2 message references the depth-3 message via `repeated`.
+    expect(result!.content).toContain("message Widget {");
+    expect(result!.content).toContain("  repeated Part parts = 2;");
+    // The depth-3 leaf message is emitted.
+    expect(result!.content).toContain("message Part {");
+    expect(result!.content).toContain("  string code = 1;");
+  });
+
+  it("two DISTINCT nested models in one output → both messages emitted", () => {
+    const a: NestedModel = { name: "Alpha", fields: [makeStringField("x")] };
+    const b: NestedModel = { name: "Beta", fields: [makeStringField("y")] };
+    const errors: string[] = [];
+    const result = emitProto(
+      "op",
+      "Svc",
+      "Do",
+      "unary",
+      SIGN_PKG,
+      SIGN_CS_NS,
+      SIGN_SOURCE,
+      "Req",
+      [],
+      "Out",
+      [makeNestedField("alpha", a), makeNestedField("beta", b)],
+      [a, b],
+      (_, m) => errors.push(m),
+    );
+    expect(errors).toHaveLength(0);
+    expect(result!.content).toContain("message Alpha {");
+    expect(result!.content).toContain("message Beta {");
+    expect(result!.content).toContain("  Alpha alpha = 1;");
+    expect(result!.content).toContain("  Beta beta = 2;");
+  });
+});

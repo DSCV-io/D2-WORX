@@ -427,7 +427,9 @@ function makeEnum(
   return {
     kind: "Enum",
     name,
-    members: new Map(members.map((m) => [m.name, { name: m.name, value: m.value }])),
+    members: new Map(
+      members.map((m) => [m.name, { name: m.name, value: m.value }]),
+    ),
   } as unknown as Type;
 }
 
@@ -557,7 +559,9 @@ describe("walkModel_NamedEnum_Supported", () => {
     const errors: Array<{ code: string; message: string }> = [];
     const { fields } = walkModel(
       makeProgram(),
-      makeModel([["x", { type: e, optional: false } as unknown as ModelProperty]]),
+      makeModel([
+        ["x", { type: e, optional: false } as unknown as ModelProperty],
+      ]),
       (code, message) => errors.push({ code, message }),
     );
 
@@ -576,7 +580,9 @@ describe("walkModel_StringLiteralUnion_Supported", () => {
     ]);
     const { fields, nestedEnums } = walkModel(
       makeProgram(),
-      makeModel([["status", { type: u, optional: false } as unknown as ModelProperty]]),
+      makeModel([
+        ["status", { type: u, optional: false } as unknown as ModelProperty],
+      ]),
       () => {},
     );
 
@@ -584,7 +590,11 @@ describe("walkModel_StringLiteralUnion_Supported", () => {
     expect(fields[0]!.protoType).toBe("string");
     const m = nestedEnums[0]!.members;
     expect(m.map((x) => x.csName)).toEqual(["Active", "Inactive", "Pending"]);
-    expect(m.map((x) => x.wireValue)).toEqual(["active", "inactive", "pending"]);
+    expect(m.map((x) => x.wireValue)).toEqual([
+      "active",
+      "inactive",
+      "pending",
+    ]);
     // PascalCase member differs from lowercase literal → needs the attribute.
     expect(m.every((x) => x.needsEnumMember)).toBe(true);
   });
@@ -596,11 +606,18 @@ describe("walkModel_StringLiteralUnion_Supported", () => {
     ]);
     const { nestedEnums } = walkModel(
       makeProgram(),
-      makeModel([["accountKind", { type: u, optional: false } as unknown as ModelProperty]]),
+      makeModel([
+        [
+          "accountKind",
+          { type: u, optional: false } as unknown as ModelProperty,
+        ],
+      ]),
       () => {},
     );
 
-    const tp = nestedEnums[0]!.members.find((x) => x.wireValue === "third-party")!;
+    const tp = nestedEnums[0]!.members.find(
+      (x) => x.wireValue === "third-party",
+    )!;
     expect(tp.csName).toBe("ThirdParty");
     expect(tp.needsEnumMember).toBe(true);
   });
@@ -613,7 +630,12 @@ describe("walkModel_StringLiteralUnion_Supported", () => {
     ]);
     const { fields, nestedEnums } = walkModel(
       makeProgram(),
-      makeModel([["inlineState", { type: u, optional: false } as unknown as ModelProperty]]),
+      makeModel([
+        [
+          "inlineState",
+          { type: u, optional: false } as unknown as ModelProperty,
+        ],
+      ]),
       () => {},
     );
 
@@ -630,7 +652,9 @@ describe("walkModel_StringLiteralUnion_Supported", () => {
     ]);
     const { fields, nestedEnums } = walkModel(
       makeProgram(),
-      makeModel([["status", { type: u, optional: false } as unknown as ModelProperty]]),
+      makeModel([
+        ["status", { type: u, optional: false } as unknown as ModelProperty],
+      ]),
       () => {},
     );
 
@@ -698,7 +722,9 @@ describe("walkModel_StringLiteralUnion_Supported", () => {
     const u = makeUnion("Weird", [strLit("3d"), strLit("--")]);
     const { nestedEnums } = walkModel(
       makeProgram(),
-      makeModel([["v", { type: u, optional: false } as unknown as ModelProperty]]),
+      makeModel([
+        ["v", { type: u, optional: false } as unknown as ModelProperty],
+      ]),
       () => {},
     );
 
@@ -706,7 +732,10 @@ describe("walkModel_StringLiteralUnion_Supported", () => {
     expect(names[0]).toBe("_3d");
     expect(names[1]).toBe("_");
     // The wire values are preserved verbatim (the literal).
-    expect(nestedEnums[0]!.members.map((m) => m.wireValue)).toEqual(["3d", "--"]);
+    expect(nestedEnums[0]!.members.map((m) => m.wireValue)).toEqual([
+      "3d",
+      "--",
+    ]);
     expect(nestedEnums[0]!.members.every((m) => m.needsEnumMember)).toBe(true);
   });
 });
@@ -720,7 +749,9 @@ describe("walkModel_UnsupportedUnionShape_D2TSP007Loud", () => {
     const errors: Array<{ code: string; message: string }> = [];
     const { fields } = walkModel(
       makeProgram(),
-      makeModel([["v", { type: u, optional: false } as unknown as ModelProperty]]),
+      makeModel([
+        ["v", { type: u, optional: false } as unknown as ModelProperty],
+      ]),
       (code, message) => errors.push({ code, message }),
     );
 
@@ -734,19 +765,23 @@ describe("walkModel_UnsupportedUnionShape_D2TSP007Loud", () => {
     const errors: Array<{ code: string }> = [];
     walkModel(
       makeProgram(),
-      makeModel([["v", { type: u, optional: false } as unknown as ModelProperty]]),
+      makeModel([
+        ["v", { type: u, optional: false } as unknown as ModelProperty],
+      ]),
       (code) => errors.push({ code }),
     );
 
     expect(errors[0]!.code).toBe("unsupported-union-shape");
   });
 
-  it("NV mixed-literal-kind union (\"a\" | 1) → D2TSP007", () => {
+  it('NV mixed-literal-kind union ("a" | 1) → D2TSP007', () => {
     const u = makeUnion(undefined, [strLit("a"), numLit(1)]);
     const errors: Array<{ code: string }> = [];
     walkModel(
       makeProgram(),
-      makeModel([["v", { type: u, optional: false } as unknown as ModelProperty]]),
+      makeModel([
+        ["v", { type: u, optional: false } as unknown as ModelProperty],
+      ]),
       (code) => errors.push({ code }),
     );
 
@@ -754,13 +789,23 @@ describe("walkModel_UnsupportedUnionShape_D2TSP007Loud", () => {
   });
 
   it("NV-3 model-variant union (Circle | Square) → loud", () => {
-    const circle = { kind: "Model", name: "Circle", properties: new Map() } as unknown as Type;
-    const square = { kind: "Model", name: "Square", properties: new Map() } as unknown as Type;
+    const circle = {
+      kind: "Model",
+      name: "Circle",
+      properties: new Map(),
+    } as unknown as Type;
+    const square = {
+      kind: "Model",
+      name: "Square",
+      properties: new Map(),
+    } as unknown as Type;
     const u = makeUnion(undefined, [circle, square]);
     const errors: Array<{ code: string }> = [];
     walkModel(
       makeProgram(),
-      makeModel([["shape", { type: u, optional: false } as unknown as ModelProperty]]),
+      makeModel([
+        ["shape", { type: u, optional: false } as unknown as ModelProperty],
+      ]),
       (code) => errors.push({ code }),
     );
 
@@ -773,7 +818,9 @@ describe("walkModel_UnsupportedUnionShape_D2TSP007Loud", () => {
     const errors: Array<{ code: string; message: string }> = [];
     walkModel(
       makeProgram(),
-      makeModel([["v", { type: u, optional: false } as unknown as ModelProperty]]),
+      makeModel([
+        ["v", { type: u, optional: false } as unknown as ModelProperty],
+      ]),
       (code, message) => errors.push({ code, message }),
     );
 
@@ -786,7 +833,9 @@ describe("walkModel_UnsupportedUnionShape_D2TSP007Loud", () => {
     const errors: Array<{ code: string }> = [];
     const { fields } = walkModel(
       makeProgram(),
-      makeModel([["v", { type: u, optional: false } as unknown as ModelProperty]]),
+      makeModel([
+        ["v", { type: u, optional: false } as unknown as ModelProperty],
+      ]),
       (code) => errors.push({ code }),
     );
 
@@ -799,7 +848,9 @@ describe("walkModel_UnsupportedUnionShape_D2TSP007Loud", () => {
     const errors: Array<{ code: string }> = [];
     const { fields } = walkModel(
       makeProgram(),
-      makeModel([["v", { type: e, optional: false } as unknown as ModelProperty]]),
+      makeModel([
+        ["v", { type: e, optional: false } as unknown as ModelProperty],
+      ]),
       (code) => errors.push({ code }),
     );
 
@@ -838,7 +889,12 @@ describe("walkModel_UnsupportedUnionShape_D2TSP007Loud", () => {
     const errors: Array<{ code: string }> = [];
     const { fields } = walkModel(
       makeProgram(),
-      makeModel([["vs", { type: arrayModel, optional: false } as unknown as ModelProperty]]),
+      makeModel([
+        [
+          "vs",
+          { type: arrayModel, optional: false } as unknown as ModelProperty,
+        ],
+      ]),
       (code) => errors.push({ code }),
     );
 
@@ -856,7 +912,12 @@ describe("walkModel_UnsupportedUnionShape_D2TSP007Loud", () => {
     } as unknown as Model;
     const { fields, nestedEnums } = walkModel(
       makeProgram(),
-      makeModel([["tags", { type: arrayModel, optional: false } as unknown as ModelProperty]]),
+      makeModel([
+        [
+          "tags",
+          { type: arrayModel, optional: false } as unknown as ModelProperty,
+        ],
+      ]),
       () => {},
     );
 
@@ -876,7 +937,12 @@ describe("walkModel_UnsupportedUnionShape_D2TSP007Loud", () => {
     const errors: Array<{ code: string; message: string }> = [];
     walkModel(
       makeProgram(),
-      makeModel([["tags", { type: arrayModel, optional: false } as unknown as ModelProperty]]),
+      makeModel([
+        [
+          "tags",
+          { type: arrayModel, optional: false } as unknown as ModelProperty,
+        ],
+      ]),
       (code, message) => errors.push({ code, message }),
     );
 
@@ -1045,14 +1111,23 @@ describe("walkModel_ArrayElement_NullIndexerKind_UnknownFallback", () => {
   });
 });
 
-describe("walkModel_CollectedNested_NonScalarFieldSkipped", () => {
-  it("non-scalar field inside a nested model is intentionally skipped (no deep recursion)", () => {
-    // Exercises the `false` branch of `if (t.kind === "Scalar")` in collectNested:
-    // a nested model field that is another Model (not a scalar) is silently skipped.
-    const anotherModel: Model = {
+describe("walkModel_CollectedNested_DeeperNestedModelRecursed", () => {
+  it("a nested-model field inside a nested model is recursed (depth-N) and collected", () => {
+    // Depth-N: a Model-typed field inside a nested model is NOW recursed (the
+    // walker resolves nested fields with the same logic as top-level fields), so
+    // the deeper model is collected too — the field is NOT dropped.
+    const deepModel: Model = {
       kind: "Model",
       name: "Deep",
-      properties: new Map<string, ModelProperty>(),
+      properties: new Map<string, ModelProperty>([
+        [
+          "leaf",
+          {
+            type: { kind: "Scalar", name: "string" } as unknown as Scalar,
+            optional: false,
+          } as unknown as ModelProperty,
+        ],
+      ]),
     } as unknown as Model;
 
     const innerModel: Model = {
@@ -1066,10 +1141,10 @@ describe("walkModel_CollectedNested_NonScalarFieldSkipped", () => {
             optional: false,
           } as unknown as ModelProperty,
         ],
-        // Non-scalar (Model) field — will be skipped inside collectNested.
+        // Model-typed field — NOW recursed into a deeper nested model (Deep).
         [
           "deep",
-          { type: anotherModel, optional: false } as unknown as ModelProperty,
+          { type: deepModel, optional: false } as unknown as ModelProperty,
         ],
       ]),
     } as unknown as Model;
@@ -1082,19 +1157,78 @@ describe("walkModel_CollectedNested_NonScalarFieldSkipped", () => {
 
     const { nestedModels } = walkModel(makeProgram(), model, () => {});
 
-    // The Shallow nested model is registered.
-    expect(nestedModels).toHaveLength(1);
-    expect(nestedModels[0]!.name).toBe("Shallow");
-    // Only the scalar 'id' field was collected; 'deep' (non-scalar) was skipped.
-    expect(nestedModels[0]!.fields).toHaveLength(1);
-    expect(nestedModels[0]!.fields[0]!.name).toBe("id");
+    // BOTH the Shallow and the deeper Deep nested models are collected (depth-N).
+    expect(nestedModels.map((m) => m.name).sort()).toEqual(["Deep", "Shallow"]);
+    const shallow = nestedModels.find((m) => m.name === "Shallow")!;
+    // Shallow keeps BOTH fields — 'id' (scalar) AND 'deep' (the nested-model ref).
+    expect(shallow.fields).toHaveLength(2);
+    const deepField = shallow.fields.find((f) => f.name === "deep")!;
+    expect(deepField.csType).toBe("Deep");
+    expect(deepField.nested!.name).toBe("Deep");
+    // The deeper Deep model carries its own scalar leaf field.
+    const deep = nestedModels.find((m) => m.name === "Deep")!;
+    expect(deep.fields).toHaveLength(1);
+    expect(deep.fields[0]!.name).toBe("leaf");
+  });
+
+  it("array-of-model field inside a nested model is recursed (depth-N)", () => {
+    // The deeper model appears via an ARRAY-of-model element inside the nested model.
+    const lineModel: Model = {
+      kind: "Model",
+      name: "DeepLine",
+      properties: new Map<string, ModelProperty>([
+        [
+          "status",
+          {
+            type: { kind: "Scalar", name: "string" } as unknown as Scalar,
+            optional: false,
+          } as unknown as ModelProperty,
+        ],
+      ]),
+    } as unknown as Model;
+
+    const arrayOfModel: Model = {
+      kind: "Model",
+      name: "Array",
+      indexer: { value: lineModel },
+      properties: new Map(),
+    } as unknown as Model;
+
+    const innerModel: Model = {
+      kind: "Model",
+      name: "Order",
+      properties: new Map<string, ModelProperty>([
+        [
+          "lines",
+          { type: arrayOfModel, optional: false } as unknown as ModelProperty,
+        ],
+      ]),
+    } as unknown as Model;
+
+    const prop = {
+      type: innerModel,
+      optional: false,
+    } as unknown as ModelProperty;
+    const model = makeModel([["order", prop]]);
+
+    const { nestedModels } = walkModel(makeProgram(), model, () => {});
+
+    expect(nestedModels.map((m) => m.name).sort()).toEqual([
+      "DeepLine",
+      "Order",
+    ]);
+    const order = nestedModels.find((m) => m.name === "Order")!;
+    const linesField = order.fields.find((f) => f.name === "lines")!;
+    expect(linesField.repeated).toBe(true);
+    expect(linesField.csType).toBe("IReadOnlyList<DeepLine>");
+    expect(linesField.nested!.name).toBe("DeepLine");
   });
 });
 
-describe("walkModel_NestedModel_UnmappedScalarSkippedSilently", () => {
-  it("unmapped scalar inside a nested model → field silently skipped, no top-level error", () => {
-    // A nested model whose field uses an unmapped scalar.
-    // The walker skips it silently in the nested context.
+describe("walkModel_NestedModel_UnmappedScalarFailsLoud", () => {
+  it("unmapped scalar inside a nested model → fires D2TSP001 loud (strict, never silently omitted)", () => {
+    // Strict fail-loud: an unmapped nested scalar fires the SAME D2TSP001 a
+    // top-level unmapped scalar fires — it is NOT silently dropped.
     const innerModel: Model = {
       kind: "Model",
       name: "Inner",
@@ -1118,17 +1252,21 @@ describe("walkModel_NestedModel_UnmappedScalarSkippedSilently", () => {
 
     const { prop, redactMap } = makeProp(innerModel as unknown as Type);
     const model = makeModel([["inner", prop]]);
-    const errors: string[] = [];
+    const errors: Array<{ code: string; message: string }> = [];
 
     const { fields, nestedModels } = walkModel(
       makeProgram(redactMap),
       model,
-      (_, m) => errors.push(m),
+      (code, message) => errors.push({ code, message }),
     );
 
-    // No errors propagated to top level.
-    expect(errors).toHaveLength(0);
-    // The nested model is registered; only the good field passes through.
+    // The unmapped nested scalar fires D2TSP001 LOUD (no silent skip).
+    expect(errors).toHaveLength(1);
+    expect(errors[0]!.code).toBe("unmapped-scalar");
+    expect(errors[0]!.message).toContain("D2TSP001");
+    expect(errors[0]!.message).toContain("notARealScalar");
+    // The nested model is still registered; only the good field passes through
+    // (the bad field is dropped AFTER the loud diagnostic, like a top-level field).
     expect(nestedModels).toHaveLength(1);
     expect(nestedModels[0]!.fields).toHaveLength(1);
     expect(nestedModels[0]!.fields[0]!.name).toBe("goodField");

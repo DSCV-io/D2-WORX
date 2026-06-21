@@ -276,5 +276,27 @@ Copyright (c) DCSV. All rights reserved.
               GrpcServices="Both"
               ProtoRoot="$(MSBuildThisFileDirectory)"
               AdditionalImportDirs="$(D2ContractsRoot)protos" />
+    <!--
+      Fourth + fifth TypeSpec gRPC fixture protos — the NESTED-MODEL / array-of-MODEL
+      transport-mapper fixtures. predicate_fixtures_orders_v2_place_order_v2.g.proto
+      carries an optional nested model (PlaceOrderV2Customer) + an array-of-model
+      (repeated PlaceOrderLine); predicate_fixtures_gizmos_deep_deep_nest.g.proto proves
+      arbitrary depth (DeepNestOutput -> DeepWidget -> repeated DeepPart). Compiled in
+      Both mode so PlaceOrderV2RoundTripTests + DeepNestRoundTripTests can host a service
+      shim via MapGrpcService<T>() and dial it via the generated stub. Each uses a DISTINCT
+      proto package + csharp_namespace + service name so the generated C# types never
+      collide with the V1 PredicateFixturesOrders proto. The D2ResultProto type still comes
+      solely from the D2.Shared.Result.Grpc ProjectReference above (each proto's import
+      "common/v1/d2_result.proto" resolves via the same AdditionalImportDirs proto_path; no
+      second d2_result.proto Protobuf include).
+    -->
+    <Protobuf Include="$(MSBuildThisFileDirectory)Unit/KeyCustodian/TypeSpecGrpcPredicate/Protos/predicate_fixtures_orders_v2_place_order_v2.g.proto"
+              GrpcServices="Both"
+              ProtoRoot="$(MSBuildThisFileDirectory)"
+              AdditionalImportDirs="$(D2ContractsRoot)protos" />
+    <Protobuf Include="$(MSBuildThisFileDirectory)Unit/KeyCustodian/TypeSpecGrpcPredicate/Protos/predicate_fixtures_gizmos_deep_deep_nest.g.proto"
+              GrpcServices="Both"
+              ProtoRoot="$(MSBuildThisFileDirectory)"
+              AdditionalImportDirs="$(D2ContractsRoot)protos" />
   </ItemGroup>
 </Project>

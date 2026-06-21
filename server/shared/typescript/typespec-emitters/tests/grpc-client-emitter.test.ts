@@ -959,11 +959,7 @@ describe("emitGrpcClient_EnumRequestField_AliasAndToWire", () => {
   }
 
   it("the client mapper emits the enum alias + I18n/Result usings + ToWire on the outbound DTO field", () => {
-    const [, , mapper] = emitGrpcClient(
-      "EnumFixtures",
-      [enumOp()],
-      CLIENTS_NS,
-    );
+    const [, , mapper] = emitGrpcClient("EnumFixtures", [enumOp()], CLIENTS_NS);
 
     expect(mapper!.content).toContain(
       "using KeyKind = global::D2.Edge.Tests.EnumDto.Generated.KeyKind;",
@@ -1007,7 +1003,11 @@ describe("emitGrpcClient_EnumRequestField_AliasAndToWire", () => {
       ],
     };
 
-    const [, , mapper] = emitGrpcClient("EnumFixtures", [opTwoEnums], CLIENTS_NS);
+    const [, , mapper] = emitGrpcClient(
+      "EnumFixtures",
+      [opTwoEnums],
+      CLIENTS_NS,
+    );
 
     expect(mapper!.content).toContain(
       "using KeyKind = global::D2.Edge.Tests.EnumDto.Generated.KeyKind;",
@@ -1152,9 +1152,7 @@ describe("emitGrpcClient_EnumResponseField_ParseAndSurface", () => {
     expect(impl!.content).toContain("responseParseFailure = dataResult;");
     expect(impl!.content).toContain("return dataResult.Data;");
     // After the pipeline, a captured parse failure becomes the business result.
-    expect(impl!.content).toContain(
-      "if (responseParseFailure is not null)",
-    );
+    expect(impl!.content).toContain("if (responseParseFailure is not null)");
     expect(impl!.content).toContain(
       "return D2Result<SignWithKindOutput?>.BubbleFail(responseParseFailure);",
     );
@@ -1220,7 +1218,9 @@ describe("emitGrpcClient_PredicateArm", () => {
     expect(impl!.content).toContain(
       "if (SignResiliencePredicates.SR_RetryWhen(businessResult))",
     );
-    expect(impl!.content).not.toContain("!SignResiliencePredicates.SR_FailWhen");
+    expect(impl!.content).not.toContain(
+      "!SignResiliencePredicates.SR_FailWhen",
+    );
   });
 
   it("retryWhen-bearing op → DI-ext IsTransient gains the sentinel arm", () => {
@@ -1262,6 +1262,225 @@ describe("emitGrpcClient_PredicateArm", () => {
     expect(plain[3]!.content).toContain(
       "IsTransient = ex => ex is RpcException r && ProtoExtensions.IsTransientGrpcException(r),",
     );
-    expect(plain[3]!.content).not.toContain("ex is D2GeneratedBusinessRetrySignal");
+    expect(plain[3]!.content).not.toContain(
+      "ex is D2GeneratedBusinessRetrySignal",
+    );
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Nested-model + array-of-model client mappers — sub-mapper recursion
+// ---------------------------------------------------------------------------
+
+describe("emitGrpcClient_NestedModel_SubMapperRecursion", () => {
+  const LINE = {
+    name: "PlaceOrderLine",
+    fields: [
+      {
+        name: "status",
+        csName: "Status",
+        csType: "string",
+        tsName: "status",
+        tsType: "string",
+        protoType: "string",
+        repeated: false,
+        optional: false,
+        redact: false,
+      },
+    ],
+  };
+  const CUSTOMER = {
+    name: "PlaceOrderV2Customer",
+    fields: [
+      {
+        name: "tier",
+        csName: "Tier",
+        csType: "string",
+        tsName: "tier",
+        tsType: "string",
+        protoType: "string",
+        repeated: false,
+        optional: false,
+        redact: false,
+      },
+    ],
+  };
+
+  function v2Op(): GrpcClientOp {
+    return {
+      opName: "placeOrderV2",
+      grpcService: "OrdersV2",
+      grpcMethod: "PlaceOrderV2",
+      protoCsharpNs: PROTO_NS,
+      dtoCsharpNs: CLIENTS_NS,
+      sourceSpec: SOURCE,
+      requestModelName: "PlaceOrderV2Input",
+      requestFields: [
+        {
+          name: "customerId",
+          csName: "CustomerId",
+          csType: "string",
+          tsName: "customerId",
+          tsType: "string",
+          protoType: "string",
+          repeated: false,
+          optional: false,
+          redact: false,
+        },
+      ],
+      responseModelName: "PlaceOrderV2Output",
+      responseFields: [
+        {
+          name: "orderCode",
+          csName: "OrderCode",
+          csType: "string",
+          tsName: "orderCode",
+          tsType: "string",
+          protoType: "string",
+          repeated: false,
+          optional: false,
+          redact: false,
+        },
+        {
+          name: "lines",
+          csName: "Lines",
+          csType: "IReadOnlyList<PlaceOrderLine>",
+          tsName: "lines",
+          tsType: "readonly PlaceOrderLine[]",
+          protoType: undefined,
+          repeated: true,
+          optional: false,
+          redact: false,
+          nested: LINE,
+        },
+        {
+          name: "customer",
+          csName: "Customer",
+          csType: "PlaceOrderV2Customer?",
+          tsName: "customer",
+          tsType: "PlaceOrderV2Customer",
+          protoType: undefined,
+          repeated: false,
+          optional: true,
+          redact: false,
+          nested: CUSTOMER,
+        },
+      ],
+    };
+  }
+
+  it("inbound (proto → DTO) array-of-model recurses `.Select(To<Model>()).ToList()` + nullable nested null-guards", () => {
+    const [, , mapper] = emitGrpcClient("Orders", [v2Op()], CLIENTS_NS);
+    expect(mapper!.content).toContain(
+      "data.Lines.Select(x => x.ToPlaceOrderLine()).ToList()",
+    );
+    expect(mapper!.content).toContain(
+      "data.Customer is null ? null : data.Customer.ToPlaceOrderV2Customer()",
+    );
+    expect(mapper!.content).toContain("using System.Linq;");
+  });
+
+  it("emits BOTH directions of a sub-mapper per nested model (global:: fully-qualified)", () => {
+    const [, , mapper] = emitGrpcClient("Orders", [v2Op()], CLIENTS_NS);
+    expect(mapper!.content).toContain(
+      `internal global::${PROTO_NS}.PlaceOrderLine ToProtoPlaceOrderLine()`,
+    );
+    expect(mapper!.content).toContain(
+      `internal global::${CLIENTS_NS}.PlaceOrderLine ToPlaceOrderLine()`,
+    );
+    expect(mapper!.content).toContain(
+      `internal global::${PROTO_NS}.PlaceOrderV2Customer ToProtoPlaceOrderV2Customer()`,
+    );
+  });
+
+  it("outbound (DTO → proto) request with a nested model recurses ToProto<Model>()", () => {
+    const op = v2Op();
+    const reqNestedOp: GrpcClientOp = {
+      ...op,
+      requestFields: [
+        ...op.requestFields,
+        {
+          name: "customer",
+          csName: "Customer",
+          csType: "PlaceOrderV2Customer?",
+          tsName: "customer",
+          tsType: "PlaceOrderV2Customer",
+          protoType: undefined,
+          repeated: false,
+          optional: true,
+          redact: false,
+          nested: CUSTOMER,
+        },
+      ],
+    };
+    const [, , mapper] = emitGrpcClient("Orders", [reqNestedOp], CLIENTS_NS);
+    expect(mapper!.content).toContain(
+      "Customer = input.Customer is null ? null : input.Customer.ToProtoPlaceOrderV2Customer(),",
+    );
+  });
+
+  it("outbound (DTO → proto) request with an ARRAY-of-model uses the collection-init form", () => {
+    // The request-mapper's collection-init arm: an array-of-model REQUEST field maps
+    // via `Field = { …Select(ToProto<Model>()) }` (RepeatedField has no setter).
+    const op = v2Op();
+    const reqArrayOp: GrpcClientOp = {
+      ...op,
+      requestFields: [
+        ...op.requestFields,
+        {
+          name: "lines",
+          csName: "Lines",
+          csType: "IReadOnlyList<PlaceOrderLine>",
+          tsName: "lines",
+          tsType: "readonly PlaceOrderLine[]",
+          protoType: undefined,
+          repeated: true,
+          optional: false,
+          redact: false,
+          nested: LINE,
+        },
+      ],
+    };
+    const [, , mapper] = emitGrpcClient("Orders", [reqArrayOp], CLIENTS_NS);
+    expect(mapper!.content).toContain(
+      "Lines = { input.Lines.Select(x => x.ToProtoPlaceOrderLine()) },",
+    );
+  });
+
+  it("a NESTED field inside an ENUM-bearing response routes through the nested sub-mapper", () => {
+    // The enum-response path returns D2Result<<Output>> and parses the enum; its
+    // NON-enum fields (including a nested model) still route through buildClientProtoToDto.
+    const KEY_KIND = {
+      name: "KeyKind",
+      members: [{ csName: "Rsa", wireValue: "Rsa", needsEnumMember: false }],
+    };
+    const op = v2Op();
+    const enumPlusNested: GrpcClientOp = {
+      ...op,
+      responseFields: [
+        ...op.responseFields,
+        {
+          name: "keyKind",
+          csName: "KeyKind",
+          csType: "KeyKind",
+          tsName: "keyKind",
+          tsType: "KeyKind",
+          protoType: "string",
+          repeated: false,
+          optional: false,
+          redact: false,
+          enumRef: KEY_KIND,
+        },
+      ],
+    };
+    const [, , mapper] = emitGrpcClient("Orders", [enumPlusNested], CLIENTS_NS);
+    // The mapper returns D2Result (enum path) AND still recurses the nested fields.
+    expect(mapper!.content).toContain("ParseKeyKindWire(data.KeyKind)");
+    expect(mapper!.content).toContain(
+      "data.Lines.Select(x => x.ToPlaceOrderLine()).ToList()",
+    );
+    expect(mapper!.content).toContain(
+      "data.Customer is null ? null : data.Customer.ToPlaceOrderV2Customer()",
+    );
   });
 });

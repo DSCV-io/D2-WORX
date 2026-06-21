@@ -10,7 +10,11 @@
 // and absence of phase/step/audit-round identifiers in emitted content.
 
 import { describe, it, expect } from "vitest";
-import type { FieldInfo, NestedEnum } from "../src/lib/model-walk.js";
+import type {
+  FieldInfo,
+  NestedEnum,
+  NestedModel,
+} from "../src/lib/model-walk.js";
 import { emitGrpcService } from "../src/lib/grpc-service-emitter.js";
 import type { GrpcDelegationTarget } from "../src/lib/grpc-service-emitter.js";
 
@@ -653,9 +657,7 @@ describe("emitGrpcService_EnumRequestField_ParseBridgeAndAlias", () => {
     );
     expect(mapper.content).toContain('KeyKind.Rsa => "Rsa",');
     expect(mapper.content).toContain("internal string ToWire()");
-    expect(mapper.content).toContain(
-      "TK.Common.Errors.VALIDATION_FAILED",
-    );
+    expect(mapper.content).toContain("TK.Common.Errors.VALIDATION_FAILED");
 
     // The request mapper returns D2Result<DoIn> (parse can fail).
     expect(mapper.content).toContain("internal D2Result<DoIn> ToDoIn()");
@@ -702,5 +704,229 @@ describe("emitGrpcService_EnumRequestField_ParseBridgeAndAlias", () => {
     );
 
     expect(mapper.content).toContain("Kind = output.Kind.ToWire(),");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Nested-model + array-of-model — the per-nested-model sub-mapper recursion
+// ---------------------------------------------------------------------------
+
+describe("emitGrpcService_NestedModel_SubMapperRecursion", () => {
+  const LINE: NestedModel = {
+    name: "PlaceOrderLine",
+    fields: [makeStringField("status")],
+  };
+  const CUSTOMER: NestedModel = {
+    name: "PlaceOrderV2Customer",
+    fields: [makeStringField("tier")],
+  };
+
+  function arrayOfModel(name: string, nested: NestedModel): FieldInfo {
+    return {
+      name,
+      csName: name.charAt(0).toUpperCase() + name.slice(1),
+      csType: `IReadOnlyList<${nested.name}>`,
+      tsName: name,
+      tsType: `readonly ${nested.name}[]`,
+      protoType: undefined,
+      repeated: true,
+      optional: false,
+      redact: false,
+      nested,
+    };
+  }
+
+  function nestedField(
+    name: string,
+    nested: NestedModel,
+    optional = false,
+  ): FieldInfo {
+    return {
+      name,
+      csName: name.charAt(0).toUpperCase() + name.slice(1),
+      csType: optional ? `${nested.name}?` : nested.name,
+      tsName: name,
+      tsType: nested.name,
+      protoType: undefined,
+      repeated: false,
+      optional,
+      redact: false,
+      nested,
+    };
+  }
+
+  function emitV2() {
+    return emitGrpcService(
+      "placeOrderV2",
+      "OrdersV2",
+      "PlaceOrderV2",
+      PROTO_NS,
+      IMPL_NS,
+      DTO_NS,
+      SOURCE,
+      "PlaceOrderV2Request",
+      "PlaceOrderV2Response",
+      "PlaceOrderV2Input",
+      [makeStringField("customerId")],
+      "PlaceOrderV2Output",
+      [
+        makeStringField("orderCode"),
+        arrayOfModel("lines", LINE),
+        nestedField("customer", CUSTOMER, true),
+      ],
+    );
+  }
+
+  it("array-of-model output → collection-init `Field = { …Select(ToProto<Model>()) }` (RepeatedField has no setter)", () => {
+    const [, mapper] = emitV2();
+    expect(mapper.content).toContain(
+      "Lines = { output.Lines.Select(x => x.ToProtoPlaceOrderLine()) },",
+    );
+    // System.Linq is pulled in for the .Select projection.
+    expect(mapper.content).toContain("using System.Linq;");
+  });
+
+  it("nullable nested-model output → `Field = source is null ? null : source.ToProto<Model>()`", () => {
+    const [, mapper] = emitV2();
+    expect(mapper.content).toContain(
+      "Customer = output.Customer is null ? null : output.Customer.ToProtoPlaceOrderV2Customer(),",
+    );
+  });
+
+  it("emits a Proto<Model> alias + DTO alias for each nested model", () => {
+    const [, mapper] = emitV2();
+    expect(mapper.content).toContain(
+      `using ProtoPlaceOrderLine = global::${PROTO_NS}.PlaceOrderLine;`,
+    );
+    expect(mapper.content).toContain(
+      `using ProtoPlaceOrderV2Customer = global::${PROTO_NS}.PlaceOrderV2Customer;`,
+    );
+    expect(mapper.content).toContain(
+      `using PlaceOrderLine = global::${DTO_NS}.PlaceOrderLine;`,
+    );
+  });
+
+  it("emits BOTH directions of a sub-mapper for each nested model", () => {
+    const [, mapper] = emitV2();
+    // DTO → proto.
+    expect(mapper.content).toContain(
+      "internal ProtoPlaceOrderLine ToProtoPlaceOrderLine()",
+    );
+    expect(mapper.content).toContain(
+      "internal ProtoPlaceOrderV2Customer ToProtoPlaceOrderV2Customer()",
+    );
+    // proto → DTO.
+    expect(mapper.content).toContain(
+      "internal PlaceOrderLine ToPlaceOrderLine()",
+    );
+    expect(mapper.content).toContain(
+      "internal PlaceOrderV2Customer ToPlaceOrderV2Customer()",
+    );
+  });
+
+  it("a nested REQUEST field recurses inbound too (proto → DTO ctor arg)", () => {
+    const [, mapper] = emitGrpcService(
+      "op",
+      "Svc",
+      "Do",
+      PROTO_NS,
+      IMPL_NS,
+      DTO_NS,
+      SOURCE,
+      "DoReq",
+      "DoResp",
+      "DoIn",
+      [nestedField("customer", CUSTOMER, false)],
+      "DoOut",
+      [],
+    );
+    // Non-optional nested request field still uses the null-guard inbound arm.
+    expect(mapper.content).toContain(
+      "new DoIn(request.Customer is null ? null : request.Customer.ToPlaceOrderV2Customer())",
+    );
+    // The sub-mapper for the request-side nested model is emitted.
+    expect(mapper.content).toContain(
+      "internal PlaceOrderV2Customer ToPlaceOrderV2Customer()",
+    );
+  });
+
+  it("an empty array-of-model output still emits the collection-init (no NRE on empty)", () => {
+    // The non-optional array maps without a null guard (the DTO record requires it
+    // non-null); an EMPTY list projects to an empty enumerable → empty repeated field.
+    const [, mapper] = emitGrpcService(
+      "op",
+      "Svc",
+      "Do",
+      PROTO_NS,
+      IMPL_NS,
+      DTO_NS,
+      SOURCE,
+      "DoReq",
+      "DoResp",
+      "DoIn",
+      [],
+      "DoOut",
+      [arrayOfModel("lines", LINE)],
+    );
+    expect(mapper.content).toContain(
+      "Lines = { output.Lines.Select(x => x.ToProtoPlaceOrderLine()) },",
+    );
+  });
+
+  it("an OPTIONAL array-of-model output null-coalesces to an empty sequence (no NRE on null)", () => {
+    const [, mapper] = emitGrpcService(
+      "op",
+      "Svc",
+      "Do",
+      PROTO_NS,
+      IMPL_NS,
+      DTO_NS,
+      SOURCE,
+      "DoReq",
+      "DoResp",
+      "DoIn",
+      [],
+      "DoOut",
+      [
+        {
+          ...arrayOfModel("lines", LINE),
+          csType: "IReadOnlyList<PlaceOrderLine>",
+          optional: true,
+        },
+      ],
+    );
+    expect(mapper.content).toContain(
+      "Lines = { (output.Lines ?? []).Select(x => x.ToProtoPlaceOrderLine()) },",
+    );
+  });
+
+  it("a nested-model field whose model carries a bytes field maps it via global:: ByteString", () => {
+    const BLOB: NestedModel = {
+      name: "Blob",
+      fields: [makeBytesField("data")],
+    };
+    const [, mapper] = emitGrpcService(
+      "op",
+      "Svc",
+      "Do",
+      PROTO_NS,
+      IMPL_NS,
+      DTO_NS,
+      SOURCE,
+      "DoReq",
+      "DoResp",
+      "DoIn",
+      [],
+      "DoOut",
+      [nestedField("blob", BLOB, false)],
+    );
+    // The sub-mapper's nested bytes arm uses the fully-qualified ByteString call
+    // outbound; inbound it is a positional ctor arg (.ToByteArray()).
+    expect(mapper.content).toContain(
+      "Data = global::Google.Protobuf.ByteString.CopyFrom(source.Data),",
+    );
+    expect(mapper.content).toContain(
+      "return new Blob(source.Data.ToByteArray());",
+    );
   });
 });
