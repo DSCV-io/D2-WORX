@@ -20,6 +20,8 @@ import {
   emitClientKeys,
   type GrpcClientOp,
 } from "../src/lib/grpc-client-emitter.js";
+import { parseResultPredicate } from "@d2/typespec-decorators";
+import type { PredicateNode } from "@d2/typespec-decorators";
 
 // ---------------------------------------------------------------------------
 // Fixture builders
@@ -1173,5 +1175,93 @@ describe("emitGrpcClient_EnumResponseField_ParseAndSurface", () => {
     expect(impl!.content).toContain(
       "return response.Data is null ? default : response.Data.ToSignOutput();",
     );
+  });
+});
+
+// ---------------------------------------------------------------------------
+// @d2Resilience predicate arm — impl + DI-ext additive emission (gated)
+// ---------------------------------------------------------------------------
+
+function predAst(expr: string): PredicateNode {
+  const parsed = parseResultPredicate(expr);
+  if (!parsed.ok) throw new Error(`test predicate failed to parse: ${expr}`);
+
+  return parsed.root;
+}
+
+describe("emitGrpcClient_PredicateArm", () => {
+  it("retryWhen-bearing op → impl emits the sentinel throw gated on retryWhen && !failWhen", () => {
+    const op = makeSignOp({
+      retryWhenAst: predAst("result.success == false"),
+      failWhenAst: predAst('result.errorCode == "X"'),
+    });
+    const [, impl] = emitGrpcClient("KeyCustodian", [op], CLIENTS_NS);
+    const c = impl!.content;
+    expect(c).toContain("var businessResult = response.Result is not null");
+    expect(c).toContain(
+      "if (SignResiliencePredicates.SR_RetryWhen(businessResult) && !SignResiliencePredicates.SR_FailWhen(businessResult))",
+    );
+    expect(c).toContain(
+      "throw new D2GeneratedBusinessRetrySignal(businessResult.ToProto());",
+    );
+    // Budget-exhaust restore arm — restores the captured business result verbatim.
+    expect(c).toContain(
+      "if (!pipelineResult.Success && transportFault is null && envelope is not null)",
+    );
+    expect(c).toContain(
+      "return envelope.ToD2Result<SignOutput?>(capturedData);",
+    );
+    expect(c).toContain("SignOutput? capturedData = default;");
+  });
+
+  it("retryWhen-only op → the throw guard is just SR_RetryWhen (no failWhen term)", () => {
+    const op = makeSignOp({ retryWhenAst: predAst("result.success == false") });
+    const [, impl] = emitGrpcClient("KeyCustodian", [op], CLIENTS_NS);
+    expect(impl!.content).toContain(
+      "if (SignResiliencePredicates.SR_RetryWhen(businessResult))",
+    );
+    expect(impl!.content).not.toContain("!SignResiliencePredicates.SR_FailWhen");
+  });
+
+  it("retryWhen-bearing op → DI-ext IsTransient gains the sentinel arm", () => {
+    const op = makeSignOp({ retryWhenAst: predAst("result.success == false") });
+    const files = emitGrpcClient("KeyCustodian", [op], CLIENTS_NS);
+    const di = files[3]!;
+    expect(di.content).toContain("IsTransient = ex =>");
+    expect(di.content).toContain("ex is D2GeneratedBusinessRetrySignal");
+    expect(di.content).toContain(
+      "|| (ex is RpcException r && ProtoExtensions.IsTransientGrpcException(r)),",
+    );
+  });
+
+  it("failWhen-ONLY op → NO sentinel/throw arm in the impl (failWhen alone never retries)", () => {
+    const op = makeSignOp({ failWhenAst: predAst("result.success == false") });
+    const [, impl] = emitGrpcClient("KeyCustodian", [op], CLIENTS_NS);
+    expect(impl!.content).not.toContain("D2GeneratedBusinessRetrySignal");
+    expect(impl!.content).not.toContain("capturedData");
+    expect(impl!.content).not.toContain("var businessResult");
+  });
+
+  it("failWhen-ONLY op → DI-ext IsTransient stays the byte-identical single-line form", () => {
+    const op = makeSignOp({ failWhenAst: predAst("result.success == false") });
+    const files = emitGrpcClient("KeyCustodian", [op], CLIENTS_NS);
+    expect(files[3]!.content).toContain(
+      "IsTransient = ex => ex is RpcException r && ProtoExtensions.IsTransientGrpcException(r),",
+    );
+    expect(files[3]!.content).not.toContain("D2GeneratedBusinessRetrySignal");
+  });
+
+  it("NO-predicate op → impl + DI-ext are byte-identical to the C-4 output (back-compat pin)", () => {
+    const plain = emitGrpcClient("KeyCustodian", [makeSignOp()], CLIENTS_NS);
+    expect(plain[1]!.content).not.toContain("D2GeneratedBusinessRetrySignal");
+    expect(plain[1]!.content).not.toContain("capturedData");
+    expect(plain[1]!.content).not.toContain("businessResult");
+    expect(plain[1]!.content).toContain(
+      "return response.Data is null ? default : response.Data.ToSignOutput();",
+    );
+    expect(plain[3]!.content).toContain(
+      "IsTransient = ex => ex is RpcException r && ProtoExtensions.IsTransientGrpcException(r),",
+    );
+    expect(plain[3]!.content).not.toContain("ex is D2GeneratedBusinessRetrySignal");
   });
 });

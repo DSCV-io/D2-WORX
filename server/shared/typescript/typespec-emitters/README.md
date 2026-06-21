@@ -498,15 +498,15 @@ surfaced by the compiler as `@d2/typespec-emitters/<name>`. The `D2TSP` ids
 are the grep-stable cross-tooling identifiers noted in comments alongside each
 catalog entry in `src/lib.ts`.
 
-| ID       | Named code                  | Trigger                                                                                                                                                                                                                                                                                                           |
-| -------- | --------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| D2TSP001 | `unmapped-scalar`           | A TypeSpec scalar has no entry in the scalar registry. Emitter cannot proceed without a C#/proto/TS mapping.                                                                                                                                                                                                      |
+| ID       | Named code                  | Trigger                                                                                                                                                                                                                                                                                                                                             |
+| -------- | --------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| D2TSP001 | `unmapped-scalar`           | A TypeSpec scalar has no entry in the scalar registry. Emitter cannot proceed without a C#/proto/TS mapping.                                                                                                                                                                                                                                        |
 | D2TSP002 | `unsupported-property-type` | A model property has an anonymous-model, model-variant, or otherwise-unrecognized type. Named enums + closed string-literal unions ARE supported (they map to a cross-language enum — a C# `public enum` + `[JsonConverter(typeof(JsonStringEnumConverter))]`, a TS const-object, and a proto `string` field carrying the member-name wire string). |
-| D2TSP003 | `missing-cqrs-category`     | An operation carries neither `@d2Command` nor `@d2Query`. The façade emitter cannot determine the handler namespace without a CQRS category.                                                                                                                                                                      |
-| D2TSP004 | `route-missing-auth-intent` | A routed operation (`@route`) carries none of `@d2RequireAnyScope`, `@d2RequireAllScopes`, or `@d2Harmless`. Every public route must declare an auth intent. The route emitter loud-fails at compile time rather than emitting a boot-failing unprotected endpoint — strictly stronger than a runtime boot guard. |
-| D2TSP005 | `unsupported-http-verb`     | An HTTP verb other than get/post/put/delete/patch (e.g. `head`, `options`) has no `Map*` mapping in the route emitter.                                                                                                                                                                                            |
-| D2TSP006 | `idempotent-requires-route` | `@d2Idempotent` is present on an operation that has no `@route`. Idempotency gating is REST-only; it is meaningless without a public HTTP route. Add `@route` + a supported HTTP verb to the operation, or remove `@d2Idempotent` if the operation is not intended to have a REST surface.                        |
-| D2TSP007 | `unsupported-union-shape`   | A union property's variants are NOT a closed set of string literals (mixed-primitive, mixed-literal-kind, numeric-literal-only, discriminated, or model unions). There is no single cross-language enum representation, so the emitter loud-fails rather than guessing. Replace with a named enum or a closed string-literal union. |
+| D2TSP003 | `missing-cqrs-category`     | An operation carries neither `@d2Command` nor `@d2Query`. The façade emitter cannot determine the handler namespace without a CQRS category.                                                                                                                                                                                                        |
+| D2TSP004 | `route-missing-auth-intent` | A routed operation (`@route`) carries none of `@d2RequireAnyScope`, `@d2RequireAllScopes`, or `@d2Harmless`. Every public route must declare an auth intent. The route emitter loud-fails at compile time rather than emitting a boot-failing unprotected endpoint — strictly stronger than a runtime boot guard.                                   |
+| D2TSP005 | `unsupported-http-verb`     | An HTTP verb other than get/post/put/delete/patch (e.g. `head`, `options`) has no `Map*` mapping in the route emitter.                                                                                                                                                                                                                              |
+| D2TSP006 | `idempotent-requires-route` | `@d2Idempotent` is present on an operation that has no `@route`. Idempotency gating is REST-only; it is meaningless without a public HTTP route. Add `@route` + a supported HTTP verb to the operation, or remove `@d2Idempotent` if the operation is not intended to have a REST surface.                                                          |
+| D2TSP007 | `unsupported-union-shape`   | A union property's variants are NOT a closed set of string literals (mixed-primitive, mixed-literal-kind, numeric-literal-only, discriminated, or model unions). There is no single cross-language enum representation, so the emitter loud-fails rather than guessing. Replace with a named enum or a closed string-literal union.                 |
 
 All diagnostics have `severity: "error"` — every violation fails `tsp compile`
 with a non-zero exit code.
@@ -580,6 +580,8 @@ server/services/edge/tests/Unit/KeyCustodian/TypeSpecGrpc/Protos/     ← .proto
 server/services/edge/tests/Unit/KeyCustodian/TypeSpecDto/Generated/   ← sign + temporal + enum fixture DTOs (TemporalInput/Output.g.cs + temporal-dto.g.ts; EnumsInput/Output.g.cs + enums-dto.g.ts)
 server/services/edge/tests/Unit/KeyCustodian/TypeSpecGrpcEnum/Generated/ ← enum gRPC fixtures (SignWithKind DTOs + service + transport/client mappers + client interface/impl/DI/keys; the proto string ↔ enum bridge)
 server/services/edge/tests/Unit/KeyCustodian/TypeSpecGrpcEnum/Protos/  ← enum gRPC fixture .proto (enum_fixtures_signer_sign_with_kind.g.proto)
+server/services/edge/tests/Unit/KeyCustodian/TypeSpecGrpcPredicate/Generated/ ← @d2Resilience predicate fixtures (flat PlaceOrder DTOs + client interface/impl/DI/keys/mappers + the C#/TS predicate twins + D2GeneratedBusinessRetrySignal; PLUS the nested/array-of-model PlaceOrderV2 DTOs + its C#/TS predicate twin — emitted STANDALONE, no gRPC client committed for the nested shape)
+server/services/edge/tests/Unit/KeyCustodian/TypeSpecGrpcPredicate/Protos/  ← predicate gRPC fixture .proto (predicate_fixtures_orders_place_order.g.proto; placeOrderV2 has no committed proto/client — nested-model gRPC responses are a tracked transport-mapper gap, roadmap §C C18)
 ```
 
 The Sign operation DTOs live in the gRPC generated directory because they are emitted
@@ -609,10 +611,15 @@ the fixtures as follows:
    `tests/facade-emitter.test.ts`, and `tests/proto-grpc-byte-parity.test.ts`
    to match the new content. The enum-shaped byte-gates in `tests/byte-parity.test.ts`
    (`byteParity_EnumsDto_CommittedFixtures` + `byteParity_SignWithKindEnumGrpc_CommittedFixtures`
-   + `byteParity_SignWithKindEnumGrpcClient_CommittedFixtures`) read the committed
-   `Enums*.g.cs` / `enums-dto.g.ts` / the enum `.proto` + transport mapper + the
-   client mapper/impl from disk and compare them to fresh emitter output, so they
-   refresh automatically when you recommit the regenerated files — no in-test constant to edit.
+   - `byteParity_SignWithKindEnumGrpcClient_CommittedFixtures`) read the committed
+     `Enums*.g.cs` / `enums-dto.g.ts` / the enum `.proto` + transport mapper + the
+     client mapper/impl from disk and compare them to fresh emitter output, so they
+     refresh automatically when you recommit the regenerated files — no in-test constant to edit.
+     The `@d2Resilience` predicate byte-gates in `tests/predicate-byte-parity.test.ts`
+     (the C#/TS predicate twins + the `D2GeneratedBusinessRetrySignal` sentinel + the
+     predicate-bearing client impl/DI-ext) likewise read the committed
+     `TypeSpecGrpcPredicate/Generated/` files from disk and re-emit (compiling the
+     fixture model through the test-host) — they refresh automatically too.
 4. Run `pnpm run test:coverage` to confirm all byte-parity tests pass with 100%
    coverage.
 5. Run `dotnet build` + `dotnet test` (scoped to `D2.Edge.Tests`) to confirm the C#

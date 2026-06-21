@@ -58,3 +58,4 @@ imports:
   - "./fixtures/sign-shaped.tsp"
   - "./fixtures/temporal-shaped.tsp"
   - "./fixtures/enum-shaped.tsp"
+  - "./fixtures/resilience-predicate-shaped.tsp"

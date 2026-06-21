@@ -66,6 +66,7 @@ import { toPascal } from "./name-transforms.js";
 import type { FieldInfo } from "./model-walk.js";
 import type { EmittedFile } from "./csharp-dto-emitter.js";
 import { collectFieldEnums, emitEnumMapperHelpers } from "./enum-mapper.js";
+import type { PredicateNode } from "@d2/typespec-decorators";
 
 // ---------------------------------------------------------------------------
 // Public types
@@ -97,6 +98,16 @@ export interface GrpcClientOp {
   readonly responseModelName: string;
   /** Fields of the response DTO (for the proto→DTO mapper). */
   readonly responseFields: readonly FieldInfo[];
+  /**
+   * Parsed @d2Resilience `retryWhen` predicate AST, when the op carries one.
+   * Present ⇒ the impl emits the predicate arm (throw the retry sentinel when
+   * `retryWhen && !failWhen`) + the budget-exhaust restore, and the DI-ext's
+   * `IsTransient` lambda gains the sentinel arm. Absent ⇒ the op emits
+   * byte-identically to a no-predicate client (the additive arms are skipped).
+   */
+  readonly retryWhenAst?: PredicateNode;
+  /** Parsed @d2Resilience `failWhen` predicate AST, when the op carries one. */
+  readonly failWhenAst?: PredicateNode;
 }
 
 // ---------------------------------------------------------------------------
@@ -373,6 +384,15 @@ function emitImpl(
       );
     }
 
+    if (op.retryWhenAst !== undefined) {
+      // The last business payload captured out of the closure so a retryWhen
+      // budget-exhaust can restore the full business D2Result (envelope + data)
+      // verbatim — the pipeline result carries no data on the sentinel-fault path.
+      lines.push(
+        `        ${op.responseModelName}? capturedData = default;  // captured out of the closure for the retryWhen restore`,
+      );
+    }
+
     lines.push(`        var pipelineResult = await pipeline.ExecuteAsync(`);
     lines.push(`            ${toPascal(op.opName)}ClientKeys.PIPELINE_KEY,`);
     lines.push(`            async innerCt =>`);
@@ -406,6 +426,39 @@ function emitImpl(
       lines.push("                    }");
       lines.push("");
       lines.push(`                    return dataResult.Data;`);
+    } else if (op.retryWhenAst !== undefined) {
+      // retryWhen arm: reconstruct the business result and, when `retryWhen` is
+      // true (and `failWhen` is false — failWhen WINS), throw the retry sentinel
+      // so the keyed pipeline's IsTransient sees it and re-attempts. On exhaust
+      // the sentinel propagates and the post-pipeline restore returns the last
+      // captured business result verbatim. The throw is gated on a retryWhen.
+      const predClass = `${pascalOp}ResiliencePredicates`;
+      const retryGuard =
+        op.failWhenAst !== undefined
+          ? `${predClass}.SR_RetryWhen(businessResult) && !${predClass}.SR_FailWhen(businessResult)`
+          : `${predClass}.SR_RetryWhen(businessResult)`;
+      lines.push(
+        `                    var data = response.Data is null ? default : response.Data.To${op.responseModelName}();`,
+      );
+      lines.push(`                    capturedData = data;  // for the budget-exhaust restore`);
+      lines.push(
+        `                    var businessResult = response.Result is not null`,
+      );
+      lines.push(
+        `                        ? response.Result.ToD2Result<${op.responseModelName}?>(data)`,
+      );
+      lines.push(
+        `                        : D2Result<${op.responseModelName}?>.Ok(data);`,
+      );
+      lines.push("");
+      lines.push(
+        `                    if (${retryGuard})`,
+      );
+      lines.push(
+        `                        throw new D2GeneratedBusinessRetrySignal(businessResult.ToProto());`,
+      );
+      lines.push("");
+      lines.push("                    return data;");
     } else {
       lines.push(
         `                    return response.Data is null ? default : response.Data.To${op.responseModelName}();`,
@@ -437,6 +490,19 @@ function emitImpl(
     lines.push(
       `            return transportFault.ToTransportFaultResult<${op.responseModelName}?>();`,
     );
+
+    if (op.retryWhenAst !== undefined) {
+      // retryWhen budget-exhaust restore: the pipeline failed with NO transport
+      // fault and a captured envelope — the retry sentinel propagated through the
+      // budget and the pipeline mapped it to a generic failure. Restore the last
+      // captured business result (envelope + data) verbatim, NOT the mapped 500.
+      lines.push(
+        `        if (!pipelineResult.Success && transportFault is null && envelope is not null)`,
+      );
+      lines.push(
+        `            return envelope.ToD2Result<${op.responseModelName}?>(capturedData);`,
+      );
+    }
 
     if (responseHasEnums) {
       // A client-side enum parse failure overrides the (successful) transport result:
@@ -804,9 +870,24 @@ function emitGrpcClientsDiExtension(
       `                b => b.UseRetries(new RetryOptions<${op.responseModelName}?>`,
     );
     lines.push("                {");
-    lines.push(
-      `                    IsTransient = ex => ex is RpcException r && ProtoExtensions.IsTransientGrpcException(r),`,
-    );
+    if (op.retryWhenAst !== undefined) {
+      // retryWhen sentinel arm: the generated client throws the emitter-owned
+      // D2GeneratedBusinessRetrySignal when the business result matches retryWhen
+      // (and not failWhen); recognizing it here makes the keyed pipeline retry —
+      // the zero-resilience-lib-change opt-in rides this existing IsTransient seam.
+      lines.push("                    IsTransient = ex =>");
+      lines.push(
+        "                        ex is D2GeneratedBusinessRetrySignal",
+      );
+      lines.push(
+        "                        || (ex is RpcException r && ProtoExtensions.IsTransientGrpcException(r)),",
+      );
+    } else {
+      lines.push(
+        `                    IsTransient = ex => ex is RpcException r && ProtoExtensions.IsTransientGrpcException(r),`,
+      );
+    }
+
     lines.push("                }));");
     lines.push("");
   }

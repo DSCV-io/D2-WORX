@@ -430,3 +430,114 @@ describe("protoGrpcEmitIntegration_UnmappedScalar_D2TSP001", () => {
     expect(hasErrors).toBe(true);
   });
 });
+
+// ---------------------------------------------------------------------------
+// Test: @d2Resilience predicate-bearing op → predicate files + sentinel emitted
+// through the live $onEmit dispatch (real-module mode).
+// ---------------------------------------------------------------------------
+
+describe("protoGrpcEmitIntegration_Resilience_PredicateAndSentinelEmitted", () => {
+  let host: Awaited<ReturnType<typeof createTestHost>>;
+
+  beforeAll(async () => {
+    host = await createTestHost({
+      libraries: [D2DecoratorTestLibrary, D2EmitterTestLibrary],
+    });
+  });
+
+  it("a predicate-bearing gRPC op emits the C#/TS predicates + the sentinel, and the client gains the sentinel arm", async () => {
+    host.addTypeSpecFile(
+      "main.tsp",
+      `
+      import "@d2/typespec-decorators";
+      using D2;
+      namespace D2.Fixtures;
+
+      model PlaceOrderInput { customerId: string; }
+      model PlaceOrderOutput { orderCode: string; itemStatuses: string[]; partial: boolean; }
+
+      @d2Command
+      @d2ServedBy("PredicateFixtures")
+      @d2GrpcMethod("PredicateFixturesOrders", "PlaceOrder")
+      @d2Resilience(
+        "retry(3)",
+        #{
+          retryWhen: "result.category == \\"infrastructure_unavailable\\" || result.data.itemStatuses.contains(\\"PENDING\\") || result.data.partial == true",
+          failWhen: "result.data.itemStatuses.count == 0 || result.errorCode == \\"VALIDATION_FAILED\\"",
+        }
+      )
+      op placeOrder(input: PlaceOrderInput): PlaceOrderOutput;
+
+      // A second real-module gRPC op in a DIFFERENT module with NO @d2Resilience —
+      // exercises the no-predicate skip (no predicate files, no sentinel for that module).
+      model PingInput { id: string; }
+      model PingOutput { ok: boolean; }
+
+      @d2Command
+      @d2ServedBy("PlainFixtures")
+      @d2GrpcMethod("PlainFixturesPinger", "Ping")
+      op ping(input: PingInput): PingOutput;
+      `,
+    );
+
+    await host.compile("main.tsp", {
+      emit: ["@d2/typespec-emitters"],
+      options: {
+        "@d2/typespec-emitters": {
+          "csharp-namespace": "D2.Test.Dto",
+          "csharp-clients-namespace": "D2.Test.Clients",
+          "csharp-app-namespace-base": "D2.Test.App.Application.Handlers",
+          "proto-package": "d2.predicatefixtures.v1",
+          "proto-csharp-namespace": "D2.Services.Protos.PredicateFixtures.V1",
+          "grpc-service-namespace": "D2.Test.Grpc",
+        },
+      },
+      outputDir: "testing:/out",
+    });
+
+    const errors = host.program.diagnostics.filter(
+      (d) => d.severity === "error",
+    );
+    expect(errors).toHaveLength(0);
+
+    // Predicate C# file emitted with the SR_ fields.
+    const predCs = getEmittedFile(host, "PlaceOrderResiliencePredicates.g.cs");
+    expect(predCs).toBeDefined();
+    expect(predCs).toContain("SR_RetryWhen");
+    expect(predCs).toContain("SR_FailWhen");
+
+    // Predicate TS parity twin emitted.
+    const predTs = getEmittedFile(host, "place-order-resilience-predicates.g.ts");
+    expect(predTs).toBeDefined();
+    expect(predTs).toContain("export const placeOrderRetryWhen");
+
+    // Emitter-owned sentinel emitted once for the module.
+    const sentinel = getEmittedFile(host, "D2GeneratedBusinessRetrySignal.g.cs");
+    expect(sentinel).toBeDefined();
+    expect(sentinel).toContain(
+      "internal sealed class D2GeneratedBusinessRetrySignal : Exception",
+    );
+
+    // The client impl gains the predicate arm; the DI-ext gains the sentinel IsTransient arm.
+    // Match the IMPL with a leading '/' so the suffix does not also match the INTERFACE
+    // file (IPredicateFixturesGrpcClient.g.cs ends with the same bare name).
+    const clientImpl = getEmittedFile(host, "/PredicateFixturesGrpcClient.g.cs");
+    expect(clientImpl).toContain(
+      "throw new D2GeneratedBusinessRetrySignal(businessResult.ToProto());",
+    );
+    const clientDi = getEmittedFile(
+      host,
+      "PredicateFixturesGrpcClientsGenerated.g.cs",
+    );
+    expect(clientDi).toContain("ex is D2GeneratedBusinessRetrySignal");
+
+    // The PLAIN module (no @d2Resilience) emits NO predicate files and its client stays
+    // byte-identical — no sentinel arm, no predicate class for that module's op.
+    expect(getEmittedFile(host, "PingResiliencePredicates.g.cs")).toBeUndefined();
+    const pingDi = getEmittedFile(host, "PlainFixturesGrpcClientsGenerated.g.cs");
+    expect(pingDi).toBeDefined();
+    expect(pingDi).not.toContain("D2GeneratedBusinessRetrySignal");
+    const pingImpl = getEmittedFile(host, "/PlainFixturesGrpcClient.g.cs");
+    expect(pingImpl).not.toContain("D2GeneratedBusinessRetrySignal");
+  });
+});

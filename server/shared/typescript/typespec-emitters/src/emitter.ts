@@ -19,8 +19,14 @@ import {
   D2_RATE_LIMIT_TIER_KEY,
   D2_CSRF_KEY,
   D2_IDEMPOTENT_KEY,
+  D2_RESILIENCE_RETRY_WHEN_KEY,
+  D2_RESILIENCE_FAIL_WHEN_KEY,
+  parseResultPredicate,
 } from "@d2/typespec-decorators";
-import type { IdempotentPayload } from "@d2/typespec-decorators";
+import type {
+  IdempotentPayload,
+  PredicateNode,
+} from "@d2/typespec-decorators";
 import { emitGeneratedFile, resolveOutputPath } from "./lib/emit-file.js";
 import { walkModel } from "./lib/model-walk.js";
 import { emitCsharpDtos } from "./lib/csharp-dto-emitter.js";
@@ -33,6 +39,10 @@ import { emitFacade } from "./lib/facade-emitter.js";
 import type { ExposedOp } from "./lib/facade-emitter.js";
 import { emitGrpcClient, emitClientKeys } from "./lib/grpc-client-emitter.js";
 import type { GrpcClientOp } from "./lib/grpc-client-emitter.js";
+import {
+  emitResultPredicates,
+  emitBusinessRetrySignal,
+} from "./lib/result-predicate-emitter.js";
 import { emitRoutePolicy } from "./lib/route-policy-emitter.js";
 import { emitIdempotencyStoreSeam } from "./lib/idempotency-gate-emitter.js";
 import type {
@@ -95,6 +105,16 @@ export interface OperationsManifest {
 }
 
 /**
+ * A gRPC client op collected during the per-op walk, paired with its output
+ * Model so the per-module @d2Resilience predicate emitter can crawl the data
+ * path at gen time. The `clientOp` already carries any parsed predicate ASTs.
+ */
+interface CollectedGrpcOp {
+  readonly clientOp: GrpcClientOp;
+  readonly outputModel: Model | undefined;
+}
+
+/**
  * TypeSpec emitter entry point. Called once per tsp compile when this package
  * appears in the consumer's tspconfig.yaml `emit:` list.
  */
@@ -144,8 +164,10 @@ export async function $onEmit(context: EmitContext): Promise<void> {
 
   // Collect gRPC-method ops per module (grouped by @d2ServedBy) for the gRPC client emitter.
   // The client emitter emits one interface + impl + mappers + DI-ext per module, after the walk.
-  // Only populated when csClientsNamespace is configured (real-module mode).
-  const grpcOpsByModule = new Map<string, GrpcClientOp[]>();
+  // Only populated when csClientsNamespace is configured (real-module mode). Each entry pairs
+  // the GrpcClientOp (with any parsed @d2Resilience predicate ASTs attached) with the op's output
+  // Model so the per-module predicate emitter can do its gen-time data-path crawl.
+  const grpcOpsByModule = new Map<string, CollectedGrpcOp[]>();
 
   // Track which registration namespaces contain at least one idempotent route.
   // The idempotency-store seam is emitted ONCE per namespace (mirrors the
@@ -386,6 +408,24 @@ export async function $onEmit(context: EmitContext): Promise<void> {
               : `${grpcPascalOp}Output`;
           /* v8 ignore stop */
 
+          // Read back the @d2Resilience retryWhen / failWhen raw strings (stored
+          // by the decorator on the two predicate state keys) and parse each into
+          // its AST. C-3 already validated them at compile time, so a parse error
+          // here would be a contract-level invariant break — surface it via the
+          // emitter's diagnostic surface and skip the predicate (no broken emit).
+          const retryWhenAst = parseOpPredicate(
+            program,
+            op,
+            D2_RESILIENCE_RETRY_WHEN_KEY,
+            "retryWhen",
+          );
+          const failWhenAst = parseOpPredicate(
+            program,
+            op,
+            D2_RESILIENCE_FAIL_WHEN_KEY,
+            "failWhen",
+          );
+
           const clientOp: GrpcClientOp = {
             opName: op.name,
             grpcService: grpcPayload.service,
@@ -397,10 +437,12 @@ export async function $onEmit(context: EmitContext): Promise<void> {
             requestFields: clientInputWalk.fields,
             responseModelName,
             responseFields: clientOutputWalk.fields,
+            retryWhenAst,
+            failWhenAst,
           };
 
           const existing = grpcOpsByModule.get(grpcServedBy) ?? [];
-          existing.push(clientOp);
+          existing.push({ clientOp, outputModel });
           grpcOpsByModule.set(grpcServedBy, existing);
         }
       }
@@ -457,9 +499,10 @@ export async function $onEmit(context: EmitContext): Promise<void> {
   // Only in real-module mode (csClientsNamespace configured).
   if (csClientsNamespace !== undefined) {
     for (const [moduleName, moduleOps] of grpcOpsByModule) {
+      const clientOps = moduleOps.map((m) => m.clientOp);
       const clientFiles = emitGrpcClient(
         moduleName,
-        moduleOps,
+        clientOps,
         csClientsNamespace,
       );
       for (const f of clientFiles) {
@@ -467,7 +510,7 @@ export async function $onEmit(context: EmitContext): Promise<void> {
         void emitGeneratedFile(program, clientPath, f.content);
       }
       // Per-op client keys constants (<Op>ClientKeys.g.cs).
-      for (const clientOp of moduleOps) {
+      for (const { clientOp } of moduleOps) {
         const keysFile = emitClientKeys(
           clientOp.opName,
           csClientsNamespace,
@@ -475,6 +518,47 @@ export async function $onEmit(context: EmitContext): Promise<void> {
         );
         const keysPath = resolveOutputPath(context, keysFile.fileName);
         void emitGeneratedFile(program, keysPath, keysFile.content);
+      }
+
+      // ---- @d2Resilience predicate emission (per predicate-bearing op) ----
+      // Emit the C# + TS predicate file pair for every op carrying retryWhen /
+      // failWhen, plus the emitter-owned retry sentinel ONCE per module (shared
+      // by every predicate-bearing op's client closure + DI-ext IsTransient arm).
+      let moduleHasPredicate = false;
+      for (const { clientOp, outputModel } of moduleOps) {
+        if (
+          clientOp.retryWhenAst === undefined &&
+          clientOp.failWhenAst === undefined
+        )
+          continue;
+
+        moduleHasPredicate = true;
+        const predicateFiles = emitResultPredicates({
+          opName: clientOp.opName,
+          responseModelName: clientOp.responseModelName,
+          outputModel,
+          clientsNs: csClientsNamespace,
+          dtoCsharpNs: clientOp.dtoCsharpNs,
+          sourceSpec: clientOp.sourceSpec,
+          retryWhen: clientOp.retryWhenAst,
+          failWhen: clientOp.failWhenAst,
+        });
+        for (const f of predicateFiles) {
+          const predicatePath = resolveOutputPath(context, f.fileName);
+          void emitGeneratedFile(program, predicatePath, f.content);
+        }
+      }
+
+      if (moduleHasPredicate) {
+        // One shared sentinel per module — only the retryWhen arm throws it, but
+        // every predicate-bearing op's DI-ext IsTransient arm references it.
+        const sentinelSpec = moduleOps[0]!.clientOp.sourceSpec;
+        const sentinelFile = emitBusinessRetrySignal(
+          csClientsNamespace,
+          sentinelSpec,
+        );
+        const sentinelPath = resolveOutputPath(context, sentinelFile.fileName);
+        void emitGeneratedFile(program, sentinelPath, sentinelFile.content);
       }
     }
   }
@@ -1092,6 +1176,33 @@ function emitRouteIfPresent(
 function tryGetSpecPath(op: Operation): string | undefined {
   const node = op.node as { file?: { path?: string } } | undefined;
   return node?.file?.path;
+}
+
+/**
+ * Read the raw @d2Resilience predicate string stored on `stateKey` for `op` and
+ * parse it into an AST. Returns undefined when the op carries no such predicate.
+ *
+ * The decorator's `validateResultPredicate` already ran THIS SAME parser at
+ * compile time (and failed the compile on any malformed predicate), so a stored
+ * predicate is always re-parseable here — the parse-failure branch is a
+ * contract-level invariant guard that is unreachable for any program that
+ * compiled. `_kind` names the predicate ("retryWhen" / "failWhen") for clarity
+ * at the call site.
+ */
+function parseOpPredicate(
+  program: Parameters<typeof walkModel>[0],
+  op: Operation,
+  stateKey: symbol,
+  _kind: string,
+): PredicateNode | undefined {
+  const raw = program.stateMap(stateKey).get(op) as string | undefined;
+  if (raw === undefined) return undefined;
+
+  const parsed = parseResultPredicate(raw);
+  /* v8 ignore start — unreachable: C-3 validateResultPredicate already gated this exact parse at compile time */
+  if (!parsed.ok) return undefined;
+  /* v8 ignore stop */
+  return parsed.root;
 }
 
 /**

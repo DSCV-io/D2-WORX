@@ -260,5 +260,21 @@ Copyright (c) DCSV. All rights reserved.
               GrpcServices="Both"
               ProtoRoot="$(MSBuildThisFileDirectory)"
               AdditionalImportDirs="$(D2ContractsRoot)protos" />
+    <!--
+      Third TypeSpec gRPC fixture proto — the @d2Resilience retryWhen/failWhen
+      custom-predicate fixture (resilience-predicate-shaped.tsp placeOrder op). The
+      rich output shape (array-of-model + optional nested model) exercises the
+      cross-language predicate emitter + the gRPC client's business-retry sentinel.
+      Compiled in Both mode so the PredicateRetryTests can host a fault-injecting
+      service via MapGrpcService<T>() and dial it via the generated stub. The
+      D2ResultProto type still comes solely from the D2.Shared.Result.Grpc
+      ProjectReference above (this proto's import "common/v1/d2_result.proto"
+      resolves via the same AdditionalImportDirs proto_path; no second
+      d2_result.proto Protobuf include).
+    -->
+    <Protobuf Include="$(MSBuildThisFileDirectory)Unit/KeyCustodian/TypeSpecGrpcPredicate/Protos/predicate_fixtures_orders_place_order.g.proto"
+              GrpcServices="Both"
+              ProtoRoot="$(MSBuildThisFileDirectory)"
+              AdditionalImportDirs="$(D2ContractsRoot)protos" />
   </ItemGroup>
 </Project>
