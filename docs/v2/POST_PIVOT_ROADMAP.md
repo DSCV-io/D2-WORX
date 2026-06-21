@@ -127,6 +127,7 @@ the C0 contract emission — so they sit after 0023.
 | B15 | Wire the forwarded-JWT outbound plumbing into the running Edge gRPC host (the credential + `.AddD2ForwardedJwt()` chain + `AddD2ForwardedJwtOutbound()` are dev-first / loopback-proven; attaching them to a live Edge host is host-gated — the forwarded-token **sibling of the mTLS host-wiring item [A4](#a--mtls-remaining-phase-3-host-gated)**) | 📐 specified-deferred | [ADR-0022 §Realization "the reusable plumbing is built…ahead of a running Edge gRPC host; wiring it into an Edge host follows when that host exists"](../adrs/0022-service-auth-mint-once-forward.md) + [0023 §3 / §5 Deferred](../wip/0023-forwarded-token-auth/README.md) | a running Edge host (PHASE_3 A1) — `api/` is `.gitkeep` today |
 | B16 | gRPC-inbound-only forwarding-host adapter for the ambient-scope port. `AddD2AuthGrpc()` now registers `GrpcHttpContextAmbientRequestScopeAccessor` — the gRPC-inbound sibling of the `auth/http` `HttpContextAmbientRequestScopeAccessor` — so a **backend→backend gRPC-inbound** forwarding host self-wires the `IAmbientRequestScopeAccessor` read-back door the outbound credential's `GetRequiredService<IAmbientRequestScopeAccessor>()` needs (a deliberate tiny duplicate, since the `auth/http`↔`auth/grpc` no-inter-dep rule prevents a single shared adapter type). Both inbound transports now self-wire the port; dual-transport hosts are first-wins-safe (both adapters read the same door). | ✅ done in 0023 — gRPC-inbound sibling adapter | [0023 Step 5 (B16)](../wip/0023-forwarded-token-auth/05-grpc-inbound-forwarding-adapter/journal.md) + `auth/grpc/Ambient/GrpcHttpContextAmbientRequestScopeAccessor.cs` | — (closed; the live forwarding into a running gRPC-inbound host still rides B15 host-wiring) |
 | B17 | Identity for genuinely system-initiated calls (a scheduled job / background worker with no inbound user request). The forwarding credential hard-fails `Unauthenticated` when no ambient request scope exists (the correct fail-loud behavior today); such callers must carry their OWN minted identity, designed when they exist | ✍ not-yet-specified | [ADR-0022 §Realization "genuinely system-initiated calls…carry their own identity and are handled when they exist"](../adrs/0022-service-auth-mint-once-forward.md) + `ForwardedJwtCallCredentials.cs` XML-doc caveat | a scheduled-jobs / background-worker execution path to exist (PHASE_3 Edge scheduled-jobs receiver) + a design decision (see [§E](#e--items-that-still-need-a-design-decision)) |
+| B18 | **`@d2/auth-bff-client` package missing — `server/web` typechecks blocked.** `server/web/package.json` declares `"@d2/auth-bff-client": "workspace:*"` but the package does not exist in `pnpm-workspace.yaml` — so `pnpm install` for `server/web` fails with `ERR_PNPM_WORKSPACE_PKG_NOT_FOUND` and `svelte-check` (+ any TS typechecking of the BFF) cannot run at all. The `D2Result.<factory>` static-call gap noted in [§H](#h--cross-cutting-deferrals-tracked-outside-this-index-pointers-deep-tracked-elsewhere) is itself already fixed against `@d2/result`'s `.d.ts`, but full `server/web` typecheck verification is blocked until this package exists. **What needs doing**: create the `@d2/auth-bff-client` package + add it to `pnpm-workspace.yaml`, then `svelte-check` can run end-to-end. This is BFF rebuild work. | 📐 specified-deferred | `server/web/package.json` (the `workspace:*` dep declaration) + `pnpm-workspace.yaml` (missing entry) | PHASE_3 BFF rebuild (Phase 7 — [B11](#b2--beyond-0023-edge-gated--c0-gated)) — the package is part of the BFF auth forwarding surface that doesn't exist yet |
 
 ---
 
@@ -292,22 +293,15 @@ tracking lives in another canonical owner (a deliverable record's honest-caveats
 follow-up tracker), and they are NOT auth-pivot / emitter / Edge-seam items. Listed so the index is complete
 without re-homing them: the pointer is here; the owner is named.
 
-- **Pre-existing `D2.Shared.Tests` OTel/CORS flake** — a MeterProvider registration race under the full
-  parallel suite (passes isolated). **Owner**: the [0022 record §Honest caveats](../dev/deliverables/0022-mtls-workload-identity.md)
-  + the project follow-up tracker. Fix the parallel-suite race; not a pivot/emitter/Edge-seam item.
+- ~~**Pre-existing `D2.Shared.Tests` OTel/CORS flake**~~ — **FIXED**. Root cause: two
+  implicit named xUnit collections (`"OtelStaticState"` / `"LogLoggerStaticState"`) had no
+  `[CollectionDefinition]`, so xUnit ran them in parallel — racing the Prometheus exporter global
+  HttpListener, MeterProvider registration, and `Log.Logger`. Fix: merged both into a single declared
+  `[CollectionDefinition("LogLoggerStaticState", DisableParallelization = true)]`; renamed all 12
+  `OtelStaticState` usages to `LogLoggerStaticState`. 3 × consecutive full-suite runs: 0 failures /
+  6351 passed each. Build 0 warnings; inspectcode 0 warnings.
 - **`server/web` `D2Result.<factory>` static-call gap** — latent BFF type errors (v2 factories are module
   functions, not statics); unsurfaced because `server/web` isn't host-typechecked yet. **Owner**: the project
   follow-up tracker. Sweep all `D2Result.fail/ok/...` static-call sites when the `d2-web` compose service is
   stood up; the `gateway-response.ts` site was already fixed, the rest remain. Not a pivot/emitter/Edge-seam
   item.
-- **Geo `EnumEmitter` `[EnumMember]` JSON-wire bug (confirmed Medium, shipped geo)** — the geo source-gen
-  `EnumEmitter` decorates enum members with `[EnumMember(Value="en")]` (a DataContract attribute). `System.Text.Json`'s
-  `JsonStringEnumConverter` ignores `[EnumMember]`; it honors `[JsonStringEnumMemberName]` (introduced in .NET 9).
-  As a result, a geo enum such as `LanguageCode` serializes on the JSON wire as `"En"` (the C# member name)
-  instead of `"en"` (the intended ISO code) — a real wire-correctness bug in the shipped geo library. Confirmed
-  by the 0019 C-2 targeted audit (Medium finding); out of 0019's pipeline scope (geo is a separate shipped
-  deliverable). **Fix**: change `EnumEmitter` to emit `[JsonStringEnumMemberName("en")]`, regenerate the geo
-  enum `.g.cs` files, and add a JSON-wire round-trip test pinning the ISO code crosses the wire. **Owner**: the
-  geo source-gen `EnumEmitter` at
-  `server/shared/dotnet/geo/source-gen/Emitters/` + the generated `*.g.cs` enum files. Not a
-  pivot/emitter/Edge-seam item.
