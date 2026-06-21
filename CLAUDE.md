@@ -281,6 +281,7 @@ _Canonical form (full service-structure standard with rationale + carve-outs): [
 - **NEVER bulk-edit / sed across N files / mass-rename without first declaring scope** (file count, glob, what changes) and giving the user the chance to redirect. [rules.md §13.2]
 - **NEVER use destructive git ops** (force push, hard reset, branch delete, `git stash` in sub-agents) without explicit authorization. [rules.md §13.3]
 - **NEVER defer / skip planned work** without asking the user first. [rules.md §13.4]
+- **NEVER reflexively defer / de-scope / "track as a limitation" requested or in-scope doable-now work** — **do-it-now is the default**. Deferral is legitimate ONLY for genuinely-blocked work (missing not-yet-existing host, pending user decision, or bursting the locked goal) and STILL requires surfacing + user permission. "Cleaner / smaller / orthogonal / pre-existing" is not a blocker. Explicitly-requested functionality especially: deliver it in full. [rules.md §13.15]
 - **NEVER start services manually** (`dotnet run`, `pnpm dev`, etc.) — Docker Compose manages services. [rules.md §8.1]
 - **NEVER `Grep` `secrets/` or `.env.secrets` by name.** [rules.md §3.11]
 
@@ -318,6 +319,7 @@ _Canonical form (full service-structure standard with rationale + carve-outs): [
 ### Code quality (zero tolerance)
 
 - **Zero warnings, BOTH tools** (they catch different issues — not interchangeable; running only one = real coverage gap). `dotnet build server/D2.slnx` (StyleCop / CS / null-ref / Roslyn analyzers) AND `jb inspectcode server/D2.slnx --severity=WARNING` (JetBrains-only: `[MustDisposeResource]`, captured-closure issues, object-init suggestions). Never suppress; fix ALL warnings/errors anywhere in the project — never dismiss as "pre-existing" (branch hygiene: if you touched the area, you own its cleanliness). [rules.md §5.21, §5.22, §5.23]
+- **Prettier-clean CODE commits (`.husky/pre-commit`-enforced)** — touched `.ts`/`.js`/`.json`/`.svelte`/`.css`/`.yaml`/etc. CODE files must pass `prettier --check` before commit (run `pnpm format`); the pre-commit hook blocks a dirty staged code file. **Markdown is EXCLUDED** — Prettier's `*`↔`_` emphasis-normalization corrupts identifier-heavy docs (`SCREAMING_SNAKE`→`SCREAMING*SNAKE`); `.md` is in `.prettierignore` + governed by §11 doc conventions, NEVER `prettier --write`. [rules.md §5.28]
 
 ### Documentation parity
 
