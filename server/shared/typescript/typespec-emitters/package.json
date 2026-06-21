@@ -27,8 +27,15 @@
     "@typespec/http": "1.13.0"
   },
   "devDependencies": {
+    "@bufbuild/buf": "1.65.0",
+    "@d2/grpc-client": "workspace:*",
+    "@d2/protos": "workspace:*",
+    "@d2/resilience": "workspace:*",
+    "@d2/result": "workspace:*",
+    "@grpc/grpc-js": "1.14.3",
     "@typespec/compiler": "1.13.0",
     "@vitest/coverage-v8": "4.0.18",
+    "ts-proto": "2.11.2",
     "typescript": "5.9.3",
     "vitest": "4.0.18"
   }

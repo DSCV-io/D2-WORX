@@ -11,6 +11,7 @@
 # Codegen-emitted source — formatting is the emitter's responsibility.
 **/*.g.ts
 server/shared/typescript/protos/src/generated/**
+server/shared/typescript/typespec-emitters/tests/grpc-fixtures/generated/**
 server/web/src/lib/paraglide/**
 
 # Machine-emitted cross-language parity fixtures.

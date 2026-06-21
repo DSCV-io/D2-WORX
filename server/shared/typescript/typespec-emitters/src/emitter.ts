@@ -21,9 +21,15 @@ import {
   D2_IDEMPOTENT_KEY,
   D2_RESILIENCE_RETRY_WHEN_KEY,
   D2_RESILIENCE_FAIL_WHEN_KEY,
+  D2_RESILIENCE_KEY,
   parseResultPredicate,
+  parse as parseResiliencePipeline,
 } from "@d2/typespec-decorators";
-import type { IdempotentPayload, PredicateNode } from "@d2/typespec-decorators";
+import type {
+  IdempotentPayload,
+  PredicateNode,
+  ResiliencePolicyNode,
+} from "@d2/typespec-decorators";
 import { emitGeneratedFile, resolveOutputPath } from "./lib/emit-file.js";
 import { walkModel } from "./lib/model-walk.js";
 import { emitCsharpDtos } from "./lib/csharp-dto-emitter.js";
@@ -36,6 +42,15 @@ import { emitFacade } from "./lib/facade-emitter.js";
 import type { ExposedOp } from "./lib/facade-emitter.js";
 import { emitGrpcClient, emitClientKeys } from "./lib/grpc-client-emitter.js";
 import type { GrpcClientOp } from "./lib/grpc-client-emitter.js";
+import { emitTsGrpcClient } from "./lib/ts-grpc-client-emitter.js";
+import type { TsGrpcClientOp } from "./lib/ts-grpc-client-emitter.js";
+import { emitTsRestClient } from "./lib/ts-rest-client-emitter.js";
+import type {
+  RestAuthIntent,
+  RestIdempotencyKeySource,
+  RestVerb,
+  TsRestClientOp,
+} from "./lib/ts-rest-client-emitter.js";
 import {
   emitResultPredicates,
   emitBusinessRetrySignal,
@@ -49,7 +64,7 @@ import type {
 } from "./lib/route-policy-emitter.js";
 import { $lib } from "./lib.js";
 
-// The $onEmit entry point drives six artifact families per tsp compile:
+// The $onEmit entry point drives these artifact families per tsp compile:
 //
 //   1. operations-manifest.json — operations smoke manifest from the initial
 //      scaffold; kept so the operations-manifest integration test stays green
@@ -64,6 +79,15 @@ import { $lib } from "./lib.js";
 //      every operation decorated with @d2GrpcMethod.
 //   6. <Service>Service.g.cs + <Op>TransportMappers.g.cs — C# gRPC service
 //      class (extends the Grpc.Tools base) + transport mappers for those ops.
+//   7. The C# cross-process gRPC client layer (per @d2ServedBy module) +
+//      @d2Resilience predicate twins (C# + TS) + the retry sentinel.
+//   8. <module>-grpc-client.g.ts — the TS SSR gRPC client (per @d2ServedBy
+//      module): the TS twin of the C# gRPC client, delegating to the real
+//      @d2/grpc-client seam over the ts-proto grpc-js stub, folding in the C-5
+//      TS predicate twin's retry-arm for a @d2Resilience op.
+//   9. <module>-rest-client.g.ts — the TS browser REST client (per @d2ServedBy
+//      module): per-@route typed fns delegating to the $lib apiCall/apiCallAnon
+//      substrate (ProblemDetails / envelope → D2Result).
 //
 // Namespace routing for C# DTOs:
 //   EXPOSED op (@d2InProcess / @d2GrpcMethod / @d2ServerPush / @route):
@@ -109,6 +133,12 @@ export interface OperationsManifest {
 interface CollectedGrpcOp {
   readonly clientOp: GrpcClientOp;
   readonly outputModel: Model | undefined;
+  /**
+   * Max-attempts budget parsed from the op's @d2Resilience("retry(N)") DSL, when
+   * present. Threaded into the TS SSR gRPC client's predicate retry pipeline
+   * (`maxAttempts`). Undefined when the op carries no @d2Resilience pipeline DSL.
+   */
+  readonly retryBudget: number | undefined;
 }
 
 /**
@@ -165,6 +195,12 @@ export async function $onEmit(context: EmitContext): Promise<void> {
   // the GrpcClientOp (with any parsed @d2Resilience predicate ASTs attached) with the op's output
   // Model so the per-module predicate emitter can do its gen-time data-path crawl.
   const grpcOpsByModule = new Map<string, CollectedGrpcOp[]>();
+
+  // Collect @route ops per module (grouped by @d2ServedBy) for the TS browser
+  // REST client emitter. The route dispatch is otherwise fire-and-emit per op;
+  // this map groups the resolved route info (verb, path, auth intent, idempotency
+  // keySource, model names) so the per-module REST client is emitted after the walk.
+  const restOpsByModule = new Map<string, TsRestClientOp[]>();
 
   // Track which registration namespaces contain at least one idempotent route.
   // The idempotency-store seam is emitted ONCE per namespace (mirrors the
@@ -438,8 +474,10 @@ export async function $onEmit(context: EmitContext): Promise<void> {
             failWhenAst,
           };
 
+          const retryBudget = parseRetryBudget(program, op);
+
           const existing = grpcOpsByModule.get(grpcServedBy) ?? [];
-          existing.push({ clientOp, outputModel });
+          existing.push({ clientOp, outputModel, retryBudget });
           grpcOpsByModule.set(grpcServedBy, existing);
         }
       }
@@ -463,6 +501,7 @@ export async function $onEmit(context: EmitContext): Promise<void> {
           outputModel,
           idempotentNamespaces,
           idempotentNamespaceSpec,
+          restOpsByModule,
         );
       }
     },
@@ -557,6 +596,44 @@ export async function $onEmit(context: EmitContext): Promise<void> {
         const sentinelPath = resolveOutputPath(context, sentinelFile.fileName);
         void emitGeneratedFile(program, sentinelPath, sentinelFile.content);
       }
+    }
+  }
+
+  // ---- TS SSR gRPC client — one <module>-grpc-client.g.ts per @d2ServedBy module ----
+  // Reuses the already-collected grpcOpsByModule (one TS client per module with
+  // ≥1 @d2GrpcMethod op). The TS twin of the C# gRPC client: delegates to the real
+  // @d2/grpc-client seam over the ts-proto grpc-js stub; folds the C-5 TS predicate
+  // twin into the retry-arm for a @d2Resilience op.
+  for (const [moduleName, moduleOps] of grpcOpsByModule) {
+    const tsOps: TsGrpcClientOp[] = moduleOps.map((m) => ({
+      opName: m.clientOp.opName,
+      grpcService: m.clientOp.grpcService,
+      grpcMethod: m.clientOp.grpcMethod,
+      sourceSpec: m.clientOp.sourceSpec,
+      requestModelName: m.clientOp.requestModelName,
+      requestFields: m.clientOp.requestFields,
+      responseModelName: m.clientOp.responseModelName,
+      responseFields: m.clientOp.responseFields,
+      retryWhenAst: m.clientOp.retryWhenAst,
+      failWhenAst: m.clientOp.failWhenAst,
+      retryBudget: m.retryBudget,
+    }));
+    const tsClientFiles = emitTsGrpcClient(moduleName, tsOps);
+    for (const f of tsClientFiles) {
+      const tsClientPath = resolveOutputPath(context, f.fileName);
+      void emitGeneratedFile(program, tsClientPath, f.content);
+    }
+  }
+
+  // ---- TS browser REST client — one <module>-rest-client.g.ts per @d2ServedBy module ----
+  // Uses the restOpsByModule collected during the per-op walk (one TS REST client
+  // per module with ≥1 @route op). Per-@route typed fns delegating to the $lib
+  // apiCall/apiCallAnon substrate (ProblemDetails / envelope → D2Result).
+  for (const [moduleName, restOps] of restOpsByModule) {
+    const restClientFiles = emitTsRestClient(moduleName, restOps);
+    for (const f of restClientFiles) {
+      const restClientPath = resolveOutputPath(context, f.fileName);
+      void emitGeneratedFile(program, restClientPath, f.content);
     }
   }
 
@@ -943,6 +1020,7 @@ function emitRouteIfPresent(
   outputModel: Model | undefined,
   idempotentNamespaces: Set<string>,
   idempotentNamespaceSpec: Map<string, string>,
+  restOpsByModule: Map<string, TsRestClientOp[]>,
 ): void {
   // Read the @d2Idempotent payload (if any) before the route check.
   // D2TSP006: if @d2Idempotent is present but no @route exists, fail loud.
@@ -1164,6 +1242,45 @@ function emitRouteIfPresent(
 
   const routePath2 = resolveOutputPath(context, routeFile.fileName);
   void emitGeneratedFile(program, routePath2, routeFile.content);
+
+  // ---- Collect this routed op for the per-module TS browser REST client ----
+  // The REST client names off the PERMANENT @d2ServedBy module (D18). An op with
+  // @route but no @d2ServedBy has no module to name the surface — skip the REST
+  // collection (the C# route above still emits; @d2ServedBy is not required there).
+  if (servedBy !== undefined && servedBy.length > 0) {
+    // Auth intent: harmless-only → apiCallAnon; any/all scope → apiCall.
+    const authIntent: RestAuthIntent =
+      scopePolicy.kind === "harmless" ? "harmless" : "scoped";
+    // Idempotency keySource: header → client threads a key; derived → server-computed
+    // (no client key); absent → none.
+    const idempotencyKeySource: RestIdempotencyKeySource =
+      idempotencyConfig === undefined ? "none" : idempotencyConfig.keySource;
+    // Request fields for GET/DELETE query binding (the walk is pure/idempotent).
+    // emitRoutePolicy above validated the model first, so the error sink is inert
+    // (never called); a parameterless routed op has no input model → empty walk.
+    /* v8 ignore start — defensive: walk error sink never fires (model pre-validated) + the no-input-model empty-walk arm */
+    const restInputWalk =
+      inputModel !== undefined
+        ? walkModel(program, inputModel, () => undefined)
+        : { fields: [], nestedModels: [], nestedEnums: [] };
+    /* v8 ignore stop */
+
+    const restOp: TsRestClientOp = {
+      opName: op.name,
+      routePath,
+      verb: verb.toUpperCase() as RestVerb,
+      authIntent,
+      sourceSpec: specHint,
+      requestModelName: inputTypeName,
+      requestFields: restInputWalk.fields,
+      responseModelName: outputTypeName,
+      idempotencyKeySource,
+    };
+
+    const existing = restOpsByModule.get(servedBy) ?? [];
+    existing.push(restOp);
+    restOpsByModule.set(servedBy, existing);
+  }
 }
 
 /**
@@ -1200,6 +1317,62 @@ function parseOpPredicate(
   if (!parsed.ok) return undefined;
   /* v8 ignore stop */
   return parsed.root;
+}
+
+/**
+ * Read the @d2Resilience pipeline DSL stored on `op` and extract the retry
+ * `maxAttempts` budget for the TS SSR gRPC client's predicate retry pipeline.
+ * Returns undefined when the op carries no pipeline DSL or no `retry(...)` node
+ * with an explicit count. The value is op-data (the op's own @d2Resilience
+ * declaration), NOT a hand-copied constant.
+ *
+ * The decorator's $onValidate already ran THIS parser at compile time and failed
+ * the compile on any malformed DSL, so a stored DSL is always re-parseable — the
+ * parse-failure branch is a contract-level invariant guard, unreachable for any
+ * program that compiled.
+ */
+function parseRetryBudget(
+  program: Parameters<typeof walkModel>[0],
+  op: Operation,
+): number | undefined {
+  const raw = program.stateMap(D2_RESILIENCE_KEY).get(op) as string | undefined;
+  if (raw === undefined) return undefined;
+
+  const parsed = parseResiliencePipeline(raw);
+  /* v8 ignore start — unreachable: $onValidate already gated this exact parse at compile time */
+  if (!parsed.ok) return undefined;
+  /* v8 ignore stop */
+
+  // Find the retry node's maxAttempts tunable. A predicate-bearing op's DSL carries
+  // `retry(...)` at the root in every realistic case (the predicate IS the retry
+  // condition), so the inner-walk fallback is defensive for an exotic nesting that
+  // no in-scope predicate uses.
+  const retryNode = findRetryNode(parsed.root);
+  /* v8 ignore next — defensive: a predicate op always carries a retry policy somewhere in the chain */
+  if (retryNode === undefined) return undefined;
+
+  const max = retryNode.tunables["maxAttempts"];
+  return typeof max === "number" ? max : undefined;
+}
+
+/**
+ * Find the `retry` policy node in a linear @d2Resilience policy chain. Returns the
+ * root when it is a retry (the realistic case for a predicate op), else walks the
+ * single-inner chain. Returns undefined when no retry node exists.
+ */
+function findRetryNode(
+  root: ResiliencePolicyNode,
+): ResiliencePolicyNode | undefined {
+  // Walk the linear policy chain (retry is at the root for a predicate op in the
+  // common case, but may be nested under circuitBreaker/singleflight, or absent).
+  let node: ResiliencePolicyNode | undefined = root;
+  while (node !== undefined) {
+    if (node.policy === "retry") return node;
+
+    node = node.inner;
+  }
+
+  return undefined;
 }
 
 /**

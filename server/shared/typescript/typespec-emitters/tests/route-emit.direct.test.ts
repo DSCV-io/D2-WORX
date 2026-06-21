@@ -41,6 +41,9 @@ import {
   D2_RATE_LIMIT_TIER_KEY,
   D2_CSRF_KEY,
   D2_IDEMPOTENT_KEY,
+  D2_RESILIENCE_KEY,
+  D2_RESILIENCE_RETRY_WHEN_KEY,
+  D2_RESILIENCE_FAIL_WHEN_KEY,
 } from "@d2/typespec-decorators";
 
 // ---------------------------------------------------------------------------
@@ -1269,5 +1272,225 @@ describe("$onEmit_unionShape_ProtoPath_D2TSP007", () => {
     expect(
       directUnitEmitted.find((e) => e.path.includes("x_signer_bad.g.proto")),
     ).toBeUndefined();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Test: TS SSR gRPC client + the @d2Resilience predicate retry-arm via $onEmit
+// (covers the TS gRPC client after-walk loop + parseRetryBudget parse + walk +
+// retry-node maxAttempts extraction, against the INSTRUMENTED src — the test-host
+// integration tests run the dist build and give no src coverage credit).
+// ---------------------------------------------------------------------------
+
+describe("$onEmit_tsGrpcClientDirect_PredicateRetryArm_RealModule", () => {
+  it("@d2GrpcMethod + @d2Resilience(retry(3)) → TS gRPC client folds in the predicate retry-arm with maxAttempts 3", async () => {
+    const str = makeStringScalar();
+    const inputModel = makeModel("OrderInput", { customerId: str });
+    const outputModel = makeModel("OrderOutput", { orderCode: str });
+    const op = makeWrappedOp("placeOrderDirect", inputModel, outputModel);
+
+    // No HTTP verb → route skipped; only the gRPC + TS-client path fires.
+    const commandMap = new Map<object, unknown>([[op, true]]);
+    const servedBy = new Map<object, unknown>([[op, "OrderFixtures"]]);
+    const grpcMethod = new Map<object, unknown>([
+      [
+        op,
+        { service: "OrderSvc", method: "PlaceOrderDirect", streaming: "unary" },
+      ],
+    ]);
+    // @d2Resilience pipeline DSL + the predicate strings (the gen-time parse target).
+    const resilience = new Map<object, unknown>([[op, "retry(3)"]]);
+    const retryWhen = new Map<object, unknown>([
+      [op, 'result.data.orderCode == "PENDING"'],
+    ]);
+    const failWhen = new Map<object, unknown>([
+      [op, 'result.errorCode == "VALIDATION_FAILED"'],
+    ]);
+
+    directUnitOps.push(op);
+
+    const program = makeMockProgram((key: symbol) => {
+      if (key === D2_COMMAND_KEY) return commandMap;
+      if (key === D2_SERVED_BY_KEY) return servedBy;
+      if (key === D2_GRPC_METHOD_KEY) return grpcMethod;
+      if (key === D2_RESILIENCE_KEY) return resilience;
+      if (key === D2_RESILIENCE_RETRY_WHEN_KEY) return retryWhen;
+      if (key === D2_RESILIENCE_FAIL_WHEN_KEY) return failWhen;
+      return new Map();
+    });
+
+    const ctx = makeBaseContext(program, {
+      "csharp-namespace": "D2.Test.Ns",
+      "csharp-app-namespace-base": "D2.Test.App.Handlers",
+      "csharp-clients-namespace": "D2.OrderFixtures.Clients",
+      "proto-package": "d2.test.v1",
+      "proto-csharp-namespace": "D2.Test.Protos.V1",
+      "grpc-service-namespace": "D2.Test.Grpc",
+    });
+    await $onEmit(ctx);
+
+    // The TS SSR gRPC client is emitted with the predicate retry-arm folded in.
+    const tsClient = directUnitEmitted.find((e) =>
+      e.path.includes("order-fixtures-grpc-client.g.ts"),
+    );
+    expect(tsClient).toBeDefined();
+    expect(tsClient!.content).toContain(
+      "export interface OrderFixturesGrpcClient {",
+    );
+    // parseRetryBudget extracted maxAttempts 3 from the retry(3) DSL.
+    expect(tsClient!.content).toContain("maxAttempts: 3,");
+    // The predicate twin consumption (the retry-arm).
+    expect(tsClient!.content).toContain(
+      "placeOrderDirectRetryWhen(result) && !placeOrderDirectFailWhen(result)",
+    );
+    expect(tsClient!.content).toContain("new ResilientPipelineBuilder()");
+
+    // The C-5 TS predicate twin is emitted too (the retry-arm consumes it).
+    const twin = directUnitEmitted.find((e) =>
+      e.path.includes("place-order-direct-resilience-predicates.g.ts"),
+    );
+    expect(twin).toBeDefined();
+  });
+
+  it("a NESTED retry DSL (circuitBreaker(retry(2))) → parseRetryBudget walks the chain to maxAttempts 2", async () => {
+    const str = makeStringScalar();
+    const inputModel = makeModel("NestInput", { customerId: str });
+    const outputModel = makeModel("NestOutput", { code: str });
+    const op = makeWrappedOp("nestRetry", inputModel, outputModel);
+
+    const commandMap = new Map<object, unknown>([[op, true]]);
+    const servedBy = new Map<object, unknown>([[op, "NestFixtures"]]);
+    const grpcMethod = new Map<object, unknown>([
+      [op, { service: "NestSvc", method: "NestRetry", streaming: "unary" }],
+    ]);
+    // retry is NESTED under circuitBreaker → parseRetryBudget walks node.inner.
+    const resilience = new Map<object, unknown>([
+      [op, "circuitBreaker(retry(2))"],
+    ]);
+    const retryWhen = new Map<object, unknown>([
+      [op, 'result.data.code == "PENDING"'],
+    ]);
+
+    directUnitOps.push(op);
+
+    const program = makeMockProgram((key: symbol) => {
+      if (key === D2_COMMAND_KEY) return commandMap;
+      if (key === D2_SERVED_BY_KEY) return servedBy;
+      if (key === D2_GRPC_METHOD_KEY) return grpcMethod;
+      if (key === D2_RESILIENCE_KEY) return resilience;
+      if (key === D2_RESILIENCE_RETRY_WHEN_KEY) return retryWhen;
+      return new Map();
+    });
+
+    await $onEmit(
+      makeBaseContext(program, {
+        "csharp-namespace": "D2.Test.Ns",
+        "csharp-app-namespace-base": "D2.Test.App.Handlers",
+        "csharp-clients-namespace": "D2.NestFixtures.Clients",
+        "proto-package": "d2.test.v1",
+        "proto-csharp-namespace": "D2.Test.Protos.V1",
+        "grpc-service-namespace": "D2.Test.Grpc",
+      }),
+    );
+
+    const tsClient = directUnitEmitted.find((e) =>
+      e.path.includes("nest-fixtures-grpc-client.g.ts"),
+    );
+    expect(tsClient).toBeDefined();
+    // The nested retry(2) budget was extracted by walking the chain.
+    expect(tsClient!.content).toContain("maxAttempts: 2,");
+  });
+
+  it("a no-retry DSL (singleflight()) with a predicate → budget defaults to 3 (no retry node)", async () => {
+    const str = makeStringScalar();
+    const inputModel = makeModel("SfInput", { customerId: str });
+    const outputModel = makeModel("SfOutput", { code: str });
+    const op = makeWrappedOp("sfOnly", inputModel, outputModel);
+
+    const commandMap = new Map<object, unknown>([[op, true]]);
+    const servedBy = new Map<object, unknown>([[op, "SfFixtures"]]);
+    const grpcMethod = new Map<object, unknown>([
+      [op, { service: "SfSvc", method: "SfOnly", streaming: "unary" }],
+    ]);
+    // No retry policy in the chain → parseRetryBudget returns undefined → default 3.
+    const resilience = new Map<object, unknown>([[op, "singleflight()"]]);
+    const retryWhen = new Map<object, unknown>([
+      [op, 'result.data.code == "PENDING"'],
+    ]);
+
+    directUnitOps.push(op);
+
+    const program = makeMockProgram((key: symbol) => {
+      if (key === D2_COMMAND_KEY) return commandMap;
+      if (key === D2_SERVED_BY_KEY) return servedBy;
+      if (key === D2_GRPC_METHOD_KEY) return grpcMethod;
+      if (key === D2_RESILIENCE_KEY) return resilience;
+      if (key === D2_RESILIENCE_RETRY_WHEN_KEY) return retryWhen;
+      return new Map();
+    });
+
+    await $onEmit(
+      makeBaseContext(program, {
+        "csharp-namespace": "D2.Test.Ns",
+        "csharp-app-namespace-base": "D2.Test.App.Handlers",
+        "csharp-clients-namespace": "D2.SfFixtures.Clients",
+        "proto-package": "d2.test.v1",
+        "proto-csharp-namespace": "D2.Test.Protos.V1",
+        "grpc-service-namespace": "D2.Test.Grpc",
+      }),
+    );
+
+    const tsClient = directUnitEmitted.find((e) =>
+      e.path.includes("sf-fixtures-grpc-client.g.ts"),
+    );
+    expect(tsClient).toBeDefined();
+    // No retry node → undefined budget → the emitter default (3).
+    expect(tsClient!.content).toContain("maxAttempts: 3,");
+  });
+
+  it("a bare retry() DSL (no explicit count) → maxAttempts is undefined → emitter default 3", async () => {
+    const str = makeStringScalar();
+    const inputModel = makeModel("BareInput", { customerId: str });
+    const outputModel = makeModel("BareOutput", { code: str });
+    const op = makeWrappedOp("bareRetry", inputModel, outputModel);
+
+    const commandMap = new Map<object, unknown>([[op, true]]);
+    const servedBy = new Map<object, unknown>([[op, "BareFixtures"]]);
+    const grpcMethod = new Map<object, unknown>([
+      [op, { service: "BareSvc", method: "BareRetry", streaming: "unary" }],
+    ]);
+    // retry() with no maxAttempts tunable → parseRetryBudget's number-check FALSE arm.
+    const resilience = new Map<object, unknown>([[op, "retry()"]]);
+    const retryWhen = new Map<object, unknown>([
+      [op, 'result.data.code == "PENDING"'],
+    ]);
+
+    directUnitOps.push(op);
+
+    const program = makeMockProgram((key: symbol) => {
+      if (key === D2_COMMAND_KEY) return commandMap;
+      if (key === D2_SERVED_BY_KEY) return servedBy;
+      if (key === D2_GRPC_METHOD_KEY) return grpcMethod;
+      if (key === D2_RESILIENCE_KEY) return resilience;
+      if (key === D2_RESILIENCE_RETRY_WHEN_KEY) return retryWhen;
+      return new Map();
+    });
+
+    await $onEmit(
+      makeBaseContext(program, {
+        "csharp-namespace": "D2.Test.Ns",
+        "csharp-app-namespace-base": "D2.Test.App.Handlers",
+        "csharp-clients-namespace": "D2.BareFixtures.Clients",
+        "proto-package": "d2.test.v1",
+        "proto-csharp-namespace": "D2.Test.Protos.V1",
+        "grpc-service-namespace": "D2.Test.Grpc",
+      }),
+    );
+
+    const tsClient = directUnitEmitted.find((e) =>
+      e.path.includes("bare-fixtures-grpc-client.g.ts"),
+    );
+    expect(tsClient).toBeDefined();
+    expect(tsClient!.content).toContain("maxAttempts: 3,");
   });
 });
