@@ -1,0 +1,61 @@
+# -----------------------------------------------------------------------
+# Copyright (c) DCSV. All rights reserved.
+# -----------------------------------------------------------------------
+#
+# Root TypeSpec compiler configuration for contracts/typespec/.
+#
+# Invokes @d2/typespec-emitters for C# DTO + TS DTO emission.
+#
+# Output placement:
+#   tsp compile writes all artifacts to dist/generated/ (inside the emitter
+#   package build output). Committed C# fixtures are independently byte-pinned
+#   snapshots; they are NOT written directly by tsp compile. After a content-
+#   changing emitter edit, manually copy updated files into their committed
+#   homes and update the byte-gate fixture constants per:
+#   "Regenerating the committed fixtures" in
+#   server/shared/typescript/typespec-emitters/README.md.
+#
+# Namespace routing:
+#   Exposed ops (@d2InProcess / @d2GrpcMethod / @d2ServerPush):
+#     DTOs  → csharp-clients-namespace (Clients project).
+#     I<Op>Handler → csharp-app-namespace-base.<Category>.<PascalOp> (app, emitUsing=false).
+#   Fixture ops (sign — no csharp-app-namespace-base path):
+#     DTOs + I<Op>Handler → csharp-namespace + grpc-service-namespace (legacy fixture ns).
+
+emit:
+  - "@d2/typespec-emitters"
+
+options:
+  "@d2/typespec-emitters":
+    # Live emit goes to dist/generated/ (relative to the emitter package).
+    emitter-output-dir: "{project-root}/../../server/shared/typescript/typespec-emitters/dist/generated"
+
+    # C# namespace for fixture ops (sign) — retained for backward compatibility.
+    csharp-namespace: "D2.Edge.Tests.TypeSpecDto.Generated"
+
+    # Clients project namespace: exposed-op DTOs (GetJwksInput, GetJwksOutput + nested
+    # Jwk) and the module façade interface land here.
+    csharp-clients-namespace: "D2.Edge.KeyCustodian.Clients"
+
+    # App handler-namespace base: per-op CQRS path = <base>.<Category>.<PascalOp>.
+    # I<Op>Handler for getJwks lands at D2.Edge.KeyCustodian.App.Application.Handlers.Queries.GetJwks.
+    csharp-app-namespace-base: "D2.Edge.KeyCustodian.App.Application.Handlers"
+
+    # proto3 package declaration (e.g. "d2.keycustodian.v1").
+    # Fed to the proto emitter; the domain segment varies per service.
+    proto-package: "d2.keycustodian.v1"
+
+    # C# namespace declared in the emitted proto's `option csharp_namespace`.
+    # Must match the Grpc.Tools output namespace for generated message + service types.
+    proto-csharp-namespace: "D2.Services.Protos.KeyCustodian.V1"
+
+    # C# namespace for the generated gRPC service-impl class + transport mapper.
+    # Distinct from proto-csharp-namespace so proto types and service impl do not collide.
+    grpc-service-namespace: "D2.Edge.Tests.TypeSpecGrpc.Generated"
+
+imports:
+  - "./key-custodian/key-custodian.tsp"
+  - "./fixtures/sign-shaped.tsp"
+  - "./fixtures/temporal-shaped.tsp"
+  - "./fixtures/enum-shaped.tsp"
+  - "./fixtures/resilience-predicate-shaped.tsp"

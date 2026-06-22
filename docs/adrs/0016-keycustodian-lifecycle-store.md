@@ -123,4 +123,5 @@ Because the `KeyRecord` CLR type never changes, every transition is an ordinary 
 
 - [ADR-0017](0017-ef-as-ddd-persistence.md) — the EF-as-DDD persistence convention; Shape B (flat non-polymorphic Record + pure mapper) is what §7 above persists this aggregate through, and carries the full morph-wall rejection of TPH delete+insert.
 - [ADR-0018](0018-spec-driven-error-codes.md) / [ADR-0019](0019-wrapped-result-wire-model.md) — the cross-service error-code + wrapped-result conventions the KeyCustodian domain transitions surface failures through (`KeyCustodianFailures.*`).
+- [ADR-0023](0023-mtls-workload-identity.md) — mTLS workload identity; its internal certificate-authority capability extends the key-lifecycle state machine and overlap-rotation model defined here with a new certificate key-type and its issuance, rotation, and revocation operations.
 - Persistence-strategy spike (EF Core 10.0.7 / Npgsql.EFC 10.0.1 / Postgres 17) — 6/6 validated; throwaway Testcontainers spike falsified TPH delete+insert and confirmed the flat-record Shape B approach persisted through `KeyRecord` + pure mapper (see §7 above and ADR-0017).

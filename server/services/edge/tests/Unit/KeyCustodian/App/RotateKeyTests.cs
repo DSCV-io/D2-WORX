@@ -224,6 +224,109 @@ public sealed class RotateKeyTests
         db.Audit.Should().BeEmpty(because: "no state transition occurred");
     }
 
+    // Regression test for B3-F2: a CA-intermediate successor whose soak has not yet
+    // elapsed must return SoakNotElapsed and leave the incumbent unchanged —
+    // mirroring the RSA Rotate_SuccessorNotYetSoaked_ReturnsSoakNotElapsed test.
+    [Fact]
+    public async Task Rotate_CaIntermediate_SuccessorNotYetSoaked_ReturnsSoakNotElapsed()
+    {
+        // Successor created at now-(soak−1ns): one nanosecond short of the 1h soak.
+        await using var db = KeyCustodianTestDbContext.CreateEmpty();
+        var soakDuration = Duration.FromHours(1);
+        var now = KcAppTestKit.SR_BaseInstant + Duration.FromHours(3);
+        var successorCreated = now - soakDuration + Duration.FromNanoseconds(1);
+
+        // Active incumbent CA intermediate.
+        var (activeKid, _) = await KcAppTestKit.SeedCaAsync(
+            db, r_crypto, KcAppTestKit.SR_BaseInstant);
+
+        // Pending successor CA intermediate — created 1 ns before soak expires.
+        await KcAppTestKit.SeedCaAsync(db, r_crypto, successorCreated, KeyStatus.Pending);
+
+        var clock = new TestClock(now);
+        var result = await Build(db, clock, new RecordingAnnouncer())
+            .HandleAsync(new RotateKeyInput(KeyDomain.MTLS_CA_INTERMEDIATE));
+
+        result.Success.Should().BeFalse();
+        result.ErrorCode.Should().Be("KEYCUSTODIAN_SOAK_NOT_ELAPSED");
+        db.Keys.Single(k => k.Kid == activeKid).Status.Should().Be(
+            KeyStatus.Active, because: "no state change on soak-not-elapsed");
+    }
+
+    // CA-certificate keys now overlap-rotate through the genuine smoke → rotate →
+    // activate path (the CA smoke arm self-derives the public key, so the rotation is
+    // type-generic). The successor activates BEFORE the predecessor fully retires —
+    // no chain gap.
+    [Fact]
+    public async Task Rotate_CaIntermediate_OverlapRotates_SuccessorActiveBeforePredecessorRetires()
+    {
+        await using var db = KeyCustodianTestDbContext.CreateEmpty();
+        var created = KcAppTestKit.SR_BaseInstant;
+
+        // Active incumbent intermediate + a soaked pending successor intermediate.
+        var (activeKid, _) = await KcAppTestKit.SeedCaAsync(db, r_crypto, created);
+        var (pendingKid, _) = await KcAppTestKit.SeedCaAsync(
+            db, r_crypto, created, KeyStatus.Pending);
+
+        var clock = new TestClock(created + Duration.FromHours(2));
+        var announcer = new RecordingAnnouncer();
+        var result = await Build(db, clock, announcer)
+            .HandleAsync(new RotateKeyInput(KeyDomain.MTLS_CA_INTERMEDIATE));
+
+        result.Success.Should().BeTrue(because: "a CA intermediate overlap-rotates like any key");
+        result.Data!.RetiringKid.Should().Be(activeKid);
+        result.Data!.ActivatedKid.Should().Be(pendingKid);
+
+        // Overlap: the incumbent is RETIRING (still serving in-flight) while the
+        // successor is ACTIVE — both live, no gap.
+        db.Keys.Single(k => k.Kid == activeKid).Status.Should().Be(KeyStatus.Retiring);
+        db.Keys.Single(k => k.Kid == pendingKid).Status.Should().Be(KeyStatus.Active);
+
+        db.Audit.Should().Contain(a => a.Action == KeyAuditAction.Rotated);
+        db.Audit.Should().Contain(a => a.Action == KeyAuditAction.Activated);
+
+        var call = announcer.Calls.Should().ContainSingle().Subject;
+        call.Urgent.Should().BeFalse(because: "a scheduled rotation is non-urgent");
+    }
+
+    // Adversarial: a CA successor whose stored material is corrupt fails the CA
+    // smoke probe → no state change (the incumbent keeps serving).
+    [Fact]
+    public async Task Rotate_CaIntermediate_SuccessorSmokeFailure_LeavesNoPersistentChange()
+    {
+        await using var db = KeyCustodianTestDbContext.CreateEmpty();
+        var created = KcAppTestKit.SR_BaseInstant;
+
+        var (activeKid, _) = await KcAppTestKit.SeedCaAsync(db, r_crypto, created);
+
+        // A pending CA row whose wrapped material is NOT a valid PKCS#8 ECDSA key —
+        // the CA smoke arm's ImportPkcs8PrivateKey throws → SMOKE_TEST_FAILED.
+        var pendingKid = await KcAppTestKit.SeedKeyWithCorruptMaterialAsync(
+            db,
+            r_crypto,
+            KeyDomain.MTLS_CA_INTERMEDIATE,
+            KeyType.X509CaCertificate,
+            KeyStatus.Pending,
+            created,
+            corruptPlaintext: RandomNumberGenerator.GetBytes(64));
+
+        // Give the corrupt pending row CA cert material so it rehydrates as a CA key.
+        var corruptRow = db.Keys.Single(k => k.Kid == pendingKid);
+        corruptRow.CaCertificate = RandomNumberGenerator.GetBytes(32);
+        await db.SaveChangesAsync();
+
+        var clock = new TestClock(created + Duration.FromHours(2));
+        var result = await Build(db, clock, new RecordingAnnouncer())
+            .HandleAsync(new RotateKeyInput(KeyDomain.MTLS_CA_INTERMEDIATE));
+
+        result.Success.Should().BeFalse();
+        result.ErrorCode.Should().Be("KEYCUSTODIAN_SMOKE_TEST_FAILED");
+        db.Keys.Single(k => k.Kid == activeKid).Status.Should().Be(
+            KeyStatus.Active, because: "incumbent must not change on smoke failure");
+        db.Keys.Single(k => k.Kid == pendingKid).Status.Should().Be(
+            KeyStatus.Pending, because: "successor must not change on smoke failure");
+    }
+
     private RotateKeyHandler Build(
         KeyCustodianTestDbContext db, TestClock clock, RecordingAnnouncer announcer) =>
         new(

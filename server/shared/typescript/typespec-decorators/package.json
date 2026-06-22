@@ -1,0 +1,34 @@
+{
+  "name": "@d2/typespec-decorators",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "description": "TypeSpec decorator library defining the @d2* vocabulary for the D2 Operation Contract IDL.",
+  "tspMain": "lib/main.tsp",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "typespec": "./lib/main.tsp",
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -b",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "type-check:test": "tsc -p tsconfig.test.json"
+  },
+  "peerDependencies": {
+    "@typespec/compiler": "^1.13.0"
+  },
+  "devDependencies": {
+    "@typespec/compiler": "1.13.0",
+    "@typespec/http": "1.13.0",
+    "@vitest/coverage-v8": "4.0.18",
+    "typescript": "5.9.3",
+    "vitest": "4.0.18"
+  }
+}

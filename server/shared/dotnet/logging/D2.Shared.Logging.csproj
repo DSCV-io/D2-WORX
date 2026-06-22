@@ -89,5 +89,14 @@ Copyright (c) DCSV. All rights reserved.
 
   <ItemGroup>
     <InternalsVisibleTo Include="D2.Shared.Tests" />
+    <!--
+      D2.Edge.Tests — the TypeSpec-emitter validation tests drive the generated
+      SignInput record through RedactDataDestructuringPolicy (the real policy,
+      not a public facade) to assert [property: RedactData] is wired correctly.
+      The public AddD2Logging path mutates the static Log.Logger which is unsafe
+      in parallel test runs; direct policy instantiation is the correct seam
+      (mirrors the D2.Shared.Tests unit-test pattern) and requires IVT.
+    -->
+    <InternalsVisibleTo Include="D2.Edge.Tests" />
   </ItemGroup>
 </Project>

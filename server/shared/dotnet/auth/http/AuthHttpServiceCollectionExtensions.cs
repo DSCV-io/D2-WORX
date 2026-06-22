@@ -6,7 +6,9 @@
 
 namespace D2.Shared.Auth.Http;
 
+using D2.Shared.Auth.Abstractions;
 using D2.Shared.Auth.Abstractions.Http;
+using D2.Shared.Auth.Http.Ambient;
 using D2.Shared.Auth.Validation;
 using D2.Shared.Context.Abstractions;
 using Microsoft.AspNetCore.Http;
@@ -113,6 +115,26 @@ public static class AuthHttpServiceCollectionExtensions
                             + "interceptor (for gRPC) has run before resolving "
                             + "IRequestContext.");
             });
+
+            // Request-scoped forwarded-JWT holder — structurally isolated from
+            // IRequestContext (a different type with a different registration,
+            // never projected by the request-context enricher). JwtAuthMiddleware
+            // populates it after successful validation; the outbound forwarding
+            // credential reads it. TryAdd keeps it idempotent and harmless under
+            // dual-transport hosts (the gRPC extension registers the same holder).
+            services.TryAddScoped<IForwardedJwtAccessor, MutableForwardedJwtAccessor>();
+
+            // Ambient-scope adapter (the read-back door, symmetric to the holder
+            // write side above): the outbound forwarding credential resolves the
+            // current request's scope through the framework-free
+            // IAmbientRequestScopeAccessor port, and this HTTP transport supplies
+            // the IHttpContextAccessor-backed adapter. Singleton — it is stateless
+            // (per-request state flows through the AsyncLocal-backed accessor).
+            // Registered here so a forwarding host (HTTP-inbound by definition in
+            // the current architecture) gets it automatically; keeping the adapter
+            // in this framework-referencing lib leaves D2.Shared.Auth.Outbound
+            // free of any AspNetCore framework reference.
+            services.TryAddSingleton<IAmbientRequestScopeAccessor, HttpContextAmbientRequestScopeAccessor>();
 
             return services;
         }

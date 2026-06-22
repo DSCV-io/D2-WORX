@@ -62,7 +62,7 @@ export const HttpHeaders = {
    */
   IDEMPOTENCY_KEY: "Idempotency-Key",
   /**
-   * Service-identity JWT minted by KeyCustodian (audience d2.edge, 15-min TTL). BFF forwards on outbound calls so Edge can distinguish BFF-originated SSR traffic from browser-direct traffic in audit + telemetry tags.
+   * The BFF's boundary token for its calls to Edge — an OAuth client_credentials JWT (audience d2.edge, 15-min TTL) the BFF acquires as an external client of Edge. Sent on outbound BFF->Edge calls so Edge can distinguish BFF-originated SSR traffic from browser-direct traffic in audit + telemetry tags.
    * Convention: d2.
    * Applicability: http.
    */

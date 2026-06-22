@@ -16,7 +16,7 @@
  * Browser-only module — uses PUBLIC_GATEWAY_URL and fetch with credentials.
  */
 import { env } from "$env/dynamic/public";
-import { D2Result } from "@d2/result";
+import { D2Result, unauthorized } from "@d2/result";
 import { getLocale } from "$lib/paraglide/runtime.js";
 import { executeFetch } from "$lib/shared/rest/gateway-response.js";
 
@@ -171,7 +171,7 @@ export async function apiCall<TData = void>(
 ): Promise<D2Result<TData>> {
   const token = await getToken();
   if (!token) {
-    return D2Result.unauthorized<TData>();
+    return unauthorized<TData>();
   }
 
   const headers = buildHeaders(options);

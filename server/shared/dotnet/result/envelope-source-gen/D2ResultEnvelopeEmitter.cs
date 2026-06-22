@@ -142,7 +142,7 @@ internal static class D2ResultEnvelopeEmitter
         EmitAllFields(sb, entries);
 
         sb.AppendLine("}");
-        return sb.ToString();
+        return sb.ToString().LfNormalized();
     }
 
     private static void EmitAllFields(StringBuilder sb, List<D2ResultEnvelopeFieldEntry> entries)

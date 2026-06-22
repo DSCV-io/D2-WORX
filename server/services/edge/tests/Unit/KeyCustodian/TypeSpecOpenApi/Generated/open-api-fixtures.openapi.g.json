@@ -1,0 +1,244 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "OpenApi Fixtures",
+    "version": "0.0.0"
+  },
+  "tags": [],
+  "paths": {
+    "/v1/openapi/sign": {
+      "post": {
+        "operationId": "sign",
+        "description": "Sign the payload — carries ALL FOUR policy decorators so every x-d2-*\nextension is exercised (x-d2-scope any + x-d2-tier + x-d2-csrf + x-d2-audience).",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "The request has succeeded.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OpenApiSignOutput"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "input": {
+                    "$ref": "#/components/schemas/OpenApiSignInput"
+                  }
+                },
+                "required": [
+                  "input"
+                ]
+              }
+            }
+          }
+        },
+        "x-d2-scope": {
+          "mode": "any",
+          "scopes": [
+            "self.write"
+          ]
+        },
+        "x-d2-tier": "Standard",
+        "x-d2-audience": "d2-edge",
+        "x-d2-csrf": "exempt"
+      }
+    },
+    "/v1/openapi/sign-minimal": {
+      "post": {
+        "operationId": "signMinimal",
+        "description": "Sign with ONLY the required auth intent — no tier / csrf / audience. Proves\nthe three extensions are ABSENT when their decorators are absent (extensions\nare not vacuously stamped).",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "The request has succeeded.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OpenApiSignOutput"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "input": {
+                    "$ref": "#/components/schemas/OpenApiSignInput"
+                  }
+                },
+                "required": [
+                  "input"
+                ]
+              }
+            }
+          }
+        },
+        "x-d2-scope": {
+          "mode": "any",
+          "scopes": [
+            "self.write"
+          ]
+        }
+      }
+    },
+    "/v1/openapi/audit": {
+      "get": {
+        "operationId": "audit",
+        "description": "Fetch an audit record —",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "The request has succeeded.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OpenApiAuditOutput"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "input": {
+                    "$ref": "#/components/schemas/OpenApiAuditInput"
+                  }
+                },
+                "required": [
+                  "input"
+                ]
+              }
+            }
+          }
+        },
+        "x-d2-scope": {
+          "mode": "all",
+          "scopes": [
+            "self.read",
+            "auth.password.change"
+          ]
+        }
+      }
+    },
+    "/v1/openapi/health": {
+      "get": {
+        "operationId": "health",
+        "description": "Health check —",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "The request has succeeded.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OpenApiHealthOutput"
+                }
+              }
+            }
+          }
+        },
+        "x-d2-scope": {
+          "mode": "harmless"
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "OpenApiSignOutput": {
+        "type": "object",
+        "required": [
+          "signature"
+        ],
+        "properties": {
+          "signature": {
+            "type": "string",
+            "description": "The signature over the payload, base64url-encoded (unpadded)."
+          }
+        },
+        "description": "Output of a sign operation: the base64url-encoded signature."
+      },
+      "OpenApiSignInput": {
+        "type": "object",
+        "required": [
+          "kid",
+          "payload"
+        ],
+        "properties": {
+          "kid": {
+            "type": "string",
+            "description": "The key identifier selecting the signing key."
+          },
+          "payload": {
+            "type": "string",
+            "format": "byte",
+            "description": "The payload to sign. Redacted in structured logs (secret material)."
+          }
+        },
+        "description": "Input for a sign operation: a key identifier and the payload bytes to sign."
+      },
+      "OpenApiAuditOutput": {
+        "type": "object",
+        "required": [
+          "detail"
+        ],
+        "properties": {
+          "detail": {
+            "type": "string",
+            "description": "The audit detail payload."
+          }
+        },
+        "description": "Output of an audit lookup: the resolved audit detail."
+      },
+      "OpenApiAuditInput": {
+        "type": "object",
+        "required": [
+          "auditId"
+        ],
+        "properties": {
+          "auditId": {
+            "type": "string",
+            "description": "The audit record identifier to fetch."
+          }
+        },
+        "description": "Input for an audit lookup: the audit record identifier."
+      },
+      "OpenApiHealthOutput": {
+        "type": "object",
+        "required": [
+          "live"
+        ],
+        "properties": {
+          "live": {
+            "type": "boolean",
+            "description": "Whether the service is live."
+          }
+        },
+        "description": "Output of a health check: a liveness flag."
+      }
+    }
+  },
+  "x-d2-generated-by": {
+    "emitter": "@d2/typespec-emitters",
+    "note": "x-d2-* policy extensions layered on the stock @typespec/openapi3 document. Manual edits will be lost on rebuild."
+  }
+}

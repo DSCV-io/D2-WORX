@@ -232,6 +232,17 @@
       "userMessageKeyPath": "TK.Keycustodian.Validation.GRACE_NOT_ELAPSED",
       "userMessageKeySnake": "keycustodian_validation_GRACE_NOT_ELAPSED"
     },
+    "KEYCUSTODIAN_INVALID_CERTIFICATE_REQUEST": {
+      "category": "internal_error",
+      "code": "KEYCUSTODIAN_INVALID_CERTIFICATE_REQUEST",
+      "doc": "A certificate-generation precondition was violated (empty subject name, non-positive validity) or a cryptographic build operation failed. This is a programmer/precondition error surfaced as a flagged 500 result (carrying telemetry) rather than a thrown exception, the same way a failed smoke test is.",
+      "domain": "keycustodian",
+      "factoryName": "InvalidCertificateRequest",
+      "factoryShape": "standard",
+      "httpStatus": 500,
+      "userMessageKeyPath": "TK.Keycustodian.Internal.INVALID_CERTIFICATE_REQUEST",
+      "userMessageKeySnake": "keycustodian_internal_INVALID_CERTIFICATE_REQUEST"
+    },
     "KEYCUSTODIAN_INVALID_ROTATION_POLICY": {
       "category": "validation_failure",
       "code": "KEYCUSTODIAN_INVALID_ROTATION_POLICY",
@@ -242,6 +253,17 @@
       "httpStatus": 400,
       "userMessageKeyPath": "TK.Keycustodian.Validation.INVALID_ROTATION_POLICY",
       "userMessageKeySnake": "keycustodian_validation_INVALID_ROTATION_POLICY"
+    },
+    "KEYCUSTODIAN_INVALID_WORKLOAD_IDENTITY": {
+      "category": "validation_failure",
+      "code": "KEYCUSTODIAN_INVALID_WORKLOAD_IDENTITY",
+      "doc": "The workload identity is null, empty, whitespace, exceeds the maximum length, contains characters outside the allowed lowercase charset [a-z0-9-], or (when parsed from a certificate subject-alternative-name) does not match the spiffe://d2.internal/workload/\u003Cservice\u003E grammar. Coarse on purpose so the peer-validation surface does not leak which check failed.",
+      "domain": "keycustodian",
+      "factoryName": "InvalidWorkloadIdentity",
+      "factoryShape": "standard",
+      "httpStatus": 400,
+      "userMessageKeyPath": "TK.Keycustodian.Validation.INVALID_WORKLOAD_IDENTITY",
+      "userMessageKeySnake": "keycustodian_validation_INVALID_WORKLOAD_IDENTITY"
     },
     "KEYCUSTODIAN_KEY_NOT_FOUND": {
       "category": "not_found",
@@ -286,6 +308,17 @@
       "httpStatus": 400,
       "userMessageKeyPath": "TK.Common.Errors.TOO_LONG",
       "userMessageKeySnake": "common_errors_TOO_LONG"
+    },
+    "KEYCUSTODIAN_NO_ACTIVE_ISSUING_CA": {
+      "category": "infrastructure_unavailable",
+      "code": "KEYCUSTODIAN_NO_ACTIVE_ISSUING_CA",
+      "doc": "No active issuing intermediate certificate authority is available to sign a workload leaf certificate. A retryable not-ready-yet condition: the CA either has not been seeded yet or is between rotations. Surfaced as a 503 service-unavailable result so callers retry rather than treat it as a client-side conflict.",
+      "domain": "keycustodian",
+      "factoryName": "NoActiveIssuingCa",
+      "factoryShape": "standard",
+      "httpStatus": 503,
+      "userMessageKeyPath": "TK.Keycustodian.Infrastructure.NO_ACTIVE_ISSUING_CA",
+      "userMessageKeySnake": "keycustodian_infrastructure_NO_ACTIVE_ISSUING_CA"
     },
     "KEYCUSTODIAN_PENDING_KEY_ALREADY_EXISTS": {
       "category": "conflict",

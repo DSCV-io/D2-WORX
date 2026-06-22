@@ -70,6 +70,9 @@ public sealed class KeyRecordConfiguration : IEntityTypeConfiguration<KeyRecord>
         builder.Property(k => k.PublicKeyMaterial)
             .HasColumnName("public_key_material");
 
+        builder.Property(k => k.CaCertificate)
+            .HasColumnName("ca_certificate");
+
         builder.Property(k => k.CreatedAt)
             .HasColumnName("created_at");
 

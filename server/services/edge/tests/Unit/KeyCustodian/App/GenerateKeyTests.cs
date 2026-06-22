@@ -140,12 +140,78 @@ public sealed class GenerateKeyTests
         db.Keys.Should().HaveCount(2);
     }
 
+    // -----------------------------------------------------------------------
+    // CA-certificate generation (the dedicated CA branch)
+    // -----------------------------------------------------------------------
+
+    [Fact]
+    public async Task Generate_CaIntermediate_WithActiveRoot_CreatesPendingCaChainingToRoot()
+    {
+        await using var db = KeyCustodianTestDbContext.CreateEmpty();
+        var created = KcAppTestKit.SR_BaseInstant;
+        var crypto = KcAppTestKit.BuildTestRootCrypto();
+        var (_, rootCertDer) = await KcAppTestKit.SeedCaRootAsync(db, crypto, created);
+        var handler = BuildWithCrypto(db, new TestClock(created + Duration.FromHours(1)), crypto);
+
+        var result = await handler.HandleAsync(
+            new GenerateKeyInput(KeyDomain.MTLS_CA_INTERMEDIATE, KeyType.X509CaCertificate));
+
+        result.Success.Should().BeTrue();
+        result.IsCreated.Should().BeTrue(because: "a new pending CA row is created");
+
+        var pending = db.Keys.Single(k =>
+            k.KeyDomain == KeyDomain.MTLS_CA_INTERMEDIATE && k.Status == KeyStatus.Pending);
+        pending.KeyType.Should().Be(KeyType.X509CaCertificate);
+        pending.CaCertificate.Should().NotBeNullOrEmpty(because: "a CA carries its certificate");
+        pending.PublicKeyMaterial.Should().BeNull();
+
+        CaTestAssertions.AssertChainsToRoot(pending.CaCertificate!, rootCertDer);
+        db.Audit.Should().Contain(a =>
+            a.Kid == pending.Kid && a.Action == KeyAuditAction.Generated);
+    }
+
+    [Fact]
+    public async Task Generate_CaIntermediate_NoActiveRoot_ReturnsServiceUnavailable_NoRow()
+    {
+        await using var db = KeyCustodianTestDbContext.CreateEmpty();
+        var handler = Build(db, new TestClock(KcAppTestKit.SR_BaseInstant));
+
+        var result = await handler.HandleAsync(
+            new GenerateKeyInput(KeyDomain.MTLS_CA_INTERMEDIATE, KeyType.X509CaCertificate));
+
+        result.Success.Should().BeFalse();
+        result.StatusCode.Should().Be(HttpStatusCode.ServiceUnavailable);
+        result.ErrorCode.Should().Be(KeyCustodianErrorCodes.KEYCUSTODIAN_NO_ACTIVE_ISSUING_CA);
+        db.Keys.Should().BeEmpty(because: "no pending CA may be created without an active root");
+        db.Audit.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task Generate_CaRoot_SelfSigned_CreatesPendingRoot()
+    {
+        await using var db = KeyCustodianTestDbContext.CreateEmpty();
+        var handler = Build(db, new TestClock(KcAppTestKit.SR_BaseInstant));
+
+        var result = await handler.HandleAsync(
+            new GenerateKeyInput(KeyDomain.MTLS_CA_ROOT, KeyType.X509CaCertificate));
+
+        result.Success.Should().BeTrue(because: "a root successor is self-signed; no issuer needed");
+        var pending = db.Keys.Single(k => k.KeyDomain == KeyDomain.MTLS_CA_ROOT);
+        pending.Status.Should().Be(KeyStatus.Pending);
+        pending.KeyType.Should().Be(KeyType.X509CaCertificate);
+        pending.CaCertificate.Should().NotBeNullOrEmpty();
+    }
+
     private static GenerateKeyHandler Build(KeyCustodianTestDbContext db, TestClock clock) =>
+        BuildWithCrypto(db, clock, KcAppTestKit.BuildTestRootCrypto());
+
+    private static GenerateKeyHandler BuildWithCrypto(
+        KeyCustodianTestDbContext db, TestClock clock, IPayloadCrypto crypto) =>
         new(
             KcAppTestKit.Context<GenerateKeyHandler>(),
             KcAppTestKit.NullClassifier(),
             db,
             KcAppTestKit.BuildOptionsAccessor(),
-            KcAppTestKit.BuildTestRootCrypto(),
+            crypto,
             clock);
 }

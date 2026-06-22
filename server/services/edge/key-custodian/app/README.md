@@ -35,11 +35,12 @@ app/
 
 The domain models a key as an immutable sum type (`EncryptionKey` + 5 sealed states). EF Core cannot morph a tracked entity's CLR type on a transition, so persistence uses a flat, non-polymorphic record whose type never changes:
 
-- **`KeyRecord`** — one row per key. Primitive / closed-enum columns only (no value converters): `Kid` (PK), `KeyDomain`, `KeyType`, `KeyMaterialEncrypted` (root-wrapped, never logged), `PublicKeyMaterial` (SPKI, loggable), `CreatedAt`, a settable `Status` value column (NOT a TPH discriminator), the nullable per-state timestamps (`ActivatedAt` / `RetiringAt` / `RetiredAt` / `CompromisedAt`), `CompromiseReason`, and `Xmin` (the PostgreSQL concurrency token, mapped in Infra).
+- **`KeyRecord`** — one row per key. Primitive / closed-enum columns only (no value converters): `Kid` (PK), `KeyDomain`, `KeyType`, `KeyMaterialEncrypted` (root-wrapped, never logged), `PublicKeyMaterial` (SPKI / certificate PEM, loggable), `CreatedAt`, a settable `Status` value column (NOT a TPH discriminator), the nullable per-state timestamps (`ActivatedAt` / `RetiringAt` / `RetiredAt` / `CompromisedAt`), `CompromiseReason`, and `Xmin` (the PostgreSQL concurrency token, mapped in Infra).
 - **`KeyAuditRecord`** — flat, append-only audit record (identity PK). Carries the kid, action, resulting status, timestamp, and an OPTIONAL non-PII `Detail` breadcrumb — never key material, never the raw compromise reason.
-- **`KeyRecordMapper`** — pure static extension members: `ToDomain()` (exhaustive `switch` on `Status` → the right sealed state via the domain's `FromTrusted` factories; a structurally corrupt row throws the trusted-store-corruption `InvalidOperationException`), `ProjectOnto(record)` (nulls EVERY per-state column first, then sets only the current state's — the anti-stale-column discipline), `ToNewRecord()` (INSERT path), and the audit `ToRecord()`.
+- **`LeafIssuanceAuditRecord`** — flat, append-only record for each workload leaf-certificate issuance (identity PK). Carries `WorkloadServiceId`, `IssuingCaKid` (FK → `KeyRecord.Kid`), `IssuedAt`, and `LeafNotAfter`. A leaf is issued on demand and is NOT a managed-key aggregate — only the issuance audit entry is persisted. Never key material, never the leaf private key.
+- **`KeyRecordMapper`** — pure static extension members: `ToDomain()` (exhaustive `switch` on `Status` → the right sealed state via the domain's `FromTrusted` factories; a structurally corrupt row throws the trusted-store-corruption `InvalidOperationException`), `ProjectOnto(record)` (nulls EVERY per-state column first, then sets only the current state's — the anti-stale-column discipline), `ToNewRecord()` (INSERT path), the key-audit `ToRecord()`, and the leaf-issuance-audit `ToRecord()`.
 - **`KeyRecordQueryExtensions`** — composable server-side filters on value columns (`Pending` / `Active` / `Retiring` / `Live` / `ForDomain` / `Signing`).
-- **`IKeyCustodianDbContext`** — the only seam Infra implements for App: `DbSet<KeyRecord> Keys`, `DbSet<KeyAuditRecord> Audit`, `SaveChangesAsync`.
+- **`IKeyCustodianDbContext`** — the only seam Infra implements for App: `DbSet<KeyRecord> Keys`, `DbSet<KeyAuditRecord> Audit`, `DbSet<LeafIssuanceAuditRecord> LeafIssuanceAudit`, `SaveChangesAsync`.
 
 A command handler loads a tracked `KeyRecord`, rehydrates the aggregate through `ToDomain()`, invokes the domain transition, projects the result back with `ProjectOnto`, appends an audit record, and calls `SaveChangesAsync` once — one ordinary UPDATE plus the audit INSERT in a single transaction.
 
@@ -49,16 +50,18 @@ A command handler loads a tracked `KeyRecord`, rehydrates the aggregate through 
 
 Each operation lives in its own folder under `Application/Handlers/{Commands,Queries}/<Operation>/`, co-locating the interface (`I<Op>Handler`), the implementation (`<Op>Handler`), the input, and (where the output is operation-specific) the output. A handler's category is determined solely by whether it mutates persistent/shared state.
 
-| Handler                  | Category   | Base              | Input → Output                                     | Intent |
-| ----------------------   | ---------- | ----------------- | -------------------------------------------------- | ------ |
-| `GenerateKeyHandler`     | `Commands` | `BaseRepoHandler` | `GenerateKeyInput` → `KeySummary`                  | Generate + root-wrap + persist a new pending key (rejects a second live pending key). |
-| `ActivateKeyHandler`     | `Commands` | `BaseRepoHandler` | `ActivateKeyInput` → `KeySummary`                  | Smoke-test + activate a soaked pending key (bootstrap / post-compromise). |
-| `RotateKeyHandler`       | `Commands` | `BaseRepoHandler` | `RotateKeyInput` → `RotateKeyOutput`               | Atomic swap: incumbent → retiring AND successor → active in one transaction, then announce. |
-| `RetireKeyHandler`       | `Commands` | `BaseRepoHandler` | `RetireKeyInput` → `KeySummary`                    | Retire a retiring key whose grace window elapsed. |
-| `CompromiseKeyHandler`   | `Commands` | `BaseRepoHandler` | `CompromiseKeyInput` → `CompromiseKeyOutput`       | Mark compromised + auto-generate a replacement pending + urgent announce. |
-| `GetJwksHandler`         | `Queries`  | `BaseHandler`     | `GetJwksInput` → `GetJwksOutput`                   | Assemble the RFC 7517 JWKS from active + retiring signing keys (active first). |
-| `GetRotationPlanHandler` | `Queries`  | `BaseHandler`     | `GetRotationPlanInput` → `GetRotationPlanOutput`   | Report the lifecycle actions due across all domains (pure read). |
-| `RunDueRotationsHandler` | `Commands` | `BaseHandler`     | `RunDueRotationsInput` → `RunDueRotationsOutput`   | Orchestrate all due lifecycle actions across domains (bootstrap → activate → rotate → generate-successor → retire) by composing `GetRotationPlan` with the per-action command handlers; per-domain failures are isolated and counted in `Errors`. |
+| Handler                            | Category   | Base              | Input → Output                                              | Intent |
+| ---------------------------------- | ---------- | ----------------- | ----------------------------------------------------------- | ------ |
+| `GenerateKeyHandler`               | `Commands` | `BaseRepoHandler` | `GenerateKeyInput` → `KeySummary`                           | Generate + root-wrap + persist a new pending key (rejects a second live pending key). |
+| `ActivateKeyHandler`               | `Commands` | `BaseRepoHandler` | `ActivateKeyInput` → `KeySummary`                           | Smoke-test + activate a soaked pending key (bootstrap / post-compromise). |
+| `RotateKeyHandler`                 | `Commands` | `BaseRepoHandler` | `RotateKeyInput` → `RotateKeyOutput`                        | Atomic swap: incumbent → retiring AND successor → active in one transaction, then announce. |
+| `RetireKeyHandler`                 | `Commands` | `BaseRepoHandler` | `RetireKeyInput` → `KeySummary`                             | Retire a retiring key whose grace window elapsed. |
+| `CompromiseKeyHandler`             | `Commands` | `BaseRepoHandler` | `CompromiseKeyInput` → `CompromiseKeyOutput`                | Mark compromised + auto-generate a replacement pending + urgent announce. |
+| `IssueWorkloadCertificateHandler`  | `Commands` | `BaseRepoHandler` | `IssueWorkloadCertificateInput` → `IssueWorkloadCertificateOutput` | Validate the workload identity, load + decrypt the active `mtls-ca-intermediate` key, issue a short-lived leaf via the domain rule, write a `LeafIssuanceAuditRecord`, and return the leaf + chain to the caller. Private key bytes are zeroed in `finally`. |
+| `SeedCertificateAuthorityHandler`  | `Commands` | `BaseRepoHandler` | `SeedCertificateAuthorityInput` → `SeedCertificateAuthorityOutput` | Idempotent bootstrap: loads the root + intermediate from `ICaProvider`, persists both as active `X509CaCertificate` managed keys (genuine pending → smoke-test → activate path), and writes the generated + activated audit entries in one `SaveChangesAsync`. No-op when both CA domains already hold an active key. |
+| `GetJwksHandler`                   | `Queries`  | `BaseHandler`     | `GetJwksInput` → `GetJwksOutput`                            | Assemble the RFC 7517 JWKS from active + retiring signing keys (active first). |
+| `GetRotationPlanHandler`           | `Queries`  | `BaseHandler`     | `GetRotationPlanInput` → `GetRotationPlanOutput`            | Report the lifecycle actions due across all domains (pure read). |
+| `RunDueRotationsHandler`           | `Commands` | `BaseHandler`     | `RunDueRotationsInput` → `RunDueRotationsOutput`            | Orchestrate all due lifecycle actions across domains (bootstrap → activate → rotate → generate-successor → retire) by composing `GetRotationPlan` with the per-action command handlers; per-domain failures are isolated and counted in `Errors`. |
 
 `KeySummary` is a shared domain projection (`domain/Rules/KeySummary.cs`) returned by the generate / activate / retire commands; the other operations declare an operation-specific `<Op>Output`. Every command handler validates input at the top via the domain `Create` / transition smart constructors (`Kid.Create`, `KeyDomain.Create`), surfaces failures only via the generated `KeyCustodianFailures.*` factories + the domain's results, and checks every nested result. Outputs carry NO key material.
 
@@ -116,7 +119,7 @@ These counters complement the cross-cutting per-handler invocation/failure count
 
 ## DI
 
-`services.AddD2KeyCustodianApp()` registers the 8 handlers (transient) and the policy provider. Key generation + smoke testing are pure domain rules with no DI, so there are no generator / smoke-tester registrations. The seams App depends on but does not own — the concrete `IKeyCustodianDbContext`, the keyed root `IPayloadCrypto`, `IRootKeyProvider`, and `IKeyRotationAnnouncer` — are registered by the Infra layer, along with the options binding + startup validation.
+`services.AddD2KeyCustodianApp()` registers the 10 handlers (transient) and the policy provider. Key generation + smoke testing are pure domain rules with no DI, so there are no generator / smoke-tester registrations. The seams App depends on but does not own — the concrete `IKeyCustodianDbContext`, the keyed root `IPayloadCrypto`, `IRootKeyProvider`, `IKeyRotationAnnouncer`, and `ICaProvider` — are registered by the Infra layer, along with the options binding + startup validation.
 
 ---
 

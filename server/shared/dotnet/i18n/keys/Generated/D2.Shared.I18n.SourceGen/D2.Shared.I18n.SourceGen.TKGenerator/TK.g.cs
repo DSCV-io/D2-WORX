@@ -737,6 +737,10 @@ public static partial class TK
         public static partial class Time
         {
             /// <summary>
+            /// Translation key <c>common_time_INVALID_DURATION</c>.
+            /// </summary>
+            public static readonly global::D2.Shared.I18n.TKMessage INVALID_DURATION = new("common_time_INVALID_DURATION");
+            /// <summary>
             /// Translation key <c>common_time_INVALID_IANA_IDENTIFIER</c>.
             /// </summary>
             public static readonly global::D2.Shared.I18n.TKMessage INVALID_IANA_IDENTIFIER = new("common_time_INVALID_IANA_IDENTIFIER");
@@ -1278,10 +1282,25 @@ public static partial class TK
     public static partial class Keycustodian
     {
         /// <summary>
+        /// Infrastructure translation keys.
+        /// </summary>
+        public static partial class Infrastructure
+        {
+            /// <summary>
+            /// Translation key <c>keycustodian_infrastructure_NO_ACTIVE_ISSUING_CA</c>.
+            /// </summary>
+            public static readonly global::D2.Shared.I18n.TKMessage NO_ACTIVE_ISSUING_CA = new("keycustodian_infrastructure_NO_ACTIVE_ISSUING_CA");
+        }
+
+        /// <summary>
         /// Internal translation keys.
         /// </summary>
         public static partial class Internal
         {
+            /// <summary>
+            /// Translation key <c>keycustodian_internal_INVALID_CERTIFICATE_REQUEST</c>.
+            /// </summary>
+            public static readonly global::D2.Shared.I18n.TKMessage INVALID_CERTIFICATE_REQUEST = new("keycustodian_internal_INVALID_CERTIFICATE_REQUEST");
             /// <summary>
             /// Translation key <c>keycustodian_internal_PRECONDITION_VIOLATED</c>.
             /// </summary>
@@ -1324,6 +1343,10 @@ public static partial class TK
             /// Translation key <c>keycustodian_validation_INVALID_ROTATION_POLICY</c>.
             /// </summary>
             public static readonly global::D2.Shared.I18n.TKMessage INVALID_ROTATION_POLICY = new("keycustodian_validation_INVALID_ROTATION_POLICY");
+            /// <summary>
+            /// Translation key <c>keycustodian_validation_INVALID_WORKLOAD_IDENTITY</c>.
+            /// </summary>
+            public static readonly global::D2.Shared.I18n.TKMessage INVALID_WORKLOAD_IDENTITY = new("keycustodian_validation_INVALID_WORKLOAD_IDENTITY");
             /// <summary>
             /// Translation key <c>keycustodian_validation_SMOKE_PROOF_TYPE_MISMATCH</c>.
             /// </summary>

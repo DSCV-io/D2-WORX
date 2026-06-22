@@ -159,25 +159,6 @@
       "tagsClassName": "OutboundTelemetryTags",
       "instruments": [
         {
-          "name": "d2.auth.outbound.service_identity.fetches",
-          "constName": "ServiceIdentityFetches",
-          "kind": "counter",
-          "description": "Total service-identity token resolutions.",
-          "tags": [
-            {
-              "name": "outcome",
-              "values": [
-                "cache_hit",
-                "cache_hit_after_singleflight",
-                "fetch_success",
-                "fetch_failure",
-                "http_failure",
-                "discovery_failure"
-              ]
-            }
-          ]
-        },
-        {
           "name": "d2.auth.outbound.token_exchange.requests",
           "constName": "TokenExchangeRequests",
           "kind": "counter",

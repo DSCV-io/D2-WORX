@@ -10,11 +10,10 @@ using System.Diagnostics;
 using System.Diagnostics.Metrics;
 
 /// <summary>
-/// Telemetry surface for the outbound auth runtime — service-identity token
-/// acquisition + RFC-8693 token exchange. Separate from the inbound
-/// <c>D2.Shared.Auth</c> source (which lives in <c>AuthTelemetry</c> in
-/// the inbound runtime lib): different SLOs, different operational
-/// dashboards, different alert thresholds.
+/// Telemetry surface for the outbound auth runtime — RFC-8693 token exchange.
+/// Separate from the inbound <c>D2.Shared.Auth</c> source (which lives in
+/// <c>AuthTelemetry</c> in the inbound runtime lib): different SLOs, different
+/// operational dashboards, different alert thresholds.
 /// </summary>
 public static class OutboundTelemetry
 {
@@ -36,17 +35,6 @@ public static class OutboundTelemetry
 
     /// <summary>The shared <see cref="Meter"/> for this lib.</summary>
     public static readonly Meter SR_Meter = new(METER_NAME);
-
-    /// <summary>
-    /// Counter — total service-identity token resolutions. Tagged with
-    /// <c>outcome</c>; closed-enum values emitted by codegen — see
-    /// <see cref="OutboundTelemetryTags.ServiceIdentityFetches.Outcome"/>.
-    /// </summary>
-    public static readonly Counter<long> SR_ServiceIdentityFetches =
-        SR_Meter.CreateCounter<long>(
-            name: "d2.auth.outbound.service_identity.fetches",
-            unit: "{fetch}",
-            description: "Total service-identity token resolutions.");
 
     /// <summary>
     /// Counter — total token-exchange requests. Tagged with <c>outcome</c>;

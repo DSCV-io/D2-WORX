@@ -298,13 +298,18 @@ Canonical: [`server/shared/dotnet/time/README.md`](../server/shared/dotnet/time/
 
 ## Resilience
 
-`D2.Shared.Resilience` ships `CircuitBreaker<T>` (three-state lock-free), `Singleflight<TKey, TValue>` (concurrent-call deduplication; first caller runs the operation, siblings share its `Task<TValue>`), `RetryHelper.RetryAsync<T>` + the `D2Result`-aware `RetryD2ResultAsync<TData>` overload (exponential backoff + jitter + transient classifier), and the `ResilientPipeline<TKey, TValue>` composition surface. Compose via the fluent DSL at the composition root; handlers inject `ResilientPipeline<TKey, TValue>` and call `pipeline.ExecuteAsync(key, op, ct)`. The pipeline returns `D2Result<TValue>` (never throws) and converts CircuitOpen / cancellation / transient / unknown exceptions to the appropriate result code.
+`D2.Shared.Resilience` ships `CircuitBreaker<T>` (three-state lock-free), `Singleflight<TKey, TValue>` (concurrent-call deduplication; first caller runs the operation, siblings share its `Task<TValue>`), `RetryHelper.RetryAsync<T>` + the `D2Result`-aware `RetryD2ResultAsync<TData>` overload (exponential backoff + jitter + transient classifier), `TimeoutLayer<TKey, TValue>` (wall-clock deadline that cancels the inner op; place at two pipeline positions for independent total-request and per-attempt deadlines), `RateLimiterLayer<TKey, TValue>` (hand-rolled `SemaphoreSlim` concurrency limiter; fail-loud `MaxConcurrency >= 1`; client-side admission control, not the server-side distributed rate-limit middleware), and the `ResilientPipeline<TKey, TValue>` composition surface. Compose via the fluent DSL at the composition root; handlers inject `ResilientPipeline<TKey, TValue>` and call `pipeline.ExecuteAsync(key, op, ct)`. The pipeline returns `D2Result<TValue>` (never throws) and converts CircuitOpen / cancellation / transient / unknown exceptions to the appropriate result code.
 
 ```csharp
-services.AddResilientPipeline<string, MyDto>(p => p
-    .UseSingleflight()
-    .UseCircuitBreaker()
-    .UseRetries(new(maxAttempts: 5)));
+// All registrations are keyed — no unkeyed path exists.
+// UseSingleflight / UseCircuitBreaker require either a serviceKey or a concrete instance.
+services.AddKeyedSingleton<Singleflight<string, MyDto>>("my-key");
+services.AddKeyedSingleton<CircuitBreaker<MyDto>>("my-key", (_, _) => new(_ => false));
+
+services.AddResilientPipeline<string, MyDto>("my-key", p => p
+    .UseSingleflight("my-key")
+    .UseCircuitBreaker("my-key")
+    .UseRetries(new() { MaxAttempts = 5 }));
 ```
 
 **Layer order = protection semantic.** `CircuitBreaker → Retries` means retry-inside-CB (upstream-protecting; backoff gives a fragile upstream air). `Retries → CircuitBreaker` means retry-outside-CB (restart-recovery; retry layer treats `CircuitOpenException` as transient and backs off through it). Full state-machine semantics + composition trade-offs → [`server/shared/dotnet/resilience/README.md`](../server/shared/dotnet/resilience/README.md).
@@ -442,9 +447,9 @@ app.MapD2DefaultEndpoints();
 await app.RunD2ServiceAsync("files");
 ```
 
-`AddD2ServiceDefaults` chains `D2Env.Load` → `AddD2Logging` → `AddD2Telemetry` → `AddD2I18n` → `AddD2Handler` → `AddD2Auth` (+ `.Http` + `.Grpc`) → `AddD2LocalCache` → `AddD2HealthChecks` → `AddD2ProblemDetails` → `AddD2Cors` → standard `HttpClient` resilience handler. The aggregator owns ZERO logic; new options on owning libs flow through via pass-through `Action<TFromOwningLib>?` delegates. `UseD2DefaultPipeline` middleware order is **LOCKED** (no insertion points): security headers → request logging → CORS → routing → infrastructure bypass → authentication → `UseD2Auth` → authorization. Auth wiring is fail-fast (`AuthConfigure` MUST be non-null when `SkipAuthAutoWiring = false`).
+`AddD2ServiceDefaults` chains `D2Env.Load` → `AddD2Logging` → `AddD2Telemetry` → `AddD2I18n` → `AddD2Handler` → `AddD2Auth` (+ `.Http` + `.Grpc`) → `AddD2LocalCache` → `AddD2HealthChecks` → `AddD2ProblemDetails` → `AddD2Cors`. The aggregator owns ZERO logic; new options on owning libs flow through via pass-through `Action<TFromOwningLib>?` delegates. `UseD2DefaultPipeline` middleware order is **LOCKED** (no insertion points): security headers → request logging → CORS → routing → infrastructure bypass → authentication → `UseD2Auth` → authorization. Auth wiring is fail-fast (`AuthConfigure` MUST be non-null when `SkipAuthAutoWiring = false`). Resilience is NOT wired by this aggregator — it is caller-side + opt-in via `D2.Shared.Resilience`.
 
-> Duplicated from [`server/shared/dotnet/service-defaults/README.md`](../server/shared/dotnet/service-defaults/README.md) for at-a-glance directory access. Full call-order rationale + middleware-order rationale + opt-out matrix (`SkipAuthAutoWiring` / `SkipLocalCacheAutoWiring` / `SkipHttpClientResilienceDefaults`) + thin-aggregator convention test live in the lib README — update both in lockstep.
+> Duplicated from [`server/shared/dotnet/service-defaults/README.md`](../server/shared/dotnet/service-defaults/README.md) for at-a-glance directory access. Full call-order rationale + middleware-order rationale + opt-out matrix (`SkipAuthAutoWiring` / `SkipLocalCacheAutoWiring`) + thin-aggregator convention test live in the lib README — update both in lockstep.
 
 ### 5-layer rename safety net (spec-driven codegen + nameof discipline)
 

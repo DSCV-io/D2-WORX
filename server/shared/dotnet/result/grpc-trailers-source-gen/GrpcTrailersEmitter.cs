@@ -140,7 +140,7 @@ internal static class GrpcTrailersEmitter
         EmitAllTrailers(sb, entries);
 
         sb.AppendLine("}");
-        return sb.ToString();
+        return sb.ToString().LfNormalized();
     }
 
     private static void EmitAllTrailers(StringBuilder sb, List<GrpcTrailerEntry> entries)

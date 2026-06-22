@@ -63,6 +63,15 @@ Copyright (c) DCSV. All rights reserved.
     -->
     <ProjectReference Include="..\..\result\core\D2.Shared.Result.csproj" />
     <ProjectReference Include="..\..\i18n\abstractions\D2.Shared.I18n.Abstractions.csproj" />
+    <!--
+      D2.Shared.Utilities — supplies [RedactData] + RedactReason for the
+      ForwardedJwt redacting wrapper (the held internal transaction-token is a
+      live bearer credential that must be unloggable by construction) and the
+      ToNullIfEmpty() guard its smart constructor uses. A leaf — references only
+      result/i18n, never auth — so no cycle: the no-Utilities carve-out is for
+      genuine cycles only and does not apply here.
+    -->
+    <ProjectReference Include="..\..\utilities\D2.Shared.Utilities.csproj" />
   </ItemGroup>
 
   <ItemGroup>

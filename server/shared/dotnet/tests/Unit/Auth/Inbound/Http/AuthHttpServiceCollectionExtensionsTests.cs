@@ -8,8 +8,10 @@ namespace D2.Shared.Tests.Unit.Auth.Inbound.Http;
 
 using AwesomeAssertions;
 using D2.Shared.Auth;
+using D2.Shared.Auth.Abstractions;
 using D2.Shared.Auth.Abstractions.Http;
 using D2.Shared.Auth.Http;
+using D2.Shared.Auth.Http.Ambient;
 using D2.Shared.Caching;
 using D2.Shared.Caching.Local.Default;
 using D2.Shared.Context.Abstractions;
@@ -87,6 +89,32 @@ public sealed class AuthHttpServiceCollectionExtensionsTests
         var act = () => scope.ServiceProvider.GetRequiredService<IRequestContext>();
 
         act.Should().Throw<InvalidOperationException>();
+    }
+
+    [Fact]
+    public void AddD2AuthHttp_RegistersAmbientScopeAccessor_ResolvableAsHttpContextAdapter()
+    {
+        // Regression (M-2, §1.3): descriptor-presence ≠ resolvability.
+        // GetRequiredService<> proves the full DI graph resolves without throwing.
+        var sp = BuildProvider();
+
+        var resolved = sp.GetRequiredService<IAmbientRequestScopeAccessor>();
+
+        resolved.Should().BeOfType<HttpContextAmbientRequestScopeAccessor>();
+    }
+
+    [Fact]
+    public void AddD2AuthHttp_AmbientScopeAccessor_IsSingleton()
+    {
+        // Singleton invariant: two resolves from the ROOT provider must return
+        // the same instance (stateless adapter — per-request state flows through
+        // IHttpContextAccessor's AsyncLocal, not through the adapter itself).
+        var sp = BuildProvider();
+
+        var first = sp.GetRequiredService<IAmbientRequestScopeAccessor>();
+        var second = sp.GetRequiredService<IAmbientRequestScopeAccessor>();
+
+        first.Should().BeSameAs(second);
     }
 
     [Fact]

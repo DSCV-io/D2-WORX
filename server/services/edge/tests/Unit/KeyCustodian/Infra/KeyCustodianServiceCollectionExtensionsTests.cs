@@ -12,6 +12,7 @@ using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.GenerateKey;
 using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.RetireKey;
 using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.RotateKey;
 using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.RunDueRotations;
+using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.SeedCertificateAuthority;
 using D2.Edge.KeyCustodian.App.Application.Handlers.Queries.GetJwks;
 using D2.Edge.KeyCustodian.App.Application.Handlers.Queries.GetRotationPlan;
 using D2.Edge.KeyCustodian.App.Infrastructure.Configuration;
@@ -62,6 +63,7 @@ public sealed class KeyCustodianServiceCollectionExtensionsTests : IDisposable
 
         // Persistence seam.
         sp.GetRequiredService<KeyCustodianDbContext>().Should().NotBeNull();
+
         using (var scope = sp.CreateScope())
         {
             scope.ServiceProvider.GetRequiredService<IKeyCustodianDbContext>()
@@ -70,6 +72,7 @@ public sealed class KeyCustodianServiceCollectionExtensionsTests : IDisposable
 
         // Vault seam + keyed root crypto.
         sp.GetRequiredService<IRootKeyProvider>().Should().BeOfType<FileRootKeyProvider>();
+        sp.GetRequiredService<ICaProvider>().Should().BeOfType<FileCaProvider>();
         sp.GetRequiredKeyedService<IPayloadCrypto>(KeyCustodianRootKey.ROOT_SERVICE_KEY)
             .Should().NotBeNull();
 
@@ -87,6 +90,7 @@ public sealed class KeyCustodianServiceCollectionExtensionsTests : IDisposable
             scoped.GetRequiredService<IRetireKeyHandler>().Should().NotBeNull();
             scoped.GetRequiredService<ICompromiseKeyHandler>().Should().NotBeNull();
             scoped.GetRequiredService<IRunDueRotationsHandler>().Should().NotBeNull();
+            scoped.GetRequiredService<ISeedCertificateAuthorityHandler>().Should().NotBeNull();
             scoped.GetRequiredService<IGetJwksHandler>().Should().NotBeNull();
             scoped.GetRequiredService<IGetRotationPlanHandler>().Should().NotBeNull();
             scoped.GetRequiredService<IRotationPolicyProvider>().Should().NotBeNull();
@@ -105,7 +109,7 @@ public sealed class KeyCustodianServiceCollectionExtensionsTests : IDisposable
     }
 
     [Fact]
-    public void AddD2KeyCustodian_RegistersMigratorBeforeRotationService()
+    public void AddD2KeyCustodian_RegistersMigratorThenSeederThenRotationService()
     {
         var services = NewServices();
         services.AddD2KeyCustodian(
@@ -113,22 +117,27 @@ public sealed class KeyCustodianServiceCollectionExtensionsTests : IDisposable
 
         // DI preserves registration order for IEnumerable<IHostedService>; resolving
         // the instances yields runtime types even for factory-registered services
-        // (the migrator), unlike descriptor inspection.
+        // (the migrator), unlike descriptor inspection. Order pins the StartAsync
+        // sequence: migration applies, the CA is seeded, then rotation runs.
         using var sp = services.BuildServiceProvider();
         var hostedTypes = sp.GetServices<IHostedService>().Select(h => h.GetType()).ToList();
 
         var migratorIndex = hostedTypes.FindIndex(
             t => t == typeof(AdvisoryLockMigrator<KeyCustodianDbContext>));
+        var seederIndex = hostedTypes.FindIndex(t => t == typeof(CaSeedingService));
         var rotationIndex = hostedTypes.FindIndex(t => t == typeof(KeyRotationService));
 
         migratorIndex.Should().BeGreaterThanOrEqualTo(0);
+        seederIndex.Should().BeGreaterThanOrEqualTo(0);
         rotationIndex.Should().BeGreaterThanOrEqualTo(0);
         migratorIndex.Should().BeLessThan(
-            rotationIndex, "the migrator must start before the rotation service");
+            seederIndex, "the migrator must start before the CA seeder");
+        seederIndex.Should().BeLessThan(
+            rotationIndex, "the CA seeder must start before the rotation service");
     }
 
     [Fact]
-    public void AddD2KeyCustodian_RegistersBothHostedServices()
+    public void AddD2KeyCustodian_RegistersAllThreeHostedServices()
     {
         var services = NewServices();
         services.AddD2KeyCustodian(
@@ -138,6 +147,7 @@ public sealed class KeyCustodianServiceCollectionExtensionsTests : IDisposable
         var hosted = sp.GetServices<IHostedService>().ToList();
 
         hosted.Should().Contain(h => h is AdvisoryLockMigrator<KeyCustodianDbContext>);
+        hosted.Should().Contain(h => h is CaSeedingService);
         hosted.Should().Contain(h => h is KeyRotationService);
     }
 

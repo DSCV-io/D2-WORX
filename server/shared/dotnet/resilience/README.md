@@ -6,9 +6,9 @@ Copyright (c) DCSV. All rights reserved.
 
 > Parent: [`server/shared/dotnet/`](../README.md)
 
-Resilience primitives for protecting outbound calls — `RetryHelper` (with optional `D2Result` awareness), `CircuitBreaker<T>`, and `Singleflight<TKey, TValue>`. Lock-free where possible (`Interlocked` operations, `ConcurrentDictionary`); test seams baked in (clock + delay overrides).
+The sole, feature-complete resilience mechanism for the platform. Covers retry, circuit-breaker, singleflight, timeout, and concurrency rate-limiting as composable pipeline layers. Lock-free where possible (`Interlocked` operations, `ConcurrentDictionary`); test seams baked in (clock + delay overrides). Resilience is **caller-side, opt-in** (off by default — it costs latency) and **per-call overridable**.
 
-Depends only on `D2.Shared.Result` (for the `D2Result`-aware retry overload).
+Depends only on `D2.Shared.Result` (for the `D2Result`-aware retry overload) and `Microsoft.Extensions.DependencyInjection.Abstractions` (for keyed DI).
 
 > **Design rationale: custom primitives over Polly.** Most of our outbound boundaries are NOT HTTP (RabbitMQ publishes, EF Core, Redis via StackExchange, internal handler chains, SeaweedFS via SDK). Polly's main "free win" — its HttpClientFactory integration via `AddStandardResilienceHandler()` — applies cleanly to gRPC (since `Grpc.Net.Client` rides on `HttpClient`) and external HTTP APIs, but the HTTP-level integration only sees HTTP 200 + trailing gRPC status codes; retry-on-`StatusCode.Unavailable` requires custom predicates anyway. With <500 LOC of pure-logic primitives + first-class `D2Result.IsTransientRetryable` integration, owning the primitives is cheaper than wrapping Polly.
 
@@ -16,20 +16,24 @@ Depends only on `D2.Shared.Result` (for the `D2Result`-aware retry overload).
 
 ## File layout
 
-| Path                                                                    | Contents                                                                                                                                                                                                                                          |
-| ----------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `Retry/RetryHelper.cs`                                                  | Static `RetryAsync<T>` (generic) and `RetryD2ResultAsync<TData>` (D2Result-aware overload). Internal `IsTransientException` classifier and `CalculateDelay` math.                                                                                 |
-| `Retry/RetryOptions.cs` + `Retry/RetryDefaults.cs`                      | `RetryOptions<T>` record — `MaxAttempts`, `BaseDelayMs`, `BackoffMultiplier`, `MaxDelayMs`, `Jitter`, `ShouldRetry`, `IsTransient`, `DelayFunc`. Defaults centralized in the non-generic `RetryDefaults` peer (single SoT, no per-T duplication). |
-| `CircuitBreaker/CircuitBreaker.cs`                                      | `CircuitBreaker<T>` — three-state Closed / Open / Half-Open with lock-free state transitions.                                                                                                                                                     |
-| `CircuitBreaker/CircuitBreakerOptions.cs`                               | `CircuitBreakerOptions` — `FailureThreshold`, `CooldownDuration`, `NowFunc` (test clock). Owns the single source of truth for breaker defaults; the breaker reads from a parameterless Options instance when nothing is supplied.                 |
-| `CircuitBreaker/CircuitState.cs`                                        | `CircuitState` enum — `Closed`, `Open`, `HalfOpen`.                                                                                                                                                                                               |
-| `CircuitBreaker/CircuitOpenException.cs`                                | Thrown by `ExecuteAsync` when the circuit is open and no fallback is supplied.                                                                                                                                                                    |
-| `Singleflight/Singleflight.cs`                                          | `Singleflight<TKey, TValue>` — deduplicates concurrent in-flight async operations by key. NOT a cache: keys are removed once the operation completes.                                                                                             |
-| `Pipeline/IResilientLayer.cs`                                           | The decorator interface — one `WrapAsync(key, next, ct)` method.                                                                                                                                                                                  |
-| `Pipeline/{Singleflight,CircuitBreaker,Retry}Layer.cs`                  | The three concrete layer wrappers around the primitives above.                                                                                                                                                                                    |
-| `Pipeline/ResilientPipeline.cs`                                         | Composes layers in outer-first order; one `ExecuteAsync(key, op, ct)` returning `D2Result<TValue>` (never throws — every exception is mapped to a result).                                                                                        |
-| `Pipeline/IResilientPipelineBuilder.cs` + `ResilientPipelineBuilder.cs` | Fluent registration DSL — `.UseSingleflight().UseCircuitBreaker().UseRetries(opts)` etc.                                                                                                                                                          |
-| `Pipeline/ResilientPipelineServiceCollectionExtensions.cs`              | `AddResilientPipeline<TKey, TValue>(p => ...)` extension on `IServiceCollection`.                                                                                                                                                                 |
+| Path                                                                    | Contents                                                                                                                                                                                                                                                          |
+| ----------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Retry/RetryHelper.cs`                                                  | Static `RetryAsync<T>` (generic) and `RetryD2ResultAsync<TData>` (D2Result-aware overload). Internal `IsTransientException` classifier and `CalculateDelay` math.                                                                                                 |
+| `Retry/RetryOptions.cs` + `Retry/RetryDefaults.cs`                      | `RetryOptions<T>` record — `MaxAttempts`, `BaseDelayMs`, `BackoffMultiplier`, `MaxDelayMs`, `Jitter`, `ShouldRetry`, `IsTransient`, `DelayFunc`. Defaults centralized in the non-generic `RetryDefaults` peer (single SoT, no per-T duplication).                 |
+| `CircuitBreaker/CircuitBreaker.cs`                                      | `CircuitBreaker<T>` — three-state Closed / Open / Half-Open with lock-free state transitions.                                                                                                                                                                     |
+| `CircuitBreaker/CircuitBreakerOptions.cs`                               | `CircuitBreakerOptions` — `FailureThreshold`, `CooldownDuration`, `NowFunc` (test clock). Owns the single source of truth for breaker defaults; the breaker reads from a parameterless Options instance when nothing is supplied.                                 |
+| `CircuitBreaker/CircuitState.cs`                                        | `CircuitState` enum — `Closed`, `Open`, `HalfOpen`.                                                                                                                                                                                                               |
+| `CircuitBreaker/CircuitOpenException.cs`                                | Thrown by `ExecuteAsync` when the circuit is open and no fallback is supplied.                                                                                                                                                                                    |
+| `Singleflight/Singleflight.cs`                                          | `Singleflight<TKey, TValue>` — deduplicates concurrent in-flight async operations by key. NOT a cache: keys are removed once the operation completes.                                                                                                             |
+| `Timeout/TimeoutOptions.cs`                                             | `TimeoutOptions` — `Duration` (default 10 s). Zero or negative = pass-through (no CTS created). Canonical small-Options-record shape.                                                                                                                             |
+| `RateLimiting/RateLimiter.cs`                                           | Hand-rolled `SemaphoreSlim`-based concurrency limiter (no `System.Threading.RateLimiting` package). `ExecuteAsync<T>` acquires a permit within `AcquisitionTimeout`, runs the op, releases in `finally`; throws `RateLimitRejectedException` on rejection.       |
+| `RateLimiting/RateLimiterOptions.cs`                                    | `RateLimiterOptions` — `MaxConcurrency` (default 100), `AcquisitionTimeout` (default `TimeSpan.Zero` = reject-fast). Canonical small-Options-record shape.                                                                                                       |
+| `RateLimiting/RateLimitRejectedException.cs`                            | Thrown when a permit cannot be acquired within `AcquisitionTimeout`. Maps to `D2Result.TooManyRequests()` (429 / `RATE_LIMITED`) at the pipeline boundary.                                                                                                       |
+| `Pipeline/IResilientLayer.cs`                                           | The decorator interface — one `WrapAsync(key, next, ct)` method.                                                                                                                                                                                                  |
+| `Pipeline/{Singleflight,CircuitBreaker,Retry,Timeout,RateLimiter}Layer.cs` | The five concrete layer wrappers around the primitives above.                                                                                                                                                                                                  |
+| `Pipeline/ResilientPipeline.cs`                                         | Composes layers in outer-first order; one `ExecuteAsync(key, op, ct)` returning `D2Result<TValue>` (never throws — every exception is mapped to a result). Exposes `PassThrough` static sentinel for the bypass-but-keep-D2Result-shape use case.                |
+| `Pipeline/IResilientPipelineBuilder.cs` + `ResilientPipelineBuilder.cs` | Fluent registration DSL — `.UseTimeout().UseRateLimiter().UseSingleflight().UseCircuitBreaker().UseRetries(opts)` etc.                                                                                                                                            |
+| `Pipeline/ResilientPipelineServiceCollectionExtensions.cs`              | `AddResilientPipeline<TKey, TValue>(p => ...)` extension on `IServiceCollection`.                                                                                                                                                                                |
 
 ---
 
@@ -125,6 +129,57 @@ Test seams:
 
 - `CircuitBreakerOptions.NowFunc` — override for the monotonic-millisecond clock (default `Environment.TickCount64`). Tests use a `FakeClock` to advance time deterministically without `Task.Delay`.
 
+### `TimeoutLayer<TKey, TValue>` — wall-clock deadline
+
+Bounds the wrapped operation with a linked `CancellationTokenSource`. On expiry throws `TimeoutException` (distinct from caller cancellation) so:
+
+- an outer `RetryLayer` retries it (`TimeoutException` is already classified transient by `RetryHelper.IsTransientException` — zero classifier change needed)
+- a leaked timeout at the pipeline boundary maps to `D2Result.ServiceUnavailable()` (503, `IsTransientRetryable = true`)
+
+Place at **two positions** in the same pipeline to express separate total-request and per-attempt deadlines (the builder's flat-list accumulator supports duplicate layer types):
+
+```csharp
+services.AddResilientPipeline<string, T>("key", p => p
+    .UseRateLimiter()
+    .UseTimeout(new(TimeSpan.FromSeconds(30)))  // total: bounds all retries combined
+    .UseRetries(new() { MaxAttempts = 3 })
+    .UseCircuitBreaker("key")
+    .UseTimeout(new(TimeSpan.FromSeconds(5))));  // per-attempt: inside retry loop
+```
+
+`TimeoutOptions` follows the small-Options-record convention: parameterless ctor = 10-second default; `Duration <= Zero` = pass-through (no CTS allocated).
+
+### `RateLimiter` + `RateLimiterLayer<TKey, TValue>` — concurrency limiter
+
+Hand-rolled `SemaphoreSlim`-based concurrency limiter (no `System.Threading.RateLimiting` package — matches the lib's <500-LOC / sole-external-dep ethos). Bounds the number of concurrent in-flight calls to `MaxConcurrency`. Callers that cannot acquire a permit within `AcquisitionTimeout` are rejected via `RateLimitRejectedException` (→ `D2Result.TooManyRequests()` / 429 at the pipeline boundary).
+
+> **Client-side, in-process only.** This is admission control for outbound calls — it limits concurrent pressure from THIS process on an upstream. It is NOT the server-side, distributed per-tier rate-limit middleware (which uses `IDistributedCache` counters).
+
+```csharp
+services.AddResilientPipeline<string, T>("key", p => p
+    .UseRateLimiter(new RateLimiterOptions(maxConcurrency: 10))
+    .UseRetries());
+```
+
+To share one `RateLimiter` across multiple pipelines (e.g. a shared broker-level concurrency cap), register it as a keyed singleton and use the service-key overload — mirroring the shared-CB pattern:
+
+```csharp
+services.AddKeyedSingleton<RateLimiter>("broker", (_, _) => new(new(maxConcurrency: 10)));
+services.AddResilientPipeline<string, T>("critical", p => p.UseRateLimiter("broker"));
+services.AddResilientPipeline<string, T>("routine",  p => p.UseRateLimiter("broker"));
+```
+
+`RateLimiterOptions` follows the small-Options-record convention. `RateLimiterLayer` is `IDisposable`. In the inline-options case, the layer owns the `RateLimiter` and its `SemaphoreSlim`; disposal propagates through the pipeline: `ResilientPipeline<TKey, TValue>` implements `IDisposable` and iterates its layers on dispose, so the container disposes the pipeline singleton at teardown and the owned semaphore is released. In the keyed-DI case, the `RateLimiter` singleton is registered directly with the container, which disposes it at teardown; the layer holds a reference only and its `Dispose` is a no-op.
+
+### `ResilientPipeline<TKey, TValue>.PassThrough` — bypass sentinel
+
+```csharp
+// Caller explicitly wants no resilience but still wants the D2Result shape.
+var result = await ResilientPipeline<string, T>.PassThrough.ExecuteAsync(key, op, ct);
+```
+
+A zero-layer pipeline singleton that performs ONLY the exception → `D2Result<TValue>` mapping — no retry, no CB, no timeout, no rate-limiter. Equivalent to `new ResilientPipeline<TKey, TValue>()` but named so the bypass intent is explicit in generated clients and per-call override sites.
+
 ### `Singleflight<TKey, TValue>` — concurrent-call deduplication
 
 The first caller for a given key runs the operation; concurrent callers for the same key share the same `Task<TValue>`. Once the operation completes (success or failure), the key is removed from the in-flight map.
@@ -174,13 +229,16 @@ Behavioral guarantees:
 
 ## When to reach for which
 
-| Need                                                                                         | Tool                                                           |
-| -------------------------------------------------------------------------------------------- | -------------------------------------------------------------- |
-| Backoff-and-retry around a flaky external call                                               | `RetryHelper.RetryAsync`                                       |
-| Backoff-and-retry around a `D2Result`-returning handler chain                                | `RetryHelper.RetryD2ResultAsync`                               |
-| Avoid hammering a confirmed-down upstream while it recovers                                  | `CircuitBreaker<T>`                                            |
-| Avoid the "five concurrent first requests trigger five identical expensive lookups" stampede | `Singleflight<TKey, TValue>`                                   |
-| Compose two or three of the above behind a single call site that returns a `D2Result`        | `ResilientPipeline<TKey, TValue>` (see Pipeline section below) |
+| Need                                                                                         | Tool                                                                      |
+| -------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
+| Backoff-and-retry around a flaky external call                                               | `RetryHelper.RetryAsync`                                                  |
+| Backoff-and-retry around a `D2Result`-returning handler chain                                | `RetryHelper.RetryD2ResultAsync`                                          |
+| Avoid hammering a confirmed-down upstream while it recovers                                  | `CircuitBreaker<T>`                                                       |
+| Avoid the "five concurrent first requests trigger five identical expensive lookups" stampede | `Singleflight<TKey, TValue>`                                              |
+| Bound an operation to a wall-clock deadline; surface expiry as a retryable transient         | `TimeoutLayer<TKey, TValue>` (via `UseTimeout` on the pipeline builder)   |
+| Limit concurrent in-flight outbound calls (client-side admission control)                    | `RateLimiter` + `RateLimiterLayer<TKey, TValue>` (via `UseRateLimiter`)  |
+| Bypass-but-keep-D2Result-shape (per-call "no resilience" override)                           | `ResilientPipeline<TKey, TValue>.PassThrough`                             |
+| Compose any of the above behind a single call site that returns a `D2Result`                 | `ResilientPipeline<TKey, TValue>` (see Pipeline section below)            |
 
 The three primitives compose naturally. The `Pipeline` namespace is the canonical way to do this composition; reach for the raw primitives only when you need direct control or have an unusual layering requirement.
 
@@ -192,7 +250,15 @@ The three primitives compose naturally. The `Pipeline` namespace is the canonica
 
 - composes layers in **outer-first order** (first layer wraps everything else)
 - exposes ONE call: `ExecuteAsync(key, operation, ct)` returning `D2Result<TValue>`
-- **never throws** — every terminating exception is converted to a `D2Result` per the documented mapping (CircuitOpen → ServiceUnavailable, caller-canceled → Canceled, transient that slipped past layers → ServiceUnavailable, anything else → UnhandledException)
+- **never throws** — every terminating exception is converted to a `D2Result` per the documented mapping:
+
+  | Exception | Mapping |
+  |---|---|
+  | `CircuitOpenException` | `ServiceUnavailable` (503) |
+  | `RateLimitRejectedException` | `TooManyRequests` (429 / `RATE_LIMITED`, `IsTransientRetryable = true`) |
+  | `OperationCanceledException` when caller `ct` canceled | `Canceled` |
+  | `TimeoutException` + any other transient (`RetryHelper.IsTransientException`) | `ServiceUnavailable` (503, `IsTransientRetryable = true`) |
+  | Anything else | `UnhandledException` |
 
 ### Two-layer API: fluent at registration, dead-simple at call site
 
@@ -263,6 +329,171 @@ The fluent chain order = layer order in the resulting pipeline (outer-first). Li
 
 Each `Use*` is independent — call zero, one, two, or three. A zero-layer pipeline still does the exception → `D2Result` mapping. To share a primitive across pipelines (e.g. multi-criticality audit pipelines sharing one broker-level CB so any tier's failures count toward the same breaker state), register the shared primitive under its own key and reference that key from each pipeline. The shared topology stays grep-able via the key constant.
 
+### Order matters — the canonical layer order and the WHY
+
+**The recommended outer-to-inner order:**
+
+```
+[Singleflight →] RateLimiter → TotalTimeout → Retry → CircuitBreaker → PerAttemptTimeout
+```
+
+Singleflight is in brackets because it only applies to idempotent-by-key operations (reads, lookups, JWKS fetches). Never use it on mutating ops.
+
+**Why each position:**
+
+| Layer | Position | Why |
+|---|---|---|
+| **Singleflight** | Outermost (when used) | All deduplicated callers share ONE concurrency permit, ONE total-budget clock, ONE retry sequence. Placing it anywhere inside means N callers compete for permits and run N independent retry sequences against a breaker that may trip on one of them. |
+| **RateLimiter** | 2nd outermost (1st when no SF) | Reject before spending any resources — no retry, no CB state, no timeout clock consumed. A rejected caller gets `TooManyRequests` in microseconds. Placing RL inside Retry means the system burns retry attempts on calls that shouldn't have been made at all. |
+| **TotalTimeout** | Outside Retry | Bounds the ENTIRE user-facing latency across all retry attempts. If total budget is 30 s and per-attempt budget is 5 s with 3 retries, the total clock ensures the caller's SLA is respected even if all 3 attempts take 10 s each. Placing total-timeout inside Retry bounds only a single attempt — the "total" is then meaningless. |
+| **Retry** | Outside CircuitBreaker — restart-recovery shape | Each retry is a separate CB execution. `CircuitOpenException` is treated as transient by the default classifier; retries back off through the CB cooldown and a later attempt may find the breaker probing/closed. Use this shape when callers can wait for an upstream restart (e.g. rolling deploy). |
+| **CircuitBreaker** | Outside Retry — upstream-protecting shape | One full retry sequence = one CB execution. The CB opens only after N complete retry sequences fail, giving the upstream more air. Use this shape for fragile third-party APIs (Resend, Twilio) where you want backoff between whole retry budgets, not just individual attempts. |
+| **PerAttemptTimeout** | Innermost | Bounds each individual attempt. A timed-out attempt surfaces as `TimeoutException` (transient), which the outer Retry layer retries. Placing per-attempt-timeout outside Retry is useless — it would bound only one attempt and then surface `ServiceUnavailable` to the caller with no retry. |
+
+**The two canonical Retry↔CircuitBreaker orderings:**
+
+```
+Retry → CircuitBreaker  (restart-recovery)
+CB opens fast; retries back off through cooldown; recovers from upstream restarts.
+Use for: read-by-key gRPC, rolling-deploy resilience.
+MaxAttempts + backoff MUST span CooldownDuration.
+
+CircuitBreaker → Retry  (upstream-protecting)
+One full retry budget = one CB execution; CB opens only after N sequences fail.
+Use for: fragile third-party writes (Resend / Twilio), outbox publishers.
+```
+
+**Anti-patterns:**
+
+- **RL innermost** — rejects AFTER burning retry attempts, timeout budget, and CB state.
+- **Per-attempt-timeout outside Retry** — times out the entire retry loop; each individual attempt has no separate deadline. Equivalent to a second total-timeout, not a per-attempt one.
+- **Singleflight on a mutating op** — two callers wanting to `CreateUser` share ONE execution; only one user is created. Merging distinct side-effects is a silent data-loss bug. See the "When NOT to use SF" table below.
+
+### Preferred configurations by use case
+
+#### (a) Idempotent read-by-key over gRPC/HTTP — restart-recovery shape with SF
+
+```csharp
+// Use case: D2.Files → Edge context resolution, JWKS fetch, reference-data lookups.
+// Key is the entity ID / IP / etc. — many concurrent callers for the same key are common.
+services.AddKeyedSingleton<Singleflight<string, T>>(key);
+services.AddKeyedSingleton<CircuitBreaker<T>>(key, (_, _) => new(_ => false));
+services.AddResilientPipeline<string, T>(key, p => p
+    .UseSingleflight(key)
+    .UseRateLimiter(new RateLimiterOptions(maxConcurrency: 20))
+    .UseTimeout(new TimeoutOptions(TimeSpan.FromSeconds(30)))           // total budget
+    .UseRetries(new()
+    {
+        MaxAttempts = 5,
+        BaseDelayMs = 500,
+        MaxDelayMs = 10_000,
+    })
+    .UseCircuitBreaker(key)
+    .UseTimeout(new TimeoutOptions(TimeSpan.FromSeconds(5))));           // per-attempt
+// Retry outside CB (restart-recovery): MaxAttempts × backoff MUST exceed CooldownDuration.
+// With 5 attempts and 500ms base/×2: ≈ 0.5 + 1 + 2 + 4 = 7.5s avg → fits 30s default cooldown.
+```
+
+#### (b) Fragile external API — upstream-protecting CB outside Retry
+
+```csharp
+// Use case: D2.Courier → Resend/Twilio. Third-party transient errors retry;
+// sustained outages trip the breaker so the provider gets recovery time.
+services.AddKeyedSingleton<CircuitBreaker<T>>(key, (_, _) => new(
+    isFailure: _ => false,
+    options: new(failureThreshold: 3, cooldownDuration: TimeSpan.FromMinutes(1))));
+services.AddResilientPipeline<string, T>(key, p => p
+    .UseRateLimiter(new RateLimiterOptions(maxConcurrency: 5))          // don't pile on
+    .UseTimeout(new TimeoutOptions(TimeSpan.FromSeconds(20)))            // total budget
+    .UseCircuitBreaker(key)                                              // upstream-protecting
+    .UseRetries(new()
+    {
+        MaxAttempts = 4,
+        BaseDelayMs = 1000,
+        BackoffMultiplier = 3.0,
+        MaxDelayMs = 30_000,
+    })
+    .UseTimeout(new TimeoutOptions(TimeSpan.FromSeconds(8))));           // per-attempt
+// CB outside R: CB sees one execution per full retry budget. Opens slowly.
+// No Singleflight — each email/SMS is a discrete delivery intent.
+```
+
+#### (c) Mutating command — conservative; NO Singleflight
+
+```csharp
+// Use case: Create/Update/Delete handlers calling an upstream over gRPC.
+// No Singleflight — two callers wanting to CreateUser should produce two users.
+// Transport-level retry is dangerous unless the upstream is idempotent (idempotency key /
+// the operation is provably safe to re-issue). If uncertain: NO retry layer.
+// Add retry only when the upstream guarantees idempotency or the mutation is truly safe
+// to re-issue (e.g. "upsert by natural key", "mark delivered" with idempotency guard).
+services.AddKeyedSingleton<CircuitBreaker<T>>(key, (_, _) => new(_ => false));
+services.AddResilientPipeline<string, T>(key, p => p
+    .UseRateLimiter(new RateLimiterOptions(maxConcurrency: 10))
+    .UseTimeout(new TimeoutOptions(TimeSpan.FromSeconds(15)))
+    .UseCircuitBreaker(key));
+// No transport-level Retry — side effects must not be duplicated.
+// CB still protects against a confirmed-down upstream; RL prevents stampede.
+```
+
+#### (d) Internal S2S gRPC call — the canonical default full stack
+
+```csharp
+// Use case: any critical inter-service gRPC call in D2 (not idempotent-by-key,
+// or SF not needed). Mirrors the strategy set of .NET's standard HTTP resilience handler (retry + circuit-breaker + rate-limiter + per-attempt timeout).
+services.AddKeyedSingleton<CircuitBreaker<T>>(key, (_, _) => new(_ => false));
+services.AddResilientPipeline<string, T>(key, p => p
+    .UseRateLimiter(new RateLimiterOptions(maxConcurrency: 20))
+    .UseTimeout(new TimeoutOptions(TimeSpan.FromSeconds(30)))
+    .UseRetries(new()
+    {
+        MaxAttempts = 3,
+        BaseDelayMs = 500,
+        MaxDelayMs = 10_000,
+    })
+    .UseCircuitBreaker(key)
+    .UseTimeout(new TimeoutOptions(TimeSpan.FromSeconds(8))));
+// Restart-recovery without SF: each caller runs its own retry sequence.
+// Add UseSingleflight(key) outermost if the call is a read-by-key hot path.
+```
+
+### Canonical layer ordering (the standard full-stack composition)
+
+The standard outer-first composition covers the same strategy set as .NET's standard HTTP resilience handler and is fully expressible with this lib's native layers:
+
+```
+RateLimiter → TotalTimeout → Retry → CircuitBreaker → PerAttemptTimeout
+```
+
+Builder call:
+
+```csharp
+services.AddResilientPipeline<string, T>("key", p => p
+    .UseRateLimiter()                                          // outermost: admission control
+    .UseTimeout(new(TimeSpan.FromSeconds(30)))                 // total-request budget
+    .UseRetries(new() { MaxAttempts = 3, BaseDelayMs = 500 })
+    .UseCircuitBreaker("key")
+    .UseTimeout(new(TimeSpan.FromSeconds(5))));                // per-attempt deadline
+```
+
+When Singleflight is used, place it outermost so deduped callers share one concurrency permit:
+
+```
+Singleflight → RateLimiter → TotalTimeout → Retry → CircuitBreaker → PerAttemptTimeout
+```
+
+See SCENARIOS.md for named recipes + tradeoff rationale.
+
+### Resilience as a caller-side, opt-in choice (cross-process clients)
+
+Beyond the lib-internal-invisible pattern (configure once at the composition root; handlers call one line; callers see nothing), the pipeline also supports a **caller-facing, opt-in, per-call-overridable** usage for generated cross-process clients. Three caller modes:
+
+1. **(a) Use the endpoint's declared default** — the endpoint registers a keyed `ResilientPipeline`; the caller resolves it by key via `[FromKeyedServices(...)]`. No new API.
+2. **(b) Supply your own** — the caller passes its own `ResilientPipeline` (or resolves a different keyed pipeline) overriding the endpoint default.
+3. **(c) Bypass** — the caller explicitly wants no resilience but still needs the `D2Result<T>` return shape: use `ResilientPipeline<TKey, TValue>.PassThrough`.
+
+Use the lib-internal-invisible pattern for a service's own outbound calls (Courier → Resend, Edge → ipinfo) where the lib author controls the composition. Use the caller-opt-in pattern for shared/generated cross-process clients (gRPC-client emitter output) where the CALLER owns the latency/criticality tradeoff.
+
 ### Extensibility
 
 `IResilientLayer<TKey, TValue>` is a single-method interface. Adding a new layer is mechanical: one new `XxxLayer` impl + one new `Use*` builder method on the pipeline — no breaking changes to existing pipelines or call sites.
@@ -279,6 +510,16 @@ Each `Use*` is independent — call zero, one, two, or three. A zero-layer pipel
 - **`CircuitBreaker`**: initial state, single success/failure, threshold transition Closed→Open, mixed exception+value-failure threshold, success resets counter, Open without/with fallback, Open→HalfOpen on cooldown, HalfOpen probe success closes, HalfOpen probe failure (exception OR value-failure) reopens, HalfOpen probe-lock (concurrent caller gets fallback / throws), `Reset` from Open fires callback, `Reset` from Closed is no-op, callback-null branches on every transition.
 - **`Singleflight`**: single-call sanity, concurrent-callers-same-key dedup (1 invocation, 3 returns), concurrent-callers-different-keys both run, sequential-calls-same-key re-run (proves no caching), exception propagation to all waiters + key removed for retry, per-caller cancellation does NOT affect siblings, no-cancellable-token fast path, non-string key (Guid).
 - **`CircuitBreakerOptions` / `RetryOptions` / `CircuitOpenException`**: defaults, init-only overrides, exception constructor variants.
+- **`TimeoutLayer`**: op-completes-before-timeout (no throw), timeout-fires-throws-TimeoutException (NOT OCE), message-contains-duration, Duration-zero/negative pass-through, default-10s-no-fire, caller-ct-cancel-NOT-masked-as-timeout, both-tokens-cancel-caller-wins, per-attempt-timeout-inside-retry-retried-then-succeeds, per-attempt-timeout-exhausted-maps-to-ServiceUnavailable, total-timeout-maps-to-ServiceUnavailable.
+- **`TimeoutOptions`**: default ctor 10s, parameterized null→default, explicit duration, zero preserved, negative preserved, with-expression.
+- **`RateLimiter`**: under-limit runs, N+1-rejected-at-zero-acquisition-timeout, positive-acquisition-admits-on-release, positive-acquisition-rejects-after-timeout, op-throws-permit-released, caller-ct-canceled-before-acquire-no-permit-leaked, max-concurrency-stress (50 callers / K=5 gate), Dispose-no-throw.
+- **`RateLimiterLayer`**: under-limit runs, gate-full-zero-timeout-throws, release-on-throw, pipeline-maps-to-TooManyRequests, keyed-DI resolves, inline-options builds, explicit-instance does-not-own-limiter, Dispose-no-throw.
+- **`RateLimiterOptions`**: default ctor all-defaults, null-args→defaults, explicit values, zero/negative MaxConcurrency throws ArgumentOutOfRangeException (F-2 regression pin), one is minimum valid, zero AcquisitionTimeout preserved, with-expression.
+- **`RateLimitRejectedException`**: all three ctor variants, IsException subtype.
+- **`ResilientPipelineTests` (extended)**: TimeoutException-maps-ServiceUnavailable, RateLimitRejectedException-maps-TooManyRequests, PassThrough-maps-exceptions, PassThrough-success-ok, PassThrough-is-singleton, PassThrough-no-retry, canonical-full-stack-order-tracing.
+- **`ResilientPipelineBuilderTests` (extended)**: UseTimeout-null/explicit, UseTimeout-twice-two-positions, UseRateLimiter-null/explicit, UseRateLimiter-keyed-DI.
+- **`PipelineCompositionTests`**: 6-layer nesting adversarial tests covering all canonical configurations and the order-of-operations proofs: canonical-full-stack-RL-Tt-R-CB-Ta (flaky succeeds, permanently-down exhausts), CB↔R order-sensitivity proof (R→CB real-op-called-once-vs CB→R real-op-called-N-times), total-timeout-outside-retry-terminates-loop, per-attempt-timeout-inside-retry-retried-then-succeeds, RL-outermost-short-circuits-inner-layers, RL-rejection-not-retried-when-inside-retry, SF-outermost-dedup-across-full-stack, SF-distinct-keys-distinct-executions, caller-cancellation-through-deep-stack-maps-to-Canceled, PassThrough-zero-layers-no-retry.
+- **`ResilientPipelineServiceCollectionExtensionsTests` (extended)**: `Dispose_InlineOptionsPipeline_DisposesOwnedRateLimiter` — F-1 regression (proves `ServiceProvider.Dispose` propagates through the keyed singleton pipeline to the inline-owned `RateLimiter`/`SemaphoreSlim`).
 
 Run: `dotnet test server/shared/dotnet/tests`
 

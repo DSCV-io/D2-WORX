@@ -81,7 +81,7 @@ internal static class GeoCatalogEmitter
 
         return ImmutableArray.Create(new EmitResult(
             HintName: "GeoCatalog.g.cs",
-            GeneratedSource: sb.ToString(),
+            GeneratedSource: sb.ToString().LfNormalized(),
             Diagnostics: ImmutableArray<EmitDiagnostic>.Empty));
     }
 

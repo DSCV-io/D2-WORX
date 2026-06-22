@@ -182,19 +182,7 @@ public static partial class ProtoExtensions
             }
             catch (RpcException ex)
             {
-                if (logger is not null)
-                {
-                    LogGrpcTransportFailure(
-                        logger,
-                        ex.StatusCode,
-                        SanitizedExceptionRender.TypeName(ex),
-                        SanitizedExceptionRender.FirstFrame(ex),
-                        traceId);
-                }
-
-                return ex.StatusCode is StatusCode.Cancelled
-                    ? D2Result<TData>.Canceled(traceId: traceId)
-                    : D2Result<TData>.ServiceUnavailable(traceId: traceId);
+                return ex.ToTransportFaultResult<TData>(logger, traceId);
             }
             catch (OperationCanceledException ex)
             {
@@ -222,6 +210,55 @@ public static partial class ProtoExtensions
 
                 return D2Result<TData>.UnhandledException(traceId: traceId);
             }
+        }
+    }
+
+    // ── RpcException → D2Result<TData> transport-fault mapping ───────────
+    extension(RpcException ex)
+    {
+        /// <summary>
+        /// Maps a transport <see cref="RpcException"/> to its fail-open
+        /// <c>D2Result{TData}</c>: <see cref="StatusCode.Cancelled"/> →
+        /// <c>Canceled</c>; every other status → <c>ServiceUnavailable</c>
+        /// (downstream unavailable — a 503, NOT a 500; the caller's own logic
+        /// is fine, the gRPC peer faulted). This is the SAME mapping
+        /// <see cref="HandleAsync"/> applies in its <see cref="RpcException"/>
+        /// catch arm — extracted so callers that run the throwing stub call
+        /// through a resilience pipeline (which would otherwise classify an
+        /// <see cref="RpcException"/> via the gRPC-agnostic generic path and
+        /// mis-map it to <c>UnhandledException</c>) can reconstruct the
+        /// gRPC-aware code after the pipeline returns.
+        /// </summary>
+        /// <param name="logger">
+        /// Optional logger for sanitized transport-fault diagnostics (type name
+        /// + first frame + status code, NEVER <see cref="Exception.Message"/>).
+        /// </param>
+        /// <param name="traceId">
+        /// Trace identifier threaded into the fail-open factory result so the
+        /// caller can correlate the failure.
+        /// </param>
+        /// <typeparam name="TData">The type of the response payload.</typeparam>
+        /// <returns>
+        /// <c>Canceled</c> for <see cref="StatusCode.Cancelled"/>;
+        /// <c>ServiceUnavailable</c> for every other status code.
+        /// </returns>
+        public D2Result<TData> ToTransportFaultResult<TData>(
+            ILogger? logger = null,
+            string? traceId = null)
+        {
+            if (logger is not null)
+            {
+                LogGrpcTransportFailure(
+                    logger,
+                    ex.StatusCode,
+                    SanitizedExceptionRender.TypeName(ex),
+                    SanitizedExceptionRender.FirstFrame(ex),
+                    traceId);
+            }
+
+            return ex.StatusCode is StatusCode.Cancelled
+                ? D2Result<TData>.Canceled(traceId: traceId)
+                : D2Result<TData>.ServiceUnavailable(traceId: traceId);
         }
     }
 

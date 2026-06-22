@@ -21,6 +21,7 @@ using D2.Shared.Utilities.Extensions;
 using global::Grpc.Core;
 using global::Grpc.Core.Interceptors;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
 /// <summary>
@@ -510,6 +511,21 @@ internal sealed class JwtAuthInterceptor : Interceptor
         }
 
         if (httpContext is not null)
+        {
             httpContext.Items[D2HttpContextItems.REQUEST_CONTEXT] = requestContext;
+
+            // Stash the validated raw bearer in the request-scoped forwarded-JWT
+            // holder (resolved from the per-call request scope) for outbound
+            // replay. Captured AFTER validation success — only a validator-
+            // accepted token reaches here. Best-effort: a host that does not
+            // register the holder simply no-ops; a null RequestServices also
+            // no-ops rather than throwing. The bearer is never logged.
+            // RequestServices is non-null-annotated but can be null at runtime
+            // (e.g. a hand-rolled test context), so guard explicitly.
+            var serviceProvider = (IServiceProvider?)httpContext.RequestServices;
+
+            if (serviceProvider is not null)
+                serviceProvider.GetService<IForwardedJwtAccessor>()?.Capture(bearerResult.Data!);
+        }
     }
 }

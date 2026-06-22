@@ -38,7 +38,10 @@ Copyright (c) DCSV. All rights reserved.
     <DialogHeader>
       <DialogTitle>{m.webclient_design_export_dialog_title()}</DialogTitle>
       <DialogDescription>
-        {m.webclient_design_export_dialog_description_part1()}<code>@theme inline</code>{m.webclient_design_export_dialog_description_part2()}<code>.dark</code>{m.webclient_design_export_dialog_description_part3()}<code>src/app.css</code>{m.webclient_design_export_dialog_description_part4()}
+        {m.webclient_design_export_dialog_description_part1()}<code>@theme inline</code
+        >{m.webclient_design_export_dialog_description_part2()}<code>.dark</code
+        >{m.webclient_design_export_dialog_description_part3()}<code>src/app.css</code
+        >{m.webclient_design_export_dialog_description_part4()}
       </DialogDescription>
     </DialogHeader>
 

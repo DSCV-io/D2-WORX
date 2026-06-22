@@ -184,7 +184,7 @@ internal static class TimezoneDataEmitter
 
         return new EmitResult(
             HintName: "TimezoneLookup.g.cs",
-            GeneratedSource: sb.ToString(),
+            GeneratedSource: sb.ToString().LfNormalized(),
             Diagnostics: ImmutableArray<EmitDiagnostic>.Empty);
     }
 
@@ -326,7 +326,7 @@ internal static class TimezoneDataEmitter
 
         return new EmitResult(
             HintName: "TimezonesNested.g.cs",
-            GeneratedSource: sb.ToString(),
+            GeneratedSource: sb.ToString().LfNormalized(),
             Diagnostics: ImmutableArray<EmitDiagnostic>.Empty);
     }
 

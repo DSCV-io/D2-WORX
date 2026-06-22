@@ -193,7 +193,10 @@ function _readJson<T>(...parts: string[]): T {
 }
 
 function _readGenerated(...parts: string[]): string {
-  return readFileSync(resolve(_repoRoot, ...parts), "utf8").replace(/\r\n/g, "\n");
+  return readFileSync(resolve(_repoRoot, ...parts), "utf8").replace(
+    /\r\n/g,
+    "\n",
+  );
 }
 
 describe("wire-shape byte-parity (in-memory regen == committed .g.ts)", () => {

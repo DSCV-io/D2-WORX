@@ -15,7 +15,7 @@ Copyright (c) DCSV. All rights reserved.
     revokeOtherSessions,
     type ActiveSessionDTO,
   } from "$lib/client/rest/account-client.js";
-  import { D2Result } from "@d2/result";
+  import { validationFailed } from "@d2/result";
   import { TK } from "@d2/i18n-keys";
   import { parseUserAgent } from "$lib/shared/utils/user-agent.js";
   import {
@@ -73,7 +73,7 @@ Copyright (c) DCSV. All rights reserved.
 
   async function doRevoke(password: string) {
     if (!revokeTarget) {
-      return D2Result.validationFailed({
+      return validationFailed({
         messages: [TK.webclient.app.ACCOUNT_SESSIONS_NO_SESSION_SELECTED],
       });
     }

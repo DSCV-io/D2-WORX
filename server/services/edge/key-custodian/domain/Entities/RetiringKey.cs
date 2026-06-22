@@ -76,6 +76,7 @@ public sealed record RetiringKey : EncryptionKey
             KeyType = KeyType,
             KeyMaterialEncrypted = KeyMaterialEncrypted,
             PublicKeyMaterial = PublicKeyMaterial,
+            CaCertificateMaterial = CaCertificateMaterial,
             CreatedAt = CreatedAt,
             ActivatedAt = ActivatedAt,
             RetiringAt = RetiringAt,

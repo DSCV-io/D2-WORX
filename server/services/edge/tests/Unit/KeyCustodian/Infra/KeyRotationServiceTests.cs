@@ -13,9 +13,9 @@ using Microsoft.Extensions.Logging.Abstractions;
 
 /// <summary>
 /// Unit tests for <see cref="KeyRotationService"/>: the bootstrap key-type
-/// mapping, the skip-if-lock-not-held no-op behavior, the swallowed-tick-exception
-/// contract (host must not crash), and the OCE re-propagation on a canceled
-/// WaitForNextTickAsync.
+/// mapping, CA-domain exclusion from auto-bootstrap, the skip-if-lock-not-held
+/// no-op behavior, the swallowed-tick-exception contract (host must not crash),
+/// and the OCE re-propagation on a canceled WaitForNextTickAsync.
 /// </summary>
 public sealed class KeyRotationServiceTests
 {
@@ -44,12 +44,38 @@ public sealed class KeyRotationServiceTests
     }
 
     [Fact]
-    public void BuildBootstrapKeyTypes_ContainsAllCatalogDomains()
+    public void BuildBootstrapKeyTypes_ContainsAllNonCaCatalogDomains()
     {
+        // CA domains are seeded by the CaSeedingService on startup, not auto-
+        // bootstrapped by this map. All other catalog domains must be present.
         var map = KeyRotationService.BuildBootstrapKeyTypes();
 
         foreach (var domain in KeyDomain.All)
-            map.Should().ContainKey(domain.Value);
+        {
+            if (KeyRotationService.IsCaDomain(domain.Value))
+            {
+                map.Should().NotContainKey(
+                    domain.Value, because: "CA domains are excluded from auto-bootstrap");
+            }
+            else
+            {
+                map.Should().ContainKey(domain.Value);
+            }
+        }
+    }
+
+    // CA domains must NEVER appear in the bootstrap map, which would silently
+    // generate AES material for a CA domain.
+    [Theory]
+    [InlineData(KeyDomain.MTLS_CA_ROOT)]
+    [InlineData(KeyDomain.MTLS_CA_INTERMEDIATE)]
+    public void BuildBootstrapKeyTypes_CaDomains_AreExcluded_NeverAes(string caDomain)
+    {
+        var map = KeyRotationService.BuildBootstrapKeyTypes();
+
+        map.Should().NotContainKey(
+            caDomain,
+            because: "CA-certificate domains are seeded by the CaSeedingService, not auto-bootstrapped as AES keys");
     }
 
     [Fact]
@@ -85,11 +111,13 @@ public sealed class KeyRotationServiceTests
             .Where(d =>
                 d.Value != KeyDomain.JWKS_SIGNING
                 && d.Value != KeyDomain.COOKIE
-                && d.Value != KeyDomain.CLIENT_SECRET)
+                && d.Value != KeyDomain.CLIENT_SECRET
+                && !KeyRotationService.IsCaDomain(d.Value))
             .ToList();
 
         encryptionDomains.Should().NotBeEmpty(
             "the catalog must include non-KC encryption domains");
+
         foreach (var domain in encryptionDomains)
             map[domain.Value].Should().Be(KeyType.AesPayload);
     }

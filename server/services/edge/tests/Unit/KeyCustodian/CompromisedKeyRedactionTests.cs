@@ -98,6 +98,7 @@ public sealed class CompromisedKeyRedactionTests
             KeyType.AesPayload,
             sr_mat,
             null,
+            null,
             Instant.FromUtc(2026, 1, 1, 0, 0, 0)).Data!;
 
         return pending.Compromise(reason, new TestClock(sr_now)).Data!;

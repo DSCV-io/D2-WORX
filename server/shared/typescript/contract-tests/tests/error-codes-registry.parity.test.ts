@@ -251,8 +251,7 @@ describe("error-codes-registry parity (.NET registry ↔ TS registry)", () => {
       const nonCommon = tsAll
         .filter(
           (e) =>
-            !e.code.startsWith("AUTH_") &&
-            !e.code.startsWith("KEYCUSTODIAN_"),
+            !e.code.startsWith("AUTH_") && !e.code.startsWith("KEYCUSTODIAN_"),
         )
         .filter((e) => e.domain !== "common")
         .map((e) => e.code);

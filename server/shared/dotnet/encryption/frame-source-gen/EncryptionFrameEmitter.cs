@@ -162,7 +162,7 @@ internal static class EncryptionFrameEmitter
         sb.AppendLine("    /// <summary>Smallest valid frame size in bytes.</summary>");
         sb.AppendLine($"    public const int CONSTRAINT_MIN_FRAME_SIZE = {c.MinFrameSize};");
         sb.AppendLine("}");
-        return sb.ToString();
+        return sb.ToString().LfNormalized();
     }
 
     private static string EscapeXmlDoc(string value) => value

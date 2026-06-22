@@ -922,7 +922,9 @@ describe("emitBaseFactoriesCatalog — name-mismatch quirks + status map", () =>
     expect(r.source).toContain(
       "category: opts.category ?? ErrorCategoryWire.InternalError,",
     );
-    expect(r.source).toContain("statusCode: HttpStatusCode.InternalServerError,");
+    expect(r.source).toContain(
+      "statusCode: HttpStatusCode.InternalServerError,",
+    );
   });
 
   // long test description — cannot wrap

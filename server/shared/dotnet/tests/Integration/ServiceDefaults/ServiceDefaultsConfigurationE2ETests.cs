@@ -253,7 +253,6 @@ public sealed class ServiceDefaultsConfigurationE2ETests
             configureOptions: opts =>
             {
                 opts.SkipAuthAutoWiring = true;
-                opts.SkipHttpClientResilienceDefaults = true;
             });
 
         using var scope = handle.Host.Services.CreateScope();
@@ -261,6 +260,5 @@ public sealed class ServiceDefaultsConfigurationE2ETests
             .GetRequiredService<IOptions<D2ServiceDefaultsOptions>>()
             .Value;
         resolved.SkipAuthAutoWiring.Should().BeTrue();
-        resolved.SkipHttpClientResilienceDefaults.Should().BeTrue();
     }
 }

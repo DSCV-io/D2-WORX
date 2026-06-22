@@ -7,11 +7,11 @@
 namespace D2.Edge.Tests.Unit.KeyCustodian;
 
 /// <summary>
-/// Pins the persisted string names of <see cref="KeyStatus"/> and
-/// <see cref="KeyAuditAction"/>. Both enums are stored via EF
-/// <c>HasConversion&lt;string&gt;()</c> — reordering ordinals is harmless, but
-/// renaming a member silently rewrites existing DB rows. These tests are the
-/// rename gate (§1.18 per-VALUE pin; NOT ordinal stability).
+/// Pins the persisted string names of <see cref="KeyStatus"/>,
+/// <see cref="KeyAuditAction"/>, and <see cref="KeyType"/>. All three enums are
+/// stored via EF <c>HasConversion&lt;string&gt;()</c> — reordering ordinals is
+/// harmless, but renaming a member silently rewrites existing DB rows. These tests
+/// are the rename gate (§1.18 per-VALUE pin; NOT ordinal stability).
 /// </summary>
 public sealed class KeyCustodianPersistedEnumStabilityTests
 {
@@ -55,5 +55,29 @@ public sealed class KeyCustodianPersistedEnumStabilityTests
     {
         action.ToString().Should().Be(expectedPersistedName);
         Enum.GetName(action).Should().Be(expectedPersistedName);
+    }
+
+    // =========================================================================
+    // KeyType — persisted by string name via HasConversion<string>()
+    // =========================================================================
+
+    [Fact]
+    public void KeyType_Enum_HasExactlyFourMembers()
+    {
+        const int expected_count = 4;
+
+        Enum.GetNames<KeyType>().Should().HaveCount(expected_count);
+    }
+
+    [Theory]
+    [InlineData(KeyType.RsaSigning, "RsaSigning")]
+    [InlineData(KeyType.AesPayload, "AesPayload")]
+    [InlineData(KeyType.Secret, "Secret")]
+    [InlineData(KeyType.X509CaCertificate, "X509CaCertificate")]
+    public void KeyType_MemberName_EqualsPersistedStringName(
+        KeyType keyType, string expectedPersistedName)
+    {
+        keyType.ToString().Should().Be(expectedPersistedName);
+        Enum.GetName(keyType).Should().Be(expectedPersistedName);
     }
 }

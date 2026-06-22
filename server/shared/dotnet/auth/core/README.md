@@ -12,7 +12,7 @@ The vocabulary slice (enums, `ActorEntry`, `IJwksProvider`, `ISessionLivenessTra
 
 The transport bindings live in two sibling csprojs: [`D2.Shared.Auth.Http`](../http/README.md) (HTTP middleware + RFC 7807 ProblemDetails + per-endpoint scope metadata) and [`D2.Shared.Auth.Grpc`](../grpc/README.md) (server-side gRPC interceptor + RpcException trailers + per-method scope metadata / attributes). Either or both can be wired into a host independently — see [Composing with siblings](#composing-with-siblings) below.
 
-The token-acquisition complement (RFC 8693 token exchange + RFC 6749 §4.4 client credentials, machine-to-machine call credentials) lives in [`D2.Shared.Auth.Outbound`](../outbound/README.md).
+The token-acquisition complement lives in [`D2.Shared.Auth.Outbound`](../outbound/README.md) — the RFC 8693 token-exchange client for the Edge boundary mint and the deliberate exception cases. Under the forward-unchanged service-to-service model ([ADR-0022](../../../../../docs/adrs/0022-service-auth-mint-once-forward.md)) a normal internal hop does not acquire a fresh token at all: the single token minted at the Edge boundary is forwarded unchanged and this lib re-validates it on receipt. Cross-process workload identity is supplied by mTLS ([ADR-0023](../../../../../docs/adrs/0023-mtls-workload-identity.md)), not by a service-identity bearer.
 
 ## Public API surface
 
@@ -198,7 +198,7 @@ Run: `dotnet test server/shared/dotnet/tests`.
 
 When a service starts emitting `AUTH_*` failures:
 
-- **`AUTH_BEARER_MISSING` / `AUTH_BEARER_MALFORMED`** — caller didn't include a parseable `Authorization: Bearer <jwt>` header. Check the caller's outbound auth wiring (typically `AddD2ServiceIdentity()` from `D2.Shared.Auth.Outbound`).
+- **`AUTH_BEARER_MISSING` / `AUTH_BEARER_MALFORMED`** — caller didn't include a parseable `Authorization: Bearer <jwt>` header. Under the forward-unchanged model ([ADR-0022](../../../../../docs/adrs/0022-service-auth-mint-once-forward.md)) the bearer is the single transaction-token minted at the Edge boundary and forwarded unchanged across the hop — check that the calling service is propagating the inbound token onto its outbound call rather than dropping it. (Workload identity is established separately by mTLS per [ADR-0023](../../../../../docs/adrs/0023-mtls-workload-identity.md), not by this bearer.)
 - **`AUTH_JWT_SIGNATURE_INVALID` / `AUTH_JWT_KID_NOT_FOUND`** — JWKS drift. Check the `d2.auth.jwks.fetches{trigger=backplane_rotation}` counter — if it's flat after a known key rotation, the rotation backplane isn't reaching this service. Either the `ICacheInvalidationBackplane` isn't registered (check the `JwksBackplaneAbsent` warning at startup) or the configured `BackplaneChannelKey` doesn't match Edge's publish key.
 - **`AUTH_JWT_ISSUER_MISMATCH` / `AUTH_JWT_AUDIENCE_MISMATCH`** — service's `AuthOptions.Issuer` / `AuthOptions.Audience` doesn't match what Edge minted. Check the env-var binding.
 - **`AUTH_JWT_EXPIRED` / `AUTH_JWT_NOT_YET_VALID`** — clock drift between the issuer and this service. `ClockSkew` (default 30s) bounds tolerance.

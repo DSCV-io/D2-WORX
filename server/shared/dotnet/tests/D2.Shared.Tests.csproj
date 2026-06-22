@@ -163,6 +163,12 @@ Copyright (c) DCSV. All rights reserved.
     -->
     <ProjectReference Include="..\result\grpc\D2.Shared.Result.Grpc.csproj" />
     <ProjectReference Include="..\utilities\D2.Shared.Utilities.csproj" />
+    <!--
+      D2.Shared.WorkloadIdentity — the shared SPIFFE workload-identity grammar.
+      Tests exercise the SpiffeWorkloadIdentity Create/Parse/Uri/FromTrusted
+      adversarial matrix directly (the moved grammar tests).
+    -->
+    <ProjectReference Include="..\workload-identity\D2.Shared.WorkloadIdentity.csproj" />
     <ProjectReference Include="..\aspnetcore\D2.Shared.AspNetCore.csproj" />
     <ProjectReference Include="..\auth\core\D2.Shared.Auth.csproj" />
     <ProjectReference Include="..\auth\abstractions\D2.Shared.Auth.Abstractions.csproj" />

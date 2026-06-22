@@ -1,0 +1,149 @@
+{
+  "$comment": [
+    "Cross-language @d2Resilience result-predicate parity fixtures. Each row feeds an",
+    "identically-shaped reconstructed D2Result<PlaceOrderOutput> to the emitted C# predicate",
+    "(PlaceOrderResiliencePredicates.SR_RetryWhen / SR_FailWhen) AND the emitted TS predicate",
+    "(placeOrderRetryWhen / placeOrderFailWhen), asserting BOTH produce the same retry / fail",
+    "booleans. A divergence means the cross-language emission has broken and MUST be surfaced,",
+    "not silently reconciled by adjusting an expected value.",
+    "",
+    "The predicate under test (from resilience-predicate-shaped.tsp placeOrder):",
+    "  retryWhen: result.category == 'infrastructure_unavailable'",
+    "             || result.data.itemStatuses.contains('PENDING')",
+    "             || result.data.partial == true",
+    "  failWhen:  result.data.itemStatuses.count == 0",
+    "             || result.errorCode == 'VALIDATION_FAILED'",
+    "",
+    "`category` is the snake_case wire string (C# Category?.ToWire(); TS r.category). `data`",
+    "null models a failure with no payload (the nullable D2Result.Data); both runtimes must",
+    "short-circuit a null/undefined data path to false (never throw)."
+  ],
+  "schemaVersion": 1,
+  "cases": [
+    {
+      "name": "retryWhen_category_infraUnavailable",
+      "$note": "data is null → itemStatuses.count coalesces to 0 → failWhen TRUE (identical C#/TS); retryWhen also true via category. Both predicates fire — at runtime failWhen WINS in the client closure (no retry).",
+      "success": false,
+      "statusCode": 503,
+      "errorCode": null,
+      "category": "infrastructure_unavailable",
+      "data": null,
+      "expectedRetry": true,
+      "expectedFail": true
+    },
+    {
+      "name": "retryWhen_arrayContainsPending",
+      "success": true,
+      "statusCode": 200,
+      "errorCode": null,
+      "category": null,
+      "data": {
+        "orderCode": "o1",
+        "itemStatuses": ["SHIPPED", "PENDING"],
+        "partial": false
+      },
+      "expectedRetry": true,
+      "expectedFail": false
+    },
+    {
+      "name": "retryWhen_flatPartialTrue",
+      "success": true,
+      "statusCode": 206,
+      "errorCode": null,
+      "category": null,
+      "data": {
+        "orderCode": "o2",
+        "itemStatuses": ["SHIPPED"],
+        "partial": true
+      },
+      "expectedRetry": true,
+      "expectedFail": false
+    },
+    {
+      "name": "failWhen_emptyCollectionCountZero",
+      "success": true,
+      "statusCode": 200,
+      "errorCode": null,
+      "category": null,
+      "data": { "orderCode": "o3", "itemStatuses": [], "partial": false },
+      "expectedRetry": false,
+      "expectedFail": true
+    },
+    {
+      "name": "failWhen_errorCodeValidationFailed",
+      "success": false,
+      "statusCode": 400,
+      "errorCode": "VALIDATION_FAILED",
+      "category": "validation_failure",
+      "data": null,
+      "expectedRetry": false,
+      "expectedFail": true
+    },
+    {
+      "name": "failWhenWins_bothMatch",
+      "success": false,
+      "statusCode": 503,
+      "errorCode": "VALIDATION_FAILED",
+      "category": "infrastructure_unavailable",
+      "data": {
+        "orderCode": "o4",
+        "itemStatuses": ["SHIPPED"],
+        "partial": true
+      },
+      "expectedRetry": true,
+      "expectedFail": true
+    },
+    {
+      "name": "neither_cleanSuccess",
+      "success": true,
+      "statusCode": 200,
+      "errorCode": null,
+      "category": null,
+      "data": {
+        "orderCode": "o5",
+        "itemStatuses": ["SHIPPED"],
+        "partial": false
+      },
+      "expectedRetry": false,
+      "expectedFail": false
+    },
+    {
+      "name": "nullData_noPayload",
+      "success": false,
+      "statusCode": 404,
+      "errorCode": "NOT_FOUND",
+      "category": "not_found",
+      "data": null,
+      "expectedRetry": false,
+      "expectedFail": true
+    },
+    {
+      "name": "retryWhen_categoryWins_emptyDataButInfra",
+      "success": false,
+      "statusCode": 503,
+      "errorCode": null,
+      "category": "infrastructure_unavailable",
+      "data": {
+        "orderCode": "o6",
+        "itemStatuses": ["SHIPPED"],
+        "partial": false
+      },
+      "expectedRetry": true,
+      "expectedFail": false
+    },
+    {
+      "name": "neither_unknownCategory_nonEmpty",
+      "success": false,
+      "statusCode": 409,
+      "errorCode": "CONFLICT",
+      "category": "conflict",
+      "data": {
+        "orderCode": "o7",
+        "itemStatuses": ["SHIPPED"],
+        "partial": false
+      },
+      "expectedRetry": false,
+      "expectedFail": false
+    }
+  ]
+}

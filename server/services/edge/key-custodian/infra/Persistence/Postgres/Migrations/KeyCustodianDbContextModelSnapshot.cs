@@ -75,6 +75,10 @@ namespace D2.Edge.KeyCustodian.Infra.Persistence.Postgres.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("activated_at");
 
+                    b.Property<byte[]>("CaCertificate")
+                        .HasColumnType("bytea")
+                        .HasColumnName("ca_certificate");
+
                     b.Property<string>("CompromiseReason")
                         .HasMaxLength(512)
                         .HasColumnType("character varying(512)")
@@ -135,11 +139,60 @@ namespace D2.Edge.KeyCustodian.Infra.Persistence.Postgres.Migrations
                     b.ToTable("key_record", (string)null);
                 });
 
+            modelBuilder.Entity("D2.Edge.KeyCustodian.App.Infrastructure.Persistence.LeafIssuanceAuditRecord", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
+
+                    b.Property<Instant>("IssuedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("issued_at");
+
+                    b.Property<string>("IssuingCaKid")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("issuing_ca_kid");
+
+                    b.Property<Instant>("LeafNotAfter")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("leaf_not_after");
+
+                    b.Property<string>("WorkloadServiceId")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("workload_service_id");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("IssuingCaKid")
+                        .HasDatabaseName("ix_leaf_issuance_audit_record_issuing_ca_kid");
+
+                    b.HasIndex("WorkloadServiceId", "IssuedAt")
+                        .HasDatabaseName("ix_leaf_issuance_audit_record_workload_service_id_issued_at");
+
+                    b.ToTable("leaf_issuance_audit_record", (string)null);
+                });
+
             modelBuilder.Entity("D2.Edge.KeyCustodian.App.Infrastructure.Persistence.KeyAuditRecord", b =>
                 {
                     b.HasOne("D2.Edge.KeyCustodian.App.Infrastructure.Persistence.KeyRecord", null)
                         .WithMany()
                         .HasForeignKey("Kid")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("D2.Edge.KeyCustodian.App.Infrastructure.Persistence.LeafIssuanceAuditRecord", b =>
+                {
+                    b.HasOne("D2.Edge.KeyCustodian.App.Infrastructure.Persistence.KeyRecord", null)
+                        .WithMany()
+                        .HasForeignKey("IssuingCaKid")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
                 });

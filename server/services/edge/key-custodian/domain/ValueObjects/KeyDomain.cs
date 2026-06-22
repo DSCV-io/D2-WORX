@@ -17,15 +17,22 @@ namespace D2.Edge.KeyCustodian.Domain.ValueObjects;
 ///
 /// <b>Catalog.</b> <see cref="All"/> is the closed catalog — the union of
 /// <see cref="EncryptionDomains.AllDomains"/> (minus <c>"plaintext"</c>, which
-/// is a no-encrypt sentinel, not a real keyring) and the three KeyCustodian-only
-/// domains (<c>jwks-signing</c>, <c>cookie</c>, <c>client-secret</c>).
+/// is a no-encrypt sentinel, not a real keyring) and the five KeyCustodian-only
+/// domains (<c>jwks-signing</c>, <c>cookie</c>, <c>client-secret</c>,
+/// <c>mtls-ca-root</c>, <c>mtls-ca-intermediate</c>).
 /// Adding a new domain requires updating the catalog here AND provisioning the
 /// corresponding keyring.
 ///
-/// <b>Wire-format constants.</b> The three KC-only literal strings are
+/// <b>Wire-format constants.</b> The KC-only literal strings are
 /// wire/spec-anchored constants (§5.25 exemption — the literal value IS the wire
 /// format). Use these constants instead of raw strings to avoid typos that would
 /// silently route material to a non-existent keyring.
+///
+/// <b>mTLS CA domains.</b> The internal certificate authority is a two-tier
+/// hierarchy persisted as managed keys. The root and the intermediate live in
+/// SEPARATE domains (<c>mtls-ca-root</c> / <c>mtls-ca-intermediate</c>) so "the
+/// active issuing CA" is a trivial <c>ForDomain(mtls-ca-intermediate).Active()</c>
+/// query — the issuance path signs with the intermediate, never the root.
 /// </remarks>
 public sealed record KeyDomain
 {
@@ -40,6 +47,12 @@ public sealed record KeyDomain
     /// <summary>Wire value for the client-secret key domain.</summary>
     public const string CLIENT_SECRET = "client-secret";
 
+    /// <summary>Wire value for the mTLS root certificate-authority key domain.</summary>
+    public const string MTLS_CA_ROOT = "mtls-ca-root";
+
+    /// <summary>Wire value for the mTLS issuing-intermediate certificate-authority key domain.</summary>
+    public const string MTLS_CA_INTERMEDIATE = "mtls-ca-intermediate";
+
     /// <summary>Gets the normalized domain string (lowercase, trimmed).</summary>
     public required string Value { get; init; }
 
@@ -52,10 +65,16 @@ public sealed record KeyDomain
     /// <summary>Gets the client-secret domain (<c>"client-secret"</c>).</summary>
     public static KeyDomain ClientSecret { get; } = new() { Value = CLIENT_SECRET };
 
+    /// <summary>Gets the mTLS root CA domain (<c>"mtls-ca-root"</c>).</summary>
+    public static KeyDomain MtlsCaRoot { get; } = new() { Value = MTLS_CA_ROOT };
+
+    /// <summary>Gets the mTLS issuing-intermediate CA domain (<c>"mtls-ca-intermediate"</c>).</summary>
+    public static KeyDomain MtlsCaIntermediate { get; } = new() { Value = MTLS_CA_INTERMEDIATE };
+
     /// <summary>
     /// Gets the closed catalog of all recognized key domains: all
     /// <see cref="EncryptionDomains.AllDomains"/> entries except
-    /// <c>"plaintext"</c>, plus the three KeyCustodian-only domains.
+    /// <c>"plaintext"</c>, plus the five KeyCustodian-only domains.
     /// </summary>
     /// <remarks>
     /// <c>"plaintext"</c> is excluded because it is a no-encrypt sentinel, not
@@ -77,6 +96,7 @@ public sealed record KeyDomain
     public static D2Result<KeyDomain> Create(string? value)
     {
         var normalized = value.ToNullIfEmpty()?.ToLowerInvariant();
+
         if (normalized is null)
             return KeyCustodianFailures<KeyDomain>.UnknownKeyDomain();
 
@@ -113,6 +133,14 @@ public sealed record KeyDomain
             .Where(d => !string.Equals(d, EncryptionDomains.PLAINTEXT, StringComparison.Ordinal))
             .Select(d => new KeyDomain { Value = d });
 
-        return [.. encDomains, JwksSigning, Cookie, ClientSecret];
+        return
+        [
+            .. encDomains,
+            JwksSigning,
+            Cookie,
+            ClientSecret,
+            MtlsCaRoot,
+            MtlsCaIntermediate,
+        ];
     }
 }

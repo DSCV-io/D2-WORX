@@ -182,7 +182,7 @@ internal static class ProblemDetailsEmitter
         EmitTitleForSwitch(sb, titles);
 
         sb.AppendLine("}");
-        return sb.ToString();
+        return sb.ToString().LfNormalized();
     }
 
     private static void EmitTitleForSwitch(StringBuilder sb, List<TitleEntry> titles)

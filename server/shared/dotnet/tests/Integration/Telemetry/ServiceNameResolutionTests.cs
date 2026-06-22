@@ -21,7 +21,7 @@ using Xunit;
 /// resource attribute (operators key dashboards by it) so coverage here
 /// pins the contract.
 /// </summary>
-[Collection("OtelStaticState")]
+[Collection("LogLoggerStaticState")]
 public sealed class ServiceNameResolutionTests
 {
     [Fact]

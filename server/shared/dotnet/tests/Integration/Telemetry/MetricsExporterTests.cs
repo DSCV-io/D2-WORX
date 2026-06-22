@@ -19,7 +19,7 @@ using Xunit;
 /// exercises the Handler meter (one of the aggregated names) so the
 /// AggregatedTelemetrySources wiring is implicitly re-walked.
 /// </summary>
-[Collection("OtelStaticState")]
+[Collection("LogLoggerStaticState")]
 public sealed class MetricsExporterTests
 {
     [Fact]

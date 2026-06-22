@@ -34,7 +34,7 @@
       "constName": "INTERNAL_TOKEN",
       "applicability": ["http"],
       "convention": "d2",
-      "description": "Service-identity JWT minted by KeyCustodian (audience d2.edge, 15-min TTL). BFF forwards on outbound calls so Edge can distinguish BFF-originated SSR traffic from browser-direct traffic in audit + telemetry tags."
+      "description": "The BFF's boundary token for its calls to Edge — an OAuth client_credentials JWT (audience d2.edge, 15-min TTL) the BFF acquires as an external client of Edge. Sent on outbound BFF->Edge calls so Edge can distinguish BFF-originated SSR traffic from browser-direct traffic in audit + telemetry tags."
     },
     {
       "name": "content-type",

@@ -65,20 +65,21 @@ public sealed class KeyCustodianErrorCodesSchemaDriftTests
             .Should().Be("^KEYCUSTODIAN_[A-Z][A-Z0-9_]*$");
 
         // KC narrows the canonical status set to the {400 input-validation,
-        // 404 key-not-found, 409 lifecycle-conflict, 500 precondition /
-        // smoke-test} subset.
+        // 404 key-not-found, 409 lifecycle-conflict, 500 precondition / smoke-test
+        // / cert-build, 503 no-active-issuing-CA} subset.
         var statuses = props.GetProperty("httpStatus").GetProperty("enum")
             .EnumerateArray().Select(e => e.GetInt32()).ToList();
-        int[] expectedStatuses = [400, 404, 409, 500];
+        int[] expectedStatuses = [400, 404, 409, 500, 503];
         statuses.Should().BeEquivalentTo(expectedStatuses);
 
         // KC narrows the canonical category set to the {validation_failure,
-        // not_found, conflict, internal_error} subset.
+        // not_found, conflict, internal_error, infrastructure_unavailable} subset.
         var categories = props.GetProperty("category").GetProperty("enum")
             .EnumerateArray().Select(e => e.GetString()).ToList();
         string[] expectedCategories =
         [
             "validation_failure", "not_found", "conflict", "internal_error",
+            "infrastructure_unavailable",
         ];
         categories.Should().BeEquivalentTo(expectedCategories);
     }
@@ -86,22 +87,24 @@ public sealed class KeyCustodianErrorCodesSchemaDriftTests
     [Fact]
     public void KcSpec_EveryEntry_IsStandardAndDeclaredStatusCategoryPair()
     {
-        // Every KC entry is the universal standard shape; each is one of four legal
+        // Every KC entry is the universal standard shape; each is one of five legal
         // (status, category) pairs: 400/validation_failure (input validation),
         // 404/not_found (key lookup), 409/conflict (illegal transition / duplicate
-        // pending), or 500/internal_error (precondition violation / smoke-test
-        // failure).
+        // pending), 500/internal_error (precondition violation / smoke-test / cert
+        // build), or 503/infrastructure_unavailable (no active issuing CA).
         var legalPairs = new Dictionary<int, string>
         {
             [400] = "validation_failure",
             [404] = "not_found",
             [409] = "conflict",
             [500] = "internal_error",
+            [503] = "infrastructure_unavailable",
         };
 
         var entries = KcSpecEntries();
 
         entries.Should().NotBeEmpty();
+
         foreach (var entry in entries)
         {
             entry.GetProperty("factoryShape").GetString().Should().Be("standard");

@@ -163,7 +163,7 @@ internal static class AudiencesEmitter
         EmitHelpers(sb, ordered);
 
         sb.AppendLine("}");
-        return sb.ToString();
+        return sb.ToString().LfNormalized();
     }
 
     private static void EmitHelpers(StringBuilder sb, IReadOnlyList<AudienceEntry> ordered)

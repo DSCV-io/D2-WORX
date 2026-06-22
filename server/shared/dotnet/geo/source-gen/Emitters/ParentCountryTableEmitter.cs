@@ -123,7 +123,7 @@ internal static class ParentCountryTableEmitter
 
         return ImmutableArray.Create(new EmitResult(
             HintName: "SubdivisionParentCountryLookup.g.cs",
-            GeneratedSource: sb.ToString(),
+            GeneratedSource: sb.ToString().LfNormalized(),
             Diagnostics: ImmutableArray<EmitDiagnostic>.Empty));
     }
 

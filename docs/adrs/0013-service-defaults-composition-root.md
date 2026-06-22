@@ -5,12 +5,12 @@ Copyright (c) DCSV. All rights reserved.
 # ADR-0013: ServiceDefaults — thin-aggregator composition root with a locked middleware order
 
 - **Status**: Accepted
-- **Date**: 2026-05-30
+- **Date**: 2026-05-30 (mTLS / forwarded-token forward note: 2026-06-18)
 - **Deliverable**: D2 shared libraries (backfilled)
 
 ## Context
 
-Every service requires the same foundational cross-cutting stack: structured PII-safe logging, OpenTelemetry, i18n, the handler pipeline, RS256/JWKS inbound auth (HTTP and gRPC), in-process L1 caching, health endpoints, RFC 7807 problem details, CORS, and BCL HttpClient resilience. Without a shared wiring point each service hand-rolls `Program.cs`, creating three failure modes: (1) middleware installed in the wrong order (auth before CORS, infra-bypass before routing) produces silent security/correctness regressions; (2) new defaults added to a shared lib silently miss every existing service until someone propagates them; (3) per-service configuration for owning-lib options (issuer URIs, CORS origins, log levels) duplicates and drifts.
+Every service requires the same foundational cross-cutting stack: structured PII-safe logging, OpenTelemetry, i18n, the handler pipeline, RS256/JWKS inbound auth (HTTP and gRPC), in-process L1 caching, health endpoints, RFC 7807 problem details, and CORS. Without a shared wiring point each service hand-rolls `Program.cs`, creating three failure modes: (1) middleware installed in the wrong order (auth before CORS, infra-bypass before routing) produces silent security/correctness regressions; (2) new defaults added to a shared lib silently miss every existing service until someone propagates them; (3) per-service configuration for owning-lib options (issuer URIs, CORS origins, log levels) duplicates and drifts.
 
 The abstractions/implementation split (ADR-0006), observability (ADR-0010), and inbound auth (ADR-0012) each defined the `AddD2X` / `UseD2X` extension shape; the only remaining question is how those extensions are assembled at the service boundary. The .NET Aspire `Microsoft.Extensions.ServiceDefaults` pattern — a dedicated aggregator csproj that delegates entirely to owning libraries — is the direct inspiration.
 
@@ -20,7 +20,7 @@ A single thin-aggregator csproj (`D2.Shared.ServiceDefaults`) owns the compositi
 
 ### 1. Thin aggregator with zero logic and pass-through delegates
 
-`AddD2ServiceDefaults` is a sequenced list of `services.AddD2X(...)` calls and nothing else (the class comment: *"THIN AGGREGATOR — ZERO logic of its own"*); its constants file is intentionally empty (*"this aggregator owns ZERO logic and reads no env vars of its own"*). Per-component configurability is entirely through pass-through `Action<TFromOwningLib>?` delegates on `D2ServiceDefaultsOptions`, each forwarded verbatim to the owning lib's parameter — so new options on any owning lib surface at the aggregator's call site automatically with no aggregator-side maintenance. The wiring order is fixed: `D2Env.Load` → `AddD2Logging` → `AddD2Telemetry` → `AddD2I18n` → `AddD2Handler` → `AddD2Auth`(+`.Http`+`.Grpc`) → `AddD2LocalCache` → `AddD2HealthChecks` → `AddD2ProblemDetails` → `AddD2Cors` → `ConfigureHttpClientDefaults(AddStandardResilienceHandler)`.
+`AddD2ServiceDefaults` is a sequenced list of `services.AddD2X(...)` calls and nothing else (the class comment: *"THIN AGGREGATOR — ZERO logic of its own"*); its constants file is intentionally empty (*"this aggregator owns ZERO logic and reads no env vars of its own"*). Per-component configurability is entirely through pass-through `Action<TFromOwningLib>?` delegates on `D2ServiceDefaultsOptions`, each forwarded verbatim to the owning lib's parameter — so new options on any owning lib surface at the aggregator's call site automatically with no aggregator-side maintenance. The wiring order is fixed: `D2Env.Load` → `AddD2Logging` → `AddD2Telemetry` → `AddD2I18n` → `AddD2Handler` → `AddD2Auth`(+`.Http`+`.Grpc`) → `AddD2LocalCache` → `AddD2HealthChecks` → `AddD2ProblemDetails` → `AddD2Cors`.
 
 ### 2. Locked middleware order with no insertion points
 
@@ -34,7 +34,7 @@ Two fail-closed behaviors are baked in at host build, not deferred to request ti
 
 **Positive.**
 
-- A new service is fully wired (logging, telemetry, auth, caching, health, CORS, HttpClient resilience) in ~10–15 lines of service-specific `Program.cs`; correctness of the cross-cutting stack is guaranteed by construction.
+- A new service is fully wired (logging, telemetry, auth, caching, health, CORS) in ~10–15 lines of service-specific `Program.cs`; correctness of the cross-cutting stack is guaranteed by construction.
 - New owning-lib options surface automatically at the call site via pass-through delegates — no aggregator maintenance pass when owning libs evolve.
 - The locked pipeline eliminates an entire bug class (auth after authorization, headers skipped on preflights, infra-bypass before routing) that reappears whenever an engineer wires a new service from scratch.
 - Fail-fast auth + CORS validation catches misconfiguration in CI (host build fails) rather than production.
@@ -42,9 +42,10 @@ Two fail-closed behaviors are baked in at host build, not deferred to request ti
 **Negative / risks.**
 
 - Services with genuinely non-standard ordering (e.g. a future Edge rate-limit layer between infra-bypass and authentication) cannot use `UseD2DefaultPipeline` and must hand-wire from the underlying lib extensions (the README acknowledges this; the rate-limit middleware will slot between infra-bypass and authentication when it ships).
+- The composition root wires inbound-only cross-cutting today; the cross-process workload-auth and forwarded-transaction-token plumbing is not built yet. When mTLS workload authentication ([ADR-0023](0023-mtls-workload-identity.md)) and forwarded-transaction-token validation ([ADR-0022](0022-service-auth-mint-once-forward.md)) are built, the mTLS client- and server-certificate validation and the forwarded-token handling slot into this composition root — the outbound mTLS channel configuration on the service's gRPC/HTTP clients and the server-side peer-certificate check alongside the existing inbound auth wiring. The locked inbound stack above is unchanged by that addition; the new layers compose with it rather than replace it.
 - The locked order has no in-band override: a consumer needing a single insertion must forgo the aggregator entirely — there is no partial use.
 - The aggregator csproj pulls the full ASP.NET Core web SDK graph into every referencing service, including services that might otherwise target a smaller SDK — intentional, but a transitive dependency cost.
-- The opt-out flags (`SkipAuthAutoWiring`, `SkipLocalCacheAutoWiring`, `SkipHttpClientResilienceDefaults`) require explicit consumer awareness; a test host that omits the opt-out wires auth and fail-fasts without an `AuthConfigure` delegate — intended, but can surprise first-time contributors.
+- The opt-out flags (`SkipAuthAutoWiring`, `SkipLocalCacheAutoWiring`) require explicit consumer awareness; a test host that omits the opt-out wires auth and fail-fasts without an `AuthConfigure` delegate — intended, but can surprise first-time contributors.
 
 ## Alternatives considered
 

@@ -8,7 +8,6 @@
 
 #nullable enable
 
-using System.Runtime.Serialization;
 using System.Text.Json.Serialization;
 
 namespace D2.Shared.Geo.Abstractions;
@@ -22,11 +21,12 @@ namespace D2.Shared.Geo.Abstractions;
 /// codes throw <see cref="System.Text.Json.JsonException"/>.
 /// </summary>
 /// <remarks>
-/// Each member carries an explicit <c>[EnumMember(Value = "&lt;code&gt;")]</c>
-/// attribute so the JSON wire form is the canonical lowercase ISO 639-1
-/// code (e.g. <c>"en"</c>) rather than the PascalCased C# member name
-/// (<c>"En"</c>). <c>JsonStringEnumConverter</c> honors <c>[EnumMember]</c>
-/// on serialize + deserialize — keeps wire-form parity with the TS-side
+/// Each member carries <c>[JsonStringEnumMemberName("&lt;code&gt;")]</c>
+/// so the JSON wire form is the canonical lowercase ISO 639-1 code
+/// (e.g. <c>"en"</c>) rather than the PascalCased C# member name
+/// (<c>"En"</c>). <c>JsonStringEnumConverter</c> honors
+/// <c>[JsonStringEnumMemberName]</c> (the .NET 9+ attribute) on both
+/// serialize and deserialize — keeps wire-form parity with the TS-side
 /// <c>LanguageCode</c> const-object (which uses lowercase string values).
 /// LanguageCode is the ONLY geo enum needing this attribute — CountryCode /
 /// CurrencyCode / GeopoliticalEntityCode / GeopoliticalEntityType / etc. all use
@@ -36,735 +36,735 @@ namespace D2.Shared.Geo.Abstractions;
 public enum LanguageCode : ushort
 {
     /// <summary>Afar (aa).</summary>
-    [EnumMember(Value = "aa")]
+    [JsonStringEnumMemberName("aa")]
     Aa = 1,
 
     /// <summary>Abkhazian (ab).</summary>
-    [EnumMember(Value = "ab")]
+    [JsonStringEnumMemberName("ab")]
     Ab = 2,
 
     /// <summary>Avestan (ae).</summary>
-    [EnumMember(Value = "ae")]
+    [JsonStringEnumMemberName("ae")]
     Ae = 3,
 
     /// <summary>Afrikaans (af).</summary>
-    [EnumMember(Value = "af")]
+    [JsonStringEnumMemberName("af")]
     Af = 4,
 
     /// <summary>Akan (ak).</summary>
-    [EnumMember(Value = "ak")]
+    [JsonStringEnumMemberName("ak")]
     Ak = 5,
 
     /// <summary>Amharic (am).</summary>
-    [EnumMember(Value = "am")]
+    [JsonStringEnumMemberName("am")]
     Am = 6,
 
     /// <summary>Aragonese (an).</summary>
-    [EnumMember(Value = "an")]
+    [JsonStringEnumMemberName("an")]
     An = 7,
 
     /// <summary>Arabic (ar).</summary>
-    [EnumMember(Value = "ar")]
+    [JsonStringEnumMemberName("ar")]
     Ar = 8,
 
     /// <summary>Assamese (as).</summary>
-    [EnumMember(Value = "as")]
+    [JsonStringEnumMemberName("as")]
     As = 9,
 
     /// <summary>Avaric (av).</summary>
-    [EnumMember(Value = "av")]
+    [JsonStringEnumMemberName("av")]
     Av = 10,
 
     /// <summary>Aymara (ay).</summary>
-    [EnumMember(Value = "ay")]
+    [JsonStringEnumMemberName("ay")]
     Ay = 11,
 
     /// <summary>Azerbaijani (az).</summary>
-    [EnumMember(Value = "az")]
+    [JsonStringEnumMemberName("az")]
     Az = 12,
 
     /// <summary>Bashkir (ba).</summary>
-    [EnumMember(Value = "ba")]
+    [JsonStringEnumMemberName("ba")]
     Ba = 13,
 
     /// <summary>Belarusian (be).</summary>
-    [EnumMember(Value = "be")]
+    [JsonStringEnumMemberName("be")]
     Be = 14,
 
     /// <summary>Bulgarian (bg).</summary>
-    [EnumMember(Value = "bg")]
+    [JsonStringEnumMemberName("bg")]
     Bg = 15,
 
     /// <summary>Bislama (bi).</summary>
-    [EnumMember(Value = "bi")]
+    [JsonStringEnumMemberName("bi")]
     Bi = 16,
 
     /// <summary>Bambara (bm).</summary>
-    [EnumMember(Value = "bm")]
+    [JsonStringEnumMemberName("bm")]
     Bm = 17,
 
     /// <summary>Bengali (bn).</summary>
-    [EnumMember(Value = "bn")]
+    [JsonStringEnumMemberName("bn")]
     Bn = 18,
 
     /// <summary>Tibetan (bo).</summary>
-    [EnumMember(Value = "bo")]
+    [JsonStringEnumMemberName("bo")]
     Bo = 19,
 
     /// <summary>Breton (br).</summary>
-    [EnumMember(Value = "br")]
+    [JsonStringEnumMemberName("br")]
     Br = 20,
 
     /// <summary>Bosnian (bs).</summary>
-    [EnumMember(Value = "bs")]
+    [JsonStringEnumMemberName("bs")]
     Bs = 21,
 
     /// <summary>Catalan; Valencian (ca).</summary>
-    [EnumMember(Value = "ca")]
+    [JsonStringEnumMemberName("ca")]
     Ca = 22,
 
     /// <summary>Chechen (ce).</summary>
-    [EnumMember(Value = "ce")]
+    [JsonStringEnumMemberName("ce")]
     Ce = 23,
 
     /// <summary>Chamorro (ch).</summary>
-    [EnumMember(Value = "ch")]
+    [JsonStringEnumMemberName("ch")]
     Ch = 24,
 
     /// <summary>Corsican (co).</summary>
-    [EnumMember(Value = "co")]
+    [JsonStringEnumMemberName("co")]
     Co = 25,
 
     /// <summary>Cree (cr).</summary>
-    [EnumMember(Value = "cr")]
+    [JsonStringEnumMemberName("cr")]
     Cr = 26,
 
     /// <summary>Czech (cs).</summary>
-    [EnumMember(Value = "cs")]
+    [JsonStringEnumMemberName("cs")]
     Cs = 27,
 
     /// <summary>Church Slavic; Old Slavonic; Church Slavonic; Old Bulgarian; Old Church Slavonic (cu).</summary>
-    [EnumMember(Value = "cu")]
+    [JsonStringEnumMemberName("cu")]
     Cu = 28,
 
     /// <summary>Chuvash (cv).</summary>
-    [EnumMember(Value = "cv")]
+    [JsonStringEnumMemberName("cv")]
     Cv = 29,
 
     /// <summary>Welsh (cy).</summary>
-    [EnumMember(Value = "cy")]
+    [JsonStringEnumMemberName("cy")]
     Cy = 30,
 
     /// <summary>Danish (da).</summary>
-    [EnumMember(Value = "da")]
+    [JsonStringEnumMemberName("da")]
     Da = 31,
 
     /// <summary>German (de).</summary>
-    [EnumMember(Value = "de")]
+    [JsonStringEnumMemberName("de")]
     De = 32,
 
     /// <summary>Divehi; Dhivehi; Maldivian (dv).</summary>
-    [EnumMember(Value = "dv")]
+    [JsonStringEnumMemberName("dv")]
     Dv = 33,
 
     /// <summary>Dzongkha (dz).</summary>
-    [EnumMember(Value = "dz")]
+    [JsonStringEnumMemberName("dz")]
     Dz = 34,
 
     /// <summary>Ewe (ee).</summary>
-    [EnumMember(Value = "ee")]
+    [JsonStringEnumMemberName("ee")]
     Ee = 35,
 
     /// <summary>Modern Greek (1453-) (el).</summary>
-    [EnumMember(Value = "el")]
+    [JsonStringEnumMemberName("el")]
     El = 36,
 
     /// <summary>English (en).</summary>
-    [EnumMember(Value = "en")]
+    [JsonStringEnumMemberName("en")]
     En = 37,
 
     /// <summary>Esperanto (eo).</summary>
-    [EnumMember(Value = "eo")]
+    [JsonStringEnumMemberName("eo")]
     Eo = 38,
 
     /// <summary>Spanish; Castilian (es).</summary>
-    [EnumMember(Value = "es")]
+    [JsonStringEnumMemberName("es")]
     Es = 39,
 
     /// <summary>Estonian (et).</summary>
-    [EnumMember(Value = "et")]
+    [JsonStringEnumMemberName("et")]
     Et = 40,
 
     /// <summary>Basque (eu).</summary>
-    [EnumMember(Value = "eu")]
+    [JsonStringEnumMemberName("eu")]
     Eu = 41,
 
     /// <summary>Persian (fa).</summary>
-    [EnumMember(Value = "fa")]
+    [JsonStringEnumMemberName("fa")]
     Fa = 42,
 
     /// <summary>Fulah (ff).</summary>
-    [EnumMember(Value = "ff")]
+    [JsonStringEnumMemberName("ff")]
     Ff = 43,
 
     /// <summary>Finnish (fi).</summary>
-    [EnumMember(Value = "fi")]
+    [JsonStringEnumMemberName("fi")]
     Fi = 44,
 
     /// <summary>Fijian (fj).</summary>
-    [EnumMember(Value = "fj")]
+    [JsonStringEnumMemberName("fj")]
     Fj = 45,
 
     /// <summary>Faroese (fo).</summary>
-    [EnumMember(Value = "fo")]
+    [JsonStringEnumMemberName("fo")]
     Fo = 46,
 
     /// <summary>French (fr).</summary>
-    [EnumMember(Value = "fr")]
+    [JsonStringEnumMemberName("fr")]
     Fr = 47,
 
     /// <summary>Western Frisian (fy).</summary>
-    [EnumMember(Value = "fy")]
+    [JsonStringEnumMemberName("fy")]
     Fy = 48,
 
     /// <summary>Irish (ga).</summary>
-    [EnumMember(Value = "ga")]
+    [JsonStringEnumMemberName("ga")]
     Ga = 49,
 
     /// <summary>Gaelic; Scottish Gaelic (gd).</summary>
-    [EnumMember(Value = "gd")]
+    [JsonStringEnumMemberName("gd")]
     Gd = 50,
 
     /// <summary>Galician (gl).</summary>
-    [EnumMember(Value = "gl")]
+    [JsonStringEnumMemberName("gl")]
     Gl = 51,
 
     /// <summary>Guarani (gn).</summary>
-    [EnumMember(Value = "gn")]
+    [JsonStringEnumMemberName("gn")]
     Gn = 52,
 
     /// <summary>Gujarati (gu).</summary>
-    [EnumMember(Value = "gu")]
+    [JsonStringEnumMemberName("gu")]
     Gu = 53,
 
     /// <summary>Manx (gv).</summary>
-    [EnumMember(Value = "gv")]
+    [JsonStringEnumMemberName("gv")]
     Gv = 54,
 
     /// <summary>Hausa (ha).</summary>
-    [EnumMember(Value = "ha")]
+    [JsonStringEnumMemberName("ha")]
     Ha = 55,
 
     /// <summary>Hebrew (he).</summary>
-    [EnumMember(Value = "he")]
+    [JsonStringEnumMemberName("he")]
     He = 56,
 
     /// <summary>Hindi (hi).</summary>
-    [EnumMember(Value = "hi")]
+    [JsonStringEnumMemberName("hi")]
     Hi = 57,
 
     /// <summary>Hiri Motu (ho).</summary>
-    [EnumMember(Value = "ho")]
+    [JsonStringEnumMemberName("ho")]
     Ho = 58,
 
     /// <summary>Croatian (hr).</summary>
-    [EnumMember(Value = "hr")]
+    [JsonStringEnumMemberName("hr")]
     Hr = 59,
 
     /// <summary>Haitian; Haitian Creole (ht).</summary>
-    [EnumMember(Value = "ht")]
+    [JsonStringEnumMemberName("ht")]
     Ht = 60,
 
     /// <summary>Hungarian (hu).</summary>
-    [EnumMember(Value = "hu")]
+    [JsonStringEnumMemberName("hu")]
     Hu = 61,
 
     /// <summary>Armenian (hy).</summary>
-    [EnumMember(Value = "hy")]
+    [JsonStringEnumMemberName("hy")]
     Hy = 62,
 
     /// <summary>Herero (hz).</summary>
-    [EnumMember(Value = "hz")]
+    [JsonStringEnumMemberName("hz")]
     Hz = 63,
 
     /// <summary>Interlingua (International Auxiliary Language Association) (ia).</summary>
-    [EnumMember(Value = "ia")]
+    [JsonStringEnumMemberName("ia")]
     Ia = 64,
 
     /// <summary>Indonesian (id).</summary>
-    [EnumMember(Value = "id")]
+    [JsonStringEnumMemberName("id")]
     Id = 65,
 
     /// <summary>Interlingue; Occidental (ie).</summary>
-    [EnumMember(Value = "ie")]
+    [JsonStringEnumMemberName("ie")]
     Ie = 66,
 
     /// <summary>Igbo (ig).</summary>
-    [EnumMember(Value = "ig")]
+    [JsonStringEnumMemberName("ig")]
     Ig = 67,
 
     /// <summary>Sichuan Yi; Nuosu (ii).</summary>
-    [EnumMember(Value = "ii")]
+    [JsonStringEnumMemberName("ii")]
     Ii = 68,
 
     /// <summary>Inupiaq (ik).</summary>
-    [EnumMember(Value = "ik")]
+    [JsonStringEnumMemberName("ik")]
     Ik = 69,
 
     /// <summary>Ido (io).</summary>
-    [EnumMember(Value = "io")]
+    [JsonStringEnumMemberName("io")]
     Io = 70,
 
     /// <summary>Icelandic (is).</summary>
-    [EnumMember(Value = "is")]
+    [JsonStringEnumMemberName("is")]
     Is = 71,
 
     /// <summary>Italian (it).</summary>
-    [EnumMember(Value = "it")]
+    [JsonStringEnumMemberName("it")]
     It = 72,
 
     /// <summary>Inuktitut (iu).</summary>
-    [EnumMember(Value = "iu")]
+    [JsonStringEnumMemberName("iu")]
     Iu = 73,
 
     /// <summary>Japanese (ja).</summary>
-    [EnumMember(Value = "ja")]
+    [JsonStringEnumMemberName("ja")]
     Ja = 74,
 
     /// <summary>Javanese (jv).</summary>
-    [EnumMember(Value = "jv")]
+    [JsonStringEnumMemberName("jv")]
     Jv = 75,
 
     /// <summary>Georgian (ka).</summary>
-    [EnumMember(Value = "ka")]
+    [JsonStringEnumMemberName("ka")]
     Ka = 76,
 
     /// <summary>Kongo (kg).</summary>
-    [EnumMember(Value = "kg")]
+    [JsonStringEnumMemberName("kg")]
     Kg = 77,
 
     /// <summary>Kikuyu; Gikuyu (ki).</summary>
-    [EnumMember(Value = "ki")]
+    [JsonStringEnumMemberName("ki")]
     Ki = 78,
 
     /// <summary>Kuanyama; Kwanyama (kj).</summary>
-    [EnumMember(Value = "kj")]
+    [JsonStringEnumMemberName("kj")]
     Kj = 79,
 
     /// <summary>Kazakh (kk).</summary>
-    [EnumMember(Value = "kk")]
+    [JsonStringEnumMemberName("kk")]
     Kk = 80,
 
     /// <summary>Kalaallisut; Greenlandic (kl).</summary>
-    [EnumMember(Value = "kl")]
+    [JsonStringEnumMemberName("kl")]
     Kl = 81,
 
     /// <summary>Central Khmer (km).</summary>
-    [EnumMember(Value = "km")]
+    [JsonStringEnumMemberName("km")]
     Km = 82,
 
     /// <summary>Kannada (kn).</summary>
-    [EnumMember(Value = "kn")]
+    [JsonStringEnumMemberName("kn")]
     Kn = 83,
 
     /// <summary>Korean (ko).</summary>
-    [EnumMember(Value = "ko")]
+    [JsonStringEnumMemberName("ko")]
     Ko = 84,
 
     /// <summary>Kanuri (kr).</summary>
-    [EnumMember(Value = "kr")]
+    [JsonStringEnumMemberName("kr")]
     Kr = 85,
 
     /// <summary>Kashmiri (ks).</summary>
-    [EnumMember(Value = "ks")]
+    [JsonStringEnumMemberName("ks")]
     Ks = 86,
 
     /// <summary>Kurdish (ku).</summary>
-    [EnumMember(Value = "ku")]
+    [JsonStringEnumMemberName("ku")]
     Ku = 87,
 
     /// <summary>Komi (kv).</summary>
-    [EnumMember(Value = "kv")]
+    [JsonStringEnumMemberName("kv")]
     Kv = 88,
 
     /// <summary>Cornish (kw).</summary>
-    [EnumMember(Value = "kw")]
+    [JsonStringEnumMemberName("kw")]
     Kw = 89,
 
     /// <summary>Kirghiz; Kyrgyz (ky).</summary>
-    [EnumMember(Value = "ky")]
+    [JsonStringEnumMemberName("ky")]
     Ky = 90,
 
     /// <summary>Latin (la).</summary>
-    [EnumMember(Value = "la")]
+    [JsonStringEnumMemberName("la")]
     La = 91,
 
     /// <summary>Luxembourgish; Letzeburgesch (lb).</summary>
-    [EnumMember(Value = "lb")]
+    [JsonStringEnumMemberName("lb")]
     Lb = 92,
 
     /// <summary>Ganda (lg).</summary>
-    [EnumMember(Value = "lg")]
+    [JsonStringEnumMemberName("lg")]
     Lg = 93,
 
     /// <summary>Limburgan; Limburger; Limburgish (li).</summary>
-    [EnumMember(Value = "li")]
+    [JsonStringEnumMemberName("li")]
     Li = 94,
 
     /// <summary>Lingala (ln).</summary>
-    [EnumMember(Value = "ln")]
+    [JsonStringEnumMemberName("ln")]
     Ln = 95,
 
     /// <summary>Lao (lo).</summary>
-    [EnumMember(Value = "lo")]
+    [JsonStringEnumMemberName("lo")]
     Lo = 96,
 
     /// <summary>Lithuanian (lt).</summary>
-    [EnumMember(Value = "lt")]
+    [JsonStringEnumMemberName("lt")]
     Lt = 97,
 
     /// <summary>Luba-Katanga (lu).</summary>
-    [EnumMember(Value = "lu")]
+    [JsonStringEnumMemberName("lu")]
     Lu = 98,
 
     /// <summary>Latvian (lv).</summary>
-    [EnumMember(Value = "lv")]
+    [JsonStringEnumMemberName("lv")]
     Lv = 99,
 
     /// <summary>Malagasy (mg).</summary>
-    [EnumMember(Value = "mg")]
+    [JsonStringEnumMemberName("mg")]
     Mg = 100,
 
     /// <summary>Marshallese (mh).</summary>
-    [EnumMember(Value = "mh")]
+    [JsonStringEnumMemberName("mh")]
     Mh = 101,
 
     /// <summary>Maori (mi).</summary>
-    [EnumMember(Value = "mi")]
+    [JsonStringEnumMemberName("mi")]
     Mi = 102,
 
     /// <summary>Macedonian (mk).</summary>
-    [EnumMember(Value = "mk")]
+    [JsonStringEnumMemberName("mk")]
     Mk = 103,
 
     /// <summary>Malayalam (ml).</summary>
-    [EnumMember(Value = "ml")]
+    [JsonStringEnumMemberName("ml")]
     Ml = 104,
 
     /// <summary>Mongolian (mn).</summary>
-    [EnumMember(Value = "mn")]
+    [JsonStringEnumMemberName("mn")]
     Mn = 105,
 
     /// <summary>Marathi (mr).</summary>
-    [EnumMember(Value = "mr")]
+    [JsonStringEnumMemberName("mr")]
     Mr = 106,
 
     /// <summary>Malay (ms).</summary>
-    [EnumMember(Value = "ms")]
+    [JsonStringEnumMemberName("ms")]
     Ms = 107,
 
     /// <summary>Maltese (mt).</summary>
-    [EnumMember(Value = "mt")]
+    [JsonStringEnumMemberName("mt")]
     Mt = 108,
 
     /// <summary>Burmese (my).</summary>
-    [EnumMember(Value = "my")]
+    [JsonStringEnumMemberName("my")]
     My = 109,
 
     /// <summary>Nauru (na).</summary>
-    [EnumMember(Value = "na")]
+    [JsonStringEnumMemberName("na")]
     Na = 110,
 
     /// <summary>Norwegian Bokmål (nb).</summary>
-    [EnumMember(Value = "nb")]
+    [JsonStringEnumMemberName("nb")]
     Nb = 111,
 
     /// <summary>North Ndebele (nd).</summary>
-    [EnumMember(Value = "nd")]
+    [JsonStringEnumMemberName("nd")]
     Nd = 112,
 
     /// <summary>Nepali (ne).</summary>
-    [EnumMember(Value = "ne")]
+    [JsonStringEnumMemberName("ne")]
     Ne = 113,
 
     /// <summary>Ndonga (ng).</summary>
-    [EnumMember(Value = "ng")]
+    [JsonStringEnumMemberName("ng")]
     Ng = 114,
 
     /// <summary>Dutch; Flemish (nl).</summary>
-    [EnumMember(Value = "nl")]
+    [JsonStringEnumMemberName("nl")]
     Nl = 115,
 
     /// <summary>Norwegian Nynorsk (nn).</summary>
-    [EnumMember(Value = "nn")]
+    [JsonStringEnumMemberName("nn")]
     Nn = 116,
 
     /// <summary>Norwegian (no).</summary>
-    [EnumMember(Value = "no")]
+    [JsonStringEnumMemberName("no")]
     No = 117,
 
     /// <summary>South Ndebele (nr).</summary>
-    [EnumMember(Value = "nr")]
+    [JsonStringEnumMemberName("nr")]
     Nr = 118,
 
     /// <summary>Navajo; Navaho (nv).</summary>
-    [EnumMember(Value = "nv")]
+    [JsonStringEnumMemberName("nv")]
     Nv = 119,
 
     /// <summary>Chichewa; Chewa; Nyanja (ny).</summary>
-    [EnumMember(Value = "ny")]
+    [JsonStringEnumMemberName("ny")]
     Ny = 120,
 
     /// <summary>Occitan (post 1500) (oc).</summary>
-    [EnumMember(Value = "oc")]
+    [JsonStringEnumMemberName("oc")]
     Oc = 121,
 
     /// <summary>Ojibwa (oj).</summary>
-    [EnumMember(Value = "oj")]
+    [JsonStringEnumMemberName("oj")]
     Oj = 122,
 
     /// <summary>Oromo (om).</summary>
-    [EnumMember(Value = "om")]
+    [JsonStringEnumMemberName("om")]
     Om = 123,
 
     /// <summary>Oriya (or).</summary>
-    [EnumMember(Value = "or")]
+    [JsonStringEnumMemberName("or")]
     Or = 124,
 
     /// <summary>Ossetian; Ossetic (os).</summary>
-    [EnumMember(Value = "os")]
+    [JsonStringEnumMemberName("os")]
     Os = 125,
 
     /// <summary>Panjabi; Punjabi (pa).</summary>
-    [EnumMember(Value = "pa")]
+    [JsonStringEnumMemberName("pa")]
     Pa = 126,
 
     /// <summary>Pali (pi).</summary>
-    [EnumMember(Value = "pi")]
+    [JsonStringEnumMemberName("pi")]
     Pi = 127,
 
     /// <summary>Polish (pl).</summary>
-    [EnumMember(Value = "pl")]
+    [JsonStringEnumMemberName("pl")]
     Pl = 128,
 
     /// <summary>Pushto; Pashto (ps).</summary>
-    [EnumMember(Value = "ps")]
+    [JsonStringEnumMemberName("ps")]
     Ps = 129,
 
     /// <summary>Portuguese (pt).</summary>
-    [EnumMember(Value = "pt")]
+    [JsonStringEnumMemberName("pt")]
     Pt = 130,
 
     /// <summary>Quechua (qu).</summary>
-    [EnumMember(Value = "qu")]
+    [JsonStringEnumMemberName("qu")]
     Qu = 131,
 
     /// <summary>Romansh (rm).</summary>
-    [EnumMember(Value = "rm")]
+    [JsonStringEnumMemberName("rm")]
     Rm = 132,
 
     /// <summary>Rundi (rn).</summary>
-    [EnumMember(Value = "rn")]
+    [JsonStringEnumMemberName("rn")]
     Rn = 133,
 
     /// <summary>Romanian; Moldavian; Moldovan (ro).</summary>
-    [EnumMember(Value = "ro")]
+    [JsonStringEnumMemberName("ro")]
     Ro = 134,
 
     /// <summary>Russian (ru).</summary>
-    [EnumMember(Value = "ru")]
+    [JsonStringEnumMemberName("ru")]
     Ru = 135,
 
     /// <summary>Kinyarwanda (rw).</summary>
-    [EnumMember(Value = "rw")]
+    [JsonStringEnumMemberName("rw")]
     Rw = 136,
 
     /// <summary>Sanskrit (sa).</summary>
-    [EnumMember(Value = "sa")]
+    [JsonStringEnumMemberName("sa")]
     Sa = 137,
 
     /// <summary>Sardinian (sc).</summary>
-    [EnumMember(Value = "sc")]
+    [JsonStringEnumMemberName("sc")]
     Sc = 138,
 
     /// <summary>Sindhi (sd).</summary>
-    [EnumMember(Value = "sd")]
+    [JsonStringEnumMemberName("sd")]
     Sd = 139,
 
     /// <summary>Northern Sami (se).</summary>
-    [EnumMember(Value = "se")]
+    [JsonStringEnumMemberName("se")]
     Se = 140,
 
     /// <summary>Sango (sg).</summary>
-    [EnumMember(Value = "sg")]
+    [JsonStringEnumMemberName("sg")]
     Sg = 141,
 
     /// <summary>Sinhala; Sinhalese (si).</summary>
-    [EnumMember(Value = "si")]
+    [JsonStringEnumMemberName("si")]
     Si = 142,
 
     /// <summary>Slovak (sk).</summary>
-    [EnumMember(Value = "sk")]
+    [JsonStringEnumMemberName("sk")]
     Sk = 143,
 
     /// <summary>Slovenian (sl).</summary>
-    [EnumMember(Value = "sl")]
+    [JsonStringEnumMemberName("sl")]
     Sl = 144,
 
     /// <summary>Samoan (sm).</summary>
-    [EnumMember(Value = "sm")]
+    [JsonStringEnumMemberName("sm")]
     Sm = 145,
 
     /// <summary>Shona (sn).</summary>
-    [EnumMember(Value = "sn")]
+    [JsonStringEnumMemberName("sn")]
     Sn = 146,
 
     /// <summary>Somali (so).</summary>
-    [EnumMember(Value = "so")]
+    [JsonStringEnumMemberName("so")]
     So = 147,
 
     /// <summary>Albanian (sq).</summary>
-    [EnumMember(Value = "sq")]
+    [JsonStringEnumMemberName("sq")]
     Sq = 148,
 
     /// <summary>Serbian (sr).</summary>
-    [EnumMember(Value = "sr")]
+    [JsonStringEnumMemberName("sr")]
     Sr = 149,
 
     /// <summary>Swati (ss).</summary>
-    [EnumMember(Value = "ss")]
+    [JsonStringEnumMemberName("ss")]
     Ss = 150,
 
     /// <summary>Sotho, Southern (st).</summary>
-    [EnumMember(Value = "st")]
+    [JsonStringEnumMemberName("st")]
     St = 151,
 
     /// <summary>Sundanese (su).</summary>
-    [EnumMember(Value = "su")]
+    [JsonStringEnumMemberName("su")]
     Su = 152,
 
     /// <summary>Swedish (sv).</summary>
-    [EnumMember(Value = "sv")]
+    [JsonStringEnumMemberName("sv")]
     Sv = 153,
 
     /// <summary>Swahili (sw).</summary>
-    [EnumMember(Value = "sw")]
+    [JsonStringEnumMemberName("sw")]
     Sw = 154,
 
     /// <summary>Tamil (ta).</summary>
-    [EnumMember(Value = "ta")]
+    [JsonStringEnumMemberName("ta")]
     Ta = 155,
 
     /// <summary>Telugu (te).</summary>
-    [EnumMember(Value = "te")]
+    [JsonStringEnumMemberName("te")]
     Te = 156,
 
     /// <summary>Tajik (tg).</summary>
-    [EnumMember(Value = "tg")]
+    [JsonStringEnumMemberName("tg")]
     Tg = 157,
 
     /// <summary>Thai (th).</summary>
-    [EnumMember(Value = "th")]
+    [JsonStringEnumMemberName("th")]
     Th = 158,
 
     /// <summary>Tigrinya (ti).</summary>
-    [EnumMember(Value = "ti")]
+    [JsonStringEnumMemberName("ti")]
     Ti = 159,
 
     /// <summary>Turkmen (tk).</summary>
-    [EnumMember(Value = "tk")]
+    [JsonStringEnumMemberName("tk")]
     Tk = 160,
 
     /// <summary>Tagalog (tl).</summary>
-    [EnumMember(Value = "tl")]
+    [JsonStringEnumMemberName("tl")]
     Tl = 161,
 
     /// <summary>Tswana (tn).</summary>
-    [EnumMember(Value = "tn")]
+    [JsonStringEnumMemberName("tn")]
     Tn = 162,
 
     /// <summary>Tonga (Tonga Islands) (to).</summary>
-    [EnumMember(Value = "to")]
+    [JsonStringEnumMemberName("to")]
     To = 163,
 
     /// <summary>Turkish (tr).</summary>
-    [EnumMember(Value = "tr")]
+    [JsonStringEnumMemberName("tr")]
     Tr = 164,
 
     /// <summary>Tsonga (ts).</summary>
-    [EnumMember(Value = "ts")]
+    [JsonStringEnumMemberName("ts")]
     Ts = 165,
 
     /// <summary>Tatar (tt).</summary>
-    [EnumMember(Value = "tt")]
+    [JsonStringEnumMemberName("tt")]
     Tt = 166,
 
     /// <summary>Twi (tw).</summary>
-    [EnumMember(Value = "tw")]
+    [JsonStringEnumMemberName("tw")]
     Tw = 167,
 
     /// <summary>Tahitian (ty).</summary>
-    [EnumMember(Value = "ty")]
+    [JsonStringEnumMemberName("ty")]
     Ty = 168,
 
     /// <summary>Uighur; Uyghur (ug).</summary>
-    [EnumMember(Value = "ug")]
+    [JsonStringEnumMemberName("ug")]
     Ug = 169,
 
     /// <summary>Ukrainian (uk).</summary>
-    [EnumMember(Value = "uk")]
+    [JsonStringEnumMemberName("uk")]
     Uk = 170,
 
     /// <summary>Urdu (ur).</summary>
-    [EnumMember(Value = "ur")]
+    [JsonStringEnumMemberName("ur")]
     Ur = 171,
 
     /// <summary>Uzbek (uz).</summary>
-    [EnumMember(Value = "uz")]
+    [JsonStringEnumMemberName("uz")]
     Uz = 172,
 
     /// <summary>Venda (ve).</summary>
-    [EnumMember(Value = "ve")]
+    [JsonStringEnumMemberName("ve")]
     Ve = 173,
 
     /// <summary>Vietnamese (vi).</summary>
-    [EnumMember(Value = "vi")]
+    [JsonStringEnumMemberName("vi")]
     Vi = 174,
 
     /// <summary>Volapük (vo).</summary>
-    [EnumMember(Value = "vo")]
+    [JsonStringEnumMemberName("vo")]
     Vo = 175,
 
     /// <summary>Walloon (wa).</summary>
-    [EnumMember(Value = "wa")]
+    [JsonStringEnumMemberName("wa")]
     Wa = 176,
 
     /// <summary>Wolof (wo).</summary>
-    [EnumMember(Value = "wo")]
+    [JsonStringEnumMemberName("wo")]
     Wo = 177,
 
     /// <summary>Xhosa (xh).</summary>
-    [EnumMember(Value = "xh")]
+    [JsonStringEnumMemberName("xh")]
     Xh = 178,
 
     /// <summary>Yiddish (yi).</summary>
-    [EnumMember(Value = "yi")]
+    [JsonStringEnumMemberName("yi")]
     Yi = 179,
 
     /// <summary>Yoruba (yo).</summary>
-    [EnumMember(Value = "yo")]
+    [JsonStringEnumMemberName("yo")]
     Yo = 180,
 
     /// <summary>Zhuang; Chuang (za).</summary>
-    [EnumMember(Value = "za")]
+    [JsonStringEnumMemberName("za")]
     Za = 181,
 
     /// <summary>Chinese (zh).</summary>
-    [EnumMember(Value = "zh")]
+    [JsonStringEnumMemberName("zh")]
     Zh = 182,
 
     /// <summary>Zulu (zu).</summary>
-    [EnumMember(Value = "zu")]
+    [JsonStringEnumMemberName("zu")]
     Zu = 183,
 
 }

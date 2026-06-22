@@ -24,42 +24,6 @@ namespace D2.Shared.Auth.Outbound.Telemetry;
 public static class OutboundTelemetryTags
 {
     /// <summary>
-    /// Tag constants for the <c>d2.auth.outbound.service_identity.fetches</c> instrument.
-    /// Total service-identity token resolutions.
-    /// </summary>
-    public static class ServiceIdentityFetches
-    {
-        /// <summary>
-        /// The wire-format tag key (<c>outcome</c>).
-        /// </summary>
-        public const string TAG_OUTCOME = "outcome";
-
-        /// <summary>
-        /// Closed-enum tag values for the <c>outcome</c> tag.
-        /// </summary>
-        public static class Outcome
-        {
-            /// <summary>The <c>cache_hit</c> value.</summary>
-            public const string CACHE_HIT = "cache_hit";
-
-            /// <summary>The <c>cache_hit_after_singleflight</c> value.</summary>
-            public const string CACHE_HIT_AFTER_SINGLEFLIGHT = "cache_hit_after_singleflight";
-
-            /// <summary>The <c>fetch_success</c> value.</summary>
-            public const string FETCH_SUCCESS = "fetch_success";
-
-            /// <summary>The <c>fetch_failure</c> value.</summary>
-            public const string FETCH_FAILURE = "fetch_failure";
-
-            /// <summary>The <c>http_failure</c> value.</summary>
-            public const string HTTP_FAILURE = "http_failure";
-
-            /// <summary>The <c>discovery_failure</c> value.</summary>
-            public const string DISCOVERY_FAILURE = "discovery_failure";
-        }
-    }
-
-    /// <summary>
     /// Tag constants for the <c>d2.auth.outbound.token_exchange.requests</c> instrument.
     /// Total token-exchange requests.
     /// </summary>

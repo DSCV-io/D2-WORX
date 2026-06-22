@@ -15,6 +15,10 @@ namespace D2.Edge.KeyCustodian.Domain.Enums;
 /// <c>PublicKeyMaterial</c> — the latter feeds the JWKS endpoint.
 /// <c>AesPayload</c> and <c>Secret</c> keys are symmetric: they carry only
 /// encrypted key material and have no public component.
+/// <c>X509CaCertificate</c> keys are asymmetric ECDSA P-256 certificate-authority
+/// keys: they carry an encrypted private key in <c>KeyMaterialEncrypted</c> and
+/// the CA certificate (not a bare public key) in <c>CaCertificateMaterial</c> —
+/// the latter is presented on the wire during the TLS handshake.
 /// </remarks>
 public enum KeyType
 {
@@ -32,4 +36,13 @@ public enum KeyType
     /// — no public component.
     /// </summary>
     Secret,
+
+    /// <summary>
+    /// Internal X.509 certificate-authority key (root or intermediate) — asymmetric
+    /// ECDSA P-256: the private key is encrypted in <c>KeyMaterialEncrypted</c> and the
+    /// CA certificate is carried as <c>CaCertificateMaterial</c> (a full X.509
+    /// certificate, not a bare SPKI public key). There is no leaf key type — workload
+    /// leaf certificates are issued on demand and never persisted as managed keys.
+    /// </summary>
+    X509CaCertificate,
 }

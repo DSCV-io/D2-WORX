@@ -41,11 +41,6 @@ Copyright (c) DCSV. All rights reserved.
     <PackageVersion Include="Microsoft.Extensions.Diagnostics.HealthChecks.Abstractions" Version="10.0.7" />
     <PackageVersion Include="Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore" Version="10.0.7" />
     <PackageVersion Include="Microsoft.Extensions.Http" Version="10.0.7" />
-    <!-- Microsoft.Extensions.Http.Resilience — AddStandardResilienceHandler()
-         (retry + circuit-break + timeout) for ConfigureHttpClientDefaults wiring
-         in D2.Shared.ServiceDefaults. Same release train (9.x) as the BCL pin
-         for resilience-stack alignment. -->
-    <PackageVersion Include="Microsoft.Extensions.Http.Resilience" Version="9.10.0" />
     <PackageVersion Include="Microsoft.Extensions.Caching.Memory" Version="10.0.7" />
     <PackageVersion Include="Microsoft.Extensions.Caching.Abstractions" Version="10.0.7" />
     <PackageVersion Include="Microsoft.Extensions.Options" Version="10.0.7" />
@@ -68,7 +63,8 @@ Copyright (c) DCSV. All rights reserved.
     <PackageVersion Include="Microsoft.IdentityModel.Protocols.OpenIdConnect" Version="8.16.0" />
 
     <!-- Grpc.Net.ClientFactory — gRPC client typed-builder + ConfigureChannel for the
-         D2.Shared.Auth.Outbound .AddD2ServiceIdentity() per-channel opt-in extension. -->
+         D2.Shared.Auth.Outbound .AddD2ForwardedJwt() / .AddD2WorkloadCertificate()
+         per-channel opt-in extensions. -->
     <PackageVersion Include="Grpc.Net.ClientFactory" Version="2.71.0" />
     <!-- Grpc.AspNetCore.Server — server-side gRPC binding for D2.Shared.Auth.Grpc
          (the JwtAuthInterceptor + per-method scope metadata on ServerCallContext).

@@ -222,15 +222,17 @@ internal static class ConstantsEmitter
         }
 
         sb.AppendLine("}");
-        return sb.ToString();
+        return sb.ToString().LfNormalized();
     }
 
     /// <summary>
     /// Appends a newline-delimited config block one line at a time via
-    /// <see cref="StringBuilder.AppendLine()"/> so every emitted line uses the
-    /// SAME line terminator as the rest of the generated source (no mixed
-    /// CRLF/LF). The block's trailing newline is consumed by the per-line
-    /// split, so callers do NOT add a separate blank-line append.
+    /// <see cref="StringBuilder.AppendLine()"/>. Every emitted line is later
+    /// collapsed to a bare LF at the source funnel (<see cref="EmitSource"/>'s
+    /// <c>LfNormalized()</c> return), so the generated source is LF-only
+    /// regardless of the build host's <c>Environment.NewLine</c>. The block's
+    /// trailing newline is consumed by the per-line split, so callers do NOT
+    /// add a separate blank-line append.
     /// </summary>
     private static void EmitBlock(StringBuilder sb, string block)
     {

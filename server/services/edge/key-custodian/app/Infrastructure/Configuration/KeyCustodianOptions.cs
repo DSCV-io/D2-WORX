@@ -41,6 +41,15 @@ public sealed class KeyCustodianOptions : IValidatableObject
     /// <summary>Default opaque-secret length in bytes when none is configured.</summary>
     public const int DEFAULT_SECRET_LENGTH_BYTES = 64;
 
+    /// <summary>Default mTLS root CA validity when none is configured (~10 years).</summary>
+    public const string DEFAULT_ROOT_CA_VALIDITY = "3650.00:00:00";
+
+    /// <summary>Default mTLS issuing-intermediate CA validity when none is configured (~1 year).</summary>
+    public const string DEFAULT_INTERMEDIATE_CA_VALIDITY = "365.00:00:00";
+
+    /// <summary>Default mTLS workload-leaf validity when none is configured (24 hours).</summary>
+    public const string DEFAULT_LEAF_VALIDITY = "1.00:00:00";
+
     /// <summary>
     /// Gets or sets the default rotation policy applied to any domain without an override.
     /// </summary>
@@ -72,6 +81,35 @@ public sealed class KeyCustodianOptions : IValidatableObject
     [Range(16, int.MaxValue, ErrorMessage = "SecretLengthBytes must be at least 16.")]
     public int SecretLengthBytes { get; set; } = DEFAULT_SECRET_LENGTH_BYTES;
 
+    /// <summary>
+    /// Gets or sets how long a generated mTLS root certificate authority is valid
+    /// for. Defaults to <see cref="DEFAULT_ROOT_CA_VALIDITY"/> (~10 years). Bound as
+    /// a <see cref="TimeSpan"/> for clean <c>IConfiguration</c> binding; converted
+    /// to a NodaTime <c>Duration</c> when passed to the certificate-generation rule.
+    /// Must be ≥ 1 second.
+    /// </summary>
+    [Range(typeof(TimeSpan), "00:00:01", "10675199.02:48:05.4775807")]
+    public TimeSpan RootCaValidity { get; set; } = TimeSpan.Parse(
+        DEFAULT_ROOT_CA_VALIDITY, CultureInfo.InvariantCulture);
+
+    /// <summary>
+    /// Gets or sets how long a generated mTLS issuing-intermediate certificate
+    /// authority is valid for. Defaults to
+    /// <see cref="DEFAULT_INTERMEDIATE_CA_VALIDITY"/> (~1 year). Must be ≥ 1 second.
+    /// </summary>
+    [Range(typeof(TimeSpan), "00:00:01", "10675199.02:48:05.4775807")]
+    public TimeSpan IntermediateCaValidity { get; set; } = TimeSpan.Parse(
+        DEFAULT_INTERMEDIATE_CA_VALIDITY, CultureInfo.InvariantCulture);
+
+    /// <summary>
+    /// Gets or sets how long an issued mTLS workload leaf certificate is valid for.
+    /// Defaults to <see cref="DEFAULT_LEAF_VALIDITY"/> (24 hours). Short-lived
+    /// because revocation is expiry-first. Must be ≥ 1 second.
+    /// </summary>
+    [Range(typeof(TimeSpan), "00:00:01", "10675199.02:48:05.4775807")]
+    public TimeSpan LeafValidity { get; set; } = TimeSpan.Parse(
+        DEFAULT_LEAF_VALIDITY, CultureInfo.InvariantCulture);
+
     /// <inheritdoc/>
     /// <remarks>
     /// Validates the nested <see cref="Default"/> policy and every per-domain
@@ -91,6 +129,27 @@ public sealed class KeyCustodianOptions : IValidatableObject
         {
             foreach (var result in ValidatePolicy($"Policies[\"{kvp.Key}\"]", kvp.Value))
                 yield return result;
+        }
+
+        // mTLS CA validity nesting: a leaf must outlive-by-less than the
+        // intermediate, which must outlive-by-less than the root — otherwise a
+        // child certificate could be told to live past the issuer that signed it,
+        // which the chain would reject. Each member is independently range-checked
+        // above; this is the cross-field ordering invariant.
+        if (LeafValidity >= IntermediateCaValidity)
+        {
+            yield return new ValidationResult(
+                $"LeafValidity ({LeafValidity}) must be shorter than IntermediateCaValidity"
+                + $" ({IntermediateCaValidity}).",
+                [nameof(LeafValidity)]);
+        }
+
+        if (IntermediateCaValidity >= RootCaValidity)
+        {
+            yield return new ValidationResult(
+                $"IntermediateCaValidity ({IntermediateCaValidity}) must be shorter than"
+                + $" RootCaValidity ({RootCaValidity}).",
+                [nameof(IntermediateCaValidity)]);
         }
     }
 

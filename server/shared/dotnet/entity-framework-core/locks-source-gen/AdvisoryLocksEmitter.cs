@@ -186,7 +186,7 @@ internal static class AdvisoryLocksEmitter
         }
 
         sb.AppendLine("}");
-        return sb.ToString();
+        return sb.ToString().LfNormalized();
     }
 
     private static string EscapeXmlDoc(string value) => value

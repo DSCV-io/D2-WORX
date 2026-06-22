@@ -18,7 +18,7 @@ using Xunit;
 /// Client-kind span) and the negative case (an outbound call to the
 /// configured OTLP traces endpoint does NOT).
 /// </summary>
-[Collection("OtelStaticState")]
+[Collection("LogLoggerStaticState")]
 public sealed class HttpClientInstrumentationTests
 {
     private const string _OTLP_TRACES = "https://otlp.example.test:4318/v1/traces";

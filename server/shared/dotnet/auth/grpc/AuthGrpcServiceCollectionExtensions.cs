@@ -6,7 +6,9 @@
 
 namespace D2.Shared.Auth.Grpc;
 
+using D2.Shared.Auth.Abstractions;
 using D2.Shared.Auth.Abstractions.Http;
+using D2.Shared.Auth.Grpc.Ambient;
 using D2.Shared.Auth.Grpc.Interceptors;
 using D2.Shared.Auth.Validation;
 using D2.Shared.Context.Abstractions;
@@ -156,6 +158,26 @@ public static class AuthGrpcServiceCollectionExtensions
                             + "interceptor (for gRPC) has run before resolving "
                             + "IRequestContext.");
             });
+
+            // Request-scoped forwarded-JWT holder — identical registration to
+            // AddD2AuthHttp() (deliberate parity; a parity test pins both register
+            // the same impl type). JwtAuthInterceptor populates it after
+            // successful validation, alongside its IRequestContext dual-write; the
+            // outbound forwarding credential reads it. TryAdd keeps it idempotent.
+            services.TryAddScoped<IForwardedJwtAccessor, MutableForwardedJwtAccessor>();
+
+            // Ambient-scope adapter (the read-back door, symmetric to the holder
+            // write side above): the outbound forwarding credential resolves the
+            // current gRPC call's scope through the framework-free
+            // IAmbientRequestScopeAccessor port, and this gRPC transport supplies the
+            // IHttpContextAccessor-backed adapter (the per-call HttpContext is set by
+            // Grpc.AspNetCore.Server on the same AsyncLocal seam the HTTP pipeline
+            // uses). Singleton — stateless (per-request state flows through the
+            // AsyncLocal-backed accessor). Registered here so a gRPC-inbound
+            // forwarding host gets it automatically, mirroring AddD2AuthHttp(). On a
+            // dual-transport host (HTTP + gRPC on one Kestrel) TryAdd is first-wins,
+            // harmless: this adapter and the HTTP sibling read the same door.
+            services.TryAddSingleton<IAmbientRequestScopeAccessor, GrpcHttpContextAmbientRequestScopeAccessor>();
 
             return services;
         }

@@ -1,7 +1,7 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "D2 keycustodian error codes spec",
-  "description": "Domain-specialized copy of contracts/error-codes/error-codes.canonical.schema.json, narrowed to the keycustodian catalog: the KEYCUSTODIAN_* code-prefix regex, the [400, 404, 409, 500] httpStatus subset, and the {validation_failure, not_found, conflict, internal_error} category subset. Conforms to the canonical 7-field set (including factoryShape) but tightens the value constraints so editors catch a non-KEYCUSTODIAN_ code, an out-of-subset status, or an out-of-subset category at edit time. The 400/validation_failure codes carry user-facing input-validation rejections; the 404/not_found + 409/conflict codes carry lifecycle-state failures (key not found, illegal transition, duplicate pending); the 500/internal_error codes carry programmer/precondition violations and failed smoke tests surfaced as flagged results instead of thrown exceptions. This is the source-of-truth catalog that D2.Edge.KeyCustodian.ErrorCodes.SourceGen reads to emit KeyCustodianErrorCodes.g.cs + KeyCustodianFailures.g.cs into D2.Edge.KeyCustodian.Domain. A drift-guard test asserts this copy stays field-aligned with the canonical schema.",
+  "description": "Domain-specialized copy of contracts/error-codes/error-codes.canonical.schema.json, narrowed to the keycustodian catalog: the KEYCUSTODIAN_* code-prefix regex, the [400, 404, 409, 500, 503] httpStatus subset, and the {validation_failure, not_found, conflict, internal_error, infrastructure_unavailable} category subset. Conforms to the canonical 7-field set (including factoryShape) but tightens the value constraints so editors catch a non-KEYCUSTODIAN_ code, an out-of-subset status, or an out-of-subset category at edit time. The 400/validation_failure codes carry user-facing input-validation rejections; the 404/not_found + 409/conflict codes carry lifecycle-state failures (key not found, illegal transition, duplicate pending); the 500/internal_error codes carry programmer/precondition violations and failed smoke tests surfaced as flagged results instead of thrown exceptions; the 503/infrastructure_unavailable codes carry retryable not-ready-yet conditions (no active issuing certificate authority to sign from). This is the source-of-truth catalog that D2.Edge.KeyCustodian.ErrorCodes.SourceGen reads to emit KeyCustodianErrorCodes.g.cs + KeyCustodianFailures.g.cs into D2.Edge.KeyCustodian.Domain. A drift-guard test asserts this copy stays field-aligned with the canonical schema.",
   "type": "object",
   "required": ["errorCodes"],
   "additionalProperties": false,
@@ -34,8 +34,8 @@
         },
         "httpStatus": {
           "type": "integer",
-          "enum": [400, 404, 409, 500],
-          "description": "HTTP status mapping. Drives both transport-side response shape AND gRPC StatusCode mapping at the transport binding (400 -> InvalidArgument, 404 -> NotFound, 409 -> AlreadyExists/Aborted, 500 -> Internal). In the unified generator it selects the base D2Result delegation factory (400 -> ValidationFailed, 404 -> NotFound, 409 -> Conflict, 500 -> UnhandledException). 400 carries user-facing input-validation rejections; 404 carries key-not-found lookups; 409 carries illegal-transition / duplicate-pending conflicts; 500 carries programmer/precondition violations and failed smoke tests surfaced as flagged internal-error results instead of thrown exceptions. Expanding the matrix requires updating the codegen mapping (D2KEC005 fires on unknown values)."
+          "enum": [400, 404, 409, 500, 503],
+          "description": "HTTP status mapping. Drives both transport-side response shape AND gRPC StatusCode mapping at the transport binding (400 -> InvalidArgument, 404 -> NotFound, 409 -> AlreadyExists/Aborted, 500 -> Internal, 503 -> Unavailable). In the unified generator it selects the base D2Result delegation factory (400 -> ValidationFailed, 404 -> NotFound, 409 -> Conflict, 500 -> UnhandledException, 503 -> ServiceUnavailable). 400 carries user-facing input-validation rejections; 404 carries key-not-found lookups; 409 carries illegal-transition / duplicate-pending conflicts; 500 carries programmer/precondition violations and failed smoke tests surfaced as flagged internal-error results instead of thrown exceptions; 503 carries retryable not-ready-yet conditions (no active issuing certificate authority). Expanding the matrix requires updating the codegen mapping (D2KEC005 fires on unknown values)."
         },
         "category": {
           "type": "string",
@@ -43,9 +43,10 @@
             "validation_failure",
             "not_found",
             "conflict",
-            "internal_error"
+            "internal_error",
+            "infrastructure_unavailable"
           ],
-          "description": "Closed semantic/telemetry classification. NOT the factory selector — httpStatus drives factory selection. Added to the wire (gRPC trailers + JSON envelope) so consumers can do generic class-based handling without importing the producer's catalog. validation_failure pairs with the 400 input-validation codes; not_found pairs with the 404 key-lookup codes; conflict pairs with the 409 illegal-transition / duplicate-pending codes; internal_error pairs with the 500 precondition-violation + smoke-test-failed codes (the 'it's our bug' alert class)."
+          "description": "Closed semantic/telemetry classification. NOT the factory selector — httpStatus drives factory selection. Added to the wire (gRPC trailers + JSON envelope) so consumers can do generic class-based handling without importing the producer's catalog. validation_failure pairs with the 400 input-validation codes; not_found pairs with the 404 key-lookup codes; conflict pairs with the 409 illegal-transition / duplicate-pending codes; internal_error pairs with the 500 precondition-violation + smoke-test-failed codes (the 'it's our bug' alert class); infrastructure_unavailable pairs with the 503 not-ready-yet codes (a retryable dependency-unavailable signal, e.g. no active issuing certificate authority)."
         },
         "userMessageKey": {
           "type": "string",
@@ -59,10 +60,7 @@
         },
         "factoryShape": {
           "type": "string",
-          "enum": [
-            "standard",
-            "none"
-          ],
+          "enum": ["standard", "none"],
           "description": "Closed enum that drives the generated factory's signature variant. standard: the one universal error-factory shape (messages?, inputErrors?, errorCode?, category?, traceId?) — ALL optional; the errorCode / category overrides are how a delegating domain factory stamps a specific code + category on its base status. none: no factory generated for this code. Every keycustodian entry is standard (the delegating emitter implements standard + none; a 400 standard entry delegates to D2Result.ValidationFailed, a 500 standard entry delegates to D2Result.UnhandledException)."
         },
         "doc": {

@@ -9,14 +9,16 @@ namespace D2.Edge.KeyCustodian.App.Application;
 using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.ActivateKey;
 using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.CompromiseKey;
 using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.GenerateKey;
+using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.IssueWorkloadCertificate;
 using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.RetireKey;
 using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.RotateKey;
 using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.RunDueRotations;
+using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.SeedCertificateAuthority;
 using D2.Edge.KeyCustodian.App.Application.Handlers.Queries.GetJwks;
 using D2.Edge.KeyCustodian.App.Application.Handlers.Queries.GetRotationPlan;
 
 /// <summary>
-/// DI registration for the KeyCustodian App layer: the 8 lifecycle handlers and
+/// DI registration for the KeyCustodian App layer: the 10 lifecycle handlers and
 /// the options-backed rotation-policy provider.
 /// </summary>
 /// <remarks>
@@ -50,6 +52,10 @@ public static class KeyCustodianAppServiceCollectionExtensions
             services.AddTransient<IRetireKeyHandler, RetireKeyHandler>();
             services.AddTransient<ICompromiseKeyHandler, CompromiseKeyHandler>();
             services.AddTransient<IRunDueRotationsHandler, RunDueRotationsHandler>();
+            services.AddTransient<
+                IIssueWorkloadCertificateHandler, IssueWorkloadCertificateHandler>();
+            services.AddTransient<
+                ISeedCertificateAuthorityHandler, SeedCertificateAuthorityHandler>();
 
             // Query handlers.
             services.AddTransient<IGetJwksHandler, GetJwksHandler>();
@@ -57,6 +63,10 @@ public static class KeyCustodianAppServiceCollectionExtensions
 
             // Policy provider.
             services.AddSingleton<IRotationPolicyProvider, OptionsRotationPolicyProvider>();
+
+            // Generated façade layer — registers IKeyCustodianApi → KeyCustodianApi (Transient).
+            // The generated extension is overwritten on rebuild; this call site is the stable hand-written anchor.
+            services.AddD2KeyCustodianClients();
 
             return services;
         }

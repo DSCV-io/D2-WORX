@@ -20,7 +20,7 @@ using Xunit;
 /// Negative-regression tests force the implementation to walk the
 /// suppression contract on every CI run.
 /// </summary>
-[Collection("OtelStaticState")]
+[Collection("LogLoggerStaticState")]
 public sealed class AspNetCoreInstrumentationTests
 {
     [Fact]

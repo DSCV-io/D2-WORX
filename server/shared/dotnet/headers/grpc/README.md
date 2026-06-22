@@ -32,7 +32,7 @@ gRPC framework constants like `grpc-encoding`, `grpc-status`, `grpc-message`, `g
 
 ## When to reach for this catalog
 
-Use `D2.Shared.Headers.Grpc` from any gRPC-context consumer — gRPC interceptors, gRPC client wrappers in `auth/grpc` and `auth/outbound`. The catalog values are identical to the corresponding entries in `D2.Shared.Headers.Common` / `D2.Shared.Headers.Http` (codegen-guaranteed and verified by `HeaderCatalogConsistencyTests`).
+Use `D2.Shared.Headers.Grpc` from any gRPC-context consumer — gRPC interceptors and the gRPC client wrappers in `auth/grpc` and `auth/outbound`. On a cross-process hop the gRPC client forwards the once-minted internal transaction-token unchanged in the `Authorization` header over mTLS, which establishes workload identity ([ADR-0023](../../../../../docs/adrs/0023-mtls-workload-identity.md)); the prior `client_credentials` service-identity layer is superseded by that mTLS workload identity. The catalog values are identical to the corresponding entries in `D2.Shared.Headers.Common` / `D2.Shared.Headers.Http` (codegen-guaranteed and verified by `HeaderCatalogConsistencyTests`).
 
 ---
 

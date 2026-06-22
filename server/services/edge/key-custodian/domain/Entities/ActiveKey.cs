@@ -64,6 +64,7 @@ public sealed record ActiveKey : EncryptionKey
             return KeyCustodianFailures<(RetiringKey, PendingKey)>.PreconditionViolated();
 
         var now = clock.GetCurrentInstant();
+
         var retiring = new RetiringKey
         {
             Kid = Kid,
@@ -71,6 +72,7 @@ public sealed record ActiveKey : EncryptionKey
             KeyType = KeyType,
             KeyMaterialEncrypted = KeyMaterialEncrypted,
             PublicKeyMaterial = PublicKeyMaterial,
+            CaCertificateMaterial = CaCertificateMaterial,
             CreatedAt = CreatedAt,
             ActivatedAt = ActivatedAt,
             RetiringAt = now,

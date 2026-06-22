@@ -92,9 +92,11 @@ function normalizeIana(
     // After Intl resolution, double-check: anything that resolves to a
     // pure offset shape ("+05:00") was a fixed-offset zone that survived
     // our up-front filter (e.g. obscure runtime quirks). Reject for parity.
+    /* v8 ignore start — defensive: modern Node Intl never resolves a filter-passing input to a bare +HH:MM offset (the up-front regexes catch every offset form first); kept as belt-and-suspenders for runtime quirks */
     if (/^[+-]\d{2}:\d{2}$/.test(resolved)) {
       return { error: "invalid" };
     }
+    /* v8 ignore stop */
     // Apply cross-language canonicalization overrides for the cases where
     // Node Intl differs from .NET NodaTime. See sr_ianaAliasOverrides.
     const overridden = sr_ianaAliasOverrides[resolved] ?? resolved;

@@ -246,7 +246,7 @@ internal static class BaseFactoriesEmitter
         }
 
         sb.AppendLine("}");
-        return sb.ToString();
+        return sb.ToString().LfNormalized();
     }
 
     private static void EmitFactory(
@@ -351,7 +351,7 @@ internal static class BaseFactoriesEmitter
         }
 
         sb.AppendLine("}");
-        return sb.ToString();
+        return sb.ToString().LfNormalized();
     }
 
     private static void EmitBoolean(StringBuilder sb, ErrorCodeEntry entry, CatalogConfig config)
@@ -369,8 +369,11 @@ internal static class BaseFactoriesEmitter
 
     /// <summary>
     /// Appends a newline-delimited config block one line at a time via
-    /// <see cref="StringBuilder.AppendLine()"/> so every emitted line uses the
-    /// same line terminator as the rest of the generated source.
+    /// <see cref="StringBuilder.AppendLine()"/>. Every emitted line is later
+    /// collapsed to a bare LF at the source funnels
+    /// (<see cref="EmitFactoriesSource"/> / <see cref="EmitBooleansSource"/>
+    /// each return <c>LfNormalized()</c>), so the generated source is LF-only
+    /// regardless of the build host's <c>Environment.NewLine</c>.
     /// </summary>
     private static void EmitBlock(StringBuilder sb, string block)
     {

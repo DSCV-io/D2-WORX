@@ -5,7 +5,7 @@ Copyright (c) DCSV. All rights reserved.
 # ADR-0010: Observability — OTel aggregation + dual span-tag and log-scope enrichment
 
 - **Status**: Accepted
-- **Date**: 2026-05-30
+- **Date**: 2026-05-30 (service-identity-removal re-verify note: 2026-06-18)
 - **Deliverable**: D2 shared libraries (backfilled)
 
 ## Context
@@ -39,7 +39,7 @@ The codebase spans multiple shared libraries (`Handler`, `Auth`, `Auth.Outbound`
 **Negative / risks.**
 
 - Dual-write constructs two overlapping data structures (Activity tags + log-scope dictionary) per invocation — a modest allocation that auto-instrumentation-only approaches avoid.
-- `AggregatedTelemetrySources` is a manual registry: adding a new library's telemetry needs a PR there, and forgetting produces no compile error — only missing dashboards (partially mitigated by the spec-pin presence tests, which must be updated in the same PR).
+- `AggregatedTelemetrySources` is a manual registry: adding a new library's telemetry needs a PR there, and forgetting produces no compile error — only missing dashboards (partially mitigated by the spec-pin presence tests, which must be updated in the same PR). When the service-identity components of `D2.Shared.Auth.Outbound` are removed (superseded by mTLS workload identity per [ADR-0023](0023-mtls-workload-identity.md), a later deliverable), the enumerated `ActivitySource` / `Meter` counts and the owning-library list here are re-verified against the trimmed lib; the token-exchange half of `Auth.Outbound` and its lib-level telemetry are retained, so the lib stays in the list and the current counts hold until that removal lands.
 - `writeToProviders: true` means each Serilog line is processed twice (Serilog pipeline + MEL→OTel bridge); operators must size the OTLP log collector accordingly.
 - `InternalIpFilter` uses byte-prefix matching with no `IPNetwork` abstraction; IPv6 private ranges other than `::1` are not admitted — deliberate for now, but a revisit point on IPv6-primary pod networks.
 

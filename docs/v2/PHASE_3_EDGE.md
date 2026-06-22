@@ -73,7 +73,7 @@ Edge is the HTTP entry-point for scheduler-triggered work; the scheduler itself
 
 ```
 Cron trigger
-  → HTTP POST to Edge (service-identity JWT auth)
+  → HTTP POST to Edge (mTLS workload-identity auth — ADR-0023)
   → Edge forwards via gRPC to the owning service
   → Service handler acquires Redis lock
   → Batch delete / cleanup loop
@@ -103,8 +103,25 @@ shared Redis lock surface.
 
 > Cross-reference: the scheduler side (Dkron + cron config + retry policy) lives in
 > [PHASE_8_REFERENCE.md](PHASE_8_REFERENCE.md). The split is deliberate — Edge owns
-> the HTTP entry-point + service-identity auth + gRPC forwarding; the scheduler owns
-> what fires when.
+> the HTTP entry-point + mTLS workload-identity auth ([ADR-0023](../adrs/0023-mtls-workload-identity.md)) +
+> gRPC forwarding; the scheduler owns what fires when.
+
+> **Deferred mTLS machinery to build here.** The mTLS workload-identity layer shipped
+> dev-first as a standalone deliverable: KeyCustodian is the internal CA (generate /
+> seed / issue / rotate / compromise) and the shared transport plumbing exists
+> (server require+validate in `D2.Shared.AspNetCore`, client leaf-present + refresh-ahead
+> in `D2.Shared.Auth.Outbound`, the `D2.Shared.WorkloadIdentity` SPIFFE grammar), proven
+> end-to-end on a local harness. **Four cross-process pieces remain for the Edge build:**
+> (1) expose `IssueWorkloadCertificate` over the gRPC contract — today `IKeyCustodianApi`
+> exposes only `GetJwks`, and issuance is an in-process command; (2) the workload
+> **first-leaf bootstrap identity** — chicken-and-egg (a workload needs a leaf to mTLS-call
+> KeyCustodian for a leaf), provisioned by the deployment orchestrator; (3) wire the mTLS
+> server + the leaf-refresh client into the running Edge host (the shipped client uses an
+> in-process issuer delegate as the dev/harness seam); (4) **channel rebuild-on-rotation
+> for long-lived gRPC channels** — `AddD2WorkloadCertificate` captures the leaf at channel
+> construction; callers holding long-lived channels must rebuild on rotation to adopt a
+> freshly-rotated leaf (currently the consumer's responsibility, undocumented in host wiring).
+> See [ADR-0023](../adrs/0023-mtls-workload-identity.md) "Negative / new work".
 
 ---
 

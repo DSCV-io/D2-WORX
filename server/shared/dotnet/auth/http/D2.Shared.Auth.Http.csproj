@@ -60,7 +60,10 @@ Copyright (c) DCSV. All rights reserved.
     <ProjectReference Include="..\core\D2.Shared.Auth.csproj" />
     <!--
       auth-abstractions — ISessionLivenessTracker contract + JwtClaimTypes (d2_session_id) +
-      D2HttpContextItems.REQUEST_CONTEXT slot key (shared with sibling auth-grpc).
+      D2HttpContextItems.REQUEST_CONTEXT slot key (shared with sibling auth-grpc) +
+      IAmbientRequestScopeAccessor port (the framework-free ambient-scope abstraction
+      the outbound forwarding credential depends on; the adapter lives here in
+      HttpContextAmbientRequestScopeAccessor, registered by AddD2AuthHttp()).
     -->
     <ProjectReference Include="..\abstractions\D2.Shared.Auth.Abstractions.csproj" />
     <!--

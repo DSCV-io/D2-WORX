@@ -59,6 +59,14 @@ Copyright (c) DCSV. All rights reserved.
       but listed explicitly because Domain uses Utilities guards directly.
     -->
     <ProjectReference Include="..\..\..\..\shared\dotnet\encryption\core\D2.Shared.Encryption.csproj" />
+    <!--
+      D2.Shared.WorkloadIdentity — the single SPIFFE workload-identity grammar
+      (spiffe://d2.internal/workload/<service>). KeyCustodian's WorkloadIdentity
+      VO delegates parse/validate to this shared grammar and re-maps the generic
+      failure to KEYCUSTODIAN_INVALID_WORKLOAD_IDENTITY on the issuance path —
+      one grammar, two consumers (the other is the shared mTLS peer validator).
+    -->
+    <ProjectReference Include="..\..\..\..\shared\dotnet\workload-identity\D2.Shared.WorkloadIdentity.csproj" />
   </ItemGroup>
 
   <ItemGroup>

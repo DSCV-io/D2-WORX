@@ -163,7 +163,9 @@ describe("toProblemDetails — category extension (omit-when-absent)", () => {
     // validationFailed() stamps category: "validation_failure"
     const failure = validationFailed();
     const body = toProblemDetails(failure, { instance: "/x" });
-    expect(body[ProblemDetailsExtensionKeys.CATEGORY]).toBe("validation_failure");
+    expect(body[ProblemDetailsExtensionKeys.CATEGORY]).toBe(
+      "validation_failure",
+    );
   });
 
   it("emits d2_category for notFound (category: not_found)", () => {
@@ -197,4 +199,3 @@ describe("toProblemDetails — input errors surfacing", () => {
     expect(ProblemDetailsExtensionKeys.INPUT_ERRORS in body).toBe(false);
   });
 });
-

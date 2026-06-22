@@ -129,7 +129,7 @@ internal static class OtelMessagingTagsEmitter
         EmitAllTags(sb, entries);
 
         sb.AppendLine("}");
-        return sb.ToString();
+        return sb.ToString().LfNormalized();
     }
 
     private static void EmitAllTags(StringBuilder sb, List<OtelMessagingTagEntry> entries)

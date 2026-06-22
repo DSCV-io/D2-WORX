@@ -104,7 +104,7 @@ internal static class InterfaceEmitter
 
         return new EmitResult(
             HintName: $"{spec.Name}.g.cs",
-            GeneratedSource: sb.ToString(),
+            GeneratedSource: sb.ToString().LfNormalized(),
             Diagnostics: diagnostics.ToImmutable());
     }
 

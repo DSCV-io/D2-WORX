@@ -133,7 +133,7 @@ internal static class DlqCausesEmitter
         EmitAllCauses(sb, entries);
 
         sb.AppendLine("}");
-        return sb.ToString();
+        return sb.ToString().LfNormalized();
     }
 
     private static void EmitAllCauses(StringBuilder sb, List<DlqCauseEntry> entries)

@@ -228,7 +228,7 @@ internal static class SubdivisionDataEmitter
 
         return new EmitResult(
             HintName: "SubdivisionLookup.g.cs",
-            GeneratedSource: sb.ToString(),
+            GeneratedSource: sb.ToString().LfNormalized(),
             Diagnostics: ImmutableArray<EmitDiagnostic>.Empty);
     }
 
@@ -350,7 +350,7 @@ internal static class SubdivisionDataEmitter
 
         return new EmitResult(
             HintName: "SubdivisionsNested.g.cs",
-            GeneratedSource: sb.ToString(),
+            GeneratedSource: sb.ToString().LfNormalized(),
             Diagnostics: ImmutableArray<EmitDiagnostic>.Empty);
     }
 

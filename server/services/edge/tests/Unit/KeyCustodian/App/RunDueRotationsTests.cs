@@ -419,6 +419,95 @@ public sealed class RunDueRotationsTests
     }
 
     // -------------------------------------------------------------------------
+    // CA-certificate domains — picked up by the generic orchestration
+    // -------------------------------------------------------------------------
+
+    [Fact]
+    public async Task Run_CaIntermediateCadenceElapsedAndSoakedSuccessor_RotatesCaDomain()
+    {
+        await using var db = KeyCustodianTestDbContext.CreateEmpty();
+        var created = KcAppTestKit.SR_BaseInstant;
+        var (activeKid, _) = await KcAppTestKit.SeedCaAsync(db, r_crypto, created);
+        var (pendingKid, _) = await KcAppTestKit.SeedCaAsync(db, r_crypto, created, KeyStatus.Pending);
+
+        // Past cadence (4h); pending soak (1h) also elapsed.
+        var clock = new TestClock(created + Duration.FromHours(5));
+
+        var result = await Build(db, clock).HandleAsync(EmptyBootstrap());
+
+        result.Success.Should().BeTrue();
+        result.Data!.Rotated.Should().Contain(KeyDomain.MTLS_CA_INTERMEDIATE);
+        result.Data!.Errors.Should().Be(0);
+        db.Keys.Single(k => k.Kid == activeKid).Status.Should().Be(KeyStatus.Retiring);
+        db.Keys.Single(k => k.Kid == pendingKid).Status.Should().Be(KeyStatus.Active);
+    }
+
+    [Fact]
+    public async Task Run_CaIntermediateCadenceElapsedNoSuccessor_GeneratesCaSuccessor()
+    {
+        await using var db = KeyCustodianTestDbContext.CreateEmpty();
+        var created = KcAppTestKit.SR_BaseInstant;
+
+        // An active root is needed to sign the generated intermediate successor.
+        await KcAppTestKit.SeedCaRootAsync(db, r_crypto, created);
+        await KcAppTestKit.SeedCaAsync(db, r_crypto, created);
+
+        var clock = new TestClock(created + Duration.FromHours(5));
+
+        var result = await Build(db, clock).HandleAsync(EmptyBootstrap());
+
+        result.Success.Should().BeTrue();
+        result.Data!.SuccessorsGenerated.Should().Contain(KeyDomain.MTLS_CA_INTERMEDIATE);
+        result.Data!.Errors.Should().Be(0);
+        db.Keys.Count(k =>
+            k.KeyDomain == KeyDomain.MTLS_CA_INTERMEDIATE && k.Status == KeyStatus.Pending)
+            .Should().Be(1, because: "a CA successor was generated");
+    }
+
+    [Fact]
+    public async Task Run_CaIntermediateRetiringGraceElapsed_RetiresCaDomain()
+    {
+        await using var db = KeyCustodianTestDbContext.CreateEmpty();
+        var created = KcAppTestKit.SR_BaseInstant;
+        var (retiringKid, _) = await KcAppTestKit.SeedCaAsync(
+            db, r_crypto, created, KeyStatus.Retiring);
+
+        // Grace is 2h past the retiring instant (SeedCaAsync sets retiringAt = created).
+        var clock = new TestClock(created + Duration.FromHours(3));
+
+        var result = await Build(db, clock).HandleAsync(EmptyBootstrap());
+
+        result.Success.Should().BeTrue();
+        result.Data!.Retired.Should().Contain(KeyDomain.MTLS_CA_INTERMEDIATE);
+        db.Keys.Single(k => k.Kid == retiringKid).Status.Should().Be(KeyStatus.Retired);
+    }
+
+    [Fact]
+    public async Task Run_EmptyStore_CaDomainsExcludedFromBootstrap_ListedInSkipped()
+    {
+        // CA domains are seeded by CaSeedingService, never auto-bootstrapped. With
+        // the real bootstrap map (which excludes the CA domains), the CA domains are
+        // still skipped because they are absent from it.
+        await using var db = KeyCustodianTestDbContext.CreateEmpty();
+        var clock = new TestClock(KcAppTestKit.SR_BaseInstant);
+
+        // The real bootstrap map (excludes CA domains).
+        var input = new RunDueRotationsInput(
+            D2.Edge.KeyCustodian.Infra.Scheduling.Hosted.KeyRotationService.BuildBootstrapKeyTypes());
+
+        var result = await Build(db, clock).HandleAsync(input);
+
+        result.Success.Should().BeTrue();
+        result.Data!.Bootstrapped.Should().NotContain(KeyDomain.MTLS_CA_ROOT);
+        result.Data!.Bootstrapped.Should().NotContain(KeyDomain.MTLS_CA_INTERMEDIATE);
+        result.Data!.Skipped.Should().Contain(KeyDomain.MTLS_CA_ROOT);
+        result.Data!.Skipped.Should().Contain(KeyDomain.MTLS_CA_INTERMEDIATE);
+        db.Keys.Should().NotContain(
+            k => k.KeyDomain == KeyDomain.MTLS_CA_ROOT,
+            because: "the CA root is seeded by CaSeedingService, never auto-bootstrapped");
+    }
+
+    // -------------------------------------------------------------------------
     // Helpers
     // -------------------------------------------------------------------------
 
@@ -431,6 +520,7 @@ public sealed class RunDueRotationsTests
     private static RunDueRotationsInput InputWithAllKeyTypes()
     {
         var keyTypes = new Dictionary<string, KeyType>(StringComparer.OrdinalIgnoreCase);
+
         foreach (var domain in KeyDomain.All)
         {
             var keyType = domain.Value switch

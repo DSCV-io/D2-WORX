@@ -93,22 +93,31 @@ public static class KeyCustodianServiceCollectionExtensions
             // --- Vault: file-backed root key provider + keyed root crypto --------
             services.AddSingleton<IRootKeyProvider, FileRootKeyProvider>();
 
+            // File-backed CA provider — loads + chain-validates the dev CA chain
+            // from the same directory; consumed by the startup seeder.
+            services.AddSingleton<ICaProvider, FileCaProvider>();
+
             services.AddD2EncryptionFor(
                 KeyCustodianRootKey.ROOT_SERVICE_KEY,
                 sp => sp.GetRequiredService<IRootKeyProvider>().GetRootKeyring());
+
             services.AddD2EncryptionStartupCheck();
 
             // --- Messaging: RabbitMQ rotation announcer --------------------------
             services.AddSingleton<IKeyRotationAnnouncer, RabbitMqKeyRotationAnnouncer>();
 
-            // --- Hosted services: migrator BEFORE rotation (order matters) -------
-            // Rotation must never run before migration applies; same-host StartAsync
-            // ordering is registration order. Pinned by a composition-order test.
+            // --- Hosted services: migrator → seeder → rotation (order matters) ---
+            // Same-host StartAsync ordering is registration order, pinned by a
+            // composition-order test. Migration must apply before anything reads the
+            // schema; the CA must be seeded before the first rotation tick classifies
+            // the CA domains; rotation runs last.
             services.AddHostedService(sp => new AdvisoryLockMigrator<KeyCustodianDbContext>(
                 sp.GetRequiredService<IServiceScopeFactory>(),
                 connectionString,
                 AdvisoryLocks.KeycustodianDb.MIGRATOR,
                 sp.GetRequiredService<ILogger<AdvisoryLockMigrator<KeyCustodianDbContext>>>()));
+
+            services.AddHostedService<CaSeedingService>();
 
             services.AddHostedService<KeyRotationService>();
 

@@ -134,7 +134,7 @@ internal static class DlqFieldsEmitter
         EmitAllFields(sb, entries);
 
         sb.AppendLine("}");
-        return sb.ToString();
+        return sb.ToString().LfNormalized();
     }
 
     private static void EmitAllFields(StringBuilder sb, List<DlqFieldEntry> entries)

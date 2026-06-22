@@ -230,7 +230,7 @@ public sealed class InstantBoundaryTests
     // -----------------------------------------------------------------------
 
     private static PendingKey MakePending(Instant createdAt) =>
-        PendingKey.Create(sr_kid, sr_domain, KeyType.AesPayload, sr_mat, null, createdAt).Data!;
+        PendingKey.Create(sr_kid, sr_domain, KeyType.AesPayload, sr_mat, null, null, createdAt).Data!;
 
     private static ActiveKey MakeActive(Instant createdAt, Instant activatedAt)
     {

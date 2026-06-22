@@ -131,7 +131,7 @@ internal static class ErrorCategoryEmitter
         sb.AppendLine();
         EmitJsonConverter(sb);
 
-        return sb.ToString();
+        return sb.ToString().LfNormalized();
     }
 
     private static void EmitEnum(StringBuilder sb, List<ErrorCategoryEntry> entries)

@@ -17,24 +17,6 @@ using Xunit;
 public sealed class OutboundTelemetryTagsGeneratedTests
 {
     [Fact]
-    public void ServiceIdentityFetches_TagAndOutcomeConstants_HavePinnedValues()
-    {
-        OutboundTelemetryTags.ServiceIdentityFetches.TAG_OUTCOME.Should().Be("outcome");
-        OutboundTelemetryTags.ServiceIdentityFetches.Outcome.CACHE_HIT
-            .Should().Be("cache_hit");
-        OutboundTelemetryTags.ServiceIdentityFetches.Outcome.CACHE_HIT_AFTER_SINGLEFLIGHT
-            .Should().Be("cache_hit_after_singleflight");
-        OutboundTelemetryTags.ServiceIdentityFetches.Outcome.FETCH_SUCCESS
-            .Should().Be("fetch_success");
-        OutboundTelemetryTags.ServiceIdentityFetches.Outcome.FETCH_FAILURE
-            .Should().Be("fetch_failure");
-        OutboundTelemetryTags.ServiceIdentityFetches.Outcome.HTTP_FAILURE
-            .Should().Be("http_failure");
-        OutboundTelemetryTags.ServiceIdentityFetches.Outcome.DISCOVERY_FAILURE
-            .Should().Be("discovery_failure");
-    }
-
-    [Fact]
     public void TokenExchangeRequests_TagAndOutcomeConstants_HavePinnedValues()
     {
         OutboundTelemetryTags.TokenExchangeRequests.TAG_OUTCOME.Should().Be("outcome");

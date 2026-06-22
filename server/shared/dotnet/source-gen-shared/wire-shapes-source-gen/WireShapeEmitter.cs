@@ -133,7 +133,7 @@ internal static class WireShapeEmitter
         }
 
         sb.AppendLine("}");
-        return sb.ToString();
+        return sb.ToString().LfNormalized();
     }
 
     private static string EscapeStringLiteral(string value) => value

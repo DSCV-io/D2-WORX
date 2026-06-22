@@ -213,7 +213,7 @@ internal static class TelemetryTagsEmitter
         }
 
         sb.AppendLine("}");
-        return sb.ToString();
+        return sb.ToString().LfNormalized();
     }
 
     private static void EmitInstrumentClass(

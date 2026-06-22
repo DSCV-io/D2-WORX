@@ -30,17 +30,20 @@ public sealed class KeyDomainTests
     [InlineData(KeyDomain.JWKS_SIGNING)]
     [InlineData(KeyDomain.COOKIE)]
     [InlineData(KeyDomain.CLIENT_SECRET)]
+    [InlineData(KeyDomain.MTLS_CA_ROOT)]
+    [InlineData(KeyDomain.MTLS_CA_INTERMEDIATE)]
     public void All_ContainsExpectedDomains(string domain)
     {
         KeyDomain.All.Should().Contain(d => d.Value == domain);
     }
 
     [Fact]
-    public void All_ContainsExactly6Entries()
+    public void All_ContainsExactly8Entries()
     {
         // audit, notifications, courier (3 non-plaintext from EncryptionDomains)
-        // + jwks-signing, cookie, client-secret (3 KC-only) = 6
-        KeyDomain.All.Count.Should().Be(6);
+        // + jwks-signing, cookie, client-secret, mtls-ca-root, mtls-ca-intermediate
+        // (5 KC-only) = 8
+        KeyDomain.All.Count.Should().Be(8);
     }
 
     // -----------------------------------------------------------------------
@@ -54,6 +57,8 @@ public sealed class KeyDomainTests
     [InlineData("jwks-signing")]
     [InlineData("cookie")]
     [InlineData("client-secret")]
+    [InlineData("mtls-ca-root")]
+    [InlineData("mtls-ca-intermediate")]
     public void Create_KnownDomain_ReturnsOk(string domain)
     {
         var result = KeyDomain.Create(domain);
@@ -193,5 +198,17 @@ public sealed class KeyDomainTests
     public void ClientSecret_HasCorrectValue()
     {
         KeyDomain.ClientSecret.Value.Should().Be(KeyDomain.CLIENT_SECRET);
+    }
+
+    [Fact]
+    public void MtlsCaRoot_HasCorrectValue()
+    {
+        KeyDomain.MtlsCaRoot.Value.Should().Be(KeyDomain.MTLS_CA_ROOT);
+    }
+
+    [Fact]
+    public void MtlsCaIntermediate_HasCorrectValue()
+    {
+        KeyDomain.MtlsCaIntermediate.Value.Should().Be(KeyDomain.MTLS_CA_INTERMEDIATE);
     }
 }

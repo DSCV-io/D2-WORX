@@ -8,7 +8,7 @@ Copyright (c) DCSV. All rights reserved.
 
 Roslyn incremental source generator that emits the `Audiences` static partial class into `D2.Shared.Auth.Abstractions` by reading `contracts/auth-audiences/audiences.spec.json` via `<AdditionalFiles>`. Single-target — emits ONLY when the consuming assembly is `D2.Shared.Auth.Abstractions`.
 
-The spec file is the single source of truth for the platform's JWT-audience catalog. Every value an inbound JWT's `aud` claim can carry, and every `targetAudience` argument passed to `TokenExchangeClient.ExchangeAsync`, lives in one JSON file — no hand-written parallel constants, no per-feature drift.
+The spec file is the single source of truth for the platform's JWT-audience catalog. Every value an inbound JWT's `aud` claim can carry — including the broad internal audience every internal service accepts under the forward-unchanged model ([ADR-0022](../../../../../docs/adrs/0022-service-auth-mint-once-forward.md)) — and every `targetAudience` argument for the retained boundary-mint / exception token exchanges (`TokenExchangeClient.ExchangeAsync`) lives in one JSON file — no hand-written parallel constants, no per-feature drift.
 
 **Convention**: spec-driven Roslyn IIncrementalGenerator pattern. See [`docs/SRC_GEN.md`](../../../../../docs/SRC_GEN.md) for the framework-wide convention (file layout, diagnostic ID convention, generator anatomy, `<AdditionalFiles>` wiring).
 
@@ -70,13 +70,13 @@ public static partial class Audiences
 }
 ```
 
-`IsKnown(audience)` is the canonical inbound-validation helper — JWT validation calls it on the `aud` claim. `Resolve(name)` is the canonical outbound-call helper — gives outbound code the URL for a name like `"Files"`. `ResolveByUrl(url)` is the inverse for telemetry / logging that wants a friendly name.
+`IsKnown(audience)` is the canonical inbound-validation helper — JWT validation calls it on the `aud` claim at every hop. `Resolve(name)` resolves a name like `"Files"` to its URL — used to address a `targetAudience` on a retained boundary-mint / exception token exchange. `ResolveByUrl(url)` is the inverse for telemetry / logging that wants a friendly name.
 
 ---
 
 ## Sourcegen-specific notes
 
-Audience strings flow through both the inbound JWT validator (`aud` claim check) AND the outbound `TokenExchangeClient.ExchangeAsync` calls. Spec-driving the catalog catches duplicate names, duplicate URLs, malformed URLs, and bad identifiers at compile time rather than at first JWT validation in production.
+Audience strings flow through the inbound JWT validator's `aud` claim check at every hop AND the `targetAudience` of the retained boundary-mint / exception `TokenExchangeClient.ExchangeAsync` calls. Spec-driving the catalog catches duplicate names, duplicate URLs, malformed URLs, and bad identifiers at compile time rather than at first JWT validation in production.
 
 ---
 

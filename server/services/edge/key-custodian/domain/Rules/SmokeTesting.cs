@@ -21,6 +21,10 @@ namespace D2.Edge.KeyCustodian.Domain.Rules;
 ///     the round-trip recovers the plaintext.</item>
 ///   <item><c>Secret</c>: derive an HMAC-SHA256 over a nonce and assert it is
 ///     deterministic + the key length is usable.</item>
+///   <item><c>X509CaCertificate</c>: import the PKCS#8 ECDSA private key, sign a
+///     nonce, and verify with the public key derived from that same private key —
+///     proves the CA's signing key is usable. The certificate-to-key binding is
+///     verified structurally at generation, not re-checked here.</item>
 /// </list>
 /// </remarks>
 public static class SmokeTesting
@@ -57,6 +61,7 @@ public static class SmokeTesting
                 KeyType.RsaSigning => VerifyRsa(plaintextMaterial.Span, publicSpki),
                 KeyType.AesPayload => VerifyAes(plaintextMaterial.Span),
                 KeyType.Secret => VerifySecret(plaintextMaterial.Span),
+                KeyType.X509CaCertificate => VerifyCa(plaintextMaterial.Span),
                 _ => KeyCustodianFailures.SmokeTestFailed(),
             };
         }
@@ -90,13 +95,35 @@ public static class SmokeTesting
 
         using var signer = RSA.Create();
         signer.ImportPkcs8PrivateKey(pkcs8Private, out _);
+
         var signature = signer.SignData(
             nonce.ToArray(), HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
 
         using var verifier = RSA.Create();
         verifier.ImportSubjectPublicKeyInfo(spki.Span, out _);
+
         var verified = verifier.VerifyData(
             nonce.ToArray(), signature, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
+
+        return verified ? D2Result.Ok() : KeyCustodianFailures.SmokeTestFailed();
+    }
+
+    private static D2Result VerifyCa(ReadOnlySpan<byte> pkcs8Private)
+    {
+        Span<byte> nonce = stackalloc byte[_PROBE_BYTES];
+        RandomNumberGenerator.Fill(nonce);
+
+        // A CA's public artifact is its certificate, not a bare SPKI, so the smoke
+        // test self-derives the public key from the private key handle: sign a nonce
+        // and verify it with the same key's public half. This proves the ECDSA
+        // signing key is usable (the integrity property a smoke test asserts) without
+        // needing the cert — the cert-to-key binding is guaranteed structurally at
+        // generation. A malformed PKCS#8 surfaces as a CryptographicException caught
+        // by the Verify envelope → SmokeTestFailed.
+        using var ecdsa = ECDsa.Create();
+        ecdsa.ImportPkcs8PrivateKey(pkcs8Private, out _);
+        var signature = ecdsa.SignData(nonce.ToArray(), HashAlgorithmName.SHA256);
+        var verified = ecdsa.VerifyData(nonce.ToArray(), signature, HashAlgorithmName.SHA256);
 
         return verified ? D2Result.Ok() : KeyCustodianFailures.SmokeTestFailed();
     }

@@ -93,11 +93,11 @@ function emitCountries(
   appendEslintDisable(sb);
   sb.appendLine();
   sb.appendLine(
-    'import type { Country, CountryCurrencyAcceptance, GeopoliticalEntity, Locale, LocaleCode,' +
+    "import type { Country, CountryCurrencyAcceptance, GeopoliticalEntity, Locale, LocaleCode," +
       ' Subdivision, SubdivisionCode } from "@d2/geo-abstractions";',
   );
   sb.appendLine(
-    'import { CountryCode, CurrencyCode, GeopoliticalEntityCode, LanguageCode }' +
+    "import { CountryCode, CurrencyCode, GeopoliticalEntityCode, LanguageCode }" +
       ' from "@d2/geo-abstractions";',
   );
   sb.appendLine();

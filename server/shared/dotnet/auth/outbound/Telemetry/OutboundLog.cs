@@ -27,36 +27,6 @@ internal static partial class OutboundLog
         string issuer);
 
     [LoggerMessage(
-        EventId = 1002,
-        Level = LogLevel.Warning,
-        Message = "Service-identity token request to Edge returned HTTP {StatusCode}.")]
-    public static partial void ServiceIdentityHttpFailure(this ILogger logger, int statusCode);
-
-    [LoggerMessage(
-        EventId = 1003,
-        Level = LogLevel.Warning,
-        Message = "Service-identity token fetch failed: {ExceptionType} ({FirstFrame}).")]
-    public static partial void ServiceIdentityFetchFailed(
-        this ILogger logger,
-        string exceptionType,
-        string firstFrame);
-
-    [LoggerMessage(
-        EventId = 1004,
-        Level = LogLevel.Warning,
-        Message = "Initial service-identity token acquisition failed at startup; "
-                + "will retry on the polling cadence ({PollInterval}).")]
-    public static partial void ServiceIdentityStartupAcquireFailed(
-        this ILogger logger,
-        TimeSpan pollInterval);
-
-    [LoggerMessage(
-        EventId = 1005,
-        Level = LogLevel.Warning,
-        Message = "Service-identity proactive refresh failed; will retry on next tick.")]
-    public static partial void ServiceIdentityRefreshTickFailed(this ILogger logger);
-
-    [LoggerMessage(
         EventId = 2001,
         Level = LogLevel.Warning,
         Message = "TokenExchangeCache: ICacheInvalidationBackplane is not registered. "
@@ -95,4 +65,28 @@ internal static partial class OutboundLog
         this ILogger logger,
         string exceptionType,
         string firstFrame);
+
+    [LoggerMessage(
+        EventId = 3001,
+        Level = LogLevel.Warning,
+        Message = "Workload leaf reissue failed: {ExceptionType} ({FirstFrame}).")]
+    public static partial void WorkloadLeafReissueFailed(
+        this ILogger logger,
+        string exceptionType,
+        string firstFrame);
+
+    [LoggerMessage(
+        EventId = 3002,
+        Level = LogLevel.Warning,
+        Message = "Initial workload leaf acquisition failed at startup; "
+                + "will retry on the polling cadence ({PollInterval}).")]
+    public static partial void WorkloadLeafStartupAcquireFailed(
+        this ILogger logger,
+        TimeSpan pollInterval);
+
+    [LoggerMessage(
+        EventId = 3003,
+        Level = LogLevel.Warning,
+        Message = "Workload leaf proactive reissue failed; will retry on next tick.")]
+    public static partial void WorkloadLeafRefreshTickFailed(this ILogger logger);
 }

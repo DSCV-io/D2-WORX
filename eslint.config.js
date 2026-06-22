@@ -16,6 +16,7 @@ export default tseslint.config(
       "**/.svelte-kit/**",
       "server/web/**",
       "server/shared/typescript/protos/src/generated/**",
+      "server/shared/typescript/typespec-emitters/tests/grpc-fixtures/generated/**",
       "old/**",
       ".claude/**",
       "**/coverage/**",

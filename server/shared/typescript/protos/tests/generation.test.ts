@@ -19,7 +19,9 @@ function findRepoRoot(): string {
     if (parent === dir) break;
     dir = parent;
   }
-  throw new Error("could not locate repo root (expected contracts/protos/ ancestor)");
+  throw new Error(
+    "could not locate repo root (expected contracts/protos/ ancestor)",
+  );
 }
 
 const repoRoot = findRepoRoot();

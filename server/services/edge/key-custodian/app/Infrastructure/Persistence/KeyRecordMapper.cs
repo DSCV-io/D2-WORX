@@ -54,6 +54,9 @@ public static class KeyRecordMapper
             var publicMaterial = record.PublicKeyMaterial is { } pub
                 ? PublicKeyMaterial.FromTrusted(pub)
                 : null;
+            var caCertificate = record.CaCertificate is { } caCert
+                ? CaCertificateMaterial.FromTrusted(caCert)
+                : null;
 
             return record.Status switch
             {
@@ -64,6 +67,7 @@ public static class KeyRecordMapper
                     KeyType = record.KeyType,
                     KeyMaterialEncrypted = material,
                     PublicKeyMaterial = publicMaterial,
+                    CaCertificateMaterial = caCertificate,
                     CreatedAt = record.CreatedAt,
                 },
                 KeyStatus.Active => new ActiveKey
@@ -73,6 +77,7 @@ public static class KeyRecordMapper
                     KeyType = record.KeyType,
                     KeyMaterialEncrypted = material,
                     PublicKeyMaterial = publicMaterial,
+                    CaCertificateMaterial = caCertificate,
                     CreatedAt = record.CreatedAt,
                     ActivatedAt = record.RequireInstant(
                         record.ActivatedAt, nameof(KeyRecord.ActivatedAt)),
@@ -84,6 +89,7 @@ public static class KeyRecordMapper
                     KeyType = record.KeyType,
                     KeyMaterialEncrypted = material,
                     PublicKeyMaterial = publicMaterial,
+                    CaCertificateMaterial = caCertificate,
                     CreatedAt = record.CreatedAt,
                     ActivatedAt = record.RequireInstant(
                         record.ActivatedAt, nameof(KeyRecord.ActivatedAt)),
@@ -97,6 +103,7 @@ public static class KeyRecordMapper
                     KeyType = record.KeyType,
                     KeyMaterialEncrypted = material,
                     PublicKeyMaterial = publicMaterial,
+                    CaCertificateMaterial = caCertificate,
                     CreatedAt = record.CreatedAt,
                     ActivatedAt = record.RequireInstant(
                         record.ActivatedAt, nameof(KeyRecord.ActivatedAt)),
@@ -112,6 +119,7 @@ public static class KeyRecordMapper
                     KeyType = record.KeyType,
                     KeyMaterialEncrypted = material,
                     PublicKeyMaterial = publicMaterial,
+                    CaCertificateMaterial = caCertificate,
                     CreatedAt = record.CreatedAt,
                     CompromisedAt = record.RequireInstant(
                         record.CompromisedAt, nameof(KeyRecord.CompromisedAt)),
@@ -146,9 +154,9 @@ public static class KeyRecordMapper
         /// nulling EVERY per-state column first, then setting only the columns the
         /// current state owns. The immutable identity columns (<c>Kid</c>,
         /// <c>KeyDomain</c>, <c>KeyType</c>, <c>KeyMaterialEncrypted</c>,
-        /// <c>PublicKeyMaterial</c>, <c>CreatedAt</c>) are left untouched on a
-        /// transition (they never change) but ARE written on a freshly-built row
-        /// via <see cref="ToNewRecord"/>.
+        /// <c>PublicKeyMaterial</c>, <c>CaCertificate</c>, <c>CreatedAt</c>) are
+        /// left untouched on a transition (they never change) but ARE written on a
+        /// freshly-built row via <see cref="ToNewRecord"/>.
         /// </summary>
         /// <param name="record">The tracked record to mutate in place.</param>
         public void ProjectOnto(KeyRecord record)
@@ -203,6 +211,7 @@ public static class KeyRecordMapper
                 KeyType = key.KeyType,
                 KeyMaterialEncrypted = key.KeyMaterialEncrypted.Bytes.ToArray(),
                 PublicKeyMaterial = key.PublicKeyMaterial?.Bytes.ToArray(),
+                CaCertificate = key.CaCertificateMaterial?.Bytes.ToArray(),
                 CreatedAt = key.CreatedAt,
                 Status = key.Status,
             };
@@ -226,6 +235,24 @@ public static class KeyRecordMapper
                 ResultingStatus = audit.ResultingStatus,
                 OccurredAt = audit.OccurredAt,
                 Detail = audit.Detail,
+            };
+    }
+
+    extension(LeafIssuanceAudit audit)
+    {
+        /// <summary>
+        /// Flattens an in-domain leaf-issuance audit entry to its persistence row.
+        /// </summary>
+        /// <returns>
+        /// A new <see cref="LeafIssuanceAuditRecord"/>. <c>Id</c> is database-generated.
+        /// </returns>
+        public LeafIssuanceAuditRecord ToRecord() =>
+            new()
+            {
+                WorkloadServiceId = audit.WorkloadServiceId,
+                IssuingCaKid = audit.IssuingCaKid.Value,
+                IssuedAt = audit.IssuedAt,
+                LeafNotAfter = audit.LeafNotAfter,
             };
     }
 }

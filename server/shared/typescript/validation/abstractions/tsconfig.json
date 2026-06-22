@@ -7,5 +7,8 @@
   },
   "include": ["src/**/*"],
   "exclude": ["dist", "node_modules", "tests"],
-  "references": [{ "path": "../../result" }, { "path": "../../geo/abstractions" }]
+  "references": [
+    { "path": "../../result" },
+    { "path": "../../geo/abstractions" }
+  ]
 }

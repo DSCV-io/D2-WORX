@@ -124,6 +124,66 @@ public sealed class KcCryptoTests
             .Success.Should().BeTrue();
     }
 
+    [Fact]
+    public void Smoke_Ca_FreshKey_Passes()
+    {
+        // A real CA's PKCS#8 ECDSA private key signs+verifies via the self-derived
+        // public key — no SPKI is passed (the CA's public artifact is its cert).
+        var clock = new TestClock(KcAppTestKit.SR_BaseInstant);
+
+        var ca = CaCertificateGeneration.GenerateRootCa(
+            "D2 Test Root CA", Duration.FromDays(3650), clock).Data!;
+
+        SmokeTesting.Verify(KeyType.X509CaCertificate, ca.PrivateKeyPkcs8, publicSpki: null)
+            .Success.Should().BeTrue();
+
+        ca.Zero();
+    }
+
+    [Fact]
+    public void Smoke_Ca_GarbagePkcs8_FailsWithoutThrow()
+    {
+        // Random bytes are not a valid PKCS#8 ECDSA key — ImportPkcs8PrivateKey
+        // throws CryptographicException, caught by the never-throw envelope.
+        var garbage = RandomNumberGenerator.GetBytes(64);
+
+        var result = SmokeTesting.Verify(KeyType.X509CaCertificate, garbage, publicSpki: null);
+
+        result.Success.Should().BeFalse();
+        result.ErrorCode.Should().Be("KEYCUSTODIAN_SMOKE_TEST_FAILED");
+    }
+
+    [Fact]
+    public void Smoke_Ca_RsaKeyBytesPassedAsCa_FailsWithoutThrow()
+    {
+        // An RSA PKCS#8 key is not an ECDSA key — ImportPkcs8PrivateKey on an ECDsa
+        // handle rejects it → SmokeTestFailed (no throw).
+        var rsa = KeyGeneration.Generate(KeyType.RsaSigning, _RSA_BITS, _SECRET_BYTES).Data!;
+
+        var result = SmokeTesting.Verify(
+            KeyType.X509CaCertificate, rsa.Plaintext, publicSpki: null);
+
+        result.Success.Should().BeFalse();
+        rsa.Zero();
+    }
+
+    [Fact]
+    public void Smoke_Ca_BitFlippedPrivate_FailsWithoutThrow()
+    {
+        var clock = new TestClock(KcAppTestKit.SR_BaseInstant);
+
+        var ca = CaCertificateGeneration.GenerateRootCa(
+            "D2 Test Root CA", Duration.FromDays(3650), clock).Data!;
+        var corrupted = (byte[])ca.PrivateKeyPkcs8.Clone();
+        corrupted[10] ^= 0xFF;
+
+        var result = SmokeTesting.Verify(
+            KeyType.X509CaCertificate, corrupted, publicSpki: null);
+
+        result.Success.Should().BeFalse();
+        ca.Zero();
+    }
+
     // -----------------------------------------------------------------------
     // Smoke tester — adversarial (no throw, returns failure)
     // -----------------------------------------------------------------------

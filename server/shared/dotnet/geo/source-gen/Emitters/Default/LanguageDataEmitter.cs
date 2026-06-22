@@ -262,7 +262,7 @@ internal static class LanguageDataEmitter
 
         return ImmutableArray.Create(new EmitResult(
             HintName: "LanguageLookup.g.cs",
-            GeneratedSource: sb.ToString(),
+            GeneratedSource: sb.ToString().LfNormalized(),
             Diagnostics: ImmutableArray<EmitDiagnostic>.Empty));
     }
 

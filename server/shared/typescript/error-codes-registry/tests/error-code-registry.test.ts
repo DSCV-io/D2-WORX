@@ -233,7 +233,9 @@ describe("errorCodeRegistry — generated merged registry", () => {
     for (const code of keycustodianCodes) {
       const info = errorCodeRegistry.resolve(code);
       expect(info, `${code} should resolve`).toBeDefined();
-      expect(info?.domain, `${code} domain should be 'keycustodian'`).toBe("keycustodian");
+      expect(info?.domain, `${code} domain should be 'keycustodian'`).toBe(
+        "keycustodian",
+      );
     }
   });
 
@@ -294,12 +296,16 @@ describe("errorCodeRegistry — generated merged registry", () => {
   });
 
   it("resolve KEYCUSTODIAN_PRECONDITION_VIOLATED: full 8-field correctness", () => {
-    const info = errorCodeRegistry.resolve("KEYCUSTODIAN_PRECONDITION_VIOLATED");
+    const info = errorCodeRegistry.resolve(
+      "KEYCUSTODIAN_PRECONDITION_VIOLATED",
+    );
     expect(info).toBeDefined();
     expect(info?.code).toBe("KEYCUSTODIAN_PRECONDITION_VIOLATED");
     expect(info?.httpStatus).toBe(500);
     expect(info?.category).toBe("internal_error");
-    expect(info?.userMessageKey).toBe(TK.keycustodian.internal.PRECONDITION_VIOLATED);
+    expect(info?.userMessageKey).toBe(
+      TK.keycustodian.internal.PRECONDITION_VIOLATED,
+    );
     expect(info?.factoryName).toBe("PreconditionViolated");
     expect(info?.factoryShape).toBe("standard");
     expect(info?.domain).toBe("keycustodian");
@@ -323,7 +329,9 @@ describe("errorCodeRegistry — generated merged registry", () => {
     expect(info?.code).toBe("KEYCUSTODIAN_KEY_STATE_CONFLICT");
     expect(info?.httpStatus).toBe(409);
     expect(info?.category).toBe("conflict");
-    expect(info?.userMessageKey).toBe(TK.keycustodian.lifecycle.KEY_STATE_CONFLICT);
+    expect(info?.userMessageKey).toBe(
+      TK.keycustodian.lifecycle.KEY_STATE_CONFLICT,
+    );
     expect(info?.factoryName).toBe("KeyStateConflict");
     expect(info?.factoryShape).toBe("standard");
     expect(info?.domain).toBe("keycustodian");

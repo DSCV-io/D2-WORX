@@ -18,11 +18,11 @@ namespace D2.Edge.KeyCustodian.App.Application.Handlers.Queries.GetJwks;
 /// <c>503 Service Unavailable</c> (fail-secure) rather than an empty 200 response.
 /// </remarks>
 public sealed class GetJwksHandler(HandlerContext<GetJwksHandler> ctx, IKeyCustodianDbContext db)
-    : BaseHandler<GetJwksHandler, GetJwksInput, GetJwksOutput>(ctx), IGetJwksHandler
+    : BaseHandler<GetJwksHandler, D2.Edge.KeyCustodian.Clients.GetJwksInput, D2.Edge.KeyCustodian.Clients.GetJwksOutput>(ctx), IGetJwksHandler
 {
     /// <inheritdoc/>
-    protected override async ValueTask<D2Result<GetJwksOutput?>> ExecuteAsync(
-        GetJwksInput input, CancellationToken ct)
+    protected override async ValueTask<D2Result<D2.Edge.KeyCustodian.Clients.GetJwksOutput?>> ExecuteAsync(
+        D2.Edge.KeyCustodian.Clients.GetJwksInput input, CancellationToken ct)
     {
         var rows = await db.Keys
             .AsNoTracking()
@@ -35,13 +35,22 @@ public sealed class GetJwksHandler(HandlerContext<GetJwksHandler> ctx, IKeyCusto
             .ToListAsync(ct)
             .ConfigureAwait(false);
 
-        var jwks = new List<Jwk>(rows.Count);
+        var jwks = new List<D2.Edge.KeyCustodian.Clients.Jwk>(rows.Count);
         foreach (var row in rows)
         {
             // A signing key always carries SPKI public material (domain invariant);
             // a null here is a corrupt row — skip rather than emit a broken JWK.
             if (row.PublicKeyMaterial is { } spki)
-                jwks.Add(JwkProjection.ToJwk(row.Kid, spki));
+            {
+                var domainJwk = JwkProjection.ToJwk(row.Kid, spki);
+                jwks.Add(new D2.Edge.KeyCustodian.Clients.Jwk(
+                    domainJwk.Kid,
+                    domainJwk.N,
+                    domainJwk.E,
+                    domainJwk.Kty,
+                    domainJwk.Use,
+                    domainJwk.Alg));
+            }
         }
 
         if (jwks.Count == 0)
@@ -49,9 +58,10 @@ public sealed class GetJwksHandler(HandlerContext<GetJwksHandler> ctx, IKeyCusto
             // Fail-secure: zero signing keys means cluster-wide JWT verification is broken.
             // Return 503 so callers know to retry rather than cache an empty key set.
             KeyCustodianMetrics.SR_EmptyJwksServed.Add(1);
-            return D2Result<GetJwksOutput?>.ServiceUnavailable();
+            return D2Result<D2.Edge.KeyCustodian.Clients.GetJwksOutput?>.ServiceUnavailable();
         }
 
-        return D2Result<GetJwksOutput?>.Ok(new GetJwksOutput(jwks));
+        return D2Result<D2.Edge.KeyCustodian.Clients.GetJwksOutput?>.Ok(
+            new D2.Edge.KeyCustodian.Clients.GetJwksOutput(jwks));
     }
 }

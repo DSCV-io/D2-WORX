@@ -168,7 +168,7 @@ internal static class GeoDataInitializerEmitter
 
         return ImmutableArray.Create(new EmitResult(
             HintName: "GeoDataInitializer.g.cs",
-            GeneratedSource: sb.ToString(),
+            GeneratedSource: sb.ToString().LfNormalized(),
             Diagnostics: ImmutableArray<EmitDiagnostic>.Empty));
     }
 }

@@ -50,7 +50,7 @@ export function emitGeopoliticalEntityData(context: GeoSpecContext): {
     'import type { Country, GeopoliticalEntity } from "@d2/geo-abstractions";',
   );
   sb.appendLine(
-    'import { CountryCode, GeopoliticalEntityCode, GeopoliticalEntityType }' +
+    "import { CountryCode, GeopoliticalEntityCode, GeopoliticalEntityType }" +
       ' from "@d2/geo-abstractions";',
   );
   sb.appendLine();

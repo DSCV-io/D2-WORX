@@ -8,6 +8,7 @@ namespace D2.Edge.Tests.Unit.KeyCustodian.App;
 
 using D2.Edge.KeyCustodian.App.Application;
 using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.ActivateKey;
+using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.IssueWorkloadCertificate;
 using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.RetireKey;
 using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.RunDueRotations;
 using D2.Edge.KeyCustodian.App.Application.Handlers.Queries.GetRotationPlan;
@@ -37,6 +38,7 @@ public sealed class KeyCustodianAppServiceCollectionExtensionsTests
         services.Should().Contain(d => d.ServiceType == typeof(IRetireKeyHandler));
         services.Should().Contain(d => d.ServiceType == typeof(ICompromiseKeyHandler));
         services.Should().Contain(d => d.ServiceType == typeof(IRunDueRotationsHandler));
+        services.Should().Contain(d => d.ServiceType == typeof(IIssueWorkloadCertificateHandler));
         services.Should().Contain(d => d.ServiceType == typeof(IGetJwksHandler));
         services.Should().Contain(d => d.ServiceType == typeof(IGetRotationPlanHandler));
     }
@@ -111,6 +113,8 @@ public sealed class KeyCustodianAppServiceCollectionExtensionsTests
             .Should().BeOfType<CompromiseKeyHandler>();
         sp.GetRequiredService<IRunDueRotationsHandler>()
             .Should().BeOfType<RunDueRotationsHandler>();
+        sp.GetRequiredService<IIssueWorkloadCertificateHandler>()
+            .Should().BeOfType<IssueWorkloadCertificateHandler>();
         sp.GetRequiredService<IGetJwksHandler>()
             .Should().BeOfType<GetJwksHandler>();
         sp.GetRequiredService<IGetRotationPlanHandler>()

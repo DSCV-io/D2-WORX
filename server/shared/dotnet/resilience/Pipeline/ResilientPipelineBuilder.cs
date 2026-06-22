@@ -7,8 +7,10 @@
 namespace D2.Shared.Resilience.Pipeline;
 
 using D2.Shared.Resilience.CircuitBreaker;
+using D2.Shared.Resilience.RateLimiting;
 using D2.Shared.Resilience.Retry;
 using D2.Shared.Resilience.Singleflight;
+using D2.Shared.Resilience.Timeout;
 using Microsoft.Extensions.DependencyInjection;
 
 /// <summary>
@@ -65,6 +67,28 @@ public sealed class ResilientPipelineBuilder<TKey, TValue>
     public IResilientPipelineBuilder<TKey, TValue> UseRetries(RetryOptions<TValue>? options = null)
     {
         r_layers.Add(new RetryLayer<TKey, TValue>(options));
+        return this;
+    }
+
+    /// <inheritdoc/>
+    public IResilientPipelineBuilder<TKey, TValue> UseTimeout(TimeoutOptions? options = null)
+    {
+        r_layers.Add(new TimeoutLayer<TKey, TValue>(options));
+        return this;
+    }
+
+    /// <inheritdoc/>
+    public IResilientPipelineBuilder<TKey, TValue> UseRateLimiter(object serviceKey)
+    {
+        r_layers.Add(new RateLimiterLayer<TKey, TValue>(
+            r_serviceProvider.GetRequiredKeyedService<RateLimiter>(serviceKey)));
+        return this;
+    }
+
+    /// <inheritdoc/>
+    public IResilientPipelineBuilder<TKey, TValue> UseRateLimiter(RateLimiterOptions? options = null)
+    {
+        r_layers.Add(new RateLimiterLayer<TKey, TValue>(options));
         return this;
     }
 

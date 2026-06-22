@@ -23,7 +23,7 @@ public sealed class D2ServiceDefaultsOptionsTests
         var opts = new D2ServiceDefaultsOptions();
         opts.SkipAuthAutoWiring.Should().BeFalse();
         opts.SkipLocalCacheAutoWiring.Should().BeFalse();
-        opts.SkipHttpClientResilienceDefaults.Should().BeFalse();
+        opts.SkipAuthEndpointGuard.Should().BeFalse();
     }
 
     [Fact]
@@ -53,12 +53,12 @@ public sealed class D2ServiceDefaultsOptionsTests
         {
             SkipAuthAutoWiring = true,
             SkipLocalCacheAutoWiring = true,
-            SkipHttpClientResilienceDefaults = true,
+            SkipAuthEndpointGuard = true,
         };
 
         opts.SkipAuthAutoWiring.Should().BeTrue();
         opts.SkipLocalCacheAutoWiring.Should().BeTrue();
-        opts.SkipHttpClientResilienceDefaults.Should().BeTrue();
+        opts.SkipAuthEndpointGuard.Should().BeTrue();
     }
 
     [Fact]

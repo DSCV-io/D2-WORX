@@ -1,0 +1,131 @@
+{
+  "$comment": [
+    "Cross-language @d2Resilience result-predicate parity fixtures for the NESTED-model",
+    "+ array-of-MODEL shape (the placeOrderV2 fixture op). Each row feeds an identically-",
+    "shaped reconstructed D2Result<PlaceOrderV2Output> to the emitted C# predicate",
+    "(PlaceOrderV2ResiliencePredicates.SR_RetryWhen / SR_FailWhen) AND the emitted TS predicate",
+    "(placeOrderV2RetryWhen / placeOrderV2FailWhen), asserting BOTH produce the same retry / fail",
+    "booleans. A divergence means the cross-language emission of the deep `?.`-chain or the",
+    "array-of-model quantifier has broken and MUST be surfaced, not silently reconciled.",
+    "",
+    "The predicate under test (from resilience-predicate-shaped.tsp placeOrderV2):",
+    "  retryWhen: result.data.customer.tier == 'TRIAL'                  (nested-optional path)",
+    "             || result.data.lines.any(l => l.status == 'PENDING')  (array-of-MODEL quantifier)",
+    "  failWhen:  result.data.lines.count == 0",
+    "             || result.errorCode == 'VALIDATION_FAILED'",
+    "",
+    "Non-vacuity hinges on EXERCISING the nested path + the array-of-model quantifier:",
+    "rows traverse customer.tier (present TRIAL → true; present non-TRIAL → false; customer",
+    "absent → the deep ?.-chain short-circuits to false) and lines[].status (any PENDING →",
+    "true; none PENDING → false; empty lines → vacuous-false .any AND count==0 failWhen).",
+    "`data` null models a failure with no payload (the nullable D2Result.Data); both runtimes",
+    "must short-circuit a null/undefined data path to false (never throw)."
+  ],
+  "schemaVersion": 1,
+  "cases": [
+    {
+      "name": "retryWhen_nestedCustomerTierTrial",
+      "$note": "nested-optional path present & == TRIAL → retryWhen true via customer.tier; lines non-empty so failWhen false.",
+      "success": true,
+      "statusCode": 200,
+      "errorCode": null,
+      "data": {
+        "orderCode": "o1",
+        "lines": [{ "status": "SHIPPED" }],
+        "customer": { "tier": "TRIAL" }
+      },
+      "expectedRetry": true,
+      "expectedFail": false
+    },
+    {
+      "name": "neither_nestedCustomerTierPaid",
+      "$note": "nested path present but != TRIAL → that arm false; no PENDING line → .any false; lines non-empty + no VALIDATION_FAILED → failWhen false. Pins the deep ?.-chain resolves a present-but-non-matching value (not a vacuous true).",
+      "success": true,
+      "statusCode": 200,
+      "errorCode": null,
+      "data": {
+        "orderCode": "o2",
+        "lines": [{ "status": "SHIPPED" }],
+        "customer": { "tier": "PAID" }
+      },
+      "expectedRetry": false,
+      "expectedFail": false
+    },
+    {
+      "name": "retryWhen_arrayOfModelAnyPending",
+      "$note": "customer absent (deep ?.-chain → false) but a line.status == PENDING → array-of-model .any true → retryWhen true. Pins the quantifier's element sub-predicate.",
+      "success": true,
+      "statusCode": 200,
+      "errorCode": null,
+      "data": {
+        "orderCode": "o3",
+        "lines": [{ "status": "SHIPPED" }, { "status": "PENDING" }],
+        "customer": null
+      },
+      "expectedRetry": true,
+      "expectedFail": false
+    },
+    {
+      "name": "neither_arrayOfModelNonePending_noCustomer",
+      "$note": "customer absent + no PENDING line → both retryWhen arms false; lines non-empty + clean → failWhen false. Pins .any returns false (not vacuous) when elements exist but none match.",
+      "success": true,
+      "statusCode": 200,
+      "errorCode": null,
+      "data": {
+        "orderCode": "o4",
+        "lines": [{ "status": "SHIPPED" }, { "status": "DELIVERED" }],
+        "customer": null
+      },
+      "expectedRetry": false,
+      "expectedFail": false
+    },
+    {
+      "name": "failWhen_emptyLinesCountZero_vacuousAny",
+      "$note": "empty lines → .any vacuous-false (retryWhen false, no customer) AND lines.count == 0 → failWhen true. Pins empty-collection semantics for BOTH the quantifier and the count.",
+      "success": true,
+      "statusCode": 200,
+      "errorCode": null,
+      "data": { "orderCode": "o5", "lines": [], "customer": null },
+      "expectedRetry": false,
+      "expectedFail": true
+    },
+    {
+      "name": "failWhenWins_trialAndEmptyLines",
+      "$note": "customer.tier == TRIAL → retryWhen true (nested path); empty lines → failWhen true (count==0). Both fire — failWhen WINS in the client closure (no retry). Pins the nested path AND the count terminal in one row.",
+      "success": true,
+      "statusCode": 206,
+      "errorCode": null,
+      "data": {
+        "orderCode": "o6",
+        "lines": [],
+        "customer": { "tier": "TRIAL" }
+      },
+      "expectedRetry": true,
+      "expectedFail": true
+    },
+    {
+      "name": "failWhen_errorCodeValidationFailed_nullData",
+      "$note": "null data → deep ?.-chain + .any + count all short-circuit (retryWhen false; count coalesces to 0 so failWhen true via count too) AND errorCode == VALIDATION_FAILED. Pins null-data never throws across the nested/array accessors.",
+      "success": false,
+      "statusCode": 400,
+      "errorCode": "VALIDATION_FAILED",
+      "data": null,
+      "expectedRetry": false,
+      "expectedFail": true
+    },
+    {
+      "name": "neither_cleanSuccess_paidCustomerShippedLine",
+      "$note": "a clean success: nested path present non-TRIAL + no PENDING line + non-empty + no error → neither predicate fires (the default path).",
+      "success": true,
+      "statusCode": 200,
+      "errorCode": null,
+      "data": {
+        "orderCode": "o7",
+        "lines": [{ "status": "SHIPPED" }],
+        "customer": { "tier": "ENTERPRISE" }
+      },
+      "expectedRetry": false,
+      "expectedFail": false
+    }
+  ]
+}

@@ -203,6 +203,7 @@ export const TK = {
       VALIDATION_FAILED: tk("common_errors_VALIDATION_FAILED")
     },
     time: {
+      INVALID_DURATION: tk("common_time_INVALID_DURATION"),
       INVALID_IANA_IDENTIFIER: tk("common_time_INVALID_IANA_IDENTIFIER"),
       INVALID_LOCAL_DATE_TIME: tk("common_time_INVALID_LOCAL_DATE_TIME")
     },
@@ -343,7 +344,11 @@ export const TK = {
     }
   },
   keycustodian: {
+    infrastructure: {
+      NO_ACTIVE_ISSUING_CA: tk("keycustodian_infrastructure_NO_ACTIVE_ISSUING_CA")
+    },
     internal: {
+      INVALID_CERTIFICATE_REQUEST: tk("keycustodian_internal_INVALID_CERTIFICATE_REQUEST"),
       PRECONDITION_VIOLATED: tk("keycustodian_internal_PRECONDITION_VIOLATED"),
       SMOKE_TEST_FAILED: tk("keycustodian_internal_SMOKE_TEST_FAILED")
     },
@@ -355,6 +360,7 @@ export const TK = {
     validation: {
       GRACE_NOT_ELAPSED: tk("keycustodian_validation_GRACE_NOT_ELAPSED"),
       INVALID_ROTATION_POLICY: tk("keycustodian_validation_INVALID_ROTATION_POLICY"),
+      INVALID_WORKLOAD_IDENTITY: tk("keycustodian_validation_INVALID_WORKLOAD_IDENTITY"),
       SMOKE_PROOF_TYPE_MISMATCH: tk("keycustodian_validation_SMOKE_PROOF_TYPE_MISMATCH"),
       SOAK_NOT_ELAPSED: tk("keycustodian_validation_SOAK_NOT_ELAPSED"),
       UNKNOWN_KEY_DOMAIN: tk("keycustodian_validation_UNKNOWN_KEY_DOMAIN")

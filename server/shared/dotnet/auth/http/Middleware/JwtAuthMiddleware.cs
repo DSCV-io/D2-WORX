@@ -22,6 +22,7 @@ using D2.Shared.ProblemDetails;
 using D2.Shared.Result;
 using D2.Shared.Utilities.Extensions;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Primitives;
 
@@ -48,6 +49,11 @@ using Microsoft.Extensions.Primitives;
 ///   <item>If the validated context carries a session id, check liveness via
 ///     <see cref="ISessionLivenessTracker.IsAliveAsync"/>. Revoked → 401.
 ///     ServiceUnavailable → 503 (fail-closed).</item>
+///   <item>Stash the raw bearer in the request-scoped
+///     <see cref="IForwardedJwtAccessor"/> (best-effort). Capture is the LAST
+///     guard-passing operation before request continuation — a token that fails
+///     harmless, bearer-missing, validation, or liveness checks never enters the
+///     holder.</item>
 ///   <item>Enforce per-endpoint scope set (any-of or all-of, per
 ///     <see cref="EndpointScopeMetadata.Match"/>). Mismatch →
 ///     <see cref="AuthFailures.ScopeInsufficient"/> 401 (NOT 403; see
@@ -192,6 +198,22 @@ internal sealed class JwtAuthMiddleware
                 return;
             }
         }
+
+        // Stash the validated raw bearer in the request-scoped forwarded-JWT
+        // holder so an outbound hop can replay it byte-for-byte. Captured AFTER
+        // validation success AND liveness pass — only a token that cleared the
+        // harmless, bearer-missing, validation-failure, and liveness-failure gates
+        // ever reaches this point, so a revoked or otherwise rejected token never
+        // enters the holder, preventing transient holder population during the
+        // error-response phase. Best-effort: a host that does not register the
+        // holder (does not forward) simply no-ops; a null RequestServices (outside
+        // a DI scope) also no-ops rather than throwing. The bearer is never logged.
+        // RequestServices is non-null-annotated but can be null at runtime
+        // (e.g. resolution outside a DI scope), so guard explicitly.
+        var serviceProvider = (IServiceProvider?)context.RequestServices;
+
+        if (serviceProvider is not null)
+            serviceProvider.GetService<IForwardedJwtAccessor>()?.Capture(bearerResult.Data!);
 
         // Per-endpoint scope enforcement (any-of or all-of, per meta.Match).
         // Empty / null required set = "any authenticated caller passes."

@@ -20,7 +20,9 @@ Copyright (c) DCSV. All rights reserved.
   <div class="grid gap-6 md:grid-cols-2">
     <!-- Progress -->
     <div class="flex flex-col gap-4 rounded-lg border p-6">
-      <h3 class="text-muted-foreground text-sm font-medium">{m.webclient_design_feedback_progress_bars()}</h3>
+      <h3 class="text-muted-foreground text-sm font-medium">
+        {m.webclient_design_feedback_progress_bars()}
+      </h3>
       <div class="flex flex-col gap-3">
         <div class="flex flex-col gap-1.5">
           <span class="text-muted-foreground text-xs">25%</span>
@@ -43,7 +45,9 @@ Copyright (c) DCSV. All rights reserved.
 
     <!-- Skeleton -->
     <div class="flex flex-col gap-4 rounded-lg border p-6">
-      <h3 class="text-muted-foreground text-sm font-medium">{m.webclient_design_feedback_skeleton_loaders()}</h3>
+      <h3 class="text-muted-foreground text-sm font-medium">
+        {m.webclient_design_feedback_skeleton_loaders()}
+      </h3>
       <div class="flex flex-col gap-4">
         <!-- Card skeleton -->
         <div class="flex items-center gap-4">
@@ -69,7 +73,9 @@ Copyright (c) DCSV. All rights reserved.
 
     <!-- Spinner -->
     <div class="flex flex-col gap-4 rounded-lg border p-6">
-      <h3 class="text-muted-foreground text-sm font-medium">{m.webclient_design_feedback_spinners()}</h3>
+      <h3 class="text-muted-foreground text-sm font-medium">
+        {m.webclient_design_feedback_spinners()}
+      </h3>
       <div class="flex items-center gap-8">
         <div class="flex flex-col items-center gap-2">
           <LoaderCircleIcon class="text-muted-foreground size-4 animate-spin" />
@@ -92,7 +98,9 @@ Copyright (c) DCSV. All rights reserved.
 
     <!-- Empty State -->
     <div class="flex flex-col gap-4 rounded-lg border p-6">
-      <h3 class="text-muted-foreground text-sm font-medium">{m.webclient_design_feedback_empty_state()}</h3>
+      <h3 class="text-muted-foreground text-sm font-medium">
+        {m.webclient_design_feedback_empty_state()}
+      </h3>
       <div class="flex flex-col items-center justify-center gap-3 py-8">
         <div class="bg-muted rounded-full p-3">
           <InboxIcon class="text-muted-foreground size-8" />
@@ -112,7 +120,9 @@ Copyright (c) DCSV. All rights reserved.
 
     <!-- Toasts -->
     <div class="flex flex-col gap-4 rounded-lg border p-6 md:col-span-2">
-      <h3 class="text-muted-foreground text-sm font-medium">{m.webclient_design_feedback_toast_notifications()}</h3>
+      <h3 class="text-muted-foreground text-sm font-medium">
+        {m.webclient_design_feedback_toast_notifications()}
+      </h3>
       <div class="flex flex-wrap gap-3">
         <Button
           variant="outline"

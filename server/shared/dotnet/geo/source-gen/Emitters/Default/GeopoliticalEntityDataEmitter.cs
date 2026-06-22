@@ -214,7 +214,7 @@ internal static class GeopoliticalEntityDataEmitter
 
         return ImmutableArray.Create(new EmitResult(
             HintName: "GeopoliticalEntityLookup.g.cs",
-            GeneratedSource: sb.ToString(),
+            GeneratedSource: sb.ToString().LfNormalized(),
             Diagnostics: ImmutableArray<EmitDiagnostic>.Empty));
     }
 

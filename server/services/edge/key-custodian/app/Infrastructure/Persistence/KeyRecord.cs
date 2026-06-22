@@ -50,9 +50,18 @@ public sealed class KeyRecord
 
     /// <summary>
     /// Gets or sets the unencrypted SPKI public-key bytes for asymmetric
-    /// (<c>RsaSigning</c>) keys; <see langword="null"/> for symmetric keys.
+    /// (<c>RsaSigning</c>) keys; <see langword="null"/> for symmetric and
+    /// certificate-authority keys.
     /// </summary>
     public byte[]? PublicKeyMaterial { get; set; }
+
+    /// <summary>
+    /// Gets or sets the DER-encoded CA certificate bytes for certificate-authority
+    /// (<c>X509CaCertificate</c>) keys; <see langword="null"/> for all other key
+    /// types. Not secret — pinned as a trust anchor and presented on the wire, so
+    /// it is intentionally loggable (not redacted), like <see cref="PublicKeyMaterial"/>.
+    /// </summary>
+    public byte[]? CaCertificate { get; set; }
 
     /// <summary>
     /// Gets or sets the UTC instant at which this key was generated.

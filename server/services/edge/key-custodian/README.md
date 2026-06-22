@@ -6,7 +6,7 @@ Copyright (c) DCSV. All rights reserved.
 
 > Parent: [`server/services/edge/`](../README.md)
 
-For engineers working on the KeyCustodian module or integrating with the key lifecycle from other Edge modules. The KeyCustodian is Edge's key-lifecycle authority. It owns the lifecycle of every long-lived secret the platform uses — JWKS signing keys (RS256), RabbitMQ payload-encryption keys (AES-256-GCM), session-cookie signing secrets, and service-identity client secrets. It is the single point that generates, activates, rotates, retires, and compromises managed keys, ensuring that no other module holds or controls key material lifecycle.
+For engineers working on the KeyCustodian module or integrating with the key lifecycle from other Edge modules. The KeyCustodian is Edge's key-lifecycle authority. It owns the lifecycle of every long-lived secret the platform uses — JWKS signing keys (RS256), RabbitMQ payload-encryption keys (AES-256-GCM), session-cookie signing secrets, service-identity client secrets, and the internal certificate-authority key (`X509CaCertificate`) that issues per-workload mTLS leaf certificates. KeyCustodian is the internal CA: it seeds the root + issuing intermediate certificate authority, issues short-lived workload leaf certificates on demand, and rotates the CA key through the same overlap lifecycle all managed keys use. It is the single point that generates, activates, rotates, retires, and compromises managed keys, ensuring that no other module holds or controls key material lifecycle.
 
 Key operations are persisted to a dedicated `keycustodian_db` (independent of `auth_db`) using an EF-as-DDD flat-record + pure-mapper pattern (no per-op Repository handlers — direct DbContext + aggregate access per [ADR-0017](../../../../docs/adrs/0017-ef-as-ddd-persistence.md)). Rotation coordination uses PostgreSQL advisory locks — leaderless, no Redis dependency for a rare, non-latency-sensitive operation. The root key that protects all managed key material at rest is file-backed (`secrets/keycustodian/root.key`), loaded at startup via `FileRootKeyProvider` in the Infra layer.
 
@@ -16,6 +16,7 @@ Key operations are persisted to a dedicated `keycustodian_db` (independent of `a
 | ------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------- |
 | [`domain/`](domain/README.md)                                            | Pure C# sum-type domain — the five-state `EncryptionKey` hierarchy, value objects, enums, and audit record. Zero EF/DI.     |
 | [`app/`](app/README.md)                                                  | CQRS handlers (generate / activate / rotate / retire / compromise / JWKS / rotation-plan), the flat `KeyRecord` + pure mapper, crypto ports, options, and the `AddD2KeyCustodianApp()` DI registration. |
+| [`clients/`](clients/README.md)                                          | Transport boundary for external callers — generated transport DTOs for exposed operations (`GetJwksInput`, `GetJwksOutput`, `Jwk`) and the module façade interface. References `D2.Shared.Result` + `D2.Shared.Utilities` only; no Domain / App / Infra dep. |
 | [`error-codes-source-gen/`](error-codes-source-gen/README.md)            | Roslyn generator shell that emits `KeyCustodianErrorCodes` constants + `KeyCustodianFailures` semantic factories into the domain from `contracts/keycustodian-error-codes/keycustodian-error-codes.spec.json`. Diagnostic prefix: `D2KEC`. |
 | [`infra/`](infra/README.md)                                              | Concrete adapters for the App-owned ports: `KeyCustodianDbContext` (EF Core) + persistence configuration, the multi-key `FileRootKeyProvider`, the message-bus `IKeyRotationAnnouncer`, the in-process `KeyRotationService`, the readiness health check, options binding + `ValidateOnStart`, and the `AddD2KeyCustodian()` composition seam. The startup migrator + advisory lock come from the shared `D2.Shared.EntityFrameworkCore.Postgres` library. |
 
@@ -28,7 +29,7 @@ Key operations are persisted to a dedicated `keycustodian_db` (independent of `a
 
 ## Database
 
-`keycustodian_db` — owned by this module. Tables: `key_record`, `key_audit_record`.
+`keycustodian_db` — owned by this module. Tables: `key_record`, `key_audit_record`, `leaf_issuance_audit_record`.
 
 ## Operations
 

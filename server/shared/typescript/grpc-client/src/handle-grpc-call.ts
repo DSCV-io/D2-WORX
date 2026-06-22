@@ -76,7 +76,10 @@ export async function handleGrpcCall<TResponse, TData>(
       // URIs, host detail) never reach the client. The gRPC numeric `err.code`
       // (closed enum) is safe to log separately if needed.
       if (err.code === _STATUS_CANCELLED)
-        return canceled<TData>({ messages: [TK.common.errors.CANCELED], traceId });
+        return canceled<TData>({
+          messages: [TK.common.errors.CANCELED],
+          traceId,
+        });
       if (err.code === _STATUS_UNAUTHENTICATED)
         return unauthorized<TData>({
           messages: [TK.common.errors.UNAUTHORIZED],

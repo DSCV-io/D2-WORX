@@ -19,7 +19,7 @@ D2 wire-protocol headers applicable to the HTTP transport. Includes HTTP-only en
 | `HttpHeaders.AUTHORIZATION`      | `const string "Authorization"`           | RFC 6750 bearer token header                                    |
 | `HttpHeaders.CLIENT_FINGERPRINT` | `const string "X-D2-Client-Fingerprint"` | Client-computed device fingerprint                              |
 | `HttpHeaders.IDEMPOTENCY_KEY`    | `const string "Idempotency-Key"`         | Stripe-style request-deduplication key                          |
-| `HttpHeaders.INTERNAL_TOKEN`     | `const string "X-D2-Internal-Token"`     | BFF↔Edge service-identity JWT                                   |
+| `HttpHeaders.INTERNAL_TOKEN`     | `const string "X-D2-Internal-Token"`     | BFF-acquired internal boundary token (BFF↔Edge)                |
 | `HttpHeaders.PROPAGATED_CONTEXT` | `const string "x-d2-context"`            | Base64url-of-JSON propagated context envelope (cross-transport) |
 | `HttpHeaders.TRACEPARENT`        | `const string "traceparent"`             | W3C Trace Context (cross-transport)                             |
 | `HttpHeaders.TRACESTATE`         | `const string "tracestate"`              | W3C tracestate (cross-transport)                                |
@@ -29,7 +29,7 @@ D2 wire-protocol headers applicable to the HTTP transport. Includes HTTP-only en
 
 ## When to reach for this catalog
 
-Use `D2.Shared.Headers.Http` from any HTTP-context consumer — `auth/http` middleware, `auth/outbound` HTTP token-exchange client, ASP.NET CORS configuration, idempotency middleware. The catalog includes BOTH the HTTP-only entries AND the cross-transport entries that an HTTP pipeline can encounter; one `using` covers everything.
+Use `D2.Shared.Headers.Http` from any HTTP-context consumer — `auth/http` middleware, `auth/outbound`'s retained RFC 8693 token-exchange client, ASP.NET CORS configuration, idempotency middleware. The catalog includes BOTH the HTTP-only entries AND the cross-transport entries that an HTTP pipeline can encounter; one `using` covers everything.
 
 ---
 

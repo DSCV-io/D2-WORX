@@ -25,7 +25,7 @@ using Xunit;
 /// <c>MapD2PrometheusEndpoint</c> at host build time. Symmetric kill
 /// switch — neither side leaves a partial registration behind.
 /// </summary>
-[Collection("OtelStaticState")]
+[Collection("LogLoggerStaticState")]
 public sealed class OtelSdkDisabledTests
 {
     [Fact]
