@@ -592,9 +592,38 @@ shapes pinned here.
 | Branches                          | 100%                                                                                                                                                                                                                                                                                                                                             |
 | Functions                         | 100%                                                                                                                                                                                                                                                                                                                                             |
 | Statements                        | 100%                                                                                                                                                                                                                                                                                                                                             |
-| Test files                        | 40                                                                                                                                                                                                                                                                                                                                               |
-| Total tests                       | 855                                                                                                                                                                                                                                                                                                                                              |
-| C# behavior tests (D2.Edge.Tests) | 906 passing (includes the temporal round-trip matrix `TemporalRoundTripTests` + the enum-wire round-trip matrix `EnumWireRoundTripTests` + the `@d2Resilience` predicate retry matrix `PredicateRetryTests` + the predicate parity matrix `PredicateParityTests` — the flat `placeOrder` rows AND the nested/array-of-model `placeOrderV2` rows) |
+| Test files                        | 43                                                                                                                                                                                                                                                                                                                                               |
+| Total tests                       | 914                                                                                                                                                                                                                                                                                                                                              |
+| C# behavior tests (D2.Edge.Tests) | 933 passing (includes the temporal round-trip matrix `TemporalRoundTripTests` + the enum-wire round-trip matrix `EnumWireRoundTripTests` + the `@d2Resilience` predicate retry matrix `PredicateRetryTests` + the predicate parity matrix `PredicateParityTests` — the flat `placeOrder` rows AND the nested/array-of-model `placeOrderV2` rows + the over-the-wire resilience suite `OverTheWireResilienceTests`) |
 | TS temporal round-trip (@d2/time) | 32 (`temporal-round-trip.test.ts`, drives the shared cross-language fixture)                                                                                                                                                                                                                                                                     |
 | TS enum-wire round-trip           | 7 (`enum-wire-round-trip.test.ts`, drives the shared `contracts/enum/enum-parity.fixture.json`)                                                                                                                                                                                                                                                  |
 | TS predicate parity               | 6 (`predicate-parity.test.ts`, drives the shared flat `contracts/resilience/predicate-parity.fixture.json` AND the nested/array-of-model `contracts/resilience/predicate-parity-nested.fixture.json`)                                                                                                                                            |
+
+---
+
+## Over-the-wire resilience + envelope integration (real Kestrel socket — `OverTheWireResilienceTests`)
+
+The closest-to-prod validation of the generated gRPC client + service + `D2ResultProto`
+envelope + `D2.Shared.Resilience` pipeline end-to-end: a real Kestrel HTTPS endpoint on
+`127.0.0.1:0` (real TCP socket + real TLS 1.3 handshake + real HTTP/2 + real protobuf
+serialization + real `RpcException` propagation), server-TLS only (loopback self-signed
+server cert, client-trust callback — NO client cert; resilience is auth-orthogonal, so the
+mTLS client-cert requirement is dropped → runs cross-platform incl. Windows). Self-managed
+(`RunningServer : IAsyncDisposable`, ephemeral port; no `dotnet run`, single process). The
+SAME generated `KeyCustodianGrpcClient` / `PredicateFixturesGrpcClient` the in-memory harness
+drives, re-proven over a real socket.
+
+| Scenario | Fault injected (server shim) | Assertion |
+| --- | --- | --- |
+| Transient-recovery | `RpcException(Unavailable)` ×1 then success | `Success`, `CallCount == 2` (retry recovered over the wire) |
+| Breaker open → half-open | `Unavailable` until threshold → open (fast-fail) → fake-clock past cooldown → probe success | open-window call does NOT reach the server (call-count frozen, 503); after cooldown the probe closes the breaker (`Success`); breaker clock injected (`CircuitBreakerOptions.NowFunc`) — deterministic, no wall-clock |
+| No-amplification (captured envelope) | business `ValidationFailed` on the `D2ResultProto` envelope at gRPC status OK | `StatusCode == 400` (NOT 503/500), **`CallCount == 1`** (a returned business failure is a VALUE, never retried) — even with a 5-attempt retry pipeline |
+| Envelope byte-fidelity | success+data / `Conflict`+errorCode / `NotFound` | reconstructed `D2Result` preserves status + category + error-code + data across real protobuf-over-HTTP/2 |
+| `@d2Resilience` predicate | success `partial==true` (retryWhen) / `VALIDATION_FAILED` (failWhen) | retryWhen → `CallCount > 1` (sentinel opts the business result into retry); failWhen → `CallCount == 1`, returned verbatim |
+
+**Determinism**: breaker window = injected `NowFunc` (test-mutable counter via single-element array
+to keep the lambda capture stable); retry backoff = `BaseDelayMs:1 + Jitter:false + DelayFunc:
+Task.CompletedTask`. No elapsed-time assertions; all timing is a controlled input. **Cross-platform**:
+no client cert presented ⇒ the Windows-Schannel client-cert-context limitation (which gates the mTLS
+harness's cert-presenting cases to non-Windows) does not apply — all five scenarios run on every
+platform.
