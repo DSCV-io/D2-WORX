@@ -78,7 +78,7 @@ async function compileModel(
   return { program, model };
 }
 
-/** Parse a predicate string into its AST (the parser is the C-3 gate; ok here). */
+/** Parse a predicate string into its AST (the decorator validator already gated this; ok here). */
 function ast(expr: string): PredicateNode {
   const parsed = parseResultPredicate(expr);
   if (!parsed.ok) throw new Error(`fixture predicate failed to parse: ${expr}`);
@@ -261,7 +261,7 @@ describe("resultPredicateEmitter_DataPathAccessors", () => {
     expect(ts).toContain('r.data?.inner?.tier === "TRIAL"');
   });
 
-  it("nested OPTIONAL path resolves the same (?. chain) — D-R8 deep-nesting proof", async () => {
+  it("nested OPTIONAL path resolves the same (?. chain) — deep-nesting proof", async () => {
     const { model } = await compileModel(
       host,
       `model Cust { tier: string; } model Order { customer?: Cust; } model Out { order?: Order; }`,

@@ -49,6 +49,7 @@ export type {
 export {
   emitOpenApiDocuments,
   injectD2Extensions,
+  OPENAPI_GENERATED_BY_EMITTER,
 } from "./lib/openapi-emitter.js";
 export type {
   D2ScopeExtension,

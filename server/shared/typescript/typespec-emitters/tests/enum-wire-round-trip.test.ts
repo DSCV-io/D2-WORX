@@ -16,8 +16,8 @@
 
 import { describe, it, expect } from "vitest";
 import { readFileSync } from "node:fs";
-import { dirname, join } from "node:path";
-import { fileURLToPath } from "node:url";
+import { join } from "node:path";
+import { findRepoRoot } from "./repo-root.js";
 
 // ---------------------------------------------------------------------------
 // The committed const-objects (the emitter output shape — value === wire string).
@@ -83,15 +83,9 @@ interface FixtureFile {
 }
 
 function loadFixture(): FixtureFile {
-  const here = dirname(fileURLToPath(import.meta.url));
-  // tests/ → package root → up to repo root → contracts/enum/…
+  // Resolved via sentinel walk-up; tolerates any future folder-depth change.
   const path = join(
-    here,
-    "..",
-    "..",
-    "..",
-    "..",
-    "..",
+    findRepoRoot(import.meta.url),
     "contracts",
     "enum",
     "enum-parity.fixture.json",

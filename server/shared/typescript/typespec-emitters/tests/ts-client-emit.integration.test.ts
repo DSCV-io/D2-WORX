@@ -177,7 +177,7 @@ describe("tsClientEmitIntegration_PredicateRetryArm_FoldedIn", () => {
 
     const grpc = getEmittedFile(host, "predicate-fixtures-grpc-client.g.ts");
     expect(grpc).toBeDefined();
-    // The predicate retry-arm is folded in: imports the C-5 twin + builds a pipeline.
+    // The predicate retry-arm is folded in: imports the predicate twin + builds a pipeline.
     expect(grpc).toContain(
       'import { placeOrderRetryWhen, placeOrderFailWhen } from "./place-order-resilience-predicates.js";',
     );
@@ -187,7 +187,7 @@ describe("tsClientEmitIntegration_PredicateRetryArm_FoldedIn", () => {
     );
     expect(grpc).toContain("maxAttempts: 3,");
 
-    // The C-5 TS predicate twin itself is also emitted (the retry-arm consumes it).
+    // The TS predicate twin itself is also emitted (the retry-arm consumes it).
     const twin = getEmittedFile(host, "place-order-resilience-predicates.g.ts");
     expect(twin).toBeDefined();
     expect(twin).toContain("export const placeOrderRetryWhen");

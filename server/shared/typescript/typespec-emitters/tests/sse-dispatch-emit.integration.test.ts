@@ -222,6 +222,7 @@ describe("sseDispatchEmitIntegration_VoidOutputPush_D2TSP008NoPartial", () => {
       String(d.code).includes("server-push-requires-payload"),
     );
     expect(hasPushPayloadDiag).toBe(true);
+    expect(badHost.program.hasError()).toBe(true);
 
     // No partial dispatcher emitted for the failing op.
     expect(getEmittedFile(badHost, "IPingDispatcher.g.cs")).toBeUndefined();
@@ -272,6 +273,7 @@ describe("sseDispatchEmitIntegration_VoidOutputPush_D2TSP008NoPartial", () => {
       String(d.code).includes("server-push-requires-payload"),
     );
     expect(hasPushPayloadDiag).toBe(true);
+    expect(badHost.program.hasError()).toBe(true);
 
     // No partial dispatcher emitted for the empty-output op.
     expect(getEmittedFile(badHost, "ISignalDispatcher.g.cs")).toBeUndefined();

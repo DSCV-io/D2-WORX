@@ -82,7 +82,7 @@ public sealed class ProtoRoundTripTests
     }
 
     [Fact]
-    public void SignRequest_Serialise_Deserialise_IsIdentity()
+    public void SignRequest_Serialize_Deserialize_IsIdentity()
     {
         // Proto serialization round-trip: confirm Grpc.Tools types support it.
         var original = new SignRequest

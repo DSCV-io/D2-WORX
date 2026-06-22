@@ -707,8 +707,11 @@ const ALL_SCOPES_ROUTE_REGISTRATION_FIXTURE = [
   "",
 ].join("\n");
 
-describe("byteParity_SignRouteRegistration_CommittedFixtureIdentical", () => {
-  it("regenerated SignRouteRegistration.g.cs is byte-identical to the committed fixture", () => {
+// Note: SIGN_ROUTE_REGISTRATION_FIXTURE is the NON-GATED form of SignRouteRegistration.
+// The gated form (with idempotency enforcement) is byte-gated separately in
+// idempotency-gate-emitter.test.ts against the committed SignRouteRegistration.g.cs.
+describe("byteParity_SignRouteRegistration_NonGatedForm", () => {
+  it("regenerated non-gated SignRouteRegistration form matches the expected non-gated output", () => {
     const file = emitRoutePolicy({
       opName: "sign",
       verb: "post",

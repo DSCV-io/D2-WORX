@@ -14,7 +14,7 @@
 //     the call body delegating to the REAL `@d2/grpc-client` seam
 //     (`unaryCall` / `handleGrpcCall` / `d2ResultFromProto` / `isTransientGrpcError`).
 //   - for a @d2Resilience op: the predicate retry-arm (the TS analog of the .NET
-//     sentinel arm) folding the C-5-emitted TS `<op>RetryWhen` / `<op>FailWhen`
+//     sentinel arm) folding the emitted TS `<op>RetryWhen` / `<op>FailWhen`
 //     twin into the retry decision over the EXISTING `@d2/resilience`
 //     `ResilientPipeline` — NO new resilience-lib export. The module-local
 //     `D2GeneratedBusinessRetrySignal` (the TS twin of the C# sentinel) carries
@@ -36,9 +36,9 @@
 //
 // Why `// @ts-nocheck` + `/* eslint-disable */` on the emitted .g.ts:
 //   The client references the proto stub + proto message types + the emitted DTO
-//   types + (for a predicate op) the C-5 TS predicate twin — module-relative
-//   imports that wire up only in a real consumer (the BFF SSR composition root,
-//   CB7). The emitted file is therefore plain runtime JS (annotations erased);
+//   types + (for a predicate op) the emitted TS predicate twin — module-relative
+//   imports that wire up only in a real consumer (the BFF SSR composition root).
+//   The emitted file is therefore plain runtime JS (annotations erased);
 //   the byte-gate pins the exact bytes and the behavioral test reconstructs the
 //   factory from the emitted text, driving it against the REAL `@d2/grpc-client`
 //   seam + the REAL fixture ts-proto types (buf/ts-proto output) + a fake stub.
@@ -178,20 +178,21 @@ export function emitTsGrpcClient(
   }
   lines.push("");
 
-  // Module-relative imports the BFF SSR consumer resolves (CB7): DTO types, the
+  // Module-relative imports the BFF SSR consumer resolves: DTO types, the
   // ts-proto message types referenced by the mappers (none needed at type level —
-  // the mappers take/return `unknown`), and (predicate ops) the C-5 twin.
+  // the mappers take/return `unknown`), and (predicate ops) the result-predicate twin.
   lines.push(
-    "// Emitted DTO types + (predicate ops) the C-5 result-predicate twin. Paths resolve",
+    "// Emitted DTO types + (predicate ops) the result-predicate twin. Paths resolve",
   );
-  lines.push("// in the BFF SSR consumer (CB7); @ts-nocheck erases them here.");
+  lines.push("// in the BFF SSR consumer; @ts-nocheck erases them here.");
   // Dedup DTO type imports by name; the import FILE is derived from the type name
   // (the DTO emitter names a type <PascalOp>Input/Output in <kebab-op>-dto.g.ts),
   // so a model shared across ops resolves to a single import (no redeclaration).
   for (const imp of collectDtoTypeImports(ops)) lines.push(imp);
-  // The retry-arm imports the C-5 twin: retryWhen always (it drives the sentinel),
-  // failWhen only when present (the "failWhen WINS" guard). A failWhen-only op has
-  // no retry-arm → no predicate import (failWhen alone is inert at the client).
+  // The retry-arm imports the predicate twin: retryWhen always (it drives the
+  // sentinel), failWhen only when present (the "failWhen WINS" guard). A
+  // failWhen-only op has no retry-arm → no predicate import (failWhen alone is
+  // inert at the client).
   for (const op of ops) {
     if (!opHasRetryArm(op)) continue;
     const predImports = [`${op.opName}RetryWhen`];

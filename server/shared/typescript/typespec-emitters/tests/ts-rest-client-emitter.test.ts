@@ -7,7 +7,7 @@
 // VALIDATION (AMB-3 — faithful apiCall double):
 //   The real browser substrate (apiCall / apiCallAnon / executeFetch) lives in
 //   the DORMANT cross-workspace server/web BFF (the $lib alias resolves only
-//   inside SvelteKit; the real wiring is the host-gated CB8). So the emitted REST
+//   inside SvelteKit; the real wiring is the host-gated BFF composition root). So the emitted REST
 //   client is driven against a FAITHFUL test-double of apiCall / apiCallAnon —
 //   same signature (`<TData>(path, ApiCallOptions): Promise<D2Result<TData>>`),
 //   returning the REAL @d2/result D2Result shape, recording path / method / body /
@@ -269,6 +269,20 @@ describe("emitTsRestClient_FileNameAndShape", () => {
       .filter((l) => l.includes("SignInput") && l.startsWith("import"));
     expect(importLines).toHaveLength(1);
     expect(importLines[0]).toContain('from "./sign-dto.js"');
+  });
+
+  it("withQuery guard uses only undefined check — no null check (DTO fields are ?: T, never T|null)", () => {
+    const get = signRestOp({
+      opName: "getStatus",
+      routePath: "/v1/status",
+      verb: "GET",
+      idempotencyKeySource: "none",
+    });
+    const [file] = emitTsRestClient("KeyCustodian", [get]);
+    // The guard must filter on undefined only; a null-field check would incorrectly
+    // omit fields that happen to hold `null` (which should not arise for ?: T DTOs).
+    expect(file!.content).toContain("if (value !== undefined)");
+    expect(file!.content).not.toContain("value !== null");
   });
 
   it("the emitted source carries no phase / deliverable / audit-round identifiers", () => {

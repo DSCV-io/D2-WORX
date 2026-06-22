@@ -286,6 +286,7 @@ public sealed class RoutePolicyEnforcementTests
     {
         var body = await response.Content.ReadAsStringAsync();
         var doc = JsonDocument.Parse(body);
+
         if (doc.RootElement.TryGetProperty(
                 D2.Shared.ProblemDetails.D2ProblemDetailsKeys.EXTENSION_ERROR_CODE, out var el))
             return el.GetString();

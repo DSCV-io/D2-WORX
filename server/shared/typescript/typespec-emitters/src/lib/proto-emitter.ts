@@ -77,7 +77,7 @@ export type StreamingMode =
  * @param protoPackage      - Proto3 package string (e.g. "d2.keycustodian.v1").
  * @param protoCsharpNs     - C# namespace option (e.g. "D2.Services.Protos.KeyCustodian.V1").
  * @param sourceSpec        - Relative spec path for the banner.
- * @param requestModelName  - TypeSpec model name for the request (e.g. "SignInput").
+ * @param requestModelName  - Proto message name for the request (e.g. "SignRequest").
  * @param requestFields     - Resolved field list for the request model.
  * @param responseModelName - TypeSpec model name for the response DTO (e.g. "SignOutput").
  *                            This name is used for both the Response wrapper message name

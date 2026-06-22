@@ -10,7 +10,7 @@
 // validate.ts).
 //
 // Checks:
-//   D4: @d2RateLimitTier on an op with no public HTTP @route → error.
+//   @d2RateLimitTier on an op with no public HTTP @route → error.
 //       Internal operations bypass Edge rate-limiting and must not carry a tier.
 //   Harmless/scope conflict: @d2Harmless + a scope decorator on the same op → error.
 //       An auth-exempt operation cannot also require scopes.
@@ -52,7 +52,7 @@ import { walkPredicateModel } from "./predicate-model-walk.js";
 /** Program-level cross-decorator validation. Runs after all decorators apply. */
 export function $onValidate(program: Program): void {
   // ----------------------------------------------------------------
-  // D4: @d2RateLimitTier requires a public HTTP @route
+  // @d2RateLimitTier requires a public HTTP @route
   // ----------------------------------------------------------------
   for (const [op] of program.stateMap(D2_RATE_LIMIT_TIER_KEY)) {
     const routePath = getRoutePath(program, op as Operation);

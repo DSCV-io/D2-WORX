@@ -10,13 +10,13 @@
 // @ts-nocheck
 // Generated browser REST client. Each method delegates to the real $lib browser substrate
 // (apiCall / apiCallAnon → fetch + auth + ProblemDetails-to-D2Result). The $lib import + the
-// DTO imports resolve only inside the SvelteKit BFF (CB8) — the emitted file is plain runtime
+// DTO imports resolve only inside the SvelteKit BFF — the emitted file is plain runtime
 // JS; the byte-gate pins the bytes and the behavioral test drives it against a faithful double.
 
 import { apiCall } from "$lib/client/rest/gateway-client.js";
 import type { D2Result } from "@d2/result";
 
-// Emitted DTO types — paths resolve in the SvelteKit BFF consumer (CB8).
+// Emitted DTO types — paths resolve in the SvelteKit BFF consumer.
 import type { SignInput, SignOutput } from "./sign-dto.js";
 
 /** Per-call options for a generated REST client method. */

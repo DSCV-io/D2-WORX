@@ -26,8 +26,9 @@ import { HttpTestLibrary } from "@typespec/http/testing";
 import { VersioningTestLibrary } from "@typespec/versioning/testing";
 import type * as CompilerNs from "@typespec/compiler";
 import { readFileSync } from "node:fs";
-import { dirname, join } from "node:path";
-import { fileURLToPath } from "node:url";
+import { join } from "node:path";
+import { findRepoRoot } from "./repo-root.js";
+import { OPENAPI_GENERATED_BY_EMITTER } from "../src/lib/openapi-emitter.js";
 
 // ===========================================================================
 // Integration — real stock @typespec/openapi3 shape + x-d2-* layering.
@@ -45,14 +46,7 @@ const D2DecoratorTestLibrary = createTestLibrary({
   typespecFileFolder: "lib",
 });
 
-const REPO = join(
-  dirname(fileURLToPath(import.meta.url)),
-  "..",
-  "..",
-  "..",
-  "..",
-  "..",
-);
+const REPO = findRepoRoot(import.meta.url);
 
 const FIXTURE_TSP = readFileSync(
   join(REPO, "contracts/typespec/fixtures/openapi-shaped.tsp"),
@@ -188,7 +182,7 @@ describe("openApiEmitter_Integration_StockShapePlusExtensions", () => {
 
   it("emits a document-level x-d2-generated-by traceability marker", () => {
     const marker = unversioned["x-d2-generated-by"] as Record<string, unknown>;
-    expect(marker["emitter"]).toBe("@d2/typespec-emitters");
+    expect(marker["emitter"]).toBe(OPENAPI_GENERATED_BY_EMITTER);
     expect(typeof marker["note"]).toBe("string");
   });
 
@@ -356,7 +350,7 @@ describe("openApiEmitter_Unit_injectD2Extensions", () => {
       unknown
     >;
     expect(result["x-d2-generated-by"]).toEqual({
-      emitter: "@d2/typespec-emitters",
+      emitter: OPENAPI_GENERATED_BY_EMITTER,
       note: expect.stringContaining("@typespec/openapi3"),
     });
     vi.doUnmock("@typespec/http");

@@ -18,8 +18,8 @@ import { d2ResultFromProto, handleGrpcCall, isTransientGrpcError, unaryCall } fr
 import type { D2Result } from "@d2/result";
 import { ResilientPipeline, ResilientPipelineBuilder } from "@d2/resilience";
 
-// Emitted DTO types + (predicate ops) the C-5 result-predicate twin. Paths resolve
-// in the BFF SSR consumer (CB7); @ts-nocheck erases them here.
+// Emitted DTO types + (predicate ops) the result-predicate twin. Paths resolve
+// in the BFF SSR consumer; @ts-nocheck erases them here.
 import type { PlaceOrderInput, PlaceOrderOutput } from "./place-order-dto.js";
 import { placeOrderRetryWhen, placeOrderFailWhen } from "./place-order-resilience-predicates.js";
 

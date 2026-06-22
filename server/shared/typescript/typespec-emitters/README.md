@@ -7,6 +7,39 @@ Copyright (c) DCSV. All rights reserved.
 TypeSpec emitter suite that reads the `@d2*` operation-contract vocabulary and
 emits C# transport and contract artifacts from TypeSpec specs.
 
+**Audience**: TypeSpec contract authors adding new operations to D²-WORX services,
+and engineers integrating the emitted artifacts (C# DTOs / gRPC service impls /
+route registrations / façades / TS clients) into service projects.
+
+---
+
+## Contents
+
+- [Overview](#overview)
+- [Usage](#usage)
+- [Shared lib](#shared-lib)
+  - [Scalar registry](#scalar-registry-srclibscalar-registryts)
+  - [Name transforms](#name-transforms-srclibname-transformsts)
+  - [Banner](#banner-srclibbannerts)
+  - [Model walker](#model-walker-srclibmodel-walkts)
+  - [C# DTO emitter](#c-dto-emitter-srclibcsharp-dto-emitterts)
+  - [TypeScript DTO emitter](#typescript-dto-emitter-srclibts-dto-emitterts)
+  - [Proto emitter](#proto-emitter-srclibproto-emitterts)
+  - [REST route+policy emitter](#rest-routepolicy-emitter-srclibroute-policy-emitterts)
+  - [gRPC service-impl emitter](#grpc-service-impl-emitter-srclibgrpc-service-emitterts)
+  - [Handler-interface emitter](#handler-interface-emitter-srclibhandler-interface-emitterts)
+  - [Façade emitter](#façade-emitter-srclibfacade-emitterts)
+  - [OpenAPI x-d2-* extension emitter](#openapi-x-d2--extension-emitter-srclibopenapi-emitterts)
+  - [Idempotency gate emitter](#idempotency-gate-emitter-srclibidempotency-gate-emitterts)
+  - [Emit-file wrapper](#emit-file-wrapper-srclibeemit-filets)
+- [Diagnostics](#diagnostics)
+- [Build](#build)
+- [Regenerating the committed fixtures](#regenerating-the-committed-fixtures)
+- [Dependencies](#dependencies)
+- [Telemetry](#telemetry)
+- [Configuration](#configuration)
+- [Edge-cases and error handling](#edge-cases-and-error-handling)
+
 ---
 
 ## Overview
@@ -78,6 +111,18 @@ options:
     csharp-namespace: "D2.YourService.Generated"
 ```
 
+All supported `tspconfig.yaml` options are listed below.
+
+| Option | Type | Required? | Default | Purpose |
+|--------|------|-----------|---------|---------|
+| `emitter-output-dir` | `string` | Required | — | Directory where emitted files are written. Pass `{output-dir}` to inherit the TypeSpec compiler default (fixture mode) or an explicit path (real-module mode). |
+| `csharp-namespace` | `string` | Required | `D2.Generated` | C# namespace for fixture-mode DTOs and the gRPC service-impl class when `csharp-app-namespace-base` is absent. Kept for backward compatibility; in real-module mode this namespace is used only for internal fixture ops. |
+| `csharp-clients-namespace` | `string` | Optional (real-module mode) | — | C# namespace for the Clients project: exposed-op DTOs (`@d2InProcess`, `@d2GrpcMethod`, `@d2ServerPush`, `@route`) and the per-module façade interface land here. Omit when emitting fixture ops only. |
+| `csharp-app-namespace-base` | `string` | Optional (real-module mode) | — | Base C# namespace for app-layer handler interfaces. Per-op CQRS path is `<base>.<Category>.<PascalOp>` (e.g. `D2.Edge.KeyCustodian.App.Application.Handlers.Queries.GetJwks`). When absent, the emitter falls back to fixture mode (handler interfaces land under `csharp-namespace`). |
+| `proto-package` | `string` | Optional | `d2.generated.v1` | proto3 `package` declaration written into the emitted `.proto` file. Use a service-specific value in real-module mode (e.g. `d2.keycustodian.v1`). |
+| `proto-csharp-namespace` | `string` | Optional | `D2.Generated.Protos.V1` | C# namespace declared via `option csharp_namespace` in the emitted `.proto` file. Must match the namespace Grpc.Tools generates for message + service types. |
+| `grpc-service-namespace` | `string` | Optional | `D2.Generated.Grpc` | C# namespace for the generated gRPC service-impl class and its transport mapper. Distinct from `proto-csharp-namespace` so generated proto types and the service impl do not collide. |
+
 The emitter reads `@d2/typespec-decorators` state keys and writes its output
 to `emitter-output-dir`. Set `csharp-namespace` to the target C# namespace.
 Import the decorators library in the `.tsp` spec:
@@ -96,8 +141,12 @@ op createOrder(input: CreateOrderInput): CreateOrderOutput;
 ## Shared lib
 
 The `src/lib/` folder exposes shared utilities consumed by every emitter in
-the fleet. They are re-exported from the package barrel (`src/index.ts`) and
-can be imported from `@d2/typespec-emitters` directly.
+the fleet. Core utilities (scalar registry, name transforms, banner, emit-file
+wrapper, model walker, DTO emitters, idempotency gate, and OpenAPI emitter) are
+re-exported from the package barrel (`src/index.ts`) and can be imported from
+`@d2/typespec-emitters` directly. The remaining emitters (REST route+policy,
+gRPC service-impl, handler-interface, and façade) are fleet-internal — called
+by `$onEmit` in `emitter.ts`, not individually importable from the barrel.
 
 ### Scalar registry (`src/lib/scalar-registry.ts`)
 
@@ -253,8 +302,10 @@ Unmapped scalars trigger `D2TSP001` and cause the function to return `undefined`
 
 ### REST route+policy emitter (`src/lib/route-policy-emitter.ts`)
 
+> Fleet-internal — called from `$onEmit`; not in the barrel.
+
 ```typescript
-import { emitRoutePolicy, emitRoutePolicyMarkers } from "@d2/typespec-emitters";
+import { emitRoutePolicy, emitRoutePolicyMarkers } from "./lib/route-policy-emitter.js";
 
 const routeFile = emitRoutePolicy({
   opName: "sign",
@@ -304,8 +355,10 @@ containing `Map<Op>Route()`. The route delegate:
   validated by `JwtValidator` for every request). An XML-doc remark on the route method notes this.
 - **Rate-tier and CSRF markers** — faithful seam declarations:
   `builder.WithMetadata(new D2GeneratedRateLimitTier("Standard"))` /
-  `builder.WithMetadata(new D2GeneratedCsrfPosture("exempt"))`. These are marker records the future Edge
-  rate-limit/CSRF middleware will read; no enforcement logic is emitted.
+  `builder.WithMetadata(new D2GeneratedCsrfPosture("exempt"))`. These are marker records the Edge
+  rate-limit/CSRF middleware reads; no enforcement logic is emitted here. Replace-trigger: the
+  unbuilt Edge rate-limit/CSRF middleware ships and reads `D2GeneratedRateLimitTier` /
+  `D2GeneratedCsrfPosture` from endpoint metadata.
 - **MAP-ii (D2Result → IResult)** — the HTTP status code is authoritative. The emitted branch keys on
   `(int)result.StatusCode < 400` (not on `result.Success`), so `Created` (201), `SomeFound` (206), and
   `PartialSuccess` (207) carry their real HTTP status codes via `Results.Json(result.Data, statusCode: status)`.
@@ -324,11 +377,12 @@ byte-pinned by `tests/route-policy-emitter.test.ts` byte-parity describe blocks 
 
 ### gRPC service-impl emitter (`src/lib/grpc-service-emitter.ts`)
 
+> Fleet-internal — called from `$onEmit`; not in the barrel (`emitGrpcService` is
+> barrel-exported but `GrpcDelegationTarget` is not).
+
 ```typescript
-import {
-  emitGrpcService,
-  type GrpcDelegationTarget,
-} from "@d2/typespec-emitters";
+import { emitGrpcService } from "@d2/typespec-emitters";
+import type { GrpcDelegationTarget } from "./lib/grpc-service-emitter.js";
 
 // Façade delegation (when op has @d2InProcess):
 const facadeTarget: GrpcDelegationTarget = {
@@ -384,8 +438,10 @@ for `bytes` fields.
 
 ### Handler-interface emitter (`src/lib/handler-interface-emitter.ts`)
 
+> Fleet-internal — called from `$onEmit`; not in the barrel.
+
 ```typescript
-import { emitHandlerInterface } from "@d2/typespec-emitters";
+import { emitHandlerInterface } from "./lib/handler-interface-emitter.js";
 
 const interfaceFile = emitHandlerInterface(
   "getJwks",
@@ -418,8 +474,10 @@ Parameters:
 
 ### Façade emitter (`src/lib/facade-emitter.ts`)
 
+> Fleet-internal — called from `$onEmit`; not in the barrel.
+
 ```typescript
-import { emitFacade } from "@d2/typespec-emitters";
+import { emitFacade } from "./lib/facade-emitter.js";
 
 const [ifaceFile, implFile, diFile] = emitFacade(
   "KeyCustodian",
@@ -479,9 +537,9 @@ Method signature shape (transport-neutral):
 ValueTask<D2Result<<Op>Output?>> <Op>Async(<Op>Input input, CancellationToken ct = default)
 ```
 
-No `HandlerOptions?` parameter — the interface must back both the in-process
-impl today and a future gRPC-client impl; `HandlerOptions` is a server-side
-concern that cannot be expressed on a wire boundary.
+No `HandlerOptions?` parameter — the interface backs both the in-process impl
+and the generated gRPC-client impl; `HandlerOptions` is a server-side concern
+that cannot be expressed on a wire boundary.
 
 ### OpenAPI `x-d2-*` extension emitter (`src/lib/openapi-emitter.ts`)
 
@@ -522,6 +580,75 @@ extension-key order + 2-space indent + trailing LF). Generated-output
 formatting is the emitter's responsibility — the committed `.g.json` fixtures
 are byte-gated and `.prettierignore`d (`**/*.g.json`).
 
+### Idempotency gate emitter (`src/lib/idempotency-gate-emitter.ts`)
+
+```typescript
+import {
+  emitIdempotencyStoreSeam,
+  buildIdempotencyGate,
+  type IdempotencyGateInput,
+  type IdempotencyGateWeave,
+  type IdempotencyKeySource,
+} from "@d2/typespec-emitters";
+
+// Emit the D2GeneratedIdempotencyStore seam interface (one per registration namespace):
+const seamFile = emitIdempotencyStoreSeam(
+  "D2.Edge.Tests.TypeSpecRoute.Generated",
+  "contracts/typespec/fixtures/sign-shaped.tsp",
+);
+// seamFile.fileName → "D2GeneratedIdempotencyStore.g.cs"
+
+// Build the gate weave fragments for a header-keyed operation:
+const weave: IdempotencyGateWeave = buildIdempotencyGate({
+  keySource: "header",
+  ttlSeconds: 86400,
+  fields: [],
+  inputTypeName: "SignInput",
+  outputTypeName: "SignOutput",
+  pascalOpName: "Sign",
+});
+// weave.storeParam       → "D2GeneratedIdempotencyStore store"
+// weave.preDelegateLines → key-resolution + replay-check C# lines
+// weave.postDelegateLines → store-write C# lines
+// weave.extraUsings      → additional using namespaces to merge
+```
+
+Two exports:
+
+- **`emitIdempotencyStoreSeam(registrationNamespace, sourceSpec)`** — emits
+  `D2GeneratedIdempotencyStore.g.cs`: the emitter-owned faithful seam interface
+  for result-replay idempotency. It declares two generic methods:
+  `TryGetAsync<TStored>(key, ct)` (returns `Ok(stored)` on hit, `NotFound` on
+  miss, or a failure on store error) and `StoreAsync<TStored>(key, value, ttl, ct)`
+  (best-effort on write — failure is silently dropped and the gate proceeds).
+  Pure function; returns a single `EmittedFile`. Throws loudly on an empty
+  `registrationNamespace`.
+
+- **`buildIdempotencyGate(input)`** — builds the C# statement fragments
+  (`IdempotencyGateWeave`) that `route-policy-emitter.ts` splices into a
+  generated route delegate body. Two key-extraction strategies are supported:
+  - `keySource: "header"` — reads the `Idempotency-Key` HTTP header; absent or
+    whitespace → immediate `ValidationFailed` (400) via `Falsey()`.
+  - `keySource: "derived"` — SHA-256 hash of the named `fields` from the input
+    DTO, concatenated as `field1|field2|…`. No header required.
+
+  In both cases the gate checks the store on read (fail-open on store outage),
+  replays a stored result verbatim, and writes the outcome after delegation
+  (best-effort). The `route-policy-emitter.ts` orchestrates timing: `preDelegateLines`
+  run after auth enforcement and before the handler or façade call;
+  `postDelegateLines` run after delegation and before the MAP-ii result branch.
+
+**Types**:
+- `IdempotencyKeySource` — `"header" | "derived"`
+- `IdempotencyGateInput` — full gate configuration (key strategy, TTL, field
+  list, DTO type names, PascalCase op name)
+- `IdempotencyGateWeave` — the four splice surfaces returned by `buildIdempotencyGate`:
+  `extraUsings`, `storeParam`, `preDelegateLines`, `postDelegateLines`
+
+Gate fixtures are byte-pinned by `tests/idempotency-gate-emitter.test.ts` and
+exercised end-to-end by the `RouteIdempotencyGateTests` and `RouteFacadeDelegationTests`
+suites in `D2.Edge.Tests`.
+
 ### Emit-file wrapper (`src/lib/emit-file.ts`)
 
 ```typescript
@@ -558,6 +685,7 @@ catalog entry in `src/lib.ts`.
 | D2TSP005 | `unsupported-http-verb`     | An HTTP verb other than get/post/put/delete/patch (e.g. `head`, `options`) has no `Map*` mapping in the route emitter.                                                                                                                                                                                                                              |
 | D2TSP006 | `idempotent-requires-route` | `@d2Idempotent` is present on an operation that has no `@route`. Idempotency gating is REST-only; it is meaningless without a public HTTP route. Add `@route` + a supported HTTP verb to the operation, or remove `@d2Idempotent` if the operation is not intended to have a REST surface.                                                          |
 | D2TSP007 | `unsupported-union-shape`   | A union property's variants are NOT a closed set of string literals (mixed-primitive, mixed-literal-kind, numeric-literal-only, discriminated, or model unions). There is no single cross-language enum representation, so the emitter loud-fails rather than guessing. Replace with a named enum or a closed string-literal union.                 |
+| D2TSP008 | `server-push-requires-payload` | A `@d2ServerPush` operation has an output model that emits no fields (void or empty record). A pure-push dispatcher must have a typed event payload to deliver to the sink. Add at least one field to the output model, or remove `@d2ServerPush` if the operation is not a server-push emitter. |
 
 All diagnostics have `severity: "error"` — every violation fails `tsp compile`
 with a non-zero exit code.
@@ -613,8 +741,13 @@ pnpm run test:coverage
 pnpm run type-check:test
 ```
 
-26 test files, 582 tests. Coverage: 100% lines / branches / functions / statements
-on all `src/**` files (excluding the barrel `src/index.ts`).
+43 test files, 952 tests. Coverage: 100% lines / branches / functions / statements
+on all `src/**` files (excluding the barrel `src/index.ts`). Suites include: DTO
+byte-parity (`byte-parity.test.ts`), gRPC byte-parity + over-the-wire resilience,
+route-policy enforcement + idempotency gate, SSE dispatch, OpenAPI extension emission,
+TS client byte-parity + behavioral validation, `@d2Resilience` predicate + nested-model
+round-trips, temporal scalars + adversarial matrix, enum wire-round-trip, guard extension
+(`emitter-source-labels.test.ts`), and the integration dispatch suites.
 
 ---
 
@@ -706,3 +839,27 @@ will fail the byte-parity tests until the fixtures are refreshed.
 | `devDependencies`  | `typescript`              | `5.9.3`       | Pinned to workspace version                                                      |
 | `devDependencies`  | `vitest`                  | `4.0.18`      | Test runner                                                                      |
 | `devDependencies`  | `@vitest/coverage-v8`     | `4.0.18`      | V8 coverage provider                                                             |
+
+---
+
+## Telemetry
+
+N/A — this package runs at `tsp compile` time (a build tool), not at service
+runtime. It emits no OTel spans, meters, or logs — the artifacts it produces
+reference OTel APIs, but the emitter itself is telemetry-free.
+
+## Configuration
+
+N/A — emitter options (see [Usage](#usage) for the full option table) are TypeSpec
+compiler options declared in the consumer's `tspconfig.yaml`, not environment
+variables or `IOptions<>` instances. There is no runtime config surface.
+
+## Edge-cases and error handling
+
+All error handling surfaces through the `D2TSP*` diagnostic family (see
+[Diagnostics](#diagnostics)) — every unsupported or ambiguous input causes a
+named `"error"`-severity diagnostic and a non-zero `tsp compile` exit code.
+There are no silent fallbacks. The emitter never writes a partial output file
+when a diagnostic fires.
+
+---

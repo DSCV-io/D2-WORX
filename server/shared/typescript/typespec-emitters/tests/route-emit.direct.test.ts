@@ -1345,7 +1345,7 @@ describe("$onEmit_tsGrpcClientDirect_PredicateRetryArm_RealModule", () => {
     );
     expect(tsClient!.content).toContain("new ResilientPipelineBuilder()");
 
-    // The C-5 TS predicate twin is emitted too (the retry-arm consumes it).
+    // The TS predicate twin is emitted too (the retry-arm consumes it).
     const twin = directUnitEmitted.find((e) =>
       e.path.includes("place-order-direct-resilience-predicates.g.ts"),
     );

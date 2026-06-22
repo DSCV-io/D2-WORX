@@ -18,8 +18,8 @@
 
 import { describe, it, expect, beforeAll } from "vitest";
 import { readFileSync } from "node:fs";
-import { dirname, join } from "node:path";
-import { fileURLToPath } from "node:url";
+import { join } from "node:path";
+import { findRepoRoot } from "./repo-root.js";
 import {
   createTestLibrary,
   createTestHost,
@@ -56,18 +56,8 @@ const DEEP_PROTO_NS = "D2.Services.Protos.PredicateFixturesDeep.V1";
 const DEEP_PKG = "d2.predicatefixturesdeep.v1";
 
 const GEN_DIR = join(
-  dirname(fileURLToPath(import.meta.url)),
-  "..",
-  "..",
-  "..",
-  "..",
-  "services",
-  "edge",
-  "tests",
-  "Unit",
-  "KeyCustodian",
-  "TypeSpecGrpcPredicate",
-  "Generated",
+  findRepoRoot(import.meta.url),
+  "server/services/edge/tests/Unit/KeyCustodian/TypeSpecGrpcPredicate/Generated",
 );
 const PROTO_DIR = join(GEN_DIR, "..", "Protos");
 
@@ -126,16 +116,8 @@ beforeAll(async () => {
   });
   const tsp = readFileSync(
     join(
-      dirname(fileURLToPath(import.meta.url)),
-      "..",
-      "..",
-      "..",
-      "..",
-      "..",
-      "contracts",
-      "typespec",
-      "fixtures",
-      "resilience-predicate-shaped.tsp",
+      findRepoRoot(import.meta.url),
+      "contracts/typespec/fixtures/resilience-predicate-shaped.tsp",
     ),
     "utf8",
   );

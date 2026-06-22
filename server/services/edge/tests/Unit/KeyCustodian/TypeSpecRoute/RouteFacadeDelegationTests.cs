@@ -96,7 +96,7 @@ public sealed class RouteFacadeDelegationTests
 
         await client.PostAsJsonAsync(
             "/internal/v1/kc/sign",
-            new SignInput(kid, Array.Empty<byte>()));
+            new SignInput(kid, []));
 
         fake.SignCallCount.Should().Be(1);
         fake.LastSignInput.Should().NotBeNull();
@@ -136,7 +136,7 @@ public sealed class RouteFacadeDelegationTests
     [Fact]
     public async Task SignRoute_SomeFound_Returns206WithBody()
     {
-        // Pins the latent bug D3: a SomeFound result has Success==false AND
+        // Pins the SomeFound status-mapping bug: a SomeFound result has Success==false AND
         // StatusCode==206. The old if (result.Success) branch would have routed
         // this to ToProblemDetails, which throws on a 2xx status code. This test
         // MUST fail without the status-mapped emitter change (status < 400 branch).

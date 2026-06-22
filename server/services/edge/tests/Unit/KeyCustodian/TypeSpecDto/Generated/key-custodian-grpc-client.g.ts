@@ -17,8 +17,8 @@
 import { d2ResultFromProto, handleGrpcCall, unaryCall } from "@d2/grpc-client";
 import type { D2Result } from "@d2/result";
 
-// Emitted DTO types + (predicate ops) the C-5 result-predicate twin. Paths resolve
-// in the BFF SSR consumer (CB7); @ts-nocheck erases them here.
+// Emitted DTO types + (predicate ops) the result-predicate twin. Paths resolve
+// in the BFF SSR consumer; @ts-nocheck erases them here.
 import type { SignInput, SignOutput } from "./sign-dto.js";
 
 /** Per-call options for a generated gRPC client method. */

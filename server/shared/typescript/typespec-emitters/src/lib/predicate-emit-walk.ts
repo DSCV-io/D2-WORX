@@ -23,7 +23,7 @@
 //   emitter package's own concern and is bounded to this file.
 //
 // This module performs NO string assembly of the full access chain and emits NO
-// diagnostics — the C-3 $onValidate model walk is the gate (a path the validator
+// diagnostics — the $onValidate model walk is the gate (a path the validator
 // accepted is known-resolvable here). It exposes pure per-segment resolution
 // primitives the result-predicate emitter composes. No runtime reflection: the
 // crawl is gen-time only, producing direct typed member access.
@@ -56,14 +56,14 @@ export interface SegmentResolution {
    * Model — the node an `any` / `all` sub-predicate walks. Undefined when the
    * element is a scalar / enum / union (no sub-model to recurse into).
    */
-  readonly elementModel: Model | undefined;
+  readonly elementModel?: Model;
   /**
    * The resolved field Model when the property is a non-array nested Model — the
    * node the NEXT path segment walks. Undefined for scalar / collection / enum /
-   * union fields (a deeper field segment is then unresolvable, which the C-3
-   * validator already rejected).
+   * union fields (a deeper field segment is then unresolvable, which the
+   * decorator validator already rejected).
    */
-  readonly fieldModel: Model | undefined;
+  readonly fieldModel?: Model;
 }
 
 // ---------------------------------------------------------------------------
@@ -92,12 +92,12 @@ function asNestedModel(t: Type | undefined): Model | undefined {
 // ---------------------------------------------------------------------------
 
 /**
- * Resolve a single `field` segment against `model`. The C-3 $onValidate walk
+ * Resolve a single `field` segment against `model`. The $onValidate model walk
  * guarantees the field exists and the path is well-formed, so an absent property
- * here is a contract-level invariant violation (the validator is the gate) — it
- * throws loudly rather than silently emitting broken access (fail-loud, no
- * silent `null`). `model` undefined means a prior segment resolved to a
- * non-model type, which the validator likewise rejected.
+ * here is a contract-level invariant violation (the decorator validator is the
+ * gate) — it throws loudly rather than silently emitting broken access (fail-loud,
+ * no silent `null`). `model` undefined means a prior segment resolved to a
+ * non-model type, which the decorator validator likewise rejected.
  */
 export function resolveSegment(
   model: Model | undefined,
@@ -105,13 +105,13 @@ export function resolveSegment(
 ): SegmentResolution {
   if (model === undefined)
     throw new Error(
-      `predicate-emit-walk: cannot resolve '${fieldName}' — the prior path segment did not resolve to a model (the C-3 validator should have rejected this path)`,
+      `predicate-emit-walk: cannot resolve '${fieldName}' — the prior path segment did not resolve to a model (the decorator validator should have rejected this path)`,
     );
 
   const prop: ModelProperty | undefined = model.properties.get(fieldName);
   if (prop === undefined)
     throw new Error(
-      `predicate-emit-walk: field '${fieldName}' is not a property of model '${model.name}' (the C-3 validator should have rejected this path)`,
+      `predicate-emit-walk: field '${fieldName}' is not a property of model '${model.name}' (the decorator validator should have rejected this path)`,
     );
 
   const propType: Type = prop.type;

@@ -447,7 +447,7 @@ describe("parse_TrailingAnd_Reject", () => {
 
 describe("parse_OrderedComparator_Reject", () => {
   it("rejects result.statusCode > 400 (no ordered comparators) with resilience-predicate-malformed", () => {
-    // '>' is an unrecognized character → malformed (D-R4: ordered comparators excluded).
+    // '>' is an unrecognized character → malformed (ordered comparators are excluded).
     assertFail(
       parseResultPredicate("result.statusCode > 400"),
       "resilience-predicate-malformed",
@@ -715,7 +715,7 @@ describe("parse_InListMixedTypes_Reject", () => {
 });
 
 // ----------------------------------------------------------------
-// Invalid — shadowed elemVar (D-R9)
+// Invalid — shadowed elemVar
 // ----------------------------------------------------------------
 
 describe("parse_ShadowedElemVar_Reject", () => {

@@ -301,7 +301,7 @@ describe("emitCsharpDtos_EmptyNestedModel_ParameterlessRecord", () => {
 });
 
 // ---------------------------------------------------------------------------
-// Enum / string-literal-union emission (C-2)
+// Enum / string-literal-union emission
 // ---------------------------------------------------------------------------
 
 const KEY_KIND: NestedEnum = {

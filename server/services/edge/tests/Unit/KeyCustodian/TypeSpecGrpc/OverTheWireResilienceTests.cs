@@ -141,7 +141,7 @@ public sealed class OverTheWireResilienceTests
 
         var signInput = new DtoSignInput("key-s2", new byte[] { 0xAB });
 
-        // --- Phase 1: drive `threshold` faults to open the breaker ---
+        // --- Stage 1: drive `threshold` faults to open the breaker ---
         for (var i = 0; i < threshold; i++)
         {
             var fault = await client.SignAsync(signInput);
@@ -151,7 +151,7 @@ public sealed class OverTheWireResilienceTests
         breaker.State.Should().Be(CircuitState.Open, "threshold consecutive faults open the breaker");
         var callCountAfterOpen = shim.CallCount;
 
-        // --- Phase 2: open-window call is fast-failed (does NOT reach the server) ---
+        // --- Stage 2: open-window call is fast-failed (does NOT reach the server) ---
         var fastFail = await client.SignAsync(signInput);
         fastFail.Success.Should().BeFalse();
         fastFail.StatusCode.Should().Be(
@@ -161,7 +161,7 @@ public sealed class OverTheWireResilienceTests
             callCountAfterOpen,
             "the open-circuit fast-fail did not reach the server (call-count frozen)");
 
-        // --- Phase 3: advance the fake clock past cooldown; disable fault; probe succeeds ---
+        // --- Stage 3: advance the fake clock past cooldown; disable fault; probe succeeds ---
         Volatile.Write(ref fakeNow[0], cooldown_ms);
         shim.SetFaultMode(false);
 
@@ -396,19 +396,17 @@ public sealed class OverTheWireResilienceTests
     /// </summary>
     private static ResilientPipeline<string, DtoSignOutput?> BuildSignRetryPipeline(int maxAttempts)
     {
-        var services = new ServiceCollection();
-        services.AddResilientPipeline<string, DtoSignOutput?>(
-            "wire-sign-retry",
-            b => b.UseRetries(new RetryOptions<DtoSignOutput?>
-            {
-                MaxAttempts = maxAttempts,
-                BaseDelayMs = 1,
-                Jitter = false,
-                IsTransient = ex => ex is RpcException r && ProtoExtensions.IsTransientGrpcException(r),
-                DelayFunc = (_, _) => Task.CompletedTask,
-            }));
-        using var sp = services.BuildServiceProvider();
-        return sp.GetRequiredKeyedService<ResilientPipeline<string, DtoSignOutput?>>("wire-sign-retry");
+        var builder = new ResilientPipelineBuilder<string, DtoSignOutput?>(
+            new ServiceCollection().BuildServiceProvider());
+        builder.UseRetries(new RetryOptions<DtoSignOutput?>
+        {
+            MaxAttempts = maxAttempts,
+            BaseDelayMs = 1,
+            Jitter = false,
+            IsTransient = ex => ex is RpcException r && ProtoExtensions.IsTransientGrpcException(r),
+            DelayFunc = (_, _) => Task.CompletedTask,
+        });
+        return builder.Build();
     }
 
     /// <summary>
@@ -433,22 +431,19 @@ public sealed class OverTheWireResilienceTests
     private static ResilientPipeline<string, DtoPlaceOrderOutput?> BuildPredicateRetryPipeline(
         int maxAttempts)
     {
-        var services = new ServiceCollection();
-        services.AddResilientPipeline<string, DtoPlaceOrderOutput?>(
-            "wire-predicate-retry",
-            b => b.UseRetries(new RetryOptions<DtoPlaceOrderOutput?>
-            {
-                MaxAttempts = maxAttempts,
-                BaseDelayMs = 1,
-                Jitter = false,
-                IsTransient = ex =>
-                    ex is D2GeneratedBusinessRetrySignal
-                    || (ex is RpcException r && ProtoExtensions.IsTransientGrpcException(r)),
-                DelayFunc = (_, _) => Task.CompletedTask,
-            }));
-        using var sp = services.BuildServiceProvider();
-        return sp.GetRequiredKeyedService<ResilientPipeline<string, DtoPlaceOrderOutput?>>(
-            "wire-predicate-retry");
+        var builder = new ResilientPipelineBuilder<string, DtoPlaceOrderOutput?>(
+            new ServiceCollection().BuildServiceProvider());
+        builder.UseRetries(new RetryOptions<DtoPlaceOrderOutput?>
+        {
+            MaxAttempts = maxAttempts,
+            BaseDelayMs = 1,
+            Jitter = false,
+            IsTransient = ex =>
+                ex is D2GeneratedBusinessRetrySignal
+                || (ex is RpcException r && ProtoExtensions.IsTransientGrpcException(r)),
+            DelayFunc = (_, _) => Task.CompletedTask,
+        });
+        return builder.Build();
     }
 
     // -----------------------------------------------------------------------
@@ -496,6 +491,7 @@ public sealed class OverTheWireResilienceTests
         public override Task<SignResponse> Sign(SignRequest request, ServerCallContext context)
         {
             var attempt = Interlocked.Increment(ref _callCount);
+
             if (attempt == 1)
                 throw new RpcException(new Status(StatusCode.Unavailable, "transient wire fault"));
 
@@ -524,6 +520,7 @@ public sealed class OverTheWireResilienceTests
         public override Task<SignResponse> Sign(SignRequest request, ServerCallContext context)
         {
             Interlocked.Increment(ref _callCount);
+
             if (_faultMode)
                 throw new RpcException(new Status(StatusCode.Unavailable, "breaker-open wire fault"));
 

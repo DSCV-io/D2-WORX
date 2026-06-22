@@ -4,7 +4,7 @@
 
 // Structural coverage for grpc-client-emitter.ts.
 //
-// Tests are organised by function:
+// Tests are organized by function:
 //   - emitGrpcClient (public) — 4-file tuple, guard cases, multi-op
 //   - emitClientKeys (public) — keys class, empty / non-empty op names
 //   - Mapper body correctness — byte[] CopyFrom / ToByteArray / plain string
@@ -1251,7 +1251,7 @@ describe("emitGrpcClient_PredicateArm", () => {
     expect(files[3]!.content).not.toContain("D2GeneratedBusinessRetrySignal");
   });
 
-  it("NO-predicate op → impl + DI-ext are byte-identical to the C-4 output (back-compat pin)", () => {
+  it("NO-predicate op → impl + DI-ext are byte-identical to the pre-predicate output (back-compat pin)", () => {
     const plain = emitGrpcClient("KeyCustodian", [makeSignOp()], CLIENTS_NS);
     expect(plain[1]!.content).not.toContain("D2GeneratedBusinessRetrySignal");
     expect(plain[1]!.content).not.toContain("capturedData");

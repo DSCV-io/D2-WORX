@@ -17,8 +17,8 @@
 
 import { describe, it, expect, beforeAll } from "vitest";
 import { readFileSync } from "node:fs";
-import { dirname, join } from "node:path";
-import { fileURLToPath } from "node:url";
+import { join } from "node:path";
+import { findRepoRoot } from "./repo-root.js";
 import {
   createTestLibrary,
   createTestHost,
@@ -70,11 +70,8 @@ const PROTO_NS = "D2.Services.Protos.PredicateFixtures.V1";
 const SPEC = "contracts/typespec/fixtures/resilience-predicate-shaped.tsp";
 
 const FIXTURE_DIR = join(
-  dirname(fileURLToPath(import.meta.url)),
-  "..",
-  "..",
-  "..",
-  "..",
+  findRepoRoot(import.meta.url),
+  "server",
   "services",
   "edge",
   "tests",
@@ -110,12 +107,7 @@ beforeAll(async () => {
   });
   const tsp = readFileSync(
     join(
-      dirname(fileURLToPath(import.meta.url)),
-      "..",
-      "..",
-      "..",
-      "..",
-      "..",
+      findRepoRoot(import.meta.url),
       "contracts",
       "typespec",
       "fixtures",

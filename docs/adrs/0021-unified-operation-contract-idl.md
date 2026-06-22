@@ -47,11 +47,11 @@ A `@d2/typespec-emitters` package contains the emitter fleet, each a `$onEmit` f
 | Emitter | Produces |
 | ------- | -------- |
 | C# DTO | `record` types with correct nullability and `[RedactData]` on PII properties |
-| TS DTO | TypeScript types with the `T \| undefined` convention |
+| TS DTO | TypeScript types with `T?` (optional shorthand — never `T \| null`) |
 | proto | `.proto` messages + services, fed to buf / Grpc.Tools for the gRPC wire |
 | OpenAPI (D² extension layer) | per-version OpenAPI with the `x-d2-*` policy extensions the stock emitter cannot surface |
 | route + policy | .NET REST route registrations with scope / tier / risk / audience enforcement applied |
-| in-process leaf | `I<Module>InternalApi` leaf interfaces for in-host module-to-module calls |
+| in-process leaf | `I<Module>Api` + `<Module>Api` façade pair — curated public interface (in `Clients` namespace) + sealed delegating impl (in `app/` namespace), for in-host module-to-module calls |
 | parity | the cross-language and registry-existence validation tests (see below) |
 
 The stock `@typespec/openapi3` emitter validates the HTTP shape correctly and is used for that; the D² OpenAPI extension layer adds the policy extensions on top.

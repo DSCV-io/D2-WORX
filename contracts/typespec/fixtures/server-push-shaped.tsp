@@ -20,7 +20,7 @@
 //     with no request input.
 //   - has an OUTPUT payload carrying a nested model field + a temporal field, so
 //     the dispatcher/seam payload type proves walkModel nested + temporal
-//     integration end-to-end (the C-1 temporal + nested-model support flows
+//     integration end-to-end (temporal + nested-model support flows
 //     through the dispatch contract byte-identically).
 //
 // The dispatcher's targetId is a runtime arg (the explicit recipient id), NOT a
@@ -45,7 +45,7 @@ model OrderLine {
 model OrderShippedOutput {
   orderId: string;
 
-  /** Temporal field — proves the C-1 utcDateTime mapping flows through the dispatch payload. */
+  /** Temporal field — proves the utcDateTime mapping flows through the dispatch payload. */
   shippedAt: utcDateTime;
 
   /** Nested array-of-model field — proves walkModel nested integration end-to-end. */
@@ -56,7 +56,7 @@ model OrderShippedOutput {
 model SessionExpiringOutput {
   sessionId: string;
 
-  /** Temporal field on the session-channel payload. */
+  /** Temporal field on the session-channel payload (proves utcDateTime mapping on the session channel too). */
   expiresAt: utcDateTime;
 }
 

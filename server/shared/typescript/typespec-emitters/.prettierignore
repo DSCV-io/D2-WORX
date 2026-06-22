@@ -1,0 +1,6 @@
+# -----------------------------------------------------------------------
+# Copyright (c) DCSV. All rights reserved.
+# -----------------------------------------------------------------------
+
+# ts-proto generated output — not hand-authored; exempt from prettier.
+tests/grpc-fixtures/generated/**

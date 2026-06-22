@@ -416,7 +416,7 @@ describe("walkModel_TemporalScalars_ResolveCorrectly", () => {
 });
 
 // ---------------------------------------------------------------------------
-// Enum / string-literal-union recognition (the C-2 SUPPORTED shapes)
+// Enum / string-literal-union recognition (supported shapes)
 // ---------------------------------------------------------------------------
 
 /** Build a synthetic TypeSpec Enum stub with the given members. */

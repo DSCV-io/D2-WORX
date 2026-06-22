@@ -95,8 +95,8 @@ import { $lib } from "./lib.js";
 //      @d2Resilience predicate twins (C# + TS) + the retry sentinel.
 //   8. <module>-grpc-client.g.ts — the TS SSR gRPC client (per @d2ServedBy
 //      module): the TS twin of the C# gRPC client, delegating to the real
-//      @d2/grpc-client seam over the ts-proto grpc-js stub, folding in the C-5
-//      TS predicate twin's retry-arm for a @d2Resilience op.
+//      @d2/grpc-client seam over the ts-proto grpc-js stub, folding in the
+//      emitted TS predicate twin's retry-arm for a @d2Resilience op.
 //   9. <module>-rest-client.g.ts — the TS browser REST client (per @d2ServedBy
 //      module): per-@route typed fns delegating to the $lib apiCall/apiCallAnon
 //      substrate (ProblemDetails / envelope → D2Result).
@@ -140,7 +140,7 @@ import { $lib } from "./lib.js";
 /** Shape of one operation entry in the smoke manifest. */
 export interface ManifestOperation {
   readonly name: string;
-  readonly servedBy: string | undefined;
+  readonly servedBy?: string;
   readonly hasGrpc: boolean;
   readonly inProcess: boolean;
 }
@@ -159,13 +159,13 @@ export interface OperationsManifest {
  */
 interface CollectedGrpcOp {
   readonly clientOp: GrpcClientOp;
-  readonly outputModel: Model | undefined;
+  readonly outputModel?: Model;
   /**
    * Max-attempts budget parsed from the op's @d2Resilience("retry(N)") DSL, when
    * present. Threaded into the TS SSR gRPC client's predicate retry pipeline
    * (`maxAttempts`). Undefined when the op carries no @d2Resilience pipeline DSL.
    */
-  readonly retryBudget: number | undefined;
+  readonly retryBudget?: number;
 }
 
 /**
@@ -509,9 +509,9 @@ export async function $onEmit(context: EmitContext): Promise<void> {
 
           // Read back the @d2Resilience retryWhen / failWhen raw strings (stored
           // by the decorator on the two predicate state keys) and parse each into
-          // its AST. C-3 already validated them at compile time, so a parse error
-          // here would be a contract-level invariant break — surface it via the
-          // emitter's diagnostic surface and skip the predicate (no broken emit).
+          // its AST. The decorator validator already validated them at compile time,
+          // so a parse error here would be a contract-level invariant break — surface
+          // it via the emitter's diagnostic surface and skip the predicate (no broken emit).
           const retryWhenAst = parseOpPredicate(
             program,
             op,
@@ -668,8 +668,8 @@ export async function $onEmit(context: EmitContext): Promise<void> {
   // ---- TS SSR gRPC client — one <module>-grpc-client.g.ts per @d2ServedBy module ----
   // Reuses the already-collected grpcOpsByModule (one TS client per module with
   // ≥1 @d2GrpcMethod op). The TS twin of the C# gRPC client: delegates to the real
-  // @d2/grpc-client seam over the ts-proto grpc-js stub; folds the C-5 TS predicate
-  // twin into the retry-arm for a @d2Resilience op.
+  // @d2/grpc-client seam over the ts-proto grpc-js stub; folds the emitted TS
+  // predicate twin into the retry-arm for a @d2Resilience op.
   for (const [moduleName, moduleOps] of grpcOpsByModule) {
     const tsOps: TsGrpcClientOp[] = moduleOps.map((m) => ({
       opName: m.clientOp.opName,
@@ -864,7 +864,7 @@ function resolveCategory(
  *
  * Routing table:
  *   - csAppNamespaceBase present + isExposed + csClientsNamespace present
- *     → Clients namespace (exposed ops' DTOs live in Clients per D-c).
+ *     → Clients namespace (exposed ops' DTOs live in the Clients project).
  *   - csAppNamespaceBase present + isInternal + category resolved
  *     → `<base>.<Category>.<PascalOp>` (internal-op DTOs in app CQRS ns).
  *   - No csAppNamespaceBase (fixture mode)
@@ -1403,7 +1403,7 @@ function emitRouteIfPresent(
   void emitGeneratedFile(program, routePath2, routeFile.content);
 
   // ---- Collect this routed op for the per-module TS browser REST client ----
-  // The REST client names off the PERMANENT @d2ServedBy module (D18). An op with
+  // The REST client names off the PERMANENT @d2ServedBy module. An op with
   // @route but no @d2ServedBy has no module to name the surface — skip the REST
   // collection (the C# route above still emits; @d2ServedBy is not required there).
   if (servedBy !== undefined && servedBy.length > 0) {
@@ -1576,7 +1576,7 @@ function parseOpPredicate(
   if (raw === undefined) return undefined;
 
   const parsed = parseResultPredicate(raw);
-  /* v8 ignore start — unreachable: C-3 validateResultPredicate already gated this exact parse at compile time */
+  /* v8 ignore start — unreachable: the decorator validator already gated this exact parse at compile time */
   if (!parsed.ok) return undefined;
   /* v8 ignore stop */
   return parsed.root;

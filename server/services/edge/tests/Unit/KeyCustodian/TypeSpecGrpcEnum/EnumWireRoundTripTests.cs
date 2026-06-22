@@ -150,7 +150,7 @@ public sealed class EnumWireRoundTripTests
         // JsonStringEnumConverter is case-INSENSITIVE by default — "rsa"/"RSA"
         // deserialize to KeyKind.Rsa in C#. The TS const-object is case-SENSITIVE
         // (exact key only). This is a documented cross-language divergence (like
-        // the C-1 C#-throws/TS-RangeError split) — pinned here, surfaced in
+        // the C# JsonException/TS-RangeError split for unknown enum values) — pinned here, surfaced in
         // VALIDATION.md, NOT silently reconciled. The TS half asserts membership
         // misses for the same values.
         JsonSerializer.Deserialize<KeyKind>("\"rsa\"", SerializerOptions.SR_Web).Should().Be(KeyKind.Rsa);

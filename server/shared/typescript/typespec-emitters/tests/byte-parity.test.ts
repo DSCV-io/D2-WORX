@@ -12,8 +12,8 @@
 
 import { describe, it, expect } from "vitest";
 import { readFileSync } from "node:fs";
-import { dirname, join } from "node:path";
-import { fileURLToPath } from "node:url";
+import { join } from "node:path";
+import { findRepoRoot } from "./repo-root.js";
 import type { Model, ModelProperty, Program, Scalar } from "@typespec/compiler";
 import { D2_REDACT_KEY } from "@d2/typespec-decorators";
 import { walkModel } from "../src/lib/model-walk.js";
@@ -668,14 +668,7 @@ describe("byteParity_GetJwksDto_TsFile", () => {
 // Enum-shaped byte-gates (the enum-shaped.tsp committed fixtures)
 // ---------------------------------------------------------------------------
 
-const REPO = join(
-  dirname(fileURLToPath(import.meta.url)),
-  "..",
-  "..",
-  "..",
-  "..",
-  "..",
-);
+const REPO = findRepoRoot(import.meta.url);
 const DTO_HOME = join(
   REPO,
   "server/services/edge/tests/Unit/KeyCustodian/TypeSpecDto/Generated",

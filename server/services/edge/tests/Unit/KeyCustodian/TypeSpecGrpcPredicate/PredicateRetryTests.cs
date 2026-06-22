@@ -63,8 +63,8 @@ public sealed class PredicateRetryTests
     // A SUCCESS with partial==true matches retryWhen (the flat-bool arm) but NOT
     // failWhen (itemStatuses is non-empty, errorCode is not VALIDATION_FAILED), so
     // the sentinel fires; on budget-exhaust the SUCCESS is restored VERBATIM (200 +
-    // data — NOT mapped to 503 / 500). FAILS WITHOUT the sentinel (C-4 returns it
-    // after one call).
+    // data — NOT mapped to 503 / 500). FAILS WITHOUT the retry-sentinel (the plain
+    // gRPC client returns it after one call).
     // ---------------------------------------------------------------------------
 
     [Fact]
@@ -323,21 +323,20 @@ public sealed class PredicateRetryTests
     /// </summary>
     private static ResilientPipeline<string, DtoPlaceOrderOutput?> BuildRetryPipeline(int maxAttempts)
     {
-        var services = new ServiceCollection();
-        services.AddResilientPipeline<string, DtoPlaceOrderOutput?>(
-            "test-predicate-retry",
-            b => b.UseRetries(new RetryOptions<DtoPlaceOrderOutput?>
-            {
-                MaxAttempts = maxAttempts,
-                BaseDelayMs = 1,
-                Jitter = false,
-                IsTransient = ex =>
-                    ex is D2GeneratedBusinessRetrySignal
-                    || (ex is RpcException r && ProtoExtensions.IsTransientGrpcException(r)),
-            }));
-        using var sp = services.BuildServiceProvider();
-        return sp.GetRequiredKeyedService<ResilientPipeline<string, DtoPlaceOrderOutput?>>(
-            "test-predicate-retry");
+        var builder = new ResilientPipelineBuilder<string, DtoPlaceOrderOutput?>(
+            new ServiceCollection().BuildServiceProvider());
+
+        builder.UseRetries(new RetryOptions<DtoPlaceOrderOutput?>
+        {
+            MaxAttempts = maxAttempts,
+            BaseDelayMs = 1,
+            Jitter = false,
+            IsTransient = ex =>
+                ex is D2GeneratedBusinessRetrySignal
+                || (ex is RpcException r && ProtoExtensions.IsTransientGrpcException(r)),
+        });
+
+        return builder.Build();
     }
 
     private static PlaceOrderResponse BuildResponse(

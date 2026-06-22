@@ -23,6 +23,7 @@ internal sealed class FakeIdempotencyStore : D2GeneratedIdempotencyStore
     private readonly TimeProvider r_clock;
 
     private bool _faulted;
+    private bool _writeFaulted;
 
     /// <summary>
     /// Initializes a new instance of <see cref="FakeIdempotencyStore"/> with
@@ -47,18 +48,29 @@ internal sealed class FakeIdempotencyStore : D2GeneratedIdempotencyStore
     /// <summary>Gets the number of <see cref="StoreAsync{TStored}"/> invocations.</summary>
     public int StoreCallCount { get; private set; }
 
-    /// <summary>Simulate a store outage: every call returns <c>ServiceUnavailable</c>.</summary>
+    /// <summary>
+    /// Simulate a full store outage: every read and write returns <c>ServiceUnavailable</c>.
+    /// </summary>
     public void SetFaulted() => _faulted = true;
+
+    /// <summary>
+    /// Simulate a write-only outage: <see cref="TryGetAsync{TStored}"/> behaves normally;
+    /// <see cref="StoreAsync{TStored}"/> returns <c>ServiceUnavailable</c>.
+    /// </summary>
+    public void SetWriteFaulted() => _writeFaulted = true;
 
     /// <inheritdoc/>
     public ValueTask<D2Result<TStored?>> TryGetAsync<TStored>(
         string key, CancellationToken ct = default)
     {
         TryGetCallCount++;
+
         if (_faulted)
             return new(D2Result<TStored?>.ServiceUnavailable());
+
         if (!r_store.TryGetValue(key, out var entry) || entry.ExpiresAt <= r_clock.GetUtcNow())
             return new(D2Result<TStored?>.NotFound());
+
         return new(D2Result<TStored?>.Ok((TStored?)entry.Value));
     }
 
@@ -67,8 +79,10 @@ internal sealed class FakeIdempotencyStore : D2GeneratedIdempotencyStore
         string key, TStored value, TimeSpan ttl, CancellationToken ct = default)
     {
         StoreCallCount++;
-        if (_faulted)
+
+        if (_faulted || _writeFaulted)
             return new(D2Result.ServiceUnavailable());
+
         r_store[key] = new Entry(value, r_clock.GetUtcNow() + ttl);
         return new(D2Result.Ok());
     }

@@ -12,8 +12,8 @@
 
 import { describe, it, expect } from "vitest";
 import { readFileSync } from "node:fs";
-import { dirname, join } from "node:path";
-import { fileURLToPath } from "node:url";
+import { join } from "node:path";
+import { findRepoRoot } from "./repo-root.js";
 import {
   emitTsGrpcClient,
   type TsGrpcClientOp,
@@ -34,14 +34,7 @@ function parsePred(expr: string): PredicateNode {
   return parsed.root;
 }
 
-const REPO = join(
-  dirname(fileURLToPath(import.meta.url)),
-  "..",
-  "..",
-  "..",
-  "..",
-  "..",
-);
+const REPO = findRepoRoot(import.meta.url);
 const KC = join(REPO, "server/services/edge/tests/Unit/KeyCustodian");
 const PRED_GEN = join(KC, "TypeSpecGrpcPredicate/Generated");
 const DTO_GEN = join(KC, "TypeSpecDto/Generated");

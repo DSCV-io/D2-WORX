@@ -73,7 +73,7 @@ public sealed class RouteIdempotencyGateTests
         var first = await PostWithHeaderAsync(
             client,
             "/internal/v1/kc/sign",
-            new SignInput("kid-001", Array.Empty<byte>()),
+            new SignInput("kid-001", []),
             _IDEMPOTENCY_KEY_HEADER,
             idempotencyKey);
         first.StatusCode.Should().Be(HttpStatusCode.OK);
@@ -84,7 +84,7 @@ public sealed class RouteIdempotencyGateTests
         var second = await PostWithHeaderAsync(
             client,
             "/internal/v1/kc/sign",
-            new SignInput("kid-001", Array.Empty<byte>()),
+            new SignInput("kid-001", []),
             _IDEMPOTENCY_KEY_HEADER,
             idempotencyKey);
         second.StatusCode.Should().Be(HttpStatusCode.OK);
@@ -111,7 +111,7 @@ public sealed class RouteIdempotencyGateTests
         // No Idempotency-Key header — gate rejects with 400.
         var response = await client.PostAsJsonAsync(
             "/internal/v1/kc/sign",
-            new SignInput("kid-001", Array.Empty<byte>()));
+            new SignInput("kid-001", []));
 
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
         response.Content.Headers.ContentType?.MediaType.Should().Be("application/problem+json");
@@ -136,7 +136,7 @@ public sealed class RouteIdempotencyGateTests
         var response = await PostWithHeaderAsync(
             client,
             "/internal/v1/kc/sign",
-            new SignInput("kid-001", Array.Empty<byte>()),
+            new SignInput("kid-001", []),
             _IDEMPOTENCY_KEY_HEADER,
             "   ");
 
@@ -160,7 +160,7 @@ public sealed class RouteIdempotencyGateTests
         var response = await PostWithHeaderAsync(
             client,
             "/internal/v1/kc/sign",
-            new SignInput("kid-001", Array.Empty<byte>()),
+            new SignInput("kid-001", []),
             _IDEMPOTENCY_KEY_HEADER,
             "idem-outage");
 
@@ -187,7 +187,7 @@ public sealed class RouteIdempotencyGateTests
         var first = await PostWithHeaderAsync(
             client,
             "/internal/v1/kc/sign",
-            new SignInput("kid-001", Array.Empty<byte>()),
+            new SignInput("kid-001", []),
             _IDEMPOTENCY_KEY_HEADER,
             idempotencyKey);
         first.StatusCode.Should().Be(HttpStatusCode.ServiceUnavailable);
@@ -197,11 +197,40 @@ public sealed class RouteIdempotencyGateTests
         var second = await PostWithHeaderAsync(
             client,
             "/internal/v1/kc/sign",
-            new SignInput("kid-001", Array.Empty<byte>()),
+            new SignInput("kid-001", []),
             _IDEMPOTENCY_KEY_HEADER,
             idempotencyKey);
         second.StatusCode.Should().Be(HttpStatusCode.ServiceUnavailable);
         fake.SignCallCount.Should().Be(1);
+    }
+
+    // ── Header keySource: store write outage → still returns delegate result ───
+
+    [Fact]
+    public async Task SignRoute_StoreWriteOutage_SuccessResultStillReturned()
+    {
+        // Write-fault: TryGet behaves normally (returns NotFound → cache miss);
+        // StoreAsync returns ServiceUnavailable. Best-effort write — the gate must
+        // NOT surface the write failure to the caller; the delegate result is returned.
+        using var jwt = new TestJwtBuilder();
+        var fake = new FakeKeyCustodianSignerFacade(
+            signResult: D2Result<SignOutput?>.Ok(new SignOutput("sig-write-fault")));
+        var store = new FakeIdempotencyStore();
+        store.SetWriteFaulted();
+        using var host = await BuildSignHostAsync(jwt, fake, store);
+        var client = BuildAuthenticatedClient(host, jwt);
+
+        var response = await PostWithHeaderAsync(
+            client,
+            "/internal/v1/kc/sign",
+            new SignInput("kid-001", []),
+            _IDEMPOTENCY_KEY_HEADER,
+            "idem-write-fault");
+
+        // Delegate was invoked and result was returned despite the write failure.
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        fake.SignCallCount.Should().Be(1);
+        store.StoreCallCount.Should().Be(1, "gate attempted the write even though it failed");
     }
 
     // ── Derived keySource: key is SHA-256 of kid field ────────────────────────
@@ -222,7 +251,7 @@ public sealed class RouteIdempotencyGateTests
         // First call — stores the result; key is derived from kid.
         var first = await client.PostAsJsonAsync(
             "/internal/v1/kc/sign-derived",
-            new SignInput(kid, Array.Empty<byte>()));
+            new SignInput(kid, []));
         first.StatusCode.Should().Be(HttpStatusCode.OK);
         fake.SignDerivedCallCount.Should().Be(1);
         store.StoreCallCount.Should().Be(1);
@@ -234,7 +263,7 @@ public sealed class RouteIdempotencyGateTests
         // Second call — same kid → same derived key → replay.
         var second = await client.PostAsJsonAsync(
             "/internal/v1/kc/sign-derived",
-            new SignInput(kid, Array.Empty<byte>()));
+            new SignInput(kid, []));
         second.StatusCode.Should().Be(HttpStatusCode.OK);
         var body = await second.Content.ReadAsStringAsync();
         body.Should().Contain(expectedSig);
@@ -257,10 +286,10 @@ public sealed class RouteIdempotencyGateTests
         // Two calls with different kids → two different derived keys → two façade calls.
         await client.PostAsJsonAsync(
             "/internal/v1/kc/sign-derived",
-            new SignInput("kid-A", Array.Empty<byte>()));
+            new SignInput("kid-A", []));
         await client.PostAsJsonAsync(
             "/internal/v1/kc/sign-derived",
-            new SignInput("kid-B", Array.Empty<byte>()));
+            new SignInput("kid-B", []));
 
         fake.SignDerivedCallCount.Should().Be(2);
         store.StoredKeys.Should().HaveCount(2);
@@ -289,7 +318,7 @@ public sealed class RouteIdempotencyGateTests
         var first = await PostWithHeaderAsync(
             client,
             "/internal/v1/kc/sign",
-            new SignInput("kid-ttl", Array.Empty<byte>()),
+            new SignInput("kid-ttl", []),
             _IDEMPOTENCY_KEY_HEADER,
             idempotencyKey);
         first.StatusCode.Should().Be(HttpStatusCode.OK);
@@ -300,7 +329,7 @@ public sealed class RouteIdempotencyGateTests
         var replay = await PostWithHeaderAsync(
             client,
             "/internal/v1/kc/sign",
-            new SignInput("kid-ttl", Array.Empty<byte>()),
+            new SignInput("kid-ttl", []),
             _IDEMPOTENCY_KEY_HEADER,
             idempotencyKey);
         replay.StatusCode.Should().Be(HttpStatusCode.OK);
@@ -313,7 +342,7 @@ public sealed class RouteIdempotencyGateTests
         var afterExpiry = await PostWithHeaderAsync(
             client,
             "/internal/v1/kc/sign",
-            new SignInput("kid-ttl", Array.Empty<byte>()),
+            new SignInput("kid-ttl", []),
             _IDEMPOTENCY_KEY_HEADER,
             idempotencyKey);
         afterExpiry.StatusCode.Should().Be(HttpStatusCode.OK);

@@ -15,7 +15,7 @@ using Microsoft.IdentityModel.Tokens;
 /// In-memory <see cref="IJwksProvider"/> stand-in that returns a snapshot
 /// built from canned <see cref="SecurityKey"/>s.
 /// Local copy — originals in <c>D2.Shared.Tests</c> are <c>internal sealed</c>
-/// and cannot be referenced from a different assembly (F-HOME per Step-7a plan).
+/// and cannot be referenced from a different assembly.
 /// </summary>
 internal sealed class FakeJwksProvider : IJwksProvider
 {

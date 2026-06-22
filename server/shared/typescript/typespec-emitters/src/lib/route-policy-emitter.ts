@@ -82,9 +82,9 @@ export interface RoutePolicyEmitInput {
   /** Auth policy for the route. */
   readonly scopePolicy: ScopePolicy;
   /** Optional rate-limit tier string (e.g. "Standard") — faithful seam only. */
-  readonly rateTier?: string | undefined;
+  readonly rateTier?: string;
   /** Optional CSRF posture string (e.g. "exempt") — faithful seam only. */
-  readonly csrf?: string | undefined;
+  readonly csrf?: string;
   /**
    * Optional idempotency gate configuration. When present, the emitter weaves
    * a dedupe gate into the route delegate: key resolution (header or derived),
@@ -94,13 +94,11 @@ export interface RoutePolicyEmitInput {
    * `fields` must be PascalCase C# property names (camel→Pascal mapping is
    * the caller's responsibility before passing here).
    */
-  readonly idempotency?:
-    | {
-        readonly keySource: "header" | "derived";
-        readonly ttlSeconds: number;
-        readonly fields: readonly string[];
-      }
-    | undefined;
+  readonly idempotency?: {
+    readonly keySource: "header" | "derived";
+    readonly ttlSeconds: number;
+    readonly fields: readonly string[];
+  };
   /** Target C# namespace for the generated file. */
   readonly registrationNamespace: string;
   /** Relative spec path for the banner. */
@@ -168,7 +166,6 @@ export function emitRoutePolicy(input: RoutePolicyEmitInput): EmittedFile {
     input.registrationNamespace,
     input.delegationTargetNamespace,
     input.dtoNamespace,
-    input.delegationTarget.kind,
     extraUsings,
   );
   for (const u of usings) lines.push(`using ${u};`);
@@ -375,10 +372,8 @@ function buildUsings(
   registrationNamespace: string,
   delegationTargetNamespace: string,
   dtoNamespace: string,
-  delegationKind: "facade" | "handler",
   extraUsings: readonly string[] = [],
 ): readonly string[] {
-  void delegationKind; // kind drives which namespace we add — both go in usings
   const set = new Set<string>([
     "D2.Shared.Auth.Http.Endpoints",
     "D2.Shared.Auth.Http.ProblemDetails",

@@ -27,7 +27,7 @@
 //
 // Why `// @ts-nocheck` + `/* eslint-disable */`: the `$lib/client/rest/gateway-client.js`
 // import + the emitted DTO imports resolve only inside the SvelteKit BFF (the
-// `$lib` alias is SvelteKit-only; CB8). The emitted file is plain runtime JS; the
+// `$lib` alias is SvelteKit-only). The emitted file is plain runtime JS; the
 // byte-gate pins the bytes and the behavioral test drives the emitted const
 // against a faithful `apiCall` double. `**/*.g.ts` is `.prettierignore`d → the
 // emitter owns the formatting.
@@ -121,7 +121,7 @@ export function emitTsRestClient(
     "// (apiCall / apiCallAnon → fetch + auth + ProblemDetails-to-D2Result). The $lib import + the",
   );
   lines.push(
-    "// DTO imports resolve only inside the SvelteKit BFF (CB8) — the emitted file is plain runtime",
+    "// DTO imports resolve only inside the SvelteKit BFF — the emitted file is plain runtime",
   );
   lines.push(
     "// JS; the byte-gate pins the bytes and the behavioral test drives it against a faithful double.",
@@ -138,12 +138,12 @@ export function emitTsRestClient(
   lines.push('import type { D2Result } from "@d2/result";');
   lines.push("");
 
-  // Module-relative DTO imports the BFF consumer resolves (CB8). Deduped by type
+  // Module-relative DTO imports the BFF consumer resolves. Deduped by type
   // name; the import FILE is derived from the type name (the DTO emitter names a
   // type <PascalOp>Input/Output in <kebab-op>-dto.g.ts), so a model shared across
   // ops resolves to a single import (no redeclaration).
   lines.push(
-    "// Emitted DTO types — paths resolve in the SvelteKit BFF consumer (CB8).",
+    "// Emitted DTO types — paths resolve in the SvelteKit BFF consumer.",
   );
   for (const imp of collectDtoTypeImports(ops)) lines.push(imp);
   lines.push("");
@@ -290,7 +290,7 @@ function emitQueryHelper(lines: string[]): void {
   );
   lines.push("  const params = new URLSearchParams();");
   lines.push("  for (const [key, value] of Object.entries(input))");
-  lines.push("    if (value !== undefined && value !== null)");
+  lines.push("    if (value !== undefined)");
   lines.push("      params.set(key, String(value));");
   lines.push("  const qs = params.toString();");
   lines.push("  return qs.length > 0 ? `${path}?${qs}` : path;");

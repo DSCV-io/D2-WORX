@@ -97,7 +97,7 @@ export interface IdempotencyGateWeave {
  *   - `TryGetAsync<TStored>` — `Ok(stored)` on hit, `NotFound` on miss,
  *     failure on store error (gate fails-open on read failure).
  *   - `StoreAsync<TStored>` — store the outcome with TTL, return `Ok` or
- *     failure (failure is logged by the middleware; gate proceeds on write failure).
+ *     failure (failure is silently dropped — best-effort on write; gate proceeds).
  *
  * This seam is distinct from `IMessageIdempotencyStore` (the messaging
  * boolean dedup store). The real Edge HTTP-idempotency middleware will

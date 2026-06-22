@@ -24,10 +24,16 @@
 
 import { describe, it, expect } from "vitest";
 import { readFileSync } from "node:fs";
-import { dirname, join } from "node:path";
-import { fileURLToPath } from "node:url";
+import { join } from "node:path";
+import { findRepoRoot } from "./repo-root.js";
 
 type Predicate = (r: unknown) => boolean;
+
+const _REPO = findRepoRoot(import.meta.url);
+const _KC_GEN = join(
+  _REPO,
+  "server/services/edge/tests/Unit/KeyCustodian/TypeSpecGrpcPredicate/Generated",
+);
 
 /**
  * Read the committed emitted predicate twin and reconstruct `placeOrderRetryWhen`
@@ -38,22 +44,7 @@ function loadEmittedPredicates(): {
   retryWhen: Predicate;
   failWhen: Predicate;
 } {
-  const here = dirname(fileURLToPath(import.meta.url));
-  const file = join(
-    here,
-    "..",
-    "..",
-    "..",
-    "..",
-    "services",
-    "edge",
-    "tests",
-    "Unit",
-    "KeyCustodian",
-    "TypeSpecGrpcPredicate",
-    "Generated",
-    "place-order-resilience-predicates.g.ts",
-  );
+  const file = join(_KC_GEN, "place-order-resilience-predicates.g.ts");
   const text = readFileSync(file, "utf8");
   return {
     retryWhen: extractPredicate(text, "placeOrderRetryWhen"),
@@ -90,9 +81,9 @@ interface ParityCase {
   readonly name: string;
   readonly success: boolean;
   readonly statusCode: number;
-  readonly errorCode: string | null;
-  readonly category: string | null;
-  readonly data: ParityData | null;
+  readonly errorCode?: string;
+  readonly category?: string;
+  readonly data?: ParityData;
   readonly expectedRetry: boolean;
   readonly expectedFail: boolean;
 }
@@ -103,18 +94,9 @@ interface FixtureFile {
 }
 
 function loadFixture(): FixtureFile {
-  const here = dirname(fileURLToPath(import.meta.url));
-  // tests/ → package root → up to repo root → contracts/resilience/…
   const path = join(
-    here,
-    "..",
-    "..",
-    "..",
-    "..",
-    "..",
-    "contracts",
-    "resilience",
-    "predicate-parity.fixture.json",
+    _REPO,
+    "contracts/resilience/predicate-parity.fixture.json",
   );
   return JSON.parse(readFileSync(path, "utf8")) as FixtureFile;
 }
@@ -199,8 +181,8 @@ interface ParityCaseV2 {
   readonly name: string;
   readonly success: boolean;
   readonly statusCode: number;
-  readonly errorCode: string | null;
-  readonly data: ParityDataV2 | null;
+  readonly errorCode?: string;
+  readonly data?: ParityDataV2;
   readonly expectedRetry: boolean;
   readonly expectedFail: boolean;
 }
@@ -211,17 +193,9 @@ interface FixtureFileV2 {
 }
 
 function loadFixtureV2(): FixtureFileV2 {
-  const here = dirname(fileURLToPath(import.meta.url));
   const path = join(
-    here,
-    "..",
-    "..",
-    "..",
-    "..",
-    "..",
-    "contracts",
-    "resilience",
-    "predicate-parity-nested.fixture.json",
+    _REPO,
+    "contracts/resilience/predicate-parity-nested.fixture.json",
   );
   return JSON.parse(readFileSync(path, "utf8")) as FixtureFileV2;
 }
@@ -230,22 +204,7 @@ function loadEmittedPredicatesV2(): {
   retryWhen: Predicate;
   failWhen: Predicate;
 } {
-  const here = dirname(fileURLToPath(import.meta.url));
-  const file = join(
-    here,
-    "..",
-    "..",
-    "..",
-    "..",
-    "services",
-    "edge",
-    "tests",
-    "Unit",
-    "KeyCustodian",
-    "TypeSpecGrpcPredicate",
-    "Generated",
-    "place-order-v2-resilience-predicates.g.ts",
-  );
+  const file = join(_KC_GEN, "place-order-v2-resilience-predicates.g.ts");
   const text = readFileSync(file, "utf8");
   return {
     retryWhen: extractPredicate(text, "placeOrderV2RetryWhen"),

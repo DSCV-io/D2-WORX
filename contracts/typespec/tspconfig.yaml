@@ -34,7 +34,7 @@ options:
     csharp-namespace: "D2.Edge.Tests.TypeSpecDto.Generated"
 
     # Clients project namespace: exposed-op DTOs (GetJwksInput, GetJwksOutput + nested
-    # Jwk) and the module façade interface (Step 6b) land here.
+    # Jwk) and the module façade interface land here.
     csharp-clients-namespace: "D2.Edge.KeyCustodian.Clients"
 
     # App handler-namespace base: per-op CQRS path = <base>.<Category>.<PascalOp>.

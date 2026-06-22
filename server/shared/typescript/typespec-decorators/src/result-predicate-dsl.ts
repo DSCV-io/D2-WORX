@@ -29,9 +29,9 @@
 //
 // Operators: == != in() && || , grouping (), and the four array accessors
 // (count / any / all / contains). No ordered comparators (< > <= >=) — those
-// are rejected as malformed (D-R4).
+// are rejected as malformed.
 //
-// Sub-predicate scoping (D-R9): a nested quantifier that re-binds an identifier
+// Sub-predicate scoping: a nested quantifier that re-binds an identifier
 // already in scope is a hard error (resilience-predicate-shadowed-elem-var).
 //
 // The parser is pure — it has no side effects and does NOT import TypeSpec
@@ -65,8 +65,8 @@ export type ResultPredicateDiagnosticCode =
   | "resilience-predicate-shadowed-elem-var";
 
 // ----------------------------------------------------------------
-// AST types — consumed by result-predicate validation now and the
-// cross-language emitter (C-5) later.
+// AST types — consumed by result-predicate validation and the
+// cross-language emitter.
 // ----------------------------------------------------------------
 
 /** A literal value in a comparison. */
@@ -673,7 +673,7 @@ class Parser {
       return undefined;
     }
 
-    // D-R9: a nested quantifier may not re-bind a name already in scope.
+    // A nested quantifier may not re-bind a name already in scope.
     if (scope.has(elemTok.value)) {
       this.errors.push({
         code: "resilience-predicate-shadowed-elem-var",
@@ -829,7 +829,7 @@ class Parser {
  * value) into an AST.
  *
  * Returns `{ ok: true, root }` on success or `{ ok: false, errors }` on
- * failure. Pure — no side effects, no TypeSpec imports. The emitter (C-5)
+ * failure. Pure — no side effects, no TypeSpec imports. The emitter
  * re-parses the stored raw string to walk the AST; $onValidate re-parses it to
  * run the model-graph checks.
  */

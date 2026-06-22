@@ -314,40 +314,38 @@ public sealed class PlaceOrderV2RoundTripTests
 
     private static ResilientPipeline<string, DtoOrderV2Output?> BuildPassThroughPipeline()
     {
-        var services = new ServiceCollection();
-        services.AddResilientPipeline<string, DtoOrderV2Output?>(
-            "test-v2-passthrough",
-            b => b.UseRetries(new RetryOptions<DtoOrderV2Output?>
-            {
-                MaxAttempts = 1,
-                BaseDelayMs = 1,
-                Jitter = false,
-                IsTransient = ex =>
-                    ex is D2GeneratedBusinessRetrySignal
-                    || (ex is RpcException r && ProtoExtensions.IsTransientGrpcException(r)),
-            }));
-        using var sp = services.BuildServiceProvider();
-        return sp.GetRequiredKeyedService<ResilientPipeline<string, DtoOrderV2Output?>>(
-            "test-v2-passthrough");
+        var builder = new ResilientPipelineBuilder<string, DtoOrderV2Output?>(
+            new ServiceCollection().BuildServiceProvider());
+
+        builder.UseRetries(new RetryOptions<DtoOrderV2Output?>
+        {
+            MaxAttempts = 1,
+            BaseDelayMs = 1,
+            Jitter = false,
+            IsTransient = ex =>
+                ex is D2GeneratedBusinessRetrySignal
+                || (ex is RpcException r && ProtoExtensions.IsTransientGrpcException(r)),
+        });
+
+        return builder.Build();
     }
 
     private static ResilientPipeline<string, DtoOrderV2Output?> BuildRetryPipeline(int maxAttempts)
     {
-        var services = new ServiceCollection();
-        services.AddResilientPipeline<string, DtoOrderV2Output?>(
-            "test-v2-retry",
-            b => b.UseRetries(new RetryOptions<DtoOrderV2Output?>
-            {
-                MaxAttempts = maxAttempts,
-                BaseDelayMs = 1,
-                Jitter = false,
-                IsTransient = ex =>
-                    ex is D2GeneratedBusinessRetrySignal
-                    || (ex is RpcException r && ProtoExtensions.IsTransientGrpcException(r)),
-            }));
-        using var sp = services.BuildServiceProvider();
-        return sp.GetRequiredKeyedService<ResilientPipeline<string, DtoOrderV2Output?>>(
-            "test-v2-retry");
+        var builder = new ResilientPipelineBuilder<string, DtoOrderV2Output?>(
+            new ServiceCollection().BuildServiceProvider());
+
+        builder.UseRetries(new RetryOptions<DtoOrderV2Output?>
+        {
+            MaxAttempts = maxAttempts,
+            BaseDelayMs = 1,
+            Jitter = false,
+            IsTransient = ex =>
+                ex is D2GeneratedBusinessRetrySignal
+                || (ex is RpcException r && ProtoExtensions.IsTransientGrpcException(r)),
+        });
+
+        return builder.Build();
     }
 
     // The shim builds the proto response DIRECTLY (raw proto construction, like

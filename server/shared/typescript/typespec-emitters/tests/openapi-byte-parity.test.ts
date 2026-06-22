@@ -21,8 +21,8 @@ import {
 import { HttpTestLibrary } from "@typespec/http/testing";
 import { VersioningTestLibrary } from "@typespec/versioning/testing";
 import { readFileSync } from "node:fs";
-import { dirname, join } from "node:path";
-import { fileURLToPath } from "node:url";
+import { join } from "node:path";
+import { findRepoRoot } from "./repo-root.js";
 import {
   emitOpenApiDocuments,
   type EmittedFile,
@@ -40,14 +40,7 @@ const D2DecoratorTestLibrary = createTestLibrary({
   typespecFileFolder: "lib",
 });
 
-const REPO = join(
-  dirname(fileURLToPath(import.meta.url)),
-  "..",
-  "..",
-  "..",
-  "..",
-  "..",
-);
+const REPO = findRepoRoot(import.meta.url);
 const FIXTURE_SRC = join(
   REPO,
   "contracts/typespec/fixtures/openapi-shaped.tsp",

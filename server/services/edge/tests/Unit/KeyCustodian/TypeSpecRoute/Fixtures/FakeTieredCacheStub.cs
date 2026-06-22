@@ -16,8 +16,7 @@ using D2.Shared.Result;
 /// everything except <c>ExistsAsync</c> (returns <c>Ok(true)</c> so the session
 /// check treats the session as live).
 /// Local copy — the original in <c>D2.Shared.Tests</c> is a <c>private sealed</c>
-/// nested class and cannot be referenced from another assembly (F-HOME per
-/// Step-7a plan).
+/// nested class and cannot be referenced from another assembly.
 /// </summary>
 internal sealed class FakeTieredCacheStub : ITieredCache
 {

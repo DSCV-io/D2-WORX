@@ -28,7 +28,7 @@ using Microsoft.Extensions.DependencyInjection;
 using DtoSignOutput = D2.Edge.Tests.TypeSpecDto.Generated.SignOutput;
 
 /// <summary>
-/// The end-to-end mutual-TLS harness proof — the D7 gate. A real Kestrel HTTPS
+/// The end-to-end mutual-TLS harness proof. A real Kestrel HTTPS
 /// endpoint on <c>127.0.0.1:0</c> (an OS-assigned ephemeral loopback port, so a
 /// real TCP socket + a real TLS 1.3 handshake), wired with the SHIPPED
 /// <see cref="MutualTlsHostExtensions.AddD2MutualTls"/> (require + validate a

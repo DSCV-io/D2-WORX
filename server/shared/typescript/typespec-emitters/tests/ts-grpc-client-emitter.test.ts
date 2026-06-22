@@ -8,7 +8,7 @@
 //   The emitted SSR gRPC client is driven against the REAL @d2/grpc-client seam
 //   (handleGrpcCall / unaryCall / d2ResultFromProto / isTransientGrpcError), the
 //   REAL @d2/resilience ResilientPipeline, the REAL fixture ts-proto types (the
-//   buf/ts-proto output — the TS twin of Grpc.Tools), and the REAL C-5 emitted
+//   buf/ts-proto output — the TS twin of Grpc.Tools), and the REAL emitted
 //   predicate twin. A FAKE grpc-js stub (a typed object implementing the real
 //   ts-proto <Service>Client interface) drives the callback path. This is NOT a
 //   type-double of the seam — every mapping (envelope→D2Result, transport-fault→
@@ -38,6 +38,7 @@ import {
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { findRepoRoot } from "./repo-root.js";
 import ts from "typescript";
 import { Metadata, status as GrpcStatus } from "@grpc/grpc-js";
 import type { ServiceError } from "@grpc/grpc-js";
@@ -78,6 +79,11 @@ import type {
 } from "./grpc-fixtures/generated/sign_with_kind.js";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
+const _REPO = findRepoRoot(import.meta.url);
+const _KC_PRED_GEN = join(
+  _REPO,
+  "server/services/edge/tests/Unit/KeyCustodian/TypeSpecGrpcPredicate/Generated",
+);
 const PRED_SRC = "contracts/typespec/fixtures/resilience-predicate-shaped.tsp";
 const ENUM_SRC = "contracts/typespec/fixtures/enum-shaped.tsp";
 
@@ -237,26 +243,12 @@ function reconstructFactory<T>(
   return make(...scopeVals);
 }
 
-/** Load the REAL committed C-5 predicate twin (placeOrder) via text extraction. */
+/** Load the REAL committed predicate twin (placeOrder) via text extraction. */
 function loadCommittedPredicateTwin(): {
   placeOrderRetryWhen: (r: unknown) => boolean;
   placeOrderFailWhen: (r: unknown) => boolean;
 } {
-  const file = join(
-    HERE,
-    "..",
-    "..",
-    "..",
-    "..",
-    "services",
-    "edge",
-    "tests",
-    "Unit",
-    "KeyCustodian",
-    "TypeSpecGrpcPredicate",
-    "Generated",
-    "place-order-resilience-predicates.g.ts",
-  );
+  const file = join(_KC_PRED_GEN, "place-order-resilience-predicates.g.ts");
   const text = readFileSync(file, "utf8");
   const extract = (name: string): ((r: unknown) => boolean) => {
     const re = new RegExp(
@@ -393,7 +385,7 @@ function runRealBufTsProto(): string {
   mkdirSync(join(protoStage, "common", "v1"), { recursive: true });
   mkdirSync(join(out, "gen"), { recursive: true });
   // The d2_result import from the real contracts/protos.
-  const repoRoot = join(HERE, "..", "..", "..", "..", "..");
+  const repoRoot = _REPO;
   cpSync(
     join(repoRoot, "contracts", "protos", "common", "v1", "d2_result.proto"),
     join(protoStage, "common", "v1", "d2_result.proto"),
@@ -489,7 +481,7 @@ describe("emitTsGrpcClient_FileNameAndShape", () => {
     expect(file!.content.endsWith("\n\n")).toBe(false);
   });
 
-  it("a predicate op imports the seam's isTransientGrpcError + the C-5 twin + builds a retry pipeline", () => {
+  it("a predicate op imports the seam's isTransientGrpcError + the predicate twin + builds a retry pipeline", () => {
     const [file] = emitTsGrpcClient("PredicateFixtures", [placeOrderOp()]);
     expect(file!.content).toContain("isTransientGrpcError");
     expect(file!.content).toContain(
@@ -985,40 +977,33 @@ describe("tsGrpcClient_Behavioral_SignWithKind_ResponseEnum_RealSeam", () => {
 // AMB-4 — cross-runtime predicate-CONSUMPTION parity.
 //
 // Drives the emitted TS client over the SAME shared parity fixture the .NET
-// PredicateParityTests + C-5 predicate-parity test use, asserting the client's
+// PredicateParityTests + predicate-parity test use, asserting the client's
 // RUNTIME retry decision matches the cross-language expectation: it retries IFF
 // `expectedRetry && !expectedFail` (the runtime rule — failWhen WINS). The
 // predicate FUNCTIONS are already proven byte-behaviorally identical cross-runtime
-// by C-5; this proves the TS client CONSUMES them the same way the .NET client
-// does (the consumption — not just the predicate — is the C-6 addition).
+// by the parity test; this proves the TS client CONSUMES them the same way the
+// .NET client does (the consumption coverage is a separate, additive guarantee).
 // ===========================================================================
 
 interface ParityCase {
   readonly name: string;
   readonly success: boolean;
   readonly statusCode: number;
-  readonly errorCode: string | null;
-  readonly category: string | null;
-  readonly data: {
+  readonly errorCode?: string;
+  readonly category?: string;
+  readonly data?: {
     orderCode: string;
     itemStatuses: string[];
     partial: boolean;
-  } | null;
+  };
   readonly expectedRetry: boolean;
   readonly expectedFail: boolean;
 }
 
 function loadParityFixture(): readonly ParityCase[] {
   const path = join(
-    HERE,
-    "..",
-    "..",
-    "..",
-    "..",
-    "..",
-    "contracts",
-    "resilience",
-    "predicate-parity.fixture.json",
+    _REPO,
+    "contracts/resilience/predicate-parity.fixture.json",
   );
   return (JSON.parse(readFileSync(path, "utf8")) as { cases: ParityCase[] })
     .cases;

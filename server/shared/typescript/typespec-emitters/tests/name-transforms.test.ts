@@ -54,7 +54,7 @@ describe("toSnake", () => {
     // The regex /([a-z0-9])([A-Z])/ fires only on a lower-to-upper transition.
     // "XMLParser": X→M→L are upper-to-upper (no firing); L→P is upper-to-upper
     // (no firing); the whole prefix lowercases to "xmlparser".
-    // This is the documented spike behaviour — we pin the actual output here.
+    // This is the documented spike behavior — we pin the actual output here.
     expect(toSnake("XMLParser")).toBe("xmlparser");
   });
 });

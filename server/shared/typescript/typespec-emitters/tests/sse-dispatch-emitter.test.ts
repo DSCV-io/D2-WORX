@@ -22,7 +22,7 @@
 import { describe, it, expect } from "vitest";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { fileURLToPath } from "node:url";
+import { findRepoRoot } from "./repo-root.js";
 import {
   emitSseEmitSinkSeam,
   emitSseDispatcher,
@@ -39,20 +39,9 @@ import type { FieldInfo } from "../src/lib/model-walk.js";
 const NS = "D2.Edge.Tests.TypeSpecSse.Generated";
 const SOURCE = "contracts/typespec/fixtures/server-push-shaped.tsp";
 
-const testsDir = fileURLToPath(new URL(".", import.meta.url));
 const genDir = join(
-  testsDir,
-  "..",
-  "..",
-  "..",
-  "..",
-  "services",
-  "edge",
-  "tests",
-  "Unit",
-  "KeyCustodian",
-  "TypeSpecSse",
-  "Generated",
+  findRepoRoot(import.meta.url),
+  "server/services/edge/tests/Unit/KeyCustodian/TypeSpecSse/Generated",
 );
 
 function committed(fileName: string): string {

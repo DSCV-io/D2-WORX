@@ -196,19 +196,18 @@ public sealed class DeepNestRoundTripTests
 
     private static ResilientPipeline<string, DtoDeepOutput?> BuildPassThroughPipeline()
     {
-        var services = new ServiceCollection();
-        services.AddResilientPipeline<string, DtoDeepOutput?>(
-            "test-deep-passthrough",
-            b => b.UseRetries(new RetryOptions<DtoDeepOutput?>
-            {
-                MaxAttempts = 1,
-                BaseDelayMs = 1,
-                Jitter = false,
-                IsTransient = ex => ex is RpcException r && ProtoExtensions.IsTransientGrpcException(r),
-            }));
-        using var sp = services.BuildServiceProvider();
-        return sp.GetRequiredKeyedService<ResilientPipeline<string, DtoDeepOutput?>>(
-            "test-deep-passthrough");
+        var builder = new ResilientPipelineBuilder<string, DtoDeepOutput?>(
+            new ServiceCollection().BuildServiceProvider());
+
+        builder.UseRetries(new RetryOptions<DtoDeepOutput?>
+        {
+            MaxAttempts = 1,
+            BaseDelayMs = 1,
+            Jitter = false,
+            IsTransient = ex => ex is RpcException r && ProtoExtensions.IsTransientGrpcException(r),
+        });
+
+        return builder.Build();
     }
 
     // Raw proto construction (depth-3) — the shim builds the nested proto tree directly

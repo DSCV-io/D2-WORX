@@ -27,7 +27,7 @@
 //   - The Response message carries: field 1 = D2ResultProto result; field 2 = <Op>Output data.
 //     The data field is populated only on success (result.IsOk && result.Data is not null).
 //   - The proto data message name collides with the DTO name (<Op>Output = both); the mapper
-//     uses the existing global:: alias mechanism (D7) — no Proto*/Dto* prefix needed.
+//     uses the existing global:: alias mechanism — no Proto*/Dto* prefix needed.
 //   - No auth logic in the generated service (auth is a transport-layer concern).
 
 import { buildBanner } from "./banner.js";
@@ -64,7 +64,7 @@ export interface GrpcDelegationTarget {
    * Only required when kind === "facade" (added as a using directive).
    * When kind === "handler" the handler interface is already in the service namespace.
    */
-  readonly targetNamespace?: string | undefined;
+  readonly targetNamespace?: string;
 }
 
 // ---------------------------------------------------------------------------

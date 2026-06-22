@@ -308,6 +308,12 @@ public sealed class GrpcClientTests
 
         result.Success.Should().BeFalse();
         result.StatusCode.Should().NotBe(HttpStatusCode.InternalServerError);
+
+        // Cancellation maps to Canceled (HTTP 400) or ServiceUnavailable (503); never 500.
+        // The Canceled arm is the primary path (OperationCanceledException / StatusCode.Cancelled).
+        result.StatusCode.Should().BeOneOf(
+            HttpStatusCode.BadRequest,      // Canceled → 400
+            HttpStatusCode.ServiceUnavailable); // fallback for other RpcException statuses
     }
 
     // ---------------------------------------------------------------------------
@@ -482,18 +488,16 @@ public sealed class GrpcClientTests
     /// </summary>
     private static ResilientPipeline<string, DtoSignOutput?> BuildGrpcRetryPipeline(int maxAttempts)
     {
-        var services = new ServiceCollection();
-        services.AddResilientPipeline<string, DtoSignOutput?>(
-            "test-grpc-retry",
-            b => b.UseRetries(new RetryOptions<DtoSignOutput?>
-            {
-                MaxAttempts = maxAttempts,
-                BaseDelayMs = 1,
-                Jitter = false,
-                IsTransient = ex => ex is RpcException r && ProtoExtensions.IsTransientGrpcException(r),
-            }));
-        using var sp = services.BuildServiceProvider();
-        return sp.GetRequiredKeyedService<ResilientPipeline<string, DtoSignOutput?>>("test-grpc-retry");
+        var builder = new ResilientPipelineBuilder<string, DtoSignOutput?>(
+            new ServiceCollection().BuildServiceProvider());
+        builder.UseRetries(new RetryOptions<DtoSignOutput?>
+        {
+            MaxAttempts = maxAttempts,
+            BaseDelayMs = 1,
+            Jitter = false,
+            IsTransient = ex => ex is RpcException r && ProtoExtensions.IsTransientGrpcException(r),
+        });
+        return builder.Build();
     }
 
     // ---------------------------------------------------------------------------

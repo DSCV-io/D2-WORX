@@ -941,7 +941,7 @@ describe("byteParity_IIdempotencyStore_SeamFixtureIdentical", () => {
 // with the correct code and error severity, providing direct unit-test coverage
 // of the diagnostic declaration from this file.
 //
-// The behaviour that triggers D2TSP006 (non-routed @d2Idempotent op) is
+// The behavior that triggers D2TSP006 (non-routed @d2Idempotent op) is
 // exercised end-to-end in route-emit.direct.test.ts
 // ($onEmit_routeEmitDirect_IdempotentWithoutRoute_D2TSP006) and in the TypeSpec
 // compiler-host integration test in route-emit.integration.test.ts.

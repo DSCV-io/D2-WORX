@@ -368,6 +368,40 @@ describe("facadeEmitter_ConventionsAndBanner", () => {
     expect(nsIdx).toBeGreaterThanOrEqual(0);
   });
 
+  it("mixed Commands+Queries categories: impl using directives are sorted alphabetically across both categories", () => {
+    // A Commands op and a Queries op in the same module — verifies the sort
+    // is applied globally (not per-category bucket) per SA1210.
+    const [, impl] = emitFacade(
+      "KeyCustodian",
+      [
+        makeOp(
+          "placeOrder",
+          "PlaceOrderInput",
+          "PlaceOrderOutput",
+          _SPEC,
+          "Commands",
+        ),
+        makeOp("getJwks", "GetJwksInput", "GetJwksOutput", _SPEC, "Queries"),
+      ],
+      _KC_CLIENTS_NS,
+      _KC_APP_NS,
+    );
+
+    const lines = impl!.content.split("\n");
+    const usingLines = lines.filter((l) => l.startsWith("using "));
+    // All using lines must appear in sorted order.
+    const sorted = [...usingLines].sort();
+    expect(usingLines).toEqual(sorted);
+    // Commands namespace appears before or after Queries depending on sort order —
+    // the specific expected sort is alphabetical; verify both category namespaces present.
+    expect(impl!.content).toContain(
+      `using ${_KC_APP_NS}.Handlers.Commands.PlaceOrder;`,
+    );
+    expect(impl!.content).toContain(
+      `using ${_KC_APP_NS}.Handlers.Queries.GetJwks;`,
+    );
+  });
+
   it("interface namespace is the Clients namespace", () => {
     const [iface] = emitFacade(
       "KeyCustodian",

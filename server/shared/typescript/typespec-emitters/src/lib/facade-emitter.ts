@@ -23,7 +23,7 @@
 //      the impl injects transient handlers that depend on the scoped DbContext;
 //      a Singleton façade would capture the scoped DbContext (captive-dependency).
 //
-// Signature shape (D-b — transport-neutral):
+// Signature shape (transport-neutral):
 //   ValueTask<D2Result<<Op>Output?>> <Op>Async(<Op>Input input, CancellationToken ct = default)
 //
 // No HandlerOptions? parameter — the SAME interface must back both the

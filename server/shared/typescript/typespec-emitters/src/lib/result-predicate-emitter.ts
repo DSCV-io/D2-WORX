@@ -3,14 +3,14 @@
 // -----------------------------------------------------------------------
 
 // Result-predicate emitter for the @d2Resilience `retryWhen` / `failWhen`
-// custom predicates. Walks the C-3 parsed predicate AST (the shared
+// custom predicates. Walks the parsed predicate AST (the shared
 // `PredicateNode` family from @d2/typespec-decorators) PLUS the emitter-local
 // gen-time model crawl (`predicate-emit-walk.ts`) to emit TWO behaviorally
 // identical predicate functions per op — one C#, one TypeScript — over the
 // op's reconstructed business `D2Result<<Op>Output?>`, plus the emitter-owned
 // retry sentinel the gRPC client throws to opt a business condition into retry.
 //
-// Mechanism (D-R8): gen-time model-crawl, NOT runtime reflection. Each
+// Mechanism: gen-time model-crawl, NOT runtime reflection. Each
 // `result.data.<path>` segment is resolved against the real TypeSpec output
 // model at GENERATION time; the emitter writes direct, type-safe, null-safe
 // member access (`r.Data?.Items?.Any(...)` in C#, `r.data?.items?.some(...)`
@@ -61,7 +61,7 @@ export interface ResultPredicateEmitInput {
   /** Response DTO type name (e.g. "PlaceOrderOutput"). */
   readonly responseModelName: string;
   /** The op's output Model — the root of the gen-time data-path crawl. */
-  readonly outputModel: Model | undefined;
+  readonly outputModel?: Model;
   /** C# namespace the predicate class + sentinel land in (the Clients/test ns). */
   readonly clientsNs: string;
   /** DTO C# namespace (where <Op>Output lives) — aliased when it differs from clientsNs. */
@@ -69,9 +69,9 @@ export interface ResultPredicateEmitInput {
   /** Source spec path for the banner. */
   readonly sourceSpec: string;
   /** The parsed `retryWhen` predicate, or undefined when absent. */
-  readonly retryWhen: PredicateNode | undefined;
+  readonly retryWhen?: PredicateNode;
   /** The parsed `failWhen` predicate, or undefined when absent. */
-  readonly failWhen: PredicateNode | undefined;
+  readonly failWhen?: PredicateNode;
 }
 
 /**

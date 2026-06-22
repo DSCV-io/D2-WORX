@@ -15,7 +15,7 @@ using Microsoft.IdentityModel.Tokens;
 /// <summary>
 /// Builds real RSA-signed JWTs for route-policy enforcement tests.
 /// Local copy — originals in <c>D2.Shared.Tests</c> are <c>internal sealed</c>
-/// and cannot be referenced from a different assembly (F-HOME per Step-7a plan).
+/// and cannot be referenced from a different assembly.
 /// </summary>
 internal sealed class TestJwtBuilder : IDisposable
 {
@@ -46,8 +46,10 @@ internal sealed class TestJwtBuilder : IDisposable
         {
             [JwtClaimTypes.SUB] = Guid.NewGuid().ToString(),
         };
+
         if (includeSessionId)
             claims[JwtClaimTypes.SESSION_ID] = (sessionId ?? Guid.NewGuid()).ToString();
+
         if (extraClaims is not null)
         {
             foreach (var kv in extraClaims)

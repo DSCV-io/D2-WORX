@@ -15,7 +15,7 @@ using D2.Shared.Result;
 /// canned outcomes per-call: alive (default), revoked, service-unavailable,
 /// validation-failed.
 /// Local copy — originals in <c>D2.Shared.Tests</c> are <c>internal sealed</c>
-/// and cannot be referenced from a different assembly (F-HOME per Step-7a plan).
+/// and cannot be referenced from a different assembly.
 /// </summary>
 internal sealed class FakeSessionLivenessTracker : ISessionLivenessTracker
 {
