@@ -269,6 +269,59 @@ describe("byteParity_PlaceOrderV2Proto", () => {
   });
 });
 
+describe("byteParity_PlaceOrderV2Dtos", () => {
+  it("re-emitted PlaceOrderV2Input.g.cs is byte-identical to the committed fixture", () => {
+    const [inputFile] = emitCsharpDtos(
+      "placeOrderV2",
+      CLIENTS_NS,
+      SPEC,
+      v2In.fields,
+      v2Out.fields,
+      dedupNested(v2In, v2Out),
+    );
+    expect(inputFile!.content).toBe(readGen("PlaceOrderV2Input.g.cs"));
+  });
+
+  it("re-emitted PlaceOrderV2Output.g.cs (with both nested records) is byte-identical", () => {
+    const [, outputFile] = emitCsharpDtos(
+      "placeOrderV2",
+      CLIENTS_NS,
+      SPEC,
+      v2In.fields,
+      v2Out.fields,
+      dedupNested(v2In, v2Out),
+    );
+    expect(outputFile!.content).toBe(readGen("PlaceOrderV2Output.g.cs"));
+  });
+
+  it("re-emitted place-order-v2-dto.g.ts is byte-identical to the committed fixture", () => {
+    const ts = emitTsDtos(
+      "placeOrderV2",
+      SPEC,
+      v2In.fields,
+      v2Out.fields,
+      dedupNested(v2In, v2Out),
+    );
+    expect(ts.content).toBe(readGen("place-order-v2-dto.g.ts"));
+  });
+
+  it("deliberate-drift: a mutated nested record does NOT match", () => {
+    const drifted = readGen("PlaceOrderV2Output.g.cs").replace(
+      "public sealed record PlaceOrderLine(",
+      "public sealed record PlaceOrderLineDRIFTED(",
+    );
+    const [, outputFile] = emitCsharpDtos(
+      "placeOrderV2",
+      CLIENTS_NS,
+      SPEC,
+      v2In.fields,
+      v2Out.fields,
+      dedupNested(v2In, v2Out),
+    );
+    expect(outputFile!.content).not.toBe(drifted);
+  });
+});
+
 describe("byteParity_PlaceOrderV2ClientMappers", () => {
   function emit(): string {
     const [, , mappers] = emitGrpcClient(
@@ -422,6 +475,20 @@ describe("byteParity_DeepNestDtos", () => {
 
   it("re-emitted depth-3 output DTO is byte-identical (DeepNestOutput → DeepWidget → DeepPart)", () => {
     expect(emitCs()).toBe(readGen("DeepNestOutput.g.cs"));
+  });
+
+  it("re-emitted depth-3 input DTO is byte-identical (DeepNestInput)", () => {
+    const files = emitCsharpDtos(
+      "deepNest",
+      CLIENTS_NS,
+      SPEC,
+      deepIn.fields,
+      deepOut.fields,
+      dedupNested(deepIn, deepOut),
+    );
+    expect(
+      files.find((f) => f.fileName === "DeepNestInput.g.cs")!.content,
+    ).toBe(readGen("DeepNestInput.g.cs"));
   });
 
   it("re-emitted depth-3 TS DTO is byte-identical", () => {

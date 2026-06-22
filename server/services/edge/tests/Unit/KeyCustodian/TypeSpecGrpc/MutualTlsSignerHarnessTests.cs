@@ -24,11 +24,7 @@ using Google.Protobuf;
 using Grpc.Core;
 using Grpc.Net.Client;
 using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Hosting.Server;
-using Microsoft.AspNetCore.Hosting.Server.Features;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
 using DtoSignOutput = D2.Edge.Tests.TypeSpecDto.Generated.SignOutput;
 
 /// <summary>
@@ -494,70 +490,41 @@ public sealed class MutualTlsSignerHarnessTests
     /// <summary>
     /// Starts a real Kestrel HTTPS host on <c>127.0.0.1:0</c> wired with the shipped
     /// <c>AddD2MutualTls</c> (require + validate a client certificate) and hosting the
-    /// generated <c>Signer.Sign</c> service delegating to the supplied façade.
+    /// generated <c>Signer.Sign</c> service delegating to the supplied façade. The
+    /// real-socket host plumbing lives in the shared <see cref="GrpcTestHost"/> test-infra
+    /// helper; this harness supplies the mTLS-specific registration (the façade singleton
+    /// + <c>AddD2MutualTls</c>) and the service map. The helper invokes the registration
+    /// BEFORE its <c>ConfigureKestrel</c>/<c>UseHttps</c>, preserving the
+    /// <c>AddD2MutualTls</c>-before-Kestrel ordering the client-certificate require depends
+    /// on.
     /// </summary>
     /// <param name="ca">The certificate authority whose public root the host trusts.</param>
     /// <param name="serverCert">The Kestrel server certificate (a leaf with server EKU).</param>
     /// <param name="facade">The in-process façade the generated service delegates to.</param>
     /// <returns>The running host + the loopback endpoint the channel dials.</returns>
-    private static async Task<RunningServer> StartServerAsync(
+    private static Task<GrpcTestHost.RunningServer> StartServerAsync(
         RealCertAuthority ca,
         X509Certificate2 serverCert,
-        FakeKeyCustodianSignerFacade facade)
-    {
-        var builder = WebApplication.CreateBuilder();
-        builder.Logging.ClearProviders();
-        builder.Services.AddSingleton<IKeyCustodianSignerFacade>(facade);
-        builder.Services.AddRouting();
-        builder.Services.AddGrpc();
+        FakeKeyCustodianSignerFacade facade) =>
+        GrpcTestHost.StartAsync(
+            serverCert,
+            services =>
+            {
+                services.AddSingleton<IKeyCustodianSignerFacade>(facade);
 
-        // The SHIPPED server wiring, exercised live. Registered BEFORE ConfigureKestrel
-        // so its ConfigureHttpsDefaults action (RequireCertificate + the validation
-        // callback) is in place when the per-listener UseHttps below applies the HTTPS
-        // defaults — the per-listener server cert composes with, and does not reset,
-        // the client-certificate require + validate.
-        builder.Services.AddD2MutualTls(o =>
-        {
-            o.Enabled = true;
-            o.AllowedWorkloads = [_ALLOWED_WORKLOAD];
-            o.TrustAnchorsProvider = ca.TrustAnchors;
-        });
-
-        builder.WebHost.ConfigureKestrel(kestrel =>
-            kestrel.Listen(
-                System.Net.IPAddress.Loopback,
-                0,
-                listen => listen.UseHttps(serverCert)));
-
-        var app = builder.Build();
-        app.MapGrpcService<KeyCustodianSignerService>();
-
-        await app.StartAsync();
-
-        var endpoint = ResolveEndpoint(app);
-
-        return new RunningServer(app, endpoint);
-    }
-
-    /// <summary>
-    /// Reads the OS-assigned loopback endpoint from the started host's server-address
-    /// feature (the ephemeral port chosen for <c>127.0.0.1:0</c>).
-    /// </summary>
-    /// <param name="app">The started host.</param>
-    /// <returns>The <c>https://127.0.0.1:&lt;port&gt;</c> endpoint URI.</returns>
-    private static Uri ResolveEndpoint(WebApplication app)
-    {
-        var addresses = app.Services
-            .GetRequiredService<IServer>()
-            .Features
-            .Get<IServerAddressesFeature>();
-
-        var address = addresses?.Addresses.FirstOrDefault()
-            ?? throw new InvalidOperationException(
-                "Kestrel did not report a bound address after StartAsync.");
-
-        return new Uri(address);
-    }
+                // The SHIPPED server wiring, exercised live. The helper runs this BEFORE
+                // ConfigureKestrel so its ConfigureHttpsDefaults action (RequireCertificate
+                // + the validation callback) is in place when the per-listener UseHttps
+                // applies the HTTPS defaults — the per-listener server cert composes with,
+                // and does not reset, the client-certificate require + validate.
+                services.AddD2MutualTls(o =>
+                {
+                    o.Enabled = true;
+                    o.AllowedWorkloads = [_ALLOWED_WORKLOAD];
+                    o.TrustAnchorsProvider = ca.TrustAnchors;
+                });
+            },
+            app => app.MapGrpcService<KeyCustodianSignerService>());
 
     /// <summary>
     /// Builds a gRPC channel that dials the loopback endpoint over a real socket,
@@ -581,42 +548,25 @@ public sealed class MutualTlsSignerHarnessTests
     /// <param name="clientLeaf">The client leaf to present, or null for the no-cert case.</param>
     /// <param name="issuingIntermediate">The intermediate that signed the leaf (presented alongside it), or null for the no-cert case.</param>
     /// <returns>A configured <see cref="GrpcChannel"/>.</returns>
-    [SuppressMessage(
-        "Security",
-        "CA5359:Do not disable certificate validation",
-        Justification = "Client-side trust of the loopback self-signed SERVER cert only "
-            + "(it is not in the machine store). This is the CLIENT validating the SERVER; "
-            + "it does NOT relax the SERVER's mutual-TLS client-certificate validation, "
-            + "which is the property under test. Test harness, loopback only.")]
     private static GrpcChannel BuildDirectChannel(
-        Uri endpoint, X509Certificate2? clientLeaf, X509Certificate2? issuingIntermediate)
-    {
-        var sslOptions = new SslClientAuthenticationOptions
-        {
-            // Client-side trust of the loopback self-signed server cert ONLY (it is not
-            // in the machine store). Does NOT relax the server's client-cert validation,
-            // which is what these tests prove.
-            RemoteCertificateValidationCallback = (_, _, _, _) => true,
-        };
-
-        if (clientLeaf is not null)
-        {
-            // Present the full leaf → intermediate chain so the peer's validator can
-            // rebuild a root-anchored chain (offline: no AIA / network fetch). On
-            // Windows this Create throws for a non-OS-trusted-root leaf, so the
-            // cert-presenting cases skip there; this runs on the Linux deployment target.
-            sslOptions.ClientCertificateContext = SslStreamCertificateContext.Create(
-                clientLeaf,
-                issuingIntermediate is null ? null : [issuingIntermediate],
-                offline: true);
-        }
-
-        var handler = new SocketsHttpHandler { SslOptions = sslOptions };
-
-        return GrpcChannel.ForAddress(
+        Uri endpoint, X509Certificate2? clientLeaf, X509Certificate2? issuingIntermediate) =>
+        GrpcTestHost.BuildChannel(
             endpoint,
-            new GrpcChannelOptions { HttpHandler = handler });
-    }
+            sslOptions =>
+            {
+                if (clientLeaf is not null)
+                {
+                    // Present the full leaf → intermediate chain so the peer's validator
+                    // can rebuild a root-anchored chain (offline: no AIA / network fetch).
+                    // On Windows this Create throws for a non-OS-trusted-root leaf, so the
+                    // cert-presenting cases skip there; this runs on the Linux deployment
+                    // target.
+                    sslOptions.ClientCertificateContext = SslStreamCertificateContext.Create(
+                        clientLeaf,
+                        issuingIntermediate is null ? null : [issuingIntermediate],
+                        offline: true);
+                }
+            });
 
     /// <summary>
     /// Builds a DI provider wiring the SHIPPED client-side leaf-presentation stack —
@@ -680,21 +630,6 @@ public sealed class MutualTlsSignerHarnessTests
             });
 
         return services.BuildServiceProvider();
-    }
-
-    /// <summary>
-    /// A running Kestrel host + its resolved loopback endpoint. Disposing stops the
-    /// host and releases the bound socket.
-    /// </summary>
-    private sealed class RunningServer(WebApplication app, Uri endpoint) : IAsyncDisposable
-    {
-        public Uri Endpoint => endpoint;
-
-        public async ValueTask DisposeAsync()
-        {
-            await app.StopAsync();
-            await app.DisposeAsync();
-        }
     }
 
     /// <summary>

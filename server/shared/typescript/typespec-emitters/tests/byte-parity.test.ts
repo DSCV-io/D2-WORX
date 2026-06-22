@@ -21,7 +21,11 @@ import { emitCsharpDtos } from "../src/lib/csharp-dto-emitter.js";
 import { emitTsDtos } from "../src/lib/ts-dto-emitter.js";
 import { emitProto } from "../src/lib/proto-emitter.js";
 import { emitGrpcService } from "../src/lib/grpc-service-emitter.js";
-import { emitGrpcClient } from "../src/lib/grpc-client-emitter.js";
+import {
+  emitGrpcClient,
+  emitClientKeys,
+} from "../src/lib/grpc-client-emitter.js";
+import { emitHandlerInterface } from "../src/lib/handler-interface-emitter.js";
 import type { FieldInfo, NestedEnum } from "../src/lib/model-walk.js";
 
 // ---------------------------------------------------------------------------
@@ -454,6 +458,56 @@ describe("byteParity_SignInput_CommittedFixtureIdentical", () => {
   });
 });
 
+// The sign OUTPUT DTO (`SignOutput(string Signature)`) — the input side is gated
+// above; this pins the committed output `.g.cs` byte-identical too.
+function buildSignOutputWalk() {
+  const model: Model = {
+    kind: "Model",
+    name: "SignOutput",
+    properties: new Map<string, ModelProperty>([
+      ["signature", makeProp(makeScalar("string"))],
+    ]),
+  } as unknown as Model;
+
+  return walkModel(makeProgram(), model, () => {});
+}
+
+describe("byteParity_SignOutput_CommittedFixtureIdentical", () => {
+  it("regenerated SignOutput.g.cs is byte-identical to the committed fixture", () => {
+    const outputWalk = buildSignOutputWalk();
+    const [, outputFile] = emitCsharpDtos(
+      "sign",
+      "D2.Edge.Tests.TypeSpecDto.Generated",
+      "contracts/typespec/fixtures/sign-shaped.tsp",
+      [],
+      outputWalk.fields,
+      outputWalk.nestedModels,
+    );
+
+    expect(outputFile!.content).toBe(
+      readFixture(join(DTO_HOME, "SignOutput.g.cs")),
+    );
+  });
+
+  it("deliberate-drift detection: a mutated SignOutput fixture does NOT match", () => {
+    const drifted = readFixture(join(DTO_HOME, "SignOutput.g.cs")).replace(
+      "string Signature",
+      "string SignatureDRIFTED",
+    );
+    const outputWalk = buildSignOutputWalk();
+    const [, outputFile] = emitCsharpDtos(
+      "sign",
+      "D2.Edge.Tests.TypeSpecDto.Generated",
+      "contracts/typespec/fixtures/sign-shaped.tsp",
+      [],
+      outputWalk.fields,
+      outputWalk.nestedModels,
+    );
+
+    expect(outputFile!.content).not.toBe(drifted);
+  });
+});
+
 describe("byteParity_TemporalInput_CommittedFixtureIdentical", () => {
   it("regenerated TemporalInput.g.cs is byte-identical to the committed fixture", () => {
     const { input, output } = buildTemporalWalks();
@@ -552,6 +606,38 @@ describe("byteParity_TemporalDto_TsFile", () => {
     );
     // No null union — prefer-undefined.
     expect(tsFile.content).not.toContain("| null");
+  });
+
+  it("regenerated temporal-dto.g.ts is byte-identical to the committed fixture", () => {
+    const { input, output } = buildTemporalWalks();
+    const tsFile = emitTsDtos(
+      "temporal",
+      "contracts/typespec/fixtures/temporal-shaped.tsp",
+      input.fields,
+      output.fields,
+      output.nestedModels,
+    );
+
+    expect(tsFile.content).toBe(
+      readFixture(join(DTO_HOME, "temporal-dto.g.ts")),
+    );
+  });
+
+  it("deliberate-drift detection: a mutated temporal-dto.g.ts fixture does NOT match", () => {
+    const drifted = readFixture(join(DTO_HOME, "temporal-dto.g.ts")).replace(
+      "export interface ZonedInstantWire {",
+      "export interface ZonedInstantWireDRIFTED {",
+    );
+    const { input, output } = buildTemporalWalks();
+    const tsFile = emitTsDtos(
+      "temporal",
+      "contracts/typespec/fixtures/temporal-shaped.tsp",
+      input.fields,
+      output.fields,
+      output.nestedModels,
+    );
+
+    expect(tsFile.content).not.toBe(drifted);
   });
 });
 
@@ -997,5 +1083,200 @@ describe("byteParity_SignWithKindEnumGrpcClient_CommittedFixtures", () => {
     );
 
     expect(clientMappers!.content).not.toBe(drifted);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Enum-module completeness byte-gates — the DTO pair (+ enum), the handler
+// interface, the service impl, the client interface + DI extension + keys.
+// These committed `.g.*` files were produced by the same pure emitters; this
+// pins each byte-identical so a hand-edit (§26.5) would be caught. The
+// SignWithKind DTOs were emitted with the per-op source-spec form the one-off
+// generator passed; reproduced verbatim so the banner matches.
+// ---------------------------------------------------------------------------
+
+const SIGN_WITH_KIND_DTO_SRC = "<typespec op: signWithKind>";
+
+describe("byteParity_SignWithKindEnumDtos_CommittedFixtures", () => {
+  it("regenerated SignWithKindInput.g.cs is byte-identical to the committed fixture", () => {
+    const [inputFile] = emitCsharpDtos(
+      "signWithKind",
+      GRPC_ENUM_NS,
+      SIGN_WITH_KIND_DTO_SRC,
+      signWithKindReqFields(),
+      signWithKindRespFields(),
+      [],
+      [SIGN_WITH_KIND_KEY_KIND],
+      [SIGN_WITH_KIND_KEY_KIND],
+    );
+
+    expect(inputFile!.content).toBe(
+      readFixture(join(GRPC_ENUM_HOME, "SignWithKindInput.g.cs")),
+    );
+  });
+
+  it("regenerated SignWithKindOutput.g.cs (with the co-located KeyKind enum) is byte-identical", () => {
+    const [, outputFile] = emitCsharpDtos(
+      "signWithKind",
+      GRPC_ENUM_NS,
+      SIGN_WITH_KIND_DTO_SRC,
+      signWithKindReqFields(),
+      signWithKindRespFields(),
+      [],
+      [SIGN_WITH_KIND_KEY_KIND],
+      [SIGN_WITH_KIND_KEY_KIND],
+    );
+
+    expect(outputFile!.content).toBe(
+      readFixture(join(GRPC_ENUM_HOME, "SignWithKindOutput.g.cs")),
+    );
+  });
+
+  it("regenerated sign-with-kind-dto.g.ts is byte-identical to the committed fixture", () => {
+    const tsFile = emitTsDtos(
+      "signWithKind",
+      SIGN_WITH_KIND_DTO_SRC,
+      signWithKindReqFields(),
+      signWithKindRespFields(),
+      [],
+      [SIGN_WITH_KIND_KEY_KIND],
+      [SIGN_WITH_KIND_KEY_KIND],
+    );
+
+    expect(tsFile.content).toBe(
+      readFixture(join(GRPC_ENUM_HOME, "sign-with-kind-dto.g.ts")),
+    );
+  });
+
+  it("deliberate-drift detection: a mutated SignWithKindOutput fixture does NOT match", () => {
+    const drifted = readFixture(
+      join(GRPC_ENUM_HOME, "SignWithKindOutput.g.cs"),
+    ).replace("public enum KeyKind", "public enum KeyKindDRIFTED");
+    const [, outputFile] = emitCsharpDtos(
+      "signWithKind",
+      GRPC_ENUM_NS,
+      SIGN_WITH_KIND_DTO_SRC,
+      signWithKindReqFields(),
+      signWithKindRespFields(),
+      [],
+      [SIGN_WITH_KIND_KEY_KIND],
+      [SIGN_WITH_KIND_KEY_KIND],
+    );
+
+    expect(outputFile!.content).not.toBe(drifted);
+  });
+});
+
+describe("byteParity_SignWithKindEnumHandlerAndService_CommittedFixtures", () => {
+  it("regenerated ISignWithKindHandler.g.cs is byte-identical to the committed fixture", () => {
+    const handler = emitHandlerInterface(
+      "signWithKind",
+      GRPC_ENUM_NS,
+      "SignWithKindInput",
+      "SignWithKindOutput",
+      true,
+      ENUM_SHAPED_SRC,
+    );
+
+    expect(handler.content).toBe(
+      readFixture(join(GRPC_ENUM_HOME, "ISignWithKindHandler.g.cs")),
+    );
+  });
+
+  it("regenerated EnumFixturesSignerService.g.cs is byte-identical to the committed fixture", () => {
+    const [service] = emitGrpcService(
+      "signWithKind",
+      "EnumFixturesSigner",
+      "SignWithKind",
+      ENUM_PROTO_NS,
+      GRPC_ENUM_NS,
+      GRPC_ENUM_NS,
+      ENUM_SHAPED_SRC,
+      "SignWithKindRequest",
+      "SignWithKindResponse",
+      "SignWithKindInput",
+      signWithKindReqFields(),
+      "SignWithKindOutput",
+      signWithKindRespFields(),
+      {
+        kind: "handler",
+        typeName: "ISignWithKindHandler",
+        methodName: "HandleAsync",
+        targetNamespace: undefined,
+      },
+    );
+
+    expect(service.content).toBe(
+      readFixture(join(GRPC_ENUM_HOME, "EnumFixturesSignerService.g.cs")),
+    );
+  });
+
+  it("deliberate-drift detection: a mutated handler-interface fixture does NOT match", () => {
+    const drifted = readFixture(
+      join(GRPC_ENUM_HOME, "ISignWithKindHandler.g.cs"),
+    ).replace("ISignWithKindHandler", "ISignWithKindHandlerDRIFTED");
+    const handler = emitHandlerInterface(
+      "signWithKind",
+      GRPC_ENUM_NS,
+      "SignWithKindInput",
+      "SignWithKindOutput",
+      true,
+      ENUM_SHAPED_SRC,
+    );
+
+    expect(handler.content).not.toBe(drifted);
+  });
+});
+
+describe("byteParity_SignWithKindEnumClientModule_CommittedFixtures", () => {
+  it("regenerated IEnumFixturesGrpcClient.g.cs (client interface) is byte-identical", () => {
+    const [iface] = emitGrpcClient(
+      "EnumFixtures",
+      [signWithKindClientOp()],
+      GRPC_ENUM_CLIENTS_NS,
+    );
+
+    expect(iface!.content).toBe(
+      readFixture(join(GRPC_ENUM_HOME, "IEnumFixturesGrpcClient.g.cs")),
+    );
+  });
+
+  it("regenerated EnumFixturesGrpcClientsGenerated.g.cs (DI extension) is byte-identical", () => {
+    const files = emitGrpcClient(
+      "EnumFixtures",
+      [signWithKindClientOp()],
+      GRPC_ENUM_CLIENTS_NS,
+    );
+
+    expect(files[3]!.content).toBe(
+      readFixture(
+        join(GRPC_ENUM_HOME, "EnumFixturesGrpcClientsGenerated.g.cs"),
+      ),
+    );
+  });
+
+  it("regenerated SignWithKindClientKeys.g.cs is byte-identical to the committed fixture", () => {
+    const keys = emitClientKeys(
+      "signWithKind",
+      GRPC_ENUM_CLIENTS_NS,
+      ENUM_SHAPED_SRC,
+    );
+
+    expect(keys.content).toBe(
+      readFixture(join(GRPC_ENUM_HOME, "SignWithKindClientKeys.g.cs")),
+    );
+  });
+
+  it("deliberate-drift detection: a mutated client-interface fixture does NOT match", () => {
+    const drifted = readFixture(
+      join(GRPC_ENUM_HOME, "IEnumFixturesGrpcClient.g.cs"),
+    ).replace("IEnumFixturesGrpcClient", "IEnumFixturesGrpcClientDRIFTED");
+    const [iface] = emitGrpcClient(
+      "EnumFixtures",
+      [signWithKindClientOp()],
+      GRPC_ENUM_CLIENTS_NS,
+    );
+
+    expect(iface!.content).not.toBe(drifted);
   });
 });

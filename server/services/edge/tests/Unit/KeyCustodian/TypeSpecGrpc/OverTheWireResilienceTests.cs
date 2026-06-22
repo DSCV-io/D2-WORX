@@ -6,7 +6,6 @@
 
 namespace D2.Edge.Tests.Unit.KeyCustodian.TypeSpecGrpc;
 
-using System.Diagnostics.CodeAnalysis;
 using System.Net;
 using System.Net.Security;
 using System.Security.Cryptography.X509Certificates;
@@ -24,11 +23,7 @@ using D2.Shared.Result.Grpc;
 using Grpc.Core;
 using Grpc.Net.Client;
 using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Hosting.Server;
-using Microsoft.AspNetCore.Hosting.Server.Features;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
 using DtoPlaceOrderInput = D2.Edge.Tests.TypeSpecGrpcPredicate.Generated.PlaceOrderInput;
 using DtoPlaceOrderOutput = D2.Edge.Tests.TypeSpecGrpcPredicate.Generated.PlaceOrderOutput;
 using DtoSignInput = D2.Edge.Tests.TypeSpecDto.Generated.SignInput;
@@ -44,7 +39,7 @@ using ProtoSignOutput = D2.Services.Protos.KeyCustodian.V1.SignOutput;
 /// real protobuf serialization + real <see cref="RpcException"/> propagation. Server-TLS
 /// only (loopback self-signed server cert, client-trust callback — NO client cert; resilience
 /// is auth-orthogonal, so the mTLS client-cert requirement is dropped → runs cross-platform
-/// including Windows). Self-managed (<see cref="RunningServer"/> : IAsyncDisposable,
+/// including Windows). Self-managed (<see cref="GrpcTestHost.RunningServer"/> : IAsyncDisposable,
 /// ephemeral port; no <c>dotnet run</c>, single process). The SAME generated
 /// <see cref="KeyCustodianGrpcClient"/> / <see cref="PredicateFixturesGrpcClient"/> the
 /// in-memory harness drives, re-proven over a real socket.
@@ -354,104 +349,42 @@ public sealed class OverTheWireResilienceTests
     /// <see cref="KeyCustodianSigner.KeyCustodianSignerBase"/> shim. Server-TLS only —
     /// no client certificate is required (resilience is auth-orthogonal). The loopback
     /// self-signed server cert chains to itself and builds on a clean Windows box, so no
-    /// OS-store mutation is needed. Cross-platform: no client-cert context is built.
+    /// OS-store mutation is needed. Cross-platform: no client-cert context is built. The
+    /// real-socket host plumbing lives in the shared <see cref="GrpcTestHost"/> test-infra
+    /// helper; this harness supplies only the bare-shim registration + the service map.
     /// </summary>
-    private static async Task<RunningServer> StartSignerServerAsync(
+    private static Task<GrpcTestHost.RunningServer> StartSignerServerAsync(
         X509Certificate2 serverCert,
-        KeyCustodianSigner.KeyCustodianSignerBase shim)
-    {
-        var builder = WebApplication.CreateBuilder();
-        builder.Logging.ClearProviders();
-        builder.Services.AddSingleton(shim);
-        builder.Services.AddRouting();
-        builder.Services.AddGrpc();
-
-        builder.WebHost.ConfigureKestrel(kestrel =>
-            kestrel.Listen(
-                System.Net.IPAddress.Loopback,
-                0,
-                listen => listen.UseHttps(serverCert)));
-
-        var app = builder.Build();
-        app.MapGrpcService<KeyCustodianSigner.KeyCustodianSignerBase>();
-
-        await app.StartAsync();
-
-        return new RunningServer(app, ResolveEndpoint(app));
-    }
+        KeyCustodianSigner.KeyCustodianSignerBase shim) =>
+        GrpcTestHost.StartAsync(
+            serverCert,
+            services => services.AddSingleton(shim),
+            app => app.MapGrpcService<KeyCustodianSigner.KeyCustodianSignerBase>());
 
     /// <summary>
     /// Starts a real Kestrel HTTPS host on <c>127.0.0.1:0</c> hosting a
-    /// <see cref="PredicateFixturesOrders.PredicateFixturesOrdersBase"/> shim.
+    /// <see cref="PredicateFixturesOrders.PredicateFixturesOrdersBase"/> shim, via the
+    /// shared <see cref="GrpcTestHost"/> test-infra helper.
     /// </summary>
-    private static async Task<RunningServer> StartPredicateServerAsync(
+    private static Task<GrpcTestHost.RunningServer> StartPredicateServerAsync(
         X509Certificate2 serverCert,
-        PredicateFixturesOrders.PredicateFixturesOrdersBase shim)
-    {
-        var builder = WebApplication.CreateBuilder();
-        builder.Logging.ClearProviders();
-        builder.Services.AddSingleton(shim);
-        builder.Services.AddRouting();
-        builder.Services.AddGrpc();
-
-        builder.WebHost.ConfigureKestrel(kestrel =>
-            kestrel.Listen(
-                System.Net.IPAddress.Loopback,
-                0,
-                listen => listen.UseHttps(serverCert)));
-
-        var app = builder.Build();
-        app.MapGrpcService<PredicateFixturesOrders.PredicateFixturesOrdersBase>();
-
-        await app.StartAsync();
-
-        return new RunningServer(app, ResolveEndpoint(app));
-    }
-
-    private static Uri ResolveEndpoint(WebApplication app)
-    {
-        var addresses = app.Services
-            .GetRequiredService<IServer>()
-            .Features
-            .Get<IServerAddressesFeature>();
-
-        var address = addresses?.Addresses.FirstOrDefault()
-            ?? throw new InvalidOperationException(
-                "Kestrel did not report a bound address after StartAsync.");
-
-        return new Uri(address);
-    }
+        PredicateFixturesOrders.PredicateFixturesOrdersBase shim) =>
+        GrpcTestHost.StartAsync(
+            serverCert,
+            services => services.AddSingleton(shim),
+            app => app.MapGrpcService<PredicateFixturesOrders.PredicateFixturesOrdersBase>());
 
     /// <summary>
     /// Builds a gRPC channel that dials the loopback HTTPS endpoint with server-TLS only.
-    /// The client trusts the loopback self-signed server cert via
-    /// <c>RemoteCertificateValidationCallback</c>. No client certificate is presented —
-    /// no <see cref="SslStreamCertificateContext"/> is built — so the Windows-Schannel
+    /// The client trusts the loopback self-signed server cert via the shared
+    /// <see cref="GrpcTestHost.BuildChannel(Uri, Action{SslClientAuthenticationOptions}?)"/>
+    /// plumbing. No client certificate is presented — no
+    /// <see cref="SslStreamCertificateContext"/> is built — so the Windows-Schannel
     /// limitation that gates the mTLS harness's cert-presenting cases to non-Windows does
     /// NOT apply here. All five scenarios run cross-platform including Windows.
     /// </summary>
-    [SuppressMessage(
-        "Security",
-        "CA5359:Do not disable certificate validation",
-        Justification = "Client-side trust of the loopback self-signed SERVER cert only (it is not "
-            + "in the machine store). No client cert is presented; no server mutual-TLS validation "
-            + "occurs. Test harness, loopback only, server-TLS only. Does not weaken any production "
-            + "security property under test.")]
-    private static GrpcChannel BuildServerTlsChannel(Uri endpoint)
-    {
-        var sslOptions = new SslClientAuthenticationOptions
-        {
-            // Client-side trust of the loopback self-signed server cert ONLY (not in the
-            // machine store). Server-TLS only — no client cert presented here.
-            RemoteCertificateValidationCallback = (_, _, _, _) => true,
-        };
-
-        var handler = new SocketsHttpHandler { SslOptions = sslOptions };
-
-        return GrpcChannel.ForAddress(
-            endpoint,
-            new GrpcChannelOptions { HttpHandler = handler });
-    }
+    private static GrpcChannel BuildServerTlsChannel(Uri endpoint) =>
+        GrpcTestHost.BuildChannel(endpoint);
 
     // -----------------------------------------------------------------------
     // Pipeline builders (deterministic — no wall-clock)
@@ -643,25 +576,6 @@ public sealed class OverTheWireResilienceTests
         {
             Interlocked.Increment(ref _callCount);
             return Task.FromResult(BuildResponse(resultFactory(), itemStatuses));
-        }
-    }
-
-    // -----------------------------------------------------------------------
-    // Running host disposable
-    // -----------------------------------------------------------------------
-
-    /// <summary>
-    /// A running Kestrel host + its resolved loopback endpoint. Disposing stops the
-    /// host and releases the bound socket.
-    /// </summary>
-    private sealed class RunningServer(WebApplication app, Uri endpoint) : IAsyncDisposable
-    {
-        public Uri Endpoint => endpoint;
-
-        public async ValueTask DisposeAsync()
-        {
-            await app.StopAsync();
-            await app.DisposeAsync();
         }
     }
 }

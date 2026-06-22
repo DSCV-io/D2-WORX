@@ -37,8 +37,13 @@ import {
 } from "../src/lib/result-predicate-emitter.js";
 import {
   emitGrpcClient,
+  emitClientKeys,
   type GrpcClientOp,
 } from "../src/lib/grpc-client-emitter.js";
+import { emitCsharpDtos } from "../src/lib/csharp-dto-emitter.js";
+import { emitTsDtos } from "../src/lib/ts-dto-emitter.js";
+import { emitProto } from "../src/lib/proto-emitter.js";
+import type { FieldInfo } from "../src/lib/model-walk.js";
 
 const D2DecoratorTestLibrary = createTestLibrary({
   name: "@d2/typespec-decorators",
@@ -399,5 +404,146 @@ describe("byteParity_PredicateBearingClient", () => {
       CLIENTS_NS,
     );
     expect(impl!.content).not.toBe(drifted);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// V1 PredicateFixtures completeness byte-gates — the placeOrder DTO pair, the
+// TS DTO, the proto, the client interface + mappers + keys. The predicate /
+// impl / DI gates above already pin the resilience-bearing members; these close
+// the remaining V1 committed `.g.*` files so the whole module is byte-gated.
+// The field lists come from the SAME makePlaceOrderClientOp() the impl gate uses.
+// ---------------------------------------------------------------------------
+
+const placeOrderReqFields = (): readonly FieldInfo[] =>
+  makePlaceOrderClientOp().requestFields;
+const placeOrderRespFields = (): readonly FieldInfo[] =>
+  makePlaceOrderClientOp().responseFields;
+
+describe("byteParity_PlaceOrderV1Dtos", () => {
+  it("re-emitted PlaceOrderInput.g.cs is byte-identical to the committed fixture", () => {
+    const [inputFile] = emitCsharpDtos(
+      "placeOrder",
+      CLIENTS_NS,
+      SPEC,
+      placeOrderReqFields(),
+      placeOrderRespFields(),
+      [],
+    );
+    expect(inputFile!.content).toBe(readFixture("PlaceOrderInput.g.cs"));
+  });
+
+  it("re-emitted PlaceOrderOutput.g.cs is byte-identical to the committed fixture", () => {
+    const [, outputFile] = emitCsharpDtos(
+      "placeOrder",
+      CLIENTS_NS,
+      SPEC,
+      placeOrderReqFields(),
+      placeOrderRespFields(),
+      [],
+    );
+    expect(outputFile!.content).toBe(readFixture("PlaceOrderOutput.g.cs"));
+  });
+
+  it("re-emitted place-order-dto.g.ts is byte-identical to the committed fixture", () => {
+    const tsFile = emitTsDtos(
+      "placeOrder",
+      SPEC,
+      placeOrderReqFields(),
+      placeOrderRespFields(),
+      [],
+    );
+    expect(tsFile.content).toBe(readFixture("place-order-dto.g.ts"));
+  });
+
+  it("deliberate-drift detection: a mutated PlaceOrderOutput fixture does NOT match", () => {
+    const drifted = readFixture("PlaceOrderOutput.g.cs").replace(
+      "string OrderCode",
+      "string OrderCodeDRIFTED",
+    );
+    const [, outputFile] = emitCsharpDtos(
+      "placeOrder",
+      CLIENTS_NS,
+      SPEC,
+      placeOrderReqFields(),
+      placeOrderRespFields(),
+      [],
+    );
+    expect(outputFile!.content).not.toBe(drifted);
+  });
+});
+
+describe("byteParity_PlaceOrderV1Proto", () => {
+  function emit(): string {
+    return emitProto(
+      "placeOrder",
+      "PredicateFixturesOrders",
+      "PlaceOrder",
+      "unary",
+      "d2.predicatefixtures.v1",
+      PROTO_NS,
+      SPEC,
+      "PlaceOrderRequest",
+      placeOrderReqFields(),
+      "PlaceOrderOutput",
+      placeOrderRespFields(),
+      [],
+      (c, m) => {
+        throw new Error(`${c}: ${m}`);
+      },
+    )!.content;
+  }
+
+  it("re-emitted V1 proto is byte-identical to the committed fixture", () => {
+    expect(emit()).toBe(
+      readFixture("../Protos/predicate_fixtures_orders_place_order.g.proto"),
+    );
+  });
+
+  it("deliberate-drift detection: a mutated proto message name does NOT match", () => {
+    const drifted = readFixture(
+      "../Protos/predicate_fixtures_orders_place_order.g.proto",
+    ).replace("message PlaceOrderOutput", "message PlaceOrderOutputDRIFTED");
+    expect(emit()).not.toBe(drifted);
+  });
+});
+
+describe("byteParity_PredicateFixturesV1ClientModule", () => {
+  it("re-emitted IPredicateFixturesGrpcClient.g.cs (client interface) is byte-identical", () => {
+    const [iface] = emitGrpcClient(
+      "PredicateFixtures",
+      [makePlaceOrderClientOp()],
+      CLIENTS_NS,
+    );
+    expect(iface!.content).toBe(
+      readFixture("IPredicateFixturesGrpcClient.g.cs"),
+    );
+  });
+
+  it("re-emitted PlaceOrderClientMappers.g.cs is byte-identical", () => {
+    const [, , mappers] = emitGrpcClient(
+      "PredicateFixtures",
+      [makePlaceOrderClientOp()],
+      CLIENTS_NS,
+    );
+    expect(mappers!.content).toBe(readFixture("PlaceOrderClientMappers.g.cs"));
+  });
+
+  it("re-emitted PlaceOrderClientKeys.g.cs is byte-identical", () => {
+    const keys = emitClientKeys("placeOrder", CLIENTS_NS, SPEC);
+    expect(keys.content).toBe(readFixture("PlaceOrderClientKeys.g.cs"));
+  });
+
+  it("deliberate-drift detection: a mutated client-interface fixture does NOT match", () => {
+    const drifted = readFixture("IPredicateFixturesGrpcClient.g.cs").replace(
+      "IPredicateFixturesGrpcClient",
+      "IPredicateFixturesGrpcClientDRIFTED",
+    );
+    const [iface] = emitGrpcClient(
+      "PredicateFixtures",
+      [makePlaceOrderClientOp()],
+      CLIENTS_NS,
+    );
+    expect(iface!.content).not.toBe(drifted);
   });
 });
