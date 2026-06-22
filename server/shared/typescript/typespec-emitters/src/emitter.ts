@@ -58,6 +58,15 @@ import {
 import { emitRoutePolicy } from "./lib/route-policy-emitter.js";
 import { emitOpenApiDocuments } from "./lib/openapi-emitter.js";
 import { emitIdempotencyStoreSeam } from "./lib/idempotency-gate-emitter.js";
+import {
+  emitSseDispatcher,
+  emitSseDispatchersDiExtension,
+  emitSseEmitSinkSeam,
+} from "./lib/sse-dispatch-emitter.js";
+import type {
+  SseChannelClass,
+  SseDispatchOp,
+} from "./lib/sse-dispatch-emitter.js";
 import type {
   DelegationTarget,
   HttpVerb,
@@ -73,8 +82,10 @@ import { $lib } from "./lib.js";
 //   2. <Op>Input.g.cs + <Op>Output.g.cs — C# sealed-record DTO pairs for
 //      every operation with a concrete input or output model. Namespace is
 //      determined by exposure routing (see "Namespace routing" below).
-//   3. I<Op>Handler.g.cs — C# handler interface per op (EVERY op — exposed
-//      and internal). Lands in the app CQRS namespace.
+//   3. I<Op>Handler.g.cs — C# handler interface per op that has a request side
+//      (exposed and internal). A PURE server-push op (only @d2ServerPush) is a
+//      caller, not a request server, and emits NO handler. Lands in the app
+//      CQRS namespace.
 //   4. <op>-dto.g.ts — TypeScript interface pair for the same operations.
 //   5. <Service>_<method>.g.proto — proto3 service + message declarations for
 //      every operation decorated with @d2GrpcMethod.
@@ -94,6 +105,16 @@ import { $lib } from "./lib.js";
 //      stock @typespec/openapi3 getOpenAPI3 seam with the four x-d2-* policy
 //      extensions (x-d2-scope / x-d2-tier / x-d2-audience / x-d2-csrf) layered
 //      on top from the @d2* stateMaps. Only emitted when a @service exists.
+//  11. The server-push DISPATCH layer for every @d2ServerPush op:
+//      D2GeneratedSseEmitSink.g.cs (the emitter-owned seam family — channel-class
+//      enum + channel-target record struct + generic-payload sink interface, one
+//      per registration namespace), I<Op>Dispatcher.g.cs + <Op>Dispatcher.g.cs
+//      (the per-op dispatcher with the channel class baked from pushTarget + the
+//      op-name event-type literal + the <Op>Output payload), and
+//      <Module>SseDispatchersGenerated.g.cs (the per-module Transient DI-ext).
+//      The text/event-stream wire framing stays hand-written fringe (the sink's
+//      job). A push op whose output has no emittable payload fires D2TSP008
+//      (server-push-requires-payload) and emits no partial dispatcher.
 //
 // Namespace routing for C# DTOs:
 //   EXPOSED op (@d2InProcess / @d2GrpcMethod / @d2ServerPush / @route):
@@ -215,6 +236,13 @@ export async function $onEmit(context: EmitContext): Promise<void> {
   // Track the last specHint per namespace for the seam banner.
   const idempotentNamespaceSpec = new Map<string, string>();
 
+  // Collect @d2ServerPush ops per module (grouped by @d2ServedBy) for the SSE
+  // dispatch-DI extension (one-per-module, emitted after the per-op walk).
+  const pushOpsByModule = new Map<string, SseDispatchOp[]>();
+  // Track the last specHint per namespace that contains ≥1 push op. The SSE
+  // emit-sink seam is emitted ONCE per namespace (mirrors the idempotency seam).
+  const sseNamespaceSpec = new Map<string, string>();
+
   navigateProgram(program, {
     operation(op: Operation) {
       ops.push({
@@ -270,25 +298,41 @@ export async function $onEmit(context: EmitContext): Promise<void> {
       // Emit C# + TS DTOs only when we have at least one side with a concrete model.
       // Returns true when emission succeeded (no walk errors); the handler-interface
       // emitter is gated on the same success so error paths produce zero .g.cs output.
+      //
+      // A PURE-push op (only @d2ServerPush, no request exposure, not @d2Internal) emits
+      // ONLY the output payload — never an input DTO. A param-less pure-push op would
+      // otherwise emit an orphan parameterless <Op>Input record (TypeSpec's parameters
+      // container is a non-undefined empty Model for a param-less op, so inputModel is
+      // always defined), which nothing consumes. Suppress it via dtoInputModel.
+      const dtoInputModel = isPurePush(program, op) ? undefined : inputModel;
       let dtoEmitSucceeded = false;
-      if (inputModel !== undefined || outputModel !== undefined) {
+
+      if (dtoInputModel !== undefined || outputModel !== undefined) {
         dtoEmitSucceeded = emitDtoPair(
           context,
           program,
           op.name,
           dtoCsNamespace,
           specHint,
-          inputModel,
+          dtoInputModel,
           outputModel,
         );
       }
 
-      // Emit I<Op>Handler.g.cs for EVERY op (exposed and internal).
+      // Emit I<Op>Handler.g.cs for every op that has a request side — and
+      // collect it for the façade. A PURE server-push op (only @d2ServerPush, no
+      // @route/@d2GrpcMethod/@d2InProcess, not @d2Internal) is the CALLER of an
+      // event channel, not a request server: it emits ONLY the dispatcher (a
+      // client stub) — no handler (a caller never registers one) and no façade
+      // entry (a façade method would delegate to the absent handler). A COMBINED
+      // op (push + a request exposure) is NOT pure-push, so it still gets both
+      // for the request side.
+      //
       // Gated on dtoEmitSucceeded so unmapped-scalar / unsupported-property-type
       // errors do not produce a partial handler-interface file with broken type refs.
       // The handler interface always lands in the app CQRS namespace
       // (or the fixture grpcServiceNs when csAppNamespaceBase is absent).
-      if (dtoEmitSucceeded) {
+      if (dtoEmitSucceeded && !isPurePush(program, op)) {
         const handlerNs = resolveHandlerNamespace(
           category,
           op.name,
@@ -349,6 +393,22 @@ export async function $onEmit(context: EmitContext): Promise<void> {
           }
         }
       }
+
+      // Emit the server-push DISPATCH layer for ops carrying @d2ServerPush.
+      // The dispatcher delivers the op's <Op>Output payload to the recipient
+      // channel; the channel class is baked from the pushTarget. A push op whose
+      // output has no emittable payload (void return / zero-field, zero-nested
+      // output walk) fires D2TSP008 and emits no partial dispatcher.
+      emitSsePushIfPresent(
+        context,
+        program,
+        op,
+        dtoCsNamespace,
+        specHint,
+        outputModel,
+        pushOpsByModule,
+        sseNamespaceSpec,
+      );
 
       // Emit proto + gRPC service impl only for ops carrying @d2GrpcMethod.
       const grpcPayload = program.stateMap(D2_GRPC_METHOD_KEY).get(op) as
@@ -656,6 +716,31 @@ export async function $onEmit(context: EmitContext): Promise<void> {
     void emitGeneratedFile(program, seamPath, seamFile.content);
   }
 
+  // ---- Server-push DI extension — one per module (after the per-op walk) ---------------------
+  // Emitted for every module that contains ≥1 @d2ServerPush op; registers each
+  // op's dispatcher Transient. Fires in both fixture + real-module modes (the
+  // dispatch layer is host-independent; @d2ServedBy is the per-module key).
+  for (const [moduleName, moduleOps] of pushOpsByModule) {
+    const diFile = emitSseDispatchersDiExtension(
+      moduleName,
+      moduleOps,
+      moduleOps[0]!.dtoNamespace,
+      moduleOps[0]!.sourceSpec,
+    );
+    const diPath = resolveOutputPath(context, diFile.fileName);
+    void emitGeneratedFile(program, diPath, diFile.content);
+  }
+
+  // ---- Server-push emit-sink seam — one per registration namespace ---------------------------
+  // Emitted for every namespace that contains ≥1 push op. sseNamespaceSpec is
+  // populated together with the per-op dispatcher emission in the walk, so a
+  // namespace appears here iff it has a dispatcher referencing the seam.
+  for (const [ns, specHint] of sseNamespaceSpec) {
+    const seamFile = emitSseEmitSinkSeam(ns, specHint);
+    const seamPath = resolveOutputPath(context, seamFile.fileName);
+    void emitGeneratedFile(program, seamPath, seamFile.content);
+  }
+
   // ---- OpenAPI x-d2-* document(s) — one per @service namespace × version --------------------
   // Runs the genuine stock @typespec/openapi3 emitter (getOpenAPI3) for the HTTP
   // shape, then layers the four x-d2-* policy extensions read from the @d2*
@@ -704,6 +789,57 @@ function resolveIsExposed(
   // The exposure decorators are @d2InProcess / @d2GrpcMethod / @d2ServerPush.
   // @route is handled by the route emitter, not this pass. isExposed is therefore a union of the three keys.
   return hasInProcess || hasGrpc || hasServerPush;
+}
+
+/**
+ * Resolve whether an operation is a PURE server-push op — it carries
+ * `@d2ServerPush` and NONE of the request-exposure decorators (`@route` /
+ * `@d2GrpcMethod` / `@d2InProcess`) and is not `@d2Internal`.
+ *
+ * A pure-push op is the CALLER of an event channel, not a server of requests:
+ * it generates ONLY the dispatcher (a client stub) — no `I<Op>Handler` (a
+ * caller never registers a handler to reach a service) and no façade entry (a
+ * façade method would delegate to the now-absent handler). The SSE gateway is
+ * the server; it implements the one generic `D2GeneratedSseEmitSink` seam once
+ * for every event, so there is zero per-event server code.
+ *
+ * This is SELECTIVE: a COMBINED op (e.g. `@d2ServerPush` + `@d2GrpcMethod`)
+ * still has a request side, so it is NOT pure-push and STILL gets a handler +
+ * façade entry for that request side.
+ *
+ * `@route` is not in the state map; it is detected via the same `getOperationVerb`
+ * mechanism the route emitter uses (an explicit HTTP verb decorator means `@route`).
+ */
+function isPurePush(
+  program: Parameters<typeof walkModel>[0],
+  op: Operation,
+): boolean {
+  const hasServerPush =
+    program.stateMap(D2_SERVER_PUSH_KEY).get(op) !== undefined;
+  if (!hasServerPush) return false;
+
+  // A request exposure (gRPC / in-process / @route) OR @d2Internal means the op
+  // has a server side that owns a handler — not pure-push. @route is detected via
+  // getOperationVerb (an explicit HTTP verb decorator), the same signal the route
+  // emitter uses; the others are state-map markers.
+  const hasGrpc = program.stateMap(D2_GRPC_METHOD_KEY).get(op) !== undefined;
+  const hasInProcess = program.stateMap(D2_IN_PROCESS_KEY).get(op) === true;
+  const isInternal = program.stateMap(D2_INTERNAL_KEY).get(op) === true;
+  const hasRoute =
+    getOperationVerb(program as Parameters<typeof getOperationVerb>[0], op) !==
+    undefined;
+
+  // Pure-push iff NONE of the request-side / internal markers hold. Combining
+  // them through `.some` over a flag array keeps a single decision point — the
+  // pure-push path (all flags false) and any combined op (≥1 flag true) cover it.
+  const hasRequestSideOrInternal = [
+    hasGrpc,
+    hasInProcess,
+    hasRoute,
+    isInternal,
+  ].some((flag) => flag);
+
+  return !hasRequestSideOrInternal;
 }
 
 /**
@@ -872,7 +1008,13 @@ function emitDtoPair(
     outputWalk.nestedEnums,
   );
 
-  for (const f of csFiles) {
+  // emitCsharpDtos always returns [inputFile, outputFile]. When inputModel is
+  // undefined, the caller has decided not to emit the input side (pure-push
+  // ops emit only the output payload DTO — no input DTO). Skip csFiles[0] in
+  // that case so no orphan parameterless <Op>Input record lands on disk.
+  const csFilesToEmit = inputModel === undefined ? csFiles.slice(1) : csFiles;
+
+  for (const f of csFilesToEmit) {
     const path = resolveOutputPath(context, f.fileName);
     void emitGeneratedFile(program, path, f.content);
   }
@@ -1298,6 +1440,110 @@ function emitRouteIfPresent(
     existing.push(restOp);
     restOpsByModule.set(servedBy, existing);
   }
+}
+
+/**
+ * Emit the server-push dispatcher pair for one operation if it carries
+ * @d2ServerPush.
+ *
+ * The op's `<Op>Output` model is the event payload. When the output has no
+ * emittable payload (a `void` return, or an output walk yielding zero fields and
+ * zero nested models), D2TSP008 (server-push-requires-payload) fires and NO
+ * partial dispatcher is emitted — a payload-less push is almost certainly an
+ * author mistake (strict + fail-loud, matching the fleet's posture).
+ *
+ * The channel CLASS is baked from the decorator's stored pushTarget
+ * ("user" | "session"). The event-type is the op-name literal. The op is also
+ * collected into `pushOpsByModule` (keyed by @d2ServedBy) for the after-walk
+ * per-module DI extension, and its namespace is tracked in `sseNamespaceSpec`
+ * for the once-per-namespace emit-sink seam.
+ *
+ * The output model is re-walked here with a no-op error sink: emitDtoPair ran
+ * first in the per-op walk and already reported any walk error, so the sink is
+ * inert (never fires) for any program that reaches this point with a present
+ * output model.
+ */
+function emitSsePushIfPresent(
+  context: EmitContext,
+  program: Parameters<typeof walkModel>[0],
+  op: Operation,
+  dtoCsNamespace: string,
+  specHint: string,
+  outputModel: Model | undefined,
+  pushOpsByModule: Map<string, SseDispatchOp[]>,
+  sseNamespaceSpec: Map<string, string>,
+): void {
+  const pushTarget = program.stateMap(D2_SERVER_PUSH_KEY).get(op) as
+    | string
+    | undefined;
+  if (pushTarget === undefined) return;
+
+  // Emit-gate: a push op must carry an emittable payload. A void return has no
+  // output model; an empty output record has zero fields + zero nested models.
+  // The walk error sink is inert (the model was validated by emitDtoPair first),
+  // so it is annotated as never-firing for coverage.
+  const outputWalk =
+    outputModel !== undefined
+      ? walkModel(
+          program,
+          outputModel,
+          /* v8 ignore next — defensive: the output model was validated by emitDtoPair first */
+          () => undefined,
+        )
+      : { fields: [], nestedModels: [], nestedEnums: [] };
+  if (outputWalk.fields.length === 0 && outputWalk.nestedModels.length === 0) {
+    $lib.reportDiagnostic(program, {
+      code: "server-push-requires-payload",
+      format: { op: op.name },
+      target: op,
+    });
+
+    return; // No partial dispatcher — the payload DTO does not exist.
+  }
+
+  // Map the decorator's pushTarget to the PascalCase C# channel-class member.
+  // The decorator validator (validatePushTarget) guarantees "user" | "session";
+  // any other value would already have failed the compile, so the else arm is a
+  // defensive fallback for an unreachable state.
+  const channelClass: SseChannelClass =
+    pushTarget === "session" ? "Session" : "User";
+
+  // Past the emit-gate the output model is always present (a void/empty output
+  // already returned above), so the name is read directly. An anonymous output
+  // model (empty name) falls back to the <PascalOp>Output convention.
+  const pascalOp = toPascalFromCamel(op.name);
+  const outputTypeName =
+    outputModel!.name.length > 0 ? outputModel!.name : `${pascalOp}Output`;
+
+  const dispatchOp: SseDispatchOp = {
+    opName: op.name,
+    channelClass,
+    outputTypeName,
+    dtoNamespace: dtoCsNamespace,
+    sourceSpec: specHint,
+  };
+
+  const dispatcherFiles = emitSseDispatcher(dispatchOp);
+  for (const f of dispatcherFiles) {
+    const path = resolveOutputPath(context, f.fileName);
+    void emitGeneratedFile(program, path, f.content);
+  }
+
+  // Collect for the after-walk per-module DI extension + the once-per-namespace
+  // seam. The seam lives in the dispatcher's namespace so the impl resolves it
+  // without a using. An op with @d2ServerPush but no @d2ServedBy has no module
+  // to name the DI extension — the dispatcher still emits; only the DI grouping
+  // is skipped (a defensive guard; the decorator layer pairs the two in practice).
+  const servedBy = program.stateMap(D2_SERVED_BY_KEY).get(op) as
+    | string
+    | undefined;
+  if (servedBy !== undefined && servedBy.length > 0) {
+    const existing = pushOpsByModule.get(servedBy) ?? [];
+    existing.push(dispatchOp);
+    pushOpsByModule.set(servedBy, existing);
+  }
+
+  sseNamespaceSpec.set(dtoCsNamespace, specHint);
 }
 
 /**

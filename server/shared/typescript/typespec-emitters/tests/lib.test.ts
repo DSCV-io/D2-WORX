@@ -54,3 +54,20 @@ describe("lib_MissingCqrsCategoryPresent", () => {
     expect(typeof descriptor.messages.default).toBe("function");
   });
 });
+
+describe("lib_ServerPushRequiresPayloadPresent", () => {
+  it("'server-push-requires-payload' (D2TSP008) is in the catalog", () => {
+    expect($lib.diagnostics["server-push-requires-payload"]).toBeDefined();
+  });
+
+  it("'server-push-requires-payload' (D2TSP008) has severity 'error'", () => {
+    expect($lib.diagnostics["server-push-requires-payload"].severity).toBe(
+      "error",
+    );
+  });
+
+  it("'server-push-requires-payload' messages.default is callable (paramMessage)", () => {
+    const descriptor = $lib.diagnostics["server-push-requires-payload"];
+    expect(typeof descriptor.messages.default).toBe("function");
+  });
+});

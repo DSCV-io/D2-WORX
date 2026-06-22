@@ -35,6 +35,13 @@ import { createTypeSpecLibrary, paramMessage } from "@typespec/compiler";
 //                                         ambiguous shapes are not — there is no single C#/proto/TS
 //                                         representation. Replace with a named enum or a closed
 //                                         string-literal union.
+//   D2TSP008  server-push-requires-payload — a @d2ServerPush op whose output has no emittable
+//                                         payload (a void return, or an output model with zero
+//                                         fields and zero nested models). The op's output model IS
+//                                         the event payload, so a payload-less push is almost
+//                                         certainly an author mistake; the dispatch emitter loud-
+//                                         fails rather than emitting a dispatcher with an empty
+//                                         payload record. Give the op a non-empty output model.
 // -----------------------------------------------------------------------
 
 /**
@@ -139,6 +146,21 @@ export const $lib = createTypeSpecLibrary({
       severity: "error",
       messages: {
         default: paramMessage`union property '${"property"}' has an unsupported shape — only a closed set of string literals (or a named enum) maps to a cross-language enum; mixed-primitive, numeric-literal, discriminated, or model unions are not supported`,
+      },
+    },
+
+    /**
+     * D2TSP008 — A @d2ServerPush operation has no emittable event payload.
+     * The op's output model IS the dispatched event payload. A void return (or
+     * an output model with zero fields and zero nested models) leaves nothing to
+     * push — almost certainly an author mistake. The dispatch emitter refuses to
+     * emit a dispatcher carrying an empty payload record. Give the operation a
+     * non-empty output model.
+     */
+    "server-push-requires-payload": {
+      severity: "error",
+      messages: {
+        default: paramMessage`@d2ServerPush on '${"op"}' has no event payload — the op's output model is the dispatched payload, so it must declare at least one field; a void or empty output cannot be pushed`,
       },
     },
   },

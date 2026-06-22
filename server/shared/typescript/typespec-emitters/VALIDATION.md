@@ -255,6 +255,60 @@ TestServer host with real `UseD2Auth()` + `FakeKeyCustodianSignerFacade` + `Fake
 
 ---
 
+## Server-push dispatch emitter — seam ledger
+
+The `text/event-stream` channel gateway is an unbuilt Edge concern (the wire binding is hand-written fringe per ADR-0021 — the channel-gateway lib lands when Edge ships). The emitter owns a faithful seam family so the dispatch contract is validated without being blocked on the unbuilt consumer. The generated `<Op>Dispatcher` delivers a TYPED `<Op>Output` payload to the sink; serialization + the `data:`/`event:` framing are the sink's job.
+
+| Seam                                                                                                                                                                                                       | Kind                                                                                                                                                                                                                                                            | Consumer                                                                                            | Replace-trigger                                                          |
+| -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------- |
+| `D2GeneratedSseEmitSink` (emitter-owned generated interface — generic `EmitAsync<TPayload>` over `D2GeneratedSseChannelTarget` { `D2GeneratedSseChannelClass` Class, string Id } + an event-type + payload) | **Faithful seam** — validates the real dispatch contract (channel class + targetId + event-type + payload round-trip; sink-failure propagation) against an in-memory `FakeSseEmitSink` that records all four and returns a configurable `D2Result` (non-vacuous) | Unbuilt Edge SSE channel gateway (the `text/event-stream` wire binding — hand-written per ADR-0021) | **CB3** — the Edge channel-gateway lib ships and implements `D2GeneratedSseEmitSink` |
+
+The `D2GeneratedSseEmitSink` / `D2GeneratedSseChannelTarget` / `D2GeneratedSseChannelClass` prefix signals emitter ownership and avoids a future name collision when the real Edge channel gateway lands its own `ISseEmitSink` / channel vocabulary. The design mirrors the idempotency emitter's `D2GeneratedIdempotencyStore` emitter-owned faithful-seam pattern.
+
+---
+
+## Server-push dispatch emitter — C# validation table (`SseDispatcherTests`)
+
+Standalone (host-independent) — the generated dispatcher + seam compile into `D2.Edge.Tests`; no TestServer. Each test drives a generated `<Op>Dispatcher` directly with the faithful `FakeSseEmitSink`, or resolves the generated DI extension.
+
+| Seam                      | Real or fake                                  | Notes                                                                                                              |
+| ------------------------- | --------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| `D2GeneratedSseEmitSink`  | **Faithful in-memory seam** (`FakeSseEmitSink`) | Records `LastTarget` (class + id), `LastEventType`, `LastPayload`, `CallCount`; returns a configurable `D2Result` |
+| `IServiceCollection` DI   | **Real**                                       | `AddD2PushFixturesSseDispatchers()` + `GetRequiredService<I<Op>Dispatcher>()` — descriptor presence ≠ resolvability |
+
+| Test                                                                  | Scenario                  | Key assertion                                                                                                          |
+| --------------------------------------------------------------------- | ------------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| `OrderShippedDispatcher_AddressesUserChannel_ForwardsAllFields`       | User-channel push         | sink sees `Class == User`, `Id == targetId`, `eventType == "orderShipped"`, the same payload instance (non-vacuous)   |
+| `SessionExpiringDispatcher_AddressesSessionChannel_ForwardsAllFields` | Session-channel push      | sink sees `Class == Session`, `eventType == "sessionExpiring"` (the baked-in channel-class arm is non-vacuous vs User) |
+| `OrderShippedDispatcher_SinkFailure_PropagatesServiceUnavailable`     | Sink outage               | the sink's `ServiceUnavailable` rides through verbatim — `Success == false`, never swallowed to `Ok` (§9.20)          |
+| `OrderShippedDispatcher_AdversarialTargetId_ForwardedUnchanged`       | Empty / whitespace id     | the id rides through verbatim (`""` / `"   "`) — the dispatcher is a thin forwarder; the sink/gateway validate         |
+| `AddD2PushFixturesSseDispatchers_ResolvesEachDispatcherToConcreteType`| DI resolution (§1.3)      | `GetRequiredService<IOrderShippedDispatcher>()` / `<ISessionExpiringDispatcher>()` resolve AS the generated impls      |
+| `AddD2PushFixturesSseDispatchers_RegistersDispatchersTransient`       | DI lifetime               | two resolutions yield distinct instances (Transient registration is real)                                            |
+
+---
+
+## Server-push dispatch emitter — byte-parity table
+
+Every committed `.g.cs` under `TypeSpecSse/Generated/` is re-emitted via the pure fns and asserted byte-identical, each with a deliberate-drift negative (`tests/sse-dispatch-emitter.test.ts`). The fixture push ops are PURE-push (param-less), so the emitter produces NO `I<Op>Handler` (suppressed by `isPurePush` — a pure-push op is a caller, not a request server) and NO `<Op>Input` (input DTO suppressed for pure-push ops — `dtoInputModel = undefined` for `isPurePush` ops, so no orphan parameterless input record is emitted; the byte-gate asserts `committed("OrderShippedInput.g.cs")` THROWS). The dispatch wiring (`$onEmit` push collection + the after-walk per-module DI loop + the once-per-namespace seam loop) is proven in `tests/sse-dispatch-emit.integration.test.ts` (real test-host compile — which also asserts NO `I<Op>Handler` and NO `<Op>Input` is emitted for a pure-push op, the handler + input suppression-proof regressions) + `tests/sse-emit.direct.test.ts` (mocked-compiler `src` credit, incl. the void/empty-output → D2TSP008 + no-partial arm, the pure-push handler-suppression, and the SELECTIVE combined push + `@d2GrpcMethod` → handler-emitted branch).
+
+Net committed set per pure-push op: output DTO + dispatcher pair + (shared) seam + DI. NO input DTO, NO handler, NO façade entry.
+
+| Committed fixture                                                       | Emitter call                                                              | Key assertion / drift negative                                                                                       |
+| ---------------------------------------------------------------------- | ------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------- |
+| `TypeSpecSse/Generated/D2GeneratedSseEmitSink.g.cs` (emitter-owned seam) | `emitSseEmitSinkSeam(NS, "…/server-push-shaped.tsp")`                     | byte-identical to the committed seam; drift `EmitAsync` → `EmitAsyncDRIFTED`                                         |
+| `TypeSpecSse/Generated/IOrderShippedDispatcher.g.cs`                    | `emitSseDispatcher(orderShipped op)[0]`                                   | byte-identical; drift `DispatchAsync` → `DispatchAsyncDRIFTED`                                                       |
+| `TypeSpecSse/Generated/OrderShippedDispatcher.g.cs`                     | `emitSseDispatcher(orderShipped op)[1]`                                   | byte-identical; drift `D2GeneratedSseChannelClass.User` → `…Session` (the baked channel class is load-bearing)       |
+| `TypeSpecSse/Generated/ISessionExpiringDispatcher.g.cs`                 | `emitSseDispatcher(sessionExpiring op)[0]`                                | byte-identical                                                                                                       |
+| `TypeSpecSse/Generated/SessionExpiringDispatcher.g.cs`                  | `emitSseDispatcher(sessionExpiring op)[1]`                               | byte-identical; drift `…Session` → `…User` (the Session arm is non-vacuous vs User)                                  |
+| `TypeSpecSse/Generated/PushFixturesSseDispatchersGenerated.g.cs`        | `emitSseDispatchersDiExtension("PushFixtures", [both ops], NS, "…")`     | byte-identical; drift `AddTransient` → `AddScoped` (the Transient lifetime is load-bearing)                          |
+| `TypeSpecSse/Generated/OrderShippedOutput.g.cs` + nested `OrderLine`   | `emitCsharpDtos("orderShipped", NS, …, [], outputFields, [OrderLine])[1]` | byte-identical (the Output payload proves walkModel nested + temporal flow); drift `DateTimeOffset ShippedAt` → `…DRIFTED` |
+| `TypeSpecSse/Generated/SessionExpiringOutput.g.cs`                      | `emitCsharpDtos("sessionExpiring", NS, …, [], outputFields, [])[1]`       | byte-identical (the Output payload with temporal field)                                                              |
+| _(no `<Op>Input.g.cs`)_                                                 | _(input DTO suppressed for pure-push ops — `isPurePush` → `dtoInputModel = undefined`)_ | byte-gate asserts `committed("OrderShippedInput.g.cs")` THROWS (file absent from committed set)               |
+
+**D2TSP008 assertion notes**: `server-push-requires-payload` is tested directly in `sse-emit.direct.test.ts` (`$onEmit_sseDirect_VoidOutput_D2TSP008` — void output → diagnostic fired + no partial dispatcher) and in `sse-dispatch-emit.integration.test.ts` (void-output AND empty-record-output arms, via the real test-host); catalog registration + error severity are asserted in `tests/lib.test.ts` (`lib_ServerPushRequiresPayloadPresent` + the all-catalog guard). Severity is `"error"` in `src/lib.ts`.
+
+---
+
 ## REST route+policy emitter — byte-parity table
 
 | Committed fixture                                                                                                          | Emitter call                                                                                                       | Key assertion                                                                                                                                                                                                              | Test file                                | Test name                                                                                                                                                      |

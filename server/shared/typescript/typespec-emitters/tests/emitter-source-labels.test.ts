@@ -2,17 +2,19 @@
 // Copyright (c) DCSV. All rights reserved.
 // -----------------------------------------------------------------------
 
-// Regression pin: emitter SOURCE files must contain no step/phase sequencing
-// labels.
+// Regression pin: emitter SOURCE and TEST files must contain no step/phase
+// sequencing labels or conversation/decision-scoped IDs.
 //
 // Context: step/phase identifiers (e.g. "Step 6a", "Step 7 scope",
-// "Phase 3") in comments are project-internal sequencing references that have
-// recurred four times in this package. They belong in git history, not in
-// source. This test reads every *.ts file under src/ and asserts that none
-// contain the leak patterns, so any future introduction is caught at build
-// time rather than in a post-hoc audit.
+// "Phase 3") and conversation-decision IDs (e.g. "R-O3a", "D-S1", "D-O2")
+// in comments are project-internal sequencing references that have recurred
+// multiple times in this package. They belong in git history, not in source
+// or tests. This test reads every *.ts file under src/ and tests/ and
+// asserts that none contain the leak patterns, so any future introduction is
+// caught at build time rather than in a post-hoc audit.
 //
-// Fail-without-fix reasoning: before the F-2 fix, src/emitter.ts contained:
+// Fail-without-fix reasoning (Step/Phase): before the F-2 fix, src/emitter.ts
+// contained:
 //   "// New in Step 6a: Clients namespace for exposed-op DTOs + façade interface."
 //   "// New in Step 6a: App handler-namespace base; per-op CQRS path ="
 //   "// For Step 6a the only exposure decorators used are @d2InProcess ..."
@@ -20,17 +22,24 @@
 // All four match /Step\s+\d/ — this test would have reported 4 violations.
 // After the fix, all four lines describe current behavior without sequencing
 // labels and this test passes.
+//
+// Fail-without-fix reasoning (R-O*/D-S*/D-O*): before the FINDING-M-1 fix,
+// src/emitter.ts:1013 contained "via R-O3a" and tests/ contained multiple
+// "R-O3" / "R-O3a" references in comments and one it() test-name string.
+// All match /\bR-O\d+[a-z]*\b/ — the tests/ scan would have reported those
+// violations. After the fix, all locations use behavior-descriptive text and
+// this test passes.
 
 import { describe, it, expect } from "vitest";
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import { join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 
-// Resolve the src/ directory relative to this test file.
+// Resolve the src/ and tests/ directories relative to this test file.
 const testsDir = fileURLToPath(new URL(".", import.meta.url));
 const srcDir = join(testsDir, "..", "src");
 
-// Collect all *.ts files under src/ recursively.
+// Collect all *.ts files under a directory recursively.
 function collectTs(dir: string): string[] {
   const results: string[] = [];
   for (const entry of readdirSync(dir)) {
@@ -48,6 +57,12 @@ const STEP_LABEL = /\bStep\s+\d+[ab]?\b/;
 
 // Pattern: "Phase N" (e.g. "Phase 3", "Phase 0").
 const PHASE_LABEL = /\bPhase\s+\d+\b/;
+
+// Pattern: conversation/decision-scoped IDs — "R-O3", "R-O3a", "D-S1",
+// "D-O2", etc. These are audit/orchestrator decision references that belong
+// in git history (PR descriptions, commit messages), NOT in committed source
+// or test files.
+const DECISION_ID = /\bR-O\d+[a-z]*\b|\bD-S\d+\b|\bD-O\d+\b/;
 
 describe("emitter_source_contains_no_sequencing_labels", () => {
   const sourceFiles = collectTs(srcDir);
@@ -89,6 +104,89 @@ describe("emitter_source_contains_no_sequencing_labels", () => {
     if (violations.length > 0)
       expect.fail(
         `Found ${violations.length} phase-sequencing label(s) in emitter source:\n` +
+          violations.map((v) => `  ${v}`).join("\n"),
+      );
+  });
+
+  it("no src/**/*.ts file contains conversation/decision-scoped IDs (R-O*, D-S*, D-O*)", () => {
+    const violations: string[] = [];
+    for (const filePath of sourceFiles) {
+      const content = readFileSync(filePath, "utf8");
+      const relPath = relative(srcDir, filePath).replaceAll("\\", "/");
+      const lines = content.split("\n");
+      lines.forEach((line, idx) => {
+        if (DECISION_ID.test(line))
+          violations.push(`src/${relPath}:${idx + 1}: ${line.trim()}`);
+      });
+    }
+    if (violations.length > 0)
+      expect.fail(
+        `Found ${violations.length} conversation/decision-scoped ID(s) in emitter source:\n` +
+          violations.map((v) => `  ${v}`).join("\n"),
+      );
+  });
+});
+
+describe("emitter_tests_contain_no_sequencing_labels", () => {
+  // Scan tests/ but exclude THIS file itself to avoid false positives on the
+  // pattern constants and the fail-without-fix reasoning text above.
+  const thisFile = fileURLToPath(import.meta.url);
+  const testFiles = collectTs(testsDir).filter((f) => f !== thisFile);
+
+  it("tests/ directory contains at least one TypeScript file (sanity check)", () => {
+    expect(testFiles.length).toBeGreaterThan(0);
+  });
+
+  it("no tests/**/*.ts file contains step-sequencing labels (Step N / Step Na)", () => {
+    const violations: string[] = [];
+    for (const filePath of testFiles) {
+      const content = readFileSync(filePath, "utf8");
+      const relPath = relative(testsDir, filePath).replaceAll("\\", "/");
+      const lines = content.split("\n");
+      lines.forEach((line, idx) => {
+        if (STEP_LABEL.test(line))
+          violations.push(`tests/${relPath}:${idx + 1}: ${line.trim()}`);
+      });
+    }
+    if (violations.length > 0)
+      expect.fail(
+        `Found ${violations.length} step-sequencing label(s) in emitter tests:\n` +
+          violations.map((v) => `  ${v}`).join("\n"),
+      );
+  });
+
+  it("no tests/**/*.ts file contains phase-sequencing labels (Phase N)", () => {
+    const violations: string[] = [];
+    for (const filePath of testFiles) {
+      const content = readFileSync(filePath, "utf8");
+      const relPath = relative(testsDir, filePath).replaceAll("\\", "/");
+      const lines = content.split("\n");
+      lines.forEach((line, idx) => {
+        if (PHASE_LABEL.test(line))
+          violations.push(`tests/${relPath}:${idx + 1}: ${line.trim()}`);
+      });
+    }
+    if (violations.length > 0)
+      expect.fail(
+        `Found ${violations.length} phase-sequencing label(s) in emitter tests:\n` +
+          violations.map((v) => `  ${v}`).join("\n"),
+      );
+  });
+
+  it("no tests/**/*.ts file contains conversation/decision-scoped IDs (R-O*, D-S*, D-O*)", () => {
+    const violations: string[] = [];
+    for (const filePath of testFiles) {
+      const content = readFileSync(filePath, "utf8");
+      const relPath = relative(testsDir, filePath).replaceAll("\\", "/");
+      const lines = content.split("\n");
+      lines.forEach((line, idx) => {
+        if (DECISION_ID.test(line))
+          violations.push(`tests/${relPath}:${idx + 1}: ${line.trim()}`);
+      });
+    }
+    if (violations.length > 0)
+      expect.fail(
+        `Found ${violations.length} conversation/decision-scoped ID(s) in emitter tests:\n` +
           violations.map((v) => `  ${v}`).join("\n"),
       );
   });
