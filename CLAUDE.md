@@ -299,6 +299,7 @@ _Canonical form (full service-structure standard with rationale + carve-outs): [
 - **Every bug fix lands with a regression test in the same change** — fails-without-fix, passes-with-fix. Behavior-descriptive name. **No fix without a test, no exceptions.** [rules.md §2]
 - **Tests are adversarial** — happy path + garbage / null / empty / whitespace / oversized / malformed / wrong-type / cross-field deps / error propagation / idempotency / concurrency. [rules.md §1.2]
 - **Composition/DI resolution tests must `GetRequiredService<>()` EVERY registered seam** — descriptor-presence ≠ resolvability. A test that resolves 3 of 8 handlers leaves 5 unverified. [rules.md §1.3]
+- **Test doubles for unbuilt collaborators MUST assert the real seam contract** — capture + assert the inputs/outputs crossing the seam; a hollow double returning a canned value with no assertion is a FINDING-HIGH. [rules.md §1.32]
 
 ### Use OOTB shared libs (don't hand-roll)
 
@@ -357,6 +358,9 @@ _Canonical form (full service-structure standard with rationale + carve-outs): [
 - **Hand-write a DTO that mirrors a `.proto` / `.spec.json` / `.openapi.yaml` / `.graphql` shape in a published package = process-integrity failure.** [rules.md §26.1]
 - **Error codes are SPEC-DECLARED** — every code lives in a `*-error-codes.spec.json` (generic `contracts/error-codes/` or per-domain `contracts/<domain>-error-codes/`) carrying its `httpStatus` + `category` + a valid `userMessageKey`; the constants, typed `D2Result` failure factories, and merged cross-service registry are GENERATED from that spec. No free-text code literals, no hand-mapped `Fail(statusCode, message)` where a spec entry could declare it, no hand-written `<Domain>Failures` duplicating generated output. [rules.md §26.6]
 - **Emitters reference the TK CONSTANT, never a string-literal of the key / symbol-path** — an emitted `tk("TK.X.Y.Z")` path literal silently bypasses the catalog (it's not a real key, so it renders the raw path AND diverges from the runtime that uses the constant); fix the emitter, ship the cross-runtime render test. [rules.md §26.7]
+- **Generators validated independently — never "pending a consumer"** — integration tests drive the generated artifact against real shared libs (where they exist) + faithful test doubles (§1.32) for unbuilt collaborators; a committed validation ledger names what each emitter is validated against + the replace-trigger for every double. [rules.md §26.15, §26.16]
+- **Conversation/decision IDs banned across ALL generator surfaces** — the §14 / §14.3 sweep for a generator deliverable covers emitter source + committed emitted output + runtime exception messages + docs; the full ID pattern-class (`C-N`, `F-XYZ`, `Step-N`, `Phase-N`, `Round-N`, etc.) must be absent from every committed surface. [rules.md §26.17]
+- **Hand-authored files MUST NOT carry a generated banner or `.g.*` extension** — that mislabels them as reproducible; hand-authored fixtures beside generated output carry a normal header + plain extension + a ledger note. [rules.md §26.18]
 
 > Need a specific category (security / concurrency / disposal / D2Result / OOTB libs / logging / PII / graceful degradation / UX / DX / observability / idempotency / configuration / codegen) → [rules.md table of contents](docs/dev/rules.md#table-of-contents) routes by §-number.
 
