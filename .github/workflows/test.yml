@@ -213,8 +213,30 @@ jobs:
   #     - run: pnpm test:contracts
 
   # ==========================================================================
+  # TypeSpec byte-gate — active now (no service dependencies)
+  # Runs the emitter unit tests (byte-parity gates) on every PR + push.
+  # ==========================================================================
+  typespec-byte-gate:
+    name: TypeSpec emitter byte-gate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - name: pnpm install (typespec-emitters)
+        run: pnpm install --frozen-lockfile
+        working-directory: server/shared/typescript/typespec-emitters
+      - name: TypeSpec emitter tests (byte-parity gate)
+        run: pnpm test
+        working-directory: server/shared/typescript/typespec-emitters
+
+  # ==========================================================================
   # Placeholder — keeps the workflow valid while all real jobs are commented.
-  # Remove this once the first real job (proto-checks or lint-and-format) is enabled.
+  # Remove this once all placeholder jobs are replaced with real ones.
   # ==========================================================================
   noop:
     name: noop (placeholder until first real job enables)

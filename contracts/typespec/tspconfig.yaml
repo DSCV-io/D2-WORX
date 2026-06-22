@@ -10,8 +10,9 @@
 #   tsp compile writes all artifacts to dist/generated/ (inside the emitter
 #   package build output). Committed C# fixtures are independently byte-pinned
 #   snapshots; they are NOT written directly by tsp compile. After a content-
-#   changing emitter edit, manually copy updated files into their committed
-#   homes and update the byte-gate fixture constants per:
+#   changing emitter edit, run `pnpm --filter @d2/typespec-emitters regen` (or
+#   `node tools/scripts/regen-typespec-emitters.mjs` from the repo root) to
+#   scatter updated files to their committed homes. See:
 #   "Regenerating the committed fixtures" in
 #   server/shared/typescript/typespec-emitters/README.md.
 #

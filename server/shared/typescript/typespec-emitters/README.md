@@ -784,40 +784,60 @@ These fixtures are an **independently committed snapshot** — they are NOT writ
 fixture directories.
 
 When the emitter changes in a way that alters emitted content, regenerate and recommit
-the fixtures as follows:
+the fixtures in one command:
 
-1. Run `tsp compile contracts/typespec/` from the repo root to emit updated files into
-   `server/shared/typescript/typespec-emitters/dist/generated/`.
-2. Copy the updated `.g.cs` files into the matching directories above (DTO fixtures
-   to `clients/`, façade impl + DI extension to `app/Application/`, handler interface
-   to the per-op CQRS handler folder, gRPC fixtures to `Generated/`).
-   Copy the updated `.g.proto` file into the `Protos/` directory.
-3. Update the fixture constants in `tests/byte-parity.test.ts` (DTO fixtures —
-   GetJwks, Sign, and the Temporal `TemporalInput`/`TemporalOutput` constants),
-   `tests/facade-emitter.test.ts`, and `tests/proto-grpc-byte-parity.test.ts`
-   to match the new content. The enum-shaped byte-gates in `tests/byte-parity.test.ts`
-   (`byteParity_EnumsDto_CommittedFixtures` + `byteParity_SignWithKindEnumGrpc_CommittedFixtures`
-   - `byteParity_SignWithKindEnumGrpcClient_CommittedFixtures`) read the committed
-     `Enums*.g.cs` / `enums-dto.g.ts` / the enum `.proto` + transport mapper + the
-     client mapper/impl from disk and compare them to fresh emitter output, so they
-     refresh automatically when you recommit the regenerated files — no in-test constant to edit.
-     The `@d2Resilience` predicate byte-gates in `tests/predicate-byte-parity.test.ts`
-     (the C#/TS predicate twins + the `D2GeneratedBusinessRetrySignal` sentinel + the
-     predicate-bearing client impl/DI-ext) likewise read the committed
-     `TypeSpecGrpcPredicate/Generated/` files from disk and re-emit (compiling the
-     fixture model through the test-host) — they refresh automatically too.
-     The OpenAPI byte-gates in `tests/openapi-byte-parity.test.ts` read the
-     committed `TypeSpecOpenApi/Generated/*.openapi.g.json` files from disk and
-     re-emit (compiling `contracts/typespec/fixtures/openapi-shaped.tsp` through
-     the test-host + `getOpenAPI3` + the `x-d2-*` injection) — they refresh
-     automatically when you recommit the regenerated files, no in-test constant
-     to edit.
-4. Run `pnpm run test:coverage` to confirm all byte-parity tests pass with 100%
-   coverage.
-5. Run `dotnet build` + `dotnet test` (scoped to `D2.Edge.Tests`) to confirm the C#
+```sh
+# From the repo root:
+pnpm --filter @d2/typespec-emitters regen
+
+# Or equivalently:
+node tools/scripts/regen-typespec-emitters.mjs
+```
+
+The scatter script (`tools/scripts/regen-typespec-emitters.mjs`):
+
+1. Compiles `contracts/typespec/` via the emitter package's own `@typespec/compiler`
+   (temporary NTFS junctions bridge the module resolver for the duration of the
+   compile — no `pnpm install` needed).
+2. Copies a **validated allowlist** of output files from `dist/generated/` to their
+   committed homes. The allowlist is intentionally narrow: only files where the
+   `tsp compile` output is byte-identical to what the in-process byte-gate tests
+   produce are listed. Files where the two pipelines diverge (namespace routing
+   differences, combined-vs-isolated module output) are excluded and must be updated
+   via the relevant test suites instead (see below).
+3. Prints each `source → dest` copy and a final summary.
+4. Fails loudly if any expected allowlist entry is missing from `dist/generated/`.
+
+**Which files are covered by `pnpm regen`:**
+
+- `GetJwksInput.g.cs` / `GetJwksOutput.g.cs` — GetJwks DTOs (Clients namespace)
+- `KeyCustodianClientsGenerated.g.cs` — DI extension (app/Application/)
+- `IGetJwksHandler.g.cs` — GetJwks handler interface (per-op CQRS folder)
+- `enums-dto.g.ts`, `key-custodian-grpc-client.g.ts`, `key-custodian-rest-client.g.ts`, `temporal-dto.g.ts` — TypeScript DTOs
+- `key_custodian_signer_sign.g.proto` — sign gRPC proto
+- `enum-fixtures-grpc-client.g.ts` — enum gRPC TypeScript client
+- `place-order-dto.g.ts`, `place-order-resilience-predicates.g.ts`, `place-order-v2-dto.g.ts`, `place-order-v2-resilience-predicates.g.ts`, `deep-nest-dto.g.ts` — predicate TypeScript files
+- `IPlaceOrderHandler.g.cs`, `IPlaceOrderV2Handler.g.cs`, `IDeepNestHandler.g.cs` — predicate handler interfaces
+
+**Which files are NOT covered (update via test suites instead):**
+
+- All C# DTO files for fixture ops (sign, temporal, enum, placeOrder, deepNest, …):
+  update by running the relevant byte-gate test suite (e.g. `byte-parity.test.ts`,
+  `proto-grpc-byte-parity.test.ts`) and committing the output.
+- gRPC service / transport-mapper / C# client files: same.
+- `IKeyCustodianApi.g.cs` / `KeyCustodianApi.g.cs`: update via `facade-emitter.test.ts`.
+- Route registration C# files: update via `route-emit.integration.test.ts`.
+- OpenAPI / SSE committed fixtures: update via `openapi-byte-parity.test.ts` /
+  `sse-dispatch-emit.integration.test.ts`.
+
+After running `pnpm regen`:
+
+1. Run `pnpm --filter @d2/typespec-emitters test` to confirm all byte-parity tests
+   pass. All byte-gate tests read the committed files from disk (Type B) and
+   auto-refresh when the committed files are updated — no in-test constants to edit.
+2. Run `dotnet build` + `dotnet test` (scoped to `D2.Edge.Tests`) to confirm the C#
    validation and gRPC harness tests still compile and pass against the new fixtures.
-6. Commit the updated fixture files and the updated test fixture constants together in
-   one atomic change.
+3. Commit the updated fixture files in one atomic change.
 
 The byte-parity tests enforce that re-running the emitters in-process produces
 byte-identical content to the committed fixtures. Any emitter change that alters content

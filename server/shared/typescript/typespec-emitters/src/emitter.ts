@@ -2,6 +2,7 @@
 // Copyright (c) DCSV. All rights reserved.
 // -----------------------------------------------------------------------
 
+import { isAbsolute, join, relative } from "node:path";
 import { navigateProgram, NoTarget } from "@typespec/compiler";
 import type { EmitContext, Model, Operation } from "@typespec/compiler";
 import { getHttpOperation, getOperationVerb } from "@typespec/http";
@@ -255,9 +256,15 @@ export async function $onEmit(context: EmitContext): Promise<void> {
       });
 
       // Derive the source spec path hint for the banner.
-      // TypeSpec exposes the file via op.file / op.node?.file — use a relative
-      // path if available; fall back to the operation name as a hint.
-      const specHint = tryGetSpecPath(op) ?? `<typespec op: ${op.name}>`;
+      // tryGetSpecPath converts the absolute file.path from the TypeSpec AST to
+      // a repo-relative path (relative to the repo root, two levels above the
+      // tspconfig.yaml directory). Falls back to the operation name when the AST
+      // does not expose a file path (e.g. in-process test invocations that
+      // supply their own sourceSpec strings rather than going through $onEmit).
+      // `program.projectRoot` may be absent on synthetic test programs.
+      const specHint =
+        tryGetSpecPath(op, (program as { projectRoot?: string }).projectRoot) ??
+        `<typespec op: ${op.name}>`;
 
       // Resolve input model: TypeSpec op parameters is a Model whose properties
       // are the named params. When the op has no params the properties map is empty.
@@ -1548,11 +1555,75 @@ function emitSsePushIfPresent(
 
 /**
  * Attempt to extract a human-readable source-spec path from the operation node.
- * Returns undefined when the TypeSpec version does not expose the file path.
+ *
+ * During `tsp compile`, each AST node's source file is reachable by walking
+ * `node.parent` upward to the `TypeSpecScriptNode` (kind === 0), which carries
+ * a `SourceFile.path` absolute path. This function converts that absolute path
+ * to a repo-relative forward-slash path so the generated banner is
+ * machine-independent and matches the strings used by the in-process byte-gate
+ * tests (which pass relative `sourceSpec` strings directly).
+ *
+ * `projectRoot` is `program.projectRoot` — the directory that contains
+ * tspconfig.yaml (i.e. `contracts/typespec/`). The repo root is two levels
+ * above that, so `relative(repoRoot, filePath)` produces e.g.
+ * `contracts/typespec/fixtures/sign-shaped.tsp`.
+ *
+ * Returns undefined when the TypeSpec version does not expose the file path via
+ * the parent chain (e.g. purely synthetic operations created in-process by
+ * tests).
  */
-function tryGetSpecPath(op: Operation): string | undefined {
-  const node = op.node as { file?: { path?: string } } | undefined;
-  return node?.file?.path;
+function tryGetSpecPath(
+  op: Operation,
+  projectRoot: string | undefined,
+): string | undefined {
+  // In real `tsp compile` runs, the SourceFile.path lives on the
+  // TypeSpecScriptNode (AST kind === 0), reached by walking op.node.parent up.
+  // In synthetic test programs (e.g. smoke-emit.test.ts), the path is placed
+  // directly on op.node.file.path without AST scaffolding.
+  //
+  // Strategy: walk up from op.node looking for the first node that carries a
+  // `file.path` string, respecting `kind === 0` for the real AST and falling
+  // back to op.node itself for synthetic setups.
+
+  type AnyNode = {
+    kind?: number;
+    file?: { path?: string };
+    parent?: AnyNode;
+  };
+
+  let node: AnyNode | undefined = op.node as AnyNode | undefined;
+
+  // Prefer the TypeSpecScriptNode (kind === 0) which is guaranteed by the real
+  // AST; also accept the raw op.node if it directly carries a file.path (the
+  // synthetic smoke-test pattern).
+  let rawPath: string | undefined;
+
+  while (node !== undefined) {
+    if (
+      node.kind === 0 ||
+      (rawPath === undefined && node.file?.path !== undefined)
+    ) {
+      rawPath = node.file?.path;
+
+      if (node.kind === 0) break; // found the canonical source; stop here
+    }
+
+    node = node.parent;
+  }
+
+  if (rawPath === undefined) return undefined;
+
+  // When the path is already relative (e.g. synthetic test programs supply a
+  // repo-relative string directly), return it unchanged.
+  if (!isAbsolute(rawPath)) return rawPath;
+
+  // During tsp compile, rawPath is the absolute disk path. Convert to a
+  // repo-relative forward-slash path. projectRoot is the tspconfig.yaml
+  // directory (contracts/typespec/), two levels above the repo root.
+  if (projectRoot === undefined) return rawPath;
+
+  const repoRoot = join(projectRoot, "../..");
+  return relative(repoRoot, rawPath).replaceAll("\\", "/");
 }
 
 /**

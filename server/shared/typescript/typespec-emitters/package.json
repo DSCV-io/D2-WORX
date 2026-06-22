@@ -17,7 +17,8 @@
     "build": "tsc -b",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
-    "type-check:test": "tsc -p tsconfig.test.json"
+    "type-check:test": "tsc -p tsconfig.test.json",
+    "regen": "node ../../../tools/scripts/regen-typespec-emitters.mjs"
   },
   "peerDependencies": {
     "@typespec/compiler": "^1.13.0"
