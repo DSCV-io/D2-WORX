@@ -96,10 +96,12 @@ jobs:
       - name: Dump failing tests on failure (temp diagnostic)
         if: failure()
         run: |
-          echo "===== FAILED TEST HEADERS ====="
-          grep -rhnE "^failed " server/shared/dotnet/tests/bin/Release/net10.0/TestResults/ || true
-          echo "===== FULL TESTRESULTS LOG ====="
-          cat server/shared/dotnet/tests/bin/Release/net10.0/TestResults/*.log || true
+          for f in server/shared/dotnet/tests/bin/Release/net10.0/TestResults/*.log; do
+            echo "===== FAILURES in $f (UTF-16 -> UTF-8) ====="
+            iconv -f UTF-16 -t UTF-8 "$f" 2>/dev/null \
+              | grep -E "^failed |Expected |but was|did not become|TimeoutException|SpinUntil|AdvanceUntil" \
+              || echo "(no UTF-16 matches)"
+          done
 
   # unit-tests-web — activates when `server/web/` SvelteKit workspace resolves
   # unit-tests-web:
