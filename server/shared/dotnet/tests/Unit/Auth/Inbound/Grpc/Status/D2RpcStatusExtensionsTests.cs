@@ -20,6 +20,7 @@ using global::Grpc.Core;
 using Xunit;
 using GrpcStatusCode = global::Grpc.Core.StatusCode;
 
+[Collection("AuthTelemetrySerial")]
 public sealed class D2RpcStatusExtensionsTests
 {
     [Fact]

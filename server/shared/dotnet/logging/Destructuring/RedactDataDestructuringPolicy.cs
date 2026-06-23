@@ -49,14 +49,20 @@ using Serilog.Events;
 /// </remarks>
 internal sealed class RedactDataDestructuringPolicy : IDestructuringPolicy
 {
-    private static readonly ConcurrentDictionary<Type, TypeRedactionInfo> sr_cache = new();
+    // Instance-scoped so each policy instance (one per Serilog LoggerConfiguration in
+    // production; one per `new RedactDataDestructuringPolicy()` in tests) has its own
+    // cache.  In production Serilog creates exactly one policy instance per pipeline, so
+    // the performance characteristics are identical to the previous static cache.  The
+    // instance field eliminates the shared-static race between test classes that call
+    // ClearCache() and assert exact CacheCount values in parallel.
+    private readonly ConcurrentDictionary<Type, TypeRedactionInfo> r_cache = new();
 
     /// <summary>
-    /// Gets the count of analyzed types currently held in the per-type cache.
+    /// Gets the count of analyzed types currently held in the per-instance cache.
     /// Internal hook for unit tests that pin cache-hit + thread-safety
     /// behavior. Not intended for production consumers.
     /// </summary>
-    internal static int CacheCount => sr_cache.Count;
+    internal int CacheCount => r_cache.Count;
 
     /// <inheritdoc />
     public bool TryDestructure(
@@ -68,7 +74,7 @@ internal sealed class RedactDataDestructuringPolicy : IDestructuringPolicy
         ArgumentNullException.ThrowIfNull(propertyValueFactory);
 
         var type = value.GetType();
-        var info = sr_cache.GetOrAdd(type, AnalyzeType);
+        var info = r_cache.GetOrAdd(type, AnalyzeType);
 
         // Type-level [RedactData] → replace entire value with placeholder.
         if (info.TypeRedactionReason is not null)
@@ -108,12 +114,12 @@ internal sealed class RedactDataDestructuringPolicy : IDestructuringPolicy
     }
 
     /// <summary>
-    /// Clears the per-type analysis cache so a subsequent
+    /// Clears the per-instance analysis cache so a subsequent
     /// <see cref="TryDestructure"/> call repopulates it. Internal hook for
     /// unit tests that pin cache behavior. Not intended for production
     /// consumers.
     /// </summary>
-    internal static void ClearCache() => sr_cache.Clear();
+    internal void ClearCache() => r_cache.Clear();
 
     private static TypeRedactionInfo AnalyzeType(Type type)
     {

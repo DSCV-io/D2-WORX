@@ -24,6 +24,7 @@ using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 using Microsoft.IdentityModel.Tokens;
 using Xunit;
 
+[Collection("AuthTelemetrySerial")]
 public sealed class HttpJwksProviderTests
 {
     [Fact]

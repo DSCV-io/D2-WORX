@@ -24,6 +24,12 @@ using Xunit;
 /// This gives a real relational model so <c>GetColumnName()</c>, <c>IsMappedToJson()</c>, and
 /// <c>GetTableName()</c> return production-faithful values.
 /// </summary>
+/// <remarks>
+/// Serialized with the other <c>AnonymizationClassifier*</c> test classes because they all
+/// call <c>AnonymizationTierClassifier.ClearCache()</c> and assert exact
+/// <c>CacheCount</c> values against the process-global static cache.
+/// </remarks>
+[Collection("AnonymizationClassifierSerial")]
 [Trait("Category", "Unit")]
 public sealed class AnonymizationTierClassifierTests : IDisposable
 {

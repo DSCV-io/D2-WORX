@@ -287,10 +287,10 @@ public sealed class RedactDataDestructuringPolicyTests
     [Fact]
     public void TryDestructure_SameType_ReusesCacheEntry()
     {
-        RedactDataDestructuringPolicy.ClearCache();
+        // Cache is instance-scoped: a fresh policy instance starts empty.
         var policy = new RedactDataDestructuringPolicy();
 
-        var initialCount = RedactDataDestructuringPolicy.CacheCount;
+        var initialCount = policy.CacheCount;
 
         policy.TryDestructure(
             new RedactionFixtures.TypeLevelRedactedRecord("a", "b"),
@@ -301,7 +301,7 @@ public sealed class RedactDataDestructuringPolicyTests
             new RecordingFactory(),
             out _);
 
-        var afterTwoCalls = RedactDataDestructuringPolicy.CacheCount;
+        var afterTwoCalls = policy.CacheCount;
 
         afterTwoCalls.Should().Be(initialCount + 1);
     }
@@ -309,7 +309,6 @@ public sealed class RedactDataDestructuringPolicyTests
     [Fact]
     public async Task TryDestructure_ParallelCallsSameType_ThreadSafe()
     {
-        RedactDataDestructuringPolicy.ClearCache();
         var policy = new RedactDataDestructuringPolicy();
 
         var tasks = Enumerable.Range(0, 100).Select(i => Task.Run(() =>
@@ -321,7 +320,7 @@ public sealed class RedactDataDestructuringPolicyTests
         }));
         await Task.WhenAll(tasks);
 
-        RedactDataDestructuringPolicy.CacheCount.Should().BeGreaterThan(0);
+        policy.CacheCount.Should().BeGreaterThan(0);
     }
 
     [Fact]

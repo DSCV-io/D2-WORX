@@ -20,6 +20,7 @@ using D2.Shared.Result;
 using Microsoft.AspNetCore.Http;
 using Xunit;
 
+[Collection("AuthTelemetrySerial")]
 public sealed class D2ProblemDetailsExtensionsTests
 {
     [Fact]

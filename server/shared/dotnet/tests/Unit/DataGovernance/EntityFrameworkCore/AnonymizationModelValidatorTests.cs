@@ -23,6 +23,12 @@ using Xunit;
 /// (Npgsql provider, dummy connection string — connection never opened) and exercises
 /// each validation rule plus the aggregation and opt-out paths.
 /// </summary>
+/// <remarks>
+/// Serialized with the other <c>AnonymizationClassifier*</c> test classes because they all
+/// call <c>AnonymizationTierClassifier.ClearCache()</c> against the process-global static
+/// cache.
+/// </remarks>
+[Collection("AnonymizationClassifierSerial")]
 [Trait("Category", "Unit")]
 public sealed class AnonymizationModelValidatorTests
 {
