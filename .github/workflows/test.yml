@@ -35,8 +35,9 @@ jobs:
   #     - run: buf lint
   #     - run: buf format --diff --exit-code
 
-  # lint-and-format — activates when `server/web/` SvelteKit deps resolve
-  # AND `server/D2.slnx` contains projects
+  # lint-and-format — blocked: web half needs `server/web/` SvelteKit workspace
+  # (not yet resolvable — missing @d2/auth-bff-client workspace package); a
+  # dotnet-only inspectcode lane can follow in a later pass.
   # lint-and-format:
   #   name: Lint + format
   #   runs-on: ubuntu-latest
@@ -70,29 +71,26 @@ jobs:
   # Activates per service — uncomment each block as the cited path ships.
   # ==========================================================================
 
-  # build — activates when `server/D2.slnx` contains projects
-  # build:
-  #   name: Build
-  #   runs-on: ubuntu-latest
-  #   needs: [lint-and-format]
-  #   steps:
-  #     - uses: actions/checkout@v4
-  #     - uses: actions/setup-dotnet@v4
-  #       with:
-  #         dotnet-version: "10.0.x"
-  #     - run: dotnet build server/D2.slnx --configuration Release
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+      - run: dotnet build server/D2.slnx --configuration Release
 
-  # unit-tests-dotnet — activates when `server/shared/dotnet/tests/` ships
-  # unit-tests-dotnet:
-  #   name: Unit tests (.NET)
-  #   runs-on: ubuntu-latest
-  #   needs: [build]
-  #   steps:
-  #     - uses: actions/checkout@v4
-  #     - uses: actions/setup-dotnet@v4
-  #       with:
-  #         dotnet-version: "10.0.x"
-  #     - run: dotnet test server/D2.slnx --filter Category=Unit --no-build --configuration Release
+  unit-tests-dotnet:
+    name: Shared library tests (.NET)
+    runs-on: ubuntu-latest
+    needs: [build]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+      - run: dotnet test server/shared/dotnet/tests/D2.Shared.Tests.csproj --configuration Release
 
   # unit-tests-web — activates when `server/web/` SvelteKit workspace resolves
   # unit-tests-web:
@@ -127,20 +125,27 @@ jobs:
   #     - uses: actions/setup-dotnet@v4
   #       with:
   #         dotnet-version: "10.0.x"
-  #     - run: dotnet test server/services/{service}/tests --no-build --configuration Release
+  #     - run: dotnet test server/services/{service}/tests --configuration Release
 
-  # integration-key-rotation — REQUIRED GATE for KeyCustodian rotation flow.
-  # Activates when the KeyCustodian module ships inside `server/services/edge/`.
-  # integration-key-rotation:
-  #   name: Key rotation (REQUIRED)
-  #   runs-on: ubuntu-latest
-  #   needs: [build]
-  #   steps:
-  #     - uses: actions/checkout@v4
-  #     - uses: actions/setup-dotnet@v4
-  #       with:
-  #         dotnet-version: "10.0.x"
-  #     - run: dotnet test server/services/edge/tests --filter Category=KeyRotation --no-build --configuration Release
+  # integration-key-rotation — REQUIRED GATE. Runs the full edge test project, which
+  # includes the KeyCustodian rotation, lifecycle, persistence, and concurrency
+  # integration tests. The full project is targeted rather than a category filter
+  # for two reasons: (1) the stack runs on Microsoft.Testing.Platform, which silently
+  # ignores VSTest-style --filter flags (emits warning MTP0001 and runs everything
+  # anyway); the correct MTP trait filter (-- --filter-trait "Category=Integration")
+  # would work, but (2) Category traits are sparsely applied, and MTP treats an
+  # assembly that matches zero tests as a run failure — making a trait filter fragile
+  # when test authors omit the attribute. Running the whole project is reliable.
+  integration-key-rotation:
+    name: Edge integration tests (REQUIRED)
+    runs-on: ubuntu-latest
+    needs: [build]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+      - run: dotnet test server/services/edge/tests --configuration Release
 
   # web-component-tests — activates when `server/web/` SvelteKit workspace resolves
   # web-component-tests:
@@ -180,23 +185,22 @@ jobs:
   #       env:
   #         D2_MOCK_INFRA: "true"
 
-  # contract-fixtures-emit — activates once the dotnet build job activates.
-  # Re-emits the cross-language parity fixtures and asserts no fixture drift.
-  # contract-fixtures-emit:
-  #   name: Contract fixture emission (.NET → fixtures)
-  #   runs-on: ubuntu-latest
-  #   needs: [build]
-  #   steps:
-  #     - uses: actions/checkout@v4
-  #     - uses: actions/setup-dotnet@v4
-  #       with:
-  #         dotnet-version: "10.0.x"
-  #     - run: dotnet test server/D2.slnx --filter "Category=ContractFixtures" --no-build --configuration Release
-  #     - name: assert no fixture drift
-  #       run: git diff --exit-code server/shared/typescript/contract-tests/fixtures/
+  contract-fixtures-emit:
+    name: Contract fixture emission (.NET → fixtures)
+    runs-on: ubuntu-latest
+    needs: [build]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+      - run: dotnet test server/shared/dotnet/tests/D2.Shared.Tests.csproj --configuration Release -- --filter-trait "Category=ContractFixtures"
+      - name: assert no fixture drift
+        run: git diff --exit-code server/shared/typescript/contract-tests/fixtures/
 
-  # contract-tests-parity — activates with contract-fixtures-emit.
-  # Reads the fixtures and asserts TS-side spec-emitted catalogs / decoders agree.
+  # contract-tests-parity — blocked: pnpm workspace install needs the missing
+  # @d2/auth-bff-client workspace package (B18) before --frozen-lockfile succeeds,
+  # and the repo needs a root `test:contracts` script.
   # contract-tests-parity:
   #   name: Contract parity tests (TS reads fixtures + asserts)
   #   runs-on: ubuntu-latest

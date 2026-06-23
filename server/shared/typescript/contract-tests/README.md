@@ -97,7 +97,7 @@ Synthetic test data only — no real PII. Per RFC 5737 the fixtures use IPs from
 
 ```bash
 # 1. Regenerate fixtures (.NET side writes them to disk via TestPaths.RepoRoot()):
-dotnet test server/D2.slnx --filter "Category=ContractFixtures"
+dotnet test server/D2.slnx -- --filter-trait "Category=ContractFixtures"
 
 # 2. Run the parity tests (TS side reads them + asserts):
 pnpm test:contracts        # from repo root

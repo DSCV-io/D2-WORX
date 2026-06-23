@@ -150,7 +150,7 @@ The journal IS the evidence of process integrity. Honest journals are self-rewar
 
 - **Build full .NET solution**: `dotnet build server/D2.slnx` — must be zero warnings (StyleCop / CS / null-ref).
 - **JetBrains inspections**: `jb inspectcode server/D2.slnx --severity=WARNING --format=Text --no-build --output=inspectcode.log && cat inspectcode.log` — must be zero warnings. Catches issues `dotnet build` does NOT (e.g. `[MustDisposeResource]`, captured-closure issues).
-- **Run .NET tests**: `dotnet test server/D2.slnx` (full) or `dotnet test server/D2.slnx --filter Category=Unit` (unit only).
+- **Run .NET tests**: `dotnet test server/D2.slnx` (full) or `dotnet test server/D2.slnx -- --filter-trait "Category=Unit"` (unit only).
 - **SvelteKit type check**: `cd server/web && pnpm exec svelte-check`.
 
 ---

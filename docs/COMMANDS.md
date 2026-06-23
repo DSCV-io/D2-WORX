@@ -40,9 +40,11 @@ These catch warnings that `dotnet build` does NOT surface: `[MustDisposeResource
 ## Test
 
 ```bash
-# .NET (xUnit)
+# .NET (xUnit v3 — Microsoft.Testing.Platform)
+# Trait filters go after `--` as `--filter-trait "name=value"`.
+# The VSTest-style `--filter` flag is silently ignored by MTP (warning MTP0001).
 dotnet test server/D2.slnx                                                 # Full solution
-dotnet test server/D2.slnx --filter Category=Unit                          # Unit only
+dotnet test server/D2.slnx -- --filter-trait "Category=Unit"              # Unit-tagged only
 dotnet test server/services/edge/tests                                      # Specific service
 
 # SvelteKit

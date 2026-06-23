@@ -188,7 +188,7 @@ The fixture file is the meeting point. Fixtures are committed to git so PR diffs
 
 ```bash
 # 1. Regenerate fixtures from the .NET side:
-dotnet test server/D2.slnx --filter "Category=ContractFixtures"
+dotnet test server/D2.slnx -- --filter-trait "Category=ContractFixtures"
 
 # 2. Run the TS parity assertions:
 pnpm test:contracts        # from repo root
