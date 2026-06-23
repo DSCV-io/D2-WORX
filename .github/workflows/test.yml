@@ -4,15 +4,16 @@
 
 name: PR
 
-# Single-lane CI.
+# PR CI — parallel lanes.
 #
 # Active jobs ramp up as services come online.
 # Each job below is commented out until its target service or workspace
 # exists; uncomment once the cited path is populated.
 # Total wall time target: <5 minutes (all active jobs run in parallel).
 #
-# Required gates (non-skippable once active):
-#   - integration-key-rotation (KeyCustodian rotation flow)
+# All active jobs must pass before merge. Which checks actually block a merge
+# is configured in branch protection (Settings -> Branches -> required status
+# checks), NOT the job name — names carry no special meaning to GitHub.
 
 on:
   pull_request:
@@ -81,8 +82,8 @@ jobs:
           dotnet-version: "10.0.x"
       - run: dotnet build server/D2.slnx --configuration Release
 
-  unit-tests-dotnet:
-    name: Shared library tests (.NET)
+  dotnet-shared-unit-tests:
+    name: .NET Shared Unit Tests
     runs-on: ubuntu-latest
     needs: [build]
     steps:
@@ -90,7 +91,79 @@ jobs:
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: "10.0.x"
-      - run: dotnet test server/shared/dotnet/tests/D2.Shared.Tests.csproj --configuration Release
+      - run: dotnet test server/shared/dotnet/tests/D2.Shared.Tests.csproj --configuration Release -- --filter-namespace "D2.Shared.Tests.Unit*"
+
+  dotnet-shared-integration-tests:
+    name: .NET Shared Integration Tests
+    runs-on: ubuntu-latest
+    needs: [build]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+      - run: dotnet test server/shared/dotnet/tests/D2.Shared.Tests.csproj --configuration Release -- --filter-namespace "D2.Shared.Tests.Integration*"
+
+  edge-unit-tests:
+    name: Edge Unit Tests
+    runs-on: ubuntu-latest
+    needs: [build]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+      - run: dotnet test server/services/edge/tests --configuration Release -- --filter-namespace "D2.Edge.Tests.Unit*"
+
+  edge-integration-tests:
+    name: Edge Integration Tests
+    runs-on: ubuntu-latest
+    needs: [build]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+      - run: dotnet test server/services/edge/tests --configuration Release -- --filter-namespace "D2.Edge.Tests.Integration*"
+
+  ts-shared-unit-tests:
+    name: TS Shared Unit Tests
+    runs-on: ubuntu-latest
+    needs: [build]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - uses: pnpm/action-setup@v4
+      # Scoped install: pulls the server/shared/typescript/** subtree and their
+      # workspace deps only. The trailing `...` includes transitive workspace deps.
+      # `tools/ts-codegen` is also included because several shared-lib prebuild
+      # scripts invoke it via `pnpm --filter ts-codegen exec tsx ...`; without it
+      # those prebuilds would fail. `server/web` (B18 — missing @d2/auth-bff-client)
+      # is NOT in the closure, so the frozen-lockfile install remains clean.
+      - name: pnpm install (shared-TS subtree + ts-codegen)
+        run: pnpm install --filter "./server/shared/typescript/**..." --filter "ts-codegen..."
+      - name: build (shared-TS packages that need a dist/ before tests run)
+        run: pnpm --filter "./server/shared/typescript/**" -r build
+      - name: TS shared unit tests
+        run: pnpm --filter "./server/shared/typescript/**" -r test
+
+  # ts-shared-integration-tests — activate when TS shared packages gain
+  # Testcontainers-backed integration tests; none exist today.
+  # ts-shared-integration-tests:
+  #   name: TS Shared Integration Tests
+  #   runs-on: ubuntu-latest
+  #   needs: [build]
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - uses: actions/setup-node@v4
+  #       with:
+  #         node-version: "24"
+  #     - uses: pnpm/action-setup@v4
+  #     - run: pnpm install --filter "./server/shared/typescript/**..." --filter "ts-codegen..."
+  #     - run: pnpm --filter "./server/shared/typescript/**" -r build
+  #     - run: pnpm --filter "./server/shared/typescript/**" -r test:integration
 
   # unit-tests-web — activates when `server/web/` SvelteKit workspace resolves
   # unit-tests-web:
@@ -108,44 +181,6 @@ jobs:
   #       working-directory: server/web
   #     - run: pnpm exec vitest run
   #       working-directory: server/web
-
-  # integration-edge — activates when `server/services/edge/tests/` ships
-  # integration-files — activates when `server/services/files/tests/` ships
-  # integration-courier — activates when `server/services/courier/tests/` ships
-  # integration-notifications — activates when `server/services/notifications/tests/` ships
-  # integration-audit — activates when `server/services/audit/tests/` ships
-  #
-  # Pattern (one per service):
-  # integration-{service}:
-  #   name: Integration tests ({service})
-  #   runs-on: ubuntu-latest
-  #   needs: [build]
-  #   steps:
-  #     - uses: actions/checkout@v4
-  #     - uses: actions/setup-dotnet@v4
-  #       with:
-  #         dotnet-version: "10.0.x"
-  #     - run: dotnet test server/services/{service}/tests --configuration Release
-
-  # integration-key-rotation — REQUIRED GATE. Runs the full edge test project, which
-  # includes the KeyCustodian rotation, lifecycle, persistence, and concurrency
-  # integration tests. The full project is targeted rather than a category filter
-  # for two reasons: (1) the stack runs on Microsoft.Testing.Platform, which silently
-  # ignores VSTest-style --filter flags (emits warning MTP0001 and runs everything
-  # anyway); the correct MTP trait filter (-- --filter-trait "Category=Integration")
-  # would work, but (2) Category traits are sparsely applied, and MTP treats an
-  # assembly that matches zero tests as a run failure — making a trait filter fragile
-  # when test authors omit the attribute. Running the whole project is reliable.
-  integration-key-rotation:
-    name: Edge integration tests (REQUIRED)
-    runs-on: ubuntu-latest
-    needs: [build]
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: "10.0.x"
-      - run: dotnet test server/services/edge/tests --configuration Release
 
   # web-component-tests — activates when `server/web/` SvelteKit workspace resolves
   # web-component-tests:
