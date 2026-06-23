@@ -47,6 +47,7 @@ namespace D2.Fixtures;
 /** Input for the place-order fixture operation. */
 model PlaceOrderInput {
   /** The customer placing the order. */
+  @d2Field(1)
   customerId: string;
 }
 
@@ -58,12 +59,15 @@ model PlaceOrderInput {
  */
 model PlaceOrderOutput {
   /** The created order identifier. */
+  @d2Field(1)
   orderCode: string;
 
   /** The per-line fulfillment statuses — a scalar collection (`.contains` / `.count`). */
+  @d2Field(2)
   itemStatuses: string[];
 
   /** Whether the order is a partial fulfillment — a flat bool data field. */
+  @d2Field(3)
   partial: boolean;
 }
 
@@ -111,18 +115,21 @@ op placeOrder(input: PlaceOrderInput): PlaceOrderOutput;
 /** A single order line for the placeOrderV2 fixture — an array-of-MODEL element. */
 model PlaceOrderLine {
   /** The line's fulfillment status (drives `lines.any(l => l.status == "…")`). */
+  @d2Field(1)
   status: string;
 }
 
 /** Customer info for the placeOrderV2 fixture — an OPTIONAL nested model. */
 model PlaceOrderV2Customer {
   /** The customer tier (drives the nested-optional path `customer.tier`). */
+  @d2Field(1)
   tier: string;
 }
 
 /** Input for the placeOrderV2 fixture operation. */
 model PlaceOrderV2Input {
   /** The customer placing the order. */
+  @d2Field(1)
   customerId: string;
 }
 
@@ -136,12 +143,15 @@ model PlaceOrderV2Input {
  */
 model PlaceOrderV2Output {
   /** The created order identifier. */
+  @d2Field(1)
   orderCode: string;
 
   /** The order lines — an array-of-MODEL (`.any(l => l.status)` / `.count`). */
+  @d2Field(2)
   lines: PlaceOrderLine[];
 
   /** The customer — an OPTIONAL nested model (`customer.tier`, deep `?.`-chain). */
+  @d2Field(3)
   customer?: PlaceOrderV2Customer;
 }
 
@@ -182,21 +192,25 @@ op placeOrderV2(input: PlaceOrderV2Input): PlaceOrderV2Output;
 /** A leaf part for the deepNest fixture — the depth-3 array-of-MODEL element. */
 model DeepPart {
   /** The part code. */
+  @d2Field(1)
   code: string;
 }
 
 /** A widget for the deepNest fixture — depth 2, holding an array-of-MODEL of parts. */
 model DeepWidget {
   /** The widget name. */
+  @d2Field(1)
   name: string;
 
   /** The widget's parts — an array-of-MODEL nested one level deeper. */
+  @d2Field(2)
   parts: DeepPart[];
 }
 
 /** Input for the deepNest fixture operation. */
 model DeepNestInput {
   /** The gizmo identifier to fetch. */
+  @d2Field(1)
   gizmoId: string;
 }
 
@@ -207,9 +221,11 @@ model DeepNestInput {
  */
 model DeepNestOutput {
   /** The created gizmo identifier. */
+  @d2Field(1)
   gizmoId: string;
 
   /** The gizmo's widget — an OPTIONAL nested model (depth 2) carrying parts (depth 3). */
+  @d2Field(2)
   widget?: DeepWidget;
 }
 

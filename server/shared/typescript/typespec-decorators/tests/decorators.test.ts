@@ -41,10 +41,16 @@ import {
   $decorators,
   D2_RESILIENCE_RETRY_WHEN_KEY,
   D2_RESILIENCE_FAIL_WHEN_KEY,
+  D2_FIELD_KEY,
+  D2_RESERVED_KEY,
   type ResilienceDiagnosticCode,
   type ResultPredicateDiagnosticCode,
 } from "../src/index.js";
-import type { GrpcMethodPayload, IdempotentPayload } from "../src/index.js";
+import type {
+  GrpcMethodPayload,
+  IdempotentPayload,
+  ReservedPayload,
+} from "../src/index.js";
 import {
   loadScopeNames,
   loadAudienceNames,
@@ -82,6 +88,8 @@ import {
   $d2Command,
   $d2Query,
   $d2Internal,
+  $d2Field,
+  $d2Reserved,
 } from "../src/decorators.js";
 import type {
   DecoratorContext,
@@ -454,6 +462,110 @@ describe("stateKeys_AreProcessGlobalSymbolFor", () => {
 });
 
 // ---------------------------------------------------------------------------
+// Direct unit tests: $d2Field
+// ---------------------------------------------------------------------------
+
+describe("directUnit_$d2Field", () => {
+  it("stores the pin number under D2_FIELD_KEY keyed by the target property", () => {
+    const { ctx, maps } = makeMockContext();
+    $d2Field(ctx, mockProperty, 3);
+    expect(maps.get(D2_FIELD_KEY)!.get(mockProperty)).toBe(3);
+  });
+
+  it("reports invalid-field-number for zero", () => {
+    const diags: Array<{ code: string }> = [];
+    const { ctx } = makeMockContext();
+    (
+      ctx.program as unknown as {
+        reportDiagnostic: (d: { code: string }) => void;
+      }
+    ).reportDiagnostic = (d) => {
+      diags.push(d);
+    };
+    $d2Field(ctx, mockProperty, 0);
+    expect(diags.some((d) => d.code.endsWith("invalid-field-number"))).toBe(
+      true,
+    );
+  });
+
+  it("reports invalid-field-number for a number in the protobuf reserved range 19000-19999", () => {
+    const diags: Array<{ code: string }> = [];
+    const { ctx } = makeMockContext();
+    (
+      ctx.program as unknown as {
+        reportDiagnostic: (d: { code: string }) => void;
+      }
+    ).reportDiagnostic = (d) => {
+      diags.push(d);
+    };
+    $d2Field(ctx, mockProperty, 19000);
+    expect(diags.some((d) => d.code.endsWith("invalid-field-number"))).toBe(
+      true,
+    );
+    diags.length = 0;
+    $d2Field(ctx, mockProperty, 19999);
+    expect(diags.some((d) => d.code.endsWith("invalid-field-number"))).toBe(
+      true,
+    );
+  });
+
+  it("accepts the maximum valid field number 536870911", () => {
+    const { ctx, maps } = makeMockContext();
+    $d2Field(ctx, mockProperty, 536870911);
+    expect(maps.get(D2_FIELD_KEY)!.get(mockProperty)).toBe(536870911);
+  });
+
+  it("accepts a number just outside the reserved range (18999 and 20000)", () => {
+    const { ctx, maps } = makeMockContext();
+    $d2Field(ctx, mockProperty, 18999);
+    expect(maps.get(D2_FIELD_KEY)!.get(mockProperty)).toBe(18999);
+    // Overwrite with 20000 — should also pass.
+    $d2Field(ctx, mockProperty, 20000);
+    expect(maps.get(D2_FIELD_KEY)!.get(mockProperty)).toBe(20000);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Direct unit tests: $d2Reserved
+// ---------------------------------------------------------------------------
+
+describe("directUnit_$d2Reserved", () => {
+  it("stores numbers and parsed names under D2_RESERVED_KEY keyed by the target model", () => {
+    const model = {} as unknown as import("@typespec/compiler").Model;
+    const { ctx, maps } = makeMockContext();
+    $d2Reserved(ctx, model, "old_field, removed_slot", 3, 5, 7);
+    const payload = maps.get(D2_RESERVED_KEY)!.get(model) as ReservedPayload;
+    expect(payload.numbers).toEqual([3, 5, 7]);
+    expect(payload.names).toEqual(["old_field", "removed_slot"]);
+  });
+
+  it("handles a comma-separated names string with extra whitespace", () => {
+    const model = {} as unknown as import("@typespec/compiler").Model;
+    const { ctx, maps } = makeMockContext();
+    $d2Reserved(ctx, model, "  first_field ,  second_field  ", 1);
+    const payload = maps.get(D2_RESERVED_KEY)!.get(model) as ReservedPayload;
+    expect(payload.names).toEqual(["first_field", "second_field"]);
+  });
+
+  it("handles an empty names string (no names, only numbers)", () => {
+    const model = {} as unknown as import("@typespec/compiler").Model;
+    const { ctx, maps } = makeMockContext();
+    $d2Reserved(ctx, model, "", 4, 8);
+    const payload = maps.get(D2_RESERVED_KEY)!.get(model) as ReservedPayload;
+    expect(payload.numbers).toEqual([4, 8]);
+    expect(payload.names).toEqual([]);
+  });
+
+  it("D2_FIELD_KEY equals Symbol.for('D2.d2Field')", () => {
+    expect(D2_FIELD_KEY).toBe(Symbol.for("D2.d2Field"));
+  });
+
+  it("D2_RESERVED_KEY equals Symbol.for('D2.d2Reserved')", () => {
+    expect(D2_RESERVED_KEY).toBe(Symbol.for("D2.d2Reserved"));
+  });
+});
+
+// ---------------------------------------------------------------------------
 // Unit tests: $lib descriptor
 // ---------------------------------------------------------------------------
 
@@ -465,12 +577,13 @@ it("lib_HasExpectedPackageName", () => {
 // Unit tests: $decorators registry key-set pin (§1.18 per-VALUE pin)
 // ---------------------------------------------------------------------------
 
-it("decorators_RegistryMapsAllSixteenDecoratorsUnderD2Namespace", () => {
+it("decorators_RegistryMapsAllEighteenDecoratorsUnderD2Namespace", () => {
   const keys = Object.keys($decorators.D2).sort();
   expect(keys).toEqual([
     "d2Audience",
     "d2Command",
     "d2Csrf",
+    "d2Field",
     "d2GrpcMethod",
     "d2Harmless",
     "d2Idempotent",
@@ -481,6 +594,7 @@ it("decorators_RegistryMapsAllSixteenDecoratorsUnderD2Namespace", () => {
     "d2Redact",
     "d2RequireAllScopes",
     "d2RequireAnyScope",
+    "d2Reserved",
     "d2Resilience",
     "d2ServedBy",
     "d2ServerPush",

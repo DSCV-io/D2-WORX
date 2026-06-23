@@ -36,6 +36,9 @@ import { createTypeSpecLibrary, paramMessage } from "@typespec/compiler";
 //                                         representation. Replace with a named enum or a closed
 //                                         string-literal union.
 //   D2TSP008  server-push-requires-payload — a @d2ServerPush op whose output has no emittable
+//   D2TSP009  unpinned-proto-field          — a model property on a @d2GrpcMethod-bound model
+//                                            lacks a @d2Field(n) pin; positional assignment is
+//                                            disabled (fires only in the proto emitter).
 //                                         payload (a void return, or an output model with zero
 //                                         fields and zero nested models). The op's output model IS
 //                                         the event payload, so a payload-less push is almost
@@ -146,6 +149,23 @@ export const $lib = createTypeSpecLibrary({
       severity: "error",
       messages: {
         default: paramMessage`union property '${"property"}' has an unsupported shape — only a closed set of string literals (or a named enum) maps to a cross-language enum; mixed-primitive, numeric-literal, discriminated, or model unions are not supported`,
+      },
+    },
+
+    /**
+     * D2TSP009 — A model property on a @d2GrpcMethod-bound model is missing its
+     * required @d2Field(n) pin. Author-pinned field numbers are mandatory for all
+     * proto-bound models; positional assignment is permanently disabled to prevent
+     * silent wire-format breaks on reorder/insert/delete. Add @d2Field(N) to every
+     * property of every model used in a @d2GrpcMethod operation's input and output.
+     *
+     * This diagnostic fires ONLY inside the proto emitter (reached only for
+     * @d2GrpcMethod ops); DTO-only / in-process ops with unpinned fields compile clean.
+     */
+    "unpinned-proto-field": {
+      severity: "error",
+      messages: {
+        default: paramMessage`field '${"field"}' on model '${"model"}' has no @d2Field pin — every field on a proto-bound model must carry an explicit @d2Field(N) field number; positional assignment is disabled`,
       },
     },
 

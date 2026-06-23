@@ -25,16 +25,19 @@ namespace D2.Fixtures;
 /** Input for a sign operation: a key identifier and the payload bytes to sign. */
 model SignInput {
   /** The key identifier selecting the signing key. */
+  @d2Field(1)
   kid: string;
 
   /** The payload to sign. Redacted in structured logs (secret material). */
   @d2Redact
+  @d2Field(2)
   payload: bytes;
 }
 
 /** Output of a sign operation: the base64url-encoded signature. */
 model SignOutput {
   /** The signature over the payload, base64url-encoded (unpadded). */
+  @d2Field(1)
   signature: string;
 }
 

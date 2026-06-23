@@ -4,6 +4,7 @@
 
 import type {
   DecoratorContext,
+  Model,
   ModelProperty,
   Operation,
 } from "@typespec/compiler";
@@ -11,6 +12,7 @@ import {
   D2_AUDIENCE_KEY,
   D2_COMMAND_KEY,
   D2_CSRF_KEY,
+  D2_FIELD_KEY,
   D2_GRPC_METHOD_KEY,
   D2_HARMLESS_KEY,
   D2_IDEMPOTENT_KEY,
@@ -21,6 +23,7 @@ import {
   D2_REDACT_KEY,
   D2_REQUIRE_ALL_SCOPES_KEY,
   D2_REQUIRE_ANY_SCOPE_KEY,
+  D2_RESERVED_KEY,
   D2_RESILIENCE_FAIL_WHEN_KEY,
   D2_RESILIENCE_KEY,
   D2_RESILIENCE_RETRY_WHEN_KEY,
@@ -30,6 +33,7 @@ import {
 import {
   validateAudience,
   validateCsrfPosture,
+  validateFieldNumber,
   validateGrpcStreaming,
   validateIdempotent,
   validatePushTarget,
@@ -297,4 +301,57 @@ export function $d2Internal(
   target: Operation,
 ): void {
   context.program.stateMap(D2_INTERNAL_KEY).set(target, true);
+}
+
+/**
+ * Pins a model property to an explicit proto3 field number. The number must be
+ * a positive integer in the range [1, 536870911] and must NOT fall in the
+ * protobuf implementation-reserved range 19000–19999.
+ *
+ * Author-pinned numbers guarantee wire stability: the proto emitter uses this
+ * number verbatim instead of assigning positionally, so reordering, inserting,
+ * or removing properties does not silently renumber surviving fields.
+ *
+ * The proto emitter requires every field on a @d2GrpcMethod-bound model to carry
+ * @d2Field; an unpinned field on a proto-bound model is a loud build failure.
+ *
+ * Emitters read back:
+ * program.stateMap(D2_FIELD_KEY).get(prop) → number.
+ */
+export function $d2Field(
+  context: DecoratorContext,
+  target: ModelProperty,
+  number: number,
+): void {
+  validateFieldNumber(context, target, number);
+  context.program.stateMap(D2_FIELD_KEY).set(target, number);
+}
+
+/**
+ * Declares author-owned reserved field numbers and names on a model. Reserved
+ * entries document proto3 slots that were previously used and must never be
+ * reused (prevents silent wire-format collisions with old clients/servers).
+ *
+ * `numbers` is a variadic list of previously-used field numbers (must each be
+ * a positive integer ≤ 536870911). `names` is stored under the model to emit
+ * `reserved "old_name";` lines. Pass numbers through the `...numbers` variadic;
+ * for names, supply a separate `@d2Reserved` call or use the names parameter
+ * (see lib/main.tsp for the TypeSpec-level signature).
+ *
+ * Emitters read back:
+ * program.stateMap(D2_RESERVED_KEY).get(model) → { numbers: number[], names: string[] }.
+ */
+export function $d2Reserved(
+  context: DecoratorContext,
+  target: Model,
+  names: string,
+  ...numbers: number[]
+): void {
+  const parsed = names
+    .split(",")
+    .map((s) => s.trim())
+    .filter((s) => s.length > 0);
+  context.program
+    .stateMap(D2_RESERVED_KEY)
+    .set(target, { numbers: [...numbers], names: parsed });
 }

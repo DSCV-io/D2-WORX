@@ -73,8 +73,8 @@ describe("protoGrpcEmitIntegration_Sign_EmitsProtoAndService", () => {
       using D2;
       namespace D2.Fixtures;
 
-      model SignInput { kid: string; @d2Redact payload: bytes; }
-      model SignOutput { signature: string; }
+      model SignInput { @d2Field(1) kid: string; @d2Field(2) @d2Redact payload: bytes; }
+      model SignOutput { @d2Field(1) signature: string; }
 
       @d2Command
       @d2ServedBy("KeyCustodian")
@@ -248,8 +248,8 @@ describe("protoGrpcEmitIntegration_RealModule_InProcessGrpc_UsesApiFacade", () =
       using D2;
       namespace D2.KeyCustodian;
 
-      model SignInput { kid: string; }
-      model SignOutput { signature: string; }
+      model SignInput { @d2Field(1) kid: string; }
+      model SignOutput { @d2Field(1) signature: string; }
 
       @d2Command
       @d2ServedBy("KeyCustodian")
@@ -323,8 +323,8 @@ describe("protoGrpcEmitIntegration_RealModule_ParameterlessAndVoidGrpcOps", () =
       using D2;
       namespace D2.KeyCustodian;
 
-      model PingOutput { ok: string; }
-      model FireInput { data: string; }
+      model PingOutput { @d2Field(1) ok: string; }
+      model FireInput { @d2Field(1) data: string; }
 
       // No input model — exercises the inputModel-undefined fallback in the client collection.
       @d2Query
@@ -453,8 +453,8 @@ describe("protoGrpcEmitIntegration_Resilience_PredicateAndSentinelEmitted", () =
       using D2;
       namespace D2.Fixtures;
 
-      model PlaceOrderInput { customerId: string; }
-      model PlaceOrderOutput { orderCode: string; itemStatuses: string[]; partial: boolean; }
+      model PlaceOrderInput { @d2Field(1) customerId: string; }
+      model PlaceOrderOutput { @d2Field(1) orderCode: string; @d2Field(2) itemStatuses: string[]; @d2Field(3) partial: boolean; }
 
       @d2Command
       @d2ServedBy("PredicateFixtures")
@@ -470,8 +470,8 @@ describe("protoGrpcEmitIntegration_Resilience_PredicateAndSentinelEmitted", () =
 
       // A second real-module gRPC op in a DIFFERENT module with NO @d2Resilience —
       // exercises the no-predicate skip (no predicate files, no sentinel for that module).
-      model PingInput { id: string; }
-      model PingOutput { ok: boolean; }
+      model PingInput { @d2Field(1) id: string; }
+      model PingOutput { @d2Field(1) ok: boolean; }
 
       @d2Command
       @d2ServedBy("PlainFixtures")

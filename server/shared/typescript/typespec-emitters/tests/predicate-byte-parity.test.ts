@@ -196,7 +196,7 @@ function emitPredicateFilesV2(): { cs: string; ts: string } {
 }
 
 function makePlaceOrderClientOp(): GrpcClientOp {
-  const strField = (name: string, cs: string) => ({
+  const strField = (name: string, cs: string, fieldNumber: number) => ({
     name,
     csName: cs,
     csType: "string",
@@ -206,6 +206,7 @@ function makePlaceOrderClientOp(): GrpcClientOp {
     repeated: false,
     optional: false,
     redact: false,
+    fieldNumber,
   });
   return {
     opName: "placeOrder",
@@ -215,10 +216,10 @@ function makePlaceOrderClientOp(): GrpcClientOp {
     dtoCsharpNs: CLIENTS_NS,
     sourceSpec: SPEC,
     requestModelName: "PlaceOrderInput",
-    requestFields: [strField("customerId", "CustomerId")],
+    requestFields: [strField("customerId", "CustomerId", 1)],
     responseModelName: "PlaceOrderOutput",
     responseFields: [
-      strField("orderCode", "OrderCode"),
+      strField("orderCode", "OrderCode", 1),
       {
         name: "itemStatuses",
         csName: "ItemStatuses",
@@ -229,6 +230,7 @@ function makePlaceOrderClientOp(): GrpcClientOp {
         repeated: true,
         optional: false,
         redact: false,
+        fieldNumber: 2,
       },
       {
         name: "partial",
@@ -240,6 +242,7 @@ function makePlaceOrderClientOp(): GrpcClientOp {
         repeated: false,
         optional: false,
         redact: false,
+        fieldNumber: 3,
       },
     ],
     retryWhenAst: retryWhen,
@@ -477,8 +480,10 @@ describe("byteParity_PlaceOrderV1Proto", () => {
       SPEC,
       "PlaceOrderRequest",
       placeOrderReqFields(),
+      undefined,
       "PlaceOrderOutput",
       placeOrderRespFields(),
+      undefined,
       [],
       (c, m) => {
         throw new Error(`${c}: ${m}`);

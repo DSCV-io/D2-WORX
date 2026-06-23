@@ -27,7 +27,7 @@ import type {
   Type,
   Union,
 } from "@typespec/compiler";
-import { D2_REDACT_KEY } from "@d2/typespec-decorators";
+import { D2_FIELD_KEY, D2_REDACT_KEY } from "@d2/typespec-decorators";
 import { resolveScalar } from "./scalar-registry.js";
 import { toPascal } from "./name-transforms.js";
 
@@ -41,6 +41,14 @@ export interface NestedModel {
   readonly name: string;
   /** Resolved fields of the nested model. */
   readonly fields: readonly FieldInfo[];
+  /**
+   * The originating TypeSpec Model node. Present when the `NestedModel` was
+   * produced by `walkModel` (i.e. from a live TypeSpec compile). Absent in
+   * hand-constructed test fixtures where no compiler context is available.
+   * Used by callers that need to query TypeSpec state maps (e.g. @d2Reserved)
+   * keyed on the compiler's Type objects.
+   */
+  readonly typeModel?: Model;
 }
 
 /** One member of a collected enum (or synthesized string-literal union). */
@@ -114,6 +122,14 @@ export interface FieldInfo {
   readonly optional: boolean;
   /** True when the ModelProperty carries @d2Redact state. */
   readonly redact: boolean;
+  /**
+   * Author-pinned proto3 field number from @d2Field(n). Populated when the
+   * property carries an @d2Field annotation; undefined for unpinned properties
+   * (DTO-only / in-process ops). The proto emitter uses this number verbatim
+   * instead of assigning positionally; an unpinned property on a proto-bound
+   * model is a loud build failure (D2TSP009).
+   */
+  readonly fieldNumber?: number;
   /** Populated when the property type is a non-array nested Model. */
   readonly nested?: NestedModel;
   /**
@@ -175,6 +191,7 @@ export function walkModel(
   onError: (code: WalkErrorCode, message: string) => void,
 ): WalkResult {
   const redactMap = program.stateMap(D2_REDACT_KEY);
+  const fieldMap = program.stateMap(D2_FIELD_KEY);
   const nestedByName = new Map<string, NestedModel>();
   const enumsByName = new Map<string, NestedEnum>();
   const fields: FieldInfo[] = [];
@@ -185,6 +202,7 @@ export function walkModel(
       propName,
       prop,
       redactMap,
+      fieldMap,
       nestedByName,
       enumsByName,
       onError,
@@ -208,12 +226,17 @@ function resolveProperty(
   propName: string,
   prop: ModelProperty,
   redactMap: Map<object, unknown>,
+  fieldMap: Map<object, unknown>,
   nestedByName: Map<string, NestedModel>,
   enumsByName: Map<string, NestedEnum>,
   onError: (code: WalkErrorCode, message: string) => void,
 ): FieldInfo | undefined {
   const optional = prop.optional;
   const redact = redactMap.get(prop) === true;
+  const fieldNumber =
+    typeof fieldMap.get(prop) === "number"
+      ? (fieldMap.get(prop) as number)
+      : undefined;
   const csName = toPascal(propName);
 
   const t = prop.type;
@@ -240,6 +263,7 @@ function resolveProperty(
       repeated: false,
       optional,
       redact,
+      fieldNumber,
     };
   }
 
@@ -253,9 +277,11 @@ function resolveProperty(
       csName,
       optional,
       redact,
+      fieldNumber,
       nestedByName,
       enumsByName,
       onError,
+      fieldMap,
     );
   }
 
@@ -274,6 +300,7 @@ function resolveProperty(
       repeated: false,
       optional,
       redact,
+      fieldNumber,
       enumRef: collected,
     };
   }
@@ -300,13 +327,20 @@ function resolveProperty(
       // S-6: a `<literals> | null` union normalizes to optional.
       optional: resolved.optional,
       redact,
+      fieldNumber,
       enumRef: resolved.enum,
     };
   }
 
   // ---- Nested model (non-array) --------------------------------------------
   if (t.kind === "Model") {
-    const nested = collectNested(t, nestedByName, enumsByName, onError);
+    const nested = collectNested(
+      t,
+      nestedByName,
+      enumsByName,
+      onError,
+      fieldMap,
+    );
     return {
       name: propName,
       csName,
@@ -318,6 +352,7 @@ function resolveProperty(
       repeated: false,
       optional,
       redact,
+      fieldNumber,
       nested,
     };
   }
@@ -342,9 +377,11 @@ function resolveArrayProperty(
   csName: string,
   optional: boolean,
   redact: boolean,
+  fieldNumber: number | undefined,
   nestedByName: Map<string, NestedModel>,
   enumsByName: Map<string, NestedEnum>,
   onError: (code: WalkErrorCode, message: string) => void,
+  fieldMap: Map<object, unknown>,
 ): FieldInfo | undefined {
   const elementType = arrayType.indexer?.value;
 
@@ -369,6 +406,7 @@ function resolveArrayProperty(
       repeated: true,
       optional,
       redact,
+      fieldNumber,
     };
   }
 
@@ -392,6 +430,7 @@ function resolveArrayProperty(
       repeated: true,
       optional,
       redact,
+      fieldNumber,
       enumRef: collected,
     };
   }
@@ -420,6 +459,7 @@ function resolveArrayProperty(
       repeated: true,
       optional,
       redact,
+      fieldNumber,
       enumRef: resolved.enum,
     };
   }
@@ -431,6 +471,7 @@ function resolveArrayProperty(
       nestedByName,
       enumsByName,
       onError,
+      fieldMap,
     );
     return {
       name: propName,
@@ -444,6 +485,7 @@ function resolveArrayProperty(
       repeated: true,
       optional,
       redact,
+      fieldNumber,
       nested,
     };
   }
@@ -696,6 +738,7 @@ function collectNested(
   nestedByName: Map<string, NestedModel>,
   enumsByName: Map<string, NestedEnum>,
   onError: (code: WalkErrorCode, message: string) => void,
+  fieldMap?: Map<object, unknown>,
 ): NestedModel {
   const existing = nestedByName.get(model.name);
   if (existing !== undefined) return existing;
@@ -703,24 +746,34 @@ function collectNested(
   // Register a mutable placeholder BEFORE walking the fields so a self-reference
   // (or a cycle through deeper models) sees an in-progress entry and terminates.
   const nestedFields: FieldInfo[] = [];
-  const nested: NestedModel = { name: model.name, fields: nestedFields };
+  const nested: NestedModel = {
+    name: model.name,
+    fields: nestedFields,
+    typeModel: model,
+  };
   nestedByName.set(model.name, nested);
 
   // Nested models carry no redact state — walk against an empty redact map so every
   // resolved field's `redact` is false. Resolution is otherwise identical to a
   // top-level field (scalars, optionals, arrays, deeper nested models, enums/unions),
   // which is what makes nested support depth-agnostic + uniformly loud.
+  // The fieldMap (for @d2Field pins) is shared from the outer walkModel so nested
+  // model properties can carry their own field-number pins.
   const emptyRedactMap = new Map<object, unknown>();
+  const resolvedFieldMap = fieldMap ?? new Map<object, unknown>();
+
   for (const [propName, prop] of model.properties) {
     const fieldInfo = resolveProperty(
       model.name,
       propName,
       prop,
       emptyRedactMap,
+      resolvedFieldMap,
       nestedByName,
       enumsByName,
       onError,
     );
+
     if (fieldInfo !== undefined) nestedFields.push(fieldInfo);
   }
 

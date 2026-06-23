@@ -38,6 +38,7 @@ import {
   D2_COMMAND_KEY,
   D2_QUERY_KEY,
   D2_INTERNAL_KEY,
+  D2_FIELD_KEY,
 } from "@d2/typespec-decorators";
 import type { OperationsManifest } from "../src/emitter.js";
 
@@ -704,10 +705,20 @@ describe("$onEmit_directUnit_DtoPairEmission", () => {
       ],
     ]);
 
+    // Field-number pins for the mock properties (mirrors the sign-shaped.tsp pins:
+    // kid=1, payload=2 on SignInput; signature=1 on SignOutput).
+    const fieldMap = new Map<object, unknown>([
+      [kidProp, 1],
+      [payloadProp, 2],
+      [sigProp, 1],
+    ]);
+
     const mockProgram = {
       diagnostics: [],
+      reportDiagnostic(): void {},
       stateMap(key: symbol): Map<object, unknown> {
         if (key === D2_GRPC_METHOD_KEY) return grpcMap;
+        if (key === D2_FIELD_KEY) return fieldMap;
         return new Map();
       },
     } as unknown as Program;
@@ -835,6 +846,11 @@ describe("$onEmit_directUnit_DtoPairEmission", () => {
       [op, { service: "MySvc", method: "Do", streaming: "bidirectional" }],
     ]);
 
+    // Field-number pin for the `id` prop so D2TSP009 does not fire before the
+    // streaming-mode check. The streaming check happens in buildRpc (called after
+    // resolveProtoFields), so fields must be pinned for the streaming error to fire.
+    const fieldMap = new Map<object, unknown>([[prop, 1]]);
+
     const reportedDiagnostics: Array<{ code: string }> = [];
     const libModule = await import("../src/lib.js");
     vi.spyOn(libModule.$lib, "reportDiagnostic").mockImplementation(
@@ -847,6 +863,7 @@ describe("$onEmit_directUnit_DtoPairEmission", () => {
       diagnostics: [],
       stateMap(key: symbol): Map<object, unknown> {
         if (key === D2_GRPC_METHOD_KEY) return grpcMap;
+        if (key === D2_FIELD_KEY) return fieldMap;
         return new Map();
       },
     } as unknown as Program;
@@ -969,10 +986,16 @@ describe("$onEmit_directUnit_DtoPairEmission", () => {
       [op, { service: "PingSvc", method: "Ping", streaming: "unary" }],
     ]);
 
+    // Field-number pin for the output `message` prop; input is undefined so no input
+    // fields need pinning.
+    const fieldMap = new Map<object, unknown>([[prop, 1]]);
+
     const mockProgram = {
       diagnostics: [],
+      reportDiagnostic(): void {},
       stateMap(key: symbol): Map<object, unknown> {
         if (key === D2_GRPC_METHOD_KEY) return grpcMap;
+        if (key === D2_FIELD_KEY) return fieldMap;
         return new Map();
       },
     } as unknown as Program;

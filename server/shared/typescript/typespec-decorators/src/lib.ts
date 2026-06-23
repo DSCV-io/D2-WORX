@@ -300,5 +300,20 @@ export const $lib = createTypeSpecLibrary({
         default: paramMessage`@d2Resilience ${"which"} predicate shadows an element variable: ${"detail"}`,
       },
     },
+
+    // ----------------------------------------------------------------
+    // @d2Field field-number validation
+    // ----------------------------------------------------------------
+
+    /**
+     * @d2Field field number is invalid. Valid range: integer ≥ 1, ≤ 536870911
+     * (proto3 max), and NOT in the protobuf implementation-reserved range 19000–19999.
+     */
+    "invalid-field-number": {
+      severity: "error",
+      messages: {
+        default: paramMessage`@d2Field number ${"value"} is invalid — must be an integer ≥ 1, ≤ 536870911, and not in the protobuf reserved range 19000–19999`,
+      },
+    },
   },
 });

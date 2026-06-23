@@ -23,12 +23,14 @@ import {
   D2_RESILIENCE_RETRY_WHEN_KEY,
   D2_RESILIENCE_FAIL_WHEN_KEY,
   D2_RESILIENCE_KEY,
+  D2_RESERVED_KEY,
   parseResultPredicate,
   parse as parseResiliencePipeline,
 } from "@d2/typespec-decorators";
 import type {
   IdempotentPayload,
   PredicateNode,
+  ReservedPayload,
   ResiliencePolicyNode,
 } from "@d2/typespec-decorators";
 import { emitGeneratedFile, resolveOutputPath } from "./lib/emit-file.js";
@@ -36,6 +38,7 @@ import { walkModel } from "./lib/model-walk.js";
 import { emitCsharpDtos } from "./lib/csharp-dto-emitter.js";
 import { emitTsDtos } from "./lib/ts-dto-emitter.js";
 import { emitProto } from "./lib/proto-emitter.js";
+import type { NestedMessageDescriptor } from "./lib/proto-emitter.js";
 import { emitGrpcService } from "./lib/grpc-service-emitter.js";
 import type { GrpcDelegationTarget } from "./lib/grpc-service-emitter.js";
 import { emitHandlerInterface } from "./lib/handler-interface-emitter.js";
@@ -1062,7 +1065,8 @@ function emitProtoAndGrpcService(
       | "unmapped-scalar"
       | "unsupported-property-type"
       | "unsupported-union-shape"
-      | "invalid-streaming-mode",
+      | "invalid-streaming-mode"
+      | "unpinned-proto-field",
     message: string,
   ): void => {
     errors.push(message);
@@ -1082,6 +1086,12 @@ function emitProtoAndGrpcService(
       $lib.reportDiagnostic(program, {
         code: "unsupported-union-shape",
         format: { property: message },
+        target: NoTarget,
+      });
+    else if (code === "unpinned-proto-field")
+      $lib.reportDiagnostic(program, {
+        code: "unpinned-proto-field",
+        format: { field: message, model: "" },
         target: NoTarget,
       });
     else
@@ -1115,6 +1125,38 @@ function emitProtoAndGrpcService(
   const dtoRequestName = inputModel?.name ?? `${grpc.method}Input`;
   const dtoResponseName = outputModel?.name ?? `${grpc.method}Output`;
 
+  // Read @d2Reserved payloads for request and response models.
+  const reservedMap = program.stateMap(D2_RESERVED_KEY);
+  const inputReserved =
+    inputModel !== undefined
+      ? (reservedMap.get(inputModel) as ReservedPayload | undefined)
+      : undefined;
+  const outputReserved =
+    outputModel !== undefined
+      ? (reservedMap.get(outputModel) as ReservedPayload | undefined)
+      : undefined;
+
+  // Build nested message descriptors with their optional @d2Reserved payloads.
+  // Merge nested models from both input and output walks (deduped by name in walkModel already).
+  const allNestedModels = [
+    ...inputWalk.nestedModels,
+    ...outputWalk.nestedModels,
+  ];
+  const seenNestedNames = new Set<string>();
+  const nestedDescriptors: NestedMessageDescriptor[] = [];
+
+  for (const nm of allNestedModels) {
+    if (seenNestedNames.has(nm.name)) continue;
+    seenNestedNames.add(nm.name);
+    nestedDescriptors.push({
+      model: nm,
+      reserved:
+        nm.typeModel !== undefined
+          ? (reservedMap.get(nm.typeModel) as ReservedPayload | undefined)
+          : undefined,
+    });
+  }
+
   const protoFile = emitProto(
     opName,
     grpc.service,
@@ -1125,13 +1167,15 @@ function emitProtoAndGrpcService(
     specHint,
     protoRequestName,
     inputWalk.fields,
+    inputReserved,
     // The proto DATA message is named after the DTO output model (<Op>Output) —
     // distinct from the <Method>Response envelope wrapper (proto-emitter derives
     // that name itself). Passing protoResponseName here would name the data message
     // <Method>Response too, colliding with the wrapper and failing protoc.
     dtoResponseName,
     outputWalk.fields,
-    outputWalk.nestedModels,
+    outputReserved,
+    nestedDescriptors,
     onError,
   );
   if (errors.length > 0 || protoFile === undefined) return;

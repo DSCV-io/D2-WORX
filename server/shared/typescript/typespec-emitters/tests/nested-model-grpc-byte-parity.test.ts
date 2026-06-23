@@ -38,6 +38,7 @@ import {
   type NestedModel,
 } from "../src/lib/model-walk.js";
 import { emitProto } from "../src/lib/proto-emitter.js";
+import type { NestedMessageDescriptor } from "../src/lib/proto-emitter.js";
 import { emitGrpcService } from "../src/lib/grpc-service-emitter.js";
 import {
   emitGrpcClient,
@@ -102,12 +103,18 @@ let v2Fail: PredicateNode;
 let deepIn: Walk;
 let deepOut: Walk;
 
-function dedupNested(...ws: Walk[]): readonly NestedModel[] {
+/** Dedup nested models for C#/TS DTO emitters (takes NestedModel[]). */
+function dedupModels(...ws: Walk[]): readonly NestedModel[] {
   const m = new Map<string, NestedModel>();
   for (const w of ws)
     for (const n of w.nested) if (!m.has(n.name)) m.set(n.name, n);
 
   return [...m.values()];
+}
+
+/** Dedup nested models for emitProto (wraps each in a NestedMessageDescriptor). */
+function dedupDescriptors(...ws: Walk[]): readonly NestedMessageDescriptor[] {
+  return dedupModels(...ws).map((model) => ({ model }));
 }
 
 beforeAll(async () => {
@@ -218,9 +225,11 @@ describe("byteParity_PlaceOrderV2Proto", () => {
       SPEC,
       "PlaceOrderV2Request",
       v2In.fields,
+      undefined,
       "PlaceOrderV2Output",
       v2Out.fields,
-      dedupNested(v2In, v2Out),
+      undefined,
+      dedupDescriptors(v2In, v2Out),
       (c, m) => {
         throw new Error(`${c}: ${m}`);
       },
@@ -259,7 +268,7 @@ describe("byteParity_PlaceOrderV2Dtos", () => {
       SPEC,
       v2In.fields,
       v2Out.fields,
-      dedupNested(v2In, v2Out),
+      dedupModels(v2In, v2Out),
     );
     expect(inputFile!.content).toBe(readGen("PlaceOrderV2Input.g.cs"));
   });
@@ -271,7 +280,7 @@ describe("byteParity_PlaceOrderV2Dtos", () => {
       SPEC,
       v2In.fields,
       v2Out.fields,
-      dedupNested(v2In, v2Out),
+      dedupModels(v2In, v2Out),
     );
     expect(outputFile!.content).toBe(readGen("PlaceOrderV2Output.g.cs"));
   });
@@ -282,7 +291,7 @@ describe("byteParity_PlaceOrderV2Dtos", () => {
       SPEC,
       v2In.fields,
       v2Out.fields,
-      dedupNested(v2In, v2Out),
+      dedupModels(v2In, v2Out),
     );
     expect(ts.content).toBe(readGen("place-order-v2-dto.g.ts"));
   });
@@ -298,7 +307,7 @@ describe("byteParity_PlaceOrderV2Dtos", () => {
       SPEC,
       v2In.fields,
       v2Out.fields,
-      dedupNested(v2In, v2Out),
+      dedupModels(v2In, v2Out),
     );
     expect(outputFile!.content).not.toBe(drifted);
   });
@@ -449,7 +458,7 @@ describe("byteParity_DeepNestDtos", () => {
       SPEC,
       deepIn.fields,
       deepOut.fields,
-      dedupNested(deepIn, deepOut),
+      dedupModels(deepIn, deepOut),
     );
 
     return files.find((f) => f.fileName === "DeepNestOutput.g.cs")!.content;
@@ -466,7 +475,7 @@ describe("byteParity_DeepNestDtos", () => {
       SPEC,
       deepIn.fields,
       deepOut.fields,
-      dedupNested(deepIn, deepOut),
+      dedupModels(deepIn, deepOut),
     );
     expect(
       files.find((f) => f.fileName === "DeepNestInput.g.cs")!.content,
@@ -479,7 +488,7 @@ describe("byteParity_DeepNestDtos", () => {
       SPEC,
       deepIn.fields,
       deepOut.fields,
-      dedupNested(deepIn, deepOut),
+      dedupModels(deepIn, deepOut),
     );
     expect(ts.content).toBe(readGen("deep-nest-dto.g.ts"));
   });
@@ -512,9 +521,11 @@ describe("byteParity_DeepNestProto", () => {
       SPEC,
       "DeepNestRequest",
       deepIn.fields,
+      undefined,
       "DeepNestOutput",
       deepOut.fields,
-      dedupNested(deepIn, deepOut),
+      undefined,
+      dedupDescriptors(deepIn, deepOut),
       (c, m) => {
         throw new Error(`${c}: ${m}`);
       },

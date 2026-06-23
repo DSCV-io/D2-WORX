@@ -12,7 +12,11 @@
 // diagnostic fails the overall compile but decorators keep storing state so
 // downstream passes see consistent program state.
 
-import type { DecoratorContext, Operation } from "@typespec/compiler";
+import type {
+  DecoratorContext,
+  ModelProperty,
+  Operation,
+} from "@typespec/compiler";
 import { $lib } from "./lib.js";
 import {
   loadScopeNames,
@@ -176,6 +180,51 @@ export function validateServedBy(
     $lib.reportDiagnostic(context.program, {
       code: "empty-served-by",
       format: {},
+      target,
+    });
+}
+
+// ----------------------------------------------------------------
+// @d2Field field-number validation
+// ----------------------------------------------------------------
+
+/**
+ * Proto3 maximum field number (2^29 - 1).
+ * Numbers above this are not valid proto3 field numbers.
+ */
+const _PROTO_MAX_FIELD_NUMBER = 536870911;
+
+/**
+ * Protobuf implementation-reserved range (inclusive). Field numbers in this
+ * range are reserved for the Protobuf implementation and must not be used
+ * by authors, even though proto3 allows numbers up to 536870911.
+ */
+const _PROTO_RESERVED_RANGE_LO = 19000;
+const _PROTO_RESERVED_RANGE_HI = 19999;
+
+/**
+ * Validate the integer field number supplied to @d2Field.
+ * Fires `invalid-field-number` when:
+ *   - the value is not a safe integer (non-integer float, NaN, Infinity)
+ *   - the value is less than 1
+ *   - the value exceeds 536870911 (proto3 max)
+ *   - the value falls in the protobuf reserved range 19000–19999
+ */
+export function validateFieldNumber(
+  context: DecoratorContext,
+  target: ModelProperty,
+  number: number,
+): void {
+  const isValid =
+    Number.isInteger(number) &&
+    number >= 1 &&
+    number <= _PROTO_MAX_FIELD_NUMBER &&
+    (number < _PROTO_RESERVED_RANGE_LO || number > _PROTO_RESERVED_RANGE_HI);
+
+  if (!isValid)
+    $lib.reportDiagnostic(context.program, {
+      code: "invalid-field-number",
+      format: { value: String(number) },
       target,
     });
 }

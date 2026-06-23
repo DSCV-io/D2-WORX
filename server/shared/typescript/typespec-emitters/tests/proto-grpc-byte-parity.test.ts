@@ -68,6 +68,7 @@ function buildSignInputFields(): readonly FieldInfo[] {
       repeated: false,
       optional: false,
       redact: false,
+      fieldNumber: 1,
     },
     {
       name: "payload",
@@ -79,6 +80,7 @@ function buildSignInputFields(): readonly FieldInfo[] {
       repeated: false,
       optional: false,
       redact: true,
+      fieldNumber: 2,
     },
   ];
 }
@@ -95,6 +97,7 @@ function buildSignOutputFields(): readonly FieldInfo[] {
       repeated: false,
       optional: false,
       redact: false,
+      fieldNumber: 1,
     },
   ];
 }
@@ -117,8 +120,10 @@ describe("byteParity_SignProto_CommittedFixtureIdentical", () => {
       SOURCE,
       "SignRequest",
       buildSignInputFields(),
+      undefined,
       "SignOutput", // data message name — wrapper is always <grpcMethod>Response
       buildSignOutputFields(),
+      undefined,
       [],
       () => {},
     );
@@ -143,8 +148,10 @@ describe("byteParity_SignProto_CommittedFixtureIdentical", () => {
       SOURCE,
       "SignRequest",
       buildSignInputFields(),
+      undefined,
       "SignOutput",
       buildSignOutputFields(),
+      undefined,
       [],
       () => {},
     );

@@ -5,24 +5,27 @@
 // Direct-unit tests for the proto3 emitter (emitProto).
 //
 // Covers: service/rpc/message structure, all four streaming modes,
-// snake_case field names, field numbering, repeated fields, nested
-// messages, unmapped scalars (loud failure), proto type column
-// (not the C# column), empty messages, and the auto-generated banner.
+// snake_case field names, author-pinned field numbers (@d2Field), repeated
+// fields, nested messages, unmapped scalars (loud failure), unpinned-field
+// loud failure (D2TSP009), reserved line emission (numbers + names,
+// range-collapse), proto type column (not the C# column), empty messages,
+// and the auto-generated banner.
 
 import { describe, it, expect, vi } from "vitest";
 import type { FieldInfo, NestedModel } from "../src/lib/model-walk.js";
 import { emitProto } from "../src/lib/proto-emitter.js";
+import type { NestedMessageDescriptor } from "../src/lib/proto-emitter.js";
 
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 
 type OnError = (
-  code: "unmapped-scalar" | "invalid-streaming-mode",
+  code: "unmapped-scalar" | "invalid-streaming-mode" | "unpinned-proto-field",
   message: string,
 ) => void;
 
-function makeStringField(name: string): FieldInfo {
+function makeStringField(name: string, fieldNumber?: number): FieldInfo {
   return {
     name,
     csName: name.charAt(0).toUpperCase() + name.slice(1),
@@ -33,10 +36,11 @@ function makeStringField(name: string): FieldInfo {
     repeated: false,
     optional: false,
     redact: false,
+    fieldNumber,
   };
 }
 
-function makeBytesField(name: string): FieldInfo {
+function makeBytesField(name: string, fieldNumber?: number): FieldInfo {
   return {
     name,
     csName: name.charAt(0).toUpperCase() + name.slice(1),
@@ -47,10 +51,11 @@ function makeBytesField(name: string): FieldInfo {
     repeated: false,
     optional: false,
     redact: false,
+    fieldNumber,
   };
 }
 
-function makeDecimalField(name: string): FieldInfo {
+function makeDecimalField(name: string, fieldNumber?: number): FieldInfo {
   return {
     name,
     csName: name.charAt(0).toUpperCase() + name.slice(1),
@@ -61,6 +66,7 @@ function makeDecimalField(name: string): FieldInfo {
     repeated: false,
     optional: false,
     redact: false,
+    fieldNumber,
   };
 }
 
@@ -68,6 +74,7 @@ function makeCollectionField(
   name: string,
   elemCsType: string,
   elemProtoType: string,
+  fieldNumber?: number,
 ): FieldInfo {
   return {
     name,
@@ -79,10 +86,15 @@ function makeCollectionField(
     repeated: true,
     optional: false,
     redact: false,
+    fieldNumber,
   };
 }
 
-function makeNestedField(name: string, nested: NestedModel): FieldInfo {
+function makeNestedField(
+  name: string,
+  nested: NestedModel,
+  fieldNumber?: number,
+): FieldInfo {
   return {
     name,
     csName: name.charAt(0).toUpperCase() + name.slice(1),
@@ -94,7 +106,12 @@ function makeNestedField(name: string, nested: NestedModel): FieldInfo {
     optional: false,
     redact: false,
     nested,
+    fieldNumber,
   };
+}
+
+function nestedDescriptor(model: NestedModel): NestedMessageDescriptor {
+  return { model };
 }
 
 const SIGN_SOURCE = "contracts/typespec/fixtures/sign-shaped.tsp";
@@ -102,11 +119,11 @@ const SIGN_PKG = "d2.keycustodian.v1";
 const SIGN_CS_NS = "D2.Services.Protos.KeyCustodian.V1";
 
 function buildSignInputFields(): readonly FieldInfo[] {
-  return [makeStringField("kid"), makeBytesField("payload")];
+  return [makeStringField("kid", 1), makeBytesField("payload", 2)];
 }
 
 function buildSignOutputFields(): readonly FieldInfo[] {
-  return [makeStringField("signature")];
+  return [makeStringField("signature", 1)];
 }
 
 function emitSignProto(streaming = "unary", onErr?: OnError) {
@@ -122,8 +139,10 @@ function emitSignProto(streaming = "unary", onErr?: OnError) {
     SIGN_SOURCE,
     "SignRequest",
     buildSignInputFields(),
+    undefined,
     "SignOutput", // data message name — wrapper is always <grpcMethod>Response
     buildSignOutputFields(),
+    undefined,
     [],
     onError,
   );
@@ -160,7 +179,7 @@ describe("emitProto_SignShape_EmitsServiceRpcMessages", () => {
 
   it("emits correct field types: request fields + envelope fields + data message fields", () => {
     const { result } = emitSignProto();
-    // Request fields.
+    // Request fields (author-pinned: kid=1, payload=2).
     expect(result!.content).toContain("string kid = 1;");
     expect(result!.content).toContain("bytes payload = 2;");
     // Envelope wrapper fields.
@@ -196,8 +215,10 @@ describe("emitProto_StreamingMode_CorrectRpcForm", () => {
       SIGN_SOURCE,
       "Req",
       [],
+      undefined,
       "Resp",
       [],
+      undefined,
       [],
       (_, m) => errors.push(m),
     );
@@ -220,8 +241,10 @@ describe("emitProto_StreamingMode_CorrectRpcForm", () => {
       SIGN_SOURCE,
       "Req",
       [],
+      undefined,
       "Resp",
       [],
+      undefined,
       [],
       (_, m) => errors.push(m),
     );
@@ -243,8 +266,10 @@ describe("emitProto_StreamingMode_CorrectRpcForm", () => {
       SIGN_SOURCE,
       "Req",
       [],
+      undefined,
       "Resp",
       [],
+      undefined,
       [],
       (_, m) => errors.push(m),
     );
@@ -272,6 +297,7 @@ describe("emitProto_FieldNaming_SnakeCaseFields_PascalCaseMessages", () => {
         repeated: false,
         optional: false,
         redact: false,
+        fieldNumber: 1,
       },
     ];
     const errors: string[] = [];
@@ -285,8 +311,10 @@ describe("emitProto_FieldNaming_SnakeCaseFields_PascalCaseMessages", () => {
       SIGN_SOURCE,
       "MyInput",
       fields,
+      undefined,
       "MyOutput",
       [],
+      undefined,
       [],
       (_, m) => errors.push(m),
     );
@@ -298,15 +326,15 @@ describe("emitProto_FieldNaming_SnakeCaseFields_PascalCaseMessages", () => {
 });
 
 // ---------------------------------------------------------------------------
-// Test 8: field numbering in declaration order
+// Test 8: author-pinned field numbers are honored (not positional)
 // ---------------------------------------------------------------------------
 
-describe("emitProto_FieldNumbering_OneBased_InDeclarationOrder", () => {
-  it("three-field message → fields numbered 1, 2, 3 in order", () => {
+describe("emitProto_FieldNumbering_AuthorPinned", () => {
+  it("fields with non-sequential pins → numbers used verbatim", () => {
     const fields: readonly FieldInfo[] = [
-      makeStringField("alpha"),
-      makeBytesField("beta"),
-      makeStringField("gamma"),
+      makeStringField("alpha", 1),
+      makeBytesField("beta", 5),
+      makeStringField("gamma", 10),
     ];
     const errors: string[] = [];
     const result = emitProto(
@@ -319,8 +347,41 @@ describe("emitProto_FieldNumbering_OneBased_InDeclarationOrder", () => {
       SIGN_SOURCE,
       "Multi",
       fields,
+      undefined,
       "Out",
       [],
+      undefined,
+      [],
+      (_, m) => errors.push(m),
+    );
+    expect(result).toBeDefined();
+    expect(result!.content).toContain("string alpha = 1;");
+    // Pin 5 is used verbatim — no positional counter.
+    expect(result!.content).toContain("bytes beta = 5;");
+    expect(result!.content).toContain("string gamma = 10;");
+  });
+
+  it("three-field message pinned 1-2-3 → same output as legacy positional (byte-neutral)", () => {
+    const fields: readonly FieldInfo[] = [
+      makeStringField("alpha", 1),
+      makeBytesField("beta", 2),
+      makeStringField("gamma", 3),
+    ];
+    const errors: string[] = [];
+    const result = emitProto(
+      "test",
+      "Svc",
+      "Do",
+      "unary",
+      SIGN_PKG,
+      SIGN_CS_NS,
+      SIGN_SOURCE,
+      "Multi",
+      fields,
+      undefined,
+      "Out",
+      [],
+      undefined,
       [],
       (_, m) => errors.push(m),
     );
@@ -332,13 +393,99 @@ describe("emitProto_FieldNumbering_OneBased_InDeclarationOrder", () => {
 });
 
 // ---------------------------------------------------------------------------
+// Test 8b: unpinned field → loud D2TSP009 failure
+// ---------------------------------------------------------------------------
+
+describe("emitProto_UnpinnedField_LoudFailure", () => {
+  it("a field without @d2Field (fieldNumber undefined) → D2TSP009 + returns undefined", () => {
+    const unpinned: FieldInfo = {
+      name: "kid",
+      csName: "Kid",
+      csType: "string",
+      tsName: "kid",
+      tsType: "string",
+      protoType: "string",
+      repeated: false,
+      optional: false,
+      redact: false,
+      // fieldNumber intentionally absent — simulates missing @d2Field
+    };
+    const onError = vi.fn();
+    const result = emitProto(
+      "test",
+      "Svc",
+      "Do",
+      "unary",
+      SIGN_PKG,
+      SIGN_CS_NS,
+      SIGN_SOURCE,
+      "Req",
+      [unpinned],
+      undefined,
+      "Resp",
+      [],
+      undefined,
+      [],
+      onError,
+    );
+    expect(result).toBeUndefined();
+    expect(onError).toHaveBeenCalledOnce();
+    expect(onError.mock.calls[0]![0]).toBe("unpinned-proto-field");
+    expect(onError.mock.calls[0]![1]).toContain("D2TSP009");
+    expect(onError.mock.calls[0]![1]).toContain("kid");
+  });
+
+  it("unpinned response field → D2TSP009 (emitter checks both request and response)", () => {
+    const unpinned: FieldInfo = {
+      name: "signature",
+      csName: "Signature",
+      csType: "string",
+      tsName: "signature",
+      tsType: "string",
+      protoType: "string",
+      repeated: false,
+      optional: false,
+      redact: false,
+      // fieldNumber intentionally absent
+    };
+    const onError = vi.fn();
+    const result = emitProto(
+      "test",
+      "Svc",
+      "Do",
+      "unary",
+      SIGN_PKG,
+      SIGN_CS_NS,
+      SIGN_SOURCE,
+      "Req",
+      [], // empty request — passes
+      undefined,
+      "Resp",
+      [unpinned],
+      undefined,
+      [],
+      onError,
+    );
+    expect(result).toBeUndefined();
+    expect(onError).toHaveBeenCalledOnce();
+    expect(onError.mock.calls[0]![0]).toBe("unpinned-proto-field");
+  });
+
+  it("pinned fields pass (no unpinned-proto-field error)", () => {
+    const { result, errors } = emitSignProto();
+    expect(result).toBeDefined();
+    expect(errors).toHaveLength(0);
+  });
+});
+
+// ---------------------------------------------------------------------------
 // Test 9: `repeated` for collection fields
 // ---------------------------------------------------------------------------
 
 describe("emitProto_CollectionField_RepeatedPrefix", () => {
   it("IReadOnlyList<string> field → repeated string tag", () => {
     const fields: readonly FieldInfo[] = [
-      makeCollectionField("items", "string", "string"),
+      makeCollectionField("items", "string", "string", 1),
     ];
     const errors: string[] = [];
     const result = emitProto(
@@ -351,8 +498,10 @@ describe("emitProto_CollectionField_RepeatedPrefix", () => {
       SIGN_SOURCE,
       "Req",
       fields,
+      undefined,
       "Resp",
       [],
+      undefined,
       [],
       (_, m) => errors.push(m),
     );
@@ -369,9 +518,9 @@ describe("emitProto_NestedMessage_EmittedAndFieldUsesModelName", () => {
   it("nested model → nested message emitted, field type is PascalCase model name", () => {
     const nestedModel: NestedModel = {
       name: "Item",
-      fields: [makeStringField("id")],
+      fields: [makeStringField("id", 1)],
     };
-    const nestedField = makeNestedField("item", nestedModel);
+    const nestedField = makeNestedField("item", nestedModel, 1);
 
     const errors: string[] = [];
     const result = emitProto(
@@ -384,9 +533,11 @@ describe("emitProto_NestedMessage_EmittedAndFieldUsesModelName", () => {
       SIGN_SOURCE,
       "Req",
       [nestedField],
+      undefined,
       "Resp",
       [],
-      [nestedModel],
+      undefined,
+      [nestedDescriptor(nestedModel)],
       (_, m) => errors.push(m),
     );
     expect(result).toBeDefined();
@@ -414,6 +565,7 @@ describe("emitProto_UnmappedScalar_LoudFailure", () => {
       repeated: false,
       optional: false,
       redact: false,
+      fieldNumber: 1, // pinned — passes the pin check; fails at scalar resolution
     };
     const onError = vi.fn();
     const result = emitProto(
@@ -426,8 +578,10 @@ describe("emitProto_UnmappedScalar_LoudFailure", () => {
       SIGN_SOURCE,
       "Req",
       [badField],
+      undefined,
       "Resp",
       [],
+      undefined,
       [],
       onError,
     );
@@ -454,6 +608,7 @@ describe("emitProto_UnmappedArrayElementScalar_LoudFailure", () => {
       repeated: true,
       optional: false,
       redact: false,
+      fieldNumber: 1,
     };
     const onError = vi.fn();
     const result = emitProto(
@@ -466,8 +621,10 @@ describe("emitProto_UnmappedArrayElementScalar_LoudFailure", () => {
       SIGN_SOURCE,
       "Req",
       [badField],
+      undefined,
       "Resp",
       [],
+      undefined,
       [],
       onError,
     );
@@ -503,7 +660,7 @@ describe("emitProto_Banner_SyntaxPackageNamespace", () => {
 
 describe("emitProto_DecimalScalar_MapsToProtoString", () => {
   it("decimal C# type → string in proto (lossless-wire mapping from registry proto column)", () => {
-    const fields: readonly FieldInfo[] = [makeDecimalField("amount")];
+    const fields: readonly FieldInfo[] = [makeDecimalField("amount", 1)];
     const errors: string[] = [];
     const result = emitProto(
       "test",
@@ -515,8 +672,10 @@ describe("emitProto_DecimalScalar_MapsToProtoString", () => {
       SIGN_SOURCE,
       "Req",
       fields,
+      undefined,
       "Resp",
       [],
+      undefined,
       [],
       (_, m) => errors.push(m),
     );
@@ -542,6 +701,7 @@ describe("emitProto_DateTimeOffset_MapsToProtoString", () => {
       repeated: false,
       optional: false,
       redact: false,
+      fieldNumber: 1,
     };
     const errors: string[] = [];
     const result = emitProto(
@@ -554,8 +714,10 @@ describe("emitProto_DateTimeOffset_MapsToProtoString", () => {
       SIGN_SOURCE,
       "Req",
       [field],
+      undefined,
       "Resp",
       [],
+      undefined,
       [],
       (_, m) => errors.push(m),
     );
@@ -575,6 +737,7 @@ describe("emitProto_DateTimeOffset_MapsToProtoString", () => {
       repeated: false,
       optional: true,
       redact: false,
+      fieldNumber: 1,
     };
     const errors: string[] = [];
     const result = emitProto(
@@ -587,8 +750,10 @@ describe("emitProto_DateTimeOffset_MapsToProtoString", () => {
       SIGN_SOURCE,
       "Req",
       [field],
+      undefined,
       "Resp",
       [],
+      undefined,
       [],
       (_, m) => errors.push(m),
     );
@@ -615,8 +780,10 @@ describe("emitProto_EmptyMessage_WellFormed", () => {
       SIGN_SOURCE,
       "EmptyIn",
       [],
+      undefined,
       "EmptyOut",
       [],
+      undefined,
       [],
       (_, m) => errors.push(m),
     );
@@ -650,8 +817,10 @@ describe("emitProto_UnknownStreamingMode_LoudFailure", () => {
       SIGN_SOURCE,
       "Req",
       [],
+      undefined,
       "Resp",
       [],
+      undefined,
       [],
       onError,
     );
@@ -689,6 +858,7 @@ describe("emitProto_UnmappedResponseField_EarlyReturn", () => {
       repeated: false,
       optional: false,
       redact: false,
+      fieldNumber: 1,
     };
     const onError = vi.fn();
     const result = emitProto(
@@ -701,8 +871,10 @@ describe("emitProto_UnmappedResponseField_EarlyReturn", () => {
       SIGN_SOURCE,
       "Req",
       [],
+      undefined,
       "Resp",
       [badRespField],
+      undefined,
       [],
       onError,
     );
@@ -728,12 +900,13 @@ describe("emitProto_NestedModel_UnmappedField_EarlyReturn", () => {
       repeated: false,
       optional: false,
       redact: false,
+      fieldNumber: 1,
     };
     const nestedModel: NestedModel = {
       name: "BadNested",
       fields: [badNestedField],
     };
-    const nestedField = makeNestedField("item", nestedModel);
+    const nestedField = makeNestedField("item", nestedModel, 1);
     const onError = vi.fn();
     const result = emitProto(
       "test",
@@ -745,9 +918,11 @@ describe("emitProto_NestedModel_UnmappedField_EarlyReturn", () => {
       SIGN_SOURCE,
       "Req",
       [nestedField],
+      undefined,
       "Resp",
       [],
-      [nestedModel],
+      undefined,
+      [nestedDescriptor(nestedModel)],
       onError,
     );
     expect(result).toBeUndefined();
@@ -764,7 +939,7 @@ describe("emitProto_ModelTypedCollection_RepeatedWithModelName", () => {
   it("IReadOnlyList<Item> field with nested set → repeated Item tag", () => {
     const nestedModel: NestedModel = {
       name: "Item",
-      fields: [makeStringField("id")],
+      fields: [makeStringField("id", 1)],
     };
     const collectionField: FieldInfo = {
       name: "items",
@@ -777,6 +952,7 @@ describe("emitProto_ModelTypedCollection_RepeatedWithModelName", () => {
       optional: false,
       redact: false,
       nested: nestedModel,
+      fieldNumber: 1,
     };
     const errors: string[] = [];
     const result = emitProto(
@@ -789,9 +965,11 @@ describe("emitProto_ModelTypedCollection_RepeatedWithModelName", () => {
       SIGN_SOURCE,
       "Req",
       [collectionField],
+      undefined,
       "Resp",
       [],
-      [nestedModel],
+      undefined,
+      [nestedDescriptor(nestedModel)],
       (_, m) => errors.push(m),
     );
     expect(result).toBeDefined();
@@ -815,7 +993,11 @@ describe("emitProto_EnumField_EmitsStringField", () => {
     ],
   };
 
-  function enumField(name: string, repeated = false): FieldInfo {
+  function enumField(
+    name: string,
+    repeated = false,
+    fieldNumber?: number,
+  ): FieldInfo {
     return {
       name,
       csName: name.charAt(0).toUpperCase() + name.slice(1),
@@ -827,6 +1009,7 @@ describe("emitProto_EnumField_EmitsStringField", () => {
       optional: false,
       redact: false,
       enumRef: KEY_KIND,
+      fieldNumber,
     };
   }
 
@@ -841,9 +1024,11 @@ describe("emitProto_EnumField_EmitsStringField", () => {
       SIGN_CS_NS,
       SIGN_SOURCE,
       "Req",
-      [makeStringField("kid"), enumField("keyKind")],
+      [makeStringField("kid", 1), enumField("keyKind", false, 2)],
+      undefined,
       "Resp",
-      [makeStringField("signature")],
+      [makeStringField("signature", 1)],
+      undefined,
       [],
       (_, m) => errors.push(m),
     );
@@ -866,9 +1051,11 @@ describe("emitProto_EnumField_EmitsStringField", () => {
       SIGN_CS_NS,
       SIGN_SOURCE,
       "Req",
-      [enumField("kinds", true)],
+      [enumField("kinds", true, 1)],
+      undefined,
       "Resp",
-      [makeStringField("signature")],
+      [makeStringField("signature", 1)],
+      undefined,
       [],
       (_, m) => errors.push(m),
     );
@@ -890,6 +1077,7 @@ describe("emitProto_EnumField_EmitsStringField", () => {
       optional: false,
       redact: false,
       enumRef: KEY_KIND,
+      fieldNumber: 1,
     };
     const result = emitProto(
       "op",
@@ -901,8 +1089,10 @@ describe("emitProto_EnumField_EmitsStringField", () => {
       SIGN_SOURCE,
       "Req",
       [field],
+      undefined,
       "Resp",
-      [makeStringField("signature")],
+      [makeStringField("signature", 1)],
+      undefined,
       [],
       (_, m) => errors.push(m),
     );
@@ -921,7 +1111,7 @@ describe("emitProto_NestedModel_WireShape", () => {
   it("a nullable nested-model field → a BARE message field (proto3 implicit presence, NO `optional`)", () => {
     const customer: NestedModel = {
       name: "Customer",
-      fields: [makeStringField("tier")],
+      fields: [makeStringField("tier", 1)],
     };
     const field: FieldInfo = {
       name: "customer",
@@ -934,6 +1124,7 @@ describe("emitProto_NestedModel_WireShape", () => {
       optional: true,
       redact: false,
       nested: customer,
+      fieldNumber: 1,
     };
     const errors: string[] = [];
     const result = emitProto(
@@ -946,9 +1137,11 @@ describe("emitProto_NestedModel_WireShape", () => {
       SIGN_SOURCE,
       "Req",
       [],
+      undefined,
       "Out",
       [field],
-      [customer],
+      undefined,
+      [nestedDescriptor(customer)],
       (_, m) => errors.push(m),
     );
     expect(errors).toHaveLength(0);
@@ -961,7 +1154,7 @@ describe("emitProto_NestedModel_WireShape", () => {
   it("array-of-model field → `repeated <Message>` + the element message", () => {
     const line: NestedModel = {
       name: "Line",
-      fields: [makeStringField("status")],
+      fields: [makeStringField("status", 1)],
     };
     const field: FieldInfo = {
       name: "lines",
@@ -974,6 +1167,7 @@ describe("emitProto_NestedModel_WireShape", () => {
       optional: false,
       redact: false,
       nested: line,
+      fieldNumber: 1,
     };
     const errors: string[] = [];
     const result = emitProto(
@@ -986,9 +1180,11 @@ describe("emitProto_NestedModel_WireShape", () => {
       SIGN_SOURCE,
       "Req",
       [],
+      undefined,
       "Out",
       [field],
-      [line],
+      undefined,
+      [nestedDescriptor(line)],
       (_, m) => errors.push(m),
     );
     expect(errors).toHaveLength(0);
@@ -1002,12 +1198,12 @@ describe("emitProto_NestedModel_WireShape", () => {
     // a nested message resolves to that model's name (incl. `repeated` for arrays).
     const part: NestedModel = {
       name: "Part",
-      fields: [makeStringField("code")],
+      fields: [makeStringField("code", 1)],
     };
     const widget: NestedModel = {
       name: "Widget",
       fields: [
-        makeStringField("name"),
+        makeStringField("name", 1),
         {
           name: "parts",
           csName: "Parts",
@@ -1019,6 +1215,7 @@ describe("emitProto_NestedModel_WireShape", () => {
           optional: false,
           redact: false,
           nested: part,
+          fieldNumber: 2,
         },
       ],
     };
@@ -1033,6 +1230,7 @@ describe("emitProto_NestedModel_WireShape", () => {
       optional: true,
       redact: false,
       nested: widget,
+      fieldNumber: 2,
     };
     const errors: string[] = [];
     const result = emitProto(
@@ -1045,9 +1243,11 @@ describe("emitProto_NestedModel_WireShape", () => {
       SIGN_SOURCE,
       "Req",
       [],
+      undefined,
       "Out",
-      [makeStringField("id"), outputField],
-      [widget, part],
+      [makeStringField("id", 1), outputField],
+      undefined,
+      [nestedDescriptor(widget), nestedDescriptor(part)],
       (_, m) => errors.push(m),
     );
     expect(errors).toHaveLength(0);
@@ -1062,8 +1262,8 @@ describe("emitProto_NestedModel_WireShape", () => {
   });
 
   it("two DISTINCT nested models in one output → both messages emitted", () => {
-    const a: NestedModel = { name: "Alpha", fields: [makeStringField("x")] };
-    const b: NestedModel = { name: "Beta", fields: [makeStringField("y")] };
+    const a: NestedModel = { name: "Alpha", fields: [makeStringField("x", 1)] };
+    const b: NestedModel = { name: "Beta", fields: [makeStringField("y", 1)] };
     const errors: string[] = [];
     const result = emitProto(
       "op",
@@ -1075,9 +1275,11 @@ describe("emitProto_NestedModel_WireShape", () => {
       SIGN_SOURCE,
       "Req",
       [],
+      undefined,
       "Out",
-      [makeNestedField("alpha", a), makeNestedField("beta", b)],
-      [a, b],
+      [makeNestedField("alpha", a, 1), makeNestedField("beta", b, 2)],
+      undefined,
+      [nestedDescriptor(a), nestedDescriptor(b)],
       (_, m) => errors.push(m),
     );
     expect(errors).toHaveLength(0);
@@ -1085,5 +1287,197 @@ describe("emitProto_NestedModel_WireShape", () => {
     expect(result!.content).toContain("message Beta {");
     expect(result!.content).toContain("  Alpha alpha = 1;");
     expect(result!.content).toContain("  Beta beta = 2;");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Reserved lines — number emission, range collapse, name emission
+// ---------------------------------------------------------------------------
+
+describe("emitProto_Reserved_NumbersAndNames", () => {
+  it("reserved single number → `reserved N;` inside the message", () => {
+    const errors: string[] = [];
+    const result = emitProto(
+      "op",
+      "Svc",
+      "Do",
+      "unary",
+      SIGN_PKG,
+      SIGN_CS_NS,
+      SIGN_SOURCE,
+      "Req",
+      [makeStringField("kid", 1)],
+      { numbers: [3], names: [] },
+      "Resp",
+      [],
+      undefined,
+      [],
+      (_, m) => errors.push(m),
+    );
+    expect(errors).toHaveLength(0);
+    expect(result!.content).toContain("reserved 3;");
+  });
+
+  it("reserved consecutive numbers → range-collapsed `reserved N to M;`", () => {
+    const errors: string[] = [];
+    const result = emitProto(
+      "op",
+      "Svc",
+      "Do",
+      "unary",
+      SIGN_PKG,
+      SIGN_CS_NS,
+      SIGN_SOURCE,
+      "Req",
+      [makeStringField("kid", 1)],
+      { numbers: [3, 4, 5], names: [] },
+      "Resp",
+      [],
+      undefined,
+      [],
+      (_, m) => errors.push(m),
+    );
+    expect(errors).toHaveLength(0);
+    expect(result!.content).toContain("reserved 3 to 5;");
+  });
+
+  it("reserved mixed numbers → combined range+singles on one line", () => {
+    const errors: string[] = [];
+    const result = emitProto(
+      "op",
+      "Svc",
+      "Do",
+      "unary",
+      SIGN_PKG,
+      SIGN_CS_NS,
+      SIGN_SOURCE,
+      "Req",
+      [makeStringField("kid", 1)],
+      { numbers: [2, 3, 7], names: [] },
+      "Resp",
+      [],
+      undefined,
+      [],
+      (_, m) => errors.push(m),
+    );
+    expect(errors).toHaveLength(0);
+    // 2+3 → range; 7 → single.
+    expect(result!.content).toContain("reserved 2 to 3, 7;");
+  });
+
+  it('reserved names → `reserved "name";` lines', () => {
+    const errors: string[] = [];
+    const result = emitProto(
+      "op",
+      "Svc",
+      "Do",
+      "unary",
+      SIGN_PKG,
+      SIGN_CS_NS,
+      SIGN_SOURCE,
+      "Req",
+      [makeStringField("kid", 1)],
+      { numbers: [], names: ["old_field", "removed_field"] },
+      "Resp",
+      [],
+      undefined,
+      [],
+      (_, m) => errors.push(m),
+    );
+    expect(errors).toHaveLength(0);
+    expect(result!.content).toContain('reserved "old_field";');
+    expect(result!.content).toContain('reserved "removed_field";');
+  });
+
+  it("reserved numbers are deduplicated before emission", () => {
+    const errors: string[] = [];
+    const result = emitProto(
+      "op",
+      "Svc",
+      "Do",
+      "unary",
+      SIGN_PKG,
+      SIGN_CS_NS,
+      SIGN_SOURCE,
+      "Req",
+      [makeStringField("kid", 1)],
+      { numbers: [3, 3, 5, 5], names: [] },
+      "Resp",
+      [],
+      undefined,
+      [],
+      (_, m) => errors.push(m),
+    );
+    expect(errors).toHaveLength(0);
+    // Deduplicated: 3, 5.
+    expect(result!.content).toContain("reserved 3, 5;");
+    // Only one occurrence.
+    const count = (result!.content.match(/reserved 3, 5;/g) ?? []).length;
+    expect(count).toBe(1);
+  });
+
+  it("response reserved payload is emitted in the data message block", () => {
+    const errors: string[] = [];
+    const result = emitProto(
+      "op",
+      "Svc",
+      "Do",
+      "unary",
+      SIGN_PKG,
+      SIGN_CS_NS,
+      SIGN_SOURCE,
+      "Req",
+      [],
+      undefined,
+      "Out",
+      [makeStringField("signature", 1)],
+      { numbers: [2], names: ["old_sig"] },
+      [],
+      (_, m) => errors.push(m),
+    );
+    expect(errors).toHaveLength(0);
+    // The reserved lines appear inside the `Out` data message (not in `DoResponse`).
+    const outBlock = result!.content.slice(
+      result!.content.indexOf("message Out {"),
+    );
+    expect(outBlock).toContain("reserved 2;");
+    expect(outBlock).toContain('reserved "old_sig";');
+  });
+
+  it("nested message reserved payload is emitted inside that nested message block", () => {
+    const nestedModel: NestedModel = {
+      name: "Item",
+      fields: [makeStringField("id", 1)],
+    };
+    const errors: string[] = [];
+    const result = emitProto(
+      "op",
+      "Svc",
+      "Do",
+      "unary",
+      SIGN_PKG,
+      SIGN_CS_NS,
+      SIGN_SOURCE,
+      "Req",
+      [],
+      undefined,
+      "Out",
+      [makeNestedField("item", nestedModel, 1)],
+      undefined,
+      [
+        {
+          model: nestedModel,
+          reserved: { numbers: [4, 5, 6], names: ["removed"] },
+        },
+      ],
+      (_, m) => errors.push(m),
+    );
+    expect(errors).toHaveLength(0);
+    // Reserved lines inside the nested Item message.
+    const itemBlock = result!.content.slice(
+      result!.content.indexOf("message Item {"),
+    );
+    expect(itemBlock).toContain("reserved 4 to 6;");
+    expect(itemBlock).toContain('reserved "removed";');
   });
 });

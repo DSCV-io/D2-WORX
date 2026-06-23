@@ -119,3 +119,29 @@ extern dec d2Query(target: Operation);
 
 /** Marks an operation as in-app-only — no cross-boundary surface is generated; structurally uncallable from outside. */
 extern dec d2Internal(target: Operation);
+
+/**
+ * Pins a model property to an explicit proto3 field number. The number must be
+ * a positive integer in the range [1, 536870911] and must NOT fall in the
+ * protobuf implementation-reserved range 19000–19999.
+ *
+ * Author-pinned numbers guarantee wire stability: the proto emitter uses this
+ * number verbatim instead of assigning positionally, so reordering, inserting,
+ * or removing properties does not silently renumber surviving fields.
+ *
+ * The proto emitter requires every field on a @d2GrpcMethod-bound model to carry
+ * @d2Field; an unpinned field is a loud build failure for proto-bound models.
+ */
+extern dec d2Field(target: ModelProperty, number: valueof int32);
+
+/**
+ * Declares author-owned reserved field numbers and names on a model. Reserved
+ * entries document proto3 slots that were previously used and must never be
+ * reused. The `names` parameter is a comma-separated list of formerly-used field
+ * names; the variadic `...numbers` accepts the removed field numbers.
+ *
+ * The proto emitter emits `reserved N, M to P;` and `reserved "old_name";`
+ * lines at the top of the affected message block (ascending, deduped,
+ * range-collapsed).
+ */
+extern dec d2Reserved(target: Model, names: valueof string, ...numbers: valueof int32[]);
