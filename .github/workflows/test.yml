@@ -90,7 +90,22 @@ jobs:
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: "10.0.x"
-      - run: dotnet test server/shared/dotnet/tests/D2.Shared.Tests.csproj --configuration Release
+      # TEMP DIAGNOSTIC (revert): loop the suite to surface a rare residual flake and
+      # capture its TestResults log on the first failure. Removed once identified + fixed.
+      - name: Surface rare flake (loop) + capture (temp diagnostic)
+        run: |
+          for i in $(seq 1 6); do
+            echo "===== suite run $i ====="
+            dotnet test server/shared/dotnet/tests/D2.Shared.Tests.csproj --configuration Release \
+              || { echo "FLAKE FIRED on run $i"; exit 1; }
+          done
+      - name: Upload TestResults on failure (temp diagnostic)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: shared-tests-results
+          path: server/shared/dotnet/tests/bin/Release/net10.0/TestResults/
+          retention-days: 1
 
   # unit-tests-web — activates when `server/web/` SvelteKit workspace resolves
   # unit-tests-web:
