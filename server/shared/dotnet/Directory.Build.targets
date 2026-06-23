@@ -49,12 +49,20 @@ Copyright (c) DCSV. All rights reserved.
   <Target Name="EnsureLoggerMessageSplitterBuilt"
           Condition="Exists('$(_LoggerMessageGcsPath)')">
     <!--
-      Always delegate to MSBuild on the splitter csproj — incremental MSBuild
-      makes this a fast no-op when the DLL is already up-to-date, but ensures
-      a stale DLL gets rebuilt if the splitter's source code changes. The
-      <MSBuild> task caches by (Project, Targets, Properties) within a single
-      session so the 4 consumer csprojs share a single splitter build.
+      Restore THEN build the splitter csproj, as two separate <MSBuild> calls.
+      Restore must be its own invocation — combining it with other targets in
+      one call is unsupported (the build targets evaluate against the
+      pre-restore import state). Restoring here makes a clean checkout
+      self-sufficient: CI and fresh clones have no prior project.assets.json for
+      the tool, and the solution restore does not cover it (the tool lives in
+      tools/, outside server/D2.slnx). Both invocations are incremental fast
+      no-ops once current, and the <MSBuild> task caches by
+      (Project, Targets, Properties) within a session so the consumer csprojs
+      share one restore + one build of the tool.
     -->
+    <MSBuild Projects="$(_LoggerMessageSplitterCsproj)"
+             Targets="Restore"
+             Properties="Configuration=Debug" />
     <MSBuild Projects="$(_LoggerMessageSplitterCsproj)"
              Targets="Build"
              Properties="Configuration=Debug" />
