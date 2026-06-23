@@ -225,8 +225,8 @@ jobs:
         with:
           node-version: "24"
       - uses: pnpm/action-setup@v4
-      - name: pnpm install (typespec-emitters subtree)
-        run: pnpm install --filter "@d2/typespec-emitters..."
+      - name: pnpm install (emitter subtree + ts-codegen build tool)
+        run: pnpm install --filter "@d2/typespec-emitters..." --filter "ts-codegen..."
       - name: build (emitter + decorators dist/)
         run: pnpm --filter "@d2/typespec-emitters..." build
       - name: TypeSpec emitter tests (byte-parity gate)
