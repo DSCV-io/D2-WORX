@@ -91,7 +91,7 @@ export interface GrpcClientOp {
   readonly grpcService: string;
   /** gRPC method name from @d2GrpcMethod (e.g. "Sign"). */
   readonly grpcMethod: string;
-  /** Proto C# namespace (e.g. "D2.Services.Protos.KeyCustodian.V1"). */
+  /** Proto C# namespace (e.g. "D2.Services.Protos.KeyCustodian.V2Alpha"). */
   readonly protoCsharpNs: string;
   /** DTO C# namespace (where <Op>Input / <Op>Output live). */
   readonly dtoCsharpNs: string;

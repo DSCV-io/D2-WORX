@@ -14,7 +14,7 @@ using D2.Edge.KeyCustodian.Domain.Rules;
 using D2.Edge.Tests.TypeSpecGrpc.Generated;
 using D2.Edge.Tests.TypeSpecRoute.Generated.Facade;
 using D2.Edge.Tests.Unit.KeyCustodian.TypeSpecRoute.Fixtures;
-using D2.Services.Protos.KeyCustodian.V1;
+using D2.Services.Protos.KeyCustodian.V2Alpha;
 using D2.Shared.AspNetCore.Mtls;
 using D2.Shared.Auth.Outbound;
 using D2.Shared.Auth.Outbound.Grpc;

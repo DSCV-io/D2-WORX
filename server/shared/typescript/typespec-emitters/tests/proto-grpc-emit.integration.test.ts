@@ -267,8 +267,8 @@ describe("protoGrpcEmitIntegration_RealModule_InProcessGrpc_UsesApiFacade", () =
           "csharp-clients-namespace": "D2.Edge.KeyCustodian.Clients",
           "csharp-app-namespace-base":
             "D2.Edge.KeyCustodian.App.Application.Handlers",
-          "proto-package": "d2.keycustodian.v1",
-          "proto-csharp-namespace": "D2.Services.Protos.KeyCustodian.V1",
+          "proto-package": "d2.keycustodian.v2alpha",
+          "proto-csharp-namespace": "D2.Services.Protos.KeyCustodian.V2Alpha",
           "grpc-service-namespace": "D2.Edge.KeyCustodian.Api.Generated",
         },
       },
@@ -347,8 +347,8 @@ describe("protoGrpcEmitIntegration_RealModule_ParameterlessAndVoidGrpcOps", () =
           "csharp-clients-namespace": "D2.Edge.KeyCustodian.Clients",
           "csharp-app-namespace-base":
             "D2.Edge.KeyCustodian.App.Application.Handlers",
-          "proto-package": "d2.keycustodian.v1",
-          "proto-csharp-namespace": "D2.Services.Protos.KeyCustodian.V1",
+          "proto-package": "d2.keycustodian.v2alpha",
+          "proto-csharp-namespace": "D2.Services.Protos.KeyCustodian.V2Alpha",
           "grpc-service-namespace": "D2.Edge.KeyCustodian.Api.Generated",
         },
       },

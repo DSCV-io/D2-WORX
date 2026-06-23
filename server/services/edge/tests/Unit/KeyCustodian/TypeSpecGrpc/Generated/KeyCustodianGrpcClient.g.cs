@@ -25,7 +25,7 @@ using Microsoft.Extensions.DependencyInjection;
 /// pipeline returns.
 /// </summary>
 public sealed class KeyCustodianGrpcClient(
-    global::D2.Services.Protos.KeyCustodian.V1.KeyCustodianSigner.KeyCustodianSignerClient keyCustodianSignerStub,
+    global::D2.Services.Protos.KeyCustodian.V2Alpha.KeyCustodianSigner.KeyCustodianSignerClient keyCustodianSignerStub,
     [FromKeyedServices(SignClientKeys.PIPELINE)] ResilientPipeline<string, SignOutput?> signPipeline
 ) : IKeyCustodianGrpcClient
 {

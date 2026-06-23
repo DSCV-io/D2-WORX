@@ -10,7 +10,7 @@ using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 using D2.Edge.Tests.TypeSpecGrpc.Generated;
-using D2.Services.Protos.KeyCustodian.V1;
+using D2.Services.Protos.KeyCustodian.V2Alpha;
 using D2.Shared.Auth.Abstractions;
 using D2.Shared.Auth.Outbound;
 using D2.Shared.Resilience.Pipeline;
@@ -26,7 +26,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using DtoSignInput = D2.Edge.Tests.TypeSpecDto.Generated.SignInput;
 using DtoSignOutput = D2.Edge.Tests.TypeSpecDto.Generated.SignOutput;
-using ProtoSignOutput = D2.Services.Protos.KeyCustodian.V1.SignOutput;
+using ProtoSignOutput = D2.Services.Protos.KeyCustodian.V2Alpha.SignOutput;
 
 /// <summary>
 /// In-memory harness tests for the generated <see cref="KeyCustodianGrpcClient"/> — the

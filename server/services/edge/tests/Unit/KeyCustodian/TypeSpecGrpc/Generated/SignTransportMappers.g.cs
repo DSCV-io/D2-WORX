@@ -9,9 +9,9 @@
 
 namespace D2.Edge.Tests.TypeSpecGrpc.Generated;
 
-using SignRequest = global::D2.Services.Protos.KeyCustodian.V1.SignRequest;
-using SignResponse = global::D2.Services.Protos.KeyCustodian.V1.SignResponse;
-using ProtoSignOutput = global::D2.Services.Protos.KeyCustodian.V1.SignOutput;
+using SignRequest = global::D2.Services.Protos.KeyCustodian.V2Alpha.SignRequest;
+using SignResponse = global::D2.Services.Protos.KeyCustodian.V2Alpha.SignResponse;
+using ProtoSignOutput = global::D2.Services.Protos.KeyCustodian.V2Alpha.SignOutput;
 using SignInput = global::D2.Edge.Tests.TypeSpecDto.Generated.SignInput;
 using SignOutput = global::D2.Edge.Tests.TypeSpecDto.Generated.SignOutput;
 using D2.Shared.Result;

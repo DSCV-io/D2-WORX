@@ -42,13 +42,16 @@ options:
     # I<Op>Handler for getJwks lands at D2.Edge.KeyCustodian.App.Application.Handlers.Queries.GetJwks.
     csharp-app-namespace-base: "D2.Edge.KeyCustodian.App.Application.Handlers"
 
-    # proto3 package declaration (e.g. "d2.keycustodian.v1").
+    # proto3 package declaration following the stability-channel scheme:
+    # d2.<svc>.v<N>(alpha|beta)? — "v2alpha" is the pre-stable channel for
+    # KeyCustodian. Graduates to "v2beta" then "v2" when stable.
     # Fed to the proto emitter; the domain segment varies per service.
-    proto-package: "d2.keycustodian.v1"
+    proto-package: "d2.keycustodian.v2alpha"
 
     # C# namespace declared in the emitted proto's `option csharp_namespace`.
     # Must match the Grpc.Tools output namespace for generated message + service types.
-    proto-csharp-namespace: "D2.Services.Protos.KeyCustodian.V1"
+    # Mirrors the channel suffix from proto-package (V2Alpha = v2alpha).
+    proto-csharp-namespace: "D2.Services.Protos.KeyCustodian.V2Alpha"
 
     # C# namespace for the generated gRPC service-impl class + transport mapper.
     # Distinct from proto-csharp-namespace so proto types and service impl do not collide.

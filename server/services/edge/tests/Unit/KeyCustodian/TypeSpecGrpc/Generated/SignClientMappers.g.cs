@@ -10,7 +10,7 @@
 namespace D2.Edge.Tests.TypeSpecGrpc.Generated;
 
 using D2.Edge.Tests.TypeSpecDto.Generated;
-using D2.Services.Protos.KeyCustodian.V1;
+using D2.Services.Protos.KeyCustodian.V2Alpha;
 using Google.Protobuf;
 
 /// <summary>Generated client-side mappers: DTO ↔ proto for the <c>Sign</c> operation (inverse of server transport mappers).</summary>
@@ -18,9 +18,9 @@ internal static class SignClientMappers
 {
     extension(global::D2.Edge.Tests.TypeSpecDto.Generated.SignInput input)
     {
-        internal global::D2.Services.Protos.KeyCustodian.V1.SignRequest ToSignRequest()
+        internal global::D2.Services.Protos.KeyCustodian.V2Alpha.SignRequest ToSignRequest()
         {
-            return new global::D2.Services.Protos.KeyCustodian.V1.SignRequest
+            return new global::D2.Services.Protos.KeyCustodian.V2Alpha.SignRequest
             {
                 Kid = input.Kid,
                 Payload = global::Google.Protobuf.ByteString.CopyFrom(input.Payload),
@@ -28,7 +28,7 @@ internal static class SignClientMappers
         }
     }
 
-    extension(global::D2.Services.Protos.KeyCustodian.V1.SignOutput data)
+    extension(global::D2.Services.Protos.KeyCustodian.V2Alpha.SignOutput data)
     {
         internal global::D2.Edge.Tests.TypeSpecDto.Generated.SignOutput ToSignOutput()
         {

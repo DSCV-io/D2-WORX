@@ -13,7 +13,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using D2.Edge.Tests.TypeSpecGrpc.Generated;
 using D2.Edge.Tests.TypeSpecGrpcPredicate.Generated;
-using D2.Services.Protos.KeyCustodian.V1;
+using D2.Services.Protos.KeyCustodian.V2Alpha;
 using D2.Services.Protos.PredicateFixtures.V1;
 using D2.Shared.Resilience.CircuitBreaker;
 using D2.Shared.Resilience.Pipeline;
@@ -29,7 +29,7 @@ using DtoPlaceOrderOutput = D2.Edge.Tests.TypeSpecGrpcPredicate.Generated.PlaceO
 using DtoSignInput = D2.Edge.Tests.TypeSpecDto.Generated.SignInput;
 using DtoSignOutput = D2.Edge.Tests.TypeSpecDto.Generated.SignOutput;
 using ProtoPlaceOrderOutput = D2.Services.Protos.PredicateFixtures.V1.PlaceOrderOutput;
-using ProtoSignOutput = D2.Services.Protos.KeyCustodian.V1.SignOutput;
+using ProtoSignOutput = D2.Services.Protos.KeyCustodian.V2Alpha.SignOutput;
 
 /// <summary>
 /// Over-the-wire resilience and envelope integration tests. Re-proves the resilience /

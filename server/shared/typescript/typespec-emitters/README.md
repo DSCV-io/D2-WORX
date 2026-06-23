@@ -119,7 +119,7 @@ All supported `tspconfig.yaml` options are listed below.
 | `csharp-namespace` | `string` | Required | `D2.Generated` | C# namespace for fixture-mode DTOs and the gRPC service-impl class when `csharp-app-namespace-base` is absent. Kept for backward compatibility; in real-module mode this namespace is used only for internal fixture ops. |
 | `csharp-clients-namespace` | `string` | Optional (real-module mode) | — | C# namespace for the Clients project: exposed-op DTOs (`@d2InProcess`, `@d2GrpcMethod`, `@d2ServerPush`, `@route`) and the per-module façade interface land here. Omit when emitting fixture ops only. |
 | `csharp-app-namespace-base` | `string` | Optional (real-module mode) | — | Base C# namespace for app-layer handler interfaces. Per-op CQRS path is `<base>.<Category>.<PascalOp>` (e.g. `D2.Edge.KeyCustodian.App.Application.Handlers.Queries.GetJwks`). When absent, the emitter falls back to fixture mode (handler interfaces land under `csharp-namespace`). |
-| `proto-package` | `string` | Optional | `d2.generated.v1` | proto3 `package` declaration written into the emitted `.proto` file. Use a service-specific value in real-module mode (e.g. `d2.keycustodian.v1`). |
+| `proto-package` | `string` | Optional | `d2.generated.v1` | proto3 `package` declaration written into the emitted `.proto` file. Use a service-specific value in real-module mode (e.g. `d2.keycustodian.v2alpha`). |
 | `proto-csharp-namespace` | `string` | Optional | `D2.Generated.Protos.V1` | C# namespace declared via `option csharp_namespace` in the emitted `.proto` file. Must match the namespace Grpc.Tools generates for message + service types. |
 | `grpc-service-namespace` | `string` | Optional | `D2.Generated.Grpc` | C# namespace for the generated gRPC service-impl class and its transport mapper. Distinct from `proto-csharp-namespace` so generated proto types and the service impl do not collide. |
 
@@ -282,8 +282,8 @@ import { emitProto } from "@d2/typespec-emitters";
 const protoFile = emitProto(
   "sign",
   "KeyCustodianSigner",
-  "d2.keycustodian.v1",
-  "D2.Services.Protos.KeyCustodian.V1",
+  "d2.keycustodian.v2alpha",
+  "D2.Services.Protos.KeyCustodian.V2Alpha",
   "contracts/typespec/key-custodian.tsp",
   inputWalk,
   outputWalk,
@@ -395,7 +395,7 @@ const [serviceFile, mappersFile] = emitGrpcService(
   "sign",
   "KeyCustodianSigner",
   "Sign",
-  "D2.Services.Protos.KeyCustodian.V1",
+  "D2.Services.Protos.KeyCustodian.V2Alpha",
   "D2.Edge.Tests.TypeSpecGrpc.Generated",
   "D2.Edge.Tests.TypeSpecDto.Generated",
   "contracts/typespec/fixtures/sign-shaped.tsp",

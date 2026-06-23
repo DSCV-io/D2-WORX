@@ -20,7 +20,7 @@ import {
   type UntypedServiceImplementation,
 } from "@grpc/grpc-js";
 
-export const protobufPackage = "d2.keycustodian.v1";
+export const protobufPackage = "d2.keycustodian.v2alpha";
 
 /**
  * -----------------------------------------------------------------------
@@ -263,7 +263,7 @@ export const SignOutput: MessageFns<SignOutput> = {
 export type KeyCustodianSignerService = typeof KeyCustodianSignerService;
 export const KeyCustodianSignerService = {
   sign: {
-    path: "/d2.keycustodian.v1.KeyCustodianSigner/Sign",
+    path: "/d2.keycustodian.v2alpha.KeyCustodianSigner/Sign",
     requestStream: false,
     responseStream: false,
     requestSerialize: (value: SignRequest): Buffer => Buffer.from(SignRequest.encode(value).finish()),
@@ -294,7 +294,7 @@ export interface KeyCustodianSignerClient extends Client {
 
 export const KeyCustodianSignerClient = makeGenericClientConstructor(
   KeyCustodianSignerService,
-  "d2.keycustodian.v1.KeyCustodianSigner",
+  "d2.keycustodian.v2alpha.KeyCustodianSigner",
 ) as unknown as {
   new (address: string, credentials: ChannelCredentials, options?: Partial<ClientOptions>): KeyCustodianSignerClient;
   service: typeof KeyCustodianSignerService;

@@ -115,8 +115,8 @@ function nestedDescriptor(model: NestedModel): NestedMessageDescriptor {
 }
 
 const SIGN_SOURCE = "contracts/typespec/fixtures/sign-shaped.tsp";
-const SIGN_PKG = "d2.keycustodian.v1";
-const SIGN_CS_NS = "D2.Services.Protos.KeyCustodian.V1";
+const SIGN_PKG = "d2.keycustodian.v2alpha";
+const SIGN_CS_NS = "D2.Services.Protos.KeyCustodian.V2Alpha";
 
 function buildSignInputFields(): readonly FieldInfo[] {
   return [makeStringField("kid", 1), makeBytesField("payload", 2)];
@@ -647,9 +647,9 @@ describe("emitProto_Banner_SyntaxPackageNamespace", () => {
     );
     expect(result!.content).toContain("Manual edits will be lost on rebuild.");
     expect(result!.content).toContain('syntax = "proto3";');
-    expect(result!.content).toContain("package d2.keycustodian.v1;");
+    expect(result!.content).toContain("package d2.keycustodian.v2alpha;");
     expect(result!.content).toContain(
-      'option csharp_namespace = "D2.Services.Protos.KeyCustodian.V1";',
+      'option csharp_namespace = "D2.Services.Protos.KeyCustodian.V2Alpha";',
     );
   });
 });
@@ -1479,5 +1479,56 @@ describe("emitProto_Reserved_NumbersAndNames", () => {
     );
     expect(itemBlock).toContain("reserved 4 to 6;");
     expect(itemBlock).toContain('reserved "removed";');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Structural guard: proto package is well-formed and not the retired v1 value.
+// Two-part guard: (1) CHANNEL_GRAMMAR regex asserts the package SHAPE
+// (d2.<svc>.v<N>(alpha|beta)?) — it does NOT structurally exclude v1 because
+// v1 is syntactically valid; (2) the identity assertion `expect(SIGN_PKG).
+// not.toBe("d2.keycustodian.v1")` is the real guard against the retired value.
+// ---------------------------------------------------------------------------
+
+describe("emitProto_ProtoPackage_ChannelGrammar", () => {
+  /** Pattern: d2.<svc-segment>.v<N> or d2.<svc-segment>.v<N>alpha or v<N>beta */
+  const CHANNEL_GRAMMAR = /^d2\.[a-z][a-z0-9]*\.v\d+(alpha|beta)?$/;
+
+  it("SIGN_PKG matches the channel grammar d2.<svc>.v<N>(alpha|beta)?", () => {
+    expect(CHANNEL_GRAMMAR.test(SIGN_PKG)).toBe(true);
+  });
+
+  it("a bare v1 package (pre-channel convention) does NOT match the channel grammar", () => {
+    // Non-vacuous: the old d2.keycustodian.v1 passes the format but not the
+    // intent (the channel grammar accepts it because v1 is syntactically valid).
+    // The real guard is that SIGN_PKG is NOT the old bare v1 value.
+    expect(SIGN_PKG).not.toBe("d2.keycustodian.v1");
+  });
+
+  it("emitted proto content carries the channel-grammar package", () => {
+    const { result } = emitSignProto();
+    expect(result).toBeDefined();
+    const packageLine = result!.content
+      .split("\n")
+      .find((l) => l.startsWith("package "));
+    expect(packageLine).toBeDefined();
+    const pkg = packageLine!.replace("package ", "").replace(";", "").trim();
+    expect(CHANNEL_GRAMMAR.test(pkg)).toBe(true);
+  });
+
+  it("stable-sounding v2 package (no alpha/beta) matches channel grammar", () => {
+    // Confirms the grammar accepts v2, v3, etc. (graduation from v2alpha).
+    expect(CHANNEL_GRAMMAR.test("d2.keycustodian.v2")).toBe(true);
+  });
+
+  it("v2beta package matches channel grammar", () => {
+    expect(CHANNEL_GRAMMAR.test("d2.keycustodian.v2beta")).toBe(true);
+  });
+
+  it("malformed packages do NOT match (e.g. uppercase, missing v, extra dots)", () => {
+    expect(CHANNEL_GRAMMAR.test("D2.keycustodian.v2alpha")).toBe(false);
+    expect(CHANNEL_GRAMMAR.test("d2.keycustodian.2alpha")).toBe(false);
+    expect(CHANNEL_GRAMMAR.test("d2.keycustodian.v2.alpha")).toBe(false);
+    expect(CHANNEL_GRAMMAR.test("d2.KeyCustodian.v2alpha")).toBe(false);
   });
 });

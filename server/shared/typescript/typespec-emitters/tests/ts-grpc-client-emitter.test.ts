@@ -448,6 +448,82 @@ describe("tsGrpcClient_AMB1_RealBufTsProtoPipeline", () => {
 });
 
 // ===========================================================================
+// AMB-2 — the real buf/ts-proto pipeline proof for sign.proto (KeyCustodian)
+// ===========================================================================
+
+/** Run the real buf/ts-proto toolchain on the sign fixture proto into a temp dir. */
+function runRealBufTsProtoSign(): string {
+  const out = mkdtempSync(join(tmpdir(), "tsp-buf-sign-"));
+  const protoStage = join(out, "protos");
+  mkdirSync(join(protoStage, "common", "v1"), { recursive: true });
+  mkdirSync(join(out, "gen"), { recursive: true });
+  // The d2_result import from the real contracts/protos.
+  const repoRoot = _REPO;
+  cpSync(
+    join(repoRoot, "contracts", "protos", "common", "v1", "d2_result.proto"),
+    join(protoStage, "common", "v1", "d2_result.proto"),
+  );
+  cpSync(
+    join(HERE, "grpc-fixtures", "sign.proto"),
+    join(protoStage, "sign.proto"),
+  );
+  const genConfig = join(out, "buf.gen.yaml");
+  writeFileSync(
+    genConfig,
+    [
+      "version: v2",
+      "plugins:",
+      '  - local: ["pnpm", "exec", "protoc-gen-ts_proto"]',
+      `    out: ${join(out, "gen").replace(/\\/g, "/")}`,
+      "    opt:",
+      "      - esModuleInterop=true",
+      "      - outputServices=grpc-js",
+      "      - useExactTypes=false",
+      "      - oneof=unions",
+      "      - useOptionals=messages",
+      "      - Mcommon/v1/d2_result.proto=@d2/protos",
+    ].join("\n"),
+  );
+  // Run buf from the @d2/protos package dir so `pnpm exec protoc-gen-ts_proto` resolves.
+  const protosDir = join(repoRoot, "server", "shared", "typescript", "protos");
+  execFileSync(
+    "pnpm",
+    ["exec", "buf", "generate", protoStage, "--template", genConfig],
+    { cwd: protosDir, stdio: "pipe", shell: process.platform === "win32" },
+  );
+  return readFileSync(join(out, "gen", "sign.ts"), "utf8").replace(
+    /\r\n/g,
+    "\n",
+  );
+}
+
+describe("tsGrpcClient_AMB2_RealBufTsProtoSignPipeline", () => {
+  it("the real buf/ts-proto toolchain runs on sign.proto and reproduces the committed sign.ts byte-identically", () => {
+    const regenerated = runRealBufTsProtoSign();
+    const committed = readFileSync(
+      join(HERE, "grpc-fixtures", "generated", "sign.ts"),
+      "utf8",
+    ).replace(/\r\n/g, "\n");
+    expect(regenerated).toBe(committed);
+  }, 60_000);
+
+  it("the committed sign.ts exports the KeyCustodianSigner grpc-js client stub + v2alpha package", () => {
+    const protoTs = readFileSync(
+      join(HERE, "grpc-fixtures", "generated", "sign.ts"),
+      "utf8",
+    );
+    // The real ts-proto output for sign.proto — grpc-js callback-style client +
+    // D2ResultProto-enveloped response. Package must be v2alpha (not the retired v1).
+    expect(protoTs).toContain("export const KeyCustodianSignerClient");
+    expect(protoTs).toContain("export interface SignResponse");
+    expect(protoTs).toContain('import { D2ResultProto } from "@d2/protos";');
+    expect(protoTs).toContain(
+      'export const protobufPackage = "d2.keycustodian.v2alpha"',
+    );
+  });
+});
+
+// ===========================================================================
 // emitTsGrpcClient — pure-function structural coverage
 // ===========================================================================
 

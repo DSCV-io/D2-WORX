@@ -82,7 +82,7 @@ export interface GrpcDelegationTarget {
  * @param grpcService         - gRPC service name (e.g. "KeyCustodianSigner").
  * @param grpcMethod          - gRPC method name (e.g. "Sign").
  * @param protoCsharpNs       - C# namespace for the Grpc.Tools-generated proto types
- *                              (e.g. "D2.Services.Protos.KeyCustodian.V1").
+ *                              (e.g. "D2.Services.Protos.KeyCustodian.V2Alpha").
  * @param serviceImplNs       - C# namespace for the generated service class + mapper
  *                              (e.g. "D2.Edge.Tests.TypeSpecGrpc.Generated").
  * @param dtoCsharpNs         - C# namespace where the handler DTO types live

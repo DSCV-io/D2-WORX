@@ -95,8 +95,8 @@ export interface NestedMessageDescriptor {
  * @param grpcService       - gRPC service name from @d2GrpcMethod (e.g. "KeyCustodianSigner").
  * @param grpcMethod        - gRPC method name from @d2GrpcMethod (e.g. "Sign").
  * @param streaming         - Streaming mode from @d2GrpcMethod.
- * @param protoPackage      - Proto3 package string (e.g. "d2.keycustodian.v1").
- * @param protoCsharpNs     - C# namespace option (e.g. "D2.Services.Protos.KeyCustodian.V1").
+ * @param protoPackage      - Proto3 package string (e.g. "d2.keycustodian.v2alpha").
+ * @param protoCsharpNs     - C# namespace option (e.g. "D2.Services.Protos.KeyCustodian.V2Alpha").
  * @param sourceSpec        - Relative spec path for the banner.
  * @param requestModelName  - Proto message name for the request (e.g. "SignRequest").
  * @param requestFields     - Resolved field list for the request model.

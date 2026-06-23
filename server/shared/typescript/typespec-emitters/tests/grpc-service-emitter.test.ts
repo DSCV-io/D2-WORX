@@ -22,7 +22,7 @@ import type { GrpcDelegationTarget } from "../src/lib/grpc-service-emitter.js";
 // Helpers
 // ---------------------------------------------------------------------------
 
-const PROTO_NS = "D2.Services.Protos.KeyCustodian.V1";
+const PROTO_NS = "D2.Services.Protos.KeyCustodian.V2Alpha";
 const IMPL_NS = "D2.Edge.Tests.TypeSpecGrpc.Generated";
 const DTO_NS = "D2.Edge.Tests.TypeSpecDto.Generated";
 const SOURCE = "contracts/typespec/fixtures/sign-shaped.tsp";
@@ -81,7 +81,7 @@ describe("emitGrpcService_BaseClass_GlobalQualified", () => {
   it("service class extends global::<protoNs>.<Service>.<Service>Base", () => {
     const [svc] = emitSign();
     expect(svc.content).toContain(
-      ": global::D2.Services.Protos.KeyCustodian.V1.KeyCustodianSigner.KeyCustodianSignerBase",
+      ": global::D2.Services.Protos.KeyCustodian.V2Alpha.KeyCustodianSigner.KeyCustodianSignerBase",
     );
   });
 });
@@ -126,10 +126,10 @@ describe("emitGrpcService_TypeAliases_Disambiguate", () => {
     // Proto message names (SignRequest/SignResponse) are distinct from DTO names
     // (SignInput/SignOutput), so no Proto*/Dto* prefixes are needed in the SERVICE file.
     expect(svc.content).toContain(
-      "using SignRequest = global::D2.Services.Protos.KeyCustodian.V1.SignRequest;",
+      "using SignRequest = global::D2.Services.Protos.KeyCustodian.V2Alpha.SignRequest;",
     );
     expect(svc.content).toContain(
-      "using SignResponse = global::D2.Services.Protos.KeyCustodian.V1.SignResponse;",
+      "using SignResponse = global::D2.Services.Protos.KeyCustodian.V2Alpha.SignResponse;",
     );
     expect(svc.content).toContain(
       "using SignInput = global::D2.Edge.Tests.TypeSpecDto.Generated.SignInput;",
@@ -148,7 +148,7 @@ describe("emitGrpcService_TypeAliases_Disambiguate", () => {
   it("mapper file emits standard using-aliases PLUS a ProtoSignOutput disambiguation alias", () => {
     const [, mapper] = emitSign();
     expect(mapper.content).toContain(
-      "using SignRequest = global::D2.Services.Protos.KeyCustodian.V1.SignRequest;",
+      "using SignRequest = global::D2.Services.Protos.KeyCustodian.V2Alpha.SignRequest;",
     );
     expect(mapper.content).toContain(
       "using SignOutput = global::D2.Edge.Tests.TypeSpecDto.Generated.SignOutput;",
@@ -156,7 +156,7 @@ describe("emitGrpcService_TypeAliases_Disambiguate", () => {
     // The proto data message name (<Op>Output) collides with the DTO name (<Op>Output).
     // The mapper emits a ProtoSignOutput alias to disambiguate.
     expect(mapper.content).toContain(
-      "using ProtoSignOutput = global::D2.Services.Protos.KeyCustodian.V1.SignOutput;",
+      "using ProtoSignOutput = global::D2.Services.Protos.KeyCustodian.V2Alpha.SignOutput;",
     );
     // No DtoSignOutput prefix (the DTO alias keeps the bare SignOutput name).
     expect(mapper.content).not.toContain("using DtoSignOutput");

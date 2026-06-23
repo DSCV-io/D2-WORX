@@ -29,7 +29,7 @@ import type { PredicateNode } from "@d2/typespec-decorators";
 
 const SOURCE = "contracts/typespec/fixtures/sign-shaped.tsp";
 const CLIENTS_NS = "D2.Edge.KeyCustodian.Clients";
-const PROTO_NS = "D2.Services.Protos.KeyCustodian.V1";
+const PROTO_NS = "D2.Services.Protos.KeyCustodian.V2Alpha";
 
 function makeSignOp(overrides: Partial<GrpcClientOp> = {}): GrpcClientOp {
   return {
@@ -256,7 +256,7 @@ describe("emitGrpcClient_ImplFile", () => {
   it("primary ctor has keyCustodianSignerStub (no r_ prefix)", () => {
     const content = getImpl();
     expect(content).toContain(
-      "global::D2.Services.Protos.KeyCustodian.V1.KeyCustodianSigner.KeyCustodianSignerClient keyCustodianSignerStub",
+      "global::D2.Services.Protos.KeyCustodian.V2Alpha.KeyCustodianSigner.KeyCustodianSignerClient keyCustodianSignerStub",
     );
   });
 
@@ -335,7 +335,7 @@ describe("emitGrpcClient_ImplFile", () => {
   it("uses global:: prefix on the stub type", () => {
     const content = getImpl();
     expect(content).toContain(
-      "global::D2.Services.Protos.KeyCustodian.V1.KeyCustodianSigner.KeyCustodianSignerClient",
+      "global::D2.Services.Protos.KeyCustodian.V2Alpha.KeyCustodianSigner.KeyCustodianSignerClient",
     );
   });
 });
@@ -391,11 +391,11 @@ describe("emitGrpcClient_MapperFile", () => {
   it("uses global:: aliases throughout mapper bodies", () => {
     const content = getMapper();
     expect(content).toContain(
-      "global::D2.Services.Protos.KeyCustodian.V1.SignRequest",
+      "global::D2.Services.Protos.KeyCustodian.V2Alpha.SignRequest",
     );
     expect(content).toContain("global::D2.Edge.KeyCustodian.Clients.SignInput");
     expect(content).toContain(
-      "global::D2.Services.Protos.KeyCustodian.V1.SignOutput",
+      "global::D2.Services.Protos.KeyCustodian.V2Alpha.SignOutput",
     );
     expect(content).toContain(
       "global::D2.Edge.KeyCustodian.Clients.SignOutput",
@@ -413,7 +413,7 @@ describe("emitGrpcClient_MapperFile", () => {
       "extension(global::D2.Edge.KeyCustodian.Clients.SignInput input)",
     );
     expect(content).toContain(
-      "extension(global::D2.Services.Protos.KeyCustodian.V1.SignOutput data)",
+      "extension(global::D2.Services.Protos.KeyCustodian.V2Alpha.SignOutput data)",
     );
   });
 });
@@ -477,7 +477,7 @@ describe("emitGrpcClient_MapperBytesField", () => {
     });
     const [, , mapper] = emitGrpcClient("KeyCustodian", [op], CLIENTS_NS);
     expect(mapper!.content).toContain(
-      "return new global::D2.Services.Protos.KeyCustodian.V1.SignRequest();",
+      "return new global::D2.Services.Protos.KeyCustodian.V2Alpha.SignRequest();",
     );
   });
 });
@@ -537,7 +537,7 @@ describe("emitGrpcClient_DiExtensionFile", () => {
   it("AddGrpcClient uses global:: alias to avoid namespace shadowing", () => {
     const content = getDi();
     expect(content).toContain(
-      "services.AddGrpcClient<global::D2.Services.Protos.KeyCustodian.V1.KeyCustodianSigner.KeyCustodianSignerClient>",
+      "services.AddGrpcClient<global::D2.Services.Protos.KeyCustodian.V2Alpha.KeyCustodianSigner.KeyCustodianSignerClient>",
     );
   });
 
@@ -870,7 +870,7 @@ describe("emitGrpcClient_DtoNamespaceNotSelf", () => {
     // The proto SERVICE namespace is NOT bare-imported (the stub is referenced via global::),
     // so the bare SignOutput in the pipeline generic args resolves to the DTO alias only.
     expect(impl!.content).not.toContain(
-      "using D2.Services.Protos.KeyCustodian.V1;",
+      "using D2.Services.Protos.KeyCustodian.V2Alpha;",
     );
   });
 
