@@ -27,18 +27,37 @@ using Xunit;
 [MustDisposeResource(false)]
 public sealed class PostgresFixture : IAsyncLifetime
 {
-    private readonly PostgreSqlContainer r_container = new PostgreSqlBuilder()
-        .WithImage("postgres:17-alpine")
-        .Build();
+    // TEST-INFRA: up to 3 startup attempts, 5 s backoff — guards against slow image
+    // pulls and transient Docker hiccups on CI without retrying actual test logic.
+    private const int _STARTUP_ATTEMPTS = 3;
+    private const int _STARTUP_BACKOFF_MS = 5_000;
+
+    private PostgreSqlContainer _container = BuildContainer();
 
     /// <summary>Gets the Npgsql connection string for the running container.</summary>
-    public string ConnectionString => r_container.GetConnectionString();
+    public string ConnectionString => _container.GetConnectionString();
 
     /// <inheritdoc />
-    public async ValueTask InitializeAsync() => await r_container.StartAsync();
+    public async ValueTask InitializeAsync()
+    {
+        for (var attempt = 1; attempt <= _STARTUP_ATTEMPTS; attempt++)
+        {
+            try
+            {
+                await _container.StartAsync();
+                return;
+            }
+            catch (Exception) when (attempt < _STARTUP_ATTEMPTS)
+            {
+                await _container.DisposeAsync();
+                await Task.Delay(_STARTUP_BACKOFF_MS);
+                _container = BuildContainer();
+            }
+        }
+    }
 
     /// <inheritdoc />
-    public async ValueTask DisposeAsync() => await r_container.DisposeAsync();
+    public async ValueTask DisposeAsync() => await _container.DisposeAsync();
 
     /// <summary>
     /// Provisions a new, uniquely-named database on the running container and returns
@@ -65,7 +84,7 @@ public sealed class PostgresFixture : IAsyncLifetime
         if (dbName.Length > 63)
             dbName = dbName[..63];
 
-        var adminCs = r_container.GetConnectionString();
+        var adminCs = _container.GetConnectionString();
 
         await using var conn = new NpgsqlConnection(adminCs);
         await conn.OpenAsync();
@@ -88,6 +107,11 @@ public sealed class PostgresFixture : IAsyncLifetime
     // =========================================================================
     // Private helpers
     // =========================================================================
+
+    private static PostgreSqlContainer BuildContainer() =>
+        new PostgreSqlBuilder()
+            .WithImage("postgres:17-alpine")
+            .Build();
 
     private static string MakeSafeDatabaseName(string label)
     {
