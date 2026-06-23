@@ -24,7 +24,7 @@ field:
 ```markdown
 # ADR-NNNN: <Decision Title>
 
-- **Status**: Accepted | Superseded by ADR-NNNN | Deprecated
+- **Status**: Proposed | Accepted | Superseded by ADR-NNNN | Deprecated
 - **Date**: YYYY-MM-DD
 - **Deliverable**: <NNNN-name>
 
@@ -55,6 +55,7 @@ across the catalog — never re-used, never re-ordered.
 
 ### Status values
 
+- **Proposed** — drafted and under review; not yet in force. Sign-off moves it to Accepted.
 - **Accepted** — currently in force; new work follows it.
 - **Superseded by ADR-NNNN** — replaced by a later decision; the ADR file
   stays as historical record.
@@ -90,6 +91,7 @@ across the catalog — never re-used, never re-ordered.
 | [0021](0021-unified-operation-contract-idl.md) | Unified operation-contract IDL — one source per operation generates every representation across three transport planes; TypeSpec front-end + D2-owned emitter fleet; proto/OpenAPI are outputs | Accepted | 2026-06-13 | `Edge contract-IDL spike` |
 | [0022](0022-service-auth-mint-once-forward.md) | Service-to-service auth — mint once at the Edge, forward the token unchanged | Accepted | 2026-06-17 | `0021-auth-pivot` |
 | [0023](0023-mtls-workload-identity.md) | mTLS workload identity — KeyCustodian-issued certificates, additive to JWT | Accepted | 2026-06-17 | `0021-auth-pivot` |
+| [0024](0024-contract-api-versioning-strategy.md) | Contract & API versioning strategy — additive-by-default behind one always-on strict breaking gate with a per-break force valve, two version handles (wire generation in the name, release in the semver), removal on telemetry not date | Accepted | 2026-06-22 | Edge contract-versioning groundwork |
 
 > This index grows as new ADRs are recorded. Backfilled ADRs (0002–0014) carry `D2 shared libraries (backfilled)` in their Deliverable field.
 
