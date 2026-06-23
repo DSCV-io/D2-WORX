@@ -102,6 +102,13 @@ jobs:
               | grep -E "^failed |Expected |but was|did not become|TimeoutException|SpinUntil|AdvanceUntil" \
               || echo "(no UTF-16 matches)"
           done
+      - name: Upload TestResults on failure (temp diagnostic)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: shared-tests-results
+          path: server/shared/dotnet/tests/bin/Release/net10.0/TestResults/
+          retention-days: 1
 
   # unit-tests-web — activates when `server/web/` SvelteKit workspace resolves
   # unit-tests-web:
