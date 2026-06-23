@@ -91,6 +91,15 @@ jobs:
         with:
           dotnet-version: "10.0.x"
       - run: dotnet test server/shared/dotnet/tests/D2.Shared.Tests.csproj --configuration Release
+      # TEMP DIAGNOSTIC (revert): dump failing-test names + context from the MTP
+      # TestResults log so the flaky set can be enumerated from the real runner.
+      - name: Dump failing tests on failure (temp diagnostic)
+        if: failure()
+        run: |
+          echo "===== FAILED TEST HEADERS ====="
+          grep -rhnE "^failed " server/shared/dotnet/tests/bin/Release/net10.0/TestResults/ || true
+          echo "===== FULL TESTRESULTS LOG ====="
+          cat server/shared/dotnet/tests/bin/Release/net10.0/TestResults/*.log || true
 
   # unit-tests-web — activates when `server/web/` SvelteKit workspace resolves
   # unit-tests-web:
