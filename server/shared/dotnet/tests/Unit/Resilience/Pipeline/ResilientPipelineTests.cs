@@ -300,31 +300,42 @@ public sealed class ResilientPipelineTests
             var gate = new TaskCompletionSource();
             const int concurrent_callers = 100;
 
+            // Entry gate: each Task.Run body signals before calling pipeline.
+            // Waiting for all N signals ensures every caller is scheduled and
+            // will imminently enter sf.GetOrAdd — no wall-clock Delay needed.
+            var allScheduled = new SemaphoreSlim(0, concurrent_callers);
+
             var tasks = Enumerable.Range(0, concurrent_callers)
-                .Select(_ => Task.Run(async () => await pipeline.ExecuteAsync("k", async _ =>
+                .Select(_ => Task.Run(async () =>
                 {
-                    var n = Interlocked.Increment(ref attempts);
-                    if (n == 1)
+                    allScheduled.Release();
+                    return await pipeline.ExecuteAsync("k", async _ =>
                     {
-                        // Hold the in-flight task open until every caller has
-                        // had a chance to dedup onto it.
-                        await gate.Task;
-                    }
+                        var n = Interlocked.Increment(ref attempts);
 
-                    if (n < 3)
-                    {
-                        throw new TimeoutException();
-                    }
+                        if (n == 1)
+                        {
+                            // Hold the in-flight task open until every caller has
+                            // had a chance to dedup onto it.
+                            await gate.Task;
+                        }
 
-                    return 7;
-                })))
+                        if (n < 3)
+                            throw new TimeoutException();
+
+                        return 7;
+                    });
+                }))
                 .ToArray();
 
-            // Wait for SF to publish the in-flight entry, then give the
-            // remaining 99 callers a window to land on it.
+            for (var i = 0; i < concurrent_callers; i++)
+                await allScheduled.WaitAsync();
+
+            // All callers are scheduled. Wait for the in-flight entry, then yield
+            // once to let remaining callers dedup — no wall-clock Delay needed.
             SpinWait.SpinUntil(() => sf.Size == 1, TimeSpan.FromSeconds(5))
                 .Should().BeTrue("singleflight should publish the in-flight entry quickly");
-            await Task.Delay(200);
+            await Task.Yield();
 
             sf.Size.Should().Be(1);
             gate.SetResult();

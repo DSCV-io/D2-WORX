@@ -42,6 +42,13 @@ internal sealed class WorkloadLeafCache : IDisposable
     private bool _disposed;
 
     /// <summary>
+    /// Gets or sets the test hook fired inside <see cref="Set"/> after the
+    /// atomic swap completes. Null in production — assigned only by tests that
+    /// need a deterministic "snapshot written" signal to avoid wall-clock polling.
+    /// </summary>
+    internal Action? OnSetForTesting { get; set; }
+
+    /// <summary>
     /// Gets the cached snapshot (any state — fresh, near-expiry, or expired)
     /// without freshness filtering. Used by the refresh hosted service to decide
     /// whether reissue is needed.
@@ -101,6 +108,8 @@ internal sealed class WorkloadLeafCache : IDisposable
         // handshake).
         if (prior is not null && !ReferenceEquals(prior, snapshot))
             DisposeSnapshotCertificates(prior);
+
+        OnSetForTesting?.Invoke();
     }
 
     /// <inheritdoc/>

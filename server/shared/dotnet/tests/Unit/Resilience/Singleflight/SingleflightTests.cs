@@ -306,6 +306,11 @@ public sealed class SingleflightTests
             var gate = new TaskCompletionSource<int>();
             const int concurrent_threads = 200;
 
+            // Entry gate: each Task.Run body signals before calling sf.
+            // Waiting for all N signals ensures every caller is scheduled and
+            // will imminently enter sf.GetOrAdd — no wall-clock Delay needed.
+            var allScheduled = new SemaphoreSlim(0, concurrent_threads);
+
             async ValueTask<int> Operation(CancellationToken ct)
             {
                 Interlocked.Increment(ref invocations);
@@ -313,15 +318,21 @@ public sealed class SingleflightTests
             }
 
             var tasks = Enumerable.Range(0, concurrent_threads)
-                .Select(_ => Task.Run(async () => await sf.ExecuteAsync("k", Operation)))
+                .Select(_ => Task.Run(async () =>
+                {
+                    allScheduled.Release();
+                    return await sf.ExecuteAsync("k", Operation);
+                }))
                 .ToArray();
 
-            // Wait for the in-flight entry to publish, then give late callers
-            // a generous window to dedup onto it. Operation is gate-blocked,
-            // so Size stays at 1 until SetResult.
+            for (var i = 0; i < concurrent_threads; i++)
+                await allScheduled.WaitAsync();
+
+            // All callers are scheduled. Wait for the in-flight entry, then yield
+            // once to let remaining callers dedup — no wall-clock Delay needed.
             SpinWait.SpinUntil(() => sf.Size == 1, TimeSpan.FromSeconds(5))
                 .Should().BeTrue("singleflight should publish the in-flight entry quickly");
-            await Task.Delay(200);
+            await Task.Yield();
 
             sf.Size.Should().Be(1);
             gate.SetResult(42);

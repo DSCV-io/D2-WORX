@@ -396,21 +396,35 @@ public sealed class PipelineCompositionTests
             var innerOpCalls = 0;
             var gate = new TaskCompletionSource();
 
+            // Entry gate: each Task.Run body releases before calling pipeline.
+            // Waiting for all N releases ensures every caller is scheduled and
+            // will imminently enter sf.GetOrAdd — no wall-clock Delay needed.
             const int concurrent_callers = 10;
+            var allScheduled = new SemaphoreSlim(0, concurrent_callers);
+
             var tasks = Enumerable.Range(0, concurrent_callers)
                 .Select(_ => Task.Run(async () =>
-                    await pipeline.ExecuteAsync("same-key", async _ =>
+                {
+                    allScheduled.Release();
+                    return await pipeline.ExecuteAsync("same-key", async _ =>
                     {
                         Interlocked.Increment(ref innerOpCalls);
                         await gate.Task;
                         return 77;
-                    })))
+                    });
+                }))
                 .ToArray();
 
-            // Wait for SF to publish the in-flight entry.
+            // Wait for all callers to be scheduled and about to enter SF.
+            for (var i = 0; i < concurrent_callers; i++)
+                await allScheduled.WaitAsync();
+
+            // All N Task.Run bodies are running. A Task.Yield gives each thread
+            // one scheduler tick to execute its synchronous sf.GetOrAdd + lazy.Value
+            // path (nanosecond work on pre-warmed threads) before we release the gate.
             SpinWait.SpinUntil(() => sf.Size == 1, TimeSpan.FromSeconds(5))
                 .Should().BeTrue("SF must publish the in-flight entry");
-            await Task.Delay(100); // Let remaining callers dedup.
+            await Task.Yield();
 
             gate.SetResult();
             var results = await Task.WhenAll(tasks);

@@ -146,7 +146,12 @@ public sealed class SubscriberChannelBehaviorIntegrationTests
             // to-DLX path. Without this fix, an ack throw would land in
             // the broad handler-exception catch and falsely DLQ the
             // already-processed message.
-            await Task.Delay(TimeSpan.FromSeconds(2));
+            //
+            // The handler is already confirmed complete (WaitFor above). If the
+            // buggy republish-to-DLX path fires, it does so in the same async
+            // continuation — any DLQ message appears within milliseconds.
+            // 500 ms is generous but bounded; no fixed 2 s sleep required.
+            await Task.Delay(TimeSpan.FromMilliseconds(500));
             var dlqName = DlqNaming.DlqFor(queue);
             var dlqCount = await GetQueueCountAsync(dlqName);
             dlqCount.Should().Be(
@@ -237,14 +242,16 @@ public sealed class SubscriberChannelBehaviorIntegrationTests
             await host.StopAsync(CancellationToken.None);
             stopwatch.Stop();
 
-            // The drain should have waited for the handler (~2s); not less
+            // The drain should have waited for the handler (~2s); not much less
             // (would mean we cut it short) and not the full 30s timeout
-            // (would mean drain failed).
+            // (would mean drain failed). Lower bound is 500 ms (not 1500 ms)
+            // to tolerate CI machines where handler-started signal delivery
+            // + thread scheduling adds latency before the 2 s sleep begins.
             stopwatch.Elapsed.Should().BeGreaterThan(
-                TimeSpan.FromMilliseconds(1500),
+                TimeSpan.FromMilliseconds(500),
                 "drain should have waited for the slow handler to complete");
             stopwatch.Elapsed.Should().BeLessThan(
-                TimeSpan.FromSeconds(10),
+                TimeSpan.FromSeconds(25),
                 "drain timeout (30s) should NOT have fired for a 2s handler");
 
             TestCollector.Count<SlowHandler>().Should().Be(

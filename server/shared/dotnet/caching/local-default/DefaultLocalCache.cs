@@ -13,6 +13,7 @@ using D2.Shared.Result;
 using D2.Shared.Utilities.Extensions;
 using JetBrains.Annotations;
 using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Internal;
 using Microsoft.Extensions.Options;
 
 /// <summary>
@@ -62,6 +63,12 @@ public sealed class DefaultLocalCache : ILocalCache, IDisposable
 
     private readonly LocalCacheOptions r_options;
 
+    /// <summary>
+    /// The clock used for TTL accounting — matched to the IMemoryCache's
+    /// own clock so both see the same "now" (critical for test determinism).
+    /// </summary>
+    private readonly TimeProvider r_clock;
+
     /// <summary>Locks indexed by prefixed key. Lifecycle is bounded by lock TTL.</summary>
     private readonly ConcurrentDictionary<string, LockEntry> r_locks = new(StringComparer.Ordinal);
 
@@ -88,16 +95,25 @@ public sealed class DefaultLocalCache : ILocalCache, IDisposable
 
     /// <summary>Initializes a new <see cref="DefaultLocalCache"/>.</summary>
     /// <param name="options">Cache options (max entries, default TTL, key prefix).</param>
+    /// <param name="clock">
+    /// Optional time provider. Defaults to <see cref="TimeProvider.System"/>.
+    /// Supplying a fake time provider makes TTL expiry deterministic in tests —
+    /// both this class's TTL accounting and <see cref="IMemoryCache"/>'s
+    /// internal expiry scanner advance together, so tests drive clock-based
+    /// expiry without real-time sleeps.
+    /// </param>
     [MustDisposeResource(false)]
-    public DefaultLocalCache(IOptions<LocalCacheOptions> options)
+    public DefaultLocalCache(IOptions<LocalCacheOptions> options, TimeProvider? clock = null)
     {
         ArgumentNullException.ThrowIfNull(options);
         r_options = options.Value;
+        r_clock = clock ?? TimeProvider.System;
 
         r_cache = new MemoryCache(new MemoryCacheOptions
         {
             SizeLimit = r_options.MaxEntries,
             CompactionPercentage = 0.05,
+            Clock = new TimeProviderSystemClockAdapter(r_clock),
         });
     }
 
@@ -190,7 +206,7 @@ public sealed class DefaultLocalCache : ILocalCache, IDisposable
 
             if (r_expirations.TryGetValue(prefixed, out var expiresAt))
             {
-                var remaining = expiresAt - DateTimeOffset.UtcNow;
+                var remaining = expiresAt - r_clock.GetUtcNow();
                 return new(D2Result<TimeSpan?>.Ok(remaining > TimeSpan.Zero ? remaining : null));
             }
 
@@ -429,7 +445,7 @@ public sealed class DefaultLocalCache : ILocalCache, IDisposable
     private void SetCore<T>(string prefixedKey, T value, TimeSpan? expiration)
     {
         var ttl = expiration ?? r_options.DefaultExpiration;
-        var expiresAt = ttl > TimeSpan.Zero ? DateTimeOffset.UtcNow + ttl : (DateTimeOffset?)null;
+        var expiresAt = ttl > TimeSpan.Zero ? r_clock.GetUtcNow() + ttl : (DateTimeOffset?)null;
         SetCoreAbsolute(prefixedKey, value, expiresAt);
     }
 
@@ -468,5 +484,25 @@ public sealed class DefaultLocalCache : ILocalCache, IDisposable
             r_expirations.TryRemove(prefixedKey, out _);
 
         // ReSharper restore InconsistentlySynchronizedField
+    }
+
+    /// <summary>
+    /// Adapts a <see cref="TimeProvider"/> to the <see cref="ISystemClock"/>
+    /// interface consumed by <see cref="MemoryCacheOptions.Clock"/>. When a
+    /// fake time provider is supplied, <see cref="IMemoryCache"/> TTL expiry
+    /// advances with the fake clock rather than wall time — entry expiry
+    /// is then fully deterministic.
+    /// </summary>
+    private sealed class TimeProviderSystemClockAdapter : ISystemClock
+    {
+        private readonly TimeProvider r_clock;
+
+        internal TimeProviderSystemClockAdapter(TimeProvider clock)
+        {
+            r_clock = clock;
+        }
+
+        /// <inheritdoc/>
+        public DateTimeOffset UtcNow => r_clock.GetUtcNow();
     }
 }
