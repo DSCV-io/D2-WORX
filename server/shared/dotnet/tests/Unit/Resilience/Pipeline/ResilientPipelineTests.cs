@@ -300,16 +300,20 @@ public sealed class ResilientPipelineTests
             var gate = new TaskCompletionSource();
             const int concurrent_callers = 100;
 
-            // Entry gate: each Task.Run body signals before calling pipeline.
-            // Waiting for all N signals ensures every caller is scheduled and
-            // will imminently enter sf.GetOrAdd — no wall-clock Delay needed.
-            var allScheduled = new SemaphoreSlim(0, concurrent_callers);
+            // Determinism guarantee: ResilientPipeline.ExecuteAsync is async; its
+            // first synchronous path builds the layer chain then calls wrapped(ct),
+            // which invokes SingleflightLayer.WrapAsync → Singleflight.ExecuteAsync
+            // → r_inflight.GetOrAdd synchronously — all before the first await.
+            // Capturing the ValueTask<D2Result<int>> (without awaiting) therefore
+            // proves the caller has joined the singleflight entry. Signalling AFTER
+            // capture makes the wait on all N signals a guarantee that all callers
+            // have joined before the gate opens — no SpinWait/Yield needed.
+            var allJoined = new SemaphoreSlim(0, concurrent_callers);
 
             var tasks = Enumerable.Range(0, concurrent_callers)
                 .Select(_ => Task.Run(async () =>
                 {
-                    allScheduled.Release();
-                    return await pipeline.ExecuteAsync("k", async _ =>
+                    var vt = pipeline.ExecuteAsync("k", async _ =>
                     {
                         var n = Interlocked.Increment(ref attempts);
 
@@ -325,18 +329,16 @@ public sealed class ResilientPipelineTests
 
                         return 7;
                     });
+                    allJoined.Release(); // signal AFTER join, not before
+                    return await vt;
                 }))
                 .ToArray();
 
+            // Wait for all callers to have joined — guaranteed, not polled.
             for (var i = 0; i < concurrent_callers; i++)
-                await allScheduled.WaitAsync();
+                await allJoined.WaitAsync();
 
-            // All callers are scheduled. Wait for the in-flight entry, then yield
-            // once to let remaining callers dedup — no wall-clock Delay needed.
-            SpinWait.SpinUntil(() => sf.Size == 1, TimeSpan.FromSeconds(5))
-                .Should().BeTrue("singleflight should publish the in-flight entry quickly");
-            await Task.Yield();
-
+            // All callers are joined to the single in-flight entry.
             sf.Size.Should().Be(1);
             gate.SetResult();
 

@@ -412,36 +412,37 @@ public sealed class PipelineCompositionTests
             var innerOpCalls = 0;
             var gate = new TaskCompletionSource();
 
-            // Entry gate: each Task.Run body releases before calling pipeline.
-            // Waiting for all N releases ensures every caller is scheduled and
-            // will imminently enter sf.GetOrAdd — no wall-clock Delay needed.
+            // Determinism guarantee: ResilientPipeline.ExecuteAsync is async; its
+            // first synchronous path builds the layer chain then calls wrapped(ct),
+            // which invokes SingleflightLayer.WrapAsync → Singleflight.ExecuteAsync
+            // → r_inflight.GetOrAdd synchronously — all before the first await.
+            // Capturing the ValueTask<D2Result<int>> (without awaiting) therefore
+            // proves the caller has joined the singleflight entry. Signalling AFTER
+            // capture makes the wait on all N signals a guarantee that all callers
+            // have joined before the gate opens — no SpinWait/Yield needed.
             const int concurrent_callers = 10;
-            var allScheduled = new SemaphoreSlim(0, concurrent_callers);
+            var allJoined = new SemaphoreSlim(0, concurrent_callers);
 
             var tasks = Enumerable.Range(0, concurrent_callers)
                 .Select(_ => Task.Run(async () =>
                 {
-                    allScheduled.Release();
-                    return await pipeline.ExecuteAsync("same-key", async _ =>
+                    var vt = pipeline.ExecuteAsync("same-key", async _ =>
                     {
                         Interlocked.Increment(ref innerOpCalls);
                         await gate.Task;
                         return 77;
                     });
+                    allJoined.Release(); // signal AFTER join, not before
+                    return await vt;
                 }))
                 .ToArray();
 
-            // Wait for all callers to be scheduled and about to enter SF.
+            // Wait for all callers to have joined — guaranteed, not polled.
             for (var i = 0; i < concurrent_callers; i++)
-                await allScheduled.WaitAsync();
+                await allJoined.WaitAsync();
 
-            // All N Task.Run bodies are running. A Task.Yield gives each thread
-            // one scheduler tick to execute its synchronous sf.GetOrAdd + lazy.Value
-            // path (nanosecond work on pre-warmed threads) before we release the gate.
-            SpinWait.SpinUntil(() => sf.Size == 1, TimeSpan.FromSeconds(5))
-                .Should().BeTrue("SF must publish the in-flight entry");
-            await Task.Yield();
-
+            // All callers are joined to the single in-flight entry.
+            sf.Size.Should().Be(1);
             gate.SetResult();
             var results = await Task.WhenAll(tasks);
 
