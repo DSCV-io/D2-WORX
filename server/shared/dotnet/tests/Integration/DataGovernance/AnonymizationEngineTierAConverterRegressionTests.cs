@@ -48,6 +48,7 @@ public sealed class AnonymizationEngineTierAConverterRegressionTests : IAsyncLif
     private readonly PostgresFixture r_fixture;
     private readonly List<DbContext> r_engineContexts = [];
 
+    private string r_connectionString = null!;
     private TierAConverterDbContext r_schemaCtx = null!;
 
     /// <summary>
@@ -63,9 +64,16 @@ public sealed class AnonymizationEngineTierAConverterRegressionTests : IAsyncLif
     /// <inheritdoc />
     public async ValueTask InitializeAsync()
     {
-        r_schemaCtx = TierAConverterDbContext.Build(r_fixture.ConnectionString);
+        // Each test class gets its own isolated database so EnsureCreatedAsync builds the
+        // full schema without colliding with sibling classes in the same xUnit collection.
+        r_connectionString = await r_fixture.CreateIsolatedDatabaseAsync(
+            nameof(AnonymizationEngineTierAConverterRegressionTests));
+        r_schemaCtx = TierAConverterDbContext.Build(r_connectionString);
 
-        // Use raw IF NOT EXISTS DDL — idempotent across all run orders.
+        // Fresh isolated DB — EnsureCreatedAsync succeeds unconditionally.
+        // TierAConverterHosts is added via IF NOT EXISTS DDL as a belt-and-suspenders
+        // measure (TierAConverterDbContext only contains that one entity type, so
+        // EnsureCreated would create it anyway — but the explicit DDL is idempotent).
         await r_schemaCtx.Database.EnsureCreatedAsync();
         await r_schemaCtx.Database.ExecuteSqlRawAsync(@"
             CREATE TABLE IF NOT EXISTS ""TierAConverterHosts"" (
@@ -108,7 +116,7 @@ public sealed class AnonymizationEngineTierAConverterRegressionTests : IAsyncLif
         const string expected_tombstone = "deleted@deleted.user.dcsv.io";
 
         // Seed via the DbContext so the value converter writes the correct store string.
-        await using var writeCtx = TierAConverterDbContext.Build(r_fixture.ConnectionString);
+        await using var writeCtx = TierAConverterDbContext.Build(r_connectionString);
         writeCtx.TierAConverterHosts.Add(new TierAConverterDbContext.TierAConverterHost
         {
             Id = Guid.NewGuid(),
@@ -118,7 +126,7 @@ public sealed class AnonymizationEngineTierAConverterRegressionTests : IAsyncLif
         await writeCtx.SaveChangesAsync();
 
         // Confirm the seed value is present before erasure (non-tautology guard).
-        await using var preCtx = TierAConverterDbContext.Build(r_fixture.ConnectionString);
+        await using var preCtx = TierAConverterDbContext.Build(r_connectionString);
         var pre = await preCtx.TierAConverterHosts.FirstAsync(h => h.UserId == userId);
         pre.Email!.Value.Should().Be(seed_email, "seed must be present before erasure");
 
@@ -131,7 +139,7 @@ public sealed class AnonymizationEngineTierAConverterRegressionTests : IAsyncLif
 
         // Read back the raw DB column via SQL to bypass any CLR value-converter
         // re-hydration that might mask a failure where the store string was not updated.
-        await using var rawCtx = TierAConverterDbContext.Build(r_fixture.ConnectionString);
+        await using var rawCtx = TierAConverterDbContext.Build(r_connectionString);
         string? raw = await rawCtx.Database
             .SqlQueryRaw<string>(
                 @"SELECT ""Email"" AS ""Value""
@@ -146,7 +154,7 @@ public sealed class AnonymizationEngineTierAConverterRegressionTests : IAsyncLif
             + "via ConvertValue — old Convert.ChangeType path would skip the column silently");
 
         // Also verify IsAnonymized is set (belt-and-braces: engine set ALL columns).
-        await using var flagCtx = TierAConverterDbContext.Build(r_fixture.ConnectionString);
+        await using var flagCtx = TierAConverterDbContext.Build(r_connectionString);
         var row = await flagCtx.TierAConverterHosts.FirstAsync(h => h.UserId == userId);
         row.IsAnonymized.Should().BeTrue();
         row.Email!.Value.Should().Be(expected_tombstone);
@@ -159,7 +167,7 @@ public sealed class AnonymizationEngineTierAConverterRegressionTests : IAsyncLif
     private AnonymizationEngine BuildEngine(int batchSize = 500)
     {
         var opts = Options.Create(new AnonymizationEngineOptions { BatchSize = batchSize });
-        var ctx = TierAConverterDbContext.Build(r_fixture.ConnectionString);
+        var ctx = TierAConverterDbContext.Build(r_connectionString);
         r_engineContexts.Add(ctx);
         return new AnonymizationEngine(ctx, opts, NullLogger<AnonymizationEngine>.Instance);
     }

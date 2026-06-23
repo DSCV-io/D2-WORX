@@ -31,6 +31,7 @@ public sealed class AnonymizationEngineIntegrationTests : IAsyncLifetime
     // Tracks engine DbContext instances created per test so they are disposed in DisposeAsync.
     private readonly System.Collections.Generic.List<GovDbContext> r_engineContexts = [];
 
+    private string r_connectionString = null!;
     private GovDbContext r_schemaCtx = null!;
 
     /// <summary>
@@ -45,7 +46,9 @@ public sealed class AnonymizationEngineIntegrationTests : IAsyncLifetime
     /// <inheritdoc />
     public async ValueTask InitializeAsync()
     {
-        r_schemaCtx = GovDbContext.Build(r_fixture.ConnectionString);
+        r_connectionString = await r_fixture.CreateIsolatedDatabaseAsync(
+            nameof(AnonymizationEngineIntegrationTests));
+        r_schemaCtx = GovDbContext.Build(r_connectionString);
         await r_schemaCtx.Database.EnsureCreatedAsync();
     }
 
@@ -85,7 +88,7 @@ public sealed class AnonymizationEngineIntegrationTests : IAsyncLifetime
         result.Success.Should().BeTrue();
         result.Data!.RowsAnonymized.Should().Be(1);
 
-        await using var readCtx = GovDbContext.Build(r_fixture.ConnectionString);
+        await using var readCtx = GovDbContext.Build(r_connectionString);
         var row = await readCtx.TierAUsers.FirstAsync(u => u.UserId == userId);
 
         row.DisplayName.Should().Be("Deleted");
@@ -118,7 +121,7 @@ public sealed class AnonymizationEngineIntegrationTests : IAsyncLifetime
         result.Success.Should().BeTrue();
         result.Data!.RowsAnonymized.Should().Be(1);
 
-        await using var readCtx = GovDbContext.Build(r_fixture.ConnectionString);
+        await using var readCtx = GovDbContext.Build(r_connectionString);
         var row = await readCtx.TierBUsers.FirstAsync(u => u.UserId == userId);
 
         var expectedEmail = $"deletedUser{userId:N}@deleted.user.dcsv.io";
@@ -144,7 +147,7 @@ public sealed class AnonymizationEngineIntegrationTests : IAsyncLifetime
         result.Data!.EntityTypesSkippedExempt.Should().BeGreaterThan(0);
         result.Data.RowsAnonymized.Should().Be(0);
 
-        await using var readCtx = GovDbContext.Build(r_fixture.ConnectionString);
+        await using var readCtx = GovDbContext.Build(r_connectionString);
         var row = await readCtx.ExemptLedgers.FirstAsync(e => e.UserId == userId);
 
         row.OwnerNote.Should().Be("Private note");
@@ -169,7 +172,7 @@ public sealed class AnonymizationEngineIntegrationTests : IAsyncLifetime
         var engine = BuildEngine();
         await engine.AnonymizeUserAsync(userId1);
 
-        await using var readCtx = GovDbContext.Build(r_fixture.ConnectionString);
+        await using var readCtx = GovDbContext.Build(r_connectionString);
         var row2 = await readCtx.TierAUsers.FirstAsync(u => u.UserId == userId2);
 
         row2.DisplayName.Should().Be("User2");
@@ -192,7 +195,7 @@ public sealed class AnonymizationEngineIntegrationTests : IAsyncLifetime
         var engine = BuildEngine();
         await engine.AnonymizeUserAsync(userId);
 
-        await using var readCtx = GovDbContext.Build(r_fixture.ConnectionString);
+        await using var readCtx = GovDbContext.Build(r_connectionString);
         var orgRow = await readCtx.OrgRecords.FirstAsync(o => o.OrgId == orgId);
         orgRow.OrgName.Should().Be("MyOrg");
         orgRow.IsAnonymized.Should().BeFalse();
@@ -213,7 +216,7 @@ public sealed class AnonymizationEngineIntegrationTests : IAsyncLifetime
         result.Success.Should().BeTrue();
         result.Data!.RowsAnonymized.Should().Be(1);
 
-        await using var readCtx = GovDbContext.Build(r_fixture.ConnectionString);
+        await using var readCtx = GovDbContext.Build(r_connectionString);
         var orgRow = await readCtx.OrgRecords.FirstAsync(o => o.OrgId == orgId);
         orgRow.OrgName.Should().Be("Deleted");
         orgRow.IsAnonymized.Should().BeTrue();
@@ -246,7 +249,7 @@ public sealed class AnonymizationEngineIntegrationTests : IAsyncLifetime
         second.Data.AlreadyAnonymizedRows.Should().BeGreaterThan(0);
 
         // Values must be byte-stable (same as first run).
-        await using var readCtx = GovDbContext.Build(r_fixture.ConnectionString);
+        await using var readCtx = GovDbContext.Build(r_connectionString);
         var row = await readCtx.TierAUsers.FirstAsync(u => u.UserId == userId);
         row.DisplayName.Should().Be("Deleted");
         row.IsAnonymized.Should().BeTrue();
@@ -272,7 +275,7 @@ public sealed class AnonymizationEngineIntegrationTests : IAsyncLifetime
         result.Success.Should().BeTrue();
         result.Data!.RowsAnonymized.Should().Be(row_count);
 
-        await using var readCtx = GovDbContext.Build(r_fixture.ConnectionString);
+        await using var readCtx = GovDbContext.Build(r_connectionString);
         var rows = await readCtx.TierBUsers
             .Where(u => u.UserId == userId)
             .ToListAsync();
@@ -303,7 +306,7 @@ public sealed class AnonymizationEngineIntegrationTests : IAsyncLifetime
         {
             // Synchronous bump via a fresh blocking context — runs on the thread-pool
             // continuation before the engine's SaveChangesAsync actually sends bytes.
-            using var bumpCtx = GovDbContext.Build(r_fixture.ConnectionString);
+            using var bumpCtx = GovDbContext.Build(r_connectionString);
             var bumpRow = bumpCtx.TierBUsers.First(u => u.UserId == userId);
             bumpRow.DisplayName = "BumpedByConcurrentWriter";
             bumpCtx.SaveChanges();
@@ -313,7 +316,7 @@ public sealed class AnonymizationEngineIntegrationTests : IAsyncLifetime
 
         result.Success.Should().BeTrue();
 
-        await using var readCtx = GovDbContext.Build(r_fixture.ConnectionString);
+        await using var readCtx = GovDbContext.Build(r_connectionString);
         var row = await readCtx.TierBUsers.FirstAsync(u => u.UserId == userId);
 
         // The retry must have run: row is anonymized after convergence.
@@ -337,7 +340,7 @@ public sealed class AnonymizationEngineIntegrationTests : IAsyncLifetime
         result.Success.Should().BeFalse();
         result.StatusCode.Should().Be(System.Net.HttpStatusCode.BadRequest);
 
-        await using var readCtx = GovDbContext.Build(r_fixture.ConnectionString);
+        await using var readCtx = GovDbContext.Build(r_connectionString);
         var row = await readCtx.TierAUsers.FirstAsync(u => u.UserId == userId);
         row.IsAnonymized.Should().BeFalse();
         row.DisplayName.Should().Be("Alice");
@@ -378,7 +381,7 @@ public sealed class AnonymizationEngineIntegrationTests : IAsyncLifetime
         result.Data!.RowsAnonymized.Should().Be(2);
         result.Data.EntityTypesProcessed.Should().BeGreaterThanOrEqualTo(2);
 
-        await using var readCtx = GovDbContext.Build(r_fixture.ConnectionString);
+        await using var readCtx = GovDbContext.Build(r_connectionString);
         var tierA = await readCtx.TierAUsers.FirstAsync(u => u.UserId == userId);
         var tierB = await readCtx.TierBUsers.FirstAsync(u => u.UserId == userId);
 
@@ -403,7 +406,7 @@ public sealed class AnonymizationEngineIntegrationTests : IAsyncLifetime
 
         result.Success.Should().BeTrue();
 
-        await using var readCtx = GovDbContext.Build(r_fixture.ConnectionString);
+        await using var readCtx = GovDbContext.Build(r_connectionString);
         var row = await readCtx.TierAUsers.FirstAsync(u => u.UserId == userId);
 
         // Status decorated with SetEmpty — should be empty string in DB.
@@ -435,7 +438,7 @@ public sealed class AnonymizationEngineIntegrationTests : IAsyncLifetime
             () => engine.AnonymizeUserAsync(userId, cts.Token));
 
         // Verify no writes occurred: the row must be unchanged.
-        await using var readCtx = GovDbContext.Build(r_fixture.ConnectionString);
+        await using var readCtx = GovDbContext.Build(r_connectionString);
         var row = await readCtx.TierAUsers.FirstAsync(u => u.UserId == userId);
         row.IsAnonymized.Should().BeFalse("pre-cancellation must not partially commit writes");
         row.DisplayName.Should().Be("Carol", "PII fields must be unchanged after abort");
@@ -456,7 +459,7 @@ public sealed class AnonymizationEngineIntegrationTests : IAsyncLifetime
         string nameFirst,
         string? nameLast)
     {
-        await using var ctx = GovDbContext.Build(r_fixture.ConnectionString);
+        await using var ctx = GovDbContext.Build(r_connectionString);
         ctx.TierAUsers.Add(new GovDbContext.TierAUser
         {
             Id = Guid.NewGuid(),
@@ -474,7 +477,7 @@ public sealed class AnonymizationEngineIntegrationTests : IAsyncLifetime
 
     private async Task SeedTierBUser(Guid userId, string email, string displayName)
     {
-        await using var ctx = GovDbContext.Build(r_fixture.ConnectionString);
+        await using var ctx = GovDbContext.Build(r_connectionString);
         ctx.TierBUsers.Add(new GovDbContext.TierBUser
         {
             Id = Guid.NewGuid(),
@@ -487,7 +490,7 @@ public sealed class AnonymizationEngineIntegrationTests : IAsyncLifetime
 
     private async Task SeedOrgRecord(Guid orgId, string orgName)
     {
-        await using var ctx = GovDbContext.Build(r_fixture.ConnectionString);
+        await using var ctx = GovDbContext.Build(r_connectionString);
         ctx.OrgRecords.Add(new GovDbContext.OrgRecord
         {
             Id = Guid.NewGuid(),
@@ -499,7 +502,7 @@ public sealed class AnonymizationEngineIntegrationTests : IAsyncLifetime
 
     private async Task SeedExemptLedger(Guid userId, string ownerNote, decimal amount)
     {
-        await using var ctx = GovDbContext.Build(r_fixture.ConnectionString);
+        await using var ctx = GovDbContext.Build(r_connectionString);
         ctx.ExemptLedgers.Add(new GovDbContext.ExemptLedger
         {
             Id = Guid.NewGuid(),
@@ -517,7 +520,7 @@ public sealed class AnonymizationEngineIntegrationTests : IAsyncLifetime
             BatchSize = batchSize,
             MaxConcurrencyRetries = maxRetries,
         });
-        var ctx = GovDbContext.Build(r_fixture.ConnectionString);
+        var ctx = GovDbContext.Build(r_connectionString);
         r_engineContexts.Add(ctx);
         return new AnonymizationEngine(ctx, opts, NullLogger<AnonymizationEngine>.Instance);
     }
