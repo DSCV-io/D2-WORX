@@ -215,7 +215,14 @@ public sealed class PipelineCompositionTests
         var result = await pipeline.ExecuteAsync("k", async ct =>
         {
             Interlocked.Increment(ref calls);
-            await Task.Delay(500, ct);
+
+            // Infinite delay (-1 ms): the operation blocks until the timeout CTS fires.
+            // Using -1 instead of a finite 500 ms removes the timing race: the timeout
+            // fires deterministically before an infinite wait completes, regardless of
+            // scheduler pressure or CPU contention. Note: `Timeout` is ambiguous here
+            // (D2.Shared.Tests.Unit.Resilience.Timeout namespace shadows System.Threading.Timeout),
+            // so the literal -1 is used directly — identical to Timeout.Infinite.
+            await Task.Delay(-1, ct);
             return 1;
         });
 
@@ -243,8 +250,17 @@ public sealed class PipelineCompositionTests
         var result = await pipeline.ExecuteAsync("k", async ct =>
         {
             var n = Interlocked.Increment(ref calls);
+
             if (n == 1)
-                await Task.Delay(500, ct); // First attempt is slow — will time out.
+            {
+                // Infinite delay (-1 ms): blocks until the per-attempt timeout CTS fires.
+                // Using -1 instead of a finite 500 ms removes the timing race — the
+                // 50 ms timeout fires deterministically before an infinite wait completes,
+                // regardless of scheduler jitter. Note: `Timeout` is ambiguous here
+                // (D2.Shared.Tests.Unit.Resilience.Timeout namespace shadows System.Threading.Timeout),
+                // so the literal -1 is used directly — identical to Timeout.Infinite.
+                await Task.Delay(-1, ct);
+            }
 
             return 42; // Second attempt returns immediately.
         });
