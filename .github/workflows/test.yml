@@ -225,22 +225,7 @@ jobs:
         with:
           node-version: "24"
       - uses: pnpm/action-setup@v4
-        with:
-          version: 10
-      - name: pnpm install (typespec-emitters)
-        run: pnpm install --frozen-lockfile
-        working-directory: server/shared/typescript/typespec-emitters
+      - name: pnpm install (typespec-emitters subtree)
+        run: pnpm install --filter "@d2/typespec-emitters..."
       - name: TypeSpec emitter tests (byte-parity gate)
-        run: pnpm test
-        working-directory: server/shared/typescript/typespec-emitters
-
-  # ==========================================================================
-  # Placeholder — keeps the workflow valid while all real jobs are commented.
-  # Remove this once all placeholder jobs are replaced with real ones.
-  # ==========================================================================
-  noop:
-    name: noop (placeholder until first real job enables)
-    runs-on: ubuntu-latest
-    steps:
-      - name: noop
-        run: echo "v2 wipe complete; CI jobs activate as each service path populates"
+        run: pnpm --filter "@d2/typespec-emitters" test
