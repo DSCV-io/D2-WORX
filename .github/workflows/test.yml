@@ -90,24 +90,7 @@ jobs:
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: "10.0.x"
-      # TEMP DIAGNOSTIC (revert): loop the suite N times, accumulate ALL failures
-      # (per-iteration results dirs) to surface the rare-flake tail in one run.
-      - name: Surface flake tail (loop, accumulate) (temp diagnostic)
-        run: |
-          fail=0
-          for i in $(seq 1 15); do
-            echo "===== suite run $i ====="
-            dotnet test server/shared/dotnet/tests/D2.Shared.Tests.csproj --configuration Release \
-              -- --results-directory "$GITHUB_WORKSPACE/flake-results/iter$i" || fail=1
-          done
-          exit $fail
-      - name: Upload all iteration results (temp diagnostic)
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: shared-tests-results
-          path: flake-results/
-          retention-days: 1
+      - run: dotnet test server/shared/dotnet/tests/D2.Shared.Tests.csproj --configuration Release
 
   # unit-tests-web — activates when `server/web/` SvelteKit workspace resolves
   # unit-tests-web:
