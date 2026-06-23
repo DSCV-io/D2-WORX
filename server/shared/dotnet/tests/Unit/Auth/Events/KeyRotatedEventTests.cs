@@ -51,10 +51,16 @@ public sealed class KeyRotatedEventTests
     public void KeyRotatedEvent_ResolvesAgainstProductionRegistry_ToPlaintextFanout()
     {
         // Full production path: [MqPub] -> MqMessagesRegistry -> descriptor, with
-        // the FQN-vs-spec cross-check the resolver enforces. Clearing the per-type
-        // cache keeps the assertion order-independent across the suite.
-        MessageWireResolver.ClearCache();
-
+        // the FQN-vs-spec cross-check the resolver enforces.
+        //
+        // NOTE: ClearCache() was removed here. KeyRotatedEvent is a production type
+        // in MqMessagesRegistry, so its cache entry is always correct (seeded by the
+        // production Resolve path). The only alternative seeder — RegisterForTesting()
+        // used by IntegrationMessageFixtures — never registers KeyRotatedEvent. A
+        // global ClearCache() call from a unit test evicts entries that
+        // parallel integration tests rely on via RegisterForTesting(), causing a
+        // race where the integration test's fixture types (which have no [MqPub]
+        // attribute and are NOT in MqMessagesRegistry) throw on re-resolution.
         var descriptor = MessageWireResolver.Resolve(typeof(KeyRotatedEvent));
 
         descriptor.Constant.Should().Be(MqMessages.AuthKeyRotated);

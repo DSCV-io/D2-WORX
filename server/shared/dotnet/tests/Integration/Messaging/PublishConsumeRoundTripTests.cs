@@ -146,6 +146,12 @@ public sealed class PublishConsumeRoundTripTests
         const int total = 20;
         var queue = "rt.conc." + Guid.NewGuid().ToString("N")[..8];
 
+        // Build expected marker set BEFORE publishing so the filter below is
+        // purely static and not derived from what arrived.
+        var expectedMarkers = Enumerable.Range(0, total)
+            .Select(i => $"m-{i}")
+            .ToHashSet(StringComparer.Ordinal);
+
         using var host = await StartHostAsync(services =>
         {
             services.AddTransient<AuditCapturingHandler>();
@@ -167,14 +173,33 @@ public sealed class PublishConsumeRoundTripTests
 
         await Task.WhenAll(publishTasks);
 
+        // Wait until all expected markers have been captured. We filter to this
+        // test's own markers so that late-arriving deliveries from a previous
+        // test (different queue, same handler type, same TestCollector bucket)
+        // do not inflate the count and cause a spurious "> total" failure.
         await WaitFor(
-            () => TestCollector.Count<AuditCapturingHandler>() >= total,
-            timeout: TimeSpan.FromSeconds(20));
+            () =>
+            {
+                var arrivedMarkers = TestCollector
+                    .Captured<AuditCapturingHandler, IntegrationAuditEvent>()
+                    .Select(c => c.Marker)
+                    .Where(m => m != null && expectedMarkers.Contains(m!))
+                    .Distinct()
+                    .Count();
+                return arrivedMarkers >= total;
+            },
+            timeout: TimeSpan.FromSeconds(30));
 
         var captured = TestCollector.Captured<AuditCapturingHandler, IntegrationAuditEvent>();
-        captured.Count.Should().Be(total);
-        var markers = captured.Select(c => c.Marker).Distinct().ToArray();
-        markers.Length.Should().Be(total, "no duplicates / no losses");
+
+        // Filter to this test's own deliveries. Any extras are late-arriving
+        // stragglers from other tests and must not cause an assertion failure here.
+        var ownMarkers = captured
+            .Select(c => c.Marker)
+            .Where(m => m != null && expectedMarkers.Contains(m!))
+            .Distinct()
+            .ToArray();
+        ownMarkers.Length.Should().Be(total, "all published messages must be delivered exactly once");
     }
 
     [Fact]

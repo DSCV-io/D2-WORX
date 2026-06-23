@@ -219,9 +219,16 @@ public sealed class RateLimiterTests
         const int max_concurrency = 5;
         const int total_callers = 50;
 
+        // Acquisition timeout is deliberately large (60s). Under CI load Task.Delay(10)
+        // can be delayed much longer than 10ms — a tight timeout (e.g. 5s) causes
+        // legitimate callers to be rejected when the system is under pressure from
+        // other parallel tests (Docker container starts, Redis, etc.), which makes
+        // the test fail with RateLimitRejectedException rather than the intended
+        // semaphore-violation assertion. 60s exceeds any plausible per-task delay
+        // while still being finite enough to catch a genuine deadlock.
         var limiter = new RateLimiter(new(
             maxConcurrency: max_concurrency,
-            acquisitionTimeout: TimeSpan.FromSeconds(5)));
+            acquisitionTimeout: TimeSpan.FromSeconds(60)));
 
         var maxObserved = 0;
         var active = 0;
@@ -231,8 +238,19 @@ public sealed class RateLimiterTests
             await limiter.ExecuteAsync(async _ =>
             {
                 var current = Interlocked.Increment(ref active);
-                if (current > Volatile.Read(ref maxObserved))
-                    Interlocked.Exchange(ref maxObserved, current);
+
+                // CAS loop: update maxObserved only when current exceeds it.
+                // Interlocked.Exchange without compare-and-swap can overwrite a
+                // higher value written by a concurrent thread (TOCTOU), causing
+                // the measured peak to be falsely low. The CAS loop guarantees
+                // maxObserved monotonically increases to the true concurrency peak.
+                int observed;
+                do
+                {
+                    observed = Volatile.Read(ref maxObserved);
+                    if (current <= observed) break;
+                }
+                while (Interlocked.CompareExchange(ref maxObserved, current, observed) != observed);
 
                 await Task.Delay(10, CancellationToken.None);
 
