@@ -9,6 +9,9 @@
 //   1. sign op (with @d2GrpcMethod) → .proto + service + mapper emitted.
 //   2. getJwks op (no @d2GrpcMethod) → NO .proto emitted (skip path).
 //   3. op with @d2GrpcMethod + unmapped scalar → D2TSP001 fires.
+//   4. unpinned field on proto-bound model → D2TSP009 renders clean (not doubly-wrapped).
+//   5. @d2Reserved on request / response models → reserved lines emitted in .proto.
+//   6. duplicate reserved names are deduplicated before emission.
 
 import { describe, it, expect, beforeAll } from "vitest";
 import {
@@ -553,5 +556,255 @@ describe("protoGrpcEmitIntegration_Resilience_PredicateAndSentinelEmitted", () =
     expect(pingDi).not.toContain("D2GeneratedBusinessRetrySignal");
     const pingImpl = getEmittedFile(host, "/PlainFixturesGrpcClient.g.cs");
     expect(pingImpl).not.toContain("D2GeneratedBusinessRetrySignal");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Test: unpinned field on a proto-bound model → D2TSP009 diagnostic renders
+// the clean pre-formatted sentence, not a doubly-wrapped garbled string.
+//
+// Regression pin: the old template had two slots (${"field"} and
+// ${"model"}); the call site stuffed the full pre-formatted sentence into
+// the `field` slot with an empty `model`, producing a message that contained
+// the sentence twice (once nested inside the outer template slots). The fix
+// changes the template to a single ${"detail"} slot and the call site to
+// `format: { detail: message }`, so the rendered string is the clean sentence.
+// ---------------------------------------------------------------------------
+
+describe("protoGrpcEmitIntegration_UnpinnedField_D2TSP009_CleanMessage", () => {
+  let host: Awaited<ReturnType<typeof createTestHost>>;
+
+  beforeAll(async () => {
+    host = await createTestHost({
+      libraries: [D2DecoratorTestLibrary, D2EmitterTestLibrary],
+    });
+  });
+
+  it("unpinned field on proto-bound model → D2TSP009 fires with a clean rendered message (not doubly-wrapped)", async () => {
+    host.addTypeSpecFile(
+      "main.tsp",
+      `
+      import "@d2/typespec-decorators";
+      using D2;
+      namespace D2.Test;
+
+      model PinlessInput { kid: string; }
+      model PinlessOutput { @d2Field(1) result: string; }
+
+      @d2Command
+      @d2ServedBy("TestSvc")
+      @d2GrpcMethod("TestSvc", "Do")
+      op doOp(input: PinlessInput): PinlessOutput;
+      `,
+    );
+
+    let compileError: unknown;
+    try {
+      await host.compile("main.tsp", {
+        emit: ["@d2/typespec-emitters"],
+        options: {
+          "@d2/typespec-emitters": {
+            "csharp-namespace": "D2.Test",
+            "proto-package": "d2.test.v1",
+            "proto-csharp-namespace": "D2.Test.Protos.V1",
+            "grpc-service-namespace": "D2.Test.Grpc",
+          },
+        },
+        outputDir: "testing:/out",
+      });
+    } catch (err) {
+      compileError = err;
+    }
+
+    const programErrors = host.program.diagnostics.filter(
+      (d) => d.severity === "error",
+    );
+    const hasErrors = compileError !== undefined || programErrors.length > 0;
+    expect(hasErrors).toBe(true);
+
+    // The rendered diagnostic message must contain the field name and model name
+    // from the pre-formatted sentence constructed in resolveProtoFields.
+    const d2tsp009 = host.program.diagnostics.find(
+      (d) => d.code === "@d2/typespec-emitters/unpinned-proto-field",
+    );
+    expect(d2tsp009).toBeDefined();
+
+    const msg = d2tsp009!.message;
+
+    // The clean message must mention both the field name and the proto message
+    // name. The emitter passes protoRequestName (grpcMethod + "Request") to
+    // resolveProtoFields — NOT the TypeSpec model name — so the expected model
+    // name in the rendered diagnostic is "DoRequest" (from @d2GrpcMethod("TestSvc", "Do")).
+    expect(msg).toContain("kid");
+    expect(msg).toContain("DoRequest");
+    expect(msg).toContain("D2TSP009");
+
+    // It must NOT be doubly-wrapped: the old bug embedded the entire sentence
+    // inside the `field` slot so the rendered string contained "@d2Field pin"
+    // twice (once from the outer template, once from the embedded sentence).
+    const pinPhrase = "@d2Field pin";
+    const occurrences = (
+      msg.match(
+        new RegExp(pinPhrase.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "g"),
+      ) ?? []
+    ).length;
+    expect(occurrences).toBe(1);
+
+    // The model slot must not appear empty ("on model ''") — that was the tell.
+    expect(msg).not.toContain("on model ''");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Test: @d2Reserved on request / response models → reserved lines in .proto
+//
+// The full end-to-end path from @d2Reserved decorator through
+// the emitter state-map read, emitProto call, and buildReservedNumberLines /
+// buildReservedNameLines helpers, all the way to the emitted .proto content.
+// Asserts both number ranges (range-collapsed) and quoted name lines appear
+// inside the correct message blocks.
+// ---------------------------------------------------------------------------
+
+describe("protoGrpcEmitIntegration_D2Reserved_ReservedLinesEmitted", () => {
+  let host: Awaited<ReturnType<typeof createTestHost>>;
+
+  beforeAll(async () => {
+    host = await createTestHost({
+      libraries: [D2DecoratorTestLibrary, D2EmitterTestLibrary],
+    });
+  });
+
+  it("@d2Reserved on request and response models → correct reserved lines in both message blocks", async () => {
+    host.addTypeSpecFile(
+      "main.tsp",
+      `
+      import "@d2/typespec-decorators";
+      using D2;
+      namespace D2.Test;
+
+      @d2Reserved("old_kid, removed_slot", 3, 5)
+      model UpdateInput { @d2Field(1) newKid: string; }
+
+      @d2Reserved("old_sig", 2)
+      model UpdateOutput { @d2Field(1) signature: string; }
+
+      @d2Command
+      @d2ServedBy("TestSvc")
+      @d2GrpcMethod("TestSvc", "Update")
+      op update(input: UpdateInput): UpdateOutput;
+      `,
+    );
+
+    await host.compile("main.tsp", {
+      emit: ["@d2/typespec-emitters"],
+      options: {
+        "@d2/typespec-emitters": {
+          "csharp-namespace": "D2.Test",
+          "proto-package": "d2.test.v1",
+          "proto-csharp-namespace": "D2.Test.Protos.V1",
+          "grpc-service-namespace": "D2.Test.Grpc",
+        },
+      },
+      outputDir: "testing:/out",
+    });
+
+    const errors = host.program.diagnostics.filter(
+      (d) => d.severity === "error",
+    );
+    expect(errors).toHaveLength(0);
+
+    const protoContent = getEmittedFile(host, ".g.proto");
+    expect(protoContent).toBeDefined();
+
+    // Extract the request message block to assert reserved lines.
+    // The emitter names the request proto message <grpcMethod>Request (not the
+    // TypeSpec model name), so the block is "UpdateRequest" for
+    // @d2GrpcMethod("TestSvc", "Update").
+    const inputBlockMatch = protoContent!.match(
+      /message UpdateRequest \{([^}]*)\}/s,
+    );
+    expect(inputBlockMatch).not.toBeNull();
+    const inputBlock = inputBlockMatch![1]!;
+
+    // Numbers 3 and 5 are non-consecutive → emitted as "reserved 3, 5;"
+    expect(inputBlock).toContain("reserved 3, 5;");
+    // Names emitted as individual reserved lines.
+    expect(inputBlock).toContain('reserved "old_kid";');
+    expect(inputBlock).toContain('reserved "removed_slot";');
+
+    // Extract the UpdateOutput (data message) block for response reserved lines.
+    const outputBlockMatch = protoContent!.match(
+      /message UpdateOutput \{([^}]*)\}/s,
+    );
+    expect(outputBlockMatch).not.toBeNull();
+    const outputBlock = outputBlockMatch![1]!;
+
+    expect(outputBlock).toContain("reserved 2;");
+    expect(outputBlock).toContain('reserved "old_sig";');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Test: duplicate reserved names are deduplicated before emission
+//
+// buildReservedNameLines deduplicates names (same as the
+// number path deduplicates numbers). This test pins the behavior: duplicate
+// name entries in the @d2Reserved list must emit only once.
+// ---------------------------------------------------------------------------
+
+describe("protoGrpcEmitIntegration_D2Reserved_DuplicateNamesDeduplicated", () => {
+  let host: Awaited<ReturnType<typeof createTestHost>>;
+
+  beforeAll(async () => {
+    host = await createTestHost({
+      libraries: [D2DecoratorTestLibrary, D2EmitterTestLibrary],
+    });
+  });
+
+  it("duplicate reserved names in @d2Reserved list emit only once in the .proto", async () => {
+    host.addTypeSpecFile(
+      "main.tsp",
+      `
+      import "@d2/typespec-decorators";
+      using D2;
+      namespace D2.Test;
+
+      @d2Reserved("old_key, old_key", 1)
+      model DedupInput { @d2Field(2) value: string; }
+
+      model DedupOutput { @d2Field(1) ok: string; }
+
+      @d2Command
+      @d2ServedBy("TestSvc")
+      @d2GrpcMethod("TestSvc", "Dedup")
+      op dedup(input: DedupInput): DedupOutput;
+      `,
+    );
+
+    await host.compile("main.tsp", {
+      emit: ["@d2/typespec-emitters"],
+      options: {
+        "@d2/typespec-emitters": {
+          "csharp-namespace": "D2.Test",
+          "proto-package": "d2.test.v1",
+          "proto-csharp-namespace": "D2.Test.Protos.V1",
+          "grpc-service-namespace": "D2.Test.Grpc",
+        },
+      },
+      outputDir: "testing:/out",
+    });
+
+    const errors = host.program.diagnostics.filter(
+      (d) => d.severity === "error",
+    );
+    expect(errors).toHaveLength(0);
+
+    const protoContent = getEmittedFile(host, ".g.proto");
+    expect(protoContent).toBeDefined();
+
+    // "old_key" appears twice in the decorator but must emit exactly once.
+    const occurrences = (protoContent!.match(/reserved "old_key";/g) ?? [])
+      .length;
+    expect(occurrences).toBe(1);
   });
 });

@@ -1498,7 +1498,7 @@ describe("emitProto_ProtoPackage_ChannelGrammar", () => {
     expect(CHANNEL_GRAMMAR.test(SIGN_PKG)).toBe(true);
   });
 
-  it("a bare v1 package (pre-channel convention) does NOT match the channel grammar", () => {
+  it("SIGN_PKG has been renumbered away from the retired bare v1 value", () => {
     // Non-vacuous: the old d2.keycustodian.v1 passes the format but not the
     // intent (the channel grammar accepts it because v1 is syntactically valid).
     // The real guard is that SIGN_PKG is NOT the old bare v1 value.
@@ -1530,5 +1530,9 @@ describe("emitProto_ProtoPackage_ChannelGrammar", () => {
     expect(CHANNEL_GRAMMAR.test("d2.keycustodian.2alpha")).toBe(false);
     expect(CHANNEL_GRAMMAR.test("d2.keycustodian.v2.alpha")).toBe(false);
     expect(CHANNEL_GRAMMAR.test("d2.KeyCustodian.v2alpha")).toBe(false);
+    // malformed channel suffixes: gamma is not a valid stability channel (only alpha/beta)
+    expect(CHANNEL_GRAMMAR.test("d2.keycustodian.v2gamma")).toBe(false);
+    // "valpha" is not a valid version segment — must be v<N>(alpha|beta)?
+    expect(CHANNEL_GRAMMAR.test("d2.keycustodian.valpha")).toBe(false);
   });
 });

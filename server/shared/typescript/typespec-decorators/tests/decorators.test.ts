@@ -69,6 +69,7 @@ import {
   validateServedBy,
   validateResilience,
   validateResultPredicate,
+  validateFieldNumber,
 } from "../src/validators.js";
 import { $onValidate } from "../src/onvalidate.js";
 import {
@@ -1294,6 +1295,134 @@ describe("directUnit_validateServedBy", () => {
     const { ctx, target, diags } = makeMockCtxWithDiags();
     validateServedBy(ctx, target, "   ");
     expect(diags.some((d) => d.code.endsWith("empty-served-by"))).toBe(true);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Helper: makeMockCtxWithDiagsForProperty — same shape as makeMockCtxWithDiags
+// but the target is typed as ModelProperty (required by validateFieldNumber).
+// ---------------------------------------------------------------------------
+
+function makeMockCtxWithDiagsForProperty(): {
+  ctx: DecoratorContext;
+  target: ModelProperty;
+  diags: Array<{ code: string }>;
+} {
+  const diags: Array<{ code: string }> = [];
+  const storeMap = new Map<symbol, Map<object, unknown>>();
+  const ctx = {
+    program: {
+      stateMap(key: symbol): Map<object, unknown> {
+        if (!storeMap.has(key)) storeMap.set(key, new Map());
+        return storeMap.get(key)!;
+      },
+      reportDiagnostic(diag: { code: string }): void {
+        diags.push(diag);
+      },
+    },
+  } as unknown as DecoratorContext;
+  const target = {} as unknown as ModelProperty;
+  return { ctx, target, diags };
+}
+
+// ---------------------------------------------------------------------------
+// Direct unit tests: validateFieldNumber
+// Exercises each invalid class and the boundary values that define them.
+// ---------------------------------------------------------------------------
+
+describe("directUnit_validateFieldNumber", () => {
+  it("no diagnostic for minimum valid field number 1", () => {
+    const { ctx, target, diags } = makeMockCtxWithDiagsForProperty();
+    validateFieldNumber(ctx, target, 1);
+    expect(diags).toHaveLength(0);
+  });
+
+  it("no diagnostic for mid-range valid number 100", () => {
+    const { ctx, target, diags } = makeMockCtxWithDiagsForProperty();
+    validateFieldNumber(ctx, target, 100);
+    expect(diags).toHaveLength(0);
+  });
+
+  it("no diagnostic for the number just below the reserved range 18999", () => {
+    const { ctx, target, diags } = makeMockCtxWithDiagsForProperty();
+    validateFieldNumber(ctx, target, 18999);
+    expect(diags).toHaveLength(0);
+  });
+
+  it("no diagnostic for the number just above the reserved range 20000", () => {
+    const { ctx, target, diags } = makeMockCtxWithDiagsForProperty();
+    validateFieldNumber(ctx, target, 20000);
+    expect(diags).toHaveLength(0);
+  });
+
+  it("no diagnostic for the proto3 maximum valid field number 536870911", () => {
+    const { ctx, target, diags } = makeMockCtxWithDiagsForProperty();
+    validateFieldNumber(ctx, target, 536870911);
+    expect(diags).toHaveLength(0);
+  });
+
+  it("emits invalid-field-number for zero (below minimum)", () => {
+    const { ctx, target, diags } = makeMockCtxWithDiagsForProperty();
+    validateFieldNumber(ctx, target, 0);
+    expect(diags.some((d) => d.code.endsWith("invalid-field-number"))).toBe(
+      true,
+    );
+  });
+
+  it("emits invalid-field-number for -1 (negative)", () => {
+    const { ctx, target, diags } = makeMockCtxWithDiagsForProperty();
+    validateFieldNumber(ctx, target, -1);
+    expect(diags.some((d) => d.code.endsWith("invalid-field-number"))).toBe(
+      true,
+    );
+  });
+
+  it("emits invalid-field-number for 1.5 (non-integer float)", () => {
+    const { ctx, target, diags } = makeMockCtxWithDiagsForProperty();
+    validateFieldNumber(ctx, target, 1.5);
+    expect(diags.some((d) => d.code.endsWith("invalid-field-number"))).toBe(
+      true,
+    );
+  });
+
+  it("emits invalid-field-number for NaN (not a number)", () => {
+    const { ctx, target, diags } = makeMockCtxWithDiagsForProperty();
+    validateFieldNumber(ctx, target, NaN);
+    expect(diags.some((d) => d.code.endsWith("invalid-field-number"))).toBe(
+      true,
+    );
+  });
+
+  it("emits invalid-field-number for the reserved range lower bound 19000", () => {
+    const { ctx, target, diags } = makeMockCtxWithDiagsForProperty();
+    validateFieldNumber(ctx, target, 19000);
+    expect(diags.some((d) => d.code.endsWith("invalid-field-number"))).toBe(
+      true,
+    );
+  });
+
+  it("emits invalid-field-number for a mid-reserved-range number 19500", () => {
+    const { ctx, target, diags } = makeMockCtxWithDiagsForProperty();
+    validateFieldNumber(ctx, target, 19500);
+    expect(diags.some((d) => d.code.endsWith("invalid-field-number"))).toBe(
+      true,
+    );
+  });
+
+  it("emits invalid-field-number for the reserved range upper bound 19999", () => {
+    const { ctx, target, diags } = makeMockCtxWithDiagsForProperty();
+    validateFieldNumber(ctx, target, 19999);
+    expect(diags.some((d) => d.code.endsWith("invalid-field-number"))).toBe(
+      true,
+    );
+  });
+
+  it("emits invalid-field-number for one over the proto3 maximum 536870912", () => {
+    const { ctx, target, diags } = makeMockCtxWithDiagsForProperty();
+    validateFieldNumber(ctx, target, 536870912);
+    expect(diags.some((d) => d.code.endsWith("invalid-field-number"))).toBe(
+      true,
+    );
   });
 });
 
@@ -2906,6 +3035,117 @@ describe("d2InProcess_OnNonOperationIsCompilerRejected", () => {
   });
 });
 
+// --- @d2Field integration rejection + acceptance ---
+
+describe("d2Field_RejectsInvalidFieldNumbers", () => {
+  it("emits invalid-field-number and hasError() for field number 0", async () => {
+    await runner.diagnose(`
+      model Message {
+        @d2Field(0) badField: string;
+      }
+    `);
+    expect(getDiagCodes(runner)).toContain(
+      "@d2/typespec-decorators/invalid-field-number",
+    );
+    expect(runner.program.hasError()).toBe(true);
+  });
+
+  it("emits invalid-field-number and hasError() for a negative field number", async () => {
+    await runner.diagnose(`
+      model Message {
+        @d2Field(-1) badField: string;
+      }
+    `);
+    expect(getDiagCodes(runner)).toContain(
+      "@d2/typespec-decorators/invalid-field-number",
+    );
+    expect(runner.program.hasError()).toBe(true);
+  });
+
+  it("emits invalid-field-number and hasError() for the protobuf reserved range lower bound 19000", async () => {
+    await runner.diagnose(`
+      model Message {
+        @d2Field(19000) badField: string;
+      }
+    `);
+    expect(getDiagCodes(runner)).toContain(
+      "@d2/typespec-decorators/invalid-field-number",
+    );
+    expect(runner.program.hasError()).toBe(true);
+  });
+
+  it("emits invalid-field-number and hasError() for the protobuf reserved range upper bound 19999", async () => {
+    await runner.diagnose(`
+      model Message {
+        @d2Field(19999) badField: string;
+      }
+    `);
+    expect(getDiagCodes(runner)).toContain(
+      "@d2/typespec-decorators/invalid-field-number",
+    );
+    expect(runner.program.hasError()).toBe(true);
+  });
+
+  it("emits invalid-field-number and hasError() for one over the proto3 maximum 536870912", async () => {
+    await runner.diagnose(`
+      model Message {
+        @d2Field(536870912) badField: string;
+      }
+    `);
+    expect(getDiagCodes(runner)).toContain(
+      "@d2/typespec-decorators/invalid-field-number",
+    );
+    expect(runner.program.hasError()).toBe(true);
+  });
+});
+
+describe("d2Field_AcceptsValidFieldNumbers", () => {
+  it("produces no invalid-field-number diagnostic for field number 1 (minimum)", async () => {
+    await runner.diagnose(`
+      model Message {
+        @d2Field(1) validField: string;
+      }
+    `);
+    expect(getDiagCodes(runner)).not.toContain(
+      "@d2/typespec-decorators/invalid-field-number",
+    );
+  });
+
+  it("produces no invalid-field-number diagnostic for field number 18999 (just below reserved range)", async () => {
+    await runner.diagnose(`
+      model Message {
+        @d2Field(18999) validField: string;
+      }
+    `);
+    expect(getDiagCodes(runner)).not.toContain(
+      "@d2/typespec-decorators/invalid-field-number",
+    );
+  });
+
+  it("produces no invalid-field-number diagnostic for field number 20000 (just above reserved range)", async () => {
+    await runner.diagnose(`
+      model Message {
+        @d2Field(20000) validField: string;
+      }
+    `);
+    expect(getDiagCodes(runner)).not.toContain(
+      "@d2/typespec-decorators/invalid-field-number",
+    );
+  });
+
+  it("produces no invalid-field-number diagnostic for the proto3 maximum field number 536870911", async () => {
+    await runner.diagnose(`
+      model Message {
+        @d2Field(536870911) validField: string;
+      }
+    `);
+    expect(getDiagCodes(runner)).not.toContain(
+      "@d2/typespec-decorators/invalid-field-number",
+    );
+    expect(runner.program.stateMap(D2_FIELD_KEY).size).toBeGreaterThan(0);
+  });
+});
+
 it("lib_InProcessDiagnosticHasErrorSeverity", () => {
   const catalog = $lib.diagnostics as Record<
     string,
@@ -2923,6 +3163,14 @@ it("lib_CategoryDiagnosticsHaveErrorSeverity", () => {
   expect(catalog["category-exclusive"]?.severity).toBe("error");
   expect(catalog["internal-op-exposed"]?.severity).toBe("error");
   expect(catalog["exposure-or-internal-required"]?.severity).toBe("error");
+});
+
+it("lib_InvalidFieldNumberDiagnosticHasErrorSeverity", () => {
+  const catalog = $lib.diagnostics as Record<
+    string,
+    { severity: string } | undefined
+  >;
+  expect(catalog["invalid-field-number"]?.severity).toBe("error");
 });
 
 // ===========================================================================

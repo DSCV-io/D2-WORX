@@ -1091,7 +1091,7 @@ function emitProtoAndGrpcService(
     else if (code === "unpinned-proto-field")
       $lib.reportDiagnostic(program, {
         code: "unpinned-proto-field",
-        format: { field: message, model: "" },
+        format: { detail: message },
         target: NoTarget,
       });
     else

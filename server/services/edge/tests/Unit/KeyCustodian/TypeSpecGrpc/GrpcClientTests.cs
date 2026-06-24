@@ -339,8 +339,8 @@ public sealed class GrpcClientTests
     // ---------------------------------------------------------------------------
     // Case 14: null envelope — success response with NO Result field set (server-contract
     // violation). The captured envelope is null → the success branch's `envelope is not
-    // null` guard is false → the pipeline result passes through verbatim (no NRE). F-6:
-    // a null envelope on a 200 is a defect; the code does not crash.
+    // null` guard is false → the pipeline result passes through verbatim (no NRE).
+    // A null envelope on a 200 is a defect; the code does not crash.
     // ---------------------------------------------------------------------------
 
     [Fact]

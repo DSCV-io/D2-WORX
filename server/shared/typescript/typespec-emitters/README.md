@@ -280,15 +280,22 @@ is a C# server-side concern, not a wire-protocol concern.
 import { emitProto } from "@d2/typespec-emitters";
 
 const protoFile = emitProto(
-  "sign",
-  "KeyCustodianSigner",
-  "d2.keycustodian.v2alpha",
-  "D2.Services.Protos.KeyCustodian.V2Alpha",
-  "contracts/typespec/key-custodian.tsp",
-  inputWalk,
-  outputWalk,
+  "sign",                                        // opName (banner context only)
+  "KeyCustodianSigner",                          // grpcService
+  "Sign",                                        // grpcMethod
+  "unary",                                       // streaming mode
+  "d2.keycustodian.v2alpha",                     // protoPackage
+  "D2.Services.Protos.KeyCustodian.V2Alpha",     // protoCsharpNs
+  "contracts/typespec/key-custodian.tsp",        // sourceSpec
+  "SignRequest",                                 // requestModelName — proto convention: <grpcMethod>Request
+  inputFields,                                   // requestFields (FieldInfo[])
+  undefined,                                     // requestReserved (@d2Reserved payload or undefined)
+  "SignOutput",                                  // responseModelName
+  outputFields,                                  // responseFields (FieldInfo[])
+  undefined,                                     // responseReserved (@d2Reserved payload or undefined)
+  [],                                            // nestedMessages (NestedMessageDescriptor[])
   (code, msg) => {
-    /* D2TSP001 on unmapped scalar */
+    /* D2TSP001 on unmapped scalar; D2TSP009 on unpinned proto field */
   },
 );
 // protoFile.fileName → "key_custodian_signer_sign.g.proto"
@@ -298,7 +305,9 @@ Emits a proto3 file with a single-method `service` + `message` definitions for
 input and output. Field names are `lower_snake_case` (via `toSnake`). `bytes`
 maps from C# `byte[]` scalar. `IReadOnlyList<T>` fields emit as `repeated T`.
 Unmapped scalars trigger `D2TSP001` and cause the function to return `undefined`
-(no partial output). Field numbers are assigned sequentially from `1`.
+(no partial output). Field numbers are author-pinned via `@d2Field(N)` on each
+model property; a proto-bound field with no pin fails loud with the
+`unpinned-proto-field` diagnostic (D2TSP009). Positional assignment is disabled.
 
 ### REST route+policy emitter (`src/lib/route-policy-emitter.ts`)
 
@@ -686,6 +695,7 @@ catalog entry in `src/lib.ts`.
 | D2TSP006 | `idempotent-requires-route` | `@d2Idempotent` is present on an operation that has no `@route`. Idempotency gating is REST-only; it is meaningless without a public HTTP route. Add `@route` + a supported HTTP verb to the operation, or remove `@d2Idempotent` if the operation is not intended to have a REST surface.                                                          |
 | D2TSP007 | `unsupported-union-shape`   | A union property's variants are NOT a closed set of string literals (mixed-primitive, mixed-literal-kind, numeric-literal-only, discriminated, or model unions). There is no single cross-language enum representation, so the emitter loud-fails rather than guessing. Replace with a named enum or a closed string-literal union.                 |
 | D2TSP008 | `server-push-requires-payload` | A `@d2ServerPush` operation has an output model that emits no fields (void or empty record). A pure-push dispatcher must have a typed event payload to deliver to the sink. Add at least one field to the output model, or remove `@d2ServerPush` if the operation is not a server-push emitter. |
+| D2TSP009 | `unpinned-proto-field`         | A model property on a `@d2GrpcMethod`-bound model is missing its required `@d2Field(N)` pin. Every field on every proto-bound model must carry an explicit author-pinned field number; positional assignment is permanently disabled to prevent silent wire-format breaks on reorder/insert/delete. Add `@d2Field(N)` to the property. Fires only inside the proto emitter; DTO-only or in-process operations with unpinned fields compile clean. Severity: `error`. |
 
 All diagnostics have `severity: "error"` — every violation fails `tsp compile`
 with a non-zero exit code.

@@ -29,6 +29,8 @@ Edge routing config, and structured-log redaction markers.
 | `@d2Command`          | `op`            | _(none)_                                                     | `D2_COMMAND_KEY`                                                                       |
 | `@d2Query`            | `op`            | _(none)_                                                     | `D2_QUERY_KEY`                                                                         |
 | `@d2Internal`         | `op`            | _(none)_                                                     | `D2_INTERNAL_KEY`                                                                      |
+| `@d2Field`            | `ModelProperty` | `number: number`                                             | `D2_FIELD_KEY`                                                                         |
+| `@d2Reserved`         | `Model`         | `names: string, ...numbers: number[]`                        | `D2_RESERVED_KEY`                                                                      |
 
 ### Scope decorators
 

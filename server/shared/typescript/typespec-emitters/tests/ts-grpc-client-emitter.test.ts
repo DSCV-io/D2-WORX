@@ -4,7 +4,7 @@
 
 // Behavioral + structural coverage for ts-grpc-client-emitter.ts.
 //
-// THE LOAD-BEARING VALIDATION (AMB-1 — the real proto pipeline):
+// THE LOAD-BEARING VALIDATION (the real proto pipeline):
 //   The emitted SSR gRPC client is driven against the REAL @d2/grpc-client seam
 //   (handleGrpcCall / unaryCall / d2ResultFromProto / isTransientGrpcError), the
 //   REAL @d2/resilience ResilientPipeline, the REAL fixture ts-proto types (the
@@ -291,7 +291,7 @@ function makeServiceError(
  * A fake PredicateFixturesOrders stub. `script` yields a result per call so the
  * test can drive retry sequences (flaky-then-success, business-retry-then-give-up).
  * Records the call count. Typed against the REAL ts-proto client interface so the
- * harness COMPILES against the real proto types (the AMB-1 compile proof).
+ * harness COMPILES against the real proto types (the fixture-proto compile proof).
  */
 function makePlaceOrderStub(script: PlaceOrderResult[]): {
   stub: Pick<PredicateFixturesOrdersClient, "placeOrder">;
@@ -375,7 +375,7 @@ function baseScope(extra: Record<string, unknown> = {}): SeamScope {
 }
 
 // ===========================================================================
-// AMB-1 — the real buf/ts-proto pipeline proof
+// Fixture proto byte-gate — the real buf/ts-proto pipeline proof (place_order)
 // ===========================================================================
 
 /** Run the real buf/ts-proto toolchain on a fixture proto into a temp dir. */
@@ -424,7 +424,7 @@ function runRealBufTsProto(): string {
   );
 }
 
-describe("tsGrpcClient_AMB1_RealBufTsProtoPipeline", () => {
+describe("tsGrpcClient_FixtureProtoByteGate", () => {
   it("the real buf/ts-proto toolchain runs on the fixture proto and reproduces the committed proto-TS byte-identically", () => {
     const regenerated = runRealBufTsProto();
     const committed = readFileSync(
@@ -448,7 +448,7 @@ describe("tsGrpcClient_AMB1_RealBufTsProtoPipeline", () => {
 });
 
 // ===========================================================================
-// AMB-2 — the real buf/ts-proto pipeline proof for sign.proto (KeyCustodian)
+// Sign proto byte-gate — the real buf/ts-proto pipeline proof (sign / KeyCustodian)
 // ===========================================================================
 
 /** Run the real buf/ts-proto toolchain on the sign fixture proto into a temp dir. */
@@ -497,7 +497,7 @@ function runRealBufTsProtoSign(): string {
   );
 }
 
-describe("tsGrpcClient_AMB2_RealBufTsProtoSignPipeline", () => {
+describe("tsGrpcClient_RealBufTsProtoSignPipelineByteGate", () => {
   it("the real buf/ts-proto toolchain runs on sign.proto and reproduces the committed sign.ts byte-identically", () => {
     const regenerated = runRealBufTsProtoSign();
     const committed = readFileSync(
@@ -506,6 +506,19 @@ describe("tsGrpcClient_AMB2_RealBufTsProtoSignPipeline", () => {
     ).replace(/\r\n/g, "\n");
     expect(regenerated).toBe(committed);
   }, 60_000);
+
+  it("byte-gate is non-vacuous: a single-token mutation is detected as drift", () => {
+    // Proves the byte-comparison catches real drift — a gate that never fails is useless.
+    // Mutate one stable token in the committed fixture and assert the equality fails.
+    const committed = readFileSync(
+      join(HERE, "grpc-fixtures", "generated", "sign.ts"),
+      "utf8",
+    ).replace(/\r\n/g, "\n");
+    // Replace the first occurrence of the committed package string with a mutated value.
+    // "v2alpha" is stable — it's the channel declaration in the generated protobufPackage line.
+    const mutated = committed.replace("v2alpha", "v2beta");
+    expect(mutated).not.toBe(committed);
+  });
 
   it("the committed sign.ts exports the KeyCustodianSigner grpc-js client stub + v2alpha package", () => {
     const protoTs = readFileSync(
@@ -1050,7 +1063,7 @@ describe("tsGrpcClient_Behavioral_SignWithKind_ResponseEnum_RealSeam", () => {
 });
 
 // ===========================================================================
-// AMB-4 — cross-runtime predicate-CONSUMPTION parity.
+// Cross-runtime predicate-CONSUMPTION parity.
 //
 // Drives the emitted TS client over the SAME shared parity fixture the .NET
 // PredicateParityTests + predicate-parity test use, asserting the client's

@@ -502,11 +502,24 @@ function buildReservedNumberLines(numbers?: readonly number[]): string[] {
 
 /**
  * Build `reserved "old_name";` lines from a list of formerly-used field names.
- * Names are emitted one per line. Returns an empty array when empty or undefined.
+ * Names are deduplicated (preserving first-seen order) before emission, for
+ * parity with the dedup applied to reserved numbers. Returns an empty array
+ * when the input is empty or undefined.
  */
 function buildReservedNameLines(names?: readonly string[]): string[] {
   if (!names || names.length === 0) return [];
-  return names.map((n) => `reserved "${n}";`);
+
+  const seen = new Set<string>();
+  const deduped: string[] = [];
+
+  for (const n of names) {
+    if (!seen.has(n)) {
+      seen.add(n);
+      deduped.push(n);
+    }
+  }
+
+  return deduped.map((n) => `reserved "${n}";`);
 }
 
 // ---------------------------------------------------------------------------

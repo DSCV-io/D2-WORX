@@ -165,7 +165,7 @@ export const $lib = createTypeSpecLibrary({
     "unpinned-proto-field": {
       severity: "error",
       messages: {
-        default: paramMessage`field '${"field"}' on model '${"model"}' has no @d2Field pin — every field on a proto-bound model must carry an explicit @d2Field(N) field number; positional assignment is disabled`,
+        default: paramMessage`${"detail"}`,
       },
     },
 
