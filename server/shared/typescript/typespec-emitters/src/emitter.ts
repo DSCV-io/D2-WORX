@@ -4,7 +4,13 @@
 
 import { isAbsolute, join, relative } from "node:path";
 import { navigateProgram, NoTarget } from "@typespec/compiler";
-import type { EmitContext, Model, Operation } from "@typespec/compiler";
+import type {
+  EmitContext,
+  Model,
+  Namespace,
+  Operation,
+} from "@typespec/compiler";
+import { getVersion } from "@typespec/versioning";
 import { getHttpOperation, getOperationVerb } from "@typespec/http";
 import {
   D2_SERVED_BY_KEY,
@@ -77,6 +83,10 @@ import type {
   ScopePolicy,
 } from "./lib/route-policy-emitter.js";
 import { $lib } from "./lib.js";
+import { validateChannelAgreement } from "./lib/wire-channel.js";
+import type { WireChannel } from "./lib/wire-channel.js";
+import { emitWireVersionConstant } from "./lib/wire-version-emitter.js";
+import { emitWireIdentityManifest } from "./lib/wire-manifest-emitter.js";
 
 // The $onEmit entry point drives these artifact families per tsp compile:
 //
@@ -119,6 +129,21 @@ import { $lib } from "./lib.js";
 //      The text/event-stream wire framing stays hand-written fringe (the sink's
 //      job). A push op whose output has no emittable payload fires D2TSP008
 //      (server-push-requires-payload) and emits no partial dispatcher.
+//  12. WireVersion.g.cs — C# static class with public const CHANNEL/GENERATION/
+//      STABILITY in the proto-csharp-namespace. Emitted once when ≥1 @d2GrpcMethod
+//      op produced a proto and the channel validated. Co-located with the
+//      Grpc.Tools proto types so runtimes reference e.g.
+//      D2.Services.Protos.KeyCustodian.V2Alpha.WireVersion.CHANNEL.
+//  13. wire-identity.manifest.g.json — JSON record of the agree-by-construction
+//      wire-identity facts (protoPackage, protoCsharpNamespace, generation,
+//      stability, channel). Emitted alongside WireVersion.g.cs (same gate).
+//      Deliberately omits published package names (parked for a later step).
+//
+// Channel cross-validation (before any proto emit):
+//   validateChannelAgreement is called once at $onEmit start after reading
+//   proto-package + proto-csharp-namespace. A proto-package ↔ proto-csharp-namespace
+//   channel mismatch (or ↔ @versioned active-version mismatch) fires D2TSP010
+//   (channel-segment-mismatch, error) and prevents emit of the two new artifacts.
 //
 // Namespace routing for C# DTOs:
 //   EXPOSED op (@d2InProcess / @d2GrpcMethod / @d2ServerPush / @route):
@@ -216,6 +241,47 @@ export async function $onEmit(context: EmitContext): Promise<void> {
       ? rawOptions["grpc-service-namespace"]
       : "D2.Generated.Grpc";
 
+  // ---- Channel cross-validation (D2TSP010) ----
+  // Resolve the @versioned active-version channel from any @versioned namespace
+  // in the program. A @versioned namespace carries a Versions enum whose member
+  // VALUES are the channel strings (e.g. "v2alpha"). We use the first member's
+  // value as the active channel — single-version programs have exactly one member.
+  let versionedChannel: string | undefined;
+
+  navigateProgram(program, {
+    namespace(ns: Namespace) {
+      const versionMap = getVersion(program, ns);
+
+      if (versionMap === undefined) return;
+
+      const versions = versionMap.getVersions();
+      if (versions.length === 0) return;
+
+      // Use the last member value as the active channel (highest version in the enum).
+      // For single-member enums this is the only member.
+      const latestVersion = versions[versions.length - 1];
+      // First @versioned namespace by navigateProgram walk order wins; subsequent ones are ignored.
+      if (latestVersion !== undefined && versionedChannel === undefined)
+        versionedChannel = latestVersion.value;
+    },
+  });
+
+  // Cross-validate proto-package ↔ proto-csharp-namespace ↔ @versioned channel.
+  // Returns the parsed WireChannel on agreement; fires D2TSP010 + returns undefined on mismatch.
+  const validatedChannel: WireChannel | undefined = validateChannelAgreement(
+    protoPackage,
+    protoCsharpNs,
+    versionedChannel,
+    (code, message) => {
+      if (code === "channel-segment-mismatch")
+        $lib.reportDiagnostic(program, {
+          code: "channel-segment-mismatch",
+          format: { detail: message },
+          target: NoTarget,
+        });
+    },
+  );
+
   // Collect exposed ops per module (grouped by @d2ServedBy) for the façade emitter.
   // Façade is one-per-module so it is emitted AFTER the per-op walk gathers all ops.
   const exposedOpsByModule = new Map<string, ExposedOp[]>();
@@ -226,6 +292,13 @@ export async function $onEmit(context: EmitContext): Promise<void> {
   // the GrpcClientOp (with any parsed @d2Resilience predicate ASTs attached) with the op's output
   // Model so the per-module predicate emitter can do its gen-time data-path crawl.
   const grpcOpsByModule = new Map<string, CollectedGrpcOp[]>();
+
+  // Gate for WireVersion.g.cs + wire-identity manifest: tracks whether any @d2GrpcMethod op
+  // successfully produced a proto. Populated in fixture mode (no csClientsNamespace) AND real-
+  // module mode — unlike grpcOpsByModule which is real-module only. The specHint from the first
+  // such op is captured for the WireVersion banner.
+  let anyGrpcProtoEmitted = false;
+  let wireSpecHintCapture: string | undefined;
 
   // Collect @route ops per module (grouped by @d2ServedBy) for the TS browser
   // REST client emitter. The route dispatch is otherwise fire-and-emit per op;
@@ -468,7 +541,7 @@ export async function $onEmit(context: EmitContext): Promise<void> {
           };
         }
 
-        emitProtoAndGrpcService(
+        const protoEmitted = emitProtoAndGrpcService(
           context,
           program,
           op.name,
@@ -482,6 +555,16 @@ export async function $onEmit(context: EmitContext): Promise<void> {
           outputModel,
           grpcDelegationTarget,
         );
+
+        // Mark that at least one proto was emitted. Captures the specHint from the first gRPC op
+        // for use in the WireVersion banner. Works in both fixture and real-module modes.
+        // Gate on protoEmitted: if the emit returned false (walk error / proto undefined),
+        // the .proto was NOT written; setting the flag here would produce orphaned
+        // WireVersion.g.cs + wire-identity.manifest.g.json with no proto on disk.
+        if (protoEmitted && !anyGrpcProtoEmitted) {
+          anyGrpcProtoEmitted = true;
+          wireSpecHintCapture = specHint;
+        }
 
         // Collect this op for the per-module gRPC client emitter (real-module only).
         // Only when csClientsNamespace is configured — fixture ops skip client emit.
@@ -749,6 +832,39 @@ export async function $onEmit(context: EmitContext): Promise<void> {
     const seamFile = emitSseEmitSinkSeam(ns, specHint);
     const seamPath = resolveOutputPath(context, seamFile.fileName);
     void emitGeneratedFile(program, seamPath, seamFile.content);
+  }
+
+  // ---- WireVersion constant + wire-identity manifest (once, when ≥1 proto was emitted) ------
+  // Emitted when the channel validated AND at least one @d2GrpcMethod op emitted a proto.
+  // anyGrpcProtoEmitted is set in the per-op walk for every gRPC op in both fixture and
+  // real-module modes (unlike grpcOpsByModule which is real-module only). Both artifacts are in
+  // the same proto C# namespace (protoCsharpNs) so they co-locate with the Grpc.Tools proto types.
+  if (validatedChannel !== undefined && anyGrpcProtoEmitted) {
+    // wireSpecHintCapture is set on the first gRPC op; fall back to protoPackage for safety
+    // (unreachable when anyGrpcProtoEmitted is true, since the first op sets the capture).
+    const wireSpecHint = wireSpecHintCapture ?? protoPackage;
+
+    const wireVersionFile = emitWireVersionConstant(
+      protoCsharpNs,
+      validatedChannel,
+      wireSpecHint,
+    );
+    const wireVersionPath = resolveOutputPath(
+      context,
+      wireVersionFile.fileName,
+    );
+    void emitGeneratedFile(program, wireVersionPath, wireVersionFile.content);
+
+    const wireManifestFile = emitWireIdentityManifest(
+      protoPackage,
+      protoCsharpNs,
+      validatedChannel,
+    );
+    const wireManifestPath = resolveOutputPath(
+      context,
+      wireManifestFile.fileName,
+    );
+    void emitGeneratedFile(program, wireManifestPath, wireManifestFile.content);
   }
 
   // ---- OpenAPI x-d2-* document(s) — one per @service namespace × version --------------------
@@ -1058,7 +1174,7 @@ function emitProtoAndGrpcService(
   inputModel: Model | undefined,
   outputModel: Model | undefined,
   delegationTarget?: GrpcDelegationTarget,
-): void {
+): boolean {
   const errors: string[] = [];
   const onError = (
     code:
@@ -1112,7 +1228,7 @@ function emitProtoAndGrpcService(
       ? walkModel(program, outputModel, onError)
       : { fields: [], nestedModels: [], nestedEnums: [] };
 
-  if (errors.length > 0) return;
+  if (errors.length > 0) return false;
 
   // ---- proto emission ----
   // Proto message names follow the <Method>Request / <Method>Response convention
@@ -1178,7 +1294,7 @@ function emitProtoAndGrpcService(
     nestedDescriptors,
     onError,
   );
-  if (errors.length > 0 || protoFile === undefined) return;
+  if (errors.length > 0 || protoFile === undefined) return false;
 
   const protoPath = resolveOutputPath(context, protoFile.fileName);
   void emitGeneratedFile(program, protoPath, protoFile.content);
@@ -1206,6 +1322,8 @@ function emitProtoAndGrpcService(
 
   const mapperPath = resolveOutputPath(context, mapperFile.fileName);
   void emitGeneratedFile(program, mapperPath, mapperFile.content);
+
+  return true;
 }
 
 /**

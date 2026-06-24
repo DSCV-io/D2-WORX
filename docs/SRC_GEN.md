@@ -140,7 +140,7 @@ abbreviation, 3-digit number). Examples currently in use:
 | Field constraints    | `D2FC`   | `validation/source-gen`                                                |
 | Advisory locks       | `D2LCK`  | `entity-framework-core/locks-source-gen`                              |
 | KC error codes       | `D2KEC`  | `server/services/edge/key-custodian/error-codes-source-gen` (shell)    |
-| TypeSpec emitters    | `D2TSP`  | `server/shared/typescript/typespec-emitters` (TypeSpec emitter fleet — independent pipeline from ts-codegen; IDs allocated in `src/lib.ts`): `D2TSP001` unmapped-scalar — scalar has no C#/proto/TS mapping; `D2TSP002` unsupported-property-type — an anonymous-model, model-variant, or otherwise-unrecognized property kind (named enums + closed string-literal unions ARE supported — they map to a cross-language enum: a C# `public enum` + `[JsonConverter(typeof(JsonStringEnumConverter))]`, a TS const-object, and a proto `string` field carrying the member-name wire string); `D2TSP003` missing-cqrs-category — op carries neither @d2Command nor @d2Query (defensive guard in namespace routing; `category-required` invariant prevents this in valid programs); `D2TSP004` route-missing-auth-intent — a routed op carries neither `@d2RequireAnyScope`, `@d2RequireAllScopes`, nor `@d2Harmless`; every routed op must declare an auth intent (the route emitter loud-fails rather than emitting a boot-failing endpoint); `D2TSP005` unsupported-http-verb — a verb other than get/post/put/delete/patch (e.g. head/options) has no `Map*` mapping in the route emitter; `D2TSP006` idempotent-requires-route — `@d2Idempotent` is present on an operation with no `@route`; idempotency gating is REST-only and is meaningless without a public HTTP route; `D2TSP007` unsupported-union-shape — a union property whose variants are NOT a closed set of string literals (mixed-primitive, mixed-literal-kind, numeric-literal-only, discriminated, or model unions); there is no single cross-language enum representation, so the emitter loud-fails rather than guessing — replace with a named enum or a closed string-literal union; `D2TSP008` server-push-requires-payload — a `@d2ServerPush` op whose output has no emittable payload (a void return, or an output model with zero fields and zero nested models); the op's output model IS the dispatched event payload, so a payload-less push is almost certainly a mistake — the dispatch emitter loud-fails rather than emitting a dispatcher with an empty payload record; `D2TSP009` unpinned-proto-field — a model property on a `@d2GrpcMethod`-bound model lacks a `@d2Field(N)` author-pinned field number; positional assignment is permanently disabled — every field on every proto-bound model must carry an explicit `@d2Field(N)` pin or the proto emitter fails loud; fires only inside the proto emitter (DTO-only and in-process ops are unaffected) (all error severity) |
+| TypeSpec emitters    | `D2TSP`  | `server/shared/typescript/typespec-emitters` (TypeSpec emitter fleet — independent pipeline from ts-codegen; IDs allocated in `src/lib.ts`): `D2TSP001` unmapped-scalar — scalar has no C#/proto/TS mapping; `D2TSP002` unsupported-property-type — an anonymous-model, model-variant, or otherwise-unrecognized property kind (named enums + closed string-literal unions ARE supported — they map to a cross-language enum: a C# `public enum` + `[JsonConverter(typeof(JsonStringEnumConverter))]`, a TS const-object, and a proto `string` field carrying the member-name wire string); `D2TSP003` missing-cqrs-category — op carries neither @d2Command nor @d2Query (defensive guard in namespace routing; `category-required` invariant prevents this in valid programs); `D2TSP004` route-missing-auth-intent — a routed op carries neither `@d2RequireAnyScope`, `@d2RequireAllScopes`, nor `@d2Harmless`; every routed op must declare an auth intent (the route emitter loud-fails rather than emitting a boot-failing endpoint); `D2TSP005` unsupported-http-verb — a verb other than get/post/put/delete/patch (e.g. head/options) has no `Map*` mapping in the route emitter; `D2TSP006` idempotent-requires-route — `@d2Idempotent` is present on an operation with no `@route`; idempotency gating is REST-only and is meaningless without a public HTTP route; `D2TSP007` unsupported-union-shape — a union property whose variants are NOT a closed set of string literals (mixed-primitive, mixed-literal-kind, numeric-literal-only, discriminated, or model unions); there is no single cross-language enum representation, so the emitter loud-fails rather than guessing — replace with a named enum or a closed string-literal union; `D2TSP008` server-push-requires-payload — a `@d2ServerPush` op whose output has no emittable payload (a void return, or an output model with zero fields and zero nested models); the op's output model IS the dispatched event payload, so a payload-less push is almost certainly a mistake — the dispatch emitter loud-fails rather than emitting a dispatcher with an empty payload record; `D2TSP009` unpinned-proto-field — a model property on a `@d2GrpcMethod`-bound model lacks a `@d2Field(N)` author-pinned field number; positional assignment is permanently disabled — every field on every proto-bound model must carry an explicit `@d2Field(N)` pin or the proto emitter fails loud; fires only inside the proto emitter (DTO-only and in-process ops are unaffected); `D2TSP010` channel-segment-mismatch — the wire-channel segment derived from `proto-package` disagrees with the trailing segment of `proto-csharp-namespace` OR with the `@versioned` enum value declared on the primary namespace; all three identity surfaces (`proto-package`, `proto-csharp-namespace`, `@versioned` channel) must carry the SAME generation (`V<N>(alpha|beta)?`) — single source + cross-validation, never hand-matching three separate strings (all error severity) |
 
 Diagnostic IDs are declared in two parallel files:
 
@@ -659,6 +659,49 @@ Emits two files into `validation/abstractions/Generated/`:
 ### Consumers
 
 `D2.Shared.Contacts` VO `Create` factories + `D2.Shared.Location` VO `Create` factories consume `FieldConstraints.*` for length-cap enforcement. `@d2/validation-abstractions` Zod schemas + frontend form validators consume the TS equivalents. Taxonomy enums are used by `D2.Shared.Contacts.ValueObjects.NameAffixes` and `Demographics`.
+
+---
+
+## §2.7. TypeSpec emitter — wire-channel single-source + versioning
+
+The `@d2/typespec-emitters` package derives wire identity from two `tsp compile` emitter options and enforces agreement between all three surfaces at emit time.
+
+### Wire-channel single source
+
+`proto-package` (e.g. `d2.keycustodian.v2alpha`) is the single source of wire identity. From it the emitter derives:
+
+- `channel` — the trailing dotted segment (`v2alpha`)
+- `generation` — the numeric prefix of the channel (`2`)
+- `stability` — `"alpha"` / `"beta"` / `"stable"` from the optional suffix
+
+`proto-csharp-namespace` carries the same generation in PascalCase as its trailing segment (e.g. `D2.Services.Protos.KeyCustodian.V2Alpha`). `@versioned` on the primary namespace carries it as the last enum value (e.g. `v2alpha: "v2alpha"`). These two surfaces must agree with `proto-package` — they do NOT add new information; they are cross-validation surfaces only.
+
+### D2TSP010 cross-validation
+
+D2TSP010 `channel-segment-mismatch` fires when any of the three surfaces disagrees with the others. The validation is implemented in `src/lib/wire-channel.ts` (`validateChannelAgreement`) using a callback pattern so it is unit-testable without a live TypeSpec program. The `$onEmit` call site wraps `$lib.reportDiagnostic` into the callback.
+
+Wire-channel grammar: `^d2\.[a-z][a-z0-9]*\.v\d+(alpha|beta)?$` (Bucket-2 — no `matchTimeout` needed; linear-bounded with bounded input).
+
+### Emitted artifacts
+
+When a spec contains at least one `@d2GrpcMethod` op AND the channel is validated, the emitter produces two additional artifacts alongside the proto and gRPC-client files:
+
+| Artifact | Path | Governed by |
+| --- | --- | --- |
+| `WireVersion.g.cs` | `<proto-csharp-namespace-path>/Generated/WireVersion.g.cs` | Byte-gate test (`proto-grpc-byte-parity.test.ts`) |
+| `wire-identity.manifest.g.json` | `<proto-csharp-namespace-path>/Generated/wire-identity.manifest.g.json` | Byte-gate test |
+
+`WireVersion.g.cs` emits a `public static class WireVersion` with three `public const` fields (`CHANNEL`, `GENERATION`, `STABILITY`). The manifest records the four identity facts (`protoPackage`, `protoCsharpNamespace`, `generation`, `stability`, `channel`) plus `x-d2-generated-by: "@d2/typespec-emitters"`. Neither artifact carries package names (those are deployment details, not wire-identity facts).
+
+Both artifacts are **excluded from the COPY_MANIFEST allowlist** in `tools/scripts/regen-typespec-emitters.mjs` because they are namespace-sensitive; they are governed by the byte-gate tests instead.
+
+### `@versioned` adoption
+
+Namespaces with gRPC ops adopt `@typespec/versioning @versioned(Namespace.Versions)` with a block `enum Versions { v2alpha: "v2alpha" }` inside the namespace block. The emitter reads the last entry of the version map via `getVersion(program, ns).getVersions()` and treats its `.value` as the `versionedChannel` cross-validation surface. Adopting `@versioned` is byte-neutral for existing emitter output on namespaces that have no `@service`/`@route` (the OpenAPI emitter early-returns; the proto emitter output is unchanged).
+
+### Barrel exports
+
+`src/index.ts` re-exports all new public symbols: `WIRE_CHANNEL_GRAMMAR`, `parseChannel`, `expectedCsharpChannelSegment`, `validateChannelAgreement`, `WireChannel` (type), `emitWireVersionConstant`, `emitWireIdentityManifest`, `WireIdentityManifest` (type).
 
 ---
 

@@ -32,6 +32,7 @@ route registrations / façades / TS clients) into service projects.
   - [OpenAPI x-d2-* extension emitter](#openapi-x-d2--extension-emitter-srclibopenapi-emitterts)
   - [Idempotency gate emitter](#idempotency-gate-emitter-srclibidempotency-gate-emitterts)
   - [Emit-file wrapper](#emit-file-wrapper-srclibeemit-filets)
+  - [Wire identity + versioning](#wire-identity--versioning-srclibwire-channelts-wire-version-emitterts-wire-manifest-emitterts)
 - [Diagnostics](#diagnostics)
 - [Build](#build)
 - [Regenerating the committed fixtures](#regenerating-the-committed-fixtures)
@@ -90,6 +91,16 @@ Current output per `tsp compile`:
    (`x-d2-scope` / `x-d2-tier` / `x-d2-audience` / `x-d2-csrf`), read from the
    `@d2*` decorator state, plus a document-level `x-d2-generated-by` marker.
    Emitted only when the program declares at least one `@service` namespace.
+7. **`WireVersion.g.cs`** (CONDITIONAL) — a C# `public static class` containing
+   `CHANNEL`, `GENERATION`, and `STABILITY` constants derived from the `proto-package`
+   tspconfig option. Emitted only when ≥1 `@d2GrpcMethod` op produced a proto AND
+   the channel cross-validated cleanly (D2TSP010). Co-located with the Grpc.Tools
+   proto types so runtimes reference the constants directly.
+8. **`wire-identity.manifest.g.json`** (CONDITIONAL) — a JSON record of the four
+   agree-by-construction wire-identity facts (`protoPackage`, `protoCsharpNamespace`,
+   `generation`, `stability`, `channel`) plus `x-d2-generated-by`. Emitted alongside
+   `WireVersion.g.cs` under the same conditions (≥1 `@d2GrpcMethod` op AND channel
+   validated). Deliberately omits any published package name.
 
 (The per-op DTOs, handler interfaces, façade, gRPC client, TS clients, route
 registrations, and idempotency-store seam are emitted alongside the above —
@@ -696,6 +707,7 @@ catalog entry in `src/lib.ts`.
 | D2TSP007 | `unsupported-union-shape`   | A union property's variants are NOT a closed set of string literals (mixed-primitive, mixed-literal-kind, numeric-literal-only, discriminated, or model unions). There is no single cross-language enum representation, so the emitter loud-fails rather than guessing. Replace with a named enum or a closed string-literal union.                 |
 | D2TSP008 | `server-push-requires-payload` | A `@d2ServerPush` operation has an output model that emits no fields (void or empty record). A pure-push dispatcher must have a typed event payload to deliver to the sink. Add at least one field to the output model, or remove `@d2ServerPush` if the operation is not a server-push emitter. |
 | D2TSP009 | `unpinned-proto-field`         | A model property on a `@d2GrpcMethod`-bound model is missing its required `@d2Field(N)` pin. Every field on every proto-bound model must carry an explicit author-pinned field number; positional assignment is permanently disabled to prevent silent wire-format breaks on reorder/insert/delete. Add `@d2Field(N)` to the property. Fires only inside the proto emitter; DTO-only or in-process operations with unpinned fields compile clean. Severity: `error`. |
+| D2TSP010 | `channel-segment-mismatch`     | The wire-generation channel segment disagrees across emitted wire surfaces. `proto-package` declares the canonical channel (e.g. `v2alpha`); the trailing dotted segment of `proto-csharp-namespace` (e.g. `V2Alpha`) must be the PascalCase form of that channel; and — when `@versioned` is adopted on the service namespace — the active-version enum member VALUE must also agree. Fix the mismatched `tspconfig.yaml` option so every surface carries the same `V<N>(alpha|beta)?` generation. Severity: `error`. |
 
 All diagnostics have `severity: "error"` — every violation fails `tsp compile`
 with a non-zero exit code.
@@ -733,6 +745,59 @@ the wire form is STILL the member-name string in all three languages. Unsupporte
 union shapes (mixed-primitive, numeric-literal, discriminated, model variants)
 fire `D2TSP007`.
 
+### Wire identity + versioning (`src/lib/wire-channel.ts`, `wire-version-emitter.ts`, `wire-manifest-emitter.ts`)
+
+The emitter enforces agree-by-construction wire identity across every surface
+that carries a version/generation segment.
+
+**Single source of the channel**: the `proto-package` tspconfig suffix (e.g.
+`v2alpha` in `d2.keycustodian.v2alpha`). `parseChannel(protoPackage)` parses
+this into a `WireChannel` triple `{ svc, generation, stability, lowerChannel,
+pascalChannel }`. `WIRE_CHANNEL_GRAMMAR` is the exported validation regex.
+
+**Agree-or-fail cross-validation (D2TSP010)**: `validateChannelAgreement` is
+called once at `$onEmit` start after the options are read. It compares:
+- `proto-package` channel → expected PascalCase segment (e.g. `V2Alpha`)
+- `proto-csharp-namespace` trailing dotted segment (must match)
+- `@versioned` active-version channel VALUE when a versioned namespace is present (must match)
+
+On ANY mismatch it calls the supplied `onError` callback with
+`"channel-segment-mismatch"` + a message embedding `D2TSP010`. The `$onEmit`
+call site routes this to `$lib.reportDiagnostic`, which fails `tsp compile`
+immediately (no partial output).
+
+**`WireVersion.g.cs`** is emitted by `emitWireVersionConstant` when ≥1
+`@d2GrpcMethod` op produced a proto AND the channel validated. It is a C#
+`public static class` in the `proto-csharp-namespace`:
+
+```csharp
+public static class WireVersion
+{
+    public const string CHANNEL    = "v2alpha";
+    public const int    GENERATION = 2;
+    public const string STABILITY  = "alpha";
+}
+```
+
+Co-located with the Grpc.Tools proto types so runtimes reference
+`D2.Services.Protos.KeyCustodian.V2Alpha.WireVersion.CHANNEL` directly.
+
+**`wire-identity.manifest.g.json`** is emitted alongside `WireVersion.g.cs` by
+`emitWireIdentityManifest`. Records the agree-by-construction wire-identity
+facts (`protoPackage`, `protoCsharpNamespace`, `generation`, `stability`,
+`channel`, `x-d2-generated-by`). Deliberately omits any published npm/NuGet
+package name — that convention is resolved separately.
+
+**`@versioned` adoption**: a `@versioned` enum on a service namespace whose
+member VALUES are the channel strings (`v2alpha`, `v2beta`, `v2`) drives the
+cross-validation axis. The namespace NAME is unchanged (`D2.KeyCustodian`, not
+`D2.KeyCustodian.V2Alpha` — `@versioned` keys off the enum, not the name).
+
+These three exports are re-exported from the barrel (`src/index.ts`):
+`WIRE_CHANNEL_GRAMMAR`, `parseChannel`, `expectedCsharpChannelSegment`,
+`validateChannelAgreement`, `WireChannel`, `emitWireVersionConstant`,
+`emitWireIdentityManifest`, `WireIdentityManifest`.
+
 ---
 
 ## Build
@@ -751,7 +816,7 @@ pnpm run test:coverage
 pnpm run type-check:test
 ```
 
-43 test files, 952 tests. Coverage: 100% lines / branches / functions / statements
+46 test files, ~1040 tests. Coverage: 100% lines / branches / functions / statements
 on all `src/**` files (excluding the barrel `src/index.ts`). Suites include: DTO
 byte-parity (`byte-parity.test.ts`), gRPC byte-parity + over-the-wire resilience,
 route-policy enforcement + idempotency gate, SSE dispatch, OpenAPI extension emission,
@@ -839,6 +904,10 @@ The scatter script (`tools/scripts/regen-typespec-emitters.mjs`):
 - Route registration C# files: update via `route-emit.integration.test.ts`.
 - OpenAPI / SSE committed fixtures: update via `openapi-byte-parity.test.ts` /
   `sse-dispatch-emit.integration.test.ts`.
+- `WireVersion.g.cs` / `wire-identity.manifest.g.json`: byte-gated by
+  `proto-grpc-byte-parity.test.ts` (`byteParity_WireVersionConstant_CommittedFixtureIdentical`
+  and `byteParity_WireIdentityManifest_CommittedFixtureIdentical`); update by
+  regenerating through those tests and committing the output.
 
 After running `pnpm regen`:
 

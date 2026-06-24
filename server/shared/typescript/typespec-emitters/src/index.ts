@@ -56,3 +56,16 @@ export type {
   D2GeneratedByExtension,
   OpenApiHttpMethod,
 } from "./lib/openapi-emitter.js";
+
+export {
+  WIRE_CHANNEL_GRAMMAR,
+  parseChannel,
+  expectedCsharpChannelSegment,
+  validateChannelAgreement,
+} from "./lib/wire-channel.js";
+export type { WireChannel } from "./lib/wire-channel.js";
+
+export { emitWireVersionConstant } from "./lib/wire-version-emitter.js";
+
+export { emitWireIdentityManifest } from "./lib/wire-manifest-emitter.js";
+export type { WireIdentityManifest } from "./lib/wire-manifest-emitter.js";

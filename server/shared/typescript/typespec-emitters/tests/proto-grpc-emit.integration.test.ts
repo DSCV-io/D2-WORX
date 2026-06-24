@@ -19,6 +19,7 @@ import {
   createTestHost,
   findTestPackageRoot,
 } from "@typespec/compiler/testing";
+import { VersioningTestLibrary } from "@typespec/versioning/testing";
 
 // Mount the decorators library.
 const D2DecoratorTestLibrary = createTestLibrary({
@@ -806,5 +807,320 @@ describe("protoGrpcEmitIntegration_D2Reserved_DuplicateNamesDeduplicated", () =>
     const occurrences = (protoContent!.match(/reserved "old_key";/g) ?? [])
       .length;
     expect(occurrences).toBe(1);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Test 7: WireVersion.g.cs + wire-identity.manifest.g.json emitted when ≥1
+// @d2GrpcMethod op is present and the channel validates. Asserts agree-by-
+// construction: the proto package, proto C# namespace, and manifest channel
+// carry the SAME generation segment.
+// ---------------------------------------------------------------------------
+
+describe("protoGrpcEmitIntegration_WireVersion_EmittedOnGrpcOp", () => {
+  let host: Awaited<ReturnType<typeof createTestHost>>;
+
+  beforeAll(async () => {
+    host = await createTestHost({
+      libraries: [D2DecoratorTestLibrary, D2EmitterTestLibrary],
+    });
+  });
+
+  it("a @d2GrpcMethod op → WireVersion.g.cs emitted with matching channel", async () => {
+    host.addTypeSpecFile(
+      "main.tsp",
+      `
+      import "@d2/typespec-decorators";
+      using D2;
+      namespace D2.Fixtures;
+
+      model PingInput { @d2Field(1) id: string; }
+      model PingOutput { @d2Field(1) ok: string; }
+
+      @d2Command
+      @d2ServedBy("PingSvc")
+      @d2GrpcMethod("PingSvc", "Ping")
+      op ping(input: PingInput): PingOutput;
+      `,
+    );
+
+    await host.compile("main.tsp", {
+      emit: ["@d2/typespec-emitters"],
+      options: {
+        "@d2/typespec-emitters": {
+          "csharp-namespace": "D2.Test",
+          "proto-package": "d2.test.v2alpha",
+          "proto-csharp-namespace": "D2.Test.Protos.V2Alpha",
+          "grpc-service-namespace": "D2.Test.Grpc",
+        },
+      },
+      outputDir: "testing:/out",
+    });
+
+    const errors = host.program.diagnostics.filter(
+      (d) => d.severity === "error",
+    );
+    expect(errors).toHaveLength(0);
+
+    // WireVersion.g.cs is emitted.
+    const wireVersionContent = getEmittedFile(host, "WireVersion.g.cs");
+    expect(wireVersionContent).toBeDefined();
+    expect(wireVersionContent).toContain('CHANNEL = "v2alpha"');
+    expect(wireVersionContent).toContain("GENERATION = 2");
+    expect(wireVersionContent).toContain('STABILITY = "alpha"');
+    expect(wireVersionContent).toContain("namespace D2.Test.Protos.V2Alpha;");
+
+    // wire-identity.manifest.g.json is emitted.
+    const manifestContent = getEmittedFile(
+      host,
+      "wire-identity.manifest.g.json",
+    );
+    expect(manifestContent).toBeDefined();
+    const manifest = JSON.parse(manifestContent!) as Record<string, unknown>;
+
+    // Channel agree-by-construction: proto package ↔ proto C# ns ↔ manifest.
+    expect(manifest["channel"]).toBe("v2alpha");
+    expect(manifest["protoPackage"]).toBe("d2.test.v2alpha");
+    expect(manifest["protoCsharpNamespace"]).toBe("D2.Test.Protos.V2Alpha");
+    expect(manifest["generation"]).toBe(2);
+    expect(manifest["stability"]).toBe("alpha");
+
+    // Also verify the emitted proto carries the matching package.
+    const protoContent = getEmittedFile(host, ".g.proto");
+    expect(protoContent).toBeDefined();
+    expect(protoContent).toContain("package d2.test.v2alpha;");
+    expect(protoContent).toContain(
+      'option csharp_namespace = "D2.Test.Protos.V2Alpha";',
+    );
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Test 8: D2TSP010 fires when proto-package ↔ proto-csharp-namespace mismatch.
+// Proves the validation reaches the TypeSpec compiler diagnostic surface.
+// ---------------------------------------------------------------------------
+
+describe("protoGrpcEmitIntegration_D2TSP010_FiresOnChannelMismatch", () => {
+  let host: Awaited<ReturnType<typeof createTestHost>>;
+
+  beforeAll(async () => {
+    host = await createTestHost({
+      libraries: [D2DecoratorTestLibrary, D2EmitterTestLibrary],
+    });
+  });
+
+  it("mismatched proto-package vs proto-csharp-namespace → D2TSP010 error diagnostic", async () => {
+    host.addTypeSpecFile(
+      "main.tsp",
+      `
+      import "@d2/typespec-decorators";
+      using D2;
+      namespace D2.Fixtures;
+
+      model PingInput { @d2Field(1) id: string; }
+      model PingOutput { @d2Field(1) ok: string; }
+
+      @d2Command
+      @d2ServedBy("PingSvc")
+      @d2GrpcMethod("PingSvc", "Ping")
+      op ping(input: PingInput): PingOutput;
+      `,
+    );
+
+    // host.compile throws when the program contains error-severity diagnostics
+    // (TypeSpec test-host calls expectDiagnosticEmpty internally). Absorb the
+    // throw so we can inspect host.program.diagnostics for D2TSP010.
+    try {
+      await host.compile("main.tsp", {
+        emit: ["@d2/typespec-emitters"],
+        options: {
+          "@d2/typespec-emitters": {
+            "csharp-namespace": "D2.Test",
+            // Deliberately mismatched: v2alpha vs V2Beta
+            "proto-package": "d2.test.v2alpha",
+            "proto-csharp-namespace": "D2.Test.Protos.V2Beta",
+            "grpc-service-namespace": "D2.Test.Grpc",
+          },
+        },
+        outputDir: "testing:/out",
+      });
+    } catch {
+      // Expected: host.compile throws on error diagnostics. Fall through to assert below.
+    }
+
+    const errors = host.program.diagnostics.filter(
+      (d) => d.severity === "error",
+    );
+    // D2TSP010 must fire.
+    const d2tsp010 = errors.find((d) => d.message.includes("D2TSP010"));
+    expect(d2tsp010).toBeDefined();
+    expect(d2tsp010!.message).toContain("v2alpha");
+    expect(d2tsp010!.message).toContain("V2Beta");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Test 9: @versioned adoption on D2.KeyCustodian is byte-neutral for existing
+// committed fixtures (GetJwks DTOs, IGetJwksHandler).
+// ---------------------------------------------------------------------------
+
+// ---------------------------------------------------------------------------
+// Test: unpinned proto field on the ONLY @d2GrpcMethod op fires D2TSP009 AND
+// produces NO WireVersion.g.cs and NO wire-identity.manifest.g.json.
+//
+// Regression pin for the orphaned-wire-identity bug: before the fix,
+// emitProtoAndGrpcService returned void and the caller set anyGrpcProtoEmitted
+// unconditionally — so D2TSP009 fired (no .proto on disk) but WireVersion.g.cs
+// + wire-identity.manifest.g.json were still emitted. The fix gates the flag on
+// the boolean return value; a false return (walk-error / proto-undefined path)
+// now leaves anyGrpcProtoEmitted=false and the WireVersion gate (line ~833) is
+// never entered.
+// ---------------------------------------------------------------------------
+
+describe("protoGrpcEmitIntegration_UnpinnedField_NoOrphanedWireIdentity", () => {
+  let host: Awaited<ReturnType<typeof createTestHost>>;
+
+  beforeAll(async () => {
+    host = await createTestHost({
+      libraries: [D2DecoratorTestLibrary, D2EmitterTestLibrary],
+    });
+  });
+
+  it("unpinned proto field on the sole @d2GrpcMethod op → D2TSP009 fires and no WireVersion or wire-identity manifest is emitted", async () => {
+    host.addTypeSpecFile(
+      "main.tsp",
+      `
+      import "@d2/typespec-decorators";
+      using D2;
+      namespace D2.Test;
+
+      model OrphanInput { unpinnedField: string; }
+      model OrphanOutput { @d2Field(1) result: string; }
+
+      @d2Command
+      @d2ServedBy("TestSvc")
+      @d2GrpcMethod("TestSvc", "Orphan")
+      op orphan(input: OrphanInput): OrphanOutput;
+      `,
+    );
+
+    let compileError: unknown;
+    try {
+      await host.compile("main.tsp", {
+        emit: ["@d2/typespec-emitters"],
+        options: {
+          "@d2/typespec-emitters": {
+            "csharp-namespace": "D2.Test",
+            "proto-package": "d2.test.v2alpha",
+            "proto-csharp-namespace": "D2.Test.Protos.V2Alpha",
+            "grpc-service-namespace": "D2.Test.Grpc",
+          },
+        },
+        outputDir: "testing:/out",
+      });
+    } catch (err) {
+      compileError = err;
+    }
+
+    // D2TSP009 must fire (the unpinned field triggers the walk-error path).
+    const programErrors = host.program.diagnostics.filter(
+      (d) => d.severity === "error",
+    );
+    const hasErrors = compileError !== undefined || programErrors.length > 0;
+    expect(hasErrors).toBe(true);
+
+    const d2tsp009 = host.program.diagnostics.find(
+      (d) => d.code === "@d2/typespec-emitters/unpinned-proto-field",
+    );
+    expect(d2tsp009).toBeDefined();
+
+    // The .proto was NOT written — the walk-error path returned false.
+    const protoContent = getEmittedFile(host, ".g.proto");
+    expect(protoContent).toBeUndefined();
+
+    // WireVersion.g.cs must NOT be emitted — anyGrpcProtoEmitted stayed false.
+    const wireVersionContent = getEmittedFile(host, "WireVersion.g.cs");
+    expect(wireVersionContent).toBeUndefined();
+
+    // wire-identity.manifest.g.json must NOT be emitted for the same reason.
+    const wireManifestContent = getEmittedFile(
+      host,
+      "wire-identity.manifest.g.json",
+    );
+    expect(wireManifestContent).toBeUndefined();
+  });
+});
+
+describe("protoGrpcEmitIntegration_VersionedAdoption_ByteNeutralForExistingFixtures", () => {
+  let host: Awaited<ReturnType<typeof createTestHost>>;
+
+  beforeAll(async () => {
+    host = await createTestHost({
+      libraries: [
+        VersioningTestLibrary,
+        D2DecoratorTestLibrary,
+        D2EmitterTestLibrary,
+      ],
+    });
+  });
+
+  it("@versioned on D2.KeyCustodian produces the same getJwks handler interface as before", async () => {
+    // Simulate the updated key-custodian.tsp with @versioned adopted.
+    host.addTypeSpecFile(
+      "main.tsp",
+      `
+      import "@d2/typespec-decorators";
+      import "@typespec/versioning";
+      using D2;
+      using TypeSpec.Versioning;
+
+      @versioned(D2.KeyCustodian.Versions)
+      namespace D2.KeyCustodian {
+        enum Versions { v2alpha: "v2alpha" }
+
+        model GetJwksOutput { keys: string[]; }
+
+        @d2Query
+        @d2InProcess
+        @d2ServedBy("KeyCustodian")
+        op getJwks(): GetJwksOutput;
+      }
+      `,
+    );
+
+    await host.compile("main.tsp", {
+      emit: ["@d2/typespec-emitters"],
+      options: {
+        "@d2/typespec-emitters": {
+          "csharp-namespace": "D2.Test",
+          "csharp-clients-namespace": "D2.Edge.KeyCustodian.Clients",
+          "csharp-app-namespace-base":
+            "D2.Edge.KeyCustodian.App.Application.Handlers",
+          "proto-package": "d2.keycustodian.v2alpha",
+          "proto-csharp-namespace": "D2.Services.Protos.KeyCustodian.V2Alpha",
+          "grpc-service-namespace": "D2.Test.Grpc",
+        },
+      },
+      outputDir: "testing:/out",
+    });
+
+    const errors = host.program.diagnostics.filter(
+      (d) => d.severity === "error",
+    );
+    expect(errors).toHaveLength(0);
+
+    // The handler interface for getJwks is still emitted (byte-neutrality: @versioned
+    // does not suppress in-process handler-interface emission).
+    const handlerInterface = getEmittedFile(host, "IGetJwksHandler.g.cs");
+    expect(handlerInterface).toBeDefined();
+    expect(handlerInterface).toContain("IGetJwksHandler");
+
+    // No proto emitted (getJwks has no @d2GrpcMethod → no proto, no WireVersion).
+    const protoContent = getEmittedFile(host, ".g.proto");
+    expect(protoContent).toBeUndefined();
+
+    // WireVersion.g.cs is NOT emitted when no @d2GrpcMethod op is present.
+    const wireVersion = getEmittedFile(host, "WireVersion.g.cs");
+    expect(wireVersion).toBeUndefined();
   });
 });

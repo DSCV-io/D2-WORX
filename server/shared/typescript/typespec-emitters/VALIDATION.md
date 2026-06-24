@@ -605,12 +605,31 @@ is needed when that consumer ships.
 
 ---
 
+## Wire identity — byte-parity table
+
+| Committed fixture | Emitter call | Key assertion | Test file | Test name |
+| --- | --- | --- | --- | --- |
+| `TypeSpecGrpc/Generated/WireVersion.g.cs` | `emitWireVersionConstant(WIRE_NS, channel, WIRE_SOURCE)` where `channel = parseChannel("d2.keycustodian.v2alpha")!` | Byte-identical to the committed fixture (CHANNEL/GENERATION/STABILITY fields agree with `proto-package`) | `tests/proto-grpc-byte-parity.test.ts` | `byteParity_WireVersionConstant_CommittedFixtureIdentical` |
+| `TypeSpecGrpc/Generated/wire-identity.manifest.g.json` | `emitWireIdentityManifest(protoPackage, protoCsharpNs, channel)` | Byte-identical to the committed fixture; all four identity facts present; `x-d2-generated-by` present; no package-name keys | `tests/proto-grpc-byte-parity.test.ts` | `byteParity_WireIdentityManifest_CommittedFixtureIdentical` |
+
+**Deliberate-drift non-vacuity guard**: the `WireVersion.g.cs` byte-gate describe block contains a second test that emits with a mutated channel (`v3beta`) and asserts the output does NOT match the committed `v2alpha` fixture. This proves the gate is not a tautology comparing a buffer to itself.
+
+**D2TSP010 non-vacuity**: `tests/wire-channel.test.ts` contains a NON-VACUOUS mismatch test that feeds `proto-package="d2.keycustodian.v2alpha"` against `proto-csharp-namespace="D2.Services.Protos.KeyCustodian.V2Beta"` and asserts `onError` is called once with code `"channel-segment-mismatch"` and a message containing `"D2TSP010"`, `"v2alpha"`, and `"V2Beta"`. A matching pair also calls `onError` zero times. Both arms are required (vacuous fire-always and vacuous fire-never are equally broken gates).
+
+**Integration tests**: `tests/proto-grpc-emit.integration.test.ts` adds four integration tests:
+- `protoGrpcEmitIntegration_WireVersion_EmittedOnGrpcOp` — full `host.compile` with a `@d2GrpcMethod` op emits both `WireVersion.g.cs` (CHANNEL=`"v2alpha"`, GENERATION=2, STABILITY=`"alpha"`) and the manifest with all four identity facts.
+- `protoGrpcEmitIntegration_D2TSP010_FiresOnChannelMismatch` — deliberately mismatched `proto-package` vs `proto-csharp-namespace` → error diagnostic with `d.message.includes("D2TSP010")`.
+- `protoGrpcEmitIntegration_UnpinnedField_NoOrphanedWireIdentity` — unpinned proto field on the sole `@d2GrpcMethod` op → D2TSP009 fires; `WireVersion.g.cs` and `wire-identity.manifest.g.json` are NOT emitted (regression: a prior bug emitted them unconditionally even when the proto walk failed).
+- `protoGrpcEmitIntegration_VersionedAdoption_ByteNeutralForExistingFixtures` — compile with `@versioned` KC inline → in-process handler file still emitted; no proto emitted; `WireVersion.g.cs` NOT emitted (no `@d2GrpcMethod` op).
+
+---
+
 ## Byte-gate completeness sweep
 
 EVERY committed generated file across the fleet — all `.g.cs` (DTO / handler /
 service / transport-mapper / client-interface / client-impl / client-mapper / DI /
-keys / predicate / idempotency / SSE / route-registration subtrees), every `.g.ts`
-DTO + client, every `.g.proto`, and every `.openapi.g.json` — has a re-emit
+keys / predicate / idempotency / SSE / route-registration / wire-version subtrees), every `.g.ts`
+DTO + client, every `.g.proto`, every `.openapi.g.json`, and every `.manifest.g.json` — has a re-emit
 byte-identity gate (re-run the emitter → assert byte-identical to the committed
 file) carrying a deliberate-drift negative. The gate set is the union of the
 per-emitter byte-parity tables above; no committed generated file in the
@@ -644,12 +663,15 @@ which façade they fake.
 | Branches                          | 100%                                                                                                                                                                                                                                                                                                                                             |
 | Functions                         | 100%                                                                                                                                                                                                                                                                                                                                             |
 | Statements                        | 100%                                                                                                                                                                                                                                                                                                                                             |
-| Test files                        | 43                                                                                                                                                                                                                                                                                                                                               |
-| Total tests                       | 952 (the byte-gate completeness sweep added 30 `it()` cases; the emitter-source-labels guard extension added 6 more covering the full ID-pattern class + C# and contracts scopes; 2 additional TS pins cover the repo-root sentinel helper + the source-label guard's extended pattern class; no new test file)                                                                                                                                                |
+| Test files                        | 46 (3 new: `wire-channel.test.ts`, `wire-version-emitter.test.ts`, `wire-manifest-emitter.test.ts`)                                                                                                                                                                                                                                              |
+| Total tests                       | ~1040 (vitest runner — 46 files; breakdown: wire-channel unit tests ~12, wire-version-emitter unit tests ~8, wire-manifest-emitter unit tests ~8, `proto-grpc-byte-parity.test.ts` additions ~2, `proto-grpc-emit.integration.test.ts` additions ~4) |
 | C# behavior tests (D2.Edge.Tests) | 934 passing (includes the temporal round-trip matrix `TemporalRoundTripTests` + the enum-wire round-trip matrix `EnumWireRoundTripTests` + the `@d2Resilience` predicate retry matrix `PredicateRetryTests` + the predicate parity matrix `PredicateParityTests` — the flat `placeOrder` rows AND the nested/array-of-model `placeOrderV2` rows + the over-the-wire resilience suite `OverTheWireResilienceTests`) |
 | TS temporal round-trip (@d2/time) | 32 (`temporal-round-trip.test.ts`, drives the shared cross-language fixture)                                                                                                                                                                                                                                                                     |
 | TS enum-wire round-trip           | 7 (`enum-wire-round-trip.test.ts`, drives the shared `contracts/enum/enum-parity.fixture.json`)                                                                                                                                                                                                                                                  |
 | TS predicate parity               | 6 (`predicate-parity.test.ts`, drives the shared flat `contracts/resilience/predicate-parity.fixture.json` AND the nested/array-of-model `contracts/resilience/predicate-parity-nested.fixture.json`)                                                                                                                                            |
+| TS wire-channel unit tests        | ~12 (`wire-channel.test.ts`: WIRE_CHANNEL_GRAMMAR matches/rejects, `parseChannel` positive 3 cases, adversarial 8 inputs, `expectedCsharpChannelSegment` 4 round-trips, NON-VACUOUS D2TSP010 mismatch, positive agreement 3 cases, `@versioned` axis, adversarial namespace shape) |
+| TS wire-version-emitter unit tests | ~8 (`wire-version-emitter.test.ts`: CHANNEL/GENERATION/STABILITY for alpha, stable STABILITY, namespace declaration, banner, `#nullable enable`, fileName) |
+| TS wire-manifest-emitter unit tests | ~8 (`wire-manifest-emitter.test.ts`: 4 identity facts, `x-d2-generated-by`, valid JSON round-trip, NO package name keys 4 asserts, beta channel variant, fileName) |
 
 ---
 

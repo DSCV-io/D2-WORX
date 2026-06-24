@@ -219,6 +219,20 @@ const COPY_MANIFEST = [
   // route registrations (TypeSpecRoute/Generated/), and all other gRPC service /
   // transport-mapper / C# DTO files are EXCLUDED for similar namespace-mismatch
   // reasons. Update them via the respective integration test suites.
+
+  // NOTE: WireVersion.g.cs is EXCLUDED — namespace-sensitive
+  // (emitted in proto-csharp-namespace D2.Services.Protos.KeyCustodian.V2Alpha;
+  // tsp compile output differs from the byte-gate test-host fixture namespace).
+  // Committed home: TypeSpecGrpc/Generated/WireVersion.g.cs.
+  // Update via byteParity_WireVersionConstant_CommittedFixtureIdentical in
+  // proto-grpc-byte-parity.test.ts (call emitWireVersionConstant directly).
+
+  // NOTE: wire-identity.manifest.g.json is EXCLUDED — namespace-sensitive
+  // (emitted alongside WireVersion.g.cs in the proto-csharp-namespace context;
+  // the tsp compile output is co-located with the namespace-sensitive C# fixtures).
+  // Committed home: TypeSpecGrpc/Generated/wire-identity.manifest.g.json.
+  // Update via the wire-manifest-emitter.test.ts unit tests (emitWireIdentityManifest
+  // directly) and proto-grpc-emit.integration.test.ts agree-by-construction assertion.
 ];
 
 // ---------------------------------------------------------------------------

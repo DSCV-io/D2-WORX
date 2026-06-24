@@ -36,15 +36,21 @@ import { createTypeSpecLibrary, paramMessage } from "@typespec/compiler";
 //                                         representation. Replace with a named enum or a closed
 //                                         string-literal union.
 //   D2TSP008  server-push-requires-payload — a @d2ServerPush op whose output has no emittable
-//   D2TSP009  unpinned-proto-field          — a model property on a @d2GrpcMethod-bound model
-//                                            lacks a @d2Field(n) pin; positional assignment is
-//                                            disabled (fires only in the proto emitter).
 //                                         payload (a void return, or an output model with zero
 //                                         fields and zero nested models). The op's output model IS
 //                                         the event payload, so a payload-less push is almost
 //                                         certainly an author mistake; the dispatch emitter loud-
 //                                         fails rather than emitting a dispatcher with an empty
 //                                         payload record. Give the op a non-empty output model.
+//   D2TSP009  unpinned-proto-field        — a model property on a @d2GrpcMethod-bound model
+//                                         lacks a @d2Field(n) pin; positional assignment is
+//                                         disabled (fires only in the proto emitter).
+//   D2TSP010  channel-segment-mismatch    — the wire-generation channel segment disagrees
+//                                         across emitted wire surfaces (proto-package vs
+//                                         proto-csharp-namespace trailing segment, or either
+//                                         vs the @versioned active-version channel). Every
+//                                         surface must carry the same V<N>(alpha|beta)?
+//                                         generation; fix the mismatched tspconfig option.
 // -----------------------------------------------------------------------
 
 /**
@@ -181,6 +187,21 @@ export const $lib = createTypeSpecLibrary({
       severity: "error",
       messages: {
         default: paramMessage`@d2ServerPush on '${"op"}' has no event payload — the op's output model is the dispatched payload, so it must declare at least one field; a void or empty output cannot be pushed`,
+      },
+    },
+
+    /**
+     * D2TSP010 — The wire-generation channel segment disagrees across emitted
+     * wire surfaces. The proto-package channel (e.g. "v2alpha") and the trailing
+     * segment of proto-csharp-namespace (e.g. "V2Alpha") must agree on the same
+     * V<N>(alpha|beta)? generation. When a @versioned active-version channel is
+     * present it must also agree. Fix the mismatched tspconfig option so every
+     * surface carries the same generation.
+     */
+    "channel-segment-mismatch": {
+      severity: "error",
+      messages: {
+        default: paramMessage`${"detail"}`,
       },
     },
   },
