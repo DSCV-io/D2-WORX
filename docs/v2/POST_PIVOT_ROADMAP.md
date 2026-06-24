@@ -57,6 +57,7 @@ not here.
 - [D — Sequencing, dependencies, and the coupling points](#d--sequencing-dependencies-and-the-coupling-points)
 - [E — Items that still need a design decision](#e--items-that-still-need-a-design-decision)
 - [H — Cross-cutting deferrals tracked outside this index (pointers)](#h--cross-cutting-deferrals-tracked-outside-this-index-pointers-deep-tracked-elsewhere)
+  - [H1 — Proto-unification follow-on](#h1--proto-unification-follow-on-sharedcommon-protos--typespecemitter-pipeline)
 
 ---
 
@@ -293,6 +294,19 @@ These ARE deferred work and so are surfaced here per the single-source-of-truth 
 tracking lives in another canonical owner (a deliverable record's honest-caveats section + the project
 follow-up tracker), and they are NOT auth-pivot / emitter / Edge-seam items. Listed so the index is complete
 without re-homing them: the pointer is here; the owner is named.
+
+### H1 — Proto-unification follow-on (shared/common protos → TypeSpec/emitter pipeline)
+
+**Status**: 📐 specified-deferred. **Canonical source**: [ADR-0024 §Shared/common wire types](../adrs/0024-contract-api-versioning-strategy.md#sharedcommon-wire-types) + the Context paragraph on `common/v1`.
+
+The four `contracts/protos/common/v1/*` files (`d2.common.v1.*`) are hand-authored — transitional leftovers from before the TypeSpec-first pipeline. The proto-unification follow-on closes that gap:
+
+| Sub-item | What | Blocked on |
+| -------- | ---- | ---------- |
+| H1.1 | Bring `common/v1/*` under the TypeSpec/emitter pipeline — emit at the buf-idiomatic `d2/common/vN` path at the correct generation; remove the `buf` `PACKAGE_DIRECTORY_MATCH` lint exception (`contracts/protos/buf.yaml `:30-36`) that accommodates the current layout | the emitter capable of emitting shared/common types (a TypeSpec source for the shared types must be authored or derived) |
+| H1.2 | Determine the target generation number for the unified path (`d2/common/v2` to match services, or a separately-chosen number per the born-stable-independent-versioning policy in ADR-0024) | a design decision (ADR-0024 defers the exact number to this follow-on) |
+| H1.3 | Close the `D2Result` two-source drift: today `d2.common.v1.D2ResultProto` (hand-authored proto) and the `contracts/error-codes/envelope.spec.json` schema are two sources of truth for the same wire shape; a drift-parity test (deliverable 0024 Step 4) is the interim stopgap; the follow-on resolves it by making TSP the single source and emitting the proto from the spec | H1.1 (emitter must handle the shared envelope shape) |
+| H1.4 | Update `proto-emitter.ts` hard-coded `import "common/v1/d2_result.proto"` references (`:195`, `:416`) to the new emitted path | H1.1 (path changes when the emitter owns the output) |
 
 - ~~**Pre-existing `D2.Shared.Tests` OTel/CORS flake**~~ — **FIXED**. Root cause: two
   implicit named xUnit collections (`"OtelStaticState"` / `"LogLoggerStaticState"`) had no
