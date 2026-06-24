@@ -17,12 +17,14 @@
 //   3. Aggregate findings; the caller consults the force valve.
 //
 // Invocation model:
-//   The buf binary is resolved from the root node_modules (it is installed as
-//   `@bufbuild/buf` in the workspace `onlyBuiltDependencies` — the binary
-//   lives at <workspace-root>/node_modules/.bin/buf and is always available).
+//   The buf shim is resolved via `createRequire` anchored to this file —
+//   `@bufbuild/buf` is a direct devDependency of this package, so the shim
+//   is always findable regardless of pnpm hoisting.  The shim (`bin/buf`) is
+//   a Node.js script that internally resolves the native platform binary via
+//   `require.resolve`; invoking it as `node <shimPath>` works on every
+//   platform (Windows and POSIX) without needing `.CMD` wrappers.
 //   A `buf.yaml` at `contracts/protos/buf.yaml` defines the module for the
-//   shared protos; the wrapper passes `--path contracts/protos` so buf resolves
-//   imports correctly. Emitted `.g.proto` files are handled per-package.
+//   shared protos.
 //
 // Regex discipline (Bucket 2 per regex-redos-discipline):
 //   The proto-file scanner uses PACKAGE_LINE_RE from proto-exemption.ts —
@@ -31,6 +33,7 @@
 
 import { spawnSync } from "node:child_process";
 import { readFileSync, readdirSync, statSync } from "node:fs";
+import { createRequire } from "node:module";
 import { join, resolve } from "node:path";
 
 import type { BreakingFinding } from "./breaking-finding.js";
@@ -119,32 +122,43 @@ function collectPackages(dir: string): Set<string> {
   return packages;
 }
 
+// ---------------------------------------------------------------------------
+// Buf shim resolution (hoisting-independent)
+// ---------------------------------------------------------------------------
+
 /**
- * Resolve the buf binary command and args prefix for the current platform.
+ * Resolve the absolute path to the `@bufbuild/buf` Node.js shim script.
  *
- * On Windows, .CMD files cannot be spawnSync'd directly — they must be invoked
- * via `cmd /c`. On POSIX, the plain `buf` binary can be invoked directly.
+ * Uses `createRequire` anchored to this module so resolution searches
+ * `node_modules` in this package and its ancestors — the pnpm virtual store
+ * — rather than the workspace root's `.bin` symlinks.  This makes buf
+ * findable regardless of whether pnpm hoisted it to the workspace root or
+ * left it package-local (e.g. under `--filter` installs on CI).
  *
- * @returns `{ cmd, prefix }` — `cmd` is the executable; `prefix` is any args
- *   to prepend before the buf sub-command args.
+ * The resolved path is the Node.js shim (`@bufbuild/buf/bin/buf`), which
+ * internally calls `require.resolve` to locate the native platform binary
+ * (e.g. `@bufbuild/buf-linux-x64`).  Invoking it with `node <shimPath>`
+ * therefore works on every platform without `.CMD` wrappers.
  */
-function resolveBufInvocation(repoRoot: string): {
+export function resolveBufShim(): string {
+  const req = createRequire(import.meta.url);
+  return req.resolve("@bufbuild/buf/bin/buf");
+}
+
+/**
+ * Resolve the buf invocation command and args prefix for the current platform.
+ *
+ * Always uses `node <shimPath>` — the shim is a Node.js script on every
+ * platform and internally resolves the native binary via `require.resolve`.
+ *
+ * @returns `{ cmd, prefix }` — `cmd` is `node`; `prefix` is `[shimPath]` to
+ *   prepend before the buf sub-command args.
+ */
+function resolveBufInvocation(): {
   readonly cmd: string;
   readonly prefix: readonly string[];
 } {
-  const isWin = process.platform === "win32";
-  const bufPath = join(
-    repoRoot,
-    "node_modules",
-    ".bin",
-    isWin ? "buf.CMD" : "buf",
-  );
-
-  if (isWin) {
-    return { cmd: "cmd", prefix: ["/c", bufPath] };
-  }
-
-  return { cmd: bufPath, prefix: [] };
+  return { cmd: process.execPath, prefix: [resolveBufShim()] };
 }
 
 // ---------------------------------------------------------------------------
@@ -191,7 +205,7 @@ export function runProtoArm(opts: ProtoArmOptions): ProtoArmResult {
     };
   }
 
-  const { cmd, prefix } = resolveBufInvocation(repoRoot);
+  const { cmd, prefix } = resolveBufInvocation();
   const bufConfigPath = join(protosDir, "buf.yaml");
 
   // Run `buf breaking` against the nova baseline at FILE level.

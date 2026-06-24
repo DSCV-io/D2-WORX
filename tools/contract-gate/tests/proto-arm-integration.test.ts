@@ -15,44 +15,40 @@
 //   (ii) Integration test: real buf breaking over the fixture pair → this file
 
 import { spawnSync } from "node:child_process";
-import { join, resolve, dirname } from "node:path";
+import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 
 import { isProtoGateExempt } from "../src/proto-exemption.js";
+import { resolveBufShim } from "../src/proto-arm.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const FIXTURES_DIR = resolve(__dirname, "fixtures", "proto");
-const REPO_ROOT = resolve(__dirname, "..", "..", "..");
-const IS_WIN = process.platform === "win32";
-const BUF_BIN = join(
-  REPO_ROOT,
-  "node_modules",
-  ".bin",
-  IS_WIN ? "buf.CMD" : "buf",
-);
 
 // ---------------------------------------------------------------------------
 // Helper: invoke buf breaking over a before/after fixture pair.
 //
-// On Windows, .CMD files cannot be spawnSync'd directly — they must be invoked
-// via `cmd /c` (matching the MEMORY.md "Manual LSP Fix" / Windows cmd-wrap pattern).
+// Uses the same shim-resolution as the production proto arm so the two can
+// never diverge.  The shim (`@bufbuild/buf/bin/buf`) is a Node.js script on
+// every platform; invoking it via `node <shimPath>` works on Windows and
+// POSIX without `.CMD` wrappers and regardless of pnpm hoisting.
 // ---------------------------------------------------------------------------
 
 function runBufBreaking(
   afterDir: string,
   againstDir: string,
 ): { status: number | null; stdout: string; stderr: string } {
-  const cmd = IS_WIN ? "cmd" : BUF_BIN;
-  const args = IS_WIN
-    ? ["/c", BUF_BIN, "breaking", afterDir, "--against", againstDir]
-    : ["breaking", afterDir, "--against", againstDir];
+  const shimPath = resolveBufShim();
 
-  const result = spawnSync(cmd, args, {
-    encoding: "utf-8",
-    maxBuffer: 4 * 1024 * 1024,
-    cwd: afterDir,
-  });
+  const result = spawnSync(
+    process.execPath,
+    [shimPath, "breaking", afterDir, "--against", againstDir],
+    {
+      encoding: "utf-8",
+      maxBuffer: 4 * 1024 * 1024,
+      cwd: afterDir,
+    },
+  );
 
   return {
     status: result.status,
