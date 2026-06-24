@@ -27,6 +27,13 @@ modules:
 lint:
   use:
     - STANDARD
+  # PACKAGE_DIRECTORY_MATCH is excepted because the hand-authored common protos
+  # (common/v1/*.proto) declare `package d2.common.v1;` but live at common/v1/
+  # relative to the module root rather than d2/common/v1/. The layout is retained
+  # until the proto-unification follow-on, which will tsp-emit these shared protos
+  # at the buf-idiomatic d2/common/vN path; this exception is removed at that point.
+  except:
+    - PACKAGE_DIRECTORY_MATCH
 breaking:
   use:
     - FILE

@@ -114,7 +114,7 @@ jobs:
           node-version: "24"
       - uses: pnpm/action-setup@v4
       - name: pnpm install (contract-gate + its workspace deps)
-        run: pnpm install --filter "contract-gate..." --filter "@d2/typespec-emitters..."
+        run: pnpm install --filter "contract-gate..." --filter "@d2/typespec-emitters..." --filter "ts-codegen..."
       - name: build contract-gate dependencies
         run: pnpm --filter "@d2/typespec-emitters..." build
       - name: Contract gate unit + integration tests
