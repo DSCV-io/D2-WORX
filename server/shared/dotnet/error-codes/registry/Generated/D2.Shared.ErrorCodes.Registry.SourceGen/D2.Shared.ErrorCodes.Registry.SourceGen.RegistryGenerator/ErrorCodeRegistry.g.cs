@@ -18,7 +18,7 @@ using D2.Shared.ErrorCodes.Category;
 using D2.Shared.I18n;
 
 /// <summary>
-/// Full metadata record for one error code. All 8 fields are populated
+/// Full metadata record for one error code. All 9 fields are populated
 /// from the source spec; the registry exposes them via
 /// <see cref="ErrorCodeRegistry.TryResolve"/> /
 /// <see cref="ErrorCodeRegistry.Resolve"/> /
@@ -47,6 +47,12 @@ using D2.Shared.I18n;
 /// Domain token derived from the spec filename (<c>common</c> for the generic
 /// catalog; e.g. <c>auth</c> for auth-error-codes.spec.json).
 /// </param>
+/// <param name="IsDeprecated">
+/// <see langword="true"/> when the spec entry carries the deprecation marker
+/// (<c>"deprecated": true</c>); the generated constant + factories also carry
+/// <c>[Obsolete]</c>. Lets runtime / telemetry consumers observe deprecation
+/// state. <see langword="false"/> for an active code.
+/// </param>
 public readonly record struct ErrorCodeInfo(
     string Code,
     int HttpStatus,
@@ -55,7 +61,8 @@ public readonly record struct ErrorCodeInfo(
     string FactoryName,
     string FactoryShape,
     string Doc,
-    string Domain);
+    string Domain,
+    bool IsDeprecated);
 
 /// <summary>
 /// Merged cross-catalog error-code registry. Aggregates every
@@ -87,7 +94,8 @@ public static class ErrorCodeRegistry
                 FactoryName: "BearerMissing",
                 FactoryShape: "standard",
                 Doc: "The Authorization header was missing on a protected endpoint.",
-                Domain: "auth"),
+                Domain: "auth",
+                IsDeprecated: false),
             ["AUTH_BEARER_MALFORMED"] = new ErrorCodeInfo(
                 Code: "AUTH_BEARER_MALFORMED",
                 HttpStatus: 401,
@@ -96,7 +104,8 @@ public static class ErrorCodeRegistry
                 FactoryName: "BearerMalformed",
                 FactoryShape: "standard",
                 Doc: "The Authorization header was present but not a parseable Bearer JWT.",
-                Domain: "auth"),
+                Domain: "auth",
+                IsDeprecated: false),
             ["AUTH_JWT_SIGNATURE_INVALID"] = new ErrorCodeInfo(
                 Code: "AUTH_JWT_SIGNATURE_INVALID",
                 HttpStatus: 401,
@@ -105,7 +114,8 @@ public static class ErrorCodeRegistry
                 FactoryName: "JwtSignatureInvalid",
                 FactoryShape: "standard",
                 Doc: "JWT signature verification failed against the JWKS.",
-                Domain: "auth"),
+                Domain: "auth",
+                IsDeprecated: false),
             ["AUTH_JWT_EXPIRED"] = new ErrorCodeInfo(
                 Code: "AUTH_JWT_EXPIRED",
                 HttpStatus: 401,
@@ -114,7 +124,8 @@ public static class ErrorCodeRegistry
                 FactoryName: "JwtExpired",
                 FactoryShape: "standard",
                 Doc: "JWT is expired (exp in the past, beyond clock skew).",
-                Domain: "auth"),
+                Domain: "auth",
+                IsDeprecated: false),
             ["AUTH_JWT_NOT_YET_VALID"] = new ErrorCodeInfo(
                 Code: "AUTH_JWT_NOT_YET_VALID",
                 HttpStatus: 401,
@@ -123,7 +134,8 @@ public static class ErrorCodeRegistry
                 FactoryName: "JwtNotYetValid",
                 FactoryShape: "standard",
                 Doc: "JWT not yet valid (nbf in the future, beyond clock skew).",
-                Domain: "auth"),
+                Domain: "auth",
+                IsDeprecated: false),
             ["AUTH_JWT_ISSUER_MISMATCH"] = new ErrorCodeInfo(
                 Code: "AUTH_JWT_ISSUER_MISMATCH",
                 HttpStatus: 401,
@@ -132,7 +144,8 @@ public static class ErrorCodeRegistry
                 FactoryName: "JwtIssuerMismatch",
                 FactoryShape: "standard",
                 Doc: "JWT iss claim does not match the configured issuer.",
-                Domain: "auth"),
+                Domain: "auth",
+                IsDeprecated: false),
             ["AUTH_JWT_AUDIENCE_MISMATCH"] = new ErrorCodeInfo(
                 Code: "AUTH_JWT_AUDIENCE_MISMATCH",
                 HttpStatus: 401,
@@ -141,7 +154,8 @@ public static class ErrorCodeRegistry
                 FactoryName: "JwtAudienceMismatch",
                 FactoryShape: "standard",
                 Doc: "JWT aud claim does not match this service's configured audience.",
-                Domain: "auth"),
+                Domain: "auth",
+                IsDeprecated: false),
             ["AUTH_JWT_CLAIM_MISSING"] = new ErrorCodeInfo(
                 Code: "AUTH_JWT_CLAIM_MISSING",
                 HttpStatus: 401,
@@ -150,7 +164,8 @@ public static class ErrorCodeRegistry
                 FactoryName: "JwtClaimMissing",
                 FactoryShape: "standard",
                 Doc: "JWT is missing a required claim that this service depends on.",
-                Domain: "auth"),
+                Domain: "auth",
+                IsDeprecated: false),
             ["AUTH_JWT_ACT_CHAIN_MALFORMED"] = new ErrorCodeInfo(
                 Code: "AUTH_JWT_ACT_CHAIN_MALFORMED",
                 HttpStatus: 401,
@@ -159,7 +174,8 @@ public static class ErrorCodeRegistry
                 FactoryName: "JwtActChainMalformed",
                 FactoryShape: "standard",
                 Doc: "JWT act chain is malformed (RFC 8693 section 2.1 violation).",
-                Domain: "auth"),
+                Domain: "auth",
+                IsDeprecated: false),
             ["AUTH_JWT_KID_NOT_FOUND"] = new ErrorCodeInfo(
                 Code: "AUTH_JWT_KID_NOT_FOUND",
                 HttpStatus: 401,
@@ -168,7 +184,8 @@ public static class ErrorCodeRegistry
                 FactoryName: "JwtKidNotFound",
                 FactoryShape: "standard",
                 Doc: "JWT signed by an unknown kid; reactive JWKS refresh did not surface it.",
-                Domain: "auth"),
+                Domain: "auth",
+                IsDeprecated: false),
             ["AUTH_JWKS_UNAVAILABLE"] = new ErrorCodeInfo(
                 Code: "AUTH_JWKS_UNAVAILABLE",
                 HttpStatus: 503,
@@ -177,7 +194,8 @@ public static class ErrorCodeRegistry
                 FactoryName: "JwksUnavailable",
                 FactoryShape: "standard",
                 Doc: "JWKS upstream is unavailable; no cached snapshot to fall back on.",
-                Domain: "auth"),
+                Domain: "auth",
+                IsDeprecated: false),
             ["AUTH_SESSION_REVOKED"] = new ErrorCodeInfo(
                 Code: "AUTH_SESSION_REVOKED",
                 HttpStatus: 401,
@@ -186,7 +204,8 @@ public static class ErrorCodeRegistry
                 FactoryName: "SessionRevoked",
                 FactoryShape: "standard",
                 Doc: "The bearer's d2_session_id is no longer alive (revoked).",
-                Domain: "auth"),
+                Domain: "auth",
+                IsDeprecated: false),
             ["AUTH_SESSION_LIVENESS_UNAVAILABLE"] = new ErrorCodeInfo(
                 Code: "AUTH_SESSION_LIVENESS_UNAVAILABLE",
                 HttpStatus: 503,
@@ -195,7 +214,8 @@ public static class ErrorCodeRegistry
                 FactoryName: "SessionLivenessUnavailable",
                 FactoryShape: "standard",
                 Doc: "Session liveness store unreachable. Caller fails closed: receives a 503-equivalent and may retry; the attempt is NOT treated as authenticated. Treating an unknown liveness state as alive would let revoked sessions ride through outages.",
-                Domain: "auth"),
+                Domain: "auth",
+                IsDeprecated: false),
             ["AUTH_SCOPE_INSUFFICIENT"] = new ErrorCodeInfo(
                 Code: "AUTH_SCOPE_INSUFFICIENT",
                 HttpStatus: 401,
@@ -204,7 +224,8 @@ public static class ErrorCodeRegistry
                 FactoryName: "ScopeInsufficient",
                 FactoryShape: "standard",
                 Doc: "Caller is authenticated but the per-endpoint scope requirement is not satisfied. Surfaces as 401 (not 403) - the auth boundary keeps a uniform shape regardless of whether the JWT was bad or scopes were insufficient, so attackers cannot deduce which check failed.",
-                Domain: "auth"),
+                Domain: "auth",
+                IsDeprecated: false),
             ["NOT_FOUND"] = new ErrorCodeInfo(
                 Code: "NOT_FOUND",
                 HttpStatus: 404,
@@ -213,7 +234,8 @@ public static class ErrorCodeRegistry
                 FactoryName: "NotFound",
                 FactoryShape: "standard",
                 Doc: "Indicates that the requested resource was not found.",
-                Domain: "common"),
+                Domain: "common",
+                IsDeprecated: false),
             ["FORBIDDEN"] = new ErrorCodeInfo(
                 Code: "FORBIDDEN",
                 HttpStatus: 403,
@@ -222,7 +244,8 @@ public static class ErrorCodeRegistry
                 FactoryName: "Forbidden",
                 FactoryShape: "standard",
                 Doc: "Indicates that the action is forbidden due to insufficient permissions.",
-                Domain: "common"),
+                Domain: "common",
+                IsDeprecated: false),
             ["UNAUTHORIZED"] = new ErrorCodeInfo(
                 Code: "UNAUTHORIZED",
                 HttpStatus: 401,
@@ -231,7 +254,8 @@ public static class ErrorCodeRegistry
                 FactoryName: "Unauthorized",
                 FactoryShape: "standard",
                 Doc: "Indicates that the user is unauthorized to perform the action (e.g., not authenticated).",
-                Domain: "common"),
+                Domain: "common",
+                IsDeprecated: false),
             ["VALIDATION_FAILED"] = new ErrorCodeInfo(
                 Code: "VALIDATION_FAILED",
                 HttpStatus: 400,
@@ -240,7 +264,8 @@ public static class ErrorCodeRegistry
                 FactoryName: "ValidationFailed",
                 FactoryShape: "standard",
                 Doc: "Indicates that the input validation has failed.",
-                Domain: "common"),
+                Domain: "common",
+                IsDeprecated: false),
             ["CONFLICT"] = new ErrorCodeInfo(
                 Code: "CONFLICT",
                 HttpStatus: 409,
@@ -249,7 +274,8 @@ public static class ErrorCodeRegistry
                 FactoryName: "Conflict",
                 FactoryShape: "standard",
                 Doc: "Indicates that a conflict occurred, such as a resource already existing.",
-                Domain: "common"),
+                Domain: "common",
+                IsDeprecated: false),
             ["UNHANDLED_EXCEPTION"] = new ErrorCodeInfo(
                 Code: "UNHANDLED_EXCEPTION",
                 HttpStatus: 500,
@@ -258,7 +284,8 @@ public static class ErrorCodeRegistry
                 FactoryName: "UnhandledException",
                 FactoryShape: "standard",
                 Doc: "Indicates that an unhandled exception has occurred.",
-                Domain: "common"),
+                Domain: "common",
+                IsDeprecated: false),
             ["COULD_NOT_BE_SERIALIZED"] = new ErrorCodeInfo(
                 Code: "COULD_NOT_BE_SERIALIZED",
                 HttpStatus: 500,
@@ -267,7 +294,8 @@ public static class ErrorCodeRegistry
                 FactoryName: "CouldNotBeSerialized",
                 FactoryShape: "none",
                 Doc: "Indicates that the data could not be serialized.",
-                Domain: "common"),
+                Domain: "common",
+                IsDeprecated: false),
             ["COULD_NOT_BE_DESERIALIZED"] = new ErrorCodeInfo(
                 Code: "COULD_NOT_BE_DESERIALIZED",
                 HttpStatus: 500,
@@ -276,7 +304,8 @@ public static class ErrorCodeRegistry
                 FactoryName: "CouldNotBeDeserialized",
                 FactoryShape: "none",
                 Doc: "Indicates that the data could not be deserialized.",
-                Domain: "common"),
+                Domain: "common",
+                IsDeprecated: false),
             ["SERVICE_UNAVAILABLE"] = new ErrorCodeInfo(
                 Code: "SERVICE_UNAVAILABLE",
                 HttpStatus: 503,
@@ -285,7 +314,8 @@ public static class ErrorCodeRegistry
                 FactoryName: "ServiceUnavailable",
                 FactoryShape: "standard",
                 Doc: "Indicates that the service is currently unavailable.",
-                Domain: "common"),
+                Domain: "common",
+                IsDeprecated: false),
             ["SOME_FOUND"] = new ErrorCodeInfo(
                 Code: "SOME_FOUND",
                 HttpStatus: 206,
@@ -294,7 +324,8 @@ public static class ErrorCodeRegistry
                 FactoryName: "SomeFound",
                 FactoryShape: "none",
                 Doc: "Indicates that some items were found in a query operation but not all.",
-                Domain: "common"),
+                Domain: "common",
+                IsDeprecated: false),
             ["PARTIAL_SUCCESS"] = new ErrorCodeInfo(
                 Code: "PARTIAL_SUCCESS",
                 HttpStatus: 207,
@@ -303,7 +334,8 @@ public static class ErrorCodeRegistry
                 FactoryName: "PartialSuccess",
                 FactoryShape: "none",
                 Doc: "Indicates that a multi-target write operation succeeded against some targets but not all (e.g. tiered cache wrote L1 but not L2). D2Result.Success stays true - the operation did succeed in part. Callers inspect IsPartialSuccess + the result data to decide what to do about the failed target(s).",
-                Domain: "common"),
+                Domain: "common",
+                IsDeprecated: false),
             ["RATE_LIMITED"] = new ErrorCodeInfo(
                 Code: "RATE_LIMITED",
                 HttpStatus: 429,
@@ -312,7 +344,8 @@ public static class ErrorCodeRegistry
                 FactoryName: "TooManyRequests",
                 FactoryShape: "standard",
                 Doc: "Indicates that the request has been rate limited.",
-                Domain: "common"),
+                Domain: "common",
+                IsDeprecated: false),
             ["IDEMPOTENCY_IN_FLIGHT"] = new ErrorCodeInfo(
                 Code: "IDEMPOTENCY_IN_FLIGHT",
                 HttpStatus: 409,
@@ -321,7 +354,8 @@ public static class ErrorCodeRegistry
                 FactoryName: "IdempotencyInFlight",
                 FactoryShape: "none",
                 Doc: "Indicates that an idempotent request is already being processed (in-flight).",
-                Domain: "common"),
+                Domain: "common",
+                IsDeprecated: false),
             ["PAYLOAD_TOO_LARGE"] = new ErrorCodeInfo(
                 Code: "PAYLOAD_TOO_LARGE",
                 HttpStatus: 413,
@@ -330,7 +364,8 @@ public static class ErrorCodeRegistry
                 FactoryName: "PayloadTooLarge",
                 FactoryShape: "standard",
                 Doc: "Indicates that the request payload exceeds the maximum allowed size.",
-                Domain: "common"),
+                Domain: "common",
+                IsDeprecated: false),
             ["CANCELED"] = new ErrorCodeInfo(
                 Code: "CANCELED",
                 HttpStatus: 400,
@@ -339,7 +374,8 @@ public static class ErrorCodeRegistry
                 FactoryName: "Canceled",
                 FactoryShape: "standard",
                 Doc: "Indicates that the operation was canceled (client or server cancellation).",
-                Domain: "common"),
+                Domain: "common",
+                IsDeprecated: false),
             ["KEYCUSTODIAN_KID_INVALID"] = new ErrorCodeInfo(
                 Code: "KEYCUSTODIAN_KID_INVALID",
                 HttpStatus: 400,
@@ -348,7 +384,8 @@ public static class ErrorCodeRegistry
                 FactoryName: "KidInvalid",
                 FactoryShape: "standard",
                 Doc: "The key identifier is null, empty, whitespace, or contains characters outside the JWKS-safe charset [A-Za-z0-9_-].",
-                Domain: "keycustodian"),
+                Domain: "keycustodian",
+                IsDeprecated: false),
             ["KEYCUSTODIAN_KID_TOO_LONG"] = new ErrorCodeInfo(
                 Code: "KEYCUSTODIAN_KID_TOO_LONG",
                 HttpStatus: 400,
@@ -357,7 +394,8 @@ public static class ErrorCodeRegistry
                 FactoryName: "KidTooLong",
                 FactoryShape: "standard",
                 Doc: "The key identifier exceeds the maximum length of 64 characters.",
-                Domain: "keycustodian"),
+                Domain: "keycustodian",
+                IsDeprecated: false),
             ["KEYCUSTODIAN_UNKNOWN_KEY_DOMAIN"] = new ErrorCodeInfo(
                 Code: "KEYCUSTODIAN_UNKNOWN_KEY_DOMAIN",
                 HttpStatus: 400,
@@ -366,7 +404,8 @@ public static class ErrorCodeRegistry
                 FactoryName: "UnknownKeyDomain",
                 FactoryShape: "standard",
                 Doc: "The specified key domain is not a member of the recognized key-domain catalog.",
-                Domain: "keycustodian"),
+                Domain: "keycustodian",
+                IsDeprecated: false),
             ["KEYCUSTODIAN_INVALID_ROTATION_POLICY"] = new ErrorCodeInfo(
                 Code: "KEYCUSTODIAN_INVALID_ROTATION_POLICY",
                 HttpStatus: 400,
@@ -375,7 +414,8 @@ public static class ErrorCodeRegistry
                 FactoryName: "InvalidRotationPolicy",
                 FactoryShape: "standard",
                 Doc: "A rotation-policy duration is non-positive, or the cadence is shorter than grace plus smoke-soak.",
-                Domain: "keycustodian"),
+                Domain: "keycustodian",
+                IsDeprecated: false),
             ["KEYCUSTODIAN_SOAK_NOT_ELAPSED"] = new ErrorCodeInfo(
                 Code: "KEYCUSTODIAN_SOAK_NOT_ELAPSED",
                 HttpStatus: 400,
@@ -384,7 +424,8 @@ public static class ErrorCodeRegistry
                 FactoryName: "SoakNotElapsed",
                 FactoryShape: "standard",
                 Doc: "The smoke-soak window has not yet elapsed; the pending key may not be activated.",
-                Domain: "keycustodian"),
+                Domain: "keycustodian",
+                IsDeprecated: false),
             ["KEYCUSTODIAN_SMOKE_PROOF_TYPE_MISMATCH"] = new ErrorCodeInfo(
                 Code: "KEYCUSTODIAN_SMOKE_PROOF_TYPE_MISMATCH",
                 HttpStatus: 400,
@@ -393,7 +434,8 @@ public static class ErrorCodeRegistry
                 FactoryName: "SmokeProofTypeMismatch",
                 FactoryShape: "standard",
                 Doc: "The supplied smoke proof was issued for a different key type than this key.",
-                Domain: "keycustodian"),
+                Domain: "keycustodian",
+                IsDeprecated: false),
             ["KEYCUSTODIAN_GRACE_NOT_ELAPSED"] = new ErrorCodeInfo(
                 Code: "KEYCUSTODIAN_GRACE_NOT_ELAPSED",
                 HttpStatus: 400,
@@ -402,7 +444,8 @@ public static class ErrorCodeRegistry
                 FactoryName: "GraceNotElapsed",
                 FactoryShape: "standard",
                 Doc: "The retirement grace window has not yet elapsed; the retiring key may not be retired.",
-                Domain: "keycustodian"),
+                Domain: "keycustodian",
+                IsDeprecated: false),
             ["KEYCUSTODIAN_PRECONDITION_VIOLATED"] = new ErrorCodeInfo(
                 Code: "KEYCUSTODIAN_PRECONDITION_VIOLATED",
                 HttpStatus: 500,
@@ -411,7 +454,8 @@ public static class ErrorCodeRegistry
                 FactoryName: "PreconditionViolated",
                 FactoryShape: "standard",
                 Doc: "A required argument supplied to a key-lifecycle transition was null, empty, or otherwise violated a documented precondition. This is a programmer/precondition error surfaced as a flagged 500 result (carrying telemetry) rather than a thrown exception.",
-                Domain: "keycustodian"),
+                Domain: "keycustodian",
+                IsDeprecated: false),
             ["KEYCUSTODIAN_KEY_NOT_FOUND"] = new ErrorCodeInfo(
                 Code: "KEYCUSTODIAN_KEY_NOT_FOUND",
                 HttpStatus: 404,
@@ -420,7 +464,8 @@ public static class ErrorCodeRegistry
                 FactoryName: "KeyNotFound",
                 FactoryShape: "standard",
                 Doc: "No managed key matching the supplied identifier (or the requested live key for a domain) exists in the store.",
-                Domain: "keycustodian"),
+                Domain: "keycustodian",
+                IsDeprecated: false),
             ["KEYCUSTODIAN_KEY_STATE_CONFLICT"] = new ErrorCodeInfo(
                 Code: "KEYCUSTODIAN_KEY_STATE_CONFLICT",
                 HttpStatus: 409,
@@ -429,7 +474,8 @@ public static class ErrorCodeRegistry
                 FactoryName: "KeyStateConflict",
                 FactoryShape: "standard",
                 Doc: "The requested lifecycle operation is not legal for the key's current state (e.g. activating a key that is not pending, or retiring a key that is not retiring).",
-                Domain: "keycustodian"),
+                Domain: "keycustodian",
+                IsDeprecated: false),
             ["KEYCUSTODIAN_PENDING_KEY_ALREADY_EXISTS"] = new ErrorCodeInfo(
                 Code: "KEYCUSTODIAN_PENDING_KEY_ALREADY_EXISTS",
                 HttpStatus: 409,
@@ -438,7 +484,8 @@ public static class ErrorCodeRegistry
                 FactoryName: "PendingKeyAlreadyExists",
                 FactoryShape: "standard",
                 Doc: "A live pending key already exists for the domain; a second pending key may not be generated until the existing one is activated or compromised.",
-                Domain: "keycustodian"),
+                Domain: "keycustodian",
+                IsDeprecated: false),
             ["KEYCUSTODIAN_SMOKE_TEST_FAILED"] = new ErrorCodeInfo(
                 Code: "KEYCUSTODIAN_SMOKE_TEST_FAILED",
                 HttpStatus: 500,
@@ -447,7 +494,8 @@ public static class ErrorCodeRegistry
                 FactoryName: "SmokeTestFailed",
                 FactoryShape: "standard",
                 Doc: "The cryptographic smoke test for the key material did not pass; the key cannot be activated. Surfaced as a flagged internal-error result so the failed material never enters service.",
-                Domain: "keycustodian"),
+                Domain: "keycustodian",
+                IsDeprecated: false),
             ["KEYCUSTODIAN_INVALID_WORKLOAD_IDENTITY"] = new ErrorCodeInfo(
                 Code: "KEYCUSTODIAN_INVALID_WORKLOAD_IDENTITY",
                 HttpStatus: 400,
@@ -456,7 +504,8 @@ public static class ErrorCodeRegistry
                 FactoryName: "InvalidWorkloadIdentity",
                 FactoryShape: "standard",
                 Doc: "The workload identity is null, empty, whitespace, exceeds the maximum length, contains characters outside the allowed lowercase charset [a-z0-9-], or (when parsed from a certificate subject-alternative-name) does not match the spiffe://d2.internal/workload/<service> grammar. Coarse on purpose so the peer-validation surface does not leak which check failed.",
-                Domain: "keycustodian"),
+                Domain: "keycustodian",
+                IsDeprecated: false),
             ["KEYCUSTODIAN_INVALID_CERTIFICATE_REQUEST"] = new ErrorCodeInfo(
                 Code: "KEYCUSTODIAN_INVALID_CERTIFICATE_REQUEST",
                 HttpStatus: 500,
@@ -465,7 +514,8 @@ public static class ErrorCodeRegistry
                 FactoryName: "InvalidCertificateRequest",
                 FactoryShape: "standard",
                 Doc: "A certificate-generation precondition was violated (empty subject name, non-positive validity) or a cryptographic build operation failed. This is a programmer/precondition error surfaced as a flagged 500 result (carrying telemetry) rather than a thrown exception, the same way a failed smoke test is.",
-                Domain: "keycustodian"),
+                Domain: "keycustodian",
+                IsDeprecated: false),
             ["KEYCUSTODIAN_NO_ACTIVE_ISSUING_CA"] = new ErrorCodeInfo(
                 Code: "KEYCUSTODIAN_NO_ACTIVE_ISSUING_CA",
                 HttpStatus: 503,
@@ -474,7 +524,8 @@ public static class ErrorCodeRegistry
                 FactoryName: "NoActiveIssuingCa",
                 FactoryShape: "standard",
                 Doc: "No active issuing intermediate certificate authority is available to sign a workload leaf certificate. A retryable not-ready-yet condition: the CA either has not been seeded yet or is between rotations. Surfaced as a 503 service-unavailable result so callers retry rather than treat it as a client-side conflict.",
-                Domain: "keycustodian"),
+                Domain: "keycustodian",
+                IsDeprecated: false),
         }.ToFrozenDictionary(StringComparer.Ordinal);
 
     /// <summary>

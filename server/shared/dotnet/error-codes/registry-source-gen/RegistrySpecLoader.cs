@@ -110,7 +110,8 @@ internal static class RegistrySpecLoader
                     FactoryShape: entry.FactoryShape,
                     Doc: entry.Doc,
                     Domain: domain,
-                    SpecFileName: fileName));
+                    SpecFileName: fileName,
+                    IsDeprecated: entry.Deprecated));
             }
         }
 

@@ -261,6 +261,12 @@ internal static class BaseFactoriesEmitter
 
         EmitFactoryDoc(sb, entry, generic);
 
+        if (entry.Deprecated)
+        {
+            sb.AppendLine(
+                $"    [System.Obsolete({ConstantsEmitter.ObsoleteMessageLiteral(entry)})]");
+        }
+
         var categoryMember = CategoryMemberName(entry.Category!);
 
         // Signature — the one universal error-factory shape: every parameter is
@@ -362,6 +368,12 @@ internal static class BaseFactoriesEmitter
             $"    /// Gets a value indicating whether this result carries the "
             + $"<see cref=\"{config.ConstantsClassName}.{entry.Code}\"/> error code.");
         sb.AppendLine("    /// </summary>");
+        if (entry.Deprecated)
+        {
+            sb.AppendLine(
+                $"    [System.Obsolete({ConstantsEmitter.ObsoleteMessageLiteral(entry)})]");
+        }
+
         sb.AppendLine("    [JsonIgnore]");
         sb.AppendLine(
             $"    public bool {name} => ErrorCode == {config.ConstantsClassName}.{entry.Code};");

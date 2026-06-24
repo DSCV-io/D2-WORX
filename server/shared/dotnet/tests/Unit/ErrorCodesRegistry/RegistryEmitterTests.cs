@@ -47,4 +47,48 @@ public sealed class RegistryEmitterTests
         var result = RegistryEmitter.CategoryToMemberName(input);
         result.Should().Be(expected);
     }
+
+    // -----------------------------------------------------------------------
+    // IsDeprecated — the registry-side deprecation flag baked onto ErrorCodeInfo.
+    // Driven by SYNTHETIC entries — no real spec entry is deprecated.
+    // -----------------------------------------------------------------------
+
+    [Fact]
+    public void Emit_ErrorCodeInfoRecord_CarriesIsDeprecatedField()
+    {
+        var source = RegistryEmitter.Emit([Entry("NOT_FOUND", isDeprecated: false)]);
+
+        source.Should().Contain("public readonly record struct ErrorCodeInfo(");
+        source.Should().Contain("    bool IsDeprecated);");
+    }
+
+    [Fact]
+    public void Emit_DeprecatedEntry_BakesIsDeprecatedTrue()
+    {
+        var source = RegistryEmitter.Emit([Entry("NOT_FOUND", isDeprecated: true)]);
+
+        source.Should().Contain("IsDeprecated: true)");
+    }
+
+    [Fact]
+    public void Emit_NonDeprecatedEntry_BakesIsDeprecatedFalse()
+    {
+        var source = RegistryEmitter.Emit([Entry("NOT_FOUND", isDeprecated: false)]);
+
+        source.Should().Contain("IsDeprecated: false)");
+        source.Should().NotContain("IsDeprecated: true");
+    }
+
+    private static RegistrySpecEntry Entry(string code, bool isDeprecated) =>
+        new(
+            Code: code,
+            HttpStatus: 404,
+            Category: "not_found",
+            UserMessageKey: "TK.Common.Errors.NOT_FOUND",
+            FactoryName: "NotFound",
+            FactoryShape: "standard",
+            Doc: "Resource not found.",
+            Domain: "common",
+            SpecFileName: "error-codes.spec.json",
+            IsDeprecated: isDeprecated);
 }

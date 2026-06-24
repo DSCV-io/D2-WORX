@@ -185,6 +185,27 @@ internal static class ConstantsEmitter
         return validEntries;
     }
 
+    /// <summary>
+    /// Composes the verbatim-string-literal argument for the <c>[Obsolete(...)]</c>
+    /// attribute on a deprecated entry. The message is the entry's
+    /// <c>deprecatedReason</c>, with <c>" Use {replacedBy} instead."</c> appended
+    /// when a successor code is declared. The result is wrapped in a C# string
+    /// literal (the same escaping the emitter applies to other string literals).
+    /// Shared with <see cref="FailuresEmitter"/> so the constant + factory carry
+    /// an identical attribute message.
+    /// </summary>
+    /// <param name="entry">A deprecated entry (<c>entry.Deprecated == true</c>).</param>
+    /// <returns>The quoted, escaped <c>[Obsolete]</c> message literal.</returns>
+    internal static string ObsoleteMessageLiteral(ErrorCodeEntry entry)
+    {
+        var reason = entry.DeprecatedReason ?? string.Empty;
+        var message = entry.ReplacedBy is { } replacedBy && !replacedBy.Falsey()
+            ? $"{reason} Use {replacedBy} instead."
+            : reason;
+
+        return $"\"{EscapeStringLiteral(message)}\"";
+    }
+
     private static string EmitSource(List<ErrorCodeEntry> entries, CatalogConfig config)
     {
         var sb = new StringBuilder();
@@ -206,6 +227,9 @@ internal static class ConstantsEmitter
         foreach (var entry in entries)
         {
             sb.AppendLine($"    /// <summary>{EscapeXmlDoc(entry.Doc)}</summary>");
+            if (entry.Deprecated)
+                sb.AppendLine($"    [System.Obsolete({ObsoleteMessageLiteral(entry)})]");
+
             sb.AppendLine(
                 $"    public const string {entry.Code} = \"{EscapeStringLiteral(entry.Code)}\";");
             sb.AppendLine();

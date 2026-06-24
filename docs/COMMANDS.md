@@ -67,6 +67,58 @@ cd server/web && pnpm exec eslint .                                         # ES
 cd server/web && pnpm exec prettier --check .                               # Prettier check
 ```
 
+## Contract breaking-change gate
+
+The always-on gate runs three arms against the `nova` baseline. Run locally before pushing a PR that touches contract files.
+
+```bash
+# Fetch the baseline first (required for all arms):
+git fetch origin nova
+
+# All arms (proto + spec/i18n/OpenAPI):
+node tools/contract-gate/dist/cli.js --against nova
+
+# Spec / i18n / OpenAPI arms only (no buf required):
+node tools/contract-gate/dist/cli.js --against nova --skip-proto
+
+# Proto arm only (buf breaking at FILE level):
+node tools/contract-gate/dist/cli.js --against nova --proto-only
+
+# Or run buf directly over the shared protos:
+pnpm --filter @d2/typespec-emitters exec buf breaking contracts/protos \
+  --against '.git#branch=nova,subdir=contracts/protos'
+
+# Gate unit tests (owned-code validation):
+pnpm --filter contract-gate test
+
+# Rebuild the gate after editing src/ (required before running the CLI):
+pnpm --filter contract-gate build
+```
+
+### Force valve
+
+To intentionally break a stable contract, add one of these footers to a commit in the PR:
+
+```
+WIRE-BREAKING: <description>    # wire-axis (proto / OpenAPI)
+BREAKING CHANGE: <description>  # api-axis (spec catalogs / i18n)
+```
+
+A `type!: subject` breaking shorthand on the subject line is also recognized.
+Any breaking footer opens **all gate arms** for the PR.
+
+**One conscious act**: the footer alone is not enough. Also:
+1. Bump the package semver MAJOR (`dotnet versionize` or manual).
+2. Add a `CHANGELOG.md` breaking entry describing the change and migration path.
+
+### Deprecate-not-delete workflow
+
+To retire a spec entry without an immediate forced break:
+
+1. Keep the entry; add `"deprecated": true` (the gate PASSES — additive).
+2. When telemetry confirms the entry is unused, delete it. The gate FAILS.
+   Pull the force valve (`WIRE-BREAKING:` footer) + bump MAJOR + write CHANGELOG.
+
 ## Versioning
 
 ```bash

@@ -800,6 +800,31 @@ importers:
         specifier: 4.0.18
         version: 4.0.18(@opentelemetry/api@1.9.0)(@types/node@25.7.0)(tsx@4.20.6)(yaml@2.9.0)
 
+  tools/contract-gate:
+    dependencies:
+      '@d2/typespec-emitters':
+        specifier: workspace:*
+        version: link:../../server/shared/typescript/typespec-emitters
+      '@d2/utilities':
+        specifier: workspace:*
+        version: link:../../server/shared/typescript/utilities
+    devDependencies:
+      '@types/node':
+        specifier: 24.10.0
+        version: 24.10.0
+      '@vitest/coverage-v8':
+        specifier: 4.0.18
+        version: 4.0.18(vitest@4.0.18(@opentelemetry/api@1.9.0)(@types/node@24.10.0)(tsx@4.20.6)(yaml@2.9.0))
+      tsx:
+        specifier: 4.20.6
+        version: 4.20.6
+      typescript:
+        specifier: 5.9.3
+        version: 5.9.3
+      vitest:
+        specifier: 4.0.18
+        version: 4.0.18(@opentelemetry/api@1.9.0)(@types/node@24.10.0)(tsx@4.20.6)(yaml@2.9.0)
+
   tools/geo-data-pipeline:
     devDependencies:
       '@types/node':
@@ -4895,6 +4920,14 @@ snapshots:
     optionalDependencies:
       vite: 7.3.3(@types/node@24.10.0)(tsx@4.20.6)(yaml@2.9.0)
 
+  '@vitest/mocker@4.0.18(vite@7.3.3(@types/node@25.7.0)(tsx@4.20.6)(yaml@2.9.0))':
+    dependencies:
+      '@vitest/spy': 4.0.18
+      estree-walker: 3.0.3
+      magic-string: 0.30.21
+    optionalDependencies:
+      vite: 7.3.3(@types/node@25.7.0)(tsx@4.20.6)(yaml@2.9.0)
+
   '@vitest/pretty-format@4.0.18':
     dependencies:
       tinyrainbow: 3.1.0
@@ -5879,7 +5912,7 @@ snapshots:
   vitest@4.0.18(@opentelemetry/api@1.9.0)(@types/node@25.7.0)(tsx@4.20.6)(yaml@2.9.0):
     dependencies:
       '@vitest/expect': 4.0.18
-      '@vitest/mocker': 4.0.18(vite@7.3.3(@types/node@24.10.0)(tsx@4.20.6)(yaml@2.9.0))
+      '@vitest/mocker': 4.0.18(vite@7.3.3(@types/node@25.7.0)(tsx@4.20.6)(yaml@2.9.0))
       '@vitest/pretty-format': 4.0.18
       '@vitest/runner': 4.0.18
       '@vitest/snapshot': 4.0.18

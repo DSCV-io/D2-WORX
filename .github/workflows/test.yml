@@ -26,15 +26,99 @@ jobs:
   # Active now (no service dependencies)
   # ==========================================================================
 
-  # proto-checks — activates when `contracts/protos/buf.yaml` is committed
-  # proto-checks:
-  #   name: Proto checks (buf lint + format)
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - uses: actions/checkout@v4
-  #     - uses: bufbuild/buf-setup-action@v1
-  #     - run: buf lint
-  #     - run: buf format --diff --exit-code
+  # ---------------------------------------------------------------------------
+  # Proto checks (buf lint + format) — active: buf.yaml now committed.
+  # Enforces STANDARD lint rules and format consistency on hand-authored protos.
+  # Scoped to `contracts/protos/` (the shared stable protos); the emitted
+  # *.g.proto files in server/ are NOT reformatted here (§26.5 — fix the
+  # emitter, never hand-edit generated output).
+  # ---------------------------------------------------------------------------
+  proto-checks:
+    name: Proto checks (buf lint + format)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: bufbuild/buf-setup-action@v1
+      - name: buf lint (STANDARD rule set)
+        run: buf lint contracts/protos
+      - name: buf format (hand-authored protos only)
+        run: buf format --diff --exit-code contracts/protos
+
+  # ---------------------------------------------------------------------------
+  # Proto breaking-change gate — always on, PR-blocking.
+  # Runs `buf breaking` at FILE level over the shared `contracts/protos/` tree
+  # against the `nova` baseline. Pre-stable packages (vNalpha/vNbeta) are exempt
+  # via the `proto-arm` wrapper in `tools/contract-gate`. The shared `d2.common.v1`
+  # protos are stable and always enforced.
+  # Needs full git history (`fetch-depth: 0`) so `nova` resolves as a ref.
+  # ---------------------------------------------------------------------------
+  proto-breaking:
+    name: Proto breaking-change gate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Fetch nova baseline
+        run: git fetch origin nova
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - uses: pnpm/action-setup@v4
+      - name: pnpm install (contract-gate + its workspace deps)
+        run: pnpm install --filter "contract-gate..." --filter "@d2/typespec-emitters..."
+      - name: build contract-gate
+        run: pnpm --filter contract-gate build
+      - name: Proto breaking-change gate (buf breaking at FILE level vs nova)
+        run: node tools/contract-gate/dist/cli.js --against nova --proto-only
+
+  # ---------------------------------------------------------------------------
+  # Contract breaking-change gate (spec / i18n / OpenAPI) — always on, PR-blocking.
+  # Runs the JSON-diff gate over `contracts/**/*.spec.json`, `contracts/messages/*.json`,
+  # and committed `*.openapi.g.json` docs against the `nova` baseline.
+  # Needs full git history so `git show nova:<path>` resolves baseline file content.
+  # ---------------------------------------------------------------------------
+  contract-breaking:
+    name: Contract breaking-change gate (spec / i18n / OpenAPI)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Fetch nova baseline
+        run: git fetch origin nova
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - uses: pnpm/action-setup@v4
+      - name: pnpm install (contract-gate + its workspace deps)
+        run: pnpm install --filter "contract-gate..." --filter "@d2/typespec-emitters..."
+      - name: build contract-gate
+        run: pnpm --filter contract-gate build
+      - name: Spec / i18n / OpenAPI breaking-change gate (JSON-diff vs nova)
+        run: node tools/contract-gate/dist/cli.js --against nova --skip-proto
+
+  # ---------------------------------------------------------------------------
+  # Contract-gate unit tests — always on.
+  # Runs the owned-code test suite for `tools/contract-gate` (footer parser,
+  # spec-diff, i18n-diff, openapi-diff, proto-exemption, catalog-identity, and
+  # the proto-arm integration test). §26.15/§26.16 owned-tooling validation.
+  # ---------------------------------------------------------------------------
+  contract-gate-unit:
+    name: Contract gate unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - uses: pnpm/action-setup@v4
+      - name: pnpm install (contract-gate + its workspace deps)
+        run: pnpm install --filter "contract-gate..." --filter "@d2/typespec-emitters..."
+      - name: build contract-gate dependencies
+        run: pnpm --filter "@d2/typespec-emitters..." build
+      - name: Contract gate unit + integration tests
+        run: pnpm --filter contract-gate test
 
   # lint-and-format — blocked: web half needs `server/web/` SvelteKit workspace
   # (not yet resolvable — missing @d2/auth-bff-client workspace package); a

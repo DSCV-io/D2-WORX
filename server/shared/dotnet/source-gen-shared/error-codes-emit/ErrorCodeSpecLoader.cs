@@ -38,6 +38,10 @@ internal static class ErrorCodeSpecLoader
     private const string _FACTORY_NAME_KEY = "factoryName";
     private const string _FACTORY_SHAPE_KEY = "factoryShape";
     private const string _DOC_KEY = "doc";
+    private const string _DEPRECATED_KEY = "deprecated";
+    private const string _DEPRECATED_REASON_KEY = "deprecatedReason";
+    private const string _REPLACED_BY_KEY = "replacedBy";
+    private const string _SUNSET_KEY = "sunset";
 
     /// <summary>
     /// Parses raw JSON spec content into an <see cref="ErrorCodesSpec"/>.
@@ -158,6 +162,13 @@ internal static class ErrorCodeSpecLoader
         var factoryName = OptionalString(element, _FACTORY_NAME_KEY);
         var factoryShape = OptionalString(element, _FACTORY_SHAPE_KEY);
 
+        // Deprecation marker — optional + additive. The schema allows but never
+        // requires these; absence means the entry is active. Only ever true.
+        var deprecated = OptionalBool(element, _DEPRECATED_KEY);
+        var deprecatedReason = OptionalString(element, _DEPRECATED_REASON_KEY);
+        var replacedBy = OptionalString(element, _REPLACED_BY_KEY);
+        var sunset = OptionalString(element, _SUNSET_KEY);
+
         var entry = new ErrorCodeEntry(
             Code: code,
             HttpStatus: httpStatus,
@@ -165,7 +176,11 @@ internal static class ErrorCodeSpecLoader
             Category: category,
             UserMessageKey: userMessageKey,
             FactoryName: factoryName,
-            FactoryShape: factoryShape);
+            FactoryShape: factoryShape,
+            Deprecated: deprecated,
+            DeprecatedReason: deprecatedReason,
+            ReplacedBy: replacedBy,
+            Sunset: sunset);
 
         return (entry, null);
     }
@@ -174,4 +189,7 @@ internal static class ErrorCodeSpecLoader
         element.TryGetProperty(key, out var el) && el.ValueKind == JsonValueKind.String
             ? el.GetString()
             : null;
+
+    private static bool OptionalBool(JsonElement element, string key) =>
+        element.TryGetProperty(key, out var el) && el.ValueKind == JsonValueKind.True;
 }

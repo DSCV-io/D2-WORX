@@ -33,6 +33,43 @@ Follow [Conventional Commits](https://www.conventionalcommits.org/):
 
 **No `Co-Authored-By` trailers** (including AI co-authors). The `commit-msg` Husky hook rejects them automatically.
 
+## Breaking changes
+
+D²-WORX enforces an always-on, PR-blocking breaking-change gate over its wire contracts:
+proto files, spec catalogs (`contracts/**/*.spec.json`), i18n keys (`contracts/messages/*.json`),
+and committed OpenAPI documents.
+
+### Force valve
+
+To intentionally break a stable contract, add one of these footers to a commit in the PR:
+
+```
+WIRE-BREAKING: <description>    # wire-axis (proto / OpenAPI)
+BREAKING CHANGE: <description>  # api-axis (spec catalogs / i18n)
+```
+
+A `type!: subject` breaking shorthand on the Conventional-Commits subject line is also recognized.
+Any breaking footer opens all gate arms for the PR.
+
+**One conscious act — all three steps are required:**
+
+1. Add the footer to a commit in the PR (`WIRE-BREAKING:` or `BREAKING CHANGE:`).
+2. Bump the package semver MAJOR.
+3. Add a `CHANGELOG.md` breaking entry describing the change and the migration path for consumers.
+
+### Deprecate-not-delete workflow
+
+Deleting a published spec entry — even a deprecated one — is a breaking change that requires
+the force valve. The safe retirement path:
+
+1. Keep the entry; mark it `"deprecated": true` (the gate PASSES — this is an additive change).
+   Generated code gets `[Obsolete]` / `@deprecated` annotations, pushing consumers off it.
+2. Once telemetry confirms the entry is unused, delete it. The gate FAILS.
+   Pull the force valve (`WIRE-BREAKING:` footer) + bump MAJOR + write CHANGELOG entry.
+
+See [docs/COMMANDS.md — Contract breaking-change gate](./docs/COMMANDS.md#contract-breaking-change-gate)
+for local invocation.
+
 ## Pull Requests
 
 - Fill out the [PR template](https://github.com/DSCV-io/D2-WORX/blob/main/.github/pull_request_template.md).

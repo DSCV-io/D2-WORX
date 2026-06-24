@@ -63,6 +63,25 @@ export interface ErrorCodeEntry {
   readonly userMessageKey?: string;
   readonly factoryName?: string;
   readonly factoryShape?: string;
+  /**
+   * Deprecation marker. When `true`, the emitted TS constant + factory carry a
+   * `@deprecated` JSDoc tag built from `deprecatedReason` + `replacedBy`
+   * (mirrors the .NET `[Obsolete]`). Additive — the entry is NEVER deleted.
+   */
+  readonly deprecated?: boolean;
+  /**
+   * Plain dev-facing English explaining why the code is deprecated; rendered
+   * verbatim into the `@deprecated` JSDoc. NOT a TK key.
+   */
+  readonly deprecatedReason?: string;
+  /** Wire code of the successor entry (e.g. `RESOURCE_NOT_FOUND`). */
+  readonly replacedBy?: string;
+  /**
+   * ISO-8601 date for the future RFC 8594 `Sunset` response header. Carried on
+   * the contract now, consumed by the Edge response middleware when it exists.
+   * Inert today (no emitter reads it).
+   */
+  readonly sunset?: string;
 }
 
 /** Result of validating the spec. */
@@ -311,11 +330,19 @@ export function emitErrorCodesCatalog(
   sb.appendLine(`export const ${config.constObjectName} = {`);
   sb.increaseIndent();
   for (const e of entries) {
+    const deprecatedTag = deprecatedJsDocText(e);
+    // Emit the per-code JSDoc when the catalog opts into it (generic) OR the
+    // entry is deprecated — a deprecated `as const` member needs the
+    // `@deprecated` tag so TS / `@typescript-eslint/no-deprecated` flag every
+    // use site (the TS twin of CS0618), even on auth (no per-code doc otherwise).
     if (config.emitPerCodeJsDoc) {
       sb.appendLine("/**");
       for (const rawLine of (e.doc ?? "").split("\n"))
         sb.appendLine(` * ${escapeJsDoc(rawLine)}`);
+      if (deprecatedTag !== undefined) sb.appendLine(` * ${deprecatedTag}`);
       sb.appendLine(" */");
+    } else if (deprecatedTag !== undefined) {
+      sb.appendLine(`/** ${deprecatedTag} */`);
     }
     sb.appendLine(`${e.code}: "${escapeStringLiteral(e.code)}",`);
   }
@@ -478,7 +505,15 @@ export function emitFailuresCatalog(
     const factory = factoryFor(entry.httpStatus);
     const fnName = camelCase(entry.factoryName!);
     const categoryMember = categoryMemberName(entry.category!);
-    sb.appendLine(`/** ${escapeJsDoc(entry.doc ?? "")} */`);
+    const deprecatedTag = deprecatedJsDocText(entry);
+    if (deprecatedTag === undefined) {
+      sb.appendLine(`/** ${escapeJsDoc(entry.doc ?? "")} */`);
+    } else {
+      sb.appendLine("/**");
+      sb.appendLine(` * ${escapeJsDoc(entry.doc ?? "")}`);
+      sb.appendLine(` * ${deprecatedTag}`);
+      sb.appendLine(" */");
+    }
     // Generic with a `void` default: the untyped call (`AuthFailures.x()` ->
     // `D2Result<void>`) and the typed call (`AuthFailures.x<User>()` ->
     // `D2Result<User>`) share one method, mirroring the framework base
@@ -614,7 +649,16 @@ function emitBaseFactory(
   const errorCodeExpr = `opts.errorCode ?? ErrorCodes.${entry.code}`;
   const categoryExpr = `opts.category ?? ErrorCategoryWire.${categoryMember}`;
 
-  sb.appendLine(`/** ${escapeJsDoc(entry.doc ?? "")} */`);
+  const deprecatedTag = deprecatedJsDocText(entry);
+  if (deprecatedTag === undefined) {
+    sb.appendLine(`/** ${escapeJsDoc(entry.doc ?? "")} */`);
+  } else {
+    sb.appendLine("/**");
+    sb.appendLine(` * ${escapeJsDoc(entry.doc ?? "")}`);
+    sb.appendLine(` * ${deprecatedTag}`);
+    sb.appendLine(" */");
+  }
+
   sb.appendLine(
     `export function ${fnName}<T = void>(opts: ErrorOpts = {}): D2Result<T> {`,
   );
@@ -683,6 +727,24 @@ function escapeStringLiteral(value: string): string {
 
 function escapeJsDoc(value: string): string {
   return value.replace(/\*\//g, "*\\/");
+}
+
+/**
+ * Composes the `@deprecated` JSDoc text for a deprecated entry: the entry's
+ * `deprecatedReason`, with ` Use {replacedBy} instead.` appended when a
+ * successor code is declared. Mirrors the .NET `ObsoleteMessageLiteral`
+ * composition so the C# `[Obsolete]` message and the TS `@deprecated` text are
+ * identical. Returns `undefined` for a non-deprecated entry (no tag emitted).
+ */
+function deprecatedJsDocText(entry: ErrorCodeEntry): string | undefined {
+  if (entry.deprecated !== true) return undefined;
+  const reason = entry.deprecatedReason ?? "";
+  const replacedBy = entry.replacedBy;
+  const message =
+    replacedBy !== undefined && replacedBy.trim().length > 0
+      ? `${reason} Use ${replacedBy} instead.`
+      : reason;
+  return `@deprecated ${escapeJsDoc(message)}`;
 }
 
 function camelCase(pascal: string): string {

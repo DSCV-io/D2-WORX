@@ -31,3 +31,4 @@ Copyright (c) DCSV. All rights reserved.
 - [ ] Unit/integration tests added or updated (if applicable)
 - [ ] Documentation updated (README, ADRs, etc.)
 - [ ] License headers / notices applied where required
+- [ ] If this PR breaks a stable contract (proto, spec catalog, i18n key, or OpenAPI doc): the `WIRE-BREAKING:` or `BREAKING CHANGE:` footer is present on the breaking commit, semver MAJOR is bumped, and a CHANGELOG.md breaking entry is added.

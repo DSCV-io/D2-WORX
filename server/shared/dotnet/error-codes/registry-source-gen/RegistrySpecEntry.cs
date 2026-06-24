@@ -42,6 +42,12 @@ namespace D2.Shared.ErrorCodes.Registry.SourceGen;
 /// The spec filename this entry was loaded from. Used for collision
 /// diagnostics and domain derivation.
 /// </param>
+/// <param name="IsDeprecated">
+/// <see langword="true"/> when the spec entry carries the deprecation marker
+/// (<c>"deprecated": true</c>). Surfaced on the runtime <c>ErrorCodeInfo</c> so
+/// telemetry / runtime consumers can observe deprecation state. Defaults to
+/// <see langword="false"/> (active).
+/// </param>
 internal sealed record RegistrySpecEntry(
     string Code,
     int HttpStatus,
@@ -51,4 +57,5 @@ internal sealed record RegistrySpecEntry(
     string FactoryShape,
     string Doc,
     string Domain,
-    string SpecFileName);
+    string SpecFileName,
+    bool IsDeprecated = false);
