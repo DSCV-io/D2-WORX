@@ -1197,3 +1197,124 @@ describe("tsGrpcClient_CapabilityParity_MirrorsNetClient", () => {
       ).toBe(true);
   });
 });
+
+// ===========================================================================
+// TOLERANT READER — the emitted client ignores unknown fields on the decoded
+// proto response; the known DTO fields survive with full fidelity.
+// ===========================================================================
+
+describe("tsGrpcClient_TolerantReader", () => {
+  const twin = loadCommittedPredicateTwin();
+
+  function buildClient(): {
+    create: (stub: unknown) => {
+      placeOrder: (
+        input: unknown,
+        opts?: unknown,
+      ) => Promise<D2Result<unknown>>;
+    };
+  } {
+    const [file] = emitTsGrpcClient("PredicateFixtures", [placeOrderOp()]);
+    const create = reconstructFactory<{
+      placeOrder: (
+        input: unknown,
+        opts?: unknown,
+      ) => Promise<D2Result<unknown>>;
+    }>(file!.content, "createPredicateFixturesGrpcClient", baseScope(twin));
+    return { create };
+  }
+
+  it("tolerant reader — a proto response with extra unknown fields decodes the known fields and ignores the rest", async () => {
+    // The fake stub returns a response object that carries extra unknown properties
+    // at both the top level and inside data.  The emitted client + d2ResultFromProto
+    // seam reads only the named proto properties (result / data); extra keys on the JS
+    // response object are never accessed and do not affect the decoded D2Result.
+    const { create } = buildClient();
+    const responseWithExtra = {
+      result: {
+        success: true,
+        statusCode: 200,
+        errorCode: undefined,
+        category: undefined,
+        traceId: undefined,
+        messages: [],
+        inputErrors: [],
+      },
+      data: {
+        orderCode: "ORD-TR3",
+        itemStatuses: ["DONE"],
+        partial: false,
+        // extra fields a newer producer might send:
+        unknownDataField: "ignored",
+        addedStatusDetail: { code: 42 },
+      },
+      // extra top-level field:
+      unknownEnvelopeField: "also-ignored",
+    } as unknown as PlaceOrderResponse;
+
+    const { stub, calls } = makePlaceOrderStub([
+      { kind: "ok", response: responseWithExtra },
+    ]);
+    const client = create(stub);
+    const result = await client.placeOrder({ customerId: "cust-tr3" });
+
+    expect(result.success).toBe(true);
+    expect(result.data).toEqual({
+      orderCode: "ORD-TR3",
+      itemStatuses: ["DONE"],
+      partial: false,
+    });
+    // Extra fields must not surface in the decoded DTO.
+    expect(Object.keys(result.data as object)).not.toContain(
+      "unknownDataField",
+    );
+    expect(Object.keys(result.data as object)).not.toContain(
+      "addedStatusDetail",
+    );
+    expect(calls()).toBe(1);
+  });
+
+  it("tolerant reader — an added optional response field is ignored by the prior-shaped decoder", async () => {
+    // Forward-compat case: a "newer producer" adds an optional field to the response
+    // data payload.  The emitted client mapper only reads the fields it declared
+    // (orderCode / itemStatuses / partial); the added field is never read, so it does
+    // not appear in the returned D2Result<data>.  The result is success with the known
+    // fields intact.
+    const { create } = buildClient();
+    const forwardCompatResponse = {
+      result: {
+        success: true,
+        statusCode: 200,
+        errorCode: undefined,
+        category: undefined,
+        traceId: undefined,
+        messages: [],
+        inputErrors: [],
+      },
+      data: {
+        orderCode: "ORD-FC4",
+        itemStatuses: ["SHIPPED", "DELIVERED"],
+        partial: false,
+        // field added in a newer spec revision:
+        estimatedDelivery: "2026-07-01",
+      },
+    } as unknown as PlaceOrderResponse;
+
+    const { stub } = makePlaceOrderStub([
+      { kind: "ok", response: forwardCompatResponse },
+    ]);
+    const client = create(stub);
+    const result = await client.placeOrder({ customerId: "cust-fc4" });
+
+    expect(result.success).toBe(true);
+    expect((result.data as { orderCode: string }).orderCode).toBe("ORD-FC4");
+    expect(
+      (result.data as { itemStatuses: string[] }).itemStatuses,
+    ).toHaveLength(2);
+    expect((result.data as { partial: boolean }).partial).toBe(false);
+    // The added field must not leak into the decoded DTO.
+    expect(Object.keys(result.data as object)).not.toContain(
+      "estimatedDelivery",
+    );
+  });
+});

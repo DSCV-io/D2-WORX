@@ -401,4 +401,32 @@ describe("tsRestClient_Behavioral_FaithfulDouble", () => {
     expect(calls[0]!.signal).toBe(ac.signal);
     expect(calls[0]!.timeout).toBe(1234);
   });
+
+  it("tolerant reader — extra fields in the substrate result are forwarded without corruption", async () => {
+    // The faithful apiCall double returns a real D2Result whose data payload carries
+    // an extra field that the SignOutput DTO does not declare.  The emitted REST client
+    // is a thin delegator: it calls apiCall<SignOutput>(...) and returns the result
+    // verbatim — it does NOT re-parse or reshape the payload.  The extra field
+    // therefore survives in the returned D2Result.data without corrupting the known
+    // fields.  This pins the tolerance property: the generated client never strips or
+    // rejects unknown fields that arrive from a newer server.
+    const dataWithExtra = Object.assign(
+      ok({ signature: "sig-tr5" }).data as object,
+      {
+        futureField: "extra-value",
+      },
+    );
+    const { client } = buildClient([signRestOp()], () =>
+      ok(dataWithExtra as { signature: string }),
+    );
+    const result = await client.sign!({ kid: "k-tr5" });
+
+    expect(result.success).toBe(true);
+    // The known field survived.
+    expect((result.data as { signature: string }).signature).toBe("sig-tr5");
+    // The extra field was forwarded verbatim (the client did not strip it).
+    expect((result.data as Record<string, unknown>)["futureField"]).toBe(
+      "extra-value",
+    );
+  });
 });
