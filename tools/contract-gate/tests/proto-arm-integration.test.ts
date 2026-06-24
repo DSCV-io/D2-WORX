@@ -104,6 +104,7 @@ describe("proto-arm integration — alpha-before → alpha-after (exempt, gate s
     // that only the exemption prevents from becoming a gate failure.
     const result = runBufBreaking(afterDir, beforeDir);
     // buf breaking should still detect the break (field removed without reserved)
+    expect(result.status).not.toBeNull();
     expect(result.status).not.toBe(0);
     // This confirms the exemption is doing real work — it suppresses a REAL break.
   });

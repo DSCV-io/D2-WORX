@@ -60,7 +60,7 @@ jobs:
         with:
           fetch-depth: 0
       - name: Fetch nova baseline
-        run: git fetch origin nova
+        run: git fetch origin nova:nova
       - uses: actions/setup-node@v4
         with:
           node-version: "24"
@@ -86,7 +86,7 @@ jobs:
         with:
           fetch-depth: 0
       - name: Fetch nova baseline
-        run: git fetch origin nova
+        run: git fetch origin nova:nova
       - uses: actions/setup-node@v4
         with:
           node-version: "24"
