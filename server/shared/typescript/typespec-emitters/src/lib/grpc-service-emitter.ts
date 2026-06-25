@@ -9,7 +9,7 @@
 //   2. <Op>TransportMappers.g.cs — C# 14 extension-member mappers (proto ↔ DTO).
 //
 // Conventions:
-//   - Base class is `global::<protoNs>.<Service>.<Service>Base` (global:: SC1 lesson).
+//   - Base class is `global::<protoNs>.<Service>.<Service>Base` (global:: rooted to prevent namespace shadowing).
 //   - Proto message names follow <Method>Request / <Method>Response (matching the
 //     hand-authored proto RPC-message convention in contracts/protos/).
 //   - DTO types follow <Op>Input / <Op>Output — distinct from proto message names so
@@ -220,7 +220,7 @@ function emitServiceClass(
   // the mapper handles this via a ProtoOutput alias. The service class only references
   // the proto Response wrapper and the DTO (via the mapper extension), never the data message
   // directly — so the service file has no collision and needs no extra alias.
-  // Short using-aliases carry the global:: root so SC1 namespace-shadowing cannot reach
+  // Short using-aliases carry the global:: root so namespace-shadowing cannot reach
   // the generated code regardless of ambient usings.
   lines.push(
     `using ${protoRequestName} = global::${protoCsharpNs}.${protoRequestName};`,
@@ -356,7 +356,7 @@ function emitTransportMappers(
   // Disambiguate via a ProtoOutput alias that points at the proto data message type.
   // The DTO alias keeps the bare name (<Op>Output = global::<dtoCsharpNs>.<Op>Output).
   // The proto data message alias is Proto<Op>Output = global::<protoCsharpNs>.<Op>Output.
-  // Short using-aliases carry the global:: root so SC1 shadowing cannot reach the code.
+  // Short using-aliases carry the global:: root so namespace-shadowing cannot reach the code.
   const protoDataAlias = `Proto${responseModelName}`;
   lines.push(
     `using ${protoRequestName} = global::${protoCsharpNs}.${protoRequestName};`,

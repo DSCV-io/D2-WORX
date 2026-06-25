@@ -20,7 +20,7 @@ import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 
 import { isProtoGateExempt } from "../src/proto-exemption.js";
-import { resolveBufShim } from "../src/proto-arm.js";
+import { resolveBufShim, runProtoArm } from "../src/proto-arm.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const FIXTURES_DIR = resolve(__dirname, "fixtures", "proto");
@@ -137,5 +137,43 @@ describe("proto-arm — force valve suppression (logical proof)", () => {
     const findings: unknown[] = [];
     const passed = findings.length === 0 || false;
     expect(passed).toBe(true);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Defense-in-depth: runProtoArm rejects an invalid baseRef directly
+// ---------------------------------------------------------------------------
+
+describe("proto-arm — direct-call baseRef validation (defense-in-depth)", () => {
+  it("throws on an empty baseRef passed directly to runProtoArm", () => {
+    expect(() =>
+      runProtoArm({ repoRoot: "/fake", baseRef: "", valveOpen: false }),
+    ).toThrow(/ref must not be empty/);
+  });
+
+  it("throws on a leading-dash baseRef passed directly to runProtoArm", () => {
+    expect(() =>
+      runProtoArm({
+        repoRoot: "/fake",
+        baseRef: "--upload-pack=x",
+        valveOpen: false,
+      }),
+    ).toThrow(/must not start with '-'/);
+  });
+
+  it("throws on a dot-dot baseRef passed directly to runProtoArm", () => {
+    expect(() =>
+      runProtoArm({ repoRoot: "/fake", baseRef: "../etc", valveOpen: false }),
+    ).toThrow(/must not contain '\.\.'/);
+  });
+
+  it("throws on a shell-metacharacter baseRef passed directly to runProtoArm", () => {
+    expect(() =>
+      runProtoArm({
+        repoRoot: "/fake",
+        baseRef: "a;rm -rf /",
+        valveOpen: false,
+      }),
+    ).toThrow(/disallowed characters/);
   });
 });

@@ -55,6 +55,7 @@ Copyright (c) DCSV. All rights reserved.
     <PackageReference Include="Microsoft.Extensions.Options" />
     <PackageReference Include="Microsoft.IdentityModel.Protocols.OpenIdConnect" />
     <PackageReference Include="Grpc.Net.ClientFactory" />
+    <PackageReference Include="NodaTime" />
   </ItemGroup>
 
   <ItemGroup>

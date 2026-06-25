@@ -11,6 +11,7 @@ using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using AwesomeAssertions;
 using D2.Shared.Auth.Outbound.WorkloadCertificate;
+using NodaTime;
 using Xunit;
 
 /// <summary>
@@ -23,8 +24,7 @@ using Xunit;
 [Trait("Category", "Unit")]
 public sealed class WorkloadLeafSnapshotTests
 {
-    private static readonly DateTimeOffset SR_Base =
-        new(2026, 1, 1, 0, 0, 0, TimeSpan.Zero);
+    private static readonly Instant SR_Base = Instant.FromUtc(2026, 1, 1, 0, 0, 0);
 
     [Fact]
     public void Construction_PopulatesAllMembers()
@@ -32,7 +32,7 @@ public sealed class WorkloadLeafSnapshotTests
         using var leaf = ASelfSignedCert();
         using var intermediate = ASelfSignedCert();
         var context = SslStreamCertificateContext.Create(leaf, [intermediate], offline: true);
-        var notAfter = SR_Base.AddHours(24);
+        var notAfter = SR_Base + Duration.FromHours(24);
 
         var snapshot = new WorkloadLeafSnapshot(leaf, intermediate, context, notAfter);
 
@@ -48,7 +48,7 @@ public sealed class WorkloadLeafSnapshotTests
         using var leaf = ASelfSignedCert();
         using var intermediate = ASelfSignedCert();
         var context = SslStreamCertificateContext.Create(leaf, [intermediate], offline: true);
-        var notAfter = SR_Base.AddHours(24);
+        var notAfter = SR_Base + Duration.FromHours(24);
 
         var a = new WorkloadLeafSnapshot(leaf, intermediate, context, notAfter);
         var b = new WorkloadLeafSnapshot(leaf, intermediate, context, notAfter);
@@ -64,8 +64,8 @@ public sealed class WorkloadLeafSnapshotTests
         using var intermediate = ASelfSignedCert();
         var context = SslStreamCertificateContext.Create(leaf, [intermediate], offline: true);
 
-        var a = new WorkloadLeafSnapshot(leaf, intermediate, context, SR_Base.AddHours(24));
-        var b = new WorkloadLeafSnapshot(leaf, intermediate, context, SR_Base.AddHours(48));
+        var a = new WorkloadLeafSnapshot(leaf, intermediate, context, SR_Base + Duration.FromHours(24));
+        var b = new WorkloadLeafSnapshot(leaf, intermediate, context, SR_Base + Duration.FromHours(48));
 
         a.Should().NotBe(b);
     }
@@ -78,11 +78,11 @@ public sealed class WorkloadLeafSnapshotTests
         using var leaf = ASelfSignedCert();
         using var intermediate = ASelfSignedCert();
         var context = SslStreamCertificateContext.Create(leaf, [intermediate], offline: true);
-        var expiresAt = SR_Base.AddMinutes(30);
+        var expiresAt = SR_Base + Duration.FromMinutes(30);
         var snapshot = new WorkloadLeafSnapshot(leaf, intermediate, context, expiresAt);
 
         // One tick before expiry — not yet expired.
-        (snapshot.NotAfter > expiresAt.AddTicks(-1)).Should().BeTrue();
+        (snapshot.NotAfter > expiresAt - Duration.FromTicks(1)).Should().BeTrue();
 
         // At expiry boundary — expired (TryGet would return null).
         (snapshot.NotAfter > expiresAt).Should().BeFalse();
@@ -96,7 +96,7 @@ public sealed class WorkloadLeafSnapshotTests
         using var leaf = ASelfSignedCert();
         using var intermediate = ASelfSignedCert();
         var context = SslStreamCertificateContext.Create(leaf, [intermediate], offline: true);
-        var snapshot = new WorkloadLeafSnapshot(leaf, intermediate, context, SR_Base.AddHours(24));
+        var snapshot = new WorkloadLeafSnapshot(leaf, intermediate, context, SR_Base + Duration.FromHours(24));
 
         // Re-reading always returns the same reference.
         snapshot.Leaf.Should().BeSameAs(snapshot.Leaf);
@@ -110,7 +110,7 @@ public sealed class WorkloadLeafSnapshotTests
         using var leaf = ASelfSignedCert();
         using var intermediate = ASelfSignedCert();
         var context = SslStreamCertificateContext.Create(leaf, [intermediate], offline: true);
-        var notAfter = SR_Base.AddHours(12);
+        var notAfter = SR_Base + Duration.FromHours(12);
         var snapshot = new WorkloadLeafSnapshot(leaf, intermediate, context, notAfter);
 
         var (actualLeaf, actualIntermediate, actualContext, actualNotAfter) = snapshot;
@@ -119,6 +119,59 @@ public sealed class WorkloadLeafSnapshotTests
         actualIntermediate.Should().BeSameAs(intermediate);
         actualContext.Should().BeSameAs(context);
         actualNotAfter.Should().Be(notAfter);
+    }
+
+    [Fact]
+    public void NotAfter_ConversionFromBclBoundary_RoundTripsCorrectly()
+    {
+        // Temporal adversarial: verifies that converting a BCL DateTimeOffset to
+        // NodaTime Instant at the issuance boundary (Instant.FromDateTimeOffset) and
+        // back again (Instant.ToDateTimeOffset) is lossless, so the cert's actual
+        // expiry is preserved when the leaf is issued and served from cache.
+        using var leaf = ASelfSignedCert();
+        using var intermediate = ASelfSignedCert();
+        var context = SslStreamCertificateContext.Create(leaf, [intermediate], offline: true);
+
+        // Representative BCL DateTimeOffset values covering temporal edge cases:
+        // (a) a normal far-future timestamp (standard leaf TTL range)
+        var farFutureBcl = new DateTimeOffset(2028, 3, 14, 15, 9, 26, 535, TimeSpan.Zero);
+        var farFutureInstant = Instant.FromDateTimeOffset(farFutureBcl);
+        var snapshotFarFuture = new WorkloadLeafSnapshot(leaf, intermediate, context, farFutureInstant);
+        snapshotFarFuture.NotAfter.ToDateTimeOffset().Should().Be(farFutureBcl);
+
+        // (b) a near-now expiry (boundary cache check)
+        var nearNowBcl = new DateTimeOffset(2026, 1, 1, 0, 0, 1, TimeSpan.Zero);
+        var nearNowInstant = Instant.FromDateTimeOffset(nearNowBcl);
+        var snapshotNearNow = new WorkloadLeafSnapshot(leaf, intermediate, context, nearNowInstant);
+        snapshotNearNow.NotAfter.ToDateTimeOffset().Should().Be(nearNowBcl);
+
+        // (c) a past timestamp (already expired — still a valid construction)
+        var pastBcl = new DateTimeOffset(2025, 1, 1, 0, 0, 0, TimeSpan.Zero);
+        var pastInstant = Instant.FromDateTimeOffset(pastBcl);
+        var snapshotPast = new WorkloadLeafSnapshot(leaf, intermediate, context, pastInstant);
+        snapshotPast.NotAfter.ToDateTimeOffset().Should().Be(pastBcl);
+    }
+
+    [Fact]
+    public void NotAfter_StrictExpiryBoundary_CacheSemantics()
+    {
+        // Temporal adversarial: the boundary condition TryGet uses is strict
+        // (NotAfter > now), so at the exact expiry instant the snapshot is expired.
+        // One tick earlier it is still valid.
+        using var leaf = ASelfSignedCert();
+        using var intermediate = ASelfSignedCert();
+        var context = SslStreamCertificateContext.Create(leaf, [intermediate], offline: true);
+
+        var expiresAt = SR_Base + Duration.FromHours(1);
+        var snapshot = new WorkloadLeafSnapshot(leaf, intermediate, context, expiresAt);
+
+        // At exactly the expiry instant → expired.
+        (snapshot.NotAfter > expiresAt).Should().BeFalse(
+            "a snapshot at exactly NotAfter is expired (strict >)");
+
+        // One tick before → still valid.
+        (snapshot.NotAfter > expiresAt - Duration.FromTicks(1)).Should().BeTrue(
+            "a snapshot one tick before NotAfter is still valid");
     }
 
     private static X509Certificate2 ASelfSignedCert()

@@ -57,4 +57,17 @@ public static class OutboundTelemetry
             name: "d2.auth.outbound.token_exchange.revoked_purges",
             unit: "{purge}",
             description: "Total token-exchange cache entries purged on session-revoked.");
+
+    /// <summary>
+    /// Counter — workload leaf reissue failures. Untagged; one increment per failed
+    /// <see cref="WorkloadCertificate.WorkloadLeafClient"/> reissue attempt.
+    /// The cached leaf's not-after is captured on the accompanying
+    /// <c>WorkloadLeafReissueFailed</c> log event as the <c>CachedLeafNotAfter</c>
+    /// structured field (ISO-8601 UTC, or <c>none</c> when no cached leaf exists).
+    /// </summary>
+    public static readonly Counter<long> SR_LeafReissueFailures =
+        SR_Meter.CreateCounter<long>(
+            name: "d2.auth.outbound.workload_leaf.reissue_failures",
+            unit: "{failure}",
+            description: "Total workload leaf reissue failures.");
 }

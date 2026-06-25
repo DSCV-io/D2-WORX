@@ -64,7 +64,7 @@ public sealed class D2ResultJsonTolerantReaderTests
         var dto = JsonSerializer.Deserialize<WidgetData>(json);
 
         dto.Should().NotBeNull();
-        dto!.Name.Should().Be("cog");
+        dto.Name.Should().Be("cog");
         dto.Count.Should().Be(7);
     }
 
@@ -89,8 +89,8 @@ public sealed class D2ResultJsonTolerantReaderTests
         var dto = JsonSerializer.Deserialize<WidgetData>(json);
 
         dto.Should().NotBeNull();
-        dto!.Name.Should().Be("sprocket");
-        dto!.Count.Should().Be(3);
+        dto.Name.Should().Be("sprocket");
+        dto.Count.Should().Be(3);
     }
 
     // ---------------------------------------------------------------------------
@@ -135,7 +135,7 @@ public sealed class D2ResultJsonTolerantReaderTests
         var dto = JsonSerializer.Deserialize<WidgetData>(json, sr_camelCaseOptions);
 
         dto.Should().NotBeNull();
-        dto!.Name.Should().Be("widget");
+        dto.Name.Should().Be("widget");
         dto.Count.Should().Be(2);
     }
 

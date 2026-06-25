@@ -165,6 +165,7 @@ const PHASE_LABEL = /\bPhase\s+\d+\b/;
 //   D3, D4, D7, D18   (bare decision IDs — known range: D3–D9, D10+)
 //   F-HOME, F-XYZ      (finding-label IDs — two or more uppercase letters)
 //   D-b, D-c           (lowercase decision shorthands — single lowercase letter)
+//   SC1, SC2, SC3      (session-scoped shorthand tokens)
 //
 // Excluded from the pattern (false-positive suppressions):
 //   "D2" — the product name ("D2.Shared", "using D2", "real D2 auth"). The
@@ -191,8 +192,9 @@ const PHASE_LABEL = /\bPhase\s+\d+\b/;
 //   \bD[12]\d+\b               D10..D19, D20+ (two+ digits starting with 1 or 2)
 //   \bF-[A-Z]{2,}\b            F-HOME, F-XYZ (two+ uppercase letters after hyphen)
 //   \bD-[a-z]\b                D-b, D-c (lowercase decision shorthands)
+//   \bSC\d+\b                  SC1, SC2, SC3 (session-scoped shorthand tokens)
 const CONVERSATION_ID =
-  /\bR-O\d+[a-z]*\b|\bD-[SO]\d+\b|\bC-\d+\b|\bCB\d+\b|\bD-R\d+\b|\bD[3-9]\d*\b|\bD[12]\d+\b|\bF-[A-Z]{2,}\b|\bD-[a-z]\b/;
+  /\bR-O\d+[a-z]*\b|\bD-[SO]\d+\b|\bC-\d+\b|\bCB\d+\b|\bD-R\d+\b|\bD[3-9]\d*\b|\bD[12]\d+\b|\bF-[A-Z]{2,}\b|\bD-[a-z]\b|\bSC\d+\b/;
 
 // Combined check for any of the above patterns.
 function hasLeak(line: string): boolean {

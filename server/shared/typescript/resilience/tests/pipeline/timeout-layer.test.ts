@@ -50,7 +50,7 @@ function layerWith(durationMs: number): TimeoutLayer {
 
 describe("TimeoutLayer — construction", () => {
   it("uses TIMEOUT_DEFAULTS when no opts supplied", () => {
-    // Internal opts not directly inspectable; verify defaults via behaviour:
+    // Internal opts not directly inspectable; verify defaults via behavior:
     // just ensure the layer is created without error.
     expect(() => new TimeoutLayer(new TerminalLayer())).not.toThrow();
   });

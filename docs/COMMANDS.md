@@ -109,8 +109,8 @@ A `type!: subject` breaking shorthand on the subject line is also recognized.
 Any breaking footer opens **all gate arms** for the PR.
 
 **One conscious act**: the footer alone is not enough. Also:
-1. Bump the package semver MAJOR (`dotnet versionize` or manual).
-2. Add a `CHANGELOG.md` breaking entry describing the change and migration path.
+1. The `tools/release-runner` reads the footer and bumps the affected package(s) to MAJOR automatically — run it after the PR merges (see [Per-package version](#per-package-version-consumable-libs-d2shared--d2) below). Do not hand-edit the version slot or CHANGELOG.
+2. The runner prepends a `CHANGELOG.md` breaking entry automatically; you may add migration details to the `[Unreleased]` block before running with `--apply`.
 
 ### Deprecate-not-delete workflow
 

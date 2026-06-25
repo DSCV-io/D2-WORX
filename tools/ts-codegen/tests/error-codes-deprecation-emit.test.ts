@@ -208,3 +208,77 @@ describe("emitBaseFactoriesCatalog — deprecation marker (constructing factory)
     expect(r.source).toContain("export function notFound<T = void>");
   });
 });
+
+// ---------------------------------------------------------------------------
+// sunset field is inert — no emitter reads it; its presence on an entry
+// MUST NOT affect the emitted output in any way (§26.8 inertness assertion).
+// The field is declared on ErrorCodeEntry as a forward-registration slot for
+// the RFC 8594 Sunset response header; no emitter function reads it today.
+// ---------------------------------------------------------------------------
+
+describe("sunset field — inert; never appears in emitted output", () => {
+  it("emitErrorCodesCatalog: sunset entry produces identical output to entry without sunset", () => {
+    const withSunset: ErrorCodesSpec = {
+      errorCodes: [deprecatedGenericEntry({ sunset: "2027-01-01" })],
+    };
+    const withoutSunset: ErrorCodesSpec = {
+      errorCodes: [deprecatedGenericEntry({ sunset: undefined })],
+    };
+
+    const rWith = emitErrorCodesCatalog(
+      withSunset,
+      GENERIC_CONFIG,
+      GENERIC_EN_US_KEYS,
+    );
+    const rWithout = emitErrorCodesCatalog(
+      withoutSunset,
+      GENERIC_CONFIG,
+      GENERIC_EN_US_KEYS,
+    );
+
+    expect(rWith.source).toBe(rWithout.source);
+    expect(rWith.source).not.toContain("sunset");
+  });
+
+  it("emitFailuresCatalog: sunset does not appear in emitted output", () => {
+    const spec: ErrorCodesSpec = {
+      errorCodes: [
+        {
+          code: "AUTH_BEARER_MISSING",
+          httpStatus: 401,
+          category: "validation_failure",
+          userMessageKey: "TK.Auth.Errors.UNAUTHORIZED",
+          factoryName: "BearerMissing",
+          factoryShape: "standard",
+          doc: "Bearer missing.",
+          deprecated: true,
+          deprecatedReason: "Superseded.",
+          replacedBy: "AUTH_BEARER_ABSENT",
+          sunset: "2027-06-01",
+        },
+      ],
+    };
+    const r = emitFailuresCatalog(
+      spec,
+      AUTH_CONFIG,
+      AUTH_FAILURES_CONFIG,
+      AUTH_EN_US_KEYS,
+    );
+
+    expect(r.source).not.toContain("sunset");
+  });
+
+  it("emitBaseFactoriesCatalog: sunset does not appear in emitted output", () => {
+    const spec: ErrorCodesSpec = {
+      errorCodes: [deprecatedGenericEntry({ sunset: "2028-12-31" })],
+    };
+    const r = emitBaseFactoriesCatalog(
+      spec,
+      GENERIC_CONFIG,
+      GENERIC_FACTORIES_CONFIG,
+      GENERIC_EN_US_KEYS,
+    );
+
+    expect(r.source).not.toContain("sunset");
+  });
+});

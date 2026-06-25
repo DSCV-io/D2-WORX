@@ -11,16 +11,18 @@ using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.ActivateKey;
 using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.IssueWorkloadCertificate;
 using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.RetireKey;
 using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.RunDueRotations;
+using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.SeedCertificateAuthority;
 using D2.Edge.KeyCustodian.App.Application.Handlers.Queries.GetRotationPlan;
 using D2.Edge.KeyCustodian.App.Infrastructure.Messaging;
 using D2.Edge.KeyCustodian.App.Infrastructure.Vault;
+using D2.Edge.KeyCustodian.Clients;
 using D2.Shared.Context.Abstractions;
 using D2.Shared.Handler;
 using Microsoft.Extensions.DependencyInjection;
 
 /// <summary>
 /// Registration tests for <see cref="KeyCustodianAppServiceCollectionExtensions"/>:
-/// the 8 handlers and the policy provider are all registered with the right
+/// all 10 handlers and the policy provider are registered with the correct
 /// service type and lifetime. Key generation + smoke testing are pure domain
 /// rules with no DI, so there are no generator / smoke-tester registrations.
 /// </summary>
@@ -39,8 +41,10 @@ public sealed class KeyCustodianAppServiceCollectionExtensionsTests
         services.Should().Contain(d => d.ServiceType == typeof(ICompromiseKeyHandler));
         services.Should().Contain(d => d.ServiceType == typeof(IRunDueRotationsHandler));
         services.Should().Contain(d => d.ServiceType == typeof(IIssueWorkloadCertificateHandler));
+        services.Should().Contain(d => d.ServiceType == typeof(ISeedCertificateAuthorityHandler));
         services.Should().Contain(d => d.ServiceType == typeof(IGetJwksHandler));
         services.Should().Contain(d => d.ServiceType == typeof(IGetRotationPlanHandler));
+        services.Should().Contain(d => d.ServiceType == typeof(IKeyCustodianApi));
     }
 
     [Fact]
@@ -97,6 +101,9 @@ public sealed class KeyCustodianAppServiceCollectionExtensionsTests
         // IOptions<KeyCustodianOptions> — policy provider + Generate/Compromise handlers.
         services.AddSingleton(KcAppTestKit.BuildOptionsAccessor());
 
+        // ICaProvider — Infra-owned; SeedCertificateAuthorityHandler.
+        services.AddSingleton<ICaProvider>(_ => new StubCaProvider());
+
         using var sp = services.BuildServiceProvider();
 
         // Act + Assert: resolve every registered handler interface and the policy
@@ -115,11 +122,24 @@ public sealed class KeyCustodianAppServiceCollectionExtensionsTests
             .Should().BeOfType<RunDueRotationsHandler>();
         sp.GetRequiredService<IIssueWorkloadCertificateHandler>()
             .Should().BeOfType<IssueWorkloadCertificateHandler>();
+        sp.GetRequiredService<ISeedCertificateAuthorityHandler>()
+            .Should().BeOfType<SeedCertificateAuthorityHandler>();
         sp.GetRequiredService<IGetJwksHandler>()
             .Should().BeOfType<GetJwksHandler>();
         sp.GetRequiredService<IGetRotationPlanHandler>()
             .Should().BeOfType<GetRotationPlanHandler>();
         sp.GetRequiredService<IRotationPolicyProvider>()
             .Should().BeOfType<OptionsRotationPolicyProvider>();
+        sp.GetRequiredService<IKeyCustodianApi>()
+            .Should().NotBeNull();
+    }
+
+    // Minimal ICaProvider stub for DI-resolution verification only. Never invoked
+    // in this test — the resolution test only proves the DI graph resolves cleanly,
+    // not that the handler executes correctly.
+    private sealed class StubCaProvider : ICaProvider
+    {
+        public D2Result<LoadedCaMaterial> GetSeedCaMaterial() =>
+            D2Result<LoadedCaMaterial>.ServiceUnavailable();
     }
 }

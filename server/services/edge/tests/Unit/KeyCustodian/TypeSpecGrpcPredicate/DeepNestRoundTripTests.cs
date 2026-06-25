@@ -54,6 +54,7 @@ public sealed class DeepNestRoundTripTests
                 new DtoDeepWidget(
                     "widget-a",
                     [new DtoDeepPart("P-1"), new DtoDeepPart("P-2")]))));
+
         using var host = await BuildHost(shim);
         using var pipeline = BuildPassThroughPipeline();
         var client = BuildClient(host, pipeline);
@@ -82,6 +83,7 @@ public sealed class DeepNestRoundTripTests
     {
         var shim = new EchoDeepShimBase(
             () => D2Result<DtoDeepOutput?>.Ok(new DtoDeepOutput("gizmo-2", Widget: null)));
+
         using var host = await BuildHost(shim);
         using var pipeline = BuildPassThroughPipeline();
         var client = BuildClient(host, pipeline);
@@ -102,6 +104,7 @@ public sealed class DeepNestRoundTripTests
         var shim = new EchoDeepShimBase(
             () => D2Result<DtoDeepOutput?>.Ok(new DtoDeepOutput(
                 "gizmo-3", new DtoDeepWidget("widget-empty", []))));
+
         using var host = await BuildHost(shim);
         using var pipeline = BuildPassThroughPipeline();
         var client = BuildClient(host, pipeline);
@@ -124,6 +127,7 @@ public sealed class DeepNestRoundTripTests
         using var host = await BuildHost(new EchoDeepShimBase(
             () => D2Result<DtoDeepOutput?>.Ok(new DtoDeepOutput(
                 "g", new DtoDeepWidget("w", [new DtoDeepPart("p")])))));
+
         var httpClient = host.GetTestClient();
 
         var services = new ServiceCollection();
@@ -190,6 +194,7 @@ public sealed class DeepNestRoundTripTests
         var channel = GrpcChannel.ForAddress(
             httpClient.BaseAddress!,
             new GrpcChannelOptions { HttpClient = httpClient });
+
         var stub = new PredicateFixturesGizmosDeep.PredicateFixturesGizmosDeepClient(channel);
         return new PredicateFixturesDeepGrpcClient(stub, pipeline);
     }

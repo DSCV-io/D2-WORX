@@ -54,7 +54,7 @@
 //
 // Conventions:
 //   - Auto-generated banner, #nullable enable, namespace BEFORE using.
-//   - global:: rooted aliases (SC1 namespace-shadowing prevention).
+//   - global:: rooted aliases (namespace-shadowing prevention).
 //   - C# 14 extension(T target) { } block form for mappers and DI extension.
 //   - sealed impl class; primary ctor injects stub + keyed pipeline.
 //   - Primary-ctor parameters carry NO r_ prefix; kept private fields DO (r_pipeline).
@@ -269,6 +269,9 @@ function emitImpl(
   usingSet.add("D2.Shared.Result.Grpc");
   usingSet.add("Grpc.Core");
   usingSet.add("Microsoft.Extensions.DependencyInjection");
+  // OTel ActivityEvent for retry-signal instrumentation.
+  if (ops.some((op) => op.retryWhenAst !== undefined))
+    usingSet.add("System.Diagnostics");
 
   // DTO type aliases (global:: rooted) so the bare request/response model names in the
   // method signatures + pipeline generic args resolve unambiguously, and never collide
@@ -461,9 +464,14 @@ function emitImpl(
       );
       lines.push("");
       lines.push(`                    if (${retryGuard})`);
+      lines.push("                    {");
+      lines.push(
+        `                        Activity.Current?.AddEvent(new ActivityEvent("d2.grpc.retry_signal"));`,
+      );
       lines.push(
         `                        throw new D2GeneratedBusinessRetrySignal(businessResult.ToProto());`,
       );
+      lines.push("                    }");
       lines.push("");
       lines.push("                    return data;");
     } else {

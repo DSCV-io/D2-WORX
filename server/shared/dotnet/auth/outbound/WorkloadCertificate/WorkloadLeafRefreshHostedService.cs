@@ -11,6 +11,7 @@ using JetBrains.Annotations;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using NodaTime;
 
 /// <summary>
 /// Background service that proactively reissues the cached workload leaf
@@ -72,8 +73,18 @@ internal sealed class WorkloadLeafRefreshHostedService : BackgroundService
         // Acquire a leaf immediately at startup so the first outbound mTLS handshake
         // hits a populated cache.
         var startupResult = await r_client.ForceReissueAsync(stoppingToken);
-        if (!startupResult.Success)
+
+        if (startupResult.Success)
+        {
+            var acquired = r_cache.PeekRaw();
+
+            if (acquired is not null)
+                r_logger.WorkloadLeafStartupAcquireSucceeded(acquired.NotAfter.ToDateTimeOffset());
+        }
+        else
+        {
             r_logger.WorkloadLeafStartupAcquireFailed(sr_pollInterval);
+        }
 
         while (!stoppingToken.IsCancellationRequested)
         {
@@ -93,12 +104,12 @@ internal sealed class WorkloadLeafRefreshHostedService : BackgroundService
     private async Task TickAsync(CancellationToken ct)
     {
         var snapshot = r_cache.PeekRaw();
-        var now = r_clock.GetUtcNow();
+        var now = Instant.FromDateTimeOffset(r_clock.GetUtcNow());
         var leadTime = r_options.WorkloadLeafRefreshLeadTime;
 
         var refreshDue =
             snapshot is null
-            || snapshot.NotAfter - now <= leadTime;
+            || (snapshot.NotAfter - now).ToTimeSpan() <= leadTime;
 
         if (!refreshDue)
             return;

@@ -89,11 +89,14 @@ internal static class RegistryEmitter
     {
         var segments = category.Split('_');
         var sb = new StringBuilder(category.Length);
+
         foreach (var segment in segments)
         {
             if (segment.Length == 0)
                 continue;
+
             sb.Append(char.ToUpperInvariant(segment[0]));
+
             if (segment.Length > 1)
                 sb.Append(segment.Substring(1).ToLowerInvariant());
         }
@@ -179,6 +182,7 @@ internal static class RegistryEmitter
         sb.AppendLine("        new Dictionary<string, ErrorCodeInfo>(StringComparer.Ordinal)");
         sb.AppendLine("        {");
 
+        // NOTE: the emitted string literals below are pipeline output — do not reformat for line length.
         foreach (var entry in entries)
         {
             var categoryMember = CategoryToMemberName(entry.Category);
@@ -214,6 +218,7 @@ internal static class RegistryEmitter
         sb.AppendLine("        new ReadOnlyCollection<ErrorCodeInfo>(");
 
         sb.AppendLine("            [");
+
         foreach (var entry in entries)
         {
             var escapedCode = EscapeStringLiteral(entry.Code);

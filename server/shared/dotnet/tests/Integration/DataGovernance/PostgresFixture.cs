@@ -8,6 +8,7 @@ namespace D2.Shared.Tests.Integration.DataGovernance;
 
 using System;
 using System.Threading.Tasks;
+using D2.Shared.Utilities.Extensions;
 using JetBrains.Annotations;
 using Npgsql;
 using Testcontainers.PostgreSql;
@@ -115,7 +116,7 @@ public sealed class PostgresFixture : IAsyncLifetime
 
     private static string MakeSafeDatabaseName(string label)
     {
-        if (string.IsNullOrWhiteSpace(label))
+        if (label.Falsey())
             return "isolated";
 
         var chars = new char[label.Length];

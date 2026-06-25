@@ -1266,6 +1266,31 @@ describe("emitGrpcClient_PredicateArm", () => {
       "ex is D2GeneratedBusinessRetrySignal",
     );
   });
+
+  it("retryWhen-bearing op → impl emits OTel AddEvent on the retry-signal throw path", () => {
+    const op = makeSignOp({ retryWhenAst: predAst("result.success == false") });
+    const [, impl] = emitGrpcClient("KeyCustodian", [op], CLIENTS_NS);
+    const c = impl!.content;
+    // OTel instrumentation must appear immediately before the sentinel throw.
+    expect(c).toContain(
+      `Activity.Current?.AddEvent(new ActivityEvent("d2.grpc.retry_signal"));`,
+    );
+    // The throw must still follow.
+    expect(c).toContain(
+      "throw new D2GeneratedBusinessRetrySignal(businessResult.ToProto());",
+    );
+  });
+
+  it("retryWhen-bearing op → impl uses System.Diagnostics (required for Activity)", () => {
+    const op = makeSignOp({ retryWhenAst: predAst("result.success == false") });
+    const [, impl] = emitGrpcClient("KeyCustodian", [op], CLIENTS_NS);
+    expect(impl!.content).toContain("using System.Diagnostics;");
+  });
+
+  it("NO-predicate op → impl omits System.Diagnostics (no unused import)", () => {
+    const plain = emitGrpcClient("KeyCustodian", [makeSignOp()], CLIENTS_NS);
+    expect(plain[1]!.content).not.toContain("using System.Diagnostics;");
+  });
 });
 
 // ---------------------------------------------------------------------------

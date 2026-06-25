@@ -216,10 +216,10 @@ interface Token {
 }
 
 /**
- * Tokenize the expression. Returns null on an unrecognized character or an
+ * Tokenize the expression. Returns undefined on an unrecognized character or an
  * unterminated string literal (both surface as `resilience-predicate-malformed`).
  */
-function tokenize(input: string): Token[] | null {
+function tokenize(input: string): Token[] | undefined {
   const tokens: Token[] = [];
   let i = 0;
   while (i < input.length) {
@@ -279,7 +279,7 @@ function tokenize(input: string): Token[] | null {
       let j = i + 1;
       while (j < input.length && input[j] !== '"') j++;
 
-      if (j >= input.length) return null; // unterminated string literal
+      if (j >= input.length) return undefined; // unterminated string literal
 
       tokens.push({
         kind: "string-literal",
@@ -288,7 +288,7 @@ function tokenize(input: string): Token[] | null {
       });
       i = j + 1;
     } else {
-      return null; // unrecognized character → malformed
+      return undefined; // unrecognized character → malformed
     }
   }
 
@@ -848,7 +848,7 @@ export function parseResultPredicate(expr: string): ResultPredicateParseResult {
     };
 
   const tokens = tokenize(trimmed);
-  if (tokens === null)
+  if (tokens === undefined)
     return {
       ok: false,
       errors: [

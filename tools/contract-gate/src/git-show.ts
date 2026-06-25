@@ -11,6 +11,8 @@
 
 import { spawnSync } from "node:child_process";
 
+import { validateGitPath, validateGitRef } from "./safe-args.js";
+
 // ---------------------------------------------------------------------------
 // Public API
 // ---------------------------------------------------------------------------
@@ -19,7 +21,7 @@ import { spawnSync } from "node:child_process";
  * Return the UTF-8 content of `filePath` at git ref `ref`, or undefined
  * when the path did not exist at that ref.
  *
- * @param ref      - The git ref to read from, e.g. "nova" or a commit SHA.
+ * @param ref      - The git ref to read from, e.g. a branch name or commit SHA.
  * @param filePath - Path to the file, relative to the repo root (forward slashes).
  * @param cwd      - The repo root directory (where `.git/` lives).
  * @returns The file content as a string, or undefined when not found.
@@ -30,6 +32,9 @@ export function fileAtRef(
   filePath: string,
   cwd: string,
 ): string | undefined {
+  validateGitRef(ref);
+  validateGitPath(filePath);
+
   const normalizedPath = filePath.replace(/\\/g, "/");
   const gitObject = `${ref}:${normalizedPath}`;
 

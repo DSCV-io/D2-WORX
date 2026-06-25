@@ -8,6 +8,8 @@
 // without triggering cli.ts's module-level side effects (argv capture,
 // git calls, process.exit).
 
+import { truthy } from "@d2/utilities";
+
 // ---------------------------------------------------------------------------
 // resolveBaseline
 // ---------------------------------------------------------------------------
@@ -24,8 +26,8 @@ export function resolveBaseline(
   arg: string | undefined,
   env: string | undefined,
 ): string | undefined {
-  if (arg !== undefined && arg.length > 0) return arg;
-  if (env !== undefined && env.length > 0) return env;
+  if (truthy(arg)) return arg;
+  if (truthy(env)) return env;
 
   return undefined;
 }

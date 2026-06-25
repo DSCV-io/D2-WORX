@@ -8,7 +8,7 @@ Always-on PR-blocking breaking-change gate for D²-WORX contracts.
 
 ## What it does
 
-Three diff arms inspect every pull request against the `nova` baseline:
+Three diff arms inspect every pull request against the integration baseline branch:
 
 1. **Proto arm** (`buf breaking` at FILE level) — guards the committed `.proto` files.
    Stable packages (`vN`, no alpha/beta) are enforced; pre-stable packages (`vNalpha`,
@@ -40,20 +40,49 @@ release runner for the CHANGELOG and semver-MAJOR bump.
 
 ## Running locally
 
+The `--against` flag names the integration baseline branch. Alternatively, set the
+`D2_GATE_BASELINE` environment variable; `--against` takes precedence. An error is
+raised if neither is provided.
+
+Fetch the baseline ref before running (required for the proto arm):
+
+```bash
+git fetch origin <baseline>
 ```
-# Proto arm only (buf breaking — requires nova ref to be fetched):
+
+```bash
+# All arms (proto + spec/i18n/OpenAPI):
+node tools/contract-gate/dist/cli.js --against <baseline>
+
+# JSON arms only (spec / i18n / OpenAPI — no buf required):
+node tools/contract-gate/dist/cli.js --against <baseline> --skip-proto
+
+# Proto arm only:
+node tools/contract-gate/dist/cli.js --against <baseline> --proto-only
+
+# Or run buf directly over the shared protos:
 pnpm --filter @d2/typespec-emitters exec buf breaking contracts/protos \
-  --against '.git#branch=nova,subdir=contracts/protos'
-
-# JSON arms (spec / i18n / OpenAPI):
-pnpm --filter contract-gate exec tsx src/cli.ts --against nova --skip-proto
-
-# All arms:
-pnpm --filter contract-gate exec tsx src/cli.ts --against nova
+  --against '.git#branch=<baseline>,subdir=contracts/protos'
 
 # Package tests (unit + proto integration):
 pnpm --filter contract-gate test
+
+# Rebuild the gate after editing src/:
+pnpm --filter contract-gate build
 ```
+
+### CLI flags
+
+| Flag | Description |
+|---|---|
+| `--against <ref>` | Integration baseline branch or commit ref. Required unless `D2_GATE_BASELINE` is set. |
+| `--skip-proto` | Skip the `buf breaking` proto arm; run only the JSON (spec/i18n/OpenAPI) arms. |
+| `--proto-only` | Run only the `buf breaking` proto arm; skip the JSON arms. |
+| `--json-only` | Alias for `--skip-proto`. |
+| `--skip-json` | Skip the JSON arms; run only the proto arm. Alias for `--proto-only`. |
+| `--help` / `-h` | Print flag descriptions and exit. |
+
+`--proto-only` and `--json-only` are mutually exclusive. `--skip-proto` and `--skip-json` are mutually exclusive.
 
 ## Catalog identity registry
 
@@ -74,8 +103,8 @@ workflow:
 2. When telemetry-gated removal is approved, delete the entry. The gate FAILS.
    Pull the force valve (`WIRE-BREAKING:` footer) + bump MAJOR + write CHANGELOG entry.
 
-**Note:** the `"deprecated"` field is not yet in the real `schema.json` files (deferred to first
-real deprecation). The gate rule is built and tested against synthetic fixtures now.
+**Note:** the `"deprecated"` field is defined in the gate logic and tested against synthetic
+fixtures. The `schema.json` files carry it once a real deprecation entry is authored.
 
 ## Validation ledger
 

@@ -46,7 +46,7 @@ import {
 // ---------------------------------------------------------------------------
 
 // ---------------------------------------------------------------------------
-// Domain derivation (D6): spec filename → domain token.
+// Domain derivation: spec filename → domain token.
 //   "error-codes.spec.json"       → "common"
 //   "auth-error-codes.spec.json"  → "auth"
 //   "geo-error-codes.spec.json"   → "geo"   (future)

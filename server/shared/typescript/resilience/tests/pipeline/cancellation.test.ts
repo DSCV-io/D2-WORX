@@ -250,7 +250,7 @@ describe("Singleflight — one caller aborts; shared op survives for the others"
 
     const sharedOp = (signal?: AbortSignal): Promise<number> => {
       executions++;
-      // The shared op must be handed NO caller signal — it cannot be cancelled
+      // The shared op must be handed NO caller signal — it cannot be canceled
       // by any single caller (mirrors CancellationToken.None on the .NET side).
       expect(signal).toBeUndefined();
       return shared.promise;
@@ -269,7 +269,7 @@ describe("Singleflight — one caller aborts; shared op survives for the others"
     // Caller #2 bails out.
     c2.abort();
 
-    // #2's wait was cancelled …
+    // #2's wait was canceled …
     expect(((await caught2) as Error).name).toBe("AbortError");
 
     // … but the SHARED op is still running for #1 and #3.

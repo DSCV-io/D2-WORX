@@ -73,6 +73,7 @@ public sealed class DefaultLocalCacheBehaviorTests
         await Task.Delay(200);
 
         var present = 0;
+
         for (var i = 0; i < 100; i++)
         {
             if ((await cache.GetAsync<int>($"k{i}")).IsOk)

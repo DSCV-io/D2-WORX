@@ -11,6 +11,8 @@
 // Integration-tested via the dry-run CLI path against the real repository.
 
 import { spawnSync } from "node:child_process";
+import { falsey, truthy } from "@d2/utilities";
+import { validateGitRef } from "contract-gate";
 import type { CommitRecord } from "./types.js";
 
 // ---------------------------------------------------------------------------
@@ -31,6 +33,9 @@ export function commitsInRange(
   baseRef: string,
   headRef: string,
 ): CommitRecord[] {
+  validateGitRef(baseRef);
+  validateGitRef(headRef);
+
   // Step 1: get SHA + message body for each commit (NUL = record separator).
   const logResult = spawnSync(
     "git",
@@ -47,7 +52,7 @@ export function commitsInRange(
 
   const raw = logResult.stdout ?? "";
   // Records are split on SOH (\x01). Each record: "<sha>\x00<body>".
-  const records = raw.split("\x01").filter((r) => r.trim().length > 0);
+  const records = raw.split("\x01").filter((r) => truthy(r));
 
   const commits: CommitRecord[] = [];
 
@@ -59,7 +64,7 @@ export function commitsInRange(
     const sha = record.slice(0, nulIdx).trim();
     const message = record.slice(nulIdx + 1);
 
-    if (sha.length === 0) continue;
+    if (falsey(sha)) continue;
 
     // Step 2: get touched file paths for this commit.
     const diffResult = spawnSync(
@@ -71,14 +76,15 @@ export function commitsInRange(
     if (diffResult.status !== 0) {
       const stderr = (diffResult.stderr ?? "").trim();
       throw new Error(
-        `git diff-tree failed for commit ${sha} (exit ${diffResult.status?.toString() ?? "unknown"}): ${stderr}`,
+        `git diff-tree failed for commit ${sha}` +
+          ` (exit ${diffResult.status?.toString() ?? "unknown"}): ${stderr}`,
       );
     }
 
     const files = (diffResult.stdout ?? "")
       .split("\n")
       .map((f) => f.trim())
-      .filter((f) => f.length > 0);
+      .filter((f) => truthy(f));
 
     commits.push({ message: message.trim(), files });
   }

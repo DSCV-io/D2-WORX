@@ -30,7 +30,7 @@ import { getCatalogIdentity } from "./catalog-identity.js";
 export interface SpecGateOptions {
   /** Absolute path to the repo root. */
   readonly repoRoot: string;
-  /** The baseline git ref, e.g. "nova". */
+  /** The integration baseline git ref (e.g. a branch name or commit SHA). */
   readonly baseRef: string;
   /** True when the force valve has been pulled. */
   readonly valveOpen: boolean;

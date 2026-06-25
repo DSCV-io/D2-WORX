@@ -176,7 +176,7 @@ interface Token {
   readonly offset: number;
 }
 
-function tokenize(input: string): Token[] | null {
+function tokenize(input: string): Token[] | undefined {
   const tokens: Token[] = [];
   let i = 0;
   while (i < input.length) {
@@ -231,7 +231,7 @@ function tokenize(input: string): Token[] | null {
       i = j + 1;
     } else {
       // Unrecognized character → signal malformed
-      return null;
+      return undefined;
     }
   }
   tokens.push({ kind: "eof", value: "", offset: i });
@@ -650,7 +650,7 @@ export function parse(expr: string): ResilienceParseResult {
   }
 
   const tokens = tokenize(trimmed);
-  if (tokens === null) {
+  if (tokens === undefined) {
     return {
       ok: false,
       errors: [

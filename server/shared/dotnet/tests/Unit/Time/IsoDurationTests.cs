@@ -303,6 +303,7 @@ public sealed class IsoDurationTests
         // 0.123456789 s is NOT exactly representable as an IEEE-754 double; if
         // any step routed through a double the nanosecond count would drift off
         // 123_456_789. The integer (right-pad) path keeps it exact.
+
         for (long ns = 100_000_000L; ns <= 999_999_999L; ns += 111_111_111L)
         {
             var iso = IsoDuration.Format(Duration.FromNanoseconds(ns));

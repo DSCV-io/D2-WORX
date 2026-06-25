@@ -129,15 +129,15 @@ namespace D2.Shared.Auth.Outbound.Telemetry
             }
         }
         [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.Extensions.Logging.Generators", "10.0.14.21808")]
-        private static readonly global::System.Action<global::Microsoft.Extensions.Logging.ILogger, global::System.String, global::System.String, global::System.Exception?> __WorkloadLeafReissueFailedCallback =
-            global::Microsoft.Extensions.Logging.LoggerMessage.Define<global::System.String, global::System.String>(global::Microsoft.Extensions.Logging.LogLevel.Warning, new global::Microsoft.Extensions.Logging.EventId(3001, nameof(WorkloadLeafReissueFailed)), "Workload leaf reissue failed: {ExceptionType} ({FirstFrame}).", new global::Microsoft.Extensions.Logging.LogDefineOptions() { SkipEnabledCheck = true }); 
+        private static readonly global::System.Action<global::Microsoft.Extensions.Logging.ILogger, global::System.String, global::System.String, global::System.String, global::System.Exception?> __WorkloadLeafReissueFailedCallback =
+            global::Microsoft.Extensions.Logging.LoggerMessage.Define<global::System.String, global::System.String, global::System.String>(global::Microsoft.Extensions.Logging.LogLevel.Warning, new global::Microsoft.Extensions.Logging.EventId(3001, nameof(WorkloadLeafReissueFailed)), "Workload leaf reissue failed: {ExceptionType} ({FirstFrame}). CachedLeafNotAfter={CachedLeafNotAfter}.", new global::Microsoft.Extensions.Logging.LogDefineOptions() { SkipEnabledCheck = true }); 
 
         [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.Extensions.Logging.Generators", "10.0.14.21808")]
-        public static partial void WorkloadLeafReissueFailed(this global::Microsoft.Extensions.Logging.ILogger logger, global::System.String exceptionType, global::System.String firstFrame)
+        public static partial void WorkloadLeafReissueFailed(this global::Microsoft.Extensions.Logging.ILogger logger, global::System.String exceptionType, global::System.String firstFrame, global::System.String cachedLeafNotAfter)
         {
             if (logger.IsEnabled(global::Microsoft.Extensions.Logging.LogLevel.Warning))
             {
-                __WorkloadLeafReissueFailedCallback(logger, exceptionType, firstFrame, null);
+                __WorkloadLeafReissueFailedCallback(logger, exceptionType, firstFrame, cachedLeafNotAfter, null);
             }
         }
         [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.Extensions.Logging.Generators", "10.0.14.21808")]
@@ -162,6 +162,30 @@ namespace D2.Shared.Auth.Outbound.Telemetry
             if (logger.IsEnabled(global::Microsoft.Extensions.Logging.LogLevel.Warning))
             {
                 __WorkloadLeafRefreshTickFailedCallback(logger, null);
+            }
+        }
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.Extensions.Logging.Generators", "10.0.14.21808")]
+        private static readonly global::System.Action<global::Microsoft.Extensions.Logging.ILogger, global::System.DateTimeOffset, global::System.Exception?> __WorkloadLeafCacheHitCallback =
+            global::Microsoft.Extensions.Logging.LoggerMessage.Define<global::System.DateTimeOffset>(global::Microsoft.Extensions.Logging.LogLevel.Debug, new global::Microsoft.Extensions.Logging.EventId(3004, nameof(WorkloadLeafCacheHit)), "Workload leaf served from cache; NotAfter={NotAfter:O}.", new global::Microsoft.Extensions.Logging.LogDefineOptions() { SkipEnabledCheck = true }); 
+
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.Extensions.Logging.Generators", "10.0.14.21808")]
+        public static partial void WorkloadLeafCacheHit(this global::Microsoft.Extensions.Logging.ILogger logger, global::System.DateTimeOffset notAfter)
+        {
+            if (logger.IsEnabled(global::Microsoft.Extensions.Logging.LogLevel.Debug))
+            {
+                __WorkloadLeafCacheHitCallback(logger, notAfter, null);
+            }
+        }
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.Extensions.Logging.Generators", "10.0.14.21808")]
+        private static readonly global::System.Action<global::Microsoft.Extensions.Logging.ILogger, global::System.DateTimeOffset, global::System.Exception?> __WorkloadLeafStartupAcquireSucceededCallback =
+            global::Microsoft.Extensions.Logging.LoggerMessage.Define<global::System.DateTimeOffset>(global::Microsoft.Extensions.Logging.LogLevel.Information, new global::Microsoft.Extensions.Logging.EventId(3005, nameof(WorkloadLeafStartupAcquireSucceeded)), "Workload leaf acquired successfully at startup; NotAfter={NotAfter:O}.", new global::Microsoft.Extensions.Logging.LogDefineOptions() { SkipEnabledCheck = true }); 
+
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.Extensions.Logging.Generators", "10.0.14.21808")]
+        public static partial void WorkloadLeafStartupAcquireSucceeded(this global::Microsoft.Extensions.Logging.ILogger logger, global::System.DateTimeOffset notAfter)
+        {
+            if (logger.IsEnabled(global::Microsoft.Extensions.Logging.LogLevel.Information))
+            {
+                __WorkloadLeafStartupAcquireSucceededCallback(logger, notAfter, null);
             }
         }
     }

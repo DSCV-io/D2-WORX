@@ -465,7 +465,11 @@ function emitCsharpComparison(
 
 /** Render a literal node as a C# literal. */
 function csharpLiteral(lit: LiteralNode): string {
-  if (lit.kind === "string") return `"${lit.value}"`;
+  if (lit.kind === "string") {
+    const escaped = lit.value.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
+    return `"${escaped}"`;
+  }
+
   if (lit.kind === "bool") return lit.value === "true" ? "true" : "false";
 
   return lit.value; // int — already a numeric token.
@@ -682,7 +686,11 @@ function emitTsComparison(
 }
 
 function tsLiteral(lit: LiteralNode): string {
-  if (lit.kind === "string") return `"${lit.value}"`;
+  if (lit.kind === "string") {
+    const escaped = lit.value.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
+    return `"${escaped}"`;
+  }
+
   if (lit.kind === "bool") return lit.value === "true" ? "true" : "false";
 
   return lit.value;

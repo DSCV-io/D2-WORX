@@ -28,6 +28,8 @@
 //   pattern uses alternation inside a quantifier. Matches the rationale comment in
 //   wire-channel.ts:20-24.
 
+import { falsey } from "@d2/utilities";
+
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
@@ -100,7 +102,7 @@ export function parseBreakingFooters(
   const apiBreaking: string[] = [];
 
   for (const message of commitMessages) {
-    if (!message || message.trim().length === 0) continue;
+    if (falsey(message)) continue;
 
     // Normalize line endings (CRLF → LF) and split into lines.
     const lines = message
@@ -130,15 +132,12 @@ export function parseBreakingFooters(
     // newline as the blank-line footer separator.
     let lastNonEmptyIndex = lines.length - 1;
 
-    while (
-      lastNonEmptyIndex >= 0 &&
-      (lines[lastNonEmptyIndex] ?? "").trim().length === 0
-    ) {
+    while (lastNonEmptyIndex >= 0 && falsey(lines[lastNonEmptyIndex] ?? "")) {
       lastNonEmptyIndex--;
     }
 
     for (let i = lastNonEmptyIndex - 1; i >= 1; i--) {
-      if ((lines[i] ?? "").trim().length === 0) {
+      if (falsey(lines[i] ?? "")) {
         footerStartIndex = i + 1;
         break;
       }

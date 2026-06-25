@@ -38,6 +38,7 @@ import { join, resolve } from "node:path";
 
 import type { BreakingFinding } from "./breaking-finding.js";
 import { extractProtoPackage, isProtoGateExempt } from "./proto-exemption.js";
+import { validateGitRef } from "./safe-args.js";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -47,7 +48,7 @@ import { extractProtoPackage, isProtoGateExempt } from "./proto-exemption.js";
 export interface ProtoArmOptions {
   /** Absolute path to the workspace root (where `buf.yaml` lives + git root). */
   readonly repoRoot: string;
-  /** The baseline git ref, e.g. "nova". */
+  /** The integration baseline git ref (e.g. a branch name or commit SHA). */
   readonly baseRef: string;
   /** True when the force valve has been pulled (any breaking footer present). */
   readonly valveOpen: boolean;
@@ -177,6 +178,13 @@ function resolveBufInvocation(): {
  */
 export function runProtoArm(opts: ProtoArmOptions): ProtoArmResult {
   const { repoRoot, baseRef, valveOpen } = opts;
+
+  // Defensive guard: the CLI path validates baseRef before calling this function,
+  // but direct callers (e.g. integration tests, future programmatic consumers)
+  // must not bypass the allowlist check. Throw early so the buf `--against` arg
+  // is never constructed from an unvalidated ref.
+  validateGitRef(baseRef);
+
   const protosDir = resolve(repoRoot, "contracts", "protos");
 
   // Discover packages present in the shared contracts/protos tree.
@@ -208,7 +216,7 @@ export function runProtoArm(opts: ProtoArmOptions): ProtoArmResult {
   const { cmd, prefix } = resolveBufInvocation();
   const bufConfigPath = join(protosDir, "buf.yaml");
 
-  // Run `buf breaking` against the nova baseline at FILE level.
+  // Run `buf breaking` against the integration baseline at FILE level.
   // The `--against '.git#branch=<ref>,subdir=contracts/protos'` form points
   // buf at the module inside the git baseline.
   const bufResult = spawnSync(

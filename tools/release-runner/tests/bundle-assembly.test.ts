@@ -17,17 +17,13 @@
 
 import { describe, expect, it } from "vitest";
 import { resolve } from "node:path";
-import { fileURLToPath } from "node:url";
+import { repoRoot } from "./repo-root.js";
 
 // ---------------------------------------------------------------------------
 // Dynamic import of the .mjs script
 // ---------------------------------------------------------------------------
 
-const __dirname = fileURLToPath(new URL(".", import.meta.url));
-const scriptPath = resolve(
-  __dirname,
-  "../../../tools/scripts/assemble-libs-bundle.mjs",
-);
+const scriptPath = resolve(repoRoot, "tools/scripts/assemble-libs-bundle.mjs");
 
 // Dynamic import so vitest resolves the .mjs ESM module at runtime.
 // We use a module-level await via top-level await (ESM).

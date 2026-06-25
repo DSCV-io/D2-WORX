@@ -100,7 +100,7 @@ export const DiagnosticIds = {
   ERC_DOMAIN_PREFIX_VIOLATION: "D2ERC001",
   ERC_TK_KEY_NOT_FOUND: "D2ERC002",
   ERC_UNSUPPORTED_FACTORY_SHAPE: "D2ERC003",
-  // Registry-level cross-catalog collision checks (D7 from design decisions).
+  // Registry-level cross-catalog collision checks.
   // D2ERC004 — same `code` declared in two or more catalogs (cross-catalog).
   // D2ERC005 — reserved-namespace violation: unprefixed code in a per-domain
   //             spec, or a domain-prefixed code in the generic spec.

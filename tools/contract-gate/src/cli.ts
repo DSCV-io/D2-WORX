@@ -9,15 +9,19 @@
 // PR's commits, and exits non-zero on an unforced break.
 //
 // Usage:
-//   node dist/cli.js [--against <ref>] [--repo-root <path>]
+//   node dist/cli.js --against <ref> [--repo-root <path>]
 //
 // Flags:
-//   --against <ref>      Baseline git ref (default: "nova")
+//   --against <ref>      Baseline git ref (integration baseline branch).
+//                        Resolution order: --against arg, then D2_GATE_BASELINE
+//                        env var. Error if neither is provided.
 //   --repo-root <path>   Repo root directory (default: cwd)
-//   --proto-only         Run only the proto arm
-//   --json-only          Run only the spec/i18n/openapi arms
+//   --proto-only         Run only the proto arm (mutually exclusive with --json-only)
+//   --json-only          Run only the spec/i18n/openapi arms (mutually exclusive
+//                        with --proto-only)
 //   --skip-proto         Skip the proto arm (run json arms only)
 //   --skip-json          Skip the json arms (run proto arm only)
+//   --help, -h           Print this help message and exit.
 //
 // Exit codes:
 //   0  All arms pass (or all breaks are valve-forced).
@@ -27,6 +31,8 @@
 import { resolve } from "node:path";
 import { existsSync } from "node:fs";
 
+import { resolveBaseline } from "./baseline.js";
+import { validateGitRef } from "./safe-args.js";
 import { commitMessagesInRange } from "./git.js";
 import { parseBreakingFooters } from "./footer-parser.js";
 import { runProtoArm } from "./proto-arm.js";
@@ -38,21 +44,23 @@ import type { BreakingFinding } from "./breaking-finding.js";
 // ---------------------------------------------------------------------------
 
 interface CliArgs {
-  readonly baseRef: string;
+  readonly baseRef: string | undefined;
   readonly repoRoot: string;
   readonly protoOnly: boolean;
   readonly jsonOnly: boolean;
   readonly skipProto: boolean;
   readonly skipJson: boolean;
+  readonly help: boolean;
 }
 
 function parseArgs(argv: string[]): CliArgs {
-  let baseRef = "nova";
+  let baseRef: string | undefined = undefined;
   let repoRoot = process.cwd();
   let protoOnly = false;
   let jsonOnly = false;
   let skipProto = false;
   let skipJson = false;
+  let help = false;
 
   for (let i = 0; i < argv.length; i++) {
     const arg = argv[i] ?? "";
@@ -69,11 +77,39 @@ function parseArgs(argv: string[]): CliArgs {
       skipProto = true;
     } else if (arg === "--skip-json") {
       skipJson = true;
+    } else if (arg === "--help" || arg === "-h") {
+      help = true;
     }
   }
 
-  return { baseRef, repoRoot, protoOnly, jsonOnly, skipProto, skipJson };
+  return { baseRef, repoRoot, protoOnly, jsonOnly, skipProto, skipJson, help };
 }
+
+// ---------------------------------------------------------------------------
+// Help text
+// ---------------------------------------------------------------------------
+
+const HELP_TEXT = `\
+contract-gate — contract breaking-change gate
+
+Usage:
+  node dist/cli.js --against <ref> [options]
+
+Options:
+  --against <ref>    Baseline git ref (required; or set D2_GATE_BASELINE env var)
+  --repo-root <path> Repo root directory (default: cwd)
+  --proto-only       Run only the proto arm (mutually exclusive with --json-only)
+  --json-only        Run only the spec/i18n/openapi arms (mutually exclusive with
+                     --proto-only)
+  --skip-proto       Skip the proto arm
+  --skip-json        Skip the json arms
+  --help, -h         Print this help message and exit
+
+Exit codes:
+  0  All arms pass (or all breaks are valve-forced).
+  1  At least one unforced break detected.
+  2  Internal error (bad config, git failure, etc.).
+`;
 
 // ---------------------------------------------------------------------------
 // Output helpers
@@ -105,6 +141,53 @@ function printFindings(
 
 async function main(): Promise<void> {
   const args = parseArgs(process.argv.slice(2));
+
+  // ── 0a. --help ────────────────────────────────────────────────────────────
+  if (args.help) {
+    process.stdout.write(HELP_TEXT);
+    process.exit(0);
+  }
+
+  // ── 0b. Mutual-exclusion: --proto-only and --json-only are contradictory ──
+  if (args.protoOnly && args.jsonOnly) {
+    process.stderr.write(
+      "[contract-gate] error: --proto-only and --json-only are mutually exclusive" +
+        " — they leave no arm to run.\n",
+    );
+    process.exit(2);
+  }
+
+  // ── 0c. No-op guard: --skip-proto + --skip-json leaves nothing to run ─────
+  if (args.skipProto && args.skipJson) {
+    process.stderr.write(
+      "[contract-gate] error: --skip-proto and --skip-json are mutually exclusive" +
+        " — they leave no arm to run.\n",
+    );
+    process.exit(2);
+  }
+
+  // ── 0. Baseline resolution: --against arg > D2_GATE_BASELINE env var ─────
+  const baseRef = resolveBaseline(
+    args.baseRef,
+    process.env["D2_GATE_BASELINE"],
+  );
+
+  if (baseRef === undefined) {
+    process.stderr.write(
+      "error: no baseline ref supplied. Pass --against <ref> or set D2_GATE_BASELINE.\n",
+    );
+    process.exit(2);
+  }
+
+  try {
+    validateGitRef(baseRef);
+  } catch (err) {
+    process.stderr.write(
+      `[contract-gate] error: invalid baseline ref — ${String(err)}\n`,
+    );
+    process.exit(2);
+  }
+
   const repoRoot = resolve(args.repoRoot);
 
   if (!existsSync(resolve(repoRoot, ".git"))) {
@@ -120,7 +203,7 @@ async function main(): Promise<void> {
     "Force valve: CLOSED (no breaking footer detected in commit range)";
 
   try {
-    const messages = commitMessagesInRange(args.baseRef, "HEAD");
+    const messages = commitMessagesInRange(baseRef, "HEAD");
     const valve = parseBreakingFooters(messages);
     valveOpen = valve.forced;
 
@@ -141,7 +224,7 @@ async function main(): Promise<void> {
   }
 
   printSection("Contract breaking-change gate");
-  process.stdout.write(`Baseline ref : ${args.baseRef}\n`);
+  process.stdout.write(`Baseline ref : ${baseRef}\n`);
   process.stdout.write(`Repo root    : ${repoRoot}\n`);
   process.stdout.write(`${valveSummary}\n`);
 
@@ -155,7 +238,7 @@ async function main(): Promise<void> {
 
     const protoResult = runProtoArm({
       repoRoot,
-      baseRef: args.baseRef,
+      baseRef,
       valveOpen,
     });
 
@@ -192,7 +275,7 @@ async function main(): Promise<void> {
 
     const specResult = await runSpecGate({
       repoRoot,
-      baseRef: args.baseRef,
+      baseRef,
       valveOpen,
     });
 

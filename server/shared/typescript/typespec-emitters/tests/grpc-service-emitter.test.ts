@@ -74,7 +74,7 @@ function emitSign() {
 }
 
 // ---------------------------------------------------------------------------
-// Test 1: global:: base-class qualification (SC1 lesson)
+// Test 1: global:: base-class qualification
 // ---------------------------------------------------------------------------
 
 describe("emitGrpcService_BaseClass_GlobalQualified", () => {

@@ -9,6 +9,7 @@ namespace D2.Shared.Auth.Outbound.WorkloadCertificate;
 using System.Net.Security;
 using System.Security.Cryptography.X509Certificates;
 using JetBrains.Annotations;
+using NodaTime;
 
 /// <summary>
 /// Single-value-per-process cache of the current live workload leaf certificate +
@@ -61,9 +62,9 @@ internal sealed class WorkloadLeafCache : IDisposable
     /// <paramref name="now"/>; otherwise null. Used by callers that demand a
     /// presentable leaf (triggers a reissue on null).
     /// </summary>
-    /// <param name="now">The current UTC time.</param>
+    /// <param name="now">The current UTC instant.</param>
     /// <returns>A non-expired snapshot or null.</returns>
-    public WorkloadLeafSnapshot? TryGet(DateTimeOffset now)
+    public WorkloadLeafSnapshot? TryGet(Instant now)
     {
         var snapshot = Volatile.Read(ref _current);
 
@@ -75,9 +76,9 @@ internal sealed class WorkloadLeafCache : IDisposable
     /// <summary>
     /// Returns the current live leaf certificate if it is non-expired, else null.
     /// </summary>
-    /// <param name="now">The current UTC time.</param>
+    /// <param name="now">The current UTC instant.</param>
     /// <returns>The live, non-expired leaf, or null.</returns>
-    public X509Certificate2? GetCurrentLeaf(DateTimeOffset now) => TryGet(now)?.Leaf;
+    public X509Certificate2? GetCurrentLeaf(Instant now) => TryGet(now)?.Leaf;
 
     /// <summary>
     /// Returns the current pre-built client-certificate chain context (leaf +
@@ -85,9 +86,9 @@ internal sealed class WorkloadLeafCache : IDisposable
     /// at channel build to set its
     /// <see cref="SslClientAuthenticationOptions.ClientCertificateContext"/>.
     /// </summary>
-    /// <param name="now">The current UTC time.</param>
+    /// <param name="now">The current UTC instant.</param>
     /// <returns>The non-expired chain context, or null.</returns>
-    public SslStreamCertificateContext? GetCurrentContext(DateTimeOffset now) =>
+    public SslStreamCertificateContext? GetCurrentContext(Instant now) =>
         TryGet(now)?.ChainContext;
 
     /// <summary>
@@ -115,9 +116,9 @@ internal sealed class WorkloadLeafCache : IDisposable
     /// <inheritdoc/>
     public void Dispose()
     {
-        if (_disposed) return;
+        if (Volatile.Read(ref _disposed)) return;
 
-        _disposed = true;
+        Volatile.Write(ref _disposed, true);
 
         var current = Volatile.Read(ref _current);
 

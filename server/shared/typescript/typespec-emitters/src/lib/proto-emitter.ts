@@ -519,7 +519,10 @@ function buildReservedNameLines(names?: readonly string[]): string[] {
     }
   }
 
-  return deduped.map((n) => `reserved "${n}";`);
+  return deduped.map((n) => {
+    const escaped = n.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
+    return `reserved "${escaped}";`;
+  });
 }
 
 // ---------------------------------------------------------------------------

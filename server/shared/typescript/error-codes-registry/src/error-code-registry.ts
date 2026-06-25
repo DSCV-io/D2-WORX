@@ -77,7 +77,7 @@ export interface ErrorCodeInfo {
 // ordinal case-sensitive lookup. Static (no DI) — the data is compile-time-
 // frozen with no runtime config.
 //
-// Resolution semantics (D3 hard not-found):
+// Resolution semantics (hard not-found):
 //   resolve("UNKNOWN_CODE")  → undefined
 //   has("UNKNOWN_CODE")      → false
 //   Unknown codes are NOT synthesized — the caller owns the fallback.

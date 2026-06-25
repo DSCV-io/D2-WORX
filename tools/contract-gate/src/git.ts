@@ -11,6 +11,9 @@
 
 import { spawnSync } from "node:child_process";
 
+import { truthy } from "@d2/utilities";
+import { validateGitRef } from "./safe-args.js";
+
 // ---------------------------------------------------------------------------
 // Public API
 // ---------------------------------------------------------------------------
@@ -29,7 +32,7 @@ import { spawnSync } from "node:child_process";
  * git-log format appends a NUL after the full message body (`%B`) of each
  * commit so splitting on `\x00` yields one element per commit.
  *
- * @param baseRef - The exclusive lower bound ref, e.g. `"nova"` or a commit SHA.
+ * @param baseRef - The exclusive lower bound ref, e.g. a branch name or commit SHA.
  * @param headRef - The inclusive upper bound ref, e.g. `"HEAD"` or a commit SHA.
  * @returns Array of raw commit-message strings, one per commit.
  * @throws {Error} When `git log` exits non-zero.
@@ -38,6 +41,9 @@ export function commitMessagesInRange(
   baseRef: string,
   headRef: string,
 ): string[] {
+  validateGitRef(baseRef);
+  validateGitRef(headRef);
+
   const result = spawnSync(
     "git",
     ["log", "--format=%B%x00", `${baseRef}..${headRef}`],
@@ -55,5 +61,5 @@ export function commitMessagesInRange(
 
   // Split on NUL delimiter; filter out empty strings that arise from the
   // trailing NUL after the last commit and any blank separators.
-  return raw.split("\x00").filter((msg) => msg.trim().length > 0);
+  return raw.split("\x00").filter((msg) => truthy(msg));
 }

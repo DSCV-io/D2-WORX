@@ -199,6 +199,7 @@ internal static class ConstantsEmitter
     internal static string ObsoleteMessageLiteral(ErrorCodeEntry entry)
     {
         var reason = entry.DeprecatedReason ?? string.Empty;
+
         var message = entry.ReplacedBy is { } replacedBy && !replacedBy.Falsey()
             ? $"{reason} Use {replacedBy} instead."
             : reason;
@@ -214,6 +215,7 @@ internal static class ConstantsEmitter
         sb.AppendLine("#nullable enable");
         sb.AppendLine();
         sb.AppendLine("using System.Collections.Generic;");
+
         if (config.EmitKebabCase)
             sb.AppendLine("using System.Text;");
 
@@ -227,11 +229,13 @@ internal static class ConstantsEmitter
         foreach (var entry in entries)
         {
             sb.AppendLine($"    /// <summary>{EscapeXmlDoc(entry.Doc)}</summary>");
+
             if (entry.Deprecated)
                 sb.AppendLine($"    [System.Obsolete({ObsoleteMessageLiteral(entry)})]");
 
             sb.AppendLine(
                 $"    public const string {entry.Code} = \"{EscapeStringLiteral(entry.Code)}\";");
+
             sb.AppendLine();
         }
 
@@ -265,6 +269,7 @@ internal static class ConstantsEmitter
         // A trailing newline produces a final empty segment — drop it so the
         // block ends exactly at its last real line.
         var count = lines.Length;
+
         if (count > 0 && lines[count - 1].Length == 0)
             count--;
 
@@ -282,6 +287,7 @@ internal static class ConstantsEmitter
         sb.AppendLine(
             "    private static readonly IReadOnlyList<string> sr_allCodes = new string[]");
         sb.AppendLine("    {");
+
         foreach (var entry in entries)
             sb.AppendLine($"        \"{EscapeStringLiteral(entry.Code)}\",");
 
@@ -294,6 +300,7 @@ internal static class ConstantsEmitter
         EmitBlock(sb, config.GetHttpStatusDoc);
         sb.AppendLine("    public static int GetHttpStatus(string errorCode) => errorCode switch");
         sb.AppendLine("    {");
+
         foreach (var entry in entries)
         {
             sb.AppendLine(

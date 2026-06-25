@@ -70,6 +70,7 @@ public sealed class PlaceOrderTolerantReaderTests
                 new ProtoOrderV2Customer { Tier = expected_tier }),
             unknownFieldNumber: 4,
             smallVarintValue: 99);
+
         var dataProto = ProtoOrderV2Output.Parser.ParseFrom(rawOutput);
 
         var shim = new TolerantReaderShim(() => BuildSuccessResponse(dataProto));
@@ -108,6 +109,7 @@ public sealed class PlaceOrderTolerantReaderTests
                 new ProtoOrderV2Customer { Tier = expected_tier }),
             unknownFieldNumber: 4,
             smallVarintValue: 42);
+
         var dataProto = ProtoOrderV2Output.Parser.ParseFrom(rawOutput);
 
         var shim = new TolerantReaderShim(() => BuildSuccessResponse(dataProto));
@@ -213,6 +215,7 @@ public sealed class PlaceOrderTolerantReaderTests
         var channel = GrpcChannel.ForAddress(
             httpClient.BaseAddress!,
             new GrpcChannelOptions { HttpClient = httpClient });
+
         var stub = new PredicateFixturesOrdersV2.PredicateFixturesOrdersV2Client(channel);
         return new PredicateFixturesV2GrpcClient(stub, pipeline);
     }

@@ -10,6 +10,7 @@
 // so the unit tests drive the runner with synthetic commit histories and fixed
 // dates — no real git or filesystem IO required in tests.
 
+import { falsey } from "@d2/utilities";
 import { computeBumpPlans } from "./bump-engine.js";
 import { writeManifestVersion } from "./manifest-editor.js";
 import { promoteChangelog } from "./changelog-editor.js";
@@ -64,7 +65,7 @@ export function runRelease(
 
   const plans = computeBumpPlans(commits, filteredPackages);
 
-  if (options.dryRun || plans.length === 0) {
+  if (options.dryRun || falsey(plans)) {
     return { plans, applied: false };
   }
 

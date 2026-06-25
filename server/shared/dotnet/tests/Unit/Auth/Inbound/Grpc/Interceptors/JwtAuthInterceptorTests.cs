@@ -290,6 +290,65 @@ public sealed class JwtAuthInterceptorTests
             .Should().Be(AuthErrorCodes.AUTH_JWT_EXPIRED);
     }
 
+    [Fact]
+    public async Task UnaryServerHandler_WrongIssuerToken_ThrowsUnauthenticated_LeavesHolderUnset()
+    {
+        // Adversarial: a token whose issuer does not match the configured issuer
+        // MUST be rejected before the holder is populated.
+        using var builder = new TestJwtBuilder();
+        var token = builder.MintToken("https://attacker.example", _AUDIENCE);
+        var holder = new MutableForwardedJwtAccessor();
+        var interceptor = MakeInterceptor(builder);
+        var ctx = MakeContextWithHolder(
+            authorization: $"{_BEARER_PREFIX}{token}",
+            holder: holder);
+
+        var act = async () =>
+            await interceptor.UnaryServerHandler<string, string>(
+                "req", ctx, (_, _) => Task.FromResult("reply"));
+
+        var ex = await act.Should().ThrowAsync<RpcException>();
+        ex.Which.StatusCode.Should().Be(GrpcStatusCode.Unauthenticated);
+        ReadTrailer(ex.Which.Trailers, D2GrpcTrailers.ERROR_CODE)
+            .Should().Be(AuthErrorCodes.AUTH_JWT_ISSUER_MISMATCH);
+        holder.Current.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task UnaryServerHandler_AlgNoneToken_ThrowsUnauthenticated_LeavesHolderUnset()
+    {
+        // Adversarial: an alg=none token (JWT confusion attack) MUST be
+        // rejected by algorithm pinning before the holder is populated.
+        using var builder = new TestJwtBuilder();
+        var payload =
+            "{\"sub\":\"" + Guid.NewGuid() + "\","
+            + "\"iss\":\"" + _ISSUER + "\","
+            + "\"aud\":\"" + _AUDIENCE + "\","
+            + "\"exp\":" + DateTimeOffset.UtcNow.AddHours(1).ToUnixTimeSeconds() + "}";
+        var noneToken =
+            EncodeBase64Url("{\"alg\":\"none\",\"typ\":\"JWT\"}")
+            + "."
+            + EncodeBase64Url(payload)
+            + ".";
+        var holder = new MutableForwardedJwtAccessor();
+        var interceptor = MakeInterceptor(builder);
+        var ctx = MakeContextWithHolder(
+            authorization: $"{_BEARER_PREFIX}{noneToken}",
+            holder: holder);
+
+        var act = async () =>
+            await interceptor.UnaryServerHandler<string, string>(
+                "req", ctx, (_, _) => Task.FromResult("reply"));
+
+        var ex = await act.Should().ThrowAsync<RpcException>();
+        ex.Which.StatusCode.Should().Be(GrpcStatusCode.Unauthenticated);
+        ReadTrailer(ex.Which.Trailers, D2GrpcTrailers.ERROR_CODE)
+            .Should().BeOneOf(
+                AuthErrorCodes.AUTH_JWT_SIGNATURE_INVALID,
+                AuthErrorCodes.AUTH_BEARER_MALFORMED);
+        holder.Current.Should().BeNull();
+    }
+
     // ---- Liveness ----
 
     [Fact]
@@ -526,6 +585,84 @@ public sealed class JwtAuthInterceptorTests
         var interceptor = MakeInterceptor(builder);
         var ctx = MakeContextWithHolder(
             authorization: null,
+            holder: holder);
+
+        var act = async () =>
+            await interceptor.UnaryServerHandler<string, string>(
+                "req", ctx, (_, _) => Task.FromResult("reply"));
+
+        await act.Should().ThrowAsync<RpcException>();
+        holder.Current.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task UnaryServerHandler_LivenessRevoked_LeavesHolderUnset()
+    {
+        // Regression (§9.39): the holder must stay empty when the liveness gate
+        // rejects the session as revoked — capture must not happen before ALL
+        // auth gates pass, including the session-liveness check.
+        using var builder = new TestJwtBuilder();
+        var token = builder.MintToken(_ISSUER, _AUDIENCE);
+        var holder = new MutableForwardedJwtAccessor();
+        var liveness = new FakeSessionLivenessTracker
+        {
+            OutcomeForSession = _ => FakeSessionLivenessTracker.Revoked(),
+        };
+        var interceptor = MakeInterceptor(builder, liveness);
+        var ctx = MakeContextWithHolder(
+            authorization: $"{_BEARER_PREFIX}{token}",
+            holder: holder);
+
+        var act = async () =>
+            await interceptor.UnaryServerHandler<string, string>(
+                "req", ctx, (_, _) => Task.FromResult("reply"));
+
+        await act.Should().ThrowAsync<RpcException>();
+        holder.Current.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task UnaryServerHandler_LivenessUnavailable_LeavesHolderUnset()
+    {
+        // Regression (§9.39): the holder must stay empty when the liveness gate
+        // cannot reach the backing store — fail-closed means the bearer is not
+        // captured and forwarded.
+        using var builder = new TestJwtBuilder();
+        var token = builder.MintToken(_ISSUER, _AUDIENCE);
+        var holder = new MutableForwardedJwtAccessor();
+        var liveness = new FakeSessionLivenessTracker
+        {
+            OutcomeForSession = _ => FakeSessionLivenessTracker.Unavailable(),
+        };
+        var interceptor = MakeInterceptor(builder, liveness);
+        var ctx = MakeContextWithHolder(
+            authorization: $"{_BEARER_PREFIX}{token}",
+            holder: holder);
+
+        var act = async () =>
+            await interceptor.UnaryServerHandler<string, string>(
+                "req", ctx, (_, _) => Task.FromResult("reply"));
+
+        await act.Should().ThrowAsync<RpcException>();
+        holder.Current.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task UnaryServerHandler_LivenessValidationFailed_LeavesHolderUnset()
+    {
+        // Regression (§9.39): the holder must stay empty when the liveness gate
+        // returns ValidationFailed (defensive fail-closed mapping) — an
+        // unexpected result from the tracker must not allow bearer capture.
+        using var builder = new TestJwtBuilder();
+        var token = builder.MintToken(_ISSUER, _AUDIENCE);
+        var holder = new MutableForwardedJwtAccessor();
+        var liveness = new FakeSessionLivenessTracker
+        {
+            OutcomeForSession = _ => FakeSessionLivenessTracker.ValidationFailed(),
+        };
+        var interceptor = MakeInterceptor(builder, liveness);
+        var ctx = MakeContextWithHolder(
+            authorization: $"{_BEARER_PREFIX}{token}",
             holder: holder);
 
         var act = async () =>
@@ -1442,6 +1579,21 @@ public sealed class JwtAuthInterceptorTests
         }
 
         return null;
+    }
+
+    /// <summary>
+    /// Encodes a string to URL-safe Base64 (no padding), matching the standard
+    /// JWT header/payload encoding. Used to hand-craft adversarial tokens
+    /// (e.g. alg=none) that real <see cref="Microsoft.IdentityModel"/> builders
+    /// refuse to produce.
+    /// </summary>
+    private static string EncodeBase64Url(string s)
+    {
+        var bytes = System.Text.Encoding.UTF8.GetBytes(s);
+        return Convert.ToBase64String(bytes)
+            .TrimEnd('=')
+            .Replace('+', '-')
+            .Replace('/', '_');
     }
 
     /// <summary>Empty <see cref="IAsyncStreamReader{T}"/> stand-in.</summary>

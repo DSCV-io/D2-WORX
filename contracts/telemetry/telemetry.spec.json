@@ -182,6 +182,13 @@
           "constName": "TokenExchangeRevokedPurges",
           "kind": "counter",
           "description": "Total token-exchange cache entries purged on session-revoked."
+        },
+        {
+          "name": "d2.auth.outbound.workload_leaf.reissue_failures",
+          "constName": "LeafReissueFailures",
+          "kind": "counter",
+          "unit": "{failure}",
+          "description": "Total workload leaf reissue failures."
         }
       ]
     },

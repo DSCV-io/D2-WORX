@@ -8,6 +8,7 @@ namespace D2.Shared.Auth.Outbound.WorkloadCertificate;
 
 using System.Net.Security;
 using System.Security.Cryptography.X509Certificates;
+using NodaTime;
 
 /// <summary>
 /// Immutable snapshot of one live workload leaf certificate, its issuing
@@ -49,7 +50,8 @@ using System.Security.Cryptography.X509Certificates;
 /// </para>
 /// </param>
 /// <param name="NotAfter">
-/// Absolute UTC not-after derived from the issuance material. The cache treats
+/// Absolute UTC not-after as a NodaTime <see cref="Instant"/> (Cat 2 fixed-expiry
+/// timestamp — timezone-independent, no DST ambiguity). The cache treats
 /// <see cref="NotAfter"/> as the wall-clock cutoff at which the leaf MUST NOT be
 /// presented further; the refresh hosted service reissues ahead of it.
 /// </param>
@@ -57,4 +59,4 @@ internal sealed record WorkloadLeafSnapshot(
     X509Certificate2 Leaf,
     X509Certificate2 Intermediate,
     SslStreamCertificateContext? ChainContext,
-    DateTimeOffset NotAfter);
+    Instant NotAfter);

@@ -10,6 +10,7 @@ using System.Threading.Channels;
 using D2.Shared.Auth.Outbound.WorkloadCertificate;
 using D2.Shared.Result;
 using D2.Shared.Tests.Unit.Mtls;
+using NodaTime;
 
 /// <summary>
 /// Test issuer that mints real leaf material from a self-contained
@@ -119,7 +120,7 @@ internal sealed class FakeWorkloadCertificateIssuer : IWorkloadCertificateIssuer
 
         // The cache-relevant NotAfter tracks the injected (fake) clock so refresh-due
         // + expiry assertions are deterministic under FakeTimeProvider advances.
-        var notAfter = r_clock.GetUtcNow().Add(r_validity);
+        var notAfter = Instant.FromDateTimeOffset(r_clock.GetUtcNow()) + Duration.FromTimeSpan(r_validity);
 
         return ValueTask.FromResult(D2Result<WorkloadLeafMaterial>.Ok(
             new WorkloadLeafMaterial(certDer, pkcs8, issuerDer, notAfter)));

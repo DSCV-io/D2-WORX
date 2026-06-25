@@ -902,7 +902,7 @@ describe("tsGrpcClient_Behavioral_PlaceOrder_RealSeam", () => {
     const result = await client.placeOrder({ customerId: "c" });
 
     expect(result.success).toBe(false);
-    // The seam maps a non-cancelled/unauthenticated fault to serviceUnavailable (503).
+    // The seam maps a non-canceled/unauthenticated fault to serviceUnavailable (503).
     expect(result.statusCode).toBe(503);
     // PII: the raw transport detail never reaches the result.
     const rendered = JSON.stringify(result);
@@ -1224,7 +1224,7 @@ describe("tsGrpcClient_TolerantReader", () => {
     return { create };
   }
 
-  it("tolerant reader — a proto response with extra unknown fields decodes the known fields and ignores the rest", async () => {
+  it("tolerant reader — extra unknown fields in a proto response are ignored", async () => {
     // The fake stub returns a response object that carries extra unknown properties
     // at both the top level and inside data.  The emitted client + d2ResultFromProto
     // seam reads only the named proto properties (result / data); extra keys on the JS
@@ -1274,7 +1274,7 @@ describe("tsGrpcClient_TolerantReader", () => {
     expect(calls()).toBe(1);
   });
 
-  it("tolerant reader — an added optional response field is ignored by the prior-shaped decoder", async () => {
+  it("tolerant reader — added optional response field is ignored by the prior decoder", async () => {
     // Forward-compat case: a "newer producer" adds an optional field to the response
     // data payload.  The emitted client mapper only reads the fields it declared
     // (orderCode / itemStatuses / partial); the added field is never read, so it does

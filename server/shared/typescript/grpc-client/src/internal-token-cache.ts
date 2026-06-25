@@ -27,10 +27,10 @@ const _DEFAULT_REFRESH_LEAD_MS = 60_000;
 export interface TryGetResult {
   /**
    * The cached snapshot when the token is still usable (fresh OR aging);
-   * `undefined` when the cache is empty or the token has hard-expired
+   * absent when the cache is empty or the token has hard-expired
    * (past `expiresAtMs − skewMs`).
    */
-  readonly snapshot: InternalTokenSnapshot | undefined;
+  readonly snapshot?: InternalTokenSnapshot;
   /**
    * `true` when the token is in the refresh-ahead window — still valid to
    * serve, but the caller should fire a background re-mint. Always `false`

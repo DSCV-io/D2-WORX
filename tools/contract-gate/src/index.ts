@@ -6,6 +6,8 @@
 // Re-exports the shared footer parser (consumed by both the breaking-change gate
 // and the release runner) and the git IO seam.
 
+export { resolveBaseline } from "./baseline.js";
+export { validateGitRef, validateGitPath } from "./safe-args.js";
 export { parseBreakingFooters, type BreakingValve } from "./footer-parser.js";
 export { commitMessagesInRange } from "./git.js";
 export {

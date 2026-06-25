@@ -14,17 +14,22 @@
 //                       modes except --list).
 //   --package <name>    Restrict to a single package
 //   --dry-run           Compute and report without writing (default: true)
-//   --apply             Write bumps + changelogs (disables dry-run)
-//   --graduate <name>   Graduate a pre-stable package from 0.x.y to 1.0.0
+//   --apply             Write bumps + changelogs (disables dry-run). Mutually
+//                       exclusive with --list.
+//   --graduate <name>   Graduate a pre-stable package from 0.x.y to 1.0.0.
+//                       Mutually exclusive with --list.
 //   --list              Print the full consumable package inventory as JSON and
 //                       exit. Read-only — writes nothing. Mutually exclusive
-//                       with bump / graduate. Does not require --against.
+//                       with --apply / --graduate. Does not require --against.
+//   --help, -h          Print this help message and exit.
 //
 // Excluded from the unit-coverage threshold (see vitest.config.ts).
 
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { falsey, truthy } from "@d2/utilities";
 import { resolveBaseline } from "./baseline.js";
+import { validateGitRef } from "contract-gate";
 import { commitsInRange } from "./git-adapter.js";
 import { loadAllPackages } from "./manifest-loader.js";
 import { formatPackageList } from "./list-formatter.js";
@@ -53,13 +58,68 @@ function option(name: string, defaultValue: string): string {
 }
 
 // ---------------------------------------------------------------------------
-// --list mode — read-only inventory emit; mutually exclusive with bump/graduate
+// Help text
+// ---------------------------------------------------------------------------
+
+const HELP_TEXT = `\
+release-runner — per-package semver release automation
+
+Usage:
+  pnpm --filter release-runner exec tsx src/cli.ts [options]
+
+Options:
+  --against <ref>    Baseline git ref (required unless --list; or set
+                     D2_RELEASE_BASELINE env var)
+  --package <name>   Restrict bump computation to a single package
+  --dry-run          Compute and print plans without writing (default)
+  --apply            Write version bumps and changelogs to disk
+  --graduate <name>  Graduate a pre-stable package from 0.x.y to 1.0.0
+  --list             Print consumable package inventory as JSON and exit.
+                     Read-only; mutually exclusive with --apply / --graduate.
+  --help, -h         Print this help message and exit
+
+Exit codes:
+  0  Success.
+  1  No packages found (--list), or invalid arguments / runtime error.
+`;
+
+// ---------------------------------------------------------------------------
+// --help mode
+// ---------------------------------------------------------------------------
+
+if (flag("--help") || flag("-h")) {
+  process.stdout.write(HELP_TEXT);
+  process.exit(0);
+}
+
+// ---------------------------------------------------------------------------
+// Mutual exclusion: --list is incompatible with --apply / --graduate
+// ---------------------------------------------------------------------------
+
+if (flag("--list") && flag("--apply")) {
+  process.stderr.write(
+    "[release-runner] error: --list and --apply are mutually exclusive" +
+      " — --list is read-only and writes nothing.\n",
+  );
+  process.exit(1);
+}
+
+if (flag("--list") && flag("--graduate")) {
+  process.stderr.write(
+    "[release-runner] error: --list and --graduate are mutually exclusive" +
+      " — --list is read-only and writes nothing.\n",
+  );
+  process.exit(1);
+}
+
+// ---------------------------------------------------------------------------
+// --list mode — read-only inventory emit
 // ---------------------------------------------------------------------------
 
 if (flag("--list")) {
   const packages = loadAllPackages(repoRoot);
 
-  if (packages.length === 0) {
+  if (falsey(packages)) {
     console.error(
       "error: --list found no consumable packages in the repo tree.",
     );
@@ -88,6 +148,16 @@ if (against === undefined) {
   );
   process.exit(1);
 }
+
+try {
+  validateGitRef(against);
+} catch (err) {
+  console.error(
+    `[release-runner] error: invalid baseline ref — ${String(err)}`,
+  );
+  process.exit(1);
+}
+
 const packageFilter = flag("--package") ? option("--package", "") : undefined;
 const dryRun = !flag("--apply");
 const graduateTarget = flag("--graduate")
@@ -114,12 +184,13 @@ const packages = loadAllPackages(repoRoot);
 // Graduate mode — mutually exclusive with the commit-range bump path
 // ---------------------------------------------------------------------------
 
-if (graduateTarget !== undefined && graduateTarget.length > 0) {
-  const result = graduatePackage(graduateTarget, packages, today, dryRun);
+if (truthy(graduateTarget)) {
+  const result = graduatePackage(graduateTarget!, packages, today, dryRun);
   const mode = result.applied ? "APPLIED" : "DRY-RUN";
 
   console.log(
-    `\nGraduate — ${mode}: ${result.pkg.name} ${result.pkg.currentVersion} → ${result.newVersion}`,
+    `\nGraduate — ${mode}: ${result.pkg.name}` +
+      ` ${result.pkg.currentVersion} → ${result.newVersion}`,
   );
 
   if (!result.applied) {
@@ -131,17 +202,14 @@ if (graduateTarget !== undefined && graduateTarget.length > 0) {
   const result = runRelease(commits, packages, {
     today,
     dryRun,
-    packageFilter:
-      packageFilter !== undefined && packageFilter.length > 0
-        ? packageFilter
-        : undefined,
+    packageFilter: truthy(packageFilter) ? packageFilter : undefined,
   });
 
   // -------------------------------------------------------------------------
   // Report
   // -------------------------------------------------------------------------
 
-  if (result.plans.length === 0) {
+  if (falsey(result.plans)) {
     console.log(
       `No consumable packages have qualifying commits in ${against}..HEAD.`,
     );
@@ -151,7 +219,8 @@ if (graduateTarget !== undefined && graduateTarget.length > 0) {
 
     for (const plan of result.plans) {
       console.log(
-        `  ${plan.pkg.name} (${plan.pkg.ecosystem})  ${plan.pkg.currentVersion} → ${plan.newVersion}  [${plan.bump}]`,
+        `  ${plan.pkg.name} (${plan.pkg.ecosystem})` +
+          `  ${plan.pkg.currentVersion} → ${plan.newVersion}  [${plan.bump}]`,
       );
 
       if (plan.wireBreakingEntries.length > 0) {
@@ -176,7 +245,8 @@ if (graduateTarget !== undefined && graduateTarget.length > 0) {
     console.log(
       result.applied
         ? `\n${result.plans.length.toString()} package(s) bumped.`
-        : `\n${result.plans.length.toString()} package(s) would be bumped (dry-run — pass --apply to write).`,
+        : `\n${result.plans.length.toString()} package(s) would be bumped` +
+            ` (dry-run — pass --apply to write).`,
     );
   }
 }

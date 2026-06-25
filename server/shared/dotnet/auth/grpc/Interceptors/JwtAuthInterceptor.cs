@@ -516,12 +516,18 @@ internal sealed class JwtAuthInterceptor : Interceptor
 
             // Stash the validated raw bearer in the request-scoped forwarded-JWT
             // holder (resolved from the per-call request scope) for outbound
-            // replay. Captured AFTER validation success — only a validator-
-            // accepted token reaches here. Best-effort: a host that does not
-            // register the holder simply no-ops; a null RequestServices also
-            // no-ops rather than throwing. The bearer is never logged.
-            // RequestServices is non-null-annotated but can be null at runtime
-            // (e.g. a hand-rolled test context), so guard explicitly.
+            // replay. Capture happens AFTER ALL inbound auth gates pass:
+            // (1) harmless-endpoint short-circuit did not fire, (2) bearer
+            // extraction succeeded, (3) JWT signature + claims validation
+            // passed, (4) session-liveness check passed (revoked/unavailable
+            // paths both throw before reaching here), and (5) per-method scope
+            // enforcement passed. Only a fully-authenticated, live-session,
+            // scope-cleared token reaches this point. Best-effort: a host that
+            // does not register the holder simply no-ops; a null
+            // RequestServices also no-ops rather than throwing. The bearer is
+            // never logged. RequestServices is non-null-annotated but can be
+            // null at runtime (e.g. a hand-rolled test context), so guard
+            // explicitly.
             var serviceProvider = (IServiceProvider?)httpContext.RequestServices;
 
             if (serviceProvider is not null)

@@ -4,7 +4,7 @@
 
 // Behavioral + structural coverage for ts-rest-client-emitter.ts.
 //
-// VALIDATION (AMB-3 — faithful apiCall double):
+// VALIDATION (faithful apiCall double):
 //   The real browser substrate (apiCall / apiCallAnon / executeFetch) lives in
 //   the DORMANT cross-workspace server/web BFF (the $lib alias resolves only
 //   inside SvelteKit; the real wiring is the host-gated BFF composition root). So the emitted REST
@@ -402,7 +402,7 @@ describe("tsRestClient_Behavioral_FaithfulDouble", () => {
     expect(calls[0]!.timeout).toBe(1234);
   });
 
-  it("tolerant reader — extra fields in the substrate result are forwarded without corruption", async () => {
+  it("tolerant reader — extra fields in the substrate result pass through intact", async () => {
     // The faithful apiCall double returns a real D2Result whose data payload carries
     // an extra field that the SignOutput DTO does not declare.  The emitted REST client
     // is a thin delegator: it calls apiCall<SignOutput>(...) and returns the result

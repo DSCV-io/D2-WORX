@@ -55,7 +55,7 @@ describe("InternalTokenCache — empty / clear / replace", () => {
 });
 
 // ---------------------------------------------------------------------------
-// Hard-expiry (skew boundary) — pre-existing behaviour, adapted for new shape
+// Hard-expiry (skew boundary) — pre-existing behavior, adapted for new shape
 // ---------------------------------------------------------------------------
 
 describe("InternalTokenCache — hard-expiry skew", () => {

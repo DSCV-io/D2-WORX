@@ -74,6 +74,7 @@ public sealed class PredicateRetryTests
             () => D2Result<DtoPlaceOrderOutput?>.Ok(
                 new DtoPlaceOrderOutput("order-partial", ["SHIPPED"], Partial: true)),
             itemStatuses: ["SHIPPED"]);
+
         using var host = await BuildHost(signer);
         using var retryPipeline = BuildRetryPipeline(maxAttempts: 3);
         var client = BuildClientWithPipeline(host, retryPipeline);
@@ -101,6 +102,7 @@ public sealed class PredicateRetryTests
         // First attempt: a partial==true success → retryWhen fires (failWhen does not).
         // Second attempt: a partial==false success → neither predicate fires → returned.
         var signer = new FlakyThenSuccessSignerBase(successItemStatuses: ["SHIPPED"]);
+
         using var host = await BuildHost(signer);
         using var retryPipeline = BuildRetryPipeline(maxAttempts: 3);
         var client = BuildClientWithPipeline(host, retryPipeline);
@@ -124,6 +126,7 @@ public sealed class PredicateRetryTests
         var signer = new BusinessResultSignerBase(
             () => D2Result<DtoPlaceOrderOutput?>.ValidationFailed(errorCode: "VALIDATION_FAILED"),
             itemStatuses: ["SHIPPED"]);
+
         using var host = await BuildHost(signer);
         using var retryPipeline = BuildRetryPipeline(maxAttempts: 5);
         var client = BuildClientWithPipeline(host, retryPipeline);
@@ -148,6 +151,7 @@ public sealed class PredicateRetryTests
         var signer = new BusinessResultSignerBase(
             () => D2Result<DtoPlaceOrderOutput?>.ServiceUnavailable(errorCode: "VALIDATION_FAILED"),
             itemStatuses: ["SHIPPED"]);
+
         using var host = await BuildHost(signer);
         using var retryPipeline = BuildRetryPipeline(maxAttempts: 5);
         var client = BuildClientWithPipeline(host, retryPipeline);
@@ -172,6 +176,7 @@ public sealed class PredicateRetryTests
         var signer = new BusinessResultSignerBase(
             () => D2Result<DtoPlaceOrderOutput?>.Ok(new DtoPlaceOrderOutput("order-empty", [], false)),
             itemStatuses: []);
+
         using var host = await BuildHost(signer);
         using var retryPipeline = BuildRetryPipeline(maxAttempts: 5);
         var client = BuildClientWithPipeline(host, retryPipeline);
@@ -193,6 +198,7 @@ public sealed class PredicateRetryTests
         var signer = new BusinessResultSignerBase(
             () => D2Result<DtoPlaceOrderOutput?>.Ok(new DtoPlaceOrderOutput("order-ok", ["SHIPPED"], false)),
             itemStatuses: ["SHIPPED"]);
+
         using var host = await BuildHost(signer);
         using var retryPipeline = BuildRetryPipeline(maxAttempts: 5);
         var client = BuildClientWithPipeline(host, retryPipeline);
@@ -217,6 +223,7 @@ public sealed class PredicateRetryTests
         var signer = new BusinessResultSignerBase(
             () => D2Result<DtoPlaceOrderOutput?>.Ok(new DtoPlaceOrderOutput("order-pending", ["PENDING"], false)),
             itemStatuses: ["PENDING"]);
+
         using var host = await BuildHost(signer);
         using var retryPipeline = BuildRetryPipeline(maxAttempts: 3);
         var client = BuildClientWithPipeline(host, retryPipeline);
@@ -242,6 +249,7 @@ public sealed class PredicateRetryTests
         using var host = await BuildHost(new BusinessResultSignerBase(
             () => D2Result<DtoPlaceOrderOutput?>.Ok(new DtoPlaceOrderOutput("o", ["SHIPPED"], false)),
             itemStatuses: ["SHIPPED"]));
+
         var httpClient = host.GetTestClient();
 
         var services = new ServiceCollection();
@@ -311,6 +319,7 @@ public sealed class PredicateRetryTests
         var channel = GrpcChannel.ForAddress(
             httpClient.BaseAddress!,
             new GrpcChannelOptions { HttpClient = httpClient });
+
         var stub = new PredicateFixturesOrders.PredicateFixturesOrdersClient(channel);
         return new PredicateFixturesGrpcClient(stub, pipeline);
     }

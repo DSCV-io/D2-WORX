@@ -41,7 +41,6 @@ internal static class SplitterEngine
     private static readonly System.Buffers.SearchValues<char> sr_classNameTerminators =
         System.Buffers.SearchValues.Create([' ', '\t', '{', '<', ':', '\r']);
 
-
     /// <summary>
     /// Pure (in-memory) parse + emit. Used by tests; the CLI shells around this.
     /// </summary>
@@ -59,6 +58,7 @@ internal static class SplitterEngine
         {
             var filename = $"LoggerMessage.{block.NamespaceLastSegment}.{block.ClassName}.g.cs";
             var content = ComposeFile(block);
+
             // Deterministic order via SortedDictionary; duplicate keys (same
             // namespace+class appearing twice) are an emitter bug — fail loud
             // rather than silently overwriting.
@@ -114,6 +114,7 @@ internal static class SplitterEngine
         // naming pattern so we never collide with the combined input file itself
         // or any other generator's output that might land in the same directory.
         var expectedNames = new HashSet<string>(splitFiles.Keys, StringComparer.Ordinal);
+
         foreach (var existingPath in Directory.GetFiles(outputDir, "LoggerMessage.*.g.cs"))
         {
             var name = Path.GetFileName(existingPath);
@@ -137,6 +138,7 @@ internal static class SplitterEngine
         var lines = input.Split('\n');
 
         var i = 0;
+
         while (i < lines.Length)
         {
             var line = lines[i];
@@ -174,6 +176,7 @@ internal static class SplitterEngine
                 // brace.
                 var nsDepth = 1; // we've opened the namespace
                 var j = nsBraceLine + 1;
+
                 while (j < lines.Length && nsDepth > 0)
                 {
                     var inner = lines[j];
@@ -272,6 +275,7 @@ internal static class SplitterEngine
         // Find the class's opening brace, then count.
         var depth = 0;
         var seenOpen = false;
+
         for (var k = startLine; k < lines.Length; k++)
         {
             foreach (var ch in lines[k])

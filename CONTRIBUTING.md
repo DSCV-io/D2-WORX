@@ -15,6 +15,7 @@ Use descriptive, lowercased branches with a slash-separated prefix:
 - `feat/...` for new features.
 - `fix/...` for bug fixes.
 - `infra/...` for CI/CD, deployment, or infrastructure changes.
+- `n/...` for feature branches merged via squash into the integration baseline (`nova`).
 - `refactor/...` for codebase cleanup without new features.
 - `test/...` for test-only additions or updates.
 - `chore/...` for maintenance tasks (deps, tooling, repo housekeeping).
@@ -143,7 +144,8 @@ new block automatically.
 
 CI runs a pack smoke on every PR to confirm the representative packages remain
 publish-ready (see [docs/COMMANDS.md — Per-package pack](./docs/COMMANDS.md#per-package-pack)).
-Actual registry push (npm / NuGet) is credential-gated and not wired yet.
+Registry publishing (npm / NuGet) is a deliberate manual step — credentials are external
+and the push is never triggered automatically by CI.
 
 ### Cutting a library release
 

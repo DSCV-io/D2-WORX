@@ -22,7 +22,7 @@ using D2.Shared.SourceGen;
 /// </summary>
 /// <remarks>
 /// <para>
-/// Domain derivation rule (D6): the generic spec
+/// Domain derivation: the generic spec
 /// (<c>error-codes.spec.json</c>) maps to <c>common</c>; every per-domain
 /// spec (<c>{domain}-error-codes.spec.json</c>) maps to the leading segment
 /// (e.g. <c>auth-error-codes.spec.json</c> → <c>auth</c>).
@@ -71,6 +71,7 @@ internal static class RegistrySpecLoader
         foreach (var spec in sorted)
         {
             var fileName = Path.GetFileName(spec.Path);
+
             if (!IsErrorCodeSpec(fileName))
                 continue;
 

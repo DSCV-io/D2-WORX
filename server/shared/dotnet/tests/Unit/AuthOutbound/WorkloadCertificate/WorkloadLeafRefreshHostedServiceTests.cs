@@ -282,6 +282,7 @@ public sealed class WorkloadLeafRefreshHostedServiceTests
             var signalTask = Issuer.WaitForInvocationCountAsync(targetCount, ct: cts.Token);
 
             var nudgeToken = cts.Token;
+
             var nudgerTask = Task.Run(
                 async () =>
                 {

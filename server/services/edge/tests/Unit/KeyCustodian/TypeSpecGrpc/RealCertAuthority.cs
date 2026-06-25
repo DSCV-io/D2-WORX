@@ -211,7 +211,7 @@ internal sealed class RealCertAuthority : IDisposable
             CertificateDer: issued.CertificateDer,
             PrivateKeyPkcs8: issued.PrivateKeyPkcs8,
             IssuerCertificateDer: issued.IssuerCertificateDer,
-            NotAfter: issued.NotAfter.ToDateTimeOffset());
+            NotAfter: issued.NotAfter);
     }
 
     /// <summary>

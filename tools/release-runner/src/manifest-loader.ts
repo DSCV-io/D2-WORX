@@ -22,6 +22,7 @@
 
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
+import { falsey } from "@d2/utilities";
 import { readNpmVersion, readNugetVersion } from "./manifest-editor.js";
 import type { PackageDescriptor } from "./types.js";
 
@@ -160,7 +161,7 @@ export function loadNugetPackages(repoRoot: string): PackageDescriptor[] {
   if (existsSync(dotnetSharedRoot)) searchRoots.push(dotnetSharedRoot);
   if (existsSync(kcClientPath)) searchRoots.push(kcClientPath);
 
-  if (searchRoots.length === 0) return [];
+  if (falsey(searchRoots)) return [];
 
   const csprojFiles: string[] = [];
 

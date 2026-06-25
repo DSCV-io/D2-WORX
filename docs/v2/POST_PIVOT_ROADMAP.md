@@ -58,6 +58,7 @@ not here.
 - [E — Items that still need a design decision](#e--items-that-still-need-a-design-decision)
 - [H — Cross-cutting deferrals tracked outside this index (pointers)](#h--cross-cutting-deferrals-tracked-outside-this-index-pointers-deep-tracked-elsewhere)
   - [H1 — Proto-unification follow-on](#h1--proto-unification-follow-on-sharedcommon-protos--typespecemitter-pipeline)
+- [I — Contract-versioning / release follow-ons (deliverable 0024)](#i--contract-versioning--release-follow-ons-deliverable-0024)
 
 ---
 
@@ -320,3 +321,26 @@ The four `contracts/protos/common/v1/*` files (`d2.common.v1.*`) are hand-author
   follow-up tracker. Sweep all `D2Result.fail/ok/...` static-call sites when the `d2-web` compose service is
   stood up; the `gateway-response.ts` site was already fixed, the rest remain. Not a pivot/emitter/Edge-seam
   item.
+
+---
+
+## I — Contract-versioning / release follow-ons (deliverable 0024)
+
+Deliverable 0024 built the contract-side versioning and breaking-change machinery: author-pinned proto field
+numbers, the `@versioned` stability channels, the always-on `tools/contract-gate` breaking-change gate, the
+deprecate-not-delete marker, per-package semver and CHANGELOGs, and the footer-keyed `tools/release-runner`.
+These rows are the pieces 0024 deliberately deferred — each names the 0024-built artifact the deferred work
+consumes so the eventual builder finds the drop-in point.
+
+**Canonical detail**: [ADR-0024](../adrs/0024-contract-api-versioning-strategy.md) +
+[the 0024 deliverable record](../dev/deliverables/0024-contract-api-versioning-strategy.md) (at SHIP).
+
+| # | Item | Status | Canonical source | Blocked on |
+| - | ---- | ------ | ---------------- | ---------- |
+| I1 | **`Deprecation` (RFC 9745) + `Sunset` (RFC 8594) response-header middleware + telemetry-gated removal.** 0024 built the contract-side shape the middleware reads: the `deprecated` / `deprecatedReason` / `replacedBy` / `sunset` (ISO-date, declared-now-INERT) marker fields across the catalog schemas + the runtime `IsDeprecated` registry flag. The Edge response middleware must emit `Deprecation` and `Sunset` headers from those fields; telemetry-gated removal must read per-generation usage before a deprecated entry is deleted. | 📐 specified-deferred | [ADR-0024 deprecation/removal section](../adrs/0024-contract-api-versioning-strategy.md) + the `deprecated`/`sunset` marker on `contracts/**/schema.json` + the `IsDeprecated` registry flag | a running Edge response pipeline + request telemetry (PHASE_3 A1 / E2) |
+| I2 | **Registry publishing (npm / NuGet) + the TS publish-enable.** 0024 proved every consumable is publish-ready (Step-6 pack-smoke; `dotnet pack` / `pnpm pack` valid) and `release-libs.yml` cuts the GitHub Release bundle, but actual registry push is unwired (no credentials) and the TS packages are still `private` (the `private:false` + `publishConfig` flip belongs here, not Wave A). Publishing is always a deliberate, manual step — never automatic. | 📐 specified-deferred | `.github/workflows/release-libs.yml` ("Publishing… is a separate, deliberate step (not wired here)") + the per-package `package.json` `private` flag + CONTRIBUTING "Cutting a library release" | npm and nuget.org credentials + a deliberate first-publish decision |
+| I3 | **Post-merge `release-libs.yml` dry-run validation.** Run `release-libs.yml` with `dry_run=true` right after this branch merges to the default branch — a ~30-second check that the bundle assembles and all 83 packages pack before any real release. A `workflow_dispatch` workflow cannot be dispatched until its file is on the default branch. | 📐 specified-deferred | `.github/workflows/release-libs.yml` (`workflow_dispatch`, `dry_run` default true) | this branch merging to the default branch (the workflow must be on the default branch to dispatch) |
+| I4 | **Automated library public-API breaking detection.** Today library-API breaks are author-declared via the commit footer; only wire/contract breaks (proto / spec / i18n / OpenAPI) are auto-detected by `tools/contract-gate` (the runner is passive — reads footers, does not diff API surfaces). Add automated detection: .NET `Microsoft.CodeAnalysis.PublicApiAnalyzers` (`PublicAPI.Shipped.txt` per package) and TS `@microsoft/api-extractor` or `@arethetypeswrong/cli`, to auto-catch library public-API breaks and cross-check the author's footer. | 📐 specified-deferred | `tools/contract-gate` (wire-only detection today) + `tools/release-runner/src/bump-engine.ts` (passive footer reader) | nothing structural — buildable now (per-package public-API baselines are the new artifact) |
+| I5 | **Runner-tag-integrated releases.** `release-libs.yml` is a standalone snapshot today (it re-reads `loadAllPackages()` via the runner's `--list` mode but does not tag from the runner's bump output). A tag-driven / runner-integrated release — where the runner's per-package `--apply` bump emits the tags the release workflow consumes — is a later refinement. | 📐 specified-deferred | `.github/workflows/release-libs.yml` (standalone snapshot) + `tools/release-runner` (`--apply` writes versions but emits no tags) | I2 (registry push) is the natural pairing; buildable incrementally before then |
+
+**Cross-reference**: I1's deprecation marker shares the `contracts/**` surface with [§H1.3](#h1--proto-unification-follow-on-sharedcommon-protos--typespecemitter-pipeline) (the `D2Result` two-source drift) — they are otherwise independent (H1.3 is proto-vs-spec source unification; I1 is the deprecation header lifecycle). None of I1–I5 duplicate an existing §H1 sub-item.
