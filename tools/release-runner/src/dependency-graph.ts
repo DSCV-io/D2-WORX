@@ -27,6 +27,104 @@ import { parseVersion, applyBump } from "./semver.js";
 import type { BumpPlan, PackageDescriptor } from "./types.js";
 
 // ---------------------------------------------------------------------------
+// Topological sort — leaf-first ordering for the diff-runner
+// ---------------------------------------------------------------------------
+
+/**
+ * Return the consumable package list in topological (leaf-first) order so
+ * that when the artifact-diff engine processes packages in sequence, each
+ * dep's new version is resolved before its dependent is fingerprinted.
+ *
+ * Uses iterative Kahn's algorithm (in-degree driven). Throws when a
+ * dependency cycle is detected — a cycle makes leaf-first processing
+ * indeterminate and a release over a cyclic graph is an error condition
+ * that must be surfaced, not silently continued.
+ *
+ * Packages with no inter-consumable edges (isolated nodes) are included in
+ * an arbitrary but deterministic order (sorted by name).
+ *
+ * @param packages - Full consumable package inventory.
+ * @returns The same packages in leaf-first topological order.
+ * @throws {Error} When a dependency cycle is detected among consumable packages.
+ */
+export function topoSort(
+  packages: readonly PackageDescriptor[],
+): PackageDescriptor[] {
+  if (falsey(packages)) return [];
+
+  const nameSet = new Set(packages.map((p) => p.name));
+  const pkgByName = new Map(packages.map((p) => [p.name, p]));
+
+  // Build in-degree map and adjacency list (dep → dependents) within the
+  // consumable set only; edges to non-consumable packages are ignored.
+  const inDegree = new Map<string, number>();
+  // forward edges: pkg → its consumable deps
+  const deps = new Map<string, string[]>();
+
+  for (const pkg of packages) {
+    inDegree.set(pkg.name, inDegree.get(pkg.name) ?? 0);
+    deps.set(pkg.name, []);
+  }
+
+  for (const pkg of packages) {
+    for (const dep of pkg.dependencies) {
+      if (!nameSet.has(dep)) continue; // non-consumable edge — ignore
+
+      // pkg depends on dep; dep must be processed before pkg.
+      // Kahn's: increment in-degree of pkg for each dep edge.
+      inDegree.set(pkg.name, (inDegree.get(pkg.name) ?? 0) + 1);
+
+      // adjacency: dep → its dependents (packages that depend on dep)
+      const dependents = deps.get(dep) ?? [];
+      dependents.push(pkg.name);
+      deps.set(dep, dependents);
+    }
+  }
+
+  // Seed the queue with all zero-in-degree nodes (true leaves), sorted for
+  // determinism.
+  const queue: string[] = [...packages]
+    .filter((p) => (inDegree.get(p.name) ?? 0) === 0)
+    .map((p) => p.name)
+    .sort();
+
+  const sorted: PackageDescriptor[] = [];
+
+  while (queue.length > 0) {
+    // Sort queue each iteration for determinism across multiple zero-in-degree nodes.
+    queue.sort();
+    const name = queue.shift()!;
+    const pkg = pkgByName.get(name);
+
+    if (pkg !== undefined) sorted.push(pkg);
+
+    for (const dependent of deps.get(name) ?? []) {
+      const newDegree = (inDegree.get(dependent) ?? 0) - 1;
+      inDegree.set(dependent, newDegree);
+
+      if (newDegree === 0) queue.push(dependent);
+    }
+  }
+
+  if (sorted.length !== packages.length) {
+    // Some nodes were not reached — they form a cycle.
+    const cycleNodes = packages
+      .filter((p) => !sorted.some((s) => s.name === p.name))
+      .map((p) => p.name)
+      .sort()
+      .join(", ");
+
+    throw new Error(
+      `Dependency cycle detected among consumable packages: [${cycleNodes}]. ` +
+        `Release cannot proceed over a cyclic dependency graph. ` +
+        `Resolve the cycle before running the release runner.`,
+    );
+  }
+
+  return sorted;
+}
+
+// ---------------------------------------------------------------------------
 // Reverse-graph builder
 // ---------------------------------------------------------------------------
 

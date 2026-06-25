@@ -23,6 +23,12 @@
 import { readFileSync, readdirSync, existsSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { describe, expect, it } from "vitest";
+
+// D2_VERSIONING_INTEGRATION=1 enables real-extraction tests that invoke
+// api-extractor against the built dist/ of @d2/error-category. The package
+// must already be built (pnpm build run in the monorepo) for these to pass.
+// The dedicated integration CI lane provides this; the Node unit lane does not.
+const RUN_INTEGRATION = process.env["D2_VERSIONING_INTEGRATION"] === "1";
 import { repoRoot } from "./repo-root.js";
 import {
   computeDistFingerprint,
@@ -564,6 +570,9 @@ describe("computeDistFingerprint — synthetic", () => {
 
 // ---------------------------------------------------------------------------
 // Integration tests — real @d2/error-category
+// Requires D2_VERSIONING_INTEGRATION=1 + a built dist/ for @d2/error-category
+// (api-extractor needs the compiled output). The dedicated integration CI lane
+// provides this; the Node unit lane does not.
 // ---------------------------------------------------------------------------
 
 // These tests invoke the real api-extractor against the committed dist/ of
@@ -571,108 +580,111 @@ describe("computeDistFingerprint — synthetic", () => {
 // states without mutating the committed etc/ files, and DistReader to inject
 // synthetic content changes.
 
-describe("extractTsPackageDiff — integration with @d2/error-category", () => {
-  it("no-op: current dist matches committed baseline → all diffs false", () => {
-    const result = extractTsPackageDiff({
-      packageDir: ERROR_CATEGORY_DIR,
-      baselineReader: makeFixedBaselineReader(
-        BASELINE_API_MD,
-        BASELINE_FINGERPRINT,
-      ),
+describe.skipIf(!RUN_INTEGRATION)(
+  "extractTsPackageDiff — integration with @d2/error-category",
+  () => {
+    it("no-op: current dist matches committed baseline → all diffs false", () => {
+      const result = extractTsPackageDiff({
+        packageDir: ERROR_CATEGORY_DIR,
+        baselineReader: makeFixedBaselineReader(
+          BASELINE_API_MD,
+          BASELINE_FINGERPRINT,
+        ),
+      });
+
+      expect(result.apiDiff.added).toBe(false);
+      expect(result.apiDiff.removed).toBe(false);
+      expect(result.apiDiff.changed).toBe(false);
+      expect(result.fingerprintDiff.changed).toBe(false);
+      expect(result.freshFingerprint).toBe(BASELINE_FINGERPRINT);
     });
 
-    expect(result.apiDiff.added).toBe(false);
-    expect(result.apiDiff.removed).toBe(false);
-    expect(result.apiDiff.changed).toBe(false);
-    expect(result.fingerprintDiff.changed).toBe(false);
-    expect(result.freshFingerprint).toBe(BASELINE_FINGERPRINT);
-  });
+    it("added export: baseline missing ALL_ERROR_CATEGORIES → apiDiff.added = true", () => {
+      // Simulate a committed baseline that did not yet include ALL_ERROR_CATEGORIES.
+      const baselineWithoutAll = BASELINE_API_MD.replace(
+        "// @public\nexport const ALL_ERROR_CATEGORIES: readonly ErrorCategory[];\n\n",
+        "",
+      );
 
-  it("added export: baseline missing ALL_ERROR_CATEGORIES → apiDiff.added = true", () => {
-    // Simulate a committed baseline that did not yet include ALL_ERROR_CATEGORIES.
-    const baselineWithoutAll = BASELINE_API_MD.replace(
-      "// @public\nexport const ALL_ERROR_CATEGORIES: readonly ErrorCategory[];\n\n",
-      "",
-    );
+      const result = extractTsPackageDiff({
+        packageDir: ERROR_CATEGORY_DIR,
+        baselineReader: makeFixedBaselineReader(
+          baselineWithoutAll,
+          BASELINE_FINGERPRINT,
+        ),
+      });
 
-    const result = extractTsPackageDiff({
-      packageDir: ERROR_CATEGORY_DIR,
-      baselineReader: makeFixedBaselineReader(
-        baselineWithoutAll,
-        BASELINE_FINGERPRINT,
-      ),
+      // Fresh report has ALL_ERROR_CATEGORIES; baseline does not → added.
+      expect(result.apiDiff.added).toBe(true);
+      expect(result.apiDiff.removed).toBe(false);
+      expect(result.apiDiff.changed).toBe(false);
     });
 
-    // Fresh report has ALL_ERROR_CATEGORIES; baseline does not → added.
-    expect(result.apiDiff.added).toBe(true);
-    expect(result.apiDiff.removed).toBe(false);
-    expect(result.apiDiff.changed).toBe(false);
-  });
+    it("removed export: baseline has LEGACY_FIELD not in fresh → apiDiff.removed = true", () => {
+      // Simulate a committed baseline that contained a now-removed export.
+      const baselineWithLegacy = BASELINE_API_MD.replace(
+        "// (No @packageDocumentation comment for this package)",
+        "// @public\nexport const LEGACY_FIELD: string;\n\n// (No @packageDocumentation comment for this package)",
+      );
 
-  it("removed export: baseline has LEGACY_FIELD not in fresh → apiDiff.removed = true", () => {
-    // Simulate a committed baseline that contained a now-removed export.
-    const baselineWithLegacy = BASELINE_API_MD.replace(
-      "// (No @packageDocumentation comment for this package)",
-      "// @public\nexport const LEGACY_FIELD: string;\n\n// (No @packageDocumentation comment for this package)",
-    );
+      const result = extractTsPackageDiff({
+        packageDir: ERROR_CATEGORY_DIR,
+        baselineReader: makeFixedBaselineReader(
+          baselineWithLegacy,
+          BASELINE_FINGERPRINT,
+        ),
+      });
 
-    const result = extractTsPackageDiff({
-      packageDir: ERROR_CATEGORY_DIR,
-      baselineReader: makeFixedBaselineReader(
-        baselineWithLegacy,
-        BASELINE_FINGERPRINT,
-      ),
+      // Fresh report does NOT have LEGACY_FIELD → removed.
+      expect(result.apiDiff.removed).toBe(true);
+      expect(result.apiDiff.added).toBe(false);
+      expect(result.apiDiff.changed).toBe(false);
     });
 
-    // Fresh report does NOT have LEGACY_FIELD → removed.
-    expect(result.apiDiff.removed).toBe(true);
-    expect(result.apiDiff.added).toBe(false);
-    expect(result.apiDiff.changed).toBe(false);
-  });
+    it("PROOF — comment-only .js edit → fingerprintDiff.changed = false", () => {
+      // Override the index.js content with a comment-only prepend.
+      // Because normaliseJsForFingerprint strips it, the hash must stay the same.
+      const realIndexJs = readFileSync(
+        join(ERROR_CATEGORY_DIR, "dist/index.js"),
+        "utf-8",
+      );
+      const commentOnlyModified =
+        "// EXTRA COMMENT THAT MUST NOT CHANGE THE FINGERPRINT\n" + realIndexJs;
 
-  it("PROOF — comment-only .js edit → fingerprintDiff.changed = false", () => {
-    // Override the index.js content with a comment-only prepend.
-    // Because normaliseJsForFingerprint strips it, the hash must stay the same.
-    const realIndexJs = readFileSync(
-      join(ERROR_CATEGORY_DIR, "dist/index.js"),
-      "utf-8",
-    );
-    const commentOnlyModified =
-      "// EXTRA COMMENT THAT MUST NOT CHANGE THE FINGERPRINT\n" + realIndexJs;
+      const result = extractTsPackageDiff({
+        packageDir: ERROR_CATEGORY_DIR,
+        baselineReader: makeFixedBaselineReader(
+          BASELINE_API_MD,
+          BASELINE_FINGERPRINT,
+        ),
+        distReader: makeOverrideDistReader({ "index.js": commentOnlyModified }),
+      });
 
-    const result = extractTsPackageDiff({
-      packageDir: ERROR_CATEGORY_DIR,
-      baselineReader: makeFixedBaselineReader(
-        BASELINE_API_MD,
-        BASELINE_FINGERPRINT,
-      ),
-      distReader: makeOverrideDistReader({ "index.js": commentOnlyModified }),
+      expect(result.fingerprintDiff.changed).toBe(false);
+      expect(result.freshFingerprint).toBe(BASELINE_FINGERPRINT);
     });
 
-    expect(result.fingerprintDiff.changed).toBe(false);
-    expect(result.freshFingerprint).toBe(BASELINE_FINGERPRINT);
-  });
+    it("PROOF — internal logic .js edit → fingerprintDiff.changed = true, hash differs", () => {
+      // Override the index.js content with a real code addition.
+      // Normalisation does not remove code → the hash must differ.
+      const realIndexJs = readFileSync(
+        join(ERROR_CATEGORY_DIR, "dist/index.js"),
+        "utf-8",
+      );
+      const logicModified =
+        realIndexJs + "\nexport const INTERNAL_CHANGE_SENTINEL = true;\n";
 
-  it("PROOF — internal logic .js edit → fingerprintDiff.changed = true, hash differs", () => {
-    // Override the index.js content with a real code addition.
-    // Normalisation does not remove code → the hash must differ.
-    const realIndexJs = readFileSync(
-      join(ERROR_CATEGORY_DIR, "dist/index.js"),
-      "utf-8",
-    );
-    const logicModified =
-      realIndexJs + "\nexport const INTERNAL_CHANGE_SENTINEL = true;\n";
+      const result = extractTsPackageDiff({
+        packageDir: ERROR_CATEGORY_DIR,
+        baselineReader: makeFixedBaselineReader(
+          BASELINE_API_MD,
+          BASELINE_FINGERPRINT,
+        ),
+        distReader: makeOverrideDistReader({ "index.js": logicModified }),
+      });
 
-    const result = extractTsPackageDiff({
-      packageDir: ERROR_CATEGORY_DIR,
-      baselineReader: makeFixedBaselineReader(
-        BASELINE_API_MD,
-        BASELINE_FINGERPRINT,
-      ),
-      distReader: makeOverrideDistReader({ "index.js": logicModified }),
+      expect(result.fingerprintDiff.changed).toBe(true);
+      expect(result.freshFingerprint).not.toBe(BASELINE_FINGERPRINT);
     });
-
-    expect(result.fingerprintDiff.changed).toBe(true);
-    expect(result.freshFingerprint).not.toBe(BASELINE_FINGERPRINT);
-  });
-});
+  },
+);

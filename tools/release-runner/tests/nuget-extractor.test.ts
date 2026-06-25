@@ -24,6 +24,11 @@
 // Coverage assertion: parsUnshippedTxt (unit) + extractNugetDiff (integration).
 
 import { afterEach, describe, expect, it } from "vitest";
+
+// D2_VERSIONING_INTEGRATION=1 enables real-extraction tests that shell out to
+// `dotnet build` and require a restored .NET project (project.assets.json).
+// The dedicated integration CI lane sets this flag. The Node unit lane does not.
+const RUN_INTEGRATION = process.env["D2_VERSIONING_INTEGRATION"] === "1";
 import { existsSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import {
@@ -156,121 +161,127 @@ describe("parseUnshippedTxt — unit", () => {
 
 // ---------------------------------------------------------------------------
 // Integration — real extraction on D2.Shared.Utilities
+// Requires D2_VERSIONING_INTEGRATION=1 + a restored .NET project (dotnet restore
+// must have been run so project.assets.json exists). The dedicated integration
+// CI lane provides this; the Node unit lane does not.
 // ---------------------------------------------------------------------------
 
-describe("extractNugetDiff — integration (D2.Shared.Utilities)", () => {
-  // T1: Adding a new public member → RS0016 → ApiDiff.added = true
-  it("T1: ApiDiff.added when a new public member is added to the source", async () => {
-    const renderPath = join(
-      utilitiesDir,
-      "Diagnostics/SanitizedExceptionRender.cs",
-    );
-    const original = readFileSync(renderPath, "utf-8");
+describe.skipIf(!RUN_INTEGRATION)(
+  "extractNugetDiff — integration (D2.Shared.Utilities)",
+  () => {
+    // T1: Adding a new public member → RS0016 → ApiDiff.added = true
+    it("T1: ApiDiff.added when a new public member is added to the source", async () => {
+      const renderPath = join(
+        utilitiesDir,
+        "Diagnostics/SanitizedExceptionRender.cs",
+      );
+      const original = readFileSync(renderPath, "utf-8");
 
-    // Insert a new public member into SanitizedExceptionRender.
-    const mutated = original.replace(
-      "public static string TypeName(Exception ex) =>",
-      "/// <summary>Spike-added test member — not part of permanent API.</summary>\n" +
-        '    /// <param name="ex">The exception.</param>\n' +
-        "    /// <returns>A string.</returns>\n" +
-        '    public static string SpikeNewMember(Exception ex) => "spike";\n\n' +
+      // Insert a new public member into SanitizedExceptionRender.
+      const mutated = original.replace(
+        "public static string TypeName(Exception ex) =>",
+        "/// <summary>Spike-added test member — not part of permanent API.</summary>\n" +
+          '    /// <param name="ex">The exception.</param>\n' +
+          "    /// <returns>A string.</returns>\n" +
+          '    public static string SpikeNewMember(Exception ex) => "spike";\n\n' +
+          "    public static string TypeName(Exception ex) =>",
+      );
+
+      mutateFile(renderPath, mutated);
+
+      const result = extractNugetDiff(utilitiesPkg);
+
+      expect(result.apiDiff.added).toBe(true);
+      expect(result.apiDiff.removed).toBe(false);
+    }, 60_000);
+
+    // T2: Removing an existing public member → RS0017 → ApiDiff.removed = true
+    it("T2: ApiDiff.removed when a shipped public member is removed from source", async () => {
+      const renderPath = join(
+        utilitiesDir,
+        "Diagnostics/SanitizedExceptionRender.cs",
+      );
+      const original = readFileSync(renderPath, "utf-8");
+
+      // Make TypeName internal so it's no longer part of the public API.
+      // RS0017 fires because PublicAPI.Shipped.txt still lists the public member.
+      const mutated = original.replace(
         "    public static string TypeName(Exception ex) =>",
-    );
+        "    internal static string TypeName(Exception ex) =>",
+      );
 
-    mutateFile(renderPath, mutated);
+      mutateFile(renderPath, mutated);
 
-    const result = extractNugetDiff(utilitiesPkg);
+      const result = extractNugetDiff(utilitiesPkg);
 
-    expect(result.apiDiff.added).toBe(true);
-    expect(result.apiDiff.removed).toBe(false);
-  }, 60_000);
+      expect(result.apiDiff.removed).toBe(true);
+    }, 60_000);
 
-  // T2: Removing an existing public member → RS0017 → ApiDiff.removed = true
-  it("T2: ApiDiff.removed when a shipped public member is removed from source", async () => {
-    const renderPath = join(
-      utilitiesDir,
-      "Diagnostics/SanitizedExceptionRender.cs",
-    );
-    const original = readFileSync(renderPath, "utf-8");
+    // T3a: Comment-only edit → FingerprintDiff.changed = false (same DLL hash)
+    // T3b: Internal body edit → FingerprintDiff.changed = true (different DLL hash)
+    it("T3a: FingerprintDiff.changed is false for a comment-only edit", async () => {
+      // First, build with clean source so the DLL exists at the expected path.
+      extractNugetDiff(utilitiesPkg);
+      const cleanDllPath = join(
+        utilitiesDir,
+        "bin/Release/net10.0/D2.Shared.Utilities.dll",
+      );
+      // The DLL was just built; compute its hash as the baseline.
+      const { createHash } = await import("node:crypto");
+      const cleanBytes = readFileSync(cleanDllPath);
+      const cleanHash = createHash("sha256").update(cleanBytes).digest("hex");
 
-    // Make TypeName internal so it's no longer part of the public API.
-    // RS0017 fires because PublicAPI.Shipped.txt still lists the public member.
-    const mutated = original.replace(
-      "    public static string TypeName(Exception ex) =>",
-      "    internal static string TypeName(Exception ex) =>",
-    );
+      // Write the clean hash as the committed baseline so the comparison works.
+      // mutateFile registers the file for restore/delete in afterEach.
+      const baselinePath = fingerprintBaselinePath(csprojPath);
+      mutateFile(baselinePath, cleanHash);
 
-    mutateFile(renderPath, mutated);
+      // Now add a comment-only edit.
+      const guardPath = join(utilitiesDir, "Extensions/GuardExtensions.cs");
+      const originalGuard = readFileSync(guardPath, "utf-8");
+      mutateFile(
+        guardPath,
+        originalGuard.replace(
+          "// -----------------------------------------------------------------------",
+          "// -----------------------------------------------------------------------\n// SPIKE_COMMENT_ONLY_TEST",
+        ),
+      );
 
-    const result = extractNugetDiff(utilitiesPkg);
+      const commentResult = extractNugetDiff(utilitiesPkg);
+      expect(commentResult.fingerprintDiff.changed).toBe(false);
+    }, 90_000);
 
-    expect(result.apiDiff.removed).toBe(true);
-  }, 60_000);
+    it("T3b: FingerprintDiff.changed is true for an internal method-body edit", async () => {
+      // Two extractNugetDiff calls (4 dotnet-build invocations × ~15s each)
+      // require a longer timeout than T3a (1 call × ~30s).
+      // Build with clean source so the DLL exists, then capture its hash.
+      extractNugetDiff(utilitiesPkg);
+      const cleanDllPath = join(
+        utilitiesDir,
+        "bin/Release/net10.0/D2.Shared.Utilities.dll",
+      );
+      const { createHash } = await import("node:crypto");
+      const cleanBytes = readFileSync(cleanDllPath);
+      const cleanHash = createHash("sha256").update(cleanBytes).digest("hex");
+      const baselinePath = fingerprintBaselinePath(csprojPath);
+      mutateFile(baselinePath, cleanHash);
 
-  // T3a: Comment-only edit → FingerprintDiff.changed = false (same DLL hash)
-  // T3b: Internal body edit → FingerprintDiff.changed = true (different DLL hash)
-  it("T3a: FingerprintDiff.changed is false for a comment-only edit", async () => {
-    // First, build with clean source so the DLL exists at the expected path.
-    extractNugetDiff(utilitiesPkg);
-    const cleanDllPath = join(
-      utilitiesDir,
-      "bin/Release/net10.0/D2.Shared.Utilities.dll",
-    );
-    // The DLL was just built; compute its hash as the baseline.
-    const { createHash } = await import("node:crypto");
-    const cleanBytes = readFileSync(cleanDllPath);
-    const cleanHash = createHash("sha256").update(cleanBytes).digest("hex");
+      // Mutate an internal string literal in a method body.
+      const guardPath = join(utilitiesDir, "Extensions/GuardExtensions.cs");
+      const originalGuard = readFileSync(guardPath, "utf-8");
+      mutateFile(
+        guardPath,
+        originalGuard.replace(
+          "Value must be a non-empty, non-whitespace string.",
+          "Value must be a non-empty, non-whitespace string. (SPIKE_INTERNAL_CHANGE)",
+        ),
+      );
 
-    // Write the clean hash as the committed baseline so the comparison works.
-    // mutateFile registers the file for restore/delete in afterEach.
-    const baselinePath = fingerprintBaselinePath(csprojPath);
-    mutateFile(baselinePath, cleanHash);
-
-    // Now add a comment-only edit.
-    const guardPath = join(utilitiesDir, "Extensions/GuardExtensions.cs");
-    const originalGuard = readFileSync(guardPath, "utf-8");
-    mutateFile(
-      guardPath,
-      originalGuard.replace(
-        "// -----------------------------------------------------------------------",
-        "// -----------------------------------------------------------------------\n// SPIKE_COMMENT_ONLY_TEST",
-      ),
-    );
-
-    const commentResult = extractNugetDiff(utilitiesPkg);
-    expect(commentResult.fingerprintDiff.changed).toBe(false);
-  }, 90_000);
-
-  it("T3b: FingerprintDiff.changed is true for an internal method-body edit", async () => {
-    // Two extractNugetDiff calls (4 dotnet-build invocations × ~15s each)
-    // require a longer timeout than T3a (1 call × ~30s).
-    // Build with clean source so the DLL exists, then capture its hash.
-    extractNugetDiff(utilitiesPkg);
-    const cleanDllPath = join(
-      utilitiesDir,
-      "bin/Release/net10.0/D2.Shared.Utilities.dll",
-    );
-    const { createHash } = await import("node:crypto");
-    const cleanBytes = readFileSync(cleanDllPath);
-    const cleanHash = createHash("sha256").update(cleanBytes).digest("hex");
-    const baselinePath = fingerprintBaselinePath(csprojPath);
-    mutateFile(baselinePath, cleanHash);
-
-    // Mutate an internal string literal in a method body.
-    const guardPath = join(utilitiesDir, "Extensions/GuardExtensions.cs");
-    const originalGuard = readFileSync(guardPath, "utf-8");
-    mutateFile(
-      guardPath,
-      originalGuard.replace(
-        "Value must be a non-empty, non-whitespace string.",
-        "Value must be a non-empty, non-whitespace string. (SPIKE_INTERNAL_CHANGE)",
-      ),
-    );
-
-    const bodyResult = extractNugetDiff(utilitiesPkg);
-    expect(bodyResult.fingerprintDiff.changed).toBe(true);
-  }, 120_000);
-});
+      const bodyResult = extractNugetDiff(utilitiesPkg);
+      expect(bodyResult.fingerprintDiff.changed).toBe(true);
+    }, 120_000);
+  },
+);
 
 // ---------------------------------------------------------------------------
 // DotnetShell injection — verify the seam contract

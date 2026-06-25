@@ -29,6 +29,18 @@ export {
 } from "./manifest-loader.js";
 export { runRelease, type RunnerResult } from "./runner.js";
 export {
+  runDiffRelease,
+  type DiffProvider,
+  type DiffProviderInput,
+  type PackageDiff,
+  type DiffRunnerResult,
+} from "./diff-runner.js";
+export {
+  buildDependentIndex,
+  propagateBumps,
+  topoSort,
+} from "./dependency-graph.js";
+export {
   graduatePackage,
   buildGraduatedChangelogText,
   type GraduateResult,
@@ -41,6 +53,12 @@ export {
   renderVersion,
   type ParsedVersion,
 } from "./semver.js";
+export {
+  deriveBump,
+  type ApiDiff,
+  type FingerprintDiff,
+  type BreakingFooter,
+} from "./diff-bump.js";
 export type {
   BumpKind,
   BumpPlan,
