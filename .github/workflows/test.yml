@@ -141,6 +141,8 @@ jobs:
         run: pnpm install --filter "release-runner..." --filter "ts-codegen..."
       - name: build release-runner dependencies
         run: pnpm --filter "release-runner^..." build
+      - name: Release runner typecheck (src + tests)
+        run: pnpm --filter release-runner typecheck
       - name: Release runner unit tests
         run: pnpm --filter release-runner test
 
@@ -161,6 +163,8 @@ jobs:
       - uses: pnpm/action-setup@v4
       - name: pnpm install (commit-lint)
         run: pnpm install --filter "commit-lint"
+      - name: Commit lint typecheck
+        run: pnpm --filter commit-lint typecheck
       - name: Commit lint unit tests
         run: pnpm --filter commit-lint test
 
@@ -274,6 +278,8 @@ jobs:
         run: pnpm install --filter "./server/shared/typescript/**..." --filter "ts-codegen..."
       - name: build (shared-TS packages that need a dist/ before tests run)
         run: pnpm --filter "./server/shared/typescript/**" -r build
+      - name: ts-codegen typecheck (src + tests)
+        run: pnpm --filter ts-codegen typecheck
       - name: TS shared unit tests
         run: pnpm --filter "./server/shared/typescript/**" -r test
 

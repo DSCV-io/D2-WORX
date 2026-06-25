@@ -38,20 +38,12 @@ export function parseVersion(raw: string): ParsedVersion {
       `Cannot parse version string "${trimmed}" — expected MAJOR.MINOR.PATCH`,
     );
 
-  // Destructure — groups 1–3 are always present when the regex matches
-  // (each is a required `\d+` group, not optional). TypeScript types them as
-  // `string | undefined` due to noUncheckedIndexedAccess; we assert non-null
-  // because the regex cannot match without all three groups being non-empty.
-  const [, rawMajor, rawMinor, rawPatch] = match as [
-    string,
-    string,
-    string,
-    string,
-  ];
-
-  const major = parseInt(rawMajor, 10);
-  const minor = parseInt(rawMinor, 10);
-  const patch = parseInt(rawPatch, 10);
+  // Groups 1–3 are always present when the regex matches (each is a required
+  // `\d+` group, not optional). Assert non-null: the regex cannot match without
+  // all three groups being non-empty strings.
+  const major = parseInt(match[1]!, 10);
+  const minor = parseInt(match[2]!, 10);
+  const patch = parseInt(match[3]!, 10);
 
   return { major, minor, patch };
 }

@@ -7,13 +7,15 @@
     "build": "tsc -b",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
-    "type-check:test": "tsc -p tsconfig.test.json"
+    "type-check:test": "tsc -p tsconfig.test.json",
+    "typecheck": "tsc -p tsconfig.test.json"
   },
   "dependencies": {
     "@d2/utilities": "workspace:*",
     "contract-gate": "workspace:*"
   },
   "devDependencies": {
+    "@microsoft/api-extractor": "^7.58.9",
     "@types/node": "24.10.0",
     "@vitest/coverage-v8": "4.0.18",
     "tsx": "4.20.6",

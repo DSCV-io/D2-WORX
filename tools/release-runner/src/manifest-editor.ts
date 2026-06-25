@@ -34,8 +34,8 @@ export function readNpmVersion(manifestPath: string): string {
     );
 
   // NPM_VERSION_RE group 2 requires [^"]+ (≥1 char) — non-empty by construction.
-  // Destructure to avoid noUncheckedIndexedAccess branch on index 2.
-  const [, , version] = match as [string, string, string, string];
+  // match[2] is always a non-empty string when NPM_VERSION_RE matches.
+  const version = match[2]!;
 
   return version;
 }
@@ -92,8 +92,8 @@ export function readNugetVersion(manifestPath: string): string {
     );
 
   // CSPROJ_VERSION_RE group 1 requires [^<]+ (≥1 char) — non-empty by construction.
-  // Destructure to avoid noUncheckedIndexedAccess branch on index 1.
-  const [, version] = match as [string, string];
+  // match[1] is always a non-empty string when CSPROJ_VERSION_RE matches.
+  const version = match[1]!;
 
   return version.trim();
 }

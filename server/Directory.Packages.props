@@ -17,6 +17,11 @@ Copyright (c) DCSV. All rights reserved.
   <ItemGroup>
     <!-- Analyzers (pulled in via Directory.Build.props) -->
     <PackageVersion Include="StyleCop.Analyzers" Version="1.2.0-beta.556" />
+    <!-- PublicApiAnalyzers — enforces public API surface tracking via PublicAPI.Shipped.txt
+         + PublicAPI.Unshipped.txt. Scoped to individual csprojs that opt in (currently
+         only D2.Shared.Utilities for the versioning-engine spike; NOT enabled globally).
+         RS0016 flags new API absent from both files; RS0017 flags removed API still in Shipped. -->
+    <PackageVersion Include="Microsoft.CodeAnalysis.PublicApiAnalyzers" Version="4.14.0" />
 
     <!-- JetBrains annotations ([MustDisposeResource], [Pure], etc.) — used across libs + tests -->
     <PackageVersion Include="JetBrains.Annotations" Version="2025.2.4" />

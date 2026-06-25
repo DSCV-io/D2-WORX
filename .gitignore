@@ -232,3 +232,9 @@ tools/typespec-spike/
 # C# in-memory test-host spike for the TypeSpec emitter harness de-risk.
 # Throwaway proof-of-concept; the committed harness is built in a later step.
 server/shared/typescript/typespec-emitters/spike-csharp/
+
+# api-extractor transient working copy: the versioning engine commits each
+# package's API report under etc/<pkg>.api.md (the baseline) and lets
+# api-extractor write its freshly-generated report to temp/ for the diff.
+# The temp/ copy is regenerated every run — keep it untracked.
+server/shared/typescript/**/temp/

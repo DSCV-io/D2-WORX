@@ -86,8 +86,7 @@ function classifyCommitType(message: string): CommitKind {
   if (match === null) return "other";
 
   // Group 1 is always present when the regex matches (required `[a-zA-Z]+` group).
-  const [, rawType] = match as [string, string];
-  const typeWord = rawType.toLowerCase();
+  const typeWord = match[1]!.toLowerCase();
 
   if (typeWord === "feat") return "feat";
   if (typeWord === "fix") return "fix";
