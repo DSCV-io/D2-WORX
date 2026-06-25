@@ -136,7 +136,7 @@ jobs:
           node-version: "24"
       - uses: pnpm/action-setup@v4
       - name: pnpm install (release-runner + its workspace deps)
-        run: pnpm install --filter "release-runner..." --filter "@d2/typespec-emitters..."
+        run: pnpm install --filter "release-runner..." --filter "@d2/typespec-emitters..." --filter "ts-codegen..."
       - name: build release-runner dependencies
         run: pnpm --filter "@d2/typespec-emitters..." build
       - name: Release runner unit tests
@@ -417,6 +417,8 @@ jobs:
       # ----- TS pack ---------------------------------------------------------
       - name: pnpm install (@d2/result subtree + ts-codegen)
         run: pnpm install --filter "@d2/result..." --filter "ts-codegen..."
+      - name: build @d2/result workspace dependencies
+        run: pnpm --filter "@d2/result^..." build
       - name: build @d2/result
         run: pnpm --filter @d2/result build
       - name: pnpm pack @d2/result
