@@ -145,6 +145,13 @@ CI runs a pack smoke on every PR to confirm the representative packages remain
 publish-ready (see [docs/COMMANDS.md — Per-package pack](./docs/COMMANDS.md#per-package-pack)).
 Actual registry push (npm / NuGet) is credential-gated and not wired yet.
 
+### Cutting a library release
+
+All 83 consumable libraries are bundled and published to GitHub Releases via a
+manual workflow dispatch — never auto-triggered. Registry publishing (npm / NuGet) is a separate, deliberate step, not performed by this workflow.
+See [docs/COMMANDS.md — Cutting a library release](./docs/COMMANDS.md#cutting-a-library-release)
+for the dry-run and release steps.
+
 ## Pull Requests
 
 - Fill out the [PR template](https://github.com/DSCV-io/D2-WORX/blob/main/.github/pull_request_template.md).

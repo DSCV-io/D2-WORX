@@ -34,6 +34,7 @@ export {
   type GraduateResult,
 } from "./graduate.js";
 export { resolveBaseline } from "./baseline.js";
+export { formatPackageList, type ListEntry } from "./list-formatter.js";
 export {
   parseVersion,
   applyBump,

@@ -10,11 +10,15 @@
 // Options:
 //   --against <ref>     Baseline git ref — the integration baseline branch.
 //                       Resolution order: --against arg, then D2_RELEASE_BASELINE
-//                       env var. Error if neither is provided.
+//                       env var. Error if neither is provided (required for all
+//                       modes except --list).
 //   --package <name>    Restrict to a single package
 //   --dry-run           Compute and report without writing (default: true)
 //   --apply             Write bumps + changelogs (disables dry-run)
 //   --graduate <name>   Graduate a pre-stable package from 0.x.y to 1.0.0
+//   --list              Print the full consumable package inventory as JSON and
+//                       exit. Read-only — writes nothing. Mutually exclusive
+//                       with bump / graduate. Does not require --against.
 //
 // Excluded from the unit-coverage threshold (see vitest.config.ts).
 
@@ -23,6 +27,7 @@ import { fileURLToPath } from "node:url";
 import { resolveBaseline } from "./baseline.js";
 import { commitsInRange } from "./git-adapter.js";
 import { loadAllPackages } from "./manifest-loader.js";
+import { formatPackageList } from "./list-formatter.js";
 import { runRelease } from "./runner.js";
 import { graduatePackage } from "./graduate.js";
 
@@ -45,6 +50,24 @@ function option(name: string, defaultValue: string): string {
   return idx !== -1 && idx + 1 < args.length
     ? (args[idx + 1] ?? defaultValue)
     : defaultValue;
+}
+
+// ---------------------------------------------------------------------------
+// --list mode — read-only inventory emit; mutually exclusive with bump/graduate
+// ---------------------------------------------------------------------------
+
+if (flag("--list")) {
+  const packages = loadAllPackages(repoRoot);
+
+  if (packages.length === 0) {
+    console.error(
+      "error: --list found no consumable packages in the repo tree.",
+    );
+    process.exit(1);
+  }
+
+  process.stdout.write(formatPackageList(packages));
+  process.exit(0);
 }
 
 // ---------------------------------------------------------------------------

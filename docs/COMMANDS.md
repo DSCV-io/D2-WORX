@@ -155,6 +155,50 @@ pnpm --filter release-runner test
 `D2_RELEASE_BASELINE`, then falls back to the built-in operational default. After
 `--apply`, review the diffs before committing.
 
+## Cutting a library release
+
+Library snapshots are published to GitHub Releases via a manual workflow dispatch —
+never auto-triggered on push. Registry publishing (npm / NuGet) is a separate, deliberate step, not performed by this workflow.
+
+### Dry-run first (always)
+
+Navigate to **Actions → Release libraries → Run workflow** in the GitHub UI and leave
+`dry_run` set to `true` (the default). The workflow will:
+
+1. Pack all 83 consumable libraries (54 .NET `.nupkg` + 29 TypeScript `.tgz`).
+2. Assemble `d2-libs-<tag>.zip` with `nuget/`, `npm/`, `manifest.json`,
+   `HOW-TO-USE.md`, and `LICENSE.md`.
+3. Upload the zip + loose artifacts as a **workflow artifact** for inspection.
+4. **Stop — no GitHub Release is created.**
+
+Download and inspect the workflow artifact to verify the bundle is correct before
+cutting a real release.
+
+### Cut a real release
+
+Run the workflow again with `dry_run` set to `false`. This runs the same pack + assemble
+steps and then executes:
+
+```
+gh release create <tag> --title "D2 libraries <tag>" \
+  --notes-file bundle/RELEASE-NOTES.md --prerelease \
+  d2-libs-<tag>.zip bundle/nuget/*.nupkg bundle/npm/*.tgz
+```
+
+The release is marked as a pre-release (all packages are pre-stable `0.x`).
+
+### Tag
+
+The default tag is `libs-YYYY.MM.DD` derived from the run date. Override it via the
+optional `tag` workflow input.
+
+### List the consumable inventory locally
+
+```bash
+# Print the full 83-package inventory as JSON (read-only — writes nothing):
+pnpm --filter release-runner exec tsx src/cli.ts --list
+```
+
 ## Per-package pack
 
 Proves a package is publish-ready (produces a valid artifact) without pushing to a registry.
