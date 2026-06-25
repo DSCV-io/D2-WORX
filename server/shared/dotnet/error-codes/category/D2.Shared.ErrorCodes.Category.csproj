@@ -46,4 +46,17 @@ Copyright (c) DCSV. All rights reserved.
     -->
     <AdditionalFiles Include="$(D2ContractsRoot)error-category\error-category.spec.json" />
   </ItemGroup>
+
+  <!-- Publish metadata (per-package semver + NuGet identity). -->
+  <PropertyGroup>
+    <Version>0.1.0</Version>
+    <PackageId>D2.Shared.ErrorCodes.Category</PackageId>
+    <Description>Foundational zero-dependency leaf exposing the closed ErrorCategory classification carried by every D2Result and error code in D2-WORX.</Description>
+    <IsPackable>true</IsPackable>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
 </Project>

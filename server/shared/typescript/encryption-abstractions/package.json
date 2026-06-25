@@ -11,6 +11,9 @@
       "import": "./dist/index.js"
     }
   },
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "prebuild": "pnpm --filter ts-codegen exec tsx src/encryption-domains-emit.ts && pnpm --filter ts-codegen exec tsx src/encryption-frame-emit.ts",
     "build": "tsc -b",

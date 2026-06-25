@@ -51,6 +51,9 @@
       "import": "./dist/generated/_records-meta.g.js"
     }
   },
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "tsc -b",
     "test": "vitest run",

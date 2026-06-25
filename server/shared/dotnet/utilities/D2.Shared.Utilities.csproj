@@ -26,4 +26,17 @@ Copyright (c) DCSV. All rights reserved.
   <ItemGroup>
     <InternalsVisibleTo Include="D2.Shared.Tests" />
   </ItemGroup>
+
+  <!-- Publish metadata (per-package semver + NuGet identity). -->
+  <PropertyGroup>
+    <Version>0.1.0</Version>
+    <PackageId>D2.Shared.Utilities</PackageId>
+    <Description>Foundational boundary helpers for D2-WORX — Falsey/Truthy semantics, string cleaning, parse-or-default extensions, indexed env-var parsing, and JSON-cycle-safe serialization.</Description>
+    <IsPackable>true</IsPackable>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
 </Project>

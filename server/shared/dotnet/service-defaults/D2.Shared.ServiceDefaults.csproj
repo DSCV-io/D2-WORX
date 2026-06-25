@@ -79,4 +79,17 @@ Copyright (c) DCSV. All rights reserved.
   <ItemGroup>
     <InternalsVisibleTo Include="D2.Shared.Tests" />
   </ItemGroup>
+
+  <!-- Publish metadata (per-package semver + NuGet identity). -->
+  <PropertyGroup>
+    <Version>0.1.0</Version>
+    <PackageId>D2.Shared.ServiceDefaults</PackageId>
+    <Description>Composition-root aggregator for D2-WORX — wires every shared library into AddD2ServiceDefaults / UseD2DefaultPipeline / MapD2DefaultEndpoints / RunD2ServiceAsync.</Description>
+    <IsPackable>true</IsPackable>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
 </Project>

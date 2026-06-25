@@ -855,6 +855,31 @@ importers:
         specifier: 4.0.18
         version: 4.0.18(@opentelemetry/api@1.9.0)(@types/node@24.10.0)(tsx@4.20.6)(yaml@2.9.0)
 
+  tools/release-runner:
+    dependencies:
+      '@d2/utilities':
+        specifier: workspace:*
+        version: link:../../server/shared/typescript/utilities
+      contract-gate:
+        specifier: workspace:*
+        version: link:../contract-gate
+    devDependencies:
+      '@types/node':
+        specifier: 24.10.0
+        version: 24.10.0
+      '@vitest/coverage-v8':
+        specifier: 4.0.18
+        version: 4.0.18(vitest@4.0.18(@opentelemetry/api@1.9.0)(@types/node@24.10.0)(tsx@4.20.6)(yaml@2.9.0))
+      tsx:
+        specifier: 4.20.6
+        version: 4.20.6
+      typescript:
+        specifier: 5.9.3
+        version: 5.9.3
+      vitest:
+        specifier: 4.0.18
+        version: 4.0.18(@opentelemetry/api@1.9.0)(@types/node@24.10.0)(tsx@4.20.6)(yaml@2.9.0)
+
   tools/ts-codegen:
     dependencies:
       '@d2/utilities':

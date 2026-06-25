@@ -68,4 +68,17 @@ Copyright (c) DCSV. All rights reserved.
   <ItemGroup>
     <InternalsVisibleTo Include="D2.Shared.Tests" />
   </ItemGroup>
+
+  <!-- Publish metadata (per-package semver + NuGet identity). -->
+  <PropertyGroup>
+    <Version>0.1.0</Version>
+    <PackageId>D2.Shared.Validation.Abstractions</PackageId>
+    <Description>Validation contract surface for D2-WORX — email, phone, and postal-code validator interfaces, shared field-length bounds, and the name/sex taxonomy enums.</Description>
+    <IsPackable>true</IsPackable>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
 </Project>

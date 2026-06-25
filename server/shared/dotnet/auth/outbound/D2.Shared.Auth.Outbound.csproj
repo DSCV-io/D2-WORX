@@ -117,4 +117,17 @@ Copyright (c) DCSV. All rights reserved.
   <ItemGroup>
     <InternalsVisibleTo Include="D2.Shared.Tests" />
   </ItemGroup>
+
+  <!-- Publish metadata (per-package semver + NuGet identity). -->
+  <PropertyGroup>
+    <Version>0.1.0</Version>
+    <PackageId>D2.Shared.Auth.Outbound</PackageId>
+    <Description>Caller-side outbound auth for D2-WORX cross-process calls — forwarded transaction tokens, mTLS workload certificates, and RFC 8693 token exchange.</Description>
+    <IsPackable>true</IsPackable>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
 </Project>

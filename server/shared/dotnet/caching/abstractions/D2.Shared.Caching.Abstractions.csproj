@@ -18,4 +18,17 @@ Copyright (c) DCSV. All rights reserved.
     <ProjectReference Include="..\..\i18n\abstractions\D2.Shared.I18n.Abstractions.csproj" />
     <ProjectReference Include="..\..\i18n\keys\D2.Shared.I18n.Keys.csproj" />
   </ItemGroup>
+
+  <!-- Publish metadata (per-package semver + NuGet identity). -->
+  <PropertyGroup>
+    <Version>0.1.0</Version>
+    <PackageId>D2.Shared.Caching.Abstractions</PackageId>
+    <Description>Shared abstractions for the D2-WORX cache stack — the ILocalCache / IDistributedCache / ITieredCache marker interfaces and the invalidation backplane contract.</Description>
+    <IsPackable>true</IsPackable>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
 </Project>

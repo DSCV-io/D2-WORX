@@ -72,4 +72,17 @@ Copyright (c) DCSV. All rights reserved.
     <InternalsVisibleTo Include="D2.Shared.Messaging.RabbitMq" />
     <InternalsVisibleTo Include="D2.Shared.Tests" />
   </ItemGroup>
+
+  <!-- Publish metadata (per-package semver + NuGet identity). -->
+  <PropertyGroup>
+    <Version>0.1.0</Version>
+    <PackageId>D2.Shared.Messaging.Abstractions</PackageId>
+    <Description>Transport-agnostic messaging abstractions for D2-WORX — the [MqPub] / [MqSub] vocabulary, the message-bus contract, and DLQ failure-metadata wire shapes.</Description>
+    <IsPackable>true</IsPackable>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
 </Project>

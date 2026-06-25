@@ -69,24 +69,25 @@ cd server/web && pnpm exec prettier --check .                               # Pr
 
 ## Contract breaking-change gate
 
-The always-on gate runs three arms against the `nova` baseline. Run locally before pushing a PR that touches contract files.
+The always-on gate runs three arms against the integration baseline branch. Run locally before pushing a PR that touches contract files.
 
 ```bash
-# Fetch the baseline first (required for all arms):
-git fetch origin nova
+# Fetch the baseline first (required for all arms — substitute <baseline> with your
+# integration baseline branch, e.g. git fetch origin <baseline>):
+git fetch origin <baseline>
 
 # All arms (proto + spec/i18n/OpenAPI):
-node tools/contract-gate/dist/cli.js --against nova
+node tools/contract-gate/dist/cli.js --against <baseline>
 
 # Spec / i18n / OpenAPI arms only (no buf required):
-node tools/contract-gate/dist/cli.js --against nova --skip-proto
+node tools/contract-gate/dist/cli.js --against <baseline> --skip-proto
 
 # Proto arm only (buf breaking at FILE level):
-node tools/contract-gate/dist/cli.js --against nova --proto-only
+node tools/contract-gate/dist/cli.js --against <baseline> --proto-only
 
-# Or run buf directly over the shared protos:
+# Or run buf directly over the shared protos (substitute <baseline>):
 pnpm --filter @d2/typespec-emitters exec buf breaking contracts/protos \
-  --against '.git#branch=nova,subdir=contracts/protos'
+  --against '.git#branch=<baseline>,subdir=contracts/protos'
 
 # Gate unit tests (owned-code validation):
 pnpm --filter contract-gate test
@@ -121,12 +122,59 @@ To retire a spec entry without an immediate forced break:
 
 ## Versioning
 
+### Product version (the deployable `d2-version`)
+
 ```bash
 dotnet tool restore                                                        # First-time setup
 dotnet versionize --dry-run                                                # Preview bump (always do this first)
 dotnet versionize                                                          # Bump version + update CHANGELOG + tag
 git push --follow-tags
 ```
+
+### Per-package version (consumable libs: `D2.Shared.*` + `@d2/*`)
+
+The release runner reads `baseline..HEAD`, maps commits to packages by file-path
+containment, and applies per-package semver + CHANGELOG entries.
+
+```bash
+# Dry-run — compute and report, write nothing (default).
+# Substitute <baseline> with your integration baseline branch, or set D2_RELEASE_BASELINE:
+pnpm --filter release-runner exec tsx src/cli.ts --against <baseline>
+
+# Dry-run scoped to one package:
+pnpm --filter release-runner exec tsx src/cli.ts --against <baseline> --package D2.Shared.Result
+
+# Apply — write version slots + prepend CHANGELOG blocks:
+pnpm --filter release-runner exec tsx src/cli.ts --against <baseline> --apply
+
+# Runner unit tests:
+pnpm --filter release-runner test
+```
+
+`--against` sets the integration baseline branch ref. If omitted, the runner checks
+`D2_RELEASE_BASELINE`, then falls back to the built-in operational default. After
+`--apply`, review the diffs before committing.
+
+## Per-package pack
+
+Proves a package is publish-ready (produces a valid artifact) without pushing to a registry.
+Run locally to validate packaging metadata before a PR.
+
+```bash
+# .NET — pack one consumable (exercises the transitive ProjectReference closure):
+dotnet pack server/shared/dotnet/result/core/D2.Shared.Result.csproj \
+  --configuration Release --output /tmp/pack-smoke
+
+# TS — build then pack one consumable (verifies files: ["dist"] allowlist):
+pnpm --filter @d2/result build
+pnpm --filter @d2/result pack --pack-destination /tmp/pack-smoke
+
+# Inspect the tarball contents:
+tar -tzf /tmp/pack-smoke/d2-result-*.tgz | head -20
+```
+
+CI runs a pack smoke on every PR (`pack-smoke` job in `.github/workflows/test.yml`) using
+the same commands above.
 
 ## Important
 

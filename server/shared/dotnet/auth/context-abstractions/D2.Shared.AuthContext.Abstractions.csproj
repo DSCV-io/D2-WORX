@@ -62,4 +62,17 @@ Copyright (c) DCSV. All rights reserved.
   <ItemGroup>
     <InternalsVisibleTo Include="D2.Shared.Tests" />
   </ItemGroup>
+
+  <!-- Publish metadata (per-package semver + NuGet identity). -->
+  <PropertyGroup>
+    <Version>0.1.0</Version>
+    <PackageId>D2.Shared.AuthContext.Abstractions</PackageId>
+    <Description>Read-only IAuthContext interface for reasoning about caller identity, organization, scopes, and impersonation context in D2-WORX.</Description>
+    <IsPackable>true</IsPackable>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
 </Project>

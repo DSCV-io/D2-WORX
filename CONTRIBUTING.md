@@ -54,8 +54,10 @@ Any breaking footer opens all gate arms for the PR.
 **One conscious act — all three steps are required:**
 
 1. Add the footer to a commit in the PR (`WIRE-BREAKING:` or `BREAKING CHANGE:`).
-2. Bump the package semver MAJOR.
-3. Add a `CHANGELOG.md` breaking entry describing the change and the migration path for consumers.
+2. Bump the package semver and update the changelog (steps 2 and 3 below are
+   performed together by the release runner — see [Per-package versioning](#per-package-versioning)).
+3. The `CHANGELOG.md` breaking entry is written by the runner under the
+   `### Wire-breaking` or `### API-breaking` section.
 
 ### Deprecate-not-delete workflow
 
@@ -69,6 +71,79 @@ the force valve. The safe retirement path:
 
 See [docs/COMMANDS.md — Contract breaking-change gate](./docs/COMMANDS.md#contract-breaking-change-gate)
 for local invocation.
+
+## Per-package versioning
+
+Every consumable library (`D2.Shared.*` for .NET, `@d2/*` for npm) carries its own
+`MAJOR.MINOR.PATCH` version and its own `CHANGELOG.md`. Services version as deployables
+and are not covered here.
+
+### Semver rules
+
+| Highest change type in the commit range | Pre-stable (`0.x`) | Stable (`≥ 1.0.0`) |
+| --------------------------------------- | ------------------- | ------------------- |
+| `WIRE-BREAKING:` or `BREAKING CHANGE:` footer | MINOR bump (no valve needed) | MAJOR bump (valve required — gate blocks without it) |
+| `feat:` additive | MINOR | MINOR |
+| `fix:` / `perf:` | PATCH | PATCH |
+
+All packages start at `0.1.0` (pre-stable). Graduation to `1.0.0` is a deliberate act
+(`--graduate <pkg>` flag on the runner) and is never inferred automatically.
+
+### Release runner
+
+The release runner (`tools/release-runner`) reads the commit range since the baseline
+branch, maps each commit to the packages it touched (by file-path containment), applies
+the semver table above per package, and writes the version slot + prepends a `CHANGELOG.md`
+block.
+
+**Dry-run first (always):**
+
+```bash
+# substitute your integration baseline branch for <baseline>, or set D2_RELEASE_BASELINE
+pnpm --filter release-runner exec tsx src/cli.ts --against <baseline>
+```
+
+**Restrict to one package:**
+
+```bash
+pnpm --filter release-runner exec tsx src/cli.ts --against <baseline> --package D2.Shared.Result
+```
+
+**Apply bumps and write changelogs:**
+
+```bash
+pnpm --filter release-runner exec tsx src/cli.ts --against <baseline> --apply
+```
+
+The `--against` argument sets the integration baseline branch ref. If omitted, the runner
+falls back to the `D2_RELEASE_BASELINE` environment variable, then to the built-in
+operational fallback. The runner computes `baseline..HEAD` — the same range the
+breaking-change gate checks. After `--apply`, review the version slot edits and the
+`CHANGELOG.md` prepends before committing.
+
+### CHANGELOG structure
+
+Each package's `CHANGELOG.md` has a `## [Unreleased]` section that the runner promotes
+to a versioned block on release:
+
+```
+## 0.2.0 - 2026-07-01
+
+### Wire-breaking
+- Removed deprecated `oldField` from `MyMessage` (migration: use `newField`).
+
+### Added
+- New `helper()` utility function.
+```
+
+Empty subsections are omitted. The `## [Unreleased]` section is re-inserted above the
+new block automatically.
+
+### Publish-readiness smoke test
+
+CI runs a pack smoke on every PR to confirm the representative packages remain
+publish-ready (see [docs/COMMANDS.md — Per-package pack](./docs/COMMANDS.md#per-package-pack)).
+Actual registry push (npm / NuGet) is credential-gated and not wired yet.
 
 ## Pull Requests
 

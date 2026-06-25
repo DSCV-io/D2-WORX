@@ -104,4 +104,17 @@ Copyright (c) DCSV. All rights reserved.
     -->
     <InternalsVisibleTo Include="D2.Shared.Geo.Default" />
   </ItemGroup>
+
+  <!-- Publish metadata (per-package semver + NuGet identity). -->
+  <PropertyGroup>
+    <Version>0.1.0</Version>
+    <PackageId>D2.Shared.Geo.Abstractions</PackageId>
+    <Description>Strongly-typed ISO geo reference-data type surface for D2-WORX (countries, subdivisions, currencies, languages, locales, timezones) without catalog data.</Description>
+    <IsPackable>true</IsPackable>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
 </Project>

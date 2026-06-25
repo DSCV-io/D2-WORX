@@ -120,6 +120,28 @@ jobs:
       - name: Contract gate unit + integration tests
         run: pnpm --filter contract-gate test
 
+  # ---------------------------------------------------------------------------
+  # Release-runner unit tests — always on.
+  # Runs the owned-code test suite for `tools/release-runner` (bump engine,
+  # manifest editor, changelog editor, semver, and runner integration tests).
+  # §26.15/§26.16 owned-tooling validation — mirrors contract-gate-unit.
+  # ---------------------------------------------------------------------------
+  release-runner-unit:
+    name: Release runner unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - uses: pnpm/action-setup@v4
+      - name: pnpm install (release-runner + its workspace deps)
+        run: pnpm install --filter "release-runner..." --filter "@d2/typespec-emitters..."
+      - name: build release-runner dependencies
+        run: pnpm --filter "@d2/typespec-emitters..." build
+      - name: Release runner unit tests
+        run: pnpm --filter release-runner test
+
   # lint-and-format — blocked: web half needs `server/web/` SvelteKit workspace
   # (not yet resolvable — missing @d2/auth-bff-client workspace package); a
   # dotnet-only inspectcode lane can follow in a later pass.
@@ -354,3 +376,55 @@ jobs:
         run: pnpm --filter "@d2/typespec-emitters..." build
       - name: TypeSpec emitter tests (byte-parity gate)
         run: pnpm --filter "@d2/typespec-emitters" test
+
+  # ==========================================================================
+  # Pack smoke — active now (no service dependencies).
+  # Proves one representative consumable per ecosystem stays publish-ready.
+  # Does NOT publish — no credentials required.
+  # .NET: packs D2.Shared.Result (exercises the full ProjectReference closure
+  #       for NuGet dependency declaration) and asserts a .nupkg is produced.
+  # TS:   builds + packs @d2/result (exercises the `files: ["dist"]` allowlist
+  #       so the tarball contains dist/ and not src/) and asserts a .tgz.
+  # ==========================================================================
+  pack-smoke:
+    name: Pack smoke (.NET nupkg + TS tgz)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - uses: pnpm/action-setup@v4
+
+      # ----- .NET pack -------------------------------------------------------
+      # `--no-build` relies on the Build job; in CI this job runs independently
+      # so we let dotnet restore + build inline via the default (no --no-build).
+      # Single-project pack — only the transitive ProjectReference closure of
+      # D2.Shared.Result is compiled (not the full solution).
+      - name: dotnet pack D2.Shared.Result
+        run: >
+          dotnet pack server/shared/dotnet/result/core/D2.Shared.Result.csproj
+          --configuration Release
+          --output /tmp/pack-smoke
+      - name: assert .nupkg produced
+        run: |
+          ls /tmp/pack-smoke/D2.Shared.Result.*.nupkg
+          echo "D2.Shared.Result nupkg OK"
+
+      # ----- TS pack ---------------------------------------------------------
+      - name: pnpm install (@d2/result subtree + ts-codegen)
+        run: pnpm install --filter "@d2/result..." --filter "ts-codegen..."
+      - name: build @d2/result
+        run: pnpm --filter @d2/result build
+      - name: pnpm pack @d2/result
+        run: pnpm --filter @d2/result pack --pack-destination /tmp/pack-smoke
+      - name: assert .tgz produced and contains dist/ not src/
+        run: |
+          tgz=$(ls /tmp/pack-smoke/d2-result-*.tgz)
+          echo "Tarball: $tgz"
+          if ! tar -tzf "$tgz" | grep -q "^package/dist/"; then echo "FAIL: dist/ missing from tarball"; exit 1; fi
+          if tar -tzf "$tgz" | grep -q "^package/src/"; then echo "FAIL: src/ leaked into tarball"; exit 1; fi
+          echo "@d2/result tgz OK"

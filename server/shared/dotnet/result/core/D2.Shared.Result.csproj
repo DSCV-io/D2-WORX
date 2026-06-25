@@ -103,4 +103,17 @@ Copyright (c) DCSV. All rights reserved.
                       ReferenceOutputAssembly="false" />
     <AdditionalFiles Include="$(D2ContractsRoot)d2result-envelope\d2result-envelope.spec.json" />
   </ItemGroup>
+
+  <!-- Publish metadata (per-package semver + NuGet identity). -->
+  <PropertyGroup>
+    <Version>0.1.0</Version>
+    <PackageId>D2.Shared.Result</PackageId>
+    <Description>D2Result — the errors-as-values pattern for D2-WORX, replacing exception-based control flow with TKMessage-typed user-facing messages.</Description>
+    <IsPackable>true</IsPackable>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
 </Project>

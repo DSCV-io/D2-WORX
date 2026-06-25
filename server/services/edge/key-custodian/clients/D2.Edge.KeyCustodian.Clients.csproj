@@ -40,4 +40,25 @@ Copyright (c) DCSV. All rights reserved.
   <ItemGroup>
     <InternalsVisibleTo Include="D2.Edge.Tests" />
   </ItemGroup>
+
+  <!-- Publish metadata (per-package semver + NuGet identity). -->
+  <PropertyGroup>
+    <Version>0.1.0</Version>
+    <PackageId>D2.Edge.KeyCustodian.Clients</PackageId>
+    <Description>In-process KeyCustodian client surface for D2-WORX — the transport DTOs and the IKeyCustodianApi module facade.</Description>
+    <IsPackable>true</IsPackable>
+    <Authors>DCSV</Authors>
+    <Company>DCSV</Company>
+    <Product>D2-WORX</Product>
+    <RepositoryUrl>https://github.com/DCSV-io/D2-WORX</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageProjectUrl>https://github.com/DCSV-io/D2-WORX</PackageProjectUrl>
+    <PackageLicenseFile>LICENSE.md</PackageLicenseFile>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="\" />
+    <None Include="$(D2RepoRoot)LICENSE.md" Pack="true" PackagePath="\" Visible="false" />
+  </ItemGroup>
 </Project>
