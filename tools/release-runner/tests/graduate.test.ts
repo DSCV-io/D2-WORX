@@ -73,6 +73,7 @@ function makeNpmPkg(name: string, version: string): PackageDescriptor {
     manifestPath,
     changelogPath,
     currentVersion: version,
+    dependencies: [],
   };
 }
 
@@ -97,6 +98,7 @@ function makeNugetPkg(name: string, version: string): PackageDescriptor {
     manifestPath,
     changelogPath,
     currentVersion: version,
+    dependencies: [],
   };
 }
 

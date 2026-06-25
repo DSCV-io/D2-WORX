@@ -144,6 +144,9 @@ pnpm --filter release-runner exec tsx src/cli.ts --against <baseline>
 # Dry-run scoped to one package:
 pnpm --filter release-runner exec tsx src/cli.ts --against <baseline> --package D2.Shared.Result
 
+# Suppress dependent propagation (dry-run of the direct package only):
+pnpm --filter release-runner exec tsx src/cli.ts --against <baseline> --no-propagate
+
 # Apply — write version slots + prepend CHANGELOG blocks:
 pnpm --filter release-runner exec tsx src/cli.ts --against <baseline> --apply
 
@@ -154,6 +157,10 @@ pnpm --filter release-runner test
 `--against` sets the integration baseline branch ref. If omitted, the runner checks
 `D2_RELEASE_BASELINE`, then falls back to the built-in operational default. After
 `--apply`, review the diffs before committing.
+
+By default the runner propagates a PATCH bump to every consumable dependent of a bumped package
+(see `CONTRIBUTING.md` → Dependent propagation). Use `--no-propagate` to suppress propagation,
+e.g. when scoping a dry-run to a single package in isolation.
 
 ## Cutting a library release
 

@@ -40,6 +40,7 @@ function makePkg(name = "@d2/result"): PackageDescriptor {
     manifestPath: "server/shared/typescript/result/package.json",
     changelogPath: "server/shared/typescript/result/CHANGELOG.md",
     currentVersion: "0.1.0",
+    dependencies: [],
   };
 }
 
@@ -52,6 +53,7 @@ function makePlan(overrides: Partial<BumpPlan> = {}): BumpPlan {
     apiBreakingEntries: [],
     addedEntries: [],
     fixedEntries: [],
+    dependencyEntries: [],
     ...overrides,
   };
 }
@@ -243,6 +245,105 @@ All changes documented here.
 
     // New version should appear before old version.
     expect(result.indexOf("## 0.2.0")).toBeLessThan(result.indexOf("## 0.1.0"));
+  });
+});
+
+// ---------------------------------------------------------------------------
+// buildPromotedText — ### Changed dependency-update section
+// ---------------------------------------------------------------------------
+
+describe("buildPromotedText — ### Changed dependency-update section", () => {
+  it("dependency entries render under ### Changed in versioned section", () => {
+    const plan = makePlan({ dependencyEntries: ["@d2/utilities"] });
+    const result = buildPromotedText(SEEDED_CHANGELOG, plan, "2026-06-24");
+
+    const versionedIdx = result.indexOf("## 0.2.0 - 2026-06-24");
+    const afterVersioned = result.slice(versionedIdx);
+
+    expect(afterVersioned).toContain("### Changed");
+    expect(afterVersioned).toContain(
+      "- Dependency update: @d2/utilities bumped.",
+    );
+  });
+
+  it("multiple dependency entries produce multiple bullets", () => {
+    const plan = makePlan({
+      dependencyEntries: ["@d2/a", "@d2/b"],
+    });
+    const result = buildPromotedText(SEEDED_CHANGELOG, plan, "2026-06-24");
+
+    expect(result).toContain("- Dependency update: @d2/a bumped.");
+    expect(result).toContain("- Dependency update: @d2/b bumped.");
+  });
+
+  it("empty dependencyEntries omits ### Changed from versioned section", () => {
+    const plan = makePlan({ dependencyEntries: [], addedEntries: ["thing"] });
+    const result = buildPromotedText(SEEDED_CHANGELOG, plan, "2026-06-24");
+
+    const versionedIdx = result.indexOf("## 0.2.0 - 2026-06-24");
+    const afterVersioned = result.slice(versionedIdx);
+    const nextH2 = afterVersioned.indexOf("\n## ", 1);
+    const versionedBody =
+      nextH2 === -1 ? afterVersioned : afterVersioned.slice(0, nextH2);
+
+    expect(versionedBody).not.toContain("### Changed");
+  });
+
+  it("### Changed appears between ### Added and ### Fixed in section order", () => {
+    const plan = makePlan({
+      addedEntries: ["new feature"],
+      dependencyEntries: ["@d2/upstream"],
+      fixedEntries: ["bug fix"],
+    });
+    const result = buildPromotedText(SEEDED_CHANGELOG, plan, "2026-06-24");
+
+    const addedIdx = result.indexOf("### Added");
+    const changedIdx = result.indexOf("### Changed");
+    const fixedIdx = result.lastIndexOf("### Fixed");
+
+    expect(addedIdx).toBeLessThan(changedIdx);
+    expect(changedIdx).toBeLessThan(fixedIdx);
+  });
+
+  it("fresh [Unreleased] block after promotion contains ### Changed", () => {
+    // The empty Unreleased block template now includes ### Changed.
+    const plan = makePlan({ dependencyEntries: ["@d2/x"] });
+    const result = buildPromotedText(SEEDED_CHANGELOG, plan, "2026-06-24");
+
+    // The fresh [Unreleased] block appears before the versioned section.
+    const unreleasedIdx = result.indexOf("## [Unreleased]");
+    const versionedIdx = result.indexOf("## 0.2.0 - 2026-06-24");
+    const freshBlock = result.slice(unreleasedIdx, versionedIdx);
+
+    expect(freshBlock).toContain("### Changed");
+  });
+
+  it("changelog seeded with old 4-subsection template still promotes and adds ### Changed in fresh block", () => {
+    const OLD_SEEDED = `# Changelog
+
+## [Unreleased]
+
+### Wire-breaking
+
+### API-breaking
+
+### Added
+
+### Fixed`;
+
+    const plan = makePlan({ dependencyEntries: ["@d2/upstream"] });
+    const result = buildPromotedText(OLD_SEEDED, plan, "2026-06-24");
+
+    // Promotion must succeed.
+    expect(result).toContain("## 0.2.0 - 2026-06-24");
+    // ### Changed appears in the versioned section (dependency entry).
+    expect(result).toContain("Dependency update: @d2/upstream bumped.");
+    // The fresh block (inserted by the promoter) carries ### Changed.
+    const unreleasedIdx = result.indexOf("## [Unreleased]");
+    const versionedIdx = result.indexOf("## 0.2.0 - 2026-06-24");
+    const freshBlock = result.slice(unreleasedIdx, versionedIdx);
+
+    expect(freshBlock).toContain("### Changed");
   });
 });
 

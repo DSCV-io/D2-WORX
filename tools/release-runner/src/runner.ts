@@ -12,6 +12,7 @@
 
 import { falsey } from "@d2/utilities";
 import { computeBumpPlans } from "./bump-engine.js";
+import { propagateBumps } from "./dependency-graph.js";
 import { writeManifestVersion } from "./manifest-editor.js";
 import { promoteChangelog } from "./changelog-editor.js";
 import type {
@@ -57,13 +58,23 @@ export function runRelease(
   packages: readonly PackageDescriptor[],
   options: RunnerOptions,
 ): RunnerResult {
-  // Apply package filter when set.
-  const filteredPackages =
-    options.packageFilter !== undefined
-      ? packages.filter((p) => p.name === options.packageFilter)
-      : packages;
+  // Compute direct plans over the FULL package set so the dependency graph
+  // can resolve all edges. The package filter is applied AFTER propagation.
+  const directPlans = computeBumpPlans(commits, packages);
 
-  const plans = computeBumpPlans(commits, filteredPackages);
+  // Propagate bumps to transitive dependents (default-on; opt-out via
+  // RunnerOptions.propagate = false / CLI --no-propagate).
+  const allPlans =
+    options.propagate && directPlans.length > 0
+      ? propagateBumps(directPlans, packages)
+      : directPlans;
+
+  // Apply the single-package filter AFTER propagation so --package X still
+  // shows X even when X was only reached via propagation.
+  const plans =
+    options.packageFilter !== undefined
+      ? allPlans.filter((p) => p.pkg.name === options.packageFilter)
+      : allPlans;
 
   if (options.dryRun || falsey(plans)) {
     return { plans, applied: false };

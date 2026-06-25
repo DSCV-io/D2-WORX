@@ -70,12 +70,17 @@ Usage:
 Options:
   --against <ref>    Baseline git ref (required unless --list; or set
                      D2_RELEASE_BASELINE env var)
-  --package <name>   Restrict bump computation to a single package
+  --package <name>   Restrict bump computation to a single package.
+                     Filter is applied after propagation so --package X
+                     shows X even when reached only via dependency-update.
   --dry-run          Compute and print plans without writing (default)
   --apply            Write version bumps and changelogs to disk
   --graduate <name>  Graduate a pre-stable package from 0.x.y to 1.0.0
   --list             Print consumable package inventory as JSON and exit.
                      Read-only; mutually exclusive with --apply / --graduate.
+  --no-propagate     Disable dependency-update propagation. By default a bump
+                     to any package also PATCH-bumps its transitive consumable
+                     dependents. Pass this flag to restrict to direct bumps only.
   --help, -h         Print this help message and exit
 
 Exit codes:
@@ -160,6 +165,7 @@ try {
 
 const packageFilter = flag("--package") ? option("--package", "") : undefined;
 const dryRun = !flag("--apply");
+const propagate = !flag("--no-propagate");
 const graduateTarget = flag("--graduate")
   ? option("--graduate", "")
   : undefined;
@@ -203,6 +209,7 @@ if (truthy(graduateTarget)) {
     today,
     dryRun,
     packageFilter: truthy(packageFilter) ? packageFilter : undefined,
+    propagate,
   });
 
   // -------------------------------------------------------------------------
@@ -218,9 +225,20 @@ if (truthy(graduateTarget)) {
     console.log(`\nRelease runner — ${mode} (baseline: ${against})\n`);
 
     for (const plan of result.plans) {
+      const isDependencyUpdate =
+        plan.dependencyEntries.length > 0 &&
+        plan.wireBreakingEntries.length === 0 &&
+        plan.apiBreakingEntries.length === 0 &&
+        plan.addedEntries.length === 0 &&
+        plan.fixedEntries.length === 0;
+
+      const tag = isDependencyUpdate
+        ? `[${plan.bump}][dependency-update]`
+        : `[${plan.bump}]`;
+
       console.log(
         `  ${plan.pkg.name} (${plan.pkg.ecosystem})` +
-          `  ${plan.pkg.currentVersion} → ${plan.newVersion}  [${plan.bump}]`,
+          `  ${plan.pkg.currentVersion} → ${plan.newVersion}  ${tag}`,
       );
 
       if (plan.wireBreakingEntries.length > 0) {
@@ -235,6 +253,11 @@ if (truthy(graduateTarget)) {
 
       if (plan.addedEntries.length > 0) {
         for (const e of plan.addedEntries) console.log(`    Added: ${e}`);
+      }
+
+      if (plan.dependencyEntries.length > 0) {
+        for (const e of plan.dependencyEntries)
+          console.log(`    Dependency update: ${e}`);
       }
 
       if (plan.fixedEntries.length > 0) {

@@ -144,6 +144,26 @@ jobs:
       - name: Release runner unit tests
         run: pnpm --filter release-runner test
 
+  # ---------------------------------------------------------------------------
+  # Commit-lint unit tests — always on.
+  # Validates the commit-msg hook's conventional-commit type-allowlist and
+  # format enforcement logic (allowed types, reject paths, skip-forms).
+  # §26.15/§26.16 owned-tooling validation — mirrors release-runner-unit.
+  # ---------------------------------------------------------------------------
+  commit-lint-unit:
+    name: Commit lint unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - uses: pnpm/action-setup@v4
+      - name: pnpm install (commit-lint)
+        run: pnpm install --filter "commit-lint"
+      - name: Commit lint unit tests
+        run: pnpm --filter commit-lint test
+
   # lint-and-format — blocked: web half needs `server/web/` SvelteKit workspace
   # (not yet resolvable — missing @d2/auth-bff-client workspace package); a
   # dotnet-only inspectcode lane can follow in a later pass.

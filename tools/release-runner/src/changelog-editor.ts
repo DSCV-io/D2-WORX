@@ -45,6 +45,8 @@ const EMPTY_UNRELEASED_BLOCK = `## [Unreleased]
 
 ### Added
 
+### Changed
+
 ### Fixed`;
 
 // ---------------------------------------------------------------------------
@@ -84,6 +86,14 @@ function buildVersionedSection(plan: BumpPlan, today: string): string {
 
   if (plan.addedEntries.length > 0) {
     parts.push(`\n### Added\n\n${renderBullets(plan.addedEntries)}`);
+  }
+
+  if (plan.dependencyEntries.length > 0) {
+    const bullets = plan.dependencyEntries.map(
+      (upstream) => `Dependency update: ${upstream} bumped.`,
+    );
+
+    parts.push(`\n### Changed\n\n${renderBullets(bullets)}`);
   }
 
   if (plan.fixedEntries.length > 0) {

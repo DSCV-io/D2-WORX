@@ -29,6 +29,7 @@ function makeNpm(name: string, version = "0.1.0"): PackageDescriptor {
     manifestPath: `/repo/server/shared/typescript/${name.replace("@d2/", "")}/package.json`,
     changelogPath: `/repo/server/shared/typescript/${name.replace("@d2/", "")}/CHANGELOG.md`,
     currentVersion: version,
+    dependencies: [],
   };
 }
 
@@ -40,6 +41,7 @@ function makeNuget(name: string, version = "0.1.0"): PackageDescriptor {
     manifestPath: `/repo/server/shared/dotnet/${name.toLowerCase().replace(/\./g, "-")}/${name}.csproj`,
     changelogPath: `/repo/server/shared/dotnet/${name.toLowerCase().replace(/\./g, "-")}/CHANGELOG.md`,
     currentVersion: version,
+    dependencies: [],
   };
 }
 

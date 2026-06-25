@@ -1,0 +1,13 @@
+{
+  "name": "commit-lint",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "@types/node": "24.10.0",
+    "vitest": "4.0.18"
+  }
+}

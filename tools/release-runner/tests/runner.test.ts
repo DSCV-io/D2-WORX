@@ -78,6 +78,7 @@ function createNpmFixture(
       manifestPath,
       changelogPath,
       currentVersion: version,
+      dependencies: [],
     },
     dir: relDir,
   };
@@ -110,6 +111,7 @@ function createNugetFixture(
       manifestPath,
       changelogPath,
       currentVersion: version,
+      dependencies: [],
     },
     dir: relDir,
   };
@@ -127,6 +129,7 @@ const opts = (dryRun: boolean, packageFilter?: string): RunnerOptions => ({
   today: "2026-06-24",
   dryRun,
   packageFilter,
+  propagate: false, // disable propagation in existing runner integration tests
 });
 
 // ---------------------------------------------------------------------------
@@ -275,6 +278,7 @@ describe("runRelease — packageFilter", () => {
       today: "2026-06-24",
       dryRun: true,
       packageFilter: "@d2/a",
+      propagate: false,
     });
 
     expect(result.plans).toHaveLength(1);
@@ -289,6 +293,7 @@ describe("runRelease — packageFilter", () => {
       today: "2026-06-24",
       dryRun: true,
       packageFilter: "@d2/nonexistent",
+      propagate: false,
     });
 
     expect(result.plans).toHaveLength(0);

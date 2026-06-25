@@ -20,8 +20,8 @@
 // Both the npm and nuget loaders read the version from the manifest so the
 // caller does not need a separate readManifestVersion call.
 
-import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
-import { dirname, join, resolve } from "node:path";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
+import { basename, dirname, join, resolve } from "node:path";
 import { falsey } from "@d2/utilities";
 import { readNpmVersion, readNugetVersion } from "./manifest-editor.js";
 import type { PackageDescriptor } from "./types.js";
@@ -81,6 +81,49 @@ function csprojHasVersion(text: string): boolean {
   return /<Version>[^<]+<\/Version>/.test(text);
 }
 
+/**
+ * Extract all `@d2/*` dependency names from a package.json text.
+ *
+ * Scans both `"dependencies"` and `"devDependencies"` blocks. Returns every
+ * key that starts with `"@d2/"`. The caller filters the result against the
+ * consumable name set.
+ */
+function extractNpmDeps(text: string): string[] {
+  // Match both "dependencies" and "devDependencies" blocks.
+  const deps: string[] = [];
+  // Regex matches "@d2/something": "..." in any JSON object property.
+  // Using a simple per-key match is sufficient since package names are well-formed.
+  const DEP_RE = /"(@d2\/[^"]+)"\s*:/g;
+  let match: RegExpExecArray | null;
+
+  while ((match = DEP_RE.exec(text)) !== null) {
+    const name = match[1];
+
+    if (name !== undefined && !deps.includes(name)) deps.push(name);
+  }
+
+  return deps;
+}
+
+/**
+ * Extract all `<ProjectReference Include="...path...">` target csproj paths
+ * from a `.csproj` text. Returns absolute paths resolved against `csprojDir`.
+ */
+function extractNugetProjectRefs(text: string, csprojDir: string): string[] {
+  const refs: string[] = [];
+  // Matches both single and double quotes, Windows and Unix path separators.
+  const REF_RE = /<ProjectReference\s+Include=["']([^"']+\.csproj)["']/gi;
+  let match: RegExpExecArray | null;
+
+  while ((match = REF_RE.exec(text)) !== null) {
+    const relPath = match[1];
+
+    if (relPath !== undefined) refs.push(resolve(csprojDir, relPath));
+  }
+
+  return refs;
+}
+
 // ---------------------------------------------------------------------------
 // Public API
 // ---------------------------------------------------------------------------
@@ -101,7 +144,18 @@ export function loadNpmPackages(repoRoot: string): PackageDescriptor[] {
     (f) => f.endsWith("package.json") && !f.includes("node_modules"),
   );
 
-  const descriptors: PackageDescriptor[] = [];
+  // First pass: collect name + raw text so we can resolve deps after building
+  // the consumable name set.
+  interface RawEntry {
+    manifestPath: string;
+    name: string;
+    text: string;
+    currentVersion: string;
+    dir: string;
+    changelogPath: string;
+  }
+
+  const rawEntries: RawEntry[] = [];
 
   for (const manifestPath of packageJsonFiles) {
     const text = readFileSync(manifestPath, "utf-8");
@@ -125,15 +179,29 @@ export function loadNpmPackages(repoRoot: string): PackageDescriptor[] {
 
     const changelogPath = join(dirname(manifestPath), "CHANGELOG.md");
 
-    descriptors.push({
-      name,
-      ecosystem: "npm",
-      dir,
+    rawEntries.push({
       manifestPath,
-      changelogPath,
+      name,
+      text,
       currentVersion,
+      dir,
+      changelogPath,
     });
   }
+
+  // Build consumable name set for edge filtering.
+  const nameSet = new Set(rawEntries.map((e) => e.name));
+
+  // Second pass: resolve dependencies against the consumable set.
+  const descriptors: PackageDescriptor[] = rawEntries.map((e) => ({
+    name: e.name,
+    ecosystem: "npm",
+    dir: e.dir,
+    manifestPath: e.manifestPath,
+    changelogPath: e.changelogPath,
+    currentVersion: e.currentVersion,
+    dependencies: extractNpmDeps(e.text).filter((d) => nameSet.has(d)),
+  }));
 
   return descriptors;
 }
@@ -176,7 +244,17 @@ export function loadNugetPackages(repoRoot: string): PackageDescriptor[] {
     );
   }
 
-  const descriptors: PackageDescriptor[] = [];
+  // First pass: gather raw entries to build the consumable name set.
+  interface RawEntry {
+    manifestPath: string;
+    name: string;
+    text: string;
+    currentVersion: string;
+    dir: string;
+    changelogPath: string;
+  }
+
+  const rawEntries: RawEntry[] = [];
 
   for (const manifestPath of csprojFiles) {
     const text = readFileSync(manifestPath, "utf-8");
@@ -193,8 +271,7 @@ export function loadNugetPackages(repoRoot: string): PackageDescriptor[] {
     }
 
     // Derive package name from the manifest filename (strip extension).
-    const filename = manifestPath.replace(/\\/g, "/").split("/").pop() ?? "";
-    const name = filename.replace(/\.csproj$/, "");
+    const name = basename(manifestPath, ".csproj");
 
     const dir = dirname(manifestPath)
       .replace(/\\/g, "/")
@@ -202,15 +279,37 @@ export function loadNugetPackages(repoRoot: string): PackageDescriptor[] {
 
     const changelogPath = join(dirname(manifestPath), "CHANGELOG.md");
 
-    descriptors.push({
-      name,
-      ecosystem: "nuget",
-      dir,
+    rawEntries.push({
       manifestPath,
-      changelogPath,
+      name,
+      text,
       currentVersion,
+      dir,
+      changelogPath,
     });
   }
+
+  // Build consumable name set for edge filtering.
+  const nameSet = new Set(rawEntries.map((e) => e.name));
+
+  // Second pass: resolve <ProjectReference> edges against the consumable set.
+  const descriptors: PackageDescriptor[] = rawEntries.map((e) => {
+    const csprojDir = dirname(e.manifestPath);
+    const refPaths = extractNugetProjectRefs(e.text, csprojDir);
+    const dependencies = refPaths
+      .map((p) => basename(p, ".csproj"))
+      .filter((n) => nameSet.has(n));
+
+    return {
+      name: e.name,
+      ecosystem: "nuget",
+      dir: e.dir,
+      manifestPath: e.manifestPath,
+      changelogPath: e.changelogPath,
+      currentVersion: e.currentVersion,
+      dependencies,
+    };
+  });
 
   return descriptors;
 }

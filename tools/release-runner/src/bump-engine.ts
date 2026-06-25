@@ -323,6 +323,7 @@ export function computeBumpPlans(
       apiBreakingEntries: acc.apiBreakingEntries,
       addedEntries: acc.addedEntries,
       fixedEntries: acc.fixedEntries,
+      dependencyEntries: [],
     });
   }
 

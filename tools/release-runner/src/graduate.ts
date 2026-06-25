@@ -87,6 +87,7 @@ export function graduatePackage(
       apiBreakingEntries: [],
       addedEntries: [],
       fixedEntries: [],
+      dependencyEntries: [],
     },
     today,
   );
@@ -119,6 +120,7 @@ export function buildGraduatedChangelogText(
       apiBreakingEntries: [],
       addedEntries: [],
       fixedEntries: [],
+      dependencyEntries: [],
     },
     today,
   );

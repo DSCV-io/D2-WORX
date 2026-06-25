@@ -19,6 +19,7 @@ function makeNpmPkg(
   name: string,
   dir: string,
   version = "0.1.0",
+  dependencies: string[] = [],
 ): PackageDescriptor {
   return {
     name,
@@ -27,6 +28,7 @@ function makeNpmPkg(
     manifestPath: `${dir}/package.json`,
     changelogPath: `${dir}/CHANGELOG.md`,
     currentVersion: version,
+    dependencies,
   };
 }
 
@@ -34,6 +36,7 @@ function makeNugetPkg(
   name: string,
   dir: string,
   version = "0.1.0",
+  dependencies: string[] = [],
 ): PackageDescriptor {
   return {
     name,
@@ -42,6 +45,7 @@ function makeNugetPkg(
     manifestPath: `${dir}/${name}.csproj`,
     changelogPath: `${dir}/CHANGELOG.md`,
     currentVersion: version,
+    dependencies,
   };
 }
 

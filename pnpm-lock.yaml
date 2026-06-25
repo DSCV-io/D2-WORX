@@ -800,6 +800,15 @@ importers:
         specifier: 4.0.18
         version: 4.0.18(@opentelemetry/api@1.9.0)(@types/node@25.7.0)(tsx@4.20.6)(yaml@2.9.0)
 
+  tools/commit-lint:
+    devDependencies:
+      '@types/node':
+        specifier: 24.10.0
+        version: 24.10.0
+      vitest:
+        specifier: 4.0.18
+        version: 4.0.18(@opentelemetry/api@1.9.0)(@types/node@24.10.0)(tsx@4.20.6)(yaml@2.9.0)
+
   tools/contract-gate:
     dependencies:
       '@d2/typespec-emitters':

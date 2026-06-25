@@ -101,3 +101,26 @@ describe("release-runner CLI — --list and --graduate are mutually exclusive", 
     expect(result.stderr).toMatch(/mutually exclusive/i);
   });
 });
+
+// ---------------------------------------------------------------------------
+// --no-propagate flag
+// ---------------------------------------------------------------------------
+
+describe("release-runner CLI — --no-propagate flag", () => {
+  it("--help documents --no-propagate", () => {
+    const result = runCli(["--help"]);
+    expect(result.stdout).toContain("--no-propagate");
+  });
+
+  it("--no-propagate is accepted without error when combined with required --against", () => {
+    // Pass an invalid ref to exit early (after flag parsing) — we only care
+    // that --no-propagate itself does not cause an argument-parse failure.
+    // The CLI exits non-zero due to the invalid ref, not due to --no-propagate.
+    const result = runCli(["--no-propagate", "--against", "invalid-ref-xyz"]);
+    // The exit should not be caused by an "unknown flag" rejection.
+    // A valid parse path would reach ref validation and fail there (exit 1).
+    // We assert the stderr does NOT mention "--no-propagate" as unknown.
+    expect(result.stderr).not.toMatch(/unknown.*no-propagate/i);
+    expect(result.stderr).not.toMatch(/no-propagate.*unknown/i);
+  });
+});

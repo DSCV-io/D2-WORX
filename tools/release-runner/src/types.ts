@@ -50,6 +50,15 @@ export interface PackageDescriptor {
   readonly changelogPath: string;
   /** Current version string parsed from the manifest (e.g. "0.1.0"). */
   readonly currentVersion: string;
+  /**
+   * Names of consumable packages this package directly depends on.
+   *
+   * npm: `@d2/*` entries from `dependencies` + `devDependencies` that are in
+   * the consumable set. nuget: `<ProjectReference>` targets resolved to their
+   * descriptor name (basename minus `.csproj`), filtered to the consumable set.
+   * Non-consumable edges (SourceGen shells, external packages) are excluded.
+   */
+  readonly dependencies: readonly string[];
 }
 
 // ---------------------------------------------------------------------------
@@ -83,6 +92,13 @@ export interface BumpPlan {
   readonly addedEntries: readonly string[];
   /** fix/perf commit subjects for the Fixed section. */
   readonly fixedEntries: readonly string[];
+  /**
+   * Names of upstream packages that triggered a propagated dependency-update
+   * bump for this plan. Populated ONLY on plans produced by propagation (not
+   * directly bumped); empty on direct-bump plans so the ### Changed section
+   * is omitted for packages with their own Added/Fixed/Breaking entries.
+   */
+  readonly dependencyEntries: readonly string[];
 }
 
 // ---------------------------------------------------------------------------
@@ -109,6 +125,16 @@ export interface RunnerOptions {
   /**
    * When set, restrict the run to this single package name.
    * When undefined, all packages with qualifying commits are processed.
+   *
+   * The filter is applied AFTER propagation so the dependency graph can
+   * resolve all edges; only the final plan set is restricted to this name.
    */
   readonly packageFilter?: string;
+  /**
+   * When true (default), propagate a PATCH dependency-update bump to every
+   * consumable that transitively depends on a directly-bumped package.
+   * Pass `--no-propagate` on the CLI to set this to false and reproduce the
+   * direct-only bumping behaviour.
+   */
+  readonly propagate: boolean;
 }

@@ -23,14 +23,28 @@ Use descriptive, lowercased branches with a slash-separated prefix:
 
 ## Commits
 
-Follow [Conventional Commits](https://www.conventionalcommits.org/):
+Follow [Conventional Commits](https://www.conventionalcommits.org/). The `commit-msg` Husky hook
+enforces the format at commit time — non-conforming subjects are rejected.
 
-- `feat:` new feature
-- `fix:` bug fix
-- `docs:` documentation
-- `refactor:` code change that neither fixes a bug nor adds a feature
-- `test:` adding or updating tests
-- `chore:` maintenance tasks
+Format: `<type>[(<scope>)][!]: <subject>` (subject capped at 100 characters).
+
+| Type | Runner bump | Notes |
+| --------- | ----------- | ------------------------------------------- |
+| `feat` | MINOR | New capability added |
+| `fix` | PATCH | Bug fix |
+| `perf` | PATCH | Performance improvement, no API change |
+| `chore` | none | Maintenance: deps, tooling, housekeeping |
+| `refactor` | none | Code restructure, no behavior change |
+| `docs` | none | Documentation only |
+| `test` | none | Test additions or updates only |
+| `ci` | none | CI/CD workflow changes |
+| `build` | none | Build system or toolchain changes |
+| `style` | none | Formatting, whitespace — no logic change |
+
+The optional `(scope)` names the area affected (e.g. `fix(result): …`).
+A trailing `!` marks a breaking change and is equivalent to adding a `WIRE-BREAKING:` / `BREAKING CHANGE:` footer.
+
+Merge commits (`Merge …`), revert commits (`Revert "…"`), and rebase autosquash commits (`fixup! …`, `squash! …`, `amend! …`) are exempt from format enforcement.
 
 **No `Co-Authored-By` trailers** (including AI co-authors). The `commit-msg` Husky hook rejects them automatically.
 
@@ -87,8 +101,35 @@ and are not covered here.
 | `feat:` additive | MINOR | MINOR |
 | `fix:` / `perf:` | PATCH | PATCH |
 
-All packages start at `0.1.0` (pre-stable). Graduation to `1.0.0` is a deliberate act
-(`--graduate <pkg>` flag on the runner) and is never inferred automatically.
+All packages start at `0.1.0` (pre-stable). **Pre-stable packages break freely** — a breaking change bumps
+MINOR with no force valve required. The strict breaking-change valve and MAJOR bite only activate at `≥ 1.0.0`.
+Graduation to `1.0.0` is a deliberate act (`--graduate <pkg>` flag on the runner) and is never inferred
+automatically.
+
+### Dependent propagation
+
+When the runner bumps a package, it automatically PATCH-bumps every consumable dependent of that package
+that the commit did not already touch directly. The dependent's `CHANGELOG.md` gets a `### Changed` entry:
+`- Dependency update: <upstream> bumped.` This is the correct behavior for `workspace:*` /
+`<ProjectReference>` consumers — their published artifact pins the dependency's exact version, so a
+dependency bump is a valid release event for the dependent too.
+
+Propagation is on by default. To suppress it (e.g. for a scoped dry-run of a single package in isolation):
+
+```bash
+pnpm --filter release-runner exec tsx src/cli.ts --against <baseline> --no-propagate
+```
+
+A dependent that itself re-exposes an upstream breaking change must declare that via its own footer on its
+own commit — propagation only contributes a PATCH bump.
+
+### Library-API breaks
+
+The always-on `contract-gate` auto-detects wire/contract breaks (proto, spec catalog, i18n keys, OpenAPI).
+It does **not** detect breaking changes to `.NET` or TypeScript library public APIs — those are
+**author-declared** via the `WIRE-BREAKING:` / `BREAKING CHANGE:` footer (or the `!` shorthand).
+If a commit changes a `D2.Shared.*` / `@d2/*` public API in a breaking way, the author must add the
+footer or `!`; the gate will not catch it automatically.
 
 ### Release runner
 
