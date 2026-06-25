@@ -39,6 +39,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: bufbuild/buf-setup-action@v1
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
       - name: buf lint (STANDARD rule set)
         run: buf lint contracts/protos
       - name: buf format (hand-authored protos only)
@@ -136,7 +138,7 @@ jobs:
           node-version: "24"
       - uses: pnpm/action-setup@v4
       - name: pnpm install (release-runner + its workspace deps)
-        run: pnpm install --filter "release-runner..."
+        run: pnpm install --filter "release-runner..." --filter "ts-codegen..."
       - name: build release-runner dependencies
         run: pnpm --filter "release-runner^..." build
       - name: Release runner unit tests
