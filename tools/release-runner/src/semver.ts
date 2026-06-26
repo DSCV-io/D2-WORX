@@ -5,7 +5,8 @@
 // Semver utilities — parse, bump, and render version strings.
 //
 // Intentionally minimal: only the three-part MAJOR.MINOR.PATCH form used
-// by this codebase. No pre-release / build-metadata handling required.
+// by this codebase. Prerelease labels (e.g. "1.0.0-alpha.3") are handled by
+// `parseVersionLoose`, which strips the label and parses the numeric core.
 
 import type { BumpKind } from "./types.js";
 
@@ -27,6 +28,8 @@ export interface ParsedVersion {
  * Parse a `MAJOR.MINOR.PATCH` version string.
  *
  * Throws if the string is not a valid three-part semver.
+ * For version strings that may carry a prerelease label (e.g. `1.0.0-alpha.3`),
+ * use `parseVersionLoose` instead.
  */
 export function parseVersion(raw: string): ParsedVersion {
   const trimmed = raw.trim();
@@ -80,4 +83,23 @@ export function applyBump(parsed: ParsedVersion, bump: BumpKind): string {
 /** Format a `ParsedVersion` back to a `MAJOR.MINOR.PATCH` string. */
 export function renderVersion(v: ParsedVersion): string {
   return `${v.major.toString()}.${v.minor.toString()}.${v.patch.toString()}`;
+}
+
+/**
+ * Parse a version string that may carry an optional prerelease label.
+ *
+ * Strips any `-<label>` suffix before parsing the `MAJOR.MINOR.PATCH`
+ * numeric core, so `"1.0.0-alpha.3"` is treated as `"1.0.0"`. The bump
+ * result (`applyBump`) will always be a clean `MAJOR.MINOR.PATCH` string —
+ * prerelease labels are not preserved on the output version.
+ *
+ * Throws if the numeric core is not a valid three-part semver.
+ */
+export function parseVersionLoose(raw: string): ParsedVersion {
+  const trimmed = raw.trim();
+  // Strip everything from the first `-` onward (prerelease label + build metadata).
+  const hyphenIdx = trimmed.indexOf("-");
+  const core = hyphenIdx === -1 ? trimmed : trimmed.slice(0, hyphenIdx);
+
+  return parseVersion(core);
 }

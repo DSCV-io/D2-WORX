@@ -22,6 +22,14 @@
 //     self-contained and testable with no external deps.
 
 // ---------------------------------------------------------------------------
+// Module-level constants
+// ---------------------------------------------------------------------------
+
+// Strict character-class allowlist for git refs.
+// Allowlist: A-Z a-z 0-9 . _ / -  (everything else is a violation)
+const _ALLOWLIST_RE = /^[A-Za-z0-9._/-]+$/;
+
+// ---------------------------------------------------------------------------
 // validateGitRef
 // ---------------------------------------------------------------------------
 
@@ -63,11 +71,7 @@ export function validateGitRef(ref: string): void {
     );
   }
 
-  // Reject shell metacharacters and whitespace.
-  // Allowlist: A-Z a-z 0-9 . _ / -
-  // Everything else is a violation.
-  const _ALLOWLIST_RE = /^[A-Za-z0-9._/-]+$/;
-
+  // Reject shell metacharacters and whitespace — see module-level _ALLOWLIST_RE.
   if (!_ALLOWLIST_RE.test(ref)) {
     throw new Error(
       "git ref validation failed: ref contains disallowed characters" +

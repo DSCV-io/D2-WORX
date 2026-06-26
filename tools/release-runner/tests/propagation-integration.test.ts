@@ -4,7 +4,7 @@
 
 // Integration tests for dependency-graph propagation wired into runRelease.
 //
-// These tests drive runRelease with propagate:true (default behaviour) and
+// These tests drive runRelease with propagate:true (default behavior) and
 // propagate:false (--no-propagate) to pin the propagation contract and the
 // opt-out regression respectively.
 //
@@ -206,7 +206,7 @@ describe("runRelease — propagation enabled (default)", () => {
 });
 
 // ---------------------------------------------------------------------------
-// --no-propagate reproduces direct-only behaviour
+// --no-propagate reproduces direct-only behavior
 // ---------------------------------------------------------------------------
 
 describe("runRelease — --no-propagate reproduces direct-only bumping", () => {

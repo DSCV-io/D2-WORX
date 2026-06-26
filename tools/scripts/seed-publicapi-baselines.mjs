@@ -1,8 +1,8 @@
 // Copyright (c) DCSV. All rights reserved.
 //
 // Seeding tool: generates the public-API surface baselines + the output
-// fingerprint baseline for every .NET CONSUMABLE in D2-WORX — the 53
-// D2.Shared.* libraries under server/shared/dotnet (excluding the source-gen
+// fingerprint baseline for every .NET CONSUMABLE in D2-WORX — the 54 total:
+// 53 D2.Shared.* libraries under server/shared/dotnet (excluding the source-gen
 // shells + the test project) plus the in-process KeyCustodian client.
 //
 // Per consumable it produces three committed baseline files next to the .csproj:

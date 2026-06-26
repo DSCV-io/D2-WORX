@@ -334,19 +334,17 @@ public sealed class DefaultLocalCacheBehaviorTests
     [Fact]
     public async Task AcquireLockAsync_ExpirationAllowsReacquisition()
     {
-        // Lock expiry uses DateTimeOffset.UtcNow directly in AcquireLockAsync
-        // (the LockEntry stores ExpiresAt = now + expiration). The fake clock
-        // is injected so AcquireLockAsync reads the same "now" as the test.
-        // Note: lock expiry is checked via r_locks ConcurrentDictionary with
-        // real DateTimeOffset comparison — AcquireLockAsync itself calls
-        // DateTimeOffset.UtcNow, so we can't fake that path. Use a real short
-        // TTL + small settle to stay correct; the lock TTL path is separate
-        // from the IMemoryCache TTL path.
-        using var cache = NewCache();
-        var first = await cache.AcquireLockAsync("k", "owner-A", TimeSpan.FromMilliseconds(150));
+        // AcquireLockAsync now uses r_clock.GetUtcNow() for the expiry
+        // computation, so a FakeTimeProvider drives the expiry check —
+        // no real-time sleep required.
+        var clock = new FakeTimeProvider();
+        using var cache = NewCache(clock: clock);
+        var first = await cache.AcquireLockAsync("k", "owner-A", TimeSpan.FromMinutes(1));
         first.Data.Should().BeTrue();
 
-        await Task.Delay(250);
+        // Advance past the lock TTL — AcquireLockAsync will see the new "now"
+        // and treat the existing entry as expired.
+        clock.Advance(TimeSpan.FromMinutes(2));
 
         var second = await cache.AcquireLockAsync("k", "owner-B", TimeSpan.FromSeconds(5));
         second.Data.Should().BeTrue();

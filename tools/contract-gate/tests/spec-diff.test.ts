@@ -91,8 +91,8 @@ describe("diffFlatCatalog — removed entry", () => {
     );
 
     expect(findings).toHaveLength(1);
-    // The finding message should match the worked-example shape from
-    // docs/wip/0024-contract-versioning/forward-design/deprecation-lifecycle-example.md
+    // The finding message must carry: BREAKING, the removed entry ID, "removed",
+    // "Gate FAILED", and a hint about the force valve.
     expect(findings[0]?.message).toContain("BREAKING");
     expect(findings[0]?.message).toContain("NOT_FOUND");
     expect(findings[0]?.message).toContain("removed");

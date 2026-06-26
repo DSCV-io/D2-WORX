@@ -914,3 +914,95 @@ describe("runDiffRelease — Suite H: commit type → changelog category (not bu
     ]);
   });
 });
+
+// ---------------------------------------------------------------------------
+// Suite I — Prerelease-labelled currentVersion (diff-engine crash regression)
+// ---------------------------------------------------------------------------
+
+describe("runDiffRelease — prerelease-labelled currentVersion", () => {
+  it("fingerprint change on a prerelease-labelled package produces a plan without throwing", () => {
+    // Regression: parseVersion crashed on "1.0.0-alpha.3" at the newVersion
+    // computation site (diff-runner.ts). parseVersionLoose must be used.
+    const { pkg } = createNugetFixture("D2.Shared.Result", [], "1.0.0-alpha.3");
+    const provider = staticDiffProvider({
+      apiDiff: { added: false, removed: false, changed: false },
+      fingerprintDiff: { changed: true },
+      baselineMissing: false,
+    });
+
+    expect(() => runDiffRelease([], [pkg], opts(true), provider)).not.toThrow();
+
+    const result = runDiffRelease([], [pkg], opts(true), provider);
+    expect(result.plans).toHaveLength(1);
+    // fingerprint-only → PATCH; prerelease label is stripped on output.
+    expect(result.plans[0]!.bump).toBe("patch");
+    expect(result.plans[0]!.newVersion).toBe("1.0.1");
+  });
+
+  it("API-remove diff on a prerelease-labelled package gives MINOR (pre-stable carve-out)", () => {
+    // "1.0.0-alpha.3" is pre-stable → break → MINOR, not MAJOR.
+    const { pkg, dir } = createNpmFixture("@d2/a", [], "1.0.0-alpha.3");
+    const provider = staticDiffProvider({
+      apiDiff: { added: false, removed: true, changed: false },
+      fingerprintDiff: { changed: true },
+      baselineMissing: false,
+    });
+
+    const result = runDiffRelease(
+      [makeCommit("feat: drop field", [dir])],
+      [pkg],
+      opts(true),
+      provider,
+    );
+
+    expect(result.plans).toHaveLength(1);
+    expect(result.plans[0]!.bump).toBe("minor");
+    // Drops the prerelease label on the output version.
+    expect(result.plans[0]!.newVersion).toBe("1.1.0");
+  });
+
+  it("propagation to a prerelease-labelled dependent does not throw", () => {
+    // Regression: diff-runner.ts:370 newVersion compute (via parseVersionLoose) was
+    // called for propagated dependents. When the dependent carries a prerelease label
+    // the parse crashed — parseVersionLoose now handles the prerelease suffix cleanly.
+    const { pkg: depPkg } = createNpmFixture("@d2/dep", [], "0.2.0");
+    const { pkg: consumerPkg } = createNpmFixture(
+      "@d2/consumer",
+      ["@d2/dep"],
+      "1.0.0-alpha.1",
+    );
+
+    // dep bumps; consumer fingerprint changes (dep version in resolved map).
+    let callCount = 0;
+    const provider: DiffProvider = {
+      getDiff(input: DiffProviderInput): PackageDiff {
+        callCount++;
+        const isConsumer = input.pkg.name === "@d2/consumer";
+
+        return {
+          apiDiff: { added: false, removed: false, changed: false },
+          fingerprintDiff: { changed: isConsumer },
+          baselineMissing: false,
+        };
+      },
+    };
+
+    expect(() =>
+      runDiffRelease([], [depPkg, consumerPkg], opts(true), provider),
+    ).not.toThrow();
+
+    const result = runDiffRelease(
+      [],
+      [depPkg, consumerPkg],
+      opts(true),
+      provider,
+    );
+    // consumer gets PATCH; prerelease label is stripped on output.
+    const consumerPlan = result.plans.find(
+      (p) => p.pkg.name === "@d2/consumer",
+    );
+    expect(consumerPlan).toBeDefined();
+    expect(consumerPlan!.bump).toBe("patch");
+    expect(consumerPlan!.newVersion).toBe("1.0.1");
+  });
+});

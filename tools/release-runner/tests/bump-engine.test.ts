@@ -770,3 +770,87 @@ describe("computeBumpPlans — breaking entry deduplication", () => {
     expect(plans[0]?.apiBreakingEntries).toHaveLength(2);
   });
 });
+
+// ---------------------------------------------------------------------------
+// Prerelease-labelled currentVersion — crash regression
+// ---------------------------------------------------------------------------
+
+describe("computeBumpPlans — prerelease-labelled currentVersion", () => {
+  const file = "server/shared/typescript/a/src/index.ts";
+
+  it("feat: commit on a prerelease-labelled package produces a plan without throwing", () => {
+    // Regression: parseVersion crashed on "1.0.0-alpha.3" — parseVersionLoose must be used.
+    const pkg = makeNpmPkg(
+      "@d2/a",
+      "server/shared/typescript/a",
+      "1.0.0-alpha.3",
+    );
+    const commits = [makeCommit("feat: add helper", [file])];
+
+    expect(() => computeBumpPlans(commits, [pkg])).not.toThrow();
+
+    const plans = computeBumpPlans(commits, [pkg]);
+    expect(plans).toHaveLength(1);
+    // prerelease label → pre-stable → feat gives MINOR; output drops the label.
+    expect(plans[0]!.bump).toBe("minor");
+    expect(plans[0]!.newVersion).toBe("1.1.0");
+  });
+
+  it("breaking commit on a prerelease-labelled stable package gives MINOR, not MAJOR", () => {
+    // A breaking change on a prerelease-labelled 1.0.0-alpha version bumps MINOR, not
+    // MAJOR — the package is pre-stable (isPreStable) so break→MINOR, not break→MAJOR.
+    const pkg = makeNpmPkg(
+      "@d2/a",
+      "server/shared/typescript/a",
+      "1.0.0-alpha.3",
+    );
+    const breakCommit = commitWithFooter(
+      "feat: drop field",
+      "Body.",
+      "WIRE-BREAKING: removed the old field",
+    );
+    const commits = [makeCommit(breakCommit, [file])];
+
+    const plans = computeBumpPlans(commits, [pkg]);
+    expect(plans).toHaveLength(1);
+    // 1.0.0-alpha.3 is pre-stable (label present) → break → MINOR, not MAJOR.
+    expect(plans[0]!.bump).toBe("minor");
+    expect(plans[0]!.newVersion).toBe("1.1.0");
+  });
+
+  it("prerelease-labelled version is treated as pre-stable — no stable-break throw", () => {
+    // A prerelease-labelled package with break entries but forced=false must NOT throw,
+    // because it is pre-stable. Before the fix, parseVersion crashed first anyway;
+    // after the fix, isPreStable correctly returns true → no throw.
+    const pkg = makeNpmPkg(
+      "@d2/a",
+      "server/shared/typescript/a",
+      "1.0.0-alpha.3",
+    );
+    const breakWithoutValve: BreakingSignalProvider = fixedSignal({
+      forced: false,
+      wireBreaking: ["some breaking change"],
+      apiBreaking: [],
+    });
+    const commits = [makeCommit("feat: some change", [file])];
+
+    expect(() =>
+      computeBumpPlans(commits, [pkg], breakWithoutValve),
+    ).not.toThrow();
+  });
+
+  it("fix: commit on a 0.x package with prerelease label produces PATCH", () => {
+    // Edge: "0.1.0-beta.1" — both MAJOR===0 and label; isPreStable → true; fix → PATCH.
+    const pkg = makeNpmPkg(
+      "@d2/a",
+      "server/shared/typescript/a",
+      "0.1.0-beta.1",
+    );
+    const commits = [makeCommit("fix: correct null handling", [file])];
+
+    const plans = computeBumpPlans(commits, [pkg]);
+    expect(plans).toHaveLength(1);
+    expect(plans[0]!.bump).toBe("patch");
+    expect(plans[0]!.newVersion).toBe("0.1.1");
+  });
+});

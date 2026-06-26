@@ -131,7 +131,7 @@ describe("extractNugetProjectRefs — backslash Include path normalization (BX-1
   // On Linux the production path.resolve IS path.posix.resolve and
   // path.basename IS path.posix.basename — so this directly mirrors what the
   // pre-fix code would do there.  On Windows path.resolve/basename also
-  // recognise `\` natively, which is WHY the bug is Windows-only and WHY the
+  // recognize `\` natively, which is WHY the bug is Windows-only and WHY the
   // test must drive the POSIX variants explicitly to stay OS-independent.
   // ---------------------------------------------------------------------------
 

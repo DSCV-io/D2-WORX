@@ -221,6 +221,35 @@ describe("commit-msg hook — REJECT (invalid subjects)", () => {
 });
 
 // ---------------------------------------------------------------------------
+// LENGTH BOUNDARY: exact 100-char (passes) and 101-char (rejects) boundary
+// ---------------------------------------------------------------------------
+//
+// The hook uses `wc -c` which counts bytes including the newline that
+// writeFile appends (UTF-8 ASCII-only subjects: byte count = char count + 1).
+// The guard is `[ "$_SUBJ_LEN" -gt 101 ]`, so:
+//   100-char subject → wc -c = 101 → 101 -gt 101 is false → PASSES
+//   101-char subject → wc -c = 102 → 102 -gt 101 is true  → REJECTS
+
+describe("commit-msg hook — LENGTH BOUNDARY (100/101-char subject)", () => {
+  it("accepts: subject of exactly 100 characters", async () => {
+    // "feat: " (6 chars) + 94 × "a" = 100 chars total.
+    const subject = "feat: " + "a".repeat(94);
+    expect(subject.length).toBe(100);
+    const { code } = await runHook(subject);
+    expect(code).toBe(0);
+  });
+
+  it("rejects: subject of exactly 101 characters", async () => {
+    // "feat: " (6 chars) + 95 × "a" = 101 chars total.
+    const subject = "feat: " + "a".repeat(95);
+    expect(subject.length).toBe(101);
+    const { code, output } = await runHook(subject);
+    expect(code).not.toBe(0);
+    expect(output).toContain("100 characters");
+  });
+});
+
+// ---------------------------------------------------------------------------
 // SKIP: auto-generated subjects that bypass type enforcement
 // ---------------------------------------------------------------------------
 

@@ -567,6 +567,134 @@ describe("directUnit_$d2Reserved", () => {
 });
 
 // ---------------------------------------------------------------------------
+// Helper: makeMockCtxWithDiagsForModel — same shape as makeMockCtxWithDiags
+// but the target is typed as Model (required by validateReservedNumber and
+// the $d2Reserved adversarial tests below).
+// ---------------------------------------------------------------------------
+
+function makeMockCtxWithDiagsForModel(): {
+  ctx: DecoratorContext;
+  target: import("@typespec/compiler").Model;
+  diags: Array<{ code: string }>;
+} {
+  const diags: Array<{ code: string }> = [];
+  const storeMap = new Map<symbol, Map<object, unknown>>();
+  const ctx = {
+    program: {
+      stateMap(key: symbol): Map<object, unknown> {
+        if (!storeMap.has(key)) storeMap.set(key, new Map());
+        return storeMap.get(key)!;
+      },
+      reportDiagnostic(diag: { code: string }): void {
+        diags.push(diag);
+      },
+    },
+  } as unknown as DecoratorContext;
+  const target = {} as unknown as import("@typespec/compiler").Model;
+  return { ctx, target, diags };
+}
+
+// ---------------------------------------------------------------------------
+// Adversarial tests: $d2Reserved with invalid numbers
+// Every invalid class that @d2Field rejects must also be rejected by @d2Reserved.
+// ---------------------------------------------------------------------------
+
+describe("directUnit_$d2Reserved_InvalidNumbers", () => {
+  it("emits invalid-reserved-number for a negative number (-1)", () => {
+    const { ctx, target, diags } = makeMockCtxWithDiagsForModel();
+    $d2Reserved(ctx, target, "", -1);
+    expect(diags.some((d) => d.code.endsWith("invalid-reserved-number"))).toBe(
+      true,
+    );
+  });
+
+  it("emits invalid-reserved-number for zero (below minimum)", () => {
+    const { ctx, target, diags } = makeMockCtxWithDiagsForModel();
+    $d2Reserved(ctx, target, "", 0);
+    expect(diags.some((d) => d.code.endsWith("invalid-reserved-number"))).toBe(
+      true,
+    );
+  });
+
+  it("emits invalid-reserved-number for a non-integer float (1.5)", () => {
+    const { ctx, target, diags } = makeMockCtxWithDiagsForModel();
+    $d2Reserved(ctx, target, "", 1.5);
+    expect(diags.some((d) => d.code.endsWith("invalid-reserved-number"))).toBe(
+      true,
+    );
+  });
+
+  it("emits invalid-reserved-number for the reserved range lower bound (19000)", () => {
+    const { ctx, target, diags } = makeMockCtxWithDiagsForModel();
+    $d2Reserved(ctx, target, "", 19000);
+    expect(diags.some((d) => d.code.endsWith("invalid-reserved-number"))).toBe(
+      true,
+    );
+  });
+
+  it("emits invalid-reserved-number for a mid-reserved-range number (19500)", () => {
+    const { ctx, target, diags } = makeMockCtxWithDiagsForModel();
+    $d2Reserved(ctx, target, "", 19500);
+    expect(diags.some((d) => d.code.endsWith("invalid-reserved-number"))).toBe(
+      true,
+    );
+  });
+
+  it("emits invalid-reserved-number for the reserved range upper bound (19999)", () => {
+    const { ctx, target, diags } = makeMockCtxWithDiagsForModel();
+    $d2Reserved(ctx, target, "", 19999);
+    expect(diags.some((d) => d.code.endsWith("invalid-reserved-number"))).toBe(
+      true,
+    );
+  });
+
+  it("emits invalid-reserved-number for one over the proto3 maximum (536870912)", () => {
+    const { ctx, target, diags } = makeMockCtxWithDiagsForModel();
+    $d2Reserved(ctx, target, "", 536870912);
+    expect(diags.some((d) => d.code.endsWith("invalid-reserved-number"))).toBe(
+      true,
+    );
+  });
+
+  it("emits one diagnostic per invalid number when multiple are supplied", () => {
+    const { ctx, target, diags } = makeMockCtxWithDiagsForModel();
+    $d2Reserved(ctx, target, "", -1, 0, 19000);
+    expect(
+      diags.filter((d) => d.code.endsWith("invalid-reserved-number")).length,
+    ).toBe(3);
+  });
+
+  it("accepts valid numbers and stores them without firing a diagnostic", () => {
+    const { ctx, target, diags } = makeMockCtxWithDiagsForModel();
+    $d2Reserved(ctx, target, "", 1, 18999, 20000, 536870911);
+    expect(diags).toHaveLength(0);
+  });
+
+  it("still stores numbers (including invalid) in the state map — report-and-continue", () => {
+    // TypeSpec convention: decorators store state even after a diagnostic fires
+    // so downstream passes see consistent program state. Use makeMockContext
+    // (which provides direct map access) plus a patched reportDiagnostic so
+    // we can inspect both the stored payload and the captured diagnostic.
+    const model = {} as unknown as import("@typespec/compiler").Model;
+    const { ctx, maps } = makeMockContext();
+    const diags: Array<{ code: string }> = [];
+    (
+      ctx.program as unknown as {
+        reportDiagnostic: (d: { code: string }) => void;
+      }
+    ).reportDiagnostic = (d) => {
+      diags.push(d);
+    };
+    $d2Reserved(ctx, model, "", -1, 5);
+    expect(diags.some((d) => d.code.endsWith("invalid-reserved-number"))).toBe(
+      true,
+    );
+    const payload = maps.get(D2_RESERVED_KEY)!.get(model) as ReservedPayload;
+    expect(payload.numbers).toEqual([-1, 5]);
+  });
+});
+
+// ---------------------------------------------------------------------------
 // Unit tests: $lib descriptor
 // ---------------------------------------------------------------------------
 

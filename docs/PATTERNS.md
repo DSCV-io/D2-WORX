@@ -954,7 +954,7 @@ This pattern is the structural enforcement behind the [5-layer rename safety net
 
 ## Per-package versioning & releases
 
-Each consumable shared library (`D2.Shared.*` for .NET, `@d2/*` for TypeScript) carries its own `MAJOR.MINOR.PATCH` version and `CHANGELOG.md`. The `tools/release-runner` derives per-package bumps from conventional-commit footers in the commit range since the last release — no hand-bumping. Wire/contract breaks are auto-detected by `tools/contract-gate`; library public-API breaks are author-declared via the `WIRE-BREAKING:` / `BREAKING CHANGE:` footer. Registry publishing (npm / NuGet) is never automatic. Deployable services are excluded — they version on the product cadence.
+Each consumable shared library (`D2.Shared.*` for .NET, `@d2/*` for TypeScript) carries its own `MAJOR.MINOR.PATCH` version and `CHANGELOG.md`. The `tools/release-runner` derives per-package bumps from a **build-free artifact diff** — a source fingerprint (SHA-256 over committed source + API report + resolved dep versions + declared toolchain pin) plus a public-API-surface diff. Commit footers (`WIRE-BREAKING:` / `BREAKING CHANGE:`) are **escalation overrides only**: they can raise the diff-derived bump level but never lower it. The footer is also the ONE conscious force-valve act for breaks not detectable by the diff. Wire/contract breaks are auto-detected by `tools/contract-gate`; library public-API breaks are author-declared via footer. Registry publishing (npm / NuGet) is never automatic. Deployable services are excluded — they version on the product cadence.
 
 Canonical discipline: `rules.md §26.19`. Operational how-to: `CONTRIBUTING.md` (Per-package versioning) + `docs/COMMANDS.md` (Per-package version + Cutting a library release).
 

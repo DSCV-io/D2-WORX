@@ -23,7 +23,7 @@
 // package is 0.1.0 → 0.1.1, consistent with the direct-fix path.
 
 import { falsey } from "@d2/utilities";
-import { parseVersion, applyBump } from "./semver.js";
+import { parseVersionLoose, applyBump } from "./semver.js";
 import type { BumpPlan, PackageDescriptor } from "./types.js";
 
 // ---------------------------------------------------------------------------
@@ -72,11 +72,11 @@ export function topoSort(
 
       // pkg depends on dep; dep must be processed before pkg.
       // Kahn's: increment in-degree of pkg for each dep edge.
-      // inDegree was pre-initialised for every package name above.
+      // inDegree was pre-initialized for every package name above.
       inDegree.set(pkg.name, inDegree.get(pkg.name)! + 1);
 
       // adjacency: dep → its dependents (packages that depend on dep).
-      // deps was pre-initialised for every package name above, so get()
+      // deps was pre-initialized for every package name above, so get()
       // always returns a defined array here.
       deps.get(dep)!.push(pkg.name);
     }
@@ -95,10 +95,10 @@ export function topoSort(
     // Sort queue each iteration for determinism across multiple zero-in-degree nodes.
     queue.sort();
     const name = queue.shift()!;
-    // pkgByName was initialised for every package name; pkg is always defined.
+    // pkgByName was initialized for every package name; pkg is always defined.
     sorted.push(pkgByName.get(name)!);
 
-    // deps was pre-initialised for every name; the array may be empty for leaves.
+    // deps was pre-initialized for every name; the array may be empty for leaves.
     for (const dependent of deps.get(name)!) {
       const newDegree = inDegree.get(dependent)! - 1;
       inDegree.set(dependent, newDegree);
@@ -237,7 +237,7 @@ export function propagateBumps(
     // All queued names come from dependentIndex values, which are package names
     // from the inventory — pkgByName always has an entry for them.
     const pkg = pkgByName.get(name)!;
-    const parsed = parseVersion(pkg.currentVersion);
+    const parsed = parseVersionLoose(pkg.currentVersion);
     const newVersion = applyBump(parsed, "patch");
 
     const propagatedPlan: BumpPlan = {

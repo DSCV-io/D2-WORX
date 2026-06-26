@@ -119,7 +119,7 @@ function collectTs(dir: string): string[] {
   return collectByExt(dir, [".ts"]);
 }
 
-/** Collect *.cs files under `dir` that live inside a TypeSpec* subfolder. */
+/** Collect *.cs and *.json files under `dir` that live inside a TypeSpec* subfolder. */
 function collectCsTypeSpec(dir: string): string[] {
   if (!existsSync(dir)) return [];
   const results: string[] = [];
@@ -129,7 +129,7 @@ function collectCsTypeSpec(dir: string): string[] {
     const full = join(dir, entry);
 
     if (statSync(full).isDirectory())
-      results.push(...collectByExt(full, [".cs"]));
+      results.push(...collectByExt(full, [".cs", ".json"]));
   }
 
   return results;

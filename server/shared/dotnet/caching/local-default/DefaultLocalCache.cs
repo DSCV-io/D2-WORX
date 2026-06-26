@@ -375,7 +375,7 @@ public sealed class DefaultLocalCache : ILocalCache, IDisposable
             return new(InputFailures.Required<bool>(nameof(expiration)));
 
         var prefixed = Prefixed(key);
-        var now = DateTimeOffset.UtcNow;
+        var now = r_clock.GetUtcNow();
         var newEntry = new LockEntry(lockId, now + expiration);
 
         var stored = r_locks.AddOrUpdate(

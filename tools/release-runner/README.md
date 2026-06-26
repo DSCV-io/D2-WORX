@@ -105,6 +105,7 @@ node tools/release-runner/dist/cli.js --help
 | `--package <name>` | Restrict the run to one package. |
 | `--legacy-commit-type` | Use the retired commit-type bump source instead of the artifact-diff engine. Escape hatch retained for one release cycle. |
 | `--list` | Print the full consumable package inventory as JSON and exit. Read-only; mutually exclusive with `--apply` and `--graduate`. Does not require `--against`. |
+| `--no-propagate` | Suppress fingerprint-based propagation to dependents. Under the diff model, propagation is inherent in the resolved-version map forwarding; this flag disables that forwarding so dependents are not given the dep's new version when computing their fingerprint. |
 | `--today <date>` | Override the release date (ISO 8601, e.g. `2026-07-01`). Useful for reproducible output in tests. |
 | `--help` / `-h` | Print flag descriptions and exit. |
 

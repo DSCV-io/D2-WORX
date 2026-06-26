@@ -72,7 +72,11 @@ export {
 
 // Result-predicate validation surface — the decorator-body validator and the
 // native-TypeSpec model-graph walk (the $onValidate model arm).
-export { validateResultPredicate, validateFieldNumber } from "./validators.js";
+export {
+  validateResultPredicate,
+  validateFieldNumber,
+  validateReservedNumber,
+} from "./validators.js";
 export {
   walkPredicateModel,
   type ModelWalkError,

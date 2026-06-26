@@ -315,5 +315,18 @@ export const $lib = createTypeSpecLibrary({
         default: paramMessage`@d2Field number ${"value"} is invalid — must be an integer ≥ 1, ≤ 536870911, and not in the protobuf reserved range 19000–19999`,
       },
     },
+
+    /**
+     * A number in the @d2Reserved variadic is invalid. Valid range: integer ≥ 1,
+     * ≤ 536870911 (proto3 max), and NOT in the protobuf implementation-reserved
+     * range 19000–19999. This applies the same validity rules as @d2Field so that
+     * reserved-slot numbers are held to the same constraints as live field numbers.
+     */
+    "invalid-reserved-number": {
+      severity: "error",
+      messages: {
+        default: paramMessage`@d2Reserved number ${"value"} is invalid — must be an integer ≥ 1, ≤ 536870911, and not in the protobuf reserved range 19000–19999`,
+      },
+    },
   },
 });

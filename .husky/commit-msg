@@ -36,7 +36,7 @@ if grep -qiE '^Co-Authored-By:.*(claude|anthropic|gpt|openai|copilot|cursor|code
   echo ""
   echo "  ✖  Commit rejected: AI-tool Co-Authored-By trailer detected."
   echo ""
-  echo "     CLAUDE.md §6 forbids \`Co-Authored-By\` lines in commit messages."
+  echo "     This project prohibits AI-tool Co-Authored-By trailers in commit messages."
   echo "     Edit the message and remove the trailer (and the blank line above it)."
   echo ""
   exit 1

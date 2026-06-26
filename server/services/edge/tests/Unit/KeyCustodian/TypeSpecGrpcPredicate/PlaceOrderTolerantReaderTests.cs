@@ -86,6 +86,7 @@ public sealed class PlaceOrderTolerantReaderTests
         result.Data!.Customer.Should().NotBeNull();
         result.Data!.Customer!.Tier.Should().Be(expected_tier);
         result.Data!.Lines.Should().ContainSingle(l => l.Status == "SHIPPED");
+        shim.CallCount.Should().Be(1, "pass-through pipeline must not retry a successful response");
     }
 
     // ---------------------------------------------------------------------------
@@ -127,6 +128,7 @@ public sealed class PlaceOrderTolerantReaderTests
         result.Data!.Lines.Should().HaveCount(2);
         result.Data!.Lines[0].Status.Should().Be("DELIVERED");
         result.Data!.Lines[1].Status.Should().Be("SHIPPED");
+        shim.CallCount.Should().Be(1, "pass-through pipeline must not retry a successful response");
     }
 
     // ---------------------------------------------------------------------------

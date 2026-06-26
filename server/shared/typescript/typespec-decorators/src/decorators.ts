@@ -40,6 +40,7 @@ import {
   validateRateLimitTier,
   validateResilience,
   validateResultPredicate,
+  validateReservedNumber,
   validateScopes,
   validateServedBy,
 } from "./validators.js";
@@ -332,11 +333,13 @@ export function $d2Field(
  * entries document proto3 slots that were previously used and must never be
  * reused (prevents silent wire-format collisions with old clients/servers).
  *
- * `numbers` is a variadic list of previously-used field numbers (must each be
- * a positive integer ≤ 536870911). `names` is stored under the model to emit
- * `reserved "old_name";` lines. Pass numbers through the `...numbers` variadic;
- * for names, supply a separate `@d2Reserved` call or use the names parameter
- * (see lib/main.tsp for the TypeSpec-level signature).
+ * `numbers` is a variadic list of previously-used field numbers. Each number
+ * must be a positive integer ≥ 1, ≤ 536870911 (proto3 max), and must NOT fall
+ * in the protobuf implementation-reserved range 19000–19999. An invalid number
+ * fires `invalid-reserved-number` (error severity). `names` is stored under the
+ * model to emit `reserved "old_name";` lines. Pass numbers through the
+ * `...numbers` variadic; for names, supply a separate `@d2Reserved` call or
+ * use the names parameter (see lib/main.tsp for the TypeSpec-level signature).
  *
  * Emitters read back:
  * program.stateMap(D2_RESERVED_KEY).get(model) → { numbers: number[], names: string[] }.
@@ -347,6 +350,8 @@ export function $d2Reserved(
   names: string,
   ...numbers: number[]
 ): void {
+  for (const n of numbers) validateReservedNumber(context, target, n);
+
   const parsed = names
     .split(",")
     .map((s) => s.trim())

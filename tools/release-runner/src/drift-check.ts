@@ -5,9 +5,10 @@
 // Baseline-drift checker — proves every committed per-package baseline still
 // matches the package's current source, so a stale baseline cannot merge.
 //
-// The drift check IS the production DiffProvider run with an EMPTY resolved-
-// version map (no propagation): drift ⇔ any package shows a non-empty diff
-// against its own committed baseline on a no-op PR. Re-using `makeRealDiffProvider`
+// The drift check IS the production DiffProvider run with the resolved-version
+// map seeded to each package's current version (no-op PR — no dep bumps): drift
+// ⇔ any package shows a non-empty diff against its own committed baseline on a
+// no-op PR. Re-using `makeRealDiffProvider`
 // (not a second extraction code path) keeps ONE extraction implementation —
 // the drift check validates the exact provider the CLI now uses for releases.
 //
@@ -73,8 +74,9 @@ export interface DriftCheckResult {
 
 /**
  * Check every package's committed baseline against its current source via the
- * injected DiffProvider, with an EMPTY resolved-version map (so a fingerprint
- * diff reflects only the package's own output, not a propagated dep bump).
+ * injected DiffProvider, with the resolved-version map seeded to each package's
+ * current version (no-op PR — no dep bumps in flight) so a fingerprint diff
+ * reflects only the package's own output, not a propagated dep bump.
  *
  * A package drifts when the provider reports any of: apiDiff.added/removed/changed,
  * fingerprintDiff.changed, or baselineMissing — on a no-op (no commits, no footer).

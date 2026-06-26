@@ -51,6 +51,10 @@ import { createTypeSpecLibrary, paramMessage } from "@typespec/compiler";
 //                                         vs the @versioned active-version channel). Every
 //                                         surface must carry the same V<N>(alpha|beta)?
 //                                         generation; fix the mismatched tspconfig option.
+//   D2TSP011  duplicate-field-number      — two or more properties on the same proto-bound
+//                                         model carry the same @d2Field(N) pin. Duplicate
+//                                         field numbers produce invalid proto3 that protoc
+//                                         rejects; caught early at tsp compile time.
 // -----------------------------------------------------------------------
 
 /**
@@ -199,6 +203,18 @@ export const $lib = createTypeSpecLibrary({
      * surface carries the same generation.
      */
     "channel-segment-mismatch": {
+      severity: "error",
+      messages: {
+        default: paramMessage`${"detail"}`,
+      },
+    },
+
+    /**
+     * D2TSP011 — Two or more properties on the same proto-bound model carry the
+     * same @d2Field(N) pin. Duplicate field numbers produce invalid proto3 that
+     * protoc rejects. Assign each property a unique field number.
+     */
+    "duplicate-field-number": {
       severity: "error",
       messages: {
         default: paramMessage`${"detail"}`,

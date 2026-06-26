@@ -2,15 +2,19 @@
 // Copyright (c) DCSV. All rights reserved.
 // -----------------------------------------------------------------------
 
-// CLI flag validation tests — mutual exclusion and --help.
+// CLI flag validation tests — mutual exclusion, arm suppression, and --help.
 //
 // Invokes the CLI via `tsx src/cli.ts` in a subprocess to avoid importing
 // the module-level side-effects (process.argv capture, process.exit).
-// Each test targets a specific startup-validation path that should exit
-// before reaching any git or buf IO.
 //
-// Note: these tests exercise the contract-gate CLI's flag-parsing and
-// startup-validation code paths only. They do not test git or buf invocation.
+// Test groups:
+//   - Guard tests: mutual-exclusion pairs caught before any git IO (exit 2
+//     at the guard step).
+//   - Arm-isolation tests: verify that arm-suppression flags prevent the
+//     correct section header from appearing in stdout. These tests pass
+//     --repo-root pointing to the real git root so the CLI proceeds past
+//     the .git check; they assert on stdout section header presence/absence
+//     and are indifferent to the ultimate exit code.
 
 import { spawnSync } from "node:child_process";
 import { dirname, resolve } from "node:path";
@@ -91,7 +95,7 @@ describe("contract-gate CLI — --proto-only and --json-only are mutually exclus
 });
 
 // ---------------------------------------------------------------------------
-// --skip-proto + --skip-json no-op guard (E1-NEW-M-1)
+// --skip-proto + --skip-json mutual exclusion (leave no arm running)
 // ---------------------------------------------------------------------------
 
 describe("contract-gate CLI — --skip-proto and --skip-json leave no arm to run", () => {
@@ -109,4 +113,182 @@ describe("contract-gate CLI — --skip-proto and --skip-json leave no arm to run
     const result = runCli(["--against", "nova", "--skip-proto", "--skip-json"]);
     expect(result.status).toBe(2);
   });
+});
+
+// ---------------------------------------------------------------------------
+// --json-only + --skip-json mutual exclusion (leave no arm running)
+// ---------------------------------------------------------------------------
+
+describe("contract-gate CLI — --json-only and --skip-json leave no arm to run", () => {
+  it("exits nonzero when both --json-only and --skip-json are passed", () => {
+    const result = runCli(["--against", "nova", "--json-only", "--skip-json"]);
+    expect(result.status).not.toBe(0);
+  });
+
+  it("writes an error message to stderr when --json-only and --skip-json are both set", () => {
+    const result = runCli(["--against", "nova", "--json-only", "--skip-json"]);
+    expect(result.stderr).toMatch(/mutually exclusive/i);
+  });
+
+  it("exits with code 2 when --json-only + --skip-json are both set", () => {
+    const result = runCli(["--against", "nova", "--json-only", "--skip-json"]);
+    expect(result.status).toBe(2);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// --proto-only + --skip-proto mutual exclusion (leave no arm running)
+// ---------------------------------------------------------------------------
+
+describe("contract-gate CLI — --proto-only and --skip-proto leave no arm to run", () => {
+  it("exits nonzero when both --proto-only and --skip-proto are passed", () => {
+    const result = runCli([
+      "--against",
+      "nova",
+      "--proto-only",
+      "--skip-proto",
+    ]);
+    expect(result.status).not.toBe(0);
+  });
+
+  it("writes an error message to stderr when --proto-only and --skip-proto are both set", () => {
+    const result = runCli([
+      "--against",
+      "nova",
+      "--proto-only",
+      "--skip-proto",
+    ]);
+    expect(result.stderr).toMatch(/mutually exclusive/i);
+  });
+
+  it("exits with code 2 when --proto-only + --skip-proto are both set", () => {
+    const result = runCli([
+      "--against",
+      "nova",
+      "--proto-only",
+      "--skip-proto",
+    ]);
+    expect(result.status).toBe(2);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Arm-suppression isolation tests
+//
+// These tests verify that arm-suppression flags suppress exactly the correct
+// arm. They pass --repo-root pointing to the real git root so the CLI
+// proceeds past the .git existence check; the assertion is on whether the
+// arm's section header appears (or not) in stdout.
+//
+// Section headers (from printSection() in cli.ts):
+//   Proto arm   : "Proto arm (buf breaking — FILE level)"
+//   JSON arm    : "Spec/i18n/OpenAPI arm (JSON-diff gate)"
+// ---------------------------------------------------------------------------
+
+const REPO_ROOT = resolve(__dirname, "../../..");
+
+describe("contract-gate CLI — --skip-proto suppresses the proto arm", () => {
+  it("omits the proto arm section header from stdout when --skip-proto is passed", () => {
+    const result = runCli([
+      "--against",
+      "nova",
+      "--skip-proto",
+      "--repo-root",
+      REPO_ROOT,
+    ]);
+
+    expect(result.stdout).not.toContain("Proto arm (buf breaking");
+  });
+
+  it("includes the JSON arm section header in stdout when --skip-proto is passed", () => {
+    const result = runCli([
+      "--against",
+      "nova",
+      "--skip-proto",
+      "--repo-root",
+      REPO_ROOT,
+    ]);
+
+    expect(result.stdout).toContain("Spec/i18n/OpenAPI arm");
+  });
+});
+
+describe("contract-gate CLI — --json-only suppresses the proto arm", () => {
+  it("omits the proto arm section header from stdout when --json-only is passed", () => {
+    const result = runCli([
+      "--against",
+      "nova",
+      "--json-only",
+      "--repo-root",
+      REPO_ROOT,
+    ]);
+
+    expect(result.stdout).not.toContain("Proto arm (buf breaking");
+  });
+
+  it("includes the JSON arm section header in stdout when --json-only is passed", () => {
+    const result = runCli([
+      "--against",
+      "nova",
+      "--json-only",
+      "--repo-root",
+      REPO_ROOT,
+    ]);
+
+    expect(result.stdout).toContain("Spec/i18n/OpenAPI arm");
+  });
+});
+
+// The --proto-only and --skip-json tests run the proto arm (buf breaking over
+// the repo), which can take 15–25 s. Each test carries an explicit 30 s timeout.
+describe("contract-gate CLI — --proto-only suppresses the JSON arm", () => {
+  it("omits the JSON arm section header from stdout when --proto-only is passed", () => {
+    const result = runCli([
+      "--against",
+      "nova",
+      "--proto-only",
+      "--repo-root",
+      REPO_ROOT,
+    ]);
+
+    expect(result.stdout).not.toContain("Spec/i18n/OpenAPI arm");
+  }, 30_000);
+
+  it("includes the proto arm section header in stdout when --proto-only is passed", () => {
+    const result = runCli([
+      "--against",
+      "nova",
+      "--proto-only",
+      "--repo-root",
+      REPO_ROOT,
+    ]);
+
+    expect(result.stdout).toContain("Proto arm (buf breaking");
+  }, 30_000);
+});
+
+describe("contract-gate CLI — --skip-json suppresses the JSON arm", () => {
+  it("omits the JSON arm section header from stdout when --skip-json is passed", () => {
+    const result = runCli([
+      "--against",
+      "nova",
+      "--skip-json",
+      "--repo-root",
+      REPO_ROOT,
+    ]);
+
+    expect(result.stdout).not.toContain("Spec/i18n/OpenAPI arm");
+  }, 30_000);
+
+  it("includes the proto arm section header in stdout when --skip-json is passed", () => {
+    const result = runCli([
+      "--against",
+      "nova",
+      "--skip-json",
+      "--repo-root",
+      REPO_ROOT,
+    ]);
+
+    expect(result.stdout).toContain("Proto arm (buf breaking");
+  }, 30_000);
 });

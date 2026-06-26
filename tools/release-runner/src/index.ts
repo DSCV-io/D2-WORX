@@ -99,12 +99,14 @@ export { resolveBaseline } from "./baseline.js";
 export { formatPackageList, type ListEntry } from "./list-formatter.js";
 export {
   parseVersion,
+  parseVersionLoose,
   applyBump,
   renderVersion,
   type ParsedVersion,
 } from "./semver.js";
 export {
   deriveBump,
+  isPreStable,
   type ApiDiff,
   type FingerprintDiff,
   type BreakingFooter,

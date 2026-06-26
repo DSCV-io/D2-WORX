@@ -129,7 +129,11 @@ export function emitProto(
   responseReserved: ReservedPayload | undefined,
   nestedMessages: readonly NestedMessageDescriptor[],
   onError: (
-    code: "unmapped-scalar" | "invalid-streaming-mode" | "unpinned-proto-field",
+    code:
+      | "unmapped-scalar"
+      | "invalid-streaming-mode"
+      | "unpinned-proto-field"
+      | "duplicate-field-number",
     message: string,
   ) => void,
 ): EmittedFile | undefined {
@@ -255,7 +259,11 @@ function buildRpcLine(
   reqName: string,
   respName: string,
   onError: (
-    code: "unmapped-scalar" | "invalid-streaming-mode" | "unpinned-proto-field",
+    code:
+      | "unmapped-scalar"
+      | "invalid-streaming-mode"
+      | "unpinned-proto-field"
+      | "duplicate-field-number",
     message: string,
   ) => void,
 ): string | undefined {
@@ -282,18 +290,24 @@ function buildRpcLine(
  * from FieldInfo.fieldNumber (@d2Field(n) on each property).
  *
  * Returns undefined when any field's proto type cannot be resolved (onError already
- * called) or when any field lacks a @d2Field pin (D2TSP009 loud failure).
+ * called), when any field lacks a @d2Field pin (D2TSP009 loud failure), or when
+ * two fields share the same field number (D2TSP011 loud failure).
  * Positional assignment is permanently disabled — every field must carry a pin.
  */
 function resolveProtoFields(
   modelName: string,
   fields: readonly FieldInfo[],
   onError: (
-    code: "unmapped-scalar" | "invalid-streaming-mode" | "unpinned-proto-field",
+    code:
+      | "unmapped-scalar"
+      | "invalid-streaming-mode"
+      | "unpinned-proto-field"
+      | "duplicate-field-number",
     message: string,
   ) => void,
 ): readonly ProtoFieldInfo[] | undefined {
   const result: ProtoFieldInfo[] = [];
+  const seenNumbers = new Set<number>();
 
   for (const f of fields) {
     if (f.fieldNumber === undefined) {
@@ -303,6 +317,16 @@ function resolveProtoFields(
       );
       return undefined;
     }
+
+    if (seenNumbers.has(f.fieldNumber)) {
+      onError(
+        "duplicate-field-number",
+        `D2TSP011: field '${f.name}' on model '${modelName}' has field number ${f.fieldNumber} which is already used by another field — every field on a proto-bound model must have a unique @d2Field pin`,
+      );
+      return undefined;
+    }
+
+    seenNumbers.add(f.fieldNumber);
 
     const resolved = resolveOneField(f, f.fieldNumber, onError);
     if (resolved === undefined) return undefined;
@@ -321,7 +345,11 @@ function resolveOneField(
   f: FieldInfo,
   fieldNumber: number,
   onError: (
-    code: "unmapped-scalar" | "invalid-streaming-mode" | "unpinned-proto-field",
+    code:
+      | "unmapped-scalar"
+      | "invalid-streaming-mode"
+      | "unpinned-proto-field"
+      | "duplicate-field-number",
     message: string,
   ) => void,
 ): ProtoFieldInfo | undefined {
@@ -380,7 +408,11 @@ function resolveProtoFromScalarCsType(
   csType: string,
   fieldName: string,
   onError: (
-    code: "unmapped-scalar" | "invalid-streaming-mode" | "unpinned-proto-field",
+    code:
+      | "unmapped-scalar"
+      | "invalid-streaming-mode"
+      | "unpinned-proto-field"
+      | "duplicate-field-number",
     message: string,
   ) => void,
 ): string | undefined {

@@ -157,10 +157,34 @@ async function main(): Promise<void> {
     process.exit(2);
   }
 
-  // ── 0c. No-op guard: --skip-proto + --skip-json leaves nothing to run ─────
+  // ── 0c. No-op guards: combinations that leave no arm to run ──────────────
+  //
+  // --skip-proto + --skip-json: each independently suppresses an arm, and
+  //   together they leave nothing to run (same outcome as the explicit pair).
+  // --json-only  + --skip-json: --json-only suppresses proto; --skip-json
+  //   suppresses json; no arm runs.
+  // --proto-only + --skip-proto: --proto-only suppresses json; --skip-proto
+  //   suppresses proto; no arm runs.
+  // (--proto-only + --json-only is already caught by 0b above.)
   if (args.skipProto && args.skipJson) {
     process.stderr.write(
       "[contract-gate] error: --skip-proto and --skip-json are mutually exclusive" +
+        " — they leave no arm to run.\n",
+    );
+    process.exit(2);
+  }
+
+  if (args.jsonOnly && args.skipJson) {
+    process.stderr.write(
+      "[contract-gate] error: --json-only and --skip-json are mutually exclusive" +
+        " — they leave no arm to run.\n",
+    );
+    process.exit(2);
+  }
+
+  if (args.protoOnly && args.skipProto) {
+    process.stderr.write(
+      "[contract-gate] error: --proto-only and --skip-proto are mutually exclusive" +
         " — they leave no arm to run.\n",
     );
     process.exit(2);

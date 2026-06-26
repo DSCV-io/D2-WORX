@@ -244,8 +244,8 @@ export async function $onEmit(context: EmitContext): Promise<void> {
   // ---- Channel cross-validation (D2TSP010) ----
   // Resolve the @versioned active-version channel from any @versioned namespace
   // in the program. A @versioned namespace carries a Versions enum whose member
-  // VALUES are the channel strings (e.g. "v2alpha"). We use the first member's
-  // value as the active channel — single-version programs have exactly one member.
+  // VALUES are the channel strings (e.g. "v2alpha"). We use the last member's
+  // value as the active channel — the highest version in the enum.
   let versionedChannel: string | undefined;
 
   navigateProgram(program, {
@@ -1182,7 +1182,8 @@ function emitProtoAndGrpcService(
       | "unsupported-property-type"
       | "unsupported-union-shape"
       | "invalid-streaming-mode"
-      | "unpinned-proto-field",
+      | "unpinned-proto-field"
+      | "duplicate-field-number",
     message: string,
   ): void => {
     errors.push(message);
@@ -1207,6 +1208,12 @@ function emitProtoAndGrpcService(
     else if (code === "unpinned-proto-field")
       $lib.reportDiagnostic(program, {
         code: "unpinned-proto-field",
+        format: { detail: message },
+        target: NoTarget,
+      });
+    else if (code === "duplicate-field-number")
+      $lib.reportDiagnostic(program, {
+        code: "duplicate-field-number",
         format: { detail: message },
         target: NoTarget,
       });

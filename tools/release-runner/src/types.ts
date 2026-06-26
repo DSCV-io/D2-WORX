@@ -134,7 +134,7 @@ export interface RunnerOptions {
    * When true (default), propagate a PATCH dependency-update bump to every
    * consumable that transitively depends on a directly-bumped package.
    * Pass `--no-propagate` on the CLI to set this to false and reproduce the
-   * direct-only bumping behaviour.
+   * direct-only bumping behavior.
    */
   readonly propagate: boolean;
 }

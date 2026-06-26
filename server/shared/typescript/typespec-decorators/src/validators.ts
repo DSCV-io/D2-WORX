@@ -229,6 +229,38 @@ export function validateFieldNumber(
     });
 }
 
+/**
+ * Validate a field number supplied to the `numbers` variadic of @d2Reserved.
+ * Applies the same proto3 validity rules as @d2Field — conservatively blocking
+ * the protobuf implementation-reserved range 19000–19999 even though proto3
+ * §20.3 technically permits these values in `reserved` lists. Blocking them
+ * here keeps the validation surface consistent and prevents accidental
+ * confusion between author-reserved slots and implementation-reserved numbers.
+ * Fires `invalid-reserved-number` when:
+ *   - the value is not a safe integer (non-integer float, NaN, Infinity)
+ *   - the value is less than 1
+ *   - the value exceeds 536870911 (proto3 max)
+ *   - the value falls in the protobuf implementation-reserved range 19000–19999
+ */
+export function validateReservedNumber(
+  context: DecoratorContext,
+  target: import("@typespec/compiler").Model,
+  number: number,
+): void {
+  const isValid =
+    Number.isInteger(number) &&
+    number >= 1 &&
+    number <= _PROTO_MAX_FIELD_NUMBER &&
+    (number < _PROTO_RESERVED_RANGE_LO || number > _PROTO_RESERVED_RANGE_HI);
+
+  if (!isValid)
+    $lib.reportDiagnostic(context.program, {
+      code: "invalid-reserved-number",
+      format: { value: String(number) },
+      target,
+    });
+}
+
 // ----------------------------------------------------------------
 // @d2Resilience pipeline-expression parse + report
 // ----------------------------------------------------------------

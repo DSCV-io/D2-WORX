@@ -76,13 +76,13 @@ pnpm --filter contract-gate build
 | Flag | Description |
 |---|---|
 | `--against <ref>` | Integration baseline branch or commit ref. Required unless `D2_GATE_BASELINE` is set. |
-| `--skip-proto` | Skip the `buf breaking` proto arm; run only the JSON (spec/i18n/OpenAPI) arms. |
-| `--proto-only` | Run only the `buf breaking` proto arm; skip the JSON arms. |
-| `--json-only` | Alias for `--skip-proto`. |
-| `--skip-json` | Skip the JSON arms; run only the proto arm. Alias for `--proto-only`. |
+| `--skip-proto` | Skip the proto arm; run only the JSON (spec/i18n/OpenAPI) arms. Mutually exclusive with `--skip-json` and `--proto-only`. |
+| `--proto-only` | Run only the proto arm; skip the JSON arms. Mutually exclusive with `--json-only` and `--skip-proto`. |
+| `--json-only` | Skip the proto arm; run only the JSON arms. Mutually exclusive with `--proto-only` and `--skip-json`. |
+| `--skip-json` | Skip the JSON arms; run only the proto arm. Mutually exclusive with `--skip-proto` and `--json-only`. |
 | `--help` / `-h` | Print flag descriptions and exit. |
 
-`--proto-only` and `--json-only` are mutually exclusive. `--skip-proto` and `--skip-json` are mutually exclusive.
+Pairs that leave no arm running are rejected (exit 2): `--proto-only`/`--json-only`, `--skip-proto`/`--skip-json`, `--json-only`/`--skip-json`, `--proto-only`/`--skip-proto`.
 
 ## Catalog identity registry
 

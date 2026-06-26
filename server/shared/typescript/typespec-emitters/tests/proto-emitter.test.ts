@@ -15,6 +15,7 @@ import { describe, it, expect, vi } from "vitest";
 import type { FieldInfo, NestedModel } from "../src/lib/model-walk.js";
 import { emitProto } from "../src/lib/proto-emitter.js";
 import type { NestedMessageDescriptor } from "../src/lib/proto-emitter.js";
+import { WIRE_CHANNEL_GRAMMAR } from "../src/lib/wire-channel.js";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -475,6 +476,125 @@ describe("emitProto_UnpinnedField_LoudFailure", () => {
     const { result, errors } = emitSignProto();
     expect(result).toBeDefined();
     expect(errors).toHaveLength(0);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Test 8c: duplicate @d2Field pin → loud D2TSP011 failure
+// ---------------------------------------------------------------------------
+
+describe("emitProto_DuplicateFieldNumber_LoudFailure", () => {
+  it("two request fields with the same pin → D2TSP011 + returns undefined", () => {
+    const fieldA = makeStringField("kid", 1);
+    const fieldB = makeBytesField("payload", 1); // same pin as kid
+    const onError = vi.fn();
+    const result = emitProto(
+      "test",
+      "Svc",
+      "Do",
+      "unary",
+      SIGN_PKG,
+      SIGN_CS_NS,
+      SIGN_SOURCE,
+      "Req",
+      [fieldA, fieldB],
+      undefined,
+      "Resp",
+      [],
+      undefined,
+      [],
+      onError,
+    );
+    expect(result).toBeUndefined();
+    expect(onError).toHaveBeenCalledOnce();
+    expect(onError.mock.calls[0]![0]).toBe("duplicate-field-number");
+    expect(onError.mock.calls[0]![1]).toContain("D2TSP011");
+    expect(onError.mock.calls[0]![1]).toContain("payload");
+    expect(onError.mock.calls[0]![1]).toContain("1");
+  });
+
+  it("two response fields with the same pin → D2TSP011 + returns undefined", () => {
+    const reqField = makeStringField("kid", 1);
+    const respA = makeStringField("status", 1);
+    const respB = makeStringField("message", 1); // same pin as status
+    const onError = vi.fn();
+    const result = emitProto(
+      "test",
+      "Svc",
+      "Do",
+      "unary",
+      SIGN_PKG,
+      SIGN_CS_NS,
+      SIGN_SOURCE,
+      "Req",
+      [reqField],
+      undefined,
+      "Resp",
+      [respA, respB],
+      undefined,
+      [],
+      onError,
+    );
+    expect(result).toBeUndefined();
+    expect(onError).toHaveBeenCalledOnce();
+    expect(onError.mock.calls[0]![0]).toBe("duplicate-field-number");
+    expect(onError.mock.calls[0]![1]).toContain("D2TSP011");
+    expect(onError.mock.calls[0]![1]).toContain("message");
+  });
+
+  it("same pin used in request AND response is not a collision (different message scopes)", () => {
+    // Field numbers are per-message in proto3 — the same number can appear in
+    // two distinct messages. Duplicate detection is scoped per resolveProtoFields call.
+    const reqField = makeStringField("kid", 1);
+    const respField = makeBytesField("signature", 1); // same pin, different message
+    const errors: string[] = [];
+    const result = emitProto(
+      "test",
+      "Svc",
+      "Do",
+      "unary",
+      SIGN_PKG,
+      SIGN_CS_NS,
+      SIGN_SOURCE,
+      "Req",
+      [reqField],
+      undefined,
+      "Resp",
+      [respField],
+      undefined,
+      [],
+      (_, m) => errors.push(m),
+    );
+    expect(result).toBeDefined();
+    expect(errors).toHaveLength(0);
+  });
+
+  it("three fields with two sharing a pin → D2TSP011 fires on the second duplicate", () => {
+    const fieldA = makeStringField("alpha", 1);
+    const fieldB = makeStringField("beta", 2);
+    const fieldC = makeStringField("gamma", 1); // collides with alpha
+    const onError = vi.fn();
+    const result = emitProto(
+      "test",
+      "Svc",
+      "Do",
+      "unary",
+      SIGN_PKG,
+      SIGN_CS_NS,
+      SIGN_SOURCE,
+      "Req",
+      [fieldA, fieldB, fieldC],
+      undefined,
+      "Resp",
+      [],
+      undefined,
+      [],
+      onError,
+    );
+    expect(result).toBeUndefined();
+    expect(onError).toHaveBeenCalledOnce();
+    expect(onError.mock.calls[0]![0]).toBe("duplicate-field-number");
+    expect(onError.mock.calls[0]![1]).toContain("gamma");
   });
 });
 
@@ -1484,18 +1604,15 @@ describe("emitProto_Reserved_NumbersAndNames", () => {
 
 // ---------------------------------------------------------------------------
 // Structural guard: proto package is well-formed and not the retired v1 value.
-// Two-part guard: (1) CHANNEL_GRAMMAR regex asserts the package SHAPE
+// Two-part guard: (1) WIRE_CHANNEL_GRAMMAR regex asserts the package SHAPE
 // (d2.<svc>.v<N>(alpha|beta)?) — it does NOT structurally exclude v1 because
 // v1 is syntactically valid; (2) the identity assertion `expect(SIGN_PKG).
 // not.toBe("d2.keycustodian.v1")` is the real guard against the retired value.
 // ---------------------------------------------------------------------------
 
 describe("emitProto_ProtoPackage_ChannelGrammar", () => {
-  /** Pattern: d2.<svc-segment>.v<N> or d2.<svc-segment>.v<N>alpha or v<N>beta */
-  const CHANNEL_GRAMMAR = /^d2\.[a-z][a-z0-9]*\.v\d+(alpha|beta)?$/;
-
   it("SIGN_PKG matches the channel grammar d2.<svc>.v<N>(alpha|beta)?", () => {
-    expect(CHANNEL_GRAMMAR.test(SIGN_PKG)).toBe(true);
+    expect(WIRE_CHANNEL_GRAMMAR.test(SIGN_PKG)).toBe(true);
   });
 
   it("SIGN_PKG has been renumbered away from the retired bare v1 value", () => {
@@ -1513,26 +1630,26 @@ describe("emitProto_ProtoPackage_ChannelGrammar", () => {
       .find((l) => l.startsWith("package "));
     expect(packageLine).toBeDefined();
     const pkg = packageLine!.replace("package ", "").replace(";", "").trim();
-    expect(CHANNEL_GRAMMAR.test(pkg)).toBe(true);
+    expect(WIRE_CHANNEL_GRAMMAR.test(pkg)).toBe(true);
   });
 
   it("stable-sounding v2 package (no alpha/beta) matches channel grammar", () => {
     // Confirms the grammar accepts v2, v3, etc. (graduation from v2alpha).
-    expect(CHANNEL_GRAMMAR.test("d2.keycustodian.v2")).toBe(true);
+    expect(WIRE_CHANNEL_GRAMMAR.test("d2.keycustodian.v2")).toBe(true);
   });
 
   it("v2beta package matches channel grammar", () => {
-    expect(CHANNEL_GRAMMAR.test("d2.keycustodian.v2beta")).toBe(true);
+    expect(WIRE_CHANNEL_GRAMMAR.test("d2.keycustodian.v2beta")).toBe(true);
   });
 
   it("malformed packages do NOT match (e.g. uppercase, missing v, extra dots)", () => {
-    expect(CHANNEL_GRAMMAR.test("D2.keycustodian.v2alpha")).toBe(false);
-    expect(CHANNEL_GRAMMAR.test("d2.keycustodian.2alpha")).toBe(false);
-    expect(CHANNEL_GRAMMAR.test("d2.keycustodian.v2.alpha")).toBe(false);
-    expect(CHANNEL_GRAMMAR.test("d2.KeyCustodian.v2alpha")).toBe(false);
+    expect(WIRE_CHANNEL_GRAMMAR.test("D2.keycustodian.v2alpha")).toBe(false);
+    expect(WIRE_CHANNEL_GRAMMAR.test("d2.keycustodian.2alpha")).toBe(false);
+    expect(WIRE_CHANNEL_GRAMMAR.test("d2.keycustodian.v2.alpha")).toBe(false);
+    expect(WIRE_CHANNEL_GRAMMAR.test("d2.KeyCustodian.v2alpha")).toBe(false);
     // malformed channel suffixes: gamma is not a valid stability channel (only alpha/beta)
-    expect(CHANNEL_GRAMMAR.test("d2.keycustodian.v2gamma")).toBe(false);
+    expect(WIRE_CHANNEL_GRAMMAR.test("d2.keycustodian.v2gamma")).toBe(false);
     // "valpha" is not a valid version segment — must be v<N>(alpha|beta)?
-    expect(CHANNEL_GRAMMAR.test("d2.keycustodian.valpha")).toBe(false);
+    expect(WIRE_CHANNEL_GRAMMAR.test("d2.keycustodian.valpha")).toBe(false);
   });
 });

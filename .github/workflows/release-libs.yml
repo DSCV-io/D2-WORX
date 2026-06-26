@@ -299,6 +299,11 @@ jobs:
           RELEASE_TAG: ${{ steps.tag.outputs.value }}
           PRERELEASE_FLAG: ${{ inputs.prerelease == true && '--prerelease' || '' }}
         run: |
+          # ${PRERELEASE_FLAG} is intentionally unquoted: it is either the literal
+          # string "--prerelease" or empty string, derived from a boolean workflow
+          # input (GitHub Actions validates the type before evaluation). Quoting it
+          # would pass an empty quoted string as a positional argument when prerelease
+          # is false. Shell word-splitting of a server-side-validated boolean is safe.
           gh release create "$RELEASE_TAG" \
             --title "D2 libraries ${RELEASE_TAG}" \
             --notes-file bundle/RELEASE-NOTES.md \

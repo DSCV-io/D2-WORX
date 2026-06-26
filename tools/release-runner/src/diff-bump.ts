@@ -109,7 +109,7 @@ function maxIntent(a: BumpIntent, b: BumpIntent): BumpIntent {
  * pre-stable (fail-safe: a bump caps at MINOR rather than firing a MAJOR
  * on a string whose stability could not be determined).
  */
-function isPreStable(version: string): boolean {
+export function isPreStable(version: string): boolean {
   if (falsey(version)) return true;
 
   // Extract the MAJOR component (digits before the first dot).

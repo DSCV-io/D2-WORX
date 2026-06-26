@@ -352,6 +352,45 @@ describe("runRelease — no-op cases", () => {
 });
 
 // ---------------------------------------------------------------------------
+// Prerelease-labelled currentVersion (legacy-path crash regression)
+// ---------------------------------------------------------------------------
+
+describe("runRelease — prerelease-labelled currentVersion", () => {
+  it("feat: commit on a prerelease-labelled package produces a plan without throwing", () => {
+    // Regression: parseVersion crashed on "1.0.0-alpha.3" inside computeBumpPlans.
+    // parseVersionLoose must be used at the newVersion computation site.
+    const { pkg, dir } = createNpmFixture("@d2/a", "1.0.0-alpha.3");
+    const commits = [makeCommit("feat: add helper", [dir])];
+
+    expect(() => runRelease(commits, [pkg], opts(true))).not.toThrow();
+
+    const result = runRelease(commits, [pkg], opts(true));
+    expect(result.plans).toHaveLength(1);
+    // 1.0.0-alpha.3 is pre-stable → feat → MINOR; label is dropped on output.
+    expect(result.plans[0]!.bump).toBe("minor");
+    expect(result.plans[0]!.newVersion).toBe("1.1.0");
+  });
+
+  it("prerelease-labelled package: breaking commit gives MINOR under --legacy-commit-type", () => {
+    // A breaking change on a prerelease-labelled 1.0.0-alpha version bumps MINOR, not
+    // MAJOR under legacy semantics — isPreStable covers prerelease labels, not just
+    // major===0, so the version "1.0.0-alpha.3" correctly yields MINOR.
+    const { pkg, dir } = createNpmFixture("@d2/a", "1.0.0-alpha.3");
+    const breakCommit = [
+      "feat: drop field",
+      "",
+      "WIRE-BREAKING: removed the old field",
+    ].join("\n");
+    const commits = [makeCommit(breakCommit, [dir])];
+
+    const result = runRelease(commits, [pkg], opts(true));
+    expect(result.plans).toHaveLength(1);
+    expect(result.plans[0]!.bump).toBe("minor");
+    expect(result.plans[0]!.newVersion).toBe("1.1.0");
+  });
+});
+
+// ---------------------------------------------------------------------------
 // Wire-breaking entry in CHANGELOG
 // ---------------------------------------------------------------------------
 

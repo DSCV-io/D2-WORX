@@ -242,16 +242,17 @@ public sealed class SubscriberChannelBehaviorIntegrationTests
             await host.StopAsync(CancellationToken.None);
             stopwatch.Stop();
 
-            // The drain should have waited for the handler (~2s); not much less
-            // (would mean we cut it short) and not the full 30s timeout
-            // (would mean drain failed). Lower bound is 500 ms (not 1500 ms)
-            // to tolerate CI machines where handler-started signal delivery
-            // + thread scheduling adds latency before the 2 s sleep begins.
+            // The drain must wait for the SlowHandler (~2 s). The
+            // handlerStarted.Task gate fires once the handler is already
+            // executing its 2 s sleep, so StopAsync must wait out the
+            // remaining sleep. A lower bound of 1500 ms proves the drain
+            // actually waited; 500 ms would allow a handler that returned
+            // early (i.e. did NOT drain) to pass silently.
             stopwatch.Elapsed.Should().BeGreaterThan(
-                TimeSpan.FromMilliseconds(500),
+                TimeSpan.FromMilliseconds(1500),
                 "drain should have waited for the slow handler to complete");
             stopwatch.Elapsed.Should().BeLessThan(
-                TimeSpan.FromSeconds(25),
+                TimeSpan.FromSeconds(15),
                 "drain timeout (30s) should NOT have fired for a 2s handler");
 
             TestCollector.Count<SlowHandler>().Should().Be(

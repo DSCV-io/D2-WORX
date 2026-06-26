@@ -50,7 +50,7 @@ import { deriveBump } from "./diff-bump.js";
 import { topoSort } from "./dependency-graph.js";
 import { writeManifestVersion } from "./manifest-editor.js";
 import { promoteChangelog } from "./changelog-editor.js";
-import { parseVersion, applyBump } from "./semver.js";
+import { parseVersionLoose, applyBump } from "./semver.js";
 import type { ApiDiff, FingerprintDiff, BreakingFooter } from "./diff-bump.js";
 import type { BumpPlan, PackageDescriptor, RunnerOptions } from "./types.js";
 
@@ -367,7 +367,7 @@ export function runDiffRelease(
 
     if (bump === "none") continue;
 
-    const parsed = parseVersion(pkg.currentVersion);
+    const parsed = parseVersionLoose(pkg.currentVersion);
     const newVersion = applyBump(parsed, bump);
 
     // Update the resolved-version map so dependents see the new version

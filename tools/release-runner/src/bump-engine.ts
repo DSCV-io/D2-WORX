@@ -37,7 +37,8 @@
 
 import { parseBreakingFooters } from "contract-gate";
 import { falsey } from "@d2/utilities";
-import { parseVersion, applyBump } from "./semver.js";
+import { parseVersionLoose, applyBump } from "./semver.js";
+import { isPreStable } from "./diff-bump.js";
 import type {
   BumpKind,
   BumpPlan,
@@ -245,9 +246,7 @@ export function computeBumpPlans(
 
     if (hasBreakEntries && !signal.forced) {
       for (const pkg of touched) {
-        const parsed = parseVersion(pkg.currentVersion);
-
-        if (parsed.major >= 1) {
+        if (!isPreStable(pkg.currentVersion)) {
           throw new Error(
             `Breaking change on stable package "${pkg.name}" (v${pkg.currentVersion}) ` +
               `without the force valve. Add a WIRE-BREAKING: or BREAKING CHANGE: footer.`,
@@ -257,12 +256,11 @@ export function computeBumpPlans(
     }
 
     for (const pkg of touched) {
-      const parsed = parseVersion(pkg.currentVersion);
-      const isPreStable = parsed.major === 0;
+      const preStable = isPreStable(pkg.currentVersion);
 
       if (signal.forced) {
         // Breaking-signal commit: bump by break level.
-        const bumpLevel: BumpKind = isPreStable ? "minor" : "major";
+        const bumpLevel: BumpKind = preStable ? "minor" : "major";
         const acc = accs.get(pkg.name) ?? emptyAccumulator();
 
         acc.bump = maxBump(acc.bump, bumpLevel);
@@ -311,7 +309,7 @@ export function computeBumpPlans(
 
     if (acc === undefined || acc.bump === "none") continue;
 
-    const parsed = parseVersion(pkg.currentVersion);
+    const parsed = parseVersionLoose(pkg.currentVersion);
     const newVersion = applyBump(parsed, acc.bump);
 
     plans.push({
