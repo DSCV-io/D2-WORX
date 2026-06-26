@@ -57,6 +57,7 @@ jobs:
   proto-breaking:
     name: Proto breaking-change gate
     runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
     steps:
       - uses: actions/checkout@v4
         with:
@@ -83,6 +84,7 @@ jobs:
   contract-breaking:
     name: Contract breaking-change gate (spec / i18n / OpenAPI)
     runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
     steps:
       - uses: actions/checkout@v4
         with:
