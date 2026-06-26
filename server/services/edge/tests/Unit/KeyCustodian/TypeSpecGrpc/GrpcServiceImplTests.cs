@@ -11,7 +11,7 @@ using D2.Edge.Tests.TypeSpecGrpc.Generated;
 using D2.Edge.Tests.TypeSpecRoute.Generated.Facade;
 using D2.Edge.Tests.Unit.KeyCustodian.TypeSpecRoute.Fixtures;
 using D2.Services.Protos.Common.V1;
-using D2.Services.Protos.KeyCustodian.V1;
+using D2.Services.Protos.KeyCustodian.V2Alpha;
 using D2.Shared.Result;
 using Google.Protobuf;
 using Grpc.Core;

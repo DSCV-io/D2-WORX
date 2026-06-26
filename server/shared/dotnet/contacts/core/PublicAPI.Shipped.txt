@@ -1,0 +1,97 @@
+#nullable enable
+D2.Shared.Contacts.ValueObjects.Demographics
+D2.Shared.Contacts.ValueObjects.Demographics.<Clone>$() -> D2.Shared.Contacts.ValueObjects.Demographics!
+D2.Shared.Contacts.ValueObjects.Demographics.BiologicalSex.get -> D2.Shared.Validation.Abstractions.BiologicalSex?
+D2.Shared.Contacts.ValueObjects.Demographics.BiologicalSex.init -> void
+D2.Shared.Contacts.ValueObjects.Demographics.DateOfBirth.get -> NodaTime.LocalDate?
+D2.Shared.Contacts.ValueObjects.Demographics.DateOfBirth.init -> void
+D2.Shared.Contacts.ValueObjects.Demographics.Demographics() -> void
+D2.Shared.Contacts.ValueObjects.Demographics.Equals(D2.Shared.Contacts.ValueObjects.Demographics? other) -> bool
+D2.Shared.Contacts.ValueObjects.EmailAddress
+D2.Shared.Contacts.ValueObjects.EmailAddress.<Clone>$() -> D2.Shared.Contacts.ValueObjects.EmailAddress!
+D2.Shared.Contacts.ValueObjects.EmailAddress.EmailAddress() -> void
+D2.Shared.Contacts.ValueObjects.EmailAddress.Equals(D2.Shared.Contacts.ValueObjects.EmailAddress? other) -> bool
+D2.Shared.Contacts.ValueObjects.EmailAddress.Value.get -> string!
+D2.Shared.Contacts.ValueObjects.EmailAddress.Value.init -> void
+D2.Shared.Contacts.ValueObjects.NameAffixes
+D2.Shared.Contacts.ValueObjects.NameAffixes.<Clone>$() -> D2.Shared.Contacts.ValueObjects.NameAffixes!
+D2.Shared.Contacts.ValueObjects.NameAffixes.Equals(D2.Shared.Contacts.ValueObjects.NameAffixes? other) -> bool
+D2.Shared.Contacts.ValueObjects.NameAffixes.NameAffixes() -> void
+D2.Shared.Contacts.ValueObjects.NameAffixes.Prefix.get -> D2.Shared.Validation.Abstractions.NamePrefix?
+D2.Shared.Contacts.ValueObjects.NameAffixes.Prefix.init -> void
+D2.Shared.Contacts.ValueObjects.NameAffixes.PrefixCustom.get -> string?
+D2.Shared.Contacts.ValueObjects.NameAffixes.PrefixCustom.init -> void
+D2.Shared.Contacts.ValueObjects.NameAffixes.Suffix.get -> D2.Shared.Validation.Abstractions.NameSuffix?
+D2.Shared.Contacts.ValueObjects.NameAffixes.Suffix.init -> void
+D2.Shared.Contacts.ValueObjects.NameAffixes.SuffixCustom.get -> string?
+D2.Shared.Contacts.ValueObjects.NameAffixes.SuffixCustom.init -> void
+D2.Shared.Contacts.ValueObjects.Personal
+D2.Shared.Contacts.ValueObjects.Personal.<Clone>$() -> D2.Shared.Contacts.ValueObjects.Personal!
+D2.Shared.Contacts.ValueObjects.Personal.Equals(D2.Shared.Contacts.ValueObjects.Personal? other) -> bool
+D2.Shared.Contacts.ValueObjects.Personal.FirstName.get -> string!
+D2.Shared.Contacts.ValueObjects.Personal.FirstName.init -> void
+D2.Shared.Contacts.ValueObjects.Personal.HashId.get -> string!
+D2.Shared.Contacts.ValueObjects.Personal.HashId.init -> void
+D2.Shared.Contacts.ValueObjects.Personal.LastName.get -> string?
+D2.Shared.Contacts.ValueObjects.Personal.LastName.init -> void
+D2.Shared.Contacts.ValueObjects.Personal.MiddleName.get -> string?
+D2.Shared.Contacts.ValueObjects.Personal.MiddleName.init -> void
+D2.Shared.Contacts.ValueObjects.Personal.Personal() -> void
+D2.Shared.Contacts.ValueObjects.Personal.PreferredName.get -> string?
+D2.Shared.Contacts.ValueObjects.Personal.PreferredName.init -> void
+D2.Shared.Contacts.ValueObjects.PhoneNumber
+D2.Shared.Contacts.ValueObjects.PhoneNumber.<Clone>$() -> D2.Shared.Contacts.ValueObjects.PhoneNumber!
+D2.Shared.Contacts.ValueObjects.PhoneNumber.Equals(D2.Shared.Contacts.ValueObjects.PhoneNumber? other) -> bool
+D2.Shared.Contacts.ValueObjects.PhoneNumber.PhoneNumber() -> void
+D2.Shared.Contacts.ValueObjects.PhoneNumber.Value.get -> string!
+D2.Shared.Contacts.ValueObjects.PhoneNumber.Value.init -> void
+D2.Shared.Contacts.ValueObjects.Professional
+D2.Shared.Contacts.ValueObjects.Professional.<Clone>$() -> D2.Shared.Contacts.ValueObjects.Professional!
+D2.Shared.Contacts.ValueObjects.Professional.CompanyName.get -> string!
+D2.Shared.Contacts.ValueObjects.Professional.CompanyName.init -> void
+D2.Shared.Contacts.ValueObjects.Professional.CompanyWebsite.get -> System.Uri?
+D2.Shared.Contacts.ValueObjects.Professional.CompanyWebsite.init -> void
+D2.Shared.Contacts.ValueObjects.Professional.Department.get -> string?
+D2.Shared.Contacts.ValueObjects.Professional.Department.init -> void
+D2.Shared.Contacts.ValueObjects.Professional.Equals(D2.Shared.Contacts.ValueObjects.Professional? other) -> bool
+D2.Shared.Contacts.ValueObjects.Professional.JobTitle.get -> string?
+D2.Shared.Contacts.ValueObjects.Professional.JobTitle.init -> void
+D2.Shared.Contacts.ValueObjects.Professional.Professional() -> void
+override D2.Shared.Contacts.ValueObjects.Demographics.Equals(object? obj) -> bool
+override D2.Shared.Contacts.ValueObjects.Demographics.GetHashCode() -> int
+override D2.Shared.Contacts.ValueObjects.Demographics.ToString() -> string!
+override D2.Shared.Contacts.ValueObjects.EmailAddress.Equals(object? obj) -> bool
+override D2.Shared.Contacts.ValueObjects.EmailAddress.GetHashCode() -> int
+override D2.Shared.Contacts.ValueObjects.EmailAddress.ToString() -> string!
+override D2.Shared.Contacts.ValueObjects.NameAffixes.Equals(object? obj) -> bool
+override D2.Shared.Contacts.ValueObjects.NameAffixes.GetHashCode() -> int
+override D2.Shared.Contacts.ValueObjects.NameAffixes.ToString() -> string!
+override D2.Shared.Contacts.ValueObjects.Personal.Equals(object? obj) -> bool
+override D2.Shared.Contacts.ValueObjects.Personal.GetHashCode() -> int
+override D2.Shared.Contacts.ValueObjects.Personal.ToString() -> string!
+override D2.Shared.Contacts.ValueObjects.PhoneNumber.Equals(object? obj) -> bool
+override D2.Shared.Contacts.ValueObjects.PhoneNumber.GetHashCode() -> int
+override D2.Shared.Contacts.ValueObjects.PhoneNumber.ToString() -> string!
+override D2.Shared.Contacts.ValueObjects.Professional.Equals(object? obj) -> bool
+override D2.Shared.Contacts.ValueObjects.Professional.GetHashCode() -> int
+override D2.Shared.Contacts.ValueObjects.Professional.ToString() -> string!
+static D2.Shared.Contacts.ValueObjects.Demographics.Create(NodaTime.LocalDate? dateOfBirth = null, D2.Shared.Validation.Abstractions.BiologicalSex? biologicalSex = null, D2.Shared.Time.IClock? clock = null) -> D2.Shared.Result.D2Result<D2.Shared.Contacts.ValueObjects.Demographics!>!
+static D2.Shared.Contacts.ValueObjects.Demographics.operator !=(D2.Shared.Contacts.ValueObjects.Demographics? left, D2.Shared.Contacts.ValueObjects.Demographics? right) -> bool
+static D2.Shared.Contacts.ValueObjects.Demographics.operator ==(D2.Shared.Contacts.ValueObjects.Demographics? left, D2.Shared.Contacts.ValueObjects.Demographics? right) -> bool
+static D2.Shared.Contacts.ValueObjects.EmailAddress.Create(string? value, D2.Shared.Validation.Abstractions.IEmailValidator? validator = null) -> D2.Shared.Result.D2Result<D2.Shared.Contacts.ValueObjects.EmailAddress!>!
+static D2.Shared.Contacts.ValueObjects.EmailAddress.FromTrusted(string! value) -> D2.Shared.Contacts.ValueObjects.EmailAddress!
+static D2.Shared.Contacts.ValueObjects.EmailAddress.operator !=(D2.Shared.Contacts.ValueObjects.EmailAddress? left, D2.Shared.Contacts.ValueObjects.EmailAddress? right) -> bool
+static D2.Shared.Contacts.ValueObjects.EmailAddress.operator ==(D2.Shared.Contacts.ValueObjects.EmailAddress? left, D2.Shared.Contacts.ValueObjects.EmailAddress? right) -> bool
+static D2.Shared.Contacts.ValueObjects.NameAffixes.Create(D2.Shared.Validation.Abstractions.NamePrefix? prefix = null, string? prefixCustom = null, D2.Shared.Validation.Abstractions.NameSuffix? suffix = null, string? suffixCustom = null) -> D2.Shared.Result.D2Result<D2.Shared.Contacts.ValueObjects.NameAffixes!>!
+static D2.Shared.Contacts.ValueObjects.NameAffixes.operator !=(D2.Shared.Contacts.ValueObjects.NameAffixes? left, D2.Shared.Contacts.ValueObjects.NameAffixes? right) -> bool
+static D2.Shared.Contacts.ValueObjects.NameAffixes.operator ==(D2.Shared.Contacts.ValueObjects.NameAffixes? left, D2.Shared.Contacts.ValueObjects.NameAffixes? right) -> bool
+static D2.Shared.Contacts.ValueObjects.Personal.Create(string? firstName, string? middleName = null, string? lastName = null, string? preferredName = null) -> D2.Shared.Result.D2Result<D2.Shared.Contacts.ValueObjects.Personal!>!
+static D2.Shared.Contacts.ValueObjects.Personal.operator !=(D2.Shared.Contacts.ValueObjects.Personal? left, D2.Shared.Contacts.ValueObjects.Personal? right) -> bool
+static D2.Shared.Contacts.ValueObjects.Personal.operator ==(D2.Shared.Contacts.ValueObjects.Personal? left, D2.Shared.Contacts.ValueObjects.Personal? right) -> bool
+static D2.Shared.Contacts.ValueObjects.PhoneNumber.Create(string? value, D2.Shared.Validation.Abstractions.IPhoneValidator? validator = null, D2.Shared.Geo.Abstractions.CountryCode? region = null) -> D2.Shared.Result.D2Result<D2.Shared.Contacts.ValueObjects.PhoneNumber!>!
+static D2.Shared.Contacts.ValueObjects.PhoneNumber.FromTrusted(string! value) -> D2.Shared.Contacts.ValueObjects.PhoneNumber!
+static D2.Shared.Contacts.ValueObjects.PhoneNumber.operator !=(D2.Shared.Contacts.ValueObjects.PhoneNumber? left, D2.Shared.Contacts.ValueObjects.PhoneNumber? right) -> bool
+static D2.Shared.Contacts.ValueObjects.PhoneNumber.operator ==(D2.Shared.Contacts.ValueObjects.PhoneNumber? left, D2.Shared.Contacts.ValueObjects.PhoneNumber? right) -> bool
+static D2.Shared.Contacts.ValueObjects.Professional.Create(string? companyName, string? jobTitle = null, string? department = null, string? companyWebsite = null) -> D2.Shared.Result.D2Result<D2.Shared.Contacts.ValueObjects.Professional!>!
+static D2.Shared.Contacts.ValueObjects.Professional.operator !=(D2.Shared.Contacts.ValueObjects.Professional? left, D2.Shared.Contacts.ValueObjects.Professional? right) -> bool
+static D2.Shared.Contacts.ValueObjects.Professional.operator ==(D2.Shared.Contacts.ValueObjects.Professional? left, D2.Shared.Contacts.ValueObjects.Professional? right) -> bool

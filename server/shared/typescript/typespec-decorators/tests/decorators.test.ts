@@ -41,10 +41,16 @@ import {
   $decorators,
   D2_RESILIENCE_RETRY_WHEN_KEY,
   D2_RESILIENCE_FAIL_WHEN_KEY,
+  D2_FIELD_KEY,
+  D2_RESERVED_KEY,
   type ResilienceDiagnosticCode,
   type ResultPredicateDiagnosticCode,
 } from "../src/index.js";
-import type { GrpcMethodPayload, IdempotentPayload } from "../src/index.js";
+import type {
+  GrpcMethodPayload,
+  IdempotentPayload,
+  ReservedPayload,
+} from "../src/index.js";
 import {
   loadScopeNames,
   loadAudienceNames,
@@ -63,6 +69,8 @@ import {
   validateServedBy,
   validateResilience,
   validateResultPredicate,
+  validateFieldNumber,
+  validateReservedName,
 } from "../src/validators.js";
 import { $onValidate } from "../src/onvalidate.js";
 import {
@@ -82,6 +90,8 @@ import {
   $d2Command,
   $d2Query,
   $d2Internal,
+  $d2Field,
+  $d2Reserved,
 } from "../src/decorators.js";
 import type {
   DecoratorContext,
@@ -454,6 +464,390 @@ describe("stateKeys_AreProcessGlobalSymbolFor", () => {
 });
 
 // ---------------------------------------------------------------------------
+// Direct unit tests: $d2Field
+// ---------------------------------------------------------------------------
+
+describe("directUnit_$d2Field", () => {
+  it("stores the pin number under D2_FIELD_KEY keyed by the target property", () => {
+    const { ctx, maps } = makeMockContext();
+    $d2Field(ctx, mockProperty, 3);
+    expect(maps.get(D2_FIELD_KEY)!.get(mockProperty)).toBe(3);
+  });
+
+  it("reports invalid-field-number for zero", () => {
+    const diags: Array<{ code: string }> = [];
+    const { ctx } = makeMockContext();
+    (
+      ctx.program as unknown as {
+        reportDiagnostic: (d: { code: string }) => void;
+      }
+    ).reportDiagnostic = (d) => {
+      diags.push(d);
+    };
+    $d2Field(ctx, mockProperty, 0);
+    expect(diags.some((d) => d.code.endsWith("invalid-field-number"))).toBe(
+      true,
+    );
+  });
+
+  it("reports invalid-field-number for a number in the protobuf reserved range 19000-19999", () => {
+    const diags: Array<{ code: string }> = [];
+    const { ctx } = makeMockContext();
+    (
+      ctx.program as unknown as {
+        reportDiagnostic: (d: { code: string }) => void;
+      }
+    ).reportDiagnostic = (d) => {
+      diags.push(d);
+    };
+    $d2Field(ctx, mockProperty, 19000);
+    expect(diags.some((d) => d.code.endsWith("invalid-field-number"))).toBe(
+      true,
+    );
+    diags.length = 0;
+    $d2Field(ctx, mockProperty, 19999);
+    expect(diags.some((d) => d.code.endsWith("invalid-field-number"))).toBe(
+      true,
+    );
+  });
+
+  it("accepts the maximum valid field number 536870911", () => {
+    const { ctx, maps } = makeMockContext();
+    $d2Field(ctx, mockProperty, 536870911);
+    expect(maps.get(D2_FIELD_KEY)!.get(mockProperty)).toBe(536870911);
+  });
+
+  it("accepts a number just outside the reserved range (18999 and 20000)", () => {
+    const { ctx, maps } = makeMockContext();
+    $d2Field(ctx, mockProperty, 18999);
+    expect(maps.get(D2_FIELD_KEY)!.get(mockProperty)).toBe(18999);
+    // Overwrite with 20000 — should also pass.
+    $d2Field(ctx, mockProperty, 20000);
+    expect(maps.get(D2_FIELD_KEY)!.get(mockProperty)).toBe(20000);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Direct unit tests: $d2Reserved
+// ---------------------------------------------------------------------------
+
+describe("directUnit_$d2Reserved", () => {
+  it("stores numbers and parsed names under D2_RESERVED_KEY keyed by the target model", () => {
+    const model = {} as unknown as import("@typespec/compiler").Model;
+    const { ctx, maps } = makeMockContext();
+    $d2Reserved(ctx, model, "old_field, removed_slot", 3, 5, 7);
+    const payload = maps.get(D2_RESERVED_KEY)!.get(model) as ReservedPayload;
+    expect(payload.numbers).toEqual([3, 5, 7]);
+    expect(payload.names).toEqual(["old_field", "removed_slot"]);
+  });
+
+  it("handles a comma-separated names string with extra whitespace", () => {
+    const model = {} as unknown as import("@typespec/compiler").Model;
+    const { ctx, maps } = makeMockContext();
+    $d2Reserved(ctx, model, "  first_field ,  second_field  ", 1);
+    const payload = maps.get(D2_RESERVED_KEY)!.get(model) as ReservedPayload;
+    expect(payload.names).toEqual(["first_field", "second_field"]);
+  });
+
+  it("handles an empty names string (no names, only numbers)", () => {
+    const model = {} as unknown as import("@typespec/compiler").Model;
+    const { ctx, maps } = makeMockContext();
+    $d2Reserved(ctx, model, "", 4, 8);
+    const payload = maps.get(D2_RESERVED_KEY)!.get(model) as ReservedPayload;
+    expect(payload.numbers).toEqual([4, 8]);
+    expect(payload.names).toEqual([]);
+  });
+
+  it("D2_FIELD_KEY equals Symbol.for('D2.d2Field')", () => {
+    expect(D2_FIELD_KEY).toBe(Symbol.for("D2.d2Field"));
+  });
+
+  it("D2_RESERVED_KEY equals Symbol.for('D2.d2Reserved')", () => {
+    expect(D2_RESERVED_KEY).toBe(Symbol.for("D2.d2Reserved"));
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Helper: makeMockCtxWithDiagsForModel — same shape as makeMockCtxWithDiags
+// but the target is typed as Model (required by validateReservedNumber and
+// the $d2Reserved adversarial tests below).
+// ---------------------------------------------------------------------------
+
+function makeMockCtxWithDiagsForModel(): {
+  ctx: DecoratorContext;
+  target: import("@typespec/compiler").Model;
+  diags: Array<{ code: string }>;
+} {
+  const diags: Array<{ code: string }> = [];
+  const storeMap = new Map<symbol, Map<object, unknown>>();
+  const ctx = {
+    program: {
+      stateMap(key: symbol): Map<object, unknown> {
+        if (!storeMap.has(key)) storeMap.set(key, new Map());
+        return storeMap.get(key)!;
+      },
+      reportDiagnostic(diag: { code: string }): void {
+        diags.push(diag);
+      },
+    },
+  } as unknown as DecoratorContext;
+  const target = {} as unknown as import("@typespec/compiler").Model;
+  return { ctx, target, diags };
+}
+
+// ---------------------------------------------------------------------------
+// Adversarial tests: $d2Reserved with invalid numbers
+// Every invalid class that @d2Field rejects must also be rejected by @d2Reserved.
+// ---------------------------------------------------------------------------
+
+describe("directUnit_$d2Reserved_InvalidNumbers", () => {
+  it("emits invalid-reserved-number for a negative number (-1)", () => {
+    const { ctx, target, diags } = makeMockCtxWithDiagsForModel();
+    $d2Reserved(ctx, target, "", -1);
+    expect(diags.some((d) => d.code.endsWith("invalid-reserved-number"))).toBe(
+      true,
+    );
+  });
+
+  it("emits invalid-reserved-number for zero (below minimum)", () => {
+    const { ctx, target, diags } = makeMockCtxWithDiagsForModel();
+    $d2Reserved(ctx, target, "", 0);
+    expect(diags.some((d) => d.code.endsWith("invalid-reserved-number"))).toBe(
+      true,
+    );
+  });
+
+  it("emits invalid-reserved-number for a non-integer float (1.5)", () => {
+    const { ctx, target, diags } = makeMockCtxWithDiagsForModel();
+    $d2Reserved(ctx, target, "", 1.5);
+    expect(diags.some((d) => d.code.endsWith("invalid-reserved-number"))).toBe(
+      true,
+    );
+  });
+
+  it("emits invalid-reserved-number for the reserved range lower bound (19000)", () => {
+    const { ctx, target, diags } = makeMockCtxWithDiagsForModel();
+    $d2Reserved(ctx, target, "", 19000);
+    expect(diags.some((d) => d.code.endsWith("invalid-reserved-number"))).toBe(
+      true,
+    );
+  });
+
+  it("emits invalid-reserved-number for a mid-reserved-range number (19500)", () => {
+    const { ctx, target, diags } = makeMockCtxWithDiagsForModel();
+    $d2Reserved(ctx, target, "", 19500);
+    expect(diags.some((d) => d.code.endsWith("invalid-reserved-number"))).toBe(
+      true,
+    );
+  });
+
+  it("emits invalid-reserved-number for the reserved range upper bound (19999)", () => {
+    const { ctx, target, diags } = makeMockCtxWithDiagsForModel();
+    $d2Reserved(ctx, target, "", 19999);
+    expect(diags.some((d) => d.code.endsWith("invalid-reserved-number"))).toBe(
+      true,
+    );
+  });
+
+  it("emits invalid-reserved-number for one over the proto3 maximum (536870912)", () => {
+    const { ctx, target, diags } = makeMockCtxWithDiagsForModel();
+    $d2Reserved(ctx, target, "", 536870912);
+    expect(diags.some((d) => d.code.endsWith("invalid-reserved-number"))).toBe(
+      true,
+    );
+  });
+
+  it("emits one diagnostic per invalid number when multiple are supplied", () => {
+    const { ctx, target, diags } = makeMockCtxWithDiagsForModel();
+    $d2Reserved(ctx, target, "", -1, 0, 19000);
+    expect(
+      diags.filter((d) => d.code.endsWith("invalid-reserved-number")).length,
+    ).toBe(3);
+  });
+
+  it("accepts valid numbers and stores them without firing a diagnostic", () => {
+    const { ctx, target, diags } = makeMockCtxWithDiagsForModel();
+    $d2Reserved(ctx, target, "", 1, 18999, 20000, 536870911);
+    expect(diags).toHaveLength(0);
+  });
+
+  it("still stores numbers (including invalid) in the state map — report-and-continue", () => {
+    // TypeSpec convention: decorators store state even after a diagnostic fires
+    // so downstream passes see consistent program state. Use makeMockContext
+    // (which provides direct map access) plus a patched reportDiagnostic so
+    // we can inspect both the stored payload and the captured diagnostic.
+    const model = {} as unknown as import("@typespec/compiler").Model;
+    const { ctx, maps } = makeMockContext();
+    const diags: Array<{ code: string }> = [];
+    (
+      ctx.program as unknown as {
+        reportDiagnostic: (d: { code: string }) => void;
+      }
+    ).reportDiagnostic = (d) => {
+      diags.push(d);
+    };
+    $d2Reserved(ctx, model, "", -1, 5);
+    expect(diags.some((d) => d.code.endsWith("invalid-reserved-number"))).toBe(
+      true,
+    );
+    const payload = maps.get(D2_RESERVED_KEY)!.get(model) as ReservedPayload;
+    expect(payload.numbers).toEqual([-1, 5]);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Adversarial tests: validateReservedName — invalid proto3 identifiers
+// A reserved name that fails the /^[A-Za-z_][A-Za-z0-9_]*$/ pattern would
+// inject unexpected content into the emitted `reserved "..."` proto3
+// declaration. Every invalid class must fire `invalid-reserved-name`.
+// ---------------------------------------------------------------------------
+
+describe("directUnit_validateReservedName_Invalid", () => {
+  it("emits invalid-reserved-name for an empty string (post-split empty token)", () => {
+    const { ctx, target, diags } = makeMockCtxWithDiagsForModel();
+    validateReservedName(ctx, target, "");
+    expect(diags.some((d) => d.code.endsWith("invalid-reserved-name"))).toBe(
+      true,
+    );
+  });
+
+  it("emits invalid-reserved-name for a name starting with a digit (leading digit)", () => {
+    const { ctx, target, diags } = makeMockCtxWithDiagsForModel();
+    validateReservedName(ctx, target, "1old_field");
+    expect(diags.some((d) => d.code.endsWith("invalid-reserved-name"))).toBe(
+      true,
+    );
+  });
+
+  it("emits invalid-reserved-name for a name containing a space", () => {
+    const { ctx, target, diags } = makeMockCtxWithDiagsForModel();
+    validateReservedName(ctx, target, "old field");
+    expect(diags.some((d) => d.code.endsWith("invalid-reserved-name"))).toBe(
+      true,
+    );
+  });
+
+  it("emits invalid-reserved-name for a name containing a semicolon (proto injection risk)", () => {
+    const { ctx, target, diags } = makeMockCtxWithDiagsForModel();
+    validateReservedName(ctx, target, "old_field;");
+    expect(diags.some((d) => d.code.endsWith("invalid-reserved-name"))).toBe(
+      true,
+    );
+  });
+
+  it("emits invalid-reserved-name for a name containing a newline (proto injection risk)", () => {
+    const { ctx, target, diags } = makeMockCtxWithDiagsForModel();
+    validateReservedName(ctx, target, "old_field\nnew_line");
+    expect(diags.some((d) => d.code.endsWith("invalid-reserved-name"))).toBe(
+      true,
+    );
+  });
+
+  it("emits invalid-reserved-name for a name containing a hyphen", () => {
+    const { ctx, target, diags } = makeMockCtxWithDiagsForModel();
+    validateReservedName(ctx, target, "old-field");
+    expect(diags.some((d) => d.code.endsWith("invalid-reserved-name"))).toBe(
+      true,
+    );
+  });
+
+  it("emits invalid-reserved-name for a name containing a dot", () => {
+    const { ctx, target, diags } = makeMockCtxWithDiagsForModel();
+    validateReservedName(ctx, target, "old.field");
+    expect(diags.some((d) => d.code.endsWith("invalid-reserved-name"))).toBe(
+      true,
+    );
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Acceptance tests: validateReservedName — valid proto3 identifiers pass
+// ---------------------------------------------------------------------------
+
+describe("directUnit_validateReservedName_Valid", () => {
+  it("accepts a lowercase snake_case name (typical proto field name)", () => {
+    const { ctx, target, diags } = makeMockCtxWithDiagsForModel();
+    validateReservedName(ctx, target, "old_field");
+    expect(diags).toHaveLength(0);
+  });
+
+  it("accepts a name starting with an underscore", () => {
+    const { ctx, target, diags } = makeMockCtxWithDiagsForModel();
+    validateReservedName(ctx, target, "_reserved");
+    expect(diags).toHaveLength(0);
+  });
+
+  it("accepts a name with digits in non-leading position", () => {
+    const { ctx, target, diags } = makeMockCtxWithDiagsForModel();
+    validateReservedName(ctx, target, "field2");
+    expect(diags).toHaveLength(0);
+  });
+
+  it("accepts a single uppercase letter name", () => {
+    const { ctx, target, diags } = makeMockCtxWithDiagsForModel();
+    validateReservedName(ctx, target, "X");
+    expect(diags).toHaveLength(0);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Integration: $d2Reserved fires invalid-reserved-name for invalid name tokens
+// Validates the per-token name check runs inside the decorator (not just the
+// standalone validateReservedName helper).
+// ---------------------------------------------------------------------------
+
+describe("directUnit_$d2Reserved_InvalidNames", () => {
+  it("emits invalid-reserved-name when the names string contains a leading-digit token", () => {
+    const { ctx, target, diags } = makeMockCtxWithDiagsForModel();
+    $d2Reserved(ctx, target, "valid_name, 1bad_name", 1);
+    expect(diags.some((d) => d.code.endsWith("invalid-reserved-name"))).toBe(
+      true,
+    );
+  });
+
+  it("emits invalid-reserved-name for a token with invalid chars — no diagnostic for the valid sibling", () => {
+    const { ctx, target, diags } = makeMockCtxWithDiagsForModel();
+    $d2Reserved(ctx, target, "valid_field, bad;field", 2);
+
+    const nameFindings = diags.filter((d) =>
+      d.code.endsWith("invalid-reserved-name"),
+    );
+
+    expect(nameFindings).toHaveLength(1);
+  });
+
+  it("still stores all name tokens in the state map even when one is invalid — report-and-continue", () => {
+    const model = {} as unknown as import("@typespec/compiler").Model;
+    const { ctx, maps } = makeMockContext();
+    const diags: Array<{ code: string }> = [];
+    (
+      ctx.program as unknown as {
+        reportDiagnostic: (d: { code: string }) => void;
+      }
+    ).reportDiagnostic = (d) => {
+      diags.push(d);
+    };
+    $d2Reserved(ctx, model, "good_name, 1bad", 3);
+    expect(diags.some((d) => d.code.endsWith("invalid-reserved-name"))).toBe(
+      true,
+    );
+    const payload = maps.get(D2_RESERVED_KEY)!.get(model) as ReservedPayload;
+    expect(payload.names).toEqual(["good_name", "1bad"]);
+  });
+
+  it("emits no name diagnostic when all name tokens are valid proto3 identifiers", () => {
+    const { ctx, target, diags } = makeMockCtxWithDiagsForModel();
+    $d2Reserved(ctx, target, "old_field, removed_slot, _legacy", 4, 5);
+
+    const nameFindings = diags.filter((d) =>
+      d.code.endsWith("invalid-reserved-name"),
+    );
+
+    expect(nameFindings).toHaveLength(0);
+  });
+});
+
+// ---------------------------------------------------------------------------
 // Unit tests: $lib descriptor
 // ---------------------------------------------------------------------------
 
@@ -465,12 +859,13 @@ it("lib_HasExpectedPackageName", () => {
 // Unit tests: $decorators registry key-set pin (§1.18 per-VALUE pin)
 // ---------------------------------------------------------------------------
 
-it("decorators_RegistryMapsAllSixteenDecoratorsUnderD2Namespace", () => {
+it("decorators_RegistryMapsAllEighteenDecoratorsUnderD2Namespace", () => {
   const keys = Object.keys($decorators.D2).sort();
   expect(keys).toEqual([
     "d2Audience",
     "d2Command",
     "d2Csrf",
+    "d2Field",
     "d2GrpcMethod",
     "d2Harmless",
     "d2Idempotent",
@@ -481,6 +876,7 @@ it("decorators_RegistryMapsAllSixteenDecoratorsUnderD2Namespace", () => {
     "d2Redact",
     "d2RequireAllScopes",
     "d2RequireAnyScope",
+    "d2Reserved",
     "d2Resilience",
     "d2ServedBy",
     "d2ServerPush",
@@ -1180,6 +1576,134 @@ describe("directUnit_validateServedBy", () => {
     const { ctx, target, diags } = makeMockCtxWithDiags();
     validateServedBy(ctx, target, "   ");
     expect(diags.some((d) => d.code.endsWith("empty-served-by"))).toBe(true);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Helper: makeMockCtxWithDiagsForProperty — same shape as makeMockCtxWithDiags
+// but the target is typed as ModelProperty (required by validateFieldNumber).
+// ---------------------------------------------------------------------------
+
+function makeMockCtxWithDiagsForProperty(): {
+  ctx: DecoratorContext;
+  target: ModelProperty;
+  diags: Array<{ code: string }>;
+} {
+  const diags: Array<{ code: string }> = [];
+  const storeMap = new Map<symbol, Map<object, unknown>>();
+  const ctx = {
+    program: {
+      stateMap(key: symbol): Map<object, unknown> {
+        if (!storeMap.has(key)) storeMap.set(key, new Map());
+        return storeMap.get(key)!;
+      },
+      reportDiagnostic(diag: { code: string }): void {
+        diags.push(diag);
+      },
+    },
+  } as unknown as DecoratorContext;
+  const target = {} as unknown as ModelProperty;
+  return { ctx, target, diags };
+}
+
+// ---------------------------------------------------------------------------
+// Direct unit tests: validateFieldNumber
+// Exercises each invalid class and the boundary values that define them.
+// ---------------------------------------------------------------------------
+
+describe("directUnit_validateFieldNumber", () => {
+  it("no diagnostic for minimum valid field number 1", () => {
+    const { ctx, target, diags } = makeMockCtxWithDiagsForProperty();
+    validateFieldNumber(ctx, target, 1);
+    expect(diags).toHaveLength(0);
+  });
+
+  it("no diagnostic for mid-range valid number 100", () => {
+    const { ctx, target, diags } = makeMockCtxWithDiagsForProperty();
+    validateFieldNumber(ctx, target, 100);
+    expect(diags).toHaveLength(0);
+  });
+
+  it("no diagnostic for the number just below the reserved range 18999", () => {
+    const { ctx, target, diags } = makeMockCtxWithDiagsForProperty();
+    validateFieldNumber(ctx, target, 18999);
+    expect(diags).toHaveLength(0);
+  });
+
+  it("no diagnostic for the number just above the reserved range 20000", () => {
+    const { ctx, target, diags } = makeMockCtxWithDiagsForProperty();
+    validateFieldNumber(ctx, target, 20000);
+    expect(diags).toHaveLength(0);
+  });
+
+  it("no diagnostic for the proto3 maximum valid field number 536870911", () => {
+    const { ctx, target, diags } = makeMockCtxWithDiagsForProperty();
+    validateFieldNumber(ctx, target, 536870911);
+    expect(diags).toHaveLength(0);
+  });
+
+  it("emits invalid-field-number for zero (below minimum)", () => {
+    const { ctx, target, diags } = makeMockCtxWithDiagsForProperty();
+    validateFieldNumber(ctx, target, 0);
+    expect(diags.some((d) => d.code.endsWith("invalid-field-number"))).toBe(
+      true,
+    );
+  });
+
+  it("emits invalid-field-number for -1 (negative)", () => {
+    const { ctx, target, diags } = makeMockCtxWithDiagsForProperty();
+    validateFieldNumber(ctx, target, -1);
+    expect(diags.some((d) => d.code.endsWith("invalid-field-number"))).toBe(
+      true,
+    );
+  });
+
+  it("emits invalid-field-number for 1.5 (non-integer float)", () => {
+    const { ctx, target, diags } = makeMockCtxWithDiagsForProperty();
+    validateFieldNumber(ctx, target, 1.5);
+    expect(diags.some((d) => d.code.endsWith("invalid-field-number"))).toBe(
+      true,
+    );
+  });
+
+  it("emits invalid-field-number for NaN (not a number)", () => {
+    const { ctx, target, diags } = makeMockCtxWithDiagsForProperty();
+    validateFieldNumber(ctx, target, NaN);
+    expect(diags.some((d) => d.code.endsWith("invalid-field-number"))).toBe(
+      true,
+    );
+  });
+
+  it("emits invalid-field-number for the reserved range lower bound 19000", () => {
+    const { ctx, target, diags } = makeMockCtxWithDiagsForProperty();
+    validateFieldNumber(ctx, target, 19000);
+    expect(diags.some((d) => d.code.endsWith("invalid-field-number"))).toBe(
+      true,
+    );
+  });
+
+  it("emits invalid-field-number for a mid-reserved-range number 19500", () => {
+    const { ctx, target, diags } = makeMockCtxWithDiagsForProperty();
+    validateFieldNumber(ctx, target, 19500);
+    expect(diags.some((d) => d.code.endsWith("invalid-field-number"))).toBe(
+      true,
+    );
+  });
+
+  it("emits invalid-field-number for the reserved range upper bound 19999", () => {
+    const { ctx, target, diags } = makeMockCtxWithDiagsForProperty();
+    validateFieldNumber(ctx, target, 19999);
+    expect(diags.some((d) => d.code.endsWith("invalid-field-number"))).toBe(
+      true,
+    );
+  });
+
+  it("emits invalid-field-number for one over the proto3 maximum 536870912", () => {
+    const { ctx, target, diags } = makeMockCtxWithDiagsForProperty();
+    validateFieldNumber(ctx, target, 536870912);
+    expect(diags.some((d) => d.code.endsWith("invalid-field-number"))).toBe(
+      true,
+    );
   });
 });
 
@@ -2792,6 +3316,117 @@ describe("d2InProcess_OnNonOperationIsCompilerRejected", () => {
   });
 });
 
+// --- @d2Field integration rejection + acceptance ---
+
+describe("d2Field_RejectsInvalidFieldNumbers", () => {
+  it("emits invalid-field-number and hasError() for field number 0", async () => {
+    await runner.diagnose(`
+      model Message {
+        @d2Field(0) badField: string;
+      }
+    `);
+    expect(getDiagCodes(runner)).toContain(
+      "@d2/typespec-decorators/invalid-field-number",
+    );
+    expect(runner.program.hasError()).toBe(true);
+  });
+
+  it("emits invalid-field-number and hasError() for a negative field number", async () => {
+    await runner.diagnose(`
+      model Message {
+        @d2Field(-1) badField: string;
+      }
+    `);
+    expect(getDiagCodes(runner)).toContain(
+      "@d2/typespec-decorators/invalid-field-number",
+    );
+    expect(runner.program.hasError()).toBe(true);
+  });
+
+  it("emits invalid-field-number and hasError() for the protobuf reserved range lower bound 19000", async () => {
+    await runner.diagnose(`
+      model Message {
+        @d2Field(19000) badField: string;
+      }
+    `);
+    expect(getDiagCodes(runner)).toContain(
+      "@d2/typespec-decorators/invalid-field-number",
+    );
+    expect(runner.program.hasError()).toBe(true);
+  });
+
+  it("emits invalid-field-number and hasError() for the protobuf reserved range upper bound 19999", async () => {
+    await runner.diagnose(`
+      model Message {
+        @d2Field(19999) badField: string;
+      }
+    `);
+    expect(getDiagCodes(runner)).toContain(
+      "@d2/typespec-decorators/invalid-field-number",
+    );
+    expect(runner.program.hasError()).toBe(true);
+  });
+
+  it("emits invalid-field-number and hasError() for one over the proto3 maximum 536870912", async () => {
+    await runner.diagnose(`
+      model Message {
+        @d2Field(536870912) badField: string;
+      }
+    `);
+    expect(getDiagCodes(runner)).toContain(
+      "@d2/typespec-decorators/invalid-field-number",
+    );
+    expect(runner.program.hasError()).toBe(true);
+  });
+});
+
+describe("d2Field_AcceptsValidFieldNumbers", () => {
+  it("produces no invalid-field-number diagnostic for field number 1 (minimum)", async () => {
+    await runner.diagnose(`
+      model Message {
+        @d2Field(1) validField: string;
+      }
+    `);
+    expect(getDiagCodes(runner)).not.toContain(
+      "@d2/typespec-decorators/invalid-field-number",
+    );
+  });
+
+  it("produces no invalid-field-number diagnostic for field number 18999 (just below reserved range)", async () => {
+    await runner.diagnose(`
+      model Message {
+        @d2Field(18999) validField: string;
+      }
+    `);
+    expect(getDiagCodes(runner)).not.toContain(
+      "@d2/typespec-decorators/invalid-field-number",
+    );
+  });
+
+  it("produces no invalid-field-number diagnostic for field number 20000 (just above reserved range)", async () => {
+    await runner.diagnose(`
+      model Message {
+        @d2Field(20000) validField: string;
+      }
+    `);
+    expect(getDiagCodes(runner)).not.toContain(
+      "@d2/typespec-decorators/invalid-field-number",
+    );
+  });
+
+  it("produces no invalid-field-number diagnostic for the proto3 maximum field number 536870911", async () => {
+    await runner.diagnose(`
+      model Message {
+        @d2Field(536870911) validField: string;
+      }
+    `);
+    expect(getDiagCodes(runner)).not.toContain(
+      "@d2/typespec-decorators/invalid-field-number",
+    );
+    expect(runner.program.stateMap(D2_FIELD_KEY).size).toBeGreaterThan(0);
+  });
+});
+
 it("lib_InProcessDiagnosticHasErrorSeverity", () => {
   const catalog = $lib.diagnostics as Record<
     string,
@@ -2809,6 +3444,14 @@ it("lib_CategoryDiagnosticsHaveErrorSeverity", () => {
   expect(catalog["category-exclusive"]?.severity).toBe("error");
   expect(catalog["internal-op-exposed"]?.severity).toBe("error");
   expect(catalog["exposure-or-internal-required"]?.severity).toBe("error");
+});
+
+it("lib_InvalidFieldNumberDiagnosticHasErrorSeverity", () => {
+  const catalog = $lib.diagnostics as Record<
+    string,
+    { severity: string } | undefined
+  >;
+  expect(catalog["invalid-field-number"]?.severity).toBe("error");
 });
 
 // ===========================================================================

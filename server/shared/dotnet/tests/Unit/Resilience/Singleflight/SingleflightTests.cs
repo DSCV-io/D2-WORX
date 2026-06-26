@@ -292,11 +292,16 @@ public sealed class SingleflightTests
         // together must guarantee exactly ONE operation invocation. All
         // 200 callers must see the same returned value.
         //
-        // Test discipline: use sf.Size polling (not Task.Delay) to verify the
-        // in-flight window is open before releasing the gate. Pre-warm the
-        // threadpool because the default growth rate (one worker per ~0.5s)
-        // would let late callers arrive AFTER the operation already returned,
-        // each starting their own invocation.
+        // Determinism guarantee: Singleflight.ExecuteAsync is an async method
+        // whose first synchronous operation is r_inflight.GetOrAdd (the join
+        // into the shared in-flight entry). No await precedes GetOrAdd, so
+        // calling ExecuteAsync and capturing the returned ValueTask — without
+        // awaiting it — is proof the caller has already joined. Signalling
+        // AFTER capturing the ValueTask therefore guarantees all 200 callers
+        // are joined before the gate opens: no SpinWait/Yield timing guess
+        // is needed. Pre-warm the threadpool because the default growth rate
+        // (one worker per ~0.5s) would let late callers arrive AFTER the
+        // operation already returned, each starting their own invocation.
         ThreadPool.GetMinThreads(out var origWorker, out var origIo);
         ThreadPool.SetMinThreads(Math.Max(origWorker, 256), Math.Max(origIo, 256));
         try
@@ -306,6 +311,12 @@ public sealed class SingleflightTests
             var gate = new TaskCompletionSource<int>();
             const int concurrent_threads = 200;
 
+            // Signal AFTER capturing the ValueTask from ExecuteAsync (not before
+            // calling it). GetOrAdd runs synchronously as the first operation
+            // inside ExecuteAsync, so capturing the ValueTask proves the join has
+            // already happened. All 200 signals == all 200 callers joined.
+            var allJoined = new SemaphoreSlim(0, concurrent_threads);
+
             async ValueTask<int> Operation(CancellationToken ct)
             {
                 Interlocked.Increment(ref invocations);
@@ -313,16 +324,19 @@ public sealed class SingleflightTests
             }
 
             var tasks = Enumerable.Range(0, concurrent_threads)
-                .Select(_ => Task.Run(async () => await sf.ExecuteAsync("k", Operation)))
+                .Select(_ => Task.Run(async () =>
+                {
+                    var vt = sf.ExecuteAsync("k", Operation); // join is synchronous; GetOrAdd already ran
+                    allJoined.Release();                       // signal AFTER join, not before
+                    return await vt;
+                }))
                 .ToArray();
 
-            // Wait for the in-flight entry to publish, then give late callers
-            // a generous window to dedup onto it. Operation is gate-blocked,
-            // so Size stays at 1 until SetResult.
-            SpinWait.SpinUntil(() => sf.Size == 1, TimeSpan.FromSeconds(5))
-                .Should().BeTrue("singleflight should publish the in-flight entry quickly");
-            await Task.Delay(200);
+            // Wait for all 200 callers to have joined — now guaranteed, not polled.
+            for (var i = 0; i < concurrent_threads; i++)
+                await allJoined.WaitAsync();
 
+            // All callers are joined to the single in-flight entry.
             sf.Size.Should().Be(1);
             gate.SetResult(42);
 

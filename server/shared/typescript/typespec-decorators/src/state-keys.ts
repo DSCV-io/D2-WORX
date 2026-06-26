@@ -76,6 +76,31 @@ export const D2_QUERY_KEY = Symbol.for("D2.d2Query");
 export const D2_INTERNAL_KEY = Symbol.for("D2.d2Internal");
 
 /**
+ * State key for @d2Field — stores the author-pinned proto field number (integer ≥ 1)
+ * on the marked model property. Emitters read back:
+ * program.stateMap(D2_FIELD_KEY).get(prop) → number.
+ */
+export const D2_FIELD_KEY = Symbol.for("D2.d2Field");
+
+/**
+ * State key for @d2Reserved — stores the author-declared reserved list
+ * ({ numbers: number[], names: string[] }) on the marked model. Emitters read back:
+ * program.stateMap(D2_RESERVED_KEY).get(model) → ReservedPayload.
+ */
+export const D2_RESERVED_KEY = Symbol.for("D2.d2Reserved");
+
+/**
+ * Payload stored by @d2Reserved: the ordered list of reserved field numbers
+ * (removed slots) and reserved field names (removed or renamed fields).
+ * Both lists are stored in authoring order; the proto emitter sorts, deduplicates,
+ * and range-collapses numbers before emission.
+ */
+export interface ReservedPayload {
+  readonly numbers: number[];
+  readonly names: string[];
+}
+
+/**
  * Payload stored by @d2GrpcMethod: the gRPC service name, method name, and
  * streaming mode. `streaming` is one of `unary | serverStream | clientStream |
  * bidiStream`; defaults to `"unary"` when no arg is provided.

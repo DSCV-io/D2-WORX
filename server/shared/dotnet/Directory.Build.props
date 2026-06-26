@@ -1,0 +1,83 @@
+<!--
+Copyright (c) DCSV. All rights reserved.
+-->
+<Project>
+  <!--
+    Shared-tree packaging properties. Applies to every .csproj under
+    server/shared/dotnet/ (the consumable D2.Shared.* libraries, the
+    source-gen shells, and the test project).
+
+    MSBuild auto-applies only the NEAREST Directory.Build.props up the tree,
+    so this file must explicitly import the solution-wide
+    server/Directory.Build.props — otherwise it would shadow it and the shared
+    libs would lose TargetFramework / Nullable / StyleCop / warnings-as-errors.
+  -->
+  <Import Project="$([MSBuild]::GetPathOfFileAbove('Directory.Build.props', '$(MSBuildThisFileDirectory)../'))" />
+
+  <PropertyGroup>
+    <!--
+      Default OFF. A package opts in with <IsPackable>true</IsPackable> in its
+      own .csproj. This keeps the source-gen shells (they ship inside their host
+      nupkg as an analyzer asset, never standalone) and the test project from
+      packing.
+    -->
+    <IsPackable>false</IsPackable>
+
+    <!-- Shared NuGet authorship + provenance metadata, identical across packages. -->
+    <Authors>DCSV</Authors>
+    <Company>DCSV</Company>
+    <Product>D2-WORX</Product>
+    <RepositoryUrl>https://github.com/DCSV-io/D2-WORX</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageProjectUrl>https://github.com/DCSV-io/D2-WORX</PackageProjectUrl>
+
+    <!--
+      PolyForm Strict is not an OSI/SPDX identifier, so the license is expressed
+      as a packed file rather than a <PackageLicenseExpression>. The file itself
+      is packed into the nupkg root by the ItemGroup below.
+    -->
+    <PackageLicenseFile>LICENSE.md</PackageLicenseFile>
+  </PropertyGroup>
+
+  <!--
+    README packaging is wired per-csproj (each consumable that carries a README
+    sets <PackageReadmeFile> + packs its own README.md) rather than defaulted
+    here, so a consumable without a README does not trip NU5039.
+  -->
+
+  <ItemGroup Condition="'$(IsPackable)' == 'true'">
+    <!--
+      Pack the repo-root LICENSE.md into the nupkg root for every consumable.
+      D2RepoRoot is defined by the imported solution-wide props.
+    -->
+    <None Include="$(D2RepoRoot)LICENSE.md" Pack="true" PackagePath="\" Visible="false" />
+  </ItemGroup>
+
+  <!--
+    Public-API surface tracking for every consumable (IsPackable=true) under the
+    shared tree. The condition keeps the source-gen shells (IsPackable=false,
+    they ship inside their host nupkg as analyzer assets) and the test project
+    out of scope — they never publish, so they have no consumer API surface to
+    track. The KeyCustodian client sits OUTSIDE this tree and wires the same
+    analyzer + AdditionalFiles inline in its own csproj.
+
+    Microsoft.CodeAnalysis.PublicApiAnalyzers is a build-time Roslyn analyzer
+    driven by two committed AdditionalFiles per project — PublicAPI.Shipped.txt
+    (the released surface) and PublicAPI.Unshipped.txt (new-but-unreleased
+    surface). Under the solution-wide TreatWarningsAsErrors policy its diagnostics
+    are build failures: RS0016 = a public member is missing from the declared API
+    (an unrecorded ADD); RS0017 = a recorded member no longer exists (a REMOVE).
+    The committed .txt pair IS the baseline — no published package is required.
+  -->
+  <ItemGroup Condition="'$(IsPackable)' == 'true'">
+    <PackageReference Include="Microsoft.CodeAnalysis.PublicApiAnalyzers">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(IsPackable)' == 'true'">
+    <AdditionalFiles Include="$(MSBuildProjectDirectory)\PublicAPI.Shipped.txt" />
+    <AdditionalFiles Include="$(MSBuildProjectDirectory)\PublicAPI.Unshipped.txt" />
+  </ItemGroup>
+</Project>

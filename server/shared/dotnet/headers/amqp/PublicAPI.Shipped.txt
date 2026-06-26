@@ -1,0 +1,12 @@
+#nullable enable
+D2.Shared.Headers.Amqp.AmqpHeaders
+const D2.Shared.Headers.Amqp.AmqpHeaders.CONTENT_TYPE = "content-type" -> string!
+const D2.Shared.Headers.Amqp.AmqpHeaders.ENCRYPTION_KID = "x-d2-encryption-kid" -> string!
+const D2.Shared.Headers.Amqp.AmqpHeaders.FAILURE_REASON = "x-d2-failure-reason" -> string!
+const D2.Shared.Headers.Amqp.AmqpHeaders.MESSAGE_ID = "message-id" -> string!
+const D2.Shared.Headers.Amqp.AmqpHeaders.PROPAGATED_CONTEXT = "x-d2-context" -> string!
+const D2.Shared.Headers.Amqp.AmqpHeaders.PROTO_TYPE = "x-proto-type" -> string!
+const D2.Shared.Headers.Amqp.AmqpHeaders.TIMESTAMP = "timestamp" -> string!
+const D2.Shared.Headers.Amqp.AmqpHeaders.TRACEPARENT = "traceparent" -> string!
+const D2.Shared.Headers.Amqp.AmqpHeaders.TRACESTATE = "tracestate" -> string!
+static D2.Shared.Headers.Amqp.AmqpHeaders.AllAmqpHeaders.get -> System.Collections.Generic.IReadOnlyList<string!>!

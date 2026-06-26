@@ -47,7 +47,7 @@ public static class KeyCustodianGrpcClientsGeneratedServiceCollectionExtensions
         public IServiceCollection AddD2KeyCustodianGrpcClients(KeyCustodianGrpcClientOptions options)
         {
             // KeyCustodianSigner channel — address from host-supplied options.
-            services.AddGrpcClient<global::D2.Services.Protos.KeyCustodian.V1.KeyCustodianSigner.KeyCustodianSignerClient>(o =>
+            services.AddGrpcClient<global::D2.Services.Protos.KeyCustodian.V2Alpha.KeyCustodianSigner.KeyCustodianSignerClient>(o =>
                 o.Address = options.Address)
                 // Auto-wired outbound auth — host never chains this (fail-safe).
                 .AddD2ForwardedJwt()

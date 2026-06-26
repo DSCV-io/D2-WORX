@@ -55,7 +55,13 @@ internal static class AudiencesEmitter
                 continue;
             }
 
-            if (!Uri.TryCreate(audience.Url, UriKind.Absolute, out _))
+            // Uri.TryCreate with UriKind.Absolute has platform-dependent behaviour for
+            // root-relative paths such as "/relative/path": on some .NET versions it
+            // returns true (treating the leading slash as a host-relative file URI) while
+            // on others it correctly returns false.  Uri.IsWellFormedUriString follows
+            // RFC 3986 strictly — it requires a scheme component — and therefore rejects
+            // "/relative/path" consistently across all platforms and .NET versions.
+            if (!Uri.IsWellFormedUriString(audience.Url, UriKind.Absolute))
             {
                 diagnostics.Add(EmitDiagnostics.InvalidAudienceUrl(audience.Name, audience.Url));
                 continue;

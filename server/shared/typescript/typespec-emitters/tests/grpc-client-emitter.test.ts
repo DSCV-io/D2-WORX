@@ -29,7 +29,7 @@ import type { PredicateNode } from "@d2/typespec-decorators";
 
 const SOURCE = "contracts/typespec/fixtures/sign-shaped.tsp";
 const CLIENTS_NS = "D2.Edge.KeyCustodian.Clients";
-const PROTO_NS = "D2.Services.Protos.KeyCustodian.V1";
+const PROTO_NS = "D2.Services.Protos.KeyCustodian.V2Alpha";
 
 function makeSignOp(overrides: Partial<GrpcClientOp> = {}): GrpcClientOp {
   return {
@@ -256,7 +256,7 @@ describe("emitGrpcClient_ImplFile", () => {
   it("primary ctor has keyCustodianSignerStub (no r_ prefix)", () => {
     const content = getImpl();
     expect(content).toContain(
-      "global::D2.Services.Protos.KeyCustodian.V1.KeyCustodianSigner.KeyCustodianSignerClient keyCustodianSignerStub",
+      "global::D2.Services.Protos.KeyCustodian.V2Alpha.KeyCustodianSigner.KeyCustodianSignerClient keyCustodianSignerStub",
     );
   });
 
@@ -335,7 +335,7 @@ describe("emitGrpcClient_ImplFile", () => {
   it("uses global:: prefix on the stub type", () => {
     const content = getImpl();
     expect(content).toContain(
-      "global::D2.Services.Protos.KeyCustodian.V1.KeyCustodianSigner.KeyCustodianSignerClient",
+      "global::D2.Services.Protos.KeyCustodian.V2Alpha.KeyCustodianSigner.KeyCustodianSignerClient",
     );
   });
 });
@@ -391,11 +391,11 @@ describe("emitGrpcClient_MapperFile", () => {
   it("uses global:: aliases throughout mapper bodies", () => {
     const content = getMapper();
     expect(content).toContain(
-      "global::D2.Services.Protos.KeyCustodian.V1.SignRequest",
+      "global::D2.Services.Protos.KeyCustodian.V2Alpha.SignRequest",
     );
     expect(content).toContain("global::D2.Edge.KeyCustodian.Clients.SignInput");
     expect(content).toContain(
-      "global::D2.Services.Protos.KeyCustodian.V1.SignOutput",
+      "global::D2.Services.Protos.KeyCustodian.V2Alpha.SignOutput",
     );
     expect(content).toContain(
       "global::D2.Edge.KeyCustodian.Clients.SignOutput",
@@ -413,7 +413,7 @@ describe("emitGrpcClient_MapperFile", () => {
       "extension(global::D2.Edge.KeyCustodian.Clients.SignInput input)",
     );
     expect(content).toContain(
-      "extension(global::D2.Services.Protos.KeyCustodian.V1.SignOutput data)",
+      "extension(global::D2.Services.Protos.KeyCustodian.V2Alpha.SignOutput data)",
     );
   });
 });
@@ -477,7 +477,7 @@ describe("emitGrpcClient_MapperBytesField", () => {
     });
     const [, , mapper] = emitGrpcClient("KeyCustodian", [op], CLIENTS_NS);
     expect(mapper!.content).toContain(
-      "return new global::D2.Services.Protos.KeyCustodian.V1.SignRequest();",
+      "return new global::D2.Services.Protos.KeyCustodian.V2Alpha.SignRequest();",
     );
   });
 });
@@ -537,7 +537,7 @@ describe("emitGrpcClient_DiExtensionFile", () => {
   it("AddGrpcClient uses global:: alias to avoid namespace shadowing", () => {
     const content = getDi();
     expect(content).toContain(
-      "services.AddGrpcClient<global::D2.Services.Protos.KeyCustodian.V1.KeyCustodianSigner.KeyCustodianSignerClient>",
+      "services.AddGrpcClient<global::D2.Services.Protos.KeyCustodian.V2Alpha.KeyCustodianSigner.KeyCustodianSignerClient>",
     );
   });
 
@@ -870,7 +870,7 @@ describe("emitGrpcClient_DtoNamespaceNotSelf", () => {
     // The proto SERVICE namespace is NOT bare-imported (the stub is referenced via global::),
     // so the bare SignOutput in the pipeline generic args resolves to the DTO alias only.
     expect(impl!.content).not.toContain(
-      "using D2.Services.Protos.KeyCustodian.V1;",
+      "using D2.Services.Protos.KeyCustodian.V2Alpha;",
     );
   });
 
@@ -1265,6 +1265,31 @@ describe("emitGrpcClient_PredicateArm", () => {
     expect(plain[3]!.content).not.toContain(
       "ex is D2GeneratedBusinessRetrySignal",
     );
+  });
+
+  it("retryWhen-bearing op → impl emits OTel AddEvent on the retry-signal throw path", () => {
+    const op = makeSignOp({ retryWhenAst: predAst("result.success == false") });
+    const [, impl] = emitGrpcClient("KeyCustodian", [op], CLIENTS_NS);
+    const c = impl!.content;
+    // OTel instrumentation must appear immediately before the sentinel throw.
+    expect(c).toContain(
+      `Activity.Current?.AddEvent(new ActivityEvent("d2.grpc.retry_signal"));`,
+    );
+    // The throw must still follow.
+    expect(c).toContain(
+      "throw new D2GeneratedBusinessRetrySignal(businessResult.ToProto());",
+    );
+  });
+
+  it("retryWhen-bearing op → impl uses System.Diagnostics (required for Activity)", () => {
+    const op = makeSignOp({ retryWhenAst: predAst("result.success == false") });
+    const [, impl] = emitGrpcClient("KeyCustodian", [op], CLIENTS_NS);
+    expect(impl!.content).toContain("using System.Diagnostics;");
+  });
+
+  it("NO-predicate op → impl omits System.Diagnostics (no unused import)", () => {
+    const plain = emitGrpcClient("KeyCustodian", [makeSignOp()], CLIENTS_NS);
+    expect(plain[1]!.content).not.toContain("using System.Diagnostics;");
   });
 });
 

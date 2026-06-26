@@ -23,6 +23,7 @@ using Xunit;
 /// real <see cref="DefaultLocalCache"/> so the cache facade exercises the
 /// canonical underlying primitive instead of a mock.
 /// </summary>
+[Collection("OutboundTelemetrySerial")]
 public sealed class TokenExchangeCacheTests
 {
     // ----------------------------------------------------------------------

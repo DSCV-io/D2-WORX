@@ -43,4 +43,12 @@ Copyright (c) DCSV. All rights reserved.
   <ItemGroup>
     <InternalsVisibleTo Include="D2.Shared.Tests" />
   </ItemGroup>
+
+  <!-- Publish metadata (per-package semver + NuGet identity). -->
+  <PropertyGroup>
+    <Version>0.1.0</Version>
+    <PackageId>D2.Shared.WorkloadIdentity</PackageId>
+    <Description>SPIFFE workload-identity value object and peer validator for D2-WORX mTLS — the subject-alternative-name a leaf certificate carries and the trust-domain grammar.</Description>
+    <IsPackable>true</IsPackable>
+  </PropertyGroup>
 </Project>

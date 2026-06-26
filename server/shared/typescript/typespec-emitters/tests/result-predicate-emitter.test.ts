@@ -487,6 +487,36 @@ describe("resultPredicateEmitter_FieldShapeAndSentinel", () => {
     expect(files).toHaveLength(0);
   });
 
+  it("outputModel:undefined — envelope-only predicates emit without data-path access", () => {
+    // When the op's output model is not available (e.g. a void-result op or
+    // an envelope-only predicate), emitResultPredicates must still produce two
+    // well-formed files. Envelope fields (result.success, result.errorCode,
+    // result.statusCode, result.category) are resolved without the model;
+    // no data-path segment is accessed.
+    const files = emitResultPredicates({
+      opName: "doThing",
+      responseModelName: "Thing",
+      outputModel: undefined,
+      clientsNs: NS,
+      dtoCsharpNs: DTO_NS,
+      sourceSpec: SPEC,
+      retryWhen: ast("result.success == false"),
+      failWhen: undefined,
+    });
+
+    expect(files).toHaveLength(2);
+    const cs = files.find((f) => f.fileName.endsWith(".g.cs"))!.content;
+    const ts = files.find((f) => f.fileName.endsWith(".g.ts"))!.content;
+
+    // C# predicate references the envelope field (r.Success) without r.Data?.
+    expect(cs).toContain("r.Success == false");
+    expect(cs).not.toContain("r.Data");
+
+    // TS predicate references the envelope field (r.success) without r.data?.
+    expect(ts).toContain("r.success === false");
+    expect(ts).not.toContain("r.data");
+  });
+
   it("DTO namespace alias emitted only when it differs from the predicate ns", () => {
     const files = emitResultPredicates({
       opName: "doThing",
@@ -594,7 +624,7 @@ describe("predicateEmitWalk_ResolveSegment", () => {
 
   it("throws loud when the model is undefined (validator is the gate)", () => {
     expect(() => resolveSegment(undefined, "x")).toThrow(
-      /did not resolve to a model/,
+      /prior segment did not resolve to a model/,
     );
   });
 
@@ -605,7 +635,7 @@ describe("predicateEmitWalk_ResolveSegment", () => {
       "Out",
     );
     expect(() => resolveSegment(model, "nope")).toThrow(
-      /not a property of model/,
+      /is not a property of model/,
     );
   });
 });

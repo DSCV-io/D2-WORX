@@ -9,8 +9,8 @@
 
 namespace D2.Edge.Tests.TypeSpecGrpc.Generated;
 
-using SignRequest = global::D2.Services.Protos.KeyCustodian.V1.SignRequest;
-using SignResponse = global::D2.Services.Protos.KeyCustodian.V1.SignResponse;
+using SignRequest = global::D2.Services.Protos.KeyCustodian.V2Alpha.SignRequest;
+using SignResponse = global::D2.Services.Protos.KeyCustodian.V2Alpha.SignResponse;
 using SignInput = global::D2.Edge.Tests.TypeSpecDto.Generated.SignInput;
 using SignOutput = global::D2.Edge.Tests.TypeSpecDto.Generated.SignOutput;
 using D2.Shared.Result.Grpc;
@@ -19,7 +19,7 @@ using D2.Edge.Tests.TypeSpecRoute.Generated.Facade;
 
 /// <summary>Generated gRPC service for the <c>Sign</c> operation, delegating to <see cref="IKeyCustodianSignerFacade"/>.</summary>
 public sealed class KeyCustodianSignerService(IKeyCustodianSignerFacade facade)
-    : global::D2.Services.Protos.KeyCustodian.V1.KeyCustodianSigner.KeyCustodianSignerBase
+    : global::D2.Services.Protos.KeyCustodian.V2Alpha.KeyCustodianSigner.KeyCustodianSignerBase
 {
     /// <inheritdoc/>
     public override async Task<SignResponse> Sign(SignRequest request, ServerCallContext context)

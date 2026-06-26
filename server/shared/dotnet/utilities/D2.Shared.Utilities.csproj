@@ -9,6 +9,12 @@ Copyright (c) DCSV. All rights reserved.
   <ItemGroup>
     <PackageReference Include="dotenv.net" />
     <PackageReference Include="JetBrains.Annotations" />
+    <!--
+      Public-API surface tracking (Microsoft.CodeAnalysis.PublicApiAnalyzers +
+      the PublicAPI.Shipped.txt / PublicAPI.Unshipped.txt AdditionalFiles) is
+      wired centrally for every consumable in server/shared/dotnet/Directory.Build.props,
+      scoped to IsPackable=true. No per-project analyzer wiring is needed here.
+    -->
   </ItemGroup>
 
   <ItemGroup>
@@ -25,5 +31,18 @@ Copyright (c) DCSV. All rights reserved.
 
   <ItemGroup>
     <InternalsVisibleTo Include="D2.Shared.Tests" />
+  </ItemGroup>
+
+  <!-- Publish metadata (per-package semver + NuGet identity). -->
+  <PropertyGroup>
+    <Version>0.1.0</Version>
+    <PackageId>D2.Shared.Utilities</PackageId>
+    <Description>Foundational boundary helpers for D2-WORX — Falsey/Truthy semantics, string cleaning, parse-or-default extensions, indexed env-var parsing, and JSON-cycle-safe serialization.</Description>
+    <IsPackable>true</IsPackable>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="\" />
   </ItemGroup>
 </Project>

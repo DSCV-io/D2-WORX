@@ -17,6 +17,13 @@ Copyright (c) DCSV. All rights reserved.
   <ItemGroup>
     <!-- Analyzers (pulled in via Directory.Build.props) -->
     <PackageVersion Include="StyleCop.Analyzers" Version="1.2.0-beta.556" />
+    <!-- PublicApiAnalyzers — enforces public API surface tracking via PublicAPI.Shipped.txt
+         + PublicAPI.Unshipped.txt. Wired centrally for every consumable (IsPackable=true)
+         in server/shared/dotnet/Directory.Build.props, and inline in the KeyCustodian
+         client (which sits outside that tree); NOT enabled globally — the source-gen shells
+         and test projects are excluded. RS0016 flags new API absent from both files;
+         RS0017 flags removed API still in Shipped. -->
+    <PackageVersion Include="Microsoft.CodeAnalysis.PublicApiAnalyzers" Version="4.14.0" />
 
     <!-- JetBrains annotations ([MustDisposeResource], [Pure], etc.) — used across libs + tests -->
     <PackageVersion Include="JetBrains.Annotations" Version="2025.2.4" />

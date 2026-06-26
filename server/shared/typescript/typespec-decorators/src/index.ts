@@ -29,8 +29,11 @@ export {
   D2_COMMAND_KEY,
   D2_QUERY_KEY,
   D2_INTERNAL_KEY,
+  D2_FIELD_KEY,
+  D2_RESERVED_KEY,
   type GrpcMethodPayload,
   type IdempotentPayload,
+  type ReservedPayload,
 } from "./state-keys.js";
 
 export { $lib } from "./lib.js";
@@ -69,7 +72,11 @@ export {
 
 // Result-predicate validation surface — the decorator-body validator and the
 // native-TypeSpec model-graph walk (the $onValidate model arm).
-export { validateResultPredicate } from "./validators.js";
+export {
+  validateResultPredicate,
+  validateFieldNumber,
+  validateReservedNumber,
+} from "./validators.js";
 export {
   walkPredicateModel,
   type ModelWalkError,

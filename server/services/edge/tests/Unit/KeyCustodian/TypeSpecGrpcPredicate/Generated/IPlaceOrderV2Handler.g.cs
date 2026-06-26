@@ -8,9 +8,9 @@
 
 #nullable enable
 
-namespace D2.Edge.KeyCustodian.App.Application.Handlers.Commands.PlaceOrderV2;
+namespace D2.Edge.Tests.TypeSpecGrpcPredicate.Generated;
 
-using D2.Edge.KeyCustodian.Clients;
+using D2.Shared.Handler.Abstractions;
 
 /// <summary>Generated handler interface for the <c>PlaceOrderV2</c> operation.</summary>
 public interface IPlaceOrderV2Handler : IHandler<PlaceOrderV2Input, PlaceOrderV2Output>;

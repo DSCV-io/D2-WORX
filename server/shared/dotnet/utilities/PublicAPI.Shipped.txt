@@ -1,0 +1,101 @@
+#nullable enable
+D2.Shared.Utilities.Attributes.RedactDataAttribute
+D2.Shared.Utilities.Attributes.RedactDataAttribute.CustomReason.get -> string?
+D2.Shared.Utilities.Attributes.RedactDataAttribute.CustomReason.init -> void
+D2.Shared.Utilities.Attributes.RedactDataAttribute.Reason.get -> D2.Shared.Utilities.Enums.RedactReason
+D2.Shared.Utilities.Attributes.RedactDataAttribute.Reason.init -> void
+D2.Shared.Utilities.Attributes.RedactDataAttribute.RedactDataAttribute() -> void
+D2.Shared.Utilities.Configuration.ConnectionStringHelper
+D2.Shared.Utilities.Configuration.D2Env
+D2.Shared.Utilities.Diagnostics.SanitizedExceptionRender
+D2.Shared.Utilities.Enums.IsolationLevel
+D2.Shared.Utilities.Enums.IsolationLevel.ReadCommitted = 0 -> D2.Shared.Utilities.Enums.IsolationLevel
+D2.Shared.Utilities.Enums.IsolationLevel.ReadUncommitted = 1 -> D2.Shared.Utilities.Enums.IsolationLevel
+D2.Shared.Utilities.Enums.IsolationLevel.RepeatableRead = 2 -> D2.Shared.Utilities.Enums.IsolationLevel
+D2.Shared.Utilities.Enums.IsolationLevel.Serializable = 3 -> D2.Shared.Utilities.Enums.IsolationLevel
+D2.Shared.Utilities.Enums.RedactReason
+D2.Shared.Utilities.Enums.RedactReason.FinancialInformation = 2 -> D2.Shared.Utilities.Enums.RedactReason
+D2.Shared.Utilities.Enums.RedactReason.Other = 5 -> D2.Shared.Utilities.Enums.RedactReason
+D2.Shared.Utilities.Enums.RedactReason.PersonalInformation = 1 -> D2.Shared.Utilities.Enums.RedactReason
+D2.Shared.Utilities.Enums.RedactReason.SecretInformation = 3 -> D2.Shared.Utilities.Enums.RedactReason
+D2.Shared.Utilities.Enums.RedactReason.Unspecified = 0 -> D2.Shared.Utilities.Enums.RedactReason
+D2.Shared.Utilities.Enums.RedactReason.VerboseContent = 4 -> D2.Shared.Utilities.Enums.RedactReason
+D2.Shared.Utilities.Extensions.CleanEnumEmptyBehavior
+D2.Shared.Utilities.Extensions.CleanEnumEmptyBehavior.ReturnEmpty = 0 -> D2.Shared.Utilities.Extensions.CleanEnumEmptyBehavior
+D2.Shared.Utilities.Extensions.CleanEnumEmptyBehavior.ReturnNull = 1 -> D2.Shared.Utilities.Extensions.CleanEnumEmptyBehavior
+D2.Shared.Utilities.Extensions.CleanEnumEmptyBehavior.Throw = 2 -> D2.Shared.Utilities.Extensions.CleanEnumEmptyBehavior
+D2.Shared.Utilities.Extensions.CleanValueNullBehavior
+D2.Shared.Utilities.Extensions.CleanValueNullBehavior.RemoveNulls = 0 -> D2.Shared.Utilities.Extensions.CleanValueNullBehavior
+D2.Shared.Utilities.Extensions.CleanValueNullBehavior.ThrowOnNull = 1 -> D2.Shared.Utilities.Extensions.CleanValueNullBehavior
+D2.Shared.Utilities.Extensions.EnumExtensions
+D2.Shared.Utilities.Extensions.EnumExtensions.extension(string?)
+D2.Shared.Utilities.Extensions.EnumExtensions.extension(string?).TryParseTruthyNull<TEnum>(out TEnum? value) -> bool
+D2.Shared.Utilities.Extensions.EnumerableExtensions
+D2.Shared.Utilities.Extensions.EnumerableExtensions.extension<T>(System.Collections.Generic.IEnumerable<T>?)
+D2.Shared.Utilities.Extensions.EnumerableExtensions.extension<T>(System.Collections.Generic.IEnumerable<T>?).Clean(System.Func<T, T?>! cleaner, D2.Shared.Utilities.Extensions.CleanEnumEmptyBehavior enumEmptyBehavior = D2.Shared.Utilities.Extensions.CleanEnumEmptyBehavior.ReturnNull, D2.Shared.Utilities.Extensions.CleanValueNullBehavior valueNullBehavior = D2.Shared.Utilities.Extensions.CleanValueNullBehavior.RemoveNulls) -> System.Collections.Generic.IEnumerable<T>?
+D2.Shared.Utilities.Extensions.EnumerableExtensions.extension<T>(System.Collections.Generic.IEnumerable<T>?).Falsey() -> bool
+D2.Shared.Utilities.Extensions.EnumerableExtensions.extension<T>(System.Collections.Generic.IEnumerable<T>?).Truthy() -> bool
+D2.Shared.Utilities.Extensions.GuardExtensions
+D2.Shared.Utilities.Extensions.GuardExtensions.extension(System.Guid)
+D2.Shared.Utilities.Extensions.GuardExtensions.extension(System.Guid).ThrowIfFalsey(string? paramName = null) -> void
+D2.Shared.Utilities.Extensions.GuardExtensions.extension(System.Guid?)
+D2.Shared.Utilities.Extensions.GuardExtensions.extension(System.Guid?).ThrowIfFalsey(string? paramName = null) -> void
+D2.Shared.Utilities.Extensions.GuardExtensions.extension(string?)
+D2.Shared.Utilities.Extensions.GuardExtensions.extension(string?).ThrowIfFalsey(string? paramName = null) -> void
+D2.Shared.Utilities.Extensions.GuardExtensions.extension<T>(System.Collections.Generic.IEnumerable<T>?)
+D2.Shared.Utilities.Extensions.GuardExtensions.extension<T>(System.Collections.Generic.IEnumerable<T>?).ThrowIfFalsey(string? paramName = null) -> void
+D2.Shared.Utilities.Extensions.GuidExtensions
+D2.Shared.Utilities.Extensions.GuidExtensions.extension(System.Guid)
+D2.Shared.Utilities.Extensions.GuidExtensions.extension(System.Guid).Falsey() -> bool
+D2.Shared.Utilities.Extensions.GuidExtensions.extension(System.Guid).Truthy() -> bool
+D2.Shared.Utilities.Extensions.GuidExtensions.extension(System.Guid?)
+D2.Shared.Utilities.Extensions.GuidExtensions.extension(System.Guid?).Falsey() -> bool
+D2.Shared.Utilities.Extensions.GuidExtensions.extension(System.Guid?).Truthy() -> bool
+D2.Shared.Utilities.Extensions.GuidExtensions.extension(string?)
+D2.Shared.Utilities.Extensions.GuidExtensions.extension(string?).TryParseTruthyNull(out System.Guid? result) -> bool
+D2.Shared.Utilities.Extensions.StringExtensions
+D2.Shared.Utilities.Extensions.StringExtensions.extension(string?)
+D2.Shared.Utilities.Extensions.StringExtensions.extension(string?).CleanDisplayStr() -> string?
+D2.Shared.Utilities.Extensions.StringExtensions.extension(string?).CleanStr() -> string?
+D2.Shared.Utilities.Extensions.StringExtensions.extension(string?).Falsey() -> bool
+D2.Shared.Utilities.Extensions.StringExtensions.extension(string?).NormalizeForHash() -> string!
+D2.Shared.Utilities.Extensions.StringExtensions.extension(string?).ToNullIfEmpty() -> string?
+D2.Shared.Utilities.Extensions.StringExtensions.extension(string?).Truthy() -> bool
+D2.Shared.Utilities.Extensions.StringExtensions.extension(string?).TryParseEmail() -> D2.Shared.Result.D2Result<string!>!
+D2.Shared.Utilities.Extensions.StringExtensions.extension(string?).TryParsePhoneNumber() -> D2.Shared.Result.D2Result<string!>!
+D2.Shared.Utilities.Extensions.StringExtensions.extension(string?[]!)
+D2.Shared.Utilities.Extensions.StringExtensions.extension(string?[]!).GetNormalizedStrForHashing() -> string!
+D2.Shared.Utilities.Serialization.SerializerOptions
+static D2.Shared.Utilities.Configuration.ConnectionStringHelper.GetPostgres(string! envVar) -> string!
+static D2.Shared.Utilities.Configuration.ConnectionStringHelper.GetRabbitMq() -> string!
+static D2.Shared.Utilities.Configuration.ConnectionStringHelper.GetRedis() -> string!
+static D2.Shared.Utilities.Configuration.ConnectionStringHelper.ParsePostgresUri(string! value) -> string!
+static D2.Shared.Utilities.Configuration.ConnectionStringHelper.ParseRedisUri(string! value) -> string!
+static D2.Shared.Utilities.Configuration.D2Env.Load(params string![]! fileNames) -> void
+static D2.Shared.Utilities.Diagnostics.SanitizedExceptionRender.FirstFrame(System.Exception! ex) -> string!
+static D2.Shared.Utilities.Diagnostics.SanitizedExceptionRender.TypeName(System.Exception! ex) -> string!
+static D2.Shared.Utilities.Extensions.EnumExtensions.TryParseTruthyNull<TEnum>(this string? input, out TEnum? value) -> bool
+static D2.Shared.Utilities.Extensions.EnumerableExtensions.Clean<T>(this System.Collections.Generic.IEnumerable<T>? enumerable, System.Func<T, T?>! cleaner, D2.Shared.Utilities.Extensions.CleanEnumEmptyBehavior enumEmptyBehavior = D2.Shared.Utilities.Extensions.CleanEnumEmptyBehavior.ReturnNull, D2.Shared.Utilities.Extensions.CleanValueNullBehavior valueNullBehavior = D2.Shared.Utilities.Extensions.CleanValueNullBehavior.RemoveNulls) -> System.Collections.Generic.IEnumerable<T>?
+static D2.Shared.Utilities.Extensions.EnumerableExtensions.Falsey<T>(this System.Collections.Generic.IEnumerable<T>? enumerable) -> bool
+static D2.Shared.Utilities.Extensions.EnumerableExtensions.Truthy<T>(this System.Collections.Generic.IEnumerable<T>? enumerable) -> bool
+static D2.Shared.Utilities.Extensions.GuardExtensions.ThrowIfFalsey(this System.Guid value, string? paramName = null) -> void
+static D2.Shared.Utilities.Extensions.GuardExtensions.ThrowIfFalsey(this System.Guid? value, string? paramName = null) -> void
+static D2.Shared.Utilities.Extensions.GuardExtensions.ThrowIfFalsey(this string? value, string? paramName = null) -> void
+static D2.Shared.Utilities.Extensions.GuardExtensions.ThrowIfFalsey<T>(this System.Collections.Generic.IEnumerable<T>? value, string? paramName = null) -> void
+static D2.Shared.Utilities.Extensions.GuidExtensions.Falsey(this System.Guid guid) -> bool
+static D2.Shared.Utilities.Extensions.GuidExtensions.Falsey(this System.Guid? guid) -> bool
+static D2.Shared.Utilities.Extensions.GuidExtensions.Truthy(this System.Guid guid) -> bool
+static D2.Shared.Utilities.Extensions.GuidExtensions.Truthy(this System.Guid? guid) -> bool
+static D2.Shared.Utilities.Extensions.GuidExtensions.TryParseTruthyNull(this string? input, out System.Guid? result) -> bool
+static D2.Shared.Utilities.Extensions.StringExtensions.CleanDisplayStr(this string? str) -> string?
+static D2.Shared.Utilities.Extensions.StringExtensions.CleanStr(this string? str) -> string?
+static D2.Shared.Utilities.Extensions.StringExtensions.Falsey(this string? str) -> bool
+static D2.Shared.Utilities.Extensions.StringExtensions.GetNormalizedStrForHashing(this string?[]! parts) -> string!
+static D2.Shared.Utilities.Extensions.StringExtensions.NormalizeForHash(this string? str) -> string!
+static D2.Shared.Utilities.Extensions.StringExtensions.ToNullIfEmpty(this string? str) -> string?
+static D2.Shared.Utilities.Extensions.StringExtensions.Truthy(this string? str) -> bool
+static D2.Shared.Utilities.Extensions.StringExtensions.TryParseEmail(this string? email) -> D2.Shared.Result.D2Result<string!>!
+static D2.Shared.Utilities.Extensions.StringExtensions.TryParsePhoneNumber(this string? phoneNumber) -> D2.Shared.Result.D2Result<string!>!
+static readonly D2.Shared.Utilities.Serialization.SerializerOptions.SR_IgnoreCycles -> System.Text.Json.JsonSerializerOptions!
+static readonly D2.Shared.Utilities.Serialization.SerializerOptions.SR_Web -> System.Text.Json.JsonSerializerOptions!
+static readonly D2.Shared.Utilities.Serialization.SerializerOptions.SR_WebIgnoreNull -> System.Text.Json.JsonSerializerOptions!

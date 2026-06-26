@@ -761,6 +761,7 @@ function signWithKindReqFields(): readonly FieldInfo[] {
       repeated: false,
       optional: false,
       redact: false,
+      fieldNumber: 1,
     },
     {
       name: "keyKind",
@@ -773,6 +774,7 @@ function signWithKindReqFields(): readonly FieldInfo[] {
       optional: false,
       redact: false,
       enumRef: SIGN_WITH_KIND_KEY_KIND,
+      fieldNumber: 2,
     },
   ];
 }
@@ -789,6 +791,7 @@ function signWithKindRespFields(): readonly FieldInfo[] {
       repeated: false,
       optional: false,
       redact: false,
+      fieldNumber: 1,
     },
     {
       // Response enum (S-1) — exercises the client proto-string -> DTO-enum parse.
@@ -802,6 +805,7 @@ function signWithKindRespFields(): readonly FieldInfo[] {
       optional: false,
       redact: false,
       enumRef: SIGN_WITH_KIND_KEY_KIND,
+      fieldNumber: 2,
     },
   ];
 }
@@ -818,8 +822,10 @@ describe("byteParity_SignWithKindEnumGrpc_CommittedFixtures", () => {
       ENUM_SHAPED_SRC,
       "SignWithKindRequest",
       signWithKindReqFields(),
+      undefined,
       "SignWithKindOutput",
       signWithKindRespFields(),
+      undefined,
       [],
       () => {},
     );

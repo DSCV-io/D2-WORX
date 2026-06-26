@@ -1,0 +1,15 @@
+#nullable enable
+D2.Shared.Validation.DefaultEmailValidator
+D2.Shared.Validation.DefaultEmailValidator.DefaultEmailValidator() -> void
+D2.Shared.Validation.DefaultEmailValidator.Validate(string? email) -> D2.Shared.Result.D2Result<string!>!
+D2.Shared.Validation.DefaultPhoneValidator
+D2.Shared.Validation.DefaultPhoneValidator.DefaultPhoneValidator() -> void
+D2.Shared.Validation.DefaultPhoneValidator.Validate(string? phone, D2.Shared.Geo.Abstractions.CountryCode? defaultRegion = null) -> D2.Shared.Result.D2Result<string!>!
+D2.Shared.Validation.DefaultPostalCodeValidator
+D2.Shared.Validation.DefaultPostalCodeValidator.DefaultPostalCodeValidator() -> void
+D2.Shared.Validation.DefaultPostalCodeValidator.Validate(string? postalCode, D2.Shared.Geo.Abstractions.CountryCode? countryCode = null) -> D2.Shared.Result.D2Result<string!>!
+D2.Shared.Validation.DependencyInjection
+D2.Shared.Validation.DependencyInjection.extension(Microsoft.Extensions.DependencyInjection.IServiceCollection!)
+D2.Shared.Validation.DependencyInjection.extension(Microsoft.Extensions.DependencyInjection.IServiceCollection!).AddValidation() -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
+const D2.Shared.Validation.DefaultEmailValidator.EMAIL_PATTERN = "^(?=.{1,254}$)[A-Z0-9._%+\\-]{1,64}@[A-Z0-9](?:[A-Z0-9\\-]{0,61}[A-Z0-9])?(?:\\.[A-Z0-9](?:[A-Z0-9\\-]{0,61}[A-Z0-9])?)+$" -> string!
+static D2.Shared.Validation.DependencyInjection.AddValidation(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!

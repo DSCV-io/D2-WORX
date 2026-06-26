@@ -233,7 +233,8 @@ public sealed class ForwardedJwtTests
         // {@x} structural-capture path. Type-level [RedactData] → the entire
         // value is replaced with "[REDACTED: SecretInformation]"; the raw bytes
         // never appear.
-        RedactDataDestructuringPolicy.ClearCache();
+        // Cache is now instance-scoped: a fresh instance starts empty; no static
+        // ClearCache() call needed.
         var policy = new RedactDataDestructuringPolicy();
         var wrapper = ForwardedJwt.Create(_KNOWN_JWT).Data;
 

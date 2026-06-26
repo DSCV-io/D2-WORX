@@ -121,9 +121,11 @@ op enums(input: EnumInput): EnumOutput;
 /** gRPC request carrying a single REQUIRED enum (the proto string + parse bridge). */
 model SignWithKindInput {
   /** The key identifier selecting the signing key. */
+  @d2Field(1)
   kid: string;
 
   /** The signing-key kind — a proto `string` field on the wire (S-1 enum). */
+  @d2Field(2)
   keyKind: KeyKind;
 }
 
@@ -137,9 +139,11 @@ model SignWithKindInput {
  */
 model SignWithKindOutput {
   /** The signature over the payload, base64url-encoded (unpadded). */
+  @d2Field(1)
   signature: string;
 
   /** The signing-key kind echoed back — a proto `string` field parsed back to the C# enum (S-1). */
+  @d2Field(2)
   keyKind: KeyKind;
 }
 

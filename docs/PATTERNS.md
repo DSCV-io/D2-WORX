@@ -25,36 +25,37 @@ Directory of the load-bearing patterns + cross-cutting conventions every D²-WOR
 13. [Telemetry](#telemetry)
 14. [AspNetCore](#aspnetcore)
 15. [JWT inbound auth](#jwt-inbound-auth)
-16. [Deny-by-default endpoint boot guard](#deny-by-default-endpoint-boot-guard)
-17. [Translation — none on HTTP path (intentionally)](#translation--none-on-http-path-intentionally)
-18. [Configuration](#configuration)
-19. [i18n](#i18n)
-20. [Messaging](#messaging)
-21. [SAGA — cross-service synchronous compensation](#saga--cross-service-synchronous-compensation)
-22. [Multi-instance scaling](#multi-instance-scaling)
-23. [Mappers](#mappers)
-24. [Batch operations](#batch-operations)
-25. [Content-addressable entities](#content-addressable-entities)
-26. [Health checks](#health-checks)
-27. [PII redaction — `[RedactData]`](#pii-redaction--redactdata)
-28. [Anonymization — `[Anonymizable]` decoration + tiered reflection engine](#anonymization--anonymizable-decoration--tiered-reflection-engine)
-29. [Contact value objects](#contact-value-objects)
-30. [EF VO mapping — complex types + value converters](#ef-vo-mapping--complex-types--value-converters)
-31. [EF Core 10 complex-member-index limitation + `CreateD2Index`](#ef-core-10-complex-member-index-limitation--created2index)
-32. [Field-constraints codegen catalog](#field-constraints-codegen-catalog)
-33. [Spec-driven codegen — the cross-cutting pattern](#spec-driven-codegen--the-cross-cutting-pattern)
-34. [Domain validation — smart-constructor pattern](#domain-validation--smart-constructor-pattern)
-35. [Input validation](#input-validation)
-36. [Module-scoped cache-aside (build-once immutable static data)](#module-scoped-cache-aside-build-once-immutable-static-data)
-37. [Namespace-disambiguated extensions over a shared receiver](#namespace-disambiguated-extensions-over-a-shared-receiver)
-38. [Reference data](#reference-data)
+16. [Service-to-service auth (outbound)](#service-to-service-auth-outbound)
+17. [Deny-by-default endpoint boot guard](#deny-by-default-endpoint-boot-guard)
+18. [Translation — none on HTTP path (intentionally)](#translation--none-on-http-path-intentionally)
+19. [Configuration](#configuration)
+20. [i18n](#i18n)
+21. [Messaging](#messaging)
+22. [SAGA — cross-service synchronous compensation](#saga--cross-service-synchronous-compensation)
+23. [Multi-instance scaling](#multi-instance-scaling)
+24. [Mappers](#mappers)
+25. [Batch operations](#batch-operations)
+26. [Content-addressable entities](#content-addressable-entities)
+27. [Health checks](#health-checks)
+28. [PII redaction — `[RedactData]`](#pii-redaction--redactdata)
+29. [Anonymization — `[Anonymizable]` decoration + tiered reflection engine](#anonymization--anonymizable-decoration--tiered-reflection-engine)
+30. [Contact value objects](#contact-value-objects)
+31. [EF VO mapping — complex types + value converters](#ef-vo-mapping--complex-types--value-converters)
+32. [EF Core 10 complex-member-index limitation + `CreateD2Index`](#ef-core-10-complex-member-index-limitation--created2index)
+33. [Field-constraints codegen catalog](#field-constraints-codegen-catalog)
+34. [Spec-driven codegen — the cross-cutting pattern](#spec-driven-codegen--the-cross-cutting-pattern)
+35. [Domain validation — smart-constructor pattern](#domain-validation--smart-constructor-pattern)
+36. [Input validation](#input-validation)
+37. [Module-scoped cache-aside (build-once immutable static data)](#module-scoped-cache-aside-build-once-immutable-static-data)
+38. [Namespace-disambiguated extensions over a shared receiver](#namespace-disambiguated-extensions-over-a-shared-receiver)
+39. [Reference data](#reference-data)
     - [Endonym discipline](#endonym-discipline)
     - [Typed geo catalogs](#typed-geo-catalogs)
     - [Typed access on IRequestContext](#typed-access-on-irequestcontext)
     - [Geo name resolution at the integration boundary](#geo-name-resolution-at-the-integration-boundary)
     - [Reference data — user-preference cascades](#reference-data--user-preference-cascades)
-39. [Hash composition](#hash-composition)
-40. [Anti-patterns to actively avoid](#anti-patterns-to-actively-avoid)
+40. [Hash composition](#hash-composition)
+41. [Anti-patterns to actively avoid](#anti-patterns-to-actively-avoid)
 
 ---
 
@@ -515,6 +516,32 @@ Canonical: [`server/shared/dotnet/auth/core/README.md`](../server/shared/dotnet/
 
 ---
 
+## Service-to-service auth (outbound)
+
+Internal cross-process calls use three independent outbound factors from `D2.Shared.Auth.Outbound`, each opt-in:
+
+1. **Forwarded transaction-token (the business default).** Edge mints exactly one internal transaction-token at the trust boundary via RFC 8693 token exchange. Every downstream gRPC hop re-attaches that same token unchanged via `ForwardedJwtCallCredentials`. The downstream receiver re-validates the token and reads the user identity and scopes directly from it — no per-hop re-exchange. ([ADR-0022](adrs/0022-service-auth-mint-once-forward.md))
+
+2. **Workload certificate (mTLS identity).** The calling workload presents a short-lived leaf certificate on the outbound gRPC channel. The mutually-authenticated TLS channel establishes *which workload is calling*. `AddD2WorkloadCertificate` + `AddD2WorkloadCertificateOutbound` wire both sides. ([ADR-0023](adrs/0023-mtls-workload-identity.md))
+
+3. **RFC 8693 token exchange (explicit exception cases only).** The boundary mint that produces the forwarded token, plus the narrow set of legitimate exceptions: cross-trust-domain calls, justified scope narrowing, asynchronous scope reduction, and `act` chain establishment/extension. Never the per-hop business default — the forward-unchanged rail covers the common case.
+
+```csharp
+// Forwarded-JWT factor — wire in the composition root of each calling service.
+services.AddD2ForwardedJwtOutbound();
+
+// Workload-certificate factor.
+services.AddD2WorkloadCertificate(opts => { ... });
+services.AddD2WorkloadCertificateOutbound();
+
+// Token-exchange client (boundary mint + exception cases).
+services.AddD2AuthOutbound(opts => { opts.Issuer = ...; opts.ClientId = ...; opts.ClientSecret = ...; });
+```
+
+Canonical: [`server/shared/dotnet/auth/outbound/README.md`](../server/shared/dotnet/auth/outbound/README.md). Workload-identity background: [`server/shared/dotnet/workload-identity/README.md`](../server/shared/dotnet/workload-identity/README.md).
+
+---
+
 ## Deny-by-default endpoint boot guard
 
 Every mapped `RouteEndpoint` must declare its auth intent before the service may serve traffic. An endpoint with no declaration silently admits any authenticated caller at runtime — a class of misconfiguration that is impossible to observe from a passing test run. The `AuthEndpointGuardStartupFilter` (in `D2.Shared.Auth.Startup`, wired automatically by `AddD2ServiceDefaults`) converts this silent failure into a fast, deterministic startup failure.
@@ -922,6 +949,14 @@ When a hand-written constants catalog gets a spec backing, the migration is **ou
 Canonical: [`docs/SRC_GEN.md`](SRC_GEN.md) — full how-to-author guide for both .NET (Roslyn `IIncrementalGenerator`) and TypeScript (`tools/ts-codegen`). Sourcegen registry (19 spec catalogs, grouped by purpose) → [`server/shared/dotnet/README.md` § Source generators](../server/shared/dotnet/README.md#source-generators-registry).
 
 This pattern is the structural enforcement behind the [5-layer rename safety net](#composition-root) — every renamed spec field cascades through generated code, consumer compile sites, `nameof()`-bound emission sites, behavioral tests, and spec-pin literal tests, in that order.
+
+---
+
+## Per-package versioning & releases
+
+Each consumable shared library (`D2.Shared.*` for .NET, `@d2/*` for TypeScript) carries its own `MAJOR.MINOR.PATCH` version and `CHANGELOG.md`. The `tools/release-runner` derives per-package bumps from a **build-free artifact diff** — a source fingerprint (SHA-256 over committed source + API report + resolved dep versions + declared toolchain pin) plus a public-API-surface diff. Commit footers (`WIRE-BREAKING:` / `BREAKING CHANGE:`) are **escalation overrides only**: they can raise the diff-derived bump level but never lower it. The footer is also the ONE conscious force-valve act for breaks not detectable by the diff. Wire/contract breaks are auto-detected by `tools/contract-gate`; library public-API breaks are author-declared via footer. Registry publishing (npm / NuGet) is never automatic. Deployable services are excluded — they version on the product cadence.
+
+Canonical discipline: `rules.md §26.19`. Operational how-to: `CONTRIBUTING.md` (Per-package versioning) + `docs/COMMANDS.md` (Per-package version + Cutting a library release).
 
 ---
 

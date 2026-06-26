@@ -21,6 +21,12 @@ using Xunit;
 /// (Npgsql provider with a dummy connection string — connection never opened).
 /// Covers the Guid.Empty guard, Tier-C defensive rejection, and option validation.
 /// </summary>
+/// <remarks>
+/// Serialized with the other <c>AnonymizationClassifier*</c> test classes because they all
+/// call <c>AnonymizationTierClassifier.ClearCache()</c> against the process-global static
+/// cache.
+/// </remarks>
+[Collection("AnonymizationClassifierSerial")]
 [Trait("Category", "Unit")]
 public sealed class AnonymizationEngineUnitTests
 {

@@ -10,26 +10,30 @@ using AwesomeAssertions;
 using D2.Shared.Caching;
 using D2.Shared.Caching.Local.Default;
 using Microsoft.Extensions.Options;
+using Microsoft.Extensions.Time.Testing;
 using Xunit;
 
 /// <summary>
 /// Behavior tests for <see cref="DefaultLocalCache"/> — exercise real
 /// <see cref="Microsoft.Extensions.Caching.Memory.IMemoryCache"/> semantics
-/// (capacity-driven eviction, real TTL expiration with wall-clock waits,
-/// concurrent-access stress). Real time + real concurrency but no external
-/// infra, so these stay in the unit tier. The Integration tier is reserved
-/// for libs whose dependencies require real infrastructure (Redis
-/// Testcontainers, real PG, etc.).
+/// (capacity-driven eviction, TTL expiration, concurrent-access stress).
+/// TTL-expiry tests use a <see cref="FakeTimeProvider"/> so expiry is
+/// driven by clock advance rather than real-time sleeps — load-independent
+/// and fully deterministic. The Integration tier is reserved for libs whose
+/// dependencies require real infrastructure (Redis Testcontainers, real PG,
+/// etc.).
 /// </summary>
 public sealed class DefaultLocalCacheBehaviorTests
 {
     [Fact]
     public async Task SetAsync_ExpiredEntryReturnsNotFoundOnNextRead()
     {
-        using var cache = NewCache();
-        await cache.SetAsync("k", 1, TimeSpan.FromMilliseconds(100));
+        var clock = new FakeTimeProvider();
+        using var cache = NewCache(clock: clock);
+        await cache.SetAsync("k", 1, TimeSpan.FromMinutes(1));
 
-        await Task.Delay(250);
+        // Advance past the TTL — IMemoryCache uses the same fake clock.
+        clock.Advance(TimeSpan.FromMinutes(2));
 
         var result = await cache.GetAsync<int>("k");
         result.IsNotFound.Should().BeTrue();
@@ -38,15 +42,17 @@ public sealed class DefaultLocalCacheBehaviorTests
     [Fact]
     public async Task SetAsync_GetTtlReportsRemainingThenZero()
     {
-        using var cache = NewCache();
-        await cache.SetAsync("k", 1, TimeSpan.FromMilliseconds(500));
+        var clock = new FakeTimeProvider();
+        using var cache = NewCache(clock: clock);
+        await cache.SetAsync("k", 1, TimeSpan.FromMinutes(5));
 
         var early = await cache.GetTtlAsync("k");
         early.IsOk.Should().BeTrue();
         early.Data.Should().NotBeNull();
-        early.Data!.Value.Should().BeGreaterThan(TimeSpan.FromMilliseconds(100));
+        early.Data!.Value.Should().BeGreaterThan(TimeSpan.FromMinutes(1));
 
-        await Task.Delay(700);
+        // Advance past the TTL.
+        clock.Advance(TimeSpan.FromMinutes(6));
 
         var late = await cache.GetTtlAsync("k");
         late.IsNotFound.Should().BeTrue();  // entry has been evicted by IMemoryCache
@@ -61,9 +67,13 @@ public sealed class DefaultLocalCacheBehaviorTests
             await cache.SetAsync($"k{i}", i);
 
         // Wait for the post-eviction callback to drain (compaction is async).
+        // This is a genuine async platform callback — not TTL-related — so a
+        // small real-time settle is correct here (not a timing hazard because
+        // the assertion is a loose "< 100" bound, not an exact count).
         await Task.Delay(200);
 
         var present = 0;
+
         for (var i = 0; i < 100; i++)
         {
             if ((await cache.GetAsync<int>($"k{i}")).IsOk)
@@ -324,11 +334,17 @@ public sealed class DefaultLocalCacheBehaviorTests
     [Fact]
     public async Task AcquireLockAsync_ExpirationAllowsReacquisition()
     {
-        using var cache = NewCache();
-        var first = await cache.AcquireLockAsync("k", "owner-A", TimeSpan.FromMilliseconds(150));
+        // AcquireLockAsync now uses r_clock.GetUtcNow() for the expiry
+        // computation, so a FakeTimeProvider drives the expiry check —
+        // no real-time sleep required.
+        var clock = new FakeTimeProvider();
+        using var cache = NewCache(clock: clock);
+        var first = await cache.AcquireLockAsync("k", "owner-A", TimeSpan.FromMinutes(1));
         first.Data.Should().BeTrue();
 
-        await Task.Delay(250);
+        // Advance past the lock TTL — AcquireLockAsync will see the new "now"
+        // and treat the existing entry as expired.
+        clock.Advance(TimeSpan.FromMinutes(2));
 
         var second = await cache.AcquireLockAsync("k", "owner-B", TimeSpan.FromSeconds(5));
         second.Data.Should().BeTrue();
@@ -422,10 +438,11 @@ public sealed class DefaultLocalCacheBehaviorTests
         await act.Should().ThrowAsync<ObjectDisposedException>();
     }
 
-    private static DefaultLocalCache NewCache(Action<LocalCacheOptions>? configure = null)
+    private static DefaultLocalCache NewCache(
+        Action<LocalCacheOptions>? configure = null, TimeProvider? clock = null)
     {
         var opts = new LocalCacheOptions();
         configure?.Invoke(opts);
-        return new DefaultLocalCache(Options.Create(opts));
+        return new DefaultLocalCache(Options.Create(opts), clock);
     }
 }

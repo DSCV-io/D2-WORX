@@ -171,7 +171,7 @@ public sealed class KeyRotationServiceTests
         // throws each time (invalid connection string) but must be swallowed.
         var executed = service.StartAsync(cts.Token);
 
-        // Wait for it to complete (cancelled by cts) — no uncaught exception.
+        // Wait for it to complete (canceled by cts) — no uncaught exception.
         var act = () => executed;
 
         await act.Should().NotThrowAsync();

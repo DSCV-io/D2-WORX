@@ -2,7 +2,7 @@
 // Copyright (c) DCSV. All rights reserved.
 // -----------------------------------------------------------------------
 
-// Supplemental model-walk tests for the proto extension (Decision D-7b):
+// Supplemental model-walk tests for the proto projection:
 // verifies that walkModel populates `protoType` and `repeated` on FieldInfo.
 //
 // These complement model-walk.test.ts which covers cs/ts types and all

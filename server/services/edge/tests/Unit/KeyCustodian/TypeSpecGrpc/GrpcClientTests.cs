@@ -10,7 +10,7 @@ using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 using D2.Edge.Tests.TypeSpecGrpc.Generated;
-using D2.Services.Protos.KeyCustodian.V1;
+using D2.Services.Protos.KeyCustodian.V2Alpha;
 using D2.Shared.Auth.Abstractions;
 using D2.Shared.Auth.Outbound;
 using D2.Shared.Resilience.Pipeline;
@@ -26,7 +26,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using DtoSignInput = D2.Edge.Tests.TypeSpecDto.Generated.SignInput;
 using DtoSignOutput = D2.Edge.Tests.TypeSpecDto.Generated.SignOutput;
-using ProtoSignOutput = D2.Services.Protos.KeyCustodian.V1.SignOutput;
+using ProtoSignOutput = D2.Services.Protos.KeyCustodian.V2Alpha.SignOutput;
 
 /// <summary>
 /// In-memory harness tests for the generated <see cref="KeyCustodianGrpcClient"/> — the
@@ -339,8 +339,8 @@ public sealed class GrpcClientTests
     // ---------------------------------------------------------------------------
     // Case 14: null envelope — success response with NO Result field set (server-contract
     // violation). The captured envelope is null → the success branch's `envelope is not
-    // null` guard is false → the pipeline result passes through verbatim (no NRE). F-6:
-    // a null envelope on a 200 is a defect; the code does not crash.
+    // null` guard is false → the pipeline result passes through verbatim (no NRE).
+    // A null envelope on a 200 is a defect; the code does not crash.
     // ---------------------------------------------------------------------------
 
     [Fact]

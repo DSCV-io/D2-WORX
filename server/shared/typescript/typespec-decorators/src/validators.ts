@@ -12,7 +12,11 @@
 // diagnostic fails the overall compile but decorators keep storing state so
 // downstream passes see consistent program state.
 
-import type { DecoratorContext, Operation } from "@typespec/compiler";
+import type {
+  DecoratorContext,
+  ModelProperty,
+  Operation,
+} from "@typespec/compiler";
 import { $lib } from "./lib.js";
 import {
   loadScopeNames,
@@ -176,6 +180,110 @@ export function validateServedBy(
     $lib.reportDiagnostic(context.program, {
       code: "empty-served-by",
       format: {},
+      target,
+    });
+}
+
+// ----------------------------------------------------------------
+// @d2Field field-number validation
+// ----------------------------------------------------------------
+
+/**
+ * Proto3 maximum field number (2^29 - 1).
+ * Numbers above this are not valid proto3 field numbers.
+ */
+const _PROTO_MAX_FIELD_NUMBER = 536870911;
+
+/**
+ * Protobuf implementation-reserved range (inclusive). Field numbers in this
+ * range are reserved for the Protobuf implementation and must not be used
+ * by authors, even though proto3 allows numbers up to 536870911.
+ */
+const _PROTO_RESERVED_RANGE_LO = 19000;
+const _PROTO_RESERVED_RANGE_HI = 19999;
+
+/**
+ * Validate the integer field number supplied to @d2Field.
+ * Fires `invalid-field-number` when:
+ *   - the value is not a safe integer (non-integer float, NaN, Infinity)
+ *   - the value is less than 1
+ *   - the value exceeds 536870911 (proto3 max)
+ *   - the value falls in the protobuf reserved range 19000–19999
+ */
+export function validateFieldNumber(
+  context: DecoratorContext,
+  target: ModelProperty,
+  number: number,
+): void {
+  const isValid =
+    Number.isInteger(number) &&
+    number >= 1 &&
+    number <= _PROTO_MAX_FIELD_NUMBER &&
+    (number < _PROTO_RESERVED_RANGE_LO || number > _PROTO_RESERVED_RANGE_HI);
+
+  if (!isValid)
+    $lib.reportDiagnostic(context.program, {
+      code: "invalid-field-number",
+      format: { value: String(number) },
+      target,
+    });
+}
+
+/**
+ * Validate a field number supplied to the `numbers` variadic of @d2Reserved.
+ * Applies the same proto3 validity rules as @d2Field — conservatively blocking
+ * the protobuf implementation-reserved range 19000–19999 even though proto3
+ * §20.3 technically permits these values in `reserved` lists. Blocking them
+ * here keeps the validation surface consistent and prevents accidental
+ * confusion between author-reserved slots and implementation-reserved numbers.
+ * Fires `invalid-reserved-number` when:
+ *   - the value is not a safe integer (non-integer float, NaN, Infinity)
+ *   - the value is less than 1
+ *   - the value exceeds 536870911 (proto3 max)
+ *   - the value falls in the protobuf implementation-reserved range 19000–19999
+ */
+export function validateReservedNumber(
+  context: DecoratorContext,
+  target: import("@typespec/compiler").Model,
+  number: number,
+): void {
+  const isValid =
+    Number.isInteger(number) &&
+    number >= 1 &&
+    number <= _PROTO_MAX_FIELD_NUMBER &&
+    (number < _PROTO_RESERVED_RANGE_LO || number > _PROTO_RESERVED_RANGE_HI);
+
+  if (!isValid)
+    $lib.reportDiagnostic(context.program, {
+      code: "invalid-reserved-number",
+      format: { value: String(number) },
+      target,
+    });
+}
+
+/**
+ * Proto3 identifier pattern. A reserved name must be a valid proto3 field
+ * identifier: non-empty, starts with a letter or underscore, followed by
+ * letters, digits, or underscores. An invalid token would inject unexpected
+ * content into the emitted `reserved "..."` proto3 declaration.
+ */
+const _PROTO_IDENTIFIER_RE = /^[A-Za-z_][A-Za-z0-9_]*$/;
+
+/**
+ * Validate a single name token supplied to the `names` string of @d2Reserved.
+ * Fires `invalid-reserved-name` when the token is not a valid proto3 identifier
+ * (empty string, contains spaces or punctuation, starts with a digit, etc.).
+ * Called per-token after the comma-split + trim in $d2Reserved.
+ */
+export function validateReservedName(
+  context: DecoratorContext,
+  target: import("@typespec/compiler").Model,
+  name: string,
+): void {
+  if (!_PROTO_IDENTIFIER_RE.test(name))
+    $lib.reportDiagnostic(context.program, {
+      code: "invalid-reserved-name",
+      format: { value: name },
       target,
     });
 }

@@ -15,10 +15,10 @@ using D2.Shared.SourceGen;
 /// <c>D2.Shared.ErrorCodes.Registry</c>. The emitter generates:
 /// <list type="bullet">
 ///   <item>
-///     The <c>ErrorCodeInfo</c> readonly-record-struct — the 8-field runtime
+///     The <c>ErrorCodeInfo</c> readonly-record-struct — the 9-field runtime
 ///     carrier: <c>Code</c>, <c>HttpStatus</c>, <c>Category</c>,
 ///     <c>UserMessageKey</c> (typed <c>TKMessage</c>), <c>FactoryName</c>,
-///     <c>FactoryShape</c>, <c>Doc</c>, <c>Domain</c>.
+///     <c>FactoryShape</c>, <c>Doc</c>, <c>Domain</c>, <c>IsDeprecated</c>.
 ///   </item>
 ///   <item>
 ///     The <c>ErrorCodeRegistry</c> static class — a
@@ -89,11 +89,14 @@ internal static class RegistryEmitter
     {
         var segments = category.Split('_');
         var sb = new StringBuilder(category.Length);
+
         foreach (var segment in segments)
         {
             if (segment.Length == 0)
                 continue;
+
             sb.Append(char.ToUpperInvariant(segment[0]));
+
             if (segment.Length > 1)
                 sb.Append(segment.Substring(1).ToLowerInvariant());
         }
@@ -104,7 +107,7 @@ internal static class RegistryEmitter
     private static void EmitErrorCodeInfoRecord(StringBuilder sb)
     {
         sb.AppendLine("/// <summary>");
-        sb.AppendLine("/// Full metadata record for one error code. All 8 fields are populated");
+        sb.AppendLine("/// Full metadata record for one error code. All 9 fields are populated");
         sb.AppendLine("/// from the source spec; the registry exposes them via");
         sb.AppendLine("/// <see cref=\"ErrorCodeRegistry.TryResolve\"/> /");
         sb.AppendLine("/// <see cref=\"ErrorCodeRegistry.Resolve\"/> /");
@@ -133,6 +136,12 @@ internal static class RegistryEmitter
         sb.AppendLine("/// Domain token derived from the spec filename (<c>common</c> for the generic");
         sb.AppendLine("/// catalog; e.g. <c>auth</c> for auth-error-codes.spec.json).");
         sb.AppendLine("/// </param>");
+        sb.AppendLine("/// <param name=\"IsDeprecated\">");
+        sb.AppendLine("/// <see langword=\"true\"/> when the spec entry carries the deprecation marker");
+        sb.AppendLine("/// (<c>\"deprecated\": true</c>); the generated constant + factories also carry");
+        sb.AppendLine("/// <c>[Obsolete]</c>. Lets runtime / telemetry consumers observe deprecation");
+        sb.AppendLine("/// state. <see langword=\"false\"/> for an active code.");
+        sb.AppendLine("/// </param>");
         sb.AppendLine("public readonly record struct ErrorCodeInfo(");
         sb.AppendLine("    string Code,");
         sb.AppendLine("    int HttpStatus,");
@@ -141,7 +150,8 @@ internal static class RegistryEmitter
         sb.AppendLine("    string FactoryName,");
         sb.AppendLine("    string FactoryShape,");
         sb.AppendLine("    string Doc,");
-        sb.AppendLine("    string Domain);");
+        sb.AppendLine("    string Domain,");
+        sb.AppendLine("    bool IsDeprecated);");
     }
 
     private static void EmitRegistryClass(
@@ -172,6 +182,7 @@ internal static class RegistryEmitter
         sb.AppendLine("        new Dictionary<string, ErrorCodeInfo>(StringComparer.Ordinal)");
         sb.AppendLine("        {");
 
+        // NOTE: the emitted string literals below are pipeline output — do not reformat for line length.
         foreach (var entry in entries)
         {
             var categoryMember = CategoryToMemberName(entry.Category);
@@ -190,7 +201,9 @@ internal static class RegistryEmitter
             sb.AppendLine($"                FactoryName: \"{escapedFactoryName}\",");
             sb.AppendLine($"                FactoryShape: \"{escapedFactoryShape}\",");
             sb.AppendLine($"                Doc: \"{escapedDoc}\",");
-            sb.AppendLine($"                Domain: \"{escapedDomain}\"),");
+            sb.AppendLine($"                Domain: \"{escapedDomain}\",");
+            sb.AppendLine(
+                $"                IsDeprecated: {(entry.IsDeprecated ? "true" : "false")}),");
         }
 
         sb.AppendLine("        }.ToFrozenDictionary(StringComparer.Ordinal);");
@@ -205,6 +218,7 @@ internal static class RegistryEmitter
         sb.AppendLine("        new ReadOnlyCollection<ErrorCodeInfo>(");
 
         sb.AppendLine("            [");
+
         foreach (var entry in entries)
         {
             var escapedCode = EscapeStringLiteral(entry.Code);

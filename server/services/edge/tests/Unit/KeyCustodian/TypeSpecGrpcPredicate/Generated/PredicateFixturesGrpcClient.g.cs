@@ -15,6 +15,7 @@ using D2.Shared.Resilience.Retry;
 using D2.Shared.Result.Grpc;
 using Grpc.Core;
 using Microsoft.Extensions.DependencyInjection;
+using System.Diagnostics;
 
 /// <summary>
 /// Generated sealed cross-process gRPC client for the PredicateFixtures module.
@@ -60,7 +61,10 @@ public sealed class PredicateFixturesGrpcClient(
                         : D2Result<PlaceOrderOutput?>.Ok(data);
 
                     if (PlaceOrderResiliencePredicates.SR_RetryWhen(businessResult) && !PlaceOrderResiliencePredicates.SR_FailWhen(businessResult))
+                    {
+                        Activity.Current?.AddEvent(new ActivityEvent("d2.grpc.retry_signal"));
                         throw new D2GeneratedBusinessRetrySignal(businessResult.ToProto());
+                    }
 
                     return data;
                 }

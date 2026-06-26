@@ -69,11 +69,13 @@ internal static partial class OutboundLog
     [LoggerMessage(
         EventId = 3001,
         Level = LogLevel.Warning,
-        Message = "Workload leaf reissue failed: {ExceptionType} ({FirstFrame}).")]
+        Message = "Workload leaf reissue failed: {ExceptionType} ({FirstFrame}). "
+                + "CachedLeafNotAfter={CachedLeafNotAfter}.")]
     public static partial void WorkloadLeafReissueFailed(
         this ILogger logger,
         string exceptionType,
-        string firstFrame);
+        string firstFrame,
+        string cachedLeafNotAfter);
 
     [LoggerMessage(
         EventId = 3002,
@@ -89,4 +91,20 @@ internal static partial class OutboundLog
         Level = LogLevel.Warning,
         Message = "Workload leaf proactive reissue failed; will retry on next tick.")]
     public static partial void WorkloadLeafRefreshTickFailed(this ILogger logger);
+
+    [LoggerMessage(
+        EventId = 3004,
+        Level = LogLevel.Debug,
+        Message = "Workload leaf served from cache; NotAfter={NotAfter:O}.")]
+    public static partial void WorkloadLeafCacheHit(
+        this ILogger logger,
+        DateTimeOffset notAfter);
+
+    [LoggerMessage(
+        EventId = 3005,
+        Level = LogLevel.Information,
+        Message = "Workload leaf acquired successfully at startup; NotAfter={NotAfter:O}.")]
+    public static partial void WorkloadLeafStartupAcquireSucceeded(
+        this ILogger logger,
+        DateTimeOffset notAfter);
 }

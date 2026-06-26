@@ -43,6 +43,7 @@ import {
 import { emitCsharpDtos } from "../src/lib/csharp-dto-emitter.js";
 import { emitTsDtos } from "../src/lib/ts-dto-emitter.js";
 import { emitProto } from "../src/lib/proto-emitter.js";
+import { emitHandlerInterface } from "../src/lib/handler-interface-emitter.js";
 import type { FieldInfo } from "../src/lib/model-walk.js";
 
 const D2DecoratorTestLibrary = createTestLibrary({
@@ -196,7 +197,7 @@ function emitPredicateFilesV2(): { cs: string; ts: string } {
 }
 
 function makePlaceOrderClientOp(): GrpcClientOp {
-  const strField = (name: string, cs: string) => ({
+  const strField = (name: string, cs: string, fieldNumber: number) => ({
     name,
     csName: cs,
     csType: "string",
@@ -206,6 +207,7 @@ function makePlaceOrderClientOp(): GrpcClientOp {
     repeated: false,
     optional: false,
     redact: false,
+    fieldNumber,
   });
   return {
     opName: "placeOrder",
@@ -215,10 +217,10 @@ function makePlaceOrderClientOp(): GrpcClientOp {
     dtoCsharpNs: CLIENTS_NS,
     sourceSpec: SPEC,
     requestModelName: "PlaceOrderInput",
-    requestFields: [strField("customerId", "CustomerId")],
+    requestFields: [strField("customerId", "CustomerId", 1)],
     responseModelName: "PlaceOrderOutput",
     responseFields: [
-      strField("orderCode", "OrderCode"),
+      strField("orderCode", "OrderCode", 1),
       {
         name: "itemStatuses",
         csName: "ItemStatuses",
@@ -229,6 +231,7 @@ function makePlaceOrderClientOp(): GrpcClientOp {
         repeated: true,
         optional: false,
         redact: false,
+        fieldNumber: 2,
       },
       {
         name: "partial",
@@ -240,6 +243,7 @@ function makePlaceOrderClientOp(): GrpcClientOp {
         repeated: false,
         optional: false,
         redact: false,
+        fieldNumber: 3,
       },
     ],
     retryWhenAst: retryWhen,
@@ -477,8 +481,10 @@ describe("byteParity_PlaceOrderV1Proto", () => {
       SPEC,
       "PlaceOrderRequest",
       placeOrderReqFields(),
+      undefined,
       "PlaceOrderOutput",
       placeOrderRespFields(),
+      undefined,
       [],
       (c, m) => {
         throw new Error(`${c}: ${m}`);
@@ -537,5 +543,112 @@ describe("byteParity_PredicateFixturesV1ClientModule", () => {
       CLIENTS_NS,
     );
     expect(iface!.content).not.toBe(drifted);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Handler interface byte-gates — predicate fixture namespace
+//
+// These three ops (placeOrder, placeOrderV2, deepNest) are defined in the
+// same resilience-predicate-shaped.tsp fixture. Their handler interfaces live
+// in the fixture namespace (CLIENTS_NS), so emitHandlerInterface is called
+// with emitUsing=true and no dtoNamespace (handler ns === DTO ns — no
+// separate using needed). The committed .g.cs files are byte-gated here,
+// not scattered from $onEmit output (which uses real-module namespaces).
+// ---------------------------------------------------------------------------
+
+describe("byteParity_PlaceOrderHandlerInterface", () => {
+  it("re-emitted IPlaceOrderHandler.g.cs is byte-identical to the committed fixture", () => {
+    const handler = emitHandlerInterface(
+      "placeOrder",
+      CLIENTS_NS,
+      "PlaceOrderInput",
+      "PlaceOrderOutput",
+      true,
+      SPEC,
+    );
+
+    expect(handler.content).toBe(readFixture("IPlaceOrderHandler.g.cs"));
+  });
+
+  it("deliberate-drift detection: a mutated fixture does NOT match", () => {
+    const drifted = readFixture("IPlaceOrderHandler.g.cs").replace(
+      "IPlaceOrderHandler",
+      "IPlaceOrderHandlerDRIFTED",
+    );
+    const handler = emitHandlerInterface(
+      "placeOrder",
+      CLIENTS_NS,
+      "PlaceOrderInput",
+      "PlaceOrderOutput",
+      true,
+      SPEC,
+    );
+
+    expect(handler.content).not.toBe(drifted);
+  });
+});
+
+describe("byteParity_PlaceOrderV2HandlerInterface", () => {
+  it("re-emitted IPlaceOrderV2Handler.g.cs is byte-identical to the committed fixture", () => {
+    const handler = emitHandlerInterface(
+      "placeOrderV2",
+      CLIENTS_NS,
+      "PlaceOrderV2Input",
+      "PlaceOrderV2Output",
+      true,
+      SPEC,
+    );
+
+    expect(handler.content).toBe(readFixture("IPlaceOrderV2Handler.g.cs"));
+  });
+
+  it("deliberate-drift detection: a mutated fixture does NOT match", () => {
+    const drifted = readFixture("IPlaceOrderV2Handler.g.cs").replace(
+      "IPlaceOrderV2Handler",
+      "IPlaceOrderV2HandlerDRIFTED",
+    );
+    const handler = emitHandlerInterface(
+      "placeOrderV2",
+      CLIENTS_NS,
+      "PlaceOrderV2Input",
+      "PlaceOrderV2Output",
+      true,
+      SPEC,
+    );
+
+    expect(handler.content).not.toBe(drifted);
+  });
+});
+
+describe("byteParity_DeepNestHandlerInterface", () => {
+  it("re-emitted IDeepNestHandler.g.cs is byte-identical to the committed fixture", () => {
+    const handler = emitHandlerInterface(
+      "deepNest",
+      CLIENTS_NS,
+      "DeepNestInput",
+      "DeepNestOutput",
+      true,
+      SPEC,
+    );
+
+    expect(handler.content).toBe(readFixture("IDeepNestHandler.g.cs"));
+  });
+
+  it("deliberate-drift detection: a mutated fixture does NOT match", () => {
+    const drifted = readFixture("IDeepNestHandler.g.cs").replace(
+      "IDeepNestHandler",
+      "IDeepNestHandlerDRIFTED",
+    );
+    const handler = emitHandlerInterface(
+      "deepNest",
+      CLIENTS_NS,
+      "DeepNestInput",
+      "DeepNestOutput",
+      true,
+      SPEC,
+    );
+
+    expect(handler.content).not.toBe(drifted);
   });
 });

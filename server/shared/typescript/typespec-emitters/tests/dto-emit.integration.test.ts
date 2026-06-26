@@ -134,8 +134,8 @@ describe("dtoEmitIntegration_Sign_RedactedFieldInGeneratedCSharp", () => {
       using D2;
       namespace D2.Fixtures;
 
-      model SignInput { kid: string; @d2Redact payload: bytes; }
-      model SignOutput { signature: string; }
+      model SignInput { @d2Field(1) kid: string; @d2Field(2) @d2Redact payload: bytes; }
+      model SignOutput { @d2Field(1) signature: string; }
 
       @d2Command
       @d2ServedBy("KeyCustodian")
@@ -250,8 +250,8 @@ describe("dtoEmitIntegration_HandlerInterface_EmittedForEveryOp", () => {
       using D2;
       namespace D2.Fixtures;
 
-      model SignInput { kid: string; @d2Redact payload: bytes; }
-      model SignOutput { signature: string; }
+      model SignInput { @d2Field(1) kid: string; @d2Field(2) @d2Redact payload: bytes; }
+      model SignOutput { @d2Field(1) signature: string; }
 
       @d2Command
       @d2ServedBy("KeyCustodian")

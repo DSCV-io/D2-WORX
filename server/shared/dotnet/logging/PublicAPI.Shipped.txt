@@ -1,0 +1,29 @@
+#nullable enable
+D2.Shared.Logging.D2LoggingConstants
+D2.Shared.Logging.D2LoggingOptions
+D2.Shared.Logging.D2LoggingOptions.<Clone>$() -> D2.Shared.Logging.D2LoggingOptions!
+D2.Shared.Logging.D2LoggingOptions.D2LoggingOptions() -> void
+D2.Shared.Logging.D2LoggingOptions.D2LoggingOptions(string? serviceName, string? environment, Serilog.Events.LogEventLevel? minimumLevel, System.Collections.Generic.IReadOnlyList<string!>? infrastructurePaths) -> void
+D2.Shared.Logging.D2LoggingOptions.Environment.get -> string?
+D2.Shared.Logging.D2LoggingOptions.Environment.set -> void
+D2.Shared.Logging.D2LoggingOptions.Equals(D2.Shared.Logging.D2LoggingOptions? other) -> bool
+D2.Shared.Logging.D2LoggingOptions.InfrastructurePaths.get -> System.Collections.Generic.IReadOnlyList<string!>!
+D2.Shared.Logging.D2LoggingOptions.InfrastructurePaths.init -> void
+D2.Shared.Logging.D2LoggingOptions.MinimumLevel.get -> Serilog.Events.LogEventLevel
+D2.Shared.Logging.D2LoggingOptions.MinimumLevel.init -> void
+D2.Shared.Logging.D2LoggingOptions.ServiceName.get -> string?
+D2.Shared.Logging.D2LoggingOptions.ServiceName.set -> void
+D2.Shared.Logging.LoggingServiceCollectionExtensions
+D2.Shared.Logging.LoggingServiceCollectionExtensions.extension(Microsoft.Extensions.DependencyInjection.IServiceCollection!)
+D2.Shared.Logging.LoggingServiceCollectionExtensions.extension(Microsoft.Extensions.DependencyInjection.IServiceCollection!).AddD2Logging(Microsoft.Extensions.Configuration.IConfiguration! configuration, System.Action<D2.Shared.Logging.D2LoggingOptions!>? configure = null) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
+D2.Shared.Logging.WebApplicationLoggingExtensions
+D2.Shared.Logging.WebApplicationLoggingExtensions.extension(Microsoft.AspNetCore.Builder.IApplicationBuilder!)
+D2.Shared.Logging.WebApplicationLoggingExtensions.extension(Microsoft.AspNetCore.Builder.IApplicationBuilder!).UseD2RequestLogging(System.Action<Serilog.AspNetCore.RequestLoggingOptions!>? configure = null) -> Microsoft.AspNetCore.Builder.IApplicationBuilder!
+const D2.Shared.Logging.D2LoggingConstants.OTEL_SERVICE_NAME_CONFIG_KEY = "OTEL_SERVICE_NAME" -> string!
+override D2.Shared.Logging.D2LoggingOptions.Equals(object? obj) -> bool
+override D2.Shared.Logging.D2LoggingOptions.GetHashCode() -> int
+override D2.Shared.Logging.D2LoggingOptions.ToString() -> string!
+static D2.Shared.Logging.D2LoggingOptions.operator !=(D2.Shared.Logging.D2LoggingOptions? left, D2.Shared.Logging.D2LoggingOptions? right) -> bool
+static D2.Shared.Logging.D2LoggingOptions.operator ==(D2.Shared.Logging.D2LoggingOptions? left, D2.Shared.Logging.D2LoggingOptions? right) -> bool
+static D2.Shared.Logging.LoggingServiceCollectionExtensions.AddD2Logging(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services, Microsoft.Extensions.Configuration.IConfiguration! configuration, System.Action<D2.Shared.Logging.D2LoggingOptions!>? configure = null) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
+static D2.Shared.Logging.WebApplicationLoggingExtensions.UseD2RequestLogging(this Microsoft.AspNetCore.Builder.IApplicationBuilder! app, System.Action<Serilog.AspNetCore.RequestLoggingOptions!>? configure = null) -> Microsoft.AspNetCore.Builder.IApplicationBuilder!

@@ -201,6 +201,12 @@ internal static class FailuresEmitter
             + "<c>TKMessage.With(...)</c> to name the offending argument.</param>");
         sb.AppendLine(
             "    /// <returns>A pre-built <see cref=\"D2Result\"/> failure.</returns>");
+        if (entry.Deprecated)
+        {
+            sb.AppendLine(
+                $"    [System.Obsolete({ConstantsEmitter.ObsoleteMessageLiteral(entry)})]");
+        }
+
         sb.AppendLine(
             $"    public static D2Result {entry.FactoryName}(IReadOnlyList<TKMessage>? messages = null)");
         sb.AppendLine("    {");
@@ -226,6 +232,12 @@ internal static class FailuresEmitter
             + "<c>TKMessage.With(...)</c> to name the offending argument.</param>");
         sb.AppendLine(
             "    /// <returns>A pre-built typed <see cref=\"D2Result{T}\"/> failure.</returns>");
+        if (entry.Deprecated)
+        {
+            sb.AppendLine(
+                $"    [System.Obsolete({ConstantsEmitter.ObsoleteMessageLiteral(entry)})]");
+        }
+
         sb.AppendLine(
             $"    public static D2Result<T> {entry.FactoryName}(IReadOnlyList<TKMessage>? messages = null)");
         sb.AppendLine("    {");
@@ -254,6 +266,12 @@ internal static class FailuresEmitter
             + "<c>TKMessage.With(...)</c> to name the offending argument.</param>");
         sb.AppendLine(
             "    /// <returns>A pre-built typed <see cref=\"D2Result{T}\"/> failure.</returns>");
+        if (entry.Deprecated)
+        {
+            sb.AppendLine(
+                $"    [System.Obsolete({ConstantsEmitter.ObsoleteMessageLiteral(entry)})]");
+        }
+
         sb.AppendLine(
             $"    public static D2Result<T> {entry.FactoryName}<T>(IReadOnlyList<TKMessage>? messages = null)");
         sb.AppendLine("    {");

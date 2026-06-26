@@ -56,4 +56,17 @@ Copyright (c) DCSV. All rights reserved.
     -->
     <AdditionalFiles Include="$(D2ContractsRoot)messages\*.json" />
   </ItemGroup>
+
+  <!-- Publish metadata (per-package semver + NuGet identity). -->
+  <PropertyGroup>
+    <Version>0.1.0</Version>
+    <PackageId>D2.Shared.I18n.Keys</PackageId>
+    <Description>Type-safe TK constants catalog for D2-WORX — one TKMessage per translation key, code-generated from the message catalog.</Description>
+    <IsPackable>true</IsPackable>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
 </Project>

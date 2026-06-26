@@ -1,0 +1,24 @@
+#nullable enable
+D2.Shared.Handler.BaseHandler<TSelf, TInput, TOutput>
+D2.Shared.Handler.BaseHandler<TSelf, TInput, TOutput>.BaseHandler(D2.Shared.Handler.HandlerContext<TSelf!>! context) -> void
+D2.Shared.Handler.BaseHandler<TSelf, TInput, TOutput>.Context.get -> D2.Shared.Handler.Abstractions.IHandlerContext!
+D2.Shared.Handler.BaseHandler<TSelf, TInput, TOutput>.RunCorePipelineAsync(TInput input, System.Threading.CancellationToken ct, D2.Shared.Handler.Abstractions.HandlerOptions? options) -> System.Threading.Tasks.ValueTask<(D2.Shared.Result.D2Result<TOutput?>! Result, System.Exception? CapturedException)>
+D2.Shared.Handler.HandlerContext<T>
+D2.Shared.Handler.HandlerContext<T>.HandlerContext(D2.Shared.Context.Abstractions.IRequestContext! request, Microsoft.Extensions.Logging.ILogger<T>! logger) -> void
+D2.Shared.Handler.HandlerContext<T>.Logger.get -> Microsoft.Extensions.Logging.ILogger!
+D2.Shared.Handler.HandlerContext<T>.Request.get -> D2.Shared.Context.Abstractions.IRequestContext!
+D2.Shared.Handler.HandlerServiceCollectionExtensions
+D2.Shared.Handler.HandlerServiceCollectionExtensions.extension(Microsoft.Extensions.DependencyInjection.IServiceCollection!)
+D2.Shared.Handler.HandlerServiceCollectionExtensions.extension(Microsoft.Extensions.DependencyInjection.IServiceCollection!).AddD2Handler() -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
+D2.Shared.Handler.HandlerTelemetry
+abstract D2.Shared.Handler.BaseHandler<TSelf, TInput, TOutput>.ExecuteAsync(TInput input, System.Threading.CancellationToken ct) -> System.Threading.Tasks.ValueTask<D2.Shared.Result.D2Result<TOutput?>!>
+const D2.Shared.Handler.HandlerTelemetry.SourceName = "D2.Shared.Handler" -> string!
+static D2.Shared.Handler.HandlerServiceCollectionExtensions.AddD2Handler(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
+static readonly D2.Shared.Handler.HandlerTelemetry.SR_ActivitySource -> System.Diagnostics.ActivitySource!
+static readonly D2.Shared.Handler.HandlerTelemetry.SR_Duration -> System.Diagnostics.Metrics.Histogram<double>!
+static readonly D2.Shared.Handler.HandlerTelemetry.SR_Failed -> System.Diagnostics.Metrics.Counter<long>!
+static readonly D2.Shared.Handler.HandlerTelemetry.SR_Invoked -> System.Diagnostics.Metrics.Counter<long>!
+static readonly D2.Shared.Handler.HandlerTelemetry.SR_Meter -> System.Diagnostics.Metrics.Meter!
+static readonly D2.Shared.Handler.HandlerTelemetry.SR_Succeeded -> System.Diagnostics.Metrics.Counter<long>!
+virtual D2.Shared.Handler.BaseHandler<TSelf, TInput, TOutput>.DefaultOptions.get -> D2.Shared.Handler.Abstractions.HandlerOptions!
+virtual D2.Shared.Handler.BaseHandler<TSelf, TInput, TOutput>.HandleAsync(TInput input, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken), D2.Shared.Handler.Abstractions.HandlerOptions? options = null) -> System.Threading.Tasks.ValueTask<D2.Shared.Result.D2Result<TOutput?>!>

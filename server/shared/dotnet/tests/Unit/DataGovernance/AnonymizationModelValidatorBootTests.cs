@@ -28,7 +28,11 @@ using Xunit;
 /// These tests exercise the full hosted-service lifecycle end-to-end — the validator is
 /// registered via <c>AddD2DataGovernance</c>, resolved through real DI, and invoked by the
 /// generic host's <c>StartAsync</c>. No network or database connection is opened.
+/// Serialized with the other <c>AnonymizationClassifier*</c> test classes because they all
+/// call <c>AnonymizationTierClassifier.ClearCache()</c> against the process-global static
+/// cache.
 /// </remarks>
+[Collection("AnonymizationClassifierSerial")]
 [Trait("Category", "Unit")]
 public sealed class AnonymizationModelValidatorBootTests
 {

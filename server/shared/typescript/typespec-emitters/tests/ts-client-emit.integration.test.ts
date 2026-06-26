@@ -82,8 +82,8 @@ describe("tsClientEmitIntegration_GrpcClient_DispatchedForGrpcOp", () => {
       using Http;
       namespace D2.Fixtures;
 
-      model SignInput { kid: string; @d2Redact payload: bytes; }
-      model SignOutput { signature: string; }
+      model SignInput { @d2Field(1) kid: string; @d2Field(2) @d2Redact payload: bytes; }
+      model SignOutput { @d2Field(1) signature: string; }
 
       @d2Command
       @d2ServedBy("KeyCustodian")
@@ -142,8 +142,8 @@ describe("tsClientEmitIntegration_PredicateRetryArm_FoldedIn", () => {
       using D2;
       namespace D2.Fixtures;
 
-      model PlaceOrderInput { customerId: string; }
-      model PlaceOrderOutput { orderCode: string; itemStatuses: string[]; partial: boolean; }
+      model PlaceOrderInput { @d2Field(1) customerId: string; }
+      model PlaceOrderOutput { @d2Field(1) orderCode: string; @d2Field(2) itemStatuses: string[]; @d2Field(3) partial: boolean; }
 
       @d2Command
       @d2ServedBy("PredicateFixtures")
@@ -208,8 +208,8 @@ describe("tsClientEmitIntegration_PredicateRetryArm_FoldedIn", () => {
       using D2;
       namespace D2.Fixtures;
 
-      model BareInput { customerId: string; }
-      model BareOutput { orderCode: string; partial: boolean; }
+      model BareInput { @d2Field(1) customerId: string; }
+      model BareOutput { @d2Field(1) orderCode: string; @d2Field(2) partial: boolean; }
 
       @d2Command
       @d2ServedBy("BareFixtures")

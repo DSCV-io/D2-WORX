@@ -115,7 +115,7 @@ internal sealed class HttpTokenExchangeClient : ITokenExchangeClient, IDisposabl
         IReadOnlySet<string>? narrowedScopes = null,
         CancellationToken ct = default)
     {
-        ObjectDisposedException.ThrowIf(_disposed, this);
+        ObjectDisposedException.ThrowIf(Volatile.Read(ref _disposed), this);
 
         if (subjectToken.Falsey() || targetAudience.Falsey())
             return D2Result<string>.ValidationFailed();
@@ -179,7 +179,7 @@ internal sealed class HttpTokenExchangeClient : ITokenExchangeClient, IDisposabl
     /// <inheritdoc/>
     public void Dispose()
     {
-        _disposed = true;
+        Volatile.Write(ref _disposed, true);
     }
 
     private static Guid? TryExtractSessionId(string subjectToken)

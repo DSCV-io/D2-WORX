@@ -22,7 +22,8 @@
     "codegen:encryption-frame": "tsx src/encryption-frame-emit.ts",
     "codegen:geo-abstractions": "tsx src/geo-emitter/cli.ts",
     "codegen:field-constraints": "tsx src/field-constraints-emit.ts",
-    "type-check:test": "tsc -p tsconfig.test.json"
+    "type-check:test": "tsc -p tsconfig.test.json",
+    "typecheck": "tsc -p tsconfig.test.json"
   },
   "dependencies": {
     "@d2/utilities": "workspace:*"

@@ -18,7 +18,7 @@ Each row maps a committed fixture to its regeneration guarantee.
 | `SignInput.g.cs`                                                                                | `emitCsharpDtos("sign", ..., inputFields, [], [])`                                                                                                                                                                | Byte-identical to `SIGN_INPUT_FIXTURE`                                                   | `tests/byte-parity.test.ts`            | `byteParity_SignInput_CommittedFixtureIdentical`                                                                                |
 | `TemporalInput.g.cs`                                                                            | `emitCsharpDtos("temporal", "D2.Edge.Tests.TypeSpecDto.Generated", "contracts/typespec/fixtures/temporal-shaped.tsp", inputFields, outputFields, nested)`                                                         | Byte-identical to `TEMPORAL_INPUT_FIXTURE` (every temporal scalar + 2 composite refs)    | `tests/byte-parity.test.ts`            | `byteParity_TemporalInput_CommittedFixtureIdentical`                                                                            |
 | `TemporalOutput.g.cs`                                                                           | `emitCsharpDtos("temporal", ..., inputFields, outputFields, [nested(ZonedInstantWire), nested(LocalAnchoredEventWire)])`                                                                                          | Byte-identical to `TEMPORAL_OUTPUT_FIXTURE` (mirror + 2 nested composite records)        | `tests/byte-parity.test.ts`            | `byteParity_TemporalOutput_CommittedFixtureIdentical`                                                                           |
-| `key_custodian_signer_sign.g.proto`                                                             | `emitProto("sign", "KeyCustodianSigner", "Sign", "unary", "d2.keycustodian.v1", "D2.Services.Protos.KeyCustodian.V1", ...)`                                                                                       | Byte-identical to `SIGN_PROTO_FIXTURE`                                                   | `tests/proto-grpc-byte-parity.test.ts` | `byteParity_SignProto_CommittedFixtureIdentical`                                                                                |
+| `key_custodian_signer_sign.g.proto`                                                             | `emitProto("sign", "KeyCustodianSigner", "Sign", "unary", "d2.keycustodian.v2alpha", "D2.Services.Protos.KeyCustodian.V2Alpha", ...)`                                                                             | Byte-identical to `SIGN_PROTO_FIXTURE`                                                   | `tests/proto-grpc-byte-parity.test.ts` | `byteParity_SignProto_CommittedFixtureIdentical`                                                                                |
 | `KeyCustodianSignerService.g.cs`                                                                | `emitGrpcService("sign", "KeyCustodianSigner", "Sign", ..., { kind: "facade", typeName: "IKeyCustodianSignerFacade", methodName: "SignAsync", targetNamespace: "D2.Edge.Tests.TypeSpecRoute.Generated.Facade" })` | Byte-identical to `SIGN_SERVICE_FIXTURE` (façade delegation — op carries `@d2InProcess`) | `tests/proto-grpc-byte-parity.test.ts` | `byteParity_KeyCustodianSignerService_FacadeDelegation_CommittedFixtureIdentical`                                               |
 | `SignTransportMappers.g.cs`                                                                     | `emitGrpcService(...)` (mappers file)                                                                                                                                                                             | Byte-identical to `SIGN_MAPPER_FIXTURE`                                                  | `tests/proto-grpc-byte-parity.test.ts` | `byteParity_SignTransportMappers_CommittedFixtureIdentical`                                                                     |
 | `clients/IKeyCustodianApi.g.cs` (ns `D2.Edge.KeyCustodian.Clients`)                             | `emitFacade("KeyCustodian", [{ opName: "getJwks", ... }], "D2.Edge.KeyCustodian.Clients", "D2.Edge.KeyCustodian.App.Application")` (interface file)                                                               | Byte-identical to `INTERFACE_FIXTURE`                                                    | `tests/facade-emitter.test.ts`         | `facadeEmitter_ByteGate_Interface > regenerated IKeyCustodianApi.g.cs is byte-identical to the committed fixture`               |
@@ -31,6 +31,20 @@ does NOT match (`not.toBe(driftedFixture)`). This proves the byte gate is not a 
 comparing a buffer to itself — the guard covers `GetJwksInput`, `GetJwksOutput`, `SignInput`,
 `TemporalInput` (mutates `DateTimeOffset PastInstant`), and `TemporalOutput` (mutates the
 `ZonedInstantWire` composite record).
+
+---
+
+## Author-pin guarantee, D2TSP009, and `@d2Reserved` validation ledger
+
+| What is validated | Against what | Test |
+| ------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------- | ---- |
+| Author-pinned field numbers (`@d2Field(N)`) are used verbatim in emitted proto — NOT assigned positionally | `byteParity_SignProto_CommittedFixtureIdentical` (the committed `key_custodian_signer_sign.g.proto` carries explicit field numbers, byte-identical to regen) + deliberate-drift negative | `tests/proto-grpc-byte-parity.test.ts` |
+| An unpinned proto-bound field triggers D2TSP009 (loud failure, returns `undefined`) | `emitProto` pure-fn with a `FieldInfo` carrying `fieldNumber: undefined` → `onError` called with code `"unpinned-proto-field"`, return value `undefined` | `tests/proto-emitter.test.ts` (`emitProto_UnpinnedField_LoudFailure`) |
+| D2TSP009 is registered in `src/lib.ts` with severity `"error"` | `src/lib.ts` catalog + `tests/lib.test.ts` all-catalog-severity guard | `tests/lib.test.ts` |
+| `reserved` lines are emitted for `@d2Reserved` entries (ascending, deduped, range-collapsed numbers + quoted names) | `emitProto` pure-fn with a `requestReserved` / `responseReserved` payload → committed `sign.proto` fixture carries the `reserved` block; direct `emitMessage` unit tests cover range-collapse; reserved-names dedup is pinned end-to-end in `protoGrpcEmitIntegration_D2Reserved_DuplicateNamesDeduplicated` | `tests/proto-emitter.test.ts` (range-collapse unit tests); `tests/proto-grpc-emit.integration.test.ts` (`protoGrpcEmitIntegration_D2Reserved_DuplicateNamesDeduplicated` for names-dedup) |
+| An empty `@d2Reserved` payload emits no `reserved` lines | `emitProto` with `requestReserved: undefined` → no `reserved` line in the emitted proto | `tests/proto-emitter.test.ts` |
+
+**Replace-trigger**: if the `@d2Field` / `@d2Reserved` decorator signatures change (see `@d2/typespec-decorators` `src/decorators.ts`), the emitter's `resolveProtoFields` caller and `FieldInfo.fieldNumber` shape must be updated in lockstep; the byte-parity gate will catch divergence.
 
 ---
 
@@ -460,9 +474,15 @@ The TS-client emitters emit, per `@d2ServedBy` module, the consumer-facing clien
 
 Both emitted `.g.ts` carry `// @ts-nocheck` + `/* eslint-disable */` (they reference module-relative imports — the proto stub + DTOs + predicate twin for gRPC; the `$lib` alias for REST — that wire up only in the real BFF consumer); the byte-gate pins the exact bytes and the behavioral tests drive the ACTUAL emitted bytes (transpile + `new Function`).
 
-### AMB-1 — the real buf/ts-proto pipeline (the load-bearing claim)
+### Real buf/ts-proto pipeline (the load-bearing claim)
 
-The SSR gRPC client validation RUNS THE REAL buf/ts-proto toolchain (the `@d2/protos` package's `@bufbuild/buf` + `protoc-gen-ts_proto` + its committed `buf.gen.yaml` opt set, with `Mcommon/v1/d2_result.proto=@d2/protos` redirecting the common-import to the shipped `@d2/protos` package) on the committed fixture `.proto` → REAL fixture ts-proto types (the TS twin of Grpc.Tools — a grpc-js callback-style `<Service>Client` + `<Method>Request`/`<Method>Response` messages). The emitted client compiles + behaviorally-validates against THOSE real types over the REAL seam + a fake grpc-js stub. The committed fixture proto-TS (`tests/grpc-fixtures/generated/*.ts`) is re-generated by the test and asserted byte-identical (`tsGrpcClient_AMB1_RealBufTsProtoPipeline`); it is NOT a type-double, NOT `@ts-nocheck`-opaque, NOT out-of-scope. (`contracts/protos/` is never polluted — the fixture protos + their generated TS live in the emitter test tree.)
+The SSR gRPC client validation RUNS THE REAL buf/ts-proto toolchain (the `@d2/protos` package's `@bufbuild/buf` + `protoc-gen-ts_proto` + its committed `buf.gen.yaml` opt set, with `Mcommon/v1/d2_result.proto=@d2/protos` redirecting the common-import to the shipped `@d2/protos` package) on the committed fixture `.proto` → REAL fixture ts-proto types (the TS twin of Grpc.Tools — a grpc-js callback-style `<Service>Client` + `<Method>Request`/`<Method>Response` messages). The emitted client compiles + behaviorally-validates against THOSE real types over the REAL seam + a fake grpc-js stub. The committed fixture proto-TS (`tests/grpc-fixtures/generated/*.ts`) is re-generated by the test and asserted byte-identical (`tsGrpcClient_FixtureProtoByteGate` for `place_order.ts`; `tsGrpcClient_RealBufTsProtoSignPipelineByteGate` for `sign.ts`); it is NOT a type-double, NOT `@ts-nocheck`-opaque, NOT out-of-scope. (`contracts/protos/` is never polluted — the fixture protos + their generated TS live in the emitter test tree.)
+
+#### Buf/ts-proto byte-gate ledger
+
+| Committed fixture | Regeneration mechanism | Key assertion | Test | Replace-trigger |
+| --------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- | --------------------------------------- | --------------------------------------------------------------------------------------- |
+| `tests/grpc-fixtures/generated/sign.ts` (ts-proto grpc-js stub — `KeyCustodianSignerClient` + `SignRequest`/`SignResponse` messages) | The test invokes the real `@bufbuild/buf` CLI + `protoc-gen-ts_proto` on the committed `tests/grpc-fixtures/key_custodian_signer_sign.g.proto` with the committed `buf.gen.yaml` opt set | Regenerated bytes are byte-identical to the committed `sign.ts` (`tsGrpcClient_RealBufTsProtoSignPipelineByteGate`) | `tests/ts-grpc-client-emitter.test.ts` | `buf.gen.yaml` opt-set changes; `protoc-gen-ts_proto` major-version bump; `@d2/protos` common-import redirect change |
 
 ### Byte-parity table (`ts-client-byte-parity.test.ts`)
 
@@ -494,11 +514,11 @@ The emitted client (reconstructed from the committed bytes) is driven against th
 | Response enum — known wire value                   | maps back to the DTO union member (success); the DTO enum value (the wire string) copied straight onto the proto request               |
 | Response enum — unknown wire value                 | fail-loud client-side `ValidationFailed` (400), NO fallback                                                                             |
 | §26.3.2 capability parity                          | table-driven: the TS client mirrors the .NET client's deadline / pipelineOverride / transient-retry / predicate-sentinel / business-gated / no-detail-leak capabilities |
-| **AMB-4 cross-runtime predicate CONSUMPTION**      | over the SHARED `predicate-parity.fixture.json`, the TS client retries IFF `expectedRetry && !expectedFail` (the runtime rule) — matching the .NET client's consumption of the SAME predicate twin |
+| **Cross-runtime predicate consumption parity**     | over the SHARED `predicate-parity.fixture.json`, the TS client retries IFF `expectedRetry && !expectedFail` (the runtime rule) — matching the .NET client's consumption of the SAME predicate twin (`tsGrpcClient_CrossRuntimePredicateConsumptionParity`) |
 
 ### Browser REST client — behavioral validation table (`ts-rest-client-emitter.test.ts`, faithful `apiCall` double)
 
-**AMB-3**: the real substrate is the dormant cross-workspace `server/web` BFF (the `$lib` alias resolves only inside SvelteKit; the real wiring is the host-gated Browser REST client wiring) — so the emitted REST client is driven against a FAITHFUL `apiCall`/`apiCallAnon` double (same signature, returns the real `@d2/result` `D2Result`, records path/method/body/idempotencyKey).
+The real substrate is the dormant cross-workspace `server/web` BFF (the `$lib` alias resolves only inside SvelteKit; the real wiring is the host-gated Browser REST client wiring) — so the emitted REST client is driven against a FAITHFUL `apiCall`/`apiCallAnon` double (same signature, returns the real `@d2/result` `D2Result`, records path/method/body/idempotencyKey).
 
 | Pin                                          | Key assertion                                                                                       |
 | -------------------------------------------- | -------------------------------------------------------------------------------------------------- |
@@ -585,12 +605,31 @@ is needed when that consumer ships.
 
 ---
 
+## Wire identity — byte-parity table
+
+| Committed fixture | Emitter call | Key assertion | Test file | Test name |
+| --- | --- | --- | --- | --- |
+| `TypeSpecGrpc/Generated/WireVersion.g.cs` | `emitWireVersionConstant(WIRE_NS, channel, WIRE_SOURCE)` where `channel = parseChannel("d2.keycustodian.v2alpha")!` | Byte-identical to the committed fixture (CHANNEL/GENERATION/STABILITY fields agree with `proto-package`) | `tests/proto-grpc-byte-parity.test.ts` | `byteParity_WireVersionConstant_CommittedFixtureIdentical` |
+| `TypeSpecGrpc/Generated/wire-identity.manifest.g.json` | `emitWireIdentityManifest(protoPackage, protoCsharpNs, channel)` | Byte-identical to the committed fixture; all four identity facts present; `x-d2-generated-by` present; no package-name keys | `tests/proto-grpc-byte-parity.test.ts` | `byteParity_WireIdentityManifest_CommittedFixtureIdentical` |
+
+**Deliberate-drift non-vacuity guard**: the `WireVersion.g.cs` byte-gate describe block contains a second test that emits with a mutated channel (`v3beta`) and asserts the output does NOT match the committed `v2alpha` fixture. This proves the gate is not a tautology comparing a buffer to itself.
+
+**D2TSP010 non-vacuity**: `tests/wire-channel.test.ts` contains a NON-VACUOUS mismatch test that feeds `proto-package="d2.keycustodian.v2alpha"` against `proto-csharp-namespace="D2.Services.Protos.KeyCustodian.V2Beta"` and asserts `onError` is called once with code `"channel-segment-mismatch"` and a message containing `"D2TSP010"`, `"v2alpha"`, and `"V2Beta"`. A matching pair also calls `onError` zero times. Both arms are required (vacuous fire-always and vacuous fire-never are equally broken gates).
+
+**Integration tests**: `tests/proto-grpc-emit.integration.test.ts` adds four integration tests:
+- `protoGrpcEmitIntegration_WireVersion_EmittedOnGrpcOp` — full `host.compile` with a `@d2GrpcMethod` op emits both `WireVersion.g.cs` (CHANNEL=`"v2alpha"`, GENERATION=2, STABILITY=`"alpha"`) and the manifest with all four identity facts.
+- `protoGrpcEmitIntegration_D2TSP010_FiresOnChannelMismatch` — deliberately mismatched `proto-package` vs `proto-csharp-namespace` → error diagnostic with `d.message.includes("D2TSP010")`.
+- `protoGrpcEmitIntegration_UnpinnedField_NoOrphanedWireIdentity` — unpinned proto field on the sole `@d2GrpcMethod` op → D2TSP009 fires; `WireVersion.g.cs` and `wire-identity.manifest.g.json` are NOT emitted (regression: a prior bug emitted them unconditionally even when the proto walk failed).
+- `protoGrpcEmitIntegration_VersionedAdoption_ByteNeutralForExistingFixtures` — compile with `@versioned` KC inline → in-process handler file still emitted; no proto emitted; `WireVersion.g.cs` NOT emitted (no `@d2GrpcMethod` op).
+
+---
+
 ## Byte-gate completeness sweep
 
 EVERY committed generated file across the fleet — all `.g.cs` (DTO / handler /
 service / transport-mapper / client-interface / client-impl / client-mapper / DI /
-keys / predicate / idempotency / SSE / route-registration subtrees), every `.g.ts`
-DTO + client, every `.g.proto`, and every `.openapi.g.json` — has a re-emit
+keys / predicate / idempotency / SSE / route-registration / wire-version subtrees), every `.g.ts`
+DTO + client, every `.g.proto`, every `.openapi.g.json`, and every `.manifest.g.json` — has a re-emit
 byte-identity gate (re-run the emitter → assert byte-identical to the committed
 file) carrying a deliberate-drift negative. The gate set is the union of the
 per-emitter byte-parity tables above; no committed generated file in the
@@ -624,12 +663,15 @@ which façade they fake.
 | Branches                          | 100%                                                                                                                                                                                                                                                                                                                                             |
 | Functions                         | 100%                                                                                                                                                                                                                                                                                                                                             |
 | Statements                        | 100%                                                                                                                                                                                                                                                                                                                                             |
-| Test files                        | 43                                                                                                                                                                                                                                                                                                                                               |
-| Total tests                       | 952 (the byte-gate completeness sweep added 30 `it()` cases; the emitter-source-labels guard extension added 6 more covering the full ID-pattern class + C# and contracts scopes; 2 additional TS pins cover the repo-root sentinel helper + the source-label guard's extended pattern class; no new test file)                                                                                                                                                |
+| Test files                        | 46 (3 new: `wire-channel.test.ts`, `wire-version-emitter.test.ts`, `wire-manifest-emitter.test.ts`)                                                                                                                                                                                                                                              |
+| Total tests                       | ~1040 (vitest runner — 46 files; breakdown: wire-channel unit tests ~12, wire-version-emitter unit tests ~8, wire-manifest-emitter unit tests ~8, `proto-grpc-byte-parity.test.ts` additions ~2, `proto-grpc-emit.integration.test.ts` additions ~4) |
 | C# behavior tests (D2.Edge.Tests) | 934 passing (includes the temporal round-trip matrix `TemporalRoundTripTests` + the enum-wire round-trip matrix `EnumWireRoundTripTests` + the `@d2Resilience` predicate retry matrix `PredicateRetryTests` + the predicate parity matrix `PredicateParityTests` — the flat `placeOrder` rows AND the nested/array-of-model `placeOrderV2` rows + the over-the-wire resilience suite `OverTheWireResilienceTests`) |
 | TS temporal round-trip (@d2/time) | 32 (`temporal-round-trip.test.ts`, drives the shared cross-language fixture)                                                                                                                                                                                                                                                                     |
 | TS enum-wire round-trip           | 7 (`enum-wire-round-trip.test.ts`, drives the shared `contracts/enum/enum-parity.fixture.json`)                                                                                                                                                                                                                                                  |
 | TS predicate parity               | 6 (`predicate-parity.test.ts`, drives the shared flat `contracts/resilience/predicate-parity.fixture.json` AND the nested/array-of-model `contracts/resilience/predicate-parity-nested.fixture.json`)                                                                                                                                            |
+| TS wire-channel unit tests        | ~12 (`wire-channel.test.ts`: WIRE_CHANNEL_GRAMMAR matches/rejects, `parseChannel` positive 3 cases, adversarial 8 inputs, `expectedCsharpChannelSegment` 4 round-trips, NON-VACUOUS D2TSP010 mismatch, positive agreement 3 cases, `@versioned` axis, adversarial namespace shape) |
+| TS wire-version-emitter unit tests | ~8 (`wire-version-emitter.test.ts`: CHANNEL/GENERATION/STABILITY for alpha, stable STABILITY, namespace declaration, banner, `#nullable enable`, fileName) |
+| TS wire-manifest-emitter unit tests | ~8 (`wire-manifest-emitter.test.ts`: 4 identity facts, `x-d2-generated-by`, valid JSON round-trip, NO package name keys 4 asserts, beta channel variant, fileName) |
 
 ---
 

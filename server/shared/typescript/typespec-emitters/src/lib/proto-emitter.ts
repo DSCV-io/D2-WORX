@@ -11,7 +11,10 @@
 //   - syntax = "proto3" with package and csharp_namespace from tspconfig options.
 //   - service name from @d2GrpcMethod `service` arg; rpc name from `method` arg.
 //   - Message names = TypeSpec model names verbatim (e.g. SignInput, SignOutput).
-//   - Field names are lower_snake_case; field numbers assigned 1-based in order.
+//   - Field names are lower_snake_case; field numbers are author-pinned via @d2Field(n).
+//     Every field on a proto-bound model MUST carry an explicit @d2Field pin — positional
+//     assignment is permanently disabled to prevent silent wire-format breaks on
+//     reorder/insert/delete. An unpinned field is a loud build failure (D2TSP009).
 //   - `repeated` for collection fields (IReadOnlyList<T> / readonly T[] in C#/TS).
 //   - Enum / string-literal-union field → a proto `string` field carrying the
 //     member-name wire string (the cross-language enum wire is always a string;
@@ -29,11 +32,15 @@
 //   - Request message is UNCHANGED (no envelope on requests).
 //   - The <Op>Output data message is emitted as a distinct message block; its fields
 //     are the response DTO fields. The Response wrapper has only the two envelope fields.
+//   - reserved lines are emitted inside each message for @d2Reserved entries (ascending,
+//     deduped, range-collapsed numbers; then quoted names). Prevents future authors from
+//     accidentally reusing removed field slots.
 
 import { buildBanner } from "./banner.js";
 import { toSnake } from "./name-transforms.js";
 import type { FieldInfo, NestedModel } from "./model-walk.js";
 import type { EmittedFile } from "./csharp-dto-emitter.js";
+import type { ReservedPayload } from "@d2/typespec-decorators";
 
 // ---------------------------------------------------------------------------
 // Public types
@@ -45,7 +52,10 @@ export interface ProtoFieldInfo {
   readonly protoName: string;
   /** proto3 type string (e.g. "string", "bytes", "int32"). */
   readonly protoType: string;
-  /** 1-based field number (assigned by the emitter in declaration order). */
+  /**
+   * Author-pinned proto3 field number from @d2Field(n). Must be present for
+   * proto-bound models — the emitter rejects undefined (D2TSP009 loud failure).
+   */
   readonly fieldNumber: number;
   /** True when the field is a collection (emits `repeated` prefix). */
   readonly repeated: boolean;
@@ -57,6 +67,14 @@ export type StreamingMode =
   | "serverStream"
   | "clientStream"
   | "bidiStream";
+
+/** Nested message descriptor with its optional reserved payload. */
+export interface NestedMessageDescriptor {
+  /** The nested model (name + fields). */
+  readonly model: NestedModel;
+  /** Optional @d2Reserved payload for this message. */
+  readonly reserved?: ReservedPayload;
+}
 
 // ---------------------------------------------------------------------------
 // Public API
@@ -70,24 +88,30 @@ export type StreamingMode =
  * The `<responseModelName>` data message is emitted as a separate message block
  * with the response DTO fields. The Request message is UNCHANGED.
  *
+ * Every field on every message MUST carry a @d2Field pin (fieldNumber on FieldInfo).
+ * An unpinned field triggers D2TSP009 (loud failure, returns undefined).
+ *
  * @param opName            - lowerCamelCase op name (for banner context only).
  * @param grpcService       - gRPC service name from @d2GrpcMethod (e.g. "KeyCustodianSigner").
  * @param grpcMethod        - gRPC method name from @d2GrpcMethod (e.g. "Sign").
  * @param streaming         - Streaming mode from @d2GrpcMethod.
- * @param protoPackage      - Proto3 package string (e.g. "d2.keycustodian.v1").
- * @param protoCsharpNs     - C# namespace option (e.g. "D2.Services.Protos.KeyCustodian.V1").
+ * @param protoPackage      - Proto3 package string (e.g. "d2.keycustodian.v2alpha").
+ * @param protoCsharpNs     - C# namespace option (e.g. "D2.Services.Protos.KeyCustodian.V2Alpha").
  * @param sourceSpec        - Relative spec path for the banner.
  * @param requestModelName  - Proto message name for the request (e.g. "SignRequest").
  * @param requestFields     - Resolved field list for the request model.
+ * @param requestReserved   - Optional @d2Reserved payload for the request message.
  * @param responseModelName - TypeSpec model name for the response DTO (e.g. "SignOutput").
  *                            This name is used for both the Response wrapper message name
  *                            suffix AND the data message name. The Response wrapper message
  *                            is always named `<grpcMethod>Response`; the data message is
  *                            named `responseModelName` (e.g. "SignOutput").
  * @param responseFields    - Resolved field list for the response DTO (the data message fields).
- * @param nestedMessages    - Distinct nested models from request/response walks.
- * @param onError           - Callback for D2TSP001 (unmapped scalar) / streaming errors.
- * @returns EmittedFile on success, undefined when a scalar is unmapped.
+ * @param responseReserved  - Optional @d2Reserved payload for the response data message.
+ * @param nestedMessages    - Distinct nested models from request/response walks with their
+ *                            optional reserved payloads.
+ * @param onError           - Callback for diagnostic emissions.
+ * @returns EmittedFile on success, undefined when a scalar is unmapped or a field is unpinned.
  */
 export function emitProto(
   _opName: string,
@@ -99,30 +123,54 @@ export function emitProto(
   sourceSpec: string,
   requestModelName: string,
   requestFields: readonly FieldInfo[],
+  requestReserved: ReservedPayload | undefined,
   responseModelName: string,
   responseFields: readonly FieldInfo[],
-  nestedMessages: readonly NestedModel[],
+  responseReserved: ReservedPayload | undefined,
+  nestedMessages: readonly NestedMessageDescriptor[],
   onError: (
-    code: "unmapped-scalar" | "invalid-streaming-mode",
+    code:
+      | "unmapped-scalar"
+      | "invalid-streaming-mode"
+      | "unpinned-proto-field"
+      | "duplicate-field-number",
     message: string,
   ) => void,
 ): EmittedFile | undefined {
   // Resolve proto fields for request + response data message.
-  const reqProtoFields = resolveProtoFields(requestFields, onError);
+  const reqProtoFields = resolveProtoFields(
+    requestModelName,
+    requestFields,
+    onError,
+  );
   if (reqProtoFields === undefined) return undefined;
 
-  const respDataProtoFields = resolveProtoFields(responseFields, onError);
+  const respDataProtoFields = resolveProtoFields(
+    responseModelName,
+    responseFields,
+    onError,
+  );
   if (respDataProtoFields === undefined) return undefined;
 
   // Resolve nested message proto fields.
   const resolvedNested: Array<{
     name: string;
     fields: readonly ProtoFieldInfo[];
+    reserved: ReservedPayload | undefined;
   }> = [];
+
   for (const nm of nestedMessages) {
-    const nestedFields = resolveProtoFields(nm.fields, onError);
+    const nestedFields = resolveProtoFields(
+      nm.model.name,
+      nm.model.fields,
+      onError,
+    );
     if (nestedFields === undefined) return undefined;
-    resolvedNested.push({ name: nm.name, fields: nestedFields });
+    resolvedNested.push({
+      name: nm.model.name,
+      fields: nestedFields,
+      reserved: nm.reserved,
+    });
   }
 
   // The rpc declaration uses <grpcMethod>Response as the response message name.
@@ -162,7 +210,7 @@ export function emitProto(
 
   // Emit request message (UNCHANGED — no envelope on requests).
   lines.push("");
-  lines.push(emitMessage(requestModelName, reqProtoFields));
+  lines.push(emitMessage(requestModelName, reqProtoFields, requestReserved));
 
   // Emit the Response envelope wrapper. The response carries:
   //   field 1: d2.common.v1.D2ResultProto result  — the D2Result envelope
@@ -175,12 +223,14 @@ export function emitProto(
 
   // Emit the response data message (the DTO fields).
   lines.push("");
-  lines.push(emitMessage(responseModelName, respDataProtoFields));
+  lines.push(
+    emitMessage(responseModelName, respDataProtoFields, responseReserved),
+  );
 
   // Emit nested messages.
   for (const nm of resolvedNested) {
     lines.push("");
-    lines.push(emitMessage(nm.name, nm.fields));
+    lines.push(emitMessage(nm.name, nm.fields, nm.reserved));
   }
 
   lines.push("");
@@ -209,7 +259,11 @@ function buildRpcLine(
   reqName: string,
   respName: string,
   onError: (
-    code: "unmapped-scalar" | "invalid-streaming-mode",
+    code:
+      | "unmapped-scalar"
+      | "invalid-streaming-mode"
+      | "unpinned-proto-field"
+      | "duplicate-field-number",
     message: string,
   ) => void,
 ): string | undefined {
@@ -232,24 +286,51 @@ function buildRpcLine(
 }
 
 /**
- * Resolve FieldInfo[] → ProtoFieldInfo[], assigning 1-based field numbers.
- * Returns undefined when any field's proto type cannot be resolved (onError already called).
+ * Resolve FieldInfo[] → ProtoFieldInfo[], reading author-pinned field numbers
+ * from FieldInfo.fieldNumber (@d2Field(n) on each property).
+ *
+ * Returns undefined when any field's proto type cannot be resolved (onError already
+ * called), when any field lacks a @d2Field pin (D2TSP009 loud failure), or when
+ * two fields share the same field number (D2TSP011 loud failure).
+ * Positional assignment is permanently disabled — every field must carry a pin.
  */
 function resolveProtoFields(
+  modelName: string,
   fields: readonly FieldInfo[],
   onError: (
-    code: "unmapped-scalar" | "invalid-streaming-mode",
+    code:
+      | "unmapped-scalar"
+      | "invalid-streaming-mode"
+      | "unpinned-proto-field"
+      | "duplicate-field-number",
     message: string,
   ) => void,
 ): readonly ProtoFieldInfo[] | undefined {
   const result: ProtoFieldInfo[] = [];
-  let fieldNumber = 1;
+  const seenNumbers = new Set<number>();
 
   for (const f of fields) {
-    const resolved = resolveOneField(f, fieldNumber, onError);
+    if (f.fieldNumber === undefined) {
+      onError(
+        "unpinned-proto-field",
+        `D2TSP009: field '${f.name}' on model '${modelName}' has no @d2Field pin — every field on a proto-bound model must carry an explicit @d2Field(N) field number; positional assignment is disabled`,
+      );
+      return undefined;
+    }
+
+    if (seenNumbers.has(f.fieldNumber)) {
+      onError(
+        "duplicate-field-number",
+        `D2TSP011: field '${f.name}' on model '${modelName}' has field number ${f.fieldNumber} which is already used by another field — every field on a proto-bound model must have a unique @d2Field pin`,
+      );
+      return undefined;
+    }
+
+    seenNumbers.add(f.fieldNumber);
+
+    const resolved = resolveOneField(f, f.fieldNumber, onError);
     if (resolved === undefined) return undefined;
     result.push(resolved);
-    fieldNumber++;
   }
 
   return result;
@@ -264,7 +345,11 @@ function resolveOneField(
   f: FieldInfo,
   fieldNumber: number,
   onError: (
-    code: "unmapped-scalar" | "invalid-streaming-mode",
+    code:
+      | "unmapped-scalar"
+      | "invalid-streaming-mode"
+      | "unpinned-proto-field"
+      | "duplicate-field-number",
     message: string,
   ) => void,
 ): ProtoFieldInfo | undefined {
@@ -323,7 +408,11 @@ function resolveProtoFromScalarCsType(
   csType: string,
   fieldName: string,
   onError: (
-    code: "unmapped-scalar" | "invalid-streaming-mode",
+    code:
+      | "unmapped-scalar"
+      | "invalid-streaming-mode"
+      | "unpinned-proto-field"
+      | "duplicate-field-number",
     message: string,
   ) => void,
 ): string | undefined {
@@ -363,22 +452,109 @@ function emitResponseEnvelopeMessage(
 }
 
 /**
- * Emit one proto3 message block.
+ * Emit one proto3 message block, with optional `reserved` lines before the fields.
+ *
+ * Reserved lines are emitted in two groups (proto3 convention):
+ *   1. `reserved N, M to P;` — ascending, deduped, range-collapsed field numbers.
+ *   2. `reserved "old_name";` — one line per formerly-used field name.
+ *
  * Empty messages emit `message Name {}` (well-formed proto3).
  */
-function emitMessage(name: string, fields: readonly ProtoFieldInfo[]): string {
-  if (fields.length === 0) return `message ${name} {}`;
+function emitMessage(
+  name: string,
+  fields: readonly ProtoFieldInfo[],
+  reserved?: ReservedPayload,
+): string {
+  const reservedNumberLines = buildReservedNumberLines(reserved?.numbers);
+  const reservedNameLines = buildReservedNameLines(reserved?.names);
+  const hasReserved =
+    reservedNumberLines.length > 0 || reservedNameLines.length > 0;
+
+  if (fields.length === 0 && !hasReserved) return `message ${name} {}`;
 
   const lines: string[] = [];
   lines.push(`message ${name} {`);
+
+  for (const line of reservedNumberLines) lines.push(`  ${line}`);
+  for (const line of reservedNameLines) lines.push(`  ${line}`);
+
   for (const f of fields) {
     const repeated = f.repeated ? "repeated " : "";
     lines.push(
       `  ${repeated}${f.protoType} ${f.protoName} = ${f.fieldNumber};`,
     );
   }
+
   lines.push("}");
   return lines.join("\n");
+}
+
+/**
+ * Build `reserved N, M to P;` lines from a list of field numbers.
+ * Numbers are deduplicated, sorted ascending, and collapsed into ranges.
+ * Returns an empty array when the input is empty or undefined.
+ *
+ * Range collapse: consecutive runs of integers become `N to M` (proto3 syntax);
+ * single-number runs emit as bare integers. The proto3 spec permits `N to M`
+ * for any N ≤ M — single-element runs still emit as bare integers for clarity.
+ */
+function buildReservedNumberLines(numbers?: readonly number[]): string[] {
+  if (!numbers || numbers.length === 0) return [];
+
+  // Dedup + sort ascending.
+  const sorted = [...new Set(numbers)].sort((a, b) => a - b);
+
+  // Collapse into ranges.
+  const ranges: string[] = [];
+  let rangeStart = sorted[0]!;
+  let rangeEnd = sorted[0]!;
+
+  for (let i = 1; i < sorted.length; i++) {
+    const n = sorted[i]!;
+
+    if (n === rangeEnd + 1) {
+      rangeEnd = n;
+    } else {
+      ranges.push(
+        rangeEnd > rangeStart
+          ? `${rangeStart} to ${rangeEnd}`
+          : `${rangeStart}`,
+      );
+      rangeStart = n;
+      rangeEnd = n;
+    }
+  }
+
+  ranges.push(
+    rangeEnd > rangeStart ? `${rangeStart} to ${rangeEnd}` : `${rangeStart}`,
+  );
+
+  return [`reserved ${ranges.join(", ")};`];
+}
+
+/**
+ * Build `reserved "old_name";` lines from a list of formerly-used field names.
+ * Names are deduplicated (preserving first-seen order) before emission, for
+ * parity with the dedup applied to reserved numbers. Returns an empty array
+ * when the input is empty or undefined.
+ */
+function buildReservedNameLines(names?: readonly string[]): string[] {
+  if (!names || names.length === 0) return [];
+
+  const seen = new Set<string>();
+  const deduped: string[] = [];
+
+  for (const n of names) {
+    if (!seen.has(n)) {
+      seen.add(n);
+      deduped.push(n);
+    }
+  }
+
+  return deduped.map((n) => {
+    const escaped = n.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
+    return `reserved "${escaped}";`;
+  });
 }
 
 // ---------------------------------------------------------------------------

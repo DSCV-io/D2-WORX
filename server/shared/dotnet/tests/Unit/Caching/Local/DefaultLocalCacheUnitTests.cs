@@ -11,6 +11,7 @@ using AwesomeAssertions;
 using D2.Shared.Caching;
 using D2.Shared.Caching.Local.Default;
 using Microsoft.Extensions.Options;
+using Microsoft.Extensions.Time.Testing;
 using Xunit;
 
 /// <summary>
@@ -240,11 +241,16 @@ public sealed class DefaultLocalCacheUnitTests
         // on the increment-existing path, which fell back to DefaultExpiration
         // (1h) instead of preserving the existing TTL. Redis-parity contract:
         // INCR on a key with TTL must keep the TTL; only the first SET sets it.
-        using var cache = NewCache();
+        var clock = new FakeTimeProvider();
+        using var cache = NewCache(clock: clock);
         var shortTtl = TimeSpan.FromMinutes(2);
 
         await cache.SetAsync("counter", 5L, shortTtl);
-        await Task.Delay(50); // observable bleed in the remaining-TTL window
+
+        // Advance the fake clock by 30 s — observable bleed in the remaining-TTL
+        // window without any real-time wait.
+        clock.Advance(TimeSpan.FromSeconds(30));
+
         await cache.IncrementAsync("counter");
 
         var ttlR = await cache.GetTtlAsync("counter");
@@ -252,8 +258,8 @@ public sealed class DefaultLocalCacheUnitTests
         ttlR.Data.Should().NotBeNull();
 
         // TTL must remain bounded by the original 2-minute window — not jump
-        // back up to the 1-hour default. Allow generous slack for timer skew.
-        ttlR.Data!.Value.Should().BeLessThan(TimeSpan.FromMinutes(2.1));
+        // back up to the 1-hour default. After 30 s elapsed, TTL ≈ 90 s < 2 min.
+        ttlR.Data!.Value.Should().BeLessThan(TimeSpan.FromMinutes(2));
     }
 
     [Fact]
@@ -426,10 +432,11 @@ public sealed class DefaultLocalCacheUnitTests
         act.Should().Throw<ArgumentNullException>();
     }
 
-    private static DefaultLocalCache NewCache(Action<LocalCacheOptions>? configure = null)
+    private static DefaultLocalCache NewCache(
+        Action<LocalCacheOptions>? configure = null, TimeProvider? clock = null)
     {
         var opts = new LocalCacheOptions();
         configure?.Invoke(opts);
-        return new DefaultLocalCache(Options.Create(opts));
+        return new DefaultLocalCache(Options.Create(opts), clock);
     }
 }

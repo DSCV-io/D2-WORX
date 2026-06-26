@@ -7,7 +7,7 @@
 namespace D2.Edge.Tests.Unit.KeyCustodian.TypeSpecGrpc;
 
 using D2.Services.Protos.Common.V1;
-using D2.Services.Protos.KeyCustodian.V1;
+using D2.Services.Protos.KeyCustodian.V2Alpha;
 using D2.Shared.Result;
 using D2.Shared.Result.Grpc;
 using Google.Protobuf;

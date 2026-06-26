@@ -57,6 +57,8 @@ not here.
 - [D — Sequencing, dependencies, and the coupling points](#d--sequencing-dependencies-and-the-coupling-points)
 - [E — Items that still need a design decision](#e--items-that-still-need-a-design-decision)
 - [H — Cross-cutting deferrals tracked outside this index (pointers)](#h--cross-cutting-deferrals-tracked-outside-this-index-pointers-deep-tracked-elsewhere)
+  - [H1 — Proto-unification follow-on](#h1--proto-unification-follow-on-sharedcommon-protos--typespecemitter-pipeline)
+- [I — Contract-versioning / release follow-ons (deliverable 0024)](#i--contract-versioning--release-follow-ons-deliverable-0024)
 
 ---
 
@@ -294,6 +296,19 @@ tracking lives in another canonical owner (a deliverable record's honest-caveats
 follow-up tracker), and they are NOT auth-pivot / emitter / Edge-seam items. Listed so the index is complete
 without re-homing them: the pointer is here; the owner is named.
 
+### H1 — Proto-unification follow-on (shared/common protos → TypeSpec/emitter pipeline)
+
+**Status**: 📐 specified-deferred. **Canonical source**: [ADR-0024 §Shared/common wire types](../adrs/0024-contract-api-versioning-strategy.md#sharedcommon-wire-types) + the Context paragraph on `common/v1`.
+
+The four `contracts/protos/common/v1/*` files (`d2.common.v1.*`) are hand-authored — transitional leftovers from before the TypeSpec-first pipeline. The proto-unification follow-on closes that gap:
+
+| Sub-item | What | Blocked on |
+| -------- | ---- | ---------- |
+| H1.1 | Bring `common/v1/*` under the TypeSpec/emitter pipeline — emit at the buf-idiomatic `d2/common/vN` path at the correct generation; remove the `buf` `PACKAGE_DIRECTORY_MATCH` lint exception (`contracts/protos/buf.yaml `:30-36`) that accommodates the current layout | the emitter capable of emitting shared/common types (a TypeSpec source for the shared types must be authored or derived) |
+| H1.2 | Determine the target generation number for the unified path (`d2/common/v2` to match services, or a separately-chosen number per the born-stable-independent-versioning policy in ADR-0024) | a design decision (ADR-0024 defers the exact number to this follow-on) |
+| H1.3 | Close the `D2Result` two-source drift: today `d2.common.v1.D2ResultProto` (hand-authored proto) and the `contracts/error-codes/envelope.spec.json` schema are two sources of truth for the same wire shape; a D2Result proto/spec drift-parity test (in `D2.Shared.Tests.Integration`) is the interim stopgap; the follow-on resolves it by making TSP the single source and emitting the proto from the spec | H1.1 (emitter must handle the shared envelope shape) |
+| H1.4 | Update `proto-emitter.ts` hard-coded `import "common/v1/d2_result.proto"` references (`:195`, `:416`) to the new emitted path | H1.1 (path changes when the emitter owns the output) |
+
 - ~~**Pre-existing `D2.Shared.Tests` OTel/CORS flake**~~ — **FIXED**. Root cause: two
   implicit named xUnit collections (`"OtelStaticState"` / `"LogLoggerStaticState"`) had no
   `[CollectionDefinition]`, so xUnit ran them in parallel — racing the Prometheus exporter global
@@ -306,3 +321,26 @@ without re-homing them: the pointer is here; the owner is named.
   follow-up tracker. Sweep all `D2Result.fail/ok/...` static-call sites when the `d2-web` compose service is
   stood up; the `gateway-response.ts` site was already fixed, the rest remain. Not a pivot/emitter/Edge-seam
   item.
+
+---
+
+## I — Contract-versioning / release follow-ons (deliverable 0024)
+
+Deliverable 0024 built the contract-side versioning and breaking-change machinery: author-pinned proto field
+numbers, the `@versioned` stability channels, the always-on `tools/contract-gate` breaking-change gate, the
+deprecate-not-delete marker, per-package semver and CHANGELOGs, and the footer-keyed `tools/release-runner`.
+These rows are the pieces 0024 deliberately deferred — each names the 0024-built artifact the deferred work
+consumes so the eventual builder finds the drop-in point.
+
+**Canonical detail**: [ADR-0024](../adrs/0024-contract-api-versioning-strategy.md) +
+[the 0024 deliverable record](../dev/deliverables/0024-contract-api-versioning-strategy.md) (at SHIP).
+
+| # | Item | Status | Canonical source | Blocked on |
+| - | ---- | ------ | ---------------- | ---------- |
+| I1 | **`Deprecation` (RFC 9745) + `Sunset` (RFC 8594) response-header middleware + telemetry-gated removal.** 0024 built the contract-side shape the middleware reads: the `deprecated` / `deprecatedReason` / `replacedBy` / `sunset` (ISO-date, declared-now-INERT) marker fields across the catalog schemas + the runtime `IsDeprecated` registry flag. The Edge response middleware must emit `Deprecation` and `Sunset` headers from those fields; telemetry-gated removal must read per-generation usage before a deprecated entry is deleted. | 📐 specified-deferred | [ADR-0024 deprecation/removal section](../adrs/0024-contract-api-versioning-strategy.md) + the `deprecated`/`sunset` marker on `contracts/**/schema.json` + the `IsDeprecated` registry flag | a running Edge response pipeline + request telemetry (PHASE_3 A1 / E2) |
+| I2 | **Registry publishing (npm / NuGet) + the TS publish-enable.** 0024 proved every consumable is publish-ready (the `pack-smoke` job in `.github/workflows/test.yml` validates `dotnet pack` / `pnpm pack`) and `release-libs.yml` cuts the GitHub Release bundle, but actual registry push is unwired (no credentials) and the TS packages are still `private` (the `private:false` + `publishConfig` flip belongs here, not Wave A). Publishing is always a deliberate, manual step — never automatic. | 📐 specified-deferred | `.github/workflows/release-libs.yml` ("Publishing… is a separate, deliberate step (not wired here)") + the per-package `package.json` `private` flag + CONTRIBUTING "Cutting a library release" | npm and nuget.org credentials + a deliberate first-publish decision |
+| I3 | **Post-merge `release-libs.yml` dry-run validation.** Run `release-libs.yml` with `dry_run=true` right after this branch merges to the default branch — a ~30-second check that the bundle assembles and all 83 packages pack before any real release. A `workflow_dispatch` workflow cannot be dispatched until its file is on the default branch. | 📐 specified-deferred | `.github/workflows/release-libs.yml` (`workflow_dispatch`, `dry_run` default true) | this branch merging to the default branch (the workflow must be on the default branch to dispatch) |
+| I4 | **Automated library public-API breaking detection.** Today library-API breaks are author-declared via the commit footer; only wire/contract breaks (proto / spec / i18n / OpenAPI) are auto-detected by `tools/contract-gate` (the runner is passive — reads footers, does not diff API surfaces). Add automated detection: .NET `Microsoft.CodeAnalysis.PublicApiAnalyzers` (`PublicAPI.Shipped.txt` per package) and TS `@microsoft/api-extractor` or `@arethetypeswrong/cli`, to auto-catch library public-API breaks and cross-check the author's footer. | 📐 specified-deferred | `tools/contract-gate` (wire-only detection today) + `tools/release-runner/src/bump-engine.ts` (passive footer reader) | nothing structural — buildable now (per-package public-API baselines are the new artifact) |
+| I5 | **Runner-tag-integrated releases.** `release-libs.yml` is a standalone snapshot today (it re-reads `loadAllPackages()` via the runner's `--list` mode but does not tag from the runner's bump output). A tag-driven / runner-integrated release — where the runner's per-package `--apply` bump emits the tags the release workflow consumes — is a later refinement. | 📐 specified-deferred | `.github/workflows/release-libs.yml` (standalone snapshot) + `tools/release-runner` (`--apply` writes versions but emits no tags) | I2 (registry push) is the natural pairing; buildable incrementally before then |
+
+**Cross-reference**: I1's deprecation marker shares the `contracts/**` surface with [§H1.3](#h1--proto-unification-follow-on-sharedcommon-protos--typespecemitter-pipeline) (the `D2Result` two-source drift) — they are otherwise independent (H1.3 is proto-vs-spec source unification; I1 is the deprecation header lifecycle). None of I1–I5 duplicate an existing §H1 sub-item.

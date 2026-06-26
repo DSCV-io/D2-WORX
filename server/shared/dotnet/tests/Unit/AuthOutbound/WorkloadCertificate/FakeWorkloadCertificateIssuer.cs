@@ -6,9 +6,11 @@
 
 namespace D2.Shared.Tests.Unit.AuthOutbound.WorkloadCertificate;
 
+using System.Threading.Channels;
 using D2.Shared.Auth.Outbound.WorkloadCertificate;
 using D2.Shared.Result;
 using D2.Shared.Tests.Unit.Mtls;
+using NodaTime;
 
 /// <summary>
 /// Test issuer that mints real leaf material from a self-contained
@@ -18,6 +20,12 @@ using D2.Shared.Tests.Unit.Mtls;
 /// </summary>
 internal sealed class FakeWorkloadCertificateIssuer : IWorkloadCertificateIssuer, IDisposable
 {
+    // Unbounded channel: each IssueAsync call writes the post-call count into it.
+    // Tests read from this channel to get a deterministic "issuer was invoked N times"
+    // signal — no polling, no wall-clock deadline.
+    private readonly Channel<int> _invocationChannel =
+        Channel.CreateUnbounded<int>(new UnboundedChannelOptions { SingleReader = false, SingleWriter = false });
+
     private readonly TestCertificateAuthority r_ca = new();
     private readonly string r_serviceId;
     private readonly TimeSpan r_validity;
@@ -60,10 +68,46 @@ internal sealed class FakeWorkloadCertificateIssuer : IWorkloadCertificateIssuer
     /// <param name="fail">Whether subsequent issuances fail.</param>
     public void SetFail(bool fail) => _fail = fail;
 
+    /// <summary>
+    /// Awaits until <see cref="IssueAsync"/> has been called at least
+    /// <paramref name="targetCount"/> times in total (across the lifetime of this
+    /// instance). Returns immediately if the count is already reached.
+    /// Times out only on a genuine hang (the SUT never invokes <c>IssueAsync</c>
+    /// — a true defect). No polling — driven by the production code's invocation.
+    /// </summary>
+    /// <param name="targetCount">The minimum cumulative call count to wait for.</param>
+    /// <param name="timeout">
+    /// Safety timeout — should be generous (default 30 s) so a slow CI runner never
+    /// trips it on normal operation; it only fires when the SUT is genuinely stuck.
+    /// </param>
+    /// <param name="ct">Optional cancellation token.</param>
+    public async Task WaitForInvocationCountAsync(
+        int targetCount,
+        TimeSpan? timeout = null,
+        CancellationToken ct = default)
+    {
+        using var cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+        cts.CancelAfter(timeout ?? TimeSpan.FromSeconds(30));
+
+        // Fast-path: already there (e.g. the test advanced the clock before calling).
+        if (Volatile.Read(ref _issuanceCount) >= targetCount)
+            return;
+
+        await foreach (var count in _invocationChannel.Reader.ReadAllAsync(cts.Token))
+        {
+            if (count >= targetCount)
+                return;
+        }
+    }
+
     /// <inheritdoc/>
     public ValueTask<D2Result<WorkloadLeafMaterial>> IssueAsync(CancellationToken ct = default)
     {
-        Interlocked.Increment(ref _issuanceCount);
+        var count = Interlocked.Increment(ref _issuanceCount);
+
+        // Signal synchronously — TryWrite on an unbounded channel never blocks or
+        // fails (the channel is never closed during a test).
+        _invocationChannel.Writer.TryWrite(count);
 
         if (_fail)
             return ValueTask.FromResult(D2Result<WorkloadLeafMaterial>.ServiceUnavailable());
@@ -76,12 +120,16 @@ internal sealed class FakeWorkloadCertificateIssuer : IWorkloadCertificateIssuer
 
         // The cache-relevant NotAfter tracks the injected (fake) clock so refresh-due
         // + expiry assertions are deterministic under FakeTimeProvider advances.
-        var notAfter = r_clock.GetUtcNow().Add(r_validity);
+        var notAfter = Instant.FromDateTimeOffset(r_clock.GetUtcNow()) + Duration.FromTimeSpan(r_validity);
 
         return ValueTask.FromResult(D2Result<WorkloadLeafMaterial>.Ok(
             new WorkloadLeafMaterial(certDer, pkcs8, issuerDer, notAfter)));
     }
 
     /// <inheritdoc/>
-    public void Dispose() => r_ca.Dispose();
+    public void Dispose()
+    {
+        _invocationChannel.Writer.TryComplete();
+        r_ca.Dispose();
+    }
 }

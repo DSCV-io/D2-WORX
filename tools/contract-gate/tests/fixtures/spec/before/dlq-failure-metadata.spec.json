@@ -1,0 +1,36 @@
+{
+  "fields": [
+    {
+      "constName": "CAUSE",
+      "value": "cause",
+      "doc": "JSON property carrying the closed-enum cause string."
+    },
+    {
+      "constName": "ERROR_CODE",
+      "value": "errorCode",
+      "doc": "JSON property carrying the exception type or D2Result error code."
+    }
+  ],
+  "causes": [
+    {
+      "constName": "HANDLER_RESULT_FAILURE",
+      "value": "HANDLER_RESULT_FAILURE",
+      "doc": "Handler returned a non-Ok D2Result."
+    },
+    {
+      "constName": "HANDLER_EXCEPTION",
+      "value": "HANDLER_EXCEPTION",
+      "doc": "Handler threw an unhandled exception."
+    },
+    {
+      "constName": "DECRYPT_FAILURE",
+      "value": "DECRYPT_FAILURE",
+      "doc": "AEAD decrypt failed."
+    },
+    {
+      "constName": "DESERIALIZE_FAILURE",
+      "value": "DESERIALIZE_FAILURE",
+      "doc": "JSON deserialization of the message body failed."
+    }
+  ]
+}

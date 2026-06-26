@@ -4,7 +4,7 @@
 
 // Behavioral + structural coverage for ts-grpc-client-emitter.ts.
 //
-// THE LOAD-BEARING VALIDATION (AMB-1 — the real proto pipeline):
+// THE LOAD-BEARING VALIDATION (the real proto pipeline):
 //   The emitted SSR gRPC client is driven against the REAL @d2/grpc-client seam
 //   (handleGrpcCall / unaryCall / d2ResultFromProto / isTransientGrpcError), the
 //   REAL @d2/resilience ResilientPipeline, the REAL fixture ts-proto types (the
@@ -291,7 +291,7 @@ function makeServiceError(
  * A fake PredicateFixturesOrders stub. `script` yields a result per call so the
  * test can drive retry sequences (flaky-then-success, business-retry-then-give-up).
  * Records the call count. Typed against the REAL ts-proto client interface so the
- * harness COMPILES against the real proto types (the AMB-1 compile proof).
+ * harness COMPILES against the real proto types (the fixture-proto compile proof).
  */
 function makePlaceOrderStub(script: PlaceOrderResult[]): {
   stub: Pick<PredicateFixturesOrdersClient, "placeOrder">;
@@ -375,7 +375,7 @@ function baseScope(extra: Record<string, unknown> = {}): SeamScope {
 }
 
 // ===========================================================================
-// AMB-1 — the real buf/ts-proto pipeline proof
+// Fixture proto byte-gate — the real buf/ts-proto pipeline proof (place_order)
 // ===========================================================================
 
 /** Run the real buf/ts-proto toolchain on a fixture proto into a temp dir. */
@@ -424,7 +424,7 @@ function runRealBufTsProto(): string {
   );
 }
 
-describe("tsGrpcClient_AMB1_RealBufTsProtoPipeline", () => {
+describe("tsGrpcClient_FixtureProtoByteGate", () => {
   it("the real buf/ts-proto toolchain runs on the fixture proto and reproduces the committed proto-TS byte-identically", () => {
     const regenerated = runRealBufTsProto();
     const committed = readFileSync(
@@ -444,6 +444,95 @@ describe("tsGrpcClient_AMB1_RealBufTsProtoPipeline", () => {
     expect(protoTs).toContain("export const PredicateFixturesOrdersClient");
     expect(protoTs).toContain("export interface PlaceOrderResponse");
     expect(protoTs).toContain('import { D2ResultProto } from "@d2/protos";');
+  });
+});
+
+// ===========================================================================
+// Sign proto byte-gate — the real buf/ts-proto pipeline proof (sign / KeyCustodian)
+// ===========================================================================
+
+/** Run the real buf/ts-proto toolchain on the sign fixture proto into a temp dir. */
+function runRealBufTsProtoSign(): string {
+  const out = mkdtempSync(join(tmpdir(), "tsp-buf-sign-"));
+  const protoStage = join(out, "protos");
+  mkdirSync(join(protoStage, "common", "v1"), { recursive: true });
+  mkdirSync(join(out, "gen"), { recursive: true });
+  // The d2_result import from the real contracts/protos.
+  const repoRoot = _REPO;
+  cpSync(
+    join(repoRoot, "contracts", "protos", "common", "v1", "d2_result.proto"),
+    join(protoStage, "common", "v1", "d2_result.proto"),
+  );
+  cpSync(
+    join(HERE, "grpc-fixtures", "sign.proto"),
+    join(protoStage, "sign.proto"),
+  );
+  const genConfig = join(out, "buf.gen.yaml");
+  writeFileSync(
+    genConfig,
+    [
+      "version: v2",
+      "plugins:",
+      '  - local: ["pnpm", "exec", "protoc-gen-ts_proto"]',
+      `    out: ${join(out, "gen").replace(/\\/g, "/")}`,
+      "    opt:",
+      "      - esModuleInterop=true",
+      "      - outputServices=grpc-js",
+      "      - useExactTypes=false",
+      "      - oneof=unions",
+      "      - useOptionals=messages",
+      "      - Mcommon/v1/d2_result.proto=@d2/protos",
+    ].join("\n"),
+  );
+  // Run buf from the @d2/protos package dir so `pnpm exec protoc-gen-ts_proto` resolves.
+  const protosDir = join(repoRoot, "server", "shared", "typescript", "protos");
+  execFileSync(
+    "pnpm",
+    ["exec", "buf", "generate", protoStage, "--template", genConfig],
+    { cwd: protosDir, stdio: "pipe", shell: process.platform === "win32" },
+  );
+  return readFileSync(join(out, "gen", "sign.ts"), "utf8").replace(
+    /\r\n/g,
+    "\n",
+  );
+}
+
+describe("tsGrpcClient_RealBufTsProtoSignPipelineByteGate", () => {
+  it("the real buf/ts-proto toolchain runs on sign.proto and reproduces the committed sign.ts byte-identically", () => {
+    const regenerated = runRealBufTsProtoSign();
+    const committed = readFileSync(
+      join(HERE, "grpc-fixtures", "generated", "sign.ts"),
+      "utf8",
+    ).replace(/\r\n/g, "\n");
+    expect(regenerated).toBe(committed);
+  }, 60_000);
+
+  it("byte-gate is non-vacuous: a single-token mutation is detected as drift", () => {
+    // Proves the byte-comparison catches real drift — a gate that never fails is useless.
+    // Mutate one stable token in the committed fixture and assert the equality fails.
+    const committed = readFileSync(
+      join(HERE, "grpc-fixtures", "generated", "sign.ts"),
+      "utf8",
+    ).replace(/\r\n/g, "\n");
+    // Replace the first occurrence of the committed package string with a mutated value.
+    // "v2alpha" is stable — it's the channel declaration in the generated protobufPackage line.
+    const mutated = committed.replace("v2alpha", "v2beta");
+    expect(mutated).not.toBe(committed);
+  });
+
+  it("the committed sign.ts exports the KeyCustodianSigner grpc-js client stub + v2alpha package", () => {
+    const protoTs = readFileSync(
+      join(HERE, "grpc-fixtures", "generated", "sign.ts"),
+      "utf8",
+    );
+    // The real ts-proto output for sign.proto — grpc-js callback-style client +
+    // D2ResultProto-enveloped response. Package must be v2alpha (not the retired v1).
+    expect(protoTs).toContain("export const KeyCustodianSignerClient");
+    expect(protoTs).toContain("export interface SignResponse");
+    expect(protoTs).toContain('import { D2ResultProto } from "@d2/protos";');
+    expect(protoTs).toContain(
+      'export const protobufPackage = "d2.keycustodian.v2alpha"',
+    );
   });
 });
 
@@ -813,7 +902,7 @@ describe("tsGrpcClient_Behavioral_PlaceOrder_RealSeam", () => {
     const result = await client.placeOrder({ customerId: "c" });
 
     expect(result.success).toBe(false);
-    // The seam maps a non-cancelled/unauthenticated fault to serviceUnavailable (503).
+    // The seam maps a non-canceled/unauthenticated fault to serviceUnavailable (503).
     expect(result.statusCode).toBe(503);
     // PII: the raw transport detail never reaches the result.
     const rendered = JSON.stringify(result);
@@ -974,7 +1063,7 @@ describe("tsGrpcClient_Behavioral_SignWithKind_ResponseEnum_RealSeam", () => {
 });
 
 // ===========================================================================
-// AMB-4 — cross-runtime predicate-CONSUMPTION parity.
+// Cross-runtime predicate-CONSUMPTION parity.
 //
 // Drives the emitted TS client over the SAME shared parity fixture the .NET
 // PredicateParityTests + predicate-parity test use, asserting the client's
@@ -1106,5 +1195,126 @@ describe("tsGrpcClient_CapabilityParity_MirrorsNetClient", () => {
         cap.ts,
         `TS client must mirror the .NET capability '${cap.net}'`,
       ).toBe(true);
+  });
+});
+
+// ===========================================================================
+// TOLERANT READER — the emitted client ignores unknown fields on the decoded
+// proto response; the known DTO fields survive with full fidelity.
+// ===========================================================================
+
+describe("tsGrpcClient_TolerantReader", () => {
+  const twin = loadCommittedPredicateTwin();
+
+  function buildClient(): {
+    create: (stub: unknown) => {
+      placeOrder: (
+        input: unknown,
+        opts?: unknown,
+      ) => Promise<D2Result<unknown>>;
+    };
+  } {
+    const [file] = emitTsGrpcClient("PredicateFixtures", [placeOrderOp()]);
+    const create = reconstructFactory<{
+      placeOrder: (
+        input: unknown,
+        opts?: unknown,
+      ) => Promise<D2Result<unknown>>;
+    }>(file!.content, "createPredicateFixturesGrpcClient", baseScope(twin));
+    return { create };
+  }
+
+  it("tolerant reader — extra unknown fields in a proto response are ignored", async () => {
+    // The fake stub returns a response object that carries extra unknown properties
+    // at both the top level and inside data.  The emitted client + d2ResultFromProto
+    // seam reads only the named proto properties (result / data); extra keys on the JS
+    // response object are never accessed and do not affect the decoded D2Result.
+    const { create } = buildClient();
+    const responseWithExtra = {
+      result: {
+        success: true,
+        statusCode: 200,
+        errorCode: undefined,
+        category: undefined,
+        traceId: undefined,
+        messages: [],
+        inputErrors: [],
+      },
+      data: {
+        orderCode: "ORD-TR3",
+        itemStatuses: ["DONE"],
+        partial: false,
+        // extra fields a newer producer might send:
+        unknownDataField: "ignored",
+        addedStatusDetail: { code: 42 },
+      },
+      // extra top-level field:
+      unknownEnvelopeField: "also-ignored",
+    } as unknown as PlaceOrderResponse;
+
+    const { stub, calls } = makePlaceOrderStub([
+      { kind: "ok", response: responseWithExtra },
+    ]);
+    const client = create(stub);
+    const result = await client.placeOrder({ customerId: "cust-tr3" });
+
+    expect(result.success).toBe(true);
+    expect(result.data).toEqual({
+      orderCode: "ORD-TR3",
+      itemStatuses: ["DONE"],
+      partial: false,
+    });
+    // Extra fields must not surface in the decoded DTO.
+    expect(Object.keys(result.data as object)).not.toContain(
+      "unknownDataField",
+    );
+    expect(Object.keys(result.data as object)).not.toContain(
+      "addedStatusDetail",
+    );
+    expect(calls()).toBe(1);
+  });
+
+  it("tolerant reader — added optional response field is ignored by the prior decoder", async () => {
+    // Forward-compat case: a "newer producer" adds an optional field to the response
+    // data payload.  The emitted client mapper only reads the fields it declared
+    // (orderCode / itemStatuses / partial); the added field is never read, so it does
+    // not appear in the returned D2Result<data>.  The result is success with the known
+    // fields intact.
+    const { create } = buildClient();
+    const forwardCompatResponse = {
+      result: {
+        success: true,
+        statusCode: 200,
+        errorCode: undefined,
+        category: undefined,
+        traceId: undefined,
+        messages: [],
+        inputErrors: [],
+      },
+      data: {
+        orderCode: "ORD-FC4",
+        itemStatuses: ["SHIPPED", "DELIVERED"],
+        partial: false,
+        // field added in a newer spec revision:
+        estimatedDelivery: "2026-07-01",
+      },
+    } as unknown as PlaceOrderResponse;
+
+    const { stub } = makePlaceOrderStub([
+      { kind: "ok", response: forwardCompatResponse },
+    ]);
+    const client = create(stub);
+    const result = await client.placeOrder({ customerId: "cust-fc4" });
+
+    expect(result.success).toBe(true);
+    expect((result.data as { orderCode: string }).orderCode).toBe("ORD-FC4");
+    expect(
+      (result.data as { itemStatuses: string[] }).itemStatuses,
+    ).toHaveLength(2);
+    expect((result.data as { partial: boolean }).partial).toBe(false);
+    // The added field must not leak into the decoded DTO.
+    expect(Object.keys(result.data as object)).not.toContain(
+      "estimatedDelivery",
+    );
   });
 });

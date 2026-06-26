@@ -1,0 +1,313 @@
+# -----------------------------------------------------------------------
+# Copyright (c) DCSV. All rights reserved.
+# -----------------------------------------------------------------------
+
+# Manual library-release workflow.
+#
+# Packs all 83 consumable D2 libraries (.NET + TypeScript), assembles an
+# atomic bundle zip, and optionally creates a GitHub Release with the
+# bundle + loose artifacts attached.
+#
+# Trigger: manual workflow_dispatch ONLY.
+#   - dry_run=true (default): pack, assemble, upload as a workflow artifact
+#     for inspection. No Release is created. Use this to validate the bundle
+#     before cutting a real release.
+#   - dry_run=false: additionally runs `gh release create` with the bundle
+#     and all loose artifacts. This is the only step that creates a real
+#     GitHub Release — it is deliberately gated behind the manual input.
+#
+# No npm or NuGet registry credentials are used. This workflow creates a
+# GitHub Release only. Publishing to npm / NuGet is a separate, deliberate
+# step (not wired here).
+
+name: Release libraries
+
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Dry run — pack and assemble only, skip gh release create"
+        type: boolean
+        default: true
+        required: true
+      tag:
+        description: "Release tag override (default: libs-YYYY.MM.DD derived from run date)"
+        type: string
+        required: false
+        default: ""
+      prerelease:
+        description: "Mark the GitHub Release as a pre-release"
+        type: boolean
+        default: true
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  release-libs:
+    name: Pack all libs and assemble bundle
+    runs-on: ubuntu-latest
+
+    steps:
+      # -----------------------------------------------------------------------
+      # Checkout + toolchain setup
+      # -----------------------------------------------------------------------
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+
+      - uses: pnpm/action-setup@v4
+
+      # -----------------------------------------------------------------------
+      # Derive the release tag (override or date-stamp)
+      # -----------------------------------------------------------------------
+      - name: Derive release tag
+        id: tag
+        env:
+          INPUT_TAG: ${{ inputs.tag }}
+        run: |
+          if [ -n "$INPUT_TAG" ]; then
+            echo "value=$INPUT_TAG" >> "$GITHUB_OUTPUT"
+          else
+            echo "value=libs-$(date +%Y.%m.%d)" >> "$GITHUB_OUTPUT"
+          fi
+
+      # -----------------------------------------------------------------------
+      # Install + build the release runner so --list can run
+      # -----------------------------------------------------------------------
+      - name: pnpm install (release-runner + deps)
+        run: pnpm install --filter "release-runner..." --filter "ts-codegen..."
+
+      - name: Build release-runner dependencies
+        run: pnpm --filter "release-runner^..." build
+
+      # -----------------------------------------------------------------------
+      # Emit the authoritative package manifest via --list
+      # -----------------------------------------------------------------------
+      - name: Emit package inventory (--list)
+        run: |
+          mkdir -p bundle/nuget bundle/npm
+          pnpm --filter release-runner exec tsx src/cli.ts --list > bundle/list.json
+          echo "Package inventory:"
+          cat bundle/list.json | python3 -c "
+          import json, sys
+          pkgs = json.load(sys.stdin)
+          npm   = [p for p in pkgs if p['ecosystem'] == 'npm']
+          nuget = [p for p in pkgs if p['ecosystem'] == 'nuget']
+          print(f'  Total: {len(pkgs)} packages ({len(nuget)} NuGet, {len(npm)} npm)')
+          "
+
+      # -----------------------------------------------------------------------
+      # Pack all .NET consumables
+      # Loops over every nuget entry in the manifest, runs dotnet pack per csproj.
+      # restore + build run inline (no --no-build) — same as pack-smoke pattern.
+      # -----------------------------------------------------------------------
+      - name: Pack all .NET consumables
+        run: |
+          python3 - <<'PYEOF'
+          import json, subprocess, sys, os
+
+          with open("bundle/list.json") as f:
+              pkgs = json.load(f)
+
+          nuget = [p for p in pkgs if p["ecosystem"] == "nuget"]
+          print(f"Packing {len(nuget)} NuGet packages...")
+
+          for p in nuget:
+              csproj = p["manifestPath"]
+              print(f"  dotnet pack {csproj}")
+              result = subprocess.run(
+                  ["dotnet", "pack", csproj, "--configuration", "Release", "--output", "bundle/nuget"],
+                  capture_output=True,
+                  text=True,
+              )
+              if result.returncode != 0:
+                  print(f"FAIL: {p['name']}", file=sys.stderr)
+                  print(result.stdout, file=sys.stderr)
+                  print(result.stderr, file=sys.stderr)
+                  sys.exit(1)
+
+          print("All NuGet packages packed.")
+          PYEOF
+
+      # -----------------------------------------------------------------------
+      # Pack all TypeScript consumables
+      # Full shared-TS subtree install + build, then loop pnpm pack per package.
+      # Proven pattern from test.yml ts-shared-unit-tests lane.
+      # -----------------------------------------------------------------------
+      - name: pnpm install (shared-TS subtree + ts-codegen)
+        run: pnpm install --filter "./server/shared/typescript/**..." --filter "ts-codegen..."
+
+      - name: Build all shared-TS packages (dep-order)
+        run: pnpm --filter "./server/shared/typescript/**" -r build
+
+      - name: Pack all TypeScript consumables
+        run: |
+          python3 - <<'PYEOF'
+          import json, subprocess, sys, os
+
+          with open("bundle/list.json") as f:
+              pkgs = json.load(f)
+
+          npm = [p for p in pkgs if p["ecosystem"] == "npm"]
+          print(f"Packing {len(npm)} npm packages...")
+
+          for p in npm:
+              name = p["name"]
+              print(f"  pnpm pack {name}")
+              result = subprocess.run(
+                  ["pnpm", "--filter", name, "pack", "--pack-destination", "bundle/npm"],
+                  capture_output=True,
+                  text=True,
+              )
+              if result.returncode != 0:
+                  print(f"FAIL: {name}", file=sys.stderr)
+                  print(result.stdout, file=sys.stderr)
+                  print(result.stderr, file=sys.stderr)
+                  sys.exit(1)
+
+          print("All npm packages packed.")
+          PYEOF
+
+      # -----------------------------------------------------------------------
+      # Validate artifact count matches the manifest (fail-loud)
+      # -----------------------------------------------------------------------
+      - name: Validate artifact counts match manifest
+        run: |
+          python3 - <<'PYEOF'
+          import json, os, sys, glob
+
+          with open("bundle/list.json") as f:
+              pkgs = json.load(f)
+
+          expected_nuget = sum(1 for p in pkgs if p["ecosystem"] == "nuget")
+          expected_npm   = sum(1 for p in pkgs if p["ecosystem"] == "npm")
+
+          actual_nuget = len(glob.glob("bundle/nuget/*.nupkg"))
+          actual_npm   = len(glob.glob("bundle/npm/*.tgz"))
+
+          ok = True
+
+          if actual_nuget != expected_nuget:
+              print(f"FAIL: expected {expected_nuget} .nupkg files, found {actual_nuget}", file=sys.stderr)
+              ok = False
+
+          if actual_npm != expected_npm:
+              print(f"FAIL: expected {expected_npm} .tgz files, found {actual_npm}", file=sys.stderr)
+              ok = False
+
+          if not ok:
+              sys.exit(1)
+
+          print(f"Count validation passed: {actual_nuget} .nupkg + {actual_npm} .tgz = {actual_nuget + actual_npm} total")
+          PYEOF
+
+      # -----------------------------------------------------------------------
+      # Assemble the bundle (manifest.json, HOW-TO-USE.md, LICENSE.md, zip)
+      # -----------------------------------------------------------------------
+      - name: Assemble bundle zip
+        env:
+          RELEASE_TAG: ${{ steps.tag.outputs.value }}
+        run: |
+          node tools/scripts/assemble-libs-bundle.mjs \
+            --bundle-dir  bundle \
+            --list-json   bundle/list.json \
+            --tag         "$RELEASE_TAG" \
+            --repo-root   . \
+            --output-zip  "d2-libs-${RELEASE_TAG}.zip"
+
+      # -----------------------------------------------------------------------
+      # Generate release notes (shipped inside the bundle + attached to Release)
+      # -----------------------------------------------------------------------
+      - name: Generate release notes
+        env:
+          RELEASE_TAG: ${{ steps.tag.outputs.value }}
+        run: |
+          python3 - <<'PYEOF'
+          import json, os
+
+          tag = os.environ["RELEASE_TAG"]
+
+          with open("bundle/manifest.json") as f:
+              manifest = json.load(f)
+
+          pkgs = manifest["packages"]
+          nuget = [p for p in pkgs if p["ecosystem"] == "nuget"]
+          npm   = [p for p in pkgs if p["ecosystem"] == "npm"]
+
+          lines = [
+              f"# D2 Libraries — {tag}",
+              "",
+              f"Snapshot bundle: {len(pkgs)} packages ({len(nuget)} .NET NuGet, {len(npm)} TypeScript npm).",
+              "",
+              "Download `d2-libs-" + tag + ".zip` for the full atomic bundle, or grab individual",
+              "`.nupkg` / `.tgz` artifacts below.",
+              "",
+              "See `HOW-TO-USE.md` inside the bundle for installation instructions.",
+              "",
+              "## Package inventory",
+              "",
+              "| Package | Ecosystem | Version |",
+              "| ------- | --------- | ------- |",
+          ]
+
+          for p in sorted(pkgs, key=lambda x: (x["ecosystem"], x["name"])):
+              lines.append(f"| `{p['name']}` | {p['ecosystem']} | {p['version']} |")
+
+          lines += [
+              "",
+              "## License",
+              "",
+              "These libraries are under the **PolyForm Strict License** — non-commercial use only.",
+              "See `LICENSE.md` in the bundle.",
+          ]
+
+          with open("bundle/RELEASE-NOTES.md", "w") as f:
+              f.write("\n".join(lines) + "\n")
+
+          print("Release notes written.")
+          PYEOF
+
+      # -----------------------------------------------------------------------
+      # Upload bundle + loose artifacts as a workflow artifact (always)
+      # -----------------------------------------------------------------------
+      - name: Upload bundle artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: d2-libs-${{ steps.tag.outputs.value }}
+          path: |
+            d2-libs-${{ steps.tag.outputs.value }}.zip
+            bundle/nuget/*.nupkg
+            bundle/npm/*.tgz
+          if-no-files-found: error
+
+      # -----------------------------------------------------------------------
+      # Create GitHub Release (only when dry_run == false)
+      # Uses the built-in gh CLI + GITHUB_TOKEN — no third-party action.
+      # -----------------------------------------------------------------------
+      - name: Create GitHub Release
+        if: ${{ inputs.dry_run == false }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_TAG: ${{ steps.tag.outputs.value }}
+          PRERELEASE_FLAG: ${{ inputs.prerelease == true && '--prerelease' || '' }}
+        run: |
+          # ${PRERELEASE_FLAG} is intentionally unquoted: it is either the literal
+          # string "--prerelease" or empty string, derived from a boolean workflow
+          # input (GitHub Actions validates the type before evaluation). Quoting it
+          # would pass an empty quoted string as a positional argument when prerelease
+          # is false. Shell word-splitting of a server-side-validated boolean is safe.
+          gh release create "$RELEASE_TAG" \
+            --title "D2 libraries ${RELEASE_TAG}" \
+            --notes-file bundle/RELEASE-NOTES.md \
+            ${PRERELEASE_FLAG} \
+            "d2-libs-${RELEASE_TAG}.zip" \
+            bundle/nuget/*.nupkg \
+            bundle/npm/*.tgz

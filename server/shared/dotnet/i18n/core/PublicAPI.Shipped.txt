@@ -1,0 +1,17 @@
+#nullable enable
+D2.Shared.I18n.I18nServiceCollectionExtensions
+D2.Shared.I18n.I18nServiceCollectionExtensions.extension(Microsoft.Extensions.DependencyInjection.IServiceCollection!)
+D2.Shared.I18n.I18nServiceCollectionExtensions.extension(Microsoft.Extensions.DependencyInjection.IServiceCollection!).AddD2I18n(Microsoft.Extensions.Configuration.IConfiguration! configuration, string? messagesDirectory = null) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
+D2.Shared.I18n.SupportedLocales
+D2.Shared.I18n.SupportedLocales.All.get -> System.Collections.Generic.IReadOnlyList<string!>!
+D2.Shared.I18n.SupportedLocales.Base.get -> string!
+D2.Shared.I18n.SupportedLocales.IsValid(string! locale) -> bool
+D2.Shared.I18n.SupportedLocales.LanguageDefaults.get -> System.Collections.Generic.IReadOnlyDictionary<string!, string!>!
+D2.Shared.I18n.SupportedLocales.Resolve(string? locale) -> string!
+D2.Shared.I18n.SupportedLocales.SupportedLocales(Microsoft.Extensions.Configuration.IConfiguration! configuration) -> void
+D2.Shared.I18n.Translator
+D2.Shared.I18n.Translator.HasKey(string! key) -> bool
+D2.Shared.I18n.Translator.T(string! locale, D2.Shared.I18n.TKMessage! message) -> string!
+D2.Shared.I18n.Translator.Translator(D2.Shared.I18n.SupportedLocales! supportedLocales, string! messagesDirectory) -> void
+static D2.Shared.I18n.I18nServiceCollectionExtensions.AddD2I18n(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services, Microsoft.Extensions.Configuration.IConfiguration! configuration, string? messagesDirectory = null) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
+static D2.Shared.I18n.SupportedLocales.ToBcp47(string! tag) -> string!

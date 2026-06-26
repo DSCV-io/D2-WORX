@@ -215,7 +215,14 @@ public sealed class PipelineCompositionTests
         var result = await pipeline.ExecuteAsync("k", async ct =>
         {
             Interlocked.Increment(ref calls);
-            await Task.Delay(500, ct);
+
+            // Infinite delay (-1 ms): the operation blocks until the timeout CTS fires.
+            // Using -1 instead of a finite 500 ms removes the timing race: the timeout
+            // fires deterministically before an infinite wait completes, regardless of
+            // scheduler pressure or CPU contention. Note: `Timeout` is ambiguous here
+            // (D2.Shared.Tests.Unit.Resilience.Timeout namespace shadows System.Threading.Timeout),
+            // so the literal -1 is used directly — identical to Timeout.Infinite.
+            await Task.Delay(-1, ct);
             return 1;
         });
 
@@ -243,8 +250,17 @@ public sealed class PipelineCompositionTests
         var result = await pipeline.ExecuteAsync("k", async ct =>
         {
             var n = Interlocked.Increment(ref calls);
+
             if (n == 1)
-                await Task.Delay(500, ct); // First attempt is slow — will time out.
+            {
+                // Infinite delay (-1 ms): blocks until the per-attempt timeout CTS fires.
+                // Using -1 instead of a finite 500 ms removes the timing race — the
+                // 50 ms timeout fires deterministically before an infinite wait completes,
+                // regardless of scheduler jitter. Note: `Timeout` is ambiguous here
+                // (D2.Shared.Tests.Unit.Resilience.Timeout namespace shadows System.Threading.Timeout),
+                // so the literal -1 is used directly — identical to Timeout.Infinite.
+                await Task.Delay(-1, ct);
+            }
 
             return 42; // Second attempt returns immediately.
         });
@@ -396,22 +412,37 @@ public sealed class PipelineCompositionTests
             var innerOpCalls = 0;
             var gate = new TaskCompletionSource();
 
+            // Determinism guarantee: ResilientPipeline.ExecuteAsync is async; its
+            // first synchronous path builds the layer chain then calls wrapped(ct),
+            // which invokes SingleflightLayer.WrapAsync → Singleflight.ExecuteAsync
+            // → r_inflight.GetOrAdd synchronously — all before the first await.
+            // Capturing the ValueTask<D2Result<int>> (without awaiting) therefore
+            // proves the caller has joined the singleflight entry. Signalling AFTER
+            // capture makes the wait on all N signals a guarantee that all callers
+            // have joined before the gate opens — no SpinWait/Yield needed.
             const int concurrent_callers = 10;
+            var allJoined = new SemaphoreSlim(0, concurrent_callers);
+
             var tasks = Enumerable.Range(0, concurrent_callers)
                 .Select(_ => Task.Run(async () =>
-                    await pipeline.ExecuteAsync("same-key", async _ =>
+                {
+                    var vt = pipeline.ExecuteAsync("same-key", async _ =>
                     {
                         Interlocked.Increment(ref innerOpCalls);
                         await gate.Task;
                         return 77;
-                    })))
+                    });
+                    allJoined.Release(); // signal AFTER join, not before
+                    return await vt;
+                }))
                 .ToArray();
 
-            // Wait for SF to publish the in-flight entry.
-            SpinWait.SpinUntil(() => sf.Size == 1, TimeSpan.FromSeconds(5))
-                .Should().BeTrue("SF must publish the in-flight entry");
-            await Task.Delay(100); // Let remaining callers dedup.
+            // Wait for all callers to have joined — guaranteed, not polled.
+            for (var i = 0; i < concurrent_callers; i++)
+                await allJoined.WaitAsync();
 
+            // All callers are joined to the single in-flight entry.
+            sf.Size.Should().Be(1);
             gate.SetResult();
             var results = await Task.WhenAll(tasks);
 

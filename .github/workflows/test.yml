@@ -4,15 +4,16 @@
 
 name: PR
 
-# Single-lane CI.
+# PR CI — parallel lanes.
 #
 # Active jobs ramp up as services come online.
 # Each job below is commented out until its target service or workspace
 # exists; uncomment once the cited path is populated.
 # Total wall time target: <5 minutes (all active jobs run in parallel).
 #
-# Required gates (non-skippable once active):
-#   - integration-key-rotation (KeyCustodian rotation flow)
+# All active jobs must pass before merge. Which checks actually block a merge
+# is configured in branch protection (Settings -> Branches -> required status
+# checks), NOT the job name — names carry no special meaning to GitHub.
 
 on:
   pull_request:
@@ -25,18 +26,199 @@ jobs:
   # Active now (no service dependencies)
   # ==========================================================================
 
-  # proto-checks — activates when `contracts/protos/buf.yaml` is committed
-  # proto-checks:
-  #   name: Proto checks (buf lint + format)
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - uses: actions/checkout@v4
-  #     - uses: bufbuild/buf-setup-action@v1
-  #     - run: buf lint
-  #     - run: buf format --diff --exit-code
+  # ---------------------------------------------------------------------------
+  # Proto checks (buf lint + format) — active: buf.yaml now committed.
+  # Enforces STANDARD lint rules and format consistency on hand-authored protos.
+  # Scoped to `contracts/protos/` (the shared stable protos); the emitted
+  # *.g.proto files in server/ are NOT reformatted here (§26.5 — fix the
+  # emitter, never hand-edit generated output).
+  # ---------------------------------------------------------------------------
+  proto-checks:
+    name: Proto checks (buf lint + format)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: bufbuild/buf-setup-action@v1
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+      - name: buf lint (STANDARD rule set)
+        run: buf lint contracts/protos
+      - name: buf format (hand-authored protos only)
+        run: buf format --diff --exit-code contracts/protos
 
-  # lint-and-format — activates when `server/web/` SvelteKit deps resolve
-  # AND `server/D2.slnx` contains projects
+  # ---------------------------------------------------------------------------
+  # Proto breaking-change gate — always on, PR-blocking.
+  # Runs `buf breaking` at FILE level over the shared `contracts/protos/` tree
+  # against the `nova` baseline. Pre-stable packages (vNalpha/vNbeta) are exempt
+  # via the `proto-arm` wrapper in `tools/contract-gate`. The shared `d2.common.v1`
+  # protos are stable and always enforced.
+  # Needs full git history (`fetch-depth: 0`) so `nova` resolves as a ref.
+  # ---------------------------------------------------------------------------
+  proto-breaking:
+    name: Proto breaking-change gate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Fetch nova baseline
+        run: git fetch origin nova:nova
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - uses: pnpm/action-setup@v4
+      - name: pnpm install (contract-gate + its workspace deps)
+        run: pnpm install --filter "contract-gate..." --filter "@d2/typespec-emitters..."
+      - name: build contract-gate
+        run: pnpm --filter contract-gate build
+      - name: Proto breaking-change gate (buf breaking at FILE level vs nova)
+        run: node tools/contract-gate/dist/cli.js --against nova --proto-only
+
+  # ---------------------------------------------------------------------------
+  # Contract breaking-change gate (spec / i18n / OpenAPI) — always on, PR-blocking.
+  # Runs the JSON-diff gate over `contracts/**/*.spec.json`, `contracts/messages/*.json`,
+  # and committed `*.openapi.g.json` docs against the `nova` baseline.
+  # Needs full git history so `git show nova:<path>` resolves baseline file content.
+  # ---------------------------------------------------------------------------
+  contract-breaking:
+    name: Contract breaking-change gate (spec / i18n / OpenAPI)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Fetch nova baseline
+        run: git fetch origin nova:nova
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - uses: pnpm/action-setup@v4
+      - name: pnpm install (contract-gate + its workspace deps)
+        run: pnpm install --filter "contract-gate..." --filter "@d2/typespec-emitters..."
+      - name: build contract-gate
+        run: pnpm --filter contract-gate build
+      - name: Spec / i18n / OpenAPI breaking-change gate (JSON-diff vs nova)
+        run: node tools/contract-gate/dist/cli.js --against nova --skip-proto
+
+  # ---------------------------------------------------------------------------
+  # Contract-gate unit tests — always on.
+  # Runs the owned-code test suite for `tools/contract-gate` (footer parser,
+  # spec-diff, i18n-diff, openapi-diff, proto-exemption, catalog-identity, and
+  # the proto-arm integration test). §26.15/§26.16 owned-tooling validation.
+  # ---------------------------------------------------------------------------
+  contract-gate-unit:
+    name: Contract gate unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - uses: pnpm/action-setup@v4
+      - name: pnpm install (contract-gate + its workspace deps)
+        run: pnpm install --filter "contract-gate..." --filter "@d2/typespec-emitters..." --filter "ts-codegen..."
+      - name: build contract-gate dependencies
+        run: pnpm --filter "@d2/typespec-emitters..." build
+      - name: Contract gate unit + integration tests
+        run: pnpm --filter contract-gate test
+
+  # ---------------------------------------------------------------------------
+  # Release-runner unit tests — always on.
+  # Runs the owned-code test suite for `tools/release-runner` (bump engine,
+  # manifest editor, changelog editor, semver, and runner integration tests).
+  # §26.15/§26.16 owned-tooling validation — mirrors contract-gate-unit.
+  # ---------------------------------------------------------------------------
+  release-runner-unit:
+    name: Release runner unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - uses: pnpm/action-setup@v4
+      - name: pnpm install (release-runner + its workspace deps)
+        run: pnpm install --filter "release-runner..." --filter "ts-codegen..."
+      - name: build release-runner dependencies
+        run: pnpm --filter "release-runner^..." build
+      - name: Release runner typecheck (src + tests)
+        run: pnpm --filter release-runner typecheck
+      - name: Release runner unit tests
+        run: pnpm --filter release-runner test
+
+  # ---------------------------------------------------------------------------
+  # Commit-lint unit tests — always on.
+  # Validates the commit-msg hook's conventional-commit type-allowlist and
+  # format enforcement logic (allowed types, reject paths, skip-forms).
+  # §26.15/§26.16 owned-tooling validation — mirrors release-runner-unit.
+  # ---------------------------------------------------------------------------
+  commit-lint-unit:
+    name: Commit lint unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - uses: pnpm/action-setup@v4
+      - name: pnpm install (commit-lint)
+        run: pnpm install --filter "commit-lint"
+      - name: Commit lint typecheck
+        run: pnpm --filter commit-lint typecheck
+      - name: Commit lint unit tests
+        run: pnpm --filter commit-lint test
+
+  # ---------------------------------------------------------------------------
+  # Versioning integration lane — required/blocking.
+  # Guards the artifact-diff versioning engine. The bump signals are build-free —
+  # the apiDiff is a git-ref text diff of the committed API reports and the
+  # fingerprint is a SOURCE-BASED hash (committed source + report + resolved deps
+  # + the declared toolchain pin), so this lane runs NO .NET build. It:
+  #   1. builds the shared-TS dists + runs api-extractor in production mode (--ci)
+  #      to guard the committed `.api.md` CURRENCY against the built `dist`
+  #      (the one thing still needing a built dist — TS has no RS0016 analog);
+  #   2. runs the baseline-drift check (drift-check.ts) — re-derives every
+  #      committed API-report diff + recomputes every source-based
+  #      .release-fingerprint and FAILS on any drift without a same-PR bump.
+  # The .NET API-report currency is owned by the `build` job (RS0016/RS0017 are
+  # errors under TreatWarningsAsErrors), so no .NET SDK is needed here.
+  # ---------------------------------------------------------------------------
+  versioning-integration:
+    name: Versioning integration (artifact-diff engine)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Full history — the API-report baseline reader does `git show HEAD:<path>`.
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - uses: pnpm/action-setup@v4
+      # Scoped install: release-runner pulls api-extractor (a devDep) + its deps;
+      # the shared-TS subtree pulls @d2/* build deps; ts-codegen for prebuilds.
+      - name: pnpm install (release-runner + shared-TS subtree + ts-codegen)
+        run: >
+          pnpm install
+          --filter "release-runner..."
+          --filter "./server/shared/typescript/**..."
+          --filter "ts-codegen..."
+      # The gated TS `.api.md` currency gate runs api-extractor against dist/.
+      - name: build the shared-TS dists
+        run: pnpm --filter "./server/shared/typescript/**" -r build
+      # Build release-runner's workspace dependency closure (contract-gate,
+      # ts-codegen, etc.) so import { ... } from "contract-gate" resolves at
+      # test/runtime. Mirrors the release-runner-unit lane's build step.
+      - name: build release-runner dependencies
+        run: pnpm --filter "release-runner^..." build
+      - name: Versioning TS api.md currency + drift check
+        run: pnpm --filter release-runner test
+      - name: Baseline drift check (API reports + source-based fingerprint)
+        run: pnpm --filter release-runner exec tsx src/drift-check-cli.ts
+
+  # lint-and-format — blocked: web half needs `server/web/` SvelteKit workspace
+  # (not yet resolvable — missing @d2/auth-bff-client workspace package); a
+  # dotnet-only inspectcode lane can follow in a later pass.
   # lint-and-format:
   #   name: Lint + format
   #   runs-on: ubuntu-latest
@@ -70,29 +252,99 @@ jobs:
   # Activates per service — uncomment each block as the cited path ships.
   # ==========================================================================
 
-  # build — activates when `server/D2.slnx` contains projects
-  # build:
-  #   name: Build
-  #   runs-on: ubuntu-latest
-  #   needs: [lint-and-format]
-  #   steps:
-  #     - uses: actions/checkout@v4
-  #     - uses: actions/setup-dotnet@v4
-  #       with:
-  #         dotnet-version: "10.0.x"
-  #     - run: dotnet build server/D2.slnx --configuration Release
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+      - run: dotnet build server/D2.slnx --configuration Release
 
-  # unit-tests-dotnet — activates when `server/shared/dotnet/tests/` ships
-  # unit-tests-dotnet:
-  #   name: Unit tests (.NET)
+  dotnet-shared-unit-tests:
+    name: .NET Shared Unit Tests
+    runs-on: ubuntu-latest
+    needs: [build]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+      - run: dotnet test server/shared/dotnet/tests/D2.Shared.Tests.csproj --configuration Release -- --filter-namespace "D2.Shared.Tests.Unit*"
+
+  dotnet-shared-integration-tests:
+    name: .NET Shared Integration Tests
+    runs-on: ubuntu-latest
+    needs: [build]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+      - run: dotnet test server/shared/dotnet/tests/D2.Shared.Tests.csproj --configuration Release -- --filter-namespace "D2.Shared.Tests.Integration*"
+
+  edge-unit-tests:
+    name: Edge Unit Tests
+    runs-on: ubuntu-latest
+    needs: [build]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+      - run: dotnet test server/services/edge/tests --configuration Release -- --filter-namespace "D2.Edge.Tests.Unit*"
+
+  edge-integration-tests:
+    name: Edge Integration Tests
+    runs-on: ubuntu-latest
+    needs: [build]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+      - run: dotnet test server/services/edge/tests --configuration Release -- --filter-namespace "D2.Edge.Tests.Integration*"
+
+  ts-shared-unit-tests:
+    name: TS Shared Unit Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - uses: pnpm/action-setup@v4
+      # Scoped install: pulls the server/shared/typescript/** subtree and their
+      # workspace deps only. The trailing `...` includes transitive workspace deps.
+      # `tools/ts-codegen` is also included because several shared-lib prebuild
+      # scripts invoke it via `pnpm --filter ts-codegen exec tsx ...`; without it
+      # those prebuilds would fail. `server/web` (B18 — missing @d2/auth-bff-client)
+      # is NOT in the closure, so the frozen-lockfile install remains clean.
+      - name: pnpm install (shared-TS subtree + ts-codegen)
+        run: pnpm install --filter "./server/shared/typescript/**..." --filter "ts-codegen..."
+      - name: build (shared-TS packages that need a dist/ before tests run)
+        run: pnpm --filter "./server/shared/typescript/**" -r build
+      - name: ts-codegen typecheck (src + tests)
+        run: pnpm --filter ts-codegen typecheck
+      - name: TS shared unit tests
+        run: pnpm --filter "./server/shared/typescript/**" -r test
+
+  # ts-shared-integration-tests — activate when TS shared packages gain
+  # Testcontainers-backed integration tests; none exist today.
+  # ts-shared-integration-tests:
+  #   name: TS Shared Integration Tests
   #   runs-on: ubuntu-latest
   #   needs: [build]
   #   steps:
   #     - uses: actions/checkout@v4
-  #     - uses: actions/setup-dotnet@v4
+  #     - uses: actions/setup-node@v4
   #       with:
-  #         dotnet-version: "10.0.x"
-  #     - run: dotnet test server/D2.slnx --filter Category=Unit --no-build --configuration Release
+  #         node-version: "24"
+  #     - uses: pnpm/action-setup@v4
+  #     - run: pnpm install --filter "./server/shared/typescript/**..." --filter "ts-codegen..."
+  #     - run: pnpm --filter "./server/shared/typescript/**" -r build
+  #     - run: pnpm --filter "./server/shared/typescript/**" -r test:integration
 
   # unit-tests-web — activates when `server/web/` SvelteKit workspace resolves
   # unit-tests-web:
@@ -110,37 +362,6 @@ jobs:
   #       working-directory: server/web
   #     - run: pnpm exec vitest run
   #       working-directory: server/web
-
-  # integration-edge — activates when `server/services/edge/tests/` ships
-  # integration-files — activates when `server/services/files/tests/` ships
-  # integration-courier — activates when `server/services/courier/tests/` ships
-  # integration-notifications — activates when `server/services/notifications/tests/` ships
-  # integration-audit — activates when `server/services/audit/tests/` ships
-  #
-  # Pattern (one per service):
-  # integration-{service}:
-  #   name: Integration tests ({service})
-  #   runs-on: ubuntu-latest
-  #   needs: [build]
-  #   steps:
-  #     - uses: actions/checkout@v4
-  #     - uses: actions/setup-dotnet@v4
-  #       with:
-  #         dotnet-version: "10.0.x"
-  #     - run: dotnet test server/services/{service}/tests --no-build --configuration Release
-
-  # integration-key-rotation — REQUIRED GATE for KeyCustodian rotation flow.
-  # Activates when the KeyCustodian module ships inside `server/services/edge/`.
-  # integration-key-rotation:
-  #   name: Key rotation (REQUIRED)
-  #   runs-on: ubuntu-latest
-  #   needs: [build]
-  #   steps:
-  #     - uses: actions/checkout@v4
-  #     - uses: actions/setup-dotnet@v4
-  #       with:
-  #         dotnet-version: "10.0.x"
-  #     - run: dotnet test server/services/edge/tests --filter Category=KeyRotation --no-build --configuration Release
 
   # web-component-tests — activates when `server/web/` SvelteKit workspace resolves
   # web-component-tests:
@@ -180,23 +401,22 @@ jobs:
   #       env:
   #         D2_MOCK_INFRA: "true"
 
-  # contract-fixtures-emit — activates once the dotnet build job activates.
-  # Re-emits the cross-language parity fixtures and asserts no fixture drift.
-  # contract-fixtures-emit:
-  #   name: Contract fixture emission (.NET → fixtures)
-  #   runs-on: ubuntu-latest
-  #   needs: [build]
-  #   steps:
-  #     - uses: actions/checkout@v4
-  #     - uses: actions/setup-dotnet@v4
-  #       with:
-  #         dotnet-version: "10.0.x"
-  #     - run: dotnet test server/D2.slnx --filter "Category=ContractFixtures" --no-build --configuration Release
-  #     - name: assert no fixture drift
-  #       run: git diff --exit-code server/shared/typescript/contract-tests/fixtures/
+  contract-fixtures-emit:
+    name: Contract fixture emission (.NET → fixtures)
+    runs-on: ubuntu-latest
+    needs: [build]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+      - run: dotnet test server/shared/dotnet/tests/D2.Shared.Tests.csproj --configuration Release -- --filter-trait "Category=ContractFixtures"
+      - name: assert no fixture drift
+        run: git diff --exit-code server/shared/typescript/contract-tests/fixtures/
 
-  # contract-tests-parity — activates with contract-fixtures-emit.
-  # Reads the fixtures and asserts TS-side spec-emitted catalogs / decoders agree.
+  # contract-tests-parity — blocked: pnpm workspace install needs the missing
+  # @d2/auth-bff-client workspace package (B18) before --frozen-lockfile succeeds,
+  # and the repo needs a root `test:contracts` script.
   # contract-tests-parity:
   #   name: Contract parity tests (TS reads fixtures + asserts)
   #   runs-on: ubuntu-latest
@@ -231,3 +451,57 @@ jobs:
         run: pnpm --filter "@d2/typespec-emitters..." build
       - name: TypeSpec emitter tests (byte-parity gate)
         run: pnpm --filter "@d2/typespec-emitters" test
+
+  # ==========================================================================
+  # Pack smoke — active now (no service dependencies).
+  # Proves one representative consumable per ecosystem stays publish-ready.
+  # Does NOT publish — no credentials required.
+  # .NET: packs D2.Shared.Result (exercises the full ProjectReference closure
+  #       for NuGet dependency declaration) and asserts a .nupkg is produced.
+  # TS:   builds + packs @d2/result (exercises the `files: ["dist"]` allowlist
+  #       so the tarball contains dist/ and not src/) and asserts a .tgz.
+  # ==========================================================================
+  pack-smoke:
+    name: Pack smoke (.NET nupkg + TS tgz)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - uses: pnpm/action-setup@v4
+
+      # ----- .NET pack -------------------------------------------------------
+      # `--no-build` relies on the Build job; in CI this job runs independently
+      # so we let dotnet restore + build inline via the default (no --no-build).
+      # Single-project pack — only the transitive ProjectReference closure of
+      # D2.Shared.Result is compiled (not the full solution).
+      - name: dotnet pack D2.Shared.Result
+        run: >
+          dotnet pack server/shared/dotnet/result/core/D2.Shared.Result.csproj
+          --configuration Release
+          --output /tmp/pack-smoke
+      - name: assert .nupkg produced
+        run: |
+          ls /tmp/pack-smoke/D2.Shared.Result.*.nupkg
+          echo "D2.Shared.Result nupkg OK"
+
+      # ----- TS pack ---------------------------------------------------------
+      - name: pnpm install (@d2/result subtree + ts-codegen)
+        run: pnpm install --filter "@d2/result..." --filter "ts-codegen..."
+      - name: build @d2/result workspace dependencies
+        run: pnpm --filter "@d2/result^..." build
+      - name: build @d2/result
+        run: pnpm --filter @d2/result build
+      - name: pnpm pack @d2/result
+        run: pnpm --filter @d2/result pack --pack-destination /tmp/pack-smoke
+      - name: assert .tgz produced and contains dist/ not src/
+        run: |
+          tgz=$(ls /tmp/pack-smoke/d2-result-*.tgz)
+          echo "Tarball: $tgz"
+          if ! tar -tzf "$tgz" | grep -q "^package/dist/"; then echo "FAIL: dist/ missing from tarball"; exit 1; fi
+          if tar -tzf "$tgz" | grep -q "^package/src/"; then echo "FAIL: src/ leaked into tarball"; exit 1; fi
+          echo "@d2/result tgz OK"

@@ -41,6 +41,7 @@ public sealed class AnonymizationEngineDualVoRegressionTests : IAsyncLifetime
     private readonly PostgresFixture r_fixture;
     private readonly System.Collections.Generic.List<GovDbContext> r_engineContexts = [];
 
+    private string r_connectionString = null!;
     private GovDbContext r_schemaCtx = null!;
 
     /// <summary>
@@ -56,13 +57,16 @@ public sealed class AnonymizationEngineDualVoRegressionTests : IAsyncLifetime
     /// <inheritdoc />
     public async ValueTask InitializeAsync()
     {
-        r_schemaCtx = GovDbContext.Build(r_fixture.ConnectionString);
+        // Each test class gets its own isolated database so EnsureCreatedAsync builds the
+        // full schema without colliding with sibling classes in the same xUnit collection.
+        r_connectionString = await r_fixture.CreateIsolatedDatabaseAsync(
+            nameof(AnonymizationEngineDualVoRegressionTests));
+        r_schemaCtx = GovDbContext.Build(r_connectionString);
 
-        // GovDbContext.EnsureCreatedAsync creates the base tables (TierAUsers, TierBUsers,
-        // OrgRecords, ExemptLedgers) when the database is fresh. If the database already
-        // exists (created by an earlier test class in the same collection), it is a no-op
-        // and does NOT create the tables added for this regression test (DualVoHosts,
-        // TierBDualVoHosts). Use raw IF NOT EXISTS DDL — idempotent on any run order.
+        // Fresh isolated DB — EnsureCreatedAsync succeeds unconditionally and creates all
+        // GovDbContext tables (TierAUsers, TierBUsers, OrgRecords, ExemptLedgers).
+        // DualVoHosts and TierBDualVoHosts are added via raw IF NOT EXISTS DDL (they are
+        // not in GovDbContext's model — the DDL is idempotent as a safety measure).
         await r_schemaCtx.Database.EnsureCreatedAsync();
 
         await r_schemaCtx.Database.ExecuteSqlRawAsync(@"
@@ -118,7 +122,7 @@ public sealed class AnonymizationEngineDualVoRegressionTests : IAsyncLifetime
 
         // Pre-erasure: assert the two address slots are genuinely distinct so the test
         // is not tautological — seeds distinct values, not the same value twice.
-        await using var preCtx = GovDbContext.Build(r_fixture.ConnectionString);
+        await using var preCtx = GovDbContext.Build(r_connectionString);
         var pre = await preCtx.DualVoHosts.FirstAsync(h => h.UserId == userId);
         pre.PrimaryAddress.City.Should().Be("Springfield", "primary city pre-erasure");
         pre.SecondaryAddress.City.Should().Be(
@@ -136,7 +140,7 @@ public sealed class AnonymizationEngineDualVoRegressionTests : IAsyncLifetime
             "duplicate-column SQL error must be gone (dual-VO Tier-A fix)");
         result.Data!.RowsAnonymized.Should().Be(1);
 
-        await using var readCtx = GovDbContext.Build(r_fixture.ConnectionString);
+        await using var readCtx = GovDbContext.Build(r_connectionString);
         var row = await readCtx.DualVoHosts.FirstAsync(h => h.UserId == userId);
 
         // (b) Both slots tombstoned independently — no cross-leak.
@@ -179,7 +183,7 @@ public sealed class AnonymizationEngineDualVoRegressionTests : IAsyncLifetime
 
         var userId = Guid.NewGuid();
 
-        await using var writeCtx = GovDbContext.Build(r_fixture.ConnectionString);
+        await using var writeCtx = GovDbContext.Build(r_connectionString);
         writeCtx.TierBDualVoHosts.Add(new GovDbContext.TierBDualVoHost
         {
             Id = Guid.NewGuid(),
@@ -199,7 +203,7 @@ public sealed class AnonymizationEngineDualVoRegressionTests : IAsyncLifetime
         await writeCtx.SaveChangesAsync();
 
         // Pre-erasure: confirm distinct values to rule out tautology.
-        await using var preCtx = GovDbContext.Build(r_fixture.ConnectionString);
+        await using var preCtx = GovDbContext.Build(r_connectionString);
         var pre = await preCtx.TierBDualVoHosts.FirstAsync(h => h.UserId == userId);
         pre.PrimaryAddress.City.Should().Be("PrimaryCity");
         pre.SecondaryAddress.City.Should().Be("SecondaryCity");
@@ -212,7 +216,7 @@ public sealed class AnonymizationEngineDualVoRegressionTests : IAsyncLifetime
             "Tier-B SetPropertyValue must not cross-write (dual-VO fix)");
         result.Data!.RowsAnonymized.Should().Be(1);
 
-        await using var readCtx = GovDbContext.Build(r_fixture.ConnectionString);
+        await using var readCtx = GovDbContext.Build(r_connectionString);
         var row = await readCtx.TierBDualVoHosts.FirstAsync(h => h.UserId == userId);
 
         // (b) Both slots tombstoned to their own values — no cross-leak.
@@ -245,7 +249,7 @@ public sealed class AnonymizationEngineDualVoRegressionTests : IAsyncLifetime
         string secondaryCity,
         string secondaryZip)
     {
-        await using var ctx = GovDbContext.Build(r_fixture.ConnectionString);
+        await using var ctx = GovDbContext.Build(r_connectionString);
         ctx.DualVoHosts.Add(new GovDbContext.DualVoHost
         {
             Id = Guid.NewGuid(),
@@ -267,7 +271,7 @@ public sealed class AnonymizationEngineDualVoRegressionTests : IAsyncLifetime
     private AnonymizationEngine BuildEngine(int batchSize = 500)
     {
         var opts = Options.Create(new AnonymizationEngineOptions { BatchSize = batchSize });
-        var ctx = GovDbContext.Build(r_fixture.ConnectionString);
+        var ctx = GovDbContext.Build(r_connectionString);
         r_engineContexts.Add(ctx);
         return new AnonymizationEngine(ctx, opts, NullLogger<AnonymizationEngine>.Instance);
     }

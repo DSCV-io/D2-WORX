@@ -6,6 +6,9 @@ packages:
   - "server/shared/typescript/**"
   - "tools/ts-codegen"
   - "tools/geo-data-pipeline"
+  - "tools/contract-gate"
+  - "tools/release-runner"
+  - "tools/commit-lint"
 
 onlyBuiltDependencies:
   - "@bufbuild/buf"

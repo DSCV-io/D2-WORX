@@ -1,0 +1,6 @@
+{
+  "$schema": "https://inlang.com/schema/inlang-message-format",
+  "auth_welcome": "Welcome to the platform.",
+  "auth_email_changed": "Your email address was changed.",
+  "common_error_generic": "An error occurred. Please try again."
+}

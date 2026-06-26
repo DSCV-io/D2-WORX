@@ -77,4 +77,17 @@ Copyright (c) DCSV. All rights reserved.
     -->
     <InternalsVisibleTo Include="D2.Shared.Result.Grpc" />
   </ItemGroup>
+
+  <!-- Publish metadata (per-package semver + NuGet identity). -->
+  <PropertyGroup>
+    <Version>0.1.0</Version>
+    <PackageId>D2.Shared.I18n.Abstractions</PackageId>
+    <Description>Domain-safe i18n slice for D2-WORX — the TKMessage primitive and the ITranslator interface, with zero external dependencies.</Description>
+    <IsPackable>true</IsPackable>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
 </Project>

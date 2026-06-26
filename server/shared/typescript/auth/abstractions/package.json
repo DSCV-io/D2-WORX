@@ -11,6 +11,9 @@
       "import": "./dist/index.js"
     }
   },
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "prebuild": "pnpm --filter ts-codegen exec tsx src/auth-scopes-emit.ts && pnpm --filter ts-codegen exec tsx src/error-codes-emit.ts && pnpm --filter ts-codegen exec tsx src/jwt-claims-emit.ts",
     "build": "tsc -b",

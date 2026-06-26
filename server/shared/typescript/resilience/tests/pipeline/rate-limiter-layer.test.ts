@@ -337,7 +337,7 @@ describe("RateLimiterLayer — splice-before-resolve race (regression)", () => {
     // activeCount must be 0 (clean slate, no phantom permit leaked).
     expect(layer.activeCount).toBe(0);
 
-    // Behavioural proof: a fresh execute() is admitted immediately, confirming
+    // Behavioral proof: a fresh execute() is admitted immediately, confirming
     // the semaphore is in a clean state (not stuck at 1 due to a phantom permit).
     expect(await layer.execute("k", async () => "fresh")).toBe("fresh");
     expect(layer.activeCount).toBe(0);

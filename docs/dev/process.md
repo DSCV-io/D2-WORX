@@ -307,7 +307,8 @@ Triggered by final-review's clean termination. Agent does:
 3. **Apply approved rule additions** to `docs/dev/rules.md` (committed change).
 4. **Copy the root README as a snapshot** from `docs/wip/NNNN-<name>/README.md` to `docs/dev/deliverables/NNNN-<name>.md` (committed — single file). The "Status" line flips to `SHIPPED YYYY-MM-DD`; the final-report section is populated; references to per-step journals get rephrased as prose since the journals don't cross the commit boundary.
 5. **Leave the wip/ workspace untouched.** The per-step journals + root README + final-review journal stay where they are in `docs/wip/NNNN-<name>/` — gitignored, local-only. The process does NOT auto-delete them. The user removes them manually whenever they want (e.g. when freeing local disk space, when archiving the project). Until then, they remain available locally as audit-trail evidence.
-6. **Commit** in this order, separately:
+6. **Consumable-lib changes carry the conventional-commit footer** the `tools/release-runner` reads at release time (per `rules.md §26.19`); SHIP itself does not bump package versions — the runner runs separately, after the deliverable merges.
+7. **Commit** in this order, separately:
    - Approved `rules.md` additions
    - The shipped deliverable code (squash-merge from feature branch)
    - The new `docs/dev/deliverables/NNNN-<name>.md` snapshot

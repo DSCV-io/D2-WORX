@@ -9,9 +9,9 @@ syntax = "proto3";
 
 import "common/v1/d2_result.proto";
 
-package d2.keycustodian.v1;
+package d2.keycustodian.v2alpha;
 
-option csharp_namespace = "D2.Services.Protos.KeyCustodian.V1";
+option csharp_namespace = "D2.Services.Protos.KeyCustodian.V2Alpha";
 
 service KeyCustodianSigner {
   rpc Sign(SignRequest) returns (SignResponse);

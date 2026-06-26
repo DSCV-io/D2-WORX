@@ -25,6 +25,7 @@ using Xunit;
 /// session-id extraction), cache fast-path, fail-fast on Edge unreachable,
 /// Singleflight dedup, and the OAuth Token Exchange request shape.
 /// </summary>
+[Collection("OutboundTelemetrySerial")]
 public sealed class HttpTokenExchangeClientTests
 {
     private const string TOKEN_ENDPOINT = "https://edge.internal/oauth/token";

@@ -1,0 +1,7 @@
+#nullable enable
+D2.Shared.Headers.Common.CommonHeaders
+const D2.Shared.Headers.Common.CommonHeaders.AUTHORIZATION = "Authorization" -> string!
+const D2.Shared.Headers.Common.CommonHeaders.PROPAGATED_CONTEXT = "x-d2-context" -> string!
+const D2.Shared.Headers.Common.CommonHeaders.TRACEPARENT = "traceparent" -> string!
+const D2.Shared.Headers.Common.CommonHeaders.TRACESTATE = "tracestate" -> string!
+static D2.Shared.Headers.Common.CommonHeaders.AllCommonHeaders.get -> System.Collections.Generic.IReadOnlyList<string!>!

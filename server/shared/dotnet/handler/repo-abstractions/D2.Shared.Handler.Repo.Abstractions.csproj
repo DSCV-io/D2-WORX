@@ -23,4 +23,17 @@ Copyright (c) DCSV. All rights reserved.
     <ProjectReference Include="..\..\result\core\D2.Shared.Result.csproj" />
     <ProjectReference Include="..\..\i18n\core\D2.Shared.I18n.csproj" />
   </ItemGroup>
+
+  <!-- Publish metadata (per-package semver + NuGet identity). -->
+  <PropertyGroup>
+    <Version>0.1.0</Version>
+    <PackageId>D2.Shared.Handler.Repo.Abstractions</PackageId>
+    <Description>Vocabulary for repo-flavored D2-WORX handlers — the database-failure discrimination contract (unique, FK, deadlock, concurrency, connection), zero infrastructure dependencies.</Description>
+    <IsPackable>true</IsPackable>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
 </Project>

@@ -11,6 +11,9 @@
       "import": "./dist/index.js"
     }
   },
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "prebuild": "pnpm --filter ts-codegen exec tsx src/request-context-emit.ts",
     "build": "tsc -b",

@@ -1,0 +1,11 @@
+# buf module config for the stable-before test fixture.
+# Used by the proto-arm integration test (non-vacuity proof).
+version: v2
+modules:
+  - path: .
+lint:
+  use:
+    - STANDARD
+breaking:
+  use:
+    - FILE

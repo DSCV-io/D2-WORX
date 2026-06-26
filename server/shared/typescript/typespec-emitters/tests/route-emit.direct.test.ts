@@ -44,6 +44,7 @@ import {
   D2_RESILIENCE_KEY,
   D2_RESILIENCE_RETRY_WHEN_KEY,
   D2_RESILIENCE_FAIL_WHEN_KEY,
+  D2_FIELD_KEY,
 } from "@d2/typespec-decorators";
 
 // ---------------------------------------------------------------------------
@@ -135,6 +136,24 @@ function makeModel(
   for (const [k, v] of Object.entries(props))
     properties.set(k, { type: v, optional: false } as unknown as ModelProperty);
   return { kind: "Model", name, properties } as unknown as Model;
+}
+
+/**
+ * Build a D2_FIELD_KEY state-map entry for all properties of the given models,
+ * assigning sequential 1-based field numbers per model in property-declaration order.
+ * Used by direct-unit tests to satisfy the `@d2Field` pinning requirement so
+ * D2TSP009 does not fire for mock proto-bound models.
+ */
+function makeFieldMap(...models: Model[]): Map<object, unknown> {
+  const m = new Map<object, unknown>();
+  for (const model of models) {
+    let n = 1;
+    for (const prop of (
+      model as unknown as { properties: Map<string, ModelProperty> }
+    ).properties.values())
+      m.set(prop, n++);
+  }
+  return m;
 }
 
 function makeWrappedOp(
@@ -919,6 +938,8 @@ describe("$onEmit_grpcDirect_RealModuleFacadeBranch_EmitterLines253To259", () =>
     const grpcMethod = new Map<object, unknown>([
       [op, { service: "Svc", method: "Do", streaming: "unary" }],
     ]);
+    // Field-number pins for all mock model properties so D2TSP009 does not fire.
+    const fieldMap = makeFieldMap(inputModel, outputModel);
 
     directUnitOps.push(op);
 
@@ -927,6 +948,7 @@ describe("$onEmit_grpcDirect_RealModuleFacadeBranch_EmitterLines253To259", () =>
       if (key === D2_SERVED_BY_KEY) return servedBy;
       if (key === D2_IN_PROCESS_KEY) return inProcess;
       if (key === D2_GRPC_METHOD_KEY) return grpcMethod;
+      if (key === D2_FIELD_KEY) return fieldMap;
       return new Map();
     });
 
@@ -979,6 +1001,8 @@ describe("$onEmit_grpcDirect_FixtureFacadeBranch_EmitterLines253To259", () => {
       [op, { service: "FixSvc", method: "FixDo", streaming: "unary" }],
     ]);
     const commandMap = new Map<object, unknown>([[op, true]]);
+    // Field-number pins for all mock model properties so D2TSP009 does not fire.
+    const fieldMap = makeFieldMap(inputModel, outputModel);
 
     directUnitOps.push(op);
 
@@ -987,6 +1011,7 @@ describe("$onEmit_grpcDirect_FixtureFacadeBranch_EmitterLines253To259", () => {
       if (key === D2_SERVED_BY_KEY) return servedBy;
       if (key === D2_IN_PROCESS_KEY) return inProcess;
       if (key === D2_GRPC_METHOD_KEY) return grpcMethod;
+      if (key === D2_FIELD_KEY) return fieldMap;
       return new Map();
     });
 

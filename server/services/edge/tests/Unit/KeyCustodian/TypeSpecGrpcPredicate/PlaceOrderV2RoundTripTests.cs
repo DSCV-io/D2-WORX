@@ -68,6 +68,7 @@ public sealed class PlaceOrderV2RoundTripTests
                 "order-1",
                 [new DtoOrderLine("SHIPPED"), new DtoOrderLine("DELIVERED")],
                 new DtoOrderV2Customer("GOLD"))));
+
         using var host = await BuildHost(shim);
         using var pipeline = BuildPassThroughPipeline();
         var client = BuildClient(host, pipeline);
@@ -99,6 +100,7 @@ public sealed class PlaceOrderV2RoundTripTests
                 "order-2",
                 [new DtoOrderLine("PENDING")],
                 Customer: null)));
+
         using var host = await BuildHost(shim);
         using var pipeline = BuildPassThroughPipeline();
         var client = BuildClient(host, pipeline);
@@ -124,6 +126,7 @@ public sealed class PlaceOrderV2RoundTripTests
                 "order-3",
                 [],
                 new DtoOrderV2Customer("SILVER"))));
+
         using var host = await BuildHost(shim);
         using var pipeline = BuildPassThroughPipeline();
         var client = BuildClient(host, pipeline);
@@ -146,6 +149,7 @@ public sealed class PlaceOrderV2RoundTripTests
         var shim = new EchoOrderV2ShimBase(
             () => D2Result<DtoOrderV2Output?>.Ok(new DtoOrderV2Output(
                 "order-4", [new DtoOrderLine("OK")], new DtoOrderV2Customer("GOLD"))));
+
         using var host = await BuildHost(shim);
         using var pipeline = BuildPassThroughPipeline();
         var client = BuildClient(host, pipeline);
@@ -170,6 +174,7 @@ public sealed class PlaceOrderV2RoundTripTests
                 "order-trial",
                 [new DtoOrderLine("SHIPPED")],
                 new DtoOrderV2Customer("TRIAL"))));
+
         using var host = await BuildHost(shim);
         using var retryPipeline = BuildRetryPipeline(maxAttempts: 3);
         var client = BuildClient(host, retryPipeline);
@@ -195,6 +200,7 @@ public sealed class PlaceOrderV2RoundTripTests
                 "order-pending",
                 [new DtoOrderLine("PENDING")],
                 new DtoOrderV2Customer("GOLD"))));
+
         using var host = await BuildHost(shim);
         using var retryPipeline = BuildRetryPipeline(maxAttempts: 3);
         var client = BuildClient(host, retryPipeline);
@@ -218,6 +224,7 @@ public sealed class PlaceOrderV2RoundTripTests
         using var host = await BuildHost(new EchoOrderV2ShimBase(
             () => D2Result<DtoOrderV2Output?>.Ok(new DtoOrderV2Output(
                 "o", [new DtoOrderLine("OK")], new DtoOrderV2Customer("GOLD")))));
+
         var httpClient = host.GetTestClient();
 
         var services = new ServiceCollection();
@@ -255,6 +262,7 @@ public sealed class PlaceOrderV2RoundTripTests
     {
         var shim = new EchoOrderV2ShimBase(
             () => D2Result<DtoOrderV2Output?>.ValidationFailed(errorCode: "VALIDATION_FAILED"));
+
         using var host = await BuildHost(shim);
         using var retryPipeline = BuildRetryPipeline(maxAttempts: 5);
         var client = BuildClient(host, retryPipeline);
@@ -308,6 +316,7 @@ public sealed class PlaceOrderV2RoundTripTests
         var channel = GrpcChannel.ForAddress(
             httpClient.BaseAddress!,
             new GrpcChannelOptions { HttpClient = httpClient });
+
         var stub = new PredicateFixturesOrdersV2.PredicateFixturesOrdersV2Client(channel);
         return new PredicateFixturesV2GrpcClient(stub, pipeline);
     }

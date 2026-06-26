@@ -33,7 +33,8 @@ public sealed class WorkloadLeafRefreshHostedServiceTests
         using var cts = new CancellationTokenSource();
         var task = harness.Service.StartAsync(cts.Token);
 
-        await Harness.WaitUntil(() => harness.Cache.PeekRaw() is not null);
+        // Await the deterministic "cache was written" signal — no polling.
+        await harness.WaitForCacheSetAsync();
 
         await cts.CancelAsync();
         await harness.Service.StopAsync(CancellationToken.None);
@@ -52,9 +53,16 @@ public sealed class WorkloadLeafRefreshHostedServiceTests
         using var cts = new CancellationTokenSource();
         var task = harness.Service.StartAsync(cts.Token);
 
-        // Wait until the loop is up (ExecuteTask assigned), then confirm it neither
-        // populated the cache (the issuer fails) nor died — it must keep polling.
-        await Harness.WaitUntil(() => harness.Service.ExecuteTask is not null);
+        // Wait until the startup IssueAsync call completes — this is the startup
+        // acquire attempt (count will be 1). The issuer signals on every IssueAsync
+        // invocation so this is deterministic regardless of scheduler pressure.
+        await harness.Issuer.WaitForInvocationCountAsync(1);
+
+        // Give the hosted service one yield to process the result and enter the loop.
+        await Task.Yield();
+
+        harness.Service.ExecuteTask.Should().NotBeNull(
+            "ExecuteAsync must be running by now");
 
         harness.Cache.PeekRaw().Should().BeNull();
         harness.Service.ExecuteTask!.IsFaulted.Should().BeFalse(
@@ -80,16 +88,23 @@ public sealed class WorkloadLeafRefreshHostedServiceTests
         using var cts = new CancellationTokenSource();
         var task = harness.Service.StartAsync(cts.Token);
 
-        await Harness.WaitUntil(() => harness.Cache.PeekRaw() is not null);
+        // Wait for startup issuance (count = 1).
+        await harness.Issuer.WaitForInvocationCountAsync(1);
         var countAfterStartup = harness.Issuer.IssuanceCount;
 
-        // Drive the loop's FakeTimeProvider-based poll: advance into the lead-time
-        // window (10 - 6 = 4 ≤ 5) and keep nudging the clock past successive poll
-        // intervals until the proactive reissue fires (robust against the
-        // advance-vs-delay-registration race a single advance is subject to).
-        await harness.AdvanceUntil(
-            () => harness.Issuer.IssuanceCount > countAfterStartup,
-            firstAdvance: TimeSpan.FromMinutes(6),
+        // Advance the fake clock into the lead-time window (10 - 6 = 4 min left ≤ 5
+        // min lead-time). The single advance schedules the FakeTimeProvider delay; a
+        // Task.Yield lets the loop wake and register the re-check delay as needed.
+        // The issuer invocation signal (count > countAfterStartup) is the gate — no
+        // iteration budget, no wall-clock deadline.
+        await Task.Yield();
+        harness.Clock.Advance(TimeSpan.FromMinutes(6));
+
+        // Nudge the clock forward in small steps until the reissue tick fires.
+        // Each nudge may be needed to fire successive poll delays; the issuer signal
+        // terminates the nudge loop the moment the reissue attempt is observed.
+        await harness.AdvanceUntilIssuerCountAsync(
+            targetCount: countAfterStartup + 1,
             nudge: TimeSpan.FromSeconds(31));
 
         harness.Issuer.IssuanceCount.Should().BeGreaterThan(
@@ -112,18 +127,22 @@ public sealed class WorkloadLeafRefreshHostedServiceTests
         using var cts = new CancellationTokenSource();
         var task = harness.Service.StartAsync(cts.Token);
 
-        await Harness.WaitUntil(() => harness.Cache.PeekRaw() is not null);
+        // Wait for startup issuance (count = 1) before sampling the baseline.
+        await harness.Issuer.WaitForInvocationCountAsync(1);
         var countAfterStartup = harness.Issuer.IssuanceCount;
 
         // Fire several poll ticks well short of the lead window (advance 31s ×3 ≈
         // 93s ≪ the 24h-minus-5min reissue threshold) and confirm none reissue.
+        // Each advance fires any FakeTimeProvider delay the loop has registered;
+        // Task.Yield() between advances lets the loop process the fired timer.
         for (var i = 0; i < 3; i++)
         {
-            await Task.Delay(30);
             harness.Clock.Advance(TimeSpan.FromSeconds(31));
+            await Task.Yield();
         }
 
-        await Task.Delay(50);
+        // One final yield to let any in-progress tick complete.
+        await Task.Yield();
 
         harness.Issuer.IssuanceCount.Should().Be(
             countAfterStartup, "reissue is not due — the leaf has 24h left");
@@ -143,16 +162,22 @@ public sealed class WorkloadLeafRefreshHostedServiceTests
         using var cts = new CancellationTokenSource();
         var task = harness.Service.StartAsync(cts.Token);
 
-        await Harness.WaitUntil(() => harness.Cache.PeekRaw() is not null);
+        // Wait for startup issuance (count = 1).
+        await harness.Issuer.WaitForInvocationCountAsync(1);
         var countAfterStartup = harness.Issuer.IssuanceCount;
 
-        // Arm a failure, then drive the poll into the reissue window so a failing
-        // tick actually runs (its reissue attempt increments the issuer count), and
-        // confirm the loop neither faulted nor completed — the failure is swallowed.
+        // Arm a failure, then drive the poll into the reissue window. The issuer is
+        // invoked even on failure — its invocation signal is the gate. No cache write
+        // occurs on failure, so this test does NOT rely on WaitForCacheSetAsync;
+        // instead it awaits the issuer-call count which increments regardless of
+        // success/failure. This makes the test deterministic under any scheduler load.
         harness.Issuer.SetFail(true);
-        await harness.AdvanceUntil(
-            () => harness.Issuer.IssuanceCount > countAfterStartup,
-            firstAdvance: TimeSpan.FromMinutes(6),
+
+        await Task.Yield();
+        harness.Clock.Advance(TimeSpan.FromMinutes(6));
+
+        await harness.AdvanceUntilIssuerCountAsync(
+            targetCount: countAfterStartup + 1,
             nudge: TimeSpan.FromSeconds(31));
 
         harness.Service.ExecuteTask!.IsFaulted.Should().BeFalse(
@@ -173,7 +198,7 @@ public sealed class WorkloadLeafRefreshHostedServiceTests
         using var cts = new CancellationTokenSource();
         var task = harness.Service.StartAsync(cts.Token);
 
-        await Harness.WaitUntil(() => harness.Cache.PeekRaw() is not null);
+        await harness.WaitForCacheSetAsync();
 
         await cts.CancelAsync();
         await harness.Service.StopAsync(CancellationToken.None);
@@ -184,11 +209,18 @@ public sealed class WorkloadLeafRefreshHostedServiceTests
 
     private sealed class Harness : IAsyncDisposable
     {
+        // Signals once every time WorkloadLeafCache.Set() completes.
+        private readonly SemaphoreSlim _cacheSetSignal = new(0);
+
         public Harness(TimeSpan? validity = null, TimeSpan? leadTime = null)
         {
             Clock = new FakeTimeProvider(SR_Base);
             Issuer = new FakeWorkloadCertificateIssuer(Clock, validity: validity);
             Cache = new WorkloadLeafCache();
+
+            // Wire the deterministic cache-written signal — no wall-clock polling.
+            Cache.OnSetForTesting = () => _cacheSetSignal.Release();
+
             var options = Options.Create(new AuthOutboundOptions
             {
                 WorkloadLeafRefreshLeadTime = leadTime ?? TimeSpan.FromMinutes(5),
@@ -213,43 +245,68 @@ public sealed class WorkloadLeafRefreshHostedServiceTests
 
         public WorkloadLeafRefreshHostedService Service { get; }
 
-        public static async Task WaitUntil(Func<bool> condition, int timeoutMs = 1000)
-        {
-            var deadline = DateTime.UtcNow.AddMilliseconds(timeoutMs);
-            while (DateTime.UtcNow < deadline)
-            {
-                if (condition())
-                    return;
+        /// <summary>
+        /// Awaits the next <see cref="WorkloadLeafCache.Set"/> completion.
+        /// Deterministic — driven by the production code's write, not a wall-clock
+        /// poll. Times out only if the SUT never calls Set (a true defect).
+        /// </summary>
+        public Task WaitForCacheSetAsync()
+            => _cacheSetSignal.WaitAsync(TimeSpan.FromSeconds(30));
 
-                await Task.Delay(10);
-            }
-
-            condition().Should().BeTrue("condition was not met within the timeout");
-        }
-
-        public async Task AdvanceUntil(
-            Func<bool> condition,
-            TimeSpan firstAdvance,
+        /// <summary>
+        /// Nudges the fake clock forward in <paramref name="nudge"/> increments,
+        /// yielding between each nudge, until the issuer has been invoked at least
+        /// <paramref name="targetCount"/> times. The issuer-invocation channel
+        /// (<see cref="FakeWorkloadCertificateIssuer.WaitForInvocationCountAsync"/>)
+        /// terminates the wait the instant the target is reached — no iteration
+        /// budget, no false-negative on a slow scheduler.
+        /// </summary>
+        /// <remarks>
+        /// Nudging is still necessary here because the background loop registers a
+        /// <c>FakeTimeProvider</c> delay; each <c>Clock.Advance</c> fires that delay
+        /// so the loop wakes. Without the nudge the loop never sees elapsed time and
+        /// never invokes the issuer. The issuer signal replaces the old condition-poll
+        /// — it eliminates the race between "did the loop run yet?" and the iteration
+        /// budget expiring.
+        /// </remarks>
+        public async Task AdvanceUntilIssuerCountAsync(
+            int targetCount,
             TimeSpan nudge,
-            int timeoutMs = 3000)
+            TimeSpan? safetyTimeout = null)
         {
-            // Settle so the loop registers its poll delay, advance once into the
-            // target window, then keep nudging past successive poll intervals —
-            // each nudge fires any due FakeTimeProvider timer the loop has armed.
-            await Task.Delay(50);
-            Clock.Advance(firstAdvance);
+            using var cts = new CancellationTokenSource(safetyTimeout ?? TimeSpan.FromSeconds(30));
 
-            var deadline = DateTime.UtcNow.AddMilliseconds(timeoutMs);
-            while (DateTime.UtcNow < deadline)
+            // Run the signal-wait and the clock-nudger concurrently. The nudger keeps
+            // advancing the fake clock (waking the loop's registered delay) until the
+            // issuer-invocation signal fires and cancels it.
+            var signalTask = Issuer.WaitForInvocationCountAsync(targetCount, ct: cts.Token);
+
+            var nudgeToken = cts.Token;
+
+            var nudgerTask = Task.Run(
+                async () =>
+                {
+                    while (!nudgeToken.IsCancellationRequested)
+                    {
+                        await Task.Yield();
+                        Clock.Advance(nudge);
+                    }
+                },
+                nudgeToken);
+
+            await signalTask;
+
+            // Signal received — cancel the nudger and let it finish.
+            await cts.CancelAsync();
+
+            try
             {
-                if (condition())
-                    return;
-
-                await Task.Delay(20);
-                Clock.Advance(nudge);
+                await nudgerTask;
             }
-
-            condition().Should().BeTrue("condition was not met within the timeout");
+            catch (OperationCanceledException)
+            {
+                // Expected — the nudger loop was cancelled after the signal fired.
+            }
         }
 
         public async ValueTask DisposeAsync()
@@ -258,6 +315,7 @@ public sealed class WorkloadLeafRefreshHostedServiceTests
             Client.Dispose();
             Cache.Dispose();
             Issuer.Dispose();
+            _cacheSetSignal.Dispose();
             await ValueTask.CompletedTask;
         }
     }

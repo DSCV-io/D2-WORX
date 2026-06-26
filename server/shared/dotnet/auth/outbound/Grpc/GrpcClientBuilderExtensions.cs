@@ -10,6 +10,7 @@ using System.Net.Security;
 using D2.Shared.Auth.Abstractions;
 using D2.Shared.Auth.Outbound.WorkloadCertificate;
 using Microsoft.Extensions.DependencyInjection;
+using NodaTime;
 
 /// <summary>
 /// Per-channel opt-in extensions for attaching D²'s outbound auth factors —
@@ -116,7 +117,7 @@ public static class GrpcClientBuilderExtensions
                 // (see remarks). When there is no current snapshot the handshake
                 // presents no client certificate, and the callee's RequireCertificate
                 // rejects it (the correct fail-closed behavior).
-                var snapshot = leafCache.TryGet(clock.GetUtcNow());
+                var snapshot = leafCache.TryGet(Instant.FromDateTimeOffset(clock.GetUtcNow()));
 
                 if (snapshot?.ChainContext is not null)
                 {

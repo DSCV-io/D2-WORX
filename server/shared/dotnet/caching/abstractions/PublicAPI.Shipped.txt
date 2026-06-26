@@ -1,0 +1,47 @@
+#nullable enable
+D2.Shared.Caching.ICacheAtomic
+D2.Shared.Caching.ICacheAtomic.AcquireLockAsync(string! key, string! lockId, System.TimeSpan expiration, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<D2.Shared.Result.D2Result<bool>!>
+D2.Shared.Caching.ICacheAtomic.IncrementAsync(string! key, long amount = 1, System.TimeSpan? expiration = null, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<D2.Shared.Result.D2Result<long>!>
+D2.Shared.Caching.ICacheAtomic.ReleaseLockAsync(string! key, string! lockId, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<D2.Shared.Result.D2Result!>
+D2.Shared.Caching.ICacheAtomic.SetNxAsync<T>(string! key, T value, System.TimeSpan? expiration = null, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<D2.Shared.Result.D2Result<bool>!>
+D2.Shared.Caching.ICacheBasic
+D2.Shared.Caching.ICacheBasic.ExistsAsync(string! key, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<D2.Shared.Result.D2Result<bool>!>
+D2.Shared.Caching.ICacheBasic.GetAsync<T>(string! key, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<D2.Shared.Result.D2Result<T?>!>
+D2.Shared.Caching.ICacheBasic.GetManyAsync<T>(System.Collections.Generic.IReadOnlyCollection<string!>! keys, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<D2.Shared.Result.D2Result<System.Collections.Generic.IReadOnlyDictionary<string!, T?>!>!>
+D2.Shared.Caching.ICacheBasic.GetTtlAsync(string! key, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<D2.Shared.Result.D2Result<System.TimeSpan?>!>
+D2.Shared.Caching.ICacheBasic.RemoveAsync(string! key, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<D2.Shared.Result.D2Result!>
+D2.Shared.Caching.ICacheBasic.RemoveManyAsync(System.Collections.Generic.IReadOnlyCollection<string!>! keys, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<D2.Shared.Result.D2Result!>
+D2.Shared.Caching.ICacheBasic.SetAsync<T>(string! key, T value, System.TimeSpan? expiration = null, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<D2.Shared.Result.D2Result!>
+D2.Shared.Caching.ICacheBasic.SetManyAsync<T>(System.Collections.Generic.IReadOnlyDictionary<string!, T>! entries, System.TimeSpan? expiration = null, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<D2.Shared.Result.D2Result!>
+D2.Shared.Caching.ICacheBroadcast
+D2.Shared.Caching.ICacheBroadcast.RemoveAndBroadcastAsync(string! key, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<D2.Shared.Result.D2Result!>
+D2.Shared.Caching.ICacheBroadcast.RemoveManyAndBroadcastAsync(System.Collections.Generic.IReadOnlyCollection<string!>! keys, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<D2.Shared.Result.D2Result!>
+D2.Shared.Caching.ICacheBroadcast.SetAndBroadcastAsync<T>(string! key, T value, System.TimeSpan? expiration = null, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<D2.Shared.Result.D2Result!>
+D2.Shared.Caching.ICacheBroadcast.SetManyAndBroadcastAsync<T>(System.Collections.Generic.IReadOnlyDictionary<string!, T>! entries, System.TimeSpan? expiration = null, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<D2.Shared.Result.D2Result!>
+D2.Shared.Caching.ICacheInvalidationBackplane
+D2.Shared.Caching.ICacheInvalidationBackplane.PublishInvalidationAsync(string! key, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<D2.Shared.Result.D2Result!>
+D2.Shared.Caching.ICacheInvalidationBackplane.PublishInvalidationManyAsync(System.Collections.Generic.IReadOnlyCollection<string!>! keys, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<D2.Shared.Result.D2Result!>
+D2.Shared.Caching.ICacheInvalidationBackplane.Subscribe(System.Func<string!, System.Threading.CancellationToken, System.Threading.Tasks.ValueTask>! handler) -> System.IAsyncDisposable!
+D2.Shared.Caching.ICacheSerializer
+D2.Shared.Caching.ICacheSerializer.ContentType.get -> string!
+D2.Shared.Caching.ICacheSerializer.Deserialize<T>(byte[]! bytes) -> D2.Shared.Result.D2Result<T>!
+D2.Shared.Caching.ICacheSerializer.Serialize<T>(T value) -> D2.Shared.Result.D2Result<byte[]!>!
+D2.Shared.Caching.ICacheSet
+D2.Shared.Caching.ICacheSet.SetAddAsync(string! key, string! member, System.TimeSpan? expiration = null, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<D2.Shared.Result.D2Result<bool>!>
+D2.Shared.Caching.ICacheSet.SetCardinalityAsync(string! key, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<D2.Shared.Result.D2Result<long>!>
+D2.Shared.Caching.ICacheSet.SetContainsAsync(string! key, string! member, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<D2.Shared.Result.D2Result<bool>!>
+D2.Shared.Caching.ICacheSet.SetRemoveAsync(string! key, string! member, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<D2.Shared.Result.D2Result<bool>!>
+D2.Shared.Caching.IDistributedCache
+D2.Shared.Caching.ILocalCache
+D2.Shared.Caching.ITieredCache
+D2.Shared.Caching.InputFailures
+D2.Shared.Caching.LocalCacheOptions
+D2.Shared.Caching.LocalCacheOptions.DefaultExpiration.get -> System.TimeSpan
+D2.Shared.Caching.LocalCacheOptions.DefaultExpiration.set -> void
+D2.Shared.Caching.LocalCacheOptions.KeyPrefix.get -> string!
+D2.Shared.Caching.LocalCacheOptions.KeyPrefix.set -> void
+D2.Shared.Caching.LocalCacheOptions.LocalCacheOptions() -> void
+D2.Shared.Caching.LocalCacheOptions.MaxEntries.get -> int
+D2.Shared.Caching.LocalCacheOptions.MaxEntries.set -> void
+static D2.Shared.Caching.InputFailures.Required(string! paramName) -> D2.Shared.Result.D2Result!
+static D2.Shared.Caching.InputFailures.Required<T>(string! paramName) -> D2.Shared.Result.D2Result<T>!

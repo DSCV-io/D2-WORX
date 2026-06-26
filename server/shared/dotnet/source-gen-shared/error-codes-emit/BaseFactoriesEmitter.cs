@@ -165,11 +165,14 @@ internal static class BaseFactoriesEmitter
     internal static string CategoryMemberName(string category)
     {
         var sb = new StringBuilder(category.Length);
+
         foreach (var segment in category.Split('_'))
         {
             if (segment.Length == 0)
                 continue;
+
             sb.Append(char.ToUpperInvariant(segment[0]));
+
             if (segment.Length > 1)
                 sb.Append(segment.Substring(1).ToLowerInvariant());
         }
@@ -187,6 +190,7 @@ internal static class BaseFactoriesEmitter
     {
         var sb = new StringBuilder(code.Length);
         var upperNext = true;
+
         foreach (var c in code)
         {
             if (c == '_')
@@ -233,6 +237,7 @@ internal static class BaseFactoriesEmitter
         sb.AppendLine("{");
 
         var first = true;
+
         foreach (var entry in entries)
         {
             if (!EmitsFactory(entry.FactoryShape))
@@ -261,14 +266,22 @@ internal static class BaseFactoriesEmitter
 
         EmitFactoryDoc(sb, entry, generic);
 
+        if (entry.Deprecated)
+        {
+            sb.AppendLine(
+                $"    [System.Obsolete({ConstantsEmitter.ObsoleteMessageLiteral(entry)})]");
+        }
+
         var categoryMember = CategoryMemberName(entry.Category!);
 
         // Signature — the one universal error-factory shape: every parameter is
         // optional so any factory can stamp a domain code + category and
         // optionally carry inputErrors.
         var sig = new StringBuilder();
+
         sig.Append("    public static ").Append(newKeyword).Append(returnType)
             .Append(' ').Append(entry.FactoryName).Append('(');
+
         sig.Append("IReadOnlyList<TKMessage>? messages = null");
         sig.Append(", IReadOnlyList<InputError>? inputErrors = null");
         sig.Append(", string? errorCode = null, ErrorCategory? category = null");
@@ -287,6 +300,7 @@ internal static class BaseFactoriesEmitter
 
         sb.AppendLine("        return new(");
         sb.AppendLine("            false,");
+
         if (generic)
             sb.AppendLine("            default,");
 
@@ -306,17 +320,22 @@ internal static class BaseFactoriesEmitter
         sb.AppendLine(
             "    /// <param name=\"messages\">Optional translation messages; defaults to "
             + $"<c>[{EscapeXmlDoc(entry.UserMessageKey ?? string.Empty)}]</c>.</param>");
+
         sb.AppendLine("    /// <param name=\"inputErrors\">Optional per-field input errors.</param>");
         sb.AppendLine(
             "    /// <param name=\"errorCode\">Optional override for the default error "
             + "code so callers can attach a more specific code.</param>");
+
         sb.AppendLine(
             "    /// <param name=\"category\">Optional override for the default error "
             + "category so a delegating factory can stamp its own code's category.</param>");
+
         sb.AppendLine("    /// <param name=\"traceId\">Optional trace identifier.</param>");
+
         var returnsRef = generic
             ? "A pre-built typed <see cref=\"D2Result{TData}\"/> failure."
             : "A pre-built <see cref=\"D2Result\"/> failure.";
+
         sb.AppendLine($"    /// <returns>{returnsRef}</returns>");
     }
 
@@ -361,8 +380,17 @@ internal static class BaseFactoriesEmitter
         sb.AppendLine(
             $"    /// Gets a value indicating whether this result carries the "
             + $"<see cref=\"{config.ConstantsClassName}.{entry.Code}\"/> error code.");
+
         sb.AppendLine("    /// </summary>");
+
+        if (entry.Deprecated)
+        {
+            sb.AppendLine(
+                $"    [System.Obsolete({ConstantsEmitter.ObsoleteMessageLiteral(entry)})]");
+        }
+
         sb.AppendLine("    [JsonIgnore]");
+
         sb.AppendLine(
             $"    public bool {name} => ErrorCode == {config.ConstantsClassName}.{entry.Code};");
     }
@@ -379,6 +407,7 @@ internal static class BaseFactoriesEmitter
     {
         var lines = block.Split('\n');
         var count = lines.Length;
+
         if (count > 0 && lines[count - 1].Length == 0)
             count--;
 

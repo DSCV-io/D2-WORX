@@ -1,0 +1,622 @@
+// Copyright (c) DCSV. All rights reserved.
+//
+// Idempotent seeding tool: installs api-extractor.json configs and generates
+// committed baselines (etc/<pkg>.api.md + etc/.release-fingerprint) for all
+// 29 @d2/* consumable packages under server/shared/typescript/.
+//
+// The fingerprint is SOURCE-BASED + PORTABLE — a SHA-256 over committed text
+// only ( committed src dump + the .api.md report + resolved deps + the declared
+// toolchain pin ), byte-identical on every OS/machine with NO build to compute.
+// It matches the release-runner's composeSourceFingerprint byte-for-byte so the
+// drift check (which recomputes via the runner) compares like-for-like. The
+// committed home is `etc/.release-fingerprint` (mirrors the .NET filename for a
+// single mental model across both ecosystems).
+//
+// EXCLUDES tooling-only packages: typespec-decorators, typespec-emitters,
+// contract-tests (these are dev fixtures, not consumable libraries).
+//
+// Run from repo root: `node tools/scripts/seed-apiextractor-baselines.mjs`
+// Idempotent: safe to re-run; regenerates baselines byte-for-byte if source
+// is unchanged (fingerprint and api.md are deterministic outputs).
+//
+// Prerequisites:
+//   - All 29 packages must have a built dist/ — api-extractor consumes
+//     dist/index.d.ts to generate the .api.md report (the fingerprint itself
+//     does NOT read dist/). Run `pnpm -r build` first.
+//   - @microsoft/api-extractor must be installed in tools/release-runner
+//     (it is — declared as a devDependency there).
+
+import { createHash } from "node:crypto";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { spawnSync } from "node:child_process";
+import { fileURLToPath } from "node:url";
+
+// ---------------------------------------------------------------------------
+// Repo layout
+// ---------------------------------------------------------------------------
+
+const REPO_ROOT = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
+const TS_SHARED = join(REPO_ROOT, "server", "shared", "typescript");
+const RUNNER_DIR = join(REPO_ROOT, "tools", "release-runner");
+
+// api-extractor binary is installed under tools/release-runner
+const API_EXTRACTOR_BIN = join(
+  RUNNER_DIR,
+  "node_modules",
+  ".bin",
+  "api-extractor",
+);
+
+// ---------------------------------------------------------------------------
+// The 29 consumable packages: [pkgDir, shortName] pairs.
+// Derived from the package names (@d2/<shortName>) so that api.md report
+// filenames are stable regardless of the directory structure.
+// Excludes: typespec-decorators, typespec-emitters, contract-tests.
+// ---------------------------------------------------------------------------
+
+/** @type {Array<{dir: string, shortName: string, pkgName: string}>} */
+const CONSUMABLES = [
+  {
+    dir: join(TS_SHARED, "auth", "abstractions"),
+    shortName: "auth-abstractions",
+    pkgName: "@d2/auth-abstractions",
+  },
+  {
+    dir: join(TS_SHARED, "auth", "context-abstractions"),
+    shortName: "auth-context-abstractions",
+    pkgName: "@d2/auth-context-abstractions",
+  },
+  {
+    dir: join(TS_SHARED, "encryption-abstractions"),
+    shortName: "encryption-abstractions",
+    pkgName: "@d2/encryption-abstractions",
+  },
+  {
+    dir: join(TS_SHARED, "error-category"),
+    shortName: "error-category",
+    pkgName: "@d2/error-category",
+  },
+  {
+    dir: join(TS_SHARED, "error-codes-registry"),
+    shortName: "error-codes-registry",
+    pkgName: "@d2/error-codes-registry",
+  },
+  {
+    dir: join(TS_SHARED, "geo", "abstractions"),
+    shortName: "geo-abstractions",
+    pkgName: "@d2/geo-abstractions",
+  },
+  {
+    dir: join(TS_SHARED, "geo", "default"),
+    shortName: "geo-default",
+    pkgName: "@d2/geo-default",
+  },
+  {
+    dir: join(TS_SHARED, "grpc-client"),
+    shortName: "grpc-client",
+    pkgName: "@d2/grpc-client",
+  },
+  {
+    dir: join(TS_SHARED, "headers", "amqp"),
+    shortName: "headers-amqp",
+    pkgName: "@d2/headers-amqp",
+  },
+  {
+    dir: join(TS_SHARED, "headers", "common"),
+    shortName: "headers-common",
+    pkgName: "@d2/headers-common",
+  },
+  {
+    dir: join(TS_SHARED, "headers", "core"),
+    shortName: "headers",
+    pkgName: "@d2/headers",
+  },
+  {
+    dir: join(TS_SHARED, "headers", "grpc"),
+    shortName: "headers-grpc",
+    pkgName: "@d2/headers-grpc",
+  },
+  {
+    dir: join(TS_SHARED, "headers", "http"),
+    shortName: "headers-http",
+    pkgName: "@d2/headers-http",
+  },
+  {
+    dir: join(TS_SHARED, "i18n-abstractions"),
+    shortName: "i18n-abstractions",
+    pkgName: "@d2/i18n-abstractions",
+  },
+  {
+    dir: join(TS_SHARED, "i18n-keys"),
+    shortName: "i18n-keys",
+    pkgName: "@d2/i18n-keys",
+  },
+  {
+    dir: join(TS_SHARED, "i18n"),
+    shortName: "i18n",
+    pkgName: "@d2/i18n",
+  },
+  {
+    dir: join(TS_SHARED, "logging"),
+    shortName: "logging",
+    pkgName: "@d2/logging",
+  },
+  {
+    dir: join(TS_SHARED, "messaging-abstractions"),
+    shortName: "messaging-abstractions",
+    pkgName: "@d2/messaging-abstractions",
+  },
+  {
+    dir: join(TS_SHARED, "problem-details-abstractions"),
+    shortName: "problem-details-abstractions",
+    pkgName: "@d2/problem-details-abstractions",
+  },
+  {
+    dir: join(TS_SHARED, "protos"),
+    shortName: "protos",
+    pkgName: "@d2/protos",
+  },
+  {
+    dir: join(TS_SHARED, "request-context-abstractions"),
+    shortName: "request-context-abstractions",
+    pkgName: "@d2/request-context-abstractions",
+  },
+  {
+    dir: join(TS_SHARED, "resilience"),
+    shortName: "resilience",
+    pkgName: "@d2/resilience",
+  },
+  {
+    dir: join(TS_SHARED, "result"),
+    shortName: "result",
+    pkgName: "@d2/result",
+  },
+  {
+    dir: join(TS_SHARED, "service-defaults"),
+    shortName: "service-defaults",
+    pkgName: "@d2/service-defaults",
+  },
+  {
+    dir: join(TS_SHARED, "telemetry"),
+    shortName: "telemetry",
+    pkgName: "@d2/telemetry",
+  },
+  {
+    dir: join(TS_SHARED, "time"),
+    shortName: "time",
+    pkgName: "@d2/time",
+  },
+  {
+    dir: join(TS_SHARED, "utilities"),
+    shortName: "utilities",
+    pkgName: "@d2/utilities",
+  },
+  {
+    dir: join(TS_SHARED, "validation", "abstractions"),
+    shortName: "validation-abstractions",
+    pkgName: "@d2/validation-abstractions",
+  },
+  {
+    dir: join(TS_SHARED, "validation", "default"),
+    shortName: "validation",
+    pkgName: "@d2/validation",
+  },
+];
+
+// ---------------------------------------------------------------------------
+// Step 1 — Write api-extractor.json (idempotent: skip if content unchanged)
+// ---------------------------------------------------------------------------
+
+/**
+ * Return the canonical api-extractor.json content for a package.
+ * @param {string} shortName
+ */
+function apiExtractorConfig(shortName) {
+  return JSON.stringify(
+    {
+      $schema:
+        "https://developer.microsoft.com/json-schemas/api-extractor/v7/api-extractor.schema.json",
+      mainEntryPointFilePath: "<projectFolder>/dist/index.d.ts",
+      bundledPackages: [],
+      apiReport: {
+        enabled: true,
+        reportFileName: `${shortName}.api.md`,
+        reportFolder: "<projectFolder>/etc/",
+      },
+      docModel: {
+        enabled: false,
+      },
+      dtsRollup: {
+        enabled: false,
+      },
+      tsdocMetadata: {
+        enabled: false,
+      },
+      messages: {
+        compilerMessageReporting: {
+          default: {
+            logLevel: "warning",
+          },
+        },
+        extractorMessageReporting: {
+          default: {
+            logLevel: "warning",
+          },
+          "ae-missing-release-tag": {
+            logLevel: "none",
+          },
+        },
+        tsdocMessageReporting: {
+          default: {
+            logLevel: "none",
+          },
+        },
+      },
+    },
+    null,
+    2,
+  );
+}
+
+/**
+ * Write a file only if its content would change (idempotency guard).
+ * @param {string} filePath
+ * @param {string} content
+ */
+function writeIfChanged(filePath, content) {
+  if (existsSync(filePath)) {
+    const existing = readFileSync(filePath, "utf-8");
+
+    if (existing === content) return false;
+  }
+
+  writeFileSync(filePath, content, "utf-8");
+
+  return true;
+}
+
+// ---------------------------------------------------------------------------
+// Step 2 — Run api-extractor --local to generate the etc/<pkg>.api.md
+// ---------------------------------------------------------------------------
+
+/**
+ * Run api-extractor in local mode for the given package.
+ * Returns the api.md content string, or null on failure.
+ * @param {string} pkgDir
+ * @param {string} shortName
+ */
+function runApiExtractor(pkgDir, shortName) {
+  const configPath = join(pkgDir, "api-extractor.json");
+
+  if (!existsSync(configPath)) {
+    console.error(`  [ERROR] No api-extractor.json at ${configPath}`);
+
+    return null;
+  }
+
+  const result = spawnSync(
+    API_EXTRACTOR_BIN,
+    ["run", "--local", "--config", configPath],
+    {
+      cwd: pkgDir,
+      encoding: "utf-8",
+      stdio: ["ignore", "pipe", "pipe"],
+    },
+  );
+
+  const reportPath = join(pkgDir, "etc", `${shortName}.api.md`);
+
+  if (result.status !== 0) {
+    // api-extractor exits non-zero even on warnings in some cases.
+    // Only treat as failure if the report file was NOT written.
+    if (!existsSync(reportPath)) {
+      console.error(`  [ERROR] api-extractor failed for ${shortName}`);
+      console.error(result.stderr ?? "");
+
+      return null;
+    }
+
+    // Warnings present but report was written — treat as success.
+    if (result.stderr?.includes("Warning:")) {
+      console.warn(`  [WARN] api-extractor warnings for ${shortName}:`);
+      console.warn(result.stderr);
+    }
+  }
+
+  if (!existsSync(reportPath)) {
+    console.error(`  [ERROR] Report not written: ${reportPath}`);
+
+    return null;
+  }
+
+  return readFileSync(reportPath, "utf-8");
+}
+
+// ---------------------------------------------------------------------------
+// Step 3 — Compute the source-based fingerprint (mirrors source-fingerprint.ts
+// + real-diff-provider.ts BYTE-FOR-BYTE; the seed↔provider identity is pinned by
+// a runner test).
+// ---------------------------------------------------------------------------
+
+/** LF-normalize so a CRLF/LF checkout difference cannot perturb the hash. */
+function normalizeLf(text) {
+  return text.replace(/\r\n/g, "\n");
+}
+
+const SKIP_DIRS = new Set([
+  "bin",
+  "obj",
+  "dist",
+  "node_modules",
+  "etc",
+  "tests",
+]);
+
+/** True when a package-relative path lives under a skipped directory. */
+function isSkipped(relPosix) {
+  return relPosix.split("/").some((seg) => SKIP_DIRS.has(seg));
+}
+
+/** Is this committed file part of the TS source dump? */
+function isNpmSourceFile(relPosixPath) {
+  const base = relPosixPath.slice(relPosixPath.lastIndexOf("/") + 1);
+
+  if (base === ".release-fingerprint" || base === "CHANGELOG.md") return false;
+  if (base.endsWith(".test.ts")) return false;
+  if (base.endsWith(".ts")) return true;
+  if (base === "package.json") return true;
+  if (base === "api-extractor.json") return true;
+
+  return base.startsWith("tsconfig") && base.endsWith(".json");
+}
+
+/**
+ * List the package-relative POSIX paths of COMMITTED (git-tracked) TS source
+ * files. Tracked-only is mandatory (the build can emit gitignored transients);
+ * mirrors the release-runner's listSourceFiles BYTE-FOR-BYTE.
+ */
+function listNpmSourceFiles(packageDir) {
+  const result = spawnSync("git", ["ls-files", "--", "."], {
+    cwd: packageDir,
+    encoding: "utf-8",
+    maxBuffer: 32 * 1024 * 1024,
+  });
+
+  if (result.status !== 0) return [];
+
+  return (result.stdout ?? "")
+    .split("\n")
+    .map((l) => l.trim().replace(/\\/g, "/"))
+    .filter((l) => l.length > 0 && !isSkipped(l) && isNpmSourceFile(l));
+}
+
+/** Ordered, LF-normalized source dump for a package dir. */
+function buildSourceDump(packageDir) {
+  const sorted = listNpmSourceFiles(packageDir).sort();
+  let dump = "";
+
+  for (const relPath of sorted) {
+    const content = readFileSync(join(packageDir, relPath), "utf-8");
+    dump += `F:${relPath}\n${normalizeLf(content)}\n`;
+  }
+
+  return dump;
+}
+
+/** Serialize keys ascending so structurally equal inputs serialize identically. */
+function stableJson(obj) {
+  const sortedKeys = Object.keys(obj).sort();
+  const ordered = {};
+
+  for (const key of sortedKeys) ordered[key] = obj[key] ?? "";
+
+  return JSON.stringify(ordered);
+}
+
+/** The declared, committed TS toolchain pin as deterministic sorted-key JSON. */
+function readNpmToolchainPin() {
+  const rootPkg = JSON.parse(
+    readFileSync(join(REPO_ROOT, "package.json"), "utf-8"),
+  );
+  const tsconfigBase = JSON.parse(
+    readFileSync(join(TS_SHARED, "tsconfig.base.json"), "utf-8"),
+  );
+
+  return stableJson({
+    module: tsconfigBase.compilerOptions?.module ?? "",
+    target: tsconfigBase.compilerOptions?.target ?? "",
+    typescript: rootPkg.devDependencies?.typescript ?? "",
+  });
+}
+
+const TOOLCHAIN_PIN = readNpmToolchainPin();
+
+/**
+ * Build the DEPS (manifest-metadata) JSON for a TS package: substitute each
+ * @d2/* dep literal with its resolved version (at seed time = committed
+ * version), then serialize {name, version, dependencies}. Mirrors the provider's
+ * substituteResolvedDeps + buildNpmManifestMeta.
+ *
+ * @param {{ name?: string; version?: string; dependencies?: Record<string,string> }} pkgJson
+ * @param {Map<string,string>} resolvedVersions
+ */
+function buildNpmDepsJson(pkgJson, resolvedVersions) {
+  const deps = pkgJson.dependencies ?? {};
+  const substituted = {};
+
+  for (const [name, literal] of Object.entries(deps)) {
+    substituted[name] = resolvedVersions.get(name) ?? literal;
+  }
+
+  const ownVersion =
+    (pkgJson.name !== undefined
+      ? resolvedVersions.get(pkgJson.name)
+      : undefined) ?? pkgJson.version;
+
+  return JSON.stringify({
+    name: pkgJson.name ?? "",
+    version: ownVersion ?? "",
+    dependencies: substituted,
+  });
+}
+
+/**
+ * Compose the source-based fingerprint over the ordered tuple
+ *   ( committed source dump + the .api.md report + resolved deps + toolchain ).
+ *
+ * Byte-identical to the release-runner's composeSourceFingerprint so the drift
+ * check (which recomputes via the runner) compares like-for-like. No build.
+ *
+ * @param {string} pkgDir
+ * @param {string} apiMd
+ * @param {string} depsJson
+ */
+function composeSourceFingerprint(pkgDir, apiMd, depsJson) {
+  const hash = createHash("sha256");
+
+  hash.update(`SOURCE:\n${buildSourceDump(pkgDir)}\n`);
+  hash.update(`APIREPORT:\n${normalizeLf(apiMd)}\n`);
+  hash.update(`DEPS:\n${depsJson}\n`);
+  hash.update(`TOOLCHAIN:\n${TOOLCHAIN_PIN}\n`);
+
+  return hash.digest("hex");
+}
+
+// ---------------------------------------------------------------------------
+// Resolved-version map — each consumable @d2/* at its committed version.
+// At seed time resolvedVersions == the committed versions, matching how the
+// provider seeds its map on a no-op drift recompute (every dep at its current
+// version), so the seeded fingerprint equals the runtime recompute.
+// ---------------------------------------------------------------------------
+
+const RESOLVED_VERSIONS = new Map();
+
+for (const { dir, pkgName } of CONSUMABLES) {
+  const pkgJsonPath = join(dir, "package.json");
+
+  if (existsSync(pkgJsonPath)) {
+    const pkgJson = JSON.parse(readFileSync(pkgJsonPath, "utf-8"));
+    RESOLVED_VERSIONS.set(pkgName, pkgJson.version ?? "");
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Main
+// ---------------------------------------------------------------------------
+
+let configsWritten = 0;
+let configsSkipped = 0;
+let apiMdWritten = 0;
+let fpWritten = 0;
+let errors = 0;
+
+/** @type {Array<{pkgName: string, issue: string}>} */
+const specialHandling = [];
+
+for (const { dir, shortName, pkgName } of CONSUMABLES) {
+  console.log(`\n[${pkgName}]`);
+
+  // --- Step 1: Write api-extractor.json ---
+  const configPath = join(dir, "api-extractor.json");
+  const configContent = apiExtractorConfig(shortName) + "\n";
+  const configChanged = writeIfChanged(configPath, configContent);
+
+  if (configChanged) {
+    console.log(`  + Wrote api-extractor.json`);
+    configsWritten++;
+  } else {
+    console.log(`  = api-extractor.json unchanged`);
+    configsSkipped++;
+  }
+
+  // --- Step 2: Ensure etc/ dir exists ---
+  const etcDir = join(dir, "etc");
+  mkdirSync(etcDir, { recursive: true });
+
+  // --- Step 2: Run api-extractor to generate etc/<pkg>.api.md ---
+  const distIndexDts = join(dir, "dist", "index.d.ts");
+
+  if (!existsSync(distIndexDts)) {
+    console.error(`  [ERROR] No dist/index.d.ts — build the package first.`);
+    specialHandling.push({ pkgName, issue: "Missing dist/index.d.ts" });
+    errors++;
+    continue;
+  }
+
+  const apiMdContent = runApiExtractor(dir, shortName);
+
+  if (apiMdContent === null) {
+    specialHandling.push({ pkgName, issue: "api-extractor failed" });
+    errors++;
+    continue;
+  }
+
+  const reportPath = join(etcDir, `${shortName}.api.md`);
+
+  // Check if any public members were found.
+  const hasPublicMembers = apiMdContent.includes("export ");
+
+  if (!hasPublicMembers) {
+    specialHandling.push({
+      pkgName,
+      issue: "No public exports detected in .api.md (empty surface)",
+    });
+  }
+
+  console.log(
+    `  + Generated ${shortName}.api.md (${hasPublicMembers ? "has public API" : "empty surface"})`,
+  );
+  apiMdWritten++;
+
+  // --- Step 3: Compose + write the source-based etc/.release-fingerprint ---
+  // The fingerprint reads the FRESHLY-WRITTEN committed .api.md back from disk
+  // (the provider reads the same committed file), so the seeded hash equals the
+  // runtime recompute.
+  const pkgJsonPath = join(dir, "package.json");
+  const pkgJson = JSON.parse(readFileSync(pkgJsonPath, "utf-8"));
+  const committedApiMd = readFileSync(reportPath, "utf-8");
+  const depsJson = buildNpmDepsJson(pkgJson, RESOLVED_VERSIONS);
+  const fingerprint = composeSourceFingerprint(dir, committedApiMd, depsJson);
+  const fpPath = join(etcDir, ".release-fingerprint");
+  const fpContent = fingerprint + "\n";
+  const fpChanged = writeIfChanged(fpPath, fpContent);
+
+  if (fpChanged) {
+    console.log(
+      `  + Wrote .release-fingerprint (${fingerprint.slice(0, 16)}…)`,
+    );
+    fpWritten++;
+  } else {
+    console.log(
+      `  = .release-fingerprint unchanged (${fingerprint.slice(0, 16)}…)`,
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Summary
+// ---------------------------------------------------------------------------
+
+console.log(`
+=== Seed complete ===
+  Packages processed : ${CONSUMABLES.length}
+  api-extractor.json : ${configsWritten} written, ${configsSkipped} unchanged
+  etc/<pkg>.api.md   : ${apiMdWritten} generated
+  .release-fingerprint : ${fpWritten} written/updated
+  Errors             : ${errors}
+`);
+
+if (specialHandling.length > 0) {
+  console.log("Special handling:");
+
+  for (const { pkgName, issue } of specialHandling) {
+    console.log(`  ${pkgName}: ${issue}`);
+  }
+
+  console.log();
+}
+
+if (errors > 0) {
+  process.exit(1);
+}

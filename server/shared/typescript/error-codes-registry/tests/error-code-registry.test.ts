@@ -162,8 +162,8 @@ describe("ErrorCodeFactoryShape type — 2 schema values", () => {
 // ---------------------------------------------------------------------------
 
 describe("errorCodeRegistry — generated merged registry", () => {
-  it("all: contains the expected total count (14 auth + 15 generic + 12 keycustodian = 41)", () => {
-    expect(errorCodeRegistry.all).toHaveLength(41);
+  it("all: contains the expected total count (14 auth + 15 generic + 15 keycustodian = 44)", () => {
+    expect(errorCodeRegistry.all).toHaveLength(44);
   });
 
   it("resolve: every generic code resolves with domain 'common'", () => {
@@ -229,6 +229,9 @@ describe("errorCodeRegistry — generated merged registry", () => {
       "KEYCUSTODIAN_KEY_STATE_CONFLICT",
       "KEYCUSTODIAN_PENDING_KEY_ALREADY_EXISTS",
       "KEYCUSTODIAN_SMOKE_TEST_FAILED",
+      "KEYCUSTODIAN_INVALID_WORKLOAD_IDENTITY",
+      "KEYCUSTODIAN_INVALID_CERTIFICATE_REQUEST",
+      "KEYCUSTODIAN_NO_ACTIVE_ISSUING_CA",
     ];
     for (const code of keycustodianCodes) {
       const info = errorCodeRegistry.resolve(code);

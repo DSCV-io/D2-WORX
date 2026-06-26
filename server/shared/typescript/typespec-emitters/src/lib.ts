@@ -42,6 +42,19 @@ import { createTypeSpecLibrary, paramMessage } from "@typespec/compiler";
 //                                         certainly an author mistake; the dispatch emitter loud-
 //                                         fails rather than emitting a dispatcher with an empty
 //                                         payload record. Give the op a non-empty output model.
+//   D2TSP009  unpinned-proto-field        — a model property on a @d2GrpcMethod-bound model
+//                                         lacks a @d2Field(n) pin; positional assignment is
+//                                         disabled (fires only in the proto emitter).
+//   D2TSP010  channel-segment-mismatch    — the wire-generation channel segment disagrees
+//                                         across emitted wire surfaces (proto-package vs
+//                                         proto-csharp-namespace trailing segment, or either
+//                                         vs the @versioned active-version channel). Every
+//                                         surface must carry the same V<N>(alpha|beta)?
+//                                         generation; fix the mismatched tspconfig option.
+//   D2TSP011  duplicate-field-number      — two or more properties on the same proto-bound
+//                                         model carry the same @d2Field(N) pin. Duplicate
+//                                         field numbers produce invalid proto3 that protoc
+//                                         rejects; caught early at tsp compile time.
 // -----------------------------------------------------------------------
 
 /**
@@ -150,6 +163,23 @@ export const $lib = createTypeSpecLibrary({
     },
 
     /**
+     * D2TSP009 — A model property on a @d2GrpcMethod-bound model is missing its
+     * required @d2Field(n) pin. Author-pinned field numbers are mandatory for all
+     * proto-bound models; positional assignment is permanently disabled to prevent
+     * silent wire-format breaks on reorder/insert/delete. Add @d2Field(N) to every
+     * property of every model used in a @d2GrpcMethod operation's input and output.
+     *
+     * This diagnostic fires ONLY inside the proto emitter (reached only for
+     * @d2GrpcMethod ops); DTO-only / in-process ops with unpinned fields compile clean.
+     */
+    "unpinned-proto-field": {
+      severity: "error",
+      messages: {
+        default: paramMessage`${"detail"}`,
+      },
+    },
+
+    /**
      * D2TSP008 — A @d2ServerPush operation has no emittable event payload.
      * The op's output model IS the dispatched event payload. A void return (or
      * an output model with zero fields and zero nested models) leaves nothing to
@@ -161,6 +191,33 @@ export const $lib = createTypeSpecLibrary({
       severity: "error",
       messages: {
         default: paramMessage`@d2ServerPush on '${"op"}' has no event payload — the op's output model is the dispatched payload, so it must declare at least one field; a void or empty output cannot be pushed`,
+      },
+    },
+
+    /**
+     * D2TSP010 — The wire-generation channel segment disagrees across emitted
+     * wire surfaces. The proto-package channel (e.g. "v2alpha") and the trailing
+     * segment of proto-csharp-namespace (e.g. "V2Alpha") must agree on the same
+     * V<N>(alpha|beta)? generation. When a @versioned active-version channel is
+     * present it must also agree. Fix the mismatched tspconfig option so every
+     * surface carries the same generation.
+     */
+    "channel-segment-mismatch": {
+      severity: "error",
+      messages: {
+        default: paramMessage`${"detail"}`,
+      },
+    },
+
+    /**
+     * D2TSP011 — Two or more properties on the same proto-bound model carry the
+     * same @d2Field(N) pin. Duplicate field numbers produce invalid proto3 that
+     * protoc rejects. Assign each property a unique field number.
+     */
+    "duplicate-field-number": {
+      severity: "error",
+      messages: {
+        default: paramMessage`${"detail"}`,
       },
     },
   },

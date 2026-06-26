@@ -99,4 +99,17 @@ Copyright (c) DCSV. All rights reserved.
     -->
     <InternalsVisibleTo Include="D2.Edge.Tests" />
   </ItemGroup>
+
+  <!-- Publish metadata (per-package semver + NuGet identity). -->
+  <PropertyGroup>
+    <Version>0.1.0</Version>
+    <PackageId>D2.Shared.Logging</PackageId>
+    <Description>Serilog configuration, the [RedactData] PII-enforcement layer, and request-logging middleware for D2-WORX services.</Description>
+    <IsPackable>true</IsPackable>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
 </Project>

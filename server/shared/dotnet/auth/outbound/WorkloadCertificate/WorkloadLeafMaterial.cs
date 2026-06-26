@@ -6,6 +6,8 @@
 
 namespace D2.Shared.Auth.Outbound.WorkloadCertificate;
 
+using NodaTime;
+
 /// <summary>
 /// The raw, transport-agnostic material of one freshly-issued workload leaf
 /// certificate — the BCL-boundary shape an <see cref="IWorkloadCertificateIssuer"/>
@@ -24,9 +26,15 @@ namespace D2.Shared.Auth.Outbound.WorkloadCertificate;
 /// <param name="CertificateDer">DER-encoded leaf certificate bytes. Public.</param>
 /// <param name="PrivateKeyPkcs8">Raw PKCS#8 ECDSA leaf private key bytes. SECRET — zeroed after the live cert is built.</param>
 /// <param name="IssuerCertificateDer">DER-encoded issuing-intermediate certificate so the full chain can be presented. Public.</param>
-/// <param name="NotAfter">The leaf's absolute UTC not-after — drives the refresh-ahead reissue condition.</param>
+/// <param name="NotAfter">
+/// The leaf's absolute UTC not-after as a NodaTime <see cref="Instant"/> (Cat 2 fixed-expiry
+/// timestamp — timezone-independent, no DST ambiguity). Convert from the BCL X.509
+/// <see cref="System.DateTimeOffset"/> boundary using <c>Instant.FromDateTimeOffset(cert.NotAfter)</c>
+/// at the issuance adapter, not inside this shared library (the lib never references
+/// the X.509 type directly).
+/// </param>
 public sealed record WorkloadLeafMaterial(
     byte[] CertificateDer,
     byte[] PrivateKeyPkcs8,
     byte[] IssuerCertificateDer,
-    DateTimeOffset NotAfter);
+    Instant NotAfter);

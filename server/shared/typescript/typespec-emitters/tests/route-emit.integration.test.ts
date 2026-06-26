@@ -93,8 +93,8 @@ describe("routeEmitIntegration_Sign_EmitsRouteRegistration", () => {
       using Http;
       namespace D2.Fixtures;
 
-      model SignInput { kid: string; @d2Redact payload: bytes; }
-      model SignOutput { signature: string; }
+      model SignInput { @d2Field(1) kid: string; @d2Field(2) @d2Redact payload: bytes; }
+      model SignOutput { @d2Field(1) signature: string; }
 
       @d2Command
       @d2ServedBy("KeyCustodian")
@@ -510,8 +510,8 @@ describe("routeEmitIntegration_GrpcRePoint_BothSurfacesDelegateThroughFacade", (
       using Http;
       namespace D2.Fixtures;
 
-      model SignInput { kid: string; @d2Redact payload: bytes; }
-      model SignOutput { signature: string; }
+      model SignInput { @d2Field(1) kid: string; @d2Field(2) @d2Redact payload: bytes; }
+      model SignOutput { @d2Field(1) signature: string; }
 
       @d2Command
       @d2ServedBy("KeyCustodian")

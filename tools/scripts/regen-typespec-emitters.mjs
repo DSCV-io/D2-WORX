@@ -102,7 +102,7 @@ const TEMP_MAIN_TSP = join(CONTRACTS_DIR, "main.tsp");
 //   - IKeyCustodianApi.g.cs / KeyCustodianApi.g.cs (include sign + signDerived methods
 //     from full compile; committed version is getJwks-only)
 //   - .proto files with non-keycustodian package names (fixture protos use per-fixture
-//     package names; tsp compile uses d2.keycustodian.v1 for all)
+//     package names; tsp compile uses d2.keycustodian.v2alpha for all)
 //   - predicate-fixtures-grpc-client.g.ts (combined module differs from test-host output)
 //
 // Files in those categories are governed exclusively by the byte-gate test suites
@@ -174,7 +174,7 @@ const COPY_MANIFEST = [
   // "contracts/typespec/fixtures/enum-shaped.tsp". Update by rerunning
   // byte-parity.test.ts with the updated SIGN_WITH_KIND_DTO_SRC constant.
   // NOTE: enum_fixtures_signer_sign_with_kind.g.proto is EXCLUDED — tsp compile
-  // uses package d2.keycustodian.v1; committed fixture uses d2.enumfixtures.v1.
+  // uses package d2.keycustodian.v2alpha; committed fixture uses d2.enumfixtures.v1.
 
   // ---- Resilience predicate TypeScript files (no namespace sensitivity) ----
   {
@@ -201,33 +201,38 @@ const COPY_MANIFEST = [
   // a combined module (PlaceOrder + PlaceOrderV2 + DeepNest); the committed
   // fixture was produced by the ts-client-byte-parity test-host with PlaceOrder-only.
 
-  // ---- Resilience predicate handler interfaces (fixture app namespace matches) ----
-  {
-    from: "IPlaceOrderHandler.g.cs",
-    to: "server/services/edge/tests/Unit/KeyCustodian/TypeSpecGrpcPredicate/Generated/IPlaceOrderHandler.g.cs",
-  },
-  {
-    from: "IPlaceOrderV2Handler.g.cs",
-    to: "server/services/edge/tests/Unit/KeyCustodian/TypeSpecGrpcPredicate/Generated/IPlaceOrderV2Handler.g.cs",
-  },
-  {
-    from: "IDeepNestHandler.g.cs",
-    to: "server/services/edge/tests/Unit/KeyCustodian/TypeSpecGrpcPredicate/Generated/IDeepNestHandler.g.cs",
-  },
-  // NOTE: All predicate DTO C# files (PlaceOrderInput, PlaceOrderOutput, …),
-  // predicate emitter C# files (PlaceOrderResiliencePredicates, …),
-  // gRPC client C# files (IPredicateFixturesGrpcClient, PredicateFixturesGrpcClient,
-  // PlaceOrderClientKeys, PredicateFixturesGrpcClientsGenerated, PlaceOrderV2ClientKeys,
-  // DeepNestClientKeys, D2GeneratedBusinessRetrySignal), and proto files
+  // NOTE: All predicate handler interface C# files (IPlaceOrderHandler.g.cs,
+  // IPlaceOrderV2Handler.g.cs, IDeepNestHandler.g.cs), predicate DTO C# files
+  // (PlaceOrderInput, PlaceOrderOutput, …), predicate emitter C# files
+  // (PlaceOrderResiliencePredicates, …), gRPC client C# files
+  // (IPredicateFixturesGrpcClient, PredicateFixturesGrpcClient, PlaceOrderClientKeys,
+  // PredicateFixturesGrpcClientsGenerated, PlaceOrderV2ClientKeys, DeepNestClientKeys,
+  // D2GeneratedBusinessRetrySignal), and proto files
   // (predicate_fixtures_orders_place_order.g.proto, predicate_fixtures_gizmos_deep_deep_nest.g.proto)
-  // are EXCLUDED — namespace mismatch (tsp compile → D2.Edge.KeyCustodian.Clients;
-  // committed fixtures → D2.Edge.Tests.TypeSpecGrpcPredicate.Generated).
-  // Update via predicate-byte-parity.test.ts and nested-model-grpc-byte-parity.test.ts.
+  // are EXCLUDED — namespace mismatch (tsp compile emits D2.Edge.KeyCustodian.* namespaces;
+  // committed fixtures use D2.Edge.Tests.TypeSpecGrpcPredicate.Generated).
+  // Handler interfaces and DTOs are governed by predicate-byte-parity.test.ts (which calls
+  // emitHandlerInterface / emitCsharpDtos directly with the fixture namespace) and
+  // nested-model-grpc-byte-parity.test.ts. Never scatter these from $onEmit output.
 
   // NOTE: OpenAPI (TypeSpecOpenApi/Generated/), SSE (TypeSpecSse/Generated/),
   // route registrations (TypeSpecRoute/Generated/), and all other gRPC service /
   // transport-mapper / C# DTO files are EXCLUDED for similar namespace-mismatch
   // reasons. Update them via the respective integration test suites.
+
+  // NOTE: WireVersion.g.cs is EXCLUDED — namespace-sensitive
+  // (emitted in proto-csharp-namespace D2.Services.Protos.KeyCustodian.V2Alpha;
+  // tsp compile output differs from the byte-gate test-host fixture namespace).
+  // Committed home: TypeSpecGrpc/Generated/WireVersion.g.cs.
+  // Update via byteParity_WireVersionConstant_CommittedFixtureIdentical in
+  // proto-grpc-byte-parity.test.ts (call emitWireVersionConstant directly).
+
+  // NOTE: wire-identity.manifest.g.json is EXCLUDED — namespace-sensitive
+  // (emitted alongside WireVersion.g.cs in the proto-csharp-namespace context;
+  // the tsp compile output is co-located with the namespace-sensitive C# fixtures).
+  // Committed home: TypeSpecGrpc/Generated/wire-identity.manifest.g.json.
+  // Update via the wire-manifest-emitter.test.ts unit tests (emitWireIdentityManifest
+  // directly) and proto-grpc-emit.integration.test.ts agree-by-construction assertion.
 ];
 
 // ---------------------------------------------------------------------------

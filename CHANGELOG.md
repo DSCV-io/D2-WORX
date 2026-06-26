@@ -8,7 +8,7 @@ This project follows [Semantic Versioning](https://semver.org/) and uses [Conven
 
 ## [Unreleased]
 
-The nova branch — v2 architecture rewrite.
+The v2 architecture rewrite.
 
 ### Added
 
@@ -19,7 +19,7 @@ The nova branch — v2 architecture rewrite.
 
 ### Changed
 
-- Branch model: main is frozen at v1; active development on the nova branch
+- Branch model: v1 is preserved as a frozen reference; active development is the v2 rewrite
 
 ---
 

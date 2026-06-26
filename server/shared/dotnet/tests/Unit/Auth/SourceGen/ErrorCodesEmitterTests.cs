@@ -373,6 +373,50 @@ public sealed class ErrorCodesEmitterTests
         FailuresEmitter.BaseFactory(httpStatus).Should().Be(expectedFactory);
     }
 
+    // -----------------------------------------------------------------------
+    // Deprecation marker — the delegating FailuresEmitter emits [Obsolete] on
+    // the factory of a deprecated entry; a non-deprecated entry emits none.
+    // Driven by a SYNTHETIC deprecated entry — no real auth code is deprecated.
+    // -----------------------------------------------------------------------
+
+    [Fact]
+    public void Emit_DeprecatedFactory_EmitsObsoleteAttributeWithComposedMessage()
+    {
+        var spec = MakeSpec(
+            DeprecatedAuthEntry("AUTH_X", 401, "validation_failure", "TK.U", "X"));
+
+        var result = FailuresEmitter.Emit(spec, Config);
+
+        result.GeneratedSource.Should().Contain(
+            "[System.Obsolete(\"Superseded by a clearer split. Use AUTH_Y instead.\")]");
+        result.GeneratedSource.Should().Contain(
+            "public static D2Result X(IReadOnlyList<TKMessage>? messages = null)");
+    }
+
+    [Fact]
+    public void Emit_DeprecatedFactory503_EmitsObsoleteOnBothFactoryAndTypedOverload()
+    {
+        var spec = MakeSpec(
+            DeprecatedAuthEntry("AUTH_X", 503, "infrastructure_unavailable", "TK.T", "X"));
+
+        var source = FailuresEmitter.Emit(spec, Config).GeneratedSource;
+
+        // The non-generic factory AND its typed <T> overload (503-only) both
+        // carry the attribute — two occurrences.
+        CountOccurrences(source, "[System.Obsolete(").Should().Be(2);
+    }
+
+    [Fact]
+    public void Emit_NonDeprecatedFactory_EmitsNoObsoleteAttribute()
+    {
+        var spec = MakeSpec(
+            AuthEntry("AUTH_X", 401, "validation_failure", "TK.U", "X", "X doc."));
+
+        var result = FailuresEmitter.Emit(spec, Config);
+
+        result.GeneratedSource.Should().NotContain("System.Obsolete");
+    }
+
     private static ErrorCodeEntry AuthEntry(
         string code,
         int httpStatus,
@@ -388,6 +432,33 @@ public sealed class ErrorCodesEmitterTests
             UserMessageKey: userMessageKey,
             FactoryName: factoryName,
             FactoryShape: "standard");
+
+    private static ErrorCodeEntry DeprecatedAuthEntry(
+        string code,
+        int httpStatus,
+        string category,
+        string userMessageKey,
+        string factoryName) =>
+        AuthEntry(code, httpStatus, category, userMessageKey, factoryName, $"{code} doc.")
+            with
+        {
+            Deprecated = true,
+            DeprecatedReason = "Superseded by a clearer split.",
+            ReplacedBy = "AUTH_Y",
+        };
+
+    private static int CountOccurrences(string haystack, string needle)
+    {
+        var count = 0;
+        var index = 0;
+        while ((index = haystack.IndexOf(needle, index, System.StringComparison.Ordinal)) >= 0)
+        {
+            count++;
+            index += needle.Length;
+        }
+
+        return count;
+    }
 
     private static ErrorCodesSpec MakeSpec(params ErrorCodeEntry[] entries) =>
         new(entries.ToImmutableArray());

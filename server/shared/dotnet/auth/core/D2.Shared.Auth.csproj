@@ -136,4 +136,17 @@ Copyright (c) DCSV. All rights reserved.
     <InternalsVisibleTo Include="D2.Shared.Auth.Http" />
     <InternalsVisibleTo Include="D2.Shared.Auth.Grpc" />
   </ItemGroup>
+
+  <!-- Publish metadata (per-package semver + NuGet identity). -->
+  <PropertyGroup>
+    <Version>0.1.0</Version>
+    <PackageId>D2.Shared.Auth</PackageId>
+    <Description>Inbound auth runtime for D2-WORX — JWT validation, JWKS snapshot management, session-liveness checking, and the DI composition root.</Description>
+    <IsPackable>true</IsPackable>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
 </Project>

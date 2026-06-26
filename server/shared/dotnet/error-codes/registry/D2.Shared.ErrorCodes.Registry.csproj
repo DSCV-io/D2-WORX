@@ -71,4 +71,17 @@ Copyright (c) DCSV. All rights reserved.
     -->
     <AdditionalFiles Include="$(D2ContractsRoot)error-category\error-category.spec.json" />
   </ItemGroup>
+
+  <!-- Publish metadata (per-package semver + NuGet identity). -->
+  <PropertyGroup>
+    <Version>0.1.0</Version>
+    <PackageId>D2.Shared.ErrorCodes.Registry</PackageId>
+    <Description>Merged cross-catalog error-code registry for D2-WORX — a frozen code-to-metadata lookup aggregating every error-code spec.</Description>
+    <IsPackable>true</IsPackable>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
 </Project>

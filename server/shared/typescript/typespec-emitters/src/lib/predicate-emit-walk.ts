@@ -105,13 +105,15 @@ export function resolveSegment(
 ): SegmentResolution {
   if (model === undefined)
     throw new Error(
-      `predicate-emit-walk: cannot resolve '${fieldName}' — the prior path segment did not resolve to a model (the decorator validator should have rejected this path)`,
+      `predicate-emit-walk: cannot resolve '${fieldName}' — ` +
+        `prior segment did not resolve to a model (validator should have rejected this path)`,
     );
 
   const prop: ModelProperty | undefined = model.properties.get(fieldName);
   if (prop === undefined)
     throw new Error(
-      `predicate-emit-walk: field '${fieldName}' is not a property of model '${model.name}' (the decorator validator should have rejected this path)`,
+      `predicate-emit-walk: '${fieldName}' is not a property of model '${model.name}' ` +
+        `(validator should have rejected this path)`,
     );
 
   const propType: Type = prop.type;

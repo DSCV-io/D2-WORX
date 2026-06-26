@@ -1,0 +1,14 @@
+// Test fixture — stable proto before (field 'b' present).
+// Package: d2.fixture.v1 (stable — no alpha/beta suffix → gate-enforced).
+// Paired with stable-after/svc.proto where field 'b' is deleted without reserved.
+// Used by the proto-arm non-vacuity integration test.
+syntax = "proto3";
+
+package d2.fixture.v1;
+
+option csharp_namespace = "D2.Services.Protos.Fixture.V1";
+
+message M {
+  string a = 1;
+  string b = 2;
+}

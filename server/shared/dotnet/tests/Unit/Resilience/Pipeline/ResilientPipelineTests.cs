@@ -300,32 +300,45 @@ public sealed class ResilientPipelineTests
             var gate = new TaskCompletionSource();
             const int concurrent_callers = 100;
 
+            // Determinism guarantee: ResilientPipeline.ExecuteAsync is async; its
+            // first synchronous path builds the layer chain then calls wrapped(ct),
+            // which invokes SingleflightLayer.WrapAsync → Singleflight.ExecuteAsync
+            // → r_inflight.GetOrAdd synchronously — all before the first await.
+            // Capturing the ValueTask<D2Result<int>> (without awaiting) therefore
+            // proves the caller has joined the singleflight entry. Signalling AFTER
+            // capture makes the wait on all N signals a guarantee that all callers
+            // have joined before the gate opens — no SpinWait/Yield needed.
+            var allJoined = new SemaphoreSlim(0, concurrent_callers);
+
             var tasks = Enumerable.Range(0, concurrent_callers)
-                .Select(_ => Task.Run(async () => await pipeline.ExecuteAsync("k", async _ =>
+                .Select(_ => Task.Run(async () =>
                 {
-                    var n = Interlocked.Increment(ref attempts);
-                    if (n == 1)
+                    var vt = pipeline.ExecuteAsync("k", async _ =>
                     {
-                        // Hold the in-flight task open until every caller has
-                        // had a chance to dedup onto it.
-                        await gate.Task;
-                    }
+                        var n = Interlocked.Increment(ref attempts);
 
-                    if (n < 3)
-                    {
-                        throw new TimeoutException();
-                    }
+                        if (n == 1)
+                        {
+                            // Hold the in-flight task open until every caller has
+                            // had a chance to dedup onto it.
+                            await gate.Task;
+                        }
 
-                    return 7;
-                })))
+                        if (n < 3)
+                            throw new TimeoutException();
+
+                        return 7;
+                    });
+                    allJoined.Release(); // signal AFTER join, not before
+                    return await vt;
+                }))
                 .ToArray();
 
-            // Wait for SF to publish the in-flight entry, then give the
-            // remaining 99 callers a window to land on it.
-            SpinWait.SpinUntil(() => sf.Size == 1, TimeSpan.FromSeconds(5))
-                .Should().BeTrue("singleflight should publish the in-flight entry quickly");
-            await Task.Delay(200);
+            // Wait for all callers to have joined — guaranteed, not polled.
+            for (var i = 0; i < concurrent_callers; i++)
+                await allJoined.WaitAsync();
 
+            // All callers are joined to the single in-flight entry.
             sf.Size.Should().Be(1);
             gate.SetResult();
 

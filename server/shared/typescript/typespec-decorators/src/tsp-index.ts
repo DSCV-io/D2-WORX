@@ -20,6 +20,7 @@ import {
   $d2Audience,
   $d2Command,
   $d2Csrf,
+  $d2Field,
   $d2GrpcMethod,
   $d2Harmless,
   $d2Idempotent,
@@ -30,6 +31,7 @@ import {
   $d2Redact,
   $d2RequireAllScopes,
   $d2RequireAnyScope,
+  $d2Reserved,
   $d2Resilience,
   $d2ServedBy,
   $d2ServerPush,
@@ -62,5 +64,7 @@ export const $decorators = {
     d2Command: $d2Command,
     d2Query: $d2Query,
     d2Internal: $d2Internal,
+    d2Field: $d2Field,
+    d2Reserved: $d2Reserved,
   },
 } as const;

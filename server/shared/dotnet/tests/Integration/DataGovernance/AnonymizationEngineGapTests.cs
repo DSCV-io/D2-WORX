@@ -41,6 +41,7 @@ public sealed class AnonymizationEngineGapTests : IAsyncLifetime
     private readonly PostgresFixture r_fixture;
     private readonly List<DbContext> r_engineContexts = [];
 
+    private string r_connectionString = null!;
     private FailClosedDbContext r_failClosedSchemaCtx = null!;
     private GovDbContext r_schemaCtx = null!;
 
@@ -56,16 +57,21 @@ public sealed class AnonymizationEngineGapTests : IAsyncLifetime
     /// <inheritdoc />
     public async ValueTask InitializeAsync()
     {
-        // GovDbContext creates its tables first (idempotent — EnsureCreated returns false if
-        // the database already exists, but the tables are already there from a prior run).
-        r_schemaCtx = GovDbContext.Build(r_fixture.ConnectionString);
+        // Each test class gets its own isolated database so EnsureCreatedAsync builds the
+        // full schema without colliding with sibling classes in the same xUnit collection.
+        r_connectionString = await r_fixture.CreateIsolatedDatabaseAsync(
+            nameof(AnonymizationEngineGapTests));
+
+        // GovDbContext creates its tables first (fresh isolated DB — EnsureCreated succeeds
+        // unconditionally because no other class has touched this database yet).
+        r_schemaCtx = GovDbContext.Build(r_connectionString);
         await r_schemaCtx.Database.EnsureCreatedAsync();
 
-        // FailClosedDbContext needs its own table in the same database. EnsureCreated cannot
-        // be used here (the DB already exists; it would be a no-op and not create the table).
-        // Use a raw CREATE TABLE IF NOT EXISTS so the FailClosedUsers table is present without
-        // disturbing the tables GovDbContext already created.
-        r_failClosedSchemaCtx = FailClosedDbContext.Build(r_fixture.ConnectionString);
+        // FailClosedDbContext needs its own table in the same isolated database.
+        // EnsureCreated cannot be used here (the DB already exists after GovDbContext above;
+        // it would be a no-op and not create the FailClosedUsers table). Use a raw
+        // CREATE TABLE IF NOT EXISTS — idempotent and safe.
+        r_failClosedSchemaCtx = FailClosedDbContext.Build(r_connectionString);
         await r_failClosedSchemaCtx.Database.ExecuteSqlRawAsync(@"
             CREATE TABLE IF NOT EXISTS ""FailClosedUsers"" (
                 ""Id""           uuid         NOT NULL PRIMARY KEY,
@@ -98,7 +104,7 @@ public sealed class AnonymizationEngineGapTests : IAsyncLifetime
         var userId = Guid.NewGuid();
         await SeedFailClosedUser(userId, "Alice", 42);
 
-        var ctx = FailClosedDbContext.Build(r_fixture.ConnectionString);
+        var ctx = FailClosedDbContext.Build(r_connectionString);
         r_engineContexts.Add(ctx);
         var engine = BuildFailClosedEngine(ctx);
 
@@ -110,7 +116,7 @@ public sealed class AnonymizationEngineGapTests : IAsyncLifetime
         result.StatusCode.Should().Be(System.Net.HttpStatusCode.InternalServerError);
 
         // Verify no writes occurred: Score and DisplayName must be unchanged.
-        await using var readCtx = FailClosedDbContext.Build(r_fixture.ConnectionString);
+        await using var readCtx = FailClosedDbContext.Build(r_connectionString);
         var row = await readCtx.FailClosedUsers.FirstAsync(u => u.UserId == userId);
 
         row.Score.Should().Be(42, "non-nullable int must be unchanged");
@@ -132,7 +138,7 @@ public sealed class AnonymizationEngineGapTests : IAsyncLifetime
         // MaxConcurrencyRetries = 0: the engine fails immediately on the first concurrency
         // conflict without any retry. OnBeforeFirstSave bumps the xmin via an independent
         // context, forcing DbUpdateConcurrencyException on the engine's first save.
-        var ctx = GovDbContext.Build(r_fixture.ConnectionString);
+        var ctx = GovDbContext.Build(r_connectionString);
         r_engineContexts.Add(ctx);
 
         var opts = Options.Create(new AnonymizationEngineOptions
@@ -147,7 +153,7 @@ public sealed class AnonymizationEngineGapTests : IAsyncLifetime
 
         engine.OnBeforeFirstSave = () =>
         {
-            using var bumpCtx = GovDbContext.Build(r_fixture.ConnectionString);
+            using var bumpCtx = GovDbContext.Build(r_connectionString);
             var row = bumpCtx.TierBUsers.First(u => u.UserId == userId);
             row.DisplayName = "BumpedToExhaustRetries";
             bumpCtx.SaveChanges();
@@ -174,7 +180,7 @@ public sealed class AnonymizationEngineGapTests : IAsyncLifetime
 
     private async Task SeedFailClosedUser(Guid userId, string displayName, int score)
     {
-        await using var ctx = FailClosedDbContext.Build(r_fixture.ConnectionString);
+        await using var ctx = FailClosedDbContext.Build(r_connectionString);
         ctx.FailClosedUsers.Add(new FailClosedDbContext.FailClosedUser
         {
             Id = Guid.NewGuid(),
@@ -187,7 +193,7 @@ public sealed class AnonymizationEngineGapTests : IAsyncLifetime
 
     private async Task SeedTierBUser(Guid userId, string email, string displayName)
     {
-        await using var ctx = GovDbContext.Build(r_fixture.ConnectionString);
+        await using var ctx = GovDbContext.Build(r_connectionString);
         ctx.TierBUsers.Add(new GovDbContext.TierBUser
         {
             Id = Guid.NewGuid(),

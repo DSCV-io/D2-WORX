@@ -16,6 +16,7 @@ using D2.Shared.Result;
 using D2.Shared.Utilities.Diagnostics;
 using JetBrains.Annotations;
 using Microsoft.Extensions.Logging;
+using NodaTime;
 
 /// <summary>
 /// Refresh-ahead implementation of <see cref="IWorkloadLeafSource"/>. Reissues this
@@ -90,13 +91,16 @@ internal sealed class WorkloadLeafClient : IWorkloadLeafSource, IDisposable
     public async ValueTask<D2Result<X509Certificate2>> GetCurrentLeafAsync(
         CancellationToken ct = default)
     {
-        ObjectDisposedException.ThrowIf(_disposed, this);
+        ObjectDisposedException.ThrowIf(Volatile.Read(ref _disposed), this);
 
-        var now = r_clock.GetUtcNow();
+        var now = Instant.FromDateTimeOffset(r_clock.GetUtcNow());
         var cached = r_cache.TryGet(now);
 
         if (cached is not null)
+        {
+            r_logger.WorkloadLeafCacheHit(cached.NotAfter.ToDateTimeOffset());
             return D2Result<X509Certificate2>.Ok(cached.Leaf);
+        }
 
         // Cache miss / expired → reissue via singleflight (outer) wrapping circuit
         // breaker (inner). Singleflight deduplicates concurrent callers; the breaker
@@ -113,7 +117,7 @@ internal sealed class WorkloadLeafClient : IWorkloadLeafSource, IDisposable
 
             // A sibling may have published a fresher snapshot; read through the
             // cache so all callers converge on the one live handle.
-            var current = r_cache.TryGet(r_clock.GetUtcNow());
+            var current = r_cache.TryGet(Instant.FromDateTimeOffset(r_clock.GetUtcNow()));
 
             if (current is not null)
                 return D2Result<X509Certificate2>.Ok(current.Leaf);
@@ -135,7 +139,7 @@ internal sealed class WorkloadLeafClient : IWorkloadLeafSource, IDisposable
     /// <returns>A <see cref="D2Result"/> describing the reissue outcome.</returns>
     public async ValueTask<D2Result> ForceReissueAsync(CancellationToken ct = default)
     {
-        ObjectDisposedException.ThrowIf(_disposed, this);
+        ObjectDisposedException.ThrowIf(Volatile.Read(ref _disposed), this);
 
         try
         {
@@ -157,7 +161,7 @@ internal sealed class WorkloadLeafClient : IWorkloadLeafSource, IDisposable
     /// <inheritdoc/>
     public void Dispose()
     {
-        _disposed = true;
+        Volatile.Write(ref _disposed, true);
     }
 
     /// <summary>
@@ -299,7 +303,7 @@ internal sealed class WorkloadLeafClient : IWorkloadLeafSource, IDisposable
         // Cache re-check: a sibling caller may have populated the cache between the
         // GetCurrentLeafAsync TryGet and the Singleflight entry. Without this
         // re-check we'd issue a redundant reissue right after a peer just refreshed.
-        var preReissueCache = r_cache.TryGet(r_clock.GetUtcNow());
+        var preReissueCache = r_cache.TryGet(Instant.FromDateTimeOffset(r_clock.GetUtcNow()));
 
         if (preReissueCache is not null)
             return ReissueResult.Successful();
@@ -330,9 +334,21 @@ internal sealed class WorkloadLeafClient : IWorkloadLeafSource, IDisposable
             // cycle may succeed. OperationCanceledException propagates above.
             // Sanitize: never log ex itself (a cert-parse exception could echo
             // subject / SAN content). Type FullName + first frame are safe.
+            // The cached leaf's not-after is captured as a structured log field
+            // (ISO-8601 UTC) so operators can correlate failures with expiry proximity.
+            // It cannot be a metric tag (timestamps are high-cardinality, not enumerable
+            // dimensions); the log record is the correct OTel home for this value.
+            var staleCached = r_cache.PeekRaw();
+            var cachedLeafNotAfter = staleCached is not null
+                ? staleCached.NotAfter.ToDateTimeOffset().ToString("O")
+                : "none";
+
             r_logger.WorkloadLeafReissueFailed(
                 SanitizedExceptionRender.TypeName(ex),
-                SanitizedExceptionRender.FirstFrame(ex));
+                SanitizedExceptionRender.FirstFrame(ex),
+                cachedLeafNotAfter);
+
+            OutboundTelemetry.SR_LeafReissueFailures.Add(1);
 
             return ReissueResult.TransientFailure();
         }

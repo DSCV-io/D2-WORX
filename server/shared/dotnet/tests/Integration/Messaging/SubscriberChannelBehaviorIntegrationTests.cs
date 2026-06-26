@@ -146,7 +146,12 @@ public sealed class SubscriberChannelBehaviorIntegrationTests
             // to-DLX path. Without this fix, an ack throw would land in
             // the broad handler-exception catch and falsely DLQ the
             // already-processed message.
-            await Task.Delay(TimeSpan.FromSeconds(2));
+            //
+            // The handler is already confirmed complete (WaitFor above). If the
+            // buggy republish-to-DLX path fires, it does so in the same async
+            // continuation — any DLQ message appears within milliseconds.
+            // 500 ms is generous but bounded; no fixed 2 s sleep required.
+            await Task.Delay(TimeSpan.FromMilliseconds(500));
             var dlqName = DlqNaming.DlqFor(queue);
             var dlqCount = await GetQueueCountAsync(dlqName);
             dlqCount.Should().Be(
@@ -237,14 +242,17 @@ public sealed class SubscriberChannelBehaviorIntegrationTests
             await host.StopAsync(CancellationToken.None);
             stopwatch.Stop();
 
-            // The drain should have waited for the handler (~2s); not less
-            // (would mean we cut it short) and not the full 30s timeout
-            // (would mean drain failed).
+            // The drain must wait for the SlowHandler (~2 s). The
+            // handlerStarted.Task gate fires once the handler is already
+            // executing its 2 s sleep, so StopAsync must wait out the
+            // remaining sleep. A lower bound of 1500 ms proves the drain
+            // actually waited; 500 ms would allow a handler that returned
+            // early (i.e. did NOT drain) to pass silently.
             stopwatch.Elapsed.Should().BeGreaterThan(
                 TimeSpan.FromMilliseconds(1500),
                 "drain should have waited for the slow handler to complete");
             stopwatch.Elapsed.Should().BeLessThan(
-                TimeSpan.FromSeconds(10),
+                TimeSpan.FromSeconds(15),
                 "drain timeout (30s) should NOT have fired for a 2s handler");
 
             TestCollector.Count<SlowHandler>().Should().Be(

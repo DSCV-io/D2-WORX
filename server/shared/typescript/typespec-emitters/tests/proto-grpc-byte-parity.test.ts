@@ -24,6 +24,9 @@ import {
   emitClientKeys,
 } from "../src/lib/grpc-client-emitter.js";
 import type { GrpcClientOp } from "../src/lib/grpc-client-emitter.js";
+import { emitWireVersionConstant } from "../src/lib/wire-version-emitter.js";
+import { emitWireIdentityManifest } from "../src/lib/wire-manifest-emitter.js";
+import { parseChannel } from "../src/lib/wire-channel.js";
 
 // ---------------------------------------------------------------------------
 // Committed-file path constants + readFixture helper
@@ -68,6 +71,7 @@ function buildSignInputFields(): readonly FieldInfo[] {
       repeated: false,
       optional: false,
       redact: false,
+      fieldNumber: 1,
     },
     {
       name: "payload",
@@ -79,6 +83,7 @@ function buildSignInputFields(): readonly FieldInfo[] {
       repeated: false,
       optional: false,
       redact: true,
+      fieldNumber: 2,
     },
   ];
 }
@@ -95,6 +100,7 @@ function buildSignOutputFields(): readonly FieldInfo[] {
       repeated: false,
       optional: false,
       redact: false,
+      fieldNumber: 1,
     },
   ];
 }
@@ -112,13 +118,15 @@ describe("byteParity_SignProto_CommittedFixtureIdentical", () => {
       "KeyCustodianSigner",
       "Sign",
       "unary",
-      "d2.keycustodian.v1",
-      "D2.Services.Protos.KeyCustodian.V1",
+      "d2.keycustodian.v2alpha",
+      "D2.Services.Protos.KeyCustodian.V2Alpha",
       SOURCE,
       "SignRequest",
       buildSignInputFields(),
+      undefined,
       "SignOutput", // data message name — wrapper is always <grpcMethod>Response
       buildSignOutputFields(),
+      undefined,
       [],
       () => {},
     );
@@ -138,13 +146,15 @@ describe("byteParity_SignProto_CommittedFixtureIdentical", () => {
       "KeyCustodianSigner",
       "Sign",
       "unary",
-      "d2.keycustodian.v1",
-      "D2.Services.Protos.KeyCustodian.V1",
+      "d2.keycustodian.v2alpha",
+      "D2.Services.Protos.KeyCustodian.V2Alpha",
       SOURCE,
       "SignRequest",
       buildSignInputFields(),
+      undefined,
       "SignOutput",
       buildSignOutputFields(),
+      undefined,
       [],
       () => {},
     );
@@ -170,7 +180,7 @@ describe("byteParity_KeyCustodianSignerService_FacadeDelegation_CommittedFixture
       "sign",
       "KeyCustodianSigner",
       "Sign",
-      "D2.Services.Protos.KeyCustodian.V1",
+      "D2.Services.Protos.KeyCustodian.V2Alpha",
       "D2.Edge.Tests.TypeSpecGrpc.Generated",
       "D2.Edge.Tests.TypeSpecDto.Generated",
       SOURCE,
@@ -196,7 +206,7 @@ describe("byteParity_KeyCustodianSignerService_FacadeDelegation_CommittedFixture
       "sign",
       "KeyCustodianSigner",
       "Sign",
-      "D2.Services.Protos.KeyCustodian.V1",
+      "D2.Services.Protos.KeyCustodian.V2Alpha",
       "D2.Edge.Tests.TypeSpecGrpc.Generated",
       "D2.Edge.Tests.TypeSpecDto.Generated",
       SOURCE,
@@ -222,7 +232,7 @@ describe("byteParity_SignTransportMappers_CommittedFixtureIdentical", () => {
       "sign",
       "KeyCustodianSigner",
       "Sign",
-      "D2.Services.Protos.KeyCustodian.V1",
+      "D2.Services.Protos.KeyCustodian.V2Alpha",
       "D2.Edge.Tests.TypeSpecGrpc.Generated",
       "D2.Edge.Tests.TypeSpecDto.Generated",
       SOURCE,
@@ -246,7 +256,7 @@ describe("byteParity_SignTransportMappers_CommittedFixtureIdentical", () => {
       "sign",
       "KeyCustodianSigner",
       "Sign",
-      "D2.Services.Protos.KeyCustodian.V1",
+      "D2.Services.Protos.KeyCustodian.V2Alpha",
       "D2.Edge.Tests.TypeSpecGrpc.Generated",
       "D2.Edge.Tests.TypeSpecDto.Generated",
       SOURCE,
@@ -278,7 +288,7 @@ function buildClientSignOp(): GrpcClientOp {
     opName: "sign",
     grpcService: "KeyCustodianSigner",
     grpcMethod: "Sign",
-    protoCsharpNs: "D2.Services.Protos.KeyCustodian.V1",
+    protoCsharpNs: "D2.Services.Protos.KeyCustodian.V2Alpha",
     dtoCsharpNs: CLIENT_DTO_NS,
     sourceSpec: SOURCE,
     requestModelName: "SignInput",
@@ -426,5 +436,61 @@ describe("byteParity_SignClientKeys_CommittedFixtureIdentical", () => {
     );
     const file = emitClientKeys("sign", CLIENTS_NS, SOURCE);
     expect(file.content).not.toBe(drifted);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// byteParity_WireVersionConstant
+// ---------------------------------------------------------------------------
+
+describe("byteParity_WireVersionConstant_CommittedFixtureIdentical", () => {
+  const WIRE_SOURCE = "contracts/typespec/fixtures/sign-shaped.tsp";
+  const WIRE_NS = "D2.Services.Protos.KeyCustodian.V2Alpha";
+  const channel = parseChannel("d2.keycustodian.v2alpha")!;
+
+  it("re-emitted WireVersion.g.cs is byte-identical to the committed fixture", () => {
+    const file = emitWireVersionConstant(WIRE_NS, channel, WIRE_SOURCE);
+    expect(file.content).toBe(readFixture(join(GRPC_HOME, "WireVersion.g.cs")));
+  });
+
+  it("deliberate-drift detection: mutated channel does NOT match committed fixture", () => {
+    const mutatedChannel = parseChannel("d2.keycustodian.v3beta")!;
+    const file = emitWireVersionConstant(WIRE_NS, mutatedChannel, WIRE_SOURCE);
+    expect(file.content).not.toBe(
+      readFixture(join(GRPC_HOME, "WireVersion.g.cs")),
+    );
+  });
+});
+
+// ---------------------------------------------------------------------------
+// byteParity_WireIdentityManifest
+// ---------------------------------------------------------------------------
+
+describe("byteParity_WireIdentityManifest_CommittedFixtureIdentical", () => {
+  const MANIFEST_PROTO_PACKAGE = "d2.keycustodian.v2alpha";
+  const MANIFEST_PROTO_CS_NS = "D2.Services.Protos.KeyCustodian.V2Alpha";
+  const channel = parseChannel(MANIFEST_PROTO_PACKAGE)!;
+
+  it("re-emitted wire-identity.manifest.g.json is byte-identical to the committed fixture", () => {
+    const file = emitWireIdentityManifest(
+      MANIFEST_PROTO_PACKAGE,
+      MANIFEST_PROTO_CS_NS,
+      channel,
+    );
+    expect(file.content).toBe(
+      readFixture(join(GRPC_HOME, "wire-identity.manifest.g.json")),
+    );
+  });
+
+  it("deliberate-drift detection: mutated channel does NOT match committed fixture", () => {
+    const mutatedChannel = parseChannel("d2.keycustodian.v3beta")!;
+    const file = emitWireIdentityManifest(
+      MANIFEST_PROTO_PACKAGE,
+      MANIFEST_PROTO_CS_NS,
+      mutatedChannel,
+    );
+    expect(file.content).not.toBe(
+      readFixture(join(GRPC_HOME, "wire-identity.manifest.g.json")),
+    );
   });
 });

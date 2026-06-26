@@ -1,0 +1,43 @@
+#nullable enable
+D2.Shared.Time.EfCore.NodaTimeValueConverterExtensions
+D2.Shared.Time.EfCore.NodaTimeValueConverterExtensions.extension(Npgsql.EntityFrameworkCore.PostgreSQL.Infrastructure.NpgsqlDbContextOptionsBuilder!)
+D2.Shared.Time.EfCore.NodaTimeValueConverterExtensions.extension(Npgsql.EntityFrameworkCore.PostgreSQL.Infrastructure.NpgsqlDbContextOptionsBuilder!).AddD2NodaTime() -> Npgsql.EntityFrameworkCore.PostgreSQL.Infrastructure.NpgsqlDbContextOptionsBuilder!
+D2.Shared.Time.IClock
+D2.Shared.Time.IClock.GetCurrentInstant() -> NodaTime.Instant
+D2.Shared.Time.IsoDuration
+D2.Shared.Time.LocalAnchoredEvent
+D2.Shared.Time.LocalAnchoredEvent.<Clone>$() -> D2.Shared.Time.LocalAnchoredEvent!
+D2.Shared.Time.LocalAnchoredEvent.ComputeNextFire() -> D2.Shared.Result.D2Result<NodaTime.Instant>!
+D2.Shared.Time.LocalAnchoredEvent.Equals(D2.Shared.Time.LocalAnchoredEvent? other) -> bool
+D2.Shared.Time.LocalAnchoredEvent.IANAIdentifier.get -> string!
+D2.Shared.Time.LocalAnchoredEvent.NextFireUtc.get -> NodaTime.Instant?
+D2.Shared.Time.LocalAnchoredEvent.ScheduledLocal.get -> NodaTime.LocalDateTime
+D2.Shared.Time.SystemClock
+D2.Shared.Time.SystemClock.GetCurrentInstant() -> NodaTime.Instant
+D2.Shared.Time.SystemClock.SystemClock() -> void
+D2.Shared.Time.TestClock
+D2.Shared.Time.TestClock.Advance(NodaTime.Duration duration) -> void
+D2.Shared.Time.TestClock.GetCurrentInstant() -> NodaTime.Instant
+D2.Shared.Time.TestClock.Now.get -> NodaTime.Instant
+D2.Shared.Time.TestClock.SetTo(NodaTime.Instant instant) -> void
+D2.Shared.Time.TestClock.TestClock(NodaTime.Instant initial) -> void
+D2.Shared.Time.ZonedInstant
+D2.Shared.Time.ZonedInstant.<Clone>$() -> D2.Shared.Time.ZonedInstant!
+D2.Shared.Time.ZonedInstant.Equals(D2.Shared.Time.ZonedInstant? other) -> bool
+D2.Shared.Time.ZonedInstant.IANAIdentifier.get -> string!
+D2.Shared.Time.ZonedInstant.Instant.get -> NodaTime.Instant
+override D2.Shared.Time.LocalAnchoredEvent.Equals(object? obj) -> bool
+override D2.Shared.Time.LocalAnchoredEvent.GetHashCode() -> int
+override D2.Shared.Time.LocalAnchoredEvent.ToString() -> string!
+override D2.Shared.Time.ZonedInstant.Equals(object? obj) -> bool
+override D2.Shared.Time.ZonedInstant.GetHashCode() -> int
+override D2.Shared.Time.ZonedInstant.ToString() -> string!
+static D2.Shared.Time.EfCore.NodaTimeValueConverterExtensions.AddD2NodaTime(this Npgsql.EntityFrameworkCore.PostgreSQL.Infrastructure.NpgsqlDbContextOptionsBuilder! optionsBuilder) -> Npgsql.EntityFrameworkCore.PostgreSQL.Infrastructure.NpgsqlDbContextOptionsBuilder!
+static D2.Shared.Time.IsoDuration.Format(NodaTime.Duration duration) -> string!
+static D2.Shared.Time.IsoDuration.Parse(string? iso) -> D2.Shared.Result.D2Result<NodaTime.Duration>!
+static D2.Shared.Time.LocalAnchoredEvent.Create(NodaTime.LocalDateTime scheduledLocal, string? ianaIdentifier, NodaTime.Instant? nextFireUtc = null) -> D2.Shared.Result.D2Result<D2.Shared.Time.LocalAnchoredEvent!>!
+static D2.Shared.Time.LocalAnchoredEvent.operator !=(D2.Shared.Time.LocalAnchoredEvent? left, D2.Shared.Time.LocalAnchoredEvent? right) -> bool
+static D2.Shared.Time.LocalAnchoredEvent.operator ==(D2.Shared.Time.LocalAnchoredEvent? left, D2.Shared.Time.LocalAnchoredEvent? right) -> bool
+static D2.Shared.Time.ZonedInstant.Create(NodaTime.Instant instant, string? ianaIdentifier) -> D2.Shared.Result.D2Result<D2.Shared.Time.ZonedInstant!>!
+static D2.Shared.Time.ZonedInstant.operator !=(D2.Shared.Time.ZonedInstant? left, D2.Shared.Time.ZonedInstant? right) -> bool
+static D2.Shared.Time.ZonedInstant.operator ==(D2.Shared.Time.ZonedInstant? left, D2.Shared.Time.ZonedInstant? right) -> bool

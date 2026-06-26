@@ -41,6 +41,29 @@ namespace D2.Shared.ErrorCodes.SourceGen;
 /// (<c>standard</c> — the universal error-factory shape — or <c>none</c>);
 /// <c>null</c> for the generic constants-only catalog.
 /// </param>
+/// <param name="Deprecated">
+/// When <see langword="true"/>, the entry is deprecated: the emitted constant +
+/// factory carry an <c>[Obsolete]</c> attribute built from
+/// <see cref="DeprecatedReason"/> + <see cref="ReplacedBy"/>. Defaults to
+/// <see langword="false"/> (active). The mere presence of the marker flips the
+/// entry to deprecated; the entry is NEVER deleted.
+/// </param>
+/// <param name="DeprecatedReason">
+/// Plain dev-facing English explaining why the code is deprecated; rendered
+/// verbatim into the <c>[Obsolete("...")]</c> message. NOT a TK key. Present
+/// only when <see cref="Deprecated"/> is <see langword="true"/>.
+/// </param>
+/// <param name="ReplacedBy">
+/// Wire code of the successor entry (e.g. <c>RESOURCE_NOT_FOUND</c>). When
+/// present, the emitted <c>[Obsolete]</c> message appends
+/// <c>" Use {ReplacedBy} instead."</c>. <see langword="null"/> for a pure
+/// retirement with no replacement.
+/// </param>
+/// <param name="Sunset">
+/// ISO-8601 date for the future RFC 8594 <c>Sunset</c> response header. Carried
+/// on the contract now, consumed by the Edge response middleware when it
+/// exists. Inert today (no emitter reads it).
+/// </param>
 internal sealed record ErrorCodeEntry(
     string Code,
     int HttpStatus,
@@ -48,4 +71,8 @@ internal sealed record ErrorCodeEntry(
     string? Category = null,
     string? UserMessageKey = null,
     string? FactoryName = null,
-    string? FactoryShape = null);
+    string? FactoryShape = null,
+    bool Deprecated = false,
+    string? DeprecatedReason = null,
+    string? ReplacedBy = null,
+    string? Sunset = null);

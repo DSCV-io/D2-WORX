@@ -45,7 +45,7 @@ using GrpcStatusCode = global::Grpc.Core.StatusCode;
 /// <see cref="AsyncAuthInterceptor"/>, and invoking it — asserting the gRPC-inbound
 /// request's own token is what the outbound hop would forward, verbatim — WITHOUT a
 /// second running backend (the credential's interceptor is invoked directly, the way
-/// the Step-3 credential tests do).
+/// the outbound forwarded-JWT credential tests do).
 /// </summary>
 /// <remarks>
 /// Sibling to <c>GrpcAuthIntegrationTests</c>; reuses its in-process gRPC
@@ -247,7 +247,7 @@ public sealed class GrpcInboundForwardingIntegrationTests
     }
 
     // Pulls the AsyncAuthInterceptor the CallCredentials carries — same extraction
-    // pattern as the Step-3 ForwardedJwtCallCredentialsTests.
+    // pattern as the ForwardedJwtCallCredentialsTests.
     private static AsyncAuthInterceptor ExtractInterceptor(CallCredentials credentials)
     {
         var configurator = new InterceptorCapturingConfigurator();

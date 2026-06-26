@@ -1,0 +1,61 @@
+#nullable enable
+D2.Shared.Validation.Abstractions.BiologicalSex
+D2.Shared.Validation.Abstractions.BiologicalSex.Female = 1 -> D2.Shared.Validation.Abstractions.BiologicalSex
+D2.Shared.Validation.Abstractions.BiologicalSex.Intersex = 2 -> D2.Shared.Validation.Abstractions.BiologicalSex
+D2.Shared.Validation.Abstractions.BiologicalSex.Male = 0 -> D2.Shared.Validation.Abstractions.BiologicalSex
+D2.Shared.Validation.Abstractions.BiologicalSex.Unspecified = 3 -> D2.Shared.Validation.Abstractions.BiologicalSex
+D2.Shared.Validation.Abstractions.FieldConstraints
+D2.Shared.Validation.Abstractions.IEmailValidator
+D2.Shared.Validation.Abstractions.IEmailValidator.Validate(string? email) -> D2.Shared.Result.D2Result<string!>!
+D2.Shared.Validation.Abstractions.IPhoneValidator
+D2.Shared.Validation.Abstractions.IPhoneValidator.Validate(string? phone, D2.Shared.Geo.Abstractions.CountryCode? defaultRegion = null) -> D2.Shared.Result.D2Result<string!>!
+D2.Shared.Validation.Abstractions.IPostalCodeValidator
+D2.Shared.Validation.Abstractions.IPostalCodeValidator.Validate(string? postalCode, D2.Shared.Geo.Abstractions.CountryCode? countryCode = null) -> D2.Shared.Result.D2Result<string!>!
+D2.Shared.Validation.Abstractions.NamePrefix
+D2.Shared.Validation.Abstractions.NamePrefix.Dr = 5 -> D2.Shared.Validation.Abstractions.NamePrefix
+D2.Shared.Validation.Abstractions.NamePrefix.Elder = 15 -> D2.Shared.Validation.Abstractions.NamePrefix
+D2.Shared.Validation.Abstractions.NamePrefix.Fr = 12 -> D2.Shared.Validation.Abstractions.NamePrefix
+D2.Shared.Validation.Abstractions.NamePrefix.Lady = 8 -> D2.Shared.Validation.Abstractions.NamePrefix
+D2.Shared.Validation.Abstractions.NamePrefix.Lord = 9 -> D2.Shared.Validation.Abstractions.NamePrefix
+D2.Shared.Validation.Abstractions.NamePrefix.Miss = 2 -> D2.Shared.Validation.Abstractions.NamePrefix
+D2.Shared.Validation.Abstractions.NamePrefix.Mr = 0 -> D2.Shared.Validation.Abstractions.NamePrefix
+D2.Shared.Validation.Abstractions.NamePrefix.Mrs = 3 -> D2.Shared.Validation.Abstractions.NamePrefix
+D2.Shared.Validation.Abstractions.NamePrefix.Ms = 1 -> D2.Shared.Validation.Abstractions.NamePrefix
+D2.Shared.Validation.Abstractions.NamePrefix.Mx = 4 -> D2.Shared.Validation.Abstractions.NamePrefix
+D2.Shared.Validation.Abstractions.NamePrefix.Other = 16 -> D2.Shared.Validation.Abstractions.NamePrefix
+D2.Shared.Validation.Abstractions.NamePrefix.Pr = 13 -> D2.Shared.Validation.Abstractions.NamePrefix
+D2.Shared.Validation.Abstractions.NamePrefix.Prof = 6 -> D2.Shared.Validation.Abstractions.NamePrefix
+D2.Shared.Validation.Abstractions.NamePrefix.Rev = 11 -> D2.Shared.Validation.Abstractions.NamePrefix
+D2.Shared.Validation.Abstractions.NamePrefix.RtHon = 10 -> D2.Shared.Validation.Abstractions.NamePrefix
+D2.Shared.Validation.Abstractions.NamePrefix.Sir = 7 -> D2.Shared.Validation.Abstractions.NamePrefix
+D2.Shared.Validation.Abstractions.NamePrefix.Sr = 14 -> D2.Shared.Validation.Abstractions.NamePrefix
+D2.Shared.Validation.Abstractions.NameSuffix
+D2.Shared.Validation.Abstractions.NameSuffix.I = 2 -> D2.Shared.Validation.Abstractions.NameSuffix
+D2.Shared.Validation.Abstractions.NameSuffix.II = 3 -> D2.Shared.Validation.Abstractions.NameSuffix
+D2.Shared.Validation.Abstractions.NameSuffix.III = 4 -> D2.Shared.Validation.Abstractions.NameSuffix
+D2.Shared.Validation.Abstractions.NameSuffix.IV = 5 -> D2.Shared.Validation.Abstractions.NameSuffix
+D2.Shared.Validation.Abstractions.NameSuffix.IX = 10 -> D2.Shared.Validation.Abstractions.NameSuffix
+D2.Shared.Validation.Abstractions.NameSuffix.Jr = 0 -> D2.Shared.Validation.Abstractions.NameSuffix
+D2.Shared.Validation.Abstractions.NameSuffix.Other = 12 -> D2.Shared.Validation.Abstractions.NameSuffix
+D2.Shared.Validation.Abstractions.NameSuffix.Sr = 1 -> D2.Shared.Validation.Abstractions.NameSuffix
+D2.Shared.Validation.Abstractions.NameSuffix.V = 6 -> D2.Shared.Validation.Abstractions.NameSuffix
+D2.Shared.Validation.Abstractions.NameSuffix.VI = 7 -> D2.Shared.Validation.Abstractions.NameSuffix
+D2.Shared.Validation.Abstractions.NameSuffix.VII = 8 -> D2.Shared.Validation.Abstractions.NameSuffix
+D2.Shared.Validation.Abstractions.NameSuffix.VIII = 9 -> D2.Shared.Validation.Abstractions.NameSuffix
+D2.Shared.Validation.Abstractions.NameSuffix.X = 11 -> D2.Shared.Validation.Abstractions.NameSuffix
+const D2.Shared.Validation.Abstractions.FieldConstraints.AFFIX_CUSTOM_MAX = 64 -> int
+const D2.Shared.Validation.Abstractions.FieldConstraints.CITY_MAX = 255 -> int
+const D2.Shared.Validation.Abstractions.FieldConstraints.COMPANY_NAME_MAX = 255 -> int
+const D2.Shared.Validation.Abstractions.FieldConstraints.COMPANY_WEBSITE_MAX = 2048 -> int
+const D2.Shared.Validation.Abstractions.FieldConstraints.DEPARTMENT_MAX = 255 -> int
+const D2.Shared.Validation.Abstractions.FieldConstraints.EMAIL_MAX = 254 -> int
+const D2.Shared.Validation.Abstractions.FieldConstraints.FIRST_NAME_MAX = 255 -> int
+const D2.Shared.Validation.Abstractions.FieldConstraints.JOB_TITLE_MAX = 255 -> int
+const D2.Shared.Validation.Abstractions.FieldConstraints.LAST_NAME_MAX = 255 -> int
+const D2.Shared.Validation.Abstractions.FieldConstraints.MIDDLE_NAME_MAX = 255 -> int
+const D2.Shared.Validation.Abstractions.FieldConstraints.PHONE_E164_MAX = 32 -> int
+const D2.Shared.Validation.Abstractions.FieldConstraints.PHONE_MAX_DIGITS = 15 -> int
+const D2.Shared.Validation.Abstractions.FieldConstraints.PHONE_MIN_DIGITS = 7 -> int
+const D2.Shared.Validation.Abstractions.FieldConstraints.POSTAL_CODE_MAX = 16 -> int
+const D2.Shared.Validation.Abstractions.FieldConstraints.PREFERRED_NAME_MAX = 255 -> int
+const D2.Shared.Validation.Abstractions.FieldConstraints.STREET_LINE_MAX = 255 -> int
