@@ -1,0 +1,52 @@
+<!--
+Copyright (c) DCSV. All rights reserved.
+-->
+<Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    Stand-alone console tool that emits a normalized, platform-independent text
+    dump of a built .NET assembly's metadata + IL, for use as the .NET output
+    fingerprint in the release-runner's artifact-diff versioning engine.
+
+    Background: the release-runner needs an "output changed" signal that is
+    stable across machines / OSes / source paths so a baseline generated on one
+    host equals a recompute on another. A raw DLL SHA-256 fails this: the PE
+    header carries a module MVID + COFF timestamp + embedded source paths that
+    differ build-to-build and host-to-host. This tool reads ONLY the metadata
+    tables + IL bytecode it explicitly walks (never the MVID, timestamp, or
+    debug-directory paths), sorts every collection by a stable key, and decodes
+    signatures to full type names rather than assembly-relative tokens — so the
+    dump is path/MVID/timestamp-independent BY CONSTRUCTION.
+
+    Zero NuGet dependencies: System.Reflection.Metadata ships in-box on net10.0
+    as part of the shared framework, so the walk needs no external package.
+
+    NOT registered in server/D2.slnx — this is a stand-alone tool, not part of
+    the framework solution build graph. Invoked directly via `dotnet run` with
+    the project path and a built-DLL path argument. The normalized dump is
+    written to stdout.
+
+    Not a consumable: lives under tools/ (outside server/shared/dotnet's
+    Directory.Build.props tree), IsPackable=false, so it does not pick up the
+    PublicApiAnalyzer and carries no PublicAPI.*.txt / .release-fingerprint of
+    its own.
+
+    See ./README.md for the full normalization contract.
+  -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>D2.Tools.IlFingerprint</RootNamespace>
+    <AssemblyName>D2.Tools.IlFingerprint</AssemblyName>
+    <IsPackable>false</IsPackable>
+    <!--
+      Stand-alone tool — does not participate in the framework solution.
+      Suppress build-gate severity escalation here (StyleCop / XML docs aren't
+      consumed by anything that ships).
+    -->
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+  </PropertyGroup>
+</Project>

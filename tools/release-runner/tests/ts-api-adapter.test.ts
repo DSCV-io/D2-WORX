@@ -20,7 +20,16 @@
 // @d2/error-category. They inject BaselineReader and DistReader seams so the
 // tests are deterministic and do not mutate committed files.
 
-import { readFileSync, readdirSync, existsSync } from "node:fs";
+import {
+  readFileSync,
+  readdirSync,
+  existsSync,
+  mkdtempSync,
+  rmSync,
+  writeFileSync,
+  mkdirSync,
+} from "node:fs";
+import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
@@ -37,6 +46,7 @@ import {
   extractTsPackageDiff,
   normaliseJsForFingerprint,
   parseApiMembers,
+  resolveApiMdPath,
   type BaselineReader,
   type DistReader,
 } from "../src/ts-api-adapter.js";
@@ -569,6 +579,109 @@ describe("computeDistFingerprint — synthetic", () => {
 });
 
 // ---------------------------------------------------------------------------
+// Unit tests — resolveApiMdPath
+// ---------------------------------------------------------------------------
+//
+// Regression for the basename-vs-reportFileName mismatch: packages like
+// headers/amqp have basename "amqp" but reportFileName "headers-amqp.api.md".
+// resolveApiMdPath must read the config, not derive from basename.
+
+describe("resolveApiMdPath — basename vs reportFileName", () => {
+  it("flat package (basename matches reportFileName) uses basename fallback", () => {
+    const tmp = mkdtempSync(join(tmpdir(), "rap-flat-"));
+
+    try {
+      // Flat packages have no api-extractor.json at all — fallback to basename.
+      const result = resolveApiMdPath(tmp, join(tmp, "api-extractor.json"));
+
+      // The path should end with etc/<lastSegmentOfTmp>.api.md.
+      const segment = tmp.split(/[\\/]/).at(-1) ?? "";
+      expect(result).toBe(join(tmp, "etc", `${segment}.api.md`));
+    } finally {
+      rmSync(tmp, { recursive: true, force: true });
+    }
+  });
+
+  it("nested package: reportFileName from api-extractor.json overrides basename", () => {
+    // Regression test: package at headers/amqp has basename "amqp" but
+    // api-extractor.json specifies reportFileName "headers-amqp.api.md".
+    // resolveApiMdPath must use the config value, NOT basename.
+    const tmp = mkdtempSync(join(tmpdir(), "rap-amqp-"));
+
+    try {
+      const configPath = join(tmp, "api-extractor.json");
+      writeFileSync(
+        configPath,
+        JSON.stringify({
+          apiReport: { reportFileName: "headers-amqp.api.md" },
+        }),
+        "utf-8",
+      );
+
+      const result = resolveApiMdPath(tmp, configPath);
+
+      expect(result).toBe(join(tmp, "etc", "headers-amqp.api.md"));
+      // Must NOT use the raw directory basename.
+      const dirBasename = tmp.split(/[\\/]/).at(-1) ?? "";
+      expect(result).not.toBe(join(tmp, "etc", `${dirBasename}.api.md`));
+    } finally {
+      rmSync(tmp, { recursive: true, force: true });
+    }
+  });
+
+  it("malformed api-extractor.json falls back to basename", () => {
+    const tmp = mkdtempSync(join(tmpdir(), "rap-malformed-"));
+
+    try {
+      const configPath = join(tmp, "api-extractor.json");
+      writeFileSync(configPath, "NOT VALID JSON", "utf-8");
+
+      // Should not throw — falls back to basename.
+      const result = resolveApiMdPath(tmp, configPath);
+
+      const segment = tmp.split(/[\\/]/).at(-1) ?? "";
+      expect(result).toBe(join(tmp, "etc", `${segment}.api.md`));
+    } finally {
+      rmSync(tmp, { recursive: true, force: true });
+    }
+  });
+
+  it("api-extractor.json with no apiReport.reportFileName falls back to basename", () => {
+    const tmp = mkdtempSync(join(tmpdir(), "rap-nofield-"));
+
+    try {
+      const configPath = join(tmp, "api-extractor.json");
+      writeFileSync(
+        configPath,
+        JSON.stringify({ mainEntryPointFilePath: "./dist/index.d.ts" }),
+        "utf-8",
+      );
+
+      const result = resolveApiMdPath(tmp, configPath);
+
+      const segment = tmp.split(/[\\/]/).at(-1) ?? "";
+      expect(result).toBe(join(tmp, "etc", `${segment}.api.md`));
+    } finally {
+      rmSync(tmp, { recursive: true, force: true });
+    }
+  });
+
+  it("real headers/amqp api-extractor.json resolves to etc/headers-amqp.api.md", () => {
+    // Smoke test against the real package config on disk (no api-extractor run needed).
+    const amqpDir = resolve(repoRoot, "server/shared/typescript/headers/amqp");
+    const configPath = join(amqpDir, "api-extractor.json");
+
+    if (!existsSync(configPath)) return; // skip if package not present in this checkout
+
+    const result = resolveApiMdPath(amqpDir, configPath);
+
+    expect(result).toBe(join(amqpDir, "etc", "headers-amqp.api.md"));
+    // Must NOT be etc/amqp.api.md (the old buggy path).
+    expect(result).not.toBe(join(amqpDir, "etc", "amqp.api.md"));
+  });
+});
+
+// ---------------------------------------------------------------------------
 // Integration tests — real @d2/error-category
 // Requires D2_VERSIONING_INTEGRATION=1 + a built dist/ for @d2/error-category
 // (api-extractor needs the compiled output). The dedicated integration CI lane
@@ -688,3 +801,38 @@ describe.skipIf(!RUN_INTEGRATION)(
     });
   },
 );
+
+// ---------------------------------------------------------------------------
+// Regression: the real api-extractor runner must resolve under a PLAIN ESM run
+// (not only under vitest, which provides a `require` shim). Reproduces the
+// "require is not defined in ES module scope" failure the drift-check CLI hit
+// when ts-api-adapter used a bare require() instead of createRequire().
+// ---------------------------------------------------------------------------
+
+describe("makeRealApiExtractorRunner — ESM require resolution", () => {
+  it("loads + resolves @microsoft/api-extractor under a plain ESM (tsx) process", async () => {
+    const { spawnSync } = await import("node:child_process");
+
+    // A standalone ESM snippet that imports the adapter module and calls the
+    // runner with a missing config. With the createRequire fix it reaches
+    // api-extractor and fails with a CONFIG error; WITHOUT it, it throws
+    // "require is not defined in ES module scope" at the require() site.
+    const snippet =
+      "import { makeRealApiExtractorRunner } from " +
+      `'${resolve(repoRoot, "tools/release-runner/src/ts-api-adapter.ts").replace(/\\/g, "/")}';` +
+      "try { makeRealApiExtractorRunner().run('/no/such/dir', '/no/such/config.json'); }" +
+      "catch (e) { console.log('CAUGHT:' + String(e && e.message ? e.message : e)); }";
+
+    const result = spawnSync(
+      "node",
+      ["--import", "tsx", "--input-type=module", "-e", snippet],
+      { encoding: "utf-8", cwd: repoRoot, maxBuffer: 10 * 1024 * 1024 },
+    );
+
+    const output = (result.stdout ?? "") + (result.stderr ?? "");
+
+    // The fix is proven by the ABSENCE of the ESM-require error. (It fails for a
+    // config reason instead, which is the expected post-fix behavior.)
+    expect(output).not.toContain("require is not defined in ES module scope");
+  }, 60_000);
+});

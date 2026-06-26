@@ -133,8 +133,14 @@ git push --follow-tags
 
 ### Per-package version (consumable libs: `D2.Shared.*` + `@d2/*`)
 
-The release runner reads `baseline..HEAD`, maps commits to packages by file-path
-containment, and applies per-package semver + CHANGELOG entries.
+The release runner derives each package's bump from the **artifact diff** — it builds the
+publishable artifact, extracts its public API surface, and computes an output fingerprint,
+then diffs those against the package's committed baselines. A consumer-visible output change
+floors at PATCH; a public-API add → MINOR; a public-API removal/change → MAJOR (MINOR while
+pre-stable `0.x`). The commit footer (`WIRE-BREAKING:` / `BREAKING CHANGE:`) can only ESCALATE
+the diff-derived bump; the commit TYPE drives the changelog category only. Because the engine
+BUILDS each package (and shells the IL-dump tool + api-extractor), a default dry-run is slower
+than the legacy commit-parse path.
 
 ```bash
 # Dry-run — compute and report, write nothing (default).
@@ -150,6 +156,9 @@ pnpm --filter release-runner exec tsx src/cli.ts --against <baseline> --no-propa
 # Apply — write version slots + prepend CHANGELOG blocks:
 pnpm --filter release-runner exec tsx src/cli.ts --against <baseline> --apply
 
+# Escape hatch — use the retired commit-type bump source for one release cycle:
+pnpm --filter release-runner exec tsx src/cli.ts --against <baseline> --legacy-commit-type
+
 # Runner unit tests:
 pnpm --filter release-runner test
 ```
@@ -159,8 +168,39 @@ pnpm --filter release-runner test
 `--apply`, review the diffs before committing.
 
 By default the runner propagates a PATCH bump to every consumable dependent of a bumped package
-(see `CONTRIBUTING.md` → Dependent propagation). Use `--no-propagate` to suppress propagation,
-e.g. when scoping a dry-run to a single package in isolation.
+(see `CONTRIBUTING.md` → Dependent propagation). Under the artifact-diff model propagation is
+inherent in the manifest fingerprint — a dependency bump rewrites the dependent's resolved
+dep-version input → its fingerprint changes → it floors at PATCH. Use `--no-propagate` to
+suppress that forwarding, e.g. when scoping a dry-run to a single package in isolation.
+
+#### Baseline files + the seed
+
+Each consumable carries committed baselines next to its manifest: the .NET set is
+`PublicAPI.Shipped.txt` + `PublicAPI.Unshipped.txt` + `.release-fingerprint` (the latter a
+SHA-256 over the PublicAPI text + a **normalized IL/metadata dump** from `tools/il-fingerprint`
++ the manifest metadata — platform-independent by construction, so a Windows-generated baseline
+equals a Linux recompute); the TS set is `etc/<pkg>.api.md` + `etc/dist-fingerprint.txt`. These
+are PIPELINE OUTPUT — regenerate them with the seed scripts, never hand-edit:
+
+```bash
+# Regenerate the 54 .NET PublicAPI + .release-fingerprint baselines:
+node tools/scripts/seed-publicapi-baselines.mjs
+# (optional) one package only:
+node tools/scripts/seed-publicapi-baselines.mjs --package D2.Shared.Result
+
+# Regenerate the 29 TS api-extractor + dist-fingerprint baselines:
+node tools/scripts/seed-apiextractor-baselines.mjs
+```
+
+#### Baseline drift check
+
+The drift check recomputes every committed baseline and FAILS on any drift without a same-PR
+bump. The `versioning-integration` CI lane runs it across both ecosystems (after building the
+.NET DLLs + the TS dists). Locally:
+
+```bash
+pnpm --filter release-runner exec tsx src/drift-check-cli.ts
+```
 
 ## Cutting a library release
 

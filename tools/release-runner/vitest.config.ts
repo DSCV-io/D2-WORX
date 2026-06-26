@@ -42,6 +42,24 @@ export default defineConfig({
         //   process.exit + process.argv make unit-testing impractical; the arms
         //   themselves are fully covered. Excluded from the coverage threshold.
         "src/cli.ts",
+        // src/drift-check-cli.ts — CLI entry point for the baseline-drift check;
+        //   process.exit + real-IO wiring (loadAllPackages + makeRealDiffProvider).
+        //   The testable core (checkBaselineDrift, formatDriftReport) lives in
+        //   drift-check.ts and is fully unit-covered. Excluded from the threshold.
+        "src/drift-check-cli.ts",
+        // src/nuget-extractor.ts — real `dotnet build` + il-fingerprint shell-out
+        //   adapter; the DotnetShell seam isolates all subprocess IO. The pure
+        //   parsing logic (parseUnshippedTxt) + the extraction mapping are unit-
+        //   covered via an injected synthetic shell; the real shell (makeRealDotnetShell)
+        //   is exercised by the gated integration lane (D2_VERSIONING_INTEGRATION).
+        //   Excluded from the unit-coverage threshold like git-adapter.ts.
+        "src/nuget-extractor.ts",
+        // src/ts-api-adapter.ts — real api-extractor + dist-reader adapter; the
+        //   parsing/diff/fingerprint pure helpers are unit-covered, but the real
+        //   seam constructors (makeGitBaselineReader, makeRealApiExtractorRunner,
+        //   makeRealDistReader) + extractTsPackageDiff are IO and exercised by the
+        //   gated integration lane. Excluded from the unit-coverage threshold.
+        "src/ts-api-adapter.ts",
       ],
       thresholds: {
         lines: 100,

@@ -62,7 +62,7 @@ export function topoSort(
   const deps = new Map<string, string[]>();
 
   for (const pkg of packages) {
-    inDegree.set(pkg.name, inDegree.get(pkg.name) ?? 0);
+    inDegree.set(pkg.name, 0);
     deps.set(pkg.name, []);
   }
 
@@ -72,19 +72,20 @@ export function topoSort(
 
       // pkg depends on dep; dep must be processed before pkg.
       // Kahn's: increment in-degree of pkg for each dep edge.
-      inDegree.set(pkg.name, (inDegree.get(pkg.name) ?? 0) + 1);
+      // inDegree was pre-initialised for every package name above.
+      inDegree.set(pkg.name, inDegree.get(pkg.name)! + 1);
 
-      // adjacency: dep → its dependents (packages that depend on dep)
-      const dependents = deps.get(dep) ?? [];
-      dependents.push(pkg.name);
-      deps.set(dep, dependents);
+      // adjacency: dep → its dependents (packages that depend on dep).
+      // deps was pre-initialised for every package name above, so get()
+      // always returns a defined array here.
+      deps.get(dep)!.push(pkg.name);
     }
   }
 
   // Seed the queue with all zero-in-degree nodes (true leaves), sorted for
   // determinism.
   const queue: string[] = [...packages]
-    .filter((p) => (inDegree.get(p.name) ?? 0) === 0)
+    .filter((p) => inDegree.get(p.name)! === 0)
     .map((p) => p.name)
     .sort();
 
@@ -94,12 +95,12 @@ export function topoSort(
     // Sort queue each iteration for determinism across multiple zero-in-degree nodes.
     queue.sort();
     const name = queue.shift()!;
-    const pkg = pkgByName.get(name);
+    // pkgByName was initialised for every package name; pkg is always defined.
+    sorted.push(pkgByName.get(name)!);
 
-    if (pkg !== undefined) sorted.push(pkg);
-
-    for (const dependent of deps.get(name) ?? []) {
-      const newDegree = (inDegree.get(dependent) ?? 0) - 1;
+    // deps was pre-initialised for every name; the array may be empty for leaves.
+    for (const dependent of deps.get(name)!) {
+      const newDegree = inDegree.get(dependent)! - 1;
       inDegree.set(dependent, newDegree);
 
       if (newDegree === 0) queue.push(dependent);
@@ -108,9 +109,10 @@ export function topoSort(
 
   if (sorted.length !== packages.length) {
     // Some nodes were not reached — they form a cycle.
-    const cycleNodes = packages
-      .filter((p) => !sorted.some((s) => s.name === p.name))
-      .map((p) => p.name)
+    // Packages remaining in-degree > 0 after Kahn's termination are the cycle members.
+    const cycleNodes = [...inDegree.entries()]
+      .filter(([, degree]) => degree > 0)
+      .map(([name]) => name)
       .sort()
       .join(", ");
 
@@ -219,39 +221,22 @@ export function propagateBumps(
 
   // BFS expansion.
   while (queue.length > 0) {
-    const entry = queue.shift();
-
-    if (entry === undefined) break;
-
-    const { name, upstream } = entry;
+    // queue.length > 0 guarantees shift() returns a defined entry.
+    const { name, upstream } = queue.shift()!;
 
     // Already has a plan (direct or earlier propagation) — don't overwrite.
-    if (planned.has(name)) {
-      // Already planned: skip but do NOT block its own dependents (they may
-      // still need expansion). The visited guard handles re-queueing.
-      if (!visited.has(name)) {
-        visited.add(name);
-        const deps = dependentIndex.get(name);
-
-        if (deps !== undefined) {
-          for (const depName of deps) {
-            queue.push({ name: depName, upstream: name });
-          }
-        }
-      }
-
-      continue;
-    }
-
-    // Cycle guard: if already visited (queued from another path), skip.
-    if (visited.has(name)) continue;
+    // The seeding loop marks every direct-plan package as visited before the
+    // BFS starts, so this branch is only entered for packages propagated in
+    // an earlier BFS iteration. The planned guard also covers the diamond-graph
+    // case (package queued via two paths) because planning and visiting are
+    // always set together — a planned package is always visited.
+    if (planned.has(name)) continue;
 
     visited.add(name);
 
-    const pkg = pkgByName.get(name);
-
-    if (pkg === undefined) continue; // should not happen; defensive
-
+    // All queued names come from dependentIndex values, which are package names
+    // from the inventory — pkgByName always has an entry for them.
+    const pkg = pkgByName.get(name)!;
     const parsed = parseVersion(pkg.currentVersion);
     const newVersion = applyBump(parsed, "patch");
 

@@ -8,20 +8,31 @@
 //   pnpm --filter release-runner exec tsx src/cli.ts [options]
 //
 // Options:
-//   --against <ref>     Baseline git ref — the integration baseline branch.
-//                       Resolution order: --against arg, then D2_RELEASE_BASELINE
-//                       env var. Error if neither is provided (required for all
-//                       modes except --list).
-//   --package <name>    Restrict to a single package
-//   --dry-run           Compute and report without writing (default: true)
-//   --apply             Write bumps + changelogs (disables dry-run). Mutually
-//                       exclusive with --list.
-//   --graduate <name>   Graduate a pre-stable package from 0.x.y to 1.0.0.
-//                       Mutually exclusive with --list.
-//   --list              Print the full consumable package inventory as JSON and
-//                       exit. Read-only — writes nothing. Mutually exclusive
-//                       with --apply / --graduate. Does not require --against.
-//   --help, -h          Print this help message and exit.
+//   --against <ref>       Baseline git ref — the integration baseline branch.
+//                         Resolution order: --against arg, then D2_RELEASE_BASELINE
+//                         env var. Error if neither is provided (required for all
+//                         modes except --list).
+//   --package <name>      Restrict to a single package
+//   --dry-run             Compute and report without writing (default: true)
+//   --apply               Write bumps + changelogs (disables dry-run). Mutually
+//                         exclusive with --list.
+//   --graduate <name>     Graduate a pre-stable package from 0.x.y to 1.0.0.
+//                         Mutually exclusive with --list.
+//   --no-propagate        Suppress dependency-update propagation (direct only).
+//   --legacy-commit-type  Use the retired commit-type bump source instead of the
+//                         artifact-diff engine. Escape hatch for one release cycle.
+//   --list                Print the full consumable package inventory as JSON and
+//                         exit. Read-only — writes nothing. Mutually exclusive
+//                         with --apply / --graduate. Does not require --against.
+//   --help, -h            Print this help message and exit.
+//
+// The DEFAULT bump source is the ARTIFACT-DIFF engine (runDiffRelease wired with
+// the production DiffProvider). The diff between each package's built artifact +
+// public API surface and its committed baseline drives the bump; the commit
+// footer can only ESCALATE it; the commit type drives changelog category only.
+// Because the artifact-diff engine BUILDS each package (and shells the IL-dump
+// tool + api-extractor), a default dry-run now triggers builds and is slower than
+// the legacy commit-parse path.
 //
 // Excluded from the unit-coverage threshold (see vitest.config.ts).
 
@@ -34,6 +45,8 @@ import { commitsInRange } from "./git-adapter.js";
 import { loadAllPackages } from "./manifest-loader.js";
 import { formatPackageList } from "./list-formatter.js";
 import { runRelease } from "./runner.js";
+import { runDiffRelease } from "./diff-runner.js";
+import { makeRealDiffProvider } from "./real-diff-provider.js";
 import { graduatePackage } from "./graduate.js";
 
 const __dirname = fileURLToPath(new URL(".", import.meta.url));
@@ -67,21 +80,28 @@ release-runner — per-package semver release automation
 Usage:
   pnpm --filter release-runner exec tsx src/cli.ts [options]
 
+The default bump source is the ARTIFACT-DIFF engine: the diff between each
+package's built artifact + public API surface and its committed baseline drives
+the bump; the commit footer can only escalate it. This BUILDS each package, so a
+default dry-run is slower than the legacy commit-parse path.
+
 Options:
-  --against <ref>    Baseline git ref (required unless --list; or set
-                     D2_RELEASE_BASELINE env var)
-  --package <name>   Restrict bump computation to a single package.
-                     Filter is applied after propagation so --package X
-                     shows X even when reached only via dependency-update.
-  --dry-run          Compute and print plans without writing (default)
-  --apply            Write version bumps and changelogs to disk
-  --graduate <name>  Graduate a pre-stable package from 0.x.y to 1.0.0
-  --list             Print consumable package inventory as JSON and exit.
-                     Read-only; mutually exclusive with --apply / --graduate.
-  --no-propagate     Disable dependency-update propagation. By default a bump
-                     to any package also PATCH-bumps its transitive consumable
-                     dependents. Pass this flag to restrict to direct bumps only.
-  --help, -h         Print this help message and exit
+  --against <ref>       Baseline git ref (required unless --list; or set
+                        D2_RELEASE_BASELINE env var)
+  --package <name>      Restrict bump computation to a single package.
+                        Filter is applied after propagation so --package X
+                        shows X even when reached only via dependency-update.
+  --dry-run             Compute and print plans without writing (default)
+  --apply               Write version bumps and changelogs to disk
+  --graduate <name>     Graduate a pre-stable package from 0.x.y to 1.0.0
+  --list                Print consumable package inventory as JSON and exit.
+                        Read-only; mutually exclusive with --apply / --graduate.
+  --no-propagate        Disable dependency-update propagation. By default a bump
+                        to any package also PATCH-bumps its transitive consumable
+                        dependents. Pass this flag to restrict to direct bumps only.
+  --legacy-commit-type  Use the retired commit-type bump source instead of the
+                        artifact-diff engine. Escape hatch for one release cycle.
+  --help, -h            Print this help message and exit
 
 Exit codes:
   0  Success.
@@ -166,6 +186,7 @@ try {
 const packageFilter = flag("--package") ? option("--package", "") : undefined;
 const dryRun = !flag("--apply");
 const propagate = !flag("--no-propagate");
+const legacyCommitType = flag("--legacy-commit-type");
 const graduateTarget = flag("--graduate")
   ? option("--graduate", "")
   : undefined;
@@ -205,16 +226,43 @@ if (truthy(graduateTarget)) {
 } else {
   const commits = commitsInRange(against, "HEAD");
 
-  const result = runRelease(commits, packages, {
+  const runnerOptions = {
     today,
     dryRun,
     packageFilter: truthy(packageFilter) ? packageFilter : undefined,
     propagate,
-  });
+  };
+
+  // Default: the artifact-diff engine is the bump source. The legacy commit-type
+  // path is retained behind --legacy-commit-type for one release cycle.
+  let result: {
+    plans: readonly import("./types.js").BumpPlan[];
+    applied: boolean;
+  };
+  let warnings: readonly string[] = [];
+
+  if (legacyCommitType) {
+    result = runRelease(commits, packages, runnerOptions);
+  } else {
+    const diffResult = runDiffRelease(
+      commits,
+      packages,
+      runnerOptions,
+      makeRealDiffProvider(repoRoot),
+    );
+    result = diffResult;
+    warnings = diffResult.warnings;
+  }
 
   // -------------------------------------------------------------------------
   // Report
   // -------------------------------------------------------------------------
+
+  // Surface any non-fatal warnings (e.g. missing baselines). The legacy
+  // runRelease path produces no warnings; the diff engine may.
+  if (truthy(warnings)) {
+    for (const w of warnings) console.warn(w);
+  }
 
   if (falsey(result.plans)) {
     console.log(

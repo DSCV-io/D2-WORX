@@ -103,6 +103,29 @@ describe("release-runner CLI — --list and --graduate are mutually exclusive", 
 });
 
 // ---------------------------------------------------------------------------
+// --legacy-commit-type flag
+// ---------------------------------------------------------------------------
+
+describe("release-runner CLI — --legacy-commit-type flag", () => {
+  it("--help documents --legacy-commit-type", () => {
+    const result = runCli(["--help"]);
+    expect(result.stdout).toContain("--legacy-commit-type");
+  });
+
+  it("--legacy-commit-type is accepted without error when combined with required --against", () => {
+    // Pass an invalid ref to exit early (after flag parsing). We only care that
+    // --legacy-commit-type itself does not cause an argument-parse failure.
+    const result = runCli([
+      "--legacy-commit-type",
+      "--against",
+      "invalid-ref-xyz",
+    ]);
+    expect(result.stderr).not.toMatch(/unknown.*legacy-commit-type/i);
+    expect(result.stderr).not.toMatch(/legacy-commit-type.*unknown/i);
+  });
+});
+
+// ---------------------------------------------------------------------------
 // --no-propagate flag
 // ---------------------------------------------------------------------------
 

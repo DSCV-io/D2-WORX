@@ -450,4 +450,50 @@ describe("deriveBump — adversarial cases", () => {
       }),
     ).toBe("minor");
   });
+
+  // --- pre-stability detection edge cases (fail-safe + no-dot forms) --------
+
+  it("empty version string + removal → treated pre-stable (fail-safe → minor, not major)", () => {
+    expect(
+      deriveBump({
+        apiDiff: removedApi(),
+        fingerprintDiff: fpChanged(),
+        currentVersion: "",
+        footer: noFooter(),
+      }),
+    ).toBe("minor");
+  });
+
+  it("no-dot stable version ('2') + removal → major (no-dot major parsed)", () => {
+    expect(
+      deriveBump({
+        apiDiff: removedApi(),
+        fingerprintDiff: fpChanged(),
+        currentVersion: "2",
+        footer: noFooter(),
+      }),
+    ).toBe("major");
+  });
+
+  it("no-dot zero version ('0') + removal → minor (pre-stable major-zero)", () => {
+    expect(
+      deriveBump({
+        apiDiff: removedApi(),
+        fingerprintDiff: fpChanged(),
+        currentVersion: "0",
+        footer: noFooter(),
+      }),
+    ).toBe("minor");
+  });
+
+  it("non-numeric major ('vNext') + removal → treated pre-stable (NaN → minor)", () => {
+    expect(
+      deriveBump({
+        apiDiff: removedApi(),
+        fingerprintDiff: fpChanged(),
+        currentVersion: "vNext",
+        footer: noFooter(),
+      }),
+    ).toBe("minor");
+  });
 });

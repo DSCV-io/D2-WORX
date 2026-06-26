@@ -40,9 +40,16 @@
 
 import { createHash } from "node:crypto";
 import { existsSync, readFileSync, readdirSync } from "node:fs";
-import { basename, join, relative } from "node:path";
+import { createRequire } from "node:module";
+import { join, relative } from "node:path";
 import { spawnSync } from "node:child_process";
 import type { ApiDiff, FingerprintDiff } from "./diff-bump.js";
+
+// api-extractor is a CommonJS package; this module is ESM. `require` is not a
+// global in ESM scope, so build one bound to this module's URL. (A bare
+// `require(...)` works under vitest's shim but throws under a plain tsx/node ESM
+// run such as the drift-check CLI lane.)
+const r_require = createRequire(import.meta.url);
 
 // ---------------------------------------------------------------------------
 // Injectable IO seams
@@ -135,10 +142,11 @@ export function makeRealApiExtractorRunner(
 ): ApiExtractorRunner {
   return {
     run(_packageDir: string, configPath: string): string {
-      // Dynamic require — api-extractor is a CommonJS package.
-      // eslint-disable-next-line @typescript-eslint/no-require-imports
-      const { Extractor, ExtractorConfig } =
-        require("@microsoft/api-extractor") as typeof import("@microsoft/api-extractor");
+      // Dynamic require — api-extractor is a CommonJS package. Uses the
+      // module-scoped createRequire so it works under a plain ESM run too.
+      const { Extractor, ExtractorConfig } = r_require(
+        "@microsoft/api-extractor",
+      ) as typeof import("@microsoft/api-extractor");
 
       const config = ExtractorConfig.loadFileAndPrepare(configPath);
 
@@ -457,6 +465,50 @@ export function readCommittedFingerprint(
 }
 
 // ---------------------------------------------------------------------------
+// Shared path helper
+// ---------------------------------------------------------------------------
+
+/**
+ * Resolve the api.md report path for a TS package by reading the
+ * `apiReport.reportFileName` field from its `api-extractor.json`.
+ *
+ * Using `reportFileName` from the config (rather than `basename(packageDir)`)
+ * is required for packages whose directory basename differs from their report
+ * name — e.g. `headers/amqp` → `etc/headers-amqp.api.md`, not
+ * `etc/amqp.api.md`.
+ *
+ * Falls back to `<basename(packageDir)>.api.md` when `api-extractor.json` is
+ * absent or does not specify `apiReport.reportFileName`, so flat packages
+ * (where basename matches) degrade gracefully.
+ *
+ * @param packageDir - Absolute path to the package root.
+ * @param configPath - Absolute path to `api-extractor.json`.
+ * @returns Absolute path to the expected `etc/<reportFileName>` file.
+ */
+export function resolveApiMdPath(
+  packageDir: string,
+  configPath: string,
+): string {
+  let reportFileName: string | undefined;
+
+  if (existsSync(configPath)) {
+    try {
+      const raw = JSON.parse(readFileSync(configPath, "utf-8")) as {
+        apiReport?: { reportFileName?: string };
+      };
+      reportFileName = raw.apiReport?.reportFileName;
+    } catch {
+      // Malformed JSON — fall through to basename fallback.
+    }
+  }
+
+  const dirBasename = packageDir.split(/[\\/]/).at(-1) ?? "";
+  const name = reportFileName ?? `${dirBasename}.api.md`;
+
+  return join(packageDir, "etc", name);
+}
+
+// ---------------------------------------------------------------------------
 // C — The combined adapter entry point
 // ---------------------------------------------------------------------------
 
@@ -552,9 +604,10 @@ export function extractTsPackageDiff(
   // baseline (api-extractor would have failed if they differ, so we read from
   // git to stay consistent regardless of mode).
   //
-  // Derive the report path from the config filename location.
-  const shortName = basename(packageDir);
-  const reportPath = join(packageDir, "etc", `${shortName}.api.md`);
+  // Derive the report path from api-extractor.json's reportFileName so that
+  // packages whose directory basename differs from their report name are
+  // resolved correctly (e.g. headers/amqp → etc/headers-amqp.api.md).
+  const reportPath = resolveApiMdPath(packageDir, apiExtractorConfigPath);
   const committedApiMd = baselineReader.read(reportPath);
 
   let apiDiff: ApiDiff;

@@ -13,8 +13,20 @@
 //   PublicAPI.Unshipped.txt  — new-but-unreleased surface; seeded empty (just
 //                              the `#nullable enable` header) since everything
 //                              currently in source is the released baseline.
-//   .release-fingerprint     — the SHA-256 of the debug-stripped Release DLL,
-//                              the output-changed (PATCH-floor) signal.
+//   .release-fingerprint     — the SHA-256 of the composed output tuple
+//                              (PublicAPI.Shipped + PublicAPI.Unshipped +
+//                              normalized IL dump + manifest metadata), the
+//                              output-changed (PATCH-floor) signal.
+//
+// Output fingerprint = a NORMALIZED IL/METADATA DUMP, not a raw DLL hash. A raw
+// DLL SHA-256 embeds the module MVID, the build timestamp, and the source path,
+// so a baseline hashed on one host (e.g. Windows) would not match a recompute on
+// another (e.g. Linux CI) and the drift check would false-fail. Instead the
+// `tools/il-fingerprint` console tool walks the built assembly's metadata + IL
+// (never reading the MVID / timestamp / debug-path fields), so its dump is
+// platform-independent BY CONSTRUCTION. The composed fingerprint matches the
+// production release-runner's `composeNugetFingerprint` byte-for-byte so the
+// drift check (which recomputes via the runner) compares like-for-like.
 //
 // Mechanism:
 //   1. Ensure both .txt files exist with the `#nullable enable` header, with
@@ -30,19 +42,21 @@
 //      Shipped.txt; leave Unshipped.txt header-only. The result exactly matches
 //      the current public API, so a subsequent build reports zero RS0016
 //      (missing-from-baseline) / RS0017 (in-baseline-not-in-source).
-//   4. FINGERPRINT: build the package with debug info stripped
-//        `dotnet build <csproj> -c Release -p:DebugType=none -p:DebugSymbols=false
-//         -p:TreatWarningsAsErrors=false --no-restore --no-incremental`
-//      and SHA-256 the output DLL; write the hex digest to .release-fingerprint.
+//   4. FINGERPRINT: build the package (Release), shell `tools/il-fingerprint`
+//      against the built DLL to get the normalized IL dump, then SHA-256 the
+//      ordered tuple (Shipped.txt + Unshipped.txt + IL dump + manifest metadata)
+//      and write the hex digest to .release-fingerprint. The manifest metadata
+//      carries the package version + every consumable ProjectReference dep's
+//      pinned version (so a dependency bump moves the dependent's fingerprint —
+//      propagation falls out of the fingerprint).
 //
 // Run from the repo root: `node tools/scripts/seed-publicapi-baselines.mjs`.
 // Optional `--package <PackageId>` limits the run to a single consumable.
 //
 // IDEMPOTENT: re-running regenerates byte-identical baseline files. The promote
-// step sorts deterministically; the fingerprint is a content hash of a
-// debug-stripped deterministic build, so a re-seed over unchanged source is a
-// no-op (the script reports "unchanged" for each). A baseline that is already
-// correct is detected and left untouched.
+// step sorts deterministically; the IL dump is platform/path-independent, so a
+// re-seed over unchanged source is a no-op (the script reports "unchanged" for
+// each). A baseline that is already correct is detected and left untouched.
 
 import { spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
@@ -113,7 +127,11 @@ const kcClient = path.join(
   "D2.Edge.KeyCustodian.Clients.csproj",
 );
 
-let consumables = [...sharedConsumables, kcClient].sort();
+// The FULL consumable set (never filtered) — needed to resolve dependency
+// versions for the manifest-metadata fingerprint input even on a --package run.
+const allConsumables = [...sharedConsumables, kcClient].sort();
+
+let consumables = [...allConsumables];
 
 if (packageFilter) {
   consumables = consumables.filter(
@@ -124,6 +142,74 @@ if (packageFilter) {
     console.error(`No consumable matches --package ${packageFilter}`);
     process.exit(1);
   }
+}
+
+// ---------------------------------------------------------------------------
+// Manifest-metadata model (version + consumable dependency versions).
+//
+// The fingerprint folds in the package version + every consumable
+// ProjectReference dep's pinned version, so a dependency bump moves the
+// dependent's fingerprint (propagation). This MUST byte-match the production
+// release-runner's buildNugetManifestMeta / composeNugetFingerprint so the
+// drift check compares like-for-like.
+// ---------------------------------------------------------------------------
+
+const CONSUMABLE_NAMES = new Set(
+  allConsumables.map((f) => path.basename(f, ".csproj")),
+);
+
+/** Extract the `<Version>` element from a csproj text, or "" when absent. */
+function extractVersion(csprojText) {
+  const match = /<Version>([^<]+)<\/Version>/.exec(csprojText);
+
+  return match ? match[1].trim() : "";
+}
+
+/**
+ * Extract the consumable ProjectReference dependency names from a csproj text.
+ * Non-consumable edges (SourceGen shells, the test project) are filtered out.
+ */
+function extractConsumableDeps(csprojText) {
+  const deps = [];
+  const refRe = /<ProjectReference\s+Include=["']([^"']+\.csproj)["']/gi;
+  let match;
+
+  while ((match = refRe.exec(csprojText)) !== null) {
+    const depName = path.basename(match[1], ".csproj");
+
+    if (CONSUMABLE_NAMES.has(depName) && !deps.includes(depName)) {
+      deps.push(depName);
+    }
+  }
+
+  return deps;
+}
+
+// Build the package-id → current version map across ALL consumables.
+const versionByName = new Map();
+
+for (const csprojPath of allConsumables) {
+  const text = fs.readFileSync(csprojPath, "utf8");
+  versionByName.set(path.basename(csprojPath, ".csproj"), extractVersion(text));
+}
+
+/**
+ * Build the deterministic manifest-metadata JSON for a package. Mirrors the
+ * release-runner's buildNugetManifestMeta (deps sorted; each mapped to its
+ * resolved version, which at seed time IS its committed version).
+ */
+function buildManifestMeta(packageId, csprojText) {
+  const deps = {};
+
+  for (const depName of extractConsumableDeps(csprojText).sort()) {
+    deps[depName] = versionByName.get(depName) ?? "";
+  }
+
+  return JSON.stringify({
+    packageId,
+    version: versionByName.get(packageId) ?? "",
+    deps,
+  });
 }
 
 // ---------------------------------------------------------------------------
@@ -280,18 +366,30 @@ function extractSurfaceViaBuild(csprojPath, packageId) {
   return surface;
 }
 
-/** Build debug-stripped + SHA-256 the output DLL. */
-function fingerprintDll(csprojPath, packageId) {
+const IL_FINGERPRINT_PROJECT = path.join(REPO_ROOT, "tools", "il-fingerprint");
+
+/** LF-normalize so a CRLF/LF checkout difference cannot perturb the hash. */
+function normalizeLf(text) {
+  return text.replace(/\r\n/g, "\n");
+}
+
+/**
+ * Build the package (Release), shell the il-fingerprint tool to get the
+ * normalized IL dump, and compose the fingerprint over
+ *   ( Shipped.txt + Unshipped.txt + IL dump + manifest metadata ).
+ *
+ * The composition is byte-identical to the release-runner's
+ * composeNugetFingerprint so the drift check (which recomputes via the runner)
+ * compares like-for-like.
+ */
+function composeFingerprint(csprojPath, packageId, shippedTxt, unshippedTxt) {
   const build = run("dotnet", [
     "build",
     csprojPath,
     "-c",
     "Release",
-    "-p:DebugType=none",
-    "-p:DebugSymbols=false",
     "-p:TreatWarningsAsErrors=false",
     "--no-restore",
-    "--no-incremental",
   ]);
 
   if (build.status !== 0) {
@@ -313,7 +411,38 @@ function fingerprintDll(csprojPath, packageId) {
     throw new Error(`Built DLL not found at ${dllPath} for ${packageId}.`);
   }
 
-  return createHash("sha256").update(fs.readFileSync(dllPath)).digest("hex");
+  // Shell the in-box IL-dump tool (--no-build: the tool is pre-built once in the
+  // pre-pass below). stdout is the normalized, platform-independent dump.
+  const dump = run("dotnet", [
+    "run",
+    "--project",
+    IL_FINGERPRINT_PROJECT,
+    "-c",
+    "Release",
+    "--no-build",
+    "--",
+    dllPath,
+  ]);
+
+  if (dump.status !== 0) {
+    throw new Error(
+      `il-fingerprint failed for ${packageId} (exit ${dump.status}):\n` +
+        `${(dump.stderr ?? "") + (dump.stdout ?? "")}`.slice(0, 2000),
+    );
+  }
+
+  const ilDump = dump.stdout ?? "";
+
+  const csprojText = fs.readFileSync(csprojPath, "utf8");
+  const manifestMeta = buildManifestMeta(packageId, csprojText);
+
+  const hash = createHash("sha256");
+  hash.update(`SHIPPED:\n${normalizeLf(shippedTxt)}\n`);
+  hash.update(`UNSHIPPED:\n${normalizeLf(unshippedTxt)}\n`);
+  hash.update(`IL:\n${normalizeLf(ilDump)}\n`);
+  hash.update(`MANIFEST:\n${manifestMeta}\n`);
+
+  return hash.digest("hex");
 }
 
 // ---------------------------------------------------------------------------
@@ -351,8 +480,18 @@ function seedConsumable(csprojPath) {
   writeApiFile(shippedPath, surface);
   writeApiFile(unshippedPath, []);
 
-  // 4. Fingerprint the debug-stripped Release DLL.
-  const fingerprint = fingerprintDll(csprojPath, packageId);
+  // 4. Compose the fingerprint over the EXACT written PublicAPI.* file content +
+  //    the normalized IL dump + the manifest metadata. The release-runner's
+  //    provider reads these same files verbatim, so reading the exact bytes back
+  //    keeps the seeded hash equal to the runtime recompute.
+  const shippedTxt = fs.readFileSync(shippedPath, "utf8");
+  const unshippedTxt = fs.readFileSync(unshippedPath, "utf8");
+  const fingerprint = composeFingerprint(
+    csprojPath,
+    packageId,
+    shippedTxt,
+    unshippedTxt,
+  );
   const fpEol = detectEol(fingerprintPath);
   fs.writeFileSync(fingerprintPath, fingerprint + fpEol, "utf8");
 
@@ -372,6 +511,28 @@ function seedConsumable(csprojPath) {
 // ---------------------------------------------------------------------------
 // Run.
 // ---------------------------------------------------------------------------
+
+// Pre-build the IL-fingerprint tool ONCE so the per-package fingerprint pass can
+// shell it with `--no-build` (fast + no per-package rebuild churn).
+process.stderr.write("building il-fingerprint tool ... ");
+
+const toolBuild = run("dotnet", [
+  "build",
+  path.join(IL_FINGERPRINT_PROJECT, "D2.Tools.IlFingerprint.csproj"),
+  "-c",
+  "Release",
+]);
+
+if (toolBuild.status !== 0) {
+  process.stderr.write("FAILED\n");
+  console.error(
+    `il-fingerprint tool build failed:\n` +
+      `${(toolBuild.stdout ?? "") + (toolBuild.stderr ?? "")}`.slice(0, 2000),
+  );
+  process.exit(1);
+}
+
+process.stderr.write("ok\n");
 
 // Pre-pass: ensure EVERY consumable has both .txt baselines on disk BEFORE any
 // build runs. The Directory.Build.props references each file by a literal

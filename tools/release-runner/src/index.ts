@@ -36,6 +36,33 @@ export {
   type DiffRunnerResult,
 } from "./diff-runner.js";
 export {
+  makeRealDiffProvider,
+  buildNugetManifestMeta,
+  composeNugetFingerprint,
+  substituteResolvedDeps,
+  readPackageJsonFile,
+  type NugetExtractor,
+  type TsExtractorSeams,
+  type RealDiffProviderOptions,
+} from "./real-diff-provider.js";
+export {
+  extractNugetDiff,
+  parseUnshippedTxt,
+  fingerprintBaselinePath,
+  shippedTxtPath,
+  unshippedTxtPath,
+  makeRealDotnetShell,
+  type DotnetShell,
+  type ShellResult,
+  type NugetExtractionResult,
+} from "./nuget-extractor.js";
+export {
+  checkBaselineDrift,
+  formatDriftReport,
+  type PackageDriftResult,
+  type DriftCheckResult,
+} from "./drift-check.js";
+export {
   buildDependentIndex,
   propagateBumps,
   topoSort,

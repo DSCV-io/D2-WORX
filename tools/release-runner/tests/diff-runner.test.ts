@@ -836,4 +836,81 @@ describe("runDiffRelease — Suite H: commit type → changelog category (not bu
     expect(result.plans).toHaveLength(0);
     expect(result.applied).toBe(false);
   });
+
+  it("a commit touching a file under NO consumable package + a no-colon subject → ignored, bump still from diff", () => {
+    const { pkg } = createNpmFixture("@d2/a");
+    const provider = staticDiffProvider({
+      apiDiff: { added: true, removed: false, changed: false },
+      fingerprintDiff: { changed: true },
+      baselineMissing: false,
+    });
+
+    // The first commit touches a path outside any package dir — findPackageForFile
+    // returns undefined (the false branch). The subject has no colon, exercising
+    // the no-colon branch of extractSubjectDescription.
+    const result = runDiffRelease(
+      [{ message: "tooling tweak no colon", files: ["tools/unrelated/x.ts"] }],
+      [pkg],
+      opts(true),
+      provider,
+    );
+
+    // The package still bumps (the diff is the source of truth, independent of
+    // whether a commit touched it) but carries no changelog prose.
+    expect(result.plans).toHaveLength(1);
+    expect(result.plans[0]!.bump).toBe("minor");
+    expect(result.plans[0]!.addedEntries).toHaveLength(0);
+  });
+
+  it("a perf: commit → classified as a Fixed changelog category", () => {
+    const { pkg, dir } = createNpmFixture("@d2/a");
+    const provider = staticDiffProvider({
+      apiDiff: { added: false, removed: false, changed: false },
+      fingerprintDiff: { changed: true },
+      baselineMissing: false,
+    });
+
+    const result = runDiffRelease(
+      [makeCommit("perf: speed up the hot path", [dir])],
+      [pkg],
+      opts(true),
+      provider,
+    );
+
+    // perf → "perf" kind → Fixed category; the fingerprint floor → PATCH.
+    expect(result.plans[0]!.bump).toBe("patch");
+    expect(result.plans[0]!.fixedEntries).toContain("speed up the hot path");
+  });
+
+  it("two commits with the SAME footer entry → deduplicated in the changelog accumulator", () => {
+    const { pkg, dir } = createNugetFixture("D2.Shared.Result", [], "1.2.0");
+    const provider = staticDiffProvider({
+      apiDiff: { added: false, removed: false, changed: false },
+      fingerprintDiff: { changed: true },
+      baselineMissing: false,
+    });
+
+    const message =
+      "feat: rework envelope\n\n" +
+      "WIRE-BREAKING: renamed the status field\n" +
+      "BREAKING CHANGE: dropped the legacy ctor";
+
+    // Two commits carrying the identical breaking footers — the accumulator's
+    // `!includes` dedup guard must keep ONE of each (covers the false branch).
+    const result = runDiffRelease(
+      [makeCommit(message, [dir]), makeCommit(message, [dir])],
+      [pkg],
+      opts(true),
+      provider,
+    );
+
+    // Footer forces a break; stable 1.2.0 → major.
+    expect(result.plans[0]!.bump).toBe("major");
+    expect(result.plans[0]!.wireBreakingEntries).toEqual([
+      "renamed the status field",
+    ]);
+    expect(result.plans[0]!.apiBreakingEntries).toEqual([
+      "dropped the legacy ctor",
+    ]);
+  });
 });

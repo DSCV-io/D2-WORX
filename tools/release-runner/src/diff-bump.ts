@@ -66,7 +66,7 @@ export interface FingerprintDiff {
  *
  * Mirrors the `BreakingValve` shape from `contract-gate/footer-parser`; typed
  * here independently so `diff-bump` has no runtime dependency on that package
- * (the adapter in step 9b wires the two together).
+ * (the runner's footer-aggregation adapter wires the two together).
  */
 export interface BreakingFooter {
   /** True when at least one WIRE-BREAKING: / BREAKING CHANGE: / type!: was found. */

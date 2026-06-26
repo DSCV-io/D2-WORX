@@ -2,43 +2,41 @@
 // Copyright (c) DCSV. All rights reserved.
 // -----------------------------------------------------------------------
 
-// NuGet extraction adapter — derives ApiDiff + FingerprintDiff for a single
-// NuGet consumable package using:
+// NuGet extraction adapter — derives the public-API diff signal + the
+// normalized IL dump for a single NuGet consumable package using:
 //
 //   A. PublicApiAnalyzers (RS0016 / RS0017) — compares the package's public API
 //      surface against its committed PublicAPI.Shipped.txt baseline to produce
 //      the ApiDiff signal.
 //
-//   B. Deterministic DLL hash (DebugType=none) — builds the package with
-//      debug-info stripped so the DLL bytes are determined solely by the IL /
-//      metadata content; SHA-256-hashes the output DLL and compares it against
-//      the committed baseline hash to produce the FingerprintDiff signal.
+//   B. Normalized IL/metadata dump — builds the package, then shells the
+//      in-box `tools/il-fingerprint` console tool against the built DLL to get a
+//      platform-independent text dump of the assembly's metadata + IL. The dump
+//      is path/MVID/timestamp-independent BY CONSTRUCTION (the tool never reads
+//      those fields), so a baseline generated on one host equals a recompute on
+//      another — unlike a raw DLL SHA-256, which embeds the source path / module
+//      MVID / build timestamp and therefore differs build-to-build and
+//      host-to-host.
 //
-// Fingerprint mechanism: `dotnet build -c Release -p:DebugType=none -p:DebugSymbols=false
-// --no-incremental` produces a DLL whose bytes are identical for comment-only /
-// whitespace edits (those affect only debug-info, which is stripped), and differ
-// for any IL or metadata change (method body edits, type changes, dependency-version
-// changes). `--no-incremental` is required because without it MSBuild skips a
-// rebuild if the output DLL is already newer than the source inputs — which means
-// a preceding API-diff build (which produces a DLL WITH debug info) would cause
-// the fingerprint build to re-hash the WRONG DLL and see a non-stable hash.
-// The hash is path-stable because no source path is embedded in the DLL when
-// DebugType=none is set.
+// This adapter RETURNS the IL-dump STRING (not a pre-hashed fingerprint). The
+// production DiffProvider (real-diff-provider.ts) composes the final per-package
+// fingerprint as SHA-256(PublicAPI.Shipped+Unshipped + il-dump + manifest), so
+// the manifest metadata (incl. resolved dependency versions for propagation) is
+// folded in at the provider layer, not here. Keeping the IL dump un-hashed here
+// is what lets the provider be the single home of the fingerprint composition.
 //
 // Injectable design: the `DotnetShell` seam isolates all subprocess calls so
-// the real extraction runs against the actual csproj while tests can supply
-// synthetic outputs without spawning child processes.
+// the real extraction runs against the actual csproj + il-fingerprint tool
+// while tests can supply synthetic outputs without spawning child processes.
 //
-// Shell-out cost: ~1–2 s per package on an incremental build (with --no-restore),
-// scaling linearly with dependency count. Estimated 1–2 min total for the 54-
-// NuGet package set (83 packages total across both ecosystems).
+// Shell-out cost: ~1–2 s per package on an incremental build (with --no-restore)
+// plus a fast il-fingerprint pass, scaling linearly with dependency count.
 
-import { createHash } from "node:crypto";
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { spawnSync, type SpawnSyncReturns } from "node:child_process";
 import { truthy } from "@d2/utilities";
-import type { ApiDiff, FingerprintDiff } from "./diff-bump.js";
+import type { ApiDiff } from "./diff-bump.js";
 import type { PackageDescriptor } from "./types.js";
 
 // ---------------------------------------------------------------------------
@@ -61,12 +59,12 @@ export interface ShellResult {
 }
 
 /**
- * Seam that wraps all subprocess calls made by the extractor.
+ * Seam that wraps all subprocess + filesystem calls made by the extractor.
  *
- * The real implementation delegates to `spawnSync`. Tests inject a synthetic
- * implementation that returns pre-canned outputs without spawning child
- * processes, enabling deterministic assertions against the ApiDiff /
- * FingerprintDiff mapping logic.
+ * The real implementation delegates to `spawnSync` + node:fs. Tests inject a
+ * synthetic implementation that returns pre-canned outputs without spawning
+ * child processes, enabling deterministic assertions against the ApiDiff +
+ * IL-dump extraction logic.
  */
 export interface DotnetShell {
   /**
@@ -78,16 +76,19 @@ export interface DotnetShell {
 
   /**
    * Read a file from the filesystem, or return undefined when the file does
-   * not exist. Used to read PublicAPI.Shipped.txt, PublicAPI.Unshipped.txt,
-   * and the committed fingerprint baseline.
+   * not exist. Used to read PublicAPI.Shipped.txt + to confirm the built DLL
+   * exists at the expected path.
    */
   readFile(filePath: string): string | undefined;
 
   /**
-   * SHA-256 the bytes of a file and return the hex digest, or return
-   * undefined when the file does not exist. Used to hash the built DLL.
+   * Shell the in-box `tools/il-fingerprint` console tool against a built DLL
+   * and return its normalized stdout dump, or undefined when the tool fails.
+   *
+   * The dump is the platform-independent "compiled output changed" signal. The
+   * provider composes it with the manifest metadata into the final fingerprint.
    */
-  sha256File(filePath: string): string | undefined;
+  ilDump(dllPath: string): string | undefined;
 }
 
 // ---------------------------------------------------------------------------
@@ -95,42 +96,64 @@ export interface DotnetShell {
 // ---------------------------------------------------------------------------
 
 /**
- * The real DotnetShell implementation — delegates to spawnSync and node:fs.
+ * Construct the real DotnetShell — delegates to spawnSync and node:fs.
  *
- * Pass this to `extractNugetDiff` in production; inject a synthetic
- * implementation in tests.
+ * `repoRoot` is required so the il-fingerprint tool can be located via
+ * `dotnet run --project <repoRoot>/tools/il-fingerprint`.
+ *
+ * @param repoRoot - Absolute path to the repository root.
  */
-export const realDotnetShell: DotnetShell = {
-  build(csprojPath, extraArgs) {
-    const result: SpawnSyncReturns<string> = spawnSync(
-      "dotnet",
-      ["build", csprojPath, ...extraArgs],
-      {
-        encoding: "utf-8",
-        maxBuffer: 10 * 1024 * 1024,
-      },
-    );
+export function makeRealDotnetShell(repoRoot: string): DotnetShell {
+  const ilFingerprintProject = join(repoRoot, "tools", "il-fingerprint");
 
-    return {
-      status: result.status,
-      stdout: result.stdout ?? "",
-      stderr: result.stderr ?? "",
-    };
-  },
+  return {
+    build(csprojPath, extraArgs) {
+      const result: SpawnSyncReturns<string> = spawnSync(
+        "dotnet",
+        ["build", csprojPath, ...extraArgs],
+        {
+          encoding: "utf-8",
+          maxBuffer: 10 * 1024 * 1024,
+        },
+      );
 
-  readFile(filePath) {
-    if (!existsSync(filePath)) return undefined;
+      return {
+        status: result.status,
+        stdout: result.stdout ?? "",
+        stderr: result.stderr ?? "",
+      };
+    },
 
-    return readFileSync(filePath, "utf-8");
-  },
+    readFile(filePath) {
+      if (!existsSync(filePath)) return undefined;
 
-  sha256File(filePath) {
-    if (!existsSync(filePath)) return undefined;
+      return readFileSync(filePath, "utf-8");
+    },
 
-    const bytes = readFileSync(filePath);
-    return createHash("sha256").update(bytes).digest("hex");
-  },
-};
+    ilDump(dllPath) {
+      const result: SpawnSyncReturns<string> = spawnSync(
+        "dotnet",
+        [
+          "run",
+          "--project",
+          ilFingerprintProject,
+          "-c",
+          "Release",
+          "--",
+          dllPath,
+        ],
+        {
+          encoding: "utf-8",
+          maxBuffer: 64 * 1024 * 1024,
+        },
+      );
+
+      if (result.status !== 0) return undefined;
+
+      return result.stdout ?? undefined;
+    },
+  };
+}
 
 // ---------------------------------------------------------------------------
 // Internal — ApiDiff derivation from PublicAPI.Unshipped.txt
@@ -178,19 +201,21 @@ export function parseUnshippedTxt(unshippedContent: string): ApiDiff {
 }
 
 // ---------------------------------------------------------------------------
-// Internal — build + extract fingerprint
+// Internal — build + extract the normalized IL dump
 // ---------------------------------------------------------------------------
 
 /**
- * Build the package with debug-info stripped and return the DLL output path.
+ * Build the package (Release) and return the built DLL path.
  *
- * Uses `dotnet build -c Release -p:DebugType=none -p:DebugSymbols=false
- * --no-restore --no-incremental` so the build is always performed with the
- * correct properties regardless of what the preceding API-diff build produced.
- * The caller supplies the `DotnetShell` seam.
+ * Uses `dotnet build -c Release -p:TreatWarningsAsErrors=false --no-restore`.
+ * Debug info is irrelevant to the IL dump (the dumper never reads the
+ * debug-directory), so `DebugType=none` is no longer needed. `--no-incremental`
+ * is NOT required either: the IL dump reads the metadata + IL of whatever DLL is
+ * present, and an incremental build still re-emits IL for changed source.
  *
- * @param csprojPath - Absolute path to the .csproj file.
- * @param shell      - The shell seam to use.
+ * @param csprojPath  - Absolute path to the .csproj file.
+ * @param packageName - The NuGet package identity (for error messages).
+ * @param shell       - The shell seam to use.
  * @returns The absolute path to the built DLL file.
  * @throws {Error} When the build fails or the DLL cannot be located.
  */
@@ -199,25 +224,16 @@ function buildAndLocateDll(
   packageName: string,
   shell: DotnetShell,
 ): string {
-  // The fingerprint build must strip debug info (for hash stability) and must
-  // suppress RS0016/RS0017 so the build succeeds even when the source has API
-  // changes (those are captured by the API-diff build, not this one). Setting
-  // WarningsAsErrors to an empty string disables the solution-wide
+  // The fingerprint build suppresses RS0016/RS0017 (captured by the API-diff
+  // build, not this one) so the build succeeds even when the source has API
+  // changes. Setting TreatWarningsAsErrors=false disables the solution-wide
   // TreatWarningsAsErrors=true only for this invocation without permanently
   // altering the project file.
-  // --no-incremental forces a full rebuild even when outputs are newer than
-  // inputs. Without it, MSBuild skips the rebuild if a preceding API-diff
-  // build already produced a DLL (with debug info), leaving the fingerprint
-  // build reading the wrong DLL (not DebugType=none). The extra ~1s per
-  // package is acceptable for the 54-package set.
   const result = shell.build(csprojPath, [
     "-c",
     "Release",
-    "-p:DebugType=none",
-    "-p:DebugSymbols=false",
     "-p:TreatWarningsAsErrors=false",
     "--no-restore",
-    "--no-incremental",
   ]);
 
   if (result.status !== 0) {
@@ -305,21 +321,28 @@ export interface NugetExtractionResult {
   /** The public API surface diff vs the committed PublicAPI.Shipped.txt baseline. */
   readonly apiDiff: ApiDiff;
   /**
-   * The output fingerprint diff vs the committed baseline hash.
+   * The normalized IL/metadata dump of the built assembly.
    *
-   * `changed: true` when the DLL SHA-256 differs from the committed
-   * `.fingerprint-baseline` file, or when no baseline exists (first run).
+   * This is the platform-independent "compiled output changed" signal. The
+   * production DiffProvider composes it with PublicAPI.* + manifest metadata
+   * into the final per-package fingerprint, then compares against the committed
+   * `.release-fingerprint`. Returned un-hashed so the provider is the single
+   * home of fingerprint composition (and can fold in resolvedVersions).
    */
-  readonly fingerprintDiff: FingerprintDiff;
+  readonly ilDump: string;
+  /** The committed PublicAPI.Shipped.txt content (for fingerprint composition). */
+  readonly shippedTxt: string;
+  /** The committed PublicAPI.Unshipped.txt content (for fingerprint composition). */
+  readonly unshippedTxt: string;
   /**
-   * Wall-clock time in milliseconds for the extraction (both builds).
+   * Wall-clock time in milliseconds for the extraction (build + IL dump).
    * Relevant for the 83-package rollout feasibility assessment.
    */
   readonly extractionMs: number;
 }
 
 // ---------------------------------------------------------------------------
-// Public API — fingerprint baseline file naming convention
+// Public API — baseline file naming conventions
 // ---------------------------------------------------------------------------
 
 /**
@@ -327,7 +350,7 @@ export interface NugetExtractionResult {
  *
  * Convention: `.release-fingerprint` in the same directory as the .csproj.
  * This file is committed to git and updated by the release runner after each
- * version bump. Its absence is treated as `changed: true` (first run).
+ * version bump. Its absence is treated as a first run.
  *
  * @param csprojPath - Absolute path to the .csproj file.
  */
@@ -336,31 +359,57 @@ export function fingerprintBaselinePath(csprojPath: string): string {
   return join(dir, ".release-fingerprint");
 }
 
+/**
+ * Return the path to the committed PublicAPI.Shipped.txt for a package.
+ *
+ * @param csprojPath - Absolute path to the .csproj file.
+ */
+export function shippedTxtPath(csprojPath: string): string {
+  const dir = csprojPath.replace(/[\\/][^\\/]+\.csproj$/, "");
+  return join(dir, "PublicAPI.Shipped.txt");
+}
+
+/**
+ * Return the path to the committed PublicAPI.Unshipped.txt for a package.
+ *
+ * @param csprojPath - Absolute path to the .csproj file.
+ */
+export function unshippedTxtPath(csprojPath: string): string {
+  const dir = csprojPath.replace(/[\\/][^\\/]+\.csproj$/, "");
+  return join(dir, "PublicAPI.Unshipped.txt");
+}
+
 // ---------------------------------------------------------------------------
 // Public API — main extraction function
 // ---------------------------------------------------------------------------
 
 /**
- * Extract the ApiDiff and FingerprintDiff for a single NuGet package.
+ * Extract the ApiDiff + the normalized IL dump for a single NuGet package.
  *
- * Runs two `dotnet build` invocations:
+ * Runs two `dotnet build` invocations + one il-fingerprint pass:
  *   1. A normal build to capture RS0016/RS0017 diagnostics (ApiDiff).
- *   2. A debug-stripped build to hash the DLL (FingerprintDiff).
+ *   2. A Release build to produce the DLL.
+ *   3. An il-fingerprint pass over the built DLL (the normalized IL dump).
  *
- * The two builds are sequenced (not parallel) because MSBuild locks the output
+ * The builds are sequenced (not parallel) because MSBuild locks the output
  * directory during a build. On an incremental build (artifacts up-to-date),
  * build 1 exits quickly from the MSBuild cache.
  *
+ * The composition of the IL dump + manifest metadata into the final fingerprint
+ * (and the comparison against the committed baseline) happens in the production
+ * DiffProvider, NOT here — this function returns the raw IL dump + the committed
+ * PublicAPI.* content so the provider can compose deterministically.
+ *
  * @param pkg   - The package descriptor from the manifest loader.
- * @param shell - The shell seam. Pass `realDotnetShell` in production.
- *                Inject a synthetic shell in tests.
- * @returns The extraction result containing ApiDiff, FingerprintDiff, and timing.
+ * @param shell - The shell seam (construct via makeRealDotnetShell in production;
+ *                inject a synthetic shell in tests).
+ * @returns The extraction result (ApiDiff, IL dump, PublicAPI.* content, timing).
  * @throws {Error} When the build fails for a reason other than RS0016/RS0017,
- *                 or when the built DLL cannot be located.
+ *                 the DLL cannot be located, or the IL dump fails.
  */
 export function extractNugetDiff(
   pkg: PackageDescriptor,
-  shell: DotnetShell = realDotnetShell,
+  shell: DotnetShell,
 ): NugetExtractionResult {
   const start = Date.now();
 
@@ -368,31 +417,30 @@ export function extractNugetDiff(
 
   const apiDiff = extractApiDiff(pkg.manifestPath, pkg.name, shell);
 
-  // --- Step B: fingerprint diff via deterministic DLL hash ----------------
+  // --- Step B: IL dump via the il-fingerprint tool ------------------------
 
   const dllPath = buildAndLocateDll(pkg.manifestPath, pkg.name, shell);
-  const currentHash = shell.sha256File(dllPath);
+  const ilDump = shell.ilDump(dllPath);
 
-  if (currentHash === undefined) {
+  if (ilDump === undefined) {
     throw new Error(
-      `sha256File returned undefined for ${dllPath} — ` +
-        `DLL was built but cannot be read.`,
+      `il-fingerprint returned no dump for ${dllPath} — ` +
+        `the DLL was built but the IL-dump tool failed.`,
     );
   }
 
-  const baselinePath = fingerprintBaselinePath(pkg.manifestPath);
-  const committedHash = shell.readFile(baselinePath)?.trim();
+  // --- Step C: read the committed PublicAPI.* content ---------------------
 
-  // If no baseline exists yet (first run after enabling fingerprinting),
-  // treat as changed so a PATCH bump is recorded and the baseline is seeded.
-  const fingerprintChanged =
-    committedHash === undefined || committedHash !== currentHash;
+  const shippedTxt = shell.readFile(shippedTxtPath(pkg.manifestPath)) ?? "";
+  const unshippedTxt = shell.readFile(unshippedTxtPath(pkg.manifestPath)) ?? "";
 
   const extractionMs = Date.now() - start;
 
   return {
     apiDiff,
-    fingerprintDiff: { changed: fingerprintChanged },
+    ilDump,
+    shippedTxt,
+    unshippedTxt,
     extractionMs,
   };
 }

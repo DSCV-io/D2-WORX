@@ -2,44 +2,33 @@
 // Copyright (c) DCSV. All rights reserved.
 // -----------------------------------------------------------------------
 
-// Integration test for the NuGet extraction adapter.
+// Tests for the NuGet extraction adapter (nuget-extractor.ts).
 //
-// Tests run against the REAL D2.Shared.Utilities package (the spike's
-// representative consumable). The PublicApiAnalyzers baseline and the
-// deterministic build are exercised end-to-end — no stubs for the extraction
-// path itself.
+// Unit (synthetic shell seam — no real build):
+//   - parseUnshippedTxt: added / removed / rename / empty.
+//   - extractNugetDiff: ApiDiff mapping from RS0016/RS0017, IL-dump capture,
+//     PublicAPI.* content capture, fail-loud paths.
 //
-// Three test scenarios (all real, no synthetic builds):
-//
-//   T1  ApiDiff detects a new public member added to the source.
-//   T2  ApiDiff detects a public member removed from the source.
-//   T3  FingerprintDiff detects an internal body change AND ignores a
-//       comment-only edit.
-//
-// The tests mutate source files under utilities/ temporarily, build, assert,
-// then restore the original content. Each test restores unconditionally in
-// the `afterEach` hook so CI never leaves the tree dirty.
-//
-// Execution time: ~3–8 s per test on an incremental build (no-restore).
-// Coverage assertion: parsUnshippedTxt (unit) + extractNugetDiff (integration).
+// Integration (gated D2_VERSIONING_INTEGRATION=1 — real build + il-fingerprint):
+//   - The provider-level proofs (path-independence, build-stability, impl-change
+//     detection) live in real-diff-provider.test.ts (the IL-dump is composed
+//     into the fingerprint there). This file's integration block exercises the
+//     real DotnetShell against D2.Shared.Utilities end-to-end.
 
-import { afterEach, describe, expect, it } from "vitest";
+import { describe, expect, it } from "vitest";
 
-// D2_VERSIONING_INTEGRATION=1 enables real-extraction tests that shell out to
-// `dotnet build` and require a restored .NET project (project.assets.json).
-// The dedicated integration CI lane sets this flag. The Node unit lane does not.
 const RUN_INTEGRATION = process.env["D2_VERSIONING_INTEGRATION"] === "1";
-import { existsSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+
 import { join, resolve } from "node:path";
 import {
   extractNugetDiff,
-  fingerprintBaselinePath,
+  makeRealDotnetShell,
   parseUnshippedTxt,
   type DotnetShell,
   type ShellResult,
 } from "../src/nuget-extractor.js";
 import { repoRoot } from "./repo-root.js";
-import type { ApiDiff, FingerprintDiff } from "../src/diff-bump.js";
+import type { ApiDiff } from "../src/diff-bump.js";
 import type { PackageDescriptor } from "../src/types.js";
 
 // ---------------------------------------------------------------------------
@@ -49,7 +38,6 @@ import type { PackageDescriptor } from "../src/types.js";
 const utilitiesDir = resolve(repoRoot, "server/shared/dotnet/utilities");
 const csprojPath = join(utilitiesDir, "D2.Shared.Utilities.csproj");
 
-/** Minimal PackageDescriptor for D2.Shared.Utilities (spike only). */
 const utilitiesPkg: PackageDescriptor = {
   name: "D2.Shared.Utilities",
   ecosystem: "nuget",
@@ -59,46 +47,6 @@ const utilitiesPkg: PackageDescriptor = {
   currentVersion: "0.1.0",
   dependencies: [],
 };
-
-// ---------------------------------------------------------------------------
-// File-mutation helpers (guard + restore)
-// ---------------------------------------------------------------------------
-
-/** Map of filePath → original content, restored in afterEach. */
-const filesToRestore = new Map<string, string>();
-
-/**
- * Mutate `filePath` to `newContent` and record it for restore in afterEach.
- *
- * When the file does not yet exist (e.g. the fingerprint baseline on a first
- * run), the restore step deletes the file rather than writing back an original.
- * Pass `newContent` as `""` when registering a file for delete-on-restore.
- */
-function mutateFile(filePath: string, newContent: string): void {
-  if (!filesToRestore.has(filePath)) {
-    // Sentinel: null string means "file did not exist — delete on restore".
-    filesToRestore.set(
-      filePath,
-      existsSync(filePath)
-        ? readFileSync(filePath, "utf-8")
-        : "\x00_DELETE_\x00",
-    );
-  }
-
-  writeFileSync(filePath, newContent, "utf-8");
-}
-
-afterEach(() => {
-  for (const [path, original] of filesToRestore) {
-    if (original === "\x00_DELETE_\x00") {
-      if (existsSync(path)) rmSync(path);
-    } else {
-      writeFileSync(path, original, "utf-8");
-    }
-  }
-
-  filesToRestore.clear();
-});
 
 // ---------------------------------------------------------------------------
 // parseUnshippedTxt — unit tests (no build required)
@@ -150,8 +98,6 @@ describe("parseUnshippedTxt — unit", () => {
   });
 
   it("changed flag is always false (not derivable from PublicApiAnalyzers output)", () => {
-    // `changed` is never set by parseUnshippedTxt; the rename case (removed+added)
-    // is modelled that way and the bump engine handles it as a break.
     const result = parseUnshippedTxt(
       "#nullable enable\nstatic D2.Shared.Foo.Bar(string! x) -> void\n",
     );
@@ -160,251 +106,187 @@ describe("parseUnshippedTxt — unit", () => {
 });
 
 // ---------------------------------------------------------------------------
-// Integration — real extraction on D2.Shared.Utilities
-// Requires D2_VERSIONING_INTEGRATION=1 + a restored .NET project (dotnet restore
-// must have been run so project.assets.json exists). The dedicated integration
-// CI lane provides this; the Node unit lane does not.
+// extractNugetDiff — injected shell (seam contract, no real build)
 // ---------------------------------------------------------------------------
 
-describe.skipIf(!RUN_INTEGRATION)(
-  "extractNugetDiff — integration (D2.Shared.Utilities)",
-  () => {
-    // T1: Adding a new public member → RS0016 → ApiDiff.added = true
-    it("T1: ApiDiff.added when a new public member is added to the source", async () => {
-      const renderPath = join(
-        utilitiesDir,
-        "Diagnostics/SanitizedExceptionRender.cs",
-      );
-      const original = readFileSync(renderPath, "utf-8");
-
-      // Insert a new public member into SanitizedExceptionRender.
-      const mutated = original.replace(
-        "public static string TypeName(Exception ex) =>",
-        "/// <summary>Spike-added test member — not part of permanent API.</summary>\n" +
-          '    /// <param name="ex">The exception.</param>\n' +
-          "    /// <returns>A string.</returns>\n" +
-          '    public static string SpikeNewMember(Exception ex) => "spike";\n\n' +
-          "    public static string TypeName(Exception ex) =>",
-      );
-
-      mutateFile(renderPath, mutated);
-
-      const result = extractNugetDiff(utilitiesPkg);
-
-      expect(result.apiDiff.added).toBe(true);
-      expect(result.apiDiff.removed).toBe(false);
-    }, 60_000);
-
-    // T2: Removing an existing public member → RS0017 → ApiDiff.removed = true
-    it("T2: ApiDiff.removed when a shipped public member is removed from source", async () => {
-      const renderPath = join(
-        utilitiesDir,
-        "Diagnostics/SanitizedExceptionRender.cs",
-      );
-      const original = readFileSync(renderPath, "utf-8");
-
-      // Make TypeName internal so it's no longer part of the public API.
-      // RS0017 fires because PublicAPI.Shipped.txt still lists the public member.
-      const mutated = original.replace(
-        "    public static string TypeName(Exception ex) =>",
-        "    internal static string TypeName(Exception ex) =>",
+/**
+ * Build a synthetic shell that returns a chosen API-diff diagnostic + a fixed
+ * IL dump + fixed PublicAPI.* content. Asserts the REAL mapping the adapter
+ * performs (faithful seam — never a hollow canned return).
+ */
+function makeShell(opts: {
+  rs0016?: boolean;
+  rs0017?: boolean;
+  ilDump?: string | undefined;
+  shipped?: string;
+  unshipped?: string;
+  dllPresent?: boolean;
+}): DotnetShell {
+  return {
+    build(_csprojPath, extraArgs): ShellResult {
+      // The fingerprint (IL-dump) build passes TreatWarningsAsErrors=false and
+      // succeeds regardless of API changes; the API-diff build has no such flag
+      // and surfaces RS0016/RS0017 with a non-zero exit. Distinguish on the flag.
+      const isFingerprintBuild = extraArgs.includes(
+        "-p:TreatWarningsAsErrors=false",
       );
 
-      mutateFile(renderPath, mutated);
+      if (isFingerprintBuild) {
+        return { status: 0, stdout: "Build succeeded.", stderr: "" };
+      }
 
-      const result = extractNugetDiff(utilitiesPkg);
+      const diags: string[] = [];
 
-      expect(result.apiDiff.removed).toBe(true);
-    }, 60_000);
+      if (opts.rs0016)
+        diags.push(
+          "error RS0016: Symbol 'static D2.Fake.Foo.NewMethod() -> void' is not part of the declared public API",
+        );
 
-    // T3a: Comment-only edit → FingerprintDiff.changed = false (same DLL hash)
-    // T3b: Internal body edit → FingerprintDiff.changed = true (different DLL hash)
-    it("T3a: FingerprintDiff.changed is false for a comment-only edit", async () => {
-      // First, build with clean source so the DLL exists at the expected path.
-      extractNugetDiff(utilitiesPkg);
-      const cleanDllPath = join(
-        utilitiesDir,
-        "bin/Release/net10.0/D2.Shared.Utilities.dll",
-      );
-      // The DLL was just built; compute its hash as the baseline.
-      const { createHash } = await import("node:crypto");
-      const cleanBytes = readFileSync(cleanDllPath);
-      const cleanHash = createHash("sha256").update(cleanBytes).digest("hex");
+      if (opts.rs0017)
+        diags.push(
+          "error RS0017: Symbol 'static D2.Fake.Foo.OldMethod() -> void' is part of the declared API, but could not be found",
+        );
 
-      // Write the clean hash as the committed baseline so the comparison works.
-      // mutateFile registers the file for restore/delete in afterEach.
-      const baselinePath = fingerprintBaselinePath(csprojPath);
-      mutateFile(baselinePath, cleanHash);
-
-      // Now add a comment-only edit.
-      const guardPath = join(utilitiesDir, "Extensions/GuardExtensions.cs");
-      const originalGuard = readFileSync(guardPath, "utf-8");
-      mutateFile(
-        guardPath,
-        originalGuard.replace(
-          "// -----------------------------------------------------------------------",
-          "// -----------------------------------------------------------------------\n// SPIKE_COMMENT_ONLY_TEST",
-        ),
-      );
-
-      const commentResult = extractNugetDiff(utilitiesPkg);
-      expect(commentResult.fingerprintDiff.changed).toBe(false);
-    }, 90_000);
-
-    it("T3b: FingerprintDiff.changed is true for an internal method-body edit", async () => {
-      // Two extractNugetDiff calls (4 dotnet-build invocations × ~15s each)
-      // require a longer timeout than T3a (1 call × ~30s).
-      // Build with clean source so the DLL exists, then capture its hash.
-      extractNugetDiff(utilitiesPkg);
-      const cleanDllPath = join(
-        utilitiesDir,
-        "bin/Release/net10.0/D2.Shared.Utilities.dll",
-      );
-      const { createHash } = await import("node:crypto");
-      const cleanBytes = readFileSync(cleanDllPath);
-      const cleanHash = createHash("sha256").update(cleanBytes).digest("hex");
-      const baselinePath = fingerprintBaselinePath(csprojPath);
-      mutateFile(baselinePath, cleanHash);
-
-      // Mutate an internal string literal in a method body.
-      const guardPath = join(utilitiesDir, "Extensions/GuardExtensions.cs");
-      const originalGuard = readFileSync(guardPath, "utf-8");
-      mutateFile(
-        guardPath,
-        originalGuard.replace(
-          "Value must be a non-empty, non-whitespace string.",
-          "Value must be a non-empty, non-whitespace string. (SPIKE_INTERNAL_CHANGE)",
-        ),
-      );
-
-      const bodyResult = extractNugetDiff(utilitiesPkg);
-      expect(bodyResult.fingerprintDiff.changed).toBe(true);
-    }, 120_000);
-  },
-);
-
-// ---------------------------------------------------------------------------
-// DotnetShell injection — verify the seam contract
-// ---------------------------------------------------------------------------
+      return {
+        status: opts.rs0016 || opts.rs0017 ? 1 : 0,
+        stdout: diags.join("\n") || "Build succeeded.",
+        stderr: "",
+      };
+    },
+    readFile(filePath): string | undefined {
+      if (filePath.endsWith(".dll"))
+        return (opts.dllPresent ?? true) ? "exists" : undefined;
+      if (filePath.endsWith("PublicAPI.Shipped.txt"))
+        return opts.shipped ?? "#nullable enable\n";
+      if (filePath.endsWith("PublicAPI.Unshipped.txt"))
+        return opts.unshipped ?? "#nullable enable\n";
+      return undefined;
+    },
+    ilDump(_dllPath): string | undefined {
+      return Object.prototype.hasOwnProperty.call(opts, "ilDump")
+        ? opts.ilDump
+        : "# il-fingerprint v1\ntype Foo\n";
+    },
+  };
+}
 
 describe("extractNugetDiff — injected shell (seam contract)", () => {
-  it("injected shell returning RS0016 in stdout → apiDiff.added = true", () => {
-    const syntheticShell: DotnetShell = {
-      build(_csprojPath, extraArgs): ShellResult {
-        if (extraArgs.includes("-p:DebugType=none")) {
-          // Fingerprint build — succeed with no diagnostics.
-          return { status: 0, stdout: "Build succeeded.", stderr: "" };
-        }
+  it("RS0016 in build output → apiDiff.added = true, IL dump + PublicAPI captured", () => {
+    const shell = makeShell({
+      rs0016: true,
+      ilDump: "# il-fingerprint v1\ntype Foo attrs=0x100\n",
+      shipped: "#nullable enable\nD2.Foo\n",
+      unshipped: "#nullable enable\n",
+    });
 
-        // API-diff build — emit RS0016 (new public member).
-        return {
-          status: 1,
-          stdout:
-            "error RS0016: Symbol 'static D2.Fake.Foo.NewMethod() -> void' " +
-            "is not part of the declared public API",
-          stderr: "",
-        };
-      },
-      readFile(filePath): string | undefined {
-        if (filePath.endsWith(".dll")) return "exists";
-        if (filePath.endsWith(".release-fingerprint")) return "abc123";
-        return undefined;
-      },
-      sha256File(_filePath): string | undefined {
-        // Return a hash DIFFERENT from the committed baseline ("abc123")
-        // so fingerprintDiff.changed is true for the injected case.
-        return "def456";
-      },
-    };
+    const result = extractNugetDiff(utilitiesPkg, shell);
 
-    const result = extractNugetDiff(utilitiesPkg, syntheticShell);
-
-    // The injected build reports RS0016 → added.
-    expect(result.apiDiff.added).toBe(true);
-    expect(result.apiDiff.removed).toBe(false);
-    expect(result.apiDiff.changed).toBe(false);
-    // The injected hash differs from the baseline → fingerprint changed.
-    expect(result.fingerprintDiff.changed).toBe(true);
-    // Timing is measurable (> 0 ms).
+    expect(result.apiDiff).toEqual<ApiDiff>({
+      added: true,
+      removed: false,
+      changed: false,
+    });
+    expect(result.ilDump).toBe("# il-fingerprint v1\ntype Foo attrs=0x100\n");
+    expect(result.shippedTxt).toBe("#nullable enable\nD2.Foo\n");
+    expect(result.unshippedTxt).toBe("#nullable enable\n");
     expect(result.extractionMs).toBeGreaterThanOrEqual(0);
   });
 
-  it("injected shell returning RS0017 in stdout → apiDiff.removed = true", () => {
-    const syntheticShell: DotnetShell = {
-      build(_csprojPath, extraArgs): ShellResult {
-        if (extraArgs.includes("-p:DebugType=none")) {
-          return { status: 0, stdout: "Build succeeded.", stderr: "" };
-        }
-
-        return {
-          status: 1,
-          stdout:
-            "error RS0017: Symbol 'static D2.Fake.Foo.OldMethod() -> void' " +
-            "is part of the declared API, but is either not public or could not be found",
-          stderr: "",
-        };
-      },
-      readFile(filePath): string | undefined {
-        if (filePath.endsWith(".dll")) return "exists";
-        if (filePath.endsWith(".release-fingerprint")) return "abc123";
-        return undefined;
-      },
-      sha256File(_filePath): string | undefined {
-        return "abc123";
-      },
-    };
-
-    const result = extractNugetDiff(utilitiesPkg, syntheticShell);
+  it("RS0017 in build output → apiDiff.removed = true", () => {
+    const shell = makeShell({ rs0017: true });
+    const result = extractNugetDiff(utilitiesPkg, shell);
 
     expect(result.apiDiff.removed).toBe(true);
     expect(result.apiDiff.added).toBe(false);
-    // Hash matches baseline → fingerprint unchanged.
-    expect(result.fingerprintDiff.changed).toBe(false);
   });
 
-  it("injected shell with no RS0016/RS0017 + matching hash → no diff", () => {
-    const syntheticShell: DotnetShell = {
-      build(_csprojPath, _extraArgs): ShellResult {
-        return { status: 0, stdout: "Build succeeded.", stderr: "" };
-      },
-      readFile(filePath): string | undefined {
-        if (filePath.endsWith(".dll")) return "exists";
-        if (filePath.endsWith(".release-fingerprint")) return "stable-hash-xyz";
-        return undefined;
-      },
-      sha256File(_filePath): string | undefined {
-        return "stable-hash-xyz";
-      },
-    };
-
-    const result = extractNugetDiff(utilitiesPkg, syntheticShell);
+  it("clean build → apiDiff all-false, IL dump returned", () => {
+    const shell = makeShell({ ilDump: "# il-fingerprint v1\n" });
+    const result = extractNugetDiff(utilitiesPkg, shell);
 
     expect(result.apiDiff).toEqual<ApiDiff>({
       added: false,
       removed: false,
       changed: false,
     });
-    expect(result.fingerprintDiff).toEqual<FingerprintDiff>({ changed: false });
+    expect(result.ilDump).toBe("# il-fingerprint v1\n");
   });
 
-  it("injected shell with no committed baseline → fingerprintDiff.changed = true (first run)", () => {
-    const syntheticShell: DotnetShell = {
+  it("il-fingerprint failure (undefined dump) → throws fail-loud", () => {
+    const shell = makeShell({ ilDump: undefined });
+
+    expect(() => extractNugetDiff(utilitiesPkg, shell)).toThrow(
+      /il-fingerprint returned no dump/,
+    );
+  });
+
+  it("missing built DLL → throws fail-loud", () => {
+    const shell = makeShell({ dllPresent: false });
+
+    expect(() => extractNugetDiff(utilitiesPkg, shell)).toThrow(
+      /Built DLL not found/,
+    );
+  });
+
+  it("build failure with no RS0016/RS0017 → throws fail-loud", () => {
+    const failingShell: DotnetShell = {
+      build(_csprojPath, _extraArgs): ShellResult {
+        return { status: 1, stdout: "error CS1002: ; expected", stderr: "" };
+      },
+      readFile(): string | undefined {
+        return undefined;
+      },
+      ilDump(): string | undefined {
+        return "x";
+      },
+    };
+
+    expect(() => extractNugetDiff(utilitiesPkg, failingShell)).toThrow(
+      /dotnet build failed/,
+    );
+  });
+
+  it("missing PublicAPI.* files → empty-string content (graceful)", () => {
+    const shell: DotnetShell = {
       build(_csprojPath, _extraArgs): ShellResult {
         return { status: 0, stdout: "Build succeeded.", stderr: "" };
       },
       readFile(filePath): string | undefined {
         if (filePath.endsWith(".dll")) return "exists";
-        // No baseline file → undefined.
+        // No PublicAPI.* files present.
         return undefined;
       },
-      sha256File(_filePath): string | undefined {
-        return "some-hash";
+      ilDump(): string | undefined {
+        return "# il-fingerprint v1\n";
       },
     };
 
-    const result = extractNugetDiff(utilitiesPkg, syntheticShell);
+    const result = extractNugetDiff(utilitiesPkg, shell);
 
-    // No baseline → treated as changed (PATCH bump seeded on first run).
-    expect(result.fingerprintDiff.changed).toBe(true);
+    expect(result.shippedTxt).toBe("");
+    expect(result.unshippedTxt).toBe("");
   });
 });
+
+// ---------------------------------------------------------------------------
+// Integration — real extraction on D2.Shared.Utilities (gated)
+// Requires D2_VERSIONING_INTEGRATION=1 + a restored .NET project + the built
+// il-fingerprint tool. The dedicated integration CI lane provides this.
+// ---------------------------------------------------------------------------
+
+describe.skipIf(!RUN_INTEGRATION)(
+  "extractNugetDiff — integration (D2.Shared.Utilities)",
+  () => {
+    it("real build + IL dump → ApiDiff all-false (baseline current), non-empty IL dump", () => {
+      const shell = makeRealDotnetShell(repoRoot);
+      const result = extractNugetDiff(utilitiesPkg, shell);
+
+      // The committed baseline is current → no API diff.
+      expect(result.apiDiff.added).toBe(false);
+      expect(result.apiDiff.removed).toBe(false);
+      // The IL dump is non-trivial and carries the tool's banner.
+      expect(result.ilDump.startsWith("# il-fingerprint v1")).toBe(true);
+      expect(result.ilDump.length).toBeGreaterThan(100);
+    }, 120_000);
+  },
+);

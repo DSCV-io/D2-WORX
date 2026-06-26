@@ -28,18 +28,24 @@ enforces the format at commit time — non-conforming subjects are rejected.
 
 Format: `<type>[(<scope>)][!]: <subject>` (subject capped at 100 characters).
 
-| Type | Runner bump | Notes |
-| --------- | ----------- | ------------------------------------------- |
-| `feat` | MINOR | New capability added |
-| `fix` | PATCH | Bug fix |
-| `perf` | PATCH | Performance improvement, no API change |
-| `chore` | none | Maintenance: deps, tooling, housekeeping |
-| `refactor` | none | Code restructure, no behavior change |
-| `docs` | none | Documentation only |
-| `test` | none | Test additions or updates only |
-| `ci` | none | CI/CD workflow changes |
-| `build` | none | Build system or toolchain changes |
-| `style` | none | Formatting, whitespace — no logic change |
+| Type | Changelog category | Notes |
+| --------- | ------------------ | ------------------------------------------- |
+| `feat` | `### Added` | New capability added |
+| `fix` | `### Fixed` | Bug fix |
+| `perf` | `### Fixed` | Performance improvement, no API change |
+| `chore` | `### Changed` | Maintenance: deps, tooling, housekeeping |
+| `refactor` | `### Changed` | Code restructure, no behavior change |
+| `docs` | `### Changed` | Documentation only |
+| `test` | `### Changed` | Test additions or updates only |
+| `ci` | `### Changed` | CI/CD workflow changes |
+| `build` | `### Changed` | Build system or toolchain changes |
+| `style` | `### Changed` | Formatting, whitespace — no logic change |
+
+The commit type determines how the entry is grouped in the `CHANGELOG.md` — it does **not**
+determine the version bump magnitude. The bump is driven by the published-artifact diff (output
+change → PATCH, API addition → MINOR, API removal → MAJOR). The `WIRE-BREAKING:` /
+`BREAKING CHANGE:` footer (or the `!` shorthand) is the authoritative override that can
+escalate that diff-derived bump; it cannot lower it.
 
 The optional `(scope)` names the area affected (e.g. `fix(result): …`).
 A trailing `!` marks a breaking change and is equivalent to adding a `WIRE-BREAKING:` / `BREAKING CHANGE:` footer.
@@ -95,16 +101,31 @@ and are not covered here.
 
 ### Semver rules
 
-| Highest change type in the commit range | Pre-stable (`0.x`) | Stable (`≥ 1.0.0`) |
-| --------------------------------------- | ------------------- | ------------------- |
-| `WIRE-BREAKING:` or `BREAKING CHANGE:` footer | MINOR bump (no valve needed) | MAJOR bump (valve required — gate blocks without it) |
-| `feat:` additive | MINOR | MINOR |
-| `fix:` / `perf:` | PATCH | PATCH |
+The bump is computed from the **artifact diff**, not the commit label. The runner builds each
+package, extracts its public API surface, and computes an output fingerprint, then diffs those
+against the package's committed baselines:
 
-All packages start at `0.1.0` (pre-stable). **Pre-stable packages break freely** — a breaking change bumps
-MINOR with no force valve required. The strict breaking-change valve and MAJOR bite only activate at `≥ 1.0.0`.
-Graduation to `1.0.0` is a deliberate act (`--graduate <pkg>` flag on the runner) and is never inferred
-automatically.
+| Signal (vs the package's committed baseline) | Pre-stable (`0.x`) | Stable (`≥ 1.0.0`) |
+| -------------------------------------------- | ------------------- | ------------------- |
+| output identical | none | none |
+| output changed, public API unchanged | PATCH | PATCH |
+| public API ADDED only | MINOR | MINOR |
+| public API REMOVED / existing member changed | MINOR (carve-out) | MAJOR |
+
+The commit footer (`WIRE-BREAKING:` / `BREAKING CHANGE:` / the `!` shorthand) is an **override
+that can only ESCALATE** the diff-derived bump — it never lowers it — and supplies the changelog
+prose. The commit **type** is demoted to changelog **category** only (`feat:` → `### Added`,
+`fix:` / `perf:` → `### Fixed`); it does NOT drive the bump magnitude. This means a
+`chore`/`build`/`refactor` change to shipped code still floors at PATCH (the output changed), so
+no commit needs to be mislabeled to force a release.
+
+All packages start at `0.1.0` (pre-stable). **Pre-stable packages break freely** — a public-API
+removal/change bumps MINOR, no force valve required. The strict breaking-change valve and MAJOR
+bite only activate at `≥ 1.0.0`. Graduation to `1.0.0` is a deliberate act (`--graduate <pkg>`
+flag on the runner) and is never inferred automatically.
+
+The retired commit-type-as-bump-source path is retained behind `--legacy-commit-type` for one
+release cycle as a rollback escape hatch.
 
 ### Dependent propagation
 
@@ -125,11 +146,17 @@ own commit — propagation only contributes a PATCH bump.
 
 ### Library-API breaks
 
-The always-on `contract-gate` auto-detects wire/contract breaks (proto, spec catalog, i18n keys, OpenAPI).
-It does **not** detect breaking changes to `.NET` or TypeScript library public APIs — those are
-**author-declared** via the `WIRE-BREAKING:` / `BREAKING CHANGE:` footer (or the `!` shorthand).
-If a commit changes a `D2.Shared.*` / `@d2/*` public API in a breaking way, the author must add the
-footer or `!`; the gate will not catch it automatically.
+Library public-API changes ARE auto-detected by the release runner's artifact-diff engine: the
+.NET surface via `PublicApiAnalyzers` (committed `PublicAPI.Shipped.txt` / `PublicAPI.Unshipped.txt`)
+and the TS surface via `api-extractor` (committed `etc/<pkg>.api.md`). A removed or changed public
+member derives a MAJOR bump on its own (MINOR while pre-stable) — the author does not need a footer
+to force it. The footer remains available as an OVERRIDE to escalate (and to write the changelog
+prose). The `versioning-integration` lane's baseline-drift check fails any PR whose committed
+PublicAPI / `.api.md` / fingerprint baselines drifted from source without a bump.
+
+The always-on `contract-gate` separately gates the WIRE/contract surface (proto, spec catalog,
+i18n keys, OpenAPI) — those are the cross-service wire contracts, distinct from the per-package
+library API surface the runner diffs.
 
 ### Release runner
 
