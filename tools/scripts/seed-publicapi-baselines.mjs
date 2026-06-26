@@ -175,7 +175,11 @@ function extractConsumableDeps(csprojText) {
   let match;
 
   while ((match = refRe.exec(csprojText)) !== null) {
-    const depName = path.basename(match[1], ".csproj");
+    // Normalize backslash separators to forward slashes before basename extraction.
+    // Windows .csproj Include attributes use backslashes; on POSIX `path.basename`
+    // treats `\` as a literal filename character, returning the whole path instead
+    // of the filename component and silently dropping the dependency.
+    const depName = path.basename(match[1].replace(/\\/g, "/"), ".csproj");
 
     if (CONSUMABLE_NAMES.has(depName) && !deps.includes(depName)) {
       deps.push(depName);

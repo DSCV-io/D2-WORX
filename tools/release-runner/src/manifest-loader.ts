@@ -108,8 +108,13 @@ function extractNpmDeps(text: string): string[] {
 /**
  * Extract all `<ProjectReference Include="...path...">` target csproj paths
  * from a `.csproj` text. Returns absolute paths resolved against `csprojDir`.
+ *
+ * Exported for testing only — the production consumers are inside this module.
  */
-function extractNugetProjectRefs(text: string, csprojDir: string): string[] {
+export function extractNugetProjectRefs(
+  text: string,
+  csprojDir: string,
+): string[] {
   const refs: string[] = [];
   // Matches both single and double quotes, Windows and Unix path separators.
   const REF_RE = /<ProjectReference\s+Include=["']([^"']+\.csproj)["']/gi;
@@ -118,7 +123,12 @@ function extractNugetProjectRefs(text: string, csprojDir: string): string[] {
   while ((match = REF_RE.exec(text)) !== null) {
     const relPath = match[1];
 
-    if (relPath !== undefined) refs.push(resolve(csprojDir, relPath));
+    // Normalize backslash separators to forward slashes before resolving.
+    // Windows .csproj Include attributes use backslashes; on POSIX `path.resolve`
+    // treats `\` as a literal filename character, garbling the resolved path and
+    // silently dropping the dependency.
+    if (relPath !== undefined)
+      refs.push(resolve(csprojDir, relPath.replace(/\\/g, "/")));
   }
 
   return refs;
