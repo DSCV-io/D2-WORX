@@ -169,7 +169,7 @@ jobs:
         run: pnpm --filter commit-lint test
 
   # ---------------------------------------------------------------------------
-  # Versioning integration lane — advisory (non-blocking) initially.
+  # Versioning integration lane — required/blocking.
   # Guards the artifact-diff versioning engine. The bump signals are build-free —
   # the apiDiff is a git-ref text diff of the committed API reports and the
   # fingerprint is a SOURCE-BASED hash (committed source + report + resolved deps
@@ -182,12 +182,10 @@ jobs:
   #      .release-fingerprint and FAILS on any drift without a same-PR bump.
   # The .NET API-report currency is owned by the `build` job (RS0016/RS0017 are
   # errors under TreatWarningsAsErrors), so no .NET SDK is needed here.
-  # `continue-on-error: true` makes it advisory: it reports but does not block.
   # ---------------------------------------------------------------------------
   versioning-integration:
     name: Versioning integration (artifact-diff engine)
     runs-on: ubuntu-latest
-    continue-on-error: true
     steps:
       - uses: actions/checkout@v4
         with:
