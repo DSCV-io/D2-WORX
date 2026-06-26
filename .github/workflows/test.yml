@@ -217,6 +217,11 @@ jobs:
       # consumes dist/index.d.ts; the fingerprint hashes dist/**).
       - name: build the shared-TS dists
         run: pnpm --filter "./server/shared/typescript/**" -r build
+      # Build release-runner's workspace dependency closure (contract-gate,
+      # ts-codegen, etc.) so import { ... } from "contract-gate" resolves at
+      # test/runtime. Mirrors the release-runner-unit lane's build step.
+      - name: build release-runner dependencies
+        run: pnpm --filter "release-runner^..." build
       - name: Versioning gated adapter + proof tests (D2_VERSIONING_INTEGRATION)
         run: pnpm --filter release-runner test
       - name: assert no source drift from the gated nuget tests

@@ -27,7 +27,6 @@ import {
   mkdtempSync,
   rmSync,
   writeFileSync,
-  mkdirSync,
 } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
