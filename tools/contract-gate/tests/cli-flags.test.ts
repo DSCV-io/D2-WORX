@@ -21,11 +21,13 @@ import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 
+import { repoRoot } from "./repo-root.js";
+
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const CLI_PATH = resolve(__dirname, "../src/cli.ts");
 
 function runCli(args: string[]): {
-  status: number | null;
+  status: number | undefined;
   stdout: string;
   stderr: string;
 } {
@@ -39,7 +41,7 @@ function runCli(args: string[]): {
   );
 
   return {
-    status: result.status,
+    status: result.status ?? undefined,
     stdout: result.stdout ?? "",
     stderr: result.stderr ?? "",
   };
@@ -185,7 +187,7 @@ describe("contract-gate CLI — --proto-only and --skip-proto leave no arm to ru
 //   JSON arm    : "Spec/i18n/OpenAPI arm (JSON-diff gate)"
 // ---------------------------------------------------------------------------
 
-const REPO_ROOT = resolve(__dirname, "../../..");
+const REPO_ROOT = repoRoot;
 
 describe("contract-gate CLI — --skip-proto suppresses the proto arm", () => {
   it("omits the proto arm section header from stdout when --skip-proto is passed", () => {

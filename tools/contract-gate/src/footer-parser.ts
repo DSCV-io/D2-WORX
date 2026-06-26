@@ -119,7 +119,7 @@ export function parseBreakingFooters(
     if (bangMatch !== null) {
       const description = bangMatch[2] ?? "";
 
-      if (description.length > 0) apiBreaking.push(description.trim());
+      if (!falsey(description)) apiBreaking.push(description.trim());
     }
 
     // ----- Footer block detection -----
@@ -156,7 +156,7 @@ export function parseBreakingFooters(
       if (wireMatch !== null) {
         const desc = (wireMatch[1] ?? "").trim();
 
-        if (desc.length > 0) wireBreaking.push(desc);
+        if (!falsey(desc)) wireBreaking.push(desc);
         continue;
       }
 
@@ -165,7 +165,7 @@ export function parseBreakingFooters(
       if (apiMatch !== null) {
         const desc = (apiMatch[1] ?? "").trim();
 
-        if (desc.length > 0) apiBreaking.push(desc);
+        if (!falsey(desc)) apiBreaking.push(desc);
       }
     }
   }

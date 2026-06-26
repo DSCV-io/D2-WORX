@@ -124,18 +124,19 @@ describe("extractNugetProjectRefs — backslash Include path normalization (BX-1
   });
 
   // ---------------------------------------------------------------------------
-  // OS-independence proof: simulate the Linux failure mode using path.posix
-  // throughout (both resolve AND basename from path.posix) so that the test
-  // exercises the POSIX semantics on EVERY OS, including Windows.
+  // OS-independence proof: simulate the POSIX path-resolution semantics using
+  // path.posix throughout (both resolve AND basename from path.posix) so that
+  // the test exercises POSIX semantics on EVERY OS, including Windows.
   //
   // On Linux the production path.resolve IS path.posix.resolve and
-  // path.basename IS path.posix.basename — so this directly mirrors what the
-  // pre-fix code would do there.  On Windows path.resolve/basename also
-  // recognize `\` natively, which is WHY the bug is Windows-only and WHY the
-  // test must drive the POSIX variants explicitly to stay OS-independent.
+  // path.basename IS path.posix.basename — so this directly mirrors what
+  // POSIX path.resolve does there.  On Windows path.resolve/basename also
+  // recognize `\` natively, which is WHY the Windows-backslash normalization
+  // is needed and WHY the test must drive the POSIX variants explicitly to
+  // stay OS-independent.
   // ---------------------------------------------------------------------------
 
-  it("posix.basename of a posix.resolve with backslash Include is garbled — proving the pre-fix Linux failure", () => {
+  it("posix.basename of a posix.resolve with backslash Include is garbled — POSIX path.resolve treats backslash as a literal filename character", () => {
     // The raw Include value as it appears in a Windows-committed .csproj.
     const backslashInclude = "..\\..\\utilities\\D2.Shared.Utilities.csproj";
 

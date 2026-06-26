@@ -142,7 +142,7 @@ function printFindings(
 async function main(): Promise<void> {
   const args = parseArgs(process.argv.slice(2));
 
-  // ── 0a. --help ────────────────────────────────────────────────────────────
+  // ── 0a. --help ──
   if (args.help) {
     process.stdout.write(HELP_TEXT);
     process.exit(0);
@@ -157,7 +157,7 @@ async function main(): Promise<void> {
     process.exit(2);
   }
 
-  // ── 0c. No-op guards: combinations that leave no arm to run ──────────────
+  // ── 0c. No-op guards: combinations that leave no arm to run ──
   //
   // --skip-proto + --skip-json: each independently suppresses an arm, and
   //   together they leave nothing to run (same outcome as the explicit pair).
@@ -190,7 +190,7 @@ async function main(): Promise<void> {
     process.exit(2);
   }
 
-  // ── 0. Baseline resolution: --against arg > D2_GATE_BASELINE env var ─────
+  // ── 0. Baseline resolution: --against arg > D2_GATE_BASELINE env var ──
   const baseRef = resolveBaseline(
     args.baseRef,
     process.env["D2_GATE_BASELINE"],
@@ -221,7 +221,7 @@ async function main(): Promise<void> {
     process.exit(2);
   }
 
-  // ── 1. Resolve the force valve ───────────────────────────────────────────
+  // ── 1. Resolve the force valve ──
   let valveOpen = false;
   let valveSummary =
     "Force valve: CLOSED (no breaking footer detected in commit range)";
@@ -254,7 +254,7 @@ async function main(): Promise<void> {
 
   const allFindings: BreakingFinding[] = [];
 
-  // ── 2. Proto arm ─────────────────────────────────────────────────────────
+  // ── 2. Proto arm ──
   const runProto = !args.jsonOnly && !args.skipProto;
 
   if (runProto) {
@@ -291,7 +291,7 @@ async function main(): Promise<void> {
     }
   }
 
-  // ── 3. Spec/i18n/OpenAPI arms ────────────────────────────────────────────
+  // ── 3. Spec/i18n/OpenAPI arms ──
   const runJson = !args.protoOnly && !args.skipJson;
 
   if (runJson) {
@@ -313,7 +313,7 @@ async function main(): Promise<void> {
     }
   }
 
-  // ── 4. Final verdict ─────────────────────────────────────────────────────
+  // ── 4. Final verdict ──
   printSection("Gate verdict");
 
   const totalBreaks = allFindings.length;

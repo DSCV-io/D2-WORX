@@ -37,7 +37,7 @@ const FIXTURES_DIR = resolve(__dirname, "fixtures", "proto");
 function runBufBreaking(
   afterDir: string,
   againstDir: string,
-): { status: number | null; stdout: string; stderr: string } {
+): { status: number | undefined; stdout: string; stderr: string } {
   const shimPath = resolveBufShim();
 
   const result = spawnSync(
@@ -51,7 +51,7 @@ function runBufBreaking(
   );
 
   return {
-    status: result.status,
+    status: result.status ?? undefined,
     stdout: result.stdout ?? "",
     stderr: result.stderr ?? "",
   };
@@ -70,7 +70,7 @@ describe("proto-arm integration — stable-before → stable-after (real buf)", 
 
     // buf breaking should exit non-zero (typically 100): field 2 was removed without reserved.
     expect(result.status).not.toBe(0);
-    expect(result.status).not.toBeNull();
+    expect(result.status).not.toBeUndefined();
     // The stdout should mention the deleted field.
     expect(result.stdout).toContain("deleted");
   });
@@ -100,7 +100,7 @@ describe("proto-arm integration — alpha-before → alpha-after (exempt, gate s
     // that only the exemption prevents from becoming a gate failure.
     const result = runBufBreaking(afterDir, beforeDir);
     // buf breaking should still detect the break (field removed without reserved)
-    expect(result.status).not.toBeNull();
+    expect(result.status).not.toBeUndefined();
     expect(result.status).not.toBe(0);
     // This confirms the exemption is doing real work — it suppresses a REAL break.
   });

@@ -244,6 +244,7 @@ internal static class SplitterEngine
         // and never decorates with extra modifiers, but be permissive in case
         // a future emitter version adds them.
         var tokens = trimmed.Split([' ', '\t'], StringSplitOptions.RemoveEmptyEntries);
+
         for (var k = 0; k < tokens.Length - 1; k++)
         {
             if (tokens[k] == "partial" && tokens[k + 1] == "class")

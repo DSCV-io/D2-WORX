@@ -36,6 +36,8 @@ import { readFileSync, readdirSync, statSync } from "node:fs";
 import { createRequire } from "node:module";
 import { join, resolve } from "node:path";
 
+import { truthy } from "@d2/utilities";
+
 import type { BreakingFinding } from "./breaking-finding.js";
 import { extractProtoPackage, isProtoGateExempt } from "./proto-exemption.js";
 import { validateGitRef } from "./safe-args.js";
@@ -243,7 +245,7 @@ export function runProtoArm(opts: ProtoArmOptions): ProtoArmResult {
     const rawOutput = (
       (bufResult.stdout ?? "") + (bufResult.stderr ?? "")
     ).trim();
-    const lines = rawOutput.split("\n").filter((l) => l.trim().length > 0);
+    const lines = rawOutput.split("\n").filter((l) => truthy(l.trim()));
 
     for (const line of lines) {
       findings.push({

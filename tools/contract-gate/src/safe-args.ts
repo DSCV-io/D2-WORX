@@ -16,10 +16,8 @@
 //     paths that escape the repo root.
 //   - Both throw on violation — no silent truncation or fallback (strict,
 //     fail-loud per project convention).
-//   - No `@d2/utilities` dependency: this module is imported by release-runner
-//     via the contract-gate public surface, and adding a new cross-package
-//     runtime dep would require a pnpm install cycle. Plain JS guards are
-//     self-contained and testable with no external deps.
+
+import { falsey } from "@d2/utilities";
 
 // ---------------------------------------------------------------------------
 // Module-level constants
@@ -53,7 +51,7 @@ const _ALLOWLIST_RE = /^[A-Za-z0-9._/-]+$/;
  * @throws {Error} When `ref` contains disallowed characters or patterns.
  */
 export function validateGitRef(ref: string): void {
-  if (ref.length === 0) {
+  if (falsey(ref)) {
     throw new Error("git ref validation failed: ref must not be empty");
   }
 
@@ -100,7 +98,7 @@ export function validateGitRef(ref: string): void {
  * @throws {Error} When `filePath` contains traversal or absolute-escape patterns.
  */
 export function validateGitPath(filePath: string): void {
-  if (filePath.length === 0) {
+  if (falsey(filePath)) {
     throw new Error("git path validation failed: filePath must not be empty");
   }
 

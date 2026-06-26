@@ -147,3 +147,10 @@ output references `@d2/*` types but the emitter itself is dep-free.
   the three runners in that order. The auth failures also reference the
   generated `@d2/i18n-keys` TK constants directly (each constant IS a
   `TKMessage`), so `@d2/auth-abstractions` depends on `@d2/i18n-keys`.
+
+## Validation
+
+See [VALIDATION.md](./VALIDATION.md) for the owned-code validation table and the test
+doubles ledger — each emitter module names what it is validated against (real shared
+libs, real spec files, or synthetic fixtures) plus the condition that triggers promoting
+a test double to a real-artifact integration test.

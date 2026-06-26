@@ -70,6 +70,7 @@ import {
   validateResilience,
   validateResultPredicate,
   validateFieldNumber,
+  validateReservedName,
 } from "../src/validators.js";
 import { $onValidate } from "../src/onvalidate.js";
 import {
@@ -691,6 +692,158 @@ describe("directUnit_$d2Reserved_InvalidNumbers", () => {
     );
     const payload = maps.get(D2_RESERVED_KEY)!.get(model) as ReservedPayload;
     expect(payload.numbers).toEqual([-1, 5]);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Adversarial tests: validateReservedName — invalid proto3 identifiers
+// A reserved name that fails the /^[A-Za-z_][A-Za-z0-9_]*$/ pattern would
+// inject unexpected content into the emitted `reserved "..."` proto3
+// declaration. Every invalid class must fire `invalid-reserved-name`.
+// ---------------------------------------------------------------------------
+
+describe("directUnit_validateReservedName_Invalid", () => {
+  it("emits invalid-reserved-name for an empty string (post-split empty token)", () => {
+    const { ctx, target, diags } = makeMockCtxWithDiagsForModel();
+    validateReservedName(ctx, target, "");
+    expect(diags.some((d) => d.code.endsWith("invalid-reserved-name"))).toBe(
+      true,
+    );
+  });
+
+  it("emits invalid-reserved-name for a name starting with a digit (leading digit)", () => {
+    const { ctx, target, diags } = makeMockCtxWithDiagsForModel();
+    validateReservedName(ctx, target, "1old_field");
+    expect(diags.some((d) => d.code.endsWith("invalid-reserved-name"))).toBe(
+      true,
+    );
+  });
+
+  it("emits invalid-reserved-name for a name containing a space", () => {
+    const { ctx, target, diags } = makeMockCtxWithDiagsForModel();
+    validateReservedName(ctx, target, "old field");
+    expect(diags.some((d) => d.code.endsWith("invalid-reserved-name"))).toBe(
+      true,
+    );
+  });
+
+  it("emits invalid-reserved-name for a name containing a semicolon (proto injection risk)", () => {
+    const { ctx, target, diags } = makeMockCtxWithDiagsForModel();
+    validateReservedName(ctx, target, "old_field;");
+    expect(diags.some((d) => d.code.endsWith("invalid-reserved-name"))).toBe(
+      true,
+    );
+  });
+
+  it("emits invalid-reserved-name for a name containing a newline (proto injection risk)", () => {
+    const { ctx, target, diags } = makeMockCtxWithDiagsForModel();
+    validateReservedName(ctx, target, "old_field\nnew_line");
+    expect(diags.some((d) => d.code.endsWith("invalid-reserved-name"))).toBe(
+      true,
+    );
+  });
+
+  it("emits invalid-reserved-name for a name containing a hyphen", () => {
+    const { ctx, target, diags } = makeMockCtxWithDiagsForModel();
+    validateReservedName(ctx, target, "old-field");
+    expect(diags.some((d) => d.code.endsWith("invalid-reserved-name"))).toBe(
+      true,
+    );
+  });
+
+  it("emits invalid-reserved-name for a name containing a dot", () => {
+    const { ctx, target, diags } = makeMockCtxWithDiagsForModel();
+    validateReservedName(ctx, target, "old.field");
+    expect(diags.some((d) => d.code.endsWith("invalid-reserved-name"))).toBe(
+      true,
+    );
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Acceptance tests: validateReservedName — valid proto3 identifiers pass
+// ---------------------------------------------------------------------------
+
+describe("directUnit_validateReservedName_Valid", () => {
+  it("accepts a lowercase snake_case name (typical proto field name)", () => {
+    const { ctx, target, diags } = makeMockCtxWithDiagsForModel();
+    validateReservedName(ctx, target, "old_field");
+    expect(diags).toHaveLength(0);
+  });
+
+  it("accepts a name starting with an underscore", () => {
+    const { ctx, target, diags } = makeMockCtxWithDiagsForModel();
+    validateReservedName(ctx, target, "_reserved");
+    expect(diags).toHaveLength(0);
+  });
+
+  it("accepts a name with digits in non-leading position", () => {
+    const { ctx, target, diags } = makeMockCtxWithDiagsForModel();
+    validateReservedName(ctx, target, "field2");
+    expect(diags).toHaveLength(0);
+  });
+
+  it("accepts a single uppercase letter name", () => {
+    const { ctx, target, diags } = makeMockCtxWithDiagsForModel();
+    validateReservedName(ctx, target, "X");
+    expect(diags).toHaveLength(0);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Integration: $d2Reserved fires invalid-reserved-name for invalid name tokens
+// Validates the per-token name check runs inside the decorator (not just the
+// standalone validateReservedName helper).
+// ---------------------------------------------------------------------------
+
+describe("directUnit_$d2Reserved_InvalidNames", () => {
+  it("emits invalid-reserved-name when the names string contains a leading-digit token", () => {
+    const { ctx, target, diags } = makeMockCtxWithDiagsForModel();
+    $d2Reserved(ctx, target, "valid_name, 1bad_name", 1);
+    expect(diags.some((d) => d.code.endsWith("invalid-reserved-name"))).toBe(
+      true,
+    );
+  });
+
+  it("emits invalid-reserved-name for a token with invalid chars — no diagnostic for the valid sibling", () => {
+    const { ctx, target, diags } = makeMockCtxWithDiagsForModel();
+    $d2Reserved(ctx, target, "valid_field, bad;field", 2);
+
+    const nameFindings = diags.filter((d) =>
+      d.code.endsWith("invalid-reserved-name"),
+    );
+
+    expect(nameFindings).toHaveLength(1);
+  });
+
+  it("still stores all name tokens in the state map even when one is invalid — report-and-continue", () => {
+    const model = {} as unknown as import("@typespec/compiler").Model;
+    const { ctx, maps } = makeMockContext();
+    const diags: Array<{ code: string }> = [];
+    (
+      ctx.program as unknown as {
+        reportDiagnostic: (d: { code: string }) => void;
+      }
+    ).reportDiagnostic = (d) => {
+      diags.push(d);
+    };
+    $d2Reserved(ctx, model, "good_name, 1bad", 3);
+    expect(diags.some((d) => d.code.endsWith("invalid-reserved-name"))).toBe(
+      true,
+    );
+    const payload = maps.get(D2_RESERVED_KEY)!.get(model) as ReservedPayload;
+    expect(payload.names).toEqual(["good_name", "1bad"]);
+  });
+
+  it("emits no name diagnostic when all name tokens are valid proto3 identifiers", () => {
+    const { ctx, target, diags } = makeMockCtxWithDiagsForModel();
+    $d2Reserved(ctx, target, "old_field, removed_slot, _legacy", 4, 5);
+
+    const nameFindings = diags.filter((d) =>
+      d.code.endsWith("invalid-reserved-name"),
+    );
+
+    expect(nameFindings).toHaveLength(0);
   });
 });
 

@@ -11,7 +11,7 @@ using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.IssueWorkloadCertif
 
 /// <summary>
 /// Tests for <see cref="IssueWorkloadCertificateHandler"/> — happy-path issuance
-/// (leaf SAN + chain + audit row), the no-active-CA 503, the retired-CA 503,
+/// (leaf SAN + chain + LeafIssuanceAudit record), the no-active-CA 503, the retired-CA 503,
 /// adversarial workload inputs (no audit, no leaf), and the issuer-private-key
 /// zeroize contract.
 /// </summary>
@@ -50,7 +50,7 @@ public sealed class IssueWorkloadCertificateTests
         using var issuerCert = X509CertificateLoader.LoadCertificate(leaf.IssuerCertificateDer);
         ChainBuilds(leafCert, rootCert, issuerCert).Should().BeTrue();
 
-        // An issuance audit row referencing the issuing CA was written.
+        // An issuance LeafIssuanceAudit record referencing the issuing CA was written.
         db.LeafIssuanceAudit.Should().ContainSingle();
         var audit = db.LeafIssuanceAudit.Single();
         audit.WorkloadServiceId.Should().Be("edge");

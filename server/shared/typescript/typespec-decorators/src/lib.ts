@@ -328,5 +328,18 @@ export const $lib = createTypeSpecLibrary({
         default: paramMessage`@d2Reserved number ${"value"} is invalid — must be an integer ≥ 1, ≤ 536870911, and not in the protobuf reserved range 19000–19999`,
       },
     },
+
+    /**
+     * A name token in the @d2Reserved names string is not a valid proto3
+     * identifier. Proto3 identifiers must be non-empty and match
+     * /^[A-Za-z_][A-Za-z0-9_]*$/ — an invalid name would inject unexpected
+     * content into the emitted `reserved "..."` proto3 declaration.
+     */
+    "invalid-reserved-name": {
+      severity: "error",
+      messages: {
+        default: paramMessage`@d2Reserved name '${"value"}' is not a valid proto3 identifier — must match ^[A-Za-z_][A-Za-z0-9_]*$`,
+      },
+    },
   },
 });

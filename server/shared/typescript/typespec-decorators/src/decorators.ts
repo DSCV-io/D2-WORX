@@ -40,6 +40,7 @@ import {
   validateRateLimitTier,
   validateResilience,
   validateResultPredicate,
+  validateReservedName,
   validateReservedNumber,
   validateScopes,
   validateServedBy,
@@ -356,6 +357,9 @@ export function $d2Reserved(
     .split(",")
     .map((s) => s.trim())
     .filter((s) => s.length > 0);
+
+  for (const name of parsed) validateReservedName(context, target, name);
+
   context.program
     .stateMap(D2_RESERVED_KEY)
     .set(target, { numbers: [...numbers], names: parsed });

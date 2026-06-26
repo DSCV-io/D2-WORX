@@ -261,6 +261,33 @@ export function validateReservedNumber(
     });
 }
 
+/**
+ * Proto3 identifier pattern. A reserved name must be a valid proto3 field
+ * identifier: non-empty, starts with a letter or underscore, followed by
+ * letters, digits, or underscores. An invalid token would inject unexpected
+ * content into the emitted `reserved "..."` proto3 declaration.
+ */
+const _PROTO_IDENTIFIER_RE = /^[A-Za-z_][A-Za-z0-9_]*$/;
+
+/**
+ * Validate a single name token supplied to the `names` string of @d2Reserved.
+ * Fires `invalid-reserved-name` when the token is not a valid proto3 identifier
+ * (empty string, contains spaces or punctuation, starts with a digit, etc.).
+ * Called per-token after the comma-split + trim in $d2Reserved.
+ */
+export function validateReservedName(
+  context: DecoratorContext,
+  target: import("@typespec/compiler").Model,
+  name: string,
+): void {
+  if (!_PROTO_IDENTIFIER_RE.test(name))
+    $lib.reportDiagnostic(context.program, {
+      code: "invalid-reserved-name",
+      format: { value: name },
+      target,
+    });
+}
+
 // ----------------------------------------------------------------
 // @d2Resilience pipeline-expression parse + report
 // ----------------------------------------------------------------

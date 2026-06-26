@@ -21,7 +21,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const CLI_PATH = resolve(__dirname, "../src/cli.ts");
 
 function runCli(args: string[]): {
-  status: number | null;
+  status: number | undefined;
   stdout: string;
   stderr: string;
 } {
@@ -35,7 +35,7 @@ function runCli(args: string[]): {
   );
 
   return {
-    status: result.status,
+    status: result.status ?? undefined,
     stdout: result.stdout ?? "",
     stderr: result.stderr ?? "",
   };

@@ -77,9 +77,15 @@ export interface ErrorCodeEntry {
   /** Wire code of the successor entry (e.g. `RESOURCE_NOT_FOUND`). */
   readonly replacedBy?: string;
   /**
-   * ISO-8601 date for the future RFC 8594 `Sunset` response header. Carried on
-   * the contract now, consumed by the Edge response middleware when it exists.
-   * Inert today (no emitter reads it).
+   * ISO-8601 date for the future RFC 8594 `Sunset` response header. Declared
+   * on the contract now so authors can annotate deprecated codes with a target
+   * removal date without a breaking spec change later.
+   *
+   * This field is currently inert — its emit path is not yet implemented. It
+   * will be consumed by the Edge response middleware (RFC 8594 `Sunset` header
+   * injection) once that middleware is built. Until then, the field is preserved
+   * in the spec schema but produces no generated output and triggers no
+   * validation diagnostic. This is a known to-do, not a permanent design choice.
    */
   readonly sunset?: string;
 }
