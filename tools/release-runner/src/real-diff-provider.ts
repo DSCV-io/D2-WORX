@@ -2,58 +2,67 @@
 // Copyright (c) DCSV. All rights reserved.
 // -----------------------------------------------------------------------
 
-// Production DiffProvider — wires the real per-ecosystem extraction adapters
-// (nuget-extractor.ts / ts-api-adapter.ts) into the `DiffProvider` seam the
-// artifact-diff engine (diff-runner.ts) consumes.
+// Production DiffProvider — wires the real per-ecosystem extraction into the
+// `DiffProvider` seam the artifact-diff engine (diff-runner.ts) consumes.
 //
-// This is the single home of the per-package FINGERPRINT COMPOSITION:
+// This is the single home of the per-package FINGERPRINT COMPOSITION, which is
+// SOURCE-BASED + PORTABLE — a SHA-256 over committed inputs only, byte-identical
+// on every OS/machine, with NO build required:
 //
-//   .NET fingerprint = SHA-256( PublicAPI.Shipped.txt
-//                             + PublicAPI.Unshipped.txt
-//                             + normalized IL dump
-//                             + manifest metadata { packageId, version, deps } )
+//   fingerprint = SHA-256( committed source dump
+//                        + the committed API report (PublicAPI.* / .api.md)
+//                        + resolved dependency versions
+//                        + the declared toolchain pin )
 //
-//   TS fingerprint   = computeDistFingerprint( dist/**, package.json metadata
-//                             with @d2/* dep versions substituted from
-//                             resolvedVersions )
+// (composed via composeSourceFingerprint in source-fingerprint.ts).
+//
+// The apiDiff is likewise build-free: a git-ref TEXT DIFF of the committed API
+// report at the baseline ref (`git show <ref>:<path>`) against the HEAD report
+// on disk, diffed by the existing pure parsers. Neither the bump nor the
+// fingerprint shells `dotnet build` or api-extractor.
 //
 // PROPAGATION-VIA-FINGERPRINT (no BFS): the engine processes packages in
 // topological (leaf-first) order and forwards the in-memory resolved-version map
 // to each DiffProvider call. This provider folds those resolved versions into
-// the manifest-metadata input (the `deps` map), so when a dependency bumps, the
-// dependent's manifest input changes → its fingerprint changes → it floors at
+// the DEPS input (the manifest-metadata `deps` map), so when a dependency bumps,
+// the dependent's DEPS input changes → its fingerprint changes → it floors at
 // PATCH. The fingerprint is the SINGLE mechanism that drives both the
-// internal-change floor and the dependency-update floor — there is no separate
+// source-change floor and the dependency-update floor — there is no separate
 // dependency-graph BFS pass.
 //
-// Injectable design: the per-ecosystem extractors are injectable so the
-// provider's dispatch + mapping + fingerprint-composition logic is unit-testable
-// with synthetic extractor results (no real build, no real api-extractor).
+// Injectable design: the readers (committed-source, git-baseline, package.json)
+// are injectable so the provider's dispatch + mapping + fingerprint-composition
+// logic is unit-testable with synthetic inputs (no real build / no api-extractor
+// / no real git).
 
-import { createHash } from "node:crypto";
 import { existsSync, readFileSync } from "node:fs";
 import { isAbsolute, join, resolve } from "node:path";
 import { falsey } from "@d2/utilities";
 import {
-  extractNugetDiff,
+  diffShippedLines,
   fingerprintBaselinePath,
-  makeRealDotnetShell,
-  type DotnetShell,
-  type NugetExtractionResult,
+  parseShippedTxt,
+  shippedTxtPath,
+  unshippedTxtPath,
 } from "./nuget-extractor.js";
 import {
-  computeDistFingerprint,
   diffApiMembers,
   makeGitBaselineReader,
-  makeRealApiExtractorRunner,
-  makeRealDistReader,
   parseApiMembers,
-  readCommittedFingerprint,
   resolveApiMdPath,
-  type ApiExtractorRunner,
+  tsFingerprintBaselinePath,
   type BaselineReader,
-  type DistReader,
 } from "./ts-api-adapter.js";
+import {
+  buildSourceDump,
+  composeSourceFingerprint,
+  listSourceFiles,
+  makeRepoFileReader,
+  readToolchainPin,
+  type RepoFileReader,
+  type SourceEcosystem,
+  type SourceFileReader,
+} from "./source-fingerprint.js";
 import type { ApiDiff, FingerprintDiff } from "./diff-bump.js";
 import type {
   DiffProvider,
@@ -63,71 +72,76 @@ import type {
 import type { PackageDescriptor } from "./types.js";
 
 // ---------------------------------------------------------------------------
-// Injectable extractor seams
+// Injectable readers
 // ---------------------------------------------------------------------------
 
 /**
- * The NuGet extractor function shape — defaults to the real `extractNugetDiff`.
- * Injectable so the provider's composition logic is unit-testable.
+ * Reads a file's content given its ABSOLUTE path, or returns undefined when the
+ * file does not exist. Used for the committed source files + the committed API
+ * report on disk (the HEAD side of the apiDiff). Injectable so the provider's
+ * composition logic is unit-testable without a real package tree.
  */
-export type NugetExtractor = (
-  pkg: PackageDescriptor,
-  shell: DotnetShell,
-) => NugetExtractionResult;
+export type FileReader = (absolutePath: string) => string | undefined;
 
-/**
- * The TS extractor pieces the provider drives. The provider runs api-extractor +
- * reads dist/ + composes the fingerprint itself (so it can substitute resolved
- * dep versions before hashing), rather than delegating to `extractTsPackageDiff`
- * whole — that function reads package.json verbatim and cannot fold in resolved
- * versions. The provider therefore reuses the lower-level api-extractor /
- * dist-reader / fingerprint helpers directly.
- */
-export interface TsExtractorSeams {
-  readonly baselineReader: BaselineReader;
-  readonly apiExtractorRunner: ApiExtractorRunner;
-  readonly distReader: DistReader;
-  /**
-   * Read + parse a package.json into the metadata subset used for fingerprinting.
-   * Injectable so tests do not need a real package.json on disk.
-   */
-  readonly readPackageJson: (packageDir: string) => {
-    name?: string;
-    version?: string;
-    dependencies?: Record<string, string>;
+/** Default FileReader — reads from disk via node:fs. */
+export function makeRealFileReader(): FileReader {
+  return (absolutePath: string): string | undefined => {
+    if (!existsSync(absolutePath)) return undefined;
+
+    return readFileSync(absolutePath, "utf-8");
   };
 }
+
+/**
+ * Lists the repo-relative committed-source paths under a package dir for an
+ * ecosystem (default: `listSourceFiles`, a real fs walk). Injectable so the
+ * provider's composition is testable against a synthetic file set without a real
+ * package tree on disk.
+ */
+export type SourceLister = (
+  packageDir: string,
+  ecosystem: SourceEcosystem,
+) => string[];
 
 /**
  * Options for `makeRealDiffProvider`.
  */
 export interface RealDiffProviderOptions {
-  /** Inject a synthetic NuGet extractor (default: real `extractNugetDiff`). */
-  readonly nugetExtractor?: NugetExtractor;
-  /** Inject a synthetic DotnetShell (default: real shell over `repoRoot`). */
-  readonly dotnetShell?: DotnetShell;
-  /** Inject synthetic TS extractor seams (default: real git + api-extractor + fs). */
-  readonly tsSeams?: TsExtractorSeams;
+  /** Inject a synthetic committed-file reader (default: real fs reader). */
+  readonly fileReader?: FileReader;
   /**
-   * When true (default), run api-extractor in localBuild mode (updates
-   * etc/*.api.md in-place). CI drift checks pass false to fail on report drift.
+   * Inject a synthetic source-file lister (default: real fs walk via
+   * `listSourceFiles`). Tests inject a fixed file set so the composition runs
+   * without a real package tree.
    */
-  readonly localBuild?: boolean;
+  readonly sourceLister?: SourceLister;
+  /** Inject a synthetic git-baseline reader (default: real `git show HEAD:`). */
+  readonly baselineReader?: BaselineReader;
+  /**
+   * Inject a synthetic repo-file reader for the toolchain pin
+   * (default: real fs reader rooted at `repoRoot`).
+   */
+  readonly toolchainReader?: RepoFileReader;
+  /**
+   * The baseline git ref for the apiDiff's `git show <ref>:<path>` read.
+   * Defaults to "HEAD" (the drift / no-op comparison). The release run passes
+   * its release baseline ref.
+   */
+  readonly baselineRef?: string;
 }
 
 // ---------------------------------------------------------------------------
-// .NET fingerprint composition
+// .NET dependency metadata (DEPS input)
 // ---------------------------------------------------------------------------
 
 /**
- * Build the deterministic manifest-metadata JSON for a NuGet package, folding in
- * the resolved dependency versions so a dependency bump moves the fingerprint.
+ * Build the deterministic DEPS (manifest-metadata) JSON for a NuGet package,
+ * folding in the resolved dependency versions so a dependency bump moves the
+ * fingerprint.
  *
  * Only this package's consumable dependencies are included (sorted), each mapped
- * to its resolved version (from `resolvedVersions`, falling back to the dep's own
- * current version). The package's own version is included too — but the IL dump
- * deliberately EXCLUDES the assembly version, so the manifest is the sole home of
- * version-driven fingerprint movement (no double-counting).
+ * to its resolved version (from `resolvedVersions`, falling back to ""). The
+ * package's own resolved version is included too.
  */
 export function buildNugetManifestMeta(
   pkg: PackageDescriptor,
@@ -147,134 +161,11 @@ export function buildNugetManifestMeta(
 }
 
 /**
- * Compose the .NET output fingerprint from the extraction result + the manifest
- * metadata. SHA-256 over the ordered tuple
- *   ( PublicAPI.Shipped.txt + PublicAPI.Unshipped.txt + IL dump + manifestMeta ).
- *
- * Each component is prefixed + LF-terminated so a boundary shift between two
- * components cannot collide with a content change.
- */
-export function composeNugetFingerprint(
-  extraction: Pick<
-    NugetExtractionResult,
-    "shippedTxt" | "unshippedTxt" | "ilDump"
-  >,
-  manifestMeta: string,
-): string {
-  const hash = createHash("sha256");
-  hash.update(`SHIPPED:\n${normalizeLf(extraction.shippedTxt)}\n`);
-  hash.update(`UNSHIPPED:\n${normalizeLf(extraction.unshippedTxt)}\n`);
-  hash.update(`IL:\n${normalizeLf(extraction.ilDump)}\n`);
-  hash.update(`MANIFEST:\n${manifestMeta}\n`);
-
-  return hash.digest("hex");
-}
-
-/** LF-normalize so a CRLF/LF checkout difference cannot perturb the hash. */
-function normalizeLf(text: string): string {
-  return text.replace(/\r\n/g, "\n");
-}
-
-// ---------------------------------------------------------------------------
-// Per-ecosystem getDiff implementations
-// ---------------------------------------------------------------------------
-
-function getNugetDiff(
-  input: DiffProviderInput,
-  extractor: NugetExtractor,
-  shell: DotnetShell,
-): PackageDiff {
-  const { pkg, resolvedVersions } = input;
-
-  const extraction = extractor(pkg, shell);
-
-  const manifestMeta = buildNugetManifestMeta(pkg, resolvedVersions);
-  const freshFingerprint = composeNugetFingerprint(extraction, manifestMeta);
-
-  const committed = shell
-    .readFile(fingerprintBaselinePath(pkg.manifestPath))
-    ?.trim();
-
-  const baselineMissing = committed === undefined;
-  const fingerprintDiff: FingerprintDiff = {
-    changed: baselineMissing || committed !== freshFingerprint,
-  };
-
-  return {
-    apiDiff: extraction.apiDiff,
-    fingerprintDiff,
-    baselineMissing,
-  };
-}
-
-function getTsDiff(
-  input: DiffProviderInput,
-  seams: TsExtractorSeams,
-  repoRoot: string,
-): PackageDiff {
-  const { pkg, resolvedVersions } = input;
-
-  // pkg.dir is repo-root-relative (e.g. server/shared/typescript/result); the
-  // extractor seams need an absolute path. An already-absolute dir (injected in
-  // tests) is passed through unchanged.
-  const packageDir = isAbsolute(pkg.dir) ? pkg.dir : resolve(repoRoot, pkg.dir);
-
-  // --- API surface diff via api-extractor ---------------------------------
-
-  const configPath = join(packageDir, "api-extractor.json");
-  const freshApiMd = seams.apiExtractorRunner.run(packageDir, configPath);
-
-  // Derive the report path from the api-extractor.json config so that packages
-  // whose directory basename differs from their reportFileName are resolved
-  // correctly (e.g. headers/amqp → etc/headers-amqp.api.md, not etc/amqp.api.md).
-  const reportPath = resolveApiMdPath(packageDir, configPath);
-  const committedApiMd = seams.baselineReader.read(reportPath);
-
-  let apiDiff: ApiDiff;
-
-  if (committedApiMd === undefined) {
-    const freshMembers = parseApiMembers(freshApiMd);
-    apiDiff = { added: freshMembers.size > 0, removed: false, changed: false };
-  } else {
-    apiDiff = diffApiMembers(
-      parseApiMembers(committedApiMd),
-      parseApiMembers(freshApiMd),
-    );
-  }
-
-  // --- Dist fingerprint, with resolved @d2/* dep versions substituted ------
-
-  const packageJson = seams.readPackageJson(packageDir);
-  const substituted = substituteResolvedDeps(packageJson, resolvedVersions);
-
-  const freshFingerprint = computeDistFingerprint(
-    packageDir,
-    substituted,
-    seams.distReader,
-  );
-
-  const baselineFingerprint = readCommittedFingerprint(
-    packageDir,
-    seams.baselineReader,
-  );
-
-  const baselineMissing =
-    committedApiMd === undefined || baselineFingerprint === undefined;
-
-  const fingerprintDiff: FingerprintDiff = {
-    changed:
-      baselineFingerprint === undefined ||
-      freshFingerprint !== baselineFingerprint,
-  };
-
-  return { apiDiff, fingerprintDiff, baselineMissing };
-}
-
-/**
  * Substitute each `@d2/*` dependency's `workspace:*` (or any) version literal
- * with its resolved version from `resolvedVersions`. A non-consumable or
- * unresolved dependency keeps its original literal. This is what makes a
- * dependency bump move a TS dependent's dist fingerprint (propagation).
+ * with its resolved version from `resolvedVersions`, then serialize the
+ * deterministic DEPS JSON for a TS package. A non-consumable or unresolved
+ * dependency keeps its original literal. This is what makes a dependency bump
+ * move a TS dependent's fingerprint (propagation).
  */
 export function substituteResolvedDeps(
   packageJson: {
@@ -304,9 +195,24 @@ export function substituteResolvedDeps(
 }
 
 /**
+ * Serialize a TS package's DEPS (manifest-metadata) JSON from its substituted
+ * `{name, version, dependencies}` subset. Mirrors the shape the seed writes.
+ */
+export function buildNpmManifestMeta(substituted: {
+  name?: string;
+  version?: string;
+  dependencies?: Record<string, string>;
+}): string {
+  return JSON.stringify({
+    name: substituted.name ?? "",
+    version: substituted.version ?? "",
+    dependencies: substituted.dependencies ?? {},
+  });
+}
+
+/**
  * Read + parse a package.json into the metadata subset used for fingerprinting.
- * The default `readPackageJson` seam. Exported so the found / not-found branches
- * are unit-testable directly against a real temp file.
+ * Exported so the found / not-found branches are unit-testable directly.
  *
  * @param packageDir - Absolute path to the package root.
  * @returns The `{ name, version, dependencies }` subset.
@@ -331,6 +237,156 @@ export function readPackageJsonFile(packageDir: string): {
 }
 
 // ---------------------------------------------------------------------------
+// Per-ecosystem getDiff implementations
+// ---------------------------------------------------------------------------
+
+/** The resolved seam set threaded into the per-ecosystem getDiff functions. */
+interface ResolvedSeams {
+  readonly fileReader: FileReader;
+  readonly sourceLister: SourceLister;
+  readonly baselineReader: BaselineReader;
+  readonly toolchainReader: RepoFileReader;
+  readonly baselineRef: string;
+}
+
+function getNugetDiff(
+  input: DiffProviderInput,
+  packageDir: string,
+  seams: ResolvedSeams,
+): PackageDiff {
+  const { pkg, resolvedVersions } = input;
+  const {
+    fileReader,
+    sourceLister,
+    baselineReader,
+    toolchainReader,
+    baselineRef,
+  } = seams;
+
+  // --- API surface diff: git-ref text diff of PublicAPI.Shipped.txt --------
+
+  const shippedAbs = shippedTxtPath(pkg.manifestPath);
+  const unshippedAbs = unshippedTxtPath(pkg.manifestPath);
+
+  const headShipped = fileReader(shippedAbs) ?? "";
+  const headUnshipped = fileReader(unshippedAbs) ?? "";
+
+  const baselineShipped = baselineReader.read(shippedAbs, baselineRef);
+
+  let apiDiff: ApiDiff;
+
+  if (baselineShipped === undefined) {
+    const headMembers = parseShippedTxt(headShipped);
+    apiDiff = { added: headMembers.size > 0, removed: false, changed: false };
+  } else {
+    apiDiff = diffShippedLines(
+      parseShippedTxt(baselineShipped),
+      parseShippedTxt(headShipped),
+    );
+  }
+
+  // --- Source-based fingerprint --------------------------------------------
+
+  const sourceRead: SourceFileReader = (relPosix) =>
+    fileReader(join(packageDir, relPosix)) ?? "";
+  const sourceDump = buildSourceDump(
+    sourceLister(packageDir, "nuget"),
+    sourceRead,
+  );
+
+  const freshFingerprint = composeSourceFingerprint({
+    sourceDump,
+    apiReport: headShipped + headUnshipped,
+    depsJson: buildNugetManifestMeta(pkg, resolvedVersions),
+    toolchainJson: readToolchainPin("nuget", toolchainReader),
+  });
+
+  const committed = fileReader(
+    fingerprintBaselinePath(pkg.manifestPath),
+  )?.trim();
+  const baselineMissing =
+    committed === undefined || baselineShipped === undefined;
+
+  const fingerprintDiff: FingerprintDiff = {
+    changed: committed === undefined || committed !== freshFingerprint,
+  };
+
+  return { apiDiff, fingerprintDiff, baselineMissing };
+}
+
+function getTsDiff(
+  input: DiffProviderInput,
+  packageDir: string,
+  seams: ResolvedSeams,
+): PackageDiff {
+  const { resolvedVersions } = input;
+  const {
+    fileReader,
+    sourceLister,
+    baselineReader,
+    toolchainReader,
+    baselineRef,
+  } = seams;
+
+  // --- API surface diff: git-ref text diff of etc/<pkg>.api.md -------------
+
+  const configPath = join(packageDir, "api-extractor.json");
+  const reportPath = resolveApiMdPath(packageDir, configPath);
+
+  const headApiMd = fileReader(reportPath) ?? "";
+  const baselineApiMd = baselineReader.read(reportPath, baselineRef);
+
+  let apiDiff: ApiDiff;
+
+  if (baselineApiMd === undefined) {
+    const headMembers = parseApiMembers(headApiMd);
+    apiDiff = { added: headMembers.size > 0, removed: false, changed: false };
+  } else {
+    apiDiff = diffApiMembers(
+      parseApiMembers(baselineApiMd),
+      parseApiMembers(headApiMd),
+    );
+  }
+
+  // --- Source-based fingerprint --------------------------------------------
+
+  const sourceRead: SourceFileReader = (relPosix) =>
+    fileReader(join(packageDir, relPosix)) ?? "";
+  const sourceDump = buildSourceDump(
+    sourceLister(packageDir, "npm"),
+    sourceRead,
+  );
+
+  const packageJsonText = fileReader(join(packageDir, "package.json"));
+  const packageJson =
+    packageJsonText === undefined
+      ? {}
+      : (JSON.parse(packageJsonText) as {
+          name?: string;
+          version?: string;
+          dependencies?: Record<string, string>;
+        });
+  const substituted = substituteResolvedDeps(packageJson, resolvedVersions);
+
+  const freshFingerprint = composeSourceFingerprint({
+    sourceDump,
+    apiReport: headApiMd,
+    depsJson: buildNpmManifestMeta(substituted),
+    toolchainJson: readToolchainPin("npm", toolchainReader),
+  });
+
+  const committed = fileReader(tsFingerprintBaselinePath(packageDir))?.trim();
+  const baselineMissing =
+    committed === undefined || baselineApiMd === undefined;
+
+  const fingerprintDiff: FingerprintDiff = {
+    changed: committed === undefined || committed !== freshFingerprint,
+  };
+
+  return { apiDiff, fingerprintDiff, baselineMissing };
+}
+
+// ---------------------------------------------------------------------------
 // Public API — makeRealDiffProvider
 // ---------------------------------------------------------------------------
 
@@ -338,30 +394,28 @@ export function readPackageJsonFile(packageDir: string): {
  * Construct the production `DiffProvider` the CLI wires into `runDiffRelease`.
  *
  * Dispatches per `pkg.ecosystem`:
- *   - "nuget" → build + IL dump + compose SHA over PublicAPI.* + IL + manifest.
- *   - "npm"   → api-extractor + dist fingerprint (with resolved dep versions).
+ *   - "nuget" → git-ref PublicAPI diff + source-based fingerprint.
+ *   - "npm"   → git-ref .api.md diff + source-based fingerprint.
  *
- * Both branches fold `input.resolvedVersions` into the fingerprint so dependency
- * propagation falls out of the fingerprint with no separate BFS pass.
+ * Both branches fold `input.resolvedVersions` into the DEPS fingerprint input so
+ * dependency propagation falls out of the fingerprint with no separate BFS pass.
+ * Nothing here builds — the whole engine is build-free.
  *
- * @param repoRoot - Absolute path to the repository root (locates il-fingerprint
- *                   + the git baseline reader).
- * @param options  - Optional injected seams (for unit-testing the composition).
+ * @param repoRoot - Absolute path to the repository root (roots the git baseline
+ *                   reader + the toolchain-pin reader).
+ * @param options  - Optional injected readers (for unit-testing the composition).
  * @returns A DiffProvider whose `getDiff` dispatches per ecosystem.
  */
 export function makeRealDiffProvider(
   repoRoot: string,
   options: RealDiffProviderOptions = {},
 ): DiffProvider {
-  const nugetExtractor = options.nugetExtractor ?? extractNugetDiff;
-  const dotnetShell = options.dotnetShell ?? makeRealDotnetShell(repoRoot);
-  const localBuild = options.localBuild ?? true;
-
-  const tsSeams: TsExtractorSeams = options.tsSeams ?? {
-    baselineReader: makeGitBaselineReader(repoRoot),
-    apiExtractorRunner: makeRealApiExtractorRunner(localBuild),
-    distReader: makeRealDistReader(),
-    readPackageJson: readPackageJsonFile,
+  const seams: ResolvedSeams = {
+    fileReader: options.fileReader ?? makeRealFileReader(),
+    sourceLister: options.sourceLister ?? listSourceFiles,
+    baselineReader: options.baselineReader ?? makeGitBaselineReader(repoRoot),
+    toolchainReader: options.toolchainReader ?? makeRepoFileReader(repoRoot),
+    baselineRef: options.baselineRef ?? "HEAD",
   };
 
   return {
@@ -372,11 +426,18 @@ export function makeRealDiffProvider(
         );
       }
 
+      // pkg.dir is repo-root-relative (e.g. server/shared/typescript/result);
+      // resolve to an absolute path. An already-absolute dir (injected in tests)
+      // is passed through unchanged.
+      const packageDir = isAbsolute(input.pkg.dir)
+        ? input.pkg.dir
+        : resolve(repoRoot, input.pkg.dir);
+
       if (input.pkg.ecosystem === "nuget") {
-        return getNugetDiff(input, nugetExtractor, dotnetShell);
+        return getNugetDiff(input, packageDir, seams);
       }
 
-      return getTsDiff(input, tsSeams, repoRoot);
+      return getTsDiff(input, packageDir, seams);
     },
   };
 }

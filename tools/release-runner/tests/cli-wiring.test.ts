@@ -39,7 +39,7 @@ describe("CLI default-path wiring (artifact-diff engine)", () => {
     expect(typeof runnerIndex.makeRealDiffProvider).toBe("function");
     expect(typeof runnerIndex.runDiffRelease).toBe("function");
     expect(typeof runnerIndex.checkBaselineDrift).toBe("function");
-    expect(typeof runnerIndex.extractNugetDiff).toBe("function");
+    expect(typeof runnerIndex.composeSourceFingerprint).toBe("function");
   });
 
   it("the default path drives the engine through the provider (not computeBumpPlans)", () => {

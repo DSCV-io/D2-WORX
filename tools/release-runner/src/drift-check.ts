@@ -11,15 +11,18 @@
 // (not a second extraction code path) keeps ONE extraction implementation —
 // the drift check validates the exact provider the CLI now uses for releases.
 //
-// Coverage by ecosystem (cross-platform-stable now that the .NET fingerprint is
-// a normalized IL dump):
+// Coverage by ecosystem (the source-based fingerprint is portable, so a
+// recompute on any host matches the committed baseline by construction):
 //   - .NET API drift  — owned by the Build lane (RS0016/RS0017 → build error
 //                       under TreatWarningsAsErrors); the drift check still
-//                       re-extracts it via the provider, and it ALSO recomputes
-//                       the platform-stable .release-fingerprint (IL dump +
-//                       manifest), which the Build lane does not check.
-//   - TS API drift    — api-extractor `.api.md` drift (no build-time analog).
-//   - TS/.NET output  — the fingerprint recompute catches internal-only changes.
+//                       re-derives it via the provider's git-ref report diff,
+//                       and it ALSO recomputes the source-based
+//                       .release-fingerprint, which the Build lane does not check.
+//   - TS API drift    — the `.api.md` report diff (no build-time analog); the CI
+//                       lane additionally runs production-mode api-extractor as a
+//                       second currency guard.
+//   - TS/.NET output  — the source-based fingerprint recompute catches a
+//                       source/dep/toolchain change not reflected in the API report.
 //
 // Failure semantics: collect ALL drifted packages (not first-fail), print a
 // table, and exit non-zero if any drifted. Fail-loud per the strict convention.

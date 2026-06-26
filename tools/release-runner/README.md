@@ -11,12 +11,14 @@ libraries.
 
 ## What it does
 
-For every consumable package, builds the publishable artifact, extracts its public API
-surface, and computes an output fingerprint, then **diffs those against the package's
-committed baselines** to derive the semver bump. The commit footer can only ESCALATE the
-diff-derived bump (never lower it); the commit TYPE drives the changelog category only.
-The runner writes the version slot plus prepends a `CHANGELOG.md` block. Without `--apply`
-the runner reports what it would do (dry-run).
+For every consumable package, derives the semver bump from a **build-free artifact diff**:
+the public-API surface diff (a git-ref text diff of the committed API report) and a
+**source-based output fingerprint** (a SHA-256 over committed source + the API report +
+resolved dependency versions + the declared toolchain pin), each diffed against the
+package's committed baselines. Nothing builds to compute the bump. The commit footer can
+only ESCALATE the diff-derived bump (never lower it); the commit TYPE drives the changelog
+category only. The runner writes the version slot plus prepends a `CHANGELOG.md` block.
+Without `--apply` the runner reports what it would do (dry-run).
 
 The bump is the **artifact diff**, not the commit label:
 
@@ -34,23 +36,38 @@ output change now floors at PATCH regardless of the commit label.
 
 ### Per-ecosystem extraction
 
-| Ecosystem | Public API surface | Output fingerprint |
-|---|---|---|
-| .NET (54) | `PublicAPI.Shipped.txt` + `PublicAPI.Unshipped.txt` (PublicApiAnalyzers) | `.release-fingerprint` = SHA-256(PublicAPI.* + normalized IL dump + manifest metadata) |
-| TS (29) | `etc/<pkg>.api.md` (api-extractor) | `etc/dist-fingerprint.txt` = SHA-256(comment-normalized dist + manifest metadata) |
+Both ecosystems share ONE fingerprint composition — a SHA-256 over the ordered tuple
+( committed source dump + the committed API report + resolved dependency versions + the
+declared toolchain pin ):
 
-The .NET output fingerprint is a **normalized IL/metadata dump** (from `tools/il-fingerprint`),
-not a raw DLL hash. The dump never reads the module MVID / build timestamp / source path, so
-it is platform-independent by construction — a baseline hashed on one host equals a recompute
-on another (the drift check compares cross-platform without false-failing).
+| Ecosystem | Public API surface (git-ref text diff) | Source-based fingerprint baseline |
+|---|---|---|
+| .NET (54) | `PublicAPI.Shipped.txt` + `PublicAPI.Unshipped.txt` (PublicApiAnalyzers) | `.release-fingerprint` |
+| TS (29) | `etc/<pkg>.api.md` (api-extractor) | `etc/.release-fingerprint` |
+
+The fingerprint hashes only COMMITTED text (git-tracked source incl. committed `.g.cs`/`.g.ts`,
+the API report, and the declared toolchain pin from `server/global.json` +
+`server/Directory.Build.props` / the root `package.json` + `tsconfig.base.json`) plus the
+resolved-dependency map. Because no built output is hashed, the fingerprint is byte-identical
+on every OS/machine and reproducible by any contributor with no build — a baseline seeded on
+one host equals a recompute on another, so the drift check compares cross-platform without
+false-failing. Build-emitted, gitignored transients (e.g. the non-deterministic
+`LoggerMessage.g.cs` the loggermessage-splitter splits into committed per-class files) are
+excluded by enumerating the source via `git ls-files`.
+
+**Honest residual:** the only signal it cannot detect is a float-within-pin rebuild —
+identical committed source + deps + declared toolchain pin, with a patch-level SDK/compiler
+drift inside the pin's roll-forward window (`rollForward: latestFeature` / `LangVersion=latest`)
+and no version bump. A republish-worthy toolchain upgrade is one that EDITS the committed pin,
+which DOES move the fingerprint; the rare float case is footer-forceable.
 
 ### Propagation falls out of the fingerprint
 
 The engine processes packages in topological (leaf-first) order and folds each dependency's
-resolved version into the dependent's manifest-metadata fingerprint input. When a dependency
-bumps, the dependent's manifest input changes → its fingerprint changes → it floors at PATCH.
-There is no separate dependency-graph BFS pass — one mechanism (the fingerprint) drives both
-the internal-change floor and the dependency-update floor.
+resolved version into the dependent's fingerprint DEPS input. When a dependency bumps, the
+dependent's DEPS input changes → its fingerprint changes → it floors at PATCH. There is no
+separate dependency-graph BFS pass — one mechanism (the fingerprint) drives both the
+source-change floor and the dependency-update floor.
 
 ### Baseline drift check
 
@@ -92,15 +109,17 @@ node tools/release-runner/dist/cli.js --help
 | `--help` / `-h` | Print flag descriptions and exit. |
 
 `--apply` and `--graduate` are mutually exclusive with `--list`. The default bump source is
-the **artifact-diff engine**, which BUILDS each package (and shells the IL-dump tool +
-api-extractor), so a default dry-run is slower than the legacy commit-parse path.
+the **artifact-diff engine**. It is build-free — the apiDiff is a git-ref text diff of the
+committed API report and the fingerprint is a source hash — so a dry-run is fast (no per-package
+build).
 
 ## Artifact-diff bump model
 
-The bump is derived from the **diff between each package's freshly-built artifact and its
-committed baseline**, not from the commit label. The commit footer is an OVERRIDE that can
-only ESCALATE the diff-derived bump (never lower it) and supplies the changelog prose; the
-commit TYPE is demoted to changelog category only.
+The bump is derived from the **diff between each package's committed artifact baselines (its
+API report + source-based fingerprint) and the current committed source**, not from the commit
+label. The commit footer is an OVERRIDE that can only ESCALATE the diff-derived bump (never
+lower it) and supplies the changelog prose; the commit TYPE is demoted to changelog category
+only.
 
 | Footer | Role |
 |---|---|

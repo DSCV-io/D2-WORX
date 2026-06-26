@@ -170,41 +170,33 @@ jobs:
 
   # ---------------------------------------------------------------------------
   # Versioning integration lane — advisory (non-blocking) initially.
-  # Exercises the artifact-diff versioning engine against REAL artifacts:
-  #   1. runs the gated real-extraction adapter tests (D2_VERSIONING_INTEGRATION=1)
-  #      — the IL-fingerprint determinism proofs (path-independence, build-
-  #      stability, impl-change detection) + the real api-extractor TS adapter;
-  #   2. runs the baseline-drift check (drift-check.ts) — recomputes every
-  #      committed PublicAPI / .api.md / .release-fingerprint baseline and FAILS
-  #      on any drift without a same-PR bump.
-  # Needs BOTH ecosystems' real artifacts (built .NET DLLs + built TS dists), so
-  # it is the heaviest lane. Advisory until the cross-platform IL-fingerprint
-  # determinism is proven green on Linux CI, then promoted to a required check
-  # (a one-line branch-protection change — no workflow edit).
+  # Guards the artifact-diff versioning engine. The bump signals are build-free —
+  # the apiDiff is a git-ref text diff of the committed API reports and the
+  # fingerprint is a SOURCE-BASED hash (committed source + report + resolved deps
+  # + the declared toolchain pin), so this lane runs NO .NET build. It:
+  #   1. builds the shared-TS dists + runs api-extractor in production mode (--ci)
+  #      to guard the committed `.api.md` CURRENCY against the built `dist`
+  #      (the one thing still needing a built dist — TS has no RS0016 analog);
+  #   2. runs the baseline-drift check (drift-check.ts) — re-derives every
+  #      committed API-report diff + recomputes every source-based
+  #      .release-fingerprint and FAILS on any drift without a same-PR bump.
+  # The .NET API-report currency is owned by the `build` job (RS0016/RS0017 are
+  # errors under TreatWarningsAsErrors), so no .NET SDK is needed here.
   # `continue-on-error: true` makes it advisory: it reports but does not block.
   # ---------------------------------------------------------------------------
   versioning-integration:
     name: Versioning integration (artifact-diff engine)
     runs-on: ubuntu-latest
     continue-on-error: true
-    env:
-      D2_VERSIONING_INTEGRATION: "1"
     steps:
       - uses: actions/checkout@v4
         with:
-          # Full history — the TS baseline reader does `git show HEAD:<path>`.
+          # Full history — the API-report baseline reader does `git show HEAD:<path>`.
           fetch-depth: 0
-      - uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: "10.0.x"
       - uses: actions/setup-node@v4
         with:
           node-version: "24"
       - uses: pnpm/action-setup@v4
-      # The gated nuget tests need a restored graph + built DLLs; the IL-dump
-      # tool is built on demand by the test's subprocess + the drift check.
-      - name: dotnet build (solution — restore + DLLs)
-        run: dotnet build server/D2.slnx -c Release
       # Scoped install: release-runner pulls api-extractor (a devDep) + its deps;
       # the shared-TS subtree pulls @d2/* build deps; ts-codegen for prebuilds.
       - name: pnpm install (release-runner + shared-TS subtree + ts-codegen)
@@ -213,8 +205,7 @@ jobs:
           --filter "release-runner..."
           --filter "./server/shared/typescript/**..."
           --filter "ts-codegen..."
-      # The gated TS adapter test + the drift check read dist/ (api-extractor
-      # consumes dist/index.d.ts; the fingerprint hashes dist/**).
+      # The gated TS `.api.md` currency gate runs api-extractor against dist/.
       - name: build the shared-TS dists
         run: pnpm --filter "./server/shared/typescript/**" -r build
       # Build release-runner's workspace dependency closure (contract-gate,
@@ -222,11 +213,9 @@ jobs:
       # test/runtime. Mirrors the release-runner-unit lane's build step.
       - name: build release-runner dependencies
         run: pnpm --filter "release-runner^..." build
-      - name: Versioning gated adapter + proof tests (D2_VERSIONING_INTEGRATION)
+      - name: Versioning TS api.md currency + drift check
         run: pnpm --filter release-runner test
-      - name: assert no source drift from the gated nuget tests
-        run: git diff --exit-code server/shared/dotnet/utilities/
-      - name: Baseline drift check (PublicAPI / .api.md / fingerprint)
+      - name: Baseline drift check (API reports + source-based fingerprint)
         run: pnpm --filter release-runner exec tsx src/drift-check-cli.ts
 
   # lint-and-format — blocked: web half needs `server/web/` SvelteKit workspace

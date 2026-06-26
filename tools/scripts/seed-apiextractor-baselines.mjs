@@ -1,8 +1,16 @@
 // Copyright (c) DCSV. All rights reserved.
 //
 // Idempotent seeding tool: installs api-extractor.json configs and generates
-// committed baselines (etc/<pkg>.api.md + etc/dist-fingerprint.txt) for all
+// committed baselines (etc/<pkg>.api.md + etc/.release-fingerprint) for all
 // 29 @d2/* consumable packages under server/shared/typescript/.
+//
+// The fingerprint is SOURCE-BASED + PORTABLE — a SHA-256 over committed text
+// only ( committed src dump + the .api.md report + resolved deps + the declared
+// toolchain pin ), byte-identical on every OS/machine with NO build to compute.
+// It matches the release-runner's composeSourceFingerprint byte-for-byte so the
+// drift check (which recomputes via the runner) compares like-for-like. The
+// committed home is `etc/.release-fingerprint` (mirrors the .NET filename for a
+// single mental model across both ecosystems).
 //
 // EXCLUDES tooling-only packages: typespec-decorators, typespec-emitters,
 // contract-tests (these are dev fixtures, not consumable libraries).
@@ -12,20 +20,15 @@
 // is unchanged (fingerprint and api.md are deterministic outputs).
 //
 // Prerequisites:
-//   - All 29 packages must have a built dist/ (run `pnpm -r build` first or
-//     pass --skip-build to use existing dist/).
+//   - All 29 packages must have a built dist/ — api-extractor consumes
+//     dist/index.d.ts to generate the .api.md report (the fingerprint itself
+//     does NOT read dist/). Run `pnpm -r build` first.
 //   - @microsoft/api-extractor must be installed in tools/release-runner
 //     (it is — declared as a devDependency there).
 
 import { createHash } from "node:crypto";
-import {
-  existsSync,
-  mkdirSync,
-  readdirSync,
-  readFileSync,
-  writeFileSync,
-} from "node:fs";
-import { dirname, join, relative } from "node:path";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { dirname, join } from "node:path";
 import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 
@@ -331,90 +334,171 @@ function runApiExtractor(pkgDir, shortName) {
 }
 
 // ---------------------------------------------------------------------------
-// Step 3 — Compute dist-fingerprint (mirrors ts-api-adapter.ts logic)
+// Step 3 — Compute the source-based fingerprint (mirrors source-fingerprint.ts
+// + real-diff-provider.ts BYTE-FOR-BYTE; the seed↔provider identity is pinned by
+// a runner test).
 // ---------------------------------------------------------------------------
 
-/**
- * Strip single-line and block JS comments, collapse blank lines.
- * @param {string} js
- */
-function normaliseJsForFingerprint(js) {
-  let s = js.replace(/\/\*[\s\S]*?\*\//g, "");
-  s = s.replace(/\/\/[^\n]*/g, "");
-  s = s.replace(/(\r?\n\s*){2,}/g, "\n\n");
+/** LF-normalize so a CRLF/LF checkout difference cannot perturb the hash. */
+function normalizeLf(text) {
+  return text.replace(/\r\n/g, "\n");
+}
 
-  return s.trim();
+const SKIP_DIRS = new Set([
+  "bin",
+  "obj",
+  "dist",
+  "node_modules",
+  "etc",
+  "tests",
+]);
+
+/** True when a package-relative path lives under a skipped directory. */
+function isSkipped(relPosix) {
+  return relPosix.split("/").some((seg) => SKIP_DIRS.has(seg));
+}
+
+/** Is this committed file part of the TS source dump? */
+function isNpmSourceFile(relPosixPath) {
+  const base = relPosixPath.slice(relPosixPath.lastIndexOf("/") + 1);
+
+  if (base === ".release-fingerprint" || base === "CHANGELOG.md") return false;
+  if (base.endsWith(".test.ts")) return false;
+  if (base.endsWith(".ts")) return true;
+  if (base === "package.json") return true;
+  if (base === "api-extractor.json") return true;
+
+  return base.startsWith("tsconfig") && base.endsWith(".json");
 }
 
 /**
- * Recursively collect files with given extensions under dir.
- * @param {string} dir
- * @param {string[]} extensions
- * @param {string[]} out
+ * List the package-relative POSIX paths of COMMITTED (git-tracked) TS source
+ * files. Tracked-only is mandatory (the build can emit gitignored transients);
+ * mirrors the release-runner's listSourceFiles BYTE-FOR-BYTE.
  */
-function walkDir(dir, extensions, out) {
-  if (!existsSync(dir)) return;
-
-  const entries = readdirSync(dir, { withFileTypes: true });
-
-  for (const entry of entries) {
-    const full = join(dir, entry.name);
-
-    if (entry.isDirectory()) {
-      walkDir(full, extensions, out);
-    } else if (entry.isFile()) {
-      const ext = entry.name.slice(entry.name.lastIndexOf("."));
-
-      if (extensions.includes(ext)) out.push(full);
-    }
-  }
-}
-
-/**
- * Compute the dist fingerprint (SHA-256) for a package.
- * Mirrors computeDistFingerprint in ts-api-adapter.ts exactly.
- * @param {string} pkgDir
- * @param {{ name?: string; version?: string; dependencies?: Record<string,string> }} pkgJson
- */
-function computeDistFingerprint(pkgDir, pkgJson) {
-  const distDir = join(pkgDir, "dist");
-  const hash = createHash("sha256");
-
-  // Hash .js files (comment-stripped) in sorted path order.
-  const jsFiles = [];
-  walkDir(distDir, [".js"], jsFiles);
-  jsFiles.sort();
-
-  for (const filePath of jsFiles) {
-    const relPath = relative(pkgDir, filePath).replace(/\\/g, "/");
-    const content = readFileSync(filePath, "utf-8");
-    const normalised = normaliseJsForFingerprint(content);
-
-    hash.update(`JS:${relPath}\n${normalised}\n`);
-  }
-
-  // Hash .d.ts files (verbatim) in sorted path order.
-  const dtsFiles = [];
-  walkDir(distDir, [".d.ts"], dtsFiles);
-  dtsFiles.sort();
-
-  for (const filePath of dtsFiles) {
-    const relPath = relative(pkgDir, filePath).replace(/\\/g, "/");
-    const content = readFileSync(filePath, "utf-8");
-
-    hash.update(`DTS:${relPath}\n${content}\n`);
-  }
-
-  // Hash package.json runtime metadata.
-  const meta = JSON.stringify({
-    name: pkgJson.name ?? "",
-    version: pkgJson.version ?? "",
-    dependencies: pkgJson.dependencies ?? {},
+function listNpmSourceFiles(packageDir) {
+  const result = spawnSync("git", ["ls-files", "--", "."], {
+    cwd: packageDir,
+    encoding: "utf-8",
+    maxBuffer: 32 * 1024 * 1024,
   });
 
-  hash.update(`PKG:${meta}\n`);
+  if (result.status !== 0) return [];
+
+  return (result.stdout ?? "")
+    .split("\n")
+    .map((l) => l.trim().replace(/\\/g, "/"))
+    .filter((l) => l.length > 0 && !isSkipped(l) && isNpmSourceFile(l));
+}
+
+/** Ordered, LF-normalized source dump for a package dir. */
+function buildSourceDump(packageDir) {
+  const sorted = listNpmSourceFiles(packageDir).sort();
+  let dump = "";
+
+  for (const relPath of sorted) {
+    const content = readFileSync(join(packageDir, relPath), "utf-8");
+    dump += `F:${relPath}\n${normalizeLf(content)}\n`;
+  }
+
+  return dump;
+}
+
+/** Serialize keys ascending so structurally equal inputs serialize identically. */
+function stableJson(obj) {
+  const sortedKeys = Object.keys(obj).sort();
+  const ordered = {};
+
+  for (const key of sortedKeys) ordered[key] = obj[key] ?? "";
+
+  return JSON.stringify(ordered);
+}
+
+/** The declared, committed TS toolchain pin as deterministic sorted-key JSON. */
+function readNpmToolchainPin() {
+  const rootPkg = JSON.parse(
+    readFileSync(join(REPO_ROOT, "package.json"), "utf-8"),
+  );
+  const tsconfigBase = JSON.parse(
+    readFileSync(join(TS_SHARED, "tsconfig.base.json"), "utf-8"),
+  );
+
+  return stableJson({
+    module: tsconfigBase.compilerOptions?.module ?? "",
+    target: tsconfigBase.compilerOptions?.target ?? "",
+    typescript: rootPkg.devDependencies?.typescript ?? "",
+  });
+}
+
+const TOOLCHAIN_PIN = readNpmToolchainPin();
+
+/**
+ * Build the DEPS (manifest-metadata) JSON for a TS package: substitute each
+ * @d2/* dep literal with its resolved version (at seed time = committed
+ * version), then serialize {name, version, dependencies}. Mirrors the provider's
+ * substituteResolvedDeps + buildNpmManifestMeta.
+ *
+ * @param {{ name?: string; version?: string; dependencies?: Record<string,string> }} pkgJson
+ * @param {Map<string,string>} resolvedVersions
+ */
+function buildNpmDepsJson(pkgJson, resolvedVersions) {
+  const deps = pkgJson.dependencies ?? {};
+  const substituted = {};
+
+  for (const [name, literal] of Object.entries(deps)) {
+    substituted[name] = resolvedVersions.get(name) ?? literal;
+  }
+
+  const ownVersion =
+    (pkgJson.name !== undefined
+      ? resolvedVersions.get(pkgJson.name)
+      : undefined) ?? pkgJson.version;
+
+  return JSON.stringify({
+    name: pkgJson.name ?? "",
+    version: ownVersion ?? "",
+    dependencies: substituted,
+  });
+}
+
+/**
+ * Compose the source-based fingerprint over the ordered tuple
+ *   ( committed source dump + the .api.md report + resolved deps + toolchain ).
+ *
+ * Byte-identical to the release-runner's composeSourceFingerprint so the drift
+ * check (which recomputes via the runner) compares like-for-like. No build.
+ *
+ * @param {string} pkgDir
+ * @param {string} apiMd
+ * @param {string} depsJson
+ */
+function composeSourceFingerprint(pkgDir, apiMd, depsJson) {
+  const hash = createHash("sha256");
+
+  hash.update(`SOURCE:\n${buildSourceDump(pkgDir)}\n`);
+  hash.update(`APIREPORT:\n${normalizeLf(apiMd)}\n`);
+  hash.update(`DEPS:\n${depsJson}\n`);
+  hash.update(`TOOLCHAIN:\n${TOOLCHAIN_PIN}\n`);
 
   return hash.digest("hex");
+}
+
+// ---------------------------------------------------------------------------
+// Resolved-version map — each consumable @d2/* at its committed version.
+// At seed time resolvedVersions == the committed versions, matching how the
+// provider seeds its map on a no-op drift recompute (every dep at its current
+// version), so the seeded fingerprint equals the runtime recompute.
+// ---------------------------------------------------------------------------
+
+const RESOLVED_VERSIONS = new Map();
+
+for (const { dir, pkgName } of CONSUMABLES) {
+  const pkgJsonPath = join(dir, "package.json");
+
+  if (existsSync(pkgJsonPath)) {
+    const pkgJson = JSON.parse(readFileSync(pkgJsonPath, "utf-8"));
+    RESOLVED_VERSIONS.set(pkgName, pkgJson.version ?? "");
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -485,22 +569,27 @@ for (const { dir, shortName, pkgName } of CONSUMABLES) {
   );
   apiMdWritten++;
 
-  // --- Step 3: Compute and write dist-fingerprint.txt ---
+  // --- Step 3: Compose + write the source-based etc/.release-fingerprint ---
+  // The fingerprint reads the FRESHLY-WRITTEN committed .api.md back from disk
+  // (the provider reads the same committed file), so the seeded hash equals the
+  // runtime recompute.
   const pkgJsonPath = join(dir, "package.json");
   const pkgJson = JSON.parse(readFileSync(pkgJsonPath, "utf-8"));
-  const fingerprint = computeDistFingerprint(dir, pkgJson);
-  const fpPath = join(etcDir, "dist-fingerprint.txt");
+  const committedApiMd = readFileSync(reportPath, "utf-8");
+  const depsJson = buildNpmDepsJson(pkgJson, RESOLVED_VERSIONS);
+  const fingerprint = composeSourceFingerprint(dir, committedApiMd, depsJson);
+  const fpPath = join(etcDir, ".release-fingerprint");
   const fpContent = fingerprint + "\n";
   const fpChanged = writeIfChanged(fpPath, fpContent);
 
   if (fpChanged) {
     console.log(
-      `  + Wrote dist-fingerprint.txt (${fingerprint.slice(0, 16)}…)`,
+      `  + Wrote .release-fingerprint (${fingerprint.slice(0, 16)}…)`,
     );
     fpWritten++;
   } else {
     console.log(
-      `  = dist-fingerprint.txt unchanged (${fingerprint.slice(0, 16)}…)`,
+      `  = .release-fingerprint unchanged (${fingerprint.slice(0, 16)}…)`,
     );
   }
 }
@@ -514,7 +603,7 @@ console.log(`
   Packages processed : ${CONSUMABLES.length}
   api-extractor.json : ${configsWritten} written, ${configsSkipped} unchanged
   etc/<pkg>.api.md   : ${apiMdWritten} generated
-  dist-fingerprint   : ${fpWritten} written/updated
+  .release-fingerprint : ${fpWritten} written/updated
   Errors             : ${errors}
 `);
 

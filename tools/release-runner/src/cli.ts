@@ -27,12 +27,11 @@
 //   --help, -h            Print this help message and exit.
 //
 // The DEFAULT bump source is the ARTIFACT-DIFF engine (runDiffRelease wired with
-// the production DiffProvider). The diff between each package's built artifact +
-// public API surface and its committed baseline drives the bump; the commit
-// footer can only ESCALATE it; the commit type drives changelog category only.
-// Because the artifact-diff engine BUILDS each package (and shells the IL-dump
-// tool + api-extractor), a default dry-run now triggers builds and is slower than
-// the legacy commit-parse path.
+// the production DiffProvider). The bump is derived from a git-ref text diff of
+// the committed API report plus a SHA-256 of committed source + API report +
+// resolved dependency versions + the declared toolchain pin — no per-package
+// build, no IL-dump tool. The commit footer can only ESCALATE the diff-derived
+// bump; the commit type drives changelog category only.
 //
 // Excluded from the unit-coverage threshold (see vitest.config.ts).
 
@@ -80,10 +79,11 @@ release-runner — per-package semver release automation
 Usage:
   pnpm --filter release-runner exec tsx src/cli.ts [options]
 
-The default bump source is the ARTIFACT-DIFF engine: the diff between each
-package's built artifact + public API surface and its committed baseline drives
-the bump; the commit footer can only escalate it. This BUILDS each package, so a
-default dry-run is slower than the legacy commit-parse path.
+The default bump source is the ARTIFACT-DIFF engine: the bump is derived from a
+git-ref text diff of the committed API report plus a SHA-256 of committed source
++ API report + resolved dependency versions + the declared toolchain pin. No
+per-package build is required. The commit footer can only escalate the
+diff-derived bump; the commit type drives changelog category only.
 
 Options:
   --against <ref>       Baseline git ref (required unless --list; or set

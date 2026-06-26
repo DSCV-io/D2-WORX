@@ -2,48 +2,31 @@
 // Copyright (c) DCSV. All rights reserved.
 // -----------------------------------------------------------------------
 
-// TS extraction adapter — api surface + dist fingerprint for npm packages.
+// TS extraction helpers — the @d2/* half of the build-free artifact-diff engine.
 //
-// Produces ApiDiff and FingerprintDiff (as defined in diff-bump.ts) for a
-// single @d2/* package by:
+// The bump is driven by two signals:
 //
-//   A. Running @microsoft/api-extractor against the package's committed
-//      etc/<name>.api.md baseline to detect public-API changes.
+//   A. apiDiff — a git-ref TEXT DIFF of the committed `etc/<pkg>.api.md` report:
+//      the baseline report at the run's baseline ref (`git show <ref>:<path>`)
+//      vs the HEAD report on disk, compared by the pure `.api.md` member parser.
+//      No build for the bump.
 //
-//   B. Hashing the package's built dist/ output (comment-stripped .js +
-//      .d.ts) combined with package.json runtime metadata to detect internal
-//      changes not visible in the API surface.
+//   B. fingerprint — a SOURCE-BASED hash composed in real-diff-provider.ts over
+//      ( committed src + .api.md + resolved deps + toolchain pin ). This module
+//      supplies the `.api.md` member parser/differ, the git baseline reader, the
+//      report-path resolver, and the TS fingerprint-baseline path; the
+//      composition lives in source-fingerprint.ts.
 //
-// Both IO operations are behind injectable seams so tests can supply
-// pre-built fixtures without spawning real tooling.
-//
-// Baseline files:
-//   etc/<pkgShortName>.api.md   — committed API report (managed by api-extractor)
-//   etc/dist-fingerprint.txt    — committed dist hash (managed by this module)
-//
-// --- Comment-handling decision ---
-//
-// tsc with the base tsconfig does NOT strip JS comments (removeComments is
-// absent / false in tsconfig.base.json). A comment-only source edit would
-// therefore change the dist .js output and WOULD change the fingerprint.
-//
-// Rather than claim the limitation silently, this adapter normalises the
-// .js content before hashing: it strips single-line (//) comments, block
-// (/* */) comments, and sourcemap URL tail comments, then collapses runs
-// of blank lines. .d.ts files are hashed verbatim (they are part of the
-// public type surface and comment changes there intentionally trigger a
-// bump — they affect generated documentation).
-//
-// Stability evidence: see tests/ts-api-adapter.test.ts which proves that
-// a comment-only .js edit produces the SAME fingerprint as the baseline,
-// while an internal logic edit produces a DIFFERENT fingerprint.
+// The real api-extractor runner lives here, used by the seed scripts + the CI
+// `.api.md` CURRENCY gate (production-mode api-extractor fails on a stale
+// committed report). The bump path reads the committed report directly and the
+// fingerprint is source-based, so neither needs api-extractor at bump time.
 
-import { createHash } from "node:crypto";
-import { existsSync, readFileSync, readdirSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import { join, relative } from "node:path";
 import { spawnSync } from "node:child_process";
-import type { ApiDiff, FingerprintDiff } from "./diff-bump.js";
+import type { ApiDiff } from "./diff-bump.js";
 
 // api-extractor is a CommonJS package; this module is ESM. `require` is not a
 // global in ESM scope, so build one bound to this module's URL. (A bare
@@ -56,16 +39,16 @@ const r_require = createRequire(import.meta.url);
 // ---------------------------------------------------------------------------
 
 /**
- * Seam for reading the committed baseline content of a file (typically via
- * `git show HEAD:<path>` for the real adapter). Returns `undefined` when
- * the file has no committed version.
+ * Seam for reading the committed baseline content of a file at a git ref
+ * (typically via `git show <ref>:<path>` for the real adapter). Returns
+ * `undefined` when the file has no committed version at that ref.
  */
 export interface BaselineReader {
   /**
-   * Read the committed content of `filePath` (repo-root-relative or
-   * absolute). Returns `undefined` when not committed.
+   * Read the committed content of `filePath` (absolute or repo-relative) at the
+   * given git ref (default "HEAD"). Returns `undefined` when not committed.
    */
-  read(filePath: string): string | undefined;
+  read(filePath: string, ref?: string): string | undefined;
 }
 
 /**
@@ -83,35 +66,18 @@ export interface ApiExtractorRunner {
   run(packageDir: string, configPath: string): string;
 }
 
-/**
- * Seam for reading and walking the dist/ directory of a package.
- */
-export interface DistReader {
-  /**
-   * Return the sorted list of absolute file paths in `distDir` matching the
-   * given extensions (e.g. [".js", ".d.ts"]).  Does not recurse into
-   * sub-directories of sub-directories beyond the dist root.
-   */
-  listFiles(distDir: string, extensions: string[]): string[];
-
-  /**
-   * Read the content of a file (utf-8).
-   */
-  readFile(filePath: string): string;
-}
-
 // ---------------------------------------------------------------------------
 // Real implementations of the seams
 // ---------------------------------------------------------------------------
 
 /**
- * Real BaselineReader — reads from `git show HEAD:<repo-root-relative-path>`.
+ * Real BaselineReader — reads from `git show <ref>:<repo-root-relative-path>`.
  */
 export function makeGitBaselineReader(repoRoot: string): BaselineReader {
   return {
-    read(filePath: string): string | undefined {
+    read(filePath: string, ref = "HEAD"): string | undefined {
       const rel = relative(repoRoot, filePath).replace(/\\/g, "/");
-      const result = spawnSync("git", ["show", `HEAD:${rel}`], {
+      const result = spawnSync("git", ["show", `${ref}:${rel}`], {
         encoding: "utf-8",
         cwd: repoRoot,
       });
@@ -130,12 +96,10 @@ export function makeGitBaselineReader(repoRoot: string): BaselineReader {
  * built `dist/` directory with a `dist/index.d.ts` entry point.
  *
  * Uses `localBuild: true` which UPDATES the etc/<name>.api.md file in-place.
- * CI should use localBuild: false to get a failure on drift instead (the
- * adapter always reads the freshly-generated file, so either mode works for
- * deriving the diff).
+ * CI should use localBuild: false to get a failure on drift instead — that
+ * production-mode run is the committed-report CURRENCY gate.
  *
- * This function returns the fresh .api.md string so the adapter can diff it
- * against the committed baseline without the caller needing to read from disk.
+ * This function returns the fresh .api.md string.
  */
 export function makeRealApiExtractorRunner(
   localBuild = true,
@@ -169,49 +133,6 @@ export function makeRealApiExtractorRunner(
       return readFileSync(reportPath, "utf-8");
     },
   };
-}
-
-/**
- * Real DistReader — walks `dist/` recursively and reads files from disk.
- */
-export function makeRealDistReader(): DistReader {
-  return {
-    listFiles(distDir: string, extensions: string[]): string[] {
-      const results: string[] = [];
-      walkDir(distDir, extensions, results);
-
-      return results.sort();
-    },
-
-    readFile(filePath: string): string {
-      return readFileSync(filePath, "utf-8");
-    },
-  };
-}
-
-// ---------------------------------------------------------------------------
-// Internal helpers
-// ---------------------------------------------------------------------------
-
-/**
- * Recursively walk `dir`, collecting files whose extension is in `extensions`.
- */
-function walkDir(dir: string, extensions: string[], out: string[]): void {
-  if (!existsSync(dir)) return;
-
-  const entries = readdirSync(dir, { withFileTypes: true });
-
-  for (const entry of entries) {
-    const full = join(dir, entry.name);
-
-    if (entry.isDirectory()) {
-      walkDir(full, extensions, out);
-    } else if (entry.isFile()) {
-      const ext = entry.name.slice(entry.name.lastIndexOf("."));
-
-      if (extensions.includes(ext)) out.push(full);
-    }
-  }
 }
 
 // ---------------------------------------------------------------------------
@@ -360,112 +281,7 @@ export function diffApiMembers(
 }
 
 // ---------------------------------------------------------------------------
-// B — Dist fingerprint
-// ---------------------------------------------------------------------------
-
-/**
- * Strip single-line and block JS comments from a .js file's content, then
- * collapse consecutive blank lines to a single blank line.
- *
- * This ensures that comment-only edits do not change the fingerprint.
- *
- * Note: This is a best-effort normalisation adequate for clean TypeScript
- * compiler output (no embedded comment-like strings that would be
- * mis-stripped). It intentionally does NOT use a full JS parser — the
- * goal is fingerprint stability, not source transformation.
- */
-export function normaliseJsForFingerprint(js: string): string {
-  // Remove block comments first (non-greedy, DOTALL).
-  let s = js.replace(/\/\*[\s\S]*?\*\//g, "");
-
-  // Remove single-line comments (including sourcemap URLs: //# sourceMappingURL=...).
-  s = s.replace(/\/\/[^\n]*/g, "");
-
-  // Collapse runs of blank / whitespace-only lines.
-  s = s.replace(/(\r?\n\s*){2,}/g, "\n\n");
-
-  return s.trim();
-}
-
-/**
- * Compute the dist fingerprint for a package.
- *
- * Hashes (SHA-256):
- *   - All .js files under dist/ (comment-normalised content)
- *   - All .d.ts files under dist/ (verbatim — part of public type surface)
- *   - The package.json `name`, `version`, and `dependencies` object
- *     (workspace:* resolved to concrete if a resolver is provided; this
- *     module stores the raw strings — the runtime engine resolves before
- *     calling computeDistFingerprint if needed)
- *
- * Files are processed in sorted path order for determinism.
- *
- * @param packageDir  - Absolute path to the package root.
- * @param packageJson - Parsed package.json object (or its relevant subset).
- * @param distReader  - Injectable DistReader seam.
- */
-export function computeDistFingerprint(
-  packageDir: string,
-  packageJson: {
-    name?: string;
-    version?: string;
-    dependencies?: Record<string, string>;
-  },
-  distReader: DistReader,
-): string {
-  const distDir = join(packageDir, "dist");
-  const hash = createHash("sha256");
-
-  // Hash .js files (comment-stripped).
-  const jsFiles = distReader.listFiles(distDir, [".js"]);
-
-  for (const filePath of jsFiles) {
-    const relPath = relative(packageDir, filePath).replace(/\\/g, "/");
-    const content = distReader.readFile(filePath);
-    const normalised = normaliseJsForFingerprint(content);
-
-    hash.update(`JS:${relPath}\n${normalised}\n`);
-  }
-
-  // Hash .d.ts files (verbatim).
-  const dtsFiles = distReader.listFiles(distDir, [".d.ts"]);
-
-  for (const filePath of dtsFiles) {
-    const relPath = relative(packageDir, filePath).replace(/\\/g, "/");
-    const content = distReader.readFile(filePath);
-
-    hash.update(`DTS:${relPath}\n${content}\n`);
-  }
-
-  // Hash package.json runtime metadata.
-  const meta = JSON.stringify({
-    name: packageJson.name ?? "",
-    version: packageJson.version ?? "",
-    dependencies: packageJson.dependencies ?? {},
-  });
-
-  hash.update(`PKG:${meta}\n`);
-
-  return hash.digest("hex");
-}
-
-/**
- * Read the committed dist-fingerprint baseline from
- * `<packageDir>/etc/dist-fingerprint.txt`.
- *
- * Returns `undefined` when no committed baseline exists yet (first run).
- */
-export function readCommittedFingerprint(
-  packageDir: string,
-  baselineReader: BaselineReader,
-): string | undefined {
-  const fingerprintPath = join(packageDir, "etc", "dist-fingerprint.txt");
-
-  return baselineReader.read(fingerprintPath)?.trim();
-}
-
-// ---------------------------------------------------------------------------
-// Shared path helper
+// Baseline path helpers
 // ---------------------------------------------------------------------------
 
 /**
@@ -508,154 +324,13 @@ export function resolveApiMdPath(
   return join(packageDir, "etc", name);
 }
 
-// ---------------------------------------------------------------------------
-// C — The combined adapter entry point
-// ---------------------------------------------------------------------------
-
 /**
- * Options for extractTsPackageDiff.
- */
-export interface TsPackageDiffOptions {
-  /**
-   * Absolute path to the package root (directory containing package.json).
-   */
-  readonly packageDir: string;
-
-  /**
-   * Absolute path to the api-extractor.json for this package.
-   * Defaults to `<packageDir>/api-extractor.json`.
-   */
-  readonly apiExtractorConfigPath?: string;
-
-  /** Injectable seam for reading committed baselines (default: git). */
-  readonly baselineReader?: BaselineReader;
-
-  /** Injectable seam for running api-extractor (default: real runner). */
-  readonly apiExtractorRunner?: ApiExtractorRunner;
-
-  /** Injectable seam for reading dist/ files (default: fs). */
-  readonly distReader?: DistReader;
-
-  /**
-   * When true, api-extractor is run in localBuild mode (updates etc/*.api.md
-   * in-place, does not fail on drift). Default: true.
-   *
-   * CI should set this to false to get build failures on uncommitted API
-   * surface changes.
-   */
-  readonly localBuild?: boolean;
-}
-
-/**
- * Result of a TS package diff extraction.
- */
-export interface TsPackageDiffResult {
-  readonly apiDiff: ApiDiff;
-  readonly fingerprintDiff: FingerprintDiff;
-  /**
-   * The freshly-computed fingerprint hex string. The caller may persist this
-   * to `etc/dist-fingerprint.txt` to update the baseline.
-   */
-  readonly freshFingerprint: string;
-  /**
-   * The committed baseline fingerprint, or `undefined` if none exists yet.
-   */
-  readonly baselineFingerprint: string | undefined;
-}
-
-/**
- * Extract the ApiDiff and FingerprintDiff for a single TypeScript package.
+ * Return the path to the committed source-based fingerprint baseline file for a
+ * TS package (`etc/.release-fingerprint`, mirroring the .NET filename for a
+ * single mental model across both ecosystems).
  *
- * Requires:
- *   - The package to have a built `dist/` directory.
- *   - An `api-extractor.json` at `<packageDir>/api-extractor.json` (or
- *     overridden via `options.apiExtractorConfigPath`).
- *   - A committed `etc/<name>.api.md` baseline (api-extractor generates it on
- *     first run with `localBuild: true`).
- *
- * @returns TsPackageDiffResult with both diffs and the fresh fingerprint.
+ * @param packageDir - Absolute path to the package root.
  */
-export function extractTsPackageDiff(
-  options: TsPackageDiffOptions,
-): TsPackageDiffResult {
-  const {
-    packageDir,
-    apiExtractorConfigPath = join(packageDir, "api-extractor.json"),
-    localBuild = true,
-  } = options;
-
-  const baselineReader =
-    options.baselineReader ?? makeGitBaselineReader(packageDir);
-
-  const apiExtractorRunner =
-    options.apiExtractorRunner ?? makeRealApiExtractorRunner(localBuild);
-
-  const distReader = options.distReader ?? makeRealDistReader();
-
-  // -------------------------------------------------------------------------
-  // A — API surface diff
-  // -------------------------------------------------------------------------
-
-  // Run api-extractor — returns the freshly-generated .api.md content.
-  const freshApiMd = apiExtractorRunner.run(packageDir, apiExtractorConfigPath);
-
-  // Read the committed baseline for the .api.md (the version BEFORE this run
-  // updated it in localBuild mode). In non-local mode the file on disk IS the
-  // baseline (api-extractor would have failed if they differ, so we read from
-  // git to stay consistent regardless of mode).
-  //
-  // Derive the report path from api-extractor.json's reportFileName so that
-  // packages whose directory basename differs from their report name are
-  // resolved correctly (e.g. headers/amqp → etc/headers-amqp.api.md).
-  const reportPath = resolveApiMdPath(packageDir, apiExtractorConfigPath);
-  const committedApiMd = baselineReader.read(reportPath);
-
-  let apiDiff: ApiDiff;
-
-  if (committedApiMd === undefined) {
-    // No baseline exists yet — treat everything in the fresh report as added.
-    const freshMembers = parseApiMembers(freshApiMd);
-    apiDiff = {
-      added: freshMembers.size > 0,
-      removed: false,
-      changed: false,
-    };
-  } else {
-    const baselineMembers = parseApiMembers(committedApiMd);
-    const freshMembers = parseApiMembers(freshApiMd);
-
-    apiDiff = diffApiMembers(baselineMembers, freshMembers);
-  }
-
-  // -------------------------------------------------------------------------
-  // B — Dist fingerprint diff
-  // -------------------------------------------------------------------------
-
-  const packageJsonPath = join(packageDir, "package.json");
-  const packageJsonText = readFileSync(packageJsonPath, "utf-8");
-  const packageJson = JSON.parse(packageJsonText) as {
-    name?: string;
-    version?: string;
-    dependencies?: Record<string, string>;
-  };
-
-  const freshFingerprint = computeDistFingerprint(
-    packageDir,
-    packageJson,
-    distReader,
-  );
-
-  const baselineFingerprint = readCommittedFingerprint(
-    packageDir,
-    baselineReader,
-  );
-
-  const fingerprintDiff: FingerprintDiff = {
-    changed:
-      baselineFingerprint === undefined
-        ? true // first run: treat as changed so a baseline is established
-        : freshFingerprint !== baselineFingerprint,
-  };
-
-  return { apiDiff, fingerprintDiff, freshFingerprint, baselineFingerprint };
+export function tsFingerprintBaselinePath(packageDir: string): string {
+  return join(packageDir, "etc", ".release-fingerprint");
 }

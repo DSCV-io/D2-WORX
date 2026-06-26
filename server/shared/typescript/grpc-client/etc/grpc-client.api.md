@@ -116,7 +116,7 @@ export function isTransientGrpcError(err: unknown): boolean;
 // @public
 export interface TryGetResult {
     readonly shouldRefreshAhead: boolean;
-    readonly snapshot: InternalTokenSnapshot | undefined;
+    readonly snapshot?: InternalTokenSnapshot;
 }
 
 // Warning: (ae-forgotten-export) The symbol "GrpcUnaryMethod" needs to be exported by the entry point index.d.ts

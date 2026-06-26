@@ -133,14 +133,14 @@ git push --follow-tags
 
 ### Per-package version (consumable libs: `D2.Shared.*` + `@d2/*`)
 
-The release runner derives each package's bump from the **artifact diff** — it builds the
-publishable artifact, extracts its public API surface, and computes an output fingerprint,
-then diffs those against the package's committed baselines. A consumer-visible output change
-floors at PATCH; a public-API add → MINOR; a public-API removal/change → MAJOR (MINOR while
-pre-stable `0.x`). The commit footer (`WIRE-BREAKING:` / `BREAKING CHANGE:`) can only ESCALATE
-the diff-derived bump; the commit TYPE drives the changelog category only. Because the engine
-BUILDS each package (and shells the IL-dump tool + api-extractor), a default dry-run is slower
-than the legacy commit-parse path.
+The release runner derives each package's bump from a **build-free artifact diff** — the
+public-API surface diff (a git-ref text diff of the committed API report) and a source-based
+output fingerprint (a SHA-256 over committed source + the API report + resolved dependency
+versions + the declared toolchain pin), each diffed against the package's committed baselines.
+A consumer-visible output change floors at PATCH; a public-API add → MINOR; a public-API
+removal/change → MAJOR (MINOR while pre-stable `0.x`). The commit footer (`WIRE-BREAKING:` /
+`BREAKING CHANGE:`) can only ESCALATE the diff-derived bump; the commit TYPE drives the
+changelog category only. Nothing builds to compute the bump, so a dry-run is fast.
 
 ```bash
 # Dry-run — compute and report, write nothing (default).
@@ -175,12 +175,14 @@ suppress that forwarding, e.g. when scoping a dry-run to a single package in iso
 
 #### Baseline files + the seed
 
-Each consumable carries committed baselines next to its manifest: the .NET set is
-`PublicAPI.Shipped.txt` + `PublicAPI.Unshipped.txt` + `.release-fingerprint` (the latter a
-SHA-256 over the PublicAPI text + a **normalized IL/metadata dump** from `tools/il-fingerprint`
-+ the manifest metadata — platform-independent by construction, so a Windows-generated baseline
-equals a Linux recompute); the TS set is `etc/<pkg>.api.md` + `etc/dist-fingerprint.txt`. These
-are PIPELINE OUTPUT — regenerate them with the seed scripts, never hand-edit:
+Each consumable carries committed baselines next to its manifest. The fingerprint is a
+**source-based, portable** SHA-256 over committed text only — git-tracked source (incl.
+committed `.g.cs`/`.g.ts`), the API report, the resolved dependency versions, and the declared
+toolchain pin (`server/global.json` + `server/Directory.Build.props` / the root `package.json`
++ `tsconfig.base.json`) — so a Windows-generated baseline equals a Linux recompute with no
+build. The .NET set is `PublicAPI.Shipped.txt` + `PublicAPI.Unshipped.txt` + `.release-fingerprint`;
+the TS set is `etc/<pkg>.api.md` + `etc/.release-fingerprint`. These are PIPELINE OUTPUT —
+regenerate them with the seed scripts, never hand-edit:
 
 ```bash
 # Regenerate the 54 .NET PublicAPI + .release-fingerprint baselines:
@@ -188,15 +190,18 @@ node tools/scripts/seed-publicapi-baselines.mjs
 # (optional) one package only:
 node tools/scripts/seed-publicapi-baselines.mjs --package D2.Shared.Result
 
-# Regenerate the 29 TS api-extractor + dist-fingerprint baselines:
+# Regenerate the 29 TS api-extractor (.api.md) + etc/.release-fingerprint baselines
+# (build the dists first — api-extractor consumes dist/index.d.ts to write the report):
+pnpm --filter "./server/shared/typescript/**" -r build
 node tools/scripts/seed-apiextractor-baselines.mjs
 ```
 
 #### Baseline drift check
 
-The drift check recomputes every committed baseline and FAILS on any drift without a same-PR
-bump. The `versioning-integration` CI lane runs it across both ecosystems (after building the
-.NET DLLs + the TS dists). Locally:
+The drift check re-derives every committed API-report diff + recomputes every source-based
+fingerprint and FAILS on any drift without a same-PR bump. It is build-free (the TS `.api.md`
+currency gate, which compares the committed report against the built `dist`, runs separately in
+the `versioning-integration` CI lane after building the TS dists). Locally:
 
 ```bash
 pnpm --filter release-runner exec tsx src/drift-check-cli.ts

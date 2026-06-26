@@ -101,9 +101,11 @@ and are not covered here.
 
 ### Semver rules
 
-The bump is computed from the **artifact diff**, not the commit label. The runner builds each
-package, extracts its public API surface, and computes an output fingerprint, then diffs those
-against the package's committed baselines:
+The bump is computed from the **artifact diff**, not the commit label. The runner derives the
+bump from a git-ref text diff of the committed API report and a source-based output fingerprint
+(a SHA-256 over committed source + the API report + resolved dependency versions + the declared
+toolchain pin), each diffed against the package's committed baselines — no per-package build
+required:
 
 | Signal (vs the package's committed baseline) | Pre-stable (`0.x`) | Stable (`≥ 1.0.0`) |
 | -------------------------------------------- | ------------------- | ------------------- |

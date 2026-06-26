@@ -37,25 +37,48 @@ export {
 } from "./diff-runner.js";
 export {
   makeRealDiffProvider,
+  makeRealFileReader,
   buildNugetManifestMeta,
-  composeNugetFingerprint,
+  buildNpmManifestMeta,
   substituteResolvedDeps,
   readPackageJsonFile,
-  type NugetExtractor,
-  type TsExtractorSeams,
+  type FileReader,
+  type SourceLister,
   type RealDiffProviderOptions,
 } from "./real-diff-provider.js";
 export {
-  extractNugetDiff,
-  parseUnshippedTxt,
+  parseShippedTxt,
+  diffShippedLines,
   fingerprintBaselinePath,
   shippedTxtPath,
   unshippedTxtPath,
-  makeRealDotnetShell,
-  type DotnetShell,
-  type ShellResult,
-  type NugetExtractionResult,
 } from "./nuget-extractor.js";
+export {
+  parseApiMembers,
+  diffApiMembers,
+  extractMemberName,
+  resolveApiMdPath,
+  tsFingerprintBaselinePath,
+  makeGitBaselineReader,
+  makeRealApiExtractorRunner,
+  type BaselineReader,
+  type ApiExtractorRunner,
+} from "./ts-api-adapter.js";
+export {
+  buildSourceDump,
+  composeSourceFingerprint,
+  listSourceFiles,
+  makeGitTrackedLister,
+  makeRepoFileReader,
+  normalizeLf,
+  readToolchainPin,
+  stableJson,
+  type RepoFileReader,
+  type SourceEcosystem,
+  type SourceFileReader,
+  type SourceFingerprintInput,
+  type TrackedFileLister,
+} from "./source-fingerprint.js";
 export {
   checkBaselineDrift,
   formatDriftReport,

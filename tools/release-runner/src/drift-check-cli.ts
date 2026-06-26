@@ -35,9 +35,11 @@ if (falsey(packages)) {
   process.exit(1);
 }
 
-// Production mode: localBuild:false makes api-extractor fail on report drift, a
-// second independent guard alongside our own `.api.md` member diff.
-const diffProvider = makeRealDiffProvider(repoRoot, { localBuild: false });
+// The drift check is build-free: it diffs the committed API reports (git-ref
+// text diff) + recomputes the source-based fingerprint, both against HEAD. The
+// `.api.md` CURRENCY (committed report vs the built dist) is enforced separately
+// in the CI lane by a production-mode api-extractor run.
+const diffProvider = makeRealDiffProvider(repoRoot);
 
 const result = checkBaselineDrift(packages, diffProvider);
 

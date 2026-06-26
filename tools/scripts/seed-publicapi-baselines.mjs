@@ -13,19 +13,17 @@
 //   PublicAPI.Unshipped.txt  — new-but-unreleased surface; seeded empty (just
 //                              the `#nullable enable` header) since everything
 //                              currently in source is the released baseline.
-//   .release-fingerprint     — the SHA-256 of the composed output tuple
-//                              (PublicAPI.Shipped + PublicAPI.Unshipped +
-//                              normalized IL dump + manifest metadata), the
-//                              output-changed (PATCH-floor) signal.
+//   .release-fingerprint     — the SHA-256 of the SOURCE-BASED composed tuple
+//                              ( committed source dump + PublicAPI.Shipped +
+//                              PublicAPI.Unshipped + resolved deps + toolchain
+//                              pin ), the output-changed (PATCH-floor) signal.
 //
-// Output fingerprint = a NORMALIZED IL/METADATA DUMP, not a raw DLL hash. A raw
-// DLL SHA-256 embeds the module MVID, the build timestamp, and the source path,
-// so a baseline hashed on one host (e.g. Windows) would not match a recompute on
-// another (e.g. Linux CI) and the drift check would false-fail. Instead the
-// `tools/il-fingerprint` console tool walks the built assembly's metadata + IL
-// (never reading the MVID / timestamp / debug-path fields), so its dump is
-// platform-independent BY CONSTRUCTION. The composed fingerprint matches the
-// production release-runner's `composeNugetFingerprint` byte-for-byte so the
+// Output fingerprint = a SOURCE-BASED, PORTABLE hash — NOT a built-output hash.
+// It hashes only committed text (source files, the PublicAPI report, the
+// declared toolchain pin) plus the resolved-dep map, so it is byte-identical on
+// every OS/machine with NO build to compute — a Windows-generated baseline
+// equals a Linux-CI recompute by construction. The composition matches the
+// production release-runner's composeSourceFingerprint byte-for-byte so the
 // drift check (which recomputes via the runner) compares like-for-like.
 //
 // Mechanism:
@@ -38,25 +36,28 @@
 //      This captures the COMPLETE enforced surface — hand-authored AND
 //      source-generated public symbols (the `dotnet format` code-fix skips
 //      generated files, so the build-diagnostic parse is the faithful source).
+//      (This is the ONLY build the seed runs, and only to seed the .txt — the
+//      fingerprint itself never builds.)
 //   3. Write the extracted lines (sorted, deduplicated, ordinal) into
 //      Shipped.txt; leave Unshipped.txt header-only. The result exactly matches
 //      the current public API, so a subsequent build reports zero RS0016
 //      (missing-from-baseline) / RS0017 (in-baseline-not-in-source).
-//   4. FINGERPRINT: build the package (Release), shell `tools/il-fingerprint`
-//      against the built DLL to get the normalized IL dump, then SHA-256 the
-//      ordered tuple (Shipped.txt + Unshipped.txt + IL dump + manifest metadata)
-//      and write the hex digest to .release-fingerprint. The manifest metadata
-//      carries the package version + every consumable ProjectReference dep's
-//      pinned version (so a dependency bump moves the dependent's fingerprint —
-//      propagation falls out of the fingerprint).
+//   4. FINGERPRINT: compose the source-based hash over the ordered tuple
+//      ( committed source dump + Shipped.txt + Unshipped.txt + resolved deps +
+//      toolchain pin ) and write the hex digest to .release-fingerprint. The
+//      source dump globs every committed *.cs (incl. Generated/**/*.g.cs) + the
+//      *.csproj; the deps carry the package version + every consumable
+//      ProjectReference dep's pinned version (so a dependency bump moves the
+//      dependent's fingerprint — propagation falls out of the fingerprint); the
+//      toolchain pin hashes the declared SDK / TargetFramework / LangVersion.
 //
 // Run from the repo root: `node tools/scripts/seed-publicapi-baselines.mjs`.
 // Optional `--package <PackageId>` limits the run to a single consumable.
 //
 // IDEMPOTENT: re-running regenerates byte-identical baseline files. The promote
-// step sorts deterministically; the IL dump is platform/path-independent, so a
-// re-seed over unchanged source is a no-op (the script reports "unchanged" for
-// each). A baseline that is already correct is detected and left untouched.
+// step sorts deterministically; the source-based hash is platform/path-
+// independent, so a re-seed over unchanged source is a no-op (the script reports
+// "unchanged" for each). A baseline that is already correct is left untouched.
 
 import { spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
@@ -71,7 +72,6 @@ const REPO_ROOT = path.resolve(
 );
 
 const NULLABLE_HEADER = "#nullable enable";
-const TARGET_FRAMEWORK = "net10.0";
 
 // ---------------------------------------------------------------------------
 // CLI args.
@@ -150,7 +150,7 @@ if (packageFilter) {
 // The fingerprint folds in the package version + every consumable
 // ProjectReference dep's pinned version, so a dependency bump moves the
 // dependent's fingerprint (propagation). This MUST byte-match the production
-// release-runner's buildNugetManifestMeta / composeNugetFingerprint so the
+// release-runner's buildNugetManifestMeta / composeSourceFingerprint so the
 // drift check compares like-for-like.
 // ---------------------------------------------------------------------------
 
@@ -366,81 +366,139 @@ function extractSurfaceViaBuild(csprojPath, packageId) {
   return surface;
 }
 
-const IL_FINGERPRINT_PROJECT = path.join(REPO_ROOT, "tools", "il-fingerprint");
-
 /** LF-normalize so a CRLF/LF checkout difference cannot perturb the hash. */
 function normalizeLf(text) {
   return text.replace(/\r\n/g, "\n");
 }
 
-/**
- * Build the package (Release), shell the il-fingerprint tool to get the
- * normalized IL dump, and compose the fingerprint over
- *   ( Shipped.txt + Unshipped.txt + IL dump + manifest metadata ).
- *
- * The composition is byte-identical to the release-runner's
- * composeNugetFingerprint so the drift check (which recomputes via the runner)
- * compares like-for-like.
- */
-function composeFingerprint(csprojPath, packageId, shippedTxt, unshippedTxt) {
-  const build = run("dotnet", [
-    "build",
-    csprojPath,
-    "-c",
-    "Release",
-    "-p:TreatWarningsAsErrors=false",
-    "--no-restore",
-  ]);
+// ---------------------------------------------------------------------------
+// Source dump + toolchain pin (mirrors release-runner/src/source-fingerprint.ts
+// BYTE-FOR-BYTE; the seed↔provider identity is pinned by a runner test).
+// ---------------------------------------------------------------------------
 
-  if (build.status !== 0) {
-    throw new Error(
-      `fingerprint build failed for ${packageId} (exit ${build.status}):\n` +
-        `${(build.stdout ?? "") + (build.stderr ?? "")}`.slice(0, 2000),
-    );
+const SKIP_DIRS = new Set([
+  "bin",
+  "obj",
+  "dist",
+  "node_modules",
+  "etc",
+  "tests",
+]);
+
+/** True when a package-relative path lives under a skipped directory. */
+function isSkipped(relPosix) {
+  return relPosix.split("/").some((seg) => SKIP_DIRS.has(seg));
+}
+
+/** Is this committed file part of the .NET source dump? (every *.cs + *.csproj) */
+function isNugetSourceFile(relPosixPath) {
+  const base = relPosixPath.slice(relPosixPath.lastIndexOf("/") + 1);
+
+  if (
+    base === ".release-fingerprint" ||
+    base === "PublicAPI.Shipped.txt" ||
+    base === "PublicAPI.Unshipped.txt" ||
+    base === "CHANGELOG.md"
+  ) {
+    return false;
   }
 
-  const dllPath = path.join(
-    path.dirname(csprojPath),
-    "bin",
-    "Release",
-    TARGET_FRAMEWORK,
-    `${packageId}.dll`,
+  return base.endsWith(".cs") || base.endsWith(".csproj");
+}
+
+/**
+ * List the package-relative POSIX paths of COMMITTED (git-tracked) .NET source
+ * files. Tracked-only is mandatory: the build emits gitignored transients (e.g.
+ * the non-deterministic LoggerMessage.g.cs) into Generated/ that a plain fs walk
+ * would fold into the fingerprint, breaking portability. Mirrors the
+ * release-runner's listSourceFiles BYTE-FOR-BYTE.
+ */
+function listNugetSourceFiles(packageDir) {
+  const result = spawnSync("git", ["ls-files", "--", "."], {
+    cwd: packageDir,
+    encoding: "utf8",
+    maxBuffer: 32 * 1024 * 1024,
+  });
+
+  if (result.status !== 0) return [];
+
+  return (result.stdout ?? "")
+    .split("\n")
+    .map((l) => l.trim().replace(/\\/g, "/"))
+    .filter((l) => l.length > 0 && !isSkipped(l) && isNugetSourceFile(l));
+}
+
+/** Ordered, LF-normalized source dump for a package dir. */
+function buildSourceDump(packageDir) {
+  const sorted = listNugetSourceFiles(packageDir).sort();
+  let dump = "";
+
+  for (const relPath of sorted) {
+    const content = fs.readFileSync(path.join(packageDir, relPath), "utf8");
+    dump += `F:${relPath}\n${normalizeLf(content)}\n`;
+  }
+
+  return dump;
+}
+
+/** Serialize keys ascending so structurally equal inputs serialize identically. */
+function stableJson(obj) {
+  const sortedKeys = Object.keys(obj).sort();
+  const ordered = {};
+
+  for (const key of sortedKeys) ordered[key] = obj[key] ?? "";
+
+  return JSON.stringify(ordered);
+}
+
+/** Extract the inner text of the first <Element>...</Element> in XML text. */
+function extractXmlElement(xml, element) {
+  const match = new RegExp(`<${element}>([^<]+)</${element}>`).exec(xml);
+
+  return match ? match[1].trim() : "";
+}
+
+/** The declared, committed .NET toolchain pin as deterministic sorted-key JSON. */
+function readNugetToolchainPin() {
+  const globalJson = JSON.parse(
+    fs.readFileSync(path.join(REPO_ROOT, "server", "global.json"), "utf8"),
+  );
+  const buildProps = fs.readFileSync(
+    path.join(REPO_ROOT, "server", "Directory.Build.props"),
+    "utf8",
   );
 
-  if (!fs.existsSync(dllPath)) {
-    throw new Error(`Built DLL not found at ${dllPath} for ${packageId}.`);
-  }
+  return stableJson({
+    langVersion: extractXmlElement(buildProps, "LangVersion"),
+    rollForward: globalJson.sdk?.rollForward ?? "",
+    sdk: globalJson.sdk?.version ?? "",
+    targetFramework: extractXmlElement(buildProps, "TargetFramework"),
+  });
+}
 
-  // Shell the in-box IL-dump tool (--no-build: the tool is pre-built once in the
-  // pre-pass below). stdout is the normalized, platform-independent dump.
-  const dump = run("dotnet", [
-    "run",
-    "--project",
-    IL_FINGERPRINT_PROJECT,
-    "-c",
-    "Release",
-    "--no-build",
-    "--",
-    dllPath,
-  ]);
+const TOOLCHAIN_PIN = readNugetToolchainPin();
 
-  if (dump.status !== 0) {
-    throw new Error(
-      `il-fingerprint failed for ${packageId} (exit ${dump.status}):\n` +
-        `${(dump.stderr ?? "") + (dump.stdout ?? "")}`.slice(0, 2000),
-    );
-  }
-
-  const ilDump = dump.stdout ?? "";
-
+/**
+ * Compose the source-based fingerprint over the ordered tuple
+ *   ( committed source dump + Shipped.txt + Unshipped.txt + deps + toolchain ).
+ *
+ * Byte-identical to the release-runner's composeSourceFingerprint so the drift
+ * check (which recomputes via the runner) compares like-for-like. No build.
+ */
+function composeFingerprint(csprojPath, packageId, shippedTxt, unshippedTxt) {
+  const packageDir = path.dirname(csprojPath);
+  const sourceDump = buildSourceDump(packageDir);
   const csprojText = fs.readFileSync(csprojPath, "utf8");
-  const manifestMeta = buildManifestMeta(packageId, csprojText);
+  const depsJson = buildManifestMeta(packageId, csprojText);
+  // Mirror the provider: apiReport = shippedTxt + unshippedTxt, LF-normalized
+  // once at compose time (composeSourceFingerprint does the single normalizeLf).
+  const apiReport = shippedTxt + unshippedTxt;
 
   const hash = createHash("sha256");
-  hash.update(`SHIPPED:\n${normalizeLf(shippedTxt)}\n`);
-  hash.update(`UNSHIPPED:\n${normalizeLf(unshippedTxt)}\n`);
-  hash.update(`IL:\n${normalizeLf(ilDump)}\n`);
-  hash.update(`MANIFEST:\n${manifestMeta}\n`);
+  hash.update(`SOURCE:\n${sourceDump}\n`);
+  hash.update(`APIREPORT:\n${normalizeLf(apiReport)}\n`);
+  hash.update(`DEPS:\n${depsJson}\n`);
+  hash.update(`TOOLCHAIN:\n${TOOLCHAIN_PIN}\n`);
 
   return hash.digest("hex");
 }
@@ -480,10 +538,11 @@ function seedConsumable(csprojPath) {
   writeApiFile(shippedPath, surface);
   writeApiFile(unshippedPath, []);
 
-  // 4. Compose the fingerprint over the EXACT written PublicAPI.* file content +
-  //    the normalized IL dump + the manifest metadata. The release-runner's
-  //    provider reads these same files verbatim, so reading the exact bytes back
-  //    keeps the seeded hash equal to the runtime recompute.
+  // 4. Compose the source-based fingerprint over the committed source dump +
+  //    the EXACT written PublicAPI.* file content + the resolved deps + the
+  //    toolchain pin. The release-runner's provider reads these same files
+  //    verbatim, so reading the exact bytes back keeps the seeded hash equal to
+  //    the runtime recompute (no build).
   const shippedTxt = fs.readFileSync(shippedPath, "utf8");
   const unshippedTxt = fs.readFileSync(unshippedPath, "utf8");
   const fingerprint = composeFingerprint(
@@ -511,28 +570,6 @@ function seedConsumable(csprojPath) {
 // ---------------------------------------------------------------------------
 // Run.
 // ---------------------------------------------------------------------------
-
-// Pre-build the IL-fingerprint tool ONCE so the per-package fingerprint pass can
-// shell it with `--no-build` (fast + no per-package rebuild churn).
-process.stderr.write("building il-fingerprint tool ... ");
-
-const toolBuild = run("dotnet", [
-  "build",
-  path.join(IL_FINGERPRINT_PROJECT, "D2.Tools.IlFingerprint.csproj"),
-  "-c",
-  "Release",
-]);
-
-if (toolBuild.status !== 0) {
-  process.stderr.write("FAILED\n");
-  console.error(
-    `il-fingerprint tool build failed:\n` +
-      `${(toolBuild.stdout ?? "") + (toolBuild.stderr ?? "")}`.slice(0, 2000),
-  );
-  process.exit(1);
-}
-
-process.stderr.write("ok\n");
 
 // Pre-pass: ensure EVERY consumable has both .txt baselines on disk BEFORE any
 // build runs. The Directory.Build.props references each file by a literal

@@ -92,9 +92,10 @@ export interface PackageDiff {
 /**
  * Seam that supplies per-package ApiDiff + FingerprintDiff.
  *
- * The real implementation dispatches to extractNugetDiff (nuget) or
- * extractTsPackageDiff (npm) based on pkg.ecosystem. Tests inject a
- * synthetic implementation that returns pre-canned diffs without building.
+ * The real implementation (`makeRealDiffProvider`) derives the apiDiff from a
+ * git-ref text diff of the committed API report and the FingerprintDiff from a
+ * source-based fingerprint recompute, dispatching per `pkg.ecosystem`. Tests
+ * inject a synthetic implementation that returns pre-canned diffs.
  */
 export interface DiffProvider {
   /**
