@@ -10,25 +10,11 @@ Copyright (c) DCSV. All rights reserved.
     <PackageReference Include="dotenv.net" />
     <PackageReference Include="JetBrains.Annotations" />
     <!--
-      PublicApiAnalyzers — public API surface tracking for the versioning-engine spike.
-      Scoped to this csproj only; NOT enabled globally.
-      RS0016: new public API absent from Shipped/Unshipped → flag for versioning engine.
-      RS0017: public API removed from source but still listed in Shipped → breaking change.
+      Public-API surface tracking (Microsoft.CodeAnalysis.PublicApiAnalyzers +
+      the PublicAPI.Shipped.txt / PublicAPI.Unshipped.txt AdditionalFiles) is
+      wired centrally for every consumable in server/shared/dotnet/Directory.Build.props,
+      scoped to IsPackable=true. No per-project analyzer wiring is needed here.
     -->
-    <PackageReference Include="Microsoft.CodeAnalysis.PublicApiAnalyzers">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
-    </PackageReference>
-  </ItemGroup>
-
-  <ItemGroup>
-    <!-- PublicAPI baseline files for the analyzer. PublicAPI.Shipped.txt contains the
-         committed public API baseline; PublicAPI.Unshipped.txt accumulates new/removed
-         APIs since the last baseline snapshot. Both start empty; running the
-         RS0016 bulk-fix populates Unshipped.txt, then Unshipped is promoted to Shipped
-         to seed the baseline. -->
-    <AdditionalFiles Include="PublicAPI.Shipped.txt" />
-    <AdditionalFiles Include="PublicAPI.Unshipped.txt" />
   </ItemGroup>
 
   <ItemGroup>

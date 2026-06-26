@@ -41,6 +41,27 @@ Copyright (c) DCSV. All rights reserved.
     <InternalsVisibleTo Include="D2.Edge.Tests" />
   </ItemGroup>
 
+  <!--
+    Public-API surface tracking. This consumable sits OUTSIDE server/shared/dotnet,
+    so the shared-tree Directory.Build.props analyzer wiring does not reach it —
+    the analyzer + the two AdditionalFiles are declared inline here instead.
+    RS0016 = a public member missing from the declared API (an unrecorded ADD);
+    RS0017 = a recorded member that no longer exists (a REMOVE). Both are build
+    failures under the solution-wide TreatWarningsAsErrors policy. The committed
+    PublicAPI.Shipped.txt / PublicAPI.Unshipped.txt pair IS the baseline.
+  -->
+  <ItemGroup>
+    <PackageReference Include="Microsoft.CodeAnalysis.PublicApiAnalyzers">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <AdditionalFiles Include="PublicAPI.Shipped.txt" />
+    <AdditionalFiles Include="PublicAPI.Unshipped.txt" />
+  </ItemGroup>
+
   <!-- Publish metadata (per-package semver + NuGet identity). -->
   <PropertyGroup>
     <Version>0.1.0</Version>

@@ -1,0 +1,77 @@
+#nullable enable
+D2.Shared.Handler.Repo.Abstractions.D2ResultDbBooleans
+D2.Shared.Handler.Repo.Abstractions.D2ResultDbBooleans.extension(D2.Shared.Result.D2Result!)
+D2.Shared.Handler.Repo.Abstractions.D2ResultDbBooleans.extension(D2.Shared.Result.D2Result!).IsCheckViolation.get -> bool
+D2.Shared.Handler.Repo.Abstractions.D2ResultDbBooleans.extension(D2.Shared.Result.D2Result!).IsConcurrencyConflict.get -> bool
+D2.Shared.Handler.Repo.Abstractions.D2ResultDbBooleans.extension(D2.Shared.Result.D2Result!).IsDbConnectionFailure.get -> bool
+D2.Shared.Handler.Repo.Abstractions.D2ResultDbBooleans.extension(D2.Shared.Result.D2Result!).IsDbDeadlock.get -> bool
+D2.Shared.Handler.Repo.Abstractions.D2ResultDbBooleans.extension(D2.Shared.Result.D2Result!).IsDbTimeout.get -> bool
+D2.Shared.Handler.Repo.Abstractions.D2ResultDbBooleans.extension(D2.Shared.Result.D2Result!).IsForeignKeyViolation.get -> bool
+D2.Shared.Handler.Repo.Abstractions.D2ResultDbBooleans.extension(D2.Shared.Result.D2Result!).IsNotNullViolation.get -> bool
+D2.Shared.Handler.Repo.Abstractions.D2ResultDbBooleans.extension(D2.Shared.Result.D2Result!).IsTransientDbFailure.get -> bool
+D2.Shared.Handler.Repo.Abstractions.D2ResultDbBooleans.extension(D2.Shared.Result.D2Result!).IsUniqueViolation.get -> bool
+D2.Shared.Handler.Repo.Abstractions.D2ResultDbFactories
+D2.Shared.Handler.Repo.Abstractions.D2ResultDbFactories.extension(D2.Shared.Result.D2Result!)
+D2.Shared.Handler.Repo.Abstractions.D2ResultDbGenericFactories
+D2.Shared.Handler.Repo.Abstractions.D2ResultDbGenericFactories.extension<TData>(D2.Shared.Result.D2Result<TData>!)
+D2.Shared.Handler.Repo.Abstractions.DbErrorCodes
+D2.Shared.Handler.Repo.Abstractions.DbFailureKind
+D2.Shared.Handler.Repo.Abstractions.DbFailureKind.CheckViolation = 4 -> D2.Shared.Handler.Repo.Abstractions.DbFailureKind
+D2.Shared.Handler.Repo.Abstractions.DbFailureKind.ConcurrencyConflict = 0 -> D2.Shared.Handler.Repo.Abstractions.DbFailureKind
+D2.Shared.Handler.Repo.Abstractions.DbFailureKind.ConnectionFailure = 7 -> D2.Shared.Handler.Repo.Abstractions.DbFailureKind
+D2.Shared.Handler.Repo.Abstractions.DbFailureKind.Deadlock = 6 -> D2.Shared.Handler.Repo.Abstractions.DbFailureKind
+D2.Shared.Handler.Repo.Abstractions.DbFailureKind.ForeignKeyViolation = 2 -> D2.Shared.Handler.Repo.Abstractions.DbFailureKind
+D2.Shared.Handler.Repo.Abstractions.DbFailureKind.NotNullViolation = 3 -> D2.Shared.Handler.Repo.Abstractions.DbFailureKind
+D2.Shared.Handler.Repo.Abstractions.DbFailureKind.Timeout = 5 -> D2.Shared.Handler.Repo.Abstractions.DbFailureKind
+D2.Shared.Handler.Repo.Abstractions.DbFailureKind.UniqueViolation = 1 -> D2.Shared.Handler.Repo.Abstractions.DbFailureKind
+D2.Shared.Handler.Repo.Abstractions.IDbExceptionClassifier
+D2.Shared.Handler.Repo.Abstractions.IDbExceptionClassifier.Classify(System.Exception! exception) -> D2.Shared.Handler.Repo.Abstractions.DbFailureKind?
+const D2.Shared.Handler.Repo.Abstractions.DbErrorCodes.CHECK_VIOLATION = "CHECK_VIOLATION" -> string!
+const D2.Shared.Handler.Repo.Abstractions.DbErrorCodes.CONCURRENCY_CONFLICT = "CONCURRENCY_CONFLICT" -> string!
+const D2.Shared.Handler.Repo.Abstractions.DbErrorCodes.DB_CONNECTION_FAILURE = "DB_CONNECTION_FAILURE" -> string!
+const D2.Shared.Handler.Repo.Abstractions.DbErrorCodes.DB_DEADLOCK = "DB_DEADLOCK" -> string!
+const D2.Shared.Handler.Repo.Abstractions.DbErrorCodes.DB_TIMEOUT = "DB_TIMEOUT" -> string!
+const D2.Shared.Handler.Repo.Abstractions.DbErrorCodes.FOREIGN_KEY_VIOLATION = "FOREIGN_KEY_VIOLATION" -> string!
+const D2.Shared.Handler.Repo.Abstractions.DbErrorCodes.NOT_NULL_VIOLATION = "NOT_NULL_VIOLATION" -> string!
+const D2.Shared.Handler.Repo.Abstractions.DbErrorCodes.UNIQUE_VIOLATION = "UNIQUE_VIOLATION" -> string!
+static D2.Shared.Handler.Repo.Abstractions.D2ResultDbBooleans.get_IsCheckViolation(D2.Shared.Result.D2Result! result) -> bool
+static D2.Shared.Handler.Repo.Abstractions.D2ResultDbBooleans.get_IsConcurrencyConflict(D2.Shared.Result.D2Result! result) -> bool
+static D2.Shared.Handler.Repo.Abstractions.D2ResultDbBooleans.get_IsDbConnectionFailure(D2.Shared.Result.D2Result! result) -> bool
+static D2.Shared.Handler.Repo.Abstractions.D2ResultDbBooleans.get_IsDbDeadlock(D2.Shared.Result.D2Result! result) -> bool
+static D2.Shared.Handler.Repo.Abstractions.D2ResultDbBooleans.get_IsDbTimeout(D2.Shared.Result.D2Result! result) -> bool
+static D2.Shared.Handler.Repo.Abstractions.D2ResultDbBooleans.get_IsForeignKeyViolation(D2.Shared.Result.D2Result! result) -> bool
+static D2.Shared.Handler.Repo.Abstractions.D2ResultDbBooleans.get_IsNotNullViolation(D2.Shared.Result.D2Result! result) -> bool
+static D2.Shared.Handler.Repo.Abstractions.D2ResultDbBooleans.get_IsTransientDbFailure(D2.Shared.Result.D2Result! result) -> bool
+static D2.Shared.Handler.Repo.Abstractions.D2ResultDbBooleans.get_IsUniqueViolation(D2.Shared.Result.D2Result! result) -> bool
+static D2.Shared.Handler.Repo.Abstractions.D2ResultDbFactories.CheckViolation(System.Collections.Generic.IReadOnlyList<D2.Shared.I18n.TKMessage!>? messages = null, System.Collections.Generic.IReadOnlyList<D2.Shared.Result.InputError!>? inputErrors = null, string? traceId = null) -> D2.Shared.Result.D2Result!
+static D2.Shared.Handler.Repo.Abstractions.D2ResultDbFactories.ConcurrencyConflict(System.Collections.Generic.IReadOnlyList<D2.Shared.I18n.TKMessage!>? messages = null, string? traceId = null) -> D2.Shared.Result.D2Result!
+static D2.Shared.Handler.Repo.Abstractions.D2ResultDbFactories.DbConnectionFailure(System.Collections.Generic.IReadOnlyList<D2.Shared.I18n.TKMessage!>? messages = null, string? traceId = null) -> D2.Shared.Result.D2Result!
+static D2.Shared.Handler.Repo.Abstractions.D2ResultDbFactories.DbDeadlock(System.Collections.Generic.IReadOnlyList<D2.Shared.I18n.TKMessage!>? messages = null, string? traceId = null) -> D2.Shared.Result.D2Result!
+static D2.Shared.Handler.Repo.Abstractions.D2ResultDbFactories.DbTimeout(System.Collections.Generic.IReadOnlyList<D2.Shared.I18n.TKMessage!>? messages = null, string? traceId = null) -> D2.Shared.Result.D2Result!
+static D2.Shared.Handler.Repo.Abstractions.D2ResultDbFactories.ForeignKeyViolation(System.Collections.Generic.IReadOnlyList<D2.Shared.I18n.TKMessage!>? messages = null, System.Collections.Generic.IReadOnlyList<D2.Shared.Result.InputError!>? inputErrors = null, string? traceId = null) -> D2.Shared.Result.D2Result!
+static D2.Shared.Handler.Repo.Abstractions.D2ResultDbFactories.NotNullViolation(System.Collections.Generic.IReadOnlyList<D2.Shared.I18n.TKMessage!>? messages = null, System.Collections.Generic.IReadOnlyList<D2.Shared.Result.InputError!>? inputErrors = null, string? traceId = null) -> D2.Shared.Result.D2Result!
+static D2.Shared.Handler.Repo.Abstractions.D2ResultDbFactories.UniqueViolation(System.Collections.Generic.IReadOnlyList<D2.Shared.I18n.TKMessage!>? messages = null, System.Collections.Generic.IReadOnlyList<D2.Shared.Result.InputError!>? inputErrors = null, string? traceId = null) -> D2.Shared.Result.D2Result!
+static D2.Shared.Handler.Repo.Abstractions.D2ResultDbFactories.extension(D2.Shared.Result.D2Result!).CheckViolation(System.Collections.Generic.IReadOnlyList<D2.Shared.I18n.TKMessage!>? messages = null, System.Collections.Generic.IReadOnlyList<D2.Shared.Result.InputError!>? inputErrors = null, string? traceId = null) -> D2.Shared.Result.D2Result!
+static D2.Shared.Handler.Repo.Abstractions.D2ResultDbFactories.extension(D2.Shared.Result.D2Result!).ConcurrencyConflict(System.Collections.Generic.IReadOnlyList<D2.Shared.I18n.TKMessage!>? messages = null, string? traceId = null) -> D2.Shared.Result.D2Result!
+static D2.Shared.Handler.Repo.Abstractions.D2ResultDbFactories.extension(D2.Shared.Result.D2Result!).DbConnectionFailure(System.Collections.Generic.IReadOnlyList<D2.Shared.I18n.TKMessage!>? messages = null, string? traceId = null) -> D2.Shared.Result.D2Result!
+static D2.Shared.Handler.Repo.Abstractions.D2ResultDbFactories.extension(D2.Shared.Result.D2Result!).DbDeadlock(System.Collections.Generic.IReadOnlyList<D2.Shared.I18n.TKMessage!>? messages = null, string? traceId = null) -> D2.Shared.Result.D2Result!
+static D2.Shared.Handler.Repo.Abstractions.D2ResultDbFactories.extension(D2.Shared.Result.D2Result!).DbTimeout(System.Collections.Generic.IReadOnlyList<D2.Shared.I18n.TKMessage!>? messages = null, string? traceId = null) -> D2.Shared.Result.D2Result!
+static D2.Shared.Handler.Repo.Abstractions.D2ResultDbFactories.extension(D2.Shared.Result.D2Result!).ForeignKeyViolation(System.Collections.Generic.IReadOnlyList<D2.Shared.I18n.TKMessage!>? messages = null, System.Collections.Generic.IReadOnlyList<D2.Shared.Result.InputError!>? inputErrors = null, string? traceId = null) -> D2.Shared.Result.D2Result!
+static D2.Shared.Handler.Repo.Abstractions.D2ResultDbFactories.extension(D2.Shared.Result.D2Result!).NotNullViolation(System.Collections.Generic.IReadOnlyList<D2.Shared.I18n.TKMessage!>? messages = null, System.Collections.Generic.IReadOnlyList<D2.Shared.Result.InputError!>? inputErrors = null, string? traceId = null) -> D2.Shared.Result.D2Result!
+static D2.Shared.Handler.Repo.Abstractions.D2ResultDbFactories.extension(D2.Shared.Result.D2Result!).UniqueViolation(System.Collections.Generic.IReadOnlyList<D2.Shared.I18n.TKMessage!>? messages = null, System.Collections.Generic.IReadOnlyList<D2.Shared.Result.InputError!>? inputErrors = null, string? traceId = null) -> D2.Shared.Result.D2Result!
+static D2.Shared.Handler.Repo.Abstractions.D2ResultDbGenericFactories.CheckViolation<TData>(System.Collections.Generic.IReadOnlyList<D2.Shared.I18n.TKMessage!>? messages = null, System.Collections.Generic.IReadOnlyList<D2.Shared.Result.InputError!>? inputErrors = null, string? traceId = null) -> D2.Shared.Result.D2Result<TData>!
+static D2.Shared.Handler.Repo.Abstractions.D2ResultDbGenericFactories.ConcurrencyConflict<TData>(System.Collections.Generic.IReadOnlyList<D2.Shared.I18n.TKMessage!>? messages = null, string? traceId = null) -> D2.Shared.Result.D2Result<TData>!
+static D2.Shared.Handler.Repo.Abstractions.D2ResultDbGenericFactories.DbConnectionFailure<TData>(System.Collections.Generic.IReadOnlyList<D2.Shared.I18n.TKMessage!>? messages = null, string? traceId = null) -> D2.Shared.Result.D2Result<TData>!
+static D2.Shared.Handler.Repo.Abstractions.D2ResultDbGenericFactories.DbDeadlock<TData>(System.Collections.Generic.IReadOnlyList<D2.Shared.I18n.TKMessage!>? messages = null, string? traceId = null) -> D2.Shared.Result.D2Result<TData>!
+static D2.Shared.Handler.Repo.Abstractions.D2ResultDbGenericFactories.DbTimeout<TData>(System.Collections.Generic.IReadOnlyList<D2.Shared.I18n.TKMessage!>? messages = null, string? traceId = null) -> D2.Shared.Result.D2Result<TData>!
+static D2.Shared.Handler.Repo.Abstractions.D2ResultDbGenericFactories.ForeignKeyViolation<TData>(System.Collections.Generic.IReadOnlyList<D2.Shared.I18n.TKMessage!>? messages = null, System.Collections.Generic.IReadOnlyList<D2.Shared.Result.InputError!>? inputErrors = null, string? traceId = null) -> D2.Shared.Result.D2Result<TData>!
+static D2.Shared.Handler.Repo.Abstractions.D2ResultDbGenericFactories.NotNullViolation<TData>(System.Collections.Generic.IReadOnlyList<D2.Shared.I18n.TKMessage!>? messages = null, System.Collections.Generic.IReadOnlyList<D2.Shared.Result.InputError!>? inputErrors = null, string? traceId = null) -> D2.Shared.Result.D2Result<TData>!
+static D2.Shared.Handler.Repo.Abstractions.D2ResultDbGenericFactories.UniqueViolation<TData>(System.Collections.Generic.IReadOnlyList<D2.Shared.I18n.TKMessage!>? messages = null, System.Collections.Generic.IReadOnlyList<D2.Shared.Result.InputError!>? inputErrors = null, string? traceId = null) -> D2.Shared.Result.D2Result<TData>!
+static D2.Shared.Handler.Repo.Abstractions.D2ResultDbGenericFactories.extension<TData>(D2.Shared.Result.D2Result<TData>!).CheckViolation(System.Collections.Generic.IReadOnlyList<D2.Shared.I18n.TKMessage!>? messages = null, System.Collections.Generic.IReadOnlyList<D2.Shared.Result.InputError!>? inputErrors = null, string? traceId = null) -> D2.Shared.Result.D2Result<TData>!
+static D2.Shared.Handler.Repo.Abstractions.D2ResultDbGenericFactories.extension<TData>(D2.Shared.Result.D2Result<TData>!).ConcurrencyConflict(System.Collections.Generic.IReadOnlyList<D2.Shared.I18n.TKMessage!>? messages = null, string? traceId = null) -> D2.Shared.Result.D2Result<TData>!
+static D2.Shared.Handler.Repo.Abstractions.D2ResultDbGenericFactories.extension<TData>(D2.Shared.Result.D2Result<TData>!).DbConnectionFailure(System.Collections.Generic.IReadOnlyList<D2.Shared.I18n.TKMessage!>? messages = null, string? traceId = null) -> D2.Shared.Result.D2Result<TData>!
+static D2.Shared.Handler.Repo.Abstractions.D2ResultDbGenericFactories.extension<TData>(D2.Shared.Result.D2Result<TData>!).DbDeadlock(System.Collections.Generic.IReadOnlyList<D2.Shared.I18n.TKMessage!>? messages = null, string? traceId = null) -> D2.Shared.Result.D2Result<TData>!
+static D2.Shared.Handler.Repo.Abstractions.D2ResultDbGenericFactories.extension<TData>(D2.Shared.Result.D2Result<TData>!).DbTimeout(System.Collections.Generic.IReadOnlyList<D2.Shared.I18n.TKMessage!>? messages = null, string? traceId = null) -> D2.Shared.Result.D2Result<TData>!
+static D2.Shared.Handler.Repo.Abstractions.D2ResultDbGenericFactories.extension<TData>(D2.Shared.Result.D2Result<TData>!).ForeignKeyViolation(System.Collections.Generic.IReadOnlyList<D2.Shared.I18n.TKMessage!>? messages = null, System.Collections.Generic.IReadOnlyList<D2.Shared.Result.InputError!>? inputErrors = null, string? traceId = null) -> D2.Shared.Result.D2Result<TData>!
+static D2.Shared.Handler.Repo.Abstractions.D2ResultDbGenericFactories.extension<TData>(D2.Shared.Result.D2Result<TData>!).NotNullViolation(System.Collections.Generic.IReadOnlyList<D2.Shared.I18n.TKMessage!>? messages = null, System.Collections.Generic.IReadOnlyList<D2.Shared.Result.InputError!>? inputErrors = null, string? traceId = null) -> D2.Shared.Result.D2Result<TData>!
+static D2.Shared.Handler.Repo.Abstractions.D2ResultDbGenericFactories.extension<TData>(D2.Shared.Result.D2Result<TData>!).UniqueViolation(System.Collections.Generic.IReadOnlyList<D2.Shared.I18n.TKMessage!>? messages = null, System.Collections.Generic.IReadOnlyList<D2.Shared.Result.InputError!>? inputErrors = null, string? traceId = null) -> D2.Shared.Result.D2Result<TData>!

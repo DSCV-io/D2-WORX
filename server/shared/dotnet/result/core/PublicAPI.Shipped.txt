@@ -1,0 +1,139 @@
+#nullable enable
+D2.Shared.Result.D2Result
+D2.Shared.Result.D2Result.Category.get -> D2.Shared.ErrorCodes.Category.ErrorCategory?
+D2.Shared.Result.D2Result.D2Result(bool success, System.Collections.Generic.IReadOnlyList<D2.Shared.I18n.TKMessage!>? messages = null, System.Collections.Generic.IReadOnlyList<D2.Shared.Result.InputError!>? inputErrors = null, System.Net.HttpStatusCode? statusCode = null, string? errorCode = null, string? traceId = null, D2.Shared.ErrorCodes.Category.ErrorCategory? category = null) -> void
+D2.Shared.Result.D2Result.ErrorCode.get -> string?
+D2.Shared.Result.D2Result.Failed.get -> bool
+D2.Shared.Result.D2Result.InputErrors.get -> System.Collections.Generic.IReadOnlyList<D2.Shared.Result.InputError!>!
+D2.Shared.Result.D2Result.IsCanceled.get -> bool
+D2.Shared.Result.D2Result.IsConflict.get -> bool
+D2.Shared.Result.D2Result.IsCreated.get -> bool
+D2.Shared.Result.D2Result.IsForbidden.get -> bool
+D2.Shared.Result.D2Result.IsIdempotencyInFlight.get -> bool
+D2.Shared.Result.D2Result.IsNotFound.get -> bool
+D2.Shared.Result.D2Result.IsOk.get -> bool
+D2.Shared.Result.D2Result.IsPartialOrMissing.get -> bool
+D2.Shared.Result.D2Result.IsPartialSuccess.get -> bool
+D2.Shared.Result.D2Result.IsPayloadTooLarge.get -> bool
+D2.Shared.Result.D2Result.IsRateLimited.get -> bool
+D2.Shared.Result.D2Result.IsServiceUnavailable.get -> bool
+D2.Shared.Result.D2Result.IsSomeFound.get -> bool
+D2.Shared.Result.D2Result.IsTransientRetryable.get -> bool
+D2.Shared.Result.D2Result.IsUnauthorized.get -> bool
+D2.Shared.Result.D2Result.IsUnhandledException.get -> bool
+D2.Shared.Result.D2Result.IsValidationFailed.get -> bool
+D2.Shared.Result.D2Result.Messages.get -> System.Collections.Generic.IReadOnlyList<D2.Shared.I18n.TKMessage!>!
+D2.Shared.Result.D2Result.StatusCode.get -> System.Net.HttpStatusCode
+D2.Shared.Result.D2Result.Success.get -> bool
+D2.Shared.Result.D2Result.TraceId.get -> string?
+D2.Shared.Result.D2Result.WithTraceId(string? traceId) -> D2.Shared.Result.D2Result!
+D2.Shared.Result.D2Result<TData>
+D2.Shared.Result.D2Result<TData>.Bind<TNext>(System.Func<TData, D2.Shared.Result.D2Result<TNext>!>! next) -> D2.Shared.Result.D2Result<TNext>!
+D2.Shared.Result.D2Result<TData>.CheckFailure(out TData? data) -> bool
+D2.Shared.Result.D2Result<TData>.CheckSuccess(out TData? data) -> bool
+D2.Shared.Result.D2Result<TData>.D2Result(bool success, TData? data = default(TData?), System.Collections.Generic.IReadOnlyList<D2.Shared.I18n.TKMessage!>? messages = null, System.Collections.Generic.IReadOnlyList<D2.Shared.Result.InputError!>? inputErrors = null, System.Net.HttpStatusCode? statusCode = null, string? errorCode = null, string? traceId = null, D2.Shared.ErrorCodes.Category.ErrorCategory? category = null) -> void
+D2.Shared.Result.D2Result<TData>.Data.get -> TData?
+D2.Shared.Result.D2Result<TData>.Map<TNext>(System.Func<TData, TNext>! projection) -> D2.Shared.Result.D2Result<TNext>!
+D2.Shared.Result.D2Result<TData>.Match<TResult>(System.Func<TData, TResult>! onSuccess, System.Func<D2.Shared.Result.D2Result<TData>!, TResult>! onFailure) -> TResult
+D2.Shared.Result.D2Result<TData>.WithTraceId(string? traceId) -> D2.Shared.Result.D2Result<TData>!
+D2.Shared.Result.D2ResultAsyncExtensions
+D2.Shared.Result.D2ResultEnvelopeFieldNames
+D2.Shared.Result.D2ResultGuardExtensions
+D2.Shared.Result.D2ResultGuardExtensions.extension<TInner>(D2.Shared.Result.D2Result<TInner>!)
+D2.Shared.Result.D2ResultGuardExtensions.extension<TInner>(D2.Shared.Result.D2Result<TInner>!).BubbleOnFailure<TOuter>(out D2.Shared.Result.D2Result<TOuter?>! bubbled, out TInner? data) -> bool
+D2.Shared.Result.ErrorCodes
+D2.Shared.Result.InputError
+D2.Shared.Result.InputError.<Clone>$() -> D2.Shared.Result.InputError!
+D2.Shared.Result.InputError.Deconstruct(out string! Field, out System.Collections.Generic.IReadOnlyList<D2.Shared.I18n.TKMessage!>! Errors) -> void
+D2.Shared.Result.InputError.Equals(D2.Shared.Result.InputError? other) -> bool
+D2.Shared.Result.InputError.Errors.get -> System.Collections.Generic.IReadOnlyList<D2.Shared.I18n.TKMessage!>!
+D2.Shared.Result.InputError.Errors.init -> void
+D2.Shared.Result.InputError.Field.get -> string!
+D2.Shared.Result.InputError.Field.init -> void
+D2.Shared.Result.InputError.InputError(string! Field, System.Collections.Generic.IReadOnlyList<D2.Shared.I18n.TKMessage!>! Errors) -> void
+D2.Shared.Result.InputErrorWireShape
+D2.Shared.Result.Unit
+D2.Shared.Result.Unit.Equals(D2.Shared.Result.Unit other) -> bool
+D2.Shared.Result.Unit.Unit() -> void
+const D2.Shared.Result.D2ResultEnvelopeFieldNames.CATEGORY = "category" -> string!
+const D2.Shared.Result.D2ResultEnvelopeFieldNames.DATA = "data" -> string!
+const D2.Shared.Result.D2ResultEnvelopeFieldNames.ERROR_CODE = "errorCode" -> string!
+const D2.Shared.Result.D2ResultEnvelopeFieldNames.INPUT_ERRORS = "inputErrors" -> string!
+const D2.Shared.Result.D2ResultEnvelopeFieldNames.MESSAGES = "messages" -> string!
+const D2.Shared.Result.D2ResultEnvelopeFieldNames.STATUS_CODE = "statusCode" -> string!
+const D2.Shared.Result.D2ResultEnvelopeFieldNames.SUCCESS = "success" -> string!
+const D2.Shared.Result.D2ResultEnvelopeFieldNames.TRACE_ID = "traceId" -> string!
+const D2.Shared.Result.ErrorCodes.CANCELED = "CANCELED" -> string!
+const D2.Shared.Result.ErrorCodes.CONFLICT = "CONFLICT" -> string!
+const D2.Shared.Result.ErrorCodes.COULD_NOT_BE_DESERIALIZED = "COULD_NOT_BE_DESERIALIZED" -> string!
+const D2.Shared.Result.ErrorCodes.COULD_NOT_BE_SERIALIZED = "COULD_NOT_BE_SERIALIZED" -> string!
+const D2.Shared.Result.ErrorCodes.FORBIDDEN = "FORBIDDEN" -> string!
+const D2.Shared.Result.ErrorCodes.IDEMPOTENCY_IN_FLIGHT = "IDEMPOTENCY_IN_FLIGHT" -> string!
+const D2.Shared.Result.ErrorCodes.NOT_FOUND = "NOT_FOUND" -> string!
+const D2.Shared.Result.ErrorCodes.PARTIAL_SUCCESS = "PARTIAL_SUCCESS" -> string!
+const D2.Shared.Result.ErrorCodes.PAYLOAD_TOO_LARGE = "PAYLOAD_TOO_LARGE" -> string!
+const D2.Shared.Result.ErrorCodes.RATE_LIMITED = "RATE_LIMITED" -> string!
+const D2.Shared.Result.ErrorCodes.SERVICE_UNAVAILABLE = "SERVICE_UNAVAILABLE" -> string!
+const D2.Shared.Result.ErrorCodes.SOME_FOUND = "SOME_FOUND" -> string!
+const D2.Shared.Result.ErrorCodes.UNAUTHORIZED = "UNAUTHORIZED" -> string!
+const D2.Shared.Result.ErrorCodes.UNHANDLED_EXCEPTION = "UNHANDLED_EXCEPTION" -> string!
+const D2.Shared.Result.ErrorCodes.VALIDATION_FAILED = "VALIDATION_FAILED" -> string!
+const D2.Shared.Result.InputErrorWireShape.ERRORS = "errors" -> string!
+const D2.Shared.Result.InputErrorWireShape.FIELD = "field" -> string!
+override D2.Shared.Result.InputError.Equals(object? obj) -> bool
+override D2.Shared.Result.InputError.GetHashCode() -> int
+override D2.Shared.Result.InputError.ToString() -> string!
+override D2.Shared.Result.Unit.GetHashCode() -> int
+static D2.Shared.Result.D2Result.Canceled(System.Collections.Generic.IReadOnlyList<D2.Shared.I18n.TKMessage!>? messages = null, System.Collections.Generic.IReadOnlyList<D2.Shared.Result.InputError!>? inputErrors = null, string? errorCode = null, D2.Shared.ErrorCodes.Category.ErrorCategory? category = null, string? traceId = null) -> D2.Shared.Result.D2Result!
+static D2.Shared.Result.D2Result.Combine<T1, T2, T3, T4, T5>(D2.Shared.Result.D2Result<T1>! r1, D2.Shared.Result.D2Result<T2>! r2, D2.Shared.Result.D2Result<T3>! r3, D2.Shared.Result.D2Result<T4>! r4, D2.Shared.Result.D2Result<T5>! r5) -> D2.Shared.Result.D2Result<(T1 Item1, T2 Item2, T3 Item3, T4 Item4, T5 Item5)>!
+static D2.Shared.Result.D2Result.Combine<T1, T2, T3, T4>(D2.Shared.Result.D2Result<T1>! r1, D2.Shared.Result.D2Result<T2>! r2, D2.Shared.Result.D2Result<T3>! r3, D2.Shared.Result.D2Result<T4>! r4) -> D2.Shared.Result.D2Result<(T1 Item1, T2 Item2, T3 Item3, T4 Item4)>!
+static D2.Shared.Result.D2Result.Combine<T1, T2, T3>(D2.Shared.Result.D2Result<T1>! r1, D2.Shared.Result.D2Result<T2>! r2, D2.Shared.Result.D2Result<T3>! r3) -> D2.Shared.Result.D2Result<(T1 Item1, T2 Item2, T3 Item3)>!
+static D2.Shared.Result.D2Result.Combine<T1, T2>(D2.Shared.Result.D2Result<T1>! r1, D2.Shared.Result.D2Result<T2>! r2) -> D2.Shared.Result.D2Result<(T1 Item1, T2 Item2)>!
+static D2.Shared.Result.D2Result.Combine<T>(System.Collections.Generic.IEnumerable<D2.Shared.Result.D2Result<T>!>! results) -> D2.Shared.Result.D2Result<System.Collections.Generic.IReadOnlyList<T>!>!
+static D2.Shared.Result.D2Result.Conflict(System.Collections.Generic.IReadOnlyList<D2.Shared.I18n.TKMessage!>? messages = null, System.Collections.Generic.IReadOnlyList<D2.Shared.Result.InputError!>? inputErrors = null, string? errorCode = null, D2.Shared.ErrorCodes.Category.ErrorCategory? category = null, string? traceId = null) -> D2.Shared.Result.D2Result!
+static D2.Shared.Result.D2Result.Created(System.Collections.Generic.IReadOnlyList<D2.Shared.I18n.TKMessage!>? messages = null, string? traceId = null) -> D2.Shared.Result.D2Result!
+static D2.Shared.Result.D2Result.Fail(System.Collections.Generic.IReadOnlyList<D2.Shared.I18n.TKMessage!>? messages = null, System.Net.HttpStatusCode? statusCode = null, System.Collections.Generic.IReadOnlyList<D2.Shared.Result.InputError!>? inputErrors = null, string? errorCode = null, string? traceId = null) -> D2.Shared.Result.D2Result!
+static D2.Shared.Result.D2Result.Forbidden(System.Collections.Generic.IReadOnlyList<D2.Shared.I18n.TKMessage!>? messages = null, System.Collections.Generic.IReadOnlyList<D2.Shared.Result.InputError!>? inputErrors = null, string? errorCode = null, D2.Shared.ErrorCodes.Category.ErrorCategory? category = null, string? traceId = null) -> D2.Shared.Result.D2Result!
+static D2.Shared.Result.D2Result.NotFound(System.Collections.Generic.IReadOnlyList<D2.Shared.I18n.TKMessage!>? messages = null, System.Collections.Generic.IReadOnlyList<D2.Shared.Result.InputError!>? inputErrors = null, string? errorCode = null, D2.Shared.ErrorCodes.Category.ErrorCategory? category = null, string? traceId = null) -> D2.Shared.Result.D2Result!
+static D2.Shared.Result.D2Result.Ok(string? traceId = null) -> D2.Shared.Result.D2Result!
+static D2.Shared.Result.D2Result.PayloadTooLarge(System.Collections.Generic.IReadOnlyList<D2.Shared.I18n.TKMessage!>? messages = null, System.Collections.Generic.IReadOnlyList<D2.Shared.Result.InputError!>? inputErrors = null, string? errorCode = null, D2.Shared.ErrorCodes.Category.ErrorCategory? category = null, string? traceId = null) -> D2.Shared.Result.D2Result!
+static D2.Shared.Result.D2Result.ServiceUnavailable(System.Collections.Generic.IReadOnlyList<D2.Shared.I18n.TKMessage!>? messages = null, System.Collections.Generic.IReadOnlyList<D2.Shared.Result.InputError!>? inputErrors = null, string? errorCode = null, D2.Shared.ErrorCodes.Category.ErrorCategory? category = null, string? traceId = null) -> D2.Shared.Result.D2Result!
+static D2.Shared.Result.D2Result.SomeFound(System.Collections.Generic.IReadOnlyList<D2.Shared.I18n.TKMessage!>? messages = null, string? traceId = null) -> D2.Shared.Result.D2Result!
+static D2.Shared.Result.D2Result.TooManyRequests(System.Collections.Generic.IReadOnlyList<D2.Shared.I18n.TKMessage!>? messages = null, System.Collections.Generic.IReadOnlyList<D2.Shared.Result.InputError!>? inputErrors = null, string? errorCode = null, D2.Shared.ErrorCodes.Category.ErrorCategory? category = null, string? traceId = null) -> D2.Shared.Result.D2Result!
+static D2.Shared.Result.D2Result.Unauthorized(System.Collections.Generic.IReadOnlyList<D2.Shared.I18n.TKMessage!>? messages = null, System.Collections.Generic.IReadOnlyList<D2.Shared.Result.InputError!>? inputErrors = null, string? errorCode = null, D2.Shared.ErrorCodes.Category.ErrorCategory? category = null, string? traceId = null) -> D2.Shared.Result.D2Result!
+static D2.Shared.Result.D2Result.UnhandledException(System.Collections.Generic.IReadOnlyList<D2.Shared.I18n.TKMessage!>? messages = null, System.Collections.Generic.IReadOnlyList<D2.Shared.Result.InputError!>? inputErrors = null, string? errorCode = null, D2.Shared.ErrorCodes.Category.ErrorCategory? category = null, string? traceId = null) -> D2.Shared.Result.D2Result!
+static D2.Shared.Result.D2Result.ValidationFailed(System.Collections.Generic.IReadOnlyList<D2.Shared.I18n.TKMessage!>? messages = null, System.Collections.Generic.IReadOnlyList<D2.Shared.Result.InputError!>? inputErrors = null, string? errorCode = null, D2.Shared.ErrorCodes.Category.ErrorCategory? category = null, string? traceId = null) -> D2.Shared.Result.D2Result!
+static D2.Shared.Result.D2Result<TData>.Bubble(D2.Shared.Result.D2Result! d2Result, TData? data = default(TData?)) -> D2.Shared.Result.D2Result<TData>!
+static D2.Shared.Result.D2Result<TData>.BubbleFail(D2.Shared.Result.D2Result! d2Result) -> D2.Shared.Result.D2Result<TData>!
+static D2.Shared.Result.D2Result<TData>.Canceled(System.Collections.Generic.IReadOnlyList<D2.Shared.I18n.TKMessage!>? messages = null, System.Collections.Generic.IReadOnlyList<D2.Shared.Result.InputError!>? inputErrors = null, string? errorCode = null, D2.Shared.ErrorCodes.Category.ErrorCategory? category = null, string? traceId = null) -> D2.Shared.Result.D2Result<TData>!
+static D2.Shared.Result.D2Result<TData>.Conflict(System.Collections.Generic.IReadOnlyList<D2.Shared.I18n.TKMessage!>? messages = null, System.Collections.Generic.IReadOnlyList<D2.Shared.Result.InputError!>? inputErrors = null, string? errorCode = null, D2.Shared.ErrorCodes.Category.ErrorCategory? category = null, string? traceId = null) -> D2.Shared.Result.D2Result<TData>!
+static D2.Shared.Result.D2Result<TData>.Created(TData? data = default(TData?), string? traceId = null) -> D2.Shared.Result.D2Result<TData>!
+static D2.Shared.Result.D2Result<TData>.Fail(System.Collections.Generic.IReadOnlyList<D2.Shared.I18n.TKMessage!>? messages = null, System.Net.HttpStatusCode? statusCode = null, System.Collections.Generic.IReadOnlyList<D2.Shared.Result.InputError!>? inputErrors = null, string? errorCode = null, string? traceId = null) -> D2.Shared.Result.D2Result<TData>!
+static D2.Shared.Result.D2Result<TData>.Forbidden(System.Collections.Generic.IReadOnlyList<D2.Shared.I18n.TKMessage!>? messages = null, System.Collections.Generic.IReadOnlyList<D2.Shared.Result.InputError!>? inputErrors = null, string? errorCode = null, D2.Shared.ErrorCodes.Category.ErrorCategory? category = null, string? traceId = null) -> D2.Shared.Result.D2Result<TData>!
+static D2.Shared.Result.D2Result<TData>.NotFound(System.Collections.Generic.IReadOnlyList<D2.Shared.I18n.TKMessage!>? messages = null, System.Collections.Generic.IReadOnlyList<D2.Shared.Result.InputError!>? inputErrors = null, string? errorCode = null, D2.Shared.ErrorCodes.Category.ErrorCategory? category = null, string? traceId = null) -> D2.Shared.Result.D2Result<TData>!
+static D2.Shared.Result.D2Result<TData>.Ok(TData? data = default(TData?), System.Collections.Generic.IReadOnlyList<D2.Shared.I18n.TKMessage!>? messages = null, string? traceId = null) -> D2.Shared.Result.D2Result<TData>!
+static D2.Shared.Result.D2Result<TData>.PartialSuccess(TData? data = default(TData?), System.Collections.Generic.IReadOnlyList<D2.Shared.I18n.TKMessage!>? messages = null, string? traceId = null) -> D2.Shared.Result.D2Result<TData>!
+static D2.Shared.Result.D2Result<TData>.PayloadTooLarge(System.Collections.Generic.IReadOnlyList<D2.Shared.I18n.TKMessage!>? messages = null, System.Collections.Generic.IReadOnlyList<D2.Shared.Result.InputError!>? inputErrors = null, string? errorCode = null, D2.Shared.ErrorCodes.Category.ErrorCategory? category = null, string? traceId = null) -> D2.Shared.Result.D2Result<TData>!
+static D2.Shared.Result.D2Result<TData>.ServiceUnavailable(System.Collections.Generic.IReadOnlyList<D2.Shared.I18n.TKMessage!>? messages = null, System.Collections.Generic.IReadOnlyList<D2.Shared.Result.InputError!>? inputErrors = null, string? errorCode = null, D2.Shared.ErrorCodes.Category.ErrorCategory? category = null, string? traceId = null) -> D2.Shared.Result.D2Result<TData>!
+static D2.Shared.Result.D2Result<TData>.SomeFound(TData? data = default(TData?), System.Collections.Generic.IReadOnlyList<D2.Shared.I18n.TKMessage!>? messages = null, string? traceId = null) -> D2.Shared.Result.D2Result<TData>!
+static D2.Shared.Result.D2Result<TData>.TooManyRequests(System.Collections.Generic.IReadOnlyList<D2.Shared.I18n.TKMessage!>? messages = null, System.Collections.Generic.IReadOnlyList<D2.Shared.Result.InputError!>? inputErrors = null, string? errorCode = null, D2.Shared.ErrorCodes.Category.ErrorCategory? category = null, string? traceId = null) -> D2.Shared.Result.D2Result<TData>!
+static D2.Shared.Result.D2Result<TData>.Unauthorized(System.Collections.Generic.IReadOnlyList<D2.Shared.I18n.TKMessage!>? messages = null, System.Collections.Generic.IReadOnlyList<D2.Shared.Result.InputError!>? inputErrors = null, string? errorCode = null, D2.Shared.ErrorCodes.Category.ErrorCategory? category = null, string? traceId = null) -> D2.Shared.Result.D2Result<TData>!
+static D2.Shared.Result.D2Result<TData>.UnhandledException(System.Collections.Generic.IReadOnlyList<D2.Shared.I18n.TKMessage!>? messages = null, System.Collections.Generic.IReadOnlyList<D2.Shared.Result.InputError!>? inputErrors = null, string? errorCode = null, D2.Shared.ErrorCodes.Category.ErrorCategory? category = null, string? traceId = null) -> D2.Shared.Result.D2Result<TData>!
+static D2.Shared.Result.D2Result<TData>.ValidationFailed(System.Collections.Generic.IReadOnlyList<D2.Shared.I18n.TKMessage!>? messages = null, System.Collections.Generic.IReadOnlyList<D2.Shared.Result.InputError!>? inputErrors = null, string? errorCode = null, D2.Shared.ErrorCodes.Category.ErrorCategory? category = null, string? traceId = null) -> D2.Shared.Result.D2Result<TData>!
+static D2.Shared.Result.D2ResultAsyncExtensions.BindAsync<TData, TNext>(this System.Threading.Tasks.Task<D2.Shared.Result.D2Result<TData>!>! task, System.Func<TData, System.Threading.Tasks.Task<D2.Shared.Result.D2Result<TNext>!>!>! next) -> System.Threading.Tasks.Task<D2.Shared.Result.D2Result<TNext>!>!
+static D2.Shared.Result.D2ResultAsyncExtensions.BindAsync<TData, TNext>(this System.Threading.Tasks.ValueTask<D2.Shared.Result.D2Result<TData>!> task, System.Func<TData, System.Threading.Tasks.ValueTask<D2.Shared.Result.D2Result<TNext>!>>! next) -> System.Threading.Tasks.ValueTask<D2.Shared.Result.D2Result<TNext>!>
+static D2.Shared.Result.D2ResultAsyncExtensions.MapAsync<TData, TNext>(this System.Threading.Tasks.Task<D2.Shared.Result.D2Result<TData>!>! task, System.Func<TData, TNext>! projection) -> System.Threading.Tasks.Task<D2.Shared.Result.D2Result<TNext>!>!
+static D2.Shared.Result.D2ResultAsyncExtensions.MapAsync<TData, TNext>(this System.Threading.Tasks.ValueTask<D2.Shared.Result.D2Result<TData>!> task, System.Func<TData, TNext>! projection) -> System.Threading.Tasks.ValueTask<D2.Shared.Result.D2Result<TNext>!>
+static D2.Shared.Result.D2ResultAsyncExtensions.ThenAsync<TData>(this System.Threading.Tasks.Task<D2.Shared.Result.D2Result<TData>!>! task, System.Func<TData, System.Threading.Tasks.Task<D2.Shared.Result.D2Result<TData>!>!>! next) -> System.Threading.Tasks.Task<D2.Shared.Result.D2Result<TData>!>!
+static D2.Shared.Result.D2ResultAsyncExtensions.ThenAsync<TData>(this System.Threading.Tasks.ValueTask<D2.Shared.Result.D2Result<TData>!> task, System.Func<TData, System.Threading.Tasks.ValueTask<D2.Shared.Result.D2Result<TData>!>>! next) -> System.Threading.Tasks.ValueTask<D2.Shared.Result.D2Result<TData>!>
+static D2.Shared.Result.D2ResultEnvelopeFieldNames.AllFields.get -> System.Collections.Generic.IReadOnlyList<string!>!
+static D2.Shared.Result.D2ResultGuardExtensions.BubbleOnFailure<TInner, TOuter>(this D2.Shared.Result.D2Result<TInner>! result, out D2.Shared.Result.D2Result<TOuter?>! bubbled, out TInner? data) -> bool
+static D2.Shared.Result.ErrorCodes.AllCodes.get -> System.Collections.Generic.IReadOnlyList<string!>!
+static D2.Shared.Result.ErrorCodes.GetHttpStatus(string! errorCode) -> int
+static D2.Shared.Result.InputError.operator !=(D2.Shared.Result.InputError? left, D2.Shared.Result.InputError? right) -> bool
+static D2.Shared.Result.InputError.operator ==(D2.Shared.Result.InputError? left, D2.Shared.Result.InputError? right) -> bool
+static D2.Shared.Result.Unit.Value.get -> D2.Shared.Result.Unit
+static D2.Shared.Result.Unit.operator !=(D2.Shared.Result.Unit left, D2.Shared.Result.Unit right) -> bool
+static D2.Shared.Result.Unit.operator ==(D2.Shared.Result.Unit left, D2.Shared.Result.Unit right) -> bool
+~override D2.Shared.Result.Unit.Equals(object obj) -> bool
+~override D2.Shared.Result.Unit.ToString() -> string

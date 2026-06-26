@@ -1,0 +1,5 @@
+#nullable enable
+D2.Shared.Handler.Repo.BaseRepoHandler<TSelf, TInput, TOutput>
+D2.Shared.Handler.Repo.BaseRepoHandler<TSelf, TInput, TOutput>.BaseRepoHandler(D2.Shared.Handler.HandlerContext<TSelf!>! context, D2.Shared.Handler.Repo.Abstractions.IDbExceptionClassifier! classifier) -> void
+override D2.Shared.Handler.Repo.BaseRepoHandler<TSelf, TInput, TOutput>.HandleAsync(TInput input, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken), D2.Shared.Handler.Abstractions.HandlerOptions? options = null) -> System.Threading.Tasks.ValueTask<D2.Shared.Result.D2Result<TOutput?>!>
+virtual D2.Shared.Handler.Repo.BaseRepoHandler<TSelf, TInput, TOutput>.MapDbException(System.Exception! exception, D2.Shared.Handler.Repo.Abstractions.DbFailureKind kind) -> D2.Shared.Result.D2Result<TOutput?>?

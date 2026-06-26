@@ -170,3 +170,14 @@ dotnet_diagnostic.SA1200.severity = none
 # never hand-authored — exclude them from style analysis. Real compile errors still surface.
 [**/Migrations/*.cs]
 generated_code = true
+
+# Protoc / Grpc.Tools output (the message C# generated from the shared .proto
+# files into obj/<Config>/<TFM>/) carries oblivious — un-annotated — reference
+# types because Google.Protobuf does not emit nullable annotations. That trips
+# the PublicApiAnalyzers RS0041 ("uses some oblivious reference types") rule on
+# the generated public proto types, which are part of the published surface but
+# whose nullability we do not author. Disable RS0041 for the generated proto
+# C# only; the API-recording rules (RS0016 new-API / RS0017 removed-API) still
+# run, so the proto-derived public surface is still tracked in PublicAPI.*.txt.
+[**/obj/**/*.cs]
+dotnet_diagnostic.RS0041.severity = none

@@ -1,0 +1,203 @@
+#nullable enable
+D2.Shared.Auth.AuthOptions
+D2.Shared.Auth.AuthOptions.<Clone>$() -> D2.Shared.Auth.AuthOptions!
+D2.Shared.Auth.AuthOptions.Audience.get -> string?
+D2.Shared.Auth.AuthOptions.Audience.set -> void
+D2.Shared.Auth.AuthOptions.AuthOptions() -> void
+D2.Shared.Auth.AuthOptions.ClockSkew.get -> System.TimeSpan
+D2.Shared.Auth.AuthOptions.ClockSkew.init -> void
+D2.Shared.Auth.AuthOptions.Equals(D2.Shared.Auth.AuthOptions? other) -> bool
+D2.Shared.Auth.AuthOptions.Issuer.get -> System.Uri?
+D2.Shared.Auth.AuthOptions.Issuer.set -> void
+D2.Shared.Auth.AuthOptions.Jwks.get -> D2.Shared.Auth.Jwks.JwksProviderOptions!
+D2.Shared.Auth.AuthOptions.Jwks.set -> void
+D2.Shared.Auth.AuthOptions.Sessions.get -> D2.Shared.Auth.Sessions.SessionLivenessOptions!
+D2.Shared.Auth.AuthOptions.Sessions.set -> void
+D2.Shared.Auth.AuthOptions.Validator.get -> D2.Shared.Auth.Validation.JwtValidatorOptions!
+D2.Shared.Auth.AuthOptions.Validator.set -> void
+D2.Shared.Auth.AuthServiceCollectionExtensions
+D2.Shared.Auth.AuthServiceCollectionExtensions.extension(Microsoft.Extensions.DependencyInjection.IServiceCollection!)
+D2.Shared.Auth.AuthServiceCollectionExtensions.extension(Microsoft.Extensions.DependencyInjection.IServiceCollection!).AddD2Auth(System.Action<D2.Shared.Auth.AuthOptions!>! configure) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
+D2.Shared.Auth.Errors.AuthErrorCodes
+D2.Shared.Auth.Errors.AuthFailures
+D2.Shared.Auth.Errors.AuthFailures<T>
+D2.Shared.Auth.Jwks.JwksProviderOptions
+D2.Shared.Auth.Jwks.JwksProviderOptions.<Clone>$() -> D2.Shared.Auth.Jwks.JwksProviderOptions!
+D2.Shared.Auth.Jwks.JwksProviderOptions.BackplaneChannelKey.get -> string!
+D2.Shared.Auth.Jwks.JwksProviderOptions.BackplaneChannelKey.init -> void
+D2.Shared.Auth.Jwks.JwksProviderOptions.CircuitBreakerCooldown.get -> System.TimeSpan
+D2.Shared.Auth.Jwks.JwksProviderOptions.CircuitBreakerCooldown.init -> void
+D2.Shared.Auth.Jwks.JwksProviderOptions.CircuitBreakerFailureThreshold.get -> int
+D2.Shared.Auth.Jwks.JwksProviderOptions.CircuitBreakerFailureThreshold.init -> void
+D2.Shared.Auth.Jwks.JwksProviderOptions.Equals(D2.Shared.Auth.Jwks.JwksProviderOptions? other) -> bool
+D2.Shared.Auth.Jwks.JwksProviderOptions.HttpRequestTimeout.get -> System.TimeSpan
+D2.Shared.Auth.Jwks.JwksProviderOptions.HttpRequestTimeout.init -> void
+D2.Shared.Auth.Jwks.JwksProviderOptions.JwksProviderOptions(System.TimeSpan? refreshCooldown = null, System.TimeSpan? httpRequestTimeout = null, int? circuitBreakerFailureThreshold = null, System.TimeSpan? circuitBreakerCooldown = null, string? backplaneChannelKey = null) -> void
+D2.Shared.Auth.Jwks.JwksProviderOptions.RefreshCooldown.get -> System.TimeSpan
+D2.Shared.Auth.Jwks.JwksProviderOptions.RefreshCooldown.init -> void
+D2.Shared.Auth.Sessions.SessionLivenessOptions
+D2.Shared.Auth.Sessions.SessionLivenessOptions.<Clone>$() -> D2.Shared.Auth.Sessions.SessionLivenessOptions!
+D2.Shared.Auth.Sessions.SessionLivenessOptions.CacheKeyPrefix.get -> string!
+D2.Shared.Auth.Sessions.SessionLivenessOptions.CacheKeyPrefix.init -> void
+D2.Shared.Auth.Sessions.SessionLivenessOptions.Equals(D2.Shared.Auth.Sessions.SessionLivenessOptions? other) -> bool
+D2.Shared.Auth.Sessions.SessionLivenessOptions.SessionLivenessOptions(string? cacheKeyPrefix = null) -> void
+D2.Shared.Auth.Telemetry.AuthTelemetry
+D2.Shared.Auth.Telemetry.AuthTelemetryTags
+D2.Shared.Auth.Telemetry.AuthTelemetryTags.JwksFetchDurationMs
+D2.Shared.Auth.Telemetry.AuthTelemetryTags.JwksFetchDurationMs.Outcome
+D2.Shared.Auth.Telemetry.AuthTelemetryTags.JwksFetchDurationMs.Trigger
+D2.Shared.Auth.Telemetry.AuthTelemetryTags.JwksFetches
+D2.Shared.Auth.Telemetry.AuthTelemetryTags.JwksFetches.Outcome
+D2.Shared.Auth.Telemetry.AuthTelemetryTags.JwksFetches.Trigger
+D2.Shared.Auth.Telemetry.AuthTelemetryTags.JwtValidationDurationMs
+D2.Shared.Auth.Telemetry.AuthTelemetryTags.JwtValidationDurationMs.Outcome
+D2.Shared.Auth.Telemetry.AuthTelemetryTags.JwtValidations
+D2.Shared.Auth.Telemetry.AuthTelemetryTags.JwtValidations.Outcome
+D2.Shared.Auth.Telemetry.AuthTelemetryTags.ProblemEmitted
+D2.Shared.Auth.Telemetry.AuthTelemetryTags.SessionLivenessChecks
+D2.Shared.Auth.Telemetry.AuthTelemetryTags.SessionLivenessChecks.Outcome
+D2.Shared.Auth.Validation.JwtValidatorOptions
+D2.Shared.Auth.Validation.JwtValidatorOptions.<Clone>$() -> D2.Shared.Auth.Validation.JwtValidatorOptions!
+D2.Shared.Auth.Validation.JwtValidatorOptions.Equals(D2.Shared.Auth.Validation.JwtValidatorOptions? other) -> bool
+D2.Shared.Auth.Validation.JwtValidatorOptions.JwtValidatorOptions(bool? requireSessionIdClaim = null, bool? requireExpirationTime = null, System.Collections.Generic.IReadOnlyList<string!>? validAlgorithms = null) -> void
+D2.Shared.Auth.Validation.JwtValidatorOptions.RequireExpirationTime.get -> bool
+D2.Shared.Auth.Validation.JwtValidatorOptions.RequireExpirationTime.init -> void
+D2.Shared.Auth.Validation.JwtValidatorOptions.RequireSessionIdClaim.get -> bool
+D2.Shared.Auth.Validation.JwtValidatorOptions.RequireSessionIdClaim.init -> void
+D2.Shared.Auth.Validation.JwtValidatorOptions.ValidAlgorithms.get -> System.Collections.Generic.IReadOnlyList<string!>!
+D2.Shared.Auth.Validation.JwtValidatorOptions.ValidAlgorithms.init -> void
+const D2.Shared.Auth.AuthServiceCollectionExtensions.OIDC_DISCOVERY_HTTP_CLIENT_NAME = "d2-auth-oidc-discovery" -> string!
+const D2.Shared.Auth.Errors.AuthErrorCodes.AUTH_BEARER_MALFORMED = "AUTH_BEARER_MALFORMED" -> string!
+const D2.Shared.Auth.Errors.AuthErrorCodes.AUTH_BEARER_MISSING = "AUTH_BEARER_MISSING" -> string!
+const D2.Shared.Auth.Errors.AuthErrorCodes.AUTH_JWKS_UNAVAILABLE = "AUTH_JWKS_UNAVAILABLE" -> string!
+const D2.Shared.Auth.Errors.AuthErrorCodes.AUTH_JWT_ACT_CHAIN_MALFORMED = "AUTH_JWT_ACT_CHAIN_MALFORMED" -> string!
+const D2.Shared.Auth.Errors.AuthErrorCodes.AUTH_JWT_AUDIENCE_MISMATCH = "AUTH_JWT_AUDIENCE_MISMATCH" -> string!
+const D2.Shared.Auth.Errors.AuthErrorCodes.AUTH_JWT_CLAIM_MISSING = "AUTH_JWT_CLAIM_MISSING" -> string!
+const D2.Shared.Auth.Errors.AuthErrorCodes.AUTH_JWT_EXPIRED = "AUTH_JWT_EXPIRED" -> string!
+const D2.Shared.Auth.Errors.AuthErrorCodes.AUTH_JWT_ISSUER_MISMATCH = "AUTH_JWT_ISSUER_MISMATCH" -> string!
+const D2.Shared.Auth.Errors.AuthErrorCodes.AUTH_JWT_KID_NOT_FOUND = "AUTH_JWT_KID_NOT_FOUND" -> string!
+const D2.Shared.Auth.Errors.AuthErrorCodes.AUTH_JWT_NOT_YET_VALID = "AUTH_JWT_NOT_YET_VALID" -> string!
+const D2.Shared.Auth.Errors.AuthErrorCodes.AUTH_JWT_SIGNATURE_INVALID = "AUTH_JWT_SIGNATURE_INVALID" -> string!
+const D2.Shared.Auth.Errors.AuthErrorCodes.AUTH_SCOPE_INSUFFICIENT = "AUTH_SCOPE_INSUFFICIENT" -> string!
+const D2.Shared.Auth.Errors.AuthErrorCodes.AUTH_SESSION_LIVENESS_UNAVAILABLE = "AUTH_SESSION_LIVENESS_UNAVAILABLE" -> string!
+const D2.Shared.Auth.Errors.AuthErrorCodes.AUTH_SESSION_REVOKED = "AUTH_SESSION_REVOKED" -> string!
+const D2.Shared.Auth.Telemetry.AuthTelemetry.ACTIVITY_SOURCE_NAME = "D2.Shared.Auth" -> string!
+const D2.Shared.Auth.Telemetry.AuthTelemetry.METER_NAME = "D2.Shared.Auth" -> string!
+const D2.Shared.Auth.Telemetry.AuthTelemetryTags.JwksFetchDurationMs.Outcome.CIRCUIT_OPEN = "circuit_open" -> string!
+const D2.Shared.Auth.Telemetry.AuthTelemetryTags.JwksFetchDurationMs.Outcome.FAILURE = "failure" -> string!
+const D2.Shared.Auth.Telemetry.AuthTelemetryTags.JwksFetchDurationMs.Outcome.PARSE_ERROR = "parse_error" -> string!
+const D2.Shared.Auth.Telemetry.AuthTelemetryTags.JwksFetchDurationMs.Outcome.RECEIVED = "received" -> string!
+const D2.Shared.Auth.Telemetry.AuthTelemetryTags.JwksFetchDurationMs.Outcome.SUCCESS = "success" -> string!
+const D2.Shared.Auth.Telemetry.AuthTelemetryTags.JwksFetchDurationMs.TAG_OUTCOME = "outcome" -> string!
+const D2.Shared.Auth.Telemetry.AuthTelemetryTags.JwksFetchDurationMs.TAG_TRIGGER = "trigger" -> string!
+const D2.Shared.Auth.Telemetry.AuthTelemetryTags.JwksFetchDurationMs.Trigger.BACKPLANE_ROTATION = "backplane_rotation" -> string!
+const D2.Shared.Auth.Telemetry.AuthTelemetryTags.JwksFetchDurationMs.Trigger.COOLDOWN_SKIPPED = "cooldown_skipped" -> string!
+const D2.Shared.Auth.Telemetry.AuthTelemetryTags.JwksFetchDurationMs.Trigger.IMPLICIT = "implicit" -> string!
+const D2.Shared.Auth.Telemetry.AuthTelemetryTags.JwksFetchDurationMs.Trigger.REACTIVE = "reactive" -> string!
+const D2.Shared.Auth.Telemetry.AuthTelemetryTags.JwksFetches.Outcome.CIRCUIT_OPEN = "circuit_open" -> string!
+const D2.Shared.Auth.Telemetry.AuthTelemetryTags.JwksFetches.Outcome.FAILURE = "failure" -> string!
+const D2.Shared.Auth.Telemetry.AuthTelemetryTags.JwksFetches.Outcome.PARSE_ERROR = "parse_error" -> string!
+const D2.Shared.Auth.Telemetry.AuthTelemetryTags.JwksFetches.Outcome.RECEIVED = "received" -> string!
+const D2.Shared.Auth.Telemetry.AuthTelemetryTags.JwksFetches.Outcome.SUCCESS = "success" -> string!
+const D2.Shared.Auth.Telemetry.AuthTelemetryTags.JwksFetches.TAG_OUTCOME = "outcome" -> string!
+const D2.Shared.Auth.Telemetry.AuthTelemetryTags.JwksFetches.TAG_TRIGGER = "trigger" -> string!
+const D2.Shared.Auth.Telemetry.AuthTelemetryTags.JwksFetches.Trigger.BACKPLANE_ROTATION = "backplane_rotation" -> string!
+const D2.Shared.Auth.Telemetry.AuthTelemetryTags.JwksFetches.Trigger.COOLDOWN_SKIPPED = "cooldown_skipped" -> string!
+const D2.Shared.Auth.Telemetry.AuthTelemetryTags.JwksFetches.Trigger.IMPLICIT = "implicit" -> string!
+const D2.Shared.Auth.Telemetry.AuthTelemetryTags.JwksFetches.Trigger.REACTIVE = "reactive" -> string!
+const D2.Shared.Auth.Telemetry.AuthTelemetryTags.JwtValidationDurationMs.Outcome.ACT_CHAIN_MALFORMED = "act_chain_malformed" -> string!
+const D2.Shared.Auth.Telemetry.AuthTelemetryTags.JwtValidationDurationMs.Outcome.AUDIENCE_MISMATCH = "audience_mismatch" -> string!
+const D2.Shared.Auth.Telemetry.AuthTelemetryTags.JwtValidationDurationMs.Outcome.BEARER_MALFORMED = "bearer_malformed" -> string!
+const D2.Shared.Auth.Telemetry.AuthTelemetryTags.JwtValidationDurationMs.Outcome.BEARER_MISSING = "bearer_missing" -> string!
+const D2.Shared.Auth.Telemetry.AuthTelemetryTags.JwtValidationDurationMs.Outcome.CLAIM_MISSING = "claim_missing" -> string!
+const D2.Shared.Auth.Telemetry.AuthTelemetryTags.JwtValidationDurationMs.Outcome.EXPIRED = "expired" -> string!
+const D2.Shared.Auth.Telemetry.AuthTelemetryTags.JwtValidationDurationMs.Outcome.ISSUER_MISMATCH = "issuer_mismatch" -> string!
+const D2.Shared.Auth.Telemetry.AuthTelemetryTags.JwtValidationDurationMs.Outcome.JWKS_UNAVAILABLE = "jwks_unavailable" -> string!
+const D2.Shared.Auth.Telemetry.AuthTelemetryTags.JwtValidationDurationMs.Outcome.KID_NOT_FOUND = "kid_not_found" -> string!
+const D2.Shared.Auth.Telemetry.AuthTelemetryTags.JwtValidationDurationMs.Outcome.NOT_YET_VALID = "not_yet_valid" -> string!
+const D2.Shared.Auth.Telemetry.AuthTelemetryTags.JwtValidationDurationMs.Outcome.SIGNATURE_INVALID = "signature_invalid" -> string!
+const D2.Shared.Auth.Telemetry.AuthTelemetryTags.JwtValidationDurationMs.Outcome.SUCCESS = "success" -> string!
+const D2.Shared.Auth.Telemetry.AuthTelemetryTags.JwtValidationDurationMs.TAG_OUTCOME = "outcome" -> string!
+const D2.Shared.Auth.Telemetry.AuthTelemetryTags.JwtValidations.Outcome.ACT_CHAIN_MALFORMED = "act_chain_malformed" -> string!
+const D2.Shared.Auth.Telemetry.AuthTelemetryTags.JwtValidations.Outcome.AUDIENCE_MISMATCH = "audience_mismatch" -> string!
+const D2.Shared.Auth.Telemetry.AuthTelemetryTags.JwtValidations.Outcome.BEARER_MALFORMED = "bearer_malformed" -> string!
+const D2.Shared.Auth.Telemetry.AuthTelemetryTags.JwtValidations.Outcome.BEARER_MISSING = "bearer_missing" -> string!
+const D2.Shared.Auth.Telemetry.AuthTelemetryTags.JwtValidations.Outcome.CLAIM_MISSING = "claim_missing" -> string!
+const D2.Shared.Auth.Telemetry.AuthTelemetryTags.JwtValidations.Outcome.EXPIRED = "expired" -> string!
+const D2.Shared.Auth.Telemetry.AuthTelemetryTags.JwtValidations.Outcome.ISSUER_MISMATCH = "issuer_mismatch" -> string!
+const D2.Shared.Auth.Telemetry.AuthTelemetryTags.JwtValidations.Outcome.JWKS_UNAVAILABLE = "jwks_unavailable" -> string!
+const D2.Shared.Auth.Telemetry.AuthTelemetryTags.JwtValidations.Outcome.KID_NOT_FOUND = "kid_not_found" -> string!
+const D2.Shared.Auth.Telemetry.AuthTelemetryTags.JwtValidations.Outcome.NOT_YET_VALID = "not_yet_valid" -> string!
+const D2.Shared.Auth.Telemetry.AuthTelemetryTags.JwtValidations.Outcome.SIGNATURE_INVALID = "signature_invalid" -> string!
+const D2.Shared.Auth.Telemetry.AuthTelemetryTags.JwtValidations.Outcome.SUCCESS = "success" -> string!
+const D2.Shared.Auth.Telemetry.AuthTelemetryTags.JwtValidations.TAG_OUTCOME = "outcome" -> string!
+const D2.Shared.Auth.Telemetry.AuthTelemetryTags.ProblemEmitted.TAG_D2_ERROR_CODE = "d2_error_code" -> string!
+const D2.Shared.Auth.Telemetry.AuthTelemetryTags.SessionLivenessChecks.Outcome.ALIVE = "alive" -> string!
+const D2.Shared.Auth.Telemetry.AuthTelemetryTags.SessionLivenessChecks.Outcome.BACKPLANE_REVOKED = "backplane_revoked" -> string!
+const D2.Shared.Auth.Telemetry.AuthTelemetryTags.SessionLivenessChecks.Outcome.INVALID_INPUT = "invalid_input" -> string!
+const D2.Shared.Auth.Telemetry.AuthTelemetryTags.SessionLivenessChecks.Outcome.REVOKED = "revoked" -> string!
+const D2.Shared.Auth.Telemetry.AuthTelemetryTags.SessionLivenessChecks.Outcome.UNAVAILABLE = "unavailable" -> string!
+const D2.Shared.Auth.Telemetry.AuthTelemetryTags.SessionLivenessChecks.TAG_OUTCOME = "outcome" -> string!
+override D2.Shared.Auth.AuthOptions.Equals(object? obj) -> bool
+override D2.Shared.Auth.AuthOptions.GetHashCode() -> int
+override D2.Shared.Auth.AuthOptions.ToString() -> string!
+override D2.Shared.Auth.Jwks.JwksProviderOptions.Equals(object? obj) -> bool
+override D2.Shared.Auth.Jwks.JwksProviderOptions.GetHashCode() -> int
+override D2.Shared.Auth.Jwks.JwksProviderOptions.ToString() -> string!
+override D2.Shared.Auth.Sessions.SessionLivenessOptions.Equals(object? obj) -> bool
+override D2.Shared.Auth.Sessions.SessionLivenessOptions.GetHashCode() -> int
+override D2.Shared.Auth.Sessions.SessionLivenessOptions.ToString() -> string!
+override D2.Shared.Auth.Validation.JwtValidatorOptions.Equals(object? obj) -> bool
+override D2.Shared.Auth.Validation.JwtValidatorOptions.GetHashCode() -> int
+override D2.Shared.Auth.Validation.JwtValidatorOptions.ToString() -> string!
+static D2.Shared.Auth.AuthOptions.operator !=(D2.Shared.Auth.AuthOptions? left, D2.Shared.Auth.AuthOptions? right) -> bool
+static D2.Shared.Auth.AuthOptions.operator ==(D2.Shared.Auth.AuthOptions? left, D2.Shared.Auth.AuthOptions? right) -> bool
+static D2.Shared.Auth.AuthServiceCollectionExtensions.AddD2Auth(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services, System.Action<D2.Shared.Auth.AuthOptions!>! configure) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
+static D2.Shared.Auth.Errors.AuthErrorCodes.AllCodes.get -> System.Collections.Generic.IReadOnlyList<string!>!
+static D2.Shared.Auth.Errors.AuthErrorCodes.GetHttpStatus(string! errorCode) -> int
+static D2.Shared.Auth.Errors.AuthErrorCodes.KebabCase(string! upperUnderscore) -> string!
+static D2.Shared.Auth.Errors.AuthFailures.BearerMalformed(System.Collections.Generic.IReadOnlyList<D2.Shared.I18n.TKMessage!>? messages = null) -> D2.Shared.Result.D2Result!
+static D2.Shared.Auth.Errors.AuthFailures.BearerMissing(System.Collections.Generic.IReadOnlyList<D2.Shared.I18n.TKMessage!>? messages = null) -> D2.Shared.Result.D2Result!
+static D2.Shared.Auth.Errors.AuthFailures.JwksUnavailable(System.Collections.Generic.IReadOnlyList<D2.Shared.I18n.TKMessage!>? messages = null) -> D2.Shared.Result.D2Result!
+static D2.Shared.Auth.Errors.AuthFailures.JwksUnavailable<T>(System.Collections.Generic.IReadOnlyList<D2.Shared.I18n.TKMessage!>? messages = null) -> D2.Shared.Result.D2Result<T>!
+static D2.Shared.Auth.Errors.AuthFailures.JwtActChainMalformed(System.Collections.Generic.IReadOnlyList<D2.Shared.I18n.TKMessage!>? messages = null) -> D2.Shared.Result.D2Result!
+static D2.Shared.Auth.Errors.AuthFailures.JwtAudienceMismatch(System.Collections.Generic.IReadOnlyList<D2.Shared.I18n.TKMessage!>? messages = null) -> D2.Shared.Result.D2Result!
+static D2.Shared.Auth.Errors.AuthFailures.JwtClaimMissing(System.Collections.Generic.IReadOnlyList<D2.Shared.I18n.TKMessage!>? messages = null) -> D2.Shared.Result.D2Result!
+static D2.Shared.Auth.Errors.AuthFailures.JwtExpired(System.Collections.Generic.IReadOnlyList<D2.Shared.I18n.TKMessage!>? messages = null) -> D2.Shared.Result.D2Result!
+static D2.Shared.Auth.Errors.AuthFailures.JwtIssuerMismatch(System.Collections.Generic.IReadOnlyList<D2.Shared.I18n.TKMessage!>? messages = null) -> D2.Shared.Result.D2Result!
+static D2.Shared.Auth.Errors.AuthFailures.JwtKidNotFound(System.Collections.Generic.IReadOnlyList<D2.Shared.I18n.TKMessage!>? messages = null) -> D2.Shared.Result.D2Result!
+static D2.Shared.Auth.Errors.AuthFailures.JwtNotYetValid(System.Collections.Generic.IReadOnlyList<D2.Shared.I18n.TKMessage!>? messages = null) -> D2.Shared.Result.D2Result!
+static D2.Shared.Auth.Errors.AuthFailures.JwtSignatureInvalid(System.Collections.Generic.IReadOnlyList<D2.Shared.I18n.TKMessage!>? messages = null) -> D2.Shared.Result.D2Result!
+static D2.Shared.Auth.Errors.AuthFailures.ScopeInsufficient(System.Collections.Generic.IReadOnlyList<D2.Shared.I18n.TKMessage!>? messages = null) -> D2.Shared.Result.D2Result!
+static D2.Shared.Auth.Errors.AuthFailures.SessionLivenessUnavailable(System.Collections.Generic.IReadOnlyList<D2.Shared.I18n.TKMessage!>? messages = null) -> D2.Shared.Result.D2Result!
+static D2.Shared.Auth.Errors.AuthFailures.SessionLivenessUnavailable<T>(System.Collections.Generic.IReadOnlyList<D2.Shared.I18n.TKMessage!>? messages = null) -> D2.Shared.Result.D2Result<T>!
+static D2.Shared.Auth.Errors.AuthFailures.SessionRevoked(System.Collections.Generic.IReadOnlyList<D2.Shared.I18n.TKMessage!>? messages = null) -> D2.Shared.Result.D2Result!
+static D2.Shared.Auth.Errors.AuthFailures<T>.BearerMalformed(System.Collections.Generic.IReadOnlyList<D2.Shared.I18n.TKMessage!>? messages = null) -> D2.Shared.Result.D2Result<T>!
+static D2.Shared.Auth.Errors.AuthFailures<T>.BearerMissing(System.Collections.Generic.IReadOnlyList<D2.Shared.I18n.TKMessage!>? messages = null) -> D2.Shared.Result.D2Result<T>!
+static D2.Shared.Auth.Errors.AuthFailures<T>.JwksUnavailable(System.Collections.Generic.IReadOnlyList<D2.Shared.I18n.TKMessage!>? messages = null) -> D2.Shared.Result.D2Result<T>!
+static D2.Shared.Auth.Errors.AuthFailures<T>.JwtActChainMalformed(System.Collections.Generic.IReadOnlyList<D2.Shared.I18n.TKMessage!>? messages = null) -> D2.Shared.Result.D2Result<T>!
+static D2.Shared.Auth.Errors.AuthFailures<T>.JwtAudienceMismatch(System.Collections.Generic.IReadOnlyList<D2.Shared.I18n.TKMessage!>? messages = null) -> D2.Shared.Result.D2Result<T>!
+static D2.Shared.Auth.Errors.AuthFailures<T>.JwtClaimMissing(System.Collections.Generic.IReadOnlyList<D2.Shared.I18n.TKMessage!>? messages = null) -> D2.Shared.Result.D2Result<T>!
+static D2.Shared.Auth.Errors.AuthFailures<T>.JwtExpired(System.Collections.Generic.IReadOnlyList<D2.Shared.I18n.TKMessage!>? messages = null) -> D2.Shared.Result.D2Result<T>!
+static D2.Shared.Auth.Errors.AuthFailures<T>.JwtIssuerMismatch(System.Collections.Generic.IReadOnlyList<D2.Shared.I18n.TKMessage!>? messages = null) -> D2.Shared.Result.D2Result<T>!
+static D2.Shared.Auth.Errors.AuthFailures<T>.JwtKidNotFound(System.Collections.Generic.IReadOnlyList<D2.Shared.I18n.TKMessage!>? messages = null) -> D2.Shared.Result.D2Result<T>!
+static D2.Shared.Auth.Errors.AuthFailures<T>.JwtNotYetValid(System.Collections.Generic.IReadOnlyList<D2.Shared.I18n.TKMessage!>? messages = null) -> D2.Shared.Result.D2Result<T>!
+static D2.Shared.Auth.Errors.AuthFailures<T>.JwtSignatureInvalid(System.Collections.Generic.IReadOnlyList<D2.Shared.I18n.TKMessage!>? messages = null) -> D2.Shared.Result.D2Result<T>!
+static D2.Shared.Auth.Errors.AuthFailures<T>.ScopeInsufficient(System.Collections.Generic.IReadOnlyList<D2.Shared.I18n.TKMessage!>? messages = null) -> D2.Shared.Result.D2Result<T>!
+static D2.Shared.Auth.Errors.AuthFailures<T>.SessionLivenessUnavailable(System.Collections.Generic.IReadOnlyList<D2.Shared.I18n.TKMessage!>? messages = null) -> D2.Shared.Result.D2Result<T>!
+static D2.Shared.Auth.Errors.AuthFailures<T>.SessionRevoked(System.Collections.Generic.IReadOnlyList<D2.Shared.I18n.TKMessage!>? messages = null) -> D2.Shared.Result.D2Result<T>!
+static D2.Shared.Auth.Jwks.JwksProviderOptions.operator !=(D2.Shared.Auth.Jwks.JwksProviderOptions? left, D2.Shared.Auth.Jwks.JwksProviderOptions? right) -> bool
+static D2.Shared.Auth.Jwks.JwksProviderOptions.operator ==(D2.Shared.Auth.Jwks.JwksProviderOptions? left, D2.Shared.Auth.Jwks.JwksProviderOptions? right) -> bool
+static D2.Shared.Auth.Sessions.SessionLivenessOptions.operator !=(D2.Shared.Auth.Sessions.SessionLivenessOptions? left, D2.Shared.Auth.Sessions.SessionLivenessOptions? right) -> bool
+static D2.Shared.Auth.Sessions.SessionLivenessOptions.operator ==(D2.Shared.Auth.Sessions.SessionLivenessOptions? left, D2.Shared.Auth.Sessions.SessionLivenessOptions? right) -> bool
+static D2.Shared.Auth.Validation.JwtValidatorOptions.operator !=(D2.Shared.Auth.Validation.JwtValidatorOptions? left, D2.Shared.Auth.Validation.JwtValidatorOptions? right) -> bool
+static D2.Shared.Auth.Validation.JwtValidatorOptions.operator ==(D2.Shared.Auth.Validation.JwtValidatorOptions? left, D2.Shared.Auth.Validation.JwtValidatorOptions? right) -> bool
+static readonly D2.Shared.Auth.Telemetry.AuthTelemetry.SR_Activity -> System.Diagnostics.ActivitySource!
+static readonly D2.Shared.Auth.Telemetry.AuthTelemetry.SR_JwksFetchDurationMs -> System.Diagnostics.Metrics.Histogram<double>!
+static readonly D2.Shared.Auth.Telemetry.AuthTelemetry.SR_JwksFetches -> System.Diagnostics.Metrics.Counter<long>!
+static readonly D2.Shared.Auth.Telemetry.AuthTelemetry.SR_JwtValidationDurationMs -> System.Diagnostics.Metrics.Histogram<double>!
+static readonly D2.Shared.Auth.Telemetry.AuthTelemetry.SR_JwtValidations -> System.Diagnostics.Metrics.Counter<long>!
+static readonly D2.Shared.Auth.Telemetry.AuthTelemetry.SR_Meter -> System.Diagnostics.Metrics.Meter!
+static readonly D2.Shared.Auth.Telemetry.AuthTelemetry.SR_ProblemEmitted -> System.Diagnostics.Metrics.Counter<long>!
+static readonly D2.Shared.Auth.Telemetry.AuthTelemetry.SR_SessionLivenessChecks -> System.Diagnostics.Metrics.Counter<long>!
+static readonly D2.Shared.Auth.Telemetry.AuthTelemetry.SR_SessionLivenessLookupDurationMs -> System.Diagnostics.Metrics.Histogram<double>!

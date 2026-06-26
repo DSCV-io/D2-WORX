@@ -1,0 +1,19 @@
+#nullable enable
+D2.Shared.WorkloadIdentity.SpiffeWorkloadIdentity
+D2.Shared.WorkloadIdentity.SpiffeWorkloadIdentity.<Clone>$() -> D2.Shared.WorkloadIdentity.SpiffeWorkloadIdentity!
+D2.Shared.WorkloadIdentity.SpiffeWorkloadIdentity.Equals(D2.Shared.WorkloadIdentity.SpiffeWorkloadIdentity? other) -> bool
+D2.Shared.WorkloadIdentity.SpiffeWorkloadIdentity.ServiceId.get -> string!
+D2.Shared.WorkloadIdentity.SpiffeWorkloadIdentity.ServiceId.init -> void
+D2.Shared.WorkloadIdentity.SpiffeWorkloadIdentity.SpiffeWorkloadIdentity() -> void
+D2.Shared.WorkloadIdentity.SpiffeWorkloadIdentity.Uri.get -> string!
+const D2.Shared.WorkloadIdentity.SpiffeWorkloadIdentity.SCHEME = "spiffe" -> string!
+const D2.Shared.WorkloadIdentity.SpiffeWorkloadIdentity.TRUST_DOMAIN = "d2.internal" -> string!
+const D2.Shared.WorkloadIdentity.SpiffeWorkloadIdentity.WORKLOAD_PATH_PREFIX = "/workload/" -> string!
+override D2.Shared.WorkloadIdentity.SpiffeWorkloadIdentity.Equals(object? obj) -> bool
+override D2.Shared.WorkloadIdentity.SpiffeWorkloadIdentity.GetHashCode() -> int
+override D2.Shared.WorkloadIdentity.SpiffeWorkloadIdentity.ToString() -> string!
+static D2.Shared.WorkloadIdentity.SpiffeWorkloadIdentity.Create(string? serviceId) -> D2.Shared.Result.D2Result<D2.Shared.WorkloadIdentity.SpiffeWorkloadIdentity!>!
+static D2.Shared.WorkloadIdentity.SpiffeWorkloadIdentity.FromTrusted(string! serviceId) -> D2.Shared.WorkloadIdentity.SpiffeWorkloadIdentity!
+static D2.Shared.WorkloadIdentity.SpiffeWorkloadIdentity.Parse(string? uri) -> D2.Shared.Result.D2Result<D2.Shared.WorkloadIdentity.SpiffeWorkloadIdentity!>!
+static D2.Shared.WorkloadIdentity.SpiffeWorkloadIdentity.operator !=(D2.Shared.WorkloadIdentity.SpiffeWorkloadIdentity? left, D2.Shared.WorkloadIdentity.SpiffeWorkloadIdentity? right) -> bool
+static D2.Shared.WorkloadIdentity.SpiffeWorkloadIdentity.operator ==(D2.Shared.WorkloadIdentity.SpiffeWorkloadIdentity? left, D2.Shared.WorkloadIdentity.SpiffeWorkloadIdentity? right) -> bool

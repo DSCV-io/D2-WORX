@@ -1,0 +1,50 @@
+#nullable enable
+D2.Shared.AuthContext.Abstractions.IAuthContext
+D2.Shared.AuthContext.Abstractions.IAuthContext.ActorChain.get -> System.Collections.Generic.IReadOnlyList<D2.Shared.Auth.Abstractions.ActorEntry!>!
+D2.Shared.AuthContext.Abstractions.IAuthContext.Audience.get -> System.Collections.Generic.IReadOnlyList<string!>!
+D2.Shared.AuthContext.Abstractions.IAuthContext.AuthMethod.get -> string?
+D2.Shared.AuthContext.Abstractions.IAuthContext.ImmediateCallerClientId.get -> string?
+D2.Shared.AuthContext.Abstractions.IAuthContext.ImpersonatedBy.get -> System.Guid?
+D2.Shared.AuthContext.Abstractions.IAuthContext.ImpersonationKind.get -> D2.Shared.Auth.Abstractions.ImpersonationKind?
+D2.Shared.AuthContext.Abstractions.IAuthContext.ImpersonationSessionId.get -> System.Guid?
+D2.Shared.AuthContext.Abstractions.IAuthContext.ImpersonatorOrgId.get -> System.Guid?
+D2.Shared.AuthContext.Abstractions.IAuthContext.ImpersonatorOrgName.get -> string?
+D2.Shared.AuthContext.Abstractions.IAuthContext.ImpersonatorOrgRole.get -> D2.Shared.Auth.Abstractions.Role?
+D2.Shared.AuthContext.Abstractions.IAuthContext.ImpersonatorOrgType.get -> D2.Shared.Auth.Abstractions.OrgType?
+D2.Shared.AuthContext.Abstractions.IAuthContext.IsAuthenticated.get -> bool?
+D2.Shared.AuthContext.Abstractions.IAuthContext.IsImpersonating.get -> bool?
+D2.Shared.AuthContext.Abstractions.IAuthContext.IsServiceIdentity.get -> bool?
+D2.Shared.AuthContext.Abstractions.IAuthContext.LastStepUpAt.get -> System.DateTimeOffset?
+D2.Shared.AuthContext.Abstractions.IAuthContext.OrgId.get -> System.Guid?
+D2.Shared.AuthContext.Abstractions.IAuthContext.OrgName.get -> string?
+D2.Shared.AuthContext.Abstractions.IAuthContext.OrgRole.get -> D2.Shared.Auth.Abstractions.Role?
+D2.Shared.AuthContext.Abstractions.IAuthContext.OrgType.get -> D2.Shared.Auth.Abstractions.OrgType?
+D2.Shared.AuthContext.Abstractions.IAuthContext.OriginatingClientId.get -> string?
+D2.Shared.AuthContext.Abstractions.IAuthContext.RequestedByClientId.get -> string?
+D2.Shared.AuthContext.Abstractions.IAuthContext.Scopes.get -> System.Collections.Generic.IReadOnlySet<string!>!
+D2.Shared.AuthContext.Abstractions.IAuthContext.SessionId.get -> System.Guid?
+D2.Shared.AuthContext.Abstractions.IAuthContext.Subject.get -> string?
+D2.Shared.AuthContext.Abstractions.IAuthContext.TokenExpiresAt.get -> System.DateTimeOffset?
+D2.Shared.AuthContext.Abstractions.IAuthContext.TokenIssuedAt.get -> System.DateTimeOffset?
+D2.Shared.AuthContext.Abstractions.IAuthContext.UserId.get -> System.Guid?
+D2.Shared.AuthContext.Abstractions.IAuthContext.Username.get -> string?
+D2.Shared.AuthContext.Abstractions.IAuthContextExtensions
+D2.Shared.AuthContext.Abstractions.IAuthContextExtensions.extension(D2.Shared.AuthContext.Abstractions.IAuthContext!)
+D2.Shared.AuthContext.Abstractions.IAuthContextExtensions.extension(D2.Shared.AuthContext.Abstractions.IAuthContext!).HasAllScopes(params string![]! scopes) -> bool
+D2.Shared.AuthContext.Abstractions.IAuthContextExtensions.extension(D2.Shared.AuthContext.Abstractions.IAuthContext!).HasAnyScope(params string![]! scopes) -> bool
+D2.Shared.AuthContext.Abstractions.IAuthContextExtensions.extension(D2.Shared.AuthContext.Abstractions.IAuthContext!).HasScope(string! scope) -> bool
+D2.Shared.AuthContext.Abstractions.IAuthContextExtensions.extension(D2.Shared.AuthContext.Abstractions.IAuthContext!).IsAdmin() -> bool
+D2.Shared.AuthContext.Abstractions.IAuthContextExtensions.extension(D2.Shared.AuthContext.Abstractions.IAuthContext!).IsConsentImpersonation() -> bool
+D2.Shared.AuthContext.Abstractions.IAuthContextExtensions.extension(D2.Shared.AuthContext.Abstractions.IAuthContext!).IsForcedImpersonation() -> bool
+D2.Shared.AuthContext.Abstractions.IAuthContextExtensions.extension(D2.Shared.AuthContext.Abstractions.IAuthContext!).IsImpersonatorAdmin() -> bool
+D2.Shared.AuthContext.Abstractions.IAuthContextExtensions.extension(D2.Shared.AuthContext.Abstractions.IAuthContext!).IsImpersonatorStaff() -> bool
+D2.Shared.AuthContext.Abstractions.IAuthContextExtensions.extension(D2.Shared.AuthContext.Abstractions.IAuthContext!).IsStaff() -> bool
+static D2.Shared.AuthContext.Abstractions.IAuthContextExtensions.HasAllScopes(this D2.Shared.AuthContext.Abstractions.IAuthContext! auth, params string![]! scopes) -> bool
+static D2.Shared.AuthContext.Abstractions.IAuthContextExtensions.HasAnyScope(this D2.Shared.AuthContext.Abstractions.IAuthContext! auth, params string![]! scopes) -> bool
+static D2.Shared.AuthContext.Abstractions.IAuthContextExtensions.HasScope(this D2.Shared.AuthContext.Abstractions.IAuthContext! auth, string! scope) -> bool
+static D2.Shared.AuthContext.Abstractions.IAuthContextExtensions.IsAdmin(this D2.Shared.AuthContext.Abstractions.IAuthContext! auth) -> bool
+static D2.Shared.AuthContext.Abstractions.IAuthContextExtensions.IsConsentImpersonation(this D2.Shared.AuthContext.Abstractions.IAuthContext! auth) -> bool
+static D2.Shared.AuthContext.Abstractions.IAuthContextExtensions.IsForcedImpersonation(this D2.Shared.AuthContext.Abstractions.IAuthContext! auth) -> bool
+static D2.Shared.AuthContext.Abstractions.IAuthContextExtensions.IsImpersonatorAdmin(this D2.Shared.AuthContext.Abstractions.IAuthContext! auth) -> bool
+static D2.Shared.AuthContext.Abstractions.IAuthContextExtensions.IsImpersonatorStaff(this D2.Shared.AuthContext.Abstractions.IAuthContext! auth) -> bool
+static D2.Shared.AuthContext.Abstractions.IAuthContextExtensions.IsStaff(this D2.Shared.AuthContext.Abstractions.IAuthContext! auth) -> bool

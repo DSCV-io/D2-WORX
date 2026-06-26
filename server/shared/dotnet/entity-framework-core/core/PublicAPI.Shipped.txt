@@ -1,0 +1,5 @@
+#nullable enable
+D2.Shared.EntityFrameworkCore.CreateD2IndexExtensions
+D2.Shared.EntityFrameworkCore.CreateD2IndexExtensions.extension(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder!)
+D2.Shared.EntityFrameworkCore.CreateD2IndexExtensions.extension(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder!).CreateD2Index<TEntity>(string! table, System.Linq.Expressions.Expression<System.Func<TEntity, object?>!>! member, string? name = null, bool unique = false) -> Microsoft.EntityFrameworkCore.Migrations.Operations.Builders.OperationBuilder<Microsoft.EntityFrameworkCore.Migrations.Operations.CreateIndexOperation!>!
+static D2.Shared.EntityFrameworkCore.CreateD2IndexExtensions.CreateD2Index<TEntity>(this Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder! migrationBuilder, string! table, System.Linq.Expressions.Expression<System.Func<TEntity, object?>!>! member, string? name = null, bool unique = false) -> Microsoft.EntityFrameworkCore.Migrations.Operations.Builders.OperationBuilder<Microsoft.EntityFrameworkCore.Migrations.Operations.CreateIndexOperation!>!

@@ -1,0 +1,159 @@
+#nullable enable
+D2.Shared.Auth.Abstractions.ActionSensitivity
+D2.Shared.Auth.Abstractions.ActionSensitivity.Critical = 2 -> D2.Shared.Auth.Abstractions.ActionSensitivity
+D2.Shared.Auth.Abstractions.ActionSensitivity.Routine = 0 -> D2.Shared.Auth.Abstractions.ActionSensitivity
+D2.Shared.Auth.Abstractions.ActionSensitivity.Sensitive = 1 -> D2.Shared.Auth.Abstractions.ActionSensitivity
+D2.Shared.Auth.Abstractions.ActorEntry
+D2.Shared.Auth.Abstractions.ActorEntry.<Clone>$() -> D2.Shared.Auth.Abstractions.ActorEntry!
+D2.Shared.Auth.Abstractions.ActorEntry.Act.get -> D2.Shared.Auth.Abstractions.ActorEntry?
+D2.Shared.Auth.Abstractions.ActorEntry.Act.init -> void
+D2.Shared.Auth.Abstractions.ActorEntry.ActorEntry(D2.Shared.Auth.Abstractions.ActorKind Kind, string! Subject, string? ClientId = null, D2.Shared.Auth.Abstractions.ImpersonationKind? ImpersonationKind = null, System.Guid? SessionId = null, System.Guid? OrgId = null, string? OrgName = null, D2.Shared.Auth.Abstractions.OrgType? OrgType = null, D2.Shared.Auth.Abstractions.Role? OrgRole = null, D2.Shared.Auth.Abstractions.ActorEntry? Act = null) -> void
+D2.Shared.Auth.Abstractions.ActorEntry.ClientId.get -> string?
+D2.Shared.Auth.Abstractions.ActorEntry.ClientId.init -> void
+D2.Shared.Auth.Abstractions.ActorEntry.Deconstruct(out D2.Shared.Auth.Abstractions.ActorKind Kind, out string! Subject, out string? ClientId, out D2.Shared.Auth.Abstractions.ImpersonationKind? ImpersonationKind, out System.Guid? SessionId, out System.Guid? OrgId, out string? OrgName, out D2.Shared.Auth.Abstractions.OrgType? OrgType, out D2.Shared.Auth.Abstractions.Role? OrgRole, out D2.Shared.Auth.Abstractions.ActorEntry? Act) -> void
+D2.Shared.Auth.Abstractions.ActorEntry.Equals(D2.Shared.Auth.Abstractions.ActorEntry? other) -> bool
+D2.Shared.Auth.Abstractions.ActorEntry.ImpersonationKind.get -> D2.Shared.Auth.Abstractions.ImpersonationKind?
+D2.Shared.Auth.Abstractions.ActorEntry.ImpersonationKind.init -> void
+D2.Shared.Auth.Abstractions.ActorEntry.Kind.get -> D2.Shared.Auth.Abstractions.ActorKind
+D2.Shared.Auth.Abstractions.ActorEntry.Kind.init -> void
+D2.Shared.Auth.Abstractions.ActorEntry.OrgId.get -> System.Guid?
+D2.Shared.Auth.Abstractions.ActorEntry.OrgId.init -> void
+D2.Shared.Auth.Abstractions.ActorEntry.OrgName.get -> string?
+D2.Shared.Auth.Abstractions.ActorEntry.OrgName.init -> void
+D2.Shared.Auth.Abstractions.ActorEntry.OrgRole.get -> D2.Shared.Auth.Abstractions.Role?
+D2.Shared.Auth.Abstractions.ActorEntry.OrgRole.init -> void
+D2.Shared.Auth.Abstractions.ActorEntry.OrgType.get -> D2.Shared.Auth.Abstractions.OrgType?
+D2.Shared.Auth.Abstractions.ActorEntry.OrgType.init -> void
+D2.Shared.Auth.Abstractions.ActorEntry.SessionId.get -> System.Guid?
+D2.Shared.Auth.Abstractions.ActorEntry.SessionId.init -> void
+D2.Shared.Auth.Abstractions.ActorEntry.Subject.get -> string!
+D2.Shared.Auth.Abstractions.ActorEntry.Subject.init -> void
+D2.Shared.Auth.Abstractions.ActorKind
+D2.Shared.Auth.Abstractions.ActorKind.Impersonation = 1 -> D2.Shared.Auth.Abstractions.ActorKind
+D2.Shared.Auth.Abstractions.ActorKind.Service = 0 -> D2.Shared.Auth.Abstractions.ActorKind
+D2.Shared.Auth.Abstractions.Audiences
+D2.Shared.Auth.Abstractions.ForwardedJwt
+D2.Shared.Auth.Abstractions.ForwardedJwt.Equals(D2.Shared.Auth.Abstractions.ForwardedJwt other) -> bool
+D2.Shared.Auth.Abstractions.ForwardedJwt.ForwardedJwt() -> void
+D2.Shared.Auth.Abstractions.ForwardedJwt.HasValue.get -> bool
+D2.Shared.Auth.Abstractions.ForwardedJwt.RevealForForwarding() -> string!
+D2.Shared.Auth.Abstractions.Http.D2HttpContextItems
+D2.Shared.Auth.Abstractions.IAmbientRequestScopeAccessor
+D2.Shared.Auth.Abstractions.IAmbientRequestScopeAccessor.Current.get -> System.IServiceProvider?
+D2.Shared.Auth.Abstractions.IForwardedJwtAccessor
+D2.Shared.Auth.Abstractions.IForwardedJwtAccessor.Capture(string! rawBearer) -> void
+D2.Shared.Auth.Abstractions.IForwardedJwtAccessor.Current.get -> D2.Shared.Auth.Abstractions.ForwardedJwt?
+D2.Shared.Auth.Abstractions.ImpersonationKind
+D2.Shared.Auth.Abstractions.ImpersonationKind.Consent = 0 -> D2.Shared.Auth.Abstractions.ImpersonationKind
+D2.Shared.Auth.Abstractions.ImpersonationKind.Force = 1 -> D2.Shared.Auth.Abstractions.ImpersonationKind
+D2.Shared.Auth.Abstractions.Jwks.IJwksProvider
+D2.Shared.Auth.Abstractions.Jwks.IJwksProvider.GetKeysAsync(System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<D2.Shared.Result.D2Result<D2.Shared.Auth.Abstractions.Jwks.JwksKeySetSnapshot!>!>
+D2.Shared.Auth.Abstractions.Jwks.IJwksProvider.RefreshAsync(System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<D2.Shared.Result.D2Result!>
+D2.Shared.Auth.Abstractions.Jwks.JwksKeySetSnapshot
+D2.Shared.Auth.Abstractions.Jwks.JwksKeySetSnapshot.<Clone>$() -> D2.Shared.Auth.Abstractions.Jwks.JwksKeySetSnapshot!
+D2.Shared.Auth.Abstractions.Jwks.JwksKeySetSnapshot.Equals(D2.Shared.Auth.Abstractions.Jwks.JwksKeySetSnapshot? other) -> bool
+D2.Shared.Auth.Abstractions.Jwks.JwksKeySetSnapshot.FetchedAt.get -> System.DateTimeOffset
+D2.Shared.Auth.Abstractions.Jwks.JwksKeySetSnapshot.FetchedAt.init -> void
+D2.Shared.Auth.Abstractions.Jwks.JwksKeySetSnapshot.JwksKeySetSnapshot() -> void
+D2.Shared.Auth.Abstractions.Jwks.JwksKeySetSnapshot.Keys.get -> System.Collections.Generic.IReadOnlyDictionary<string!, Microsoft.IdentityModel.Tokens.SecurityKey!>!
+D2.Shared.Auth.Abstractions.Jwks.JwksKeySetSnapshot.Keys.init -> void
+D2.Shared.Auth.Abstractions.Jwks.JwksKeySetSnapshot.SourceUri.get -> System.Uri!
+D2.Shared.Auth.Abstractions.Jwks.JwksKeySetSnapshot.SourceUri.init -> void
+D2.Shared.Auth.Abstractions.JwtClaimTypes
+D2.Shared.Auth.Abstractions.MutableForwardedJwtAccessor
+D2.Shared.Auth.Abstractions.MutableForwardedJwtAccessor.Capture(string! rawBearer) -> void
+D2.Shared.Auth.Abstractions.MutableForwardedJwtAccessor.Current.get -> D2.Shared.Auth.Abstractions.ForwardedJwt?
+D2.Shared.Auth.Abstractions.MutableForwardedJwtAccessor.MutableForwardedJwtAccessor() -> void
+D2.Shared.Auth.Abstractions.OrgType
+D2.Shared.Auth.Abstractions.OrgType.Admin = 0 -> D2.Shared.Auth.Abstractions.OrgType
+D2.Shared.Auth.Abstractions.OrgType.Affiliate = 4 -> D2.Shared.Auth.Abstractions.OrgType
+D2.Shared.Auth.Abstractions.OrgType.Customer = 2 -> D2.Shared.Auth.Abstractions.OrgType
+D2.Shared.Auth.Abstractions.OrgType.Support = 1 -> D2.Shared.Auth.Abstractions.OrgType
+D2.Shared.Auth.Abstractions.OrgType.ThirdParty = 3 -> D2.Shared.Auth.Abstractions.OrgType
+D2.Shared.Auth.Abstractions.Role
+D2.Shared.Auth.Abstractions.Role.Agent = 1 -> D2.Shared.Auth.Abstractions.Role
+D2.Shared.Auth.Abstractions.Role.Auditor = 0 -> D2.Shared.Auth.Abstractions.Role
+D2.Shared.Auth.Abstractions.Role.Officer = 2 -> D2.Shared.Auth.Abstractions.Role
+D2.Shared.Auth.Abstractions.Role.Owner = 3 -> D2.Shared.Auth.Abstractions.Role
+D2.Shared.Auth.Abstractions.ScopeMatch
+D2.Shared.Auth.Abstractions.ScopeMatch.All = 1 -> D2.Shared.Auth.Abstractions.ScopeMatch
+D2.Shared.Auth.Abstractions.ScopeMatch.Any = 0 -> D2.Shared.Auth.Abstractions.ScopeMatch
+D2.Shared.Auth.Abstractions.Scopes
+D2.Shared.Auth.Abstractions.Scopes.Anon
+D2.Shared.Auth.Abstractions.Scopes.Anon.Auth
+D2.Shared.Auth.Abstractions.Scopes.Anon.Auth.Signin
+D2.Shared.Auth.Abstractions.Scopes.Anon.Public
+D2.Shared.Auth.Abstractions.Scopes.Auth
+D2.Shared.Auth.Abstractions.Scopes.Auth.Password
+D2.Shared.Auth.Abstractions.Scopes.Auth.User
+D2.Shared.Auth.Abstractions.Scopes.Auth.User.Impersonate
+D2.Shared.Auth.Abstractions.Scopes.Billing
+D2.Shared.Auth.Abstractions.Scopes.Billing.Payment
+D2.Shared.Auth.Abstractions.Scopes.Self
+D2.Shared.Auth.Abstractions.Sessions.ISessionLivenessTracker
+D2.Shared.Auth.Abstractions.Sessions.ISessionLivenessTracker.IsAliveAsync(System.Guid sessionId, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<D2.Shared.Result.D2Result<bool>!>
+D2.Shared.Auth.Abstractions.WellKnownAudiences
+const D2.Shared.Auth.Abstractions.Audiences.Audit = "https://audit.internal" -> string!
+const D2.Shared.Auth.Abstractions.Audiences.Courier = "https://courier.internal" -> string!
+const D2.Shared.Auth.Abstractions.Audiences.Files = "https://files.internal" -> string!
+const D2.Shared.Auth.Abstractions.Audiences.Notifications = "https://notifications.internal" -> string!
+const D2.Shared.Auth.Abstractions.ForwardedJwt.REDACTION_PLACEHOLDER = "[REDACTED: ForwardedJwt]" -> string!
+const D2.Shared.Auth.Abstractions.Http.D2HttpContextItems.REQUEST_CONTEXT = "D2.RequestContext" -> string!
+const D2.Shared.Auth.Abstractions.JwtClaimTypes.ACT = "act" -> string!
+const D2.Shared.Auth.Abstractions.JwtClaimTypes.ACT_KIND = "d2_kind" -> string!
+const D2.Shared.Auth.Abstractions.JwtClaimTypes.ACT_SESSION_ID = "d2_session_id" -> string!
+const D2.Shared.Auth.Abstractions.JwtClaimTypes.AMR = "amr" -> string!
+const D2.Shared.Auth.Abstractions.JwtClaimTypes.AUD = "aud" -> string!
+const D2.Shared.Auth.Abstractions.JwtClaimTypes.AZP = "azp" -> string!
+const D2.Shared.Auth.Abstractions.JwtClaimTypes.CLIENT_ID = "client_id" -> string!
+const D2.Shared.Auth.Abstractions.JwtClaimTypes.EXP = "exp" -> string!
+const D2.Shared.Auth.Abstractions.JwtClaimTypes.FINGERPRINT = "d2_fp" -> string!
+const D2.Shared.Auth.Abstractions.JwtClaimTypes.IAT = "iat" -> string!
+const D2.Shared.Auth.Abstractions.JwtClaimTypes.ORG_ID = "d2_org_id" -> string!
+const D2.Shared.Auth.Abstractions.JwtClaimTypes.ORG_NAME = "d2_org_name" -> string!
+const D2.Shared.Auth.Abstractions.JwtClaimTypes.ORG_ROLE = "d2_org_role" -> string!
+const D2.Shared.Auth.Abstractions.JwtClaimTypes.ORG_TYPE = "d2_org_type" -> string!
+const D2.Shared.Auth.Abstractions.JwtClaimTypes.SCOPE = "scope" -> string!
+const D2.Shared.Auth.Abstractions.JwtClaimTypes.SESSION_ID = "d2_session_id" -> string!
+const D2.Shared.Auth.Abstractions.JwtClaimTypes.STEP_UP_AT = "d2_step_up_at" -> string!
+const D2.Shared.Auth.Abstractions.JwtClaimTypes.SUB = "sub" -> string!
+const D2.Shared.Auth.Abstractions.JwtClaimTypes.USERNAME = "d2_username" -> string!
+const D2.Shared.Auth.Abstractions.Scopes.Anon.Auth.Signin.Attempt = "anon.auth.signin.attempt" -> string!
+const D2.Shared.Auth.Abstractions.Scopes.Anon.Public.Health = "anon.public.health" -> string!
+const D2.Shared.Auth.Abstractions.Scopes.Auth.Password.Change = "auth.password.change" -> string!
+const D2.Shared.Auth.Abstractions.Scopes.Auth.User.Impersonate.Consent = "auth.user.impersonate.consent" -> string!
+const D2.Shared.Auth.Abstractions.Scopes.Auth.User.Impersonate.Force = "auth.user.impersonate.force" -> string!
+const D2.Shared.Auth.Abstractions.Scopes.Billing.Payment.Charge = "billing.payment.charge" -> string!
+const D2.Shared.Auth.Abstractions.Scopes.Self.Read = "self.read" -> string!
+const D2.Shared.Auth.Abstractions.Scopes.Self.Write = "self.write" -> string!
+const D2.Shared.Auth.Abstractions.WellKnownAudiences.D2_INTERNAL_AUDIENCE = "d2.internal" -> string!
+override D2.Shared.Auth.Abstractions.ActorEntry.Equals(object? obj) -> bool
+override D2.Shared.Auth.Abstractions.ActorEntry.GetHashCode() -> int
+override D2.Shared.Auth.Abstractions.ActorEntry.ToString() -> string!
+override D2.Shared.Auth.Abstractions.ForwardedJwt.Equals(object? obj) -> bool
+override D2.Shared.Auth.Abstractions.ForwardedJwt.GetHashCode() -> int
+override D2.Shared.Auth.Abstractions.ForwardedJwt.ToString() -> string!
+override D2.Shared.Auth.Abstractions.Jwks.JwksKeySetSnapshot.Equals(object? obj) -> bool
+override D2.Shared.Auth.Abstractions.Jwks.JwksKeySetSnapshot.GetHashCode() -> int
+override D2.Shared.Auth.Abstractions.Jwks.JwksKeySetSnapshot.ToString() -> string!
+static D2.Shared.Auth.Abstractions.ActorEntry.operator !=(D2.Shared.Auth.Abstractions.ActorEntry? left, D2.Shared.Auth.Abstractions.ActorEntry? right) -> bool
+static D2.Shared.Auth.Abstractions.ActorEntry.operator ==(D2.Shared.Auth.Abstractions.ActorEntry? left, D2.Shared.Auth.Abstractions.ActorEntry? right) -> bool
+static D2.Shared.Auth.Abstractions.Audiences.AllUrls.get -> System.Collections.Generic.IReadOnlySet<string!>!
+static D2.Shared.Auth.Abstractions.Audiences.ByName.get -> System.Collections.Generic.IReadOnlyDictionary<string!, string!>!
+static D2.Shared.Auth.Abstractions.Audiences.IsKnown(string! audience) -> bool
+static D2.Shared.Auth.Abstractions.Audiences.Resolve(string! name) -> string?
+static D2.Shared.Auth.Abstractions.Audiences.ResolveByUrl(string! url) -> string?
+static D2.Shared.Auth.Abstractions.ForwardedJwt.Create(string? rawBearer) -> D2.Shared.Result.D2Result<D2.Shared.Auth.Abstractions.ForwardedJwt>!
+static D2.Shared.Auth.Abstractions.ForwardedJwt.operator !=(D2.Shared.Auth.Abstractions.ForwardedJwt left, D2.Shared.Auth.Abstractions.ForwardedJwt right) -> bool
+static D2.Shared.Auth.Abstractions.ForwardedJwt.operator ==(D2.Shared.Auth.Abstractions.ForwardedJwt left, D2.Shared.Auth.Abstractions.ForwardedJwt right) -> bool
+static D2.Shared.Auth.Abstractions.Jwks.JwksKeySetSnapshot.operator !=(D2.Shared.Auth.Abstractions.Jwks.JwksKeySetSnapshot? left, D2.Shared.Auth.Abstractions.Jwks.JwksKeySetSnapshot? right) -> bool
+static D2.Shared.Auth.Abstractions.Jwks.JwksKeySetSnapshot.operator ==(D2.Shared.Auth.Abstractions.Jwks.JwksKeySetSnapshot? left, D2.Shared.Auth.Abstractions.Jwks.JwksKeySetSnapshot? right) -> bool
+static D2.Shared.Auth.Abstractions.Scopes.AllAnonymousScopes.get -> System.Collections.Generic.IReadOnlySet<string!>!
+static D2.Shared.Auth.Abstractions.Scopes.AllImpersonationBlockedScopes.get -> System.Collections.Generic.IReadOnlySet<string!>!
+static D2.Shared.Auth.Abstractions.Scopes.AllScopes.get -> System.Collections.Generic.IReadOnlySet<string!>!
+static D2.Shared.Auth.Abstractions.Scopes.GetActionSensitivity(string! scope) -> D2.Shared.Auth.Abstractions.ActionSensitivity
+static D2.Shared.Auth.Abstractions.Scopes.GrantedScopes.get -> System.Collections.Generic.IReadOnlyDictionary<(D2.Shared.Auth.Abstractions.OrgType, D2.Shared.Auth.Abstractions.Role), System.Collections.Generic.IReadOnlySet<string!>!>!
+static D2.Shared.Auth.Abstractions.Scopes.IsAnonymous(string! scope) -> bool
+static D2.Shared.Auth.Abstractions.Scopes.IsGrantedTo(string! scope, D2.Shared.Auth.Abstractions.OrgType orgType, D2.Shared.Auth.Abstractions.Role role) -> bool
+static D2.Shared.Auth.Abstractions.Scopes.IsImpersonationBlocked(string! scope) -> bool
+static D2.Shared.Auth.Abstractions.Scopes.IsKnown(string! scope) -> bool

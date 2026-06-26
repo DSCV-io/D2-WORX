@@ -1,0 +1,23 @@
+#nullable enable
+D2.Shared.I18n.ITranslator
+D2.Shared.I18n.ITranslator.HasKey(string! key) -> bool
+D2.Shared.I18n.ITranslator.T(string! locale, D2.Shared.I18n.TKMessage! message) -> string!
+D2.Shared.I18n.TKMessage
+D2.Shared.I18n.TKMessage.<Clone>$() -> D2.Shared.I18n.TKMessage!
+D2.Shared.I18n.TKMessage.Equals(D2.Shared.I18n.TKMessage? other) -> bool
+D2.Shared.I18n.TKMessage.Key.get -> string!
+D2.Shared.I18n.TKMessage.Parameters.get -> System.Collections.Generic.IReadOnlyDictionary<string!, string!>?
+D2.Shared.I18n.TKMessage.With(System.Collections.Generic.IReadOnlyDictionary<string!, string!>! parameters) -> D2.Shared.I18n.TKMessage!
+D2.Shared.I18n.TKMessage.With(string! name, string! value) -> D2.Shared.I18n.TKMessage!
+D2.Shared.I18n.TKMessageJsonConverter
+D2.Shared.I18n.TKMessageJsonConverter.TKMessageJsonConverter() -> void
+D2.Shared.I18n.TkMessageWireShape
+const D2.Shared.I18n.TkMessageWireShape.KEY = "key" -> string!
+const D2.Shared.I18n.TkMessageWireShape.PARAMS = "params" -> string!
+override D2.Shared.I18n.TKMessage.Equals(object? obj) -> bool
+override D2.Shared.I18n.TKMessage.GetHashCode() -> int
+override D2.Shared.I18n.TKMessage.ToString() -> string!
+override D2.Shared.I18n.TKMessageJsonConverter.Read(ref System.Text.Json.Utf8JsonReader reader, System.Type! typeToConvert, System.Text.Json.JsonSerializerOptions! options) -> D2.Shared.I18n.TKMessage?
+override D2.Shared.I18n.TKMessageJsonConverter.Write(System.Text.Json.Utf8JsonWriter! writer, D2.Shared.I18n.TKMessage! value, System.Text.Json.JsonSerializerOptions! options) -> void
+static D2.Shared.I18n.TKMessage.operator !=(D2.Shared.I18n.TKMessage? left, D2.Shared.I18n.TKMessage? right) -> bool
+static D2.Shared.I18n.TKMessage.operator ==(D2.Shared.I18n.TKMessage? left, D2.Shared.I18n.TKMessage? right) -> bool

@@ -1,0 +1,70 @@
+#nullable enable
+D2.Shared.Encryption.EncryptionDomains
+D2.Shared.Encryption.EncryptionException
+D2.Shared.Encryption.EncryptionException.EncryptionException(string! message) -> void
+D2.Shared.Encryption.EncryptionException.EncryptionException(string! message, System.Exception! inner) -> void
+D2.Shared.Encryption.EncryptionFrameLayout
+D2.Shared.Encryption.EncryptionRegistration
+D2.Shared.Encryption.EncryptionRegistration.EncryptionRegistration(string! serviceKey) -> void
+D2.Shared.Encryption.EncryptionRegistration.ServiceKey.get -> string!
+D2.Shared.Encryption.EncryptionRegistry
+D2.Shared.Encryption.EncryptionRegistry.EncryptionRegistry(System.Collections.Generic.IEnumerable<D2.Shared.Encryption.EncryptionRegistration!>! registrations) -> void
+D2.Shared.Encryption.EncryptionRegistry.ServiceKeys.get -> System.Collections.Generic.IReadOnlyList<string!>!
+D2.Shared.Encryption.EncryptionServiceCollectionExtensions
+D2.Shared.Encryption.EncryptionServiceCollectionExtensions.extension(Microsoft.Extensions.DependencyInjection.IServiceCollection!)
+D2.Shared.Encryption.EncryptionServiceCollectionExtensions.extension(Microsoft.Extensions.DependencyInjection.IServiceCollection!).AddD2EncryptionFor(string! serviceKey, System.Func<System.IServiceProvider!, D2.Shared.Encryption.PayloadCryptoKeyring!>! keyringFactory) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
+D2.Shared.Encryption.EncryptionServiceCollectionExtensions.extension(Microsoft.Extensions.DependencyInjection.IServiceCollection!).AddD2EncryptionStartupCheck() -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
+D2.Shared.Encryption.EncryptionStartupCheck
+D2.Shared.Encryption.EncryptionStartupCheck.EncryptionStartupCheck(System.IServiceProvider! services, D2.Shared.Encryption.EncryptionRegistry! registry, Microsoft.Extensions.Logging.ILogger<D2.Shared.Encryption.EncryptionStartupCheck!>! logger) -> void
+D2.Shared.Encryption.EncryptionStartupCheck.StartAsync(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task!
+D2.Shared.Encryption.EncryptionStartupCheck.StopAsync(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task!
+D2.Shared.Encryption.FrameMalformedException
+D2.Shared.Encryption.FrameMalformedException.FrameMalformedException(string! message) -> void
+D2.Shared.Encryption.FrameVersionMismatchException
+D2.Shared.Encryption.FrameVersionMismatchException.FrameVersionMismatchException(byte version) -> void
+D2.Shared.Encryption.FrameVersionMismatchException.Version.get -> byte
+D2.Shared.Encryption.IPayloadCrypto
+D2.Shared.Encryption.IPayloadCrypto.Decrypt(System.ReadOnlySpan<byte> framed) -> byte[]!
+D2.Shared.Encryption.IPayloadCrypto.Encrypt(System.ReadOnlySpan<byte> plaintext) -> byte[]!
+D2.Shared.Encryption.KidNotInKeyringException
+D2.Shared.Encryption.KidNotInKeyringException.Kid.get -> string!
+D2.Shared.Encryption.KidNotInKeyringException.KidNotInKeyringException(string! kid) -> void
+D2.Shared.Encryption.PayloadCrypto
+D2.Shared.Encryption.PayloadCrypto.Decrypt(System.ReadOnlySpan<byte> framed) -> byte[]!
+D2.Shared.Encryption.PayloadCrypto.Encrypt(System.ReadOnlySpan<byte> plaintext) -> byte[]!
+D2.Shared.Encryption.PayloadCrypto.PayloadCrypto(D2.Shared.Encryption.PayloadCryptoKeyring! keyring) -> void
+D2.Shared.Encryption.PayloadCryptoKeyring
+D2.Shared.Encryption.PayloadCryptoKeyring.AadContext.get -> System.ReadOnlyMemory<byte>
+D2.Shared.Encryption.PayloadCryptoKeyring.ActiveKid.get -> string!
+D2.Shared.Encryption.PayloadCryptoKeyring.AllKids.get -> System.Collections.Generic.IReadOnlyCollection<string!>!
+D2.Shared.Encryption.PayloadCryptoKeyring.Dispose() -> void
+D2.Shared.Encryption.PayloadCryptoKeyring.PayloadCryptoKeyring(string! activeKid, System.Collections.Generic.IReadOnlyDictionary<string!, byte[]!>! keys, System.ReadOnlyMemory<byte> aadContext) -> void
+D2.Shared.Encryption.PayloadCryptoKeyring.TryGetKey(string? kid, out System.ReadOnlyMemory<byte> key) -> bool
+const D2.Shared.Encryption.EncryptionDomains.AUDIT = "audit" -> string!
+const D2.Shared.Encryption.EncryptionDomains.COURIER = "courier" -> string!
+const D2.Shared.Encryption.EncryptionDomains.NOTIFICATIONS = "notifications" -> string!
+const D2.Shared.Encryption.EncryptionDomains.PLAINTEXT = "plaintext" -> string!
+const D2.Shared.Encryption.EncryptionFrameLayout.CIPHERTEXT_WITH_TAG_LENGTH = -1 -> int
+const D2.Shared.Encryption.EncryptionFrameLayout.CIPHERTEXT_WITH_TAG_OFFSET = -1 -> int
+const D2.Shared.Encryption.EncryptionFrameLayout.CONSTRAINT_MAX_KID_LENGTH = 64 -> int
+const D2.Shared.Encryption.EncryptionFrameLayout.CONSTRAINT_MIN_FRAME_SIZE = 30 -> int
+const D2.Shared.Encryption.EncryptionFrameLayout.CONSTRAINT_MIN_KID_LENGTH = 1 -> int
+const D2.Shared.Encryption.EncryptionFrameLayout.CONSTRAINT_NONCE_LENGTH = 12 -> int
+const D2.Shared.Encryption.EncryptionFrameLayout.CONSTRAINT_TAG_LENGTH = 16 -> int
+const D2.Shared.Encryption.EncryptionFrameLayout.CURRENT_VERSION = 1 -> byte
+const D2.Shared.Encryption.EncryptionFrameLayout.KID_LENGTH = -1 -> int
+const D2.Shared.Encryption.EncryptionFrameLayout.KID_LENGTH_LENGTH = 1 -> int
+const D2.Shared.Encryption.EncryptionFrameLayout.KID_LENGTH_OFFSET = 1 -> int
+const D2.Shared.Encryption.EncryptionFrameLayout.KID_OFFSET = 2 -> int
+const D2.Shared.Encryption.EncryptionFrameLayout.NONCE_LENGTH = 12 -> int
+const D2.Shared.Encryption.EncryptionFrameLayout.NONCE_OFFSET = -1 -> int
+const D2.Shared.Encryption.EncryptionFrameLayout.VERSION_LENGTH = 1 -> int
+const D2.Shared.Encryption.EncryptionFrameLayout.VERSION_OFFSET = 0 -> int
+const D2.Shared.Encryption.PayloadCryptoKeyring.KEY_SIZE_BYTES = 32 -> int
+const D2.Shared.Encryption.PayloadCryptoKeyring.MAX_KID_LENGTH = 64 -> int
+const D2.Shared.Encryption.PayloadCryptoKeyring.MIN_KID_LENGTH = 1 -> int
+override D2.Shared.Encryption.PayloadCrypto.ToString() -> string!
+override D2.Shared.Encryption.PayloadCryptoKeyring.ToString() -> string!
+static D2.Shared.Encryption.EncryptionDomains.AllDomains.get -> System.Collections.Generic.IReadOnlyList<string!>!
+static D2.Shared.Encryption.EncryptionServiceCollectionExtensions.AddD2EncryptionFor(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services, string! serviceKey, System.Func<System.IServiceProvider!, D2.Shared.Encryption.PayloadCryptoKeyring!>! keyringFactory) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
+static D2.Shared.Encryption.EncryptionServiceCollectionExtensions.AddD2EncryptionStartupCheck(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
