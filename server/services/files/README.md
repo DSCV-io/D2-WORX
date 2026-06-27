@@ -6,7 +6,7 @@ Copyright (c) DCSV. All rights reserved.
 
 > Parent: [`server/services/`](../README.md)
 
-> **Status**: NOT IMPLEMENTED — tracked at [docs/v2/V2.md](../../../docs/v2/V2.md).
+> **Status**: NOT IMPLEMENTED — not yet built.
 
 ## Purpose
 
@@ -48,7 +48,7 @@ Transitions managed by `transitionFileStatus()` (transactional, audit-logged). F
 - `D2.Shared.Encryption` (NOT used for `d2.files.events` — `metadata` is not classified PII; `[Encrypted(Domain.X)]` is the opt-in attribute when payload encryption is required)
 - `D2.Shared.Auth` (JWT validation on REST endpoints, scope checks)
 - `D2.Shared.Contacts` (file ownership references via `files_contacts_db`)
-- `D2.Shared.GeoReference` (locale-aware filename normalization, optional)
+- `D2.Shared.Geo` (locale-aware filename normalization, optional)
 
 ## Database
 

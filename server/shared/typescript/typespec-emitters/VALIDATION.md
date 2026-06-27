@@ -237,11 +237,11 @@ The TestServer host in `D2.Edge.Tests` stands up the real `JwtAuthMiddleware` pi
 
 ## Idempotency gate emitter — seam ledger
 
-The HTTP result-replay idempotency store is an unbuilt Edge concern. The emitter owns a faithful seam interface so validation is not blocked on the unbuilt consumer. (Canonical design: `docs/v2/PHASE_3_EDGE.md §1`; this seam ledger is the tracking artifact — the phase doc is the design source.)
+The HTTP result-replay idempotency store is an unbuilt Edge concern. The emitter owns a faithful seam interface so validation is not blocked on the unbuilt consumer. Deferred wiring is tracked in `docs/v2/PHASE_3.md` §G (deferred-work wire-up ledger); this seam ledger is the tracking artifact for the emitter side.
 
 | Seam                                                                                                               | Kind                                                                                                                                                                      | Consumer                                                                   | Replace-trigger                                                        |
 | ------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
-| `D2GeneratedIdempotencyStore` (emitter-owned generated interface — `TryGetAsync<TStored>` + `StoreAsync<TStored>`) | **Faithful seam** — validates the real replay contract (store/lookup/TTL-expiry/result-replay) against an in-memory `FakeIdempotencyStore` with injectable `TimeProvider` | Unbuilt Edge `Idempotency.*` HTTP-idempotency middleware (design: `docs/v2/PHASE_3_EDGE.md §1`) | That middleware lib ships and implements `D2GeneratedIdempotencyStore` |
+| `D2GeneratedIdempotencyStore` (emitter-owned generated interface — `TryGetAsync<TStored>` + `StoreAsync<TStored>`) | **Faithful seam** — validates the real replay contract (store/lookup/TTL-expiry/result-replay) against an in-memory `FakeIdempotencyStore` with injectable `TimeProvider` | Unbuilt Edge `Idempotency.*` HTTP-idempotency middleware (tracked: `docs/v2/PHASE_3.md` §G) | That middleware lib ships and implements `D2GeneratedIdempotencyStore` |
 
 The `D2GeneratedIdempotencyStore` prefix signals emitter ownership; the real Edge `IIdempotencyStore` carries the un-prefixed name when it ships (the `D2Generated` prefix reserves the collision-free namespace). The design mirrors the route emitter's `D2GeneratedRateLimitTier` / `D2GeneratedCsrfPosture` faithful-seam pattern.
 
@@ -377,7 +377,7 @@ The generated `sign` gRPC CLIENT (`KeyCustodianGrpcClient.g.cs`) is validated ag
 | Per-call pipeline override                             | `SignAsync_WithPassThroughOverride_BypassesInjectedRetryPipeline`                                  | a per-call `pipelineOverride` bypasses the injected retry; `CallCount == 1`                                                                                                                                          |
 | **§1.3 DI resolution (every registered seam)**         | `AddD2KeyCustodianGrpcClients_ResolvesClientAndKeyedPipeline`                                      | `GetRequiredService<IKeyCustodianGrpcClient>()` resolves AS `KeyCustodianGrpcClient` **and** `GetRequiredKeyedService<ResilientPipeline<…>>(SignClientKeys.PIPELINE)` resolves — descriptor-presence ≠ resolvability |
 
-**Replace-triggers (host-gated wiring — inert until a real Edge host exists)**: the generated DI ext takes a required host-supplied channel address and auto-chains the per-channel `.AddD2ForwardedJwt().AddD2WorkloadCertificate()`, but the channel-address supply and the one-time outbound-auth composition-root registrations are NOT wired by the test. Both are tracked in the roadmap §G master wire-up list — see `docs/v2/POST_PIVOT_ROADMAP.md` §G line 227 (channel address; `Tracked as` C1a + A4) and line 228 (the one-time `AddD2ForwardedJwtOutbound()` / `AddD2WorkloadCertificateOutbound()` registrations; `Tracked as` B15 + C7). They are referenced here, not duplicated.
+**Replace-triggers (host-gated wiring — inert until a real Edge host exists)**: the generated DI ext takes a required host-supplied channel address and auto-chains the per-channel `.AddD2ForwardedJwt().AddD2WorkloadCertificate()`, but the channel-address supply and the one-time outbound-auth composition-root registrations are NOT wired by the test. Both are tracked in `docs/v2/PHASE_3.md` §G (deferred-work wire-up ledger).
 
 **Nested-model / array-of-model gRPC response fields**: the gRPC client + service transport mappers now recurse nested-model and array-of-model response fields to arbitrary depth — see the "Nested-model / array-of-model gRPC wire support" section below + roadmap §C row C18 (done).
 
@@ -537,7 +537,7 @@ Compiles inline `.tsp` through the TypeSpec test-host and asserts the in-memory 
 
 ### Host-gated BFF-wiring replace-triggers
 
-Both seams exist, so both emitters are BUILT + validated now; the ONLY deferrals are the host-gated BFF composition-root WIRING (BFF-rebuild-gated). The canonical tracking is this ledger; the roadmap master-list already carries both rows (SSR-gRPC-client → BFF gRPC composition root + browser-REST-client → BFF browser integration). (Canonical roadmap design: `docs/v2/POST_PIVOT_ROADMAP.md` — the phase doc is the design source; this ledger is the seam-tracking artifact.)
+Both seams exist, so both emitters are BUILT + validated now; the ONLY deferrals are the host-gated BFF composition-root WIRING (BFF-rebuild-gated). The canonical tracking is this ledger; both rows are in `docs/v2/PHASE_3.md` §G (SSR-gRPC-client → BFF gRPC composition root + browser-REST-client → BFF browser integration).
 
 | Replace-trigger | Deferred wiring | Why deferred (genuine block) | Validated now against |
 | --------------- | --------------- | ---------------------------- | --------------------- |

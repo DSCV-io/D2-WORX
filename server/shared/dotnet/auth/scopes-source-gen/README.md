@@ -124,4 +124,4 @@ All lookup helpers are O(1) — backed by `HashSet<string>` / `Dictionary<,>`. `
 - [`contracts/auth-scopes/schema.json`](../../../../../contracts/auth-scopes/schema.json) — JSON Schema for the spec
 - [`contracts/auth-scopes/scopes.spec.json`](../../../../../contracts/auth-scopes/scopes.spec.json) — the source-of-truth scope catalog
 - [`D2.Shared.I18n.SourceGen`](../../i18n/source-gen/README.md) — sibling SrcGen this one mirrors (same incremental-generator + diagnostic-split pattern)
-- [`docs/v2/PHASE_3_RATE_LIMITING.md`](../../../../../docs/v2/PHASE_3_RATE_LIMITING.md) — companion `RateLimitTier` enum (lives in Edge — orthogonal axis). Canonical: not yet shipped; design at the cited path. Will migrate to a shipped Edge lib README when Edge rate-limiting ships.
+- Companion `RateLimitTier` enum (lives in the Edge rate-limit middleware — orthogonal axis, not yet shipped). Will be cross-referenced from the Edge lib README when Edge rate-limiting ships.

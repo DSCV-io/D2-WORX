@@ -77,7 +77,7 @@ app.UseD2Auth();
 app.UseAuthorization();
 ```
 
-No insertion points exposed — services that need bespoke ordering call the underlying lib extensions themselves and skip `UseD2DefaultPipeline`. The order rationale (companion Edge rate-limit design — Canonical: not yet shipped; design at [`docs/v2/PHASE_3_RATE_LIMITING.md`](../../../../docs/v2/PHASE_3_RATE_LIMITING.md). Will migrate to the Edge lib README when Edge rate-limiting ships):
+No insertion points exposed — services that need bespoke ordering call the underlying lib extensions themselves and skip `UseD2DefaultPipeline`. The order rationale (companion Edge rate-limit design — not yet shipped; will be documented in the Edge lib README when rate-limiting ships):
 
 - **`UseD2SecurityHeaders` first** — OWASP headers apply on EVERY response, including responses produced by middleware that short-circuits the pipeline (CORS preflight, infrastructure bypass).
 - **`UseD2RequestLogging` early (before routing)** — even early-pipeline failures emit a structured request-completion line.
@@ -85,7 +85,7 @@ No insertion points exposed — services that need bespoke ordering call the und
 - **`UseRouting` then `UseD2InfrastructureBypass`** — bypass needs the routing-resolved endpoint on the context to invoke the matched `RequestDelegate` directly when short-circuiting.
 - **`UseAuthentication` → `UseD2Auth` → `UseAuthorization`** — JWT auth middleware (`UseD2Auth`) requires the AspNetCore authentication feature on the context (`UseAuthentication`) and runs BEFORE `UseAuthorization` so the authorization stage fires scope / policy gates against the populated `IRequestContext`.
 
-The rate-limit middleware (an Edge concern, owned outside this lib) slots BETWEEN `UseD2InfrastructureBypass` and `UseAuthentication` per the companion Edge rate-limit design (Canonical: not yet shipped; design at [`docs/v2/PHASE_3_RATE_LIMITING.md`](../../../../docs/v2/PHASE_3_RATE_LIMITING.md). Will migrate to the Edge lib README when Edge rate-limiting ships). The current LOCKED order matches that wiring.
+The rate-limit middleware (an Edge concern, owned outside this lib) slots BETWEEN `UseD2InfrastructureBypass` and `UseAuthentication` per the companion Edge rate-limit design (not yet shipped; will be documented in the Edge lib README when rate-limiting ships). The current LOCKED order matches that wiring.
 
 ### `MapD2DefaultEndpoints()`
 
@@ -162,7 +162,7 @@ The aggregator owns ZERO field-level configuration knowledge. New options on any
 - **`AuthConfigure` null + `SkipAuthAutoWiring = false` is fail-fast.** The aggregator throws `InvalidOperationException` at host build with a clear remediation message. The fail-fast prevents services from accidentally shipping without auth wiring; opt out of auth entirely by setting `SkipAuthAutoWiring = true` (test hosts, anonymous-only admin endpoints).
 - **`OTEL_SDK_DISABLED=true` short-circuits both `AddD2Telemetry` and `MapD2PrometheusEndpoint` symmetrically.** No OTel providers / exporters are registered AND the `/metrics` route is not mapped. Consumers MUST tolerate the absence of both surfaces under the kill-switch condition.
 - **`AddD2I18n` has no `Action<T>` overload.** The aggregator passes `IConfiguration` only. The lib defaults `messagesDirectory` to `{AppContext.BaseDirectory}/messages` populated at build time via the consuming csproj's `<Content Include="...contracts/messages/*.json" />` item group.
-- **`UseD2DefaultPipeline` middleware ordering is LOCKED — no insertion points.** Services that need bespoke ordering call the underlying lib extensions themselves and skip the aggregator's pipeline method entirely. Per the companion Edge rate-limit design (Canonical: not yet shipped; design at [`docs/v2/PHASE_3_RATE_LIMITING.md`](../../../../docs/v2/PHASE_3_RATE_LIMITING.md). Will migrate to the Edge lib README when Edge rate-limiting ships).
+- **`UseD2DefaultPipeline` middleware ordering is LOCKED — no insertion points.** Services that need bespoke ordering call the underlying lib extensions themselves and skip the aggregator's pipeline method entirely. The locked order accounts for the Edge rate-limit middleware slot (not yet shipped; will be documented in the Edge lib README when rate-limiting ships).
 - **`MapD2DefaultEndpoints` MUST run exactly once per host.** `MapD2HealthEndpoints` raises a duplicate-route exception per the underlying ASP.NET Core endpoint-routing convention; `MapD2PrometheusEndpoint` similarly. The aggregator does not idempotency-guard the `Map*` calls.
 - **`SecurityHeadersConfigure` and `InfrastructureBypassConfigure` apply at pipeline-installation time.** Both underlying middleware extensions accept their `Action<T>?` at `Use*` time, not at service-registration time. The aggregator resolves `IOptions<D2ServiceDefaultsOptions>` from `app.ApplicationServices` to read these — when no options were registered (typical case; `AddD2ServiceDefaults` snapshots into a local but doesn't bind into DI), each underlying middleware uses its own defaults.
 - **`D2Env.Load` is idempotent.** Calling `AddD2ServiceDefaults` twice is safe — the second `D2Env.Load` no-ops via the `s_loaded` flag.

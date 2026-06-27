@@ -46,6 +46,20 @@ Every step is complete (the artifact-diff engine took several sub-passes as the 
 
 No CLAUDE.md lockstep edit was warranted — neither predicate has a genuine condensed mirror in CLAUDE.md (§7.14 appears only as a bare pointer in the convention list; the audit blocks describe the closure model conceptually without enumerating §24.23-class Fixer sub-rules), so adding detail there would have manufactured a mirror rather than kept one in sync.
 
+## Release / runtime follow-ups (deferred from 0024)
+
+These items were deliberately deferred in 0024. Each names the 0024-built artifact it consumes so the eventual builder finds the drop-in point. [ADR-0024](../adrs/0024-contract-api-versioning-strategy.md) is the canonical detail source.
+
+| # | Item | Status | Blocked on |
+| - | ---- | ------ | ---------- |
+| I1 | **`Deprecation` (RFC 9745) + `Sunset` (RFC 8594) response-header middleware + telemetry-gated removal.** 0024 built the contract-side shape the middleware reads: `deprecated` / `deprecatedReason` / `replacedBy` / `sunset` marker fields across catalog schemas + the runtime `IsDeprecated` registry flag. The Edge response middleware must emit `Deprecation` and `Sunset` headers from those fields; telemetry-gated removal must read per-generation usage before a deprecated entry is deleted. | 📐 specified-deferred | Running Edge response pipeline + request telemetry (PHASE_3 A1 / E2). Also tracked in [PHASE_3.md](../../v2/PHASE_3.md) §Deferred-work checklist E2 row. |
+| I2 | **Registry publishing (npm / NuGet) + TS publish-enable.** 0024 proved every consumable is publish-ready (`pack-smoke` CI job validates `dotnet pack` / `pnpm pack`); `release-libs.yml` cuts the GitHub Release bundle; actual registry push is unwired (no credentials) and TS packages are still `private`. Publishing is always a deliberate, manual step. | 📐 specified-deferred | npm and NuGet credentials + a deliberate first-publish decision |
+| I3 | **Post-merge `release-libs.yml` dry-run validation.** Run `release-libs.yml` with `dry_run=true` right after this branch merges to the default branch — confirms the bundle assembles and all 83 packages pack. The workflow cannot be dispatched until its file is on the default branch. | 📐 specified-deferred | Branch merging to the default branch |
+| I4 | **Automated library public-API breaking detection.** Today library-API breaks are author-declared via commit footer; only wire/contract breaks are auto-detected by `tools/contract-gate`. Add: .NET `Microsoft.CodeAnalysis.PublicApiAnalyzers` (`PublicAPI.Shipped.txt` per package) and TS `@microsoft/api-extractor` or `@arethetypeswrong/cli`. | 📐 specified-deferred | Nothing structural — buildable now |
+| I5 | **Runner-tag-integrated releases.** `release-libs.yml` is a standalone snapshot today; a tag-driven / runner-integrated release (where the runner's `--apply` bump emits the tags the release workflow consumes) is a later refinement. | 📐 specified-deferred | I2 (registry push) is the natural pairing; buildable incrementally |
+
+**Note**: I1 is also Edge-response-gated and cross-referenced from PHASE_3.md §Deferred-work checklist. Proto-unification (common/v1 → TypeSpec pipeline) is tracked in [ADR-0024 §Shared/common wire types](../adrs/0024-contract-api-versioning-strategy.md) directly.
+
 ## Honest completeness-checklist status (the gate before REVIEW)
 
 Audit cadence: the user-authorized targeted-per-step + full-K=12-at-FINAL-REVIEW model (the §13.14-named deviation used in 0015 / 0017 / 0022 / 0023).

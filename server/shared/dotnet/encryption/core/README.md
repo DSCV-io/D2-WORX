@@ -61,7 +61,7 @@ Overhead is ~14 bytes plus the kid length (typical kid `audit-2026q3` → 26 byt
 - Plaintext-length leakage — pad the plaintext if length-hiding matters.
 - Memory-dump of the running process — OS-level mitigations (disable swap, etc.).
 - Side-channel timing attacks against AES-NI — the BCL / OS handles this.
-- Compromise of the keys themselves — handled by KeyCustodian (see the [KeyCustodian README](../../../../services/edge/key-custodian/README.md) for the lifecycle authority; compromise-response runbook authoring is a tracked future deliverable — see [`docs/v2/PHASE_0_AUTH.md` §14a](../../../../docs/v2/PHASE_0_AUTH.md#14a-keycustodian-compromise-runbook-future-deliverable) for the scenario checklist).
+- Compromise of the keys themselves — handled by KeyCustodian (see the [KeyCustodian README](../../../../services/edge/key-custodian/README.md) for the lifecycle authority; compromise-response runbook authoring is a tracked future deliverable).
 
 ## Usage
 
@@ -146,4 +146,4 @@ None by design. This lib is a low-level crypto primitive — instrumentation liv
 
 ## References
 
-- [KeyCustodian README](../../../../services/edge/key-custodian/README.md) — KeyCustodian lifecycle authority (this lib is the encrypt/decrypt half; KeyCustodian owns key generation, rotation, and compromise). Compromise-response runbook authoring is a tracked future deliverable — see [`docs/v2/PHASE_0_AUTH.md` §14a](../../../../docs/v2/PHASE_0_AUTH.md#14a-keycustodian-compromise-runbook-future-deliverable) for the scenario checklist.
+- [KeyCustodian README](../../../../services/edge/key-custodian/README.md) — KeyCustodian lifecycle authority (this lib is the encrypt/decrypt half; KeyCustodian owns key generation, rotation, and compromise). Compromise-response runbook authoring is a tracked future deliverable.

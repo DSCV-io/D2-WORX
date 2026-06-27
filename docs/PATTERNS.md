@@ -4,7 +4,7 @@ Copyright (c) DCSV. All rights reserved.
 
 # PATTERNS.md — D²-WORX Code Patterns
 
-Directory of the load-bearing patterns + cross-cutting conventions every D²-WORX shared library and service embodies. Engineers implementing new handlers, libs, or services find here the high-level shape + jump-links to the canonical per-lib READMEs that own the full reference. Three sections stay at depth here because they are codebase-wide conventions with no per-lib canonical home (service project structure, spec-driven codegen philosophy, smart-constructor domain validation); every other entry is a thin description + small example + link.
+Directory of the core patterns + cross-cutting conventions every D²-WORX shared library and service embodies. Engineers implementing new handlers, libs, or services find here the high-level shape + jump-links to the canonical per-lib READMEs that own the full reference. Three sections stay at depth here because they are codebase-wide conventions with no per-lib canonical home (service project structure, spec-driven codegen philosophy, smart-constructor domain validation); every other entry is a thin description + small example + link.
 
 > This doc INTENTIONALLY summarizes content canonical at the cited per-lib READMEs. Updates to behavior land in the per-lib README FIRST, then propagate to the PATTERNS.md summary only if the at-a-glance description itself changes. Per `docs/dev/rules.md` §11.32 condensed-view discipline.
 
@@ -220,6 +220,8 @@ return D2Result<OutputDto>.Ok(order.ToDto());
 ```
 
 Partial-success ladder: `NotFound` (none resolved, Success=false) → `SomeFound` (partial, data attached, Success=false) → `Ok` (all resolved, Success=true). Callers use `IsPartialOrMissing` (`IsNotFound || IsSomeFound`) for cache-fallback. `Forbidden` is returned when an authenticated caller lacks the required scope.
+
+`IsTransientRetryable` covers `IsServiceUnavailable || IsRateLimited`. **`IsUnhandledException` is intentionally excluded** — an unknown exception means unknown system state; retrying could mask bugs or double-execute a non-idempotent operation.
 
 > Duplicated from [`server/shared/dotnet/result/core/README.md`](../server/shared/dotnet/result/core/README.md) for at-a-glance directory access. Full factory catalog, `BubbleFail` / `Bubble`, per-code booleans (`IsTransientRetryable` / `IsTransientDbFailure`), monadic `Bind` / `Map` / `ThenAsync` / `Match`, and auto-injected `traceId` semantics live in the lib README — update both in lockstep.
 
@@ -674,7 +676,7 @@ if (!authR.IsOk)
 return D2Result<ContactDto>.Ok(authR.Data!);
 ```
 
-Irreversible flows (e.g., user-deletion anonymize) are NOT SAGAs — they're fire-and-forget fanouts; downstream services own their idempotent consumers rather than coordinating rollback. Full design spec: [`docs/v2/PHASE_3_EDGE.md §6`](v2/PHASE_3_EDGE.md#6-cross-service-saga-pattern).
+Irreversible flows (e.g., user-deletion anonymize) are NOT SAGAs — they're fire-and-forget fanouts; downstream services own their idempotent consumers rather than coordinating rollback. Full cross-service SAGA design is tracked in the Edge gateway planning docs (not yet built).
 
 ---
 
@@ -682,7 +684,7 @@ Irreversible flows (e.g., user-deletion anonymize) are NOT SAGAs — they're fir
 
 Every D² service is designed to run with N replicas behind a load balancer. Correctness must not depend on instance affinity — sessions live in Redis (3-tier with PG dual-write), JWT validation reads from shared JWKS, rate-limit counters in Redis (cluster scope, never per-process), HTTP idempotency in Redis (`SET NX` + 24h TTL). Local in-memory caches are per-instance with cluster-wide L1 coherence via `ICacheInvalidationBackplane` (Redis pub/sub) for `*AndBroadcast*` write variants. Background jobs use Redis distributed locks (`SET NX`) — return early if held. Cache-invalidation events use fanout exchanges with exclusive auto-delete queues (not competing consumers) for cluster-wide propagation.
 
-Full service-onboarding checklist (rate limiting / HTTP idempotency / session+auth / local caches / background jobs / cache invalidation / connection strings / DB constraints / migrations / cross-service mutations / encryption): design spec at [`docs/v2/PHASE_3_EDGE.md §5`](v2/PHASE_3_EDGE.md#5-multi-instance-scaling--service-onboarding-checklist).
+Full service-onboarding checklist (rate limiting / HTTP idempotency / session+auth / local caches / background jobs / cache invalidation / connection strings / DB constraints / migrations / cross-service mutations / encryption) is tracked in the Edge gateway planning docs (not yet built).
 
 ---
 
@@ -1103,7 +1105,7 @@ Display names follow the endonym-first convention: the entity carries its name i
 
 ### Typed geo catalogs
 
-Closed-set catalogs (country, currency, language, geopolitical entity) are real C# enums with the `Code` suffix: `CountryCode`, `CurrencyCode`, `LanguageCode`, `GeopoliticalEntityCode`. Open-set catalogs (subdivision, locale, timezone) are branded wrapper structs: `SubdivisionCode`, `LocaleCode`, `TimezoneCode`. The distinction is load-bearing:
+Closed-set catalogs (country, currency, language, geopolitical entity) are real C# enums with the `Code` suffix: `CountryCode`, `CurrencyCode`, `LanguageCode`, `GeopoliticalEntityCode`. Open-set catalogs (subdivision, locale, timezone) are branded wrapper structs: `SubdivisionCode`, `LocaleCode`, `TimezoneCode`. The distinction determines the .NET shape — closed-set gets a real enum, open-set gets a struct:
 
 | Category | .NET shape | Rationale |
 |---|---|---|

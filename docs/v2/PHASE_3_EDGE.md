@@ -2,15 +2,17 @@
 Copyright (c) DCSV. All rights reserved.
 -->
 
-# PHASE_3_EDGE.md — Edge service forward-looking design
+# PHASE_3_EDGE.md — Edge service design
 
-> **Status**: design only. Implementation tracked under Phase 3 in [V2.md](V2.md).
+> Design annex — holds the Edge service design for the unbuilt Edge deliverables (E1–E5).
+> Folds into the deliverable ship doc(s) + ADRs when built, then pruned.
+> Not a tracker (see [PHASE_3.md](PHASE_3.md)) and not current-truth for what is already shipped
+> (see the relevant ADRs and per-service READMEs).
 
-Design intent for the Edge service (Phase 3 of the v2 roadmap) — module authors,
-operators, and reviewers preparing for Edge implementation will find here the canonical
-references for HTTP idempotency, request enrichment, scheduled-jobs receiver, session
-3-tier storage, multi-instance scaling, and the cross-service SAGA pattern that Edge
-coordinates.
+Module authors, operators, and reviewers preparing for Edge implementation will find here
+the canonical references for HTTP idempotency, request enrichment, scheduled-jobs receiver,
+session 3-tier storage, multi-instance scaling, and the cross-service SAGA pattern that
+Edge coordinates.
 
 ---
 
@@ -56,7 +58,7 @@ enrichment claims every downstream service consumes.
 - **No instance affinity required** — replicas don't need to pin a session to a
   specific Edge box; the resolved enrichment flows through the JWT claim set Edge
   mints (per the anon-visitor authentication pattern in
-  [PHASE_0_AUTH.md §3.8](PHASE_0_AUTH.md#38-anon-visitor-authentication-pattern--pattern-a-locked-mint-anon-jwt-at-edge)).
+  [PHASE_3_AUTH.md §3.8](PHASE_3_AUTH.md#38-anon-visitor-authentication-pattern--pattern-a-locked-mint-anon-jwt-at-edge)).
 - **Downstream propagation** — services receive the resolved WhoIs via the
   `X-D2-WhoIs` header AND via the JWT's `d2_whois_id` tamper-evident claim
   binding (anon JWTs only; authed JWTs carry the WhoIs ID the same way).
@@ -144,7 +146,7 @@ remain valid on the device that has it cached for up to 5 minutes (the cookie
 JWT validation across all three tiers reads from the shared JWKS — any Edge or
 backend instance validates with the cached JWKS public key. JWKS rotation propagates
 via the canonical `/.well-known/jwks.json` endpoint; key rotation cadence + dual-key
-window during grace live in [V2.md §5.4](V2.md) and [PHASE_0_AUTH.md](PHASE_0_AUTH.md).
+window during grace live in [V2.md §5.4](V2.md) and [PHASE_3_AUTH.md](PHASE_3_AUTH.md).
 
 ---
 
@@ -225,7 +227,7 @@ consumers rather than coordinating rollback).
   roadmap entry for the Edge service.
 - [PHASE_3_RATE_LIMITING.md](PHASE_3_RATE_LIMITING.md) — sister doc, rate-limit
   middleware design.
-- [PHASE_0_AUTH.md](PHASE_0_AUTH.md) — Auth runtime + anon-visitor
+- [PHASE_3_AUTH.md](PHASE_3_AUTH.md) — Auth runtime + anon-visitor
   authentication pattern (every request reaches Edge with a JWT).
 - [PHASE_8_REFERENCE.md](PHASE_8_REFERENCE.md) — scheduler half of the
   scheduled-jobs flow.

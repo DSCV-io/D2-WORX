@@ -8,6 +8,29 @@ Copyright (c) DCSV. All rights reserved.
 
 Project documentation that doesn't belong at the repo root.
 
+## How the docs are organized
+
+Docs fall into two kinds: **persistent** (survive forever, each owns one altitude) and **ephemeral** (holding-pens that fold into the durable form on ship, then get pruned).
+
+### Persistent tiers
+
+| Tier | Doc | Owns |
+| ---- | --- | ---- |
+| 1 — whole project | `docs/v2/V2.md` | Phase map + one-line status per phase + vision |
+| 2 — per phase | `docs/v2/PHASE_N.md` | That phase's deliverable DAG + per-deliverable scope/status/deps + build order |
+| 3 — per deliverable | `docs/dev/deliverables/NNNN.md` + ADRs | What shipped, decisions, lessons |
+| Reference | KEEP docs (`PATTERNS`, `rules`, `process`, `TESTS`, …) + per-lib/service READMEs | Current-truth API and conventions |
+
+Each tier **points** to the tier below — it does not restate what that tier owns. No two docs are a redundant source of truth for the same status or plan.
+
+### Ephemeral holding-pens
+
+- **Research docs** (e.g. `docs/wip/phase-3-edge-planning/`) — distilled into the ship doc + ADRs on ship, then deleted.
+- **Design annexes** (`docs/v2/PHASE_N_<concern>.md`) — live until their deliverable is built, then fold into the ship doc + ADRs, then pruned.
+- **wip workspaces** (`docs/wip/NNNN/`) — working journals; pruned after ship.
+
+Once work ships, the durable form is the ship doc + ADRs. The forward-looking holding-pen folds in and is pruned.
+
 ## Index
 
 ### Cross-cutting patterns
@@ -39,8 +62,8 @@ Project documentation that doesn't belong at the repo root.
 | -------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
 | [v2/V2.md](v2/V2.md)                               | Architecture & build plan — internal tracking doc.                                                                                       |
 | [archive/PHASE_1_GEO_LIBS.md](archive/PHASE_1_GEO_LIBS.md) | Geo-library execution tracking (archived — 0009-geo-libs shipped).                                                             |
-| [v2/PHASE_0_AUTH.md](v2/PHASE_0_AUTH.md)           | Authentication architecture reference — JWT shape, session model, key-rotation flow.                                                     |
-| [v2/PHASE_0_MESSAGING.md](v2/PHASE_0_MESSAGING.md) | Async-messaging architecture reference — exchange/queue topology, encryption framing, DLQ flow.                                          |
+| [v2/PHASE_3_AUTH.md](v2/PHASE_3_AUTH.md)           | Authentication architecture reference — JWT shape, session model, key-rotation flow. Edge-auth design annex for A1–A6.                   |
+| [v2/PHASE_3_RATE_LIMITING.md](v2/PHASE_3_RATE_LIMITING.md) | Rate-limit design annex — 18-bucket algorithm, Operation Risk Tier classification, kill-switch + FP-detection behavior.           |
 | [v2/PHASE_5_REFERENCE.md](v2/PHASE_5_REFERENCE.md) | D2.Courier + D2.Notifications rebuild reference — Universal Message Shape, Comms 6 design principles.                                    |
 | [v2/PHASE_6_REFERENCE.md](v2/PHASE_6_REFERENCE.md) | D2.Files (.NET) rebuild reference — 6 design principles, status state machine, smartphone MIME list, GEO_CLIENT log-suppression pattern. |
 | [v2/PHASE_8_REFERENCE.md](v2/PHASE_8_REFERENCE.md) | dkron-mgr (.NET) rewrite reference — Reconciler pattern, change-detection field list.                                                    |

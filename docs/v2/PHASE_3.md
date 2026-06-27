@@ -37,7 +37,7 @@ The following existing docs contain locked design content for Phase 3. Consult a
 | --- | -------- |
 | [PHASE_3_EDGE.md](PHASE_3_EDGE.md) | HTTP idempotency contract, request enrichment, scheduled-jobs receiver, session 3-tier storage, multi-instance scaling checklist, cross-service SAGA pattern |
 | [PHASE_3_RATE_LIMITING.md](PHASE_3_RATE_LIMITING.md) | 18-bucket rate-limit model, claims-driven keying, FP-too-common detection, runtime kill-switches, per-tier failure modes |
-| [PHASE_0_AUTH.md](PHASE_0_AUTH.md) | JWT shape (RS256, 15 min, `d2_`-prefixed snake_case custom claims), session model, JWKS at OIDC-canonical path, key-rotation flow, KeyCustodian lifecycle, anon-visitor authentication pattern |
+| [PHASE_3_AUTH.md](PHASE_3_AUTH.md) | JWT shape (RS256, 15 min, `d2_`-prefixed snake_case custom claims), session model, JWKS at OIDC-canonical path, key-rotation flow, KeyCustodian lifecycle, anon-visitor authentication pattern |
 | [ADR-0021](../adrs/0021-unified-operation-contract-idl.md) | Unified operation-contract IDL — one source per operation → DTOs/proto/OpenAPI/route+policy/gRPC/SSE/in-process-leaf/parity across all three transport planes; TypeSpec front-end + D2 emitter fleet + `@d2*` policy decorators + dual REST+gRPC binding. The contract foundation for every endpoint-bearing deliverable. |
 | [V2.md §5.2](V2.md#52-edge--unified-gateway) | Edge topology, YARP wiring, OpenAPI per-version |
 | [V2.md §5.4](V2.md#54-auth--security) | Auth + security stack decisions |
@@ -55,7 +55,7 @@ These decisions are locked for Phase 3. Any change requires an ADR entry and a V
 | **IPinfo provider abstraction** | `IWhoIsProvider` / `IpinfoWhoIsProvider` pattern with Singleflight + circuit-breaker + negative cache. WhoIs entity is a content-addressable hash keyed by `SHA-256(normalizedIp|year|month)` with 3-tier cache; `Find` (resolve+populate) vs `Get` (lookup by ID) handler split. |
 | **18-bucket rate limiter** | Claims-driven keying (auth-state-discriminated), FP-too-common detection, 5-level runtime kill-switch, fail-closed Restricted tier, per-endpoint `RateLimitTier` annotation. Full spec in [PHASE_3_RATE_LIMITING.md](PHASE_3_RATE_LIMITING.md). |
 | **JWKS at OIDC-canonical path** | `/.well-known/jwks.json` served by Edge; discovery doc at `/.well-known/openid-configuration`. Off-the-shelf libraries auto-discover. |
-| **Anon-visitor Pattern A** | Edge mints a short-lived anon-session JWT for every unauthenticated visitor — no "no-JWT" code path in normal traffic. `d2_kind: "anonymous"` claim discriminates anon vs authed. Rejected Pattern B (no-JWT header-based path) for pushing enrichment-vs-claims branching into every consumer. Full rationale in [PHASE_0_AUTH.md §3.8](PHASE_0_AUTH.md). |
+| **Anon-visitor Pattern A** | Edge mints a short-lived anon-session JWT for every unauthenticated visitor — no "no-JWT" code path in normal traffic. `d2_kind: "anonymous"` claim discriminates anon vs authed. Rejected Pattern B (no-JWT header-based path) for pushing enrichment-vs-claims branching into every consumer. Full rationale in [PHASE_3_AUTH.md §3.8](PHASE_3_AUTH.md). |
 | **3-tier sessions** | Cookie cache 5 min → Redis (session lifetime up to 30 days) → PostgreSQL `auth_db.session` dual-write. Revocation: delete Redis row → `d2.security.session-revoked` fanout → all instances drop L1. No sticky sessions. |
 | **KeyCustodian as peer module in Edge** | KeyCustodian is a module within Edge (same process, same deployment unit), not a standalone service. Extractable via `IKeyCustodianClient` interface if needed later. |
 
@@ -80,8 +80,8 @@ Phase 3 is too large for one deliverable. It is carved into a dependency-ordered
 
 | # | Deliverable | Scope | Size | Status |
 |---|---|---|---|---|
-| **A1** | **Edge host shell + `auth_db` foundation** | Edge ASP.NET host skeleton (`api/app/domain/infra` + `.slnx`), ServiceDefaults pipeline, `auth_db` foundation + EF, health/OTel/config. The host the auth module lives in. No upstream deps — parallel with K1. | M | ☐ Next |
-| **A2** | **Token issuance + JWKS** | `POST /oauth/token` mints the **one** internal transaction-token at the boundary (RFC 8693 retained for the boundary mint + exceptions per [ADR-0022](../adrs/0022-service-auth-mint-once-forward.md); the token is then forwarded unchanged downstream — no per-hop re-mint), JWKS publishing + OIDC discovery, OAuth client registry (`oauth_client`), `JsonWebTokenHandler` RS256, the ~15-min user-token TTL that bounds the whole forwarded chain, the 16-claim payload. Backend-to-backend workload identity is mTLS ([ADR-0023](../adrs/0023-mtls-workload-identity.md)), not a service-identity token. | M–L | ☐ Pending |
+| **A1** | **Edge host shell** | Edge ASP.NET host skeleton (`api/app/domain/infra` + `.slnx`), ServiceDefaults pipeline, health/OTel/config. The host the auth module lives in — no DB of its own. No upstream deps — parallel with K1. | M | ☐ Next |
+| **A2** | **Token issuance + JWKS** | `auth_db` foundation + EF (the auth module owns its own database, like KeyCustodian owns `keycustodian_db`). `POST /oauth/token` mints the **one** internal transaction-token at the boundary (RFC 8693 retained for the boundary mint + exceptions per [ADR-0022](../adrs/0022-service-auth-mint-once-forward.md); the token is then forwarded unchanged downstream — no per-hop re-mint), JWKS publishing + OIDC discovery, OAuth client registry (`oauth_client`), `JsonWebTokenHandler` RS256, the ~15-min user-token TTL that bounds the whole forwarded chain, the 16-claim payload. Backend-to-backend workload identity is mTLS ([ADR-0023](../adrs/0023-mtls-workload-identity.md)), not a service-identity token. | M–L | ☐ Pending |
 | **A3** | **Sessions + credential auth core + anon-mint** | 3-tier sessions (cookie→Redis→PG + revocation backplane), sign-up + email-verification, sign-in (email+username), sign-out, get-session, password policy (HIBP k-anon + ~1k blocklist + pattern blocks), password reset/change, progressive sign-in throttle (known-good bypass), `sign_in_event` audit + `auth.whois-resolution` async enrich, fingerprint binding, anon-visitor Pattern A mint. | L | ☐ Pending |
 | **A4** | **Account self-management** | Name/username/locale/timezone (Geo/Contacts SAGAs), email-change + phone-change OTP flows (+ OTP rate-limit store), remove-phone, avatar file-callback, list/revoke/revoke-others sessions, sign-in-event history, self-service deletion (state machine + sole-owner guard + 30-day grace + cancel-on-signin + nightly anonymization + `auth.user-anonymize` fanout). | L | ☐ Pending |
 | **A5** | **Orgs + memberships + invitations + emulation + org-contacts** | Org CRUD (orgType creation rules), memberships + role hierarchy (auditor<agent<officer<owner) + last-owner guard, invitation lifecycle (state machine + role-hierarchy + Geo contact for new invitees + comms), emulation consent (CRUD + partial-unique + session flow forcing auditor role), org-contacts (junction → `D2.Shared.Contacts` fold-in), 2 cleanup jobs. | L | ☐ Pending |
@@ -106,7 +106,7 @@ Phase 3 is too large for one deliverable. It is carved into a dependency-ordered
 ```
 K1 (KeyCustodian — no deps, start now) ─┐
                                         ├─► A2 (token+JWKS) ──► E5 (keyring needs a key source)
-A1 (Edge host shell + auth_db) ─────────┘        └─► A3 (sessions + sign-in + anon-mint)
+A1 (Edge host shell) ───────────────────┘        └─► A3 (sessions + sign-in + anon-mint)
                                                        │   ▲
 E1 (WhoIs / enrichment) ───────── needs ───────────────┘   (anon-mint sets d2_whois_id)
    └─► E2 (rate-limit: needs E1 + A3 claims)
@@ -138,11 +138,162 @@ A3 ─┬─► A4 (account)
 
 ---
 
-## Open prerequisites (must resolve before or during the planning session)
+## Open prerequisites
 
-1. **Auth-module ADR(s)** — architectural decisions for the self-rolled Auth module scope, session state machine, impersonation model, and security-policy enforcement need to be captured as ADRs before detailed step work begins.
-2. **JWT claims catalog** — `docs/JWT-CLAIMS.md` (prose catalog) + `contracts/jwt-claims/jwt-claims.spec.json` (spec-driven source for codegen-emitted `JwtClaimTypes` constants) to be created; the claim set must be locked before the Auth module is implemented.
-3. **Branch** — each deliverable checks out `n/{name}` off clean `nova` as Step 0.
+Genuinely open items only — resolved or well-understood items removed.
+
+1. **Edge-auth-module ADRs** — session state machine, OAuth client registry, and impersonation model each need an ADR, written *as* A2–A6 are planned and built, not upfront. The broader auth-system ADRs (token model, mTLS workload identity) are already accepted: ADR-0005, ADR-0007, ADR-0012, ADR-0022, ADR-0023. The shared auth libs are built and shipped.
+2. **`docs/JWT-CLAIMS.md` prose catalog + 3 anon-claim additions** — the 16-claim payload is locked (see [PHASE_3_AUTH.md §3.1](PHASE_3_AUTH.md)) and `contracts/jwt-claims/jwt-claims.spec.json` exists (drives codegen). What remains is writing the prose catalog and adding the 3 anon claims (`d2_kind`, `d2_whois_id`, `d2_fingerprint_score`) to the spec. Formalization due at A3.
+3. **First-leaf bootstrap mechanism** — the ONE genuine design gap in the mTLS cross-process slice: how a workload obtains its first leaf before it can mTLS-call KeyCustodian (chicken-and-egg). ADR-0023 frames it as deployment-orchestrator-provisioned; the exact mechanism is designed at build-order step 6 (mTLS cross-process slice). Not a blocker for A1–E2 (all in-host / browser-facing).
+4. **CSRF: token vs SameSite+anon-gating** — one decision due at E2. The logic-layer design is already locked: cookies `HttpOnly+Secure+SameSite=Lax`; the anon-JWT-as-CSRF-gate rule is locked (`d2_kind:"anonymous"` cannot bear state-mutating ops unless scope-declared anon-eligible); every generated route already carries a `D2GeneratedCsrfPosture` marker (shipped, asserted). Remaining: decide whether SameSite+anon-gating alone is sufficient or an explicit CSRF token is added, then build enforcement in E2.
+5. **Branch** — each deliverable checks out `n/{name}` off clean `nova` as Step 0.
+
+---
+
+## Build order (interleaved; real-not-stub; one wireup ledger)
+
+The critical-path spine `(K1 ∥ A1) → A2 → A3` from the dependency graph is correct. The interleaved order below bakes in the mTLS cross-process slice at the natural point and makes explicit that A1–E2 are ALL in-host / browser-facing — none blocked on mTLS or the first-leaf bootstrap.
+
+1. **A1** — Edge host shell + compose the real KC (`getJwks` live) + stand up the deferred-work wireup ledger (§Deferred-work checklist below).
+2. **A2** — auth module issuance: token minting (locked 16-claim payload) + KC signing keys in-process + JWKS publish + OAuth client registry + `auth_db` + EF migrations (auth module owns its DB, like KC owns `keycustodian_db`).
+3. **E1** — WhoIs + fingerprint (module backing enrichment middleware; `IWhoIsProvider` port lands early; anon-mint at A3 depends on E1's `d2_whois_id`).
+4. **A3** — sessions + credential-auth core + anon-mint (needs A2 token shape + E1 port; adds 3 anon claims to the spec).
+5. **E2** — net-new middleware: 18-bucket rate-limit + HTTP idempotency + CSRF enforcement + security headers + i18n (needs A3 claim shape + the generated markers from the deferred-work checklist §F).
+6. **mTLS cross-process slice** — expose KC's existing `IssueWorkloadCertificate` handler over gRPC + wire Edge server-side mTLS. First-leaf bootstrap is designed here (deployment-layer concern; see open prerequisite #3).
+7+. **E4** (SSE), **A4/A5/A6** (account / orgs / impersonation), then **E3** (YARP routing) + **E5** (keyring) — as their first consumers arrive.
+
+Walk the **§Deferred-work checklist** §G master table top-to-bottom when the host + middleware land — it is the seam→consumer master list.
+
+---
+
+## Deferred-work checklist
+
+**This is the single committed home for every deferral that the Edge build must drain.** If a piece of work is deferred (specified-but-not-built, host-gated, design-pending, or built-as-a-seam awaiting a real consumer), it has a row here. The Edge / middleware build runs off this ONE checklist — nothing deferred is allowed to live only in a per-deliverable ledger, a phase-doc deferral section, or a code comment.
+
+**How to read the status column:**
+
+| Status | Meaning |
+| ------ | ------- |
+| ✅ done | Built + tested + shipped. Row kept for sequencing context. |
+| 🔄 active | Active right now in a named deliverable. |
+| 📐 specified-deferred | Design is locked; code is deliberately deferred, with a tracked to-be-done note. |
+| ✍ not-yet-specified | Needs a design decision before it can be built. |
+
+---
+
+### A — mTLS cross-process remainder (host-gated)
+
+0022 shipped the reusable mTLS plumbing (~70% built: CA + leaf issuance handler + SPIFFE-SAN + server-side peer validator + outbound forwarded-token plumbing + workload-cert client, all harness-proven over a real socket on Linux). What remains is the cross-process wiring that genuinely needs a running Edge gRPC host.
+
+**Canonical detail**: [ADR-0023 "Negative / new work"](../adrs/0023-mtls-workload-identity.md) + [PHASE_3_EDGE.md §3](PHASE_3_EDGE.md) + [deliverable 0022](../dev/deliverables/0022-mtls-workload-identity.md).
+
+| # | Item | Status | Blocked on |
+| - | ---- | ------ | ---------- |
+| A1 | Reusable mTLS plumbing (CA issuance, server validate, client present + refresh, SPIFFE-SAN, loopback proof) | ✅ done | — |
+| A2 | Cross-process gRPC `IssueWorkloadCertificate` endpoint (today in-process only) | 📐 specified-deferred | Running Edge gRPC host (build-order A1) + C0 gRPC contract for the issuance op |
+| A3 | First-leaf bootstrap identity (chicken-and-egg — provisioned by the deployment orchestrator) | ✍ not-yet-specified | Design decision at build-order step 6 (see open prerequisite #3) |
+| A4 | Wire the mTLS server + leaf-refresh client into the running Edge host | 📐 specified-deferred | Running Edge host (build-order A1) |
+| A5 | Channel-rebuild-on-rotation for long-lived gRPC channels | 📐 specified-deferred | Edge host channel-lifetime policy (A4) |
+
+---
+
+### B — Auth-pivot existing-code reconciliation
+
+**Canonical detail**: [deliverable 0023 record](../dev/deliverables/0023-forwarded-token-auth.md) + [ADR-0022](../adrs/0022-service-auth-mint-once-forward.md) + [ADR-0023](../adrs/0023-mtls-workload-identity.md) + [PHASE_3_AUTH.md](PHASE_3_AUTH.md).
+
+#### B.1 — Shipped in 0023 (✅ SHIPPED 2026-06-20)
+
+| # | Item | Status |
+| - | ---- | ------ |
+| B1 | `D2_INTERNAL_AUDIENCE` constant in `D2.Shared.Auth.Abstractions` | ✅ done in 0023 |
+| B2 | Request-scoped raw-JWT holder (`IForwardedJwtAccessor`) + inbound capture at both transports | ✅ done in 0023 |
+| B3 | Per-request `CallCredentials` forwarding-attach + `IAmbientRequestScopeAccessor` port | ✅ done in 0023 |
+| B4 | Emitter auto-wire of `.AddD2ForwardedJwt().AddD2WorkloadCertificate()` into generated DI registration | ✅ done in 0023 |
+| B5 | Retire the `client_credentials` service-identity surface | ✅ done in 0023 |
+| B6 | Doc / comment reconciliation off the predates-the-pivot framing | ✅ done in 0023 |
+| B16 | gRPC-inbound ambient-scope adapter (`GrpcHttpContextAmbientRequestScopeAccessor`) | ✅ done in 0023 |
+
+#### B.2 — Beyond 0023 (Edge-gated / C0-gated)
+
+| # | Item | Status | Blocked on |
+| - | ---- | ------ | ---------- |
+| B7 | Edge `/oauth/token` boundary minter | 📐 specified-deferred | PHASE_3 A2 (token issuance + JWKS) |
+| B8 | Anon-JWT minting (Pattern A) | 📐 specified-deferred | PHASE_3 A3 (sets `d2_whois_id`; needs E1) |
+| B9 | Operational-subset (`PropagatedContext`) reader/writer on .NET→.NET sync gRPC/HTTP hops (absorbs the call-path interceptor deferred from 0023 Step 3) | 📐 specified-deferred | A service-to-service .NET call path (first appears with Edge→backend) |
+| B10 | Build-time caller-scopes ⊇ callee-scopes check (`@d2Calls`-style annotation) | 📐 specified-deferred | C0 (additive emitter output) |
+| B11 | TS BFF `InternalToken*` → `EdgeBoundaryToken*` rename + BFF forwarding path | 📐 specified-deferred | PHASE_3 BFF (Phase 7) |
+| B12 | `contracts/*.spec.json` docstring fixes + `ts-codegen` emitters + regenerate `.g.*` | 📐 specified-deferred | None structural |
+| B13 | Over-the-wire mint↔validate parity test | 📐 specified-deferred | Running minter + validator (PHASE_3 A2) |
+| B14 | Emit `D2_INTERNAL_AUDIENCE` to the TS runtime | ✍ not-yet-specified | Design decision on emission mechanism (see §E open design decisions) |
+| B15 | Wire forwarded-JWT outbound plumbing into the running Edge host | 📐 specified-deferred | Running Edge host (PHASE_3 A1) |
+| B17 | Identity for genuinely system-initiated calls (scheduled job / background worker with no inbound request) | ✍ not-yet-specified | A scheduled-jobs execution path + design decision (see §E) |
+| B18 | `@d2/auth-bff-client` package missing — `server/web` typechecks blocked | 📐 specified-deferred | PHASE_3 BFF rebuild (Phase 7) |
+
+---
+
+### C — Contract-IDL (C0 / 0019) remainder
+
+0019 shipped emitter-complete. **Canonical detail**: [deliverable 0019 record](../dev/deliverables/0019-typespec-emitters.md) + [ADR-0021](../adrs/0021-unified-operation-contract-idl.md).
+
+C1–C16, C18 are ✅ done. Open rows:
+
+| # | Item | Status | Blocked on |
+| - | ---- | ------ | ---------- |
+| C8 | Real Edge HTTP-idempotency-store impl behind the generated seam (`D2GeneratedIdempotencyStore.g.cs` seam exists; in-memory fake exists) | 📐 specified-deferred | Running Edge host (PHASE_3 E2 — cross-cutting middleware) |
+| C17 | Proto emitter: optional-presence wrapper path (no `@d2GrpcMethod` op currently needs this; add when first one does) | 📐 specified-deferred | Nothing structural — buildable now; unblocked when a `@d2GrpcMethod` op first carries an optional scalar |
+
+---
+
+### E — Open design decisions
+
+Items still needing a design decision before they can be built:
+
+- **A3 / build-order step 6 — first-leaf bootstrap identity.** How a workload obtains its first leaf before it can mTLS-call KeyCustodian (chicken-and-egg). ADR-0023 says "provisioned by the deployment orchestrator from a secret" but the exact mechanism is undesigned. Resolved at the mTLS cross-process slice (build-order step 6).
+- **B14 — `D2_INTERNAL_AUDIENCE` to the TS runtime.** The `.NET` constant is hand-declared (out of `audiences.spec.json` by design — it's the universal receive audience). The TS side needs the same value; the emission mechanism (hand-declared TS constant vs a dedicated single-entry spec vs piggybacking an existing emitter) is undecided, and must avoid creating a spec-mirror DTO.
+- **B17 — identity for system-initiated calls.** A scheduled job / background worker with no inbound user request cannot use the forwarding credential (correctly hard-fails `Unauthenticated`). How such a caller obtains its own identity is undesigned; surfaces when the first system-initiated execution path (Edge scheduled-jobs receiver) is built.
+
+---
+
+### F — Generated-marker seam bindings (markers awaiting their real consumer)
+
+Every generated route carries faithful, asserted-present seam markers; nothing reads them yet. When Edge middleware lands it MUST wire each marker or the build ships correct metadata with zero enforcement.
+
+**Canonical detail**: 0019 `VALIDATION.md` replace-trigger ledger + [PHASE_3_EDGE.md](PHASE_3_EDGE.md) + [PHASE_3_AUTH.md §3.8](PHASE_3_AUTH.md).
+
+| # | Item | Status | Blocked on |
+| - | ---- | ------ | ---------- |
+| F1 | **Anon-JWT `EffectiveScopes` algorithm gap (CRITICAL — security path).** `JwtAuthMiddleware` scope check is JWT-scopes-only; Pattern A requires `EffectiveScopes(ctx) = ctx.Scopes ∪ Scopes.AllAnonymousScopes`. Also: `ClaimsToContextMapper` must map `d2_kind` / `d2_whois_id` / `d2_fingerprint_score` into request context. | 📐 specified-deferred | Anon-JWT mint (B8 / PHASE_3 A3) |
+| F2 | **Edge rate-limit middleware must READ `D2GeneratedRateLimitTier` marker.** Marker is present + asserted on endpoint metadata; no enforcement. 18-bucket rate-limiter must call `GetMetadata<D2GeneratedRateLimitTier>()` per route. | 📐 specified-deferred | Edge rate-limit middleware (PHASE_3 E2) |
+| F3 | **Edge CSRF middleware must READ `D2GeneratedCsrfPosture` marker.** Marker is present + asserted; no enforcement. CSRF middleware must call `GetMetadata<D2GeneratedCsrfPosture>()` per route. | 📐 specified-deferred | Edge CSRF middleware (PHASE_3 E2) |
+| F4 | **Keyring distribution endpoint + its consumer wiring.** `D2.Shared.Auth.Keyring` ships consumer-side types (`IKeyringClient`, `GrpcKeyringClient`, `RabbitMqRotationEventChannel`) but no endpoint exists yet. | 📐 specified-deferred | KeyCustodian gRPC `internal/keys/{domain}` endpoint (PHASE_3 E5) + messaging |
+
+---
+
+### G — Seam → real-consumer wire-up master table
+
+**This is THE actionable list the Edge / middleware build consumes.** Every emitter output and shared-lib seam that exists today as a faithful test-double / inert marker, the real consumer that must wire it, and the exact replace-trigger. Walk this table top-to-bottom when the Edge host + middleware land. The `Tracked as` column points back at the owning row — this is a cross-cut view, not a new backlog.
+
+**Source**: the 0019 `VALIDATION.md` replace-trigger ledger + the seam markers in the emitter sources.
+
+| Seam / test-double / marker that exists TODAY | Real consumer that must wire it | Replace-trigger (when to do it) | Tracked as |
+| --------------------------------------------- | ------------------------------- | ------------------------------- | ---------- |
+| `D2GeneratedRateLimitTier` metadata marker on every generated route (faithful, asserted-present, no enforcement) | Edge 18-bucket rate-limit middleware — `GetMetadata<D2GeneratedRateLimitTier>()` per route + enforce | Edge rate-limit middleware lands (PHASE_3 E2) | F2 |
+| `D2GeneratedCsrfPosture` metadata marker on every generated route (faithful, asserted-present, no enforcement) | Edge CSRF middleware — `GetMetadata<D2GeneratedCsrfPosture>()` per route + enforce | Edge CSRF middleware lands (PHASE_3 E2) | F3 |
+| `D2GeneratedIdempotencyStore` generated seam + in-memory `FakeIdempotencyStore` (injectable `TimeProvider`; `TryGetAsync<TStored>` + `StoreAsync<TStored>`) | Edge HTTP-idempotency middleware — real `D2GeneratedIdempotencyStore` impl (Redis `SET NX`, 24h TTL) | Edge `Idempotency.*` middleware lands (PHASE_3 E2) | C8 |
+| `JwtAuthMiddleware` / `JwtAuthInterceptor` scope check = JWT-scopes-only; `ClaimsToContextMapper` does not map `d2_kind` / `d2_whois_id` / `d2_fingerprint_score` | Edge auth — change check to `EffectiveScopes = ctx.Scopes ∪ Scopes.AllAnonymousScopes`; map the anon claims | anon-JWT mint exists (PHASE_3 A3) | F1 |
+| `D2.Shared.Auth.Keyring` `IKeyringClient` / `GrpcKeyringClient` / `RabbitMqRotationEventChannel` (client types, no endpoint) | KeyCustodian gRPC `internal/keys/{domain}` endpoint + `GrpcKeyringClient` wired to it + messaging for the rotation channel | keyring distribution endpoint built (PHASE_3 E5) | F4 |
+| In-process `IWorkloadCertificateIssuer` delegate (harness seam); `WorkloadLeafClient` wired to it | Cross-process `IssueWorkloadCertificate` gRPC endpoint exposing the in-process issuer over the wire | running Edge gRPC host + C0 gRPC contract for the issuance op | A2 |
+| `D2MutualTlsOptions.Enabled = off` by default; loopback harness proof only | Edge host — Kestrel `RequireCertificate` + SPIFFE validator + leaf-refresh client wired in | running Edge host (PHASE_3 A1) | A4 |
+| `AddD2WorkloadCertificate` captures the leaf at channel construction (no rebuild-on-rotation) | Edge host-lifetime policy — invalidate + rebuild long-lived gRPC channels when `WorkloadLeafRefreshHostedService` rotates the leaf | Edge host channel-lifetime policy lands (A4) | A5 |
+| `ForwardedJwtCallCredentials` + `.AddD2ForwardedJwt()` + `AddD2ForwardedJwtOutbound()` (in-memory-proven; Edge `api/` is `.gitkeep`) | Edge host composition root — attach the outbound forwarded-JWT rails; dual-transport with the mTLS rails on the same channel | running Edge host (PHASE_3 A1) | B15 |
+| `<Module>GrpcClientOptions.Address` (required, host-supplied; the generated DI ext embeds no literal address) | Edge host composition root — supply `AddD2KeyCustodianGrpcClients(new KeyCustodianGrpcClientOptions { Address = … })` | host composition root exists (PHASE_3 A1) | C1a (generated client) + A4 |
+| The generated gRPC-client DI ext auto-chains the per-channel `.AddD2ForwardedJwt()` + `.AddD2WorkloadCertificate()`; the ONE-TIME `AddD2ForwardedJwtOutbound()` + `AddD2WorkloadCertificateOutbound()` composition-root registrations are NOT auto-called | Edge host composition root — call the ONE-TIME outbound registrations the per-channel interceptors depend on | host composition root exists (PHASE_3 A1) | B15 + C7 |
+| The generated TS SSR gRPC client fns (validated against the real `@d2/grpc-client` seam + real ts-proto types) run against a hand-written BFF composition root (`getChannel`, context-propagation interceptor, boundary-token cache) | BFF gRPC composition root — wire the generated TS server client fns against the real channel + interceptors | BFF rebuild (Phase 7) | C10 + B11 |
+| The generated TS browser REST client fns (validated against a faithful `apiCall` double) call `apiCall`/`apiCallAnon` from the BFF client lib | BFF browser integration — wire the generated typed REST client fns to the real fetch substrate | BFF browser integration (Phase 7) | C10 |
+| The `text/event-stream` SSE binding is NOT generated; `@d2ServerPush` is an exposure marker only | Edge channel gateway (the real SSE fan-out engine) — only relevant if the SSE emit-vs-fringe decision resolves "emit" | SSE emit-vs-fringe decision resolves "emit" AND Edge channel gateway lands (PHASE_3 E4) | C4 |
+| `PropagatedContext` (operational `x-d2-context`) is read/written on AMQP only; sync .NET hops build context from JWT claims; the call-path interceptor is not wired | A real .NET→.NET sync hop — wire `x-d2-context` read/write + the call-path interceptor | a service-to-service .NET call path exists (Edge→backend, or a second .NET service) | B9 |
+
+**Note on the JWKS route** — `/.well-known/jwks.json` is deliberately NOT generated (ADR-0021 keeps it in the named hand-written fringe); only the `sign` route is generated. There is no replace-trigger — it stays hand-written. Listed here so its absence from the generated set is not mistaken for a gap.
 
 ---
 

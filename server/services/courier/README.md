@@ -6,7 +6,7 @@ Copyright (c) DCSV. All rights reserved.
 
 > Parent: [`server/services/`](../README.md)
 
-> **Status**: NOT IMPLEMENTED — tracked at [docs/v2/V2.md](../../../docs/v2/V2.md).
+> **Status**: NOT IMPLEMENTED — not yet built.
 
 ## Purpose
 
@@ -35,7 +35,7 @@ D2.Notifications is the "show in the UI" side. Each owns one slice — Courier n
 - `D2.Shared.Messaging` (consumer + publisher to `d2.audit.events` for cross-cutting audit)
 - `D2.Shared.Encryption` (decrypts RMQ payloads from `d2.courier.deliver`)
 - `D2.Shared.Contacts` (recipient resolution via `courier_contacts_db`)
-- `D2.Shared.GeoReference`, `D2.Shared.Location` (locale + currency for templated content)
+- `D2.Shared.Geo`, `D2.Shared.Location` (locale + currency for templated content)
 - `D2.Shared.I18n` (template rendering with locale-aware variables)
 
 ## Database

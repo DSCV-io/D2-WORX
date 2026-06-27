@@ -2,15 +2,17 @@
 Copyright (c) DCSV. All rights reserved.
 -->
 
-# PHASE_0_AUTH.md — D2.Shared.Auth Runtime Design (working doc)
+# PHASE_3_AUTH.md — Edge Auth Module Design
 
-> Working notes for the D2.Shared.Auth runtime lib design. Iterates freely.
-> Folds back into [PHASE_0.md](PHASE_0.md) when the lib ships; deleted after.
+> Design annex — holds the auth-module and D2.Shared.Auth runtime design for the unbuilt Edge-auth
+> deliverables (A1–A6). Folds into the deliverable ship doc(s) + ADRs when built, then pruned.
+> Not a tracker (see [PHASE_3.md](PHASE_3.md)) and not current-truth for what is already shipped
+> (see the relevant ADRs and per-lib READMEs).
 
-> **Branch**: `n/auth` (off `nova`).
-> **Status**: design phase complete; all Q1-Q15 resolved (see §12 decisions log). Implementation
-> proceeds per the build order in §15. **`D2.Shared.Messaging` ships first as its own commit/wave**
-> (per Q3 — RMQ rotation events) before any Auth work begins.
+> **D2.Shared.Auth shipped** (deliverable 0002). The auth runtime library (`D2.Shared.Auth`,
+> `D2.Shared.Auth.Http`, `D2.Shared.Auth.Grpc`, `D2.Shared.Auth.Outbound`,
+> `D2.Shared.Auth.Keyring`) is live on `nova`. This doc is the **auth-runtime and Edge-auth
+> design reference** that Phase 3 A1–A6 builds on — not an in-progress working doc.
 
 > **⚠ Deliverable 0002 scope tightening (2026-05-10)** — the inbound runtime's authoritative
 > file/scope layout now lives in [`docs/wip/0002-auth-inbound/README.md`](../wip/0002-auth-inbound/README.md).
@@ -2319,7 +2321,6 @@ Each csproj lands as its own buildable unit; tests pass at every checkpoint; zer
 4. PATTERNS.md updates (auth section if needed).
 5. `docs/dev/rules.md` updates (any new auth-related predicate additions).
 6. V2.md tree update (Wave 7 → ✅ Complete).
-7. **This doc archived → folded into PHASE_0.md per the lifecycle rule.**
 
 Each step buildable + testable + zero warnings before moving on.
 
@@ -2349,7 +2350,6 @@ The KeyCustodian state machine, key lifecycle, and `keycustodian_db` are shipped
 - [PHASE_3_RATE_LIMITING.md](PHASE_3_RATE_LIMITING.md) — auth-related fields + session
   invalidation backplane
 - [PATTERNS.md](../PATTERNS.md) — handler / cache / middleware patterns this lib must fit
-- [PHASE_0.md](PHASE_0.md) — per-lib checklist row (D2.Shared.Auth, Wave 4, ☐ Not started)
 - [RFC 6749 §4.4](https://datatracker.ietf.org/doc/html/rfc6749#section-4.4) — `client_credentials`
   grant
 - [RFC 8693](https://datatracker.ietf.org/doc/html/rfc8693) — OAuth 2.0 Token Exchange

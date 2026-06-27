@@ -36,7 +36,7 @@ both .NET (Roslyn `IIncrementalGenerator`) and TypeScript (`tools/ts-codegen`).
 D²-WORX uses spec-driven codegen for every cross-language constant catalog —
 error codes, scopes, audiences, JWT claim names, wire-format headers, OTel
 attribute names, encryption-frame byte offsets, RFC 7807 ProblemDetails keys,
-the messaging registry, and more. The pattern's load-bearing properties:
+the messaging registry, and more. The pattern's key properties:
 
 - **Single source of truth.** A JSON spec under `contracts/<topic>/<topic>.spec.json`
   is the canonical declaration; both .NET and TypeScript consumers derive their
@@ -96,7 +96,7 @@ mechanism:
 </Project>
 ```
 
-Three load-bearing properties of this wiring:
+Three required properties of this wiring:
 
 - `OutputItemType="Analyzer"` + `ReferenceOutputAssembly="false"` — the
   source-gen dll runs at compile time but is NEVER added to the consumer's
@@ -193,7 +193,7 @@ public sealed class TKGenerator : IIncrementalGenerator
 }
 ```
 
-Five load-bearing decisions:
+Five key decisions:
 
 1. **Incremental pipeline boundaries are value-equatable records.** Wrapping
    `AdditionalText` content in a `SpecFile(Path, Content)` record (with
@@ -387,7 +387,7 @@ if (import.meta.url === `file://${process.argv[1]}`) {
 }
 ```
 
-Five load-bearing properties:
+Five required properties:
 
 1. **`loadSpec` for parse + diagnostic.** A malformed spec returns
    `D2<TOPIC>001` consistent with the .NET side; consumers grepping CI logs

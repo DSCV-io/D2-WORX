@@ -6,7 +6,7 @@ Copyright (c) DCSV. All rights reserved.
 
 > Parent: [`server/services/`](../README.md)
 
-> **Status**: NOT IMPLEMENTED — tracked at [docs/v2/V2.md](../../../docs/v2/V2.md).
+> **Status**: NOT IMPLEMENTED — not yet built.
 
 ## Purpose
 

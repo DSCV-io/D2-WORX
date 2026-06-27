@@ -64,7 +64,7 @@ docker stack deploy -c infra/compose/compose.yml -c infra/compose/compose.prod.y
 
 ## Production topology
 
-Pre-launch: Compose on a single VPS. Production: Docker Swarm + Portainer. Full design (cluster shape, overlay networks, secrets/configs management, K8s upgrade path) is documented in [docs/v2/V2.md §5.9](../docs/v2/V2.md#59-production-deployment).
+Pre-launch: Compose on a single VPS. Production: Docker Swarm + Portainer (cluster shape, overlay networks, secrets/configs management, K8s upgrade path).
 
 Two overlay networks (Swarm-time):
 

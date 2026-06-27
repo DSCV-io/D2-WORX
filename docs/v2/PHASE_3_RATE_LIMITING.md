@@ -4,13 +4,16 @@ Copyright (c) DCSV. All rights reserved.
 
 # PHASE_3_RATE_LIMITING.md — Edge rate-limiting design
 
-> **Status**: design only. Implementation tracked under Phase 3 in [V2.md](V2.md).
+> Design annex — holds the Edge rate-limiting design for the unbuilt Edge deliverables (E1, E2).
+> Folds into the deliverable ship doc(s) + ADRs when built, then pruned.
+> Not a tracker (see [PHASE_3.md](PHASE_3.md)) and not current-truth for what is already shipped
+> (see the relevant ADRs and per-lib READMEs).
 
-Design intent for the Edge rate-limiting middleware (Phase 3 of the v2 roadmap) —
-sister doc to [PHASE_3_EDGE.md](PHASE_3_EDGE.md). Module authors + operators
+Sister doc to [PHASE_3_EDGE.md](PHASE_3_EDGE.md). Module authors + operators
 preparing for Edge implementation will find here the single coherent design for the
 18-bucket model, claims-driven keying via JWT, FP-too-common detection, runtime
-kill-switches, and per-tier failure modes.
+kill-switches, per-tier failure modes, and the Operation Risk Tier classification
+the `RateLimitTier` projects from.
 
 ---
 
@@ -27,6 +30,7 @@ kill-switches, and per-tier failure modes.
 - [§9. Implementation guidance](#9-implementation-guidance)
 - [§10. Out of scope](#10-out-of-scope)
 - [§11. Anon-JWT TTL implication for bucket continuity](#11-anon-jwt-ttl-implication-for-bucket-continuity)
+- [§12. Operation Risk Tier (cross-cutting)](#12-operation-risk-tier-cross-cutting)
 - [Reference](#reference)
 
 ---
@@ -41,7 +45,7 @@ The design's load-bearing decisions:
 
 - **Claims-driven keying** — every request reaching this middleware carries a
   validated JWT (anon or user; the upstream Edge anon-visitor pattern in
-  [PHASE_0_AUTH.md §3.8](PHASE_0_AUTH.md) guarantees this). The middleware reads
+  [PHASE_3_AUTH.md §3.8](PHASE_3_AUTH.md) guarantees this). The middleware reads
   the JWT's `d2_kind` claim as the anon/authed discriminator, `sub` as the bucket
   key (`anon:<uuid>` or `user:<uuid>`), and `d2_whois_id` for the
   signed-binding geographic enrichment. There is no cookie-shortcut branch or
@@ -436,11 +440,114 @@ window of allowance per re-issuance); the historical-pattern signals on
   `d2_fingerprint_score`. RS256-signed via the same Edge JWKS that signs
   authed JWTs. ~15 min TTL with `sub`-stability across re-mints for the same
   cookie / 3-tier session. Full anon-visitor authentication spec lives in
-  [PHASE_0_AUTH.md §3.8](PHASE_0_AUTH.md).
+  [PHASE_3_AUTH.md §3.8](PHASE_3_AUTH.md).
 - **Trinary `IsAuthenticated`** — the `IRequestContext.IsAuthenticated` field
   carries three states (`null` = pre-Edge, `false` = anon JWT, `true` = authed
   JWT). Audit / observability use the same claims-driven discriminator the
   rate-limit middleware does.
+
+---
+
+## §12. Operation Risk Tier (cross-cutting)
+
+A single attribute on every endpoint or RPC drives multiple subsystems: auth requirement,
+rate-limit cap, risk-score thresholds, impersonation default, audit verbosity, and
+fail-open vs fail-closed behavior. The `RateLimitTier` enum (§2) is the **rate-limit
+projection** of this classification. The full per-tier defaults table below is the source
+of truth for how `RateLimitTier` values map to per-FP caps, fail behavior, and risk
+thresholds — implementers of the rate-limit middleware should read this alongside §2–§8.
+
+The single question the developer answers when choosing a tier: **"What's the blast
+radius if this endpoint is abused?"** Auth-required is captured by the tier (Public = no
+auth; everything else = auth required); op type (read vs write) is captured by HTTP method
+or RPC name.
+
+### Four tiers, one axis
+
+| Tier         | Meaning — answer to "what's the blast radius if abused?"                                                                  | Example endpoints                                                                                                                                              |
+| ------------ | ------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Public**   | None or negligible. Reading public data, health checks. **Auth not required.**                                            | `GET /health`, `GET /api/v1/public/*`                                                                                                                          |
+| **Standard** | Low. Standard authenticated read/write of user's own data.                                                                | `GET /api/v1/users/me`, `GET /api/v1/files/{id}`, `POST /api/v1/files` (regular upload)                                                                        |
+| **Elevated** | Medium. Affects user account integrity, modifies auth-relevant state, or exposes PII beyond the user's own basic profile. | `POST /api/v1/account/email`, `POST /api/v1/account/password`, `GET /api/v1/billing/history`, `GET /api/v1/account/sessions`, `POST /api/v1/account/mfa/setup` |
+| **Critical** | Maximum. Irreversible, financial, or admin-org-only actions.                                                              | `POST /api/v1/billing/charge`, `DELETE /api/v1/orgs/{id}`, `POST /api/v1/admin/users/{id}/ban`, force-impersonation initiation                                 |
+
+### Per-tier defaults
+
+| Tier         | Auth required? | Rate-limit per-FP cap                                       | Risk thresholds (step-up / block) | Impersonation default                                                                  | Audit verbosity                          | Fail behavior on Redis outage |
+| ------------ | -------------- | ----------------------------------------------------------- | --------------------------------- | -------------------------------------------------------------------------------------- | ---------------------------------------- | ----------------------------- |
+| **Public**   | No             | None (relies on per-IP / per-city / per-country dimensions) | n/a (no session)                  | n/a                                                                                    | Low (sample 1%)                          | Fail open                     |
+| **Standard** | Yes            | 100/min                                                     | 50 / 80                           | Allow                                                                                  | Medium (every write)                     | Fail open                     |
+| **Elevated** | Yes            | 30/min                                                      | 30 / 60                           | **Block by default** (must explicitly opt in via `[ImpersonationAllowed]` to override) | High (every event)                       | **Fail closed**               |
+| **Critical** | Yes            | 10/min                                                      | 20 / 40                           | **Always blocked** (no opt-in)                                                         | Maximum (every event + payload metadata) | **Fail closed**               |
+
+Note that `Public` tier endpoints may still carry a per-IP override for brute-force surfaces
+(sign-in, password reset, OTP). The TIER says "no auth needed, low blast radius" and the
+OVERRIDE says "cap brute-force attempts at 5/min/IP" — two orthogonal attributes.
+
+### How per-endpoint declarations work
+
+**HTTP (Edge minimal API endpoints)**:
+
+```csharp
+app.MapPost("/api/v1/account/email", ChangeEmailHandler)
+   .RequireAuthorization()
+   .WithMetadata(new OperationRiskTierAttribute(OperationRiskTier.Elevated))
+   .WithMetadata(new RequireScopeAttribute("auth.user.email.change"));
+```
+
+The C0 IDL (`@d2*` decorators per ADR-0021) is the source-of-truth declaration at design
+time; the generated route registration carries the attribute. Middleware reads endpoint
+metadata via `HttpContext.GetEndpoint()?.Metadata.GetMetadata<OperationRiskTierAttribute>()`.
+
+**gRPC (proto file)**:
+
+```proto
+service FilesService {
+  rpc UploadFile(UploadFileRequest) returns (UploadFileResponse) {
+    option (d2.options.required_scope) = "files.upload.write";
+    option (d2.options.risk_tier) = "Standard";
+    option (d2.options.idempotent) = false;
+  }
+}
+```
+
+### Brute-force override pattern
+
+Dominant carve-out: **brute-force-targeted Public endpoints** (sign-in, password reset, OTP)
+are `Public` tier (must be callable without auth) but need a tighter per-IP rate limit
+than the default. Declare both attributes independently:
+
+```csharp
+app.MapPost("/api/v1/auth/sign-in", SignInHandler)
+   .WithMetadata(new OperationRiskTierAttribute(OperationRiskTier.Public))
+   .WithMetadata(new RateLimitOverrideAttribute(maxPerMinute: 5, dimension: RateLimitDimension.IP));
+```
+
+The rate-limit middleware reads the override when present; falls back to the per-tier default.
+
+### Security Policy interaction
+
+The user/org Security Policy framework (§5.4 of the auth design in [PHASE_3_AUTH.md](PHASE_3_AUTH.md))
+**monotonically tightens** the per-tier defaults. A user on a "Strict" personal policy might
+have step-up at 30 instead of 50 for `Standard` endpoints. Policies can **never loosen**
+per-tier defaults. A `Critical` endpoint always blocks impersonation; no policy can change
+that.
+
+### Relationship to RateLimitTier (§2)
+
+`OperationRiskTier` is the full four-tier cross-cutting classification; `RateLimitTier` (§2)
+is a three-value **rate-limit-only** projection of it. The mapping:
+
+| OperationRiskTier | Projects to RateLimitTier |
+| ----------------- | ------------------------- |
+| `Public`          | `Standard` (or overridden via `RateLimitOverrideAttribute`) |
+| `Standard`        | `Standard`                |
+| `Elevated`        | `Elevated`                |
+| `Critical`        | `Restricted`              |
+
+`RateLimitTier` is declared via `RateLimitTierAttribute` directly on endpoints that deviate
+from the default projection (e.g. a brute-force `Public` endpoint needing `Restricted`
+rate-limit behavior).
 
 ---
 
@@ -454,7 +561,7 @@ window of allowance per re-issuance); the historical-pattern signals on
   Critical)
 - [PHASE_3_EDGE.md](PHASE_3_EDGE.md) — sister Edge-design doc (idempotency,
   enrichment, sessions, scheduled jobs).
-- [PHASE_0_AUTH.md §3.8](PHASE_0_AUTH.md) — anon-visitor authentication
+- [PHASE_3_AUTH.md §3.8](PHASE_3_AUTH.md) — anon-visitor authentication
   pattern (the upstream guarantee that every request reaching this
   middleware carries a validated JWT).
 - [V2.md §5.2 Edge](V2.md#52-edge--unified-gateway) — top-level Phase 3

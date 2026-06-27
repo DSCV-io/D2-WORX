@@ -258,7 +258,7 @@ The real-socket path itself is then proven in the deploy-target container — th
 - Race conditions (rotation while N replicas publishing concurrently)
 - Archive decryption (ops CLI fetches retired/compromised kids on demand)
 
-The workflow job at `.github/workflows/test.yml` is commented out — the KeyCustodian state machine and key lifecycle are shipped (see [KeyCustodian README](../server/services/edge/key-custodian/README.md)), but the compromise-response runbook (executable CLI invocations, detection criteria, recovery procedures) is a tracked future deliverable. See [`docs/v2/PHASE_0_AUTH.md` §14a](v2/PHASE_0_AUTH.md#14a-keycustodian-compromise-runbook-future-deliverable) for the scenario checklist this future deliverable must cover.
+The workflow job at `.github/workflows/test.yml` is commented out — the KeyCustodian state machine and key lifecycle are shipped (see [KeyCustodian README](../server/services/edge/key-custodian/README.md)), but the compromise-response runbook (executable CLI invocations, detection criteria, recovery procedures) is a tracked future deliverable.
 
 ---
 
@@ -269,4 +269,4 @@ By dropping the cross-service tier we lose:
 - **Cross-service contract drift detection in CI** — caught by code review + the proto versioning policy + production observability
 - **Full-flow happy-path verification** — caught by manual testing (you click through critical flows after meaningful changes)
 
-For pre-alpha (no users), this is acceptable. The criteria for adding a pre-merge cross-service gate are tracked at [docs/v2/V2.md](v2/V2.md).
+For pre-alpha (no users), this is acceptable. The criteria for adding a pre-merge cross-service gate are tracked as a future deliverable decision.
