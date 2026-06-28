@@ -148,12 +148,12 @@ beforeAll(async () => {
     return { fields: r.fields, nested: r.nestedModels };
   }
 
-  v2In = walk("PlaceOrderV2Input");
-  v2Out = walk("PlaceOrderV2Output");
-  deepIn = walk("DeepNestInput");
-  deepOut = walk("DeepNestOutput");
+  v2In = walk("PlaceOrderV2FixtureInput");
+  v2Out = walk("PlaceOrderV2FixtureOutput");
+  deepIn = walk("DeepNestFixtureInput");
+  deepOut = walk("DeepNestFixtureOutput");
 
-  const opV2 = fixturesNs?.operations.get("placeOrderV2") as
+  const opV2 = fixturesNs?.operations.get("placeOrderV2Fixture") as
     | Operation
     | undefined;
   if (opV2 === undefined) throw new Error("placeOrderV2 op not found");
@@ -179,15 +179,15 @@ function parsePred(raw: string): PredicateNode {
 
 function v2ClientOp(): GrpcClientOp {
   return {
-    opName: "placeOrderV2",
+    opName: "placeOrderV2Fixture",
     grpcService: "PredicateFixturesOrdersV2",
-    grpcMethod: "PlaceOrderV2",
+    grpcMethod: "PlaceOrderV2Fixture",
     protoCsharpNs: V2_PROTO_NS,
     dtoCsharpNs: CLIENTS_NS,
     sourceSpec: SPEC,
-    requestModelName: "PlaceOrderV2Input",
+    requestModelName: "PlaceOrderV2FixtureInput",
     requestFields: v2In.fields,
-    responseModelName: "PlaceOrderV2Output",
+    responseModelName: "PlaceOrderV2FixtureOutput",
     responseFields: v2Out.fields,
     retryWhenAst: v2Retry,
     failWhenAst: v2Fail,
@@ -196,15 +196,15 @@ function v2ClientOp(): GrpcClientOp {
 
 function deepClientOp(): GrpcClientOp {
   return {
-    opName: "deepNest",
+    opName: "deepNestFixture",
     grpcService: "PredicateFixturesGizmosDeep",
-    grpcMethod: "DeepNest",
+    grpcMethod: "DeepNestFixture",
     protoCsharpNs: DEEP_PROTO_NS,
     dtoCsharpNs: CLIENTS_NS,
     sourceSpec: SPEC,
-    requestModelName: "DeepNestInput",
+    requestModelName: "DeepNestFixtureInput",
     requestFields: deepIn.fields,
-    responseModelName: "DeepNestOutput",
+    responseModelName: "DeepNestFixtureOutput",
     responseFields: deepOut.fields,
   };
 }
@@ -216,17 +216,17 @@ function deepClientOp(): GrpcClientOp {
 describe("byteParity_PlaceOrderV2Proto", () => {
   function emit(): string {
     return emitProto(
-      "placeOrderV2",
+      "placeOrderV2Fixture",
       "PredicateFixturesOrdersV2",
-      "PlaceOrderV2",
+      "PlaceOrderV2Fixture",
       "unary",
       V2_PKG,
       V2_PROTO_NS,
       SPEC,
-      "PlaceOrderV2Request",
+      "PlaceOrderV2FixtureRequest",
       v2In.fields,
       undefined,
-      "PlaceOrderV2Output",
+      "PlaceOrderV2FixtureOutput",
       v2Out.fields,
       undefined,
       dedupDescriptors(v2In, v2Out),
@@ -238,71 +238,74 @@ describe("byteParity_PlaceOrderV2Proto", () => {
 
   it("re-emitted V2 proto is byte-identical to the committed fixture", () => {
     expect(emit()).toBe(
-      readProto("predicate_fixtures_orders_v2_place_order_v2.g.proto"),
+      readProto("predicate_fixtures_orders_v2_place_order_v2_fixture.g.proto"),
     );
   });
 
-  it("carries repeated PlaceOrderLine + bare PlaceOrderV2Customer + both nested messages (non-vacuity)", () => {
+  it("carries repeated PlaceOrderFixtureLine + bare PlaceOrderV2FixtureCustomer + both nested messages (non-vacuity)", () => {
     const p = emit();
-    expect(p).toContain("repeated PlaceOrderLine lines = 2;");
+    expect(p).toContain("repeated PlaceOrderFixtureLine lines = 2;");
     // Nullable nested model → bare message field (NO `optional` keyword, proto3 presence).
-    expect(p).toContain("  PlaceOrderV2Customer customer = 3;");
-    expect(p).not.toContain("optional PlaceOrderV2Customer");
-    expect(p).toContain("message PlaceOrderLine {");
-    expect(p).toContain("message PlaceOrderV2Customer {");
+    expect(p).toContain("  PlaceOrderV2FixtureCustomer customer = 3;");
+    expect(p).not.toContain("optional PlaceOrderV2FixtureCustomer");
+    expect(p).toContain("message PlaceOrderFixtureLine {");
+    expect(p).toContain("message PlaceOrderV2FixtureCustomer {");
   });
 
   it("deliberate-drift: a mutated nested message name does NOT match", () => {
     const drifted = readProto(
-      "predicate_fixtures_orders_v2_place_order_v2.g.proto",
-    ).replace("message PlaceOrderLine", "message PlaceOrderLineDRIFTED");
+      "predicate_fixtures_orders_v2_place_order_v2_fixture.g.proto",
+    ).replace(
+      "message PlaceOrderFixtureLine",
+      "message PlaceOrderFixtureLineDRIFTED",
+    );
     expect(emit()).not.toBe(drifted);
   });
 });
 
 describe("byteParity_PlaceOrderV2Dtos", () => {
-  it("re-emitted PlaceOrderV2Input.g.cs is byte-identical to the committed fixture", () => {
+  it("re-emitted PlaceOrderV2FixtureInput.g.cs is byte-identical to the committed fixture", () => {
     const [inputFile] = emitCsharpDtos(
-      "placeOrderV2",
+      "placeOrderV2Fixture",
       CLIENTS_NS,
       SPEC,
       v2In.fields,
       v2Out.fields,
       dedupModels(v2In, v2Out),
     );
-    expect(inputFile!.content).toBe(readGen("PlaceOrderV2Input.g.cs"));
+    expect(inputFile!.content).toBe(readGen("PlaceOrderV2FixtureInput.g.cs"));
   });
 
-  it("re-emitted PlaceOrderV2Output.g.cs (with both nested records) is byte-identical", () => {
+  it("re-emitted PlaceOrderV2FixtureOutput.g.cs (with both nested records) is byte-identical", () => {
     const [, outputFile] = emitCsharpDtos(
-      "placeOrderV2",
+      "placeOrderV2Fixture",
       CLIENTS_NS,
       SPEC,
       v2In.fields,
       v2Out.fields,
       dedupModels(v2In, v2Out),
     );
-    expect(outputFile!.content).toBe(readGen("PlaceOrderV2Output.g.cs"));
+    expect(outputFile!.content).toBe(readGen("PlaceOrderV2FixtureOutput.g.cs"));
   });
 
-  it("re-emitted place-order-v2-dto.g.ts is byte-identical to the committed fixture", () => {
+  it("re-emitted place-order-v2-fixture-dto.g.ts is byte-identical to the committed fixture", () => {
     const ts = emitTsDtos(
-      "placeOrderV2",
+      "placeOrderV2Fixture",
       SPEC,
       v2In.fields,
       v2Out.fields,
       dedupModels(v2In, v2Out),
     );
-    expect(ts.content).toBe(readGen("place-order-v2-dto.g.ts"));
+    expect(ts.content).toBe(readGen("place-order-v2-fixture-dto.g.ts"));
   });
 
   it("deliberate-drift: a mutated nested record does NOT match", () => {
-    const drifted = readGen("PlaceOrderV2Output.g.cs").replace(
-      "public sealed record PlaceOrderLine(",
-      "public sealed record PlaceOrderLineDRIFTED(",
+    const drifted = readGen("PlaceOrderV2FixtureOutput.g.cs").replace(
+      "public sealed record PlaceOrderFixtureLine(",
+      "public sealed record PlaceOrderFixtureLineDRIFTED(",
     );
     const [, outputFile] = emitCsharpDtos(
-      "placeOrderV2",
+      "placeOrderV2Fixture",
       CLIENTS_NS,
       SPEC,
       v2In.fields,
@@ -313,7 +316,7 @@ describe("byteParity_PlaceOrderV2Dtos", () => {
   });
 });
 
-describe("byteParity_PlaceOrderV2ClientMappers", () => {
+describe("byteParity_PlaceOrderV2FixtureClientMappers", () => {
   function emit(): string {
     const [, , mappers] = emitGrpcClient(
       "PredicateFixturesV2",
@@ -325,30 +328,30 @@ describe("byteParity_PlaceOrderV2ClientMappers", () => {
   }
 
   it("re-emitted V2 client mappers are byte-identical to the committed fixture", () => {
-    expect(emit()).toBe(readGen("PlaceOrderV2ClientMappers.g.cs"));
+    expect(emit()).toBe(readGen("PlaceOrderV2FixtureClientMappers.g.cs"));
   });
 
   it("carries the array-of-model + nullable-nested recursion + both sub-mappers (non-vacuity)", () => {
     const m = emit();
     expect(m).toContain(
-      "data.Lines.Select(x => x.ToPlaceOrderLine()).ToList()",
+      "data.Lines.Select(x => x.ToPlaceOrderFixtureLine()).ToList()",
     );
     expect(m).toContain(
-      "data.Customer is null ? null : data.Customer.ToPlaceOrderV2Customer()",
+      "data.Customer is null ? null : data.Customer.ToPlaceOrderV2FixtureCustomer()",
     );
     expect(m).toContain(
-      "internal global::D2.Services.Protos.PredicateFixturesV2.V1.PlaceOrderLine ToProtoPlaceOrderLine()",
+      "internal global::D2.Services.Protos.PredicateFixturesV2.V1.PlaceOrderFixtureLine ToProtoPlaceOrderFixtureLine()",
     );
     expect(m).toContain(
-      "internal global::D2.Edge.Tests.TypeSpecGrpcPredicate.Generated.PlaceOrderLine ToPlaceOrderLine()",
+      "internal global::D2.Edge.Tests.TypeSpecGrpcPredicate.Generated.PlaceOrderFixtureLine ToPlaceOrderFixtureLine()",
     );
     expect(m).toContain("using System.Linq;");
   });
 
   it("deliberate-drift: a mutated sub-mapper name does NOT match", () => {
-    const drifted = readGen("PlaceOrderV2ClientMappers.g.cs").replace(
-      "ToProtoPlaceOrderLine",
-      "ToProtoPlaceOrderLineDRIFTED",
+    const drifted = readGen("PlaceOrderV2FixtureClientMappers.g.cs").replace(
+      "ToProtoPlaceOrderFixtureLine",
+      "ToProtoPlaceOrderFixtureLineDRIFTED",
     );
     expect(emit()).not.toBe(drifted);
   });
@@ -356,7 +359,7 @@ describe("byteParity_PlaceOrderV2ClientMappers", () => {
 
 // The SERVER transport mapper for placeOrderV2 is NOT committed as a fixture file:
 // the client mapper + the server transport mapper share the SAME namespace and emit the
-// SAME per-nested-model sub-mappers (ToProtoPlaceOrderLine / ToPlaceOrderLine …), so
+// SAME per-nested-model sub-mappers (ToProtoPlaceOrderFixtureLine / ToPlaceOrderFixtureLine …), so
 // compiling both in one assembly would collide (CS0121). V1 commits only the client side
 // for the same reason. The server-side buildDtoToProto / buildProtoToDto nested recursion is
 // proven by grpc-service-emitter.test.ts direct-unit assertions; here we additionally pin
@@ -364,18 +367,18 @@ describe("byteParity_PlaceOrderV2ClientMappers", () => {
 describe("emitGrpcService_PlaceOrderV2_ServerMapperRecursion_NonCommitted", () => {
   function emit(): string {
     const [, mappers] = emitGrpcService(
-      "placeOrderV2",
+      "placeOrderV2Fixture",
       "PredicateFixturesOrdersV2",
-      "PlaceOrderV2",
+      "PlaceOrderV2Fixture",
       V2_PROTO_NS,
       CLIENTS_NS,
       CLIENTS_NS,
       SPEC,
-      "PlaceOrderV2Request",
-      "PlaceOrderV2Response",
-      "PlaceOrderV2Input",
+      "PlaceOrderV2FixtureRequest",
+      "PlaceOrderV2FixtureResponse",
+      "PlaceOrderV2FixtureInput",
       v2In.fields,
-      "PlaceOrderV2Output",
+      "PlaceOrderV2FixtureOutput",
       v2Out.fields,
     );
 
@@ -386,13 +389,17 @@ describe("emitGrpcService_PlaceOrderV2_ServerMapperRecursion_NonCommitted", () =
     const m = emit();
     // RepeatedField has no setter → collection-init `Field = { … }` form.
     expect(m).toContain(
-      "Lines = { output.Lines.Select(x => x.ToProtoPlaceOrderLine()) },",
+      "Lines = { output.Lines.Select(x => x.ToProtoPlaceOrderFixtureLine()) },",
     );
     expect(m).toContain(
-      "Customer = output.Customer is null ? null : output.Customer.ToProtoPlaceOrderV2Customer(),",
+      "Customer = output.Customer is null ? null : output.Customer.ToProtoPlaceOrderV2FixtureCustomer(),",
     );
-    expect(m).toContain("internal ProtoPlaceOrderLine ToProtoPlaceOrderLine()");
-    expect(m).toContain("internal PlaceOrderLine ToPlaceOrderLine()");
+    expect(m).toContain(
+      "internal ProtoPlaceOrderFixtureLine ToProtoPlaceOrderFixtureLine()",
+    );
+    expect(m).toContain(
+      "internal PlaceOrderFixtureLine ToPlaceOrderFixtureLine()",
+    );
     expect(m).toContain("using System.Linq;");
   });
 });
@@ -409,7 +416,7 @@ describe("byteParity_PlaceOrderV2ModuleFiles", () => {
       [v2ClientOp()],
       CLIENTS_NS,
     );
-    const keys = emitClientKeys("placeOrderV2", CLIENTS_NS, SPEC);
+    const keys = emitClientKeys("placeOrderV2Fixture", CLIENTS_NS, SPEC);
 
     return {
       iface: iface!.content,
@@ -434,13 +441,13 @@ describe("byteParity_PlaceOrderV2ModuleFiles", () => {
   });
 
   it("V2 client keys are byte-identical", () => {
-    expect(emit().keys).toBe(readGen("PlaceOrderV2ClientKeys.g.cs"));
+    expect(emit().keys).toBe(readGen("PlaceOrderV2FixtureClientKeys.g.cs"));
   });
 
   it("deliberate-drift: a mutated impl does NOT match", () => {
     const drifted = readGen("PredicateFixturesV2GrpcClient.g.cs").replace(
-      "ToPlaceOrderV2Output",
-      "ToPlaceOrderV2OutputDRIFTED",
+      "ToPlaceOrderV2FixtureOutput",
+      "ToPlaceOrderV2FixtureOutputDRIFTED",
     );
     expect(emit().impl).not.toBe(drifted);
   });
@@ -453,7 +460,7 @@ describe("byteParity_PlaceOrderV2ModuleFiles", () => {
 describe("byteParity_DeepNestDtos", () => {
   function emitCs(): string {
     const files = emitCsharpDtos(
-      "deepNest",
+      "deepNestFixture",
       CLIENTS_NS,
       SPEC,
       deepIn.fields,
@@ -461,16 +468,17 @@ describe("byteParity_DeepNestDtos", () => {
       dedupModels(deepIn, deepOut),
     );
 
-    return files.find((f) => f.fileName === "DeepNestOutput.g.cs")!.content;
+    return files.find((f) => f.fileName === "DeepNestFixtureOutput.g.cs")!
+      .content;
   }
 
-  it("re-emitted depth-3 output DTO is byte-identical (DeepNestOutput → DeepWidget → DeepPart)", () => {
-    expect(emitCs()).toBe(readGen("DeepNestOutput.g.cs"));
+  it("re-emitted depth-3 output DTO is byte-identical (DeepNestFixtureOutput → DeepFixtureWidget → DeepFixturePart)", () => {
+    expect(emitCs()).toBe(readGen("DeepNestFixtureOutput.g.cs"));
   });
 
-  it("re-emitted depth-3 input DTO is byte-identical (DeepNestInput)", () => {
+  it("re-emitted depth-3 input DTO is byte-identical (DeepNestFixtureInput)", () => {
     const files = emitCsharpDtos(
-      "deepNest",
+      "deepNestFixture",
       CLIENTS_NS,
       SPEC,
       deepIn.fields,
@@ -478,32 +486,32 @@ describe("byteParity_DeepNestDtos", () => {
       dedupModels(deepIn, deepOut),
     );
     expect(
-      files.find((f) => f.fileName === "DeepNestInput.g.cs")!.content,
-    ).toBe(readGen("DeepNestInput.g.cs"));
+      files.find((f) => f.fileName === "DeepNestFixtureInput.g.cs")!.content,
+    ).toBe(readGen("DeepNestFixtureInput.g.cs"));
   });
 
   it("re-emitted depth-3 TS DTO is byte-identical", () => {
     const ts = emitTsDtos(
-      "deepNest",
+      "deepNestFixture",
       SPEC,
       deepIn.fields,
       deepOut.fields,
       dedupModels(deepIn, deepOut),
     );
-    expect(ts.content).toBe(readGen("deep-nest-dto.g.ts"));
+    expect(ts.content).toBe(readGen("deep-nest-fixture-dto.g.ts"));
   });
 
   it("carries all three depth levels as records (non-vacuity)", () => {
     const cs = emitCs();
-    expect(cs).toContain("public sealed record DeepWidget(");
-    expect(cs).toContain("IReadOnlyList<DeepPart> Parts);");
-    expect(cs).toContain("public sealed record DeepPart(");
+    expect(cs).toContain("public sealed record DeepFixtureWidget(");
+    expect(cs).toContain("IReadOnlyList<DeepFixturePart> Parts);");
+    expect(cs).toContain("public sealed record DeepFixturePart(");
   });
 
   it("deliberate-drift: a mutated nested record does NOT match", () => {
-    const drifted = readGen("DeepNestOutput.g.cs").replace(
-      "DeepPart",
-      "DeepPartDRIFTED",
+    const drifted = readGen("DeepNestFixtureOutput.g.cs").replace(
+      "DeepFixturePart",
+      "DeepFixturePartDRIFTED",
     );
     expect(emitCs()).not.toBe(drifted);
   });
@@ -512,17 +520,17 @@ describe("byteParity_DeepNestDtos", () => {
 describe("byteParity_DeepNestProto", () => {
   function emit(): string {
     return emitProto(
-      "deepNest",
+      "deepNestFixture",
       "PredicateFixturesGizmosDeep",
-      "DeepNest",
+      "DeepNestFixture",
       "unary",
       DEEP_PKG,
       DEEP_PROTO_NS,
       SPEC,
-      "DeepNestRequest",
+      "DeepNestFixtureRequest",
       deepIn.fields,
       undefined,
-      "DeepNestOutput",
+      "DeepNestFixtureOutput",
       deepOut.fields,
       undefined,
       dedupDescriptors(deepIn, deepOut),
@@ -534,28 +542,28 @@ describe("byteParity_DeepNestProto", () => {
 
   it("re-emitted depth-3 proto is byte-identical (all three message levels)", () => {
     expect(emit()).toBe(
-      readProto("predicate_fixtures_gizmos_deep_deep_nest.g.proto"),
+      readProto("predicate_fixtures_gizmos_deep_deep_nest_fixture.g.proto"),
     );
   });
 
   it("emits a message at EVERY depth + the array-of-model inside the nested model (non-vacuity)", () => {
     const p = emit();
-    expect(p).toContain("message DeepNestOutput {");
-    expect(p).toContain("  DeepWidget widget = 2;");
-    expect(p).toContain("message DeepWidget {");
-    expect(p).toContain("  repeated DeepPart parts = 2;");
-    expect(p).toContain("message DeepPart {");
+    expect(p).toContain("message DeepNestFixtureOutput {");
+    expect(p).toContain("  DeepFixtureWidget widget = 2;");
+    expect(p).toContain("message DeepFixtureWidget {");
+    expect(p).toContain("  repeated DeepFixturePart parts = 2;");
+    expect(p).toContain("message DeepFixturePart {");
   });
 
   it("deliberate-drift: a mutated depth-3 message name does NOT match", () => {
     const drifted = readProto(
-      "predicate_fixtures_gizmos_deep_deep_nest.g.proto",
-    ).replace("message DeepPart", "message DeepPartDRIFTED");
+      "predicate_fixtures_gizmos_deep_deep_nest_fixture.g.proto",
+    ).replace("message DeepFixturePart", "message DeepFixturePartDRIFTED");
     expect(emit()).not.toBe(drifted);
   });
 });
 
-describe("byteParity_DeepNestClientMappers", () => {
+describe("byteParity_DeepNestFixtureClientMappers", () => {
   function emit(): string {
     const [, , mappers] = emitGrpcClient(
       "PredicateFixturesDeep",
@@ -567,29 +575,31 @@ describe("byteParity_DeepNestClientMappers", () => {
   }
 
   it("re-emitted depth-3 client mappers are byte-identical (recursion through all levels)", () => {
-    expect(emit()).toBe(readGen("DeepNestClientMappers.g.cs"));
+    expect(emit()).toBe(readGen("DeepNestFixtureClientMappers.g.cs"));
   });
 
   it("emits a sub-mapper for EVERY nested level + the nested-array recursion (non-vacuity)", () => {
     const m = emit();
     // Top → widget (nullable nested).
     expect(m).toContain(
-      "data.Widget is null ? null : data.Widget.ToDeepWidget()",
+      "data.Widget is null ? null : data.Widget.ToDeepFixtureWidget()",
     );
     // Widget → parts (array-of-model INSIDE a nested model — the depth-N proof).
-    expect(m).toContain("source.Parts.Select(x => x.ToProtoDeepPart())");
-    expect(m).toContain("source.Parts.Select(x => x.ToDeepPart()).ToList()");
-    // A sub-mapper exists for BOTH the depth-2 DeepWidget AND the depth-3 DeepPart.
-    expect(m).toContain("ToProtoDeepWidget()");
-    expect(m).toContain("ToProtoDeepPart()");
-    expect(m).toContain("ToDeepWidget()");
-    expect(m).toContain("ToDeepPart()");
+    expect(m).toContain("source.Parts.Select(x => x.ToProtoDeepFixturePart())");
+    expect(m).toContain(
+      "source.Parts.Select(x => x.ToDeepFixturePart()).ToList()",
+    );
+    // A sub-mapper exists for BOTH the depth-2 DeepFixtureWidget AND the depth-3 DeepFixturePart.
+    expect(m).toContain("ToProtoDeepFixtureWidget()");
+    expect(m).toContain("ToProtoDeepFixturePart()");
+    expect(m).toContain("ToDeepFixtureWidget()");
+    expect(m).toContain("ToDeepFixturePart()");
   });
 
   it("deliberate-drift: a mutated depth-3 sub-mapper name does NOT match", () => {
-    const drifted = readGen("DeepNestClientMappers.g.cs").replace(
-      "ToProtoDeepPart",
-      "ToProtoDeepPartDRIFTED",
+    const drifted = readGen("DeepNestFixtureClientMappers.g.cs").replace(
+      "ToProtoDeepFixturePart",
+      "ToProtoDeepFixturePartDRIFTED",
     );
     expect(emit()).not.toBe(drifted);
   });
@@ -601,18 +611,18 @@ describe("byteParity_DeepNestClientMappers", () => {
 describe("emitGrpcService_DeepNest_ServerMapperRecursion_NonCommitted", () => {
   function emit(): string {
     const [, mappers] = emitGrpcService(
-      "deepNest",
+      "deepNestFixture",
       "PredicateFixturesGizmosDeep",
-      "DeepNest",
+      "DeepNestFixture",
       DEEP_PROTO_NS,
       CLIENTS_NS,
       CLIENTS_NS,
       SPEC,
-      "DeepNestRequest",
-      "DeepNestResponse",
-      "DeepNestInput",
+      "DeepNestFixtureRequest",
+      "DeepNestFixtureResponse",
+      "DeepNestFixtureInput",
       deepIn.fields,
-      "DeepNestOutput",
+      "DeepNestFixtureOutput",
       deepOut.fields,
     );
 
@@ -622,14 +632,18 @@ describe("emitGrpcService_DeepNest_ServerMapperRecursion_NonCommitted", () => {
   it("recurses every depth level + the nested array-of-model (collection-init)", () => {
     const m = emit();
     expect(m).toContain(
-      "Widget = output.Widget is null ? null : output.Widget.ToProtoDeepWidget(),",
+      "Widget = output.Widget is null ? null : output.Widget.ToProtoDeepFixtureWidget(),",
     );
     expect(m).toContain(
-      "Parts = { source.Parts.Select(x => x.ToProtoDeepPart()) },",
+      "Parts = { source.Parts.Select(x => x.ToProtoDeepFixturePart()) },",
     );
-    expect(m).toContain("internal ProtoDeepWidget ToProtoDeepWidget()");
-    expect(m).toContain("internal ProtoDeepPart ToProtoDeepPart()");
-    expect(m).toContain("internal DeepPart ToDeepPart()");
+    expect(m).toContain(
+      "internal ProtoDeepFixtureWidget ToProtoDeepFixtureWidget()",
+    );
+    expect(m).toContain(
+      "internal ProtoDeepFixturePart ToProtoDeepFixturePart()",
+    );
+    expect(m).toContain("internal DeepFixturePart ToDeepFixturePart()");
   });
 });
 
@@ -640,7 +654,7 @@ describe("byteParity_DeepNestModuleFiles", () => {
       [deepClientOp()],
       CLIENTS_NS,
     );
-    const keys = emitClientKeys("deepNest", CLIENTS_NS, SPEC);
+    const keys = emitClientKeys("deepNestFixture", CLIENTS_NS, SPEC);
 
     return {
       iface: iface!.content,
@@ -657,13 +671,13 @@ describe("byteParity_DeepNestModuleFiles", () => {
     expect(e.di).toBe(
       readGen("PredicateFixturesDeepGrpcClientsGenerated.g.cs"),
     );
-    expect(e.keys).toBe(readGen("DeepNestClientKeys.g.cs"));
+    expect(e.keys).toBe(readGen("DeepNestFixtureClientKeys.g.cs"));
   });
 
   it("deliberate-drift: a mutated impl does NOT match", () => {
     const drifted = readGen("PredicateFixturesDeepGrpcClient.g.cs").replace(
-      "ToDeepNestOutput",
-      "ToDeepNestOutputDRIFTED",
+      "ToDeepNestFixtureOutput",
+      "ToDeepNestFixtureOutputDRIFTED",
     );
     expect(emit().impl).not.toBe(drifted);
   });

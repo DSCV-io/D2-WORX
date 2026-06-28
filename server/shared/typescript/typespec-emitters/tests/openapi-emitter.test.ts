@@ -107,7 +107,7 @@ describe("openApiEmitter_Integration_StockShapePlusExtensions", () => {
     const signPost = (paths["/v1/openapi/sign"] as Record<string, unknown>)[
       "post"
     ] as Record<string, unknown>;
-    expect(signPost["operationId"]).toBe("sign");
+    expect(signPost["operationId"]).toBe("openApiSignFixture");
 
     // Stock request-body wrapping the named param + $ref into components/schemas.
     const requestBody = signPost["requestBody"] as Record<string, unknown>;
@@ -121,13 +121,13 @@ describe("openApiEmitter_Integration_StockShapePlusExtensions", () => {
         "input"
       ] as Record<string, unknown>
     )["$ref"];
-    expect(inputRef).toBe("#/components/schemas/OpenApiSignInput");
+    expect(inputRef).toBe("#/components/schemas/OpenApiSignFixtureInput");
 
     // Stock components/schemas carry the model definitions.
     const components = unversioned["components"] as Record<string, unknown>;
     const schemas = components["schemas"] as Record<string, unknown>;
-    expect(schemas["OpenApiSignInput"]).toBeDefined();
-    expect(schemas["OpenApiSignOutput"]).toBeDefined();
+    expect(schemas["OpenApiSignFixtureInput"]).toBeDefined();
+    expect(schemas["OpenApiSignFixtureOutput"]).toBeDefined();
   });
 
   it("injects ALL FOUR x-d2-* extensions, present-and-correct, on the fully-decorated op", () => {

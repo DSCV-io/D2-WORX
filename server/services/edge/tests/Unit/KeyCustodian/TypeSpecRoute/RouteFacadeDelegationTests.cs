@@ -28,7 +28,7 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
 
 /// <summary>
-/// Delegation tests for the TypeSpec-emitted <c>SignRouteRegistration</c>.
+/// Delegation tests for the TypeSpec-emitted <c>SignFixtureRouteRegistration</c>.
 /// Exercises the MAP-ii 2xx-status-mapped shape:
 ///   - success (2xx/3xx status) maps to <c>Results.Json(result.Data, statusCode: status)</c>
 ///     — e.g. Ok 200, Created 201, SomeFound 206, preserving the real status code
@@ -54,8 +54,8 @@ public sealed class RouteFacadeDelegationTests
     {
         const string expectedSig = "abc123==";
         using var jwt = new TestJwtBuilder();
-        var fake = new FakeKeyCustodianSignerFacade(
-            D2Result<SignOutput?>.Ok(new SignOutput(expectedSig)));
+        var fake = new FakeSignFixtureSignerFacade(
+            D2Result<SignFixtureOutput?>.Ok(new SignFixtureOutput(expectedSig)));
         using var host = await BuildHostAsync(jwt, fake);
         var client = host.GetTestServer().CreateClient();
         var token = jwt.MintToken(
@@ -67,7 +67,7 @@ public sealed class RouteFacadeDelegationTests
         client.DefaultRequestHeaders.TryAddWithoutValidation("Idempotency-Key", "delegation-test-1");
 
         var response = await client.PostAsJsonAsync(
-            "/internal/v1/kc/sign",
+            "/internal/v1/fixtures/sign-fixture",
             new { kid = "key-001", payload = string.Empty });
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
@@ -82,8 +82,8 @@ public sealed class RouteFacadeDelegationTests
         // through to the façade without mutation.
         const string kid = "expected-kid";
         using var jwt = new TestJwtBuilder();
-        var fake = new FakeKeyCustodianSignerFacade(
-            D2Result<SignOutput?>.Ok(new SignOutput("sig==")));
+        var fake = new FakeSignFixtureSignerFacade(
+            D2Result<SignFixtureOutput?>.Ok(new SignFixtureOutput("sig==")));
         using var host = await BuildHostAsync(jwt, fake);
         var client = host.GetTestServer().CreateClient();
         var token = jwt.MintToken(
@@ -95,12 +95,12 @@ public sealed class RouteFacadeDelegationTests
         client.DefaultRequestHeaders.TryAddWithoutValidation("Idempotency-Key", "delegation-test-2");
 
         await client.PostAsJsonAsync(
-            "/internal/v1/kc/sign",
-            new SignInput(kid, []));
+            "/internal/v1/fixtures/sign-fixture",
+            new SignFixtureInput(kid, []));
 
         fake.SignCallCount.Should().Be(1);
-        fake.LastSignInput.Should().NotBeNull();
-        fake.LastSignInput!.Kid.Should().Be(kid);
+        fake.LastSignFixtureInput.Should().NotBeNull();
+        fake.LastSignFixtureInput!.Kid.Should().Be(kid);
     }
 
     // ── Status-fidelity paths — MAP-ii emits the real 2xx status code ────
@@ -112,8 +112,8 @@ public sealed class RouteFacadeDelegationTests
         // branch would have returned 200 instead of 201.
         const string expectedSig = "created-sig==";
         using var jwt = new TestJwtBuilder();
-        var fake = new FakeKeyCustodianSignerFacade(
-            D2Result<SignOutput?>.Created(new SignOutput(expectedSig)));
+        var fake = new FakeSignFixtureSignerFacade(
+            D2Result<SignFixtureOutput?>.Created(new SignFixtureOutput(expectedSig)));
         using var host = await BuildHostAsync(jwt, fake);
         var client = host.GetTestServer().CreateClient();
         var token = jwt.MintToken(
@@ -125,7 +125,7 @@ public sealed class RouteFacadeDelegationTests
         client.DefaultRequestHeaders.TryAddWithoutValidation("Idempotency-Key", "delegation-test-created");
 
         var response = await client.PostAsJsonAsync(
-            "/internal/v1/kc/sign",
+            "/internal/v1/fixtures/sign-fixture",
             new { kid = "key-001", payload = string.Empty });
 
         response.StatusCode.Should().Be(HttpStatusCode.Created);
@@ -142,8 +142,8 @@ public sealed class RouteFacadeDelegationTests
         // MUST fail without the status-mapped emitter change (status < 400 branch).
         const string expectedSig = "some-found-sig==";
         using var jwt = new TestJwtBuilder();
-        var fake = new FakeKeyCustodianSignerFacade(
-            D2Result<SignOutput?>.SomeFound(new SignOutput(expectedSig)));
+        var fake = new FakeSignFixtureSignerFacade(
+            D2Result<SignFixtureOutput?>.SomeFound(new SignFixtureOutput(expectedSig)));
         using var host = await BuildHostAsync(jwt, fake);
         var client = host.GetTestServer().CreateClient();
         var token = jwt.MintToken(
@@ -155,7 +155,7 @@ public sealed class RouteFacadeDelegationTests
         client.DefaultRequestHeaders.TryAddWithoutValidation("Idempotency-Key", "delegation-test-somefound");
 
         var response = await client.PostAsJsonAsync(
-            "/internal/v1/kc/sign",
+            "/internal/v1/fixtures/sign-fixture",
             new { kid = "key-001", payload = string.Empty });
 
         response.StatusCode.Should().Be(HttpStatusCode.PartialContent);
@@ -170,7 +170,7 @@ public sealed class RouteFacadeDelegationTests
     public async Task SignRoute_ServiceUnavailable_Returns503ProblemJson()
     {
         using var jwt = new TestJwtBuilder();
-        var fake = new FakeKeyCustodianSignerFacade(D2Result<SignOutput?>.ServiceUnavailable());
+        var fake = new FakeSignFixtureSignerFacade(D2Result<SignFixtureOutput?>.ServiceUnavailable());
         using var host = await BuildHostAsync(jwt, fake);
         var client = host.GetTestServer().CreateClient();
         var token = jwt.MintToken(
@@ -182,7 +182,7 @@ public sealed class RouteFacadeDelegationTests
         client.DefaultRequestHeaders.TryAddWithoutValidation("Idempotency-Key", "delegation-test-3");
 
         var response = await client.PostAsJsonAsync(
-            "/internal/v1/kc/sign",
+            "/internal/v1/fixtures/sign-fixture",
             new { kid = "k1", payload = string.Empty });
 
         response.StatusCode.Should().Be(HttpStatusCode.ServiceUnavailable);
@@ -193,7 +193,7 @@ public sealed class RouteFacadeDelegationTests
     public async Task SignRoute_NotFound_Returns404ProblemJson()
     {
         using var jwt = new TestJwtBuilder();
-        var fake = new FakeKeyCustodianSignerFacade(D2Result<SignOutput?>.NotFound());
+        var fake = new FakeSignFixtureSignerFacade(D2Result<SignFixtureOutput?>.NotFound());
         using var host = await BuildHostAsync(jwt, fake);
         var client = host.GetTestServer().CreateClient();
         var token = jwt.MintToken(
@@ -205,7 +205,7 @@ public sealed class RouteFacadeDelegationTests
         client.DefaultRequestHeaders.TryAddWithoutValidation("Idempotency-Key", "delegation-test-4");
 
         var response = await client.PostAsJsonAsync(
-            "/internal/v1/kc/sign",
+            "/internal/v1/fixtures/sign-fixture",
             new { kid = "k1", payload = string.Empty });
 
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
@@ -220,7 +220,7 @@ public sealed class RouteFacadeDelegationTests
         // recommends 400 for constraint violations; 422 is used for semantic errors
         // beyond syntactic validation, which D2Result uses a different factory for).
         using var jwt = new TestJwtBuilder();
-        var fake = new FakeKeyCustodianSignerFacade(D2Result<SignOutput?>.ValidationFailed());
+        var fake = new FakeSignFixtureSignerFacade(D2Result<SignFixtureOutput?>.ValidationFailed());
         using var host = await BuildHostAsync(jwt, fake);
         var client = host.GetTestServer().CreateClient();
         var token = jwt.MintToken(
@@ -232,7 +232,7 @@ public sealed class RouteFacadeDelegationTests
         client.DefaultRequestHeaders.TryAddWithoutValidation("Idempotency-Key", "delegation-test-5");
 
         var response = await client.PostAsJsonAsync(
-            "/internal/v1/kc/sign",
+            "/internal/v1/fixtures/sign-fixture",
             new { kid = "k1", payload = string.Empty });
 
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
@@ -243,7 +243,7 @@ public sealed class RouteFacadeDelegationTests
 
     private static async Task<IHost> BuildHostAsync(
         TestJwtBuilder jwtBuilder,
-        FakeKeyCustodianSignerFacade fake)
+        FakeSignFixtureSignerFacade fake)
     {
         var hostBuilder = new HostBuilder()
             .ConfigureWebHost(webHost =>
@@ -274,7 +274,7 @@ public sealed class RouteFacadeDelegationTests
                         services.AddSingleton<D2.Shared.Auth.Abstractions.Sessions.ISessionLivenessTracker>(
                             new FakeSessionLivenessTracker());
 
-                        services.AddSingleton<IKeyCustodianSignerFacade>(fake);
+                        services.AddSingleton<ISignFixtureSignerFacade>(fake);
 
                         // The Sign route gate requires D2GeneratedIdempotencyStore in DI;
                         // delegation tests supply a no-op store — idempotency semantics
@@ -288,7 +288,7 @@ public sealed class RouteFacadeDelegationTests
                         app.UseD2Auth();
                         app.UseEndpoints(endpoints =>
                         {
-                            endpoints.MapSignRoute();
+                            endpoints.MapSignFixtureRoute();
                         });
                     });
             });

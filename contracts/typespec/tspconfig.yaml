@@ -20,7 +20,7 @@
 #   Exposed ops (@d2InProcess / @d2GrpcMethod / @d2ServerPush):
 #     DTOs  → csharp-clients-namespace (Clients project).
 #     I<Op>Handler → csharp-app-namespace-base.<Category>.<PascalOp> (app, emitUsing=false).
-#   Fixture ops (sign — no csharp-app-namespace-base path):
+#   Fixture ops (signFixture — no csharp-app-namespace-base path):
 #     DTOs + I<Op>Handler → csharp-namespace + grpc-service-namespace (legacy fixture ns).
 
 emit:
@@ -31,7 +31,7 @@ options:
     # Live emit goes to dist/generated/ (relative to the emitter package).
     emitter-output-dir: "{project-root}/../../server/shared/typescript/typespec-emitters/dist/generated"
 
-    # C# namespace for fixture ops (sign) — retained for backward compatibility.
+    # C# namespace for fixture ops (signFixture) — retained for backward compatibility.
     csharp-namespace: "D2.Edge.Tests.TypeSpecDto.Generated"
 
     # Clients project namespace: exposed-op DTOs (GetJwksInput, GetJwksOutput + nested

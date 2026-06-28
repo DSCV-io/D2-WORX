@@ -12,7 +12,7 @@ using Serilog;
 using Serilog.Events;
 using Xunit;
 
-using GenSignInput = D2.Edge.Tests.TypeSpecDto.Generated.SignInput;
+using GenSignFixtureInput = D2.Edge.Tests.TypeSpecDto.Generated.SignFixtureInput;
 
 /// <summary>
 /// Validates that the TypeSpec-emitted <c>sign</c> fixture DTO wires
@@ -33,7 +33,7 @@ public sealed class TypeSpecDtoValidationTests
     // -------------------------------------------------------------------------
 
     [Fact]
-    public void GeneratedSignInput_PayloadProperty_IsRedactedByRealPolicy()
+    public void GeneratedSignFixtureInput_PayloadProperty_IsRedactedByRealPolicy()
     {
         // Build a local Serilog logger with the real RedactDataDestructuringPolicy.
         // IVT is granted in D2.Shared.Logging.csproj so this assembly can
@@ -48,7 +48,7 @@ public sealed class TypeSpecDtoValidationTests
         // Instantiate the generated record with a known secret payload.
         // The [property: RedactData] attribute on Payload must be seen by the
         // policy when it reflects over PUBLIC INSTANCE PROPERTIES (not ctor params).
-        var input = new GenSignInput("test-kid-001", System.Text.Encoding.UTF8.GetBytes("SECRET_PAYLOAD"));
+        var input = new GenSignFixtureInput("test-kid-001", System.Text.Encoding.UTF8.GetBytes("SECRET_PAYLOAD"));
 
         logger.Information("sign input: {@Input}", input);
 
@@ -62,7 +62,7 @@ public sealed class TypeSpecDtoValidationTests
     }
 
     [Fact]
-    public void GeneratedSignInput_NonRedactedField_IsNotMasked()
+    public void GeneratedSignFixtureInput_NonRedactedField_IsNotMasked()
     {
         // Non-vacuous control: the kid field (not @d2Redact) must NOT be masked.
         var sink = new TypeSpecDtoInMemorySink();
@@ -73,7 +73,7 @@ public sealed class TypeSpecDtoValidationTests
             .CreateLogger();
 
         const string knownKid = "test-kid-visibility-check";
-        var input = new GenSignInput(knownKid, [0x01, 0x02]);
+        var input = new GenSignFixtureInput(knownKid, [0x01, 0x02]);
 
         logger.Information("sign input: {@Input}", input);
 

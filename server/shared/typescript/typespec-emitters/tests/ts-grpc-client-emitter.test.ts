@@ -68,13 +68,13 @@ function parsePred(expr: string): PredicateNode {
 }
 // REAL fixture ts-proto types (buf/ts-proto output — the TS twin of Grpc.Tools).
 import type {
-  PlaceOrderRequest,
-  PlaceOrderResponse,
+  PlaceOrderFixtureRequest,
+  PlaceOrderFixtureResponse,
   PredicateFixturesOrdersClient,
 } from "./grpc-fixtures/generated/place_order.js";
 import type {
-  SignWithKindRequest,
-  SignWithKindResponse,
+  SignWithKindFixtureRequest,
+  SignWithKindFixtureResponse,
   EnumFixturesSignerClient,
 } from "./grpc-fixtures/generated/sign_with_kind.js";
 
@@ -114,7 +114,7 @@ function field(
 }
 
 const KEY_KIND: FieldInfo["enumRef"] = {
-  name: "KeyKind",
+  name: "FixtureKeyKind",
   members: [
     { csName: "Rsa", wireValue: "Rsa", needsEnumMember: false },
     { csName: "Aes", wireValue: "Aes", needsEnumMember: false },
@@ -124,13 +124,13 @@ const KEY_KIND: FieldInfo["enumRef"] = {
 
 function placeOrderOp(): TsGrpcClientOp {
   return {
-    opName: "placeOrder",
+    opName: "placeOrderFixture",
     grpcService: "PredicateFixturesOrders",
-    grpcMethod: "PlaceOrder",
+    grpcMethod: "PlaceOrderFixture",
     sourceSpec: PRED_SRC,
-    requestModelName: "PlaceOrderInput",
+    requestModelName: "PlaceOrderFixtureInput",
     requestFields: [field("customerId", "string", "string", "string")],
-    responseModelName: "PlaceOrderOutput",
+    responseModelName: "PlaceOrderFixtureOutput",
     responseFields: [
       field("orderCode", "string", "string", "string"),
       field(
@@ -154,32 +154,32 @@ function placeOrderOp(): TsGrpcClientOp {
 
 function signGrpcOp(): TsGrpcClientOp {
   return {
-    opName: "sign",
-    grpcService: "KeyCustodianSigner",
-    grpcMethod: "Sign",
+    opName: "signFixture",
+    grpcService: "SignFixtureSigner",
+    grpcMethod: "SignFixture",
     sourceSpec: "contracts/typespec/fixtures/sign-shaped.tsp",
-    requestModelName: "SignInput",
+    requestModelName: "SignFixtureInput",
     requestFields: [
       field("kid", "string", "string", "string"),
       field("payload", "byte[]", "Uint8Array", "bytes"),
     ],
-    responseModelName: "SignOutput",
+    responseModelName: "SignFixtureOutput",
     responseFields: [field("signature", "string", "string", "string")],
   };
 }
 
 function signWithKindOp(): TsGrpcClientOp {
   return {
-    opName: "signWithKind",
+    opName: "signWithKindFixture",
     grpcService: "EnumFixturesSigner",
-    grpcMethod: "SignWithKind",
+    grpcMethod: "SignWithKindFixture",
     sourceSpec: ENUM_SRC,
-    requestModelName: "SignWithKindInput",
+    requestModelName: "SignWithKindFixtureInput",
     requestFields: [
       field("kid", "string", "string", "string"),
       field("keyKind", "KeyKind", "KeyKind", "string", false, KEY_KIND),
     ],
-    responseModelName: "SignWithKindOutput",
+    responseModelName: "SignWithKindFixtureOutput",
     responseFields: [
       field("signature", "string", "string", "string"),
       field("keyKind", "KeyKind", "KeyKind", "string", false, KEY_KIND),
@@ -245,10 +245,13 @@ function reconstructFactory<T>(
 
 /** Load the REAL committed predicate twin (placeOrder) via text extraction. */
 function loadCommittedPredicateTwin(): {
-  placeOrderRetryWhen: (r: unknown) => boolean;
-  placeOrderFailWhen: (r: unknown) => boolean;
+  placeOrderFixtureRetryWhen: (r: unknown) => boolean;
+  placeOrderFixtureFailWhen: (r: unknown) => boolean;
 } {
-  const file = join(_KC_PRED_GEN, "place-order-resilience-predicates.g.ts");
+  const file = join(
+    _KC_PRED_GEN,
+    "place-order-fixture-resilience-predicates.g.ts",
+  );
   const text = readFileSync(file, "utf8");
   const extract = (name: string): ((r: unknown) => boolean) => {
     const re = new RegExp(
@@ -262,8 +265,8 @@ function loadCommittedPredicateTwin(): {
     ) => boolean;
   };
   return {
-    placeOrderRetryWhen: extract("placeOrderRetryWhen"),
-    placeOrderFailWhen: extract("placeOrderFailWhen"),
+    placeOrderFixtureRetryWhen: extract("placeOrderFixtureRetryWhen"),
+    placeOrderFixtureFailWhen: extract("placeOrderFixtureFailWhen"),
   };
 }
 
@@ -273,7 +276,7 @@ function loadCommittedPredicateTwin(): {
 // ---------------------------------------------------------------------------
 
 type PlaceOrderResult =
-  | { kind: "ok"; response: PlaceOrderResponse }
+  | { kind: "ok"; response: PlaceOrderFixtureResponse }
   | { kind: "error"; error: ServiceError };
 
 function makeServiceError(
@@ -294,15 +297,15 @@ function makeServiceError(
  * harness COMPILES against the real proto types (the fixture-proto compile proof).
  */
 function makePlaceOrderStub(script: PlaceOrderResult[]): {
-  stub: Pick<PredicateFixturesOrdersClient, "placeOrder">;
+  stub: Pick<PredicateFixturesOrdersClient, "placeOrderFixture">;
   calls: () => number;
-  lastRequest: () => PlaceOrderRequest | undefined;
+  lastRequest: () => PlaceOrderFixtureRequest | undefined;
 } {
   let i = 0;
   let count = 0;
-  let last: PlaceOrderRequest | undefined;
-  const placeOrder = ((
-    request: PlaceOrderRequest,
+  let last: PlaceOrderFixtureRequest | undefined;
+  const placeOrderFixture = ((
+    request: PlaceOrderFixtureRequest,
     arg2: unknown,
     arg3?: unknown,
     arg4?: unknown,
@@ -314,7 +317,7 @@ function makePlaceOrderStub(script: PlaceOrderResult[]): {
       .filter((a) => typeof a === "function")
       .pop() as (
       error: ServiceError | null,
-      response?: PlaceOrderResponse,
+      response?: PlaceOrderFixtureResponse,
     ) => void;
     const step = script[Math.min(i, script.length - 1)]!;
     i += 1;
@@ -324,21 +327,21 @@ function makePlaceOrderStub(script: PlaceOrderResult[]): {
       else cb(step.error);
     });
     return undefined as never;
-  }) as unknown as PredicateFixturesOrdersClient["placeOrder"];
+  }) as unknown as PredicateFixturesOrdersClient["placeOrderFixture"];
   return {
-    stub: { placeOrder },
+    stub: { placeOrderFixture },
     calls: () => count,
     lastRequest: () => last,
   };
 }
 
-function makeSignWithKindStub(response: SignWithKindResponse): {
-  stub: Pick<EnumFixturesSignerClient, "signWithKind">;
-  lastRequest: () => SignWithKindRequest | undefined;
+function makeSignWithKindStub(response: SignWithKindFixtureResponse): {
+  stub: Pick<EnumFixturesSignerClient, "signWithKindFixture">;
+  lastRequest: () => SignWithKindFixtureRequest | undefined;
 } {
-  let last: SignWithKindRequest | undefined;
-  const signWithKind = ((
-    request: SignWithKindRequest,
+  let last: SignWithKindFixtureRequest | undefined;
+  const signWithKindFixture = ((
+    request: SignWithKindFixtureRequest,
     arg2: unknown,
     arg3?: unknown,
     arg4?: unknown,
@@ -348,12 +351,12 @@ function makeSignWithKindStub(response: SignWithKindResponse): {
       .filter((a) => typeof a === "function")
       .pop() as (
       error: ServiceError | null,
-      response?: SignWithKindResponse,
+      response?: SignWithKindFixtureResponse,
     ) => void;
     queueMicrotask(() => cb(null, response));
     return undefined as never;
-  }) as unknown as EnumFixturesSignerClient["signWithKind"];
-  return { stub: { signWithKind }, lastRequest: () => last };
+  }) as unknown as EnumFixturesSignerClient["signWithKindFixture"];
+  return { stub: { signWithKindFixture }, lastRequest: () => last };
 }
 
 // ---------------------------------------------------------------------------
@@ -442,7 +445,7 @@ describe("tsGrpcClient_FixtureProtoByteGate", () => {
     // The real ts-proto output — a grpc-js callback-style client + the response
     // carrying result (D2ResultProto) + data. This is what the emitted client binds to.
     expect(protoTs).toContain("export const PredicateFixturesOrdersClient");
-    expect(protoTs).toContain("export interface PlaceOrderResponse");
+    expect(protoTs).toContain("export interface PlaceOrderFixtureResponse");
     expect(protoTs).toContain('import { D2ResultProto } from "@d2/protos";');
   });
 });
@@ -515,23 +518,23 @@ describe("tsGrpcClient_RealBufTsProtoSignPipelineByteGate", () => {
       "utf8",
     ).replace(/\r\n/g, "\n");
     // Replace the first occurrence of the committed package string with a mutated value.
-    // "v2alpha" is stable — it's the channel declaration in the generated protobufPackage line.
-    const mutated = committed.replace("v2alpha", "v2beta");
+    // "v1" is stable — it's the channel declaration in the generated protobufPackage line.
+    const mutated = committed.replace("v1", "v2beta");
     expect(mutated).not.toBe(committed);
   });
 
-  it("the committed sign.ts exports the KeyCustodianSigner grpc-js client stub + v2alpha package", () => {
+  it("the committed sign.ts exports the SignFixtureSigner grpc-js client stub + v2alpha package", () => {
     const protoTs = readFileSync(
       join(HERE, "grpc-fixtures", "generated", "sign.ts"),
       "utf8",
     );
     // The real ts-proto output for sign.proto — grpc-js callback-style client +
     // D2ResultProto-enveloped response. Package must be v2alpha (not the retired v1).
-    expect(protoTs).toContain("export const KeyCustodianSignerClient");
-    expect(protoTs).toContain("export interface SignResponse");
+    expect(protoTs).toContain("export const SignFixtureSignerClient");
+    expect(protoTs).toContain("export interface SignFixtureResponse");
     expect(protoTs).toContain('import { D2ResultProto } from "@d2/protos";');
     expect(protoTs).toContain(
-      'export const protobufPackage = "d2.keycustodian.v2alpha"',
+      'export const protobufPackage = "d2.signfixtures.v1"',
     );
   });
 });
@@ -574,17 +577,17 @@ describe("emitTsGrpcClient_FileNameAndShape", () => {
     const [file] = emitTsGrpcClient("PredicateFixtures", [placeOrderOp()]);
     expect(file!.content).toContain("isTransientGrpcError");
     expect(file!.content).toContain(
-      'import { placeOrderRetryWhen, placeOrderFailWhen } from "./place-order-resilience-predicates.js";',
+      'import { placeOrderFixtureRetryWhen, placeOrderFixtureFailWhen } from "./place-order-fixture-resilience-predicates.js";',
     );
     expect(file!.content).toContain("new ResilientPipelineBuilder()");
     expect(file!.content).toContain("maxAttempts: 3,");
     expect(file!.content).toContain(
-      "placeOrderRetryWhen(result) && !placeOrderFailWhen(result)",
+      "placeOrderFixtureRetryWhen(result) && !placeOrderFixtureFailWhen(result)",
     );
   });
 
   it("a non-predicate op emits the plain handleGrpcCall body (no pipeline import, no sentinel)", () => {
-    const [file] = emitTsGrpcClient("KeyCustodian", [signGrpcOp()]);
+    const [file] = emitTsGrpcClient("SignFixture", [signGrpcOp()]);
     expect(file!.content).not.toContain("ResilientPipelineBuilder");
     expect(file!.content).not.toContain("D2GeneratedBusinessRetrySignal");
     expect(file!.content).not.toContain("isTransientGrpcError");
@@ -594,28 +597,30 @@ describe("emitTsGrpcClient_FileNameAndShape", () => {
   it("a response-enum op emits the fail-loud membership parse + imports the enum const", () => {
     const [file] = emitTsGrpcClient("EnumFixtures", [signWithKindOp()]);
     expect(file!.content).toContain(
-      'import { KeyKind } from "./sign-with-kind-dto.js";',
+      'import { FixtureKeyKind } from "./sign-with-kind-fixture-dto.js";',
     );
     expect(file!.content).toContain(
-      "Object.values(KeyKind).includes(data.keyKind)",
+      "Object.values(FixtureKeyKind).includes(data.keyKind)",
     );
-    expect(file!.content).toContain("validationFailed<SignWithKindOutput>()");
+    expect(file!.content).toContain(
+      "validationFailed<SignWithKindFixtureOutput>()",
+    );
   });
 
   it("a shared model across ops imports the DTO type ONCE (deduped, derived from the type name)", () => {
-    // Two ops sharing SignInput/SignOutput must not redeclare the import.
+    // Two ops sharing SignFixtureInput/SignFixtureOutput must not redeclare the import.
     const opA = signGrpcOp();
     const opB: TsGrpcClientOp = {
       ...signGrpcOp(),
       opName: "signAgain",
       grpcMethod: "SignAgain",
     };
-    const [file] = emitTsGrpcClient("KeyCustodian", [opA, opB]);
+    const [file] = emitTsGrpcClient("SignFixture", [opA, opB]);
     const importLines = file!.content
       .split("\n")
-      .filter((l) => l.includes("SignInput") && l.startsWith("import"));
+      .filter((l) => l.includes("SignFixtureInput") && l.startsWith("import"));
     expect(importLines).toHaveLength(1);
-    expect(importLines[0]).toContain('from "./sign-dto.js"');
+    expect(importLines[0]).toContain('from "./sign-fixture-dto.js"');
   });
 
   it("the emitted source carries no phase / deliverable / audit-round identifiers", () => {
@@ -626,7 +631,7 @@ describe("emitTsGrpcClient_FileNameAndShape", () => {
   it("an empty-request op emits a `return {};` request mapper (no fields)", () => {
     const noInput: TsGrpcClientOp = {
       opName: "getJwks",
-      grpcService: "KeyCustodianSigner",
+      grpcService: "SignFixtureSigner",
       grpcMethod: "GetJwks",
       sourceSpec: "contracts/typespec/fixtures/sign-shaped.tsp",
       requestModelName: "GetJwksInput",
@@ -634,7 +639,7 @@ describe("emitTsGrpcClient_FileNameAndShape", () => {
       responseModelName: "GetJwksOutput",
       responseFields: [field("kid", "string", "string", "string")],
     };
-    const [file] = emitTsGrpcClient("KeyCustodian", [noInput]);
+    const [file] = emitTsGrpcClient("SignFixture", [noInput]);
     expect(file!.content).toContain(
       "function toGetJwksRequest(input: GetJwksInput): unknown {",
     );
@@ -644,7 +649,7 @@ describe("emitTsGrpcClient_FileNameAndShape", () => {
   it("a void-response op emits a `return {} as <Output>` response mapper (no fields)", () => {
     const noOutput: TsGrpcClientOp = {
       opName: "revoke",
-      grpcService: "KeyCustodianSigner",
+      grpcService: "SignFixtureSigner",
       grpcMethod: "Revoke",
       sourceSpec: "contracts/typespec/fixtures/sign-shaped.tsp",
       requestModelName: "RevokeInput",
@@ -652,7 +657,7 @@ describe("emitTsGrpcClient_FileNameAndShape", () => {
       responseModelName: "RevokeOutput",
       responseFields: [],
     };
-    const [file] = emitTsGrpcClient("KeyCustodian", [noOutput]);
+    const [file] = emitTsGrpcClient("SignFixture", [noOutput]);
     expect(file!.content).toContain("return {} as RevokeOutput;");
   });
 
@@ -663,11 +668,11 @@ describe("emitTsGrpcClient_FileNameAndShape", () => {
     };
     const [file] = emitTsGrpcClient("PredicateFixtures", [retryOnly]);
     expect(file!.content).toContain(
-      'import { placeOrderRetryWhen } from "./place-order-resilience-predicates.js";',
+      'import { placeOrderFixtureRetryWhen } from "./place-order-fixture-resilience-predicates.js";',
     );
-    expect(file!.content).not.toContain("placeOrderFailWhen");
+    expect(file!.content).not.toContain("placeOrderFixtureFailWhen");
     // The retry guard is just retryWhen(result) (no failWhen conjunction).
-    expect(file!.content).toContain("if (placeOrderRetryWhen(result))");
+    expect(file!.content).toContain("if (placeOrderFixtureRetryWhen(result))");
   });
 
   it("a failWhen-ONLY op carries NO retry-arm (failWhen alone is inert at the client)", () => {
@@ -678,8 +683,8 @@ describe("emitTsGrpcClient_FileNameAndShape", () => {
       retryWhenAst: undefined,
     };
     const [file] = emitTsGrpcClient("PredicateFixtures", [failOnly]);
-    expect(file!.content).not.toContain("placeOrderFailWhen");
-    expect(file!.content).not.toContain("placeOrderRetryWhen");
+    expect(file!.content).not.toContain("placeOrderFixtureFailWhen");
+    expect(file!.content).not.toContain("placeOrderFixtureRetryWhen");
     expect(file!.content).not.toContain("ResilientPipelineBuilder");
     expect(file!.content).not.toContain("D2GeneratedBusinessRetrySignal");
     // Simple forwarding body (no predicate twin import).
@@ -720,7 +725,7 @@ describe("tsGrpcClient_Behavioral_PlaceOrder_RealSeam", () => {
       errorCode?: string;
       category?: string;
     }>,
-  ): PlaceOrderResponse {
+  ): PlaceOrderFixtureResponse {
     return {
       result: {
         success: envelope?.success ?? true,
@@ -748,7 +753,7 @@ describe("tsGrpcClient_Behavioral_PlaceOrder_RealSeam", () => {
       },
     ]);
     const client = create(stub);
-    const result = await client.placeOrder({ customerId: "cust-1" });
+    const result = await client.placeOrderFixture({ customerId: "cust-1" });
 
     expect(result.success).toBe(true);
     expect(result.data).toEqual({
@@ -781,7 +786,7 @@ describe("tsGrpcClient_Behavioral_PlaceOrder_RealSeam", () => {
       },
     ]);
     const client = create(stub);
-    const result = await client.placeOrder({ customerId: "c" });
+    const result = await client.placeOrderFixture({ customerId: "c" });
 
     expect(result.success).toBe(false);
     expect(result.statusCode).toBe(409);
@@ -810,7 +815,7 @@ describe("tsGrpcClient_Behavioral_PlaceOrder_RealSeam", () => {
       { kind: "ok", response: recovered },
     ]);
     const client = create(stub);
-    const result = await client.placeOrder(
+    const result = await client.placeOrderFixture(
       { customerId: "c" },
       { deadlineMs: 1000 },
     );
@@ -841,7 +846,7 @@ describe("tsGrpcClient_Behavioral_PlaceOrder_RealSeam", () => {
       },
     ]);
     const client = create(stub);
-    const result = await client.placeOrder({ customerId: "c" });
+    const result = await client.placeOrderFixture({ customerId: "c" });
 
     expect(result.success).toBe(false);
     expect(result.errorCode).toBe("VALIDATION_FAILED");
@@ -862,7 +867,7 @@ describe("tsGrpcClient_Behavioral_PlaceOrder_RealSeam", () => {
       { kind: "ok", response: partial },
     ]);
     const client = create(stub);
-    const result = await client.placeOrder({ customerId: "c" });
+    const result = await client.placeOrderFixture({ customerId: "c" });
 
     // The restored result is the captured business result (success, partial data), not a 500.
     expect(result.statusCode).toBe(206);
@@ -883,7 +888,7 @@ describe("tsGrpcClient_Behavioral_PlaceOrder_RealSeam", () => {
       { kind: "ok", response: recovered },
     ]);
     const client = create(stub);
-    const result = await client.placeOrder({ customerId: "c" });
+    const result = await client.placeOrderFixture({ customerId: "c" });
 
     expect(result.success).toBe(true);
     expect(calls()).toBeGreaterThan(1);
@@ -899,7 +904,7 @@ describe("tsGrpcClient_Behavioral_PlaceOrder_RealSeam", () => {
       },
     ]);
     const client = create(stub);
-    const result = await client.placeOrder({ customerId: "c" });
+    const result = await client.placeOrderFixture({ customerId: "c" });
 
     expect(result.success).toBe(false);
     // The seam maps a non-canceled/unauthenticated fault to serviceUnavailable (503).
@@ -919,7 +924,7 @@ describe("tsGrpcClient_Behavioral_PlaceOrder_RealSeam", () => {
       },
     ]);
     const client = create(stub);
-    const result = await client.placeOrder({ customerId: "c" });
+    const result = await client.placeOrderFixture({ customerId: "c" });
 
     expect(result.success).toBe(false);
     // The seam's `canceled` factory carries the CANCELED error code (status 400).
@@ -932,8 +937,8 @@ describe("tsGrpcClient_Behavioral_PlaceOrder_RealSeam", () => {
     // A spy stub records that a deadline reached grpc-js (via the 3-arg overload).
     const { create } = buildClient();
     let sawCallOptions = false;
-    const placeOrder = ((
-      _request: PlaceOrderRequest,
+    const placeOrderFixture = ((
+      _request: PlaceOrderFixtureRequest,
       arg2: unknown,
       arg3?: unknown,
       arg4?: unknown,
@@ -943,7 +948,7 @@ describe("tsGrpcClient_Behavioral_PlaceOrder_RealSeam", () => {
       if (args.some((a) => a instanceof Metadata)) sawCallOptions = true;
       const cb = args.filter((a) => typeof a === "function").pop() as (
         e: ServiceError | null,
-        r?: PlaceOrderResponse,
+        r?: PlaceOrderFixtureResponse,
       ) => void;
       queueMicrotask(() =>
         cb(null, {
@@ -960,9 +965,9 @@ describe("tsGrpcClient_Behavioral_PlaceOrder_RealSeam", () => {
         }),
       );
       return undefined as never;
-    }) as unknown as PredicateFixturesOrdersClient["placeOrder"];
-    const client = create({ placeOrder });
-    await client.placeOrder({ customerId: "c" }, { deadlineMs: 5000 });
+    }) as unknown as PredicateFixturesOrdersClient["placeOrderFixture"];
+    const client = create({ placeOrderFixture });
+    await client.placeOrderFixture({ customerId: "c" }, { deadlineMs: 5000 });
     expect(sawCallOptions).toBe(true);
   });
 
@@ -982,7 +987,7 @@ describe("tsGrpcClient_Behavioral_PlaceOrder_RealSeam", () => {
     const client = create(stub);
     // With PassThrough, the business-retry sentinel still throws, but the
     // pipeline does not retry → the catch restores the captured result on 1 call.
-    const result = await client.placeOrder(
+    const result = await client.placeOrderFixture(
       { customerId: "c" },
       { pipeline: passthrough },
     );
@@ -1013,7 +1018,7 @@ describe("tsGrpcClient_Behavioral_SignWithKind_ResponseEnum_RealSeam", () => {
     }>(
       file!.content,
       "createEnumFixturesGrpcClient",
-      baseScope({ KeyKind: KeyKindConst }),
+      baseScope({ FixtureKeyKind: KeyKindConst }),
     );
   }
 
@@ -1032,7 +1037,10 @@ describe("tsGrpcClient_Behavioral_SignWithKind_ResponseEnum_RealSeam", () => {
       data: { signature: "sig", keyKind: "Rsa" },
     });
     const client = create(stub);
-    const result = await client.signWithKind({ kid: "k", keyKind: "Rsa" });
+    const result = await client.signWithKindFixture({
+      kid: "k",
+      keyKind: "Rsa",
+    });
 
     expect(result.success).toBe(true);
     expect(result.data).toEqual({ signature: "sig", keyKind: "Rsa" });
@@ -1055,7 +1063,10 @@ describe("tsGrpcClient_Behavioral_SignWithKind_ResponseEnum_RealSeam", () => {
       data: { signature: "sig", keyKind: "Quantum" },
     });
     const client = create(stub);
-    const result = await client.signWithKind({ kid: "k", keyKind: "Rsa" });
+    const result = await client.signWithKindFixture({
+      kid: "k",
+      keyKind: "Rsa",
+    });
 
     expect(result.success).toBe(false);
     expect(result.statusCode).toBe(400);
@@ -1127,7 +1138,7 @@ describe("tsGrpcClient_CrossRuntimePredicateConsumptionParity", () => {
     for (const c of loadParityFixture()) {
       // The server returns this row's reconstructed result on EVERY call (so a
       // retry would re-observe the same row → distinguishable only by call count).
-      const response: PlaceOrderResponse = {
+      const response: PlaceOrderFixtureResponse = {
         result: {
           success: c.success,
           statusCode: c.statusCode,
@@ -1141,7 +1152,7 @@ describe("tsGrpcClient_CrossRuntimePredicateConsumptionParity", () => {
       };
       const { stub, calls } = makePlaceOrderStub([{ kind: "ok", response }]);
       const client = create(stub);
-      await client.placeOrder({ customerId: "c" });
+      await client.placeOrderFixture({ customerId: "c" });
 
       const shouldRetry = c.expectedRetry && !c.expectedFail;
       if (shouldRetry) {
@@ -1182,7 +1193,7 @@ describe("tsGrpcClient_CapabilityParity_MirrorsNetClient", () => {
       // business-not-retried by default (the predicate gates the sentinel throw).
       {
         net: "business-gated",
-        ts: content.includes("placeOrderFailWhen(result)"),
+        ts: content.includes("placeOrderFixtureFailWhen(result)"),
       },
       // transport-fault never leaks err.details (the seam owns the mapping).
       {
@@ -1250,13 +1261,13 @@ describe("tsGrpcClient_TolerantReader", () => {
       },
       // extra top-level field:
       unknownEnvelopeField: "also-ignored",
-    } as unknown as PlaceOrderResponse;
+    } as unknown as PlaceOrderFixtureResponse;
 
     const { stub, calls } = makePlaceOrderStub([
       { kind: "ok", response: responseWithExtra },
     ]);
     const client = create(stub);
-    const result = await client.placeOrder({ customerId: "cust-tr3" });
+    const result = await client.placeOrderFixture({ customerId: "cust-tr3" });
 
     expect(result.success).toBe(true);
     expect(result.data).toEqual({
@@ -1298,13 +1309,13 @@ describe("tsGrpcClient_TolerantReader", () => {
         // field added in a newer spec revision:
         estimatedDelivery: "2026-07-01",
       },
-    } as unknown as PlaceOrderResponse;
+    } as unknown as PlaceOrderFixtureResponse;
 
     const { stub } = makePlaceOrderStub([
       { kind: "ok", response: forwardCompatResponse },
     ]);
     const client = create(stub);
-    const result = await client.placeOrder({ customerId: "cust-fc4" });
+    const result = await client.placeOrderFixture({ customerId: "cust-fc4" });
 
     expect(result.success).toBe(true);
     expect((result.data as { orderCode: string }).orderCode).toBe("ORD-FC4");

@@ -22,9 +22,10 @@
 //      so the v1 and v2 documents genuinely differ.
 //
 // Scopes / audiences are real declared values (contracts/auth-scopes +
-// contracts/auth-audiences) so the @d2* decorator validators pass. NOT KC's real
-// operations — a fixture mirroring routed signing/reporting shapes for the
-// purpose of exercising the OpenAPI emitter.
+// contracts/auth-audiences) so the @d2* decorator validators pass. A fixture
+// mirroring routed signing/reporting shapes for the purpose of exercising the
+// OpenAPI emitter. The fixture-only operation ids carry an `openApi…Fixture`
+// marker (the models already carry the `OpenApi` family marker).
 
 import "@d2/typespec-decorators";
 import "@typespec/http";
@@ -40,8 +41,8 @@ using TypeSpec.Versioning;
 
 @service(#{ title: "OpenApi Fixtures" })
 namespace OpenApiFixtures {
-  /** Input for a sign operation: a key identifier and the payload bytes to sign. */
-  model OpenApiSignInput {
+  /** Input for a sign fixture operation: a key identifier and the payload bytes to sign. */
+  model OpenApiSignFixtureInput {
     /** The key identifier selecting the signing key. */
     kid: string;
 
@@ -50,26 +51,26 @@ namespace OpenApiFixtures {
     payload: bytes;
   }
 
-  /** Output of a sign operation: the base64url-encoded signature. */
-  model OpenApiSignOutput {
+  /** Output of a sign fixture operation: the base64url-encoded signature. */
+  model OpenApiSignFixtureOutput {
     /** The signature over the payload, base64url-encoded (unpadded). */
     signature: string;
   }
 
-  /** Input for an audit lookup: the audit record identifier. */
-  model OpenApiAuditInput {
+  /** Input for an audit fixture lookup: the audit record identifier. */
+  model OpenApiAuditFixtureInput {
     /** The audit record identifier to fetch. */
     auditId: string;
   }
 
-  /** Output of an audit lookup: the resolved audit detail. */
-  model OpenApiAuditOutput {
+  /** Output of an audit fixture lookup: the resolved audit detail. */
+  model OpenApiAuditFixtureOutput {
     /** The audit detail payload. */
     detail: string;
   }
 
-  /** Output of a health check: a liveness flag. */
-  model OpenApiHealthOutput {
+  /** Output of a health fixture check: a liveness flag. */
+  model OpenApiHealthFixtureOutput {
     /** Whether the service is live. */
     live: boolean;
   }
@@ -87,7 +88,7 @@ namespace OpenApiFixtures {
   @d2RateLimitTier("Standard")
   @d2Csrf("exempt")
   @d2Audience("d2-edge")
-  op sign(input: OpenApiSignInput): OpenApiSignOutput;
+  op openApiSignFixture(input: OpenApiSignFixtureInput): OpenApiSignFixtureOutput;
 
   /**
    * Sign with ONLY the required auth intent — no tier / csrf / audience. Proves
@@ -100,7 +101,7 @@ namespace OpenApiFixtures {
   @route("/v1/openapi/sign-minimal")
   @post
   @d2RequireAnyScope("self.write")
-  op signMinimal(input: OpenApiSignInput): OpenApiSignOutput;
+  op openApiSignMinimalFixture(input: OpenApiSignFixtureInput): OpenApiSignFixtureOutput;
 
   /** Fetch an audit record — @d2RequireAllScopes → x-d2-scope { mode: "all" }. */
   @d2Query
@@ -109,7 +110,7 @@ namespace OpenApiFixtures {
   @route("/v1/openapi/audit")
   @get
   @d2RequireAllScopes("self.read", "auth.password.change")
-  op audit(input: OpenApiAuditInput): OpenApiAuditOutput;
+  op openApiAuditFixture(input: OpenApiAuditFixtureInput): OpenApiAuditFixtureOutput;
 
   /** Health check — @d2Harmless → x-d2-scope { mode: "harmless" }. */
   @d2Query
@@ -118,7 +119,7 @@ namespace OpenApiFixtures {
   @route("/v1/openapi/health")
   @get
   @d2Harmless
-  op health(): OpenApiHealthOutput;
+  op openApiHealthFixture(): OpenApiHealthFixtureOutput;
 }
 
 // ===========================================================================
@@ -126,10 +127,10 @@ namespace OpenApiFixtures {
 // ===========================================================================
 
 @service(#{ title: "OpenApi Versioned Fixtures" })
-@versioned(OpenApiVersionedFixtures.OpenApiVersions)
+@versioned(OpenApiVersionedFixtures.OpenApiFixtureVersions)
 namespace OpenApiVersionedFixtures {
-  /** Versions enum driving the @versioned service (two versions). */
-  enum OpenApiVersions {
+  /** Versions enum driving the @versioned fixture service (two versions). */
+  enum OpenApiFixtureVersions {
     /** Initial version. */
     v1: "1.0",
 
@@ -137,20 +138,20 @@ namespace OpenApiVersionedFixtures {
     v2: "2.0",
   }
 
-  /** Input for a report fetch: the report identifier. */
-  model OpenApiReportInput {
+  /** Input for a report fixture fetch: the report identifier. */
+  model OpenApiReportFixtureInput {
     /** The report identifier. */
     reportId: string;
   }
 
-  /** Output of a report fetch: the report body. */
-  model OpenApiReportOutput {
+  /** Output of a report fixture fetch: the report body. */
+  model OpenApiReportFixtureOutput {
     /** The rendered report body. */
     body: string;
   }
 
-  /** Output of a report export: the export location. */
-  model OpenApiExportOutput {
+  /** Output of a report fixture export: the export location. */
+  model OpenApiExportFixtureOutput {
     /** The location of the exported report artifact. */
     location: string;
   }
@@ -163,18 +164,18 @@ namespace OpenApiVersionedFixtures {
   @get
   @d2RequireAnyScope("self.read")
   @d2RateLimitTier("Standard")
-  op report(input: OpenApiReportInput): OpenApiReportOutput;
+  op openApiReportFixture(input: OpenApiReportFixtureInput): OpenApiReportFixtureOutput;
 
   /**
    * Export a report — @added in v2 so the v1 and v2 OpenAPI documents genuinely
    * differ (the per-version fan-out is proven non-vacuous: this path is in v2 only).
    */
-  @added(OpenApiVersionedFixtures.OpenApiVersions.v2)
+  @added(OpenApiVersionedFixtures.OpenApiFixtureVersions.v2)
   @d2Command
   @d2ServedBy("OpenApiVersionedFixtures")
   @d2InProcess
   @route("/v1/openapi/report/export")
   @post
   @d2RequireAnyScope("self.write")
-  op exportReport(input: OpenApiReportInput): OpenApiExportOutput;
+  op openApiExportReportFixture(input: OpenApiReportFixtureInput): OpenApiExportFixtureOutput;
 }

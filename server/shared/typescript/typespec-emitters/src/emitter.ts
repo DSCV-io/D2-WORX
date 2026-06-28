@@ -1482,7 +1482,7 @@ function emitRouteIfPresent(
 
   if (inProcess && servedBy !== undefined && servedBy.length > 0) {
     // Facade delegation: the fixture façade interface name is I<ServedBy>SignerFacade
-    // (for the sign fixture, this is IKeyCustodianSignerFacade — the fixture-specific
+    // (for the sign fixture, this is ISignFixtureSignerFacade — the fixture-specific
     // naming that avoids collision with the real IKeyCustodianApi).
     // In fixture mode (no csAppNamespaceBase), use the fixture gRPC namespace.
     // In real-module mode, use the clients namespace.

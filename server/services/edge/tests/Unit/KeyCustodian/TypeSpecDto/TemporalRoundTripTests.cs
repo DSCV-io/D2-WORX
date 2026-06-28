@@ -508,7 +508,7 @@ public sealed class TemporalRoundTripTests
     [Fact]
     public void AD11_OptionalInstantField_Null_SerializesAndRoundTrips()
     {
-        // The TemporalInput.OptionalInstant wire field is DateTimeOffset? — a null
+        // The TemporalFixtureInput.OptionalInstant wire field is DateTimeOffset? — a null
         // value serializes as JSON null and round-trips to null (the C# half of the
         // null→undefined contract; TS normalizes JSON null to undefined).
         DateTimeOffset? absent = null;

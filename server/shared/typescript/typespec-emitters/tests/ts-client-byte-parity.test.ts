@@ -73,7 +73,7 @@ function field(
 }
 
 const KEY_KIND: FieldInfo["enumRef"] = {
-  name: "KeyKind",
+  name: "FixtureKeyKind",
   members: [
     { csName: "Rsa", wireValue: "Rsa", needsEnumMember: false },
     { csName: "Aes", wireValue: "Aes", needsEnumMember: false },
@@ -87,13 +87,13 @@ const KEY_KIND: FieldInfo["enumRef"] = {
 
 function placeOrderOp(): TsGrpcClientOp {
   return {
-    opName: "placeOrder",
+    opName: "placeOrderFixture",
     grpcService: "PredicateFixturesOrders",
-    grpcMethod: "PlaceOrder",
+    grpcMethod: "PlaceOrderFixture",
     sourceSpec: PRED_SRC,
-    requestModelName: "PlaceOrderInput",
+    requestModelName: "PlaceOrderFixtureInput",
     requestFields: [field("customerId", "string", "string", "string")],
-    responseModelName: "PlaceOrderOutput",
+    responseModelName: "PlaceOrderFixtureOutput",
     responseFields: [
       field("orderCode", "string", "string", "string"),
       field(
@@ -117,32 +117,32 @@ function placeOrderOp(): TsGrpcClientOp {
 
 function signGrpcOp(): TsGrpcClientOp {
   return {
-    opName: "sign",
-    grpcService: "KeyCustodianSigner",
-    grpcMethod: "Sign",
+    opName: "signFixture",
+    grpcService: "SignFixtureSigner",
+    grpcMethod: "SignFixture",
     sourceSpec: SIGN_SRC,
-    requestModelName: "SignInput",
+    requestModelName: "SignFixtureInput",
     requestFields: [
       field("kid", "string", "string", "string"),
       field("payload", "byte[]", "Uint8Array", "bytes"),
     ],
-    responseModelName: "SignOutput",
+    responseModelName: "SignFixtureOutput",
     responseFields: [field("signature", "string", "string", "string")],
   };
 }
 
 function signWithKindOp(): TsGrpcClientOp {
   return {
-    opName: "signWithKind",
+    opName: "signWithKindFixture",
     grpcService: "EnumFixturesSigner",
-    grpcMethod: "SignWithKind",
+    grpcMethod: "SignWithKindFixture",
     sourceSpec: ENUM_SRC,
-    requestModelName: "SignWithKindInput",
+    requestModelName: "SignWithKindFixtureInput",
     requestFields: [
       field("kid", "string", "string", "string"),
       field("keyKind", "KeyKind", "KeyKind", "string", false, KEY_KIND),
     ],
-    responseModelName: "SignWithKindOutput",
+    responseModelName: "SignWithKindFixtureOutput",
     responseFields: [
       field("signature", "string", "string", "string"),
       field("keyKind", "KeyKind", "KeyKind", "string", false, KEY_KIND),
@@ -152,34 +152,34 @@ function signWithKindOp(): TsGrpcClientOp {
 
 function signRestOp(): TsRestClientOp {
   return {
-    opName: "sign",
-    routePath: "/internal/v1/kc/sign",
+    opName: "signFixture",
+    routePath: "/internal/v1/fixtures/sign-fixture",
     verb: "POST",
     authIntent: "scoped",
     sourceSpec: SIGN_SRC,
-    requestModelName: "SignInput",
+    requestModelName: "SignFixtureInput",
     requestFields: [
       field("kid", "string", "string", "string"),
       field("payload", "byte[]", "Uint8Array", "bytes"),
     ],
-    responseModelName: "SignOutput",
+    responseModelName: "SignFixtureOutput",
     idempotencyKeySource: "header",
   };
 }
 
 function signDerivedRestOp(): TsRestClientOp {
   return {
-    opName: "signDerived",
-    routePath: "/internal/v1/kc/sign-derived",
+    opName: "signFixtureDerived",
+    routePath: "/internal/v1/fixtures/sign-fixture-derived",
     verb: "POST",
     authIntent: "scoped",
     sourceSpec: SIGN_SRC,
-    requestModelName: "SignInput",
+    requestModelName: "SignFixtureInput",
     requestFields: [
       field("kid", "string", "string", "string"),
       field("payload", "byte[]", "Uint8Array", "bytes"),
     ],
-    responseModelName: "SignOutput",
+    responseModelName: "SignFixtureOutput",
     idempotencyKeySource: "derived",
   };
 }
@@ -199,25 +199,28 @@ describe("tsClientByteParity_PredicateFixturesGrpcClient", () => {
   it("deliberate-drift detection: a mutated fixture does NOT match regenerated output", () => {
     const drifted = readFixture(
       join(PRED_GEN, "predicate-fixtures-grpc-client.g.ts"),
-    ).replace("placeOrderRetryWhen", "placeOrderRetryWhenDRIFTED");
+    ).replace(
+      "placeOrderFixtureRetryWhen",
+      "placeOrderFixtureRetryWhenDRIFTED",
+    );
     const [file] = emitTsGrpcClient("PredicateFixtures", [placeOrderOp()]);
     expect(file!.content).not.toBe(drifted);
   });
 });
 
-describe("tsClientByteParity_KeyCustodianGrpcClient", () => {
-  it("regenerated key-custodian-grpc-client.g.ts is byte-identical to the committed fixture", () => {
-    const [file] = emitTsGrpcClient("KeyCustodian", [signGrpcOp()]);
+describe("tsClientByteParity_SignFixtureGrpcClient", () => {
+  it("regenerated sign-fixture-grpc-client.g.ts is byte-identical to the committed fixture", () => {
+    const [file] = emitTsGrpcClient("SignFixture", [signGrpcOp()]);
     expect(file!.content).toBe(
-      readFixture(join(DTO_GEN, "key-custodian-grpc-client.g.ts")),
+      readFixture(join(DTO_GEN, "sign-fixture-grpc-client.g.ts")),
     );
   });
 
   it("deliberate-drift detection: a mutated fixture does NOT match", () => {
     const drifted = readFixture(
-      join(DTO_GEN, "key-custodian-grpc-client.g.ts"),
+      join(DTO_GEN, "sign-fixture-grpc-client.g.ts"),
     ).replace("handleGrpcCall", "handleGrpcCallDRIFTED");
-    const [file] = emitTsGrpcClient("KeyCustodian", [signGrpcOp()]);
+    const [file] = emitTsGrpcClient("SignFixture", [signGrpcOp()]);
     expect(file!.content).not.toBe(drifted);
   });
 });
@@ -243,22 +246,22 @@ describe("tsClientByteParity_EnumFixturesGrpcClient", () => {
 // REST client byte-gate
 // ===========================================================================
 
-describe("tsClientByteParity_KeyCustodianRestClient", () => {
-  it("regenerated key-custodian-rest-client.g.ts is byte-identical to the committed fixture", () => {
-    const [file] = emitTsRestClient("KeyCustodian", [
+describe("tsClientByteParity_SignFixtureRestClient", () => {
+  it("regenerated sign-fixture-rest-client.g.ts is byte-identical to the committed fixture", () => {
+    const [file] = emitTsRestClient("SignFixture", [
       signRestOp(),
       signDerivedRestOp(),
     ]);
     expect(file!.content).toBe(
-      readFixture(join(DTO_GEN, "key-custodian-rest-client.g.ts")),
+      readFixture(join(DTO_GEN, "sign-fixture-rest-client.g.ts")),
     );
   });
 
   it("deliberate-drift detection: a mutated fixture does NOT match", () => {
     const drifted = readFixture(
-      join(DTO_GEN, "key-custodian-rest-client.g.ts"),
+      join(DTO_GEN, "sign-fixture-rest-client.g.ts"),
     ).replace("apiCall", "apiCallDRIFTED");
-    const [file] = emitTsRestClient("KeyCustodian", [
+    const [file] = emitTsRestClient("SignFixture", [
       signRestOp(),
       signDerivedRestOp(),
     ]);

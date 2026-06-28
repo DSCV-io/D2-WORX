@@ -9,8 +9,8 @@
 
 namespace D2.Edge.Tests.TypeSpecGrpcEnum.Clients;
 
-using SignWithKindInput = global::D2.Edge.Tests.TypeSpecGrpcEnum.Generated.SignWithKindInput;
-using SignWithKindOutput = global::D2.Edge.Tests.TypeSpecGrpcEnum.Generated.SignWithKindOutput;
+using SignWithKindFixtureInput = global::D2.Edge.Tests.TypeSpecGrpcEnum.Generated.SignWithKindFixtureInput;
+using SignWithKindFixtureOutput = global::D2.Edge.Tests.TypeSpecGrpcEnum.Generated.SignWithKindFixtureOutput;
 using D2.Shared.Auth.Outbound.Grpc;
 using D2.Shared.Resilience.Pipeline;
 using D2.Shared.Resilience.Retry;
@@ -53,11 +53,11 @@ public static class EnumFixturesGrpcClientsGeneratedServiceCollectionExtensions
                 .AddD2ForwardedJwt()
                 .AddD2WorkloadCertificate();
 
-            // SignWithKind resilience pipeline — retry on gRPC transport transients only.
+            // SignWithKindFixture resilience pipeline — retry on gRPC transport transients only.
             // Replace with ResilientPipeline<…>.PassThrough in tests that do not need retry.
-            services.AddResilientPipeline<string, SignWithKindOutput?>(
-                SignWithKindClientKeys.PIPELINE,
-                b => b.UseRetries(new RetryOptions<SignWithKindOutput?>
+            services.AddResilientPipeline<string, SignWithKindFixtureOutput?>(
+                SignWithKindFixtureClientKeys.PIPELINE,
+                b => b.UseRetries(new RetryOptions<SignWithKindFixtureOutput?>
                 {
                     IsTransient = ex => ex is RpcException r && ProtoExtensions.IsTransientGrpcException(r),
                 }));

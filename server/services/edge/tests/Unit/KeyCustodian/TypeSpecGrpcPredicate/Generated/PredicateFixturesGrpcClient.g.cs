@@ -25,42 +25,42 @@ using System.Diagnostics;
 /// </summary>
 public sealed class PredicateFixturesGrpcClient(
     global::D2.Services.Protos.PredicateFixtures.V1.PredicateFixturesOrders.PredicateFixturesOrdersClient predicateFixturesOrdersStub,
-    [FromKeyedServices(PlaceOrderClientKeys.PIPELINE)] ResilientPipeline<string, PlaceOrderOutput?> placeOrderPipeline
+    [FromKeyedServices(PlaceOrderFixtureClientKeys.PIPELINE)] ResilientPipeline<string, PlaceOrderFixtureOutput?> placeOrderFixturePipeline
 ) : IPredicateFixturesGrpcClient
 {
-    private readonly ResilientPipeline<string, PlaceOrderOutput?> r_placeOrderPipeline = placeOrderPipeline;
+    private readonly ResilientPipeline<string, PlaceOrderFixtureOutput?> r_placeOrderFixturePipeline = placeOrderFixturePipeline;
 
     /// <inheritdoc/>
-    public ValueTask<D2Result<PlaceOrderOutput?>> PlaceOrderAsync(
-        PlaceOrderInput input,
-        ResilientPipeline<string, PlaceOrderOutput?>? pipelineOverride = null,
+    public ValueTask<D2Result<PlaceOrderFixtureOutput?>> PlaceOrderFixtureAsync(
+        PlaceOrderFixtureInput input,
+        ResilientPipeline<string, PlaceOrderFixtureOutput?>? pipelineOverride = null,
         CancellationToken ct = default)
-        => PlaceOrderCoreAsync(input, pipelineOverride ?? r_placeOrderPipeline, ct);
+        => PlaceOrderFixtureCoreAsync(input, pipelineOverride ?? r_placeOrderFixturePipeline, ct);
 
-    private async ValueTask<D2Result<PlaceOrderOutput?>> PlaceOrderCoreAsync(
-        PlaceOrderInput input,
-        ResilientPipeline<string, PlaceOrderOutput?> pipeline,
+    private async ValueTask<D2Result<PlaceOrderFixtureOutput?>> PlaceOrderFixtureCoreAsync(
+        PlaceOrderFixtureInput input,
+        ResilientPipeline<string, PlaceOrderFixtureOutput?> pipeline,
         CancellationToken ct)
     {
-        var request = input.ToPlaceOrderRequest();
+        var request = input.ToPlaceOrderFixtureRequest();
         D2ResultProto? envelope = null;                  // captured out of the closure
         RpcException? transportFault = null;             // captured out of the closure
-        PlaceOrderOutput? capturedData = default;  // captured out of the closure for the retryWhen restore
+        PlaceOrderFixtureOutput? capturedData = default;  // captured out of the closure for the retryWhen restore
         var pipelineResult = await pipeline.ExecuteAsync(
-            PlaceOrderClientKeys.PIPELINE_KEY,
+            PlaceOrderFixtureClientKeys.PIPELINE_KEY,
             async innerCt =>
             {
                 try
                 {
-                    var response = await predicateFixturesOrdersStub.PlaceOrderAsync(request, cancellationToken: innerCt);
+                    var response = await predicateFixturesOrdersStub.PlaceOrderFixtureAsync(request, cancellationToken: innerCt);
                     envelope = response.Result;          // business result (gRPC status OK)
-                    var data = response.Data is null ? default : response.Data.ToPlaceOrderOutput();
+                    var data = response.Data is null ? default : response.Data.ToPlaceOrderFixtureOutput();
                     capturedData = data;  // for the budget-exhaust restore
                     var businessResult = response.Result is not null
-                        ? response.Result.ToD2Result<PlaceOrderOutput?>(data)
-                        : D2Result<PlaceOrderOutput?>.Ok(data);
+                        ? response.Result.ToD2Result<PlaceOrderFixtureOutput?>(data)
+                        : D2Result<PlaceOrderFixtureOutput?>.Ok(data);
 
-                    if (PlaceOrderResiliencePredicates.SR_RetryWhen(businessResult) && !PlaceOrderResiliencePredicates.SR_FailWhen(businessResult))
+                    if (PlaceOrderFixtureResiliencePredicates.SR_RetryWhen(businessResult) && !PlaceOrderFixtureResiliencePredicates.SR_FailWhen(businessResult))
                     {
                         Activity.Current?.AddEvent(new ActivityEvent("d2.grpc.retry_signal"));
                         throw new D2GeneratedBusinessRetrySignal(businessResult.ToProto());
@@ -79,13 +79,13 @@ public sealed class PredicateFixturesGrpcClient(
         // path (mis-mapping to UnhandledException); remap the captured RpcException to the
         // gRPC-aware code (Cancelled -> Canceled, else -> ServiceUnavailable).
         if (!pipelineResult.Success && transportFault is not null)
-            return transportFault.ToTransportFaultResult<PlaceOrderOutput?>();
+            return transportFault.ToTransportFaultResult<PlaceOrderFixtureOutput?>();
         if (!pipelineResult.Success && transportFault is null && envelope is not null)
-            return envelope.ToD2Result<PlaceOrderOutput?>(capturedData);
+            return envelope.ToD2Result<PlaceOrderFixtureOutput?>(capturedData);
         // Business result: reconstruct the full D2Result from the captured envelope. Other
         // pipeline failures (CircuitOpen, RateLimit, caller-cancel) pass through verbatim.
         return pipelineResult.Success && envelope is not null
-            ? envelope.ToD2Result<PlaceOrderOutput?>(pipelineResult.Data)
+            ? envelope.ToD2Result<PlaceOrderFixtureOutput?>(pipelineResult.Data)
             : pipelineResult;
     }
 }

@@ -11,7 +11,7 @@ using D2.Edge.Tests.TypeSpecGrpc.Generated;
 using D2.Edge.Tests.TypeSpecRoute.Generated.Facade;
 using D2.Edge.Tests.Unit.KeyCustodian.TypeSpecRoute.Fixtures;
 using D2.Services.Protos.Common.V1;
-using D2.Services.Protos.KeyCustodian.V2Alpha;
+using D2.Services.Protos.SignFixtures.V1;
 using D2.Shared.Result;
 using Google.Protobuf;
 using Grpc.Core;
@@ -21,16 +21,16 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using DtoSignOutput = D2.Edge.Tests.TypeSpecDto.Generated.SignOutput;
+using DtoSignFixtureOutput = D2.Edge.Tests.TypeSpecDto.Generated.SignFixtureOutput;
 
 /// <summary>
 /// In-memory gRPC harness tests for the TypeSpec-emitted
-/// <c>KeyCustodianSignerService</c> + <c>SignTransportMappers</c> pair.
+/// <c>SignFixtureSignerService</c> + <c>SignFixtureTransportMappers</c> pair.
 /// Hosts the generated service via <see cref="TestServer"/> and dials it
 /// via an in-process <see cref="GrpcChannel"/> — no network sockets.
-/// The service delegates through <see cref="IKeyCustodianSignerFacade"/>
+/// The service delegates through <see cref="ISignFixtureSignerFacade"/>
 /// (the fixture façade). The response carries the <see cref="D2ResultProto"/>
-/// envelope (field 1) + typed <c>SignOutput</c> data (field 2); gRPC status
+/// envelope (field 1) + typed <c>SignFixtureOutput</c> data (field 2); gRPC status
 /// stays <see cref="StatusCode.OK"/> for all business results.
 /// </summary>
 public sealed class GrpcServiceImplTests
@@ -47,15 +47,15 @@ public sealed class GrpcServiceImplTests
         var payload = new byte[] { 1, 2, 3 };
         const string expectedSig = "sig-base64==";
 
-        var fakeFacade = new FakeKeyCustodianSignerFacade(
-            D2Result<DtoSignOutput?>.Ok(new DtoSignOutput(expectedSig)));
+        var fakeFacade = new FakeSignFixtureSignerFacade(
+            D2Result<DtoSignFixtureOutput?>.Ok(new DtoSignFixtureOutput(expectedSig)));
 
         using var host = await BuildHost(fakeFacade);
         using var channel = CreateChannel(host);
-        var client = new KeyCustodianSigner.KeyCustodianSignerClient(channel);
+        var client = new SignFixtureSigner.SignFixtureSignerClient(channel);
 
         // Act.
-        var reply = await client.SignAsync(new SignRequest
+        var reply = await client.SignFixtureAsync(new SignFixtureRequest
         {
             Kid = kid,
             Payload = ByteString.CopyFrom(payload),
@@ -66,8 +66,8 @@ public sealed class GrpcServiceImplTests
         reply.Result.StatusCode.Should().Be(200);
         reply.Data.Signature.Should().Be(expectedSig);
         fakeFacade.SignCallCount.Should().Be(1);
-        fakeFacade.LastSignInput!.Kid.Should().Be(kid);
-        fakeFacade.LastSignInput.Payload.Should().Equal(payload);
+        fakeFacade.LastSignFixtureInput!.Kid.Should().Be(kid);
+        fakeFacade.LastSignFixtureInput.Payload.Should().Equal(payload);
     }
 
     // ---------------------------------------------------------------------------
@@ -78,15 +78,15 @@ public sealed class GrpcServiceImplTests
     public async Task Sign_FacadeFailure_ValidationFailed_ReturnsEnvelopeWithRealCode()
     {
         // Arrange: façade returns a ValidationFailed result.
-        var fakeFacade = new FakeKeyCustodianSignerFacade(D2Result<DtoSignOutput?>.ValidationFailed());
+        var fakeFacade = new FakeSignFixtureSignerFacade(D2Result<DtoSignFixtureOutput?>.ValidationFailed());
 
         using var host = await BuildHost(fakeFacade);
         using var channel = CreateChannel(host);
-        var client = new KeyCustodianSigner.KeyCustodianSignerClient(channel);
+        var client = new SignFixtureSigner.SignFixtureSignerClient(channel);
 
         // Act: the gRPC call SUCCEEDS at the transport layer (StatusCode.OK).
         // The business failure rides the D2ResultProto envelope — never throws.
-        var reply = await client.SignAsync(new SignRequest
+        var reply = await client.SignFixtureAsync(new SignFixtureRequest
         {
             Kid = "k",
             Payload = ByteString.CopyFrom(0xDE, 0xAD),
@@ -109,14 +109,14 @@ public sealed class GrpcServiceImplTests
     public async Task Sign_FacadeFailure_NotFound_ReturnsEnvelopeWithRealCode()
     {
         // Arrange: façade returns NotFound.
-        var fakeFacade = new FakeKeyCustodianSignerFacade(D2Result<DtoSignOutput?>.NotFound());
+        var fakeFacade = new FakeSignFixtureSignerFacade(D2Result<DtoSignFixtureOutput?>.NotFound());
 
         using var host = await BuildHost(fakeFacade);
         using var channel = CreateChannel(host);
-        var client = new KeyCustodianSigner.KeyCustodianSignerClient(channel);
+        var client = new SignFixtureSigner.SignFixtureSignerClient(channel);
 
         // Act: transport-layer call succeeds (StatusCode.OK).
-        var reply = await client.SignAsync(new SignRequest
+        var reply = await client.SignFixtureAsync(new SignFixtureRequest
         {
             Kid = "k",
             Payload = ByteString.CopyFrom(0x01),
@@ -135,14 +135,14 @@ public sealed class GrpcServiceImplTests
     public async Task Sign_FacadeFailure_ServiceUnavailable_ReturnsEnvelopeWithRealCode()
     {
         // Arrange: façade returns ServiceUnavailable.
-        var fakeFacade = new FakeKeyCustodianSignerFacade(D2Result<DtoSignOutput?>.ServiceUnavailable());
+        var fakeFacade = new FakeSignFixtureSignerFacade(D2Result<DtoSignFixtureOutput?>.ServiceUnavailable());
 
         using var host = await BuildHost(fakeFacade);
         using var channel = CreateChannel(host);
-        var client = new KeyCustodianSigner.KeyCustodianSignerClient(channel);
+        var client = new SignFixtureSigner.SignFixtureSignerClient(channel);
 
         // Act: transport-layer call SUCCEEDS (StatusCode.OK) — no throw.
-        var reply = await client.SignAsync(new SignRequest
+        var reply = await client.SignFixtureAsync(new SignFixtureRequest
         {
             Kid = "k",
             Payload = ByteString.CopyFrom(0xDE, 0xAD),
@@ -161,16 +161,16 @@ public sealed class GrpcServiceImplTests
     public async Task Sign_DelegatesThroughFacade_RecordsCallCount()
     {
         // Arrange: the facade records call count so we can assert delegation.
-        var fakeFacade = new FakeKeyCustodianSignerFacade(
-            D2Result<DtoSignOutput?>.Ok(new DtoSignOutput("proof-sig")));
+        var fakeFacade = new FakeSignFixtureSignerFacade(
+            D2Result<DtoSignFixtureOutput?>.Ok(new DtoSignFixtureOutput("proof-sig")));
 
         using var host = await BuildHost(fakeFacade);
         using var channel = CreateChannel(host);
-        var client = new KeyCustodianSigner.KeyCustodianSignerClient(channel);
+        var client = new SignFixtureSigner.SignFixtureSignerClient(channel);
 
         // Two calls → two façade invocations.
-        await client.SignAsync(new SignRequest { Kid = "k1", Payload = ByteString.CopyFrom(0x01) });
-        await client.SignAsync(new SignRequest { Kid = "k2", Payload = ByteString.CopyFrom(0x02) });
+        await client.SignFixtureAsync(new SignFixtureRequest { Kid = "k1", Payload = ByteString.CopyFrom(0x01) });
+        await client.SignFixtureAsync(new SignFixtureRequest { Kid = "k2", Payload = ByteString.CopyFrom(0x02) });
 
         // Assert: the service called the FAÇADE exactly twice, routing through it
         // rather than any direct handler invocation.
@@ -181,7 +181,7 @@ public sealed class GrpcServiceImplTests
     // Host + channel helpers
     // ---------------------------------------------------------------------------
 
-    private static async Task<IHost> BuildHost(IKeyCustodianSignerFacade facade)
+    private static async Task<IHost> BuildHost(ISignFixtureSignerFacade facade)
     {
         var host = new HostBuilder()
             .ConfigureWebHost(web =>
@@ -198,7 +198,7 @@ public sealed class GrpcServiceImplTests
                     app.UseRouting();
                     app.UseEndpoints(endpoints =>
                     {
-                        endpoints.MapGrpcService<KeyCustodianSignerService>();
+                        endpoints.MapGrpcService<SignFixtureSignerService>();
                     });
                 });
             })

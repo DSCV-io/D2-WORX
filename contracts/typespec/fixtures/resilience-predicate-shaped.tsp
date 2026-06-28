@@ -15,18 +15,19 @@
 //
 // The richer array-of-MODEL quantifier (`lines.any(l => l.status == "…")`) and
 // nested-optional path (`customer.tier`) predicate constructs are carried by a
-// SECOND op (`placeOrderV2`, output `PlaceOrderV2Output`). Its predicate twin is
-// emitted STANDALONE (the predicate emitter crawls only the output MODEL + the
-// predicate AST at gen time) AND it carries a FULL committed gRPC client + proto +
-// transport mappers + keys (an optional nested model + an array-of-MODEL response
-// survive proto ↔ DTO with full fidelity via the per-nested-model sub-mappers); it
-// is driven in BOTH runtimes by the nested cross-runtime parity matrix and by the
-// in-memory gRPC round-trip harness.
+// SECOND op (`placeOrderV2Fixture`, output `PlaceOrderV2FixtureOutput`). Its
+// predicate twin is emitted STANDALONE (the predicate emitter crawls only the
+// output MODEL + the predicate AST at gen time) AND it carries a FULL committed
+// gRPC client + proto + transport mappers + keys (an optional nested model + an
+// array-of-MODEL response survive proto ↔ DTO with full fidelity via the
+// per-nested-model sub-mappers); it is driven in BOTH runtimes by the nested
+// cross-runtime parity matrix and by the in-memory gRPC round-trip harness.
 //
-// A THIRD op (`deepNest`, output `DeepNestOutput`) proves ARBITRARY nesting depth:
-// output → `DeepWidget` (depth 2, optional) → `DeepPart[]` (depth 3, array-of-MODEL
-// inside a nested model). It carries no @d2Resilience predicate (no predicate twin) —
-// its purpose is the depth-N transport-mapper recursion + round-trip proof.
+// A THIRD op (`deepNestFixture`, output `DeepNestFixtureOutput`) proves ARBITRARY
+// nesting depth: output → `DeepFixtureWidget` (depth 2, optional) →
+// `DeepFixturePart[]` (depth 3, array-of-MODEL inside a nested model). It carries
+// no @d2Resilience predicate (no predicate twin) — its purpose is the depth-N
+// transport-mapper recursion + round-trip proof.
 //
 // The predicate strings use REAL registry literals (the closed error-code +
 // ErrorCategory wire sets the @d2Resilience $onValidate model walk validates):
@@ -34,9 +35,10 @@
 //   - errorCode "VALIDATION_FAILED"          (error-codes spec code)
 //
 // Served by a DEDICATED gRPC module (PredicateFixtures) so the existing
-// sign / signWithKind fixtures + their byte-gates stay byte-identical.
+// sign / enum fixtures + their byte-gates stay byte-identical.
 //
-// This is a test fixture, not a real operation.
+// This is a test fixture, not a real operation. Every fixture-only leaf symbol
+// carries a `Fixture` marker in its own name.
 
 import "@d2/typespec-decorators";
 
@@ -45,7 +47,7 @@ using D2;
 namespace D2.Fixtures;
 
 /** Input for the place-order fixture operation. */
-model PlaceOrderInput {
+model PlaceOrderFixtureInput {
   /** The customer placing the order. */
   @d2Field(1)
   customerId: string;
@@ -57,7 +59,7 @@ model PlaceOrderInput {
  * generated gRPC client + mappers compile while the predicate still exercises
  * an array `.contains` / `.count`, a flat data field, and envelope fields.
  */
-model PlaceOrderOutput {
+model PlaceOrderFixtureOutput {
   /** The created order identifier. */
   @d2Field(1)
   orderCode: string;
@@ -83,7 +85,7 @@ model PlaceOrderOutput {
  */
 @d2Command
 @d2ServedBy("PredicateFixtures")
-@d2GrpcMethod("PredicateFixturesOrders", "PlaceOrder")
+@d2GrpcMethod("PredicateFixturesOrders", "PlaceOrderFixture")
 @d2Resilience(
   "retry(3)",
   #{
@@ -91,43 +93,43 @@ model PlaceOrderOutput {
     failWhen: "result.data.itemStatuses.count == 0 || result.errorCode == \"VALIDATION_FAILED\"",
   }
 )
-op placeOrder(input: PlaceOrderInput): PlaceOrderOutput;
+op placeOrderFixture(input: PlaceOrderFixtureInput): PlaceOrderFixtureOutput;
 
 // ---------------------------------------------------------------------------
-// placeOrderV2 — the NESTED-MODEL + array-of-MODEL predicate shape.
+// placeOrderV2Fixture — the NESTED-MODEL + array-of-MODEL predicate shape.
 //
-// `PlaceOrderV2Output` carries an optional NESTED model (`customer?` →
-// `customer.tier`) and an array-of-MODEL (`lines: PlaceOrderLine[]` →
+// `PlaceOrderV2FixtureOutput` carries an optional NESTED model (`customer?` →
+// `customer.tier`) and an array-of-MODEL (`lines: PlaceOrderFixtureLine[]` →
 // `lines.any(l => l.status == "…")` / `lines.count`). The predicate emitter
 // resolves each segment against this model at GEN TIME (a deep `?.`-chain for
 // the optional nested path; a LINQ `.Any(...)` / `.some(...)` quantifier with an
 // element sub-predicate for the array-of-model) — proving the cross-language
-// emission for the shapes the flat `placeOrder` cannot exercise.
+// emission for the shapes the flat `placeOrderFixture` cannot exercise.
 //
 // A nested-model gRPC RESPONSE IS wire-mappable: the gRPC transport mapper recurses
 // each nested-model / array-of-MODEL field through a per-nested-model proto ↔ DTO
 // sub-mapper (a `repeated <Message>` for the array, a bare message field for the
-// optional nested model — proto3 implicit presence, null when absent). `placeOrderV2`
+// optional nested model — proto3 implicit presence, null when absent). `placeOrderV2Fixture`
 // carries a full committed gRPC client + proto + transport mappers + keys (served by
 // the dedicated `PredicateFixturesV2` module so the V1 module-level fixtures stay
 // byte-identical), round-tripped on the in-memory gRPC harness.
 
-/** A single order line for the placeOrderV2 fixture — an array-of-MODEL element. */
-model PlaceOrderLine {
+/** A single order line for the placeOrderV2Fixture fixture — an array-of-MODEL element. */
+model PlaceOrderFixtureLine {
   /** The line's fulfillment status (drives `lines.any(l => l.status == "…")`). */
   @d2Field(1)
   status: string;
 }
 
-/** Customer info for the placeOrderV2 fixture — an OPTIONAL nested model. */
-model PlaceOrderV2Customer {
+/** Customer info for the placeOrderV2Fixture fixture — an OPTIONAL nested model. */
+model PlaceOrderV2FixtureCustomer {
   /** The customer tier (drives the nested-optional path `customer.tier`). */
   @d2Field(1)
   tier: string;
 }
 
-/** Input for the placeOrderV2 fixture operation. */
-model PlaceOrderV2Input {
+/** Input for the placeOrderV2Fixture fixture operation. */
+model PlaceOrderV2FixtureInput {
   /** The customer placing the order. */
   @d2Field(1)
   customerId: string;
@@ -141,18 +143,18 @@ model PlaceOrderV2Input {
  * transport mapper recurses each nested-model / array-of-MODEL field through a
  * per-nested-model proto ↔ DTO sub-mapper, and a full gRPC client is committed.
  */
-model PlaceOrderV2Output {
+model PlaceOrderV2FixtureOutput {
   /** The created order identifier. */
   @d2Field(1)
   orderCode: string;
 
   /** The order lines — an array-of-MODEL (`.any(l => l.status)` / `.count`). */
   @d2Field(2)
-  lines: PlaceOrderLine[];
+  lines: PlaceOrderFixtureLine[];
 
   /** The customer — an OPTIONAL nested model (`customer.tier`, deep `?.`-chain). */
   @d2Field(3)
-  customer?: PlaceOrderV2Customer;
+  customer?: PlaceOrderV2FixtureCustomer;
 }
 
 /**
@@ -170,7 +172,7 @@ model PlaceOrderV2Output {
  */
 @d2Command
 @d2ServedBy("PredicateFixtures")
-@d2GrpcMethod("PredicateFixturesOrders", "PlaceOrderV2")
+@d2GrpcMethod("PredicateFixturesOrders", "PlaceOrderV2Fixture")
 @d2Resilience(
   "retry(3)",
   #{
@@ -178,55 +180,56 @@ model PlaceOrderV2Output {
     failWhen: "result.data.lines.count == 0 || result.errorCode == \"VALIDATION_FAILED\"",
   }
 )
-op placeOrderV2(input: PlaceOrderV2Input): PlaceOrderV2Output;
+op placeOrderV2Fixture(input: PlaceOrderV2FixtureInput): PlaceOrderV2FixtureOutput;
 
 // ---------------------------------------------------------------------------
-// deepNest — the ARBITRARY-DEPTH (depth-3) nested-model shape.
+// deepNestFixture — the ARBITRARY-DEPTH (depth-3) nested-model shape.
 //
-// `DeepNestOutput` → optional `DeepWidget` (depth 2) → `DeepPart[]` (depth 3,
-// an array-of-MODEL INSIDE a nested model). Proves the transport-mapper recursion
-// crawls arbitrary depth (a per-nested-model sub-mapper per level, deduped) and
-// the proto emitter emits every nested message at every level. No @d2Resilience
-// predicate (no predicate twin) — this op exists purely to prove depth-N.
+// `DeepNestFixtureOutput` → optional `DeepFixtureWidget` (depth 2) →
+// `DeepFixturePart[]` (depth 3, an array-of-MODEL INSIDE a nested model). Proves
+// the transport-mapper recursion crawls arbitrary depth (a per-nested-model
+// sub-mapper per level, deduped) and the proto emitter emits every nested message
+// at every level. No @d2Resilience predicate (no predicate twin) — this op exists
+// purely to prove depth-N.
 
-/** A leaf part for the deepNest fixture — the depth-3 array-of-MODEL element. */
-model DeepPart {
+/** A leaf part for the deepNestFixture fixture — the depth-3 array-of-MODEL element. */
+model DeepFixturePart {
   /** The part code. */
   @d2Field(1)
   code: string;
 }
 
-/** A widget for the deepNest fixture — depth 2, holding an array-of-MODEL of parts. */
-model DeepWidget {
+/** A widget for the deepNestFixture fixture — depth 2, holding an array-of-MODEL of parts. */
+model DeepFixtureWidget {
   /** The widget name. */
   @d2Field(1)
   name: string;
 
   /** The widget's parts — an array-of-MODEL nested one level deeper. */
   @d2Field(2)
-  parts: DeepPart[];
+  parts: DeepFixturePart[];
 }
 
-/** Input for the deepNest fixture operation. */
-model DeepNestInput {
+/** Input for the deepNestFixture fixture operation. */
+model DeepNestFixtureInput {
   /** The gizmo identifier to fetch. */
   @d2Field(1)
   gizmoId: string;
 }
 
 /**
- * Output of the deepNest fixture operation — an optional nested `DeepWidget` (depth 2)
- * whose `parts` is an array-of-MODEL (depth 3). Drives the depth-N transport-mapper
- * recursion + the depth-3 round-trip proof.
+ * Output of the deepNestFixture fixture operation — an optional nested `DeepFixtureWidget`
+ * (depth 2) whose `parts` is an array-of-MODEL (depth 3). Drives the depth-N
+ * transport-mapper recursion + the depth-3 round-trip proof.
  */
-model DeepNestOutput {
+model DeepNestFixtureOutput {
   /** The created gizmo identifier. */
   @d2Field(1)
   gizmoId: string;
 
   /** The gizmo's widget — an OPTIONAL nested model (depth 2) carrying parts (depth 3). */
   @d2Field(2)
-  widget?: DeepWidget;
+  widget?: DeepFixtureWidget;
 }
 
 /**
@@ -237,5 +240,5 @@ model DeepNestOutput {
  */
 @d2Command
 @d2ServedBy("PredicateFixtures")
-@d2GrpcMethod("PredicateFixturesGizmosDeep", "DeepNest")
-op deepNest(input: DeepNestInput): DeepNestOutput;
+@d2GrpcMethod("PredicateFixturesGizmosDeep", "DeepNestFixture")
+op deepNestFixture(input: DeepNestFixtureInput): DeepNestFixtureOutput;

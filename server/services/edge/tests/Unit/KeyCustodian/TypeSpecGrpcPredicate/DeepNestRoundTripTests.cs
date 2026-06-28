@@ -22,18 +22,18 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using DtoDeepInput = D2.Edge.Tests.TypeSpecGrpcPredicate.Generated.DeepNestInput;
-using DtoDeepOutput = D2.Edge.Tests.TypeSpecGrpcPredicate.Generated.DeepNestOutput;
-using DtoDeepPart = D2.Edge.Tests.TypeSpecGrpcPredicate.Generated.DeepPart;
-using DtoDeepWidget = D2.Edge.Tests.TypeSpecGrpcPredicate.Generated.DeepWidget;
-using ProtoDeepOutput = D2.Services.Protos.PredicateFixturesDeep.V1.DeepNestOutput;
-using ProtoDeepPart = D2.Services.Protos.PredicateFixturesDeep.V1.DeepPart;
-using ProtoDeepWidget = D2.Services.Protos.PredicateFixturesDeep.V1.DeepWidget;
+using DtoDeepFixturePart = D2.Edge.Tests.TypeSpecGrpcPredicate.Generated.DeepFixturePart;
+using DtoDeepFixtureWidget = D2.Edge.Tests.TypeSpecGrpcPredicate.Generated.DeepFixtureWidget;
+using DtoDeepInput = D2.Edge.Tests.TypeSpecGrpcPredicate.Generated.DeepNestFixtureInput;
+using DtoDeepOutput = D2.Edge.Tests.TypeSpecGrpcPredicate.Generated.DeepNestFixtureOutput;
+using ProtoDeepFixturePart = D2.Services.Protos.PredicateFixturesDeep.V1.DeepFixturePart;
+using ProtoDeepFixtureWidget = D2.Services.Protos.PredicateFixturesDeep.V1.DeepFixtureWidget;
+using ProtoDeepOutput = D2.Services.Protos.PredicateFixturesDeep.V1.DeepNestFixtureOutput;
 
 /// <summary>
 /// In-memory harness tests for the generated <see cref="PredicateFixturesDeepGrpcClient"/> — the
 /// ARBITRARY-DEPTH (depth-3) nested-model transport-mapper recursion. Proves an
-/// output → optional <c>DeepWidget</c> (depth 2) → <c>DeepPart[]</c> (depth 3, array-of-MODEL
+/// output → optional <c>DeepFixtureWidget</c> (depth 2) → <c>DeepFixturePart[]</c> (depth 3, array-of-MODEL
 /// inside a nested model) survives proto ↔ DTO with full fidelity through the per-nested-level
 /// sub-mappers (every level mapped, deduped). Hosts a concrete shim extending
 /// <see cref="PredicateFixturesGizmosDeep.PredicateFixturesGizmosDeepBase"/> over an in-process
@@ -51,15 +51,15 @@ public sealed class DeepNestRoundTripTests
         var shim = new EchoDeepShimBase(
             () => D2Result<DtoDeepOutput?>.Ok(new DtoDeepOutput(
                 "gizmo-1",
-                new DtoDeepWidget(
+                new DtoDeepFixtureWidget(
                     "widget-a",
-                    [new DtoDeepPart("P-1"), new DtoDeepPart("P-2")]))));
+                    [new DtoDeepFixturePart("P-1"), new DtoDeepFixturePart("P-2")]))));
 
         using var host = await BuildHost(shim);
         using var pipeline = BuildPassThroughPipeline();
         var client = BuildClient(host, pipeline);
 
-        var result = await client.DeepNestAsync(new DtoDeepInput("gizmo-1"));
+        var result = await client.DeepNestFixtureAsync(new DtoDeepInput("gizmo-1"));
 
         result.Success.Should().BeTrue();
         result.Data!.GizmoId.Should().Be("gizmo-1");
@@ -88,7 +88,7 @@ public sealed class DeepNestRoundTripTests
         using var pipeline = BuildPassThroughPipeline();
         var client = BuildClient(host, pipeline);
 
-        var result = await client.DeepNestAsync(new DtoDeepInput("gizmo-2"));
+        var result = await client.DeepNestFixtureAsync(new DtoDeepInput("gizmo-2"));
 
         result.Success.Should().BeTrue();
         result.Data!.Widget.Should().BeNull();
@@ -103,13 +103,13 @@ public sealed class DeepNestRoundTripTests
     {
         var shim = new EchoDeepShimBase(
             () => D2Result<DtoDeepOutput?>.Ok(new DtoDeepOutput(
-                "gizmo-3", new DtoDeepWidget("widget-empty", []))));
+                "gizmo-3", new DtoDeepFixtureWidget("widget-empty", []))));
 
         using var host = await BuildHost(shim);
         using var pipeline = BuildPassThroughPipeline();
         var client = BuildClient(host, pipeline);
 
-        var result = await client.DeepNestAsync(new DtoDeepInput("gizmo-3"));
+        var result = await client.DeepNestFixtureAsync(new DtoDeepInput("gizmo-3"));
 
         result.Success.Should().BeTrue();
         result.Data!.Widget.Should().NotBeNull();
@@ -126,7 +126,7 @@ public sealed class DeepNestRoundTripTests
     {
         using var host = await BuildHost(new EchoDeepShimBase(
             () => D2Result<DtoDeepOutput?>.Ok(new DtoDeepOutput(
-                "g", new DtoDeepWidget("w", [new DtoDeepPart("p")])))));
+                "g", new DtoDeepFixtureWidget("w", [new DtoDeepFixturePart("p")])))));
 
         var httpClient = host.GetTestClient();
 
@@ -150,7 +150,7 @@ public sealed class DeepNestRoundTripTests
         client.Should().BeOfType<PredicateFixturesDeepGrpcClient>();
 
         var pipeline = sp.GetRequiredKeyedService<ResilientPipeline<string, DtoDeepOutput?>>(
-            DeepNestClientKeys.PIPELINE);
+            DeepNestFixtureClientKeys.PIPELINE);
         pipeline.Should().NotBeNull();
     }
 
@@ -218,9 +218,9 @@ public sealed class DeepNestRoundTripTests
     // Raw proto construction (depth-3) — the shim builds the nested proto tree directly
     // (no committed server transport mapper; see PlaceOrderV2RoundTripTests for why). This
     // harness proves the CLIENT depth-3 proto → DTO recursion end-to-end.
-    private static DeepNestResponse BuildResponse(D2Result<DtoDeepOutput?> businessResult)
+    private static DeepNestFixtureResponse BuildResponse(D2Result<DtoDeepOutput?> businessResult)
     {
-        var response = new DeepNestResponse { Result = businessResult.ToProto() };
+        var response = new DeepNestFixtureResponse { Result = businessResult.ToProto() };
         if (businessResult.Success && businessResult.Data is not null)
         {
             var data = businessResult.Data;
@@ -228,10 +228,10 @@ public sealed class DeepNestRoundTripTests
 
             if (data.Widget is not null)
             {
-                var widget = new ProtoDeepWidget { Name = data.Widget.Name };
+                var widget = new ProtoDeepFixtureWidget { Name = data.Widget.Name };
 
                 foreach (var part in data.Widget.Parts)
-                    widget.Parts.Add(new ProtoDeepPart { Code = part.Code });
+                    widget.Parts.Add(new ProtoDeepFixturePart { Code = part.Code });
 
                 proto.Widget = widget;
             }
@@ -245,8 +245,8 @@ public sealed class DeepNestRoundTripTests
     private sealed class EchoDeepShimBase(Func<D2Result<DtoDeepOutput?>> resultFactory)
         : PredicateFixturesGizmosDeep.PredicateFixturesGizmosDeepBase
     {
-        public override Task<DeepNestResponse> DeepNest(
-            DeepNestRequest request, ServerCallContext context)
+        public override Task<DeepNestFixtureResponse> DeepNestFixture(
+            DeepNestFixtureRequest request, ServerCallContext context)
             => Task.FromResult(BuildResponse(resultFactory()));
     }
 

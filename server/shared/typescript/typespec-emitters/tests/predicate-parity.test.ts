@@ -6,14 +6,14 @@
 // parity suite. Drives the SAME shared fixture
 // (contracts/resilience/predicate-parity.fixture.json) as the .NET
 // PredicateParityTests, importing the ACTUAL emitted predicate twin
-// (place-order-resilience-predicates.g.ts — the committed byte-gated fixture)
-// and evaluating placeOrderRetryWhen / placeOrderFailWhen over every row. An
+// (place-order-fixture-resilience-predicates.g.ts — the committed byte-gated fixture)
+// and evaluating placeOrderFixtureRetryWhen / placeOrderFixtureFailWhen over every row. An
 // identically-shaped reconstructed D2Result must yield the SAME retry / fail
 // booleans in TS as in C#; a divergence breaks the cross-language emission
 // contract and must be surfaced (not reconciled by editing an expected value).
 //
 // The emitted .g.ts carries `// @ts-nocheck` (it references the D2Result<T> /
-// PlaceOrderOutput types that wire up only in a real consumer) and lives in the
+// PlaceOrderFixtureOutput types that wire up only in a real consumer) and lives in the
 // edge test project (outside this package's rootDir), so it cannot be a typed
 // `import`. Instead the test reads the committed file TEXT and reconstructs the
 // two predicate functions from the emitted arrow-function bodies via `new
@@ -36,19 +36,19 @@ const _KC_GEN = join(
 );
 
 /**
- * Read the committed emitted predicate twin and reconstruct `placeOrderRetryWhen`
- * / `placeOrderFailWhen` from their emitted arrow-function bodies. The emitted
+ * Read the committed emitted predicate twin and reconstruct `placeOrderFixtureRetryWhen`
+ * / `placeOrderFixtureFailWhen` from their emitted arrow-function bodies. The emitted
  * shape is `export const <name> = (r: D2Result<…>): boolean =>\n    <expr>;`.
  */
 function loadEmittedPredicates(): {
   retryWhen: Predicate;
   failWhen: Predicate;
 } {
-  const file = join(_KC_GEN, "place-order-resilience-predicates.g.ts");
+  const file = join(_KC_GEN, "place-order-fixture-resilience-predicates.g.ts");
   const text = readFileSync(file, "utf8");
   return {
-    retryWhen: extractPredicate(text, "placeOrderRetryWhen"),
-    failWhen: extractPredicate(text, "placeOrderFailWhen"),
+    retryWhen: extractPredicate(text, "placeOrderFixtureRetryWhen"),
+    failWhen: extractPredicate(text, "placeOrderFixtureFailWhen"),
   };
 }
 
@@ -64,8 +64,10 @@ function extractPredicate(source: string, name: string): Predicate {
   return new Function("r", `return (${m[1]!.trim()});`) as Predicate;
 }
 
-const { retryWhen: placeOrderRetryWhen, failWhen: placeOrderFailWhen } =
-  loadEmittedPredicates();
+const {
+  retryWhen: placeOrderFixtureRetryWhen,
+  failWhen: placeOrderFixtureFailWhen,
+} = loadEmittedPredicates();
 
 // ---------------------------------------------------------------------------
 // Shared fixture loader
@@ -139,17 +141,17 @@ describe("predicateParity_SharedFixtureLoads", () => {
 });
 
 describe("predicateParity_EmittedTsPredicate_MatchesExpected", () => {
-  it("placeOrderRetryWhen + placeOrderFailWhen match the cross-language expectation for every row", () => {
+  it("placeOrderFixtureRetryWhen + placeOrderFixtureFailWhen match the cross-language expectation for every row", () => {
     const fx = loadFixture();
 
     for (const c of fx.cases) {
       const r = toResult(c);
       expect(
-        placeOrderRetryWhen(r),
+        placeOrderFixtureRetryWhen(r),
         `retryWhen for '${c.name}' must match the cross-language expectation`,
       ).toBe(c.expectedRetry);
       expect(
-        placeOrderFailWhen(r),
+        placeOrderFixtureFailWhen(r),
         `failWhen for '${c.name}' must match the cross-language expectation`,
       ).toBe(c.expectedFail);
     }
@@ -161,7 +163,7 @@ describe("predicateParity_EmittedTsPredicate_MatchesExpected", () => {
 //
 // Drives the SAME shared nested fixture (predicate-parity-nested.fixture.json) as
 // the .NET PredicateParityTests, executing the ACTUAL committed emitted twin
-// (place-order-v2-resilience-predicates.g.ts) over a deep `?.`-chain
+// (place-order-v2-fixture-resilience-predicates.g.ts) over a deep `?.`-chain
 // (customer.tier) + an array-of-MODEL quantifier (lines.any(l => l.status)). This
 // is the cross-runtime BEHAVIORAL proof of the rich emission the flat placeOrder
 // matrix cannot exercise — the emitted predicate is EVALUATED, not string-asserted.
@@ -204,11 +206,14 @@ function loadEmittedPredicatesV2(): {
   retryWhen: Predicate;
   failWhen: Predicate;
 } {
-  const file = join(_KC_GEN, "place-order-v2-resilience-predicates.g.ts");
+  const file = join(
+    _KC_GEN,
+    "place-order-v2-fixture-resilience-predicates.g.ts",
+  );
   const text = readFileSync(file, "utf8");
   return {
-    retryWhen: extractPredicate(text, "placeOrderV2RetryWhen"),
-    failWhen: extractPredicate(text, "placeOrderV2FailWhen"),
+    retryWhen: extractPredicate(text, "placeOrderV2FixtureRetryWhen"),
+    failWhen: extractPredicate(text, "placeOrderV2FixtureFailWhen"),
   };
 }
 

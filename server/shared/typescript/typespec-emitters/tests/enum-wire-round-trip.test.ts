@@ -25,41 +25,41 @@ import { findRepoRoot } from "./repo-root.js";
 // that the emitter produces exactly these. Here we exercise the WIRE BEHAVIOR.
 // ---------------------------------------------------------------------------
 
-const KeyKind = {
+const FixtureKeyKind = {
   Rsa: "Rsa",
   Aes: "Aes",
   Secret: "Secret",
 } as const;
 
-const Level = {
+const FixtureLevel = {
   Low: "Low",
   Medium: "Medium",
   High: "High",
 } as const;
 
-const Status = {
+const FixtureStatus = {
   Active: "active",
   Inactive: "inactive",
   Pending: "pending",
 } as const;
 
-const AccountKind = {
+const FixtureAccountKind = {
   Internal: "internal",
   ThirdParty: "third-party",
 } as const;
 
-const EnumOutputInlineState = {
+const EnumFixtureWalkOutputInlineState = {
   Draft: "draft",
   Published: "published",
   Archived: "archived",
 } as const;
 
 const CONST_OBJECTS: Record<string, Record<string, string>> = {
-  KeyKind,
-  Level,
-  Status,
-  AccountKind,
-  EnumOutputInlineState,
+  FixtureKeyKind,
+  FixtureLevel,
+  FixtureStatus,
+  FixtureAccountKind,
+  EnumFixtureWalkOutputInlineState,
 };
 
 // ---------------------------------------------------------------------------
@@ -139,16 +139,16 @@ describe("enumWireRoundTrip_KnownWire_ResolvesToMember", () => {
   });
 
   it("S-2 Level value is the member NAME string (matching the C# string wire), not the int", () => {
-    expect(Level.High).toBe("High");
-    expect(Level.Low).toBe("Low");
+    expect(FixtureLevel.High).toBe("High");
+    expect(FixtureLevel.Low).toBe("Low");
     // The integer backing is C#-side only — it never appears in the TS wire value.
-    expect(Object.values(Level)).not.toContain(0);
-    expect(Object.values(Level)).not.toContain(10);
+    expect(Object.values(FixtureLevel)).not.toContain(0);
+    expect(Object.values(FixtureLevel)).not.toContain(10);
   });
 
   it("S-3 AccountKind ThirdParty value is the hyphenated literal", () => {
-    expect(AccountKind.ThirdParty).toBe("third-party");
-    expect(AccountKind.Internal).toBe("internal");
+    expect(FixtureAccountKind.ThirdParty).toBe("third-party");
+    expect(FixtureAccountKind.Internal).toBe("internal");
   });
 });
 
@@ -173,8 +173,12 @@ describe("enumWireRoundTrip_UnknownWire_RejectedNoFallback", () => {
   });
 
   it("a key lookup for a non-member returns undefined (no Unknown sentinel)", () => {
-    expect((KeyKind as Record<string, string>)["Quantum"]).toBeUndefined();
-    expect((Status as Record<string, string>)["deleted"]).toBeUndefined();
+    expect(
+      (FixtureKeyKind as Record<string, string>)["Quantum"],
+    ).toBeUndefined();
+    expect(
+      (FixtureStatus as Record<string, string>)["deleted"],
+    ).toBeUndefined();
   });
 });
 

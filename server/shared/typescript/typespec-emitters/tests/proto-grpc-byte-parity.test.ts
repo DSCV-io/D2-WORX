@@ -59,7 +59,7 @@ function readFixture(absPath: string): string {
 // Field stubs matching the sign fixture
 // ---------------------------------------------------------------------------
 
-function buildSignInputFields(): readonly FieldInfo[] {
+function buildSignFixtureInputFields(): readonly FieldInfo[] {
   return [
     {
       name: "kid",
@@ -88,7 +88,7 @@ function buildSignInputFields(): readonly FieldInfo[] {
   ];
 }
 
-function buildSignOutputFields(): readonly FieldInfo[] {
+function buildSignFixtureOutputFields(): readonly FieldInfo[] {
   return [
     {
       name: "signature",
@@ -114,46 +114,48 @@ const SOURCE = "contracts/typespec/fixtures/sign-shaped.tsp";
 describe("byteParity_SignProto_CommittedFixtureIdentical", () => {
   it("re-emitted .proto is byte-identical to the committed fixture", () => {
     const result = emitProto(
-      "sign",
-      "KeyCustodianSigner",
-      "Sign",
+      "signFixture",
+      "SignFixtureSigner",
+      "SignFixture",
       "unary",
-      "d2.keycustodian.v2alpha",
-      "D2.Services.Protos.KeyCustodian.V2Alpha",
+      "d2.signfixtures.v1",
+      "D2.Services.Protos.SignFixtures.V1",
       SOURCE,
-      "SignRequest",
-      buildSignInputFields(),
+      "SignFixtureRequest",
+      buildSignFixtureInputFields(),
       undefined,
-      "SignOutput", // data message name — wrapper is always <grpcMethod>Response
-      buildSignOutputFields(),
+      "SignFixtureOutput", // data message name — wrapper is always <grpcMethod>Response
+      buildSignFixtureOutputFields(),
       undefined,
       [],
       () => {},
     );
     expect(result).toBeDefined();
     expect(result!.content).toBe(
-      readFixture(join(GRPC_PROTOS, "key_custodian_signer_sign.g.proto")),
+      readFixture(
+        join(GRPC_PROTOS, "sign_fixture_signer_sign_fixture.g.proto"),
+      ),
     );
   });
 
   it("deliberate-drift detection: mutated fixture does NOT match re-emitted output", () => {
     // §1.20 non-vacuous guard: corrupt the fixture by one byte — D2ResultProto → DRIFTED.
     const drifted = readFixture(
-      join(GRPC_PROTOS, "key_custodian_signer_sign.g.proto"),
+      join(GRPC_PROTOS, "sign_fixture_signer_sign_fixture.g.proto"),
     ).replace("D2ResultProto", "D2ResultProtoDRIFTED");
     const result = emitProto(
-      "sign",
-      "KeyCustodianSigner",
-      "Sign",
+      "signFixture",
+      "SignFixtureSigner",
+      "SignFixture",
       "unary",
-      "d2.keycustodian.v2alpha",
-      "D2.Services.Protos.KeyCustodian.V2Alpha",
+      "d2.signfixtures.v1",
+      "D2.Services.Protos.SignFixtures.V1",
       SOURCE,
-      "SignRequest",
-      buildSignInputFields(),
+      "SignFixtureRequest",
+      buildSignFixtureInputFields(),
       undefined,
-      "SignOutput",
-      buildSignOutputFields(),
+      "SignFixtureOutput",
+      buildSignFixtureOutputFields(),
       undefined,
       [],
       () => {},
@@ -163,59 +165,59 @@ describe("byteParity_SignProto_CommittedFixtureIdentical", () => {
 });
 
 // ---------------------------------------------------------------------------
-// byteParity_KeyCustodianSignerService (re-pointed to façade delegation)
+// byteParity_SignFixtureSignerService (re-pointed to façade delegation)
 // ---------------------------------------------------------------------------
 
 /** Fixture façade delegation target for the sign op (matches the committed .g.cs). */
 const SIGN_FACADE_TARGET: GrpcDelegationTarget = {
   kind: "facade",
-  typeName: "IKeyCustodianSignerFacade",
-  methodName: "SignAsync",
+  typeName: "ISignFixtureSignerFacade",
+  methodName: "SignFixtureAsync",
   targetNamespace: "D2.Edge.Tests.TypeSpecRoute.Generated.Facade",
 };
 
-describe("byteParity_KeyCustodianSignerService_FacadeDelegation_CommittedFixtureIdentical", () => {
+describe("byteParity_SignFixtureSignerService_FacadeDelegation_CommittedFixtureIdentical", () => {
   it("re-emitted service .g.cs (façade delegation) is byte-identical to the committed fixture", () => {
     const [svc] = emitGrpcService(
-      "sign",
-      "KeyCustodianSigner",
-      "Sign",
-      "D2.Services.Protos.KeyCustodian.V2Alpha",
+      "signFixture",
+      "SignFixtureSigner",
+      "SignFixture",
+      "D2.Services.Protos.SignFixtures.V1",
       "D2.Edge.Tests.TypeSpecGrpc.Generated",
       "D2.Edge.Tests.TypeSpecDto.Generated",
       SOURCE,
-      "SignRequest",
-      "SignResponse",
-      "SignInput",
-      buildSignInputFields(),
-      "SignOutput",
-      buildSignOutputFields(),
+      "SignFixtureRequest",
+      "SignFixtureResponse",
+      "SignFixtureInput",
+      buildSignFixtureInputFields(),
+      "SignFixtureOutput",
+      buildSignFixtureOutputFields(),
       SIGN_FACADE_TARGET,
     );
     expect(svc.content).toBe(
-      readFixture(join(GRPC_HOME, "KeyCustodianSignerService.g.cs")),
+      readFixture(join(GRPC_HOME, "SignFixtureSignerService.g.cs")),
     );
   });
 
   it("deliberate-drift detection: handler delegation does NOT match façade fixture", () => {
-    // Substituting SignAsync → HandleAsync would produce a mismatch (non-vacuous gate).
+    // Substituting SignFixtureAsync → HandleAsync would produce a mismatch (non-vacuous gate).
     const drifted = readFixture(
-      join(GRPC_HOME, "KeyCustodianSignerService.g.cs"),
-    ).replace("facade.SignAsync", "handler.HandleAsync");
+      join(GRPC_HOME, "SignFixtureSignerService.g.cs"),
+    ).replace("facade.SignFixtureAsync", "handler.HandleAsync");
     const [svc] = emitGrpcService(
-      "sign",
-      "KeyCustodianSigner",
-      "Sign",
-      "D2.Services.Protos.KeyCustodian.V2Alpha",
+      "signFixture",
+      "SignFixtureSigner",
+      "SignFixture",
+      "D2.Services.Protos.SignFixtures.V1",
       "D2.Edge.Tests.TypeSpecGrpc.Generated",
       "D2.Edge.Tests.TypeSpecDto.Generated",
       SOURCE,
-      "SignRequest",
-      "SignResponse",
-      "SignInput",
-      buildSignInputFields(),
-      "SignOutput",
-      buildSignOutputFields(),
+      "SignFixtureRequest",
+      "SignFixtureResponse",
+      "SignFixtureInput",
+      buildSignFixtureInputFields(),
+      "SignFixtureOutput",
+      buildSignFixtureOutputFields(),
       SIGN_FACADE_TARGET,
     );
     expect(svc.content).not.toBe(drifted);
@@ -223,49 +225,52 @@ describe("byteParity_KeyCustodianSignerService_FacadeDelegation_CommittedFixture
 });
 
 // ---------------------------------------------------------------------------
-// byteParity_SignTransportMappers
+// byteParity_SignFixtureTransportMappers
 // ---------------------------------------------------------------------------
 
-describe("byteParity_SignTransportMappers_CommittedFixtureIdentical", () => {
+describe("byteParity_SignFixtureTransportMappers_CommittedFixtureIdentical", () => {
   it("re-emitted mapper .g.cs is byte-identical to the committed fixture", () => {
     const [, mapper] = emitGrpcService(
-      "sign",
-      "KeyCustodianSigner",
-      "Sign",
-      "D2.Services.Protos.KeyCustodian.V2Alpha",
+      "signFixture",
+      "SignFixtureSigner",
+      "SignFixture",
+      "D2.Services.Protos.SignFixtures.V1",
       "D2.Edge.Tests.TypeSpecGrpc.Generated",
       "D2.Edge.Tests.TypeSpecDto.Generated",
       SOURCE,
-      "SignRequest",
-      "SignResponse",
-      "SignInput",
-      buildSignInputFields(),
-      "SignOutput",
-      buildSignOutputFields(),
+      "SignFixtureRequest",
+      "SignFixtureResponse",
+      "SignFixtureInput",
+      buildSignFixtureInputFields(),
+      "SignFixtureOutput",
+      buildSignFixtureOutputFields(),
     );
     expect(mapper.content).toBe(
-      readFixture(join(GRPC_HOME, "SignTransportMappers.g.cs")),
+      readFixture(join(GRPC_HOME, "SignFixtureTransportMappers.g.cs")),
     );
   });
 
   it("deliberate-drift detection: mutated fixture does NOT match re-emitted output", () => {
     const drifted = readFixture(
-      join(GRPC_HOME, "SignTransportMappers.g.cs"),
-    ).replace("SignTransportMappers", "SignTransportMappersDRIFTED");
+      join(GRPC_HOME, "SignFixtureTransportMappers.g.cs"),
+    ).replace(
+      "SignFixtureTransportMappers",
+      "SignFixtureTransportMappersDRIFTED",
+    );
     const [, mapper] = emitGrpcService(
-      "sign",
-      "KeyCustodianSigner",
-      "Sign",
-      "D2.Services.Protos.KeyCustodian.V2Alpha",
+      "signFixture",
+      "SignFixtureSigner",
+      "SignFixture",
+      "D2.Services.Protos.SignFixtures.V1",
       "D2.Edge.Tests.TypeSpecGrpc.Generated",
       "D2.Edge.Tests.TypeSpecDto.Generated",
       SOURCE,
-      "SignRequest",
-      "SignResponse",
-      "SignInput",
-      buildSignInputFields(),
-      "SignOutput",
-      buildSignOutputFields(),
+      "SignFixtureRequest",
+      "SignFixtureResponse",
+      "SignFixtureInput",
+      buildSignFixtureInputFields(),
+      "SignFixtureOutput",
+      buildSignFixtureOutputFields(),
     );
     expect(mapper.content).not.toBe(drifted);
   });
@@ -285,41 +290,41 @@ const CLIENT_DTO_NS = "D2.Edge.Tests.TypeSpecDto.Generated";
 
 function buildClientSignOp(): GrpcClientOp {
   return {
-    opName: "sign",
-    grpcService: "KeyCustodianSigner",
-    grpcMethod: "Sign",
-    protoCsharpNs: "D2.Services.Protos.KeyCustodian.V2Alpha",
+    opName: "signFixture",
+    grpcService: "SignFixtureSigner",
+    grpcMethod: "SignFixture",
+    protoCsharpNs: "D2.Services.Protos.SignFixtures.V1",
     dtoCsharpNs: CLIENT_DTO_NS,
     sourceSpec: SOURCE,
-    requestModelName: "SignInput",
-    requestFields: buildSignInputFields(),
-    responseModelName: "SignOutput",
-    responseFields: buildSignOutputFields(),
+    requestModelName: "SignFixtureInput",
+    requestFields: buildSignFixtureInputFields(),
+    responseModelName: "SignFixtureOutput",
+    responseFields: buildSignFixtureOutputFields(),
   };
 }
 
 // ---------------------------------------------------------------------------
-// byteParity_IKeyCustodianGrpcClient
+// byteParity_ISignFixtureGrpcClient
 // ---------------------------------------------------------------------------
 
-describe("byteParity_IKeyCustodianGrpcClient_CommittedFixtureIdentical", () => {
+describe("byteParity_ISignFixtureGrpcClient_CommittedFixtureIdentical", () => {
   it("re-emitted interface .g.cs is byte-identical to the committed fixture", () => {
     const [iface] = emitGrpcClient(
-      "KeyCustodian",
+      "SignFixture",
       [buildClientSignOp()],
       CLIENTS_NS,
     );
     expect(iface!.content).toBe(
-      readFixture(join(GRPC_HOME, "IKeyCustodianGrpcClient.g.cs")),
+      readFixture(join(GRPC_HOME, "ISignFixtureGrpcClient.g.cs")),
     );
   });
 
   it("deliberate-drift detection: mutated fixture does NOT match re-emitted output", () => {
     const drifted = readFixture(
-      join(GRPC_HOME, "IKeyCustodianGrpcClient.g.cs"),
-    ).replace("IKeyCustodianGrpcClient", "IKeyCustodianGrpcClientDRIFTED");
+      join(GRPC_HOME, "ISignFixtureGrpcClient.g.cs"),
+    ).replace("ISignFixtureGrpcClient", "ISignFixtureGrpcClientDRIFTED");
     const [iface] = emitGrpcClient(
-      "KeyCustodian",
+      "SignFixture",
       [buildClientSignOp()],
       CLIENTS_NS,
     );
@@ -328,27 +333,27 @@ describe("byteParity_IKeyCustodianGrpcClient_CommittedFixtureIdentical", () => {
 });
 
 // ---------------------------------------------------------------------------
-// byteParity_KeyCustodianGrpcClient (impl)
+// byteParity_SignFixtureGrpcClient (impl)
 // ---------------------------------------------------------------------------
 
-describe("byteParity_KeyCustodianGrpcClient_CommittedFixtureIdentical", () => {
+describe("byteParity_SignFixtureGrpcClient_CommittedFixtureIdentical", () => {
   it("re-emitted impl .g.cs is byte-identical to the committed fixture", () => {
     const [, impl] = emitGrpcClient(
-      "KeyCustodian",
+      "SignFixture",
       [buildClientSignOp()],
       CLIENTS_NS,
     );
     expect(impl!.content).toBe(
-      readFixture(join(GRPC_HOME, "KeyCustodianGrpcClient.g.cs")),
+      readFixture(join(GRPC_HOME, "SignFixtureGrpcClient.g.cs")),
     );
   });
 
   it("deliberate-drift detection: removing D2Services.Protos.Common.V1 does NOT match", () => {
     const drifted = readFixture(
-      join(GRPC_HOME, "KeyCustodianGrpcClient.g.cs"),
+      join(GRPC_HOME, "SignFixtureGrpcClient.g.cs"),
     ).replace("using D2.Services.Protos.Common.V1;\n", "");
     const [, impl] = emitGrpcClient(
-      "KeyCustodian",
+      "SignFixture",
       [buildClientSignOp()],
       CLIENTS_NS,
     );
@@ -357,27 +362,27 @@ describe("byteParity_KeyCustodianGrpcClient_CommittedFixtureIdentical", () => {
 });
 
 // ---------------------------------------------------------------------------
-// byteParity_SignClientMappers
+// byteParity_SignFixtureClientMappers
 // ---------------------------------------------------------------------------
 
-describe("byteParity_SignClientMappers_CommittedFixtureIdentical", () => {
+describe("byteParity_SignFixtureClientMappers_CommittedFixtureIdentical", () => {
   it("re-emitted mapper .g.cs is byte-identical to the committed fixture", () => {
     const [, , mapper] = emitGrpcClient(
-      "KeyCustodian",
+      "SignFixture",
       [buildClientSignOp()],
       CLIENTS_NS,
     );
     expect(mapper!.content).toBe(
-      readFixture(join(GRPC_HOME, "SignClientMappers.g.cs")),
+      readFixture(join(GRPC_HOME, "SignFixtureClientMappers.g.cs")),
     );
   });
 
   it("deliberate-drift detection: mutated fixture does NOT match re-emitted output", () => {
     const drifted = readFixture(
-      join(GRPC_HOME, "SignClientMappers.g.cs"),
-    ).replace("SignClientMappers", "SignClientMappersDRIFTED");
+      join(GRPC_HOME, "SignFixtureClientMappers.g.cs"),
+    ).replace("SignFixtureClientMappers", "SignFixtureClientMappersDRIFTED");
     const [, , mapper] = emitGrpcClient(
-      "KeyCustodian",
+      "SignFixture",
       [buildClientSignOp()],
       CLIENTS_NS,
     );
@@ -386,30 +391,30 @@ describe("byteParity_SignClientMappers_CommittedFixtureIdentical", () => {
 });
 
 // ---------------------------------------------------------------------------
-// byteParity_KeyCustodianGrpcClientsGenerated (DI extension)
+// byteParity_SignFixtureGrpcClientsGenerated (DI extension)
 // ---------------------------------------------------------------------------
 
-describe("byteParity_KeyCustodianGrpcClientsGenerated_CommittedFixtureIdentical", () => {
+describe("byteParity_SignFixtureGrpcClientsGenerated_CommittedFixtureIdentical", () => {
   it("re-emitted DI-ext .g.cs is byte-identical to the committed fixture", () => {
     const [, , , di] = emitGrpcClient(
-      "KeyCustodian",
+      "SignFixture",
       [buildClientSignOp()],
       CLIENTS_NS,
     );
     expect(di!.content).toBe(
-      readFixture(join(GRPC_HOME, "KeyCustodianGrpcClientsGenerated.g.cs")),
+      readFixture(join(GRPC_HOME, "SignFixtureGrpcClientsGenerated.g.cs")),
     );
   });
 
   it("deliberate-drift detection: mutated fixture does NOT match re-emitted output", () => {
     const drifted = readFixture(
-      join(GRPC_HOME, "KeyCustodianGrpcClientsGenerated.g.cs"),
+      join(GRPC_HOME, "SignFixtureGrpcClientsGenerated.g.cs"),
     ).replace(
-      "AddD2KeyCustodianGrpcClients",
-      "AddD2KeyCustodianGrpcClientsDRIFTED",
+      "AddD2SignFixtureGrpcClients",
+      "AddD2SignFixtureGrpcClientsDRIFTED",
     );
     const [, , , di] = emitGrpcClient(
-      "KeyCustodian",
+      "SignFixture",
       [buildClientSignOp()],
       CLIENTS_NS,
     );
@@ -418,23 +423,22 @@ describe("byteParity_KeyCustodianGrpcClientsGenerated_CommittedFixtureIdentical"
 });
 
 // ---------------------------------------------------------------------------
-// byteParity_SignClientKeys
+// byteParity_SignFixtureClientKeys
 // ---------------------------------------------------------------------------
 
-describe("byteParity_SignClientKeys_CommittedFixtureIdentical", () => {
+describe("byteParity_SignFixtureClientKeys_CommittedFixtureIdentical", () => {
   it("re-emitted keys .g.cs is byte-identical to the committed fixture", () => {
-    const file = emitClientKeys("sign", CLIENTS_NS, SOURCE);
+    const file = emitClientKeys("signFixture", CLIENTS_NS, SOURCE);
     expect(file.content).toBe(
-      readFixture(join(GRPC_HOME, "SignClientKeys.g.cs")),
+      readFixture(join(GRPC_HOME, "SignFixtureClientKeys.g.cs")),
     );
   });
 
   it("deliberate-drift detection: mutated fixture does NOT match re-emitted output", () => {
-    const drifted = readFixture(join(GRPC_HOME, "SignClientKeys.g.cs")).replace(
-      "SignGrpcClientPipeline",
-      "SignGrpcClientPipelineDRIFTED",
-    );
-    const file = emitClientKeys("sign", CLIENTS_NS, SOURCE);
+    const drifted = readFixture(
+      join(GRPC_HOME, "SignFixtureClientKeys.g.cs"),
+    ).replace("SignFixtureGrpcClientPipeline", "SignGrpcClientPipelineDRIFTED");
+    const file = emitClientKeys("signFixture", CLIENTS_NS, SOURCE);
     expect(file.content).not.toBe(drifted);
   });
 });
@@ -445,8 +449,8 @@ describe("byteParity_SignClientKeys_CommittedFixtureIdentical", () => {
 
 describe("byteParity_WireVersionConstant_CommittedFixtureIdentical", () => {
   const WIRE_SOURCE = "contracts/typespec/fixtures/sign-shaped.tsp";
-  const WIRE_NS = "D2.Services.Protos.KeyCustodian.V2Alpha";
-  const channel = parseChannel("d2.keycustodian.v2alpha")!;
+  const WIRE_NS = "D2.Services.Protos.SignFixtures.V1";
+  const channel = parseChannel("d2.signfixtures.v1")!;
 
   it("re-emitted WireVersion.g.cs is byte-identical to the committed fixture", () => {
     const file = emitWireVersionConstant(WIRE_NS, channel, WIRE_SOURCE);
@@ -454,7 +458,7 @@ describe("byteParity_WireVersionConstant_CommittedFixtureIdentical", () => {
   });
 
   it("deliberate-drift detection: mutated channel does NOT match committed fixture", () => {
-    const mutatedChannel = parseChannel("d2.keycustodian.v3beta")!;
+    const mutatedChannel = parseChannel("d2.sample.v3beta")!;
     const file = emitWireVersionConstant(WIRE_NS, mutatedChannel, WIRE_SOURCE);
     expect(file.content).not.toBe(
       readFixture(join(GRPC_HOME, "WireVersion.g.cs")),
@@ -467,8 +471,8 @@ describe("byteParity_WireVersionConstant_CommittedFixtureIdentical", () => {
 // ---------------------------------------------------------------------------
 
 describe("byteParity_WireIdentityManifest_CommittedFixtureIdentical", () => {
-  const MANIFEST_PROTO_PACKAGE = "d2.keycustodian.v2alpha";
-  const MANIFEST_PROTO_CS_NS = "D2.Services.Protos.KeyCustodian.V2Alpha";
+  const MANIFEST_PROTO_PACKAGE = "d2.signfixtures.v1";
+  const MANIFEST_PROTO_CS_NS = "D2.Services.Protos.SignFixtures.V1";
   const channel = parseChannel(MANIFEST_PROTO_PACKAGE)!;
 
   it("re-emitted wire-identity.manifest.g.json is byte-identical to the committed fixture", () => {
@@ -483,7 +487,7 @@ describe("byteParity_WireIdentityManifest_CommittedFixtureIdentical", () => {
   });
 
   it("deliberate-drift detection: mutated channel does NOT match committed fixture", () => {
-    const mutatedChannel = parseChannel("d2.keycustodian.v3beta")!;
+    const mutatedChannel = parseChannel("d2.sample.v3beta")!;
     const file = emitWireIdentityManifest(
       MANIFEST_PROTO_PACKAGE,
       MANIFEST_PROTO_CS_NS,

@@ -24,7 +24,7 @@ import {
 
 describe("wireChannel_Grammar_MatchesAndRejects", () => {
   it("matches a valid alpha channel", () => {
-    expect(WIRE_CHANNEL_GRAMMAR.test("d2.keycustodian.v2alpha")).toBe(true);
+    expect(WIRE_CHANNEL_GRAMMAR.test("d2.sample.v2alpha")).toBe(true);
   });
 
   it("matches a valid beta channel", () => {
@@ -36,11 +36,11 @@ describe("wireChannel_Grammar_MatchesAndRejects", () => {
   });
 
   it("rejects uppercase service prefix", () => {
-    expect(WIRE_CHANNEL_GRAMMAR.test("D2.keycustodian.v2alpha")).toBe(false);
+    expect(WIRE_CHANNEL_GRAMMAR.test("D2.sample.v2alpha")).toBe(false);
   });
 
   it("rejects missing version number after v", () => {
-    expect(WIRE_CHANNEL_GRAMMAR.test("d2.keycustodian.valpha")).toBe(false);
+    expect(WIRE_CHANNEL_GRAMMAR.test("d2.sample.valpha")).toBe(false);
   });
 });
 
@@ -49,10 +49,10 @@ describe("wireChannel_Grammar_MatchesAndRejects", () => {
 // ---------------------------------------------------------------------------
 
 describe("parseChannel_AlphaChannel_ReturnsFullTriple", () => {
-  it("parses d2.keycustodian.v2alpha into the full WireChannel triple", () => {
-    const result = parseChannel("d2.keycustodian.v2alpha");
+  it("parses d2.sample.v2alpha into the full WireChannel triple", () => {
+    const result = parseChannel("d2.sample.v2alpha");
     expect(result).toBeDefined();
-    expect(result!.svc).toBe("keycustodian");
+    expect(result!.svc).toBe("sample");
     expect(result!.generation).toBe(2);
     expect(result!.stability).toBe("alpha");
     expect(result!.lowerChannel).toBe("v2alpha");
@@ -86,23 +86,23 @@ describe("parseChannel_StableChannel_ReturnsStableStability", () => {
 
 describe("parseChannel_Adversarial_ReturnsUndefined", () => {
   it("returns undefined for uppercase proto-package prefix", () => {
-    expect(parseChannel("D2.keycustodian.v2alpha")).toBeUndefined();
+    expect(parseChannel("D2.sample.v2alpha")).toBeUndefined();
   });
 
   it("returns undefined for missing v before the number", () => {
-    expect(parseChannel("d2.keycustodian.2alpha")).toBeUndefined();
+    expect(parseChannel("d2.sample.2alpha")).toBeUndefined();
   });
 
   it("returns undefined for an extra dot in the channel segment", () => {
-    expect(parseChannel("d2.keycustodian.v2.alpha")).toBeUndefined();
+    expect(parseChannel("d2.sample.v2.alpha")).toBeUndefined();
   });
 
   it("returns undefined for an unsupported stability suffix", () => {
-    expect(parseChannel("d2.keycustodian.v2gamma")).toBeUndefined();
+    expect(parseChannel("d2.sample.v2gamma")).toBeUndefined();
   });
 
   it("returns undefined for missing version number after v (valpha)", () => {
-    expect(parseChannel("d2.keycustodian.valpha")).toBeUndefined();
+    expect(parseChannel("d2.sample.valpha")).toBeUndefined();
   });
 
   it("returns undefined for empty string", () => {
@@ -114,7 +114,7 @@ describe("parseChannel_Adversarial_ReturnsUndefined", () => {
   });
 
   it("returns undefined when the channel segment is absent", () => {
-    expect(parseChannel("d2.keycustodian")).toBeUndefined();
+    expect(parseChannel("d2.sample")).toBeUndefined();
   });
 });
 
@@ -148,8 +148,8 @@ describe("validateChannelAgreement_Agreement_PassesAndReturnsChannel", () => {
   it("agreeing proto-package and proto-csharp-namespace → no error, returns WireChannel", () => {
     const onError = vi.fn();
     const result = validateChannelAgreement(
-      "d2.keycustodian.v2alpha",
-      "D2.Services.Protos.KeyCustodian.V2Alpha",
+      "d2.sample.v2alpha",
+      "D2.Services.Protos.Sample.V2Alpha",
       undefined,
       onError,
     );
@@ -161,8 +161,8 @@ describe("validateChannelAgreement_Agreement_PassesAndReturnsChannel", () => {
   it("agreeing proto-package and @versioned channel → no error", () => {
     const onError = vi.fn();
     const result = validateChannelAgreement(
-      "d2.keycustodian.v2alpha",
-      "D2.Services.Protos.KeyCustodian.V2Alpha",
+      "d2.sample.v2alpha",
+      "D2.Services.Protos.Sample.V2Alpha",
       "v2alpha",
       onError,
     );
@@ -180,8 +180,8 @@ describe("validateChannelAgreement_CsharpNsMismatch_FiresD2TSP010", () => {
   it("proto-package v2alpha vs proto-csharp-namespace V2Beta → onError called once with channel-segment-mismatch", () => {
     const onError = vi.fn();
     const result = validateChannelAgreement(
-      "d2.keycustodian.v2alpha",
-      "D2.Services.Protos.KeyCustodian.V2Beta",
+      "d2.sample.v2alpha",
+      "D2.Services.Protos.Sample.V2Beta",
       undefined,
       onError,
     );
@@ -199,8 +199,8 @@ describe("validateChannelAgreement_VersionedChannelMismatch_FiresD2TSP010", () =
   it("@versioned channel v2beta vs proto-package v2alpha → onError called with channel-segment-mismatch", () => {
     const onError = vi.fn();
     const result = validateChannelAgreement(
-      "d2.keycustodian.v2alpha",
-      "D2.Services.Protos.KeyCustodian.V2Alpha",
+      "d2.sample.v2alpha",
+      "D2.Services.Protos.Sample.V2Alpha",
       "v2beta",
       onError,
     );
@@ -222,7 +222,7 @@ describe("validateChannelAgreement_NoChannelInNamespace_MismatchFires", () => {
   it("proto-csharp-namespace with no channel trailing segment → mismatch fires", () => {
     const onError = vi.fn();
     const result = validateChannelAgreement(
-      "d2.keycustodian.v2alpha",
+      "d2.sample.v2alpha",
       "D2.Foo.Bar",
       undefined,
       onError,

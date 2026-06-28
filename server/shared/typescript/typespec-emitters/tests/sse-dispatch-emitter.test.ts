@@ -69,13 +69,13 @@ function scalarField(
   };
 }
 
-// The OrderLine nested model (sku: string, quantity: int32).
+// The OrderFixtureLine nested model (sku: string, quantity: int32).
 const ORDER_LINE_FIELDS: FieldInfo[] = [
   scalarField("sku", "string", "string", "string"),
   scalarField("quantity", "int", "number", "int32"),
 ];
 
-// OrderShippedOutput { orderId: string; shippedAt: utcDateTime; lines: OrderLine[] }
+// OrderShippedFixtureOutput { orderId: string; shippedAt: utcDateTime; lines: OrderFixtureLine[] }
 const ORDER_SHIPPED_OUTPUT_FIELDS: FieldInfo[] = [
   scalarField("orderId", "string", "string", "string"),
   scalarField(
@@ -87,18 +87,18 @@ const ORDER_SHIPPED_OUTPUT_FIELDS: FieldInfo[] = [
   {
     name: "lines",
     csName: "Lines",
-    csType: "IReadOnlyList<OrderLine>",
+    csType: "IReadOnlyList<OrderFixtureLine>",
     tsName: "lines",
-    tsType: "readonly OrderLine[]",
+    tsType: "readonly OrderFixtureLine[]",
     protoType: undefined,
     repeated: true,
     optional: false,
     redact: false,
-    nested: { name: "OrderLine", fields: ORDER_LINE_FIELDS },
+    nested: { name: "OrderFixtureLine", fields: ORDER_LINE_FIELDS },
   },
 ];
 
-// SessionExpiringOutput { sessionId: string; expiresAt: utcDateTime }
+// SessionExpiringFixtureOutput { sessionId: string; expiresAt: utcDateTime }
 const SESSION_EXPIRING_OUTPUT_FIELDS: FieldInfo[] = [
   scalarField("sessionId", "string", "string", "string"),
   scalarField(
@@ -110,17 +110,17 @@ const SESSION_EXPIRING_OUTPUT_FIELDS: FieldInfo[] = [
 ];
 
 const ORDER_SHIPPED_OP: SseDispatchOp = {
-  opName: "orderShipped",
+  opName: "orderShippedFixture",
   channelClass: "User",
-  outputTypeName: "OrderShippedOutput",
+  outputTypeName: "OrderShippedFixtureOutput",
   dtoNamespace: NS,
   sourceSpec: SOURCE,
 };
 
 const SESSION_EXPIRING_OP: SseDispatchOp = {
-  opName: "sessionExpiring",
+  opName: "sessionExpiringFixture",
   channelClass: "Session",
-  outputTypeName: "SessionExpiringOutput",
+  outputTypeName: "SessionExpiringFixtureOutput",
   dtoNamespace: NS,
   sourceSpec: SOURCE,
 };
@@ -205,25 +205,25 @@ describe("emitSseEmitSinkSeam — file shape", () => {
 describe("emitSseDispatcher — interface + impl shape", () => {
   it("returns [interface, impl] with the per-op file names", () => {
     const [iface, impl] = emitSseDispatcher(ORDER_SHIPPED_OP);
-    expect(iface!.fileName).toBe("IOrderShippedDispatcher.g.cs");
-    expect(impl!.fileName).toBe("OrderShippedDispatcher.g.cs");
+    expect(iface!.fileName).toBe("IOrderShippedFixtureDispatcher.g.cs");
+    expect(impl!.fileName).toBe("OrderShippedFixtureDispatcher.g.cs");
   });
 
   it("interface declares DispatchAsync(string targetId, <Op>Output payload, ...)", () => {
     const [iface] = emitSseDispatcher(ORDER_SHIPPED_OP);
     expect(iface!.content).toContain(
-      "public interface IOrderShippedDispatcher",
+      "public interface IOrderShippedFixtureDispatcher",
     );
     expect(iface!.content).toContain("ValueTask<D2Result> DispatchAsync(");
     expect(iface!.content).toContain(
-      "string targetId, OrderShippedOutput payload, CancellationToken ct = default);",
+      "string targetId, OrderShippedFixtureOutput payload, CancellationToken ct = default);",
     );
   });
 
   it("impl is a sealed class with a primary-ctor sink param (no r_ prefix)", () => {
     const [, impl] = emitSseDispatcher(ORDER_SHIPPED_OP);
     expect(impl!.content).toContain(
-      "public sealed class OrderShippedDispatcher(D2GeneratedSseEmitSink sink) : IOrderShippedDispatcher",
+      "public sealed class OrderShippedFixtureDispatcher(D2GeneratedSseEmitSink sink) : IOrderShippedFixtureDispatcher",
     );
     expect(impl!.content).not.toContain("r_sink");
   });
@@ -233,7 +233,7 @@ describe("emitSseDispatcher — interface + impl shape", () => {
     expect(impl!.content).toContain(
       "new D2GeneratedSseChannelTarget(D2GeneratedSseChannelClass.User, targetId),",
     );
-    expect(impl!.content).toContain('"orderShipped", payload, ct);');
+    expect(impl!.content).toContain('"orderShippedFixture", payload, ct);');
   });
 
   it("impl bakes the Session channel class for a session-target op (non-vacuous)", () => {
@@ -241,7 +241,7 @@ describe("emitSseDispatcher — interface + impl shape", () => {
     expect(impl!.content).toContain(
       "new D2GeneratedSseChannelTarget(D2GeneratedSseChannelClass.Session, targetId),",
     );
-    expect(impl!.content).toContain('"sessionExpiring", payload, ct);');
+    expect(impl!.content).toContain('"sessionExpiringFixture", payload, ct);');
     expect(impl!.content).not.toContain("ChannelClass.User");
   });
 
@@ -295,10 +295,10 @@ describe("emitSseDispatchersDiExtension — Transient DI ext", () => {
   it("emits one AddTransient per push op (interface → impl)", () => {
     const file = emitSseDispatchersDiExtension("PushFixtures", ops, NS, SOURCE);
     expect(file.content).toContain(
-      "services.AddTransient<IOrderShippedDispatcher, OrderShippedDispatcher>();",
+      "services.AddTransient<IOrderShippedFixtureDispatcher, OrderShippedFixtureDispatcher>();",
     );
     expect(file.content).toContain(
-      "services.AddTransient<ISessionExpiringDispatcher, SessionExpiringDispatcher>();",
+      "services.AddTransient<ISessionExpiringFixtureDispatcher, SessionExpiringFixtureDispatcher>();",
     );
   });
 
@@ -354,14 +354,16 @@ describe("byteParity_SseEmitSinkSeam_CommittedFixtureIdentical", () => {
   });
 });
 
-describe("byteParity_OrderShippedDispatcher_CommittedFixturesIdentical", () => {
-  it("regenerated IOrderShippedDispatcher.g.cs is byte-identical to the committed fixture", () => {
+describe("byteParity_OrderShippedFixtureDispatcher_CommittedFixturesIdentical", () => {
+  it("regenerated IOrderShippedFixtureDispatcher.g.cs is byte-identical to the committed fixture", () => {
     const [iface] = emitSseDispatcher(ORDER_SHIPPED_OP);
-    expect(iface!.content).toBe(committed("IOrderShippedDispatcher.g.cs"));
+    expect(iface!.content).toBe(
+      committed("IOrderShippedFixtureDispatcher.g.cs"),
+    );
   });
 
   it("interface deliberate-drift: mutated method name does NOT match", () => {
-    const drifted = committed("IOrderShippedDispatcher.g.cs").replace(
+    const drifted = committed("IOrderShippedFixtureDispatcher.g.cs").replace(
       "DispatchAsync",
       "DispatchAsyncDRIFTED",
     );
@@ -369,13 +371,13 @@ describe("byteParity_OrderShippedDispatcher_CommittedFixturesIdentical", () => {
     expect(iface!.content).not.toBe(drifted);
   });
 
-  it("regenerated OrderShippedDispatcher.g.cs is byte-identical to the committed fixture", () => {
+  it("regenerated OrderShippedFixtureDispatcher.g.cs is byte-identical to the committed fixture", () => {
     const [, impl] = emitSseDispatcher(ORDER_SHIPPED_OP);
-    expect(impl!.content).toBe(committed("OrderShippedDispatcher.g.cs"));
+    expect(impl!.content).toBe(committed("OrderShippedFixtureDispatcher.g.cs"));
   });
 
   it("impl deliberate-drift: User→Session channel-class mutation does NOT match (the baked datum)", () => {
-    const drifted = committed("OrderShippedDispatcher.g.cs").replace(
+    const drifted = committed("OrderShippedFixtureDispatcher.g.cs").replace(
       "D2GeneratedSseChannelClass.User",
       "D2GeneratedSseChannelClass.Session",
     );
@@ -384,19 +386,23 @@ describe("byteParity_OrderShippedDispatcher_CommittedFixturesIdentical", () => {
   });
 });
 
-describe("byteParity_SessionExpiringDispatcher_CommittedFixturesIdentical", () => {
-  it("regenerated ISessionExpiringDispatcher.g.cs is byte-identical to the committed fixture", () => {
+describe("byteParity_SessionExpiringFixtureDispatcher_CommittedFixturesIdentical", () => {
+  it("regenerated ISessionExpiringFixtureDispatcher.g.cs is byte-identical to the committed fixture", () => {
     const [iface] = emitSseDispatcher(SESSION_EXPIRING_OP);
-    expect(iface!.content).toBe(committed("ISessionExpiringDispatcher.g.cs"));
+    expect(iface!.content).toBe(
+      committed("ISessionExpiringFixtureDispatcher.g.cs"),
+    );
   });
 
-  it("regenerated SessionExpiringDispatcher.g.cs is byte-identical to the committed fixture", () => {
+  it("regenerated SessionExpiringFixtureDispatcher.g.cs is byte-identical to the committed fixture", () => {
     const [, impl] = emitSseDispatcher(SESSION_EXPIRING_OP);
-    expect(impl!.content).toBe(committed("SessionExpiringDispatcher.g.cs"));
+    expect(impl!.content).toBe(
+      committed("SessionExpiringFixtureDispatcher.g.cs"),
+    );
   });
 
   it("impl deliberate-drift: Session→User channel-class mutation does NOT match (non-vacuous Session arm)", () => {
-    const drifted = committed("SessionExpiringDispatcher.g.cs").replace(
+    const drifted = committed("SessionExpiringFixtureDispatcher.g.cs").replace(
       "D2GeneratedSseChannelClass.Session",
       "D2GeneratedSseChannelClass.User",
     );
@@ -434,28 +440,30 @@ describe("byteParity_PushFixturesDiExtension_CommittedFixtureIdentical", () => {
 // ---------------------------------------------------------------------------
 
 describe("byteParity_SsePushDtos_CommittedFixturesIdentical", () => {
-  it("OrderShippedOutput (with nested OrderLine + temporal) is byte-identical to the committed fixture", () => {
+  it("OrderShippedFixtureOutput (with nested OrderFixtureLine + temporal) is byte-identical to the committed fixture", () => {
     const [, output] = emitCsharpDtos(
-      "orderShipped",
+      "orderShippedFixture",
       NS,
       SOURCE,
       [],
       ORDER_SHIPPED_OUTPUT_FIELDS,
-      [{ name: "OrderLine", fields: ORDER_LINE_FIELDS }],
+      [{ name: "OrderFixtureLine", fields: ORDER_LINE_FIELDS }],
     );
-    expect(output!.content).toBe(committed("OrderShippedOutput.g.cs"));
+    expect(output!.content).toBe(committed("OrderShippedFixtureOutput.g.cs"));
   });
 
-  it("SessionExpiringOutput (with temporal) is byte-identical to the committed fixture", () => {
+  it("SessionExpiringFixtureOutput (with temporal) is byte-identical to the committed fixture", () => {
     const [, output] = emitCsharpDtos(
-      "sessionExpiring",
+      "sessionExpiringFixture",
       NS,
       SOURCE,
       [],
       SESSION_EXPIRING_OUTPUT_FIELDS,
       [],
     );
-    expect(output!.content).toBe(committed("SessionExpiringOutput.g.cs"));
+    expect(output!.content).toBe(
+      committed("SessionExpiringFixtureOutput.g.cs"),
+    );
   });
 
   it("no <Op>Input.g.cs in the committed set (pure-push ops emit only the output payload DTO)", () => {
@@ -467,17 +475,17 @@ describe("byteParity_SsePushDtos_CommittedFixturesIdentical", () => {
   });
 
   it("DTO deliberate-drift: temporal field mutation does NOT match (temporal flows through the payload)", () => {
-    const drifted = committed("OrderShippedOutput.g.cs").replace(
+    const drifted = committed("OrderShippedFixtureOutput.g.cs").replace(
       "DateTimeOffset ShippedAt",
       "DateTimeOffset ShippedAtDRIFTED",
     );
     const [, output] = emitCsharpDtos(
-      "orderShipped",
+      "orderShippedFixture",
       NS,
       SOURCE,
       [],
       ORDER_SHIPPED_OUTPUT_FIELDS,
-      [{ name: "OrderLine", fields: ORDER_LINE_FIELDS }],
+      [{ name: "OrderFixtureLine", fields: ORDER_LINE_FIELDS }],
     );
     expect(output!.content).not.toBe(drifted);
   });

@@ -6,7 +6,7 @@
 //
 // Compiles inline .tsp programs and asserts that:
 //   1. getJwks op → GetJwksInput.g.cs (parameterless) + GetJwksOutput.g.cs (with Jwk).
-//   2. sign fixture → SignInput.g.cs carries [property: RedactData...].
+//   2. sign fixture → SignFixtureInput.g.cs carries [property: RedactData...].
 //   3. Unmapped scalar → D2TSP001 diagnostic fires (error exit).
 //
 // The integration test host (TypeSpec @testing) compiles inline .tsp and
@@ -126,7 +126,7 @@ describe("dtoEmitIntegration_Sign_RedactedFieldInGeneratedCSharp", () => {
     });
   });
 
-  it("sign fixture with @d2Redact → [property: RedactData] in SignInput.g.cs", async () => {
+  it("sign fixture with @d2Redact → [property: RedactData] in SignFixtureInput.g.cs", async () => {
     host.addTypeSpecFile(
       "main.tsp",
       `
@@ -134,14 +134,14 @@ describe("dtoEmitIntegration_Sign_RedactedFieldInGeneratedCSharp", () => {
       using D2;
       namespace D2.Fixtures;
 
-      model SignInput { @d2Field(1) kid: string; @d2Field(2) @d2Redact payload: bytes; }
-      model SignOutput { @d2Field(1) signature: string; }
+      model SignFixtureInput { @d2Field(1) kid: string; @d2Field(2) @d2Redact payload: bytes; }
+      model SignFixtureOutput { @d2Field(1) signature: string; }
 
       @d2Command
-      @d2ServedBy("KeyCustodian")
+      @d2ServedBy("SignFixture")
       @d2InProcess
-      @d2GrpcMethod("KeyCustodianSigner", "Sign")
-      op sign(input: SignInput): SignOutput;
+      @d2GrpcMethod("SignFixtureSigner", "SignFixture")
+      op signFixture(input: SignFixtureInput): SignFixtureOutput;
       `,
     );
 
@@ -156,7 +156,7 @@ describe("dtoEmitIntegration_Sign_RedactedFieldInGeneratedCSharp", () => {
     );
     expect(errors).toHaveLength(0);
 
-    const inputContent = getEmittedFile(host, "SignInput.g.cs");
+    const inputContent = getEmittedFile(host, "SignFixtureInput.g.cs");
     expect(inputContent).toBeDefined();
     // The [property:] target is load-bearing — a bare param attribute would NOT
     // be seen by the property-reflecting RedactDataDestructuringPolicy.
@@ -174,7 +174,7 @@ describe("dtoEmitIntegration_Sign_RedactedFieldInGeneratedCSharp", () => {
     expect(redactCount).toBe(1);
 
     // TS side: redacted field emitted normally (no attribute).
-    const tsContent = getEmittedFile(host, "sign-dto.g.ts");
+    const tsContent = getEmittedFile(host, "sign-fixture-dto.g.ts");
     expect(tsContent).toBeDefined();
     expect(tsContent).toContain("readonly payload: Uint8Array;");
     expect(tsContent).not.toContain("RedactData");
@@ -242,7 +242,7 @@ describe("dtoEmitIntegration_HandlerInterface_EmittedForEveryOp", () => {
     );
   });
 
-  it("sign fixture (@d2GrpcMethod) → ISignHandler.g.cs emitted with using directive", async () => {
+  it("sign fixture (@d2GrpcMethod) → ISignFixtureHandler.g.cs emitted with using directive", async () => {
     host.addTypeSpecFile(
       "main.tsp",
       `
@@ -250,14 +250,14 @@ describe("dtoEmitIntegration_HandlerInterface_EmittedForEveryOp", () => {
       using D2;
       namespace D2.Fixtures;
 
-      model SignInput { @d2Field(1) kid: string; @d2Field(2) @d2Redact payload: bytes; }
-      model SignOutput { @d2Field(1) signature: string; }
+      model SignFixtureInput { @d2Field(1) kid: string; @d2Field(2) @d2Redact payload: bytes; }
+      model SignFixtureOutput { @d2Field(1) signature: string; }
 
       @d2Command
-      @d2ServedBy("KeyCustodian")
+      @d2ServedBy("SignFixture")
       @d2InProcess
-      @d2GrpcMethod("KeyCustodianSigner", "Sign")
-      op sign(input: SignInput): SignOutput;
+      @d2GrpcMethod("SignFixtureSigner", "SignFixture")
+      op signFixture(input: SignFixtureInput): SignFixtureOutput;
       `,
     );
 
@@ -266,7 +266,7 @@ describe("dtoEmitIntegration_HandlerInterface_EmittedForEveryOp", () => {
       options: {
         "@d2/typespec-emitters": {
           "csharp-namespace": "D2.Edge.Tests.TypeSpecDto.Generated",
-          // grpc-service-namespace → the fixture gRPC namespace used for ISignHandler.
+          // grpc-service-namespace → the fixture gRPC namespace used for ISignFixtureHandler.
           "grpc-service-namespace": "D2.Edge.Tests.TypeSpecGrpc.Generated",
           // No csharp-app-namespace-base → fixture mode → emitUsing=true.
         },
@@ -279,10 +279,10 @@ describe("dtoEmitIntegration_HandlerInterface_EmittedForEveryOp", () => {
     );
     expect(errors).toHaveLength(0);
 
-    const handlerContent = getEmittedFile(host, "ISignHandler.g.cs");
+    const handlerContent = getEmittedFile(host, "ISignFixtureHandler.g.cs");
     expect(handlerContent).toBeDefined();
     expect(handlerContent).toContain(
-      "public interface ISignHandler : IHandler<SignInput, SignOutput>;",
+      "public interface ISignFixtureHandler : IHandler<SignFixtureInput, SignFixtureOutput>;",
     );
     // fixture mode → emitUsing=true.
     expect(handlerContent).toContain("using D2.Shared.Handler.Abstractions;");
@@ -366,7 +366,7 @@ describe("dtoEmitIntegration_Temporal_EmitsScalarsAndComposites", () => {
       model ZonedInstantWire { instant: utcDateTime; zoneId: string; }
       model LocalAnchoredEventWire { scheduledLocal: plainDateTime; ianaZone: string; nextFireUtc?: utcDateTime; }
 
-      model TemporalInput {
+      model TemporalFixtureInput {
         pastInstant: utcDateTime;
         withOffset: offsetDateTime;
         birthday: plainDate;
@@ -377,7 +377,7 @@ describe("dtoEmitIntegration_Temporal_EmitsScalarsAndComposites", () => {
         zoned: ZonedInstantWire;
         schedule: LocalAnchoredEventWire;
       }
-      model TemporalOutput {
+      model TemporalFixtureOutput {
         pastInstant: utcDateTime;
         zoned: ZonedInstantWire;
         schedule: LocalAnchoredEventWire;
@@ -385,8 +385,8 @@ describe("dtoEmitIntegration_Temporal_EmitsScalarsAndComposites", () => {
 
       @d2Query
       @d2InProcess
-      @d2ServedBy("Fixtures")
-      op temporal(input: TemporalInput): TemporalOutput;
+      @d2ServedBy("TemporalFixtures")
+      op temporalFixture(input: TemporalFixtureInput): TemporalFixtureOutput;
       `,
     );
 
@@ -406,7 +406,7 @@ describe("dtoEmitIntegration_Temporal_EmitsScalarsAndComposites", () => {
     expect(errors).toHaveLength(0);
 
     // C# input — instant scalars → DateTimeOffset, plain/duration → string, optional → T?.
-    const inputContent = getEmittedFile(host, "TemporalInput.g.cs");
+    const inputContent = getEmittedFile(host, "TemporalFixtureInput.g.cs");
     expect(inputContent).toBeDefined();
     expect(inputContent).toContain("DateTimeOffset PastInstant");
     expect(inputContent).toContain("DateTimeOffset WithOffset");
@@ -418,7 +418,7 @@ describe("dtoEmitIntegration_Temporal_EmitsScalarsAndComposites", () => {
     expect(inputContent).toContain("LocalAnchoredEventWire Schedule");
 
     // C# output — the two composite records emitted as nested siblings.
-    const outputContent = getEmittedFile(host, "TemporalOutput.g.cs");
+    const outputContent = getEmittedFile(host, "TemporalFixtureOutput.g.cs");
     expect(outputContent).toBeDefined();
     expect(outputContent).toContain("public sealed record ZonedInstantWire(");
     expect(outputContent).toContain("DateTimeOffset Instant");
@@ -430,7 +430,7 @@ describe("dtoEmitIntegration_Temporal_EmitsScalarsAndComposites", () => {
     expect(outputContent).toContain("DateTimeOffset? NextFireUtc");
 
     // TS DTO — every temporal field is string; composites are interfaces; no null union.
-    const tsContent = getEmittedFile(host, "temporal-dto.g.ts");
+    const tsContent = getEmittedFile(host, "temporal-fixture-dto.g.ts");
     expect(tsContent).toBeDefined();
     expect(tsContent).toContain("export interface ZonedInstantWire {");
     expect(tsContent).toContain("export interface LocalAnchoredEventWire {");
@@ -457,34 +457,34 @@ describe("dtoEmitIntegration_Enum_EmitsSiblingEnumsAndConstObjects", () => {
       using D2;
       namespace D2.Fixtures;
 
-      enum KeyKind { Rsa, Aes, Secret }
-      enum Level { Low: 0, Medium: 5, High: 10 }
-      union Status { active: "active", inactive: "inactive", pending: "pending" }
-      union AccountKind { internal: "internal", thirdParty: "third-party" }
+      enum FixtureKeyKind { Rsa, Aes, Secret }
+      enum FixtureLevel { Low: 0, Medium: 5, High: 10 }
+      union FixtureStatus { active: "active", inactive: "inactive", pending: "pending" }
+      union FixtureAccountKind { internal: "internal", thirdParty: "third-party" }
 
-      model EnumInput {
-        keyKind: KeyKind;
-        level: Level;
-        status: Status;
-        accountKind: AccountKind;
+      model EnumFixtureWalkInput {
+        keyKind: FixtureKeyKind;
+        level: FixtureLevel;
+        status: FixtureStatus;
+        accountKind: FixtureAccountKind;
         inlineState: "draft" | "published" | "archived";
-        optionalKind?: KeyKind;
-        kinds: KeyKind[];
+        optionalKind?: FixtureKeyKind;
+        kinds: FixtureKeyKind[];
       }
-      model EnumOutput {
-        keyKind: KeyKind;
-        level: Level;
-        status: Status;
-        accountKind: AccountKind;
+      model EnumFixtureWalkOutput {
+        keyKind: FixtureKeyKind;
+        level: FixtureLevel;
+        status: FixtureStatus;
+        accountKind: FixtureAccountKind;
         inlineState: "draft" | "published" | "archived";
-        optionalKind?: KeyKind;
-        kinds: KeyKind[];
+        optionalKind?: FixtureKeyKind;
+        kinds: FixtureKeyKind[];
       }
 
       @d2Query
       @d2InProcess
       @d2ServedBy("EnumFixtures")
-      op enums(input: EnumInput): EnumOutput;
+      op enumFixture(input: EnumFixtureWalkInput): EnumFixtureWalkOutput;
       `,
     );
 
@@ -500,36 +500,36 @@ describe("dtoEmitIntegration_Enum_EmitsSiblingEnumsAndConstObjects", () => {
     expect(errors).toHaveLength(0);
 
     // C# output — sibling enums with the correct [JsonStringEnumMemberName].
-    const cs = getEmittedFile(host, "EnumsOutput.g.cs");
+    const cs = getEmittedFile(host, "EnumFixtureOutput.g.cs");
     expect(cs).toBeDefined();
     expect(cs).toContain("[JsonConverter(typeof(JsonStringEnumConverter))]");
-    expect(cs).toContain("public enum KeyKind");
+    expect(cs).toContain("public enum FixtureKeyKind");
     expect(cs).toContain("    Low = 0,"); // S-2 backing preserved
     expect(cs).toContain('[JsonStringEnumMemberName("third-party")]');
     expect(cs).toContain("    ThirdParty,");
-    expect(cs).toContain("public enum EnumOutputInlineState"); // S-4 synthetic
+    expect(cs).toContain("public enum EnumFixtureWalkOutputInlineState"); // S-4 synthetic
     expect(cs).toContain("using System.Text.Json.Serialization;");
     // The wrong attribute / namespace must NOT appear.
     expect(cs).not.toContain("System.Runtime.Serialization");
     expect(cs).not.toContain("EnumMember(Value");
     // Field types reference the enum names.
-    expect(cs).toContain("KeyKind KeyKind");
+    expect(cs).toContain("FixtureKeyKind KeyKind");
     expect(cs).toContain("KeyKind? OptionalKind");
-    expect(cs).toContain("IReadOnlyList<KeyKind> Kinds");
+    expect(cs).toContain("IReadOnlyList<FixtureKeyKind> Kinds");
 
     // TS output — const-objects + derived types (NOT the TS enum keyword, no Zod).
-    const ts = getEmittedFile(host, "enums-dto.g.ts");
+    const ts = getEmittedFile(host, "enum-fixture-dto.g.ts");
     expect(ts).toBeDefined();
-    expect(ts).toContain("export const KeyKind = {");
+    expect(ts).toContain("export const FixtureKeyKind = {");
     expect(ts).toContain('  Rsa: "Rsa",');
     expect(ts).toContain('  Low: "Low",'); // S-2 value is the NAME, not 0
     expect(ts).toContain('  ThirdParty: "third-party",');
     expect(ts).toContain(
-      "export type KeyKind = (typeof KeyKind)[keyof typeof KeyKind];",
+      "export type FixtureKeyKind = (typeof FixtureKeyKind)[keyof typeof FixtureKeyKind];",
     );
     expect(ts).not.toContain('from "zod"');
     expect(ts).not.toMatch(/\benum\s+KeyKind/);
-    expect(ts).toContain("readonly kinds: readonly KeyKind[];");
+    expect(ts).toContain("readonly kinds: readonly FixtureKeyKind[];");
   });
 
   it("loud-fail: a mixed-primitive union → D2TSP007 error diagnostic", async () => {

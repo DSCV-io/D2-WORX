@@ -98,7 +98,7 @@ Copyright (c) DCSV. All rights reserved.
          GrpcChannel (no network sockets). -->
     <PackageReference Include="Microsoft.AspNetCore.TestHost" />
     <!-- Grpc.Tools — drives protoc + the C# plugin for the test-only
-         TypeSpecGrpc/Protos/key_custodian_signer_sign.g.proto fixture. Build-only;
+         TypeSpecGrpc/Protos/sign_fixture_signer_sign_fixture.g.proto fixture. Build-only;
          PrivateAssets="all" so the targets do not flow to consumers. -->
     <PackageReference Include="Grpc.Tools">
       <PrivateAssets>all</PrivateAssets>
@@ -111,7 +111,7 @@ Copyright (c) DCSV. All rights reserved.
          test (constructs a GrpcChannel atop the TestServer's HttpClient). -->
     <PackageReference Include="Grpc.Net.Client" />
     <!-- Grpc.Net.ClientFactory — AddGrpcClient<TStub>() extension used by the generated
-         gRPC client DI fixture (TypeSpecGrpc/Generated/KeyCustodianGrpcClientsGenerated.g.cs)
+         gRPC client DI fixture (TypeSpecGrpc/Generated/SignFixtureGrpcClientsGenerated.g.cs)
          to register the channel. The fixture validates the emitter's DI-ext output compiles
          + resolves; the production Clients project gains this ref in its own (later) step. -->
     <PackageReference Include="Grpc.Net.ClientFactory" />
@@ -134,7 +134,7 @@ Copyright (c) DCSV. All rights reserved.
         1. The C# D2ResultProto type (D2.Services.Protos.Common.V1.D2ResultProto),
            generated from contracts/protos/common/v1/d2_result.proto via Grpc.Tools.
         2. The D2Result.ToProto() and D2ResultProto.ToD2Result<T>() extension methods
-           used by the generated SignTransportMappers.g.cs (ToProtoResponse).
+           used by the generated SignFixtureTransportMappers.g.cs (ToProtoResponse).
       This is the SOLE source of D2ResultProto in this assembly — no second Protobuf
       include for d2_result.proto is added here (that would double-generate the type
       and cause CS0433). The fixture proto's import "common/v1/d2_result.proto" is
@@ -164,7 +164,7 @@ Copyright (c) DCSV. All rights reserved.
     <!--
       D2.Shared.Resilience — ResilientPipeline<TKey,TValue> + AddResilientPipeline +
       ResilientPipeline<…>.PassThrough, consumed by the TypeSpec gRPC client harness
-      (GrpcClientTests) which drives the generated KeyCustodianGrpcClient fixture through
+      (GrpcClientTests) which drives the generated SignFixtureGrpcClient fixture through
       the in-memory channel + per-call pipeline overrides. The generated client fixture
       (TypeSpecGrpc/Generated/) compiles inside this test project against the same proto
       compile (GrpcServices="Both"); no production project compiles the fixture proto.
@@ -241,14 +241,14 @@ Copyright (c) DCSV. All rights reserved.
       GrpcServices="Both" generates both the server base class and client stub
       so the test can host via MapGrpcService<T>() and dial via the stub.
     -->
-    <Protobuf Include="$(MSBuildThisFileDirectory)Unit/KeyCustodian/TypeSpecGrpc/Protos/key_custodian_signer_sign.g.proto"
+    <Protobuf Include="$(MSBuildThisFileDirectory)Unit/KeyCustodian/TypeSpecGrpc/Protos/sign_fixture_signer_sign_fixture.g.proto"
               GrpcServices="Both"
               ProtoRoot="$(MSBuildThisFileDirectory)"
               AdditionalImportDirs="$(D2ContractsRoot)protos" />
     <!--
       Second TypeSpec gRPC fixture proto — the enum-string-field bridge fixture
-      (enum-shaped.tsp signWithKind op). An enum DTO field maps to a proto `string`
-      field; the generated SignWithKindTransportMappers.g.cs parses the wire string
+      (enum-shaped.tsp signWithKindFixture op). An enum DTO field maps to a proto `string`
+      field; the generated SignWithKindFixtureTransportMappers.g.cs parses the wire string
       back to the C# enum, failing loud (400 ValidationFailed) on an unknown value.
       Compiled in Both mode so the EnumWireRoundTripTests can host the service via
       MapGrpcService<T>() and dial it via the generated stub. The D2ResultProto type
@@ -256,13 +256,13 @@ Copyright (c) DCSV. All rights reserved.
       (this proto's import "common/v1/d2_result.proto" resolves via the same
       AdditionalImportDirs proto_path; no second d2_result.proto Protobuf include).
     -->
-    <Protobuf Include="$(MSBuildThisFileDirectory)Unit/KeyCustodian/TypeSpecGrpcEnum/Protos/enum_fixtures_signer_sign_with_kind.g.proto"
+    <Protobuf Include="$(MSBuildThisFileDirectory)Unit/KeyCustodian/TypeSpecGrpcEnum/Protos/enum_fixtures_signer_sign_with_kind_fixture.g.proto"
               GrpcServices="Both"
               ProtoRoot="$(MSBuildThisFileDirectory)"
               AdditionalImportDirs="$(D2ContractsRoot)protos" />
     <!--
       Third TypeSpec gRPC fixture proto — the @d2Resilience retryWhen/failWhen
-      custom-predicate fixture (resilience-predicate-shaped.tsp placeOrder op). The
+      custom-predicate fixture (resilience-predicate-shaped.tsp placeOrderFixture op). The
       rich output shape (array-of-model + optional nested model) exercises the
       cross-language predicate emitter + the gRPC client's business-retry sentinel.
       Compiled in Both mode so the PredicateRetryTests can host a fault-injecting
@@ -272,16 +272,16 @@ Copyright (c) DCSV. All rights reserved.
       resolves via the same AdditionalImportDirs proto_path; no second
       d2_result.proto Protobuf include).
     -->
-    <Protobuf Include="$(MSBuildThisFileDirectory)Unit/KeyCustodian/TypeSpecGrpcPredicate/Protos/predicate_fixtures_orders_place_order.g.proto"
+    <Protobuf Include="$(MSBuildThisFileDirectory)Unit/KeyCustodian/TypeSpecGrpcPredicate/Protos/predicate_fixtures_orders_place_order_fixture.g.proto"
               GrpcServices="Both"
               ProtoRoot="$(MSBuildThisFileDirectory)"
               AdditionalImportDirs="$(D2ContractsRoot)protos" />
     <!--
       Fourth + fifth TypeSpec gRPC fixture protos — the NESTED-MODEL / array-of-MODEL
-      transport-mapper fixtures. predicate_fixtures_orders_v2_place_order_v2.g.proto
-      carries an optional nested model (PlaceOrderV2Customer) + an array-of-model
-      (repeated PlaceOrderLine); predicate_fixtures_gizmos_deep_deep_nest.g.proto proves
-      arbitrary depth (DeepNestOutput -> DeepWidget -> repeated DeepPart). Compiled in
+      transport-mapper fixtures. predicate_fixtures_orders_v2_place_order_v2_fixture.g.proto
+      carries an optional nested model (PlaceOrderV2FixtureCustomer) + an array-of-model
+      (repeated PlaceOrderFixtureLine); predicate_fixtures_gizmos_deep_deep_nest_fixture.g.proto proves
+      arbitrary depth (DeepNestFixtureOutput -> DeepFixtureWidget -> repeated DeepFixturePart). Compiled in
       Both mode so PlaceOrderV2RoundTripTests + DeepNestRoundTripTests can host a service
       shim via MapGrpcService<T>() and dial it via the generated stub. Each uses a DISTINCT
       proto package + csharp_namespace + service name so the generated C# types never
@@ -290,11 +290,11 @@ Copyright (c) DCSV. All rights reserved.
       "common/v1/d2_result.proto" resolves via the same AdditionalImportDirs proto_path; no
       second d2_result.proto Protobuf include).
     -->
-    <Protobuf Include="$(MSBuildThisFileDirectory)Unit/KeyCustodian/TypeSpecGrpcPredicate/Protos/predicate_fixtures_orders_v2_place_order_v2.g.proto"
+    <Protobuf Include="$(MSBuildThisFileDirectory)Unit/KeyCustodian/TypeSpecGrpcPredicate/Protos/predicate_fixtures_orders_v2_place_order_v2_fixture.g.proto"
               GrpcServices="Both"
               ProtoRoot="$(MSBuildThisFileDirectory)"
               AdditionalImportDirs="$(D2ContractsRoot)protos" />
-    <Protobuf Include="$(MSBuildThisFileDirectory)Unit/KeyCustodian/TypeSpecGrpcPredicate/Protos/predicate_fixtures_gizmos_deep_deep_nest.g.proto"
+    <Protobuf Include="$(MSBuildThisFileDirectory)Unit/KeyCustodian/TypeSpecGrpcPredicate/Protos/predicate_fixtures_gizmos_deep_deep_nest_fixture.g.proto"
               GrpcServices="Both"
               ProtoRoot="$(MSBuildThisFileDirectory)"
               AdditionalImportDirs="$(D2ContractsRoot)protos" />

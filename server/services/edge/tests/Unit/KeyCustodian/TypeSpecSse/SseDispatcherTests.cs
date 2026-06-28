@@ -14,7 +14,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 /// <summary>
 /// Behavioral tests for the TypeSpec-emitted server-push dispatchers
-/// (<see cref="OrderShippedDispatcher"/> / <see cref="SessionExpiringDispatcher"/>)
+/// (<see cref="OrderShippedFixtureDispatcher"/> / <see cref="SessionExpiringFixtureDispatcher"/>)
 /// against the faithful <see cref="FakeSseEmitSink"/>.
 ///
 /// Each test exercises one observable behavior of a dispatcher:
@@ -33,14 +33,14 @@ public sealed class SseDispatcherTests
     // ── User-channel dispatch: class + id + eventType + payload (non-vacuous) ──
 
     [Fact]
-    public async Task OrderShippedDispatcher_AddressesUserChannel_ForwardsAllFields()
+    public async Task OrderShippedFixtureDispatcher_AddressesUserChannel_ForwardsAllFields()
     {
         var sink = new FakeSseEmitSink();
-        var dispatcher = new OrderShippedDispatcher(sink);
-        var payload = new OrderShippedOutput(
+        var dispatcher = new OrderShippedFixtureDispatcher(sink);
+        var payload = new OrderShippedFixtureOutput(
             "order-42",
             DateTimeOffset.UnixEpoch,
-            [new OrderLine("sku-1", 3)]);
+            [new OrderFixtureLine("sku-1", 3)]);
 
         var result = await dispatcher.DispatchAsync("user-7", payload);
 
@@ -48,18 +48,18 @@ public sealed class SseDispatcherTests
         sink.CallCount.Should().Be(1);
         sink.LastTarget.Class.Should().Be(D2GeneratedSseChannelClass.User);
         sink.LastTarget.Id.Should().Be("user-7");
-        sink.LastEventType.Should().Be("orderShipped");
+        sink.LastEventType.Should().Be("orderShippedFixture");
         sink.LastPayload.Should().BeSameAs(payload);
     }
 
     // ── Session-channel dispatch: the Session arm is non-vacuous vs User ──
 
     [Fact]
-    public async Task SessionExpiringDispatcher_AddressesSessionChannel_ForwardsAllFields()
+    public async Task SessionExpiringFixtureDispatcher_AddressesSessionChannel_ForwardsAllFields()
     {
         var sink = new FakeSseEmitSink();
-        var dispatcher = new SessionExpiringDispatcher(sink);
-        var payload = new SessionExpiringOutput("session-9", DateTimeOffset.UnixEpoch);
+        var dispatcher = new SessionExpiringFixtureDispatcher(sink);
+        var payload = new SessionExpiringFixtureOutput("session-9", DateTimeOffset.UnixEpoch);
 
         var result = await dispatcher.DispatchAsync("session-9", payload);
 
@@ -67,18 +67,18 @@ public sealed class SseDispatcherTests
         sink.CallCount.Should().Be(1);
         sink.LastTarget.Class.Should().Be(D2GeneratedSseChannelClass.Session);
         sink.LastTarget.Id.Should().Be("session-9");
-        sink.LastEventType.Should().Be("sessionExpiring");
+        sink.LastEventType.Should().Be("sessionExpiringFixture");
         sink.LastPayload.Should().BeSameAs(payload);
     }
 
     // ── Sink failure propagates verbatim — never swallowed to Ok (§9.20) ──
 
     [Fact]
-    public async Task OrderShippedDispatcher_SinkFailure_PropagatesServiceUnavailable()
+    public async Task OrderShippedFixtureDispatcher_SinkFailure_PropagatesServiceUnavailable()
     {
         var sink = new FakeSseEmitSink(D2Result.ServiceUnavailable());
-        var dispatcher = new OrderShippedDispatcher(sink);
-        var payload = new OrderShippedOutput("order-1", DateTimeOffset.UnixEpoch, []);
+        var dispatcher = new OrderShippedFixtureDispatcher(sink);
+        var payload = new OrderShippedFixtureOutput("order-1", DateTimeOffset.UnixEpoch, []);
 
         var result = await dispatcher.DispatchAsync("user-1", payload);
 
@@ -94,12 +94,12 @@ public sealed class SseDispatcherTests
     [Theory]
     [InlineData("")]
     [InlineData("   ")]
-    public async Task OrderShippedDispatcher_AdversarialTargetId_ForwardedUnchanged(
+    public async Task OrderShippedFixtureDispatcher_AdversarialTargetId_ForwardedUnchanged(
         string targetId)
     {
         var sink = new FakeSseEmitSink();
-        var dispatcher = new OrderShippedDispatcher(sink);
-        var payload = new OrderShippedOutput("order-1", DateTimeOffset.UnixEpoch, []);
+        var dispatcher = new OrderShippedFixtureDispatcher(sink);
+        var payload = new OrderShippedFixtureOutput("order-1", DateTimeOffset.UnixEpoch, []);
 
         var result = await dispatcher.DispatchAsync(targetId, payload);
 
@@ -123,11 +123,11 @@ public sealed class SseDispatcherTests
         using var sp = services.BuildServiceProvider();
 
         // Descriptor presence ≠ resolvability — resolve EVERY registered seam.
-        var userDispatcher = sp.GetRequiredService<IOrderShippedDispatcher>();
-        userDispatcher.Should().BeOfType<OrderShippedDispatcher>();
+        var userDispatcher = sp.GetRequiredService<IOrderShippedFixtureDispatcher>();
+        userDispatcher.Should().BeOfType<OrderShippedFixtureDispatcher>();
 
-        var sessionDispatcher = sp.GetRequiredService<ISessionExpiringDispatcher>();
-        sessionDispatcher.Should().BeOfType<SessionExpiringDispatcher>();
+        var sessionDispatcher = sp.GetRequiredService<ISessionExpiringFixtureDispatcher>();
+        sessionDispatcher.Should().BeOfType<SessionExpiringFixtureDispatcher>();
     }
 
     // ── DI lifetime is Transient — two resolutions yield distinct instances ──
@@ -142,8 +142,8 @@ public sealed class SseDispatcherTests
 
         using var sp = services.BuildServiceProvider();
 
-        var first = sp.GetRequiredService<IOrderShippedDispatcher>();
-        var second = sp.GetRequiredService<IOrderShippedDispatcher>();
+        var first = sp.GetRequiredService<IOrderShippedFixtureDispatcher>();
+        var second = sp.GetRequiredService<IOrderShippedFixtureDispatcher>();
         first.Should().NotBeSameAs(second);
     }
 }

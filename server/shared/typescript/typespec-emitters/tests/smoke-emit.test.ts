@@ -699,10 +699,7 @@ describe("$onEmit_directUnit_DtoPairEmission", () => {
 
     // Wire @d2GrpcMethod state map for this op.
     const grpcMap = new Map<object, unknown>([
-      [
-        op,
-        { service: "KeyCustodianSigner", method: "Sign", streaming: "unary" },
-      ],
+      [op, { service: "SampleSigner", method: "Sign", streaming: "unary" }],
     ]);
 
     // Field-number pins for the mock properties (mirrors the sign-shaped.tsp pins:
@@ -740,9 +737,9 @@ describe("$onEmit_directUnit_DtoPairEmission", () => {
     // .proto file emitted.
     expect(paths.some((p) => p.includes(".g.proto"))).toBe(true);
     // gRPC service class emitted.
-    expect(
-      paths.some((p) => p.includes("KeyCustodianSignerService.g.cs")),
-    ).toBe(true);
+    expect(paths.some((p) => p.includes("SampleSignerService.g.cs"))).toBe(
+      true,
+    );
     // Transport mapper emitted.
     expect(paths.some((p) => p.includes("SignTransportMappers.g.cs"))).toBe(
       true,

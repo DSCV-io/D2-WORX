@@ -142,60 +142,62 @@ const COPY_MANIFEST = [
 
   // ---- TypeScript DTOs — no namespace sensitivity, all match ----
   {
-    from: "enums-dto.g.ts",
-    to: "server/services/edge/tests/Unit/KeyCustodian/TypeSpecDto/Generated/enums-dto.g.ts",
+    from: "enum-fixture-dto.g.ts",
+    to: "server/services/edge/tests/Unit/KeyCustodian/TypeSpecDto/Generated/enum-fixture-dto.g.ts",
   },
   {
-    from: "key-custodian-grpc-client.g.ts",
-    to: "server/services/edge/tests/Unit/KeyCustodian/TypeSpecDto/Generated/key-custodian-grpc-client.g.ts",
+    from: "sign-fixture-grpc-client.g.ts",
+    to: "server/services/edge/tests/Unit/KeyCustodian/TypeSpecDto/Generated/sign-fixture-grpc-client.g.ts",
   },
   {
-    from: "key-custodian-rest-client.g.ts",
-    to: "server/services/edge/tests/Unit/KeyCustodian/TypeSpecDto/Generated/key-custodian-rest-client.g.ts",
+    from: "sign-fixture-rest-client.g.ts",
+    to: "server/services/edge/tests/Unit/KeyCustodian/TypeSpecDto/Generated/sign-fixture-rest-client.g.ts",
   },
   {
-    from: "temporal-dto.g.ts",
-    to: "server/services/edge/tests/Unit/KeyCustodian/TypeSpecDto/Generated/temporal-dto.g.ts",
+    from: "temporal-fixture-dto.g.ts",
+    to: "server/services/edge/tests/Unit/KeyCustodian/TypeSpecDto/Generated/temporal-fixture-dto.g.ts",
   },
 
-  // ---- Sign .proto fixture (namespace matches: keycustodian package) ----
-  {
-    from: "key_custodian_signer_sign.g.proto",
-    to: "server/services/edge/tests/Unit/KeyCustodian/TypeSpecGrpc/Protos/key_custodian_signer_sign.g.proto",
-  },
+  // NOTE: the sign-shaped fixture proto is EXCLUDED — after the wire-identity
+  // rename the fixture carries the synthetic per-fixture package d2.signfixtures.v1,
+  // which the GLOBAL tspconfig compile (proto-package d2.keycustodian.v2alpha, the
+  // REAL KC ops) no longer matches. Like the enum / predicate fixture protos it is
+  // now governed exclusively by the byte-gate test suites (proto-grpc-byte-parity.test.ts)
+  // — never scattered from $onEmit output.
 
-  // ---- Enum gRPC TypeScript client (no namespace sensitivity) ----
+  // ---- Enum gRPC TypeScript client (no namespace sensitivity; served-by EnumFixtures
+  //      is unchanged so the file name is stable) ----
   {
     from: "enum-fixtures-grpc-client.g.ts",
     to: "server/services/edge/tests/Unit/KeyCustodian/TypeSpecGrpcEnum/Generated/enum-fixtures-grpc-client.g.ts",
   },
-  // NOTE: sign-with-kind-dto.g.ts is EXCLUDED — the committed banner uses
-  // "<typespec op: signWithKind>" (the fallback form); tsp compile now emits
+  // NOTE: sign-with-kind-fixture-dto.g.ts is EXCLUDED — the committed banner uses
+  // "<typespec op: signWithKindFixture>" (the per-op fallback form); tsp compile now emits
   // "contracts/typespec/fixtures/enum-shaped.tsp". Update by rerunning
-  // byte-parity.test.ts with the updated SIGN_WITH_KIND_DTO_SRC constant.
-  // NOTE: enum_fixtures_signer_sign_with_kind.g.proto is EXCLUDED — tsp compile
+  // byte-parity.test.ts with the updated SWK DTO source constant.
+  // NOTE: enum_fixtures_signer_sign_with_kind_fixture.g.proto is EXCLUDED — tsp compile
   // uses package d2.keycustodian.v2alpha; committed fixture uses d2.enumfixtures.v1.
 
   // ---- Resilience predicate TypeScript files (no namespace sensitivity) ----
   {
-    from: "place-order-dto.g.ts",
-    to: "server/services/edge/tests/Unit/KeyCustodian/TypeSpecGrpcPredicate/Generated/place-order-dto.g.ts",
+    from: "place-order-fixture-dto.g.ts",
+    to: "server/services/edge/tests/Unit/KeyCustodian/TypeSpecGrpcPredicate/Generated/place-order-fixture-dto.g.ts",
   },
   {
-    from: "place-order-resilience-predicates.g.ts",
-    to: "server/services/edge/tests/Unit/KeyCustodian/TypeSpecGrpcPredicate/Generated/place-order-resilience-predicates.g.ts",
+    from: "place-order-fixture-resilience-predicates.g.ts",
+    to: "server/services/edge/tests/Unit/KeyCustodian/TypeSpecGrpcPredicate/Generated/place-order-fixture-resilience-predicates.g.ts",
   },
   {
-    from: "place-order-v2-dto.g.ts",
-    to: "server/services/edge/tests/Unit/KeyCustodian/TypeSpecGrpcPredicate/Generated/place-order-v2-dto.g.ts",
+    from: "place-order-v2-fixture-dto.g.ts",
+    to: "server/services/edge/tests/Unit/KeyCustodian/TypeSpecGrpcPredicate/Generated/place-order-v2-fixture-dto.g.ts",
   },
   {
-    from: "place-order-v2-resilience-predicates.g.ts",
-    to: "server/services/edge/tests/Unit/KeyCustodian/TypeSpecGrpcPredicate/Generated/place-order-v2-resilience-predicates.g.ts",
+    from: "place-order-v2-fixture-resilience-predicates.g.ts",
+    to: "server/services/edge/tests/Unit/KeyCustodian/TypeSpecGrpcPredicate/Generated/place-order-v2-fixture-resilience-predicates.g.ts",
   },
   {
-    from: "deep-nest-dto.g.ts",
-    to: "server/services/edge/tests/Unit/KeyCustodian/TypeSpecGrpcPredicate/Generated/deep-nest-dto.g.ts",
+    from: "deep-nest-fixture-dto.g.ts",
+    to: "server/services/edge/tests/Unit/KeyCustodian/TypeSpecGrpcPredicate/Generated/deep-nest-fixture-dto.g.ts",
   },
   // NOTE: predicate-fixtures-grpc-client.g.ts is EXCLUDED — tsp compile produces
   // a combined module (PlaceOrder + PlaceOrderV2 + DeepNest); the committed

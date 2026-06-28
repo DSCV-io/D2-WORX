@@ -17,7 +17,10 @@
 // round-trip tests exercise the handler-side Create mapping, the emitter only
 // produces the flat wire DTO.
 //
-// This is a test fixture, not a real operation.
+// This is a test fixture, not a real operation. The fixture-owned leaf symbols
+// carry a `Fixture` marker; the shared zone-bearing composites
+// (ZonedInstantWire / LocalAnchoredEventWire) are real canonical wire models the
+// fixture merely consumes, so they keep their real names.
 
 import "@d2/typespec-decorators";
 import "../common/temporal.tsp";
@@ -28,7 +31,7 @@ using D2.Common.Temporal;
 namespace D2.Fixtures;
 
 /** Input carrying every temporal type — scalars plus both zone-bearing composites. */
-model TemporalInput {
+model TemporalFixtureInput {
   /** Bare past instant (Category 1/2). */
   pastInstant: utcDateTime;
 
@@ -61,7 +64,7 @@ model TemporalInput {
 }
 
 /** Output mirrors the input so the DTO emitter walks every temporal type in both directions. */
-model TemporalOutput {
+model TemporalFixtureOutput {
   /** Bare past instant (Category 1/2). */
   pastInstant: utcDateTime;
 
@@ -99,5 +102,5 @@ model TemporalOutput {
  */
 @d2Query
 @d2InProcess
-@d2ServedBy("Fixtures")
-op temporal(input: TemporalInput): TemporalOutput;
+@d2ServedBy("TemporalFixtures")
+op temporalFixture(input: TemporalFixtureInput): TemporalFixtureOutput;

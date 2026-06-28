@@ -87,7 +87,7 @@ import type { PredicateNode } from "@d2/typespec-decorators";
 export interface GrpcClientOp {
   /** lowerCamelCase op name (e.g. "sign"). */
   readonly opName: string;
-  /** gRPC service name from @d2GrpcMethod (e.g. "KeyCustodianSigner"). */
+  /** gRPC service name from @d2GrpcMethod (e.g. "SampleSigner"). */
   readonly grpcService: string;
   /** gRPC method name from @d2GrpcMethod (e.g. "Sign"). */
   readonly grpcMethod: string;

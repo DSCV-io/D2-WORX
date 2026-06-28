@@ -130,7 +130,7 @@ All supported `tspconfig.yaml` options are listed below.
 | `csharp-namespace` | `string` | Required | `D2.Generated` | C# namespace for fixture-mode DTOs and the gRPC service-impl class when `csharp-app-namespace-base` is absent. Kept for backward compatibility; in real-module mode this namespace is used only for internal fixture ops. |
 | `csharp-clients-namespace` | `string` | Optional (real-module mode) | — | C# namespace for the Clients project: exposed-op DTOs (`@d2InProcess`, `@d2GrpcMethod`, `@d2ServerPush`, `@route`) and the per-module façade interface land here. Omit when emitting fixture ops only. |
 | `csharp-app-namespace-base` | `string` | Optional (real-module mode) | — | Base C# namespace for app-layer handler interfaces. Per-op CQRS path is `<base>.<Category>.<PascalOp>` (e.g. `D2.Edge.KeyCustodian.App.Application.Handlers.Queries.GetJwks`). When absent, the emitter falls back to fixture mode (handler interfaces land under `csharp-namespace`). |
-| `proto-package` | `string` | Optional | `d2.generated.v1` | proto3 `package` declaration written into the emitted `.proto` file. Use a service-specific value in real-module mode (e.g. `d2.keycustodian.v2alpha`). |
+| `proto-package` | `string` | Optional | `d2.generated.v1` | proto3 `package` declaration written into the emitted `.proto` file. Use a service-specific value in real-module mode (e.g. `d2.signfixtures.v1`). |
 | `proto-csharp-namespace` | `string` | Optional | `D2.Generated.Protos.V1` | C# namespace declared via `option csharp_namespace` in the emitted `.proto` file. Must match the namespace Grpc.Tools generates for message + service types. |
 | `grpc-service-namespace` | `string` | Optional | `D2.Generated.Grpc` | C# namespace for the generated gRPC service-impl class and its transport mapper. Distinct from `proto-csharp-namespace` so generated proto types and the service impl do not collide. |
 
@@ -292,16 +292,16 @@ import { emitProto } from "@d2/typespec-emitters";
 
 const protoFile = emitProto(
   "sign",                                        // opName (banner context only)
-  "KeyCustodianSigner",                          // grpcService
+  "SignFixtureSigner",                          // grpcService
   "Sign",                                        // grpcMethod
   "unary",                                       // streaming mode
-  "d2.keycustodian.v2alpha",                     // protoPackage
-  "D2.Services.Protos.KeyCustodian.V2Alpha",     // protoCsharpNs
+  "d2.signfixtures.v1",                     // protoPackage
+  "D2.Services.Protos.SignFixtures.V1",     // protoCsharpNs
   "contracts/typespec/key-custodian.tsp",        // sourceSpec
   "SignRequest",                                 // requestModelName — proto convention: <grpcMethod>Request
   inputFields,                                   // requestFields (FieldInfo[])
   undefined,                                     // requestReserved (@d2Reserved payload or undefined)
-  "SignOutput",                                  // responseModelName
+  "SignFixtureOutput",                                  // responseModelName
   outputFields,                                  // responseFields (FieldInfo[])
   undefined,                                     // responseReserved (@d2Reserved payload or undefined)
   [],                                            // nestedMessages (NestedMessageDescriptor[])
@@ -309,7 +309,7 @@ const protoFile = emitProto(
     /* D2TSP001 on unmapped scalar; D2TSP009 on unpinned proto field */
   },
 );
-// protoFile.fileName → "key_custodian_signer_sign.g.proto"
+// protoFile.fileName → "sign_fixture_signer_sign_fixture.g.proto"
 ```
 
 Emits a proto3 file with a single-method `service` + `message` definitions for
@@ -330,15 +330,15 @@ import { emitRoutePolicy, emitRoutePolicyMarkers } from "./lib/route-policy-emit
 const routeFile = emitRoutePolicy({
   opName: "sign",
   verb: "post",
-  routePath: "/internal/v1/kc/sign",
+  routePath: "/internal/v1/fixtures/sign-fixture",
   delegationTarget: {
     kind: "facade",
-    typeName: "IKeyCustodianSignerFacade",
+    typeName: "ISignFixtureSignerFacade",
     methodName: "SignAsync",
   },
   delegationTargetNamespace: "D2.Edge.Tests.TypeSpecRoute.Generated.Facade",
-  inputTypeName: "SignInput",
-  outputTypeName: "SignOutput",
+  inputTypeName: "SignFixtureInput",
+  outputTypeName: "SignFixtureOutput",
   dtoNamespace: "D2.Edge.Tests.TypeSpecDto.Generated",
   scopePolicy: { kind: "any", scopes: ["self.write"] },
   rateTier: "Standard",
@@ -346,7 +346,7 @@ const routeFile = emitRoutePolicy({
   registrationNamespace: "D2.Edge.Tests.TypeSpecRoute.Generated",
   sourceSpec: "contracts/typespec/fixtures/sign-shaped.tsp",
 });
-// routeFile.fileName → "SignRouteRegistration.g.cs"
+// routeFile.fileName → "SignFixtureRouteRegistration.g.cs"
 
 const markersFile = emitRoutePolicyMarkers(
   "D2.Edge.Tests.TypeSpecRoute.Generated",
@@ -407,28 +407,28 @@ import type { GrpcDelegationTarget } from "./lib/grpc-service-emitter.js";
 // Façade delegation (when op has @d2InProcess):
 const facadeTarget: GrpcDelegationTarget = {
   kind: "facade",
-  typeName: "IKeyCustodianSignerFacade",
+  typeName: "ISignFixtureSignerFacade",
   methodName: "SignAsync",
   targetNamespace: "D2.Edge.Tests.TypeSpecRoute.Generated.Facade",
 };
 const [serviceFile, mappersFile] = emitGrpcService(
   "sign",
-  "KeyCustodianSigner",
+  "SignFixtureSigner",
   "Sign",
-  "D2.Services.Protos.KeyCustodian.V2Alpha",
+  "D2.Services.Protos.SignFixtures.V1",
   "D2.Edge.Tests.TypeSpecGrpc.Generated",
   "D2.Edge.Tests.TypeSpecDto.Generated",
   "contracts/typespec/fixtures/sign-shaped.tsp",
   "SignRequest",
   "SignResponse",
-  "SignInput",
+  "SignFixtureInput",
   inputWalk.fields,
-  "SignOutput",
+  "SignFixtureOutput",
   outputWalk.fields,
   facadeTarget, // omit to fall back to I<Op>Handler delegation
 );
-// serviceFile.fileName  → "KeyCustodianSignerService.g.cs"
-// mappersFile.fileName  → "SignTransportMappers.g.cs"
+// serviceFile.fileName  → "SignFixtureSignerService.g.cs"
+// mappersFile.fileName  → "SignFixtureTransportMappers.g.cs"
 ```
 
 Always returns exactly two files. The service class is `sealed`. Its primary
@@ -623,8 +623,8 @@ const weave: IdempotencyGateWeave = buildIdempotencyGate({
   keySource: "header",
   ttlSeconds: 86400,
   fields: [],
-  inputTypeName: "SignInput",
-  outputTypeName: "SignOutput",
+  inputTypeName: "SignFixtureInput",
+  outputTypeName: "SignFixtureOutput",
   pascalOpName: "Sign",
 });
 // weave.storeParam       → "D2GeneratedIdempotencyStore store"
@@ -751,7 +751,7 @@ The emitter enforces agree-by-construction wire identity across every surface
 that carries a version/generation segment.
 
 **Single source of the channel**: the `proto-package` tspconfig suffix (e.g.
-`v2alpha` in `d2.keycustodian.v2alpha`). `parseChannel(protoPackage)` parses
+`v2alpha` in `d2.signfixtures.v1`). `parseChannel(protoPackage)` parses
 this into a `WireChannel` triple `{ svc, generation, stability, lowerChannel,
 pascalChannel }`. `WIRE_CHANNEL_GRAMMAR` is the exported validation regex.
 
@@ -780,7 +780,7 @@ public static class WireVersion
 ```
 
 Co-located with the Grpc.Tools proto types so runtimes reference
-`D2.Services.Protos.KeyCustodian.V2Alpha.WireVersion.CHANNEL` directly.
+`D2.Services.Protos.SignFixtures.V1.WireVersion.CHANNEL` directly.
 
 **`wire-identity.manifest.g.json`** is emitted alongside `WireVersion.g.cs` by
 `emitWireIdentityManifest`. Records the agree-by-construction wire-identity
@@ -836,11 +836,11 @@ server/services/edge/key-custodian/app/Application/                   ← façad
 server/services/edge/key-custodian/app/Application/Handlers/…/GetJwks/ ← GetJwks handler interface (app CQRS namespace)
 server/services/edge/tests/Unit/KeyCustodian/TypeSpecGrpc/Generated/  ← gRPC service + mapper fixtures
 server/services/edge/tests/Unit/KeyCustodian/TypeSpecGrpc/Protos/     ← .proto fixture
-server/services/edge/tests/Unit/KeyCustodian/TypeSpecDto/Generated/   ← sign + temporal + enum fixture DTOs (TemporalInput/Output.g.cs + temporal-dto.g.ts; EnumsInput/Output.g.cs + enums-dto.g.ts)
+server/services/edge/tests/Unit/KeyCustodian/TypeSpecDto/Generated/   ← sign + temporal + enum fixture DTOs (TemporalFixtureInput/Output.g.cs + temporal-fixture-dto.g.ts; EnumsInput/Output.g.cs + enum-fixture-dto.g.ts)
 server/services/edge/tests/Unit/KeyCustodian/TypeSpecGrpcEnum/Generated/ ← enum gRPC fixtures (SignWithKind DTOs + service + transport/client mappers + client interface/impl/DI/keys; the proto string ↔ enum bridge)
-server/services/edge/tests/Unit/KeyCustodian/TypeSpecGrpcEnum/Protos/  ← enum gRPC fixture .proto (enum_fixtures_signer_sign_with_kind.g.proto)
+server/services/edge/tests/Unit/KeyCustodian/TypeSpecGrpcEnum/Protos/  ← enum gRPC fixture .proto (enum_fixtures_signer_sign_with_kind_fixture.g.proto)
 server/services/edge/tests/Unit/KeyCustodian/TypeSpecGrpcPredicate/Generated/ ← @d2Resilience predicate fixtures (flat PlaceOrder DTOs + client interface/impl/DI/keys/mappers + the C#/TS predicate twins + D2GeneratedBusinessRetrySignal; PLUS the nested/array-of-model PlaceOrderV2 DTOs + its C#/TS predicate twin — emitted STANDALONE, no gRPC client committed for the nested shape)
-server/services/edge/tests/Unit/KeyCustodian/TypeSpecGrpcPredicate/Protos/  ← predicate gRPC fixture .proto (predicate_fixtures_orders_place_order.g.proto; placeOrderV2 has no committed proto/client — nested-model gRPC responses are a tracked transport-mapper gap, roadmap §C C18)
+server/services/edge/tests/Unit/KeyCustodian/TypeSpecGrpcPredicate/Protos/  ← predicate gRPC fixture .proto (predicate_fixtures_orders_place_order_fixture.g.proto; placeOrderV2 has no committed proto/client — nested-model gRPC responses are a tracked transport-mapper gap, roadmap §C C18)
 server/services/edge/tests/Unit/KeyCustodian/TypeSpecOpenApi/Generated/    ← OpenAPI x-d2-* documents (open-api-fixtures.openapi.g.json + the two versioned open-api-versioned-fixtures.{1-0,2-0}.openapi.g.json), regenerated by compiling contracts/typespec/fixtures/openapi-shaped.tsp through getOpenAPI3 + the x-d2-* injection
 server/services/edge/tests/Unit/KeyCustodian/TypeSpecSse/Generated/        ← server-push dispatch fixtures (D2GeneratedSseEmitSink seam + the per-op I<Op>Dispatcher/<Op>Dispatcher pairs + PushFixturesSseDispatchersGenerated DI-ext + the <Op>Output payload DTOs), regenerated from contracts/typespec/fixtures/server-push-shaped.tsp. The push ops are PURE-push, so NO I<Op>Handler is emitted (a pure-push op is a caller, not a request server) and NO <Op>Input is emitted (input suppressed — a pure-push op emits ONLY the output payload)
 ```
@@ -888,11 +888,11 @@ The scatter script (`tools/scripts/regen-typespec-emitters.mjs`):
 - `GetJwksInput.g.cs` / `GetJwksOutput.g.cs` — GetJwks DTOs (Clients namespace)
 - `KeyCustodianClientsGenerated.g.cs` — DI extension (app/Application/)
 - `IGetJwksHandler.g.cs` — GetJwks handler interface (per-op CQRS folder)
-- `enums-dto.g.ts`, `key-custodian-grpc-client.g.ts`, `key-custodian-rest-client.g.ts`, `temporal-dto.g.ts` — TypeScript DTOs
-- `key_custodian_signer_sign.g.proto` — sign gRPC proto
+- `enum-fixture-dto.g.ts`, `sign-fixture-grpc-client.g.ts`, `sign-fixture-rest-client.g.ts`, `temporal-fixture-dto.g.ts` — TypeScript DTOs
 - `enum-fixtures-grpc-client.g.ts` — enum gRPC TypeScript client
-- `place-order-dto.g.ts`, `place-order-resilience-predicates.g.ts`, `place-order-v2-dto.g.ts`, `place-order-v2-resilience-predicates.g.ts`, `deep-nest-dto.g.ts` — predicate TypeScript files
-- `IPlaceOrderHandler.g.cs`, `IPlaceOrderV2Handler.g.cs`, `IDeepNestHandler.g.cs` — predicate handler interfaces
+- `place-order-fixture-dto.g.ts`, `place-order-fixture-resilience-predicates.g.ts`, `place-order-v2-fixture-dto.g.ts`, `place-order-v2-fixture-resilience-predicates.g.ts`, `deep-nest-fixture-dto.g.ts` — predicate TypeScript files
+
+> The sign-shaped fixture proto (`sign_fixture_signer_sign_fixture.g.proto`) is NO LONGER regen-covered: after its wire-identity rename to the synthetic per-fixture package `d2.signfixtures.v1`, the GLOBAL `tspconfig.yaml` compile (proto-package `d2.keycustodian.v2alpha`, the REAL KC ops) no longer matches it, so — like the enum / predicate fixture protos — it is governed exclusively by the byte-gate test suites (`proto-grpc-byte-parity.test.ts`).
 
 **Which files are NOT covered (update via test suites instead):**
 

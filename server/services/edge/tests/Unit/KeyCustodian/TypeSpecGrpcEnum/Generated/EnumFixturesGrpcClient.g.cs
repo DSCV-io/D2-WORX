@@ -9,8 +9,8 @@
 
 namespace D2.Edge.Tests.TypeSpecGrpcEnum.Clients;
 
-using SignWithKindInput = global::D2.Edge.Tests.TypeSpecGrpcEnum.Generated.SignWithKindInput;
-using SignWithKindOutput = global::D2.Edge.Tests.TypeSpecGrpcEnum.Generated.SignWithKindOutput;
+using SignWithKindFixtureInput = global::D2.Edge.Tests.TypeSpecGrpcEnum.Generated.SignWithKindFixtureInput;
+using SignWithKindFixtureOutput = global::D2.Edge.Tests.TypeSpecGrpcEnum.Generated.SignWithKindFixtureOutput;
 using D2.Services.Protos.Common.V1;
 using D2.Shared.Resilience.Pipeline;
 using D2.Shared.Resilience.Retry;
@@ -26,39 +26,39 @@ using Microsoft.Extensions.DependencyInjection;
 /// </summary>
 public sealed class EnumFixturesGrpcClient(
     global::D2.Services.Protos.EnumFixtures.V1.EnumFixturesSigner.EnumFixturesSignerClient enumFixturesSignerStub,
-    [FromKeyedServices(SignWithKindClientKeys.PIPELINE)] ResilientPipeline<string, SignWithKindOutput?> signWithKindPipeline
+    [FromKeyedServices(SignWithKindFixtureClientKeys.PIPELINE)] ResilientPipeline<string, SignWithKindFixtureOutput?> signWithKindFixturePipeline
 ) : IEnumFixturesGrpcClient
 {
-    private readonly ResilientPipeline<string, SignWithKindOutput?> r_signWithKindPipeline = signWithKindPipeline;
+    private readonly ResilientPipeline<string, SignWithKindFixtureOutput?> r_signWithKindFixturePipeline = signWithKindFixturePipeline;
 
     /// <inheritdoc/>
-    public ValueTask<D2Result<SignWithKindOutput?>> SignWithKindAsync(
-        SignWithKindInput input,
-        ResilientPipeline<string, SignWithKindOutput?>? pipelineOverride = null,
+    public ValueTask<D2Result<SignWithKindFixtureOutput?>> SignWithKindFixtureAsync(
+        SignWithKindFixtureInput input,
+        ResilientPipeline<string, SignWithKindFixtureOutput?>? pipelineOverride = null,
         CancellationToken ct = default)
-        => SignWithKindCoreAsync(input, pipelineOverride ?? r_signWithKindPipeline, ct);
+        => SignWithKindFixtureCoreAsync(input, pipelineOverride ?? r_signWithKindFixturePipeline, ct);
 
-    private async ValueTask<D2Result<SignWithKindOutput?>> SignWithKindCoreAsync(
-        SignWithKindInput input,
-        ResilientPipeline<string, SignWithKindOutput?> pipeline,
+    private async ValueTask<D2Result<SignWithKindFixtureOutput?>> SignWithKindFixtureCoreAsync(
+        SignWithKindFixtureInput input,
+        ResilientPipeline<string, SignWithKindFixtureOutput?> pipeline,
         CancellationToken ct)
     {
-        var request = input.ToSignWithKindRequest();
+        var request = input.ToSignWithKindFixtureRequest();
         D2ResultProto? envelope = null;                  // captured out of the closure
         RpcException? transportFault = null;             // captured out of the closure
-        D2Result<SignWithKindOutput>? responseParseFailure = null;  // client-side enum parse failure
+        D2Result<SignWithKindFixtureOutput>? responseParseFailure = null;  // client-side enum parse failure
         var pipelineResult = await pipeline.ExecuteAsync(
-            SignWithKindClientKeys.PIPELINE_KEY,
+            SignWithKindFixtureClientKeys.PIPELINE_KEY,
             async innerCt =>
             {
                 try
                 {
-                    var response = await enumFixturesSignerStub.SignWithKindAsync(request, cancellationToken: innerCt);
+                    var response = await enumFixturesSignerStub.SignWithKindFixtureAsync(request, cancellationToken: innerCt);
                     envelope = response.Result;          // business result (gRPC status OK)
                     if (response.Data is null)
                         return default;
 
-                    var dataResult = response.Data.ToSignWithKindOutput();
+                    var dataResult = response.Data.ToSignWithKindFixtureOutput();
                     if (!dataResult.Success)
                     {
                         responseParseFailure = dataResult;  // capture; surface after the pipeline
@@ -78,14 +78,14 @@ public sealed class EnumFixturesGrpcClient(
         // path (mis-mapping to UnhandledException); remap the captured RpcException to the
         // gRPC-aware code (Cancelled -> Canceled, else -> ServiceUnavailable).
         if (!pipelineResult.Success && transportFault is not null)
-            return transportFault.ToTransportFaultResult<SignWithKindOutput?>();
+            return transportFault.ToTransportFaultResult<SignWithKindFixtureOutput?>();
         // Client could not map a response enum wire value → ValidationFailed (strict, no fallback).
         if (responseParseFailure is not null)
-            return D2Result<SignWithKindOutput?>.BubbleFail(responseParseFailure);
+            return D2Result<SignWithKindFixtureOutput?>.BubbleFail(responseParseFailure);
         // Business result: reconstruct the full D2Result from the captured envelope. Other
         // pipeline failures (CircuitOpen, RateLimit, caller-cancel) pass through verbatim.
         return pipelineResult.Success && envelope is not null
-            ? envelope.ToD2Result<SignWithKindOutput?>(pipelineResult.Data)
+            ? envelope.ToD2Result<SignWithKindFixtureOutput?>(pipelineResult.Data)
             : pipelineResult;
     }
 }

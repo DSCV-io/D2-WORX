@@ -8,7 +8,7 @@
   "paths": {
     "/v1/openapi/sign": {
       "post": {
-        "operationId": "sign",
+        "operationId": "openApiSignFixture",
         "description": "Sign the payload — carries ALL FOUR policy decorators so every x-d2-*\nextension is exercised (x-d2-scope any + x-d2-tier + x-d2-csrf + x-d2-audience).",
         "parameters": [],
         "responses": {
@@ -17,7 +17,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/OpenApiSignOutput"
+                  "$ref": "#/components/schemas/OpenApiSignFixtureOutput"
                 }
               }
             }
@@ -31,7 +31,7 @@
                 "type": "object",
                 "properties": {
                   "input": {
-                    "$ref": "#/components/schemas/OpenApiSignInput"
+                    "$ref": "#/components/schemas/OpenApiSignFixtureInput"
                   }
                 },
                 "required": [
@@ -54,7 +54,7 @@
     },
     "/v1/openapi/sign-minimal": {
       "post": {
-        "operationId": "signMinimal",
+        "operationId": "openApiSignMinimalFixture",
         "description": "Sign with ONLY the required auth intent — no tier / csrf / audience. Proves\nthe three extensions are ABSENT when their decorators are absent (extensions\nare not vacuously stamped).",
         "parameters": [],
         "responses": {
@@ -63,7 +63,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/OpenApiSignOutput"
+                  "$ref": "#/components/schemas/OpenApiSignFixtureOutput"
                 }
               }
             }
@@ -77,7 +77,7 @@
                 "type": "object",
                 "properties": {
                   "input": {
-                    "$ref": "#/components/schemas/OpenApiSignInput"
+                    "$ref": "#/components/schemas/OpenApiSignFixtureInput"
                   }
                 },
                 "required": [
@@ -97,7 +97,7 @@
     },
     "/v1/openapi/audit": {
       "get": {
-        "operationId": "audit",
+        "operationId": "openApiAuditFixture",
         "description": "Fetch an audit record —",
         "parameters": [],
         "responses": {
@@ -106,7 +106,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/OpenApiAuditOutput"
+                  "$ref": "#/components/schemas/OpenApiAuditFixtureOutput"
                 }
               }
             }
@@ -120,7 +120,7 @@
                 "type": "object",
                 "properties": {
                   "input": {
-                    "$ref": "#/components/schemas/OpenApiAuditInput"
+                    "$ref": "#/components/schemas/OpenApiAuditFixtureInput"
                   }
                 },
                 "required": [
@@ -141,7 +141,7 @@
     },
     "/v1/openapi/health": {
       "get": {
-        "operationId": "health",
+        "operationId": "openApiHealthFixture",
         "description": "Health check —",
         "parameters": [],
         "responses": {
@@ -150,7 +150,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/OpenApiHealthOutput"
+                  "$ref": "#/components/schemas/OpenApiHealthFixtureOutput"
                 }
               }
             }
@@ -164,7 +164,7 @@
   },
   "components": {
     "schemas": {
-      "OpenApiSignOutput": {
+      "OpenApiSignFixtureOutput": {
         "type": "object",
         "required": [
           "signature"
@@ -175,9 +175,9 @@
             "description": "The signature over the payload, base64url-encoded (unpadded)."
           }
         },
-        "description": "Output of a sign operation: the base64url-encoded signature."
+        "description": "Output of a sign fixture operation: the base64url-encoded signature."
       },
-      "OpenApiSignInput": {
+      "OpenApiSignFixtureInput": {
         "type": "object",
         "required": [
           "kid",
@@ -194,9 +194,9 @@
             "description": "The payload to sign. Redacted in structured logs (secret material)."
           }
         },
-        "description": "Input for a sign operation: a key identifier and the payload bytes to sign."
+        "description": "Input for a sign fixture operation: a key identifier and the payload bytes to sign."
       },
-      "OpenApiAuditOutput": {
+      "OpenApiAuditFixtureOutput": {
         "type": "object",
         "required": [
           "detail"
@@ -207,9 +207,9 @@
             "description": "The audit detail payload."
           }
         },
-        "description": "Output of an audit lookup: the resolved audit detail."
+        "description": "Output of an audit fixture lookup: the resolved audit detail."
       },
-      "OpenApiAuditInput": {
+      "OpenApiAuditFixtureInput": {
         "type": "object",
         "required": [
           "auditId"
@@ -220,9 +220,9 @@
             "description": "The audit record identifier to fetch."
           }
         },
-        "description": "Input for an audit lookup: the audit record identifier."
+        "description": "Input for an audit fixture lookup: the audit record identifier."
       },
-      "OpenApiHealthOutput": {
+      "OpenApiHealthFixtureOutput": {
         "type": "object",
         "required": [
           "live"
@@ -233,7 +233,7 @@
             "description": "Whether the service is live."
           }
         },
-        "description": "Output of a health check: a liveness flag."
+        "description": "Output of a health fixture check: a liveness flag."
       }
     }
   },

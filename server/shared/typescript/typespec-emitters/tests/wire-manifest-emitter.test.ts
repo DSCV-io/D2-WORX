@@ -14,8 +14,8 @@ import { describe, it, expect } from "vitest";
 import { emitWireIdentityManifest } from "../src/lib/wire-manifest-emitter.js";
 import { parseChannel } from "../src/lib/wire-channel.js";
 
-const PROTO_PACKAGE = "d2.keycustodian.v2alpha";
-const PROTO_CSHARP_NS = "D2.Services.Protos.KeyCustodian.V2Alpha";
+const PROTO_PACKAGE = "d2.sample.v2alpha";
+const PROTO_CSHARP_NS = "D2.Services.Protos.Sample.V2Alpha";
 const ALPHA_CHANNEL = parseChannel(PROTO_PACKAGE)!;
 
 const BETA_PACKAGE = "d2.geo.v2beta";

@@ -13,8 +13,8 @@ using System.Threading;
 using System.Threading.Tasks;
 using D2.Edge.Tests.TypeSpecGrpc.Generated;
 using D2.Edge.Tests.TypeSpecGrpcPredicate.Generated;
-using D2.Services.Protos.KeyCustodian.V2Alpha;
 using D2.Services.Protos.PredicateFixtures.V1;
+using D2.Services.Protos.SignFixtures.V1;
 using D2.Shared.Resilience.CircuitBreaker;
 using D2.Shared.Resilience.Pipeline;
 using D2.Shared.Resilience.Retry;
@@ -24,12 +24,12 @@ using Grpc.Core;
 using Grpc.Net.Client;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
-using DtoPlaceOrderInput = D2.Edge.Tests.TypeSpecGrpcPredicate.Generated.PlaceOrderInput;
-using DtoPlaceOrderOutput = D2.Edge.Tests.TypeSpecGrpcPredicate.Generated.PlaceOrderOutput;
-using DtoSignInput = D2.Edge.Tests.TypeSpecDto.Generated.SignInput;
-using DtoSignOutput = D2.Edge.Tests.TypeSpecDto.Generated.SignOutput;
-using ProtoPlaceOrderOutput = D2.Services.Protos.PredicateFixtures.V1.PlaceOrderOutput;
-using ProtoSignOutput = D2.Services.Protos.KeyCustodian.V2Alpha.SignOutput;
+using DtoPlaceOrderFixtureInput = D2.Edge.Tests.TypeSpecGrpcPredicate.Generated.PlaceOrderFixtureInput;
+using DtoPlaceOrderFixtureOutput = D2.Edge.Tests.TypeSpecGrpcPredicate.Generated.PlaceOrderFixtureOutput;
+using DtoSignFixtureInput = D2.Edge.Tests.TypeSpecDto.Generated.SignFixtureInput;
+using DtoSignFixtureOutput = D2.Edge.Tests.TypeSpecDto.Generated.SignFixtureOutput;
+using ProtoPlaceOrderFixtureOutput = D2.Services.Protos.PredicateFixtures.V1.PlaceOrderFixtureOutput;
+using ProtoSignFixtureOutput = D2.Services.Protos.SignFixtures.V1.SignFixtureOutput;
 
 /// <summary>
 /// Over-the-wire resilience and envelope integration tests. Re-proves the resilience /
@@ -41,7 +41,7 @@ using ProtoSignOutput = D2.Services.Protos.KeyCustodian.V2Alpha.SignOutput;
 /// is auth-orthogonal, so the mTLS client-cert requirement is dropped → runs cross-platform
 /// including Windows). Self-managed (<see cref="GrpcTestHost.RunningServer"/> : IAsyncDisposable,
 /// ephemeral port; no <c>dotnet run</c>, single process). The SAME generated
-/// <see cref="KeyCustodianGrpcClient"/> / <see cref="PredicateFixturesGrpcClient"/> the
+/// <see cref="SignFixtureGrpcClient"/> / <see cref="PredicateFixturesGrpcClient"/> the
 /// in-memory harness drives, re-proven over a real socket.
 /// </summary>
 /// <remarks>
@@ -85,10 +85,10 @@ public sealed class OverTheWireResilienceTests
         using var channel = BuildServerTlsChannel(host.Endpoint);
 
         using var retryPipeline = BuildSignRetryPipeline(maxAttempts: 3);
-        var stub = new KeyCustodianSigner.KeyCustodianSignerClient(channel);
-        var client = new KeyCustodianGrpcClient(stub, retryPipeline);
+        var stub = new SignFixtureSigner.SignFixtureSignerClient(channel);
+        var client = new SignFixtureGrpcClient(stub, retryPipeline);
 
-        var result = await client.SignAsync(new DtoSignInput("key-s1", new byte[] { 1, 2, 3 }));
+        var result = await client.SignFixtureAsync(new DtoSignFixtureInput("key-s1", new byte[] { 1, 2, 3 }));
 
         result.Success.Should().BeTrue("the retry pipeline recovered from the transient fault over the real socket");
         result.Data!.Signature.Should().Be(recovered_sig);
@@ -118,7 +118,7 @@ public sealed class OverTheWireResilienceTests
         // fakeNow[0] past cooldown_ms makes the breaker transition Open → HalfOpen.
         // No Task.Delay ever called — deterministic by construction.
         var fakeNow = new long[] { 0 };
-        var breaker = new CircuitBreaker<DtoSignOutput?>(
+        var breaker = new CircuitBreaker<DtoSignFixtureOutput?>(
             isFailure: _ => false,   // exceptions already record failure via the breaker's catch arm
             options: new CircuitBreakerOptions(
                 failureThreshold: threshold,
@@ -132,19 +132,19 @@ public sealed class OverTheWireResilienceTests
         await using var host = await StartSignerServerAsync(serverCert, shim);
         using var channel = BuildServerTlsChannel(host.Endpoint);
 
-        var stub = new KeyCustodianSigner.KeyCustodianSignerClient(channel);
+        var stub = new SignFixtureSigner.SignFixtureSignerClient(channel);
 
         // Build a pipeline with the test-controlled breaker (bypass-DI overload) and no retry
         // so each call is one independent breaker execution (no retry masking the state).
         using var pipeline = BuildSignBreakerPipeline(breaker);
-        var client = new KeyCustodianGrpcClient(stub, pipeline);
+        var client = new SignFixtureGrpcClient(stub, pipeline);
 
-        var signInput = new DtoSignInput("key-s2", new byte[] { 0xAB });
+        var signInput = new DtoSignFixtureInput("key-s2", new byte[] { 0xAB });
 
         // --- Stage 1: drive `threshold` faults to open the breaker ---
         for (var i = 0; i < threshold; i++)
         {
-            var fault = await client.SignAsync(signInput);
+            var fault = await client.SignFixtureAsync(signInput);
             fault.Success.Should().BeFalse();
         }
 
@@ -152,7 +152,7 @@ public sealed class OverTheWireResilienceTests
         var callCountAfterOpen = shim.CallCount;
 
         // --- Stage 2: open-window call is fast-failed (does NOT reach the server) ---
-        var fastFail = await client.SignAsync(signInput);
+        var fastFail = await client.SignFixtureAsync(signInput);
         fastFail.Success.Should().BeFalse();
         fastFail.StatusCode.Should().Be(
             HttpStatusCode.ServiceUnavailable,
@@ -165,7 +165,7 @@ public sealed class OverTheWireResilienceTests
         Volatile.Write(ref fakeNow[0], cooldown_ms);
         shim.SetFaultMode(false);
 
-        var probeResult = await client.SignAsync(signInput);
+        var probeResult = await client.SignFixtureAsync(signInput);
 
         probeResult.Success.Should().BeTrue("the probe call succeeded and closed the breaker");
         breaker.State.Should().Be(CircuitState.Closed, "a successful probe closes the breaker");
@@ -189,7 +189,7 @@ public sealed class OverTheWireResilienceTests
     public async Task Sign_OverWire_BusinessValidationFailed_RidesEnvelopeAtGrpcOk_NotRetried()
     {
         var shim = new WireBusinessResultSignerBase(
-            D2Result<DtoSignOutput?>.ValidationFailed());
+            D2Result<DtoSignFixtureOutput?>.ValidationFailed());
 
         using var ca = new RealCertAuthority();
         using var serverCert = ca.IssueServerCertificate(_SERVER_WORKLOAD);
@@ -199,10 +199,10 @@ public sealed class OverTheWireResilienceTests
         // A 5-attempt retry pipeline that WOULD retry transport faults — but must NOT
         // retry a business result returned at gRPC status OK.
         using var retryPipeline = BuildSignRetryPipeline(maxAttempts: 5);
-        var stub = new KeyCustodianSigner.KeyCustodianSignerClient(channel);
-        var client = new KeyCustodianGrpcClient(stub, retryPipeline);
+        var stub = new SignFixtureSigner.SignFixtureSignerClient(channel);
+        var client = new SignFixtureGrpcClient(stub, retryPipeline);
 
-        var result = await client.SignAsync(new DtoSignInput("key-s3", new byte[] { 0xFF }));
+        var result = await client.SignFixtureAsync(new DtoSignFixtureInput("key-s3", new byte[] { 0xFF }));
 
         result.Success.Should().BeFalse();
         result.StatusCode.Should().Be(
@@ -228,11 +228,11 @@ public sealed class OverTheWireResilienceTests
         const string error_code = "KC_KEY_NOT_FOUND";
         const string expected_sig = "wire-fidelity-sig==";
 
-        D2Result<DtoSignOutput?> serverResult = scenario switch
+        D2Result<DtoSignFixtureOutput?> serverResult = scenario switch
         {
-            "success" => D2Result<DtoSignOutput?>.Ok(new DtoSignOutput(expected_sig)),
-            "conflict" => D2Result<DtoSignOutput?>.Conflict(errorCode: error_code),
-            _ => D2Result<DtoSignOutput?>.NotFound(),
+            "success" => D2Result<DtoSignFixtureOutput?>.Ok(new DtoSignFixtureOutput(expected_sig)),
+            "conflict" => D2Result<DtoSignFixtureOutput?>.Conflict(errorCode: error_code),
+            _ => D2Result<DtoSignFixtureOutput?>.NotFound(),
         };
 
         var shim = new WireBusinessResultSignerBase(serverResult);
@@ -242,11 +242,11 @@ public sealed class OverTheWireResilienceTests
         await using var host = await StartSignerServerAsync(serverCert, shim);
         using var channel = BuildServerTlsChannel(host.Endpoint);
 
-        var stub = new KeyCustodianSigner.KeyCustodianSignerClient(channel);
-        var client = new KeyCustodianGrpcClient(
-            stub, ResilientPipeline<string, DtoSignOutput?>.PassThrough);
+        var stub = new SignFixtureSigner.SignFixtureSignerClient(channel);
+        var client = new SignFixtureGrpcClient(
+            stub, ResilientPipeline<string, DtoSignFixtureOutput?>.PassThrough);
 
-        var result = await client.SignAsync(new DtoSignInput("key-s4", new byte[] { 0x42 }));
+        var result = await client.SignFixtureAsync(new DtoSignFixtureInput("key-s4", new byte[] { 0x42 }));
 
         switch (scenario)
         {
@@ -278,7 +278,7 @@ public sealed class OverTheWireResilienceTests
     // -----------------------------------------------------------------------
 
     /// <summary>
-    /// A server returning a SUCCESS <c>PlaceOrderOutput</c> with <c>partial==true</c>
+    /// A server returning a SUCCESS <c>PlaceOrderFixtureOutput</c> with <c>partial==true</c>
     /// matches <c>retryWhen</c> (the flat-bool arm) and opts the business result into
     /// retry via the generated sentinel — proven over a real socket. <c>CallCount &gt; 1</c>
     /// confirms the predicate-driven retry executed real server calls.
@@ -287,8 +287,8 @@ public sealed class OverTheWireResilienceTests
     public async Task PlaceOrder_OverWire_RetryWhenMatches_RetriesViaSentinel()
     {
         var shim = new WirePredicateSignerBase(
-            () => D2Result<DtoPlaceOrderOutput?>.Ok(
-                new DtoPlaceOrderOutput("order-partial-wire", ["SHIPPED"], Partial: true)),
+            () => D2Result<DtoPlaceOrderFixtureOutput?>.Ok(
+                new DtoPlaceOrderFixtureOutput("order-partial-wire", ["SHIPPED"], Partial: true)),
             itemStatuses: ["SHIPPED"]);
 
         using var ca = new RealCertAuthority();
@@ -300,7 +300,7 @@ public sealed class OverTheWireResilienceTests
         var stub = new PredicateFixturesOrders.PredicateFixturesOrdersClient(channel);
         var client = new PredicateFixturesGrpcClient(stub, retryPipeline);
 
-        var result = await client.PlaceOrderAsync(new DtoPlaceOrderInput("cust-wire-1"));
+        var result = await client.PlaceOrderFixtureAsync(new DtoPlaceOrderFixtureInput("cust-wire-1"));
 
         shim.CallCount.Should().BeGreaterThan(
             1,
@@ -320,7 +320,7 @@ public sealed class OverTheWireResilienceTests
     public async Task PlaceOrder_OverWire_FailWhenMatches_NotRetried()
     {
         var shim = new WirePredicateSignerBase(
-            () => D2Result<DtoPlaceOrderOutput?>.ValidationFailed(errorCode: "VALIDATION_FAILED"),
+            () => D2Result<DtoPlaceOrderFixtureOutput?>.ValidationFailed(errorCode: "VALIDATION_FAILED"),
             itemStatuses: ["SHIPPED"]);
 
         using var ca = new RealCertAuthority();
@@ -332,7 +332,7 @@ public sealed class OverTheWireResilienceTests
         var stub = new PredicateFixturesOrders.PredicateFixturesOrdersClient(channel);
         var client = new PredicateFixturesGrpcClient(stub, retryPipeline);
 
-        var result = await client.PlaceOrderAsync(new DtoPlaceOrderInput("cust-wire-2"));
+        var result = await client.PlaceOrderFixtureAsync(new DtoPlaceOrderFixtureInput("cust-wire-2"));
 
         shim.CallCount.Should().Be(1, "failWhen matched → no retry, returned verbatim on the first call");
         result.Success.Should().BeFalse();
@@ -346,7 +346,7 @@ public sealed class OverTheWireResilienceTests
 
     /// <summary>
     /// Starts a real Kestrel HTTPS host on <c>127.0.0.1:0</c> hosting a
-    /// <see cref="KeyCustodianSigner.KeyCustodianSignerBase"/> shim. Server-TLS only —
+    /// <see cref="SignFixtureSigner.SignFixtureSignerBase"/> shim. Server-TLS only —
     /// no client certificate is required (resilience is auth-orthogonal). The loopback
     /// self-signed server cert chains to itself and builds on a clean Windows box, so no
     /// OS-store mutation is needed. Cross-platform: no client-cert context is built. The
@@ -355,11 +355,11 @@ public sealed class OverTheWireResilienceTests
     /// </summary>
     private static Task<GrpcTestHost.RunningServer> StartSignerServerAsync(
         X509Certificate2 serverCert,
-        KeyCustodianSigner.KeyCustodianSignerBase shim) =>
+        SignFixtureSigner.SignFixtureSignerBase shim) =>
         GrpcTestHost.StartAsync(
             serverCert,
             services => services.AddSingleton(shim),
-            app => app.MapGrpcService<KeyCustodianSigner.KeyCustodianSignerBase>());
+            app => app.MapGrpcService<SignFixtureSigner.SignFixtureSignerBase>());
 
     /// <summary>
     /// Starts a real Kestrel HTTPS host on <c>127.0.0.1:0</c> hosting a
@@ -394,11 +394,11 @@ public sealed class OverTheWireResilienceTests
     /// Builds a retry-only pipeline with the gRPC-aware transient predicate, near-zero
     /// backoff, and an instant <c>DelayFunc</c> so no real delay occurs between attempts.
     /// </summary>
-    private static ResilientPipeline<string, DtoSignOutput?> BuildSignRetryPipeline(int maxAttempts)
+    private static ResilientPipeline<string, DtoSignFixtureOutput?> BuildSignRetryPipeline(int maxAttempts)
     {
-        var builder = new ResilientPipelineBuilder<string, DtoSignOutput?>(
+        var builder = new ResilientPipelineBuilder<string, DtoSignFixtureOutput?>(
             new ServiceCollection().BuildServiceProvider());
-        builder.UseRetries(new RetryOptions<DtoSignOutput?>
+        builder.UseRetries(new RetryOptions<DtoSignFixtureOutput?>
         {
             MaxAttempts = maxAttempts,
             BaseDelayMs = 1,
@@ -414,10 +414,10 @@ public sealed class OverTheWireResilienceTests
     /// <paramref name="breaker"/> via the bypass-DI overload. No retry layer — each call
     /// is one independent breaker execution (no retry masking the state transitions).
     /// </summary>
-    private static ResilientPipeline<string, DtoSignOutput?> BuildSignBreakerPipeline(
-        CircuitBreaker<DtoSignOutput?> breaker)
+    private static ResilientPipeline<string, DtoSignFixtureOutput?> BuildSignBreakerPipeline(
+        CircuitBreaker<DtoSignFixtureOutput?> breaker)
     {
-        var builder = new ResilientPipelineBuilder<string, DtoSignOutput?>(
+        var builder = new ResilientPipelineBuilder<string, DtoSignFixtureOutput?>(
             new ServiceCollection().BuildServiceProvider());
         builder.UseCircuitBreaker(breaker);
         return builder.Build();
@@ -428,12 +428,12 @@ public sealed class OverTheWireResilienceTests
     /// generated DI extension emits (recognizes both the business-retry sentinel AND
     /// gRPC-transient exceptions), near-zero backoff, and an instant <c>DelayFunc</c>.
     /// </summary>
-    private static ResilientPipeline<string, DtoPlaceOrderOutput?> BuildPredicateRetryPipeline(
+    private static ResilientPipeline<string, DtoPlaceOrderFixtureOutput?> BuildPredicateRetryPipeline(
         int maxAttempts)
     {
-        var builder = new ResilientPipelineBuilder<string, DtoPlaceOrderOutput?>(
+        var builder = new ResilientPipelineBuilder<string, DtoPlaceOrderFixtureOutput?>(
             new ServiceCollection().BuildServiceProvider());
-        builder.UseRetries(new RetryOptions<DtoPlaceOrderOutput?>
+        builder.UseRetries(new RetryOptions<DtoPlaceOrderFixtureOutput?>
         {
             MaxAttempts = maxAttempts,
             BaseDelayMs = 1,
@@ -450,15 +450,15 @@ public sealed class OverTheWireResilienceTests
     // Helper shared by predicate shims — must precede the nested classes (SA1201)
     // -----------------------------------------------------------------------
 
-    private static PlaceOrderResponse BuildResponse(
-        D2Result<DtoPlaceOrderOutput?> businessResult,
+    private static PlaceOrderFixtureResponse BuildResponse(
+        D2Result<DtoPlaceOrderFixtureOutput?> businessResult,
         string[] statuses)
     {
-        var response = new PlaceOrderResponse { Result = businessResult.ToProto() };
+        var response = new PlaceOrderFixtureResponse { Result = businessResult.ToProto() };
 
         if (businessResult.Success)
         {
-            var data = new ProtoPlaceOrderOutput
+            var data = new ProtoPlaceOrderFixtureOutput
             {
                 OrderCode = businessResult.Data?.OrderCode ?? "order",
                 Partial = businessResult.Data?.Partial ?? false,
@@ -482,22 +482,22 @@ public sealed class OverTheWireResilienceTests
     /// envelope on the second — the transient-recovery shim for S1.
     /// </summary>
     private sealed class WireFlakySignerBase(string signature)
-        : KeyCustodianSigner.KeyCustodianSignerBase
+        : SignFixtureSigner.SignFixtureSignerBase
     {
         private int _callCount;
 
         public int CallCount => Volatile.Read(ref _callCount);
 
-        public override Task<SignResponse> Sign(SignRequest request, ServerCallContext context)
+        public override Task<SignFixtureResponse> SignFixture(SignFixtureRequest request, ServerCallContext context)
         {
             var attempt = Interlocked.Increment(ref _callCount);
 
             if (attempt == 1)
                 throw new RpcException(new Status(StatusCode.Unavailable, "transient wire fault"));
 
-            var result = D2Result<DtoSignOutput?>.Ok(new DtoSignOutput(signature));
-            var response = new SignResponse { Result = result.ToProto() };
-            response.Data = new ProtoSignOutput { Signature = signature };
+            var result = D2Result<DtoSignFixtureOutput?>.Ok(new DtoSignFixtureOutput(signature));
+            var response = new SignFixtureResponse { Result = result.ToProto() };
+            response.Data = new ProtoSignFixtureOutput { Signature = signature };
             return Task.FromResult(response);
         }
     }
@@ -508,7 +508,7 @@ public sealed class OverTheWireResilienceTests
     /// Used by S2 to drive the breaker open, then prove the probe succeeds after cooldown.
     /// </summary>
     private sealed class WireToggleableSignerBase(bool faultMode)
-        : KeyCustodianSigner.KeyCustodianSignerBase
+        : SignFixtureSigner.SignFixtureSignerBase
     {
         private int _callCount;
         private volatile bool _faultMode = faultMode;
@@ -517,7 +517,7 @@ public sealed class OverTheWireResilienceTests
 
         public void SetFaultMode(bool enabled) => _faultMode = enabled;
 
-        public override Task<SignResponse> Sign(SignRequest request, ServerCallContext context)
+        public override Task<SignFixtureResponse> SignFixture(SignFixtureRequest request, ServerCallContext context)
         {
             Interlocked.Increment(ref _callCount);
 
@@ -525,9 +525,9 @@ public sealed class OverTheWireResilienceTests
                 throw new RpcException(new Status(StatusCode.Unavailable, "breaker-open wire fault"));
 
             const string probe_sig = "probe-success-sig==";
-            var result = D2Result<DtoSignOutput?>.Ok(new DtoSignOutput(probe_sig));
-            var response = new SignResponse { Result = result.ToProto() };
-            response.Data = new ProtoSignOutput { Signature = probe_sig };
+            var result = D2Result<DtoSignFixtureOutput?>.Ok(new DtoSignFixtureOutput(probe_sig));
+            var response = new SignFixtureResponse { Result = result.ToProto() };
+            response.Data = new ProtoSignFixtureOutput { Signature = probe_sig };
             return Task.FromResult(response);
         }
     }
@@ -536,20 +536,20 @@ public sealed class OverTheWireResilienceTests
     /// Returns the supplied <see cref="D2Result{T}"/> as a <c>D2ResultProto</c> envelope
     /// at gRPC status OK on every call (business failure / success fidelity shim for S3 + S4).
     /// </summary>
-    private sealed class WireBusinessResultSignerBase(D2Result<DtoSignOutput?> businessResult)
-        : KeyCustodianSigner.KeyCustodianSignerBase
+    private sealed class WireBusinessResultSignerBase(D2Result<DtoSignFixtureOutput?> businessResult)
+        : SignFixtureSigner.SignFixtureSignerBase
     {
         private int _callCount;
 
         public int CallCount => Volatile.Read(ref _callCount);
 
-        public override Task<SignResponse> Sign(SignRequest request, ServerCallContext context)
+        public override Task<SignFixtureResponse> SignFixture(SignFixtureRequest request, ServerCallContext context)
         {
             Interlocked.Increment(ref _callCount);
-            var response = new SignResponse { Result = businessResult.ToProto() };
+            var response = new SignFixtureResponse { Result = businessResult.ToProto() };
 
             if (businessResult.Success && businessResult.Data is not null)
-                response.Data = new ProtoSignOutput { Signature = businessResult.Data.Signature };
+                response.Data = new ProtoSignFixtureOutput { Signature = businessResult.Data.Signature };
 
             return Task.FromResult(response);
         }
@@ -560,7 +560,7 @@ public sealed class OverTheWireResilienceTests
     /// <paramref name="itemStatuses"/> on every call — the predicate-behavior shim for S5.
     /// </summary>
     private sealed class WirePredicateSignerBase(
-        Func<D2Result<DtoPlaceOrderOutput?>> resultFactory,
+        Func<D2Result<DtoPlaceOrderFixtureOutput?>> resultFactory,
         string[] itemStatuses)
         : PredicateFixturesOrders.PredicateFixturesOrdersBase
     {
@@ -568,8 +568,8 @@ public sealed class OverTheWireResilienceTests
 
         public int CallCount => Volatile.Read(ref _callCount);
 
-        public override Task<PlaceOrderResponse> PlaceOrder(
-            PlaceOrderRequest request, ServerCallContext context)
+        public override Task<PlaceOrderFixtureResponse> PlaceOrderFixture(
+            PlaceOrderFixtureRequest request, ServerCallContext context)
         {
             Interlocked.Increment(ref _callCount);
             return Task.FromResult(BuildResponse(resultFactory(), itemStatuses));

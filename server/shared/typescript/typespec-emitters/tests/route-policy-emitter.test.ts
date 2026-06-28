@@ -31,10 +31,10 @@ function makeFacadeInput(
   return {
     opName: "sign",
     verb: "post",
-    routePath: "/internal/v1/kc/sign",
+    routePath: "/internal/v1/sample/sign",
     delegationTarget: {
       kind: "facade",
-      typeName: "IKeyCustodianSignerFacade",
+      typeName: "ISampleSignerFacade",
       methodName: "SignAsync",
     },
     delegationTargetNamespace: "D2.Edge.Tests.TypeSpecRoute.Generated.Facade",
@@ -116,7 +116,7 @@ describe("emitRoutePolicy — verb routing", () => {
 describe("emitRoutePolicy — façade delegation", () => {
   it("injects the façade type, not IHandler", () => {
     const file = emitRoutePolicy(makeFacadeInput());
-    expect(file.content).toContain("IKeyCustodianSignerFacade facade");
+    expect(file.content).toContain("ISampleSignerFacade facade");
     expect(file.content).not.toContain("ISignHandler handler");
   });
 
@@ -333,10 +333,10 @@ describe("emitRoutePolicy — MAP-ii result mapping", () => {
 // ---------------------------------------------------------------------------
 
 describe("emitRoutePolicy — delegate signature", () => {
-  it("façade: signature includes (SignInput input, IKeyCustodianSignerFacade facade, HttpContext http, CancellationToken ct)", () => {
+  it("façade: signature includes (SignInput input, ISampleSignerFacade facade, HttpContext http, CancellationToken ct)", () => {
     const file = emitRoutePolicy(makeFacadeInput());
     expect(file.content).toContain("SignInput input");
-    expect(file.content).toContain("IKeyCustodianSignerFacade facade");
+    expect(file.content).toContain("ISampleSignerFacade facade");
     expect(file.content).toContain("HttpContext http");
     expect(file.content).toContain("CancellationToken ct");
   });
@@ -399,7 +399,7 @@ describe("emitRoutePolicy — C# conventions", () => {
 
   it("emits the correct route path in MapPost call", () => {
     const file = emitRoutePolicy(makeFacadeInput());
-    expect(file.content).toContain('"/internal/v1/kc/sign"');
+    expect(file.content).toContain('"/internal/v1/sample/sign"');
   });
 
   it("using directives are sorted alphabetically (SA1210)", () => {
@@ -630,13 +630,13 @@ const SIGN_ROUTE_REGISTRATION_FIXTURE = [
   "{",
   "    extension(IEndpointRouteBuilder endpoints)",
   "    {",
-  '        /// <summary>Maps <c>POST /internal/v1/kc/sign</c>, delegating to <see cref="IKeyCustodianSignerFacade"/>.</summary>',
+  '        /// <summary>Maps <c>POST /internal/v1/sample/sign</c>, delegating to <see cref="ISampleSignerFacade"/>.</summary>',
   "        /// <remarks>Audience is enforced service-wide via <c>AuthOptions.Audience</c> — no per-route audience fluent (§9.2).</remarks>",
   "        public IEndpointConventionBuilder MapSignRoute()",
   "        {",
   "            var builder = endpoints.MapPost(",
-  '                "/internal/v1/kc/sign",',
-  "                static async (SignInput input, IKeyCustodianSignerFacade facade, HttpContext http, CancellationToken ct) =>",
+  '                "/internal/v1/sample/sign",',
+  "                static async (SignInput input, ISampleSignerFacade facade, HttpContext http, CancellationToken ct) =>",
   "                {",
   "                    var result = await facade.SignAsync(input, ct).ConfigureAwait(false);",
   "                    var status = (int)result.StatusCode;",
@@ -683,13 +683,13 @@ const ALL_SCOPES_ROUTE_REGISTRATION_FIXTURE = [
   "{",
   "    extension(IEndpointRouteBuilder endpoints)",
   "    {",
-  '        /// <summary>Maps <c>GET /internal/v1/kc/all-scopes</c>, delegating to <see cref="IKeyCustodianSignerFacade"/>.</summary>',
+  '        /// <summary>Maps <c>GET /internal/v1/sample/all-scopes</c>, delegating to <see cref="ISampleSignerFacade"/>.</summary>',
   "        /// <remarks>Audience is enforced service-wide via <c>AuthOptions.Audience</c> — no per-route audience fluent (§9.2).</remarks>",
   "        public IEndpointConventionBuilder MapAllScopesRoute()",
   "        {",
   "            var builder = endpoints.MapGet(",
-  '                "/internal/v1/kc/all-scopes",',
-  "                static async ([AsParameters] SignInput input, IKeyCustodianSignerFacade facade, HttpContext http, CancellationToken ct) =>",
+  '                "/internal/v1/sample/all-scopes",',
+  "                static async ([AsParameters] SignInput input, ISampleSignerFacade facade, HttpContext http, CancellationToken ct) =>",
   "                {",
   "                    var result = await facade.AllScopesAsync(input, ct).ConfigureAwait(false);",
   "                    var status = (int)result.StatusCode;",
@@ -715,10 +715,10 @@ describe("byteParity_SignRouteRegistration_NonGatedForm", () => {
     const file = emitRoutePolicy({
       opName: "sign",
       verb: "post",
-      routePath: "/internal/v1/kc/sign",
+      routePath: "/internal/v1/sample/sign",
       delegationTarget: {
         kind: "facade",
-        typeName: "IKeyCustodianSignerFacade",
+        typeName: "ISampleSignerFacade",
         methodName: "SignAsync",
       },
       delegationTargetNamespace: "D2.Edge.Tests.TypeSpecRoute.Generated.Facade",
@@ -742,10 +742,10 @@ describe("byteParity_SignRouteRegistration_NonGatedForm", () => {
     const file = emitRoutePolicy({
       opName: "sign",
       verb: "post",
-      routePath: "/internal/v1/kc/sign",
+      routePath: "/internal/v1/sample/sign",
       delegationTarget: {
         kind: "facade",
-        typeName: "IKeyCustodianSignerFacade",
+        typeName: "ISampleSignerFacade",
         methodName: "SignAsync",
       },
       delegationTargetNamespace: "D2.Edge.Tests.TypeSpecRoute.Generated.Facade",
@@ -767,10 +767,10 @@ describe("byteParity_AllScopesRouteRegistration_CommittedFixtureIdentical", () =
     const file = emitRoutePolicy({
       opName: "allScopes",
       verb: "get",
-      routePath: "/internal/v1/kc/all-scopes",
+      routePath: "/internal/v1/sample/all-scopes",
       delegationTarget: {
         kind: "facade",
-        typeName: "IKeyCustodianSignerFacade",
+        typeName: "ISampleSignerFacade",
         methodName: "AllScopesAsync",
       },
       delegationTargetNamespace: "D2.Edge.Tests.TypeSpecRoute.Generated.Facade",
@@ -792,10 +792,10 @@ describe("byteParity_AllScopesRouteRegistration_CommittedFixtureIdentical", () =
     const file = emitRoutePolicy({
       opName: "allScopes",
       verb: "get",
-      routePath: "/internal/v1/kc/all-scopes",
+      routePath: "/internal/v1/sample/all-scopes",
       delegationTarget: {
         kind: "facade",
-        typeName: "IKeyCustodianSignerFacade",
+        typeName: "ISampleSignerFacade",
         methodName: "AllScopesAsync",
       },
       delegationTargetNamespace: "D2.Edge.Tests.TypeSpecRoute.Generated.Facade",

@@ -19,10 +19,10 @@ using D2.Shared.Result;
 /// SAME shared fixture (<c>contracts/resilience/predicate-parity.fixture.json</c>) as the
 /// TypeScript <c>predicate-parity.test.ts</c>, so an identically-shaped reconstructed
 /// <see cref="D2Result{TData}"/> yields the SAME retry / fail booleans from the emitted C#
-/// predicate (<see cref="PlaceOrderResiliencePredicates"/>) as from the emitted TS predicate.
+/// predicate (<see cref="PlaceOrderFixtureResiliencePredicates"/>) as from the emitted TS predicate.
 /// Each row reconstructs a <see cref="D2Result{TData}"/> with the row's envelope fields + data
-/// shape, evaluates <see cref="PlaceOrderResiliencePredicates.SR_RetryWhen"/> /
-/// <see cref="PlaceOrderResiliencePredicates.SR_FailWhen"/>, and asserts the expected booleans.
+/// shape, evaluates <see cref="PlaceOrderFixtureResiliencePredicates.SR_RetryWhen"/> /
+/// <see cref="PlaceOrderFixtureResiliencePredicates.SR_FailWhen"/>, and asserts the expected booleans.
 /// A divergence between the two languages breaks the cross-language emission contract and MUST be
 /// surfaced (NOT silently reconciled by editing an expected value).
 /// </summary>
@@ -62,10 +62,10 @@ public sealed class PredicateParityTests
 
         var result = Reconstruct(c);
 
-        PlaceOrderResiliencePredicates.SR_RetryWhen(result).Should().Be(
+        PlaceOrderFixtureResiliencePredicates.SR_RetryWhen(result).Should().Be(
             c.ExpectedRetry,
             $"retryWhen for case '{caseName}' must match the cross-language expectation");
-        PlaceOrderResiliencePredicates.SR_FailWhen(result).Should().Be(
+        PlaceOrderFixtureResiliencePredicates.SR_FailWhen(result).Should().Be(
             c.ExpectedFail,
             $"failWhen for case '{caseName}' must match the cross-language expectation");
     }
@@ -91,8 +91,8 @@ public sealed class PredicateParityTests
     //
     // Drives the SAME shared nested fixture (predicate-parity-nested.fixture.json) as the
     // TypeScript predicate-parity.test.ts, so an identically-shaped reconstructed
-    // D2Result<PlaceOrderV2Output?> yields the SAME retry / fail booleans from the emitted C#
-    // predicate (PlaceOrderV2ResiliencePredicates, a deep ?.-chain over Customer.Tier + a LINQ
+    // D2Result<PlaceOrderV2FixtureOutput?> yields the SAME retry / fail booleans from the emitted C#
+    // predicate (PlaceOrderV2FixtureResiliencePredicates, a deep ?.-chain over Customer.Tier + a LINQ
     // .Any(...) quantifier over Lines) as from the emitted TS predicate. The compiled emitted
     // predicate is EXECUTED here against real nested DTO instances — the behavioral cross-language
     // proof the flat placeOrder matrix cannot give.
@@ -107,10 +107,10 @@ public sealed class PredicateParityTests
 
         var result = ReconstructV2(c);
 
-        PlaceOrderV2ResiliencePredicates.SR_RetryWhen(result).Should().Be(
+        PlaceOrderV2FixtureResiliencePredicates.SR_RetryWhen(result).Should().Be(
             c.ExpectedRetry,
             $"retryWhen for case '{caseName}' must match the cross-language expectation");
-        PlaceOrderV2ResiliencePredicates.SR_FailWhen(result).Should().Be(
+        PlaceOrderV2FixtureResiliencePredicates.SR_FailWhen(result).Should().Be(
             c.ExpectedFail,
             $"failWhen for case '{caseName}' must match the cross-language expectation");
     }
@@ -146,17 +146,17 @@ public sealed class PredicateParityTests
             "a row must drive retry via the array-of-model Lines.Any(...) quantifier alone");
     }
 
-    private static D2Result<PlaceOrderOutput?> Reconstruct(ParityCase c)
+    private static D2Result<PlaceOrderFixtureOutput?> Reconstruct(ParityCase c)
     {
         ErrorCategory? category = null;
         if (c.Category is not null && ErrorCategoryWire.TryFromWire(c.Category, out var parsed))
             category = parsed;
 
-        PlaceOrderOutput? data = c.Data is null
+        PlaceOrderFixtureOutput? data = c.Data is null
             ? null
-            : new PlaceOrderOutput(c.Data.OrderCode, c.Data.ItemStatuses, c.Data.Partial);
+            : new PlaceOrderFixtureOutput(c.Data.OrderCode, c.Data.ItemStatuses, c.Data.Partial);
 
-        return new D2Result<PlaceOrderOutput?>(
+        return new D2Result<PlaceOrderFixtureOutput?>(
             success: c.Success,
             data: data,
             statusCode: (HttpStatusCode)c.StatusCode,
@@ -164,16 +164,16 @@ public sealed class PredicateParityTests
             category: category);
     }
 
-    private static D2Result<PlaceOrderV2Output?> ReconstructV2(ParityCaseV2 c)
+    private static D2Result<PlaceOrderV2FixtureOutput?> ReconstructV2(ParityCaseV2 c)
     {
-        PlaceOrderV2Output? data = c.Data is null
+        PlaceOrderV2FixtureOutput? data = c.Data is null
             ? null
-            : new PlaceOrderV2Output(
+            : new PlaceOrderV2FixtureOutput(
                 c.Data.OrderCode,
-                c.Data.Lines.Select(l => new PlaceOrderLine(l.Status)).ToList(),
-                c.Data.Customer is null ? null : new PlaceOrderV2Customer(c.Data.Customer.Tier));
+                c.Data.Lines.Select(l => new PlaceOrderFixtureLine(l.Status)).ToList(),
+                c.Data.Customer is null ? null : new PlaceOrderV2FixtureCustomer(c.Data.Customer.Tier));
 
-        return new D2Result<PlaceOrderV2Output?>(
+        return new D2Result<PlaceOrderV2FixtureOutput?>(
             success: c.Success,
             data: data,
             statusCode: (HttpStatusCode)c.StatusCode,

@@ -12,7 +12,7 @@
   "schemaVersion": 1,
   "enums": [
     {
-      "name": "KeyKind",
+      "name": "FixtureKeyKind",
       "comment": "S-1 bare-member named enum — member name IS the wire string.",
       "members": [
         { "memberName": "Rsa", "wire": "Rsa" },
@@ -22,7 +22,7 @@
       "unknownValues": ["Quantum", "rsa", "", " ", "RSA"]
     },
     {
-      "name": "Level",
+      "name": "FixtureLevel",
       "comment": "S-2 explicit-int named enum — wire is STILL the member NAME, NOT the int.",
       "members": [
         { "memberName": "Low", "wire": "Low" },
@@ -32,7 +32,7 @@
       "unknownValues": ["0", "5", "10", "Critical"]
     },
     {
-      "name": "Status",
+      "name": "FixtureStatus",
       "comment": "S-3 named string-literal union — lowercase literal differs from PascalCase member (needs [EnumMember]).",
       "members": [
         { "memberName": "Active", "wire": "active" },
@@ -42,7 +42,7 @@
       "unknownValues": ["Active", "deleted", ""]
     },
     {
-      "name": "AccountKind",
+      "name": "FixtureAccountKind",
       "comment": "S-3 with a non-identifier literal — ThirdParty carries [EnumMember(Value=\"third-party\")].",
       "members": [
         { "memberName": "Internal", "wire": "internal" },
@@ -51,7 +51,7 @@
       "unknownValues": ["ThirdParty", "thirdParty", "external"]
     },
     {
-      "name": "EnumOutputInlineState",
+      "name": "EnumFixtureWalkOutputInlineState",
       "comment": "S-4 inline anonymous string-literal union → synthetic enum.",
       "members": [
         { "memberName": "Draft", "wire": "draft" },
