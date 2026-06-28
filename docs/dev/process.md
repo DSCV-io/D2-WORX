@@ -388,6 +388,16 @@ The following actions require explicit user permission **per occurrence**, not i
 - **Process-bypass naming** — every bypass requires per-occurrence user-quoted authorization NAMING the specific rule / step being skipped. Verbal "go ahead" / "looks good" / implicit consent from prior conversation does NOT qualify. (rules.md §13.14)
 - **K=1 audit-round dispatch** — never self-invoked; requires explicit per-round user permission with quoted authorization in the orchestrator log. (rules.md §24.0h + cross-ref [§4 K=1 carve-out usage policy](#k1-carve-out-usage-policy))
 
+### Deferral posture — do-it-now is the default
+
+Reflexive deferral is a recurring failure mode to actively guard against. The recurring form it takes: marking work "inert until a consumer", "ready but deferred to the live-wiring step", or "track it for follow-on" when the work was fully buildable and provable in isolation — and there was no missing build dependency, only the absence of a live downstream caller.
+
+The operative test for whether deferral is legitimate is whether a **build dependency is genuinely missing** — something that must exist before the work can be built AND proven in isolation: an unbuilt collaborator with no faithful §1.32 test-double, an undesigned decision whose outcome changes the work's shape, missing infrastructure, or a running host/process needed to register LIVE wiring into. "No consumer exists yet", "not wired into the live host yet", "not exercised cross-process yet", "a fixture or tracker row labels it deferred", and "the real config or domain values don't exist yet" are NOT build dependencies. Proving in isolation (Testcontainers, an in-memory transport TestServer, faithful §1.32 doubles) needs no live host and no real consumer.
+
+The default is therefore: **if the work is in-scope and no build dependency is missing, build it and prove it in isolation now** — do not wait for the first consumer; waiting is exactly how no-dependency work gets silently forgotten. Correct and complete work is preferred over fast and partial work even when it takes substantially longer. A genuine blocker gets a committed tracker row (not a comment- or journal-only TODO) and is surfaced to the user per §13.4. YAGNI applies only to work that is NOT known-needed.
+
+Predicate-of-record: [rules.md §13.15](rules.md#13-permission--action-discipline). Annotation per [rules.md §11.32](rules.md#11-documentation-parity--best-practices).
+
 <sup>[↑ jump to top](#top)</sup>
 
 ---
