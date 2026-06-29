@@ -88,13 +88,12 @@ export const $lib = createTypeSpecLibrary({
       },
     },
 
-    /** The audience string supplied to @d2Audience is not declared in
-     *  contracts/auth-audiences/audiences.spec.json and is not the
-     *  self-audience "d2-edge". */
+    /** The audience string supplied to @d2Audience is not a declared protocol
+     *  audience in contracts/auth-protocol-audiences/protocol-audiences.spec.json. */
     "unknown-audience": {
       severity: "error",
       messages: {
-        default: paramMessage`audience '${"value"}' is not declared in audiences.spec.json (and is not the 'd2-edge' self-audience)`,
+        default: paramMessage`audience '${"value"}' is not a declared protocol audience in auth-protocol-audiences/protocol-audiences.spec.json`,
       },
     },
 

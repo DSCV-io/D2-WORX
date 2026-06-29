@@ -180,6 +180,10 @@ public sealed class KeyCustodianMetricsTests
             .Should().Be("d2.keycustodian.leaf_certificates_issued");
         KeyCustodianMetrics.SR_NoActiveIssuingCaTotal.Name
             .Should().Be("d2.keycustodian.no_active_issuing_ca");
+        KeyCustodianMetrics.SR_CrossProcessSigningRejections.Name
+            .Should().Be("d2.keycustodian.cross_process_signing_rejections");
+        KeyCustodianMetrics.SR_AuthorityRejectionsTotal.Name
+            .Should().Be("d2.keycustodian.authority_rejections");
     }
 
     [Fact]

@@ -125,8 +125,10 @@ public sealed class KeyCustodianOptions : IValidatableObject
 
     /// <inheritdoc/>
     /// <remarks>
-    /// Validates the nested <see cref="Default"/> policy and every per-domain
-    /// entry in <see cref="Policies"/>. Each nested <see cref="RotationPolicyOptions"/>
+    /// Validates <see cref="IssuerBaseUrl"/> for whitespace-only values (which pass
+    /// <c>[Required]</c> + <c>[MinLength(1)]</c> but are semantically invalid) and
+    /// validates the nested <see cref="Default"/> policy and every per-domain entry
+    /// in <see cref="Policies"/>. Each nested <see cref="RotationPolicyOptions"/>
     /// is validated with <c>validateAllProperties: true</c> so its
     /// <see cref="RangeAttribute"/> constraints are checked. The cross-field
     /// invariant <c>Cadence ≥ Grace + SmokeSoak</c> (mirroring
@@ -135,6 +137,16 @@ public sealed class KeyCustodianOptions : IValidatableObject
     /// </remarks>
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {
+        // [Required] rejects null; [MinLength(1)] rejects empty — but neither rejects
+        // a whitespace-only value ("   "). A whitespace IssuerBaseUrl would boot and
+        // serve issuer:"   " and jwks_uri:"   /.well-known/jwks.json". Fail-loud here.
+        if (IssuerBaseUrl.Falsey())
+        {
+            yield return new ValidationResult(
+                "IssuerBaseUrl must not be null, empty, or whitespace-only.",
+                [nameof(IssuerBaseUrl)]);
+        }
+
         foreach (var result in ValidatePolicy("Default", Default))
             yield return result;
 

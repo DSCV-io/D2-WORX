@@ -210,4 +210,28 @@ public static class KeyCustodianFailures<T>
             category: ErrorCategory.InfrastructureUnavailable);
     }
 
+    /// <summary>The requested key domain is in-process-only (e.g. jwks-signing) and may not be signed with by a cross-process caller. The jwks-signing key is the root of mint-once-forward and never leaves the Edge host process. Enforced structurally (independent of policy) and backed by a boot-time config-validation invariant that refuses to grant an in-process-only domain to any workload. Typed result.</summary>
+    /// <param name="messages">Optional translation messages; defaults to <c>[TK.Keycustodian.Authorization.CROSS_PROCESS_DOMAIN_REJECTED]</c>. Pass a message bound via <c>TKMessage.With(...)</c> to name the offending argument.</param>
+    /// <returns>A pre-built typed <see cref="D2Result{T}"/> failure.</returns>
+    public static D2Result<T> CrossProcessDomainRejected(IReadOnlyList<TKMessage>? messages = null)
+    {
+        messages ??= [TK.Keycustodian.Authorization.CROSS_PROCESS_DOMAIN_REJECTED];
+        return D2Result<T>.Forbidden(
+            messages: messages,
+            errorCode: KeyCustodianErrorCodes.KEYCUSTODIAN_CROSS_PROCESS_DOMAIN_REJECTED,
+            category: ErrorCategory.PolicyDenied);
+    }
+
+    /// <summary>The calling workload is not authorized to sign with the requested key domain (the domain is not in the workload's allowed-signing-domains policy set). Distinct from the in-process-only rejection: this is a policy-scope denial, not an in-process-only-domain denial. Typed result.</summary>
+    /// <param name="messages">Optional translation messages; defaults to <c>[TK.Keycustodian.Authorization.SIGNING_DOMAIN_NOT_AUTHORIZED]</c>. Pass a message bound via <c>TKMessage.With(...)</c> to name the offending argument.</param>
+    /// <returns>A pre-built typed <see cref="D2Result{T}"/> failure.</returns>
+    public static D2Result<T> SigningDomainNotAuthorized(IReadOnlyList<TKMessage>? messages = null)
+    {
+        messages ??= [TK.Keycustodian.Authorization.SIGNING_DOMAIN_NOT_AUTHORIZED];
+        return D2Result<T>.Forbidden(
+            messages: messages,
+            errorCode: KeyCustodianErrorCodes.KEYCUSTODIAN_SIGNING_DOMAIN_NOT_AUTHORIZED,
+            category: ErrorCategory.PolicyDenied);
+    }
+
 }

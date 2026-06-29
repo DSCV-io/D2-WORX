@@ -65,21 +65,22 @@ public sealed class KeyCustodianErrorCodesSchemaDriftTests
             .Should().Be("^KEYCUSTODIAN_[A-Z][A-Z0-9_]*$");
 
         // KC narrows the canonical status set to the {400 input-validation,
-        // 404 key-not-found, 409 lifecycle-conflict, 500 precondition / smoke-test
-        // / cert-build, 503 no-active-issuing-CA} subset.
+        // 403 capability-authority-denial, 404 key-not-found, 409 lifecycle-conflict,
+        // 500 precondition / smoke-test / cert-build, 503 no-active-issuing-CA} subset.
         var statuses = props.GetProperty("httpStatus").GetProperty("enum")
             .EnumerateArray().Select(e => e.GetInt32()).ToList();
-        int[] expectedStatuses = [400, 404, 409, 500, 503];
+        int[] expectedStatuses = [400, 403, 404, 409, 500, 503];
         statuses.Should().BeEquivalentTo(expectedStatuses);
 
         // KC narrows the canonical category set to the {validation_failure,
-        // not_found, conflict, internal_error, infrastructure_unavailable} subset.
+        // policy_denied, not_found, conflict, internal_error, infrastructure_unavailable}
+        // subset.
         var categories = props.GetProperty("category").GetProperty("enum")
             .EnumerateArray().Select(e => e.GetString()).ToList();
         string[] expectedCategories =
         [
-            "validation_failure", "not_found", "conflict", "internal_error",
-            "infrastructure_unavailable",
+            "validation_failure", "policy_denied", "not_found", "conflict",
+            "internal_error", "infrastructure_unavailable",
         ];
         categories.Should().BeEquivalentTo(expectedCategories);
     }
@@ -87,14 +88,17 @@ public sealed class KeyCustodianErrorCodesSchemaDriftTests
     [Fact]
     public void KcSpec_EveryEntry_IsStandardAndDeclaredStatusCategoryPair()
     {
-        // Every KC entry is the universal standard shape; each is one of five legal
+        // Every KC entry is the universal standard shape; each is one of six legal
         // (status, category) pairs: 400/validation_failure (input validation),
-        // 404/not_found (key lookup), 409/conflict (illegal transition / duplicate
-        // pending), 500/internal_error (precondition violation / smoke-test / cert
-        // build), or 503/infrastructure_unavailable (no active issuing CA).
+        // 403/policy_denied (capability-authority denial — cross-process in-process-only
+        // domain rejection or a domain outside the caller's allowed-signing-domains
+        // policy set), 404/not_found (key lookup), 409/conflict (illegal transition /
+        // duplicate pending), 500/internal_error (precondition violation / smoke-test /
+        // cert build), or 503/infrastructure_unavailable (no active issuing CA).
         var legalPairs = new Dictionary<int, string>
         {
             [400] = "validation_failure",
+            [403] = "policy_denied",
             [404] = "not_found",
             [409] = "conflict",
             [500] = "internal_error",
@@ -115,7 +119,7 @@ public sealed class KeyCustodianErrorCodesSchemaDriftTests
 
             legalPairs.Should().ContainKey(
                 status,
-                because: $"KC code '{code}' must declare one of the four legal KC statuses");
+                because: $"KC code '{code}' must declare one of the six legal KC statuses");
             category.Should().Be(
                 legalPairs[status],
                 because: $"the {status} KC code '{code}' must carry its paired category");

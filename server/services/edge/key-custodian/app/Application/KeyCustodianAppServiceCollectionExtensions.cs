@@ -64,8 +64,10 @@ public static class KeyCustodianAppServiceCollectionExtensions
                 IGetOidcConfigurationHandler, GetOidcConfigurationHandler>();
             services.AddTransient<IGetRotationPlanHandler, GetRotationPlanHandler>();
 
-            // Policy provider.
+            // Policy providers.
             services.AddSingleton<IRotationPolicyProvider, OptionsRotationPolicyProvider>();
+            services.AddSingleton<
+                ISigningDomainAuthorityPolicy, OptionsSigningDomainAuthorityPolicy>();
 
             // Generated façade layer — registers IKeyCustodianApi → KeyCustodianApi (Transient).
             // The generated extension is overwritten on rebuild; this call site is the stable hand-written anchor.

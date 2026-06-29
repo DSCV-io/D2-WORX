@@ -22,6 +22,10 @@
 #     I<Op>Handler → csharp-app-namespace-base.<Category>.<PascalOp> (app, emitUsing=false).
 #   Fixture ops (signFixture — no csharp-app-namespace-base path):
 #     DTOs + I<Op>Handler → csharp-namespace + grpc-service-namespace (legacy fixture ns).
+#     Note: sign-shaped proto / WireVersion.g.cs / wire-identity.manifest.g.json are
+#     byte-gate-governed (committed, asserted byte-for-byte in tests), NOT regen-governed
+#     via COPY_MANIFEST — unlike enum/predicate fixtures, they are excluded from the
+#     regeneration-on-tsp-change flow.
 
 emit:
   - "@d2/typespec-emitters"

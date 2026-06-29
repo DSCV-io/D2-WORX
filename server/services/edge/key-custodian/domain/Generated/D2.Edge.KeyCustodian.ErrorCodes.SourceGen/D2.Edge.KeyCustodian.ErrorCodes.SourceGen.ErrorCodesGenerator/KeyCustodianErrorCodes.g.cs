@@ -69,6 +69,12 @@ public static class KeyCustodianErrorCodes
     /// <summary>No active issuing intermediate certificate authority is available to sign a workload leaf certificate. A retryable not-ready-yet condition: the CA either has not been seeded yet or is between rotations. Surfaced as a 503 service-unavailable result so callers retry rather than treat it as a client-side conflict.</summary>
     public const string KEYCUSTODIAN_NO_ACTIVE_ISSUING_CA = "KEYCUSTODIAN_NO_ACTIVE_ISSUING_CA";
 
+    /// <summary>The requested key domain is in-process-only (e.g. jwks-signing) and may not be signed with by a cross-process caller. The jwks-signing key is the root of mint-once-forward and never leaves the Edge host process. Enforced structurally (independent of policy) and backed by a boot-time config-validation invariant that refuses to grant an in-process-only domain to any workload.</summary>
+    public const string KEYCUSTODIAN_CROSS_PROCESS_DOMAIN_REJECTED = "KEYCUSTODIAN_CROSS_PROCESS_DOMAIN_REJECTED";
+
+    /// <summary>The calling workload is not authorized to sign with the requested key domain (the domain is not in the workload's allowed-signing-domains policy set). Distinct from the in-process-only rejection: this is a policy-scope denial, not an in-process-only-domain denial.</summary>
+    public const string KEYCUSTODIAN_SIGNING_DOMAIN_NOT_AUTHORIZED = "KEYCUSTODIAN_SIGNING_DOMAIN_NOT_AUTHORIZED";
+
     /// <summary>
     /// All declared <c>KEYCUSTODIAN_*</c> codes in spec order. Useful for
     /// registry membership checks and cross-spec consistency tests.
@@ -92,6 +98,8 @@ public static class KeyCustodianErrorCodes
         "KEYCUSTODIAN_INVALID_WORKLOAD_IDENTITY",
         "KEYCUSTODIAN_INVALID_CERTIFICATE_REQUEST",
         "KEYCUSTODIAN_NO_ACTIVE_ISSUING_CA",
+        "KEYCUSTODIAN_CROSS_PROCESS_DOMAIN_REJECTED",
+        "KEYCUSTODIAN_SIGNING_DOMAIN_NOT_AUTHORIZED",
     };
 
     /// <summary>
@@ -119,6 +127,8 @@ public static class KeyCustodianErrorCodes
         "KEYCUSTODIAN_INVALID_WORKLOAD_IDENTITY" => 400,
         "KEYCUSTODIAN_INVALID_CERTIFICATE_REQUEST" => 500,
         "KEYCUSTODIAN_NO_ACTIVE_ISSUING_CA" => 503,
+        "KEYCUSTODIAN_CROSS_PROCESS_DOMAIN_REJECTED" => 403,
+        "KEYCUSTODIAN_SIGNING_DOMAIN_NOT_AUTHORIZED" => 403,
         _ => 500,
     };
 }

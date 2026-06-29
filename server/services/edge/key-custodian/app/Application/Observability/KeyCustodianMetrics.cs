@@ -117,4 +117,38 @@ public static class KeyCustodianMetrics
             description:
                 "Total IssueWorkloadCertificate requests that found no active issuing CA "
                 + "and returned 503. A sustained non-zero rate blocks the entire mTLS mesh.");
+
+    /// <summary>
+    /// Counter — total cross-process signing requests rejected for an
+    /// in-process-only key domain (<c>jwks-signing</c>). The highest-severity
+    /// authority signal: any non-zero value means a separate process attempted to
+    /// mint with the cluster signing key — the root of mint-once-forward, which must
+    /// never leave the Edge host process. Pages on any non-zero value.
+    /// </summary>
+    public static readonly Counter<long> SR_CrossProcessSigningRejections =
+        SR_Meter.CreateCounter<long>(
+            name: "d2.keycustodian.cross_process_signing_rejections",
+            unit: "{rejection}",
+            description:
+                "Total cross-process signing requests rejected for an in-process-only key "
+                + "domain (jwks-signing). Any non-zero value is a security signal — a "
+                + "separate process attempted to mint with the cluster signing key.");
+
+    /// <summary>
+    /// Counter — total capability-authority rejections across every capability. The
+    /// broad dashboard counter complementing the specific
+    /// <see cref="SR_CrossProcessSigningRejections"/>. Tagged <c>capability</c>
+    /// (<c>sign</c> / <c>seal-encrypt</c> / <c>seal-decrypt</c>) and <c>reason</c>
+    /// (<c>cross-process-domain</c> / <c>not-in-allowed-set</c> /
+    /// <c>identity-absent</c>) — both CLOSED-enum string literals inlined at the call
+    /// site, never free text, so the tag cardinality is bounded.
+    /// </summary>
+    public static readonly Counter<long> SR_AuthorityRejectionsTotal =
+        SR_Meter.CreateCounter<long>(
+            name: "d2.keycustodian.authority_rejections",
+            unit: "{rejection}",
+            description:
+                "Total capability-authority rejections. Tags: capability "
+                + "(sign / seal-encrypt / seal-decrypt), reason (cross-process-domain / "
+                + "not-in-allowed-set / identity-absent) — both closed-enum values.");
 }

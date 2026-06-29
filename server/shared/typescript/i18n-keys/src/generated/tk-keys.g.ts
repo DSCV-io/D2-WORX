@@ -344,6 +344,10 @@ export const TK = {
     }
   },
   keycustodian: {
+    authorization: {
+      CROSS_PROCESS_DOMAIN_REJECTED: tk("keycustodian_authorization_CROSS_PROCESS_DOMAIN_REJECTED"),
+      SIGNING_DOMAIN_NOT_AUTHORIZED: tk("keycustodian_authorization_SIGNING_DOMAIN_NOT_AUTHORIZED")
+    },
     infrastructure: {
       NO_ACTIVE_ISSUING_CA: tk("keycustodian_infrastructure_NO_ACTIVE_ISSUING_CA")
     },

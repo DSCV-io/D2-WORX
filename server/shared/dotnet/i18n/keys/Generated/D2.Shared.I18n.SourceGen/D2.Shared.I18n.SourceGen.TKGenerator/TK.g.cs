@@ -1282,6 +1282,21 @@ public static partial class TK
     public static partial class Keycustodian
     {
         /// <summary>
+        /// Authorization translation keys.
+        /// </summary>
+        public static partial class Authorization
+        {
+            /// <summary>
+            /// Translation key <c>keycustodian_authorization_CROSS_PROCESS_DOMAIN_REJECTED</c>.
+            /// </summary>
+            public static readonly global::D2.Shared.I18n.TKMessage CROSS_PROCESS_DOMAIN_REJECTED = new("keycustodian_authorization_CROSS_PROCESS_DOMAIN_REJECTED");
+            /// <summary>
+            /// Translation key <c>keycustodian_authorization_SIGNING_DOMAIN_NOT_AUTHORIZED</c>.
+            /// </summary>
+            public static readonly global::D2.Shared.I18n.TKMessage SIGNING_DOMAIN_NOT_AUTHORIZED = new("keycustodian_authorization_SIGNING_DOMAIN_NOT_AUTHORIZED");
+        }
+
+        /// <summary>
         /// Infrastructure translation keys.
         /// </summary>
         public static partial class Infrastructure

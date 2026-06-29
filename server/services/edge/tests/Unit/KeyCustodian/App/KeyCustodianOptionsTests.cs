@@ -245,6 +245,49 @@ public sealed class KeyCustodianOptionsTests
         found!.Cadence.Should().Be(expected.Cadence);
     }
 
+    // -----------------------------------------------------------------------
+    // IssuerBaseUrl whitespace-only guard (IValidatableObject.Validate regression)
+    // [Required] rejects null; [MinLength(1)] rejects empty — but neither rejects
+    // a whitespace-only value. The Falsey() guard in Validate() closes the gap:
+    // "   " must fail validation rather than boot and serve issuer:"   ".
+    // -----------------------------------------------------------------------
+
+    [Theory]
+    [InlineData("   ")]
+    [InlineData("\t")]
+    [InlineData(" \t ")]
+    public void WhitespaceOnlyIssuerBaseUrl_FailsValidation(string whitespace)
+    {
+        // Arrange — valid rotation policy so the Default-policy recursion does
+        // not produce noise findings; the only invalid field is IssuerBaseUrl.
+        var options = new KeyCustodianOptions
+        {
+            IssuerBaseUrl = whitespace,
+            Default = new RotationPolicyOptions
+            {
+                Cadence = TimeSpan.FromDays(30),
+                Grace = TimeSpan.FromDays(2),
+                SmokeSoak = TimeSpan.FromDays(1),
+            },
+        };
+
+        var results = new List<ValidationResult>();
+
+        // Act — TryValidateObject invokes IValidatableObject.Validate() (where the
+        // Falsey() guard lives) in addition to checking data-annotation attributes.
+        var valid = Validator.TryValidateObject(
+            options, new ValidationContext(options), results, validateAllProperties: true);
+
+        // Assert — validation must fail and name IssuerBaseUrl in the member list,
+        // pinning the Falsey() guard: removing it would let whitespace through
+        // [Required]+[MinLength(1)] and this assertion would fail.
+        valid.Should().BeFalse(
+            because: "a whitespace-only IssuerBaseUrl must fail IValidatableObject.Validate");
+        results.Should().Contain(
+            r => r.MemberNames.Contains(nameof(KeyCustodianOptions.IssuerBaseUrl)),
+            because: "the validation error must be attributed to IssuerBaseUrl");
+    }
+
     [Fact]
     public void Policies_OrdinalIgnoreCase_UppercaseKeyAndLowercaseLookupAreSameSlot()
     {

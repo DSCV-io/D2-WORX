@@ -180,4 +180,23 @@ internal static partial class KeyCustodianLog
             "Certificate-authority hierarchy already seeded (active root + intermediate "
             + "present); seeding is a no-op.")]
     public static partial void CaSeedSkippedAlreadyActive(ILogger logger);
+
+    /// <summary>
+    /// Logs that the capability authority rejected a request: the named workload is
+    /// not authorized for the requested capability on the requested target. The
+    /// workload id, capability, and target are all loggable non-PII labels; no key
+    /// material is logged and there is no exception parameter (§3.1).
+    /// </summary>
+    /// <param name="logger">The logger.</param>
+    /// <param name="workloadServiceId">The workload that was denied (a non-PII service label).</param>
+    /// <param name="capability">The requested capability (sign / seal-encrypt / seal-decrypt).</param>
+    /// <param name="target">The requested target (e.g. the key domain), or a marker when none.</param>
+    [LoggerMessage(
+        EventId = 9512,
+        Level = LogLevel.Warning,
+        Message =
+            "Authority rejected: workload {workloadServiceId} not authorized for capability "
+            + "{capability} on target {target}.")]
+    public static partial void AuthorityRejected(
+        ILogger logger, string workloadServiceId, string capability, string target);
 }

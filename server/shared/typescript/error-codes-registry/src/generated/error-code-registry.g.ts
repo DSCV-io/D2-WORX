@@ -458,6 +458,26 @@ const _entries: readonly ErrorCodeInfo[] = [
     doc: "No active issuing intermediate certificate authority is available to sign a workload leaf certificate. A retryable not-ready-yet condition: the CA either has not been seeded yet or is between rotations. Surfaced as a 503 service-unavailable result so callers retry rather than treat it as a client-side conflict.",
     domain: "keycustodian",
   },
+  {
+    code: "KEYCUSTODIAN_CROSS_PROCESS_DOMAIN_REJECTED",
+    httpStatus: 403,
+    category: "policy_denied",
+    userMessageKey: TK.keycustodian.authorization.CROSS_PROCESS_DOMAIN_REJECTED,
+    factoryName: "CrossProcessDomainRejected",
+    factoryShape: "standard",
+    doc: "The requested key domain is in-process-only (e.g. jwks-signing) and may not be signed with by a cross-process caller. The jwks-signing key is the root of mint-once-forward and never leaves the Edge host process. Enforced structurally (independent of policy) and backed by a boot-time config-validation invariant that refuses to grant an in-process-only domain to any workload.",
+    domain: "keycustodian",
+  },
+  {
+    code: "KEYCUSTODIAN_SIGNING_DOMAIN_NOT_AUTHORIZED",
+    httpStatus: 403,
+    category: "policy_denied",
+    userMessageKey: TK.keycustodian.authorization.SIGNING_DOMAIN_NOT_AUTHORIZED,
+    factoryName: "SigningDomainNotAuthorized",
+    factoryShape: "standard",
+    doc: "The calling workload is not authorized to sign with the requested key domain (the domain is not in the workload's allowed-signing-domains policy set). Distinct from the in-process-only rejection: this is a policy-scope denial, not an in-process-only-domain denial.",
+    domain: "keycustodian",
+  },
 ];
 
 /**

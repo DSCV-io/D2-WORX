@@ -221,6 +221,17 @@
       "userMessageKeyPath": "TK.Common.Errors.IDEMPOTENCY_IN_FLIGHT",
       "userMessageKeySnake": "common_errors_IDEMPOTENCY_IN_FLIGHT"
     },
+    "KEYCUSTODIAN_CROSS_PROCESS_DOMAIN_REJECTED": {
+      "category": "policy_denied",
+      "code": "KEYCUSTODIAN_CROSS_PROCESS_DOMAIN_REJECTED",
+      "doc": "The requested key domain is in-process-only (e.g. jwks-signing) and may not be signed with by a cross-process caller. The jwks-signing key is the root of mint-once-forward and never leaves the Edge host process. Enforced structurally (independent of policy) and backed by a boot-time config-validation invariant that refuses to grant an in-process-only domain to any workload.",
+      "domain": "keycustodian",
+      "factoryName": "CrossProcessDomainRejected",
+      "factoryShape": "standard",
+      "httpStatus": 403,
+      "userMessageKeyPath": "TK.Keycustodian.Authorization.CROSS_PROCESS_DOMAIN_REJECTED",
+      "userMessageKeySnake": "keycustodian_authorization_CROSS_PROCESS_DOMAIN_REJECTED"
+    },
     "KEYCUSTODIAN_GRACE_NOT_ELAPSED": {
       "category": "validation_failure",
       "code": "KEYCUSTODIAN_GRACE_NOT_ELAPSED",
@@ -341,6 +352,17 @@
       "httpStatus": 500,
       "userMessageKeyPath": "TK.Keycustodian.Internal.PRECONDITION_VIOLATED",
       "userMessageKeySnake": "keycustodian_internal_PRECONDITION_VIOLATED"
+    },
+    "KEYCUSTODIAN_SIGNING_DOMAIN_NOT_AUTHORIZED": {
+      "category": "policy_denied",
+      "code": "KEYCUSTODIAN_SIGNING_DOMAIN_NOT_AUTHORIZED",
+      "doc": "The calling workload is not authorized to sign with the requested key domain (the domain is not in the workload\u0027s allowed-signing-domains policy set). Distinct from the in-process-only rejection: this is a policy-scope denial, not an in-process-only-domain denial.",
+      "domain": "keycustodian",
+      "factoryName": "SigningDomainNotAuthorized",
+      "factoryShape": "standard",
+      "httpStatus": 403,
+      "userMessageKeyPath": "TK.Keycustodian.Authorization.SIGNING_DOMAIN_NOT_AUTHORIZED",
+      "userMessageKeySnake": "keycustodian_authorization_SIGNING_DOMAIN_NOT_AUTHORIZED"
     },
     "KEYCUSTODIAN_SMOKE_PROOF_TYPE_MISMATCH": {
       "category": "validation_failure",

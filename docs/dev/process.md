@@ -219,7 +219,10 @@ Tests written:
   ...
 Adversarial coverage: <count, summary>
 Build state: clean | <warnings to address>
+Baseline currency: PASS | <packages needing re-seed>
 ```
+
+If any consumable shared package's source was modified, the Implementer runs `pnpm --filter release-runner check-baselines` before declaring implementation complete. If the gate reports stale baselines, the Implementer re-runs the seed scripts, re-stages the baseline files, and records `Baseline currency: PASS` only after the gate exits 0. A stale baseline left for "later" is FINDING-HIGH at audit (§26.20).
 
 The Implementer returns a structured files-touched + tests-added + build status summary; its context dies on return. The orchestrator does NOT read the source files itself — it consumes the summary.
 

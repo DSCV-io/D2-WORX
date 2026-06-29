@@ -27,6 +27,9 @@ D2.Shared.Auth.Grpc.Endpoints.RequireD2GrpcScopeExtensions.extension(Microsoft.A
 D2.Shared.Auth.Grpc.Interceptors.ServerCallContextRequestContextExtensions
 D2.Shared.Auth.Grpc.Interceptors.ServerCallContextRequestContextExtensions.extension(Grpc.Core.ServerCallContext!)
 D2.Shared.Auth.Grpc.Interceptors.ServerCallContextRequestContextExtensions.extension(Grpc.Core.ServerCallContext!).GetD2RequestContext() -> D2.Shared.Context.Abstractions.IRequestContext?
+D2.Shared.Auth.Grpc.Mtls.PeerWorkloadIdentityServerCallContextExtensions
+D2.Shared.Auth.Grpc.Mtls.PeerWorkloadIdentityServerCallContextExtensions.extension(Grpc.Core.ServerCallContext!)
+D2.Shared.Auth.Grpc.Mtls.PeerWorkloadIdentityServerCallContextExtensions.extension(Grpc.Core.ServerCallContext!).GetD2PeerWorkloadIdentity() -> string?
 D2.Shared.Auth.Grpc.Status.D2GrpcTrailers
 D2.Shared.Auth.Grpc.Status.D2RpcStatusExtensions
 D2.Shared.Auth.Grpc.Status.D2RpcStatusExtensions.extension(D2.Shared.Result.D2Result?)
@@ -45,6 +48,7 @@ static D2.Shared.Auth.Grpc.Endpoints.RequireD2GrpcScopeExtensions.MarkAsD2Harmle
 static D2.Shared.Auth.Grpc.Endpoints.RequireD2GrpcScopeExtensions.RequireAllScopes(this Microsoft.AspNetCore.Builder.GrpcServiceEndpointConventionBuilder! builder, string! scope, params string![]! additionalScopes) -> Microsoft.AspNetCore.Builder.GrpcServiceEndpointConventionBuilder!
 static D2.Shared.Auth.Grpc.Endpoints.RequireD2GrpcScopeExtensions.RequireAnyScope(this Microsoft.AspNetCore.Builder.GrpcServiceEndpointConventionBuilder! builder, string! scope, params string![]! additionalScopes) -> Microsoft.AspNetCore.Builder.GrpcServiceEndpointConventionBuilder!
 static D2.Shared.Auth.Grpc.Interceptors.ServerCallContextRequestContextExtensions.GetD2RequestContext(this Grpc.Core.ServerCallContext! context) -> D2.Shared.Context.Abstractions.IRequestContext?
+static D2.Shared.Auth.Grpc.Mtls.PeerWorkloadIdentityServerCallContextExtensions.GetD2PeerWorkloadIdentity(this Grpc.Core.ServerCallContext! context) -> string?
 static D2.Shared.Auth.Grpc.Status.D2GrpcTrailers.AllTrailers.get -> System.Collections.Generic.IReadOnlyList<string!>!
 static D2.Shared.Auth.Grpc.Status.D2RpcStatusExtensions.ToRpcException(this D2.Shared.Result.D2Result? result) -> Grpc.Core.RpcException!
 static readonly D2.Shared.Auth.Grpc.Endpoints.MethodScopeMetadata.HarmlessEndpoint -> D2.Shared.Auth.Grpc.Endpoints.MethodScopeMetadata!

@@ -16,16 +16,19 @@ using D2.Edge.Tests.TypeSpecRoute.Generated.Facade;
 using D2.Edge.Tests.Unit.KeyCustodian.TypeSpecRoute.Fixtures;
 using D2.Services.Protos.SignFixtures.V2Alpha;
 using D2.Shared.AspNetCore.Mtls;
+using D2.Shared.Auth.Grpc.Mtls;
 using D2.Shared.Auth.Outbound;
 using D2.Shared.Auth.Outbound.Grpc;
 using D2.Shared.Auth.Outbound.WorkloadCertificate;
 using D2.Shared.Result;
+using D2.Shared.Result.Grpc;
 using Google.Protobuf;
 using Grpc.Core;
 using Grpc.Net.Client;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using DtoSignFixtureOutput = D2.Edge.Tests.TypeSpecDto.Generated.SignFixtureOutput;
+using ProtoSignFixtureOutput = D2.Services.Protos.SignFixtures.V2Alpha.SignFixtureOutput;
 
 /// <summary>
 /// The end-to-end mutual-TLS harness proof. A real Kestrel HTTPS
@@ -232,6 +235,73 @@ public sealed class MutualTlsSignerHarnessTests
         // mTLS channel (it was not gated at the handshake).
         facade.SignCallCount.Should().Be(1);
         facade.LastSignFixtureInput!.Kid.Should().Be(kid);
+    }
+
+    // -----------------------------------------------------------------------
+    // Peer-SAN surfacing — the hosted gRPC service reads the validated peer
+    // identity via context.GetD2PeerWorkloadIdentity() over a REAL TLS handshake
+    // -----------------------------------------------------------------------
+
+    [Fact]
+    public async Task ValidLeaf_HostedService_SurfacesPeerWorkloadIdentity_Edge()
+    {
+        SkipIfClientCertContextUnbuildable();
+
+        using var ca = new RealCertAuthority();
+        using var serverCert = ca.IssueServerCertificate(_SERVER_WORKLOAD);
+        var captor = new PeerIdCapturingSignFixtureService();
+
+        await using var host = await StartPeerIdCapturingServerAsync(
+            ca, serverCert, captor, allowedWorkloads: [_ALLOWED_WORKLOAD]);
+        using var clientLeaf = ca.IssueLeaf(_ALLOWED_WORKLOAD);
+        using var channel = BuildDirectChannel(host.Endpoint, clientLeaf, ca.IntermediateCertificate);
+        var client = new SignFixtureSigner.SignFixtureSignerClient(channel);
+
+        var reply = await client.SignFixtureAsync(new SignFixtureRequest
+        {
+            Kid = "k",
+            Payload = ByteString.CopyFrom(0x01),
+        });
+
+        // The hosted service read the validated peer SAN from the real mTLS handshake
+        // (via GetHttpContext().Connection.ClientCertificate) and surfaced "edge".
+        reply.Result.Success.Should().BeTrue();
+        reply.Data.Signature.Should().Be(
+            _ALLOWED_WORKLOAD,
+            because: "the hosted gRPC service surfaces the validated peer workload id "
+            + "over a real TLS handshake via context.GetD2PeerWorkloadIdentity()");
+        captor.LastPeerId.Should().Be(_ALLOWED_WORKLOAD);
+    }
+
+    [Fact]
+    public async Task ValidLeaf_HostedService_SurfacesSecondPeerWorkloadIdentity_Files()
+    {
+        SkipIfClientCertContextUnbuildable();
+
+        const string second_workload = "files";
+
+        using var ca = new RealCertAuthority();
+        using var serverCert = ca.IssueServerCertificate(_SERVER_WORKLOAD);
+        var captor = new PeerIdCapturingSignFixtureService();
+
+        // Add "files" to the allowed set so a second, distinct validated identity
+        // surfaces (it is a REJECT case under the default ["edge"]-only set).
+        await using var host = await StartPeerIdCapturingServerAsync(
+            ca, serverCert, captor, allowedWorkloads: [_ALLOWED_WORKLOAD, second_workload]);
+        using var clientLeaf = ca.IssueLeaf(second_workload);
+        using var channel = BuildDirectChannel(host.Endpoint, clientLeaf, ca.IntermediateCertificate);
+        var client = new SignFixtureSigner.SignFixtureSignerClient(channel);
+
+        var reply = await client.SignFixtureAsync(new SignFixtureRequest
+        {
+            Kid = "k",
+            Payload = ByteString.CopyFrom(0x02),
+        });
+
+        reply.Data.Signature.Should().Be(
+            second_workload,
+            because: "the accessor surfaces whichever validated workload presented its leaf");
+        captor.LastPeerId.Should().Be(second_workload);
     }
 
     // -----------------------------------------------------------------------
@@ -527,6 +597,37 @@ public sealed class MutualTlsSignerHarnessTests
             app => app.MapGrpcService<SignFixtureSignerService>());
 
     /// <summary>
+    /// Starts the real Kestrel mTLS host hosting a peer-id-CAPTURING gRPC service
+    /// that reads <c>context.GetD2PeerWorkloadIdentity()</c> on each call — the
+    /// vehicle that proves the validated peer SAN surfaces over a real TLS handshake.
+    /// The allowed-workload set is parameterized so a second valid identity can be
+    /// exercised (the default harness set is <c>["edge"]</c> only).
+    /// </summary>
+    /// <param name="ca">The certificate authority whose public root the host trusts.</param>
+    /// <param name="serverCert">The Kestrel server certificate.</param>
+    /// <param name="service">The capturing service instance whose surfaced id is asserted.</param>
+    /// <param name="allowedWorkloads">The allowed-workload set the validator enforces.</param>
+    /// <returns>The running host + the loopback endpoint the channel dials.</returns>
+    private static Task<GrpcTestHost.RunningServer> StartPeerIdCapturingServerAsync(
+        RealCertAuthority ca,
+        X509Certificate2 serverCert,
+        PeerIdCapturingSignFixtureService service,
+        IReadOnlyList<string> allowedWorkloads) =>
+        GrpcTestHost.StartAsync(
+            serverCert,
+            services =>
+            {
+                services.AddSingleton(service);
+                services.AddD2MutualTls(o =>
+                {
+                    o.Enabled = true;
+                    o.AllowedWorkloads = allowedWorkloads;
+                    o.TrustAnchorsProvider = ca.TrustAnchors;
+                });
+            },
+            app => app.MapGrpcService<PeerIdCapturingSignFixtureService>());
+
+    /// <summary>
     /// Builds a gRPC channel that dials the loopback endpoint over a real socket,
     /// presenting <paramref name="clientLeaf"/> + its issuing intermediate as a full
     /// chain on the TLS handshake (or no client certificate when null). The client
@@ -643,5 +744,37 @@ public sealed class MutualTlsSignerHarnessTests
     {
         public ValueTask<D2Result<WorkloadLeafMaterial>> IssueAsync(CancellationToken ct = default) =>
             new(D2Result<WorkloadLeafMaterial>.Ok(ca.IssueLeafMaterial(serviceId)));
+    }
+
+    /// <summary>
+    /// A test-only gRPC service that reads the validated peer workload identity via
+    /// <c>context.GetD2PeerWorkloadIdentity()</c> (the gRPC overload) on each call,
+    /// captures it, and echoes it back in the response signature so the client can
+    /// assert the surfaced id end-to-end over a real mTLS handshake. The capture is
+    /// the proof vehicle for the peer-SAN surfacing; it performs no real signing.
+    /// </summary>
+    private sealed class PeerIdCapturingSignFixtureService
+        : SignFixtureSigner.SignFixtureSignerBase
+    {
+        private string? _lastPeerId;
+
+        /// <summary>Gets the peer workload id the service surfaced on the last call.</summary>
+        public string? LastPeerId => Volatile.Read(ref _lastPeerId);
+
+        public override Task<SignFixtureResponse> SignFixture(
+            SignFixtureRequest request, ServerCallContext context)
+        {
+            var peerId = context.GetD2PeerWorkloadIdentity();
+            Volatile.Write(ref _lastPeerId, peerId);
+
+            var ok = D2Result<DtoSignFixtureOutput?>.Ok(
+                new DtoSignFixtureOutput(peerId ?? string.Empty));
+
+            return Task.FromResult(new SignFixtureResponse
+            {
+                Result = ok.ToProto(),
+                Data = new ProtoSignFixtureOutput { Signature = peerId ?? string.Empty },
+            });
+        }
     }
 }

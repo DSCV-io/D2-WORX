@@ -22,3 +22,4 @@ Authentication and authorization building blocks for D²-WORX services that issu
 | [`audiences-source-gen/`](audiences-source-gen/README.md) | Roslyn generator emitting the `Audiences.*` const-string catalog into `abstractions/` from `contracts/auth-audiences/audiences.spec.json`.    |
 | [`jwt-claims-source-gen/`](jwt-claims-source-gen/README.md) | Roslyn generator emitting `JwtClaimTypes.g.cs` into `abstractions/` from `contracts/jwt-claims/jwt-claims.spec.json`.                         |
 | [`error-codes-source-gen/`](error-codes-source-gen/README.md) | Roslyn generator emitting the auth-failure taxonomy (`AuthErrorCodes` + `AuthFailures` factories) into `core/` from `contracts/auth-error-codes/auth-error-codes.spec.json`. |
+| `protocol-audiences-source-gen/` | Roslyn generator emitting `WellKnownAudiences.g.cs` into `abstractions/` from `contracts/auth-protocol-audiences/protocol-audiences.spec.json`. |

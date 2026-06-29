@@ -12,13 +12,16 @@ using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.IssueWorkloadCertif
 using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.RetireKey;
 using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.RunDueRotations;
 using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.SeedCertificateAuthority;
+using D2.Edge.KeyCustodian.App.Application.Handlers.Queries.GetOidcConfiguration;
 using D2.Edge.KeyCustodian.App.Application.Handlers.Queries.GetRotationPlan;
+using D2.Edge.KeyCustodian.App.Infrastructure.Configuration;
 using D2.Edge.KeyCustodian.App.Infrastructure.Messaging;
 using D2.Edge.KeyCustodian.App.Infrastructure.Vault;
 using D2.Edge.KeyCustodian.Clients;
 using D2.Shared.Context.Abstractions;
 using D2.Shared.Handler;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 
 /// <summary>
 /// Registration tests for <see cref="KeyCustodianAppServiceCollectionExtensions"/>:
@@ -43,8 +46,10 @@ public sealed class KeyCustodianAppServiceCollectionExtensionsTests
         services.Should().Contain(d => d.ServiceType == typeof(IIssueWorkloadCertificateHandler));
         services.Should().Contain(d => d.ServiceType == typeof(ISeedCertificateAuthorityHandler));
         services.Should().Contain(d => d.ServiceType == typeof(IGetJwksHandler));
+        services.Should().Contain(d => d.ServiceType == typeof(IGetOidcConfigurationHandler));
         services.Should().Contain(d => d.ServiceType == typeof(IGetRotationPlanHandler));
         services.Should().Contain(d => d.ServiceType == typeof(IKeyCustodianApi));
+        services.Should().Contain(d => d.ServiceType == typeof(ISigningDomainAuthorityPolicy));
     }
 
     [Fact]
@@ -104,6 +109,9 @@ public sealed class KeyCustodianAppServiceCollectionExtensionsTests
         // ICaProvider — Infra-owned; SeedCertificateAuthorityHandler.
         services.AddSingleton<ICaProvider>(_ => new StubCaProvider());
 
+        // IOptions<SigningDomainAuthorityOptions> — App-owned; OptionsSigningDomainAuthorityPolicy.
+        services.AddSingleton(Options.Create(new SigningDomainAuthorityOptions()));
+
         using var sp = services.BuildServiceProvider();
 
         // Act + Assert: resolve every registered handler interface and the policy
@@ -130,6 +138,12 @@ public sealed class KeyCustodianAppServiceCollectionExtensionsTests
             .Should().BeOfType<GetRotationPlanHandler>();
         sp.GetRequiredService<IRotationPolicyProvider>()
             .Should().BeOfType<OptionsRotationPolicyProvider>();
+        sp.GetRequiredService<ISigningDomainAuthorityPolicy>()
+            .Should().BeOfType<OptionsSigningDomainAuthorityPolicy>(
+                "AddD2KeyCustodianApp registers the singleton policy provider");
+        sp.GetRequiredService<IGetOidcConfigurationHandler>()
+            .Should().BeOfType<GetOidcConfigurationHandler>(
+                "AddD2KeyCustodianApp registers the OIDC-discovery query handler");
         sp.GetRequiredService<IKeyCustodianApi>()
             .Should().NotBeNull();
     }

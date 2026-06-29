@@ -248,6 +248,8 @@
   "contacts_validation_SUFFIX_CUSTOM_REQUIRED": "A custom suffix is required when the suffix is set to Other.",
   "contacts_validation_SUFFIX_CUSTOM_TOO_LONG": "The custom suffix is too long.",
   "contacts_validation_WEBSITE_INVALID": "Enter a valid website URL (must start with http:// or https://).",
+  "keycustodian_authorization_CROSS_PROCESS_DOMAIN_REJECTED": "This signing key can only be used within the issuing service and cannot be requested remotely.",
+  "keycustodian_authorization_SIGNING_DOMAIN_NOT_AUTHORIZED": "You are not authorized to sign with the requested key.",
   "keycustodian_infrastructure_NO_ACTIVE_ISSUING_CA": "No active issuing certificate authority is available right now. Please try again shortly.",
   "keycustodian_internal_INVALID_CERTIFICATE_REQUEST": "A certificate could not be generated because of an internal error. This has been logged for investigation.",
   "keycustodian_internal_PRECONDITION_VIOLATED": "An internal precondition was not met while updating a key. This has been logged for investigation.",

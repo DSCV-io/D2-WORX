@@ -158,6 +158,41 @@ internal sealed class SpiffeSanPeerValidator
     }
 
     /// <summary>
+    /// Extracts the validated SPIFFE workload identity from a presented certificate
+    /// by running the SAME single-URI-SAN walk + grammar parse the
+    /// <see cref="Validate"/> path uses (conjunct 2) — there is ONE SAN-parse
+    /// implementation, shared. Returns the parsed identity, or <see langword="null"/>
+    /// on any missing / non-URI / multiple-URI SAN or non-SPIFFE (wrong scheme,
+    /// foreign trust domain, malformed) value. Never throws — a decode failure inside
+    /// <see cref="ExtractSingleUriSan"/> propagates as the same default-deny the
+    /// <see cref="Validate"/> catch handles; callers that read it outside
+    /// <see cref="Validate"/> guard the cert is the Kestrel-validated one.
+    /// </summary>
+    /// <remarks>
+    /// <b>This does NOT re-authenticate the peer.</b> It only re-derives the workload
+    /// id from the SAN. The peer-identity accessor that reads this does so ONLY from
+    /// <c>HttpContext.Connection.ClientCertificate</c>, which Kestrel populates ONLY
+    /// after all three default-deny conjuncts already passed at the handshake — so the
+    /// id is derived from an already-validated certificate, never a free-standing
+    /// untrusted value.
+    /// </remarks>
+    /// <param name="cert">The presented (already chain-validated) client certificate.</param>
+    /// <returns>The validated workload identity, or <see langword="null"/> on any malformed SAN.</returns>
+    internal static SpiffeWorkloadIdentity? TryExtractWorkloadId(X509Certificate2 cert)
+    {
+        ArgumentNullException.ThrowIfNull(cert);
+
+        var sanResult = ExtractSingleUriSan(cert);
+
+        if (!sanResult.Success)
+            return null;
+
+        var identityResult = SpiffeWorkloadIdentity.Parse(sanResult.Uri);
+
+        return identityResult.Success ? identityResult.Data : null;
+    }
+
+    /// <summary>
     /// Returns whether the presented certificate is a CA (its basic-constraints
     /// extension marks it as a certificate authority). A workload leaf is never a CA.
     /// </summary>

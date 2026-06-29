@@ -248,6 +248,8 @@
   "contacts_validation_SUFFIX_CUSTOM_REQUIRED": "Un suffixe personnalisé est requis lorsque le suffixe est défini à Autre.",
   "contacts_validation_SUFFIX_CUSTOM_TOO_LONG": "Le suffixe personnalisé est trop long.",
   "contacts_validation_WEBSITE_INVALID": "Saisissez une URL de site Web valide (doit commencer par http:// ou https://).",
+  "keycustodian_authorization_CROSS_PROCESS_DOMAIN_REJECTED": "Cette clé de signature ne peut être utilisée qu'au sein du service émetteur et ne peut pas être demandée à distance.",
+  "keycustodian_authorization_SIGNING_DOMAIN_NOT_AUTHORIZED": "Vous n'êtes pas autorisé à signer avec la clé demandée.",
   "keycustodian_infrastructure_NO_ACTIVE_ISSUING_CA": "Aucune autorité de certification émettrice active n'est disponible pour le moment. Veuillez réessayer sous peu.",
   "keycustodian_internal_INVALID_CERTIFICATE_REQUEST": "Un certificat n'a pas pu être généré en raison d'une erreur interne. Cet incident a été journalisé pour investigation.",
   "keycustodian_internal_PRECONDITION_VIOLATED": "Une condition préalable interne n'a pas été remplie lors de la mise à jour d'une clé. Cet incident a été journalisé pour investigation.",

@@ -64,6 +64,23 @@ public static class KeyCustodianServiceCollectionExtensions
                 .ValidateDataAnnotations()
                 .ValidateOnStart();
 
+            // Signing-domain authority policy — bound + fail-loud validated. The
+            // validator REFUSES to boot a dangerous configuration (it rejects VALUES,
+            // not just shape): no workload may be granted an in-process-only domain
+            // (jwks-signing), no key may be empty, no value may name a non-catalog
+            // domain. An EMPTY policy is legitimately fine (deny-all). This converts
+            // the load-bearing jwks-signing-Edge-only control from operator-discipline
+            // to "the host won't start misconfigured" (defense-in-depth alongside the
+            // structural authority-rule deny).
+            services.AddOptions<SigningDomainAuthorityOptions>()
+                .Bind(configuration.GetSection(SigningDomainAuthorityOptions.SECTION))
+                .Validate(
+                    static o => o.Validate() is null,
+                    "KEYCUSTODIAN_SIGNING_AUTHORITY is misconfigured. See the host log "
+                    + "for the specific invariant violated (in-process-only-domain grant, "
+                    + "empty workload key, or non-catalog signing domain).")
+                .ValidateOnStart();
+
             // --- Persistence: plain scoped DbContext, shared Npgsql defaults -----
             // No EnableRetryOnFailure (an execution-strategy reconnect would drop a
             // session advisory lock mid-critical-section).

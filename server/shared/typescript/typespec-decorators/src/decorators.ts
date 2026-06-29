@@ -92,8 +92,9 @@ export function $d2RateLimitTier(
 
 /**
  * Stores the expected JWT audience claim string on the operation.
- * Validated against contracts/auth-audiences/audiences.spec.json; "d2-edge"
- * is always valid as the Edge self-audience.
+ * Validated against the spec-driven set in
+ * contracts/auth-protocol-audiences/protocol-audiences.spec.json via
+ * loadProtocolAudienceValues() — only declared protocol audiences pass.
  * Emitters read back: program.stateMap(D2_AUDIENCE_KEY).get(op) → string.
  */
 export function $d2Audience(

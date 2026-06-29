@@ -172,11 +172,11 @@ public sealed class WellKnownRouteTests
     [Fact]
     public async Task DiscoveryThenJwks_OidcDocPointsAtJwks_AndBothResolveTogether()
     {
-        // The README Step-2 chain: the OIDC discovery doc's jwks_uri points at the
+        // The discovery-then-JWKS chain: the OIDC discovery doc's jwks_uri points at the
         // JWKS route, and a client that reads the discovery doc then fetches the
-        // referenced JWKS gets both seeded kids. (This is exactly the chain .NET's
+        // referenced JWKS gets both seeded kids. This is the chain
         // ConfigurationManager<OpenIdConnectConfiguration> walks — see
-        // OidcDiscoveryEndToEndTests for the real-ConfigurationManager proof.)
+        // OidcDiscoveryEndToEndTests for the real-ConfigurationManager proof.
         await using var db = KeyCustodianTestDbContext.CreateEmpty();
         var crypto = KcAppTestKit.BuildTestRootCrypto();
         var options = BuildOptions();

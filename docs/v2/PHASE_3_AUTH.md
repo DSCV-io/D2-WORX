@@ -277,6 +277,22 @@ locale, …) per ADR-0007 §2. No hop mutates the token to append itself.
   filtered out (ops CLI loads them on demand for forensic decryption).
 - **Smoke test**: T+1h delay between `pending` and `active` (catches generation bugs before they hit
   production).
+- **Capability authority** (the structural form of mint-once-forward + mTLS identity): KC answers
+  "may workload W use capability C (sign / seal-encrypt / seal-decrypt) on target D?" via one pure
+  domain rule, keyed on the validated mTLS peer workload identity. That identity is surfaced by ONE
+  capability-general accessor `GetD2PeerWorkloadIdentity()` that reads the already-validated client
+  certificate from `HttpContext.Connection.ClientCertificate` (REST) or `ServerCallContext.GetHttpContext()`
+  (gRPC) and re-runs the SPIFFE SAN extraction — fail-closed (no certificate ⇒ no identity ⇒ deny).
+  Signing is policy-driven (the `KEYCUSTODIAN_SIGNING_AUTHORITY` workload→allowed-signing-domains map)
+  with a structural in-process-only backstop: a cross-process caller can NEVER sign with `jwks-signing`
+  (the root of mint-once-forward) — denied structurally by the rule (independent of policy) AND at boot
+  by a config validator that refuses to grant an in-process-only domain to any workload. The in-process
+  Edge minter signs `jwks-signing` in-process (bypassing the gRPC gate). Seal-encrypt is broad (any
+  scoped producer fetches any public key); seal-decrypt is self-only (the op carries no target — the key
+  is selected by the authenticated identity). Two 403 `policy_denied` codes distinguish the deny reasons
+  (`KEYCUSTODIAN_CROSS_PROCESS_DOMAIN_REJECTED` / `KEYCUSTODIAN_SIGNING_DOMAIN_NOT_AUTHORIZED`); the
+  cross-process `jwks-signing` rejection pages on any non-zero value. The same accessor is the single
+  peer-identity source for the sign guard (Step 4) and the seal ops (Step 9) across both transports.
 
 ### 3.6 Fingerprint binding (composite, 10-slot)
 

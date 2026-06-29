@@ -526,6 +526,26 @@ public static class ErrorCodeRegistry
                 Doc: "No active issuing intermediate certificate authority is available to sign a workload leaf certificate. A retryable not-ready-yet condition: the CA either has not been seeded yet or is between rotations. Surfaced as a 503 service-unavailable result so callers retry rather than treat it as a client-side conflict.",
                 Domain: "keycustodian",
                 IsDeprecated: false),
+            ["KEYCUSTODIAN_CROSS_PROCESS_DOMAIN_REJECTED"] = new ErrorCodeInfo(
+                Code: "KEYCUSTODIAN_CROSS_PROCESS_DOMAIN_REJECTED",
+                HttpStatus: 403,
+                Category: ErrorCategory.PolicyDenied,
+                UserMessageKey: TK.Keycustodian.Authorization.CROSS_PROCESS_DOMAIN_REJECTED,
+                FactoryName: "CrossProcessDomainRejected",
+                FactoryShape: "standard",
+                Doc: "The requested key domain is in-process-only (e.g. jwks-signing) and may not be signed with by a cross-process caller. The jwks-signing key is the root of mint-once-forward and never leaves the Edge host process. Enforced structurally (independent of policy) and backed by a boot-time config-validation invariant that refuses to grant an in-process-only domain to any workload.",
+                Domain: "keycustodian",
+                IsDeprecated: false),
+            ["KEYCUSTODIAN_SIGNING_DOMAIN_NOT_AUTHORIZED"] = new ErrorCodeInfo(
+                Code: "KEYCUSTODIAN_SIGNING_DOMAIN_NOT_AUTHORIZED",
+                HttpStatus: 403,
+                Category: ErrorCategory.PolicyDenied,
+                UserMessageKey: TK.Keycustodian.Authorization.SIGNING_DOMAIN_NOT_AUTHORIZED,
+                FactoryName: "SigningDomainNotAuthorized",
+                FactoryShape: "standard",
+                Doc: "The calling workload is not authorized to sign with the requested key domain (the domain is not in the workload's allowed-signing-domains policy set). Distinct from the in-process-only rejection: this is a policy-scope denial, not an in-process-only-domain denial.",
+                Domain: "keycustodian",
+                IsDeprecated: false),
         }.ToFrozenDictionary(StringComparer.Ordinal);
 
     /// <summary>
@@ -579,6 +599,8 @@ public static class ErrorCodeRegistry
                 sr_lookup["KEYCUSTODIAN_INVALID_WORKLOAD_IDENTITY"],
                 sr_lookup["KEYCUSTODIAN_INVALID_CERTIFICATE_REQUEST"],
                 sr_lookup["KEYCUSTODIAN_NO_ACTIVE_ISSUING_CA"],
+                sr_lookup["KEYCUSTODIAN_CROSS_PROCESS_DOMAIN_REJECTED"],
+                sr_lookup["KEYCUSTODIAN_SIGNING_DOMAIN_NOT_AUTHORIZED"],
             ]);
 
     /// <summary>

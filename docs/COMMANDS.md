@@ -196,6 +196,23 @@ pnpm --filter "./server/shared/typescript/**" -r build
 node tools/scripts/seed-apiextractor-baselines.mjs
 ```
 
+#### Baseline currency check (pre-commit gate)
+
+The pre-commit currency check recomputes each consumable's source-based fingerprint over the
+**working tree** and compares it to the **on-disk `.release-fingerprint`**. It FAILS when source
+has changed without re-running the seed (i.e., the baseline is stale). For `.NET` consumables it
+also asserts that `PublicAPI.Unshipped.txt` is header-only. This is the gate that catches
+"forgot to re-seed after editing source" — distinct from the drift check below.
+
+Runs automatically via `.husky/pre-commit` on every commit. To run manually:
+
+```bash
+pnpm --filter release-runner check-baselines
+```
+
+On failure, run the seed scripts shown in the error output, re-stage the updated baseline files,
+and commit again.
+
 #### Baseline drift check
 
 The drift check re-derives every committed API-report diff + recomputes every source-based

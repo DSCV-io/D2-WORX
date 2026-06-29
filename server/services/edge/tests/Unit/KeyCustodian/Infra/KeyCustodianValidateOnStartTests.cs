@@ -102,6 +102,24 @@ public sealed class KeyCustodianValidateOnStartTests : IDisposable
                 because: "an empty IssuerBaseUrl must fail the startup validation gate");
     }
 
+    [Theory]
+    [InlineData("   ")]
+    [InlineData("\t")]
+    [InlineData(" \t ")]
+    public void WhitespaceAppIssuerBaseUrl_FailsValidationOnResolve(string whitespace)
+    {
+        // [Required] rejects null; [MinLength(1)] rejects empty — but neither rejects
+        // whitespace-only values. Without the IValidatableObject Falsey() check a
+        // "   " IssuerBaseUrl boots and serves issuer:"   " + jwks_uri:"   /.well-known/...".
+        // The Validate() predicate catches it and the startup gate surfaces it.
+        using var sp = BuildProvider(
+            ConfigurationWithOverride("KEYCUSTODIAN_APP:IssuerBaseUrl", whitespace));
+
+        sp.Invoking(s => s.GetRequiredService<IOptions<KeyCustodianOptions>>().Value)
+            .Should().Throw<OptionsValidationException>(
+                because: "a whitespace-only IssuerBaseUrl must fail the startup validation gate");
+    }
+
     [Fact]
     public void MissingAppIssuerBaseUrl_FailsValidationOnResolve()
     {

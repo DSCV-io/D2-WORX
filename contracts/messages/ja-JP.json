@@ -248,6 +248,8 @@
   "contacts_validation_SUFFIX_CUSTOM_REQUIRED": "接尾辞が「その他」に設定されている場合、カスタム接尾辞は必須です。",
   "contacts_validation_SUFFIX_CUSTOM_TOO_LONG": "カスタム接尾辞が長すぎます。",
   "contacts_validation_WEBSITE_INVALID": "有効なウェブサイトのURLを入力してください（http:// または https:// で始まる必要があります）。",
+  "keycustodian_authorization_CROSS_PROCESS_DOMAIN_REJECTED": "この署名キーは発行元サービス内でのみ使用でき、リモートから要求することはできません。",
+  "keycustodian_authorization_SIGNING_DOMAIN_NOT_AUTHORIZED": "要求されたキーで署名する権限がありません。",
   "keycustodian_infrastructure_NO_ACTIVE_ISSUING_CA": "現在、アクティブな発行認証局が利用できません。しばらくしてからもう一度お試しください。",
   "keycustodian_internal_INVALID_CERTIFICATE_REQUEST": "内部エラーのため証明書を生成できませんでした。この事象は調査のため記録されました。",
   "keycustodian_internal_PRECONDITION_VIOLATED": "キーの更新中に内部の前提条件が満たされませんでした。この事象は調査のため記録されました。",

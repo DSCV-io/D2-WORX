@@ -24,6 +24,7 @@ D2.Shared.I18n.TK.Geo
 D2.Shared.I18n.TK.Geo.Errors
 D2.Shared.I18n.TK.Geo.Validation
 D2.Shared.I18n.TK.Keycustodian
+D2.Shared.I18n.TK.Keycustodian.Authorization
 D2.Shared.I18n.TK.Keycustodian.Infrastructure
 D2.Shared.I18n.TK.Keycustodian.Internal
 D2.Shared.I18n.TK.Keycustodian.Lifecycle
@@ -317,6 +318,8 @@ static readonly D2.Shared.I18n.TK.Geo.Validation.LONGITUDE_RANGE -> D2.Shared.I1
 static readonly D2.Shared.I18n.TK.Geo.Validation.POSTAL_CODE_INVALID -> D2.Shared.I18n.TKMessage!
 static readonly D2.Shared.I18n.TK.Geo.Validation.POSTAL_CODE_TOO_LONG -> D2.Shared.I18n.TKMessage!
 static readonly D2.Shared.I18n.TK.Geo.Validation.STREET_LINE_TOO_LONG -> D2.Shared.I18n.TKMessage!
+static readonly D2.Shared.I18n.TK.Keycustodian.Authorization.CROSS_PROCESS_DOMAIN_REJECTED -> D2.Shared.I18n.TKMessage!
+static readonly D2.Shared.I18n.TK.Keycustodian.Authorization.SIGNING_DOMAIN_NOT_AUTHORIZED -> D2.Shared.I18n.TKMessage!
 static readonly D2.Shared.I18n.TK.Keycustodian.Infrastructure.NO_ACTIVE_ISSUING_CA -> D2.Shared.I18n.TKMessage!
 static readonly D2.Shared.I18n.TK.Keycustodian.Internal.INVALID_CERTIFICATE_REQUEST -> D2.Shared.I18n.TKMessage!
 static readonly D2.Shared.I18n.TK.Keycustodian.Internal.PRECONDITION_VIOLATED -> D2.Shared.I18n.TKMessage!

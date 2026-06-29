@@ -248,6 +248,8 @@
   "contacts_validation_SUFFIX_CUSTOM_REQUIRED": "Se requiere un sufijo personalizado cuando el sufijo está establecido en Otro.",
   "contacts_validation_SUFFIX_CUSTOM_TOO_LONG": "El sufijo personalizado es demasiado largo.",
   "contacts_validation_WEBSITE_INVALID": "Ingrese una URL de sitio web válida (debe comenzar con http:// o https://).",
+  "keycustodian_authorization_CROSS_PROCESS_DOMAIN_REJECTED": "Esta clave de firma solo puede usarse dentro del servicio emisor y no puede solicitarse de forma remota.",
+  "keycustodian_authorization_SIGNING_DOMAIN_NOT_AUTHORIZED": "No tiene autorización para firmar con la clave solicitada.",
   "keycustodian_infrastructure_NO_ACTIVE_ISSUING_CA": "No hay ninguna autoridad de certificación emisora activa disponible en este momento. Vuelva a intentarlo en breve.",
   "keycustodian_internal_INVALID_CERTIFICATE_REQUEST": "No se pudo generar un certificado debido a un error interno. Esto se ha registrado para su investigación.",
   "keycustodian_internal_PRECONDITION_VIOLATED": "No se cumplió una condición previa interna al actualizar una clave. Esto se ha registrado para su investigación.",

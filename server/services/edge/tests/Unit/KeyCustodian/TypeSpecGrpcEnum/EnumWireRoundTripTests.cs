@@ -21,13 +21,13 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
 // FixtureKeyKind is emitted in BOTH the gRPC-enum DTO namespace (SignWithKindFixtureInput.g.cs)
-// and the in-process enum DTO namespace (EnumFixtureOutput.g.cs). The alias pins the
-// gRPC-side FixtureKeyKind (where ToWire / ParseFixtureKeyKindWire live) so the bare identifier
-// is unambiguous; the Level / Status / AccountKind aliases pin the in-process DTO-ns enums.
+// and the in-process enum DTO namespace (EnumFixtureOutput.g.cs). The Level / Status /
+// AccountKind aliases pin the in-process DTO-ns enums. FixtureKeyKind is referenced directly
+// from the gRPC-enum namespace (where ToWire / ParseFixtureKeyKindWire live) — no alias so
+// the fixture-only name is visible at every call site (§7.23).
 // SignWithKindFixtureOutput exists as both the DTO record (TypeSpecGrpcEnum.Generated) and
 // the Grpc.Tools proto message (D2.Services.Protos.EnumFixtures.V1); pin the DTO.
 using AccountKind = D2.Edge.Tests.TypeSpecDto.Generated.FixtureAccountKind;
-using KeyKind = D2.Edge.Tests.TypeSpecGrpcEnum.Generated.FixtureKeyKind;
 using Level = D2.Edge.Tests.TypeSpecDto.Generated.FixtureLevel;
 using SignWithKindFixtureOutput = D2.Edge.Tests.TypeSpecGrpcEnum.Generated.SignWithKindFixtureOutput;
 using Status = D2.Edge.Tests.TypeSpecDto.Generated.FixtureStatus;
@@ -63,17 +63,17 @@ public sealed class EnumWireRoundTripTests
     // -------------------------------------------------------------------------
 
     [Fact]
-    public void P1_KeyKind_BareMember_WireIsMemberName_RoundTrips()
+    public void P1_FixtureKeyKind_BareMember_WireIsMemberName_RoundTrips()
     {
         foreach (var (member, wire) in MembersOf("FixtureKeyKind"))
         {
-            var value = ParseKeyKind(member);
+            var value = ParseFixtureKeyKind(member);
 
             // Serialize via the REAL SR_Web preset (JsonStringEnumConverter).
             var json = JsonSerializer.Serialize(value, SerializerOptions.SR_Web);
             json.Should().Be($"\"{wire}\"", $"member {member} must serialize to its wire string");
 
-            var back = JsonSerializer.Deserialize<KeyKind>(json, SerializerOptions.SR_Web);
+            var back = JsonSerializer.Deserialize<FixtureKeyKind>(json, SerializerOptions.SR_Web);
             back.Should().Be(value, $"wire '{wire}' must deserialize back to {member}");
         }
     }
@@ -140,8 +140,8 @@ public sealed class EnumWireRoundTripTests
             if (IsKnownIgnoringCase("FixtureKeyKind", unknown))
                 continue;
 
-            var act = () => JsonSerializer.Deserialize<KeyKind>($"\"{unknown}\"", SerializerOptions.SR_Web);
-            act.Should().Throw<JsonException>($"'{unknown}' is not a KeyKind wire value");
+            var act = () => JsonSerializer.Deserialize<FixtureKeyKind>($"\"{unknown}\"", SerializerOptions.SR_Web);
+            act.Should().Throw<JsonException>($"'{unknown}' is not a FixtureKeyKind wire value");
         }
     }
 
@@ -149,20 +149,20 @@ public sealed class EnumWireRoundTripTests
     public void AD2_CaseInsensitivity_DocumentedDivergence_CSharpAcceptsTsRejects()
     {
         // JsonStringEnumConverter is case-INSENSITIVE by default — "rsa"/"RSA"
-        // deserialize to KeyKind.Rsa in C#. The TS const-object is case-SENSITIVE
+        // deserialize to FixtureKeyKind.Rsa in C#. The TS const-object is case-SENSITIVE
         // (exact key only). This is a documented cross-language divergence (like
         // the C# JsonException/TS-RangeError split for unknown enum values) — pinned here, surfaced in
         // VALIDATION.md, NOT silently reconciled. The TS half asserts membership
         // misses for the same values.
-        JsonSerializer.Deserialize<KeyKind>("\"rsa\"", SerializerOptions.SR_Web).Should().Be(KeyKind.Rsa);
-        JsonSerializer.Deserialize<KeyKind>("\"RSA\"", SerializerOptions.SR_Web).Should().Be(KeyKind.Rsa);
+        JsonSerializer.Deserialize<FixtureKeyKind>("\"rsa\"", SerializerOptions.SR_Web).Should().Be(FixtureKeyKind.Rsa);
+        JsonSerializer.Deserialize<FixtureKeyKind>("\"RSA\"", SerializerOptions.SR_Web).Should().Be(FixtureKeyKind.Rsa);
     }
 
     [Fact]
     public void AD3_NullForRequiredEnum_ThrowsOrIsRejected()
     {
         // A JSON null for a non-nullable enum value type fails to deserialize.
-        var act = () => JsonSerializer.Deserialize<KeyKind>("null", SerializerOptions.SR_Web);
+        var act = () => JsonSerializer.Deserialize<FixtureKeyKind>("null", SerializerOptions.SR_Web);
         act.Should().Throw<JsonException>("null is not a valid value for a non-nullable enum");
     }
 
@@ -187,8 +187,8 @@ public sealed class EnumWireRoundTripTests
         {
             var result = string.ParseFixtureKeyKindWire(wire);
 
-            result.Success.Should().BeTrue($"'{wire}' is a valid KeyKind wire value");
-            result.Data.Should().Be(ParseKeyKind(member));
+            result.Success.Should().BeTrue($"'{wire}' is a valid FixtureKeyKind wire value");
+            result.Data.Should().Be(ParseFixtureKeyKind(member));
         }
     }
 
@@ -206,7 +206,7 @@ public sealed class EnumWireRoundTripTests
         // misses const-object membership).
         var result = string.ParseFixtureKeyKindWire(unknown);
 
-        result.Success.Should().BeFalse($"'{unknown ?? "<null>"}' is not a KeyKind wire value");
+        result.Success.Should().BeFalse($"'{unknown ?? "<null>"}' is not a FixtureKeyKind wire value");
         result.StatusCode.Should().Be(HttpStatusCode.BadRequest);
     }
 
@@ -215,7 +215,7 @@ public sealed class EnumWireRoundTripTests
     {
         // ToWire (outbound) ∘ ParseFixtureKeyKindWire (inbound) is the identity over the
         // closed enum — proving the outbound + inbound bridges agree.
-        foreach (var kind in new[] { KeyKind.Rsa, KeyKind.Aes, KeyKind.Secret })
+        foreach (var kind in new[] { FixtureKeyKind.Rsa, FixtureKeyKind.Aes, FixtureKeyKind.Secret })
         {
             var wire = kind.ToWire();
             string.ParseFixtureKeyKindWire(wire).Data.Should().Be(kind);
@@ -230,7 +230,7 @@ public sealed class EnumWireRoundTripTests
     public async Task Grpc_SignWithKind_ValidEnumWire_HandlerReceivesParsedEnum()
     {
         var fake = new FakeSignWithKindFixtureHandler(
-            D2Result<SignWithKindFixtureOutput?>.Ok(new SignWithKindFixtureOutput("sig==", KeyKind.Secret)));
+            D2Result<SignWithKindFixtureOutput?>.Ok(new SignWithKindFixtureOutput("sig==", FixtureKeyKind.Secret)));
 
         using var host = await BuildHost(fake);
         using var channel = CreateChannel(host);
@@ -249,9 +249,9 @@ public sealed class EnumWireRoundTripTests
         // THE inbound bridge assertion: the request proto string "Aes" parsed back to the C# enum.
         fake.CallCount.Should().Be(1);
         fake.LastInput!.Kid.Should().Be("k1");
-        fake.LastInput.KeyKind.Should().Be(KeyKind.Aes);
+        fake.LastInput.KeyKind.Should().Be(FixtureKeyKind.Aes);
 
-        // THE outbound bridge assertion: the C# response enum KeyKind.Secret is serialized to
+        // THE outbound bridge assertion: the C# response enum FixtureKeyKind.Secret is serialized to
         // the proto `string key_kind` wire form on the response (server ToWire path).
         reply.Data.KeyKind.Should().Be("Secret");
     }
@@ -264,7 +264,7 @@ public sealed class EnumWireRoundTripTests
         // circuits to the envelope WITHOUT delegating to the handler. The gRPC call
         // SUCCEEDS at the transport layer (StatusCode.OK); the 400 rides the envelope.
         var fake = new FakeSignWithKindFixtureHandler(
-            D2Result<SignWithKindFixtureOutput?>.Ok(new SignWithKindFixtureOutput("should-not-be-returned", KeyKind.Rsa)));
+            D2Result<SignWithKindFixtureOutput?>.Ok(new SignWithKindFixtureOutput("should-not-be-returned", FixtureKeyKind.Rsa)));
 
         using var host = await BuildHost(fake);
         using var channel = CreateChannel(host);
@@ -273,7 +273,7 @@ public sealed class EnumWireRoundTripTests
         var reply = await client.SignWithKindFixtureAsync(new SignWithKindFixtureRequest
         {
             Kid = "k1",
-            KeyKind = "Quantum", // not a KeyKind wire value
+            KeyKind = "Quantum", // not a FixtureKeyKind wire value
         });
 
         reply.Result.Success.Should().BeFalse("an unknown enum wire value is a business validation failure");
@@ -309,9 +309,9 @@ public sealed class EnumWireRoundTripTests
             // ToWire / ParseFixtureKeyKindWire helpers (server + client mappers) ambiguous.
             var result = MapClientOutput(protoData);
 
-            result.Success.Should().BeTrue($"'{wire}' is a valid response KeyKind wire value");
+            result.Success.Should().BeTrue($"'{wire}' is a valid response FixtureKeyKind wire value");
             result.Data!.Signature.Should().Be("sig==");
-            result.Data.KeyKind.Should().Be(ParseKeyKind(member));
+            result.Data.KeyKind.Should().Be(ParseFixtureKeyKind(member));
         }
     }
 
@@ -333,7 +333,7 @@ public sealed class EnumWireRoundTripTests
 
         var result = MapClientOutput(protoData);
 
-        result.Success.Should().BeFalse($"'{unknown}' is not a KeyKind wire value");
+        result.Success.Should().BeFalse($"'{unknown}' is not a FixtureKeyKind wire value");
         result.StatusCode.Should().Be(HttpStatusCode.BadRequest);
         result.Data.Should().BeNull("no DTO is produced when the response enum is invalid");
     }
@@ -344,7 +344,7 @@ public sealed class EnumWireRoundTripTests
         // Server outbound (DTO enum -> proto string via ToWire) ∘ client inbound
         // (proto string -> DTO enum via the response parse) is the identity over the
         // closed enum — proving the server-write and client-read response bridges agree.
-        foreach (var kind in new[] { KeyKind.Rsa, KeyKind.Aes, KeyKind.Secret })
+        foreach (var kind in new[] { FixtureKeyKind.Rsa, FixtureKeyKind.Aes, FixtureKeyKind.Secret })
         {
             var protoData = new global::D2.Services.Protos.EnumFixtures.V1.SignWithKindFixtureOutput
             {
@@ -379,7 +379,7 @@ public sealed class EnumWireRoundTripTests
         // The FixtureKeyKind fixture wires round-trip through the proto mapper here.
         var keyKindFx = LoadFixture().Enums.Single(e => e.Name == "FixtureKeyKind");
         foreach (var m in keyKindFx.Members)
-            string.ParseFixtureKeyKindWire(m.Wire).Data.Should().Be(ParseKeyKind(m.MemberName));
+            string.ParseFixtureKeyKindWire(m.Wire).Data.Should().Be(ParseFixtureKeyKind(m.MemberName));
     }
 
     // -------------------------------------------------------------------------
@@ -435,12 +435,12 @@ public sealed class EnumWireRoundTripTests
         global::D2.Edge.Tests.TypeSpecGrpcEnum.Clients.SignWithKindFixtureClientMappers
             .ToSignWithKindFixtureOutput(protoData);
 
-    private static KeyKind ParseKeyKind(string member) => member switch
+    private static FixtureKeyKind ParseFixtureKeyKind(string member) => member switch
     {
-        "Rsa" => KeyKind.Rsa,
-        "Aes" => KeyKind.Aes,
-        "Secret" => KeyKind.Secret,
-        _ => throw new InvalidDataException($"unknown KeyKind member '{member}'"),
+        "Rsa" => FixtureKeyKind.Rsa,
+        "Aes" => FixtureKeyKind.Aes,
+        "Secret" => FixtureKeyKind.Secret,
+        _ => throw new InvalidDataException($"unknown FixtureKeyKind member '{member}'"),
     };
 
     private static Level ParseLevel(string member) => member switch

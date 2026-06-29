@@ -178,6 +178,13 @@ Copyright (c) DCSV. All rights reserved.
     -->
     <ProjectReference Include="..\..\..\shared\dotnet\auth\http\D2.Shared.Auth.Http.csproj" />
     <!--
+      D2.Shared.Auth.Grpc — the gRPC-transport overload of the capability-general
+      peer-identity accessor (ServerCallContext.GetD2PeerWorkloadIdentity()), which
+      the mTLS harness's hosted gRPC service reads to prove the validated peer SAN
+      surfaces over a real TLS handshake.
+    -->
+    <ProjectReference Include="..\..\..\shared\dotnet\auth\grpc\D2.Shared.Auth.Grpc.csproj" />
+    <!--
       D2.Shared.Caching.Local.Default — AddD2LocalCache() extension used in the
       route-policy TestServer host setup to satisfy JwtValidator's tiered-cache DI
       dependency. Also provides D2.Shared.Caching.Abstractions transitively.

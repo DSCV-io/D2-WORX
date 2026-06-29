@@ -26,6 +26,7 @@ Key operations are persisted to a dedicated `keycustodian_db` (independent of `a
 - **Flat record + pure mapper (EF-as-DDD Shape B)**: the immutable sum type is persisted as a single non-polymorphic `KeyRecord`; a pure static mapper bridges domain ↔ record. See [ADR-0017](../../../../docs/adrs/0017-ef-as-ddd-persistence.md).
 - **File-backed root key (multi-key)**: the 32-byte root key lives at `secrets/keycustodian/root.key`, loaded once at startup and never persisted to the database. An optional `root-next.key` in the same directory loads as a decrypt-only kid for zero-downtime root rotation.
 - **PG advisory lock rotation coordination**: leaderless; no Redis dependency for key rotation.
+- **Capability-general workload authority**: one pure domain rule (`WorkloadCapabilityAuthority`) answers "may workload W use capability C (sign / seal-encrypt / seal-decrypt) on target D?", keyed on the validated mutual-TLS peer workload identity. The peer identity is surfaced by one capability-general accessor (`GetD2PeerWorkloadIdentity()`) that reads the already-validated client certificate from `HttpContext.Connection.ClientCertificate` (REST) or `ServerCallContext.GetHttpContext()` (gRPC) and re-runs the SPIFFE SAN extraction — fail-closed (no certificate ⇒ no identity ⇒ deny). Signing is policy-driven (`KEYCUSTODIAN_SIGNING_AUTHORITY`) with a structural in-process-only backstop: a cross-process caller can NEVER sign with `jwks-signing` — denied structurally by the rule (independent of policy, `KEYCUSTODIAN_CROSS_PROCESS_DOMAIN_REJECTED`) AND at boot by the config validator that refuses to grant an in-process-only domain to any workload. A domain not in the caller's allowed set is a distinct policy-scope denial (`KEYCUSTODIAN_SIGNING_DOMAIN_NOT_AUTHORIZED`). Seal-encrypt is broad (any scoped producer fetches any public key); seal-decrypt is self-only (the op carries no target — the key is selected by the authenticated identity). Two security counters (`d2.keycustodian.cross_process_signing_rejections` — pages on any non-zero value — and `d2.keycustodian.authority_rejections`) and the `AuthorityRejected` log delegate record denials.
 
 ## Database
 
@@ -56,6 +57,12 @@ App options bind from the `KEYCUSTODIAN_APP` section (prefix `KEYCUSTODIAN_APP__
 | `RsaKeySizeBits`  | `KEYCUSTODIAN_APP__RSAKEYSIZEBITS` | No (2048) | RSA modulus size for generated signing keys (minimum 2048).                                                                                                |
 | `SecretLengthBytes` | `KEYCUSTODIAN_APP__SECRETLENGTHBYTES` | No (64) | Opaque-secret length (minimum 16).                                                                                                                         |
 | `Default` / `Policies` | `KEYCUSTODIAN_APP__DEFAULT__*` / `…__POLICIES__<DOMAIN>__*` | No | Rotation policy (cadence / grace / smoke-soak) — default + per-domain overrides. `RootCaValidity` / `IntermediateCaValidity` / `LeafValidity` govern mTLS CA windows (leaf < intermediate < root, startup-enforced). |
+
+The signing-domain authority policy binds from its own `KEYCUSTODIAN_SIGNING_AUTHORITY` section (prefix `KEYCUSTODIAN_SIGNING_AUTHORITY__`), validated fail-loud at startup (`ValidateOnStart`):
+
+| Option | Env var | Required | Notes |
+| --- | --- | --- | --- |
+| `AllowedSigningDomainsByWorkload` | `KEYCUSTODIAN_SIGNING_AUTHORITY__ALLOWEDSIGNINGDOMAINSBYWORKLOAD__<WORKLOAD>__<i>` | No (empty = deny-all) | Per-workload allowed cross-process signing domains. Key = lowercase SPIFFE workload id (e.g. `edge`); value = the signing key domains that workload may sign with. **The in-process-only domain `jwks-signing` must NEVER appear under any workload — the host refuses to boot if it is granted (fail-loud).** Empty-string keys and non-catalog domain values also fail at startup. An empty policy is valid (every lookup returns the empty set ⇒ deny-all ⇒ fail-closed). |
 
 ### Run locally
 

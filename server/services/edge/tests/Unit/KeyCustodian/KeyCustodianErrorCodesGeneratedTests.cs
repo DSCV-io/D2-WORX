@@ -58,6 +58,12 @@ public sealed class KeyCustodianErrorCodesGeneratedTests
     [InlineData(
         KeyCustodianErrorCodes.KEYCUSTODIAN_NO_ACTIVE_ISSUING_CA,
         "KEYCUSTODIAN_NO_ACTIVE_ISSUING_CA")]
+    [InlineData(
+        KeyCustodianErrorCodes.KEYCUSTODIAN_CROSS_PROCESS_DOMAIN_REJECTED,
+        "KEYCUSTODIAN_CROSS_PROCESS_DOMAIN_REJECTED")]
+    [InlineData(
+        KeyCustodianErrorCodes.KEYCUSTODIAN_SIGNING_DOMAIN_NOT_AUTHORIZED,
+        "KEYCUSTODIAN_SIGNING_DOMAIN_NOT_AUTHORIZED")]
     public void Constant_ValueEqualsWireLiteral(string constant, string expected_wire_literal)
     {
         constant.Should().Be(expected_wire_literal);
@@ -87,6 +93,8 @@ public sealed class KeyCustodianErrorCodesGeneratedTests
             "KEYCUSTODIAN_INVALID_WORKLOAD_IDENTITY",
             "KEYCUSTODIAN_INVALID_CERTIFICATE_REQUEST",
             "KEYCUSTODIAN_NO_ACTIVE_ISSUING_CA",
+            "KEYCUSTODIAN_CROSS_PROCESS_DOMAIN_REJECTED",
+            "KEYCUSTODIAN_SIGNING_DOMAIN_NOT_AUTHORIZED",
         ];
 
         KeyCustodianErrorCodes.AllCodes.Should().BeEquivalentTo(
@@ -95,9 +103,9 @@ public sealed class KeyCustodianErrorCodesGeneratedTests
     }
 
     [Fact]
-    public void AllCodes_CountIsFifteenCodes()
+    public void AllCodes_CountIsSeventeenCodes()
     {
-        KeyCustodianErrorCodes.AllCodes.Should().HaveCount(15);
+        KeyCustodianErrorCodes.AllCodes.Should().HaveCount(17);
     }
 
     // -----------------------------------------------------------------------
@@ -118,6 +126,8 @@ public sealed class KeyCustodianErrorCodesGeneratedTests
     [InlineData("KEYCUSTODIAN_INVALID_WORKLOAD_IDENTITY", 400)]
     [InlineData("KEYCUSTODIAN_INVALID_CERTIFICATE_REQUEST", 500)]
     [InlineData("KEYCUSTODIAN_NO_ACTIVE_ISSUING_CA", 503)]
+    [InlineData("KEYCUSTODIAN_CROSS_PROCESS_DOMAIN_REJECTED", 403)]
+    [InlineData("KEYCUSTODIAN_SIGNING_DOMAIN_NOT_AUTHORIZED", 403)]
     public void GetHttpStatus_KnownCode_ReturnsDeclaredStatus(string code, int expected_status)
     {
         KeyCustodianErrorCodes.GetHttpStatus(code).Should().Be(expected_status);
@@ -142,10 +152,11 @@ public sealed class KeyCustodianErrorCodesGeneratedTests
     public void GetHttpStatus_AllSpecCodes_ReturnDeclaredStatus()
     {
         // Regression pin: every code returns its declared status — the 400 input
-        // validation codes return 400, the 404 not-found code returns 404, the 409
-        // conflict codes return 409, and the 500 internal-error codes (precondition
-        // violation + smoke-test failure) return 500. A generator regression that
-        // drops a code from the switch or maps it to the wrong status fails here.
+        // validation codes return 400, the 403 capability-authority-denial codes return
+        // 403, the 404 not-found code returns 404, the 409 conflict codes return 409,
+        // and the 500 internal-error codes (precondition violation + smoke-test failure)
+        // return 500. A generator regression that drops a code from the switch or maps
+        // it to the wrong status fails here.
         var expectedStatuses = new Dictionary<string, int>(System.StringComparer.Ordinal)
         {
             ["KEYCUSTODIAN_KID_INVALID"] = 400,
@@ -163,6 +174,8 @@ public sealed class KeyCustodianErrorCodesGeneratedTests
             ["KEYCUSTODIAN_INVALID_WORKLOAD_IDENTITY"] = 400,
             ["KEYCUSTODIAN_INVALID_CERTIFICATE_REQUEST"] = 500,
             ["KEYCUSTODIAN_NO_ACTIVE_ISSUING_CA"] = 503,
+            ["KEYCUSTODIAN_CROSS_PROCESS_DOMAIN_REJECTED"] = 403,
+            ["KEYCUSTODIAN_SIGNING_DOMAIN_NOT_AUTHORIZED"] = 403,
         };
 
         foreach (var code in KeyCustodianErrorCodes.AllCodes)
@@ -471,5 +484,67 @@ public sealed class KeyCustodianErrorCodesGeneratedTests
         result.StatusCode.Should().Be(System.Net.HttpStatusCode.ServiceUnavailable);
         result.ErrorCode.Should().Be(KeyCustodianErrorCodes.KEYCUSTODIAN_NO_ACTIVE_ISSUING_CA);
         result.Category.Should().Be(ErrorCategory.InfrastructureUnavailable);
+    }
+
+    // -----------------------------------------------------------------------
+    // Capability-authority denial factories — 403 / policy_denied (the Step-3
+    // additions). Both delegate to D2Result.Forbidden, stamping the KC code +
+    // PolicyDenied category.
+    // -----------------------------------------------------------------------
+
+    [Fact]
+    public void CrossProcessDomainRejected_NonGeneric_ReturnsForbiddenPolicyDenied()
+    {
+        var result = KeyCustodianFailures.CrossProcessDomainRejected();
+
+        result.Success.Should().BeFalse();
+        result.StatusCode.Should().Be(
+            System.Net.HttpStatusCode.Forbidden,
+            "a cross-process caller requesting an in-process-only signing domain is denied");
+        result.ErrorCode.Should().Be(
+            KeyCustodianErrorCodes.KEYCUSTODIAN_CROSS_PROCESS_DOMAIN_REJECTED);
+        result.Category.Should().Be(ErrorCategory.PolicyDenied);
+        result.Messages.Should().Contain(
+            m => m.Key == "keycustodian_authorization_CROSS_PROCESS_DOMAIN_REJECTED");
+    }
+
+    [Fact]
+    public void CrossProcessDomainRejected_Generic_ReturnsTypedForbiddenPolicyDenied()
+    {
+        var result = KeyCustodianFailures<int>.CrossProcessDomainRejected();
+
+        result.Success.Should().BeFalse();
+        result.StatusCode.Should().Be(System.Net.HttpStatusCode.Forbidden);
+        result.ErrorCode.Should().Be(
+            KeyCustodianErrorCodes.KEYCUSTODIAN_CROSS_PROCESS_DOMAIN_REJECTED);
+        result.Category.Should().Be(ErrorCategory.PolicyDenied);
+    }
+
+    [Fact]
+    public void SigningDomainNotAuthorized_NonGeneric_ReturnsForbiddenPolicyDenied()
+    {
+        var result = KeyCustodianFailures.SigningDomainNotAuthorized();
+
+        result.Success.Should().BeFalse();
+        result.StatusCode.Should().Be(
+            System.Net.HttpStatusCode.Forbidden,
+            "a domain not in the caller's allowed-signing-domains policy set is denied");
+        result.ErrorCode.Should().Be(
+            KeyCustodianErrorCodes.KEYCUSTODIAN_SIGNING_DOMAIN_NOT_AUTHORIZED);
+        result.Category.Should().Be(ErrorCategory.PolicyDenied);
+        result.Messages.Should().Contain(
+            m => m.Key == "keycustodian_authorization_SIGNING_DOMAIN_NOT_AUTHORIZED");
+    }
+
+    [Fact]
+    public void SigningDomainNotAuthorized_Generic_ReturnsTypedForbiddenPolicyDenied()
+    {
+        var result = KeyCustodianFailures<int>.SigningDomainNotAuthorized();
+
+        result.Success.Should().BeFalse();
+        result.StatusCode.Should().Be(System.Net.HttpStatusCode.Forbidden);
+        result.ErrorCode.Should().Be(
+            KeyCustodianErrorCodes.KEYCUSTODIAN_SIGNING_DOMAIN_NOT_AUTHORIZED);
+        result.Category.Should().Be(ErrorCategory.PolicyDenied);
     }
 }

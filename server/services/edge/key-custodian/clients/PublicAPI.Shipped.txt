@@ -10,8 +10,28 @@ D2.Edge.KeyCustodian.Clients.GetJwksOutput.Equals(D2.Edge.KeyCustodian.Clients.G
 D2.Edge.KeyCustodian.Clients.GetJwksOutput.GetJwksOutput(System.Collections.Generic.IReadOnlyList<D2.Edge.KeyCustodian.Clients.Jwk!>! Keys) -> void
 D2.Edge.KeyCustodian.Clients.GetJwksOutput.Keys.get -> System.Collections.Generic.IReadOnlyList<D2.Edge.KeyCustodian.Clients.Jwk!>!
 D2.Edge.KeyCustodian.Clients.GetJwksOutput.Keys.init -> void
+D2.Edge.KeyCustodian.Clients.GetOidcConfigurationInput
+D2.Edge.KeyCustodian.Clients.GetOidcConfigurationInput.<Clone>$() -> D2.Edge.KeyCustodian.Clients.GetOidcConfigurationInput!
+D2.Edge.KeyCustodian.Clients.GetOidcConfigurationInput.Equals(D2.Edge.KeyCustodian.Clients.GetOidcConfigurationInput? other) -> bool
+D2.Edge.KeyCustodian.Clients.GetOidcConfigurationInput.GetOidcConfigurationInput() -> void
+D2.Edge.KeyCustodian.Clients.GetOidcConfigurationOutput
+D2.Edge.KeyCustodian.Clients.GetOidcConfigurationOutput.<Clone>$() -> D2.Edge.KeyCustodian.Clients.GetOidcConfigurationOutput!
+D2.Edge.KeyCustodian.Clients.GetOidcConfigurationOutput.Deconstruct(out string! Issuer, out string! JwksUri, out System.Collections.Generic.IReadOnlyList<string!>! IdTokenSigningAlgValuesSupported, out System.Collections.Generic.IReadOnlyList<string!>! ResponseTypesSupported, out System.Collections.Generic.IReadOnlyList<string!>! SubjectTypesSupported) -> void
+D2.Edge.KeyCustodian.Clients.GetOidcConfigurationOutput.Equals(D2.Edge.KeyCustodian.Clients.GetOidcConfigurationOutput? other) -> bool
+D2.Edge.KeyCustodian.Clients.GetOidcConfigurationOutput.GetOidcConfigurationOutput(string! Issuer, string! JwksUri, System.Collections.Generic.IReadOnlyList<string!>! IdTokenSigningAlgValuesSupported, System.Collections.Generic.IReadOnlyList<string!>! ResponseTypesSupported, System.Collections.Generic.IReadOnlyList<string!>! SubjectTypesSupported) -> void
+D2.Edge.KeyCustodian.Clients.GetOidcConfigurationOutput.IdTokenSigningAlgValuesSupported.get -> System.Collections.Generic.IReadOnlyList<string!>!
+D2.Edge.KeyCustodian.Clients.GetOidcConfigurationOutput.IdTokenSigningAlgValuesSupported.init -> void
+D2.Edge.KeyCustodian.Clients.GetOidcConfigurationOutput.Issuer.get -> string!
+D2.Edge.KeyCustodian.Clients.GetOidcConfigurationOutput.Issuer.init -> void
+D2.Edge.KeyCustodian.Clients.GetOidcConfigurationOutput.JwksUri.get -> string!
+D2.Edge.KeyCustodian.Clients.GetOidcConfigurationOutput.JwksUri.init -> void
+D2.Edge.KeyCustodian.Clients.GetOidcConfigurationOutput.ResponseTypesSupported.get -> System.Collections.Generic.IReadOnlyList<string!>!
+D2.Edge.KeyCustodian.Clients.GetOidcConfigurationOutput.ResponseTypesSupported.init -> void
+D2.Edge.KeyCustodian.Clients.GetOidcConfigurationOutput.SubjectTypesSupported.get -> System.Collections.Generic.IReadOnlyList<string!>!
+D2.Edge.KeyCustodian.Clients.GetOidcConfigurationOutput.SubjectTypesSupported.init -> void
 D2.Edge.KeyCustodian.Clients.IKeyCustodianApi
 D2.Edge.KeyCustodian.Clients.IKeyCustodianApi.GetJwksAsync(D2.Edge.KeyCustodian.Clients.GetJwksInput! input, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<D2.Shared.Result.D2Result<D2.Edge.KeyCustodian.Clients.GetJwksOutput?>!>
+D2.Edge.KeyCustodian.Clients.IKeyCustodianApi.GetOidcConfigurationAsync(D2.Edge.KeyCustodian.Clients.GetOidcConfigurationInput! input, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<D2.Shared.Result.D2Result<D2.Edge.KeyCustodian.Clients.GetOidcConfigurationOutput?>!>
 D2.Edge.KeyCustodian.Clients.Jwk
 D2.Edge.KeyCustodian.Clients.Jwk.<Clone>$() -> D2.Edge.KeyCustodian.Clients.Jwk!
 D2.Edge.KeyCustodian.Clients.Jwk.Alg.get -> string!
@@ -35,6 +55,12 @@ override D2.Edge.KeyCustodian.Clients.GetJwksInput.ToString() -> string!
 override D2.Edge.KeyCustodian.Clients.GetJwksOutput.Equals(object? obj) -> bool
 override D2.Edge.KeyCustodian.Clients.GetJwksOutput.GetHashCode() -> int
 override D2.Edge.KeyCustodian.Clients.GetJwksOutput.ToString() -> string!
+override D2.Edge.KeyCustodian.Clients.GetOidcConfigurationInput.Equals(object? obj) -> bool
+override D2.Edge.KeyCustodian.Clients.GetOidcConfigurationInput.GetHashCode() -> int
+override D2.Edge.KeyCustodian.Clients.GetOidcConfigurationInput.ToString() -> string!
+override D2.Edge.KeyCustodian.Clients.GetOidcConfigurationOutput.Equals(object? obj) -> bool
+override D2.Edge.KeyCustodian.Clients.GetOidcConfigurationOutput.GetHashCode() -> int
+override D2.Edge.KeyCustodian.Clients.GetOidcConfigurationOutput.ToString() -> string!
 override D2.Edge.KeyCustodian.Clients.Jwk.Equals(object? obj) -> bool
 override D2.Edge.KeyCustodian.Clients.Jwk.GetHashCode() -> int
 override D2.Edge.KeyCustodian.Clients.Jwk.ToString() -> string!
@@ -42,5 +68,9 @@ static D2.Edge.KeyCustodian.Clients.GetJwksInput.operator !=(D2.Edge.KeyCustodia
 static D2.Edge.KeyCustodian.Clients.GetJwksInput.operator ==(D2.Edge.KeyCustodian.Clients.GetJwksInput? left, D2.Edge.KeyCustodian.Clients.GetJwksInput? right) -> bool
 static D2.Edge.KeyCustodian.Clients.GetJwksOutput.operator !=(D2.Edge.KeyCustodian.Clients.GetJwksOutput? left, D2.Edge.KeyCustodian.Clients.GetJwksOutput? right) -> bool
 static D2.Edge.KeyCustodian.Clients.GetJwksOutput.operator ==(D2.Edge.KeyCustodian.Clients.GetJwksOutput? left, D2.Edge.KeyCustodian.Clients.GetJwksOutput? right) -> bool
+static D2.Edge.KeyCustodian.Clients.GetOidcConfigurationInput.operator !=(D2.Edge.KeyCustodian.Clients.GetOidcConfigurationInput? left, D2.Edge.KeyCustodian.Clients.GetOidcConfigurationInput? right) -> bool
+static D2.Edge.KeyCustodian.Clients.GetOidcConfigurationInput.operator ==(D2.Edge.KeyCustodian.Clients.GetOidcConfigurationInput? left, D2.Edge.KeyCustodian.Clients.GetOidcConfigurationInput? right) -> bool
+static D2.Edge.KeyCustodian.Clients.GetOidcConfigurationOutput.operator !=(D2.Edge.KeyCustodian.Clients.GetOidcConfigurationOutput? left, D2.Edge.KeyCustodian.Clients.GetOidcConfigurationOutput? right) -> bool
+static D2.Edge.KeyCustodian.Clients.GetOidcConfigurationOutput.operator ==(D2.Edge.KeyCustodian.Clients.GetOidcConfigurationOutput? left, D2.Edge.KeyCustodian.Clients.GetOidcConfigurationOutput? right) -> bool
 static D2.Edge.KeyCustodian.Clients.Jwk.operator !=(D2.Edge.KeyCustodian.Clients.Jwk? left, D2.Edge.KeyCustodian.Clients.Jwk? right) -> bool
 static D2.Edge.KeyCustodian.Clients.Jwk.operator ==(D2.Edge.KeyCustodian.Clients.Jwk? left, D2.Edge.KeyCustodian.Clients.Jwk? right) -> bool

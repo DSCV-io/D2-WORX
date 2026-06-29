@@ -47,6 +47,35 @@ public sealed class GetOidcConfigurationTests
     }
 
     [Fact]
+    public async Task GetOidcConfiguration_MultipleTrailingSlashes_AllTrimmed()
+    {
+        // TrimEnd('/') strips ALL trailing slashes — "https://edge.internal///" must
+        // produce the same issuer and jwks_uri as a clean base URL. A single TrimEnd
+        // call removes all trailing '/' occurrences in one pass.
+        var result = await Build("https://edge.internal///")
+            .HandleAsync(new GetOidcConfigurationInput());
+
+        result.Data!.Issuer.Should().Be(_ISSUER);
+        result.Data.JwksUri.Should().Be($"{_ISSUER}/.well-known/jwks.json");
+    }
+
+    [Fact]
+    public async Task GetOidcConfiguration_SubpathIssuerBaseUrl_ComposesJwksUriUnderSubpath()
+    {
+        // A subpath IssuerBaseUrl ("https://edge.internal/foo") is not rejected by
+        // startup validation (only whitespace is invalid). The handler trims the trailing
+        // slash and composes jwks_uri under the subpath. The test pins the CURRENT
+        // behavior (subpath is accepted and composed correctly) so any future startup-gate
+        // that rejects subpath origins is a deliberate, visible change.
+        const string subpathIssuer = "https://edge.internal/foo";
+        var result = await Build(subpathIssuer)
+            .HandleAsync(new GetOidcConfigurationInput());
+
+        result.Data!.Issuer.Should().Be(subpathIssuer);
+        result.Data.JwksUri.Should().Be($"{subpathIssuer}/.well-known/jwks.json");
+    }
+
+    [Fact]
     public async Task GetOidcConfiguration_SerializesCanonicalSnakeCaseOidcKeys()
     {
         // The discovery document is consumed by off-the-shelf OIDC clients (and
