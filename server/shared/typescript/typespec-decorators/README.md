@@ -356,6 +356,15 @@ guard asserts the parser's `ResultPredicateDiagnosticCode` union ⇔ the `$lib` 
 These notes cover contracts between the AST/state-map layer and the emitter fleet.
 Emitter authors must read this section before generating code from any `@d2*` decorator.
 
+### Stock TypeSpec decorators consumed by the emitters
+
+The C# DTO emitter (`src/lib/csharp-dto-emitter.ts` in `@d2/typespec-emitters`) consumes
+the stock TypeSpec `@encodedName("application/json", "<wire>")` decorator — not a `@d2*`
+decorator — via `resolveEncodedName` from `@typespec/compiler`, and emits
+`[property: JsonPropertyName("<wire>")]` on the generated record param. See the
+[C# DTO emitter section](../typespec-emitters/README.md#c-dto-emitter-srclibcsharp-dto-emitterts)
+in the emitters README for the differs-from-default guard and conditional `using` rules.
+
 ### Sparse tunables — absent key means "use library default"
 
 `ResiliencePolicyNode.tunables` is a **sparse** record: only explicitly-provided tunable keys

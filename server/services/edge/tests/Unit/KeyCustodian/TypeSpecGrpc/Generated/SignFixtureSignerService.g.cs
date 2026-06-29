@@ -9,8 +9,8 @@
 
 namespace D2.Edge.Tests.TypeSpecGrpc.Generated;
 
-using SignFixtureRequest = global::D2.Services.Protos.SignFixtures.V1.SignFixtureRequest;
-using SignFixtureResponse = global::D2.Services.Protos.SignFixtures.V1.SignFixtureResponse;
+using SignFixtureRequest = global::D2.Services.Protos.SignFixtures.V2Alpha.SignFixtureRequest;
+using SignFixtureResponse = global::D2.Services.Protos.SignFixtures.V2Alpha.SignFixtureResponse;
 using SignFixtureInput = global::D2.Edge.Tests.TypeSpecDto.Generated.SignFixtureInput;
 using SignFixtureOutput = global::D2.Edge.Tests.TypeSpecDto.Generated.SignFixtureOutput;
 using D2.Shared.Result.Grpc;
@@ -19,7 +19,7 @@ using D2.Edge.Tests.TypeSpecRoute.Generated.Facade;
 
 /// <summary>Generated gRPC service for the <c>SignFixture</c> operation, delegating to <see cref="ISignFixtureSignerFacade"/>.</summary>
 public sealed class SignFixtureSignerService(ISignFixtureSignerFacade facade)
-    : global::D2.Services.Protos.SignFixtures.V1.SignFixtureSigner.SignFixtureSignerBase
+    : global::D2.Services.Protos.SignFixtures.V2Alpha.SignFixtureSigner.SignFixtureSignerBase
 {
     /// <inheritdoc/>
     public override async Task<SignFixtureResponse> SignFixture(SignFixtureRequest request, ServerCallContext context)

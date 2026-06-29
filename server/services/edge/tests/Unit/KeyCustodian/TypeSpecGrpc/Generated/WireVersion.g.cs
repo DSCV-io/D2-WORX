@@ -8,7 +8,7 @@
 
 #nullable enable
 
-namespace D2.Services.Protos.SignFixtures.V1;
+namespace D2.Services.Protos.SignFixtures.V2Alpha;
 
 /// <summary>
 /// Wire-generation constants for this proto package.
@@ -16,7 +16,7 @@ namespace D2.Services.Protos.SignFixtures.V1;
 /// </summary>
 public static class WireVersion
 {
-    public const string CHANNEL = "v1";
-    public const int    GENERATION = 1;
-    public const string STABILITY = "stable";
+    public const string CHANNEL = "v2alpha";
+    public const int    GENERATION = 2;
+    public const string STABILITY = "alpha";
 }

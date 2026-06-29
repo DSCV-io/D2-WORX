@@ -10,7 +10,7 @@
 namespace D2.Edge.Tests.TypeSpecGrpc.Generated;
 
 using D2.Edge.Tests.TypeSpecDto.Generated;
-using D2.Services.Protos.SignFixtures.V1;
+using D2.Services.Protos.SignFixtures.V2Alpha;
 using Google.Protobuf;
 
 /// <summary>Generated client-side mappers: DTO ↔ proto for the <c>SignFixture</c> operation (inverse of server transport mappers).</summary>
@@ -18,9 +18,9 @@ internal static class SignFixtureClientMappers
 {
     extension(global::D2.Edge.Tests.TypeSpecDto.Generated.SignFixtureInput input)
     {
-        internal global::D2.Services.Protos.SignFixtures.V1.SignFixtureRequest ToSignFixtureRequest()
+        internal global::D2.Services.Protos.SignFixtures.V2Alpha.SignFixtureRequest ToSignFixtureRequest()
         {
-            return new global::D2.Services.Protos.SignFixtures.V1.SignFixtureRequest
+            return new global::D2.Services.Protos.SignFixtures.V2Alpha.SignFixtureRequest
             {
                 Kid = input.Kid,
                 Payload = global::Google.Protobuf.ByteString.CopyFrom(input.Payload),
@@ -28,7 +28,7 @@ internal static class SignFixtureClientMappers
         }
     }
 
-    extension(global::D2.Services.Protos.SignFixtures.V1.SignFixtureOutput data)
+    extension(global::D2.Services.Protos.SignFixtures.V2Alpha.SignFixtureOutput data)
     {
         internal global::D2.Edge.Tests.TypeSpecDto.Generated.SignFixtureOutput ToSignFixtureOutput()
         {

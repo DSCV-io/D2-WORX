@@ -9,9 +9,9 @@ syntax = "proto3";
 
 import "common/v1/d2_result.proto";
 
-package d2.signfixtures.v1;
+package d2.signfixtures.v2alpha;
 
-option csharp_namespace = "D2.Services.Protos.SignFixtures.V1";
+option csharp_namespace = "D2.Services.Protos.SignFixtures.V2Alpha";
 
 service SignFixtureSigner {
   rpc SignFixture(SignFixtureRequest) returns (SignFixtureResponse);

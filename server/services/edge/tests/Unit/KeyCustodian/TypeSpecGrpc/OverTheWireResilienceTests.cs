@@ -14,7 +14,7 @@ using System.Threading.Tasks;
 using D2.Edge.Tests.TypeSpecGrpc.Generated;
 using D2.Edge.Tests.TypeSpecGrpcPredicate.Generated;
 using D2.Services.Protos.PredicateFixtures.V1;
-using D2.Services.Protos.SignFixtures.V1;
+using D2.Services.Protos.SignFixtures.V2Alpha;
 using D2.Shared.Resilience.CircuitBreaker;
 using D2.Shared.Resilience.Pipeline;
 using D2.Shared.Resilience.Retry;
@@ -29,7 +29,7 @@ using DtoPlaceOrderFixtureOutput = D2.Edge.Tests.TypeSpecGrpcPredicate.Generated
 using DtoSignFixtureInput = D2.Edge.Tests.TypeSpecDto.Generated.SignFixtureInput;
 using DtoSignFixtureOutput = D2.Edge.Tests.TypeSpecDto.Generated.SignFixtureOutput;
 using ProtoPlaceOrderFixtureOutput = D2.Services.Protos.PredicateFixtures.V1.PlaceOrderFixtureOutput;
-using ProtoSignFixtureOutput = D2.Services.Protos.SignFixtures.V1.SignFixtureOutput;
+using ProtoSignFixtureOutput = D2.Services.Protos.SignFixtures.V2Alpha.SignFixtureOutput;
 
 /// <summary>
 /// Over-the-wire resilience and envelope integration tests. Re-proves the resilience /

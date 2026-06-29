@@ -518,8 +518,8 @@ describe("tsGrpcClient_RealBufTsProtoSignPipelineByteGate", () => {
       "utf8",
     ).replace(/\r\n/g, "\n");
     // Replace the first occurrence of the committed package string with a mutated value.
-    // "v1" is stable — it's the channel declaration in the generated protobufPackage line.
-    const mutated = committed.replace("v1", "v2beta");
+    // "v2alpha" is the channel — it's the channel declaration in the generated protobufPackage line.
+    const mutated = committed.replace("v2alpha", "v3beta");
     expect(mutated).not.toBe(committed);
   });
 
@@ -534,7 +534,7 @@ describe("tsGrpcClient_RealBufTsProtoSignPipelineByteGate", () => {
     expect(protoTs).toContain("export interface SignFixtureResponse");
     expect(protoTs).toContain('import { D2ResultProto } from "@d2/protos";');
     expect(protoTs).toContain(
-      'export const protobufPackage = "d2.signfixtures.v1"',
+      'export const protobufPackage = "d2.signfixtures.v2alpha"',
     );
   });
 });

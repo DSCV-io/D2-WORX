@@ -118,8 +118,8 @@ describe("byteParity_SignProto_CommittedFixtureIdentical", () => {
       "SignFixtureSigner",
       "SignFixture",
       "unary",
-      "d2.signfixtures.v1",
-      "D2.Services.Protos.SignFixtures.V1",
+      "d2.signfixtures.v2alpha",
+      "D2.Services.Protos.SignFixtures.V2Alpha",
       SOURCE,
       "SignFixtureRequest",
       buildSignFixtureInputFields(),
@@ -148,8 +148,8 @@ describe("byteParity_SignProto_CommittedFixtureIdentical", () => {
       "SignFixtureSigner",
       "SignFixture",
       "unary",
-      "d2.signfixtures.v1",
-      "D2.Services.Protos.SignFixtures.V1",
+      "d2.signfixtures.v2alpha",
+      "D2.Services.Protos.SignFixtures.V2Alpha",
       SOURCE,
       "SignFixtureRequest",
       buildSignFixtureInputFields(),
@@ -182,7 +182,7 @@ describe("byteParity_SignFixtureSignerService_FacadeDelegation_CommittedFixtureI
       "signFixture",
       "SignFixtureSigner",
       "SignFixture",
-      "D2.Services.Protos.SignFixtures.V1",
+      "D2.Services.Protos.SignFixtures.V2Alpha",
       "D2.Edge.Tests.TypeSpecGrpc.Generated",
       "D2.Edge.Tests.TypeSpecDto.Generated",
       SOURCE,
@@ -208,7 +208,7 @@ describe("byteParity_SignFixtureSignerService_FacadeDelegation_CommittedFixtureI
       "signFixture",
       "SignFixtureSigner",
       "SignFixture",
-      "D2.Services.Protos.SignFixtures.V1",
+      "D2.Services.Protos.SignFixtures.V2Alpha",
       "D2.Edge.Tests.TypeSpecGrpc.Generated",
       "D2.Edge.Tests.TypeSpecDto.Generated",
       SOURCE,
@@ -234,7 +234,7 @@ describe("byteParity_SignFixtureTransportMappers_CommittedFixtureIdentical", () 
       "signFixture",
       "SignFixtureSigner",
       "SignFixture",
-      "D2.Services.Protos.SignFixtures.V1",
+      "D2.Services.Protos.SignFixtures.V2Alpha",
       "D2.Edge.Tests.TypeSpecGrpc.Generated",
       "D2.Edge.Tests.TypeSpecDto.Generated",
       SOURCE,
@@ -261,7 +261,7 @@ describe("byteParity_SignFixtureTransportMappers_CommittedFixtureIdentical", () 
       "signFixture",
       "SignFixtureSigner",
       "SignFixture",
-      "D2.Services.Protos.SignFixtures.V1",
+      "D2.Services.Protos.SignFixtures.V2Alpha",
       "D2.Edge.Tests.TypeSpecGrpc.Generated",
       "D2.Edge.Tests.TypeSpecDto.Generated",
       SOURCE,
@@ -293,7 +293,7 @@ function buildClientSignOp(): GrpcClientOp {
     opName: "signFixture",
     grpcService: "SignFixtureSigner",
     grpcMethod: "SignFixture",
-    protoCsharpNs: "D2.Services.Protos.SignFixtures.V1",
+    protoCsharpNs: "D2.Services.Protos.SignFixtures.V2Alpha",
     dtoCsharpNs: CLIENT_DTO_NS,
     sourceSpec: SOURCE,
     requestModelName: "SignFixtureInput",
@@ -449,8 +449,8 @@ describe("byteParity_SignFixtureClientKeys_CommittedFixtureIdentical", () => {
 
 describe("byteParity_WireVersionConstant_CommittedFixtureIdentical", () => {
   const WIRE_SOURCE = "contracts/typespec/fixtures/sign-shaped.tsp";
-  const WIRE_NS = "D2.Services.Protos.SignFixtures.V1";
-  const channel = parseChannel("d2.signfixtures.v1")!;
+  const WIRE_NS = "D2.Services.Protos.SignFixtures.V2Alpha";
+  const channel = parseChannel("d2.signfixtures.v2alpha")!;
 
   it("re-emitted WireVersion.g.cs is byte-identical to the committed fixture", () => {
     const file = emitWireVersionConstant(WIRE_NS, channel, WIRE_SOURCE);
@@ -471,8 +471,8 @@ describe("byteParity_WireVersionConstant_CommittedFixtureIdentical", () => {
 // ---------------------------------------------------------------------------
 
 describe("byteParity_WireIdentityManifest_CommittedFixtureIdentical", () => {
-  const MANIFEST_PROTO_PACKAGE = "d2.signfixtures.v1";
-  const MANIFEST_PROTO_CS_NS = "D2.Services.Protos.SignFixtures.V1";
+  const MANIFEST_PROTO_PACKAGE = "d2.signfixtures.v2alpha";
+  const MANIFEST_PROTO_CS_NS = "D2.Services.Protos.SignFixtures.V2Alpha";
   const channel = parseChannel(MANIFEST_PROTO_PACKAGE)!;
 
   it("re-emitted wire-identity.manifest.g.json is byte-identical to the committed fixture", () => {

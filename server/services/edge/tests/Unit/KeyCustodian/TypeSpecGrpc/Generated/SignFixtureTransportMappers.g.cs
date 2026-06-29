@@ -9,9 +9,9 @@
 
 namespace D2.Edge.Tests.TypeSpecGrpc.Generated;
 
-using SignFixtureRequest = global::D2.Services.Protos.SignFixtures.V1.SignFixtureRequest;
-using SignFixtureResponse = global::D2.Services.Protos.SignFixtures.V1.SignFixtureResponse;
-using ProtoSignFixtureOutput = global::D2.Services.Protos.SignFixtures.V1.SignFixtureOutput;
+using SignFixtureRequest = global::D2.Services.Protos.SignFixtures.V2Alpha.SignFixtureRequest;
+using SignFixtureResponse = global::D2.Services.Protos.SignFixtures.V2Alpha.SignFixtureResponse;
+using ProtoSignFixtureOutput = global::D2.Services.Protos.SignFixtures.V2Alpha.SignFixtureOutput;
 using SignFixtureInput = global::D2.Edge.Tests.TypeSpecDto.Generated.SignFixtureInput;
 using SignFixtureOutput = global::D2.Edge.Tests.TypeSpecDto.Generated.SignFixtureOutput;
 using D2.Shared.Result;

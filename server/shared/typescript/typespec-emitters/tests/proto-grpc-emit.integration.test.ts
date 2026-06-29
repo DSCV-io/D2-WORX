@@ -274,8 +274,8 @@ describe("protoGrpcEmitIntegration_RealModule_InProcessGrpc_UsesApiFacade", () =
           "csharp-clients-namespace": "D2.Edge.KeyCustodian.Clients",
           "csharp-app-namespace-base":
             "D2.Edge.KeyCustodian.App.Application.Handlers",
-          "proto-package": "d2.signfixtures.v1",
-          "proto-csharp-namespace": "D2.Services.Protos.SignFixtures.V1",
+          "proto-package": "d2.signfixtures.v2alpha",
+          "proto-csharp-namespace": "D2.Services.Protos.SignFixtures.V2Alpha",
           "grpc-service-namespace": "D2.Edge.KeyCustodian.Api.Generated",
         },
       },
@@ -354,8 +354,8 @@ describe("protoGrpcEmitIntegration_RealModule_ParameterlessAndVoidGrpcOps", () =
           "csharp-clients-namespace": "D2.Edge.KeyCustodian.Clients",
           "csharp-app-namespace-base":
             "D2.Edge.KeyCustodian.App.Application.Handlers",
-          "proto-package": "d2.signfixtures.v1",
-          "proto-csharp-namespace": "D2.Services.Protos.SignFixtures.V1",
+          "proto-package": "d2.signfixtures.v2alpha",
+          "proto-csharp-namespace": "D2.Services.Protos.SignFixtures.V2Alpha",
           "grpc-service-namespace": "D2.Edge.KeyCustodian.Api.Generated",
         },
       },
@@ -1084,7 +1084,7 @@ describe("protoGrpcEmitIntegration_VersionedAdoption_ByteNeutralForExistingFixtu
 
       @versioned(D2.KeyCustodian.Versions)
       namespace D2.KeyCustodian {
-        enum Versions { v2alpha: "v1" }
+        enum Versions { v2alpha: "v2alpha" }
 
         model GetJwksOutput { keys: string[]; }
 
@@ -1104,8 +1104,8 @@ describe("protoGrpcEmitIntegration_VersionedAdoption_ByteNeutralForExistingFixtu
           "csharp-clients-namespace": "D2.Edge.KeyCustodian.Clients",
           "csharp-app-namespace-base":
             "D2.Edge.KeyCustodian.App.Application.Handlers",
-          "proto-package": "d2.signfixtures.v1",
-          "proto-csharp-namespace": "D2.Services.Protos.SignFixtures.V1",
+          "proto-package": "d2.signfixtures.v2alpha",
+          "proto-csharp-namespace": "D2.Services.Protos.SignFixtures.V2Alpha",
           "grpc-service-namespace": "D2.Test.Grpc",
         },
       },

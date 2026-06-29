@@ -10,7 +10,7 @@ using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 using D2.Edge.Tests.TypeSpecGrpc.Generated;
-using D2.Services.Protos.SignFixtures.V1;
+using D2.Services.Protos.SignFixtures.V2Alpha;
 using D2.Shared.Auth.Abstractions;
 using D2.Shared.Auth.Outbound;
 using D2.Shared.Resilience.Pipeline;
@@ -26,7 +26,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using DtoSignFixtureInput = D2.Edge.Tests.TypeSpecDto.Generated.SignFixtureInput;
 using DtoSignFixtureOutput = D2.Edge.Tests.TypeSpecDto.Generated.SignFixtureOutput;
-using ProtoSignFixtureOutput = D2.Services.Protos.SignFixtures.V1.SignFixtureOutput;
+using ProtoSignFixtureOutput = D2.Services.Protos.SignFixtures.V2Alpha.SignFixtureOutput;
 
 /// <summary>
 /// In-memory harness tests for the generated <see cref="SignFixtureGrpcClient"/> — the

@@ -47,7 +47,7 @@ public static class SignFixtureGrpcClientsGeneratedServiceCollectionExtensions
         public IServiceCollection AddD2SignFixtureGrpcClients(SignFixtureGrpcClientOptions options)
         {
             // SignFixtureSigner channel — address from host-supplied options.
-            services.AddGrpcClient<global::D2.Services.Protos.SignFixtures.V1.SignFixtureSigner.SignFixtureSignerClient>(o =>
+            services.AddGrpcClient<global::D2.Services.Protos.SignFixtures.V2Alpha.SignFixtureSigner.SignFixtureSignerClient>(o =>
                 o.Address = options.Address)
                 // Auto-wired outbound auth — host never chains this (fail-safe).
                 .AddD2ForwardedJwt()

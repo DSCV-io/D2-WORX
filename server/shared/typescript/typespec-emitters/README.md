@@ -130,7 +130,7 @@ All supported `tspconfig.yaml` options are listed below.
 | `csharp-namespace` | `string` | Required | `D2.Generated` | C# namespace for fixture-mode DTOs and the gRPC service-impl class when `csharp-app-namespace-base` is absent. Kept for backward compatibility; in real-module mode this namespace is used only for internal fixture ops. |
 | `csharp-clients-namespace` | `string` | Optional (real-module mode) | — | C# namespace for the Clients project: exposed-op DTOs (`@d2InProcess`, `@d2GrpcMethod`, `@d2ServerPush`, `@route`) and the per-module façade interface land here. Omit when emitting fixture ops only. |
 | `csharp-app-namespace-base` | `string` | Optional (real-module mode) | — | Base C# namespace for app-layer handler interfaces. Per-op CQRS path is `<base>.<Category>.<PascalOp>` (e.g. `D2.Edge.KeyCustodian.App.Application.Handlers.Queries.GetJwks`). When absent, the emitter falls back to fixture mode (handler interfaces land under `csharp-namespace`). |
-| `proto-package` | `string` | Optional | `d2.generated.v1` | proto3 `package` declaration written into the emitted `.proto` file. Use a service-specific value in real-module mode (e.g. `d2.signfixtures.v1`). |
+| `proto-package` | `string` | Optional | `d2.generated.v1` | proto3 `package` declaration written into the emitted `.proto` file. Use a service-specific value in real-module mode (e.g. `d2.signfixtures.v2alpha`). |
 | `proto-csharp-namespace` | `string` | Optional | `D2.Generated.Protos.V1` | C# namespace declared via `option csharp_namespace` in the emitted `.proto` file. Must match the namespace Grpc.Tools generates for message + service types. |
 | `grpc-service-namespace` | `string` | Optional | `D2.Generated.Grpc` | C# namespace for the generated gRPC service-impl class and its transport mapper. Distinct from `proto-csharp-namespace` so generated proto types and the service impl do not collide. |
 
@@ -265,6 +265,21 @@ is not seen by `RedactDataDestructuringPolicy`). Conditional `using` directives
 for `D2.Shared.Utilities.Attributes` and `D2.Shared.Utilities.Enums` are emitted
 only when at least one field is redacted.
 
+The emitter also honors the stock TypeSpec `@encodedName("application/json", "<wire>")`
+decorator by emitting `[property: JsonPropertyName("<wire>")]` on the positional param,
+so `System.Text.Json` serializes the property under the canonical wire name (e.g.
+`jwks_uri` for an OIDC discovery field). A **differs-from-default guard** in the model
+walker (`src/lib/model-walk.ts`) ensures the attribute is emitted only when the
+`@encodedName` value differs from the default `System.Text.Json` camelCase wire name
+(first character of the C# property name lowered). A property with no `@encodedName`,
+or one whose override happens to equal the default wire name, produces no attribute —
+existing generated DTOs stay byte-identical. `using System.Text.Json.Serialization;`
+is emitted conditionally: when any field carries a JSON-name override, or when any
+sibling enum is present (the same namespace supplies `[JsonConverter]`,
+`[JsonStringEnumConverter]`, `[JsonStringEnumMemberName]`, and `[JsonPropertyName]`).
+When both `[JsonPropertyName]` and `[RedactData]` appear on the same param, the
+JSON-name attribute precedes the redact attribute.
+
 ### TypeScript DTO emitter (`src/lib/ts-dto-emitter.ts`)
 
 ```typescript
@@ -295,8 +310,8 @@ const protoFile = emitProto(
   "SignFixtureSigner",                          // grpcService
   "Sign",                                        // grpcMethod
   "unary",                                       // streaming mode
-  "d2.signfixtures.v1",                     // protoPackage
-  "D2.Services.Protos.SignFixtures.V1",     // protoCsharpNs
+  "d2.signfixtures.v2alpha",                 // protoPackage
+  "D2.Services.Protos.SignFixtures.V2Alpha", // protoCsharpNs
   "contracts/typespec/key-custodian.tsp",        // sourceSpec
   "SignRequest",                                 // requestModelName — proto convention: <grpcMethod>Request
   inputFields,                                   // requestFields (FieldInfo[])
@@ -415,7 +430,7 @@ const [serviceFile, mappersFile] = emitGrpcService(
   "sign",
   "SignFixtureSigner",
   "Sign",
-  "D2.Services.Protos.SignFixtures.V1",
+  "D2.Services.Protos.SignFixtures.V2Alpha",
   "D2.Edge.Tests.TypeSpecGrpc.Generated",
   "D2.Edge.Tests.TypeSpecDto.Generated",
   "contracts/typespec/fixtures/sign-shaped.tsp",
@@ -751,7 +766,7 @@ The emitter enforces agree-by-construction wire identity across every surface
 that carries a version/generation segment.
 
 **Single source of the channel**: the `proto-package` tspconfig suffix (e.g.
-`v2alpha` in `d2.signfixtures.v1`). `parseChannel(protoPackage)` parses
+`v2alpha` in `d2.signfixtures.v2alpha`). `parseChannel(protoPackage)` parses
 this into a `WireChannel` triple `{ svc, generation, stability, lowerChannel,
 pascalChannel }`. `WIRE_CHANNEL_GRAMMAR` is the exported validation regex.
 
@@ -780,7 +795,7 @@ public static class WireVersion
 ```
 
 Co-located with the Grpc.Tools proto types so runtimes reference
-`D2.Services.Protos.SignFixtures.V1.WireVersion.CHANNEL` directly.
+`D2.Services.Protos.SignFixtures.V2Alpha.WireVersion.CHANNEL` directly.
 
 **`wire-identity.manifest.g.json`** is emitted alongside `WireVersion.g.cs` by
 `emitWireIdentityManifest`. Records the agree-by-construction wire-identity
@@ -892,7 +907,7 @@ The scatter script (`tools/scripts/regen-typespec-emitters.mjs`):
 - `enum-fixtures-grpc-client.g.ts` — enum gRPC TypeScript client
 - `place-order-fixture-dto.g.ts`, `place-order-fixture-resilience-predicates.g.ts`, `place-order-v2-fixture-dto.g.ts`, `place-order-v2-fixture-resilience-predicates.g.ts`, `deep-nest-fixture-dto.g.ts` — predicate TypeScript files
 
-> The sign-shaped fixture proto (`sign_fixture_signer_sign_fixture.g.proto`) is NO LONGER regen-covered: after its wire-identity rename to the synthetic per-fixture package `d2.signfixtures.v1`, the GLOBAL `tspconfig.yaml` compile (proto-package `d2.keycustodian.v2alpha`, the REAL KC ops) no longer matches it, so — like the enum / predicate fixture protos — it is governed exclusively by the byte-gate test suites (`proto-grpc-byte-parity.test.ts`).
+> The sign-shaped fixture proto (`sign_fixture_signer_sign_fixture.g.proto`) is NO LONGER regen-covered: after its wire-identity rename to the synthetic per-fixture package `d2.signfixtures.v2alpha`, the GLOBAL `tspconfig.yaml` compile (proto-package `d2.keycustodian.v2alpha`, the REAL KC ops) no longer matches it because the FAMILY differs (`signfixtures` vs `keycustodian`), so — like the enum / predicate fixture protos — it is governed exclusively by the byte-gate test suites (`proto-grpc-byte-parity.test.ts`).
 
 **Which files are NOT covered (update via test suites instead):**
 

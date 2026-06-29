@@ -25,7 +25,7 @@ using Microsoft.Extensions.DependencyInjection;
 /// pipeline returns.
 /// </summary>
 public sealed class SignFixtureGrpcClient(
-    global::D2.Services.Protos.SignFixtures.V1.SignFixtureSigner.SignFixtureSignerClient signFixtureSignerStub,
+    global::D2.Services.Protos.SignFixtures.V2Alpha.SignFixtureSigner.SignFixtureSignerClient signFixtureSignerStub,
     [FromKeyedServices(SignFixtureClientKeys.PIPELINE)] ResilientPipeline<string, SignFixtureOutput?> signFixturePipeline
 ) : ISignFixtureGrpcClient
 {

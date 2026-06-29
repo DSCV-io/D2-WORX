@@ -204,7 +204,7 @@ const COPY_MANIFEST = [
   },
 
   // NOTE: the sign-shaped fixture proto is EXCLUDED — after the wire-identity
-  // rename the fixture carries the synthetic per-fixture package d2.signfixtures.v1,
+  // rename the fixture carries the synthetic per-fixture package d2.signfixtures.v2alpha,
   // which the GLOBAL tspconfig compile (proto-package d2.keycustodian.v2alpha, the
   // REAL KC ops) no longer matches. Like the enum / predicate fixture protos it is
   // now governed exclusively by the byte-gate test suites (proto-grpc-byte-parity.test.ts)

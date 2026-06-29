@@ -20,7 +20,7 @@ import {
   type UntypedServiceImplementation,
 } from "@grpc/grpc-js";
 
-export const protobufPackage = "d2.signfixtures.v1";
+export const protobufPackage = "d2.signfixtures.v2alpha";
 
 /**
  * -----------------------------------------------------------------------
@@ -263,7 +263,7 @@ export const SignFixtureOutput: MessageFns<SignFixtureOutput> = {
 export type SignFixtureSignerService = typeof SignFixtureSignerService;
 export const SignFixtureSignerService = {
   signFixture: {
-    path: "/d2.signfixtures.v1.SignFixtureSigner/SignFixture",
+    path: "/d2.signfixtures.v2alpha.SignFixtureSigner/SignFixture",
     requestStream: false,
     responseStream: false,
     requestSerialize: (value: SignFixtureRequest): Buffer => Buffer.from(SignFixtureRequest.encode(value).finish()),
@@ -297,7 +297,7 @@ export interface SignFixtureSignerClient extends Client {
 
 export const SignFixtureSignerClient = makeGenericClientConstructor(
   SignFixtureSignerService,
-  "d2.signfixtures.v1.SignFixtureSigner",
+  "d2.signfixtures.v2alpha.SignFixtureSigner",
 ) as unknown as {
   new (address: string, credentials: ChannelCredentials, options?: Partial<ClientOptions>): SignFixtureSignerClient;
   service: typeof SignFixtureSignerService;
