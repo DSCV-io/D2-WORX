@@ -6,9 +6,11 @@ Copyright (c) DCSV. All rights reserved.
 
 > Parent: [`server/shared/dotnet/`](../README.md)
 
+**Input contract:** [`contracts/encryption-domains/`](../../../../../contracts/encryption-domains/README.md)
+
 Roslyn incremental source generator that emits the `EncryptionDomains` static class — the closed catalog of encryption-domain identifiers — from `contracts/encryption-domains/encryption-domains.spec.json`.
 
-**Convention**: spec-driven Roslyn IIncrementalGenerator pattern. See [`docs/SRC_GEN.md`](../../../../docs/SRC_GEN.md) for the framework-wide convention (file layout, diagnostic ID convention, generator anatomy, `<AdditionalFiles>` wiring).
+**Convention**: spec-driven Roslyn IIncrementalGenerator pattern. See [`docs/SRC_GEN.md`](../../../../../docs/SRC_GEN.md) for the framework-wide convention (file layout, diagnostic ID convention, generator anatomy, `<AdditionalFiles>` wiring).
 
 ## What this emits
 

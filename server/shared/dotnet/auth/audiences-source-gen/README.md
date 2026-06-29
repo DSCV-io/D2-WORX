@@ -6,6 +6,8 @@ Copyright (c) DCSV. All rights reserved.
 
 > Parent: [`server/shared/dotnet/`](../../README.md)
 
+**Input contract:** [`contracts/auth-audiences/`](../../../../../contracts/auth-audiences/README.md)
+
 Roslyn incremental source generator that emits the `Audiences` static partial class into `D2.Shared.Auth.Abstractions` by reading `contracts/auth-audiences/audiences.spec.json` via `<AdditionalFiles>`. Single-target — emits ONLY when the consuming assembly is `D2.Shared.Auth.Abstractions`.
 
 The spec file is the single source of truth for the platform's JWT-audience catalog. Every value an inbound JWT's `aud` claim can carry — including the broad internal audience every internal service accepts under the forward-unchanged model ([ADR-0022](../../../../../docs/adrs/0022-service-auth-mint-once-forward.md)) — and every `targetAudience` argument for the retained boundary-mint / exception token exchanges (`TokenExchangeClient.ExchangeAsync`) lives in one JSON file — no hand-written parallel constants, no per-feature drift.

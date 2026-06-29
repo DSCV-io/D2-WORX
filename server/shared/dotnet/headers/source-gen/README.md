@@ -6,11 +6,13 @@ Copyright (c) DCSV. All rights reserved.
 
 > Parent: [`server/shared/dotnet/`](../README.md)
 
+**Input contract:** [`contracts/headers/`](../../../../../contracts/headers/README.md)
+
 Roslyn incremental source generator that emits per-transport header catalog classes by reading `contracts/headers/headers.spec.json` via `<AdditionalFiles>`. Dispatches per consuming assembly to one of four target catalogs.
 
 The spec file is the single source of truth for every D2 wire header (HTTP / gRPC / AMQP). Cross-transport entries appear in multiple per-transport catalogs at identical wire values — codegen-guaranteed and verified by `HeaderCatalogConsistencyTests`.
 
-**Convention**: spec-driven Roslyn IIncrementalGenerator pattern. See [`docs/SRC_GEN.md`](../../../../docs/SRC_GEN.md) for the framework-wide convention (file layout, diagnostic ID convention, generator anatomy, `<AdditionalFiles>` wiring).
+**Convention**: spec-driven Roslyn IIncrementalGenerator pattern. See [`docs/SRC_GEN.md`](../../../../../docs/SRC_GEN.md) for the framework-wide convention (file layout, diagnostic ID convention, generator anatomy, `<AdditionalFiles>` wiring).
 
 ---
 
@@ -91,8 +93,8 @@ This convention applies uniformly to every per-transport catalog consumed by [`D
 
 ## Reference
 
-- [`docs/SRC_GEN.md`](../../../../docs/SRC_GEN.md) — canonical how-to-author guide for D² Roslyn source generators
-- [`contracts/headers/schema.json`](../../../../contracts/headers/schema.json) — JSON Schema for the spec
-- [`contracts/headers/headers.spec.json`](../../../../contracts/headers/headers.spec.json) — the source-of-truth catalog
+- [`docs/SRC_GEN.md`](../../../../../docs/SRC_GEN.md) — canonical how-to-author guide for D² Roslyn source generators
+- [`contracts/headers/schema.json`](../../../../../contracts/headers/schema.json) — JSON Schema for the spec
+- [`contracts/headers/headers.spec.json`](../../../../../contracts/headers/headers.spec.json) — the source-of-truth catalog
 - [`D2.Shared.Auth.ErrorCodes.SourceGen`](../../auth/error-codes-source-gen/README.md) — sibling SrcGen this one mirrors (same incremental-generator + diagnostic-split pattern)
 - [`D2.Shared.InProcessKeys.SourceGen`](../../encryption/in-process-keys-source-gen/README.md) — sibling SrcGen for cross-binding in-process slot keys

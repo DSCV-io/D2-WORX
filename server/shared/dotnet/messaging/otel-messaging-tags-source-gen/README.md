@@ -6,6 +6,8 @@ Copyright (c) DCSV. All rights reserved.
 
 > Parent: [`server/shared/dotnet/`](../../README.md)
 
+**Input contract:** [`contracts/otel-messaging-tags/`](../../../../../contracts/otel-messaging-tags/README.md)
+
 Roslyn incremental source generator that emits `MessagingActivityTags` — the closed catalog of OTel semantic-convention messaging activity-tag attribute names — from `contracts/otel-messaging-tags/otel-messaging-tags.spec.json`.
 
 > **Placement** — lives under `messaging/` for consumer-locality; observability

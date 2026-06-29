@@ -6,6 +6,8 @@ Copyright (c) DCSV. All rights reserved.
 
 > Parent: [`server/shared/dotnet/`](../../README.md)
 
+**Input contracts:** [`contracts/auth-context/`](../../../../../contracts/auth-context/README.md) + [`contracts/request-context/`](../../../../../contracts/request-context/README.md)
+
 Roslyn incremental source generator that emits context interfaces + the
 mutable concrete class from JSON spec files. Multi-target — dispatches per
 consuming assembly.

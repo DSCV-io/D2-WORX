@@ -8,6 +8,15 @@ Copyright (c) DCSV. All rights reserved.
 
 Audience: developers contributing to or consuming the geo data pipeline (Tier 1 src-data, Tier 2 codegen-ready specs, Tier 3 generated downstream code).
 
+## Consumed by
+
+The Tier 2 `*.spec.json` files at this directory's root are the codegen inputs:
+
+- **.NET** — [`server/shared/dotnet/geo/source-gen/`](../../server/shared/dotnet/geo/source-gen/README.md) (Roslyn source-gen → record shapes, branded code types, lookups, and catalog data in `D2.Shared.Geo.Abstractions` / `D2.Shared.Geo.Default`)
+- **TypeScript** — [`tools/ts-codegen` › `geo-emitter/`](../../tools/ts-codegen/README.md) (→ record shapes, branded code types, Zod schemas, and catalog data in `@d2/geo-abstractions` / `@d2/geo-default`)
+
+Both consume the same Tier 2 specs, so cross-language parity is structural. See [docs/SRC_GEN.md](../../docs/SRC_GEN.md) for the codegen pattern and [contracts catalog](../README.md) for the full contract index.
+
 ## Three-tier story
 
 The geo data flows through three tiers from upstream ingestion to consumed code:
@@ -120,3 +129,15 @@ All sources are PolyForm-Strict-compatible:
 - **debian/iso-codes**: LGPL-2.1+
 
 Composite Tier 2 output inherits derived-work licensing. Per-source license attribution is enumerated above.
+
+---
+
+## Navigation
+
+**Consumed by:**
+- `server/shared/dotnet/geo/source-gen/` — .NET Roslyn source-gen; emits geo record types, code wrapper structs, lookup tables, and enum constants into `D2.Shared.Geo.Abstractions` and `D2.Shared.Geo.Default`
+- `tools/ts-codegen/src/geo-emitter/` — `tools/ts-codegen` geo emitter; generates TypeScript record shapes, branded code types, Zod schemas, and catalog data into `@d2/geo-abstractions` and `@d2/geo-default`
+
+**Generated output** is committed + byte-gated — see [docs/SRC_GEN.md](../../docs/SRC_GEN.md).
+
+Part of the [contracts catalog](../README.md).

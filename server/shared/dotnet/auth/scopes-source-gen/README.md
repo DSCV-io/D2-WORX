@@ -6,6 +6,8 @@ Copyright (c) DCSV. All rights reserved.
 
 > Parent: [`server/shared/dotnet/`](../../README.md)
 
+**Input contract:** [`contracts/auth-scopes/`](../../../../../contracts/auth-scopes/README.md)
+
 Roslyn incremental source generator that emits the `Scopes` static partial class into `D2.Shared.Auth.Abstractions` by reading `contracts/auth-scopes/scopes.spec.json` via `<AdditionalFiles>`. Single-target — emits ONLY when the consuming assembly is `D2.Shared.Auth.Abstractions`.
 
 The spec file is the single source of truth for the platform's scope catalog. Every scope a handler can require, every scope Edge mints into a token, and every grant-matrix entry lives in one JSON file — no hand-written parallel constants, no per-feature drift.

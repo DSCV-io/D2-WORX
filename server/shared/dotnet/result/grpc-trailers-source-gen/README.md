@@ -6,6 +6,8 @@ Copyright (c) DCSV. All rights reserved.
 
 > Parent: [`server/shared/dotnet/`](../../README.md)
 
+**Input contract:** [`contracts/grpc-trailers/`](../../../../../contracts/grpc-trailers/README.md)
+
 Roslyn incremental source generator that emits the `D2GrpcTrailers` static class — the canonical catalog of gRPC trailer-key constants — from `contracts/grpc-trailers/grpc-trailers.spec.json`.
 
 **Convention**: spec-driven Roslyn IIncrementalGenerator pattern. See [`docs/SRC_GEN.md`](../../../../../docs/SRC_GEN.md) for the framework-wide convention (file layout, diagnostic ID convention, generator anatomy, `<AdditionalFiles>` wiring).

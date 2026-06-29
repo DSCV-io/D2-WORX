@@ -6,6 +6,8 @@ Copyright (c) DCSV. All rights reserved.
 
 > Parent: [`server/shared/dotnet/`](../../README.md)
 
+**Input contract:** [`contracts/error-codes/`](../../../../../contracts/error-codes/README.md)
+
 A thin `[Generator]` shell over the shared unified error-codes engine ([`error-codes-emit`](../error-codes-emit/README.md)). It emits the `ErrorCodes` const-string catalog AND the constructing semantic failure factories + per-code booleans into `D2.Shared.Result` by reading `contracts/error-codes/error-codes.spec.json` via `<AdditionalFiles>`. Single-target — emits ONLY when the consuming assembly is `D2.Shared.Result`. The shell owns only the generic catalog's identity (assembly name + the `ErrorCodesGenerator` type FQN) + its `CatalogConfig`; all generation logic lives in the shared engine.
 
 The spec file is the single source of truth for the platform's generic error-code taxonomy. Every `d2_error_code` constant a `D2Result` failure carries, every constructing semantic failure factory on `D2Result` / `D2Result<TData>` (e.g. `NotFound`, `ValidationFailed`), and every per-code boolean discriminator (e.g. `IsNotFound`, `IsConflict`) is generated from this spec. Same spec drives the TS-side `@d2/result` `ErrorCodes` catalog + factories via `tools/ts-codegen/src/error-codes-emit.ts` — cross-language wire-format drift is structurally impossible.

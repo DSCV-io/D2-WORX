@@ -6,6 +6,8 @@ Copyright (c) DCSV. All rights reserved.
 
 > Parent: [`server/shared/dotnet/`](../../README.md)
 
+**Input contract:** [`contracts/dlq-failure-metadata/`](../../../../../contracts/dlq-failure-metadata/README.md)
+
 Roslyn incremental source generator that emits the DLQ failure-metadata catalogs from `contracts/dlq-failure-metadata/dlq-failure-metadata.spec.json`.
 
 **Convention**: spec-driven Roslyn IIncrementalGenerator pattern. See [`docs/SRC_GEN.md`](../../../../../docs/SRC_GEN.md) for the framework-wide convention (file layout, diagnostic ID convention, generator anatomy, `<AdditionalFiles>` wiring).

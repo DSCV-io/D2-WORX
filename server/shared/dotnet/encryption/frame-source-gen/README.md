@@ -6,9 +6,11 @@ Copyright (c) DCSV. All rights reserved.
 
 > Parent: [`server/shared/dotnet/`](../README.md)
 
+**Input contract:** [`contracts/encryption-frame/`](../../../../../contracts/encryption-frame/README.md)
+
 Roslyn incremental source generator that emits `EncryptionFrameLayout` — the closed catalog of binary-layout offsets, byte lengths, and constraints for the D2 on-wire encryption frame — from `contracts/encryption-frame/encryption-frame.spec.json`.
 
-**Convention**: spec-driven Roslyn IIncrementalGenerator pattern. See [`docs/SRC_GEN.md`](../../../../docs/SRC_GEN.md) for the framework-wide convention (file layout, diagnostic ID convention, generator anatomy, `<AdditionalFiles>` wiring).
+**Convention**: spec-driven Roslyn IIncrementalGenerator pattern. See [`docs/SRC_GEN.md`](../../../../../docs/SRC_GEN.md) for the framework-wide convention (file layout, diagnostic ID convention, generator anatomy, `<AdditionalFiles>` wiring).
 
 ## What this emits
 
