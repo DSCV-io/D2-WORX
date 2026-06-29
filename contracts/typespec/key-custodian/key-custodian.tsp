@@ -19,9 +19,11 @@
 //   replace the domain VO.
 
 import "@d2/typespec-decorators";
+import "@typespec/http";
 import "@typespec/versioning";
 
 using D2;
+using Http;
 using TypeSpec.Versioning;
 
 @versioned(D2.KeyCustodian.Versions)
@@ -61,10 +63,52 @@ namespace D2.KeyCustodian {
   /**
    * Return the JWKS document for the signing domain.
    * The JWKS document is computed entirely from the signing keys in the store,
-   * so the query takes no parameters.
+   * so the query takes no parameters. Served at the OIDC-canonical
+   * /.well-known/jwks.json so any HTTP JWKS client can fetch the public keys;
+   * the JWKS is public by definition (@d2Harmless — auth-exempt). The
+   * @d2InProcess leaf entry stays for the in-host auth module.
    */
   @d2Query
   @d2InProcess
   @d2ServedBy("KeyCustodian")
+  @route("/.well-known/jwks.json")
+  @get
+  @d2Harmless
   op getJwks(): GetJwksOutput;
+
+  /** Minimal OIDC discovery document (issuer + jwks_uri + RS256 signing algs). */
+  model GetOidcConfigurationOutput {
+    /** The token issuer identifier (the Edge external base URL). */
+    issuer: string;
+
+    /** Absolute URL of the JWKS document. */
+    @encodedName("application/json", "jwks_uri")
+    jwksUri: string;
+
+    /** Supported JWT signing algorithms — always ["RS256"]. */
+    @encodedName("application/json", "id_token_signing_alg_values_supported")
+    idTokenSigningAlgValuesSupported: string[];
+
+    /** Supported response types — minimal set for the discovery handshake. */
+    @encodedName("application/json", "response_types_supported")
+    responseTypesSupported: string[];
+
+    /** Supported subject identifier types. */
+    @encodedName("application/json", "subject_types_supported")
+    subjectTypesSupported: string[];
+  }
+
+  /**
+   * Serve the minimal OIDC discovery document so OIDC/JWKS clients auto-discover
+   * jwks_uri. Config-reading Query; the token_endpoint / grant-type fields belong
+   * to the not-yet-built token endpoint and are added later. Public discovery
+   * surface (@d2Harmless — auth-exempt).
+   */
+  @d2Query
+  @d2InProcess
+  @d2ServedBy("KeyCustodian")
+  @route("/.well-known/openid-configuration")
+  @get
+  @d2Harmless
+  op getOidcConfiguration(): GetOidcConfigurationOutput;
 }

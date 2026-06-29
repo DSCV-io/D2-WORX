@@ -88,6 +88,42 @@ public sealed class KeyCustodianValidateOnStartTests : IDisposable
             .Should().Throw<OptionsValidationException>();
     }
 
+    [Fact]
+    public void EmptyAppIssuerBaseUrl_FailsValidationOnResolve()
+    {
+        // IssuerBaseUrl is [Required] + [MinLength(1)] — an empty value (the binder
+        // default) must fail the startup gate so the OIDC discovery handler never
+        // serves an empty `issuer` at request time (fail-loud).
+        using var sp = BuildProvider(
+            ConfigurationWithOverride("KEYCUSTODIAN_APP:IssuerBaseUrl", string.Empty));
+
+        sp.Invoking(s => s.GetRequiredService<IOptions<KeyCustodianOptions>>().Value)
+            .Should().Throw<OptionsValidationException>(
+                because: "an empty IssuerBaseUrl must fail the startup validation gate");
+    }
+
+    [Fact]
+    public void MissingAppIssuerBaseUrl_FailsValidationOnResolve()
+    {
+        // With NO IssuerBaseUrl key present the binder leaves it at string.Empty,
+        // which violates [Required]. Must fail at the startup gate.
+        var settings = new Dictionary<string, string?>
+        {
+            ["KEYCUSTODIAN_APP:Default:Cadence"] = "30.00:00:00",
+            ["KEYCUSTODIAN_APP:Default:Grace"] = "7.00:00:00",
+            ["KEYCUSTODIAN_APP:Default:SmokeSoak"] = "01:00:00",
+            ["KEYCUSTODIAN_INFRA:RootKeyPath"] = r_rootKeyDir,
+            ["KEYCUSTODIAN_INFRA:RotationCheckInterval"] = "00:05:00",
+            ["KEYCUSTODIAN_INFRA:DbCommandTimeoutSeconds"] = "30",
+        };
+        var config = new ConfigurationBuilder().AddInMemoryCollection(settings).Build();
+        using var sp = BuildProvider(config);
+
+        sp.Invoking(s => s.GetRequiredService<IOptions<KeyCustodianOptions>>().Value)
+            .Should().Throw<OptionsValidationException>(
+                because: "an absent IssuerBaseUrl must fail the startup validation gate");
+    }
+
     // -----------------------------------------------------------------------
     // Nested policy validation — IValidatableObject recursion regression
     // (§23.7 start-validation gap: ValidateDataAnnotations() does NOT recurse
@@ -131,6 +167,7 @@ public sealed class KeyCustodianValidateOnStartTests : IDisposable
         // first ForDomain() call.
         var settings = new Dictionary<string, string?>
         {
+            ["KEYCUSTODIAN_APP:IssuerBaseUrl"] = "https://edge.internal",
             ["KEYCUSTODIAN_APP:Default:Cadence"] = "02:00:00",
             ["KEYCUSTODIAN_APP:Default:Grace"] = "02:00:00",
             ["KEYCUSTODIAN_APP:Default:SmokeSoak"] = "02:00:00",
@@ -154,6 +191,7 @@ public sealed class KeyCustodianValidateOnStartTests : IDisposable
         // when ForDomain(JwksSigning) is first called.
         var settings = new Dictionary<string, string?>
         {
+            ["KEYCUSTODIAN_APP:IssuerBaseUrl"] = "https://edge.internal",
             ["KEYCUSTODIAN_APP:Default:Cadence"] = "30.00:00:00",
             ["KEYCUSTODIAN_APP:Default:Grace"] = "07.00:00:00",
             ["KEYCUSTODIAN_APP:Default:SmokeSoak"] = "01:00:00",
@@ -179,6 +217,7 @@ public sealed class KeyCustodianValidateOnStartTests : IDisposable
         // start gate — regression guard so the fix does not over-reject valid config.
         var settings = new Dictionary<string, string?>
         {
+            ["KEYCUSTODIAN_APP:IssuerBaseUrl"] = "https://edge.internal",
             ["KEYCUSTODIAN_APP:Default:Cadence"] = "30.00:00:00",
             ["KEYCUSTODIAN_APP:Default:Grace"] = "07.00:00:00",
             ["KEYCUSTODIAN_APP:Default:SmokeSoak"] = "01:00:00",
@@ -233,6 +272,7 @@ public sealed class KeyCustodianValidateOnStartTests : IDisposable
     {
         var settings = new Dictionary<string, string?>
         {
+            ["KEYCUSTODIAN_APP:IssuerBaseUrl"] = "https://edge.internal",
             ["KEYCUSTODIAN_APP:Default:Cadence"] = "30.00:00:00",
             ["KEYCUSTODIAN_APP:Default:Grace"] = "7.00:00:00",
             ["KEYCUSTODIAN_APP:Default:SmokeSoak"] = "01:00:00",

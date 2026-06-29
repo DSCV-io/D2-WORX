@@ -16,6 +16,7 @@ global using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.CompromiseKe
 global using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.GenerateKey;
 global using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.RotateKey;
 global using D2.Edge.KeyCustodian.App.Application.Handlers.Queries.GetJwks;
+global using D2.Edge.KeyCustodian.App.Application.Handlers.Queries.GetOidcConfiguration;
 global using D2.Edge.KeyCustodian.App.Infrastructure.Configuration;
 global using D2.Edge.KeyCustodian.App.Infrastructure.Persistence;
 global using D2.Edge.KeyCustodian.Domain.Entities;

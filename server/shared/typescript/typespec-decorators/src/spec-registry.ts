@@ -6,11 +6,12 @@
 // error-category names.
 //
 // Reads contracts/auth-scopes/scopes.spec.json,
-// contracts/auth-audiences/audiences.spec.json, every
+// contracts/auth-audiences/audiences.spec.json,
+// contracts/auth-protocol-audiences/protocol-audiences.spec.json, every
 // contracts/*-error-codes/*.spec.json, and
 // contracts/error-category/error-category.spec.json at process startup.
-// These are the single sources of truth for valid scope / audience / error-code
-// / error-category values.
+// These are the single sources of truth for valid scope / audience /
+// protocol-audience / error-code / error-category values.
 //
 // Resolution uses import.meta.url to locate the repo root regardless of cwd
 // (mirrors tools/ts-codegen/src/lib/paths.ts).  The anchor is the compiled
@@ -46,6 +47,10 @@ interface AudiencesSpec {
   readonly audiences: ReadonlyArray<{ readonly name: string }>;
 }
 
+interface ProtocolAudiencesSpec {
+  readonly protocolAudiences: ReadonlyArray<{ readonly value: string }>;
+}
+
 interface ErrorCodesSpec {
   readonly errorCodes: ReadonlyArray<{ readonly code: string }>;
 }
@@ -60,6 +65,7 @@ interface ErrorCategorySpec {
 
 let _scopeNames: ReadonlySet<string> | undefined;
 let _audienceNames: ReadonlySet<string> | undefined;
+let _protocolAudienceValues: ReadonlySet<string> | undefined;
 let _errorCodeNames: ReadonlySet<string> | undefined;
 let _errorCategoryNames: ReadonlySet<string> | undefined;
 
@@ -95,6 +101,32 @@ export function loadAudienceNames(): ReadonlySet<string> {
     );
   _audienceNames = new Set(spec.audiences.map((a) => a.name));
   return _audienceNames;
+}
+
+/**
+ * Returns the set of declared PROTOCOL-audience VALUES from
+ * protocol-audiences.spec.json (the bare-token aud values d2.internal, d2-edge).
+ * These are the universal-receive / self protocol audiences — distinct from the
+ * URL-shaped token-exchange targets in audiences.spec.json. `@d2Audience`
+ * accepts a value iff it is one of these OR a token-exchange-target name; this
+ * is the single source the validator reads instead of a hard-coded literal.
+ */
+export function loadProtocolAudienceValues(): ReadonlySet<string> {
+  if (_protocolAudienceValues) return _protocolAudienceValues;
+  const raw = readFileSync(
+    contractsPath("auth-protocol-audiences", "protocol-audiences.spec.json"),
+    "utf8",
+  );
+  const spec = JSON.parse(raw) as ProtocolAudiencesSpec;
+  if (
+    !Array.isArray((spec as { protocolAudiences?: unknown }).protocolAudiences)
+  )
+    throw new Error(
+      "contracts/auth-protocol-audiences/protocol-audiences.spec.json has " +
+        "unexpected shape — expected { protocolAudiences: [{ value: string }] }",
+    );
+  _protocolAudienceValues = new Set(spec.protocolAudiences.map((a) => a.value));
+  return _protocolAudienceValues;
 }
 
 /**
@@ -167,6 +199,7 @@ export function loadErrorCategoryNames(): ReadonlySet<string> {
 export function _resetSpecRegistryCache(): void {
   _scopeNames = undefined;
   _audienceNames = undefined;
+  _protocolAudienceValues = undefined;
   _errorCodeNames = undefined;
   _errorCategoryNames = undefined;
 }

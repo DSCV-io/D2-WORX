@@ -1,0 +1,15 @@
+{
+  "$schema": "./schema.json",
+  "protocolAudiences": [
+    {
+      "name": "D2_INTERNAL_AUDIENCE",
+      "value": "d2.internal",
+      "description": "The single universal internal receive audience. The Edge mints exactly one internal transaction-token with aud=this value, and every hop validates aud == this value. It is NOT a token-exchange target (those live in auth-audiences/audiences.spec.json) — it is the universal receive audience that makes forward-unchanged possible."
+    },
+    {
+      "name": "D2_EDGE_SELF_AUDIENCE",
+      "value": "d2-edge",
+      "description": "The Edge self-audience for the Edge's own operations — the aud the Edge accepts on tokens minted for itself."
+    }
+  ]
+}

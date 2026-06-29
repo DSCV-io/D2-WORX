@@ -4,6 +4,7 @@
 
 import { runAuthContextEmit } from "./auth-context-emit.js";
 import { runAuthScopesEmit } from "./auth-scopes-emit.js";
+import { runProtocolAudiencesEmit } from "./protocol-audiences-emit.js";
 import { runD2ResultEnvelopeEmit } from "./d2result-envelope-emit.js";
 import { runDlqFailureMetadataEmit } from "./dlq-failure-metadata-emit.js";
 import { runEncryptionDomainsEmit } from "./encryption-domains-emit.js";
@@ -40,6 +41,12 @@ function main(): void {
     // request-context extends auth-context — emit auth-context first.
     ...runRequestContextEmit(force),
     ...runAuthScopesEmit(force),
+    // Protocol audiences — emits the ProtocolAudiences const-object (d2.internal,
+    // d2-edge bare-token aud values) into @d2/auth-abstractions from
+    // contracts/auth-protocol-audiences/protocol-audiences.spec.json. The
+    // @d2Audience validator (typespec-decorators) reads the same spec directly.
+    // Independent catalog — order within this block does not matter.
+    ...runProtocolAudiencesEmit(force),
     // Error category — emits the closed ErrorCategory string-union into
     // @d2/error-category from contracts/error-category/error-category.spec.json.
     // @d2/error-codes-registry imports ErrorCategory from this leaf; a future

@@ -21,6 +21,7 @@ import { $lib } from "./lib.js";
 import {
   loadScopeNames,
   loadAudienceNames,
+  loadProtocolAudienceValues,
   loadErrorCodeNames,
   loadErrorCategoryNames,
 } from "./spec-registry.js";
@@ -159,8 +160,13 @@ export function validateAudience(
   target: Operation,
   audience: string,
 ): void {
-  // "d2-edge" is the self-audience — always valid without a spec entry
-  if (audience === "d2-edge") return;
+  // Protocol audiences (d2.internal — the universal internal receive audience;
+  // d2-edge — the Edge self-audience) are single-source constants declared in
+  // contracts/auth-protocol-audiences/protocol-audiences.spec.json. They are NOT
+  // token-exchange targets, so they are absent from audiences.spec.json — the
+  // validator accepts them from the protocol-audiences spec instead of a
+  // hard-coded literal.
+  if (loadProtocolAudienceValues().has(audience)) return;
   const known = loadAudienceNames();
   if (!known.has(audience))
     $lib.reportDiagnostic(context.program, {

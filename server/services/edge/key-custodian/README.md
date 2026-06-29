@@ -16,7 +16,7 @@ Key operations are persisted to a dedicated `keycustodian_db` (independent of `a
 | ------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------- |
 | [`domain/`](domain/README.md)                                            | Pure C# sum-type domain — the five-state `EncryptionKey` hierarchy, value objects, enums, and audit record. Zero EF/DI.     |
 | [`app/`](app/README.md)                                                  | CQRS handlers (generate / activate / rotate / retire / compromise / JWKS / rotation-plan), the flat `KeyRecord` + pure mapper, crypto ports, options, and the `AddD2KeyCustodianApp()` DI registration. |
-| [`clients/`](clients/README.md)                                          | Transport boundary for external callers — generated transport DTOs for exposed operations (`GetJwksInput`, `GetJwksOutput`, `Jwk`) and the module façade interface. References `D2.Shared.Result` + `D2.Shared.Utilities` only; no Domain / App / Infra dep. |
+| [`clients/`](clients/README.md)                                          | Transport boundary for external callers — generated transport DTOs for exposed operations (`GetJwksInput`/`GetJwksOutput`/`Jwk`, `GetOidcConfigurationInput`/`GetOidcConfigurationOutput`) and the module façade interface (`IKeyCustodianApi`). References `D2.Shared.Result` + `D2.Shared.Utilities` only; no Domain / App / Infra dep. |
 | [`error-codes-source-gen/`](error-codes-source-gen/README.md)            | Roslyn generator shell that emits `KeyCustodianErrorCodes` constants + `KeyCustodianFailures` semantic factories into the domain from `contracts/keycustodian-error-codes/keycustodian-error-codes.spec.json`. Diagnostic prefix: `D2KEC`. |
 | [`infra/`](infra/README.md)                                              | Concrete adapters for the App-owned ports: `KeyCustodianDbContext` (EF Core) + persistence configuration, the multi-key `FileRootKeyProvider`, the message-bus `IKeyRotationAnnouncer`, the in-process `KeyRotationService`, the readiness health check, options binding + `ValidateOnStart`, and the `AddD2KeyCustodian()` composition seam. The startup migrator + advisory lock come from the shared `D2.Shared.EntityFrameworkCore.Postgres` library. |
 
@@ -33,7 +33,29 @@ Key operations are persisted to a dedicated `keycustodian_db` (independent of `a
 
 ## Operations
 
-KeyCustodian is a module within Edge — it is composed into the Edge host via `AddD2KeyCustodian(...)` and has no standalone process. The JWKS HTTP / gRPC transport surface is owned by the Edge transport layer; this module ships the key-lifecycle engine (persistence, rotation, vault, health), not the endpoints that expose it.
+KeyCustodian is a module within Edge — it is composed into the Edge host via `AddD2KeyCustodian(...)` and has no standalone process. It ships the key-lifecycle engine (persistence, rotation, vault, health) plus the generated well-known discovery surface below; the Edge host wires the routes into its composition root.
+
+### Well-known endpoints (generated)
+
+The contract (`contracts/typespec/key-custodian/key-custodian.tsp`) declares two anonymous (`@d2Harmless`) `GET` operations served at the OIDC-canonical paths; both are GENERATED end-to-end (route registration + DTOs + in-process façade) by the TypeSpec emitter fleet:
+
+| Path                                | Operation              | Body                                                                                                                                          |
+| ----------------------------------- | ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| `/.well-known/jwks.json`            | `GetJwks`              | The RFC 7517 JWKS document (active signing key(s) first). Empty signing-key store → `503` (fail-secure).                                     |
+| `/.well-known/openid-configuration` | `GetOidcConfiguration` | Minimal OIDC discovery document — `issuer`, `jwks_uri`, `id_token_signing_alg_values_supported: ["RS256"]`, and the spec-required placeholders. |
+
+Any HTTP JWKS / OIDC client (including .NET's `ConfigurationManager<OpenIdConnectConfiguration>`, which the shared `HttpJwksProvider` wraps) auto-discovers `jwks_uri` from the discovery document and fetches the JWKS.
+
+### Configuration
+
+App options bind from the `KEYCUSTODIAN_APP` section (prefix `KEYCUSTODIAN_APP__`), validated at host startup (`ValidateDataAnnotations` + `ValidateOnStart`):
+
+| Option            | Env var                          | Required | Notes                                                                                                                                                       |
+| ----------------- | -------------------------------- | -------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `IssuerBaseUrl`   | `KEYCUSTODIAN_APP__ISSUERBASEURL` | Yes      | The Edge external base URL — the OIDC `issuer` and the prefix of the published `jwks_uri`. Empty/unset crashes the host at startup (fail-loud).             |
+| `RsaKeySizeBits`  | `KEYCUSTODIAN_APP__RSAKEYSIZEBITS` | No (2048) | RSA modulus size for generated signing keys (minimum 2048).                                                                                                |
+| `SecretLengthBytes` | `KEYCUSTODIAN_APP__SECRETLENGTHBYTES` | No (64) | Opaque-secret length (minimum 16).                                                                                                                         |
+| `Default` / `Policies` | `KEYCUSTODIAN_APP__DEFAULT__*` / `…__POLICIES__<DOMAIN>__*` | No | Rotation policy (cadence / grace / smoke-soak) — default + per-domain overrides. `RootCaValidity` / `IntermediateCaValidity` / `LeafValidity` govern mTLS CA windows (leaf < intermediate < root, startup-enforced). |
 
 ### Run locally
 

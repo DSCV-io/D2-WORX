@@ -183,7 +183,7 @@ public sealed class PublishConsumeRoundTripTests
                 var arrivedMarkers = TestCollector
                     .Captured<AuditCapturingHandler, IntegrationAuditEvent>()
                     .Select(c => c.Marker)
-                    .Where(m => m != null && expectedMarkers.Contains(m!))
+                    .Where(m => m != null && expectedMarkers.Contains(m))
                     .Distinct()
                     .Count();
                 return arrivedMarkers >= total;
@@ -196,7 +196,7 @@ public sealed class PublishConsumeRoundTripTests
         // stragglers from other tests and must not cause an assertion failure here.
         var ownMarkers = captured
             .Select(c => c.Marker)
-            .Where(m => m != null && expectedMarkers.Contains(m!))
+            .Where(m => m != null && expectedMarkers.Contains(m))
             .Distinct()
             .ToArray();
         ownMarkers.Length.Should().Be(total, "all published messages must be delivered exactly once");

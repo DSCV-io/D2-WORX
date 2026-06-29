@@ -507,11 +507,23 @@ describe("facadeEmitter_ZeroOps_AndAdversarial", () => {
 // Byte-gate: IKeyCustodianApi.g.cs (interface)
 // ---------------------------------------------------------------------------
 
+// The committed KC façade carries the two real well-known ops (getJwks +
+// getOidcConfiguration) in source order; the byte-gates regenerate from that
+// exact op list.
+const _KC_FACADE_OPS = [
+  makeOp("getJwks", "GetJwksInput", "GetJwksOutput"),
+  makeOp(
+    "getOidcConfiguration",
+    "GetOidcConfigurationInput",
+    "GetOidcConfigurationOutput",
+  ),
+];
+
 describe("facadeEmitter_ByteGate_Interface", () => {
   it("regenerated IKeyCustodianApi.g.cs is byte-identical to the committed fixture", () => {
     const [iface] = emitFacade(
       "KeyCustodian",
-      [makeOp("getJwks", "GetJwksInput", "GetJwksOutput")],
+      _KC_FACADE_OPS,
       _KC_CLIENTS_NS,
       _KC_APP_NS,
     );
@@ -527,7 +539,7 @@ describe("facadeEmitter_ByteGate_Interface", () => {
     ).replace("IKeyCustodianApi", "IKeyCustodianApiDRIFTED");
     const [iface] = emitFacade(
       "KeyCustodian",
-      [makeOp("getJwks", "GetJwksInput", "GetJwksOutput")],
+      _KC_FACADE_OPS,
       _KC_CLIENTS_NS,
       _KC_APP_NS,
     );
@@ -544,7 +556,7 @@ describe("facadeEmitter_ByteGate_Impl", () => {
   it("regenerated KeyCustodianApi.g.cs is byte-identical to the committed fixture", () => {
     const [, impl] = emitFacade(
       "KeyCustodian",
-      [makeOp("getJwks", "GetJwksInput", "GetJwksOutput")],
+      _KC_FACADE_OPS,
       _KC_CLIENTS_NS,
       _KC_APP_NS,
     );
@@ -560,7 +572,7 @@ describe("facadeEmitter_ByteGate_Impl", () => {
     ).replace("KeyCustodianApi", "KeyCustodianApiDRIFTED");
     const [, impl] = emitFacade(
       "KeyCustodian",
-      [makeOp("getJwks", "GetJwksInput", "GetJwksOutput")],
+      _KC_FACADE_OPS,
       _KC_CLIENTS_NS,
       _KC_APP_NS,
     );
@@ -577,7 +589,7 @@ describe("facadeEmitter_ByteGate_DiExtension", () => {
   it("regenerated KeyCustodianClientsGenerated.g.cs is byte-identical to the committed fixture", () => {
     const [, , di] = emitFacade(
       "KeyCustodian",
-      [makeOp("getJwks", "GetJwksInput", "GetJwksOutput")],
+      _KC_FACADE_OPS,
       _KC_CLIENTS_NS,
       _KC_APP_NS,
     );
@@ -595,7 +607,7 @@ describe("facadeEmitter_ByteGate_DiExtension", () => {
     ).replace("AddD2KeyCustodianClients", "AddD2KeyCustodianClientsDRIFTED");
     const [, , di] = emitFacade(
       "KeyCustodian",
-      [makeOp("getJwks", "GetJwksInput", "GetJwksOutput")],
+      _KC_FACADE_OPS,
       _KC_CLIENTS_NS,
       _KC_APP_NS,
     );

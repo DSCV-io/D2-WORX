@@ -138,7 +138,14 @@ Citations inline.
 - **TTL**: ~5 min for service tokens, ~15 min for user tokens (V2.md §5.4 line 797 says ~5min —
   needs Q resolution; user JWT spec elsewhere says 15min).
 - **JWKS**: served at OIDC-canonical `/.well-known/jwks.json` with discovery doc at
-  `/.well-known/openid-configuration`. Off-the-shelf libraries auto-discover.
+  `/.well-known/openid-configuration`. Off-the-shelf libraries auto-discover. **Both
+  routes are GENERATED** from `key-custodian.tsp` (`@route @get @d2Harmless`) — route
+  registration + DTOs + in-process façade — and TestServer-proven against the real
+  .NET `ConfigurationManager<OpenIdConnectConfiguration>`. The discovery document is
+  the minimal set (`issuer` + `jwks_uri` + `id_token_signing_alg_values_supported:
+  ["RS256"]` + the spec-required `response_types_supported` / `subject_types_supported`
+  placeholders); the `token_endpoint` + grant-type fields are added when the token
+  endpoint ships (A2). The Edge host calls `Map…Route()` in its composition root (A1).
 - **Standard OAuth/OIDC claims** (canonical names): `sub`, `aud`, `iat`, `exp`, `azp`, `scope`,
   `act`, `client_id`.
 - **D²-specific custom claims** (all `d2_`-prefixed):

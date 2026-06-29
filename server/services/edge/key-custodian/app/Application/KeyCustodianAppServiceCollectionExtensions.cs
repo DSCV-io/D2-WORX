@@ -15,6 +15,7 @@ using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.RotateKey;
 using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.RunDueRotations;
 using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.SeedCertificateAuthority;
 using D2.Edge.KeyCustodian.App.Application.Handlers.Queries.GetJwks;
+using D2.Edge.KeyCustodian.App.Application.Handlers.Queries.GetOidcConfiguration;
 using D2.Edge.KeyCustodian.App.Application.Handlers.Queries.GetRotationPlan;
 
 /// <summary>
@@ -59,6 +60,8 @@ public static class KeyCustodianAppServiceCollectionExtensions
 
             // Query handlers.
             services.AddTransient<IGetJwksHandler, GetJwksHandler>();
+            services.AddTransient<
+                IGetOidcConfigurationHandler, GetOidcConfigurationHandler>();
             services.AddTransient<IGetRotationPlanHandler, GetRotationPlanHandler>();
 
             // Policy provider.

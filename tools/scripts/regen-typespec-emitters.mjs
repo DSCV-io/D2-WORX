@@ -122,22 +122,67 @@ const COPY_MANIFEST = [
     from: "GetJwksOutput.g.cs",
     to: "server/services/edge/key-custodian/clients/GetJwksOutput.g.cs",
   },
-  // NOTE: IKeyCustodianApi.g.cs is EXCLUDED — tsp compile includes sign + signDerived
-  // methods (fixture ops also have @d2InProcess); the committed version is getJwks-only.
-  // Update it via the facade-emitter.test.ts test-host.
 
-  // ---- GetJwks DI extension (app/Application/) ----
+  // ---- OIDC discovery DTOs (Clients namespace — matches tsp compile routing) ----
+  {
+    from: "GetOidcConfigurationInput.g.cs",
+    to: "server/services/edge/key-custodian/clients/GetOidcConfigurationInput.g.cs",
+  },
+  {
+    from: "GetOidcConfigurationOutput.g.cs",
+    to: "server/services/edge/key-custodian/clients/GetOidcConfigurationOutput.g.cs",
+  },
+
+  // ---- Module façade interface + impl (real KC ops only — getJwks +
+  //      getOidcConfiguration). After the Step-1 fixture wire-identity rename
+  //      the fixtures no longer serve-as "KeyCustodian", so tsp compile's
+  //      IKeyCustodianApi / KeyCustodianApi carry ONLY the real KC ops and are
+  //      namespace-stable — scattered here (the facade-emitter.test.ts byte-gate
+  //      pins them independently). ----
+  {
+    from: "IKeyCustodianApi.g.cs",
+    to: "server/services/edge/key-custodian/clients/IKeyCustodianApi.g.cs",
+  },
+  {
+    from: "KeyCustodianApi.g.cs",
+    to: "server/services/edge/key-custodian/app/Application/KeyCustodianApi.g.cs",
+  },
+
+  // ---- Façade DI extension (app/Application/) ----
   {
     from: "KeyCustodianClientsGenerated.g.cs",
     to: "server/services/edge/key-custodian/app/Application/KeyCustodianClientsGenerated.g.cs",
   },
-  // NOTE: KeyCustodianApi.g.cs is EXCLUDED — tsp compile includes sign + signDerived
-  // using lines. The committed version is getJwks-only.
 
-  // ---- GetJwks handler interface (per-op CQRS folder) ----
+  // ---- Handler interfaces (per-op CQRS folder) ----
   {
     from: "IGetJwksHandler.g.cs",
     to: "server/services/edge/key-custodian/app/Application/Handlers/Queries/GetJwks/IGetJwksHandler.g.cs",
+  },
+  {
+    from: "IGetOidcConfigurationHandler.g.cs",
+    to: "server/services/edge/key-custodian/app/Application/Handlers/Queries/GetOidcConfiguration/IGetOidcConfigurationHandler.g.cs",
+  },
+
+  // ---- Well-known route registrations (real-KC namespace
+  //      D2.Edge.KeyCustodian.App.Application.Routes — matches tsp compile;
+  //      delegate to IKeyCustodianApi, both @d2Harmless GET).
+  //
+  //      Committed into the KC TEST project (which references AspNetCore +
+  //      D2.Shared.Auth.Http) rather than the transport-agnostic app project:
+  //      a route registration references IEndpointRouteBuilder / Map* /
+  //      MarkAsD2HarmlessEndpoint, which the app layer (ADR-0020 — App is
+  //      transport-agnostic, no AspNetCore) cannot reference. The production
+  //      HOST wiring (the Edge composition root calling MapGetJwksRoute /
+  //      MapGetOidcConfigurationRoute) is A1-deferred (PHASE_3 §G); these files
+  //      are compiled + TestServer-proven in the test assembly now. ----
+  {
+    from: "GetJwksRouteRegistration.g.cs",
+    to: "server/services/edge/tests/Unit/KeyCustodian/WellKnown/Generated/GetJwksRouteRegistration.g.cs",
+  },
+  {
+    from: "GetOidcConfigurationRouteRegistration.g.cs",
+    to: "server/services/edge/tests/Unit/KeyCustodian/WellKnown/Generated/GetOidcConfigurationRouteRegistration.g.cs",
   },
 
   // ---- TypeScript DTOs — no namespace sensitivity, all match ----

@@ -54,6 +54,7 @@ import type {
 import {
   loadScopeNames,
   loadAudienceNames,
+  loadProtocolAudienceValues,
   loadErrorCodeNames,
   loadErrorCategoryNames,
   _resetSpecRegistryCache,
@@ -1291,15 +1292,34 @@ describe("specRegistry_LoadsKnownAudience", () => {
     expect(names.has("Files")).toBe(true);
   });
 
-  it("loadAudienceNames() does NOT contain 'd2-edge' (it is the self-audience special-case)", () => {
+  it("loadAudienceNames() does NOT contain 'd2-edge' (it is a protocol audience, not a token-exchange target)", () => {
     const names = loadAudienceNames();
-    // d2-edge is not declared in audiences.spec.json; it is handled as a special case in the validator
+    // d2-edge is declared in protocol-audiences.spec.json (a bare-token protocol
+    // audience), NOT in audiences.spec.json (URL-shaped token-exchange targets).
     expect(names.has("d2-edge")).toBe(false);
   });
 
   it("loadAudienceNames() returns a non-empty set", () => {
     const names = loadAudienceNames();
     expect(names.size).toBeGreaterThan(0);
+  });
+});
+
+describe("specRegistry_LoadsProtocolAudiences", () => {
+  afterEach(() => _resetSpecRegistryCache());
+
+  it("loadProtocolAudienceValues() returns exactly { d2.internal, d2-edge }", () => {
+    const values = loadProtocolAudienceValues();
+    expect([...values].sort()).toEqual(["d2-edge", "d2.internal"]);
+  });
+
+  it("loadProtocolAudienceValues() contains the universal internal receive audience", () => {
+    expect(loadProtocolAudienceValues().has("d2.internal")).toBe(true);
+  });
+
+  it("loadProtocolAudienceValues() does NOT contain a token-exchange target like 'Files'", () => {
+    // The token-exchange targets live in audiences.spec.json, not here.
+    expect(loadProtocolAudienceValues().has("Files")).toBe(false);
   });
 });
 
@@ -1540,13 +1560,22 @@ describe("directUnit_validateScopes", () => {
 });
 
 describe("directUnit_validateAudience", () => {
-  it("no diagnostic for 'd2-edge' (self-audience special case)", () => {
+  it("no diagnostic for 'd2.internal' (the universal internal receive audience — the Steps-3+ compile gate)", () => {
+    // Before this, @d2Audience("d2.internal") hard-failed (it is intentionally
+    // NOT in audiences.spec.json); it now validates via the protocol-audiences
+    // single-source spec. Every internal KC op depends on this.
+    const { ctx, target, diags } = makeMockCtxWithDiags();
+    validateAudience(ctx, target, "d2.internal");
+    expect(diags).toHaveLength(0);
+  });
+
+  it("no diagnostic for 'd2-edge' (the Edge self-audience — now a protocol-audiences spec entry, no hard-coded literal)", () => {
     const { ctx, target, diags } = makeMockCtxWithDiags();
     validateAudience(ctx, target, "d2-edge");
     expect(diags).toHaveLength(0);
   });
 
-  it("no diagnostic for 'Files'", () => {
+  it("no diagnostic for 'Files' (a token-exchange target in audiences.spec.json)", () => {
     const { ctx, target, diags } = makeMockCtxWithDiags();
     validateAudience(ctx, target, "Files");
     expect(diags).toHaveLength(0);
@@ -3029,6 +3058,20 @@ describe("d2Audience_AcceptsD2EdgeSpecialCase", () => {
       @d2Query
       @d2Internal
       @d2Audience("d2-edge")
+      op goodOp(): void;
+    `);
+    expect(getDiagCodes(runner)).not.toContain(
+      "@d2/typespec-decorators/unknown-audience",
+    );
+  });
+});
+
+describe("d2Audience_AcceptsD2InternalAudience", () => {
+  it("produces no unknown-audience diagnostic for 'd2.internal'", async () => {
+    await runner.diagnose(`
+      @d2Query
+      @d2Internal
+      @d2Audience("d2.internal")
       op goodOp(): void;
     `);
     expect(getDiagCodes(runner)).not.toContain(

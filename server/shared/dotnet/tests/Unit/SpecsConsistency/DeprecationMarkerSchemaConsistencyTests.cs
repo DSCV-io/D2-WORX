@@ -161,9 +161,6 @@ public sealed class DeprecationMarkerSchemaConsistencyTests
                         Walk(item, acc);
 
                     break;
-
-                default:
-                    break;
             }
         }
     }

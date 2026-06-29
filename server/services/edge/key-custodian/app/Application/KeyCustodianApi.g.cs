@@ -11,6 +11,7 @@
 namespace D2.Edge.KeyCustodian.App.Application;
 
 using D2.Edge.KeyCustodian.App.Application.Handlers.Queries.GetJwks;
+using D2.Edge.KeyCustodian.App.Application.Handlers.Queries.GetOidcConfiguration;
 using D2.Edge.KeyCustodian.Clients;
 
 /// <summary>
@@ -18,9 +19,13 @@ using D2.Edge.KeyCustodian.Clients;
 /// corresponding app-layer handler. Registered Transient to match handler lifetime.
 /// </summary>
 public sealed class KeyCustodianApi(
-    IGetJwksHandler getJwksHandler) : IKeyCustodianApi
+    IGetJwksHandler getJwksHandler,
+    IGetOidcConfigurationHandler getOidcConfigurationHandler) : IKeyCustodianApi
 {
     /// <inheritdoc/>
     public ValueTask<D2Result<GetJwksOutput?>> GetJwksAsync(GetJwksInput input, CancellationToken ct = default)
         => getJwksHandler.HandleAsync(input, ct);
+    /// <inheritdoc/>
+    public ValueTask<D2Result<GetOidcConfigurationOutput?>> GetOidcConfigurationAsync(GetOidcConfigurationInput input, CancellationToken ct = default)
+        => getOidcConfigurationHandler.HandleAsync(input, ct);
 }

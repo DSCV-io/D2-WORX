@@ -175,7 +175,7 @@ public sealed class PlaceOrderTolerantReaderTests
 
     private static PlaceOrderV2FixtureResponse BuildSuccessResponse(ProtoOrderV2Output data)
     {
-        var businessResult = D2Result<DtoOrderV2Output?>.Ok(null);
+        var businessResult = D2Result<DtoOrderV2Output?>.Ok();
         return new PlaceOrderV2FixtureResponse { Result = businessResult.ToProto(), Data = data };
     }
 

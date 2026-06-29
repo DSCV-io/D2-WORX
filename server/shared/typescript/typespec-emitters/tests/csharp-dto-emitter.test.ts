@@ -28,6 +28,7 @@ function field(
   tsType: string,
   optional = false,
   redact = false,
+  jsonName?: string,
 ): FieldInfo {
   return {
     name,
@@ -37,6 +38,7 @@ function field(
     tsType,
     optional,
     redact,
+    jsonName,
     repeated: false,
   };
 }
@@ -184,6 +186,123 @@ describe("emitCsharpDtos_RedactedField_PropertyTarget", () => {
       "using D2.Shared.Utilities.Enums;",
     );
     expect(inputFile!.content).not.toContain("RedactData");
+  });
+});
+
+describe("emitCsharpDtos_JsonPropertyName_WireOverride", () => {
+  it("jsonName set (differs from default) → [property: JsonPropertyName] + System.Text.Json using", () => {
+    // The OIDC discovery doc's snake_case field: a property JwksUri whose JSON
+    // wire form must be jwks_uri.
+    const outputFields = [
+      field("jwksUri", "string", "string", false, false, "jwks_uri"),
+    ];
+    const [, outputFile] = emitCsharpDtos(
+      "getOidcConfiguration",
+      TEST_NAMESPACE,
+      TEST_SPEC,
+      [],
+      outputFields,
+      [],
+    );
+
+    expect(outputFile!.content).toContain(
+      '[property: JsonPropertyName("jwks_uri")] string JwksUri',
+    );
+    expect(outputFile!.content).toContain(
+      "using System.Text.Json.Serialization;",
+    );
+  });
+
+  it("no jsonName + no enums → attribute absent AND the System.Text.Json using absent (byte-stability guard)", () => {
+    const outputFields = [field("issuer", "string", "string")];
+    const [, outputFile] = emitCsharpDtos(
+      "getOidcConfiguration",
+      TEST_NAMESPACE,
+      TEST_SPEC,
+      [],
+      outputFields,
+      [],
+    );
+
+    expect(outputFile!.content).not.toContain("JsonPropertyName");
+    expect(outputFile!.content).not.toContain(
+      "using System.Text.Json.Serialization;",
+    );
+  });
+
+  it("jsonName + redact on the same field → BOTH attributes, JsonPropertyName first", () => {
+    const outputFields = [
+      field("secretWire", "string", "string", false, true, "secret_wire"),
+    ];
+    const [, outputFile] = emitCsharpDtos(
+      "combo",
+      TEST_NAMESPACE,
+      TEST_SPEC,
+      [],
+      outputFields,
+      [],
+    );
+
+    expect(outputFile!.content).toContain(
+      '[property: JsonPropertyName("secret_wire")] [property: RedactData(Reason = RedactReason.PersonalInformation)] string SecretWire',
+    );
+    // Both namespaces are present.
+    expect(outputFile!.content).toContain(
+      "using System.Text.Json.Serialization;",
+    );
+    expect(outputFile!.content).toContain(
+      "using D2.Shared.Utilities.Attributes;",
+    );
+  });
+
+  it("jsonName on an array field → [property: JsonPropertyName] precedes the IReadOnlyList type", () => {
+    const outputFields: FieldInfo[] = [
+      {
+        name: "idTokenSigningAlgValuesSupported",
+        csName: "IdTokenSigningAlgValuesSupported",
+        csType: "IReadOnlyList<string>",
+        tsName: "idTokenSigningAlgValuesSupported",
+        tsType: "readonly string[]",
+        protoType: "string",
+        optional: false,
+        redact: false,
+        jsonName: "id_token_signing_alg_values_supported",
+        repeated: true,
+      },
+    ];
+    const [, outputFile] = emitCsharpDtos(
+      "getOidcConfiguration",
+      TEST_NAMESPACE,
+      TEST_SPEC,
+      [],
+      outputFields,
+      [],
+    );
+
+    expect(outputFile!.content).toContain(
+      '[property: JsonPropertyName("id_token_signing_alg_values_supported")] IReadOnlyList<string> IdTokenSigningAlgValuesSupported',
+    );
+  });
+
+  it("jsonName on a nested-model field → the System.Text.Json using is added for the owning record", () => {
+    const nestedWithJsonName = nested("Inner", [
+      field("wireField", "string", "string", false, false, "wire_field"),
+    ]);
+    const [, outputFile] = emitCsharpDtos(
+      "withNested",
+      TEST_NAMESPACE,
+      TEST_SPEC,
+      [],
+      [field("inner", "Inner", "Inner")],
+      [nestedWithJsonName],
+    );
+
+    expect(outputFile!.content).toContain(
+      "using System.Text.Json.Serialization;",
+    );
+    expect(outputFile!.content).toContain(
+      '[property: JsonPropertyName("wire_field")] string WireField',
+    );
   });
 });
 

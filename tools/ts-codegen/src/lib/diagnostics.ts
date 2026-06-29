@@ -74,6 +74,16 @@ export const DiagnosticIds = {
   SCP_INVALID_SENSITIVITY: "D2SCP003",
   SCP_MALFORMED_SPEC: "D2SCP009",
 
+  // Auth protocol audiences. Mirror the .NET
+  // D2.Shared.Auth.ProtocolAudiences.SourceGen DiagnosticIds values byte-for-byte
+  // — same spec source on both sides means the same predicate-violation surface,
+  // so identical IDs are correct.
+  PAUD_DUPLICATE_NAME: "D2PAUD001",
+  PAUD_INVALID_NAME: "D2PAUD002",
+  PAUD_DUPLICATE_VALUE: "D2PAUD003",
+  PAUD_EMPTY_VALUE: "D2PAUD004",
+  PAUD_MALFORMED_SPEC: "D2PAUD009",
+
   // Auth error codes.
   AEC_DUPLICATE_CODE: "D2AEC001",
   AEC_DUPLICATE_FACTORY: "D2AEC002",

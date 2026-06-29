@@ -1,1 +1,2 @@
 #nullable enable
+const D2.Shared.Auth.Abstractions.WellKnownAudiences.D2_EDGE_SELF_AUDIENCE = "d2-edge" -> string!

@@ -158,7 +158,7 @@ public sealed class WorkloadLeafRegressionTests
         var entry = logger.Entries.FirstOrDefault(e => e.EventId.Id == 3001);
 
         entry.Should().NotBeNull("WorkloadLeafReissueFailed (EventId=3001) must be emitted on exception-path reissue");
-        entry!.Message.Should().Contain(
+        entry.Message.Should().Contain(
             "CachedLeafNotAfter=none",
             "CachedLeafNotAfter is 'none' when no cached leaf exists at failure time");
     }
@@ -192,7 +192,7 @@ public sealed class WorkloadLeafRegressionTests
         var entry = logger.Entries.FirstOrDefault(e => e.EventId.Id == 3001);
 
         entry.Should().NotBeNull("WorkloadLeafReissueFailed (EventId=3001) must be emitted");
-        entry!.Message.Should().NotContain(
+        entry.Message.Should().NotContain(
             "CachedLeafNotAfter=none",
             "a stale cached leaf provides a real ISO-8601 timestamp, not 'none'");
 

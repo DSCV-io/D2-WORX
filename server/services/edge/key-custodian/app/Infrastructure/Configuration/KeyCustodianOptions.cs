@@ -51,6 +51,19 @@ public sealed class KeyCustodianOptions : IValidatableObject
     public const string DEFAULT_LEAF_VALIDITY = "1.00:00:00";
 
     /// <summary>
+    /// Gets or sets the token issuer base URL — the Edge external base URL that is
+    /// the OIDC <c>issuer</c> and the prefix of the published <c>jwks_uri</c>
+    /// (<c>{IssuerBaseUrl}/.well-known/jwks.json</c>) in the OIDC discovery
+    /// document. Required and non-empty: an unset value is a misconfiguration that
+    /// crashes the host at startup (fail-loud) rather than serving an empty
+    /// <c>issuer</c> at request time. No trailing slash is required — the handler
+    /// trims one if present.
+    /// </summary>
+    [Required(ErrorMessage = "IssuerBaseUrl is required (the Edge external base URL).")]
+    [MinLength(1, ErrorMessage = "IssuerBaseUrl must not be empty.")]
+    public string IssuerBaseUrl { get; set; } = string.Empty;
+
+    /// <summary>
     /// Gets or sets the default rotation policy applied to any domain without an override.
     /// </summary>
     public RotationPolicyOptions Default { get; set; } = new();

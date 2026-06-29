@@ -118,6 +118,7 @@ abbreviation, 3-digit number). Examples currently in use:
 | i18n                 | `D2I18N` | `i18n/source-gen`                                                      |
 | Auth scopes          | `D2SCP`  | `auth/scopes-source-gen`                                               |
 | Auth audiences       | `D2AUD`  | `auth/audiences-source-gen`                                            |
+| Auth protocol audiences | `D2PAUD` | `auth/protocol-audiences-source-gen`                               |
 | Auth error codes     | `D2AEC`  | `auth/error-codes-source-gen` (shell)                                  |
 | Generic error codes  | `D2EC`   | `source-gen-shared/error-codes-source-gen` (shell)                     |
 | Error-codes engine   | `D2ERC`  | `source-gen-shared/error-codes-emit` (shared engine — catalog-neutral; `D2ERC006`/`D2ERC007` owned by `error-codes/registry-source-gen`) |
@@ -325,6 +326,7 @@ tools/ts-codegen/
 │   ├── jwt-claims-emit.ts
 │   ├── otel-messaging-tags-emit.ts
 │   ├── problem-details-emit.ts
+│   ├── protocol-audiences-emit.ts
 │   ├── request-context-emit.ts
 │   ├── wire-shape-emit.ts
 │   └── lib/

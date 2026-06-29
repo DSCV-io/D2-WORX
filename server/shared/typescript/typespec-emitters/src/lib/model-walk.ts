@@ -27,6 +27,7 @@ import type {
   Type,
   Union,
 } from "@typespec/compiler";
+import { resolveEncodedName } from "@typespec/compiler";
 import { D2_FIELD_KEY, D2_REDACT_KEY } from "@d2/typespec-decorators";
 import { resolveScalar } from "./scalar-registry.js";
 import { toPascal } from "./name-transforms.js";
@@ -123,6 +124,19 @@ export interface FieldInfo {
   /** True when the ModelProperty carries @d2Redact state. */
   readonly redact: boolean;
   /**
+   * The JSON wire-name override from @encodedName("application/json", "..."),
+   * present ONLY when that override DIFFERS from the default camelCase
+   * serialization of csName. The C# DTO emitter emits
+   * [property: JsonPropertyName("<jsonName>")] for it so the JSON wire form is
+   * the canonical override (e.g. "jwks_uri" for a property csName "JwksUri").
+   * Undefined when the property carries no @encodedName, or when the override
+   * equals the default System.Text.Json wire name (no attribute needed —
+   * keeps existing generated output byte-identical). Read via the stock TypeSpec
+   * resolveEncodedName(program, prop, "application/json") API, NOT a @d2* state
+   * map.
+   */
+  readonly jsonName?: string;
+  /**
    * Author-pinned proto3 field number from @d2Field(n). Populated when the
    * property carries an @d2Field annotation; undefined for unpinned properties
    * (DTO-only / in-process ops). The proto emitter uses this number verbatim
@@ -198,6 +212,7 @@ export function walkModel(
 
   for (const [propName, prop] of model.properties) {
     const fieldInfo = resolveProperty(
+      program,
       model.name,
       propName,
       prop,
@@ -222,6 +237,7 @@ export function walkModel(
 // ---------------------------------------------------------------------------
 
 function resolveProperty(
+  program: Program,
   modelName: string,
   propName: string,
   prop: ModelProperty,
@@ -238,6 +254,14 @@ function resolveProperty(
       ? (fieldMap.get(prop) as number)
       : undefined;
   const csName = toPascal(propName);
+
+  // The @encodedName("application/json", "...") override, kept ONLY when it
+  // differs from System.Text.Json's default camelCase wire name for csName.
+  // A property with no @encodedName (every current op) or whose override equals
+  // the default wire name yields jsonName === undefined → the C# DTO emitter
+  // emits NO [JsonPropertyName] attribute → existing generated output is
+  // byte-identical (the differs-from-default guard).
+  const jsonName = resolveJsonName(program, prop, csName);
 
   const t = prop.type;
 
@@ -263,6 +287,7 @@ function resolveProperty(
       repeated: false,
       optional,
       redact,
+      jsonName,
       fieldNumber,
     };
   }
@@ -271,12 +296,14 @@ function resolveProperty(
   // TypeSpec `T[]` is represented as a Model named "Array" with a template arg.
   if (t.kind === "Model" && t.name === "Array") {
     return resolveArrayProperty(
+      program,
       modelName,
       propName,
       t,
       csName,
       optional,
       redact,
+      jsonName,
       fieldNumber,
       nestedByName,
       enumsByName,
@@ -300,6 +327,7 @@ function resolveProperty(
       repeated: false,
       optional,
       redact,
+      jsonName,
       fieldNumber,
       enumRef: collected,
     };
@@ -327,6 +355,7 @@ function resolveProperty(
       // S-6: a `<literals> | null` union normalizes to optional.
       optional: resolved.optional,
       redact,
+      jsonName,
       fieldNumber,
       enumRef: resolved.enum,
     };
@@ -335,6 +364,7 @@ function resolveProperty(
   // ---- Nested model (non-array) --------------------------------------------
   if (t.kind === "Model") {
     const nested = collectNested(
+      program,
       t,
       nestedByName,
       enumsByName,
@@ -352,6 +382,7 @@ function resolveProperty(
       repeated: false,
       optional,
       redact,
+      jsonName,
       fieldNumber,
       nested,
     };
@@ -366,17 +397,47 @@ function resolveProperty(
 }
 
 /**
+ * Resolve the JSON wire-name override for a property, returning it ONLY when it
+ * differs from the default System.Text.Json camelCase serialization of csName.
+ *
+ * `resolveEncodedName` returns the `@encodedName("application/json", "…")` value
+ * when present, otherwise the property's own TypeSpec name — it NEVER returns
+ * undefined. System.Text.Json (default policy) serializes a PascalCase property
+ * `JwksUri` as `jwksUri` (first char lowered), so the default wire name is
+ * `csName[0].toLowerCase() + csName.slice(1)`. The override is kept only when it
+ * diverges from that default — a property with no `@encodedName` (its resolved
+ * name is its lowerCamel TypeSpec name, which equals the default wire name), or
+ * one whose override happens to equal the camelCase default, yields `undefined`
+ * so NO [JsonPropertyName] attribute is emitted and existing generated output
+ * stays byte-identical (the byte-gate-safety property).
+ */
+function resolveJsonName(
+  program: Program,
+  prop: ModelProperty,
+  csName: string,
+): string | undefined {
+  const encoded = resolveEncodedName(program, prop, "application/json");
+
+  const defaultJsonName =
+    csName.length > 0 ? csName[0]!.toLowerCase() + csName.slice(1) : csName;
+
+  return encoded !== defaultJsonName ? encoded : undefined;
+}
+
+/**
  * Resolve an `Array` (TypeSpec `T[]`) property. The element may be a scalar, a
  * nested model, or a supported enum/string-literal union. Anything else is a
  * loud failure (D2TSP002 / D2TSP007).
  */
 function resolveArrayProperty(
+  program: Program,
   modelName: string,
   propName: string,
   arrayType: Model,
   csName: string,
   optional: boolean,
   redact: boolean,
+  jsonName: string | undefined,
   fieldNumber: number | undefined,
   nestedByName: Map<string, NestedModel>,
   enumsByName: Map<string, NestedEnum>,
@@ -406,6 +467,7 @@ function resolveArrayProperty(
       repeated: true,
       optional,
       redact,
+      jsonName,
       fieldNumber,
     };
   }
@@ -430,6 +492,7 @@ function resolveArrayProperty(
       repeated: true,
       optional,
       redact,
+      jsonName,
       fieldNumber,
       enumRef: collected,
     };
@@ -459,6 +522,7 @@ function resolveArrayProperty(
       repeated: true,
       optional,
       redact,
+      jsonName,
       fieldNumber,
       enumRef: resolved.enum,
     };
@@ -467,6 +531,7 @@ function resolveArrayProperty(
   if (elementType?.kind === "Model" && elementType.name !== "Array") {
     // Collection of nested models — recurse to collect the nested model.
     const nested = collectNested(
+      program,
       elementType,
       nestedByName,
       enumsByName,
@@ -485,6 +550,7 @@ function resolveArrayProperty(
       repeated: true,
       optional,
       redact,
+      jsonName,
       fieldNumber,
       nested,
     };
@@ -734,6 +800,7 @@ function sanitizeIdentifier(literal: string): string {
  * exactly like a top-level field.
  */
 function collectNested(
+  program: Program,
   model: Model,
   nestedByName: Map<string, NestedModel>,
   enumsByName: Map<string, NestedEnum>,
@@ -764,6 +831,7 @@ function collectNested(
 
   for (const [propName, prop] of model.properties) {
     const fieldInfo = resolveProperty(
+      program,
       model.name,
       propName,
       prop,

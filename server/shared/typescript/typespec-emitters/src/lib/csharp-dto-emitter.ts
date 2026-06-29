@@ -186,17 +186,21 @@ function emitRecord(
   lines.push("");
 
   // Conditional using directives (SA1210-sorted: D2.* before System.*).
-  // [RedactData] needs the attribute + enum namespaces; an emitted enum needs
-  // System.Text.Json.Serialization — which supplies BOTH [JsonConverter] /
-  // JsonStringEnumConverter AND [JsonStringEnumMemberName] (the .NET 9+ attribute
-  // JsonStringEnumConverter honors for a custom wire name). No second using is
-  // needed for the member-name attribute.
+  // [RedactData] needs the attribute + enum namespaces; an emitted enum OR a
+  // [JsonPropertyName] wire-name override needs System.Text.Json.Serialization —
+  // the SAME namespace supplies [JsonConverter] / JsonStringEnumConverter,
+  // [JsonStringEnumMemberName] (the .NET 9+ custom-wire-name attribute), AND
+  // [JsonPropertyName]. One using covers all of them; it is pushed at most once.
+  const anyJsonName =
+    fields.some((f) => f.jsonName !== undefined) ||
+    nested.some((nm) => nm.fields.some((f) => f.jsonName !== undefined));
   const usings: string[] = [];
   if (needsRedactUsings) {
     usings.push("using D2.Shared.Utilities.Attributes;");
     usings.push("using D2.Shared.Utilities.Enums;");
   }
-  if (enums.length > 0) usings.push("using System.Text.Json.Serialization;");
+  if (enums.length > 0 || anyJsonName)
+    usings.push("using System.Text.Json.Serialization;");
   if (usings.length > 0) {
     for (const u of usings) lines.push(u);
     lines.push("");
@@ -279,14 +283,26 @@ function emitEnumBlock(lines: string[], en: NestedEnum): void {
 /**
  * Build the C# positional-parameter declaration string for one field.
  *
- * Redacted fields get `[property: RedactData(Reason = RedactReason.PersonalInformation)]`
- * prepended. The `[property:]` target is mandatory — see emitRecord doc comment.
+ * A field carrying a JSON wire-name override (FieldInfo.jsonName — the
+ * @encodedName("application/json", "…") value, present only when it differs from
+ * the default camelCase wire name) gets
+ * `[property: JsonPropertyName("<jsonName>")]` prepended so System.Text.Json
+ * serializes the property under the canonical wire name (e.g. "jwks_uri").
+ * Redacted fields get `[property: RedactData(Reason = RedactReason.PersonalInformation)]`.
+ * Both use the `[property:]` target — mandatory because positional record
+ * parameters synthesize the backing property the serializer / redaction policy
+ * reflect over (a bare param-target attribute is not seen). When both are
+ * present the JSON-name attribute precedes the redact attribute.
  */
 function buildParam(field: FieldInfo): string {
+  const jsonNameAttr =
+    field.jsonName !== undefined
+      ? `[property: JsonPropertyName("${field.jsonName}")] `
+      : "";
   const redactAttr = field.redact
     ? "[property: RedactData(Reason = RedactReason.PersonalInformation)] "
     : "";
-  return `${redactAttr}${field.csType} ${field.csName}`;
+  return `${jsonNameAttr}${redactAttr}${field.csType} ${field.csName}`;
 }
 
 /** Convert lowerCamelCase op name to PascalCase type prefix. */

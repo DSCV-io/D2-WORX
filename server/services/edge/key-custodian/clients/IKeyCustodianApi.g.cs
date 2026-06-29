@@ -18,4 +18,6 @@ public interface IKeyCustodianApi
 {
     /// <summary>Dispatches the <c>GetJwks</c> operation.</summary>
     ValueTask<D2Result<GetJwksOutput?>> GetJwksAsync(GetJwksInput input, CancellationToken ct = default);
+    /// <summary>Dispatches the <c>GetOidcConfiguration</c> operation.</summary>
+    ValueTask<D2Result<GetOidcConfigurationOutput?>> GetOidcConfigurationAsync(GetOidcConfigurationInput input, CancellationToken ct = default);
 }
