@@ -40,6 +40,11 @@ export const Scopes = {
       charge: "billing.payment.charge",
     },
   },
+  internal: {
+    kc: {
+      sign: "internal.kc.sign",
+    },
+  },
   self: {
     read: "self.read",
     write: "self.write",
@@ -56,6 +61,7 @@ export const ALL_SCOPES: readonly string[] = [
   "auth.user.impersonate.consent",
   "auth.user.impersonate.force",
   "billing.payment.charge",
+  "internal.kc.sign",
   "self.read",
   "self.write",
 ];

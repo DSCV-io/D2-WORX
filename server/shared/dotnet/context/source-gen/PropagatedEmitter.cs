@@ -77,10 +77,21 @@ internal static class PropagatedEmitter
 
     private static EmitResult EmitRecord(IReadOnlyList<PropertySpec> propagated)
     {
+        var anyRecordList = HasRecordListField(propagated);
         var sb = new StringBuilder();
         EmitFileHeader(sb);
         sb.AppendLine();
+
+        // A propagated list-of-records field (CallPath) pulls in IReadOnlyList<T>
+        // and the record's home namespace; scalar-only specs stay byte-identical.
+        if (anyRecordList)
+            sb.AppendLine("using System.Collections.Generic;");
+
         sb.AppendLine("using System.Text.Json.Serialization;");
+
+        if (anyRecordList)
+            sb.AppendLine("using D2.Shared.Auth.Abstractions;");
+
         sb.AppendLine();
         sb.AppendLine($"namespace {_TARGET_NAMESPACE};");
         sb.AppendLine();
@@ -117,7 +128,12 @@ internal static class PropagatedEmitter
 
             first = false;
             EmitXmlDocSummary(sb, prop.Doc ?? prop.Name, indent: 1);
-            sb.AppendLine($"    public {prop.Type} {prop.Name} {{ get; init; }}");
+
+            // List fields carry the nullable annotation so an absent (empty) path
+            // omits cleanly under WhenWritingNull; scalar vocab types are already
+            // nullable (e.g. string?) so their declarations stay byte-identical.
+            var fieldType = IsListType(prop.Type) ? $"{prop.Type}?" : prop.Type;
+            sb.AppendLine($"    public {fieldType} {prop.Name} {{ get; init; }}");
         }
 
         sb.AppendLine();
@@ -130,12 +146,15 @@ internal static class PropagatedEmitter
         {
             var p = propagated[i];
             var suffix = i == propagated.Count - 1 ? ";" : " ||";
-            sb.AppendLine($"        {p.Name} is not null{suffix}");
+            var predicate = IsListType(p.Type) ? "is { Count: > 0 }" : "is not null";
+            sb.AppendLine($"        {p.Name} {predicate}{suffix}");
         }
 
         sb.AppendLine("}");
         return new EmitResult(
-            $"{_RECORD_NAME}.g.cs", sb.ToString().LfNormalized(), ImmutableArray<EmitDiagnostic>.Empty);
+            $"{_RECORD_NAME}.g.cs",
+            sb.ToString().LfNormalized(),
+            ImmutableArray<EmitDiagnostic>.Empty);
     }
 
     private static EmitResult EmitExtensions(IReadOnlyList<PropertySpec> propagated)
@@ -167,7 +186,20 @@ internal static class PropagatedEmitter
         sb.AppendLine($"        return new {_RECORD_NAME}");
         sb.AppendLine("        {");
         foreach (var prop in propagated)
-            sb.AppendLine($"            {prop.Name} = context.{prop.Name},");
+        {
+            if (IsListType(prop.Type))
+            {
+                // Null-when-empty: an empty path projects to null so it drops from
+                // the wire (the receiving hop then appends itself).
+                sb.AppendLine(
+                    $"            {prop.Name} = context.{prop.Name} is {{ Count: > 0 }} "
+                    + $"? context.{prop.Name} : null,");
+            }
+            else
+            {
+                sb.AppendLine($"            {prop.Name} = context.{prop.Name},");
+            }
+        }
 
         sb.AppendLine("        };");
         sb.AppendLine("    }");
@@ -186,7 +218,8 @@ internal static class PropagatedEmitter
         sb.AppendLine();
         foreach (var prop in propagated)
         {
-            sb.AppendLine($"        if (propagated.{prop.Name} is not null)");
+            var predicate = IsListType(prop.Type) ? "is { Count: > 0 }" : "is not null";
+            sb.AppendLine($"        if (propagated.{prop.Name} {predicate})");
             sb.AppendLine($"            context.{prop.Name} = propagated.{prop.Name};");
             sb.AppendLine();
         }
@@ -199,11 +232,14 @@ internal static class PropagatedEmitter
         sb.AppendLine("    }");
         sb.AppendLine("}");
         return new EmitResult(
-            $"{_EXTENSIONS_NAME}.g.cs", sb.ToString().LfNormalized(), ImmutableArray<EmitDiagnostic>.Empty);
+            $"{_EXTENSIONS_NAME}.g.cs",
+            sb.ToString().LfNormalized(),
+            ImmutableArray<EmitDiagnostic>.Empty);
     }
 
     private static EmitResult EmitSerializer(IReadOnlyList<PropertySpec> propagated)
     {
+        var anyRecordList = HasRecordListField(propagated);
         var sb = new StringBuilder();
         EmitFileHeader(sb);
         sb.AppendLine();
@@ -243,11 +279,31 @@ internal static class PropagatedEmitter
         sb.AppendLine($"    /// legitimate <see cref=\"{_RECORD_NAME}\"/> payload.</summary>");
         sb.AppendLine("    public const int MAX_HEADER_LENGTH = 2048;");
         sb.AppendLine();
+
+        if (anyRecordList)
+        {
+            // Single source of the cap: the value is read from the record-list
+            // field's spec-declared entryIdMaxLength (never hard-coded here or in
+            // the TS emitter — both derive it from the same spec field).
+            var entryIdMax = ResolveCallPathEntryIdMax(propagated);
+            sb.AppendLine("    /// <summary>Per-entry id length cap for a propagated call-path");
+            sb.AppendLine("    /// entry. Bounds a single forged entry id so it cannot bloat log");
+            sb.AppendLine("    /// scope keys / audit columns even when the entry count is legal.</summary>");
+            sb.AppendLine($"    private const int _CALL_PATH_ENTRY_ID_MAX = {entryIdMax};");
+            sb.AppendLine();
+        }
+
         sb.AppendLine("    private static readonly JsonSerializerOptions sr_jsonOptions = new()");
         sb.AppendLine("    {");
         sb.AppendLine("        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,");
         sb.AppendLine("        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,");
         sb.AppendLine("        WriteIndented = false,");
+
+        // A record-list field carries enum members (CallPathKind); render them as
+        // human-readable strings rather than ordinals for log-grep-ability.
+        if (anyRecordList)
+            sb.AppendLine("        Converters = { new JsonStringEnumConverter() },");
+
         sb.AppendLine("    };");
         sb.AppendLine();
         sb.AppendLine("    /// <summary>Encodes a <see cref=\"" + _RECORD_NAME + "\"/> as a");
@@ -316,7 +372,28 @@ internal static class PropagatedEmitter
             if (prop.MaxLength is not { } max) continue;
 
             anyBoundedField = true;
-            sb.AppendLine($"        if (ctx.{prop.Name} is {{ Length: > {max} }}) return false;");
+
+            // On a list field maxLength is the depth bound (max entry count); on a
+            // scalar string field it is the max character length.
+            var member = IsListType(prop.Type) ? "Count" : "Length";
+            sb.AppendLine($"        if (ctx.{prop.Name} is {{ {member}: > {max} }}) return false;");
+        }
+
+        foreach (var prop in propagated)
+        {
+            if (!IsRecordListType(prop.Type)) continue;
+
+            anyBoundedField = true;
+            sb.AppendLine();
+            sb.AppendLine($"        if (ctx.{prop.Name} is not null)");
+            sb.AppendLine("        {");
+            sb.AppendLine($"            foreach (var entry in ctx.{prop.Name})");
+            sb.AppendLine("            {");
+            sb.AppendLine("                if (entry.Id is { Length: > _CALL_PATH_ENTRY_ID_MAX })");
+            sb.AppendLine("                    return false;");
+            sb.AppendLine("            }");
+            sb.AppendLine("        }");
+            sb.AppendLine();
         }
 
         if (!anyBoundedField)
@@ -349,7 +426,9 @@ internal static class PropagatedEmitter
         sb.AppendLine("    }");
         sb.AppendLine("}");
         return new EmitResult(
-            $"{_SERIALIZER_NAME}.g.cs", sb.ToString().LfNormalized(), ImmutableArray<EmitDiagnostic>.Empty);
+            $"{_SERIALIZER_NAME}.g.cs",
+            sb.ToString().LfNormalized(),
+            ImmutableArray<EmitDiagnostic>.Empty);
     }
 
     private static void EmitFileHeader(StringBuilder sb)
@@ -381,4 +460,51 @@ internal static class PropagatedEmitter
         .Replace("&", "&amp;")
         .Replace("<", "&lt;")
         .Replace(">", "&gt;");
+
+    /// <summary>True for a read-only list vocabulary type (e.g.
+    /// <c>IReadOnlyList&lt;CallPathEntry&gt;</c>); drives the count-shaped
+    /// nullable-field / projection / bound emission.</summary>
+    private static bool IsListType(string type) =>
+        type.StartsWith("IReadOnlyList<", System.StringComparison.Ordinal);
+
+    /// <summary>True for a propagated list-of-records vocabulary type that carries
+    /// per-entry ids (CallPath). Gates the per-entry-id cap loop + the
+    /// <c>JsonStringEnumConverter</c> + the record's import usings.</summary>
+    private static bool IsRecordListType(string type) =>
+        string.Equals(type, TypeVocabulary.CallPathEntryList, System.StringComparison.Ordinal);
+
+    /// <summary>Resolves the per-entry-id length cap for the propagated
+    /// list-of-records field (CallPath) from its spec-declared
+    /// <c>entryIdMaxLength</c>. Single source of the cap — the emitted serializer
+    /// never hard-codes the number. A record-list field with no declared cap is a
+    /// spec error (fail loud).</summary>
+    private static int ResolveCallPathEntryIdMax(IReadOnlyList<PropertySpec> propagated)
+    {
+        foreach (var prop in propagated)
+        {
+            if (IsRecordListType(prop.Type))
+            {
+                return prop.EntryIdMaxLength
+                    ?? throw new System.InvalidOperationException(
+                        $"propagated list-of-records field '{prop.Name}' must declare "
+                        + "'entryIdMaxLength' in the request-context spec");
+            }
+        }
+
+        // Unreachable in practice: the caller emits the const only when a record-list
+        // field exists (HasRecordListField), so the loop always returns above.
+        return 0;
+    }
+
+    /// <summary>True when any propagated field is a list-of-records (CallPath).</summary>
+    private static bool HasRecordListField(IReadOnlyList<PropertySpec> propagated)
+    {
+        foreach (var prop in propagated)
+        {
+            if (IsRecordListType(prop.Type))
+                return true;
+        }
+
+        return false;
+    }
 }

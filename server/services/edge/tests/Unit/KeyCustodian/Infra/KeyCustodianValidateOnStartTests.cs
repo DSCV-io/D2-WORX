@@ -8,6 +8,7 @@ namespace D2.Edge.Tests.Unit.KeyCustodian.Infra;
 
 using D2.Edge.KeyCustodian.App.Infrastructure.Configuration;
 using D2.Edge.KeyCustodian.Infra.Configuration;
+using D2.Shared.Auth.Abstractions;
 using D2.Shared.Messaging;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -275,6 +276,38 @@ public sealed class KeyCustodianValidateOnStartTests : IDisposable
                 because:
                     "an absent KEYCUSTODIAN_APP section binds all TimeSpan fields to "
                     + "TimeSpan.Zero and must fail the startup validation gate");
+    }
+
+    [Fact]
+    public void MissingWorkloadIdentityServiceId_FailsValidationOnResolve()
+    {
+        // The CA-seeding + key-rotation System workers establish their System request
+        // context from the host's workload ServiceId. AddD2KeyCustodian does NOT bind it
+        // (the host owns the bind) but DOES gate presence — an unset ServiceId must fail the
+        // start gate rather than silently seed + rotate under an empty self-id (fail-late).
+        using var sp = BuildProvider(KcInfraTestKit.BuildConfiguration(r_rootKeyDir));
+
+        sp.Invoking(s => s.GetRequiredService<IOptions<D2WorkloadIdentityOptions>>().Value)
+            .Should().Throw<OptionsValidationException>(
+                because: "an unset host ServiceId must fail the KeyCustodian start gate");
+    }
+
+    [Fact]
+    public void ConfiguredWorkloadIdentityServiceId_ResolvesWithoutThrowing()
+    {
+        // With the host's bind supplying a non-empty ServiceId, the presence gate passes —
+        // regression guard so the fix does not over-reject a properly-configured host.
+        var services = new ServiceCollection();
+        services.AddLogging();
+        services.AddSingleton<IMessageBus, NoopMessageBus>();
+        services.AddD2KeyCustodian(
+            KcInfraTestKit.BuildConfiguration(r_rootKeyDir), KcInfraTestKit.FAKE_CONNECTION_STRING);
+        services.Configure<D2WorkloadIdentityOptions>(o => o.ServiceId = "key-custodian");
+
+        using var sp = services.BuildServiceProvider();
+
+        sp.Invoking(s => s.GetRequiredService<IOptions<D2WorkloadIdentityOptions>>().Value)
+            .Should().NotThrow("a bound non-empty ServiceId satisfies the KC start gate");
     }
 
     private static ServiceProvider BuildProvider(IConfiguration configuration)

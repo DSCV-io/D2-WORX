@@ -30,6 +30,21 @@ JWT-claim parsing semantics — RFCs do — so these stay imperative):
 | `ScopeClaimParser.cs`             | RFC 6749 §3.3 | Parses `scope` claim — SP-only string OR JSON array — into `IReadOnlySet<string>`.                                                                         |
 | `MalformedActorChainException.cs` | —             | Surface for actor-chain parse failures.                                                                                                                    |
 
+Two in-host establishment boundaries plus their shared call-path helper ship here
+too ([ADR-0025](../../../../../docs/adrs/0025-request-context-establishment.md)):
+
+| File                             | Purpose                                                                                                                                                                                                                                                            |
+| -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `InProcessModuleBoundary.cs`     | Extension method `IRequestContext.EstablishInProcessModule(callingModuleId, targetModuleId, IClock)` — the generated in-host module façade (the `I<Module>Api` leaf) calls this before dispatching into another module inside the same host. Sets `Origin = RequestOrigin.InProcessModule`, `ImmediateCaller` = the calling module's own id, and appends a `CallPathKind.ModuleHop` entry. No-op-safe when the context is not a `MutableRequestContext` (e.g. a read-only test double). |
+| `SystemRequestContextBootstrap.cs` | Extension method `IServiceProvider.EstablishSystemContext(hostServiceId, IClock)` — an in-host background worker's per-iteration DI scope calls this before resolving any handler. Resolves the scope's `MutableRequestContext` (throws `InvalidOperationException` if the scope does not register one), sets `Origin = RequestOrigin.System`, `ImmediateCaller` = the host's own service id, and starts a fresh single-entry `CallPath` with a `CallPathKind.System` entry. |
+| `CallPathOps.cs`                 | Pure static helper `Append(existing, id, kind, timestamp) → IReadOnlyList<CallPathEntry>` shared by every establishment boundary (in this lib and in the `D2.Shared.Auth.Http` / `D2.Shared.Auth.Grpc` transport bindings). Depth-bounds the accumulated call-path at `MAX_CALL_PATH_DEPTH` (16) by trimming the oldest entries — keeps the field bounded even though a request cannot grow it without limit hop-by-hop. Throws `ArgumentException` on a null/empty/whitespace `id` (a missing self-identity is a misconfiguration, not a silently-dropped entry). |
+
+`Origin` / `ImmediateCaller` are never propagated (recomputed fresh, locally, by
+every establishment boundary); `CallPath` is the one field here that IS
+propagated (`propagate: true`, depth-bounded) — see
+[`D2.Shared.Auth.Abstractions`](../../auth/abstractions/README.md#requestorigin--callpath--local-establishment-facts-vs-propagated-telemetry)
+for the full local-fact-vs-propagated-telemetry model.
+
 ---
 
 ## Spec annotations driving the codegen
@@ -75,8 +90,9 @@ Plus everything from `IAuthContext` (token / identity / organization / impersona
 ## Dependencies
 
 - `D2.Shared.AuthContext.Abstractions` — `IAuthContext` base interface + `IAuthContextExtensions`.
-- `D2.Shared.Auth.Abstractions` — `ActorEntry`, enums (`ActorKind`, `ImpersonationKind`, `OrgType`, `Role`).
-- `D2.Shared.Utilities` — `Falsey()` / `Truthy()` / `TryParseTruthyNull` extensions used by parsers.
+- `D2.Shared.Auth.Abstractions` — `ActorEntry`, enums (`ActorKind`, `ImpersonationKind`, `OrgType`, `Role`, `RequestOrigin`, `CallPathKind`), and `CallPathEntry` — the establishment vocabulary `InProcessModuleBoundary` / `SystemRequestContextBootstrap` / `CallPathOps` operate on.
+- `D2.Shared.Utilities` — `Falsey()` / `Truthy()` / `TryParseTruthyNull` extensions used by parsers; `ThrowIfFalsey()` guards on the establishment boundaries.
+- `D2.Shared.Time` — `IClock` injection seam the `InProcessModuleBoundary` + `SystemRequestContextBootstrap` establishment boundaries use to timestamp the call-path entry they append.
 - Analyzer-only ref to `D2.Shared.Context.SourceGen`.
 
 ---

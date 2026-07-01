@@ -45,7 +45,7 @@ function field(name: string, csType: string, tsType: string): FieldInfo {
     protoType: "string",
     repeated: false,
     optional: false,
-    redact: false,
+    redactReason: undefined,
   };
 }
 
@@ -417,7 +417,7 @@ describe("tsRestClient_Behavioral_FaithfulDouble", () => {
       },
     );
     const { client } = buildClient([signRestOp()], () =>
-      ok(dataWithExtra as { signature: string }),
+      ok(dataWithExtra as unknown as { signature: string }),
     );
     const result = await client.sign!({ kid: "k-tr5" });
 

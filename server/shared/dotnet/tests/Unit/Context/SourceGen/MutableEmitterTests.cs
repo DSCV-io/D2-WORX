@@ -420,8 +420,20 @@ public sealed class MutableEmitterTests
         string? doc = null,
         bool propagate = false,
         int? maxLength = null,
+        int? entryIdMaxLength = null,
         bool redact = false) =>
-        new(name, type, claim, trinaryAuth, derived, @default, doc, propagate, maxLength, redact);
+        new(
+            name,
+            type,
+            claim,
+            trinaryAuth,
+            derived,
+            @default,
+            doc,
+            propagate,
+            maxLength,
+            entryIdMaxLength,
+            redact);
 
     private static string Normalize(string s) => s.Replace("\r\n", "\n").Trim();
 }

@@ -35,6 +35,10 @@ from `contracts/typespec/key-custodian/key-custodian.tsp`. Do not edit by hand
 | ------------------- | ------------------------------------------- | --------- |
 | `GetJwksInput.g.cs` | `GetJwksInput` (parameterless record)        | `getJwks` |
 | `GetJwksOutput.g.cs`| `GetJwksOutput(IReadOnlyList<Jwk> Keys)` + `Jwk` (6-field positional record) | `getJwks` |
+| `GetOidcConfigurationInput.g.cs` | `GetOidcConfigurationInput` (parameterless record) | `getOidcConfiguration` |
+| `GetOidcConfigurationOutput.g.cs` | `GetOidcConfigurationOutput(Issuer, JwksUri, IdTokenSigningAlgValuesSupported, ResponseTypesSupported, SubjectTypesSupported)` | `getOidcConfiguration` |
+| `SignInput.g.cs`    | `SignInput(string KeyDomain, byte[] SigningInput)` — `SigningInput` carries `[RedactData]` | `sign` |
+| `SignOutput.g.cs`   | `SignOutput(string Signature, string Kid)`  | `sign` |
 
 All types live in `namespace D2.Edge.KeyCustodian.Clients`.
 
@@ -72,16 +76,42 @@ with the KeyCustodian module at runtime. It lists only the operations exposed
 across a boundary; internal-only operations are structurally absent.
 
 The generated interface method signature is transport-neutral — no `HandlerOptions?`
-parameter — so the same interface can back both an in-process impl (today) and a
-future gRPC-client impl without modification:
+parameter — so the in-process implementation backs it directly, and a gRPC-client
+implementation would satisfy the same signature without modification:
 
 ```csharp
 ValueTask<D2Result<GetJwksOutput?>> GetJwksAsync(GetJwksInput input, CancellationToken ct = default);
+ValueTask<D2Result<GetOidcConfigurationOutput?>> GetOidcConfigurationAsync(GetOidcConfigurationInput input, CancellationToken ct = default);
+ValueTask<D2Result<SignOutput?>> SignAsync(SignInput input, CancellationToken ct = default);
 ```
 
 The façade implementation (`KeyCustodianApi`) and the generated DI extension
 (`KeyCustodianClientsGenerated.g.cs`) live in the `app/Application/` directory, not
 here, because they reference app-layer handler interfaces.
+
+### Minter-capability seam — `IJwtSigningCapability` (hand-authored)
+
+The one hand-authored (non-generated) type in this project. The dedicated
+cluster-signing-root (`jwks-signing`) capability — possession IS the authority
+([ADR-0025](../../../../../docs/adrs/0025-request-context-establishment.md)):
+
+```csharp
+public interface IJwtSigningCapability
+{
+    ValueTask<D2Result<SignOutput>> SignJwtAsync(SignInput input, CancellationToken ct = default);
+}
+```
+
+Registered ONLY by the JWT minter's (auth module's) composition via
+`AddD2JwtSigningCapability()` — never by `AddD2KeyCustodianClients()`, the
+registration every ordinary consumer of the KeyCustodian client uses. The general
+`IKeyCustodianApi.SignAsync` surface can never sign `jwks-signing` for anyone —
+only a holder of this capability can. The seam reuses the generated `SignInput` /
+`SignOutput` transport DTOs above (no hand-authored spec-mirror type). The
+`keyDomain` field on the passed `SignInput` is ignored — the minter always
+targets the fixed cluster-signing root. The implementation (`JwtSigningCapability`)
+and its isolated DI registration (`JwtSigningCapabilityServiceCollectionExtensions`)
+live in `app/Application/`, alongside the general façade.
 
 ---
 

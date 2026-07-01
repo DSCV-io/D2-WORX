@@ -134,7 +134,7 @@ describe("dtoEmitIntegration_Sign_RedactedFieldInGeneratedCSharp", () => {
       using D2;
       namespace D2.Fixtures;
 
-      model SignFixtureInput { @d2Field(1) kid: string; @d2Field(2) @d2Redact payload: bytes; }
+      model SignFixtureInput { @d2Field(1) kid: string; @d2Field(2) @d2Redact("SecretInformation") payload: bytes; }
       model SignFixtureOutput { @d2Field(1) signature: string; }
 
       @d2Command
@@ -161,7 +161,7 @@ describe("dtoEmitIntegration_Sign_RedactedFieldInGeneratedCSharp", () => {
     // The [property:] target is load-bearing — a bare param attribute would NOT
     // be seen by the property-reflecting RedactDataDestructuringPolicy.
     expect(inputContent).toContain(
-      "[property: RedactData(Reason = RedactReason.PersonalInformation)] byte[] Payload",
+      "[property: RedactData(Reason = RedactReason.SecretInformation)] byte[] Payload",
     );
     expect(inputContent).toContain("using D2.Shared.Utilities.Attributes;");
     expect(inputContent).toContain("using D2.Shared.Utilities.Enums;");
@@ -250,7 +250,7 @@ describe("dtoEmitIntegration_HandlerInterface_EmittedForEveryOp", () => {
       using D2;
       namespace D2.Fixtures;
 
-      model SignFixtureInput { @d2Field(1) kid: string; @d2Field(2) @d2Redact payload: bytes; }
+      model SignFixtureInput { @d2Field(1) kid: string; @d2Field(2) @d2Redact("SecretInformation") payload: bytes; }
       model SignFixtureOutput { @d2Field(1) signature: string; }
 
       @d2Command

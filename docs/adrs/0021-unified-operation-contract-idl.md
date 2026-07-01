@@ -5,7 +5,7 @@ Copyright (c) DCSV. All rights reserved.
 # ADR-0021: Unified operation-contract IDL — one source per operation generates every representation across three transport planes, with TypeSpec as the compiler front-end and a D2-owned emitter fleet
 
 - **Status**: Accepted (validated 2026-06-13 by the supervised TypeSpec spike)
-- **Date**: 2026-06-13 (service-auth cross-ref: 2026-06-18)
+- **Date**: 2026-06-13 (service-auth cross-ref: 2026-06-18; establishment cross-ref: 2026-06-30)
 - **Deliverable**: Edge contract-IDL spike
 
 ## Context
@@ -51,7 +51,7 @@ A `@d2/typespec-emitters` package contains the emitter fleet, each a `$onEmit` f
 | proto | `.proto` messages + services, fed to buf / Grpc.Tools for the gRPC wire |
 | OpenAPI (D² extension layer) | per-version OpenAPI with the `x-d2-*` policy extensions the stock emitter cannot surface |
 | route + policy | .NET REST route registrations with scope / tier / risk / audience enforcement applied |
-| in-process leaf | `I<Module>Api` + `<Module>Api` façade pair — curated public interface (in `Clients` namespace) + sealed delegating impl (in `app/` namespace), for in-host module-to-module calls |
+| in-process leaf | `I<Module>Api` + `<Module>Api` façade pair — curated public interface (in `Clients` namespace) + sealed delegating impl (in `app/` namespace), for in-host module-to-module calls. The leaf is the call site for the `InProcessModule` context-establishment boundary ([ADR-0025](0025-request-context-establishment.md)): before dispatching, it marks the request's `Origin` as a genuine in-process module call, distinct from a cross-process hop merely dispatched through in-process code. |
 | parity | the cross-language and registry-existence validation tests (see below) |
 
 The stock `@typespec/openapi3` emitter validates the HTTP shape correctly and is used for that; the D² OpenAPI extension layer adds the policy extensions on top.
@@ -142,4 +142,5 @@ The seed `@d2/typespec-decorators` package and a diagnostic emitter were authore
 - [ADR-0023](0023-mtls-workload-identity.md) — the mTLS workload-identity decision: the generated cross-process gRPC client this IDL emits runs over the mutually-authenticated TLS channel ADR-0023 secures, so the channel carrying the forwarded token between service processes is authenticated and encrypted.
 - [ADR-0018](0018-spec-driven-error-codes.md) — the spec-driven error codes the op-IDL references rather than re-declares; the error-code-existence parity test validates the reference.
 - [ADR-0007](0007-request-context-propagation.md) — the request-context spec that remains the ambient enrichment channel an op composes with, distinct from the per-op contract.
+- [ADR-0025](0025-request-context-establishment.md) — the `InProcessModule` context-establishment boundary the generated in-process leaf calls before dispatching a module-to-module call, and the broader establishment model (`Origin` / `ImmediateCaller` / `CallPath`) that closes the confused-deputy gap the plain in-process/cross-process distinction left open.
 - [ADR-0002](0002-spec-driven-codegen.md) — the spec-driven-codegen precedent this generalizes from "one spec → a type in two languages" to "one source → types + operations + bindings + policy across every language and transport."

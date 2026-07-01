@@ -546,6 +546,46 @@ public static class ErrorCodeRegistry
                 Doc: "The calling workload is not authorized to sign with the requested key domain (the domain is not in the workload's allowed-signing-domains policy set). Distinct from the in-process-only rejection: this is a policy-scope denial, not an in-process-only-domain denial.",
                 Domain: "keycustodian",
                 IsDeprecated: false),
+            ["KEYCUSTODIAN_REQUEST_ORIGIN_UNESTABLISHED"] = new ErrorCodeInfo(
+                Code: "KEYCUSTODIAN_REQUEST_ORIGIN_UNESTABLISHED",
+                HttpStatus: 403,
+                Category: ErrorCategory.PolicyDenied,
+                UserMessageKey: TK.Keycustodian.Authorization.REQUEST_ORIGIN_UNESTABLISHED,
+                FactoryName: "RequestOriginUnestablished",
+                FactoryShape: "standard",
+                Doc: "The request origin was not positively established by any trust boundary (the fail-closed RequestOrigin.Unestablished default), so the signing authority denies. The origin is recomputed locally by the receiving boundary from its own unforgeable transport facts and is never propagated; a capability authority that has not had its origin established denies rather than assume a plane.",
+                Domain: "keycustodian",
+                IsDeprecated: false),
+            ["KEYCUSTODIAN_MINTER_CAPABILITY_REQUIRED"] = new ErrorCodeInfo(
+                Code: "KEYCUSTODIAN_MINTER_CAPABILITY_REQUIRED",
+                HttpStatus: 403,
+                Category: ErrorCategory.PolicyDenied,
+                UserMessageKey: TK.Keycustodian.Authorization.MINTER_CAPABILITY_REQUIRED,
+                FactoryName: "MinterCapabilityRequired",
+                FactoryShape: "standard",
+                Doc: "The requested key domain is the cluster-signing root (jwks-signing) and is structurally unreachable on the general signing surface for every established origin. It is signable only through the dedicated JWT minter capability, which is registered solely in the auth-module composition (possession plus the in-process-module plane is the authority). This kills the confused-deputy: a request that became in-process downstream cannot reach the root, and there is no caller id to spoof.",
+                Domain: "keycustodian",
+                IsDeprecated: false),
+            ["KEYCUSTODIAN_SIGNING_KEY_UNAVAILABLE"] = new ErrorCodeInfo(
+                Code: "KEYCUSTODIAN_SIGNING_KEY_UNAVAILABLE",
+                HttpStatus: 503,
+                Category: ErrorCategory.InfrastructureUnavailable,
+                UserMessageKey: TK.Keycustodian.Infrastructure.SIGNING_KEY_UNAVAILABLE,
+                FactoryName: "SigningKeyUnavailable",
+                FactoryShape: "standard",
+                Doc: "No active signing key is available for the requested key domain. Retryable not-ready-yet condition (the domain has not been seeded or is mid-rotation with no active key).",
+                Domain: "keycustodian",
+                IsDeprecated: false),
+            ["KEYCUSTODIAN_EMPTY_SIGNING_INPUT"] = new ErrorCodeInfo(
+                Code: "KEYCUSTODIAN_EMPTY_SIGNING_INPUT",
+                HttpStatus: 400,
+                Category: ErrorCategory.ValidationFailure,
+                UserMessageKey: TK.Keycustodian.Validation.EMPTY_SIGNING_INPUT,
+                FactoryName: "EmptySigningInput",
+                FactoryShape: "standard",
+                Doc: "The signing input was empty. There is nothing to sign — a zero-length payload is a client error, rejected before any key load or crypto.",
+                Domain: "keycustodian",
+                IsDeprecated: false),
         }.ToFrozenDictionary(StringComparer.Ordinal);
 
     /// <summary>
@@ -601,6 +641,10 @@ public static class ErrorCodeRegistry
                 sr_lookup["KEYCUSTODIAN_NO_ACTIVE_ISSUING_CA"],
                 sr_lookup["KEYCUSTODIAN_CROSS_PROCESS_DOMAIN_REJECTED"],
                 sr_lookup["KEYCUSTODIAN_SIGNING_DOMAIN_NOT_AUTHORIZED"],
+                sr_lookup["KEYCUSTODIAN_REQUEST_ORIGIN_UNESTABLISHED"],
+                sr_lookup["KEYCUSTODIAN_MINTER_CAPABILITY_REQUIRED"],
+                sr_lookup["KEYCUSTODIAN_SIGNING_KEY_UNAVAILABLE"],
+                sr_lookup["KEYCUSTODIAN_EMPTY_SIGNING_INPUT"],
             ]);
 
     /// <summary>

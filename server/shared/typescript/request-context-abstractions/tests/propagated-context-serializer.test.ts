@@ -3,7 +3,9 @@
 // -----------------------------------------------------------------------
 
 import { describe, expect, it } from "vitest";
+import { CallPathKind } from "@d2/auth-context-abstractions";
 import { PropagatedContextSerializer } from "../src/PropagatedContextSerializer.g.js";
+import type { IPropagatedContext } from "../src/IPropagatedContext.g.js";
 import { IRequestContextRedactPaths } from "../src/IRequestContext.g.js";
 
 describe("PropagatedContextSerializer", () => {
@@ -452,5 +454,140 @@ describe("IRequestContextRedactPaths", () => {
     // subdivisionIso31662Code field. The redact paths array must not
     // contain the old name.
     expect(IRequestContextRedactPaths).not.toContain("region");
+  });
+});
+
+describe("PropagatedContextSerializer — call-path (propagated list-of-records)", () => {
+  // The first propagated list-of-records field. Mirrors the .NET CallPath
+  // depth-bound (max entry count = 16) + per-entry-id cap (128).
+
+  const buildPath = (count: number): IPropagatedContext["callPath"] =>
+    Array.from({ length: count }, (_unused, i) => ({
+      id: `svc-${i}`,
+      kind: CallPathKind.WorkloadHop,
+      timestamp: `2026-05-27T10:00:0${i % 10}.0000000+00:00`,
+    }));
+
+  it("round-trips a multi-entry call-path preserving order + fields", () => {
+    const callPath = [
+      {
+        id: "edge",
+        kind: CallPathKind.Edge,
+        timestamp: "2026-05-27T10:00:00.0000000+00:00",
+      },
+      {
+        id: "key-custodian",
+        kind: CallPathKind.WorkloadHop,
+        timestamp: "2026-05-27T10:00:01.0000000+00:00",
+      },
+      {
+        id: "audit",
+        kind: CallPathKind.ModuleHop,
+        timestamp: "2026-05-27T10:00:02.0000000+00:00",
+      },
+    ];
+    const enc = PropagatedContextSerializer.serialize({ callPath });
+    const dec = PropagatedContextSerializer.tryDecode(enc);
+
+    expect(dec).toBeDefined();
+    expect(dec!.callPath).toEqual(callPath);
+  });
+
+  it("serializes the entry kind as its human-readable string name", () => {
+    const enc = PropagatedContextSerializer.serialize({
+      callPath: [
+        {
+          id: "kc",
+          kind: CallPathKind.WorkloadHop,
+          timestamp: "2026-05-27T10:00:00.0000000+00:00",
+        },
+      ],
+    });
+    expect(enc).toContain('"kind":"WorkloadHop"');
+    expect(enc).not.toContain('"kind":1');
+  });
+
+  it("omits the call-path from the wire when undefined", () => {
+    const enc = PropagatedContextSerializer.serialize({
+      requestId: "r",
+      callPath: undefined,
+    });
+    const parsed = JSON.parse(enc) as Record<string, unknown>;
+    expect(Object.prototype.hasOwnProperty.call(parsed, "callPath")).toBe(
+      false,
+    );
+  });
+
+  it("accepts a path at the depth bound (16 entries)", () => {
+    const enc = PropagatedContextSerializer.serialize({
+      callPath: buildPath(16),
+    });
+    const dec = PropagatedContextSerializer.tryDecode(enc);
+    expect(dec).toBeDefined();
+    expect(dec!.callPath).toHaveLength(16);
+  });
+
+  it("drops the context when the call-path exceeds the depth bound (17 entries)", () => {
+    const enc = PropagatedContextSerializer.serialize({
+      callPath: buildPath(17),
+    });
+    expect(PropagatedContextSerializer.tryDecode(enc)).toBeUndefined();
+  });
+
+  it("accepts an entry id at the per-entry cap (128 chars)", () => {
+    const enc = PropagatedContextSerializer.serialize({
+      callPath: [
+        {
+          id: "a".repeat(128),
+          kind: CallPathKind.Edge,
+          timestamp: "2026-05-27T10:00:00.0000000+00:00",
+        },
+      ],
+    });
+    expect(PropagatedContextSerializer.tryDecode(enc)).toBeDefined();
+  });
+
+  it("drops the context when an entry id exceeds the per-entry cap (129 chars)", () => {
+    const enc = PropagatedContextSerializer.serialize({
+      callPath: [
+        {
+          id: "a".repeat(129),
+          kind: CallPathKind.Edge,
+          timestamp: "2026-05-27T10:00:00.0000000+00:00",
+        },
+      ],
+    });
+    expect(PropagatedContextSerializer.tryDecode(enc)).toBeUndefined();
+  });
+
+  it("drops the context when callPath is not an array", () => {
+    expect(
+      PropagatedContextSerializer.tryDecode(
+        JSON.stringify({ callPath: "not-an-array" }),
+      ),
+    ).toBeUndefined();
+  });
+
+  it("drops the context when an entry is malformed (missing/typed id, kind, timestamp)", () => {
+    expect(
+      PropagatedContextSerializer.tryDecode(
+        JSON.stringify({ callPath: [{ kind: "Edge", timestamp: "t" }] }),
+      ),
+    ).toBeUndefined();
+    expect(
+      PropagatedContextSerializer.tryDecode(
+        JSON.stringify({ callPath: [{ id: "x", timestamp: "t" }] }),
+      ),
+    ).toBeUndefined();
+    expect(
+      PropagatedContextSerializer.tryDecode(
+        JSON.stringify({ callPath: [{ id: "x", kind: "Edge" }] }),
+      ),
+    ).toBeUndefined();
+    expect(
+      PropagatedContextSerializer.tryDecode(
+        JSON.stringify({ callPath: ["not-an-object"] }),
+      ),
+    ).toBeUndefined();
   });
 });

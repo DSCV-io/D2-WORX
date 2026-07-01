@@ -69,6 +69,14 @@ Copyright (c) DCSV. All rights reserved.
       (App ← Clients is the legal edge; Clients refs Result only).
     -->
     <ProjectReference Include="..\clients\D2.Edge.KeyCustodian.Clients.csproj" />
+    <!--
+      D2.Shared.Context.Abstractions — the scoped IRequestContext the sign handler
+      reads (the established Origin / ImmediateCaller) and the JWT-minter capability
+      injects to assert its in-process plane. Read side only — App stays gRPC-free +
+      ASP.NET-Core-free. Brought transitively via D2.Shared.Handler but listed
+      explicitly ("declare what you use").
+    -->
+    <ProjectReference Include="..\..\..\..\shared\dotnet\context\abstractions\D2.Shared.Context.Abstractions.csproj" />
   </ItemGroup>
 
   <ItemGroup>

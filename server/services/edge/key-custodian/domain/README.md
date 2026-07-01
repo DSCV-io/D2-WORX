@@ -65,6 +65,8 @@ domain/
     KidMinting.cs           pure JWKS-safe kid minter (16 random bytes → base64url)
     JwkProjection.cs        pure SPKI → RFC 7517 JWK projection
     KeySummary.cs           pure projection over EncryptionKey (shared command output)
+    RsaSigning.cs           pure RS256 sign over an already-unwrapped private key
+    WorkloadCapabilityAuthority.cs   pure capability-general workload→target authority rule
   Generated/
     (codegen output — see below; do not hand-edit)
 ```
@@ -95,8 +97,28 @@ domain/
 | `KidMinting`      | `Mint() → string`                                                                                 | 16 random bytes → unpadded base64url; guaranteed to pass `Kid.Create`.                          |
 | `JwkProjection`   | `ToJwk(string kid, ReadOnlySpan<byte> publicSpki) → Jwk`                                          | Imports the SPKI to recover modulus/exponent and base64url-encodes them per RFC 7518.          |
 | `KeySummary`      | `From(EncryptionKey) → KeySummary`                                                                | Non-sensitive projection (kid/domain/type/status/createdAt). The shared output of the generate / activate / retire commands. |
+| `RsaSigning`      | `Sign(ReadOnlySpan<byte> privatePkcs8, ReadOnlySpan<byte> signingInput) → D2Result<string>`       | RS256 (RSASSA-PKCS1-v1_5 over SHA-256) sign over an already-unwrapped private key; base64url-encoded signature. BCL crypto only; a crypto import/sign failure maps to `KEYCUSTODIAN_PRECONDITION_VIOLATED` rather than throwing. |
 
 Rules hold no DI, no `IOptions`, no logger, and no clock-as-dependency (`IClock` is a permitted method parameter). A tunable is a parameter the App handler passes in, not configuration the rule reads.
+
+## Capability authority — `WorkloadCapabilityAuthority`
+
+The capability-general workload→target authority rule — answers "may workload W
+use capability C (sign / seal-encrypt / seal-decrypt) on target D?"
+([ADR-0025](../../../../../docs/adrs/0025-request-context-establishment.md)).
+Pure — no DB, no `IOptions`, no logging, never throws; every arm returns a
+`D2Result` (allow = `Ok`, deny a typed failure). The workload→policy map is a
+method PARAMETER, never an injected option — the App handler resolves the
+policy and owns the counter / log on a deny.
+
+| Method                | Keyed on                                                                 | Notes |
+| ---------------------- | ------------------------------------------------------------------------ | ----- |
+| `AuthorizeSigning`     | `RequestOrigin` (the locally-established, never-propagated hop fact, from `D2.Shared.Auth.Abstractions`) + `ImmediateCaller` + the target `KeyDomain` + the caller's allowed-signing-domains set | Fail-closed layered decision: `Unestablished` origin denies; the cluster-signing root `jwks-signing` is STRUCTURALLY unreachable here for EVERY established origin (`MinterCapabilityRequired`) — reachable only via `AuthorizeMinterSigning`; every other domain requires `CrossProcessHop` + an authenticated peer + membership in the caller's allowed set. |
+| `AuthorizeMinterSigning` | `RequestOrigin` only                                                    | The dedicated JWT-minter capability's own gate — requires `Origin == InProcessModule`; possession of the capability (registered only in the auth-module composition) plus this plane check IS the authority. |
+| `AuthorizeSealEncrypt` | The caller's authenticated workload id (presence only)                   | Broad — any authenticated caller may fetch any public seal key (public material is harmless to over-share). |
+| `AuthorizeSealDecrypt` | The caller's authenticated workload id (presence only)                   | Self-only, enforced by the op SHAPE (`getOwnSealPrivateKey()` carries no target) — no in-handler `caller == target` comparison exists because there is no target. |
+
+`AuthorizeSigning` is the general `sign` op's chokepoint; `AuthorizeMinterSigning` is the dedicated `IJwtSigningCapability` minter's chokepoint. The two never overlap: the general surface categorically rejects `jwks-signing`, and the minter path never routes through `AuthorizeSigning` at all — closing the confused-deputy shape a bare `bool isCrossProcess` check could not express.
 
 ---
 
@@ -106,8 +128,8 @@ The `error-codes-source-gen/` sibling project emits three files into `Generated/
 
 | File                              | Content                                                                     |
 | --------------------------------- | --------------------------------------------------------------------------- |
-| `KeyCustodianErrorCodes.g.cs`     | 12 `const string` error-code constants + `AllCodes` + `GetHttpStatus`        |
-| `KeyCustodianFailures.g.cs`       | 12 `static D2Result FactoryName(...)` semantic factory methods                |
+| `KeyCustodianErrorCodes.g.cs`     | 21 `const string` error-code constants + `AllCodes` + `GetHttpStatus`        |
+| `KeyCustodianFailures.g.cs`       | 21 `static D2Result FactoryName(...)` semantic factory methods                |
 | `KeyCustodianFailures.Generic.g.cs` | The `KeyCustodianFailures<T>` typed twin                                  |
 
 All transition methods and VO smart constructors use the generated `KeyCustodianFailures<T>.*` factories — never raw `D2Result.ValidationFailed(...)` with hand-written codes. See [`error-codes-source-gen/README.md`](../error-codes-source-gen/README.md).
@@ -116,7 +138,7 @@ All transition methods and VO smart constructors use the generated `KeyCustodian
 
 ## Dependencies
 
-`D2.Shared.Result`, `D2.Shared.Utilities`, `D2.Shared.Time` (NodaTime `IClock` + `Instant`), `D2.Shared.Encryption` (the `EncryptionDomains` catalog consumed by `KeyDomain`'s static catalog builder), `D2.Shared.I18n` (the generated `TK.*` keys — injected via the Tier-1 global using in `server/services/Directory.Build.targets`; not a direct `<ProjectReference>`), and the BCL `System.Security.Cryptography` (used by the `Rules/` generators + verifiers).
+`D2.Shared.Result`, `D2.Shared.Utilities`, `D2.Shared.Time` (NodaTime `IClock` + `Instant`), `D2.Shared.Auth.Abstractions` (the domain-safe `RequestOrigin` enum `WorkloadCapabilityAuthority` keys its fail-closed decision on — pure enums/records only, so the domain dependency law holds), `D2.Shared.Encryption` (the `EncryptionDomains` catalog consumed by `KeyDomain`'s static catalog builder), `D2.Shared.I18n` (the generated `TK.*` keys — injected via the Tier-1 global using in `server/services/Directory.Build.targets`; not a direct `<ProjectReference>`), and the BCL `System.Security.Cryptography` (used by the `Rules/` generators + verifiers).
 
 Zero EF Core, zero DI, zero I/O.
 

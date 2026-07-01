@@ -1,4 +1,4 @@
-﻿<!--
+<!--
 Copyright (c) DCSV. All rights reserved.
 -->
 
@@ -279,20 +279,25 @@ locale, …) per ADR-0007 §2. No hop mutates the token to append itself.
   production).
 - **Capability authority** (the structural form of mint-once-forward + mTLS identity): KC answers
   "may workload W use capability C (sign / seal-encrypt / seal-decrypt) on target D?" via one pure
-  domain rule, keyed on the validated mTLS peer workload identity. That identity is surfaced by ONE
-  capability-general accessor `GetD2PeerWorkloadIdentity()` that reads the already-validated client
-  certificate from `HttpContext.Connection.ClientCertificate` (REST) or `ServerCallContext.GetHttpContext()`
-  (gRPC) and re-runs the SPIFFE SAN extraction — fail-closed (no certificate ⇒ no identity ⇒ deny).
-  Signing is policy-driven (the `KEYCUSTODIAN_SIGNING_AUTHORITY` workload→allowed-signing-domains map)
-  with a structural in-process-only backstop: a cross-process caller can NEVER sign with `jwks-signing`
-  (the root of mint-once-forward) — denied structurally by the rule (independent of policy) AND at boot
-  by a config validator that refuses to grant an in-process-only domain to any workload. The in-process
-  Edge minter signs `jwks-signing` in-process (bypassing the gRPC gate). Seal-encrypt is broad (any
-  scoped producer fetches any public key); seal-decrypt is self-only (the op carries no target — the key
-  is selected by the authenticated identity). Two 403 `policy_denied` codes distinguish the deny reasons
-  (`KEYCUSTODIAN_CROSS_PROCESS_DOMAIN_REJECTED` / `KEYCUSTODIAN_SIGNING_DOMAIN_NOT_AUTHORIZED`); the
-  cross-process `jwks-signing` rejection pages on any non-zero value. The same accessor is the single
-  peer-identity source for the sign guard (Step 4) and the seal ops (Step 9) across both transports.
+  domain rule, keyed on the locally-established request `RequestOrigin` (recomputed by the receiving
+  boundary from its own unforgeable transport facts — never a propagated wire value) plus the validated
+  mTLS peer workload identity (`ImmediateCaller`). Signing is layered + fail-closed: an unestablished
+  origin denies (`KEYCUSTODIAN_REQUEST_ORIGIN_UNESTABLISHED`); the cluster-signing root `jwks-signing`
+  (the root of mint-once-forward) is STRUCTURALLY unreachable on the general signing surface for EVERY
+  established origin (`KEYCUSTODIAN_MINTER_CAPABILITY_REQUIRED`) — it is signable only through the
+  dedicated minter capability `IJwtSigningCapability`, registered solely in the JWT minter's (auth-module's)
+  composition (possession of the resolved seam plus the in-process-module plane check IS the authority;
+  there is no caller-id to spoof, killing the confused-deputy). Every other domain signs cross-process
+  only, per the `KEYCUSTODIAN_SIGNING_AUTHORITY` workload→allowed-signing-domains map: a domain outside
+  the set is `KEYCUSTODIAN_SIGNING_DOMAIN_NOT_AUTHORIZED`; a cross-process hop with no authenticated peer
+  is `Forbidden`; the boot-time config validator still refuses to grant `jwks-signing` to any workload.
+  Seal-encrypt is broad (any scoped producer fetches any public key); seal-decrypt is self-only (the op
+  carries no target — the key is selected by the authenticated identity). The general `sign` op
+  (`internal.kc.sign` scope, the first production `AuthorizeSigning(RequestOrigin)` consumer) reads the
+  established `IRequestContext.Origin` / `.ImmediateCaller` — the KC app stays gRPC-free. Deny telemetry:
+  `d2.keycustodian.cross_process_signing_rejections` (pages on any non-zero value — a general-surface
+  attempt to reach the cluster root) + `d2.keycustodian.authority_rejections` (tagged `capability` +
+  `reason`) + the `AuthorityRejected` log delegate.
 
 ### 3.6 Fingerprint binding (composite, 10-slot)
 
@@ -1058,9 +1063,13 @@ issuer lands the fixture is swapped for the real endpoint with no code change in
 
 > **Note on the forward-unchanged default.** Forwarding the once-minted token unchanged needs **no
 > outbound mint client at all** for an ordinary business hop — the inbound transaction-token is simply
-> re-attached on the outbound call and re-validated by the receiver. That forwarding wiring (and the
-> propagated service call-path that rides alongside it) is **designed, not built** — it is a code
-> follow-up of the pivot, tracked outside this doc.
+> re-attached on the outbound call and re-validated by the receiver. That forwarding wiring is designed
+> (§6.6 Build-state below has the honest per-piece detail). The propagated service call-path that rides
+> alongside it is **built** — a dedicated outbound gRPC client interceptor writes it (plus the rest of
+> the operational subset) on every outbound call, and a matching inbound interceptor applies it before
+> establishing the receiving hop's own call-path entry ([ADR-0025](../adrs/0025-request-context-establishment.md)),
+> proven over an in-memory two-process `TestServer` harness. What is still outstanding is the **live Edge
+> host** registering these pieces on a running pipeline, not the machinery itself.
 
 **Why a distinct exchange client (vs folding it into ServiceIdentity)**: distinct semantics.
 ServiceIdentity (§6.5) has no user in the loop and a per-process lifecycle; token-exchange always has
@@ -1301,11 +1310,17 @@ token never rescues a bad leaf (check 0 rejects at the channel). Both factors ar
 > is mTLS, and the BFF → Edge boundary `client_credentials` token (an external client of Edge)
 > survives unchanged.
 
-**Build-state**: the forward-unchanged wiring, the propagated service call-path, and the build-time
-scope check are **designed, not built** — code follow-ups of the pivot. Operational-subset propagation
-on .NET → .NET sync gRPC hops is likewise new plumbing (.NET already rebuilds the *identity* half from
-the JWT — that half is correct today; the operational-subset reader/writer on sync .NET hops is not
-yet wired). mTLS is a new KeyCustodian PKI subsystem (designed — ADR-0023). The §13 worked-flow table
+**Build-state**: the forwarded-token `CallCredentials` attach + mTLS leaf-presentation machinery are
+**built** in `D2.Shared.Auth.Outbound` (proven in-memory / loopback, no live host); the build-time
+caller-scopes ⊇ callee-scopes check is **designed, not built** — a code follow-up of the pivot.
+Operational-subset propagation on .NET → .NET sync gRPC hops — including the propagated service
+call-path — is **built**: .NET already rebuilds the *identity* half from the JWT (correct today), and
+the operational-subset reader/writer on sync gRPC hops is now wired both directions (outbound client
+interceptor writes `x-d2-context`; inbound server interceptor applies it and establishes the receiving
+hop's own `Origin` / `ImmediateCaller` / call-path entry — [ADR-0025](../adrs/0025-request-context-establishment.md)),
+proven over an in-memory two-process `TestServer` harness. mTLS is a new KeyCustodian PKI subsystem
+(designed — ADR-0023). What remains for all of the above is the **live Edge host** wiring these
+interceptors onto a running pipeline — a host dependency, not a design gap. The §13 worked-flow table
 tags each arrow's build-state precisely.
 
 ### Scenario C: AMQP message Edge → Notifications
@@ -1530,12 +1545,15 @@ the resolved contradiction record (C1–C7) are in **§13**. The three coupled i
 3. **Per-hop callback avoidance → satisfied by construction (forward-unchanged = zero downstream
    mints).** Forwarding the once-minted token incurs **no** mint callback on any downstream hop: the
    one mint is the boundary mint at Edge; in-process module hops pass the validated context through the
-   façade (no wire token); async hops use the encrypted `PropagatedContext` as the trust boundary — no
-   mint, no validation (Scenario C). The forwarding wiring must simply re-attach the inbound token on
-   outbound calls (and append to the propagated service call-path); the failure mode to avoid — "exchange
-   on every outbound hop" — is exactly the per-hop re-mint the pivot removes. The forwarding wiring, the
-   call-path, and the build-time caller-scopes ⊇ callee-scopes check are **designed, not built** (code
-   follow-ups of the pivot).
+   façade (no wire token; now positively marked `Origin = InProcessModule` per
+   [ADR-0025](../adrs/0025-request-context-establishment.md)); async hops use the encrypted
+   `PropagatedContext` as the trust boundary — no mint, no validation (Scenario C). The forwarding
+   wiring re-attaches the inbound token on outbound calls and appends to the propagated service
+   call-path — both **built** (the forwarded-JWT `CallCredentials` in `D2.Shared.Auth.Outbound`; the
+   call-path via the outbound/inbound gRPC interceptor pair, ADR-0025); the failure mode to avoid —
+   "exchange on every outbound hop" — is exactly the per-hop re-mint the pivot removes and does not
+   occur. The build-time caller-scopes ⊇ callee-scopes check remains **designed, not built** (a code
+   follow-up of the pivot).
 
 ---
 
@@ -2076,7 +2094,8 @@ lowercase to match existing `act.d2_kind` value casing).
 > mint-once-at-the-Edge + forward-unchanged + additive-mTLS model
 > ([ADR-0022](../adrs/0022-service-auth-mint-once-forward.md) /
 > [ADR-0023](../adrs/0023-mtls-workload-identity.md), building on
-> [ADR-0007](../adrs/0007-request-context-propagation.md)). Every claim cites `§` or `file:line`.
+> [ADR-0007](../adrs/0007-request-context-propagation.md) /
+> [ADR-0025](../adrs/0025-request-context-establishment.md)). Every claim cites `§` or `file:line`.
 > Read alongside the resolved §11 Q24 (outbound wiring) — the rows below are the evidence behind it,
 > and the **resolved contradiction record** at the end of the section.
 
@@ -2085,7 +2104,7 @@ lowercase to match existing `act.d2_kind` value casing).
 | Tag | Meaning |
 | --- | --- |
 | **✅ built** | Code exists in this lib AND is exercised on a real request/processing path (or by the transport middleware that runs on every request). |
-| **⚠ designed, NOT built** | The behavior is decided (forward-unchanged wiring, the propagated call-path, the build-time scope check, mTLS) but **no code wires it on a request flow** yet. Where a primitive exists but is unwired, it is noted: `ITokenExchangeClient.ExchangeAsync` is built + unit-tested but called **only** by `HttpTokenExchangeClientTests.cs` (verified: grep `\.ExchangeAsync\(` returns test-only hits); the cross-process mTLS issuance + Edge host wiring that supplies internal workload identity (ADR-0023) is future work. |
+| **⚠ designed, NOT built** | The behavior is decided but **no code wires it on a request flow** yet. Where a primitive exists but is unwired, it is noted: `ITokenExchangeClient.ExchangeAsync` is built + unit-tested but called **only** by `HttpTokenExchangeClientTests.cs` (verified: grep `\.ExchangeAsync\(` returns test-only hits); the cross-process mTLS issuance that supplies internal workload identity (ADR-0023) is future work. As of [ADR-0025](../adrs/0025-request-context-establishment.md) this tag no longer applies to the forward-unchanged attach, the propagated call-path, or the operational-subset reader/writer on sync gRPC hops — those are **✅ built**, proven over an in-memory `TestServer`, with only the *live Edge host* (not the machinery) still outstanding; see the row-level notes. |
 | **❌ issuer/endpoint unbuilt (Phase 3)** | Depends on Edge's `POST /oauth/token` issuer (or anon-JWT minting), which is **Phase-3, not built** (§1 "this lib never mints a token"; §6.6 Build-state; §10). The token is *requested+cached* here; it is *minted* nowhere yet. |
 
 ### Terminology — `PropagatedContext`, not `ContextEnvelope` (settled; applied throughout the doc)
@@ -2112,9 +2131,9 @@ is passed through the in-process façade). Auth→A and A→B are **cross-proces
 | Step | Token on the arrow | aud + key claims | Issued by / how | Mint callback? | Receiver validates | Build-state |
 | --- | --- | --- | --- | --- | --- | --- |
 | `client → Edge` (REST) | session cookie **+** bearer user JWT | `aud=edge.internal`; `sub=user:<uuid>`, `scope`, `d2_session_id`, `d2_org_*`, `d2_fp`; `act` only if impersonating | Edge `/oauth/token` (cookie→JWT exchange, RFC 8693) | none (token already on request) | **`JwtAuthMiddleware`**: sig via JWKS, `iss`, `aud`, `exp`/`nbf`, RS256 pin, then `ISessionLivenessTracker.IsAliveAsync(d2_session_id)`, then per-endpoint scopes (`JwtAuthMiddleware.cs:155-210`; `JwtValidator.cs:275-285`) | **✅ built** (inbound). JWT **issuance** ❌ Phase 3. |
-| `Edge → Auth` (in-process module call) | **NONE in process** — validated `IRequestContext` passed via façade | n/a (no wire hop; same process) | n/a — Auth is a module *inside* Edge (§1, §3.5 "module within Edge") | **none** (in-process; the topology's whole point — §11 Q24 item 3) | n/a (no re-validation in-process) | **❌ host unbuilt** — Edge itself is Phase 3; the *pattern* (pass context, don't re-mint) is designed-only. |
-| `Auth → Service A` (gRPC) | **the SAME transaction-token, forwarded unchanged** — `Authorization: Bearer <transaction-token>`; mTLS client cert on the channel; `PropagatedContext` (x-d2-context) carries only the operational subset (+ the appended call-path) | `aud=d2.internal` (unchanged); user `sub`, `scope` (the request's union), `d2_session_id`, `d2_org_*`, `act` if impersonating | not re-issued — Edge's boundary token is re-attached as-is; mTLS workload cert issued by KeyCustodian (ADR-0023) | **none** — zero downstream mint (the topology's whole point; resolved §11 Q24) | A's `JwtAuthInterceptor`: sig/`aud==d2.internal`/`exp`/liveness/**per-op scopes** — maps identity from the **forwarded JWT's** claims (the correct half — `JwtAuthInterceptor.cs:420-514`); mTLS peer verified against the internal CA | **⚠ designed, NOT built.** The forward-unchanged attach + mTLS + the operational-subset reader on .NET sync hops are designed (code follow-ups). The .NET server already maps identity from JWT claims ✅; it does not yet read `x-d2-context` on sync hops (zero `PropagatedContext` refs in `auth/grpc` today). Issuer + mTLS PKI ❌ Phase 3 / designed. |
-| `Service A → Service B` (gRPC) | the same transaction-token, **forwarded again unchanged** from A's inbound context | `aud=d2.internal` (unchanged the whole way down) | not re-issued — A forwards the token it received; mTLS cert is A's workload identity | **none** — no per-hop re-mint at any depth | B's `JwtAuthInterceptor`: identical inbound pipeline; identity + per-op scopes from the forwarded JWT; mTLS peer = Service A | **⚠ designed, NOT built** (same as the A hop). "Does each hop re-mint?" — **no**; forward-unchanged means the one boundary mint serves the whole chain (resolved §11 Q24). |
+| `Edge → Auth` (in-process module call) | **NONE in process** — validated `IRequestContext` passed via façade | n/a (no wire hop; same process) | n/a — Auth is a module *inside* Edge (§1, §3.5 "module within Edge") | **none** (in-process; the topology's whole point — §11 Q24 item 3) | n/a (no re-validation in-process) | **✅ pattern built** — `InProcessModuleBoundary.EstablishInProcessModule` marks `Origin = InProcessModule` before the generated leaf dispatches ([ADR-0025](../adrs/0025-request-context-establishment.md)); **❌ host unbuilt** — Edge itself is Phase 3, so the pattern has no live process to run in yet. |
+| `Auth → Service A` (gRPC) | **the SAME transaction-token, forwarded unchanged** — `Authorization: Bearer <transaction-token>`; mTLS client cert on the channel; `PropagatedContext` (x-d2-context) carries only the operational subset (+ the appended call-path) | `aud=d2.internal` (unchanged); user `sub`, `scope` (the request's union), `d2_session_id`, `d2_org_*`, `act` if impersonating | not re-issued — Edge's boundary token is re-attached as-is; mTLS workload cert issued by KeyCustodian (ADR-0023) | **none** — zero downstream mint (the topology's whole point; resolved §11 Q24) | A's `JwtAuthInterceptor`: sig/`aud==d2.internal`/`exp`/liveness/**per-op scopes** — maps identity from the **forwarded JWT's** claims (the correct half — `JwtAuthInterceptor.cs:420-514`); mTLS peer verified against the internal CA; `RequestOriginCrossProcessInterceptor` applies `x-d2-context` and establishes `Origin = CrossProcessHop` / `ImmediateCaller` from the mTLS peer | **✅ built** (proven over an in-memory two-process `TestServer`). The forward-unchanged attach + mTLS + the operational-subset reader/writer on .NET sync hops are all wired — the .NET server maps identity from JWT claims ✅ AND reads/writes `x-d2-context` (`RequestOriginCrossProcessInterceptor` inbound, `PropagatedContextClientInterceptor` outbound — [ADR-0025](../adrs/0025-request-context-establishment.md)). Issuer + mTLS PKI cross-process issuance ❌ Phase 3 / designed; **❌ live Edge host** to run this hop in production is still Phase 3. |
+| `Service A → Service B` (gRPC) | the same transaction-token, **forwarded again unchanged** from A's inbound context | `aud=d2.internal` (unchanged the whole way down) | not re-issued — A forwards the token it received; mTLS cert is A's workload identity | **none** — no per-hop re-mint at any depth | B's `JwtAuthInterceptor`: identical inbound pipeline; identity + per-op scopes from the forwarded JWT; mTLS peer = Service A; call-path establishment identical to the A hop | **✅ built** (same machinery as the A hop — `TestServer`-proven, not host-proven). "Does each hop re-mint?" — **no**; forward-unchanged means the one boundary mint serves the whole chain (resolved §11 Q24). **❌ live Edge host** remains the outstanding piece. |
 
 **Scope-authority note (RESOLVED — forward-unchanged).** On every cross-process hop the receiver's
 `JwtAuthInterceptor` checks `RequiredScopes` against **`requestContext.Scopes`**
@@ -2184,7 +2203,7 @@ that mints the inbound token).
 | **C1** | §8 Scenario B (service-identity+envelope, "RequiredScopes from envelope") **vs** the old Q10 token-exchange lean — different tokens on the wire **and** different scope sources. | **RESOLVED — forward the once-minted JWT.** Both readings superseded: the receiver validates the forwarded transaction-token's **own** scopes; the envelope-scope step is deleted. Fixed in §8 Scenario B, §13 Scenario 1 A/B rows + the scope-authority note, and §11 Q24 #1. |
 | **C2** | A second forwarded service-token sent with **no `audience`** would hit `AUDIENCE_MISMATCH` at a non-Edge receiver (`JwtValidator.cs:277-278`). | **RESOLVED — no second workload bearer exists.** Workload identity is mTLS (ADR-0023): cross-service business hops forward only the one transaction-token (broad `aud=d2.internal`, D1), which every internal service accepts. The over-the-wire mint↔validate parity test is a **code follow-up** (§11 Q24 #2). Fixed in §6.5, §13 Scenario 4, §11 Q24 #2. |
 | **C3** | Doc used a non-existent **"ContextEnvelope"** type and called it "encrypted" on the sync gRPC path. | **FIXED — global rename to `PropagatedContext` (`x-d2-context`).** Encryption applies to the **AMQP path only**; sync gRPC relies on transport TLS/mTLS + the forwarded JWT. Applied in §3.6, §4.2, §6, §8 (Scenarios B/C), §9, and the §13 terminology note. |
-| **C4** | Scenario B said the .NET gRPC client injects `x-d2-context` and the server "reconstructs identity from the envelope" — neither is wired in .NET (only TS injects; the .NET server maps from JWT claims). | **RESOLVED — identity comes from the forwarded JWT** (which .NET already does ✅); the "server reconstructs from envelope" step is **deleted**. Operational-subset propagation on .NET→.NET sync hops is **new plumbing / a code follow-up**. Fixed in §8 Scenario B, §13 Scenario 1 A/B rows. |
+| **C4** | Scenario B said the .NET gRPC client injects `x-d2-context` and the server "reconstructs identity from the envelope" — neither is wired in .NET (only TS injects; the .NET server maps from JWT claims). | **RESOLVED — identity comes from the forwarded JWT** (which .NET already does ✅); the "server reconstructs from envelope" step is **deleted**. Operational-subset propagation on .NET→.NET sync hops (the .NET client now *does* inject `x-d2-context`, including the call-path — the server applies it, never identity) is **now built** ([ADR-0025](../adrs/0025-request-context-establishment.md)), `TestServer`-proven; the live Edge host to run it in is the remaining piece. Fixed in §8 Scenario B, §13 Scenario 1 A/B rows. |
 | **C5** | §6.1/§3.8 implied a graceful "no-JWT → anonymous pass-through"; the built middleware only bypasses `[D2HarmlessEndpoint]`, else 401. | **FIXED — the only no-token bypass is `[D2HarmlessEndpoint]`.** "Anonymous" traffic requires the not-yet-built anon-JWT (Pattern A, §3.8). Clarified in §6.1 step 1 — doc precision, no code change. |
 | **C6** | §6.3 still showed `GetSnapshotAsync` + a rich `SessionSnapshot`; §8 Scenario A/E used `CachedSessionLivenessCheck` — but the 0002 reversal made the lib sentinel-only with `TieredCacheSessionLivenessTracker`. | **FIXED — §6.3 pruned to the as-shipped sentinel-only `ISessionLivenessTracker.IsAliveAsync`**; the `SessionSnapshot`/`GetSnapshotAsync` block is marked Edge-internal/Phase-3 and removed; `CachedSessionLivenessCheck` → `TieredCacheSessionLivenessTracker` in §8 Scenario A/E. |
 | **C7** | §3.3 impersonation vs §3.8 anon claims / `ActorKind.Anonymous` / §9 #5 assert — which are present in code? | **FIXED — build-state tagged.** §3.3 impersonation `act`-chain = ✅ built; §3.8 anon claims (`d2_kind` top-level, `d2_whois_id`, `d2_fingerprint_score`) + `ActorKind.Anonymous` + the §9 #5 impersonation-blocked `Debug.Assert` = **designed-only / not built** (Phase 3). §9 #5 now reads as a target, not currently-enforced. |
@@ -2192,16 +2211,20 @@ that mints the inbound token).
 **One-line build-state verdict.** *Inbound* JWT validation + session-liveness + per-op scope enforcement
 (`JwtAuthMiddleware`, `JwtAuthInterceptor`, `JwtValidator`, `TieredCacheSessionLivenessTracker`) is
 **built and strict**. The **forward-unchanged service-to-service model** — re-attaching the once-minted
-transaction-token, the propagated service call-path, the build-time caller-scopes ⊇ callee-scopes check,
-and **mTLS** workload identity (a new KeyCustodian PKI subsystem) — is **designed, not built** (code
-follow-ups of the pivot). The outbound `ITokenExchangeClient` is **built as a client but wired into no
-request flow** (test-only callers) and backs the **retained RFC 8693 exception paths**, not the per-hop
-business default. The forwarded-transaction-token `CallCredentials` and the workload-certificate
-leaf-presentation path are built in `D2.Shared.Auth.Outbound`; the calling workload's identity is the
-mTLS channel (ADR-0023), and the user's identity rides in the forwarded token (ADR-0022). The BFF → Edge
-boundary `client_credentials` token survives (the BFF is an external client of Edge). The **issuer**
-(Edge `/oauth/token`) + anon-JWT minting + `auth-keyring` + the cross-process mTLS issuance are
-**Phase-3 / unbuilt** — so end-to-end cross-service auth does not yet run anywhere.
+transaction-token, the propagated service call-path, and **mTLS** workload identity presentation — is
+**built** (`D2.Shared.Auth.Outbound`'s forwarded-transaction-token `CallCredentials` + workload-certificate
+leaf-presentation path; the call-path's outbound/inbound gRPC interceptor pair —
+[ADR-0025](../adrs/0025-request-context-establishment.md)), proven over an in-memory two-process
+`TestServer`, not yet exercised by a live multi-process host. The **build-time caller-scopes ⊇
+callee-scopes check** remains **designed, not built** (a code follow-up of the pivot). The outbound
+`ITokenExchangeClient` is **built as a client but wired into no request flow** (test-only callers) and
+backs the **retained RFC 8693 exception paths**, not the per-hop business default. The calling workload's
+identity is the mTLS channel (ADR-0023), and the user's identity rides in the forwarded token (ADR-0022).
+The BFF → Edge boundary `client_credentials` token survives (the BFF is an external client of Edge). The
+**issuer** (Edge `/oauth/token`) + anon-JWT minting + `auth-keyring` + the cross-process mTLS issuance +
+the **live Edge host** to run any of the above as a real multi-process deployment are **Phase-3 /
+unbuilt** — so end-to-end cross-service auth does not yet run anywhere, even though every piece of its
+machinery is now built and proven in isolation.
 
 ---
 

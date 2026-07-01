@@ -11,12 +11,16 @@
 // feeds both).
 //
 // Loud failures:
-//   D2TSP001  unmapped-scalar           — scalar has no registry entry
-//   D2TSP002  unsupported-property-type — anonymous-model / model-variant /
-//                                         otherwise-unrecognized prop kind
-//   D2TSP007  unsupported-union-shape   — a union whose variants are NOT a
-//                                         closed set of string literals
-//                                         (mixed-primitive / numeric / model)
+//   D2TSP001  unmapped-scalar             — scalar has no registry entry
+//   D2TSP002  unsupported-property-type   — anonymous-model / model-variant /
+//                                           otherwise-unrecognized prop kind
+//   D2TSP007  unsupported-union-shape     — a union whose variants are NOT a
+//                                           closed set of string literals
+//                                           (mixed-primitive / numeric / model)
+//   D2TSP012  nested-redact-unsupported   — a @d2Redact on a NESTED-model property;
+//                                           redaction is threaded only for top-level
+//                                           op-context properties, so a nested one is
+//                                           failed loud (never silently dropped)
 
 import type {
   Enum,
@@ -121,8 +125,16 @@ export interface FieldInfo {
   readonly repeated: boolean;
   /** True when the ModelProperty is marked optional (`?:`). */
   readonly optional: boolean;
-  /** True when the ModelProperty carries @d2Redact state. */
-  readonly redact: boolean;
+  /**
+   * The redaction reason from @d2Redact — a `D2.Shared.Utilities.Enums.RedactReason`
+   * member name (e.g. "SecretInformation"). Present ONLY when the property carries
+   * @d2Redact; undefined otherwise (so `redactReason !== undefined` is the redacted
+   * predicate). The C# DTO emitter emits
+   * `[property: RedactData(Reason = RedactReason.<redactReason>)]`; the reason is
+   * threaded from the decorator (never defaulted) so a secret-adjacent field is
+   * never silently classified as PersonalInformation.
+   */
+  readonly redactReason?: string;
   /**
    * The JSON wire-name override from @encodedName("application/json", "..."),
    * present ONLY when that override DIFFERS from the default camelCase
@@ -176,7 +188,8 @@ export interface WalkResult {
 export type WalkErrorCode =
   | "unmapped-scalar"
   | "unsupported-property-type"
-  | "unsupported-union-shape";
+  | "unsupported-union-shape"
+  | "nested-redact-unsupported";
 
 // ---------------------------------------------------------------------------
 // Walk implementation
@@ -248,7 +261,12 @@ function resolveProperty(
   onError: (code: WalkErrorCode, message: string) => void,
 ): FieldInfo | undefined {
   const optional = prop.optional;
-  const redact = redactMap.get(prop) === true;
+  // @d2Redact stores its RedactReason member-name string on the property; a
+  // legacy bare `true` (or any non-string) is treated as "not redacted" so the
+  // emitter never emits a reason it cannot map. The decorator layer guarantees a
+  // valid string reason, so this only degrades defensively.
+  const rawRedact = redactMap.get(prop);
+  const redactReason = typeof rawRedact === "string" ? rawRedact : undefined;
   const fieldNumber =
     typeof fieldMap.get(prop) === "number"
       ? (fieldMap.get(prop) as number)
@@ -286,7 +304,7 @@ function resolveProperty(
       protoType: mapping.proto,
       repeated: false,
       optional,
-      redact,
+      redactReason,
       jsonName,
       fieldNumber,
     };
@@ -302,7 +320,7 @@ function resolveProperty(
       t,
       csName,
       optional,
-      redact,
+      redactReason,
       jsonName,
       fieldNumber,
       nestedByName,
@@ -326,7 +344,7 @@ function resolveProperty(
       protoType: "string",
       repeated: false,
       optional,
-      redact,
+      redactReason,
       jsonName,
       fieldNumber,
       enumRef: collected,
@@ -354,7 +372,7 @@ function resolveProperty(
       repeated: false,
       // S-6: a `<literals> | null` union normalizes to optional.
       optional: resolved.optional,
-      redact,
+      redactReason,
       jsonName,
       fieldNumber,
       enumRef: resolved.enum,
@@ -381,7 +399,7 @@ function resolveProperty(
       protoType: undefined,
       repeated: false,
       optional,
-      redact,
+      redactReason,
       jsonName,
       fieldNumber,
       nested,
@@ -436,7 +454,7 @@ function resolveArrayProperty(
   arrayType: Model,
   csName: string,
   optional: boolean,
-  redact: boolean,
+  redactReason: string | undefined,
   jsonName: string | undefined,
   fieldNumber: number | undefined,
   nestedByName: Map<string, NestedModel>,
@@ -466,7 +484,7 @@ function resolveArrayProperty(
       protoType: mapping.proto,
       repeated: true,
       optional,
-      redact,
+      redactReason,
       jsonName,
       fieldNumber,
     };
@@ -491,7 +509,7 @@ function resolveArrayProperty(
       protoType: "string",
       repeated: true,
       optional,
-      redact,
+      redactReason,
       jsonName,
       fieldNumber,
       enumRef: collected,
@@ -521,7 +539,7 @@ function resolveArrayProperty(
       protoType: "string",
       repeated: true,
       optional,
-      redact,
+      redactReason,
       jsonName,
       fieldNumber,
       enumRef: resolved.enum,
@@ -549,7 +567,7 @@ function resolveArrayProperty(
       protoType: undefined,
       repeated: true,
       optional,
-      redact,
+      redactReason,
       jsonName,
       fieldNumber,
       nested,
@@ -781,10 +799,13 @@ function sanitizeIdentifier(literal: string): string {
 
 /**
  * Collect a nested model into the dedup map. Returns the NestedModel (which
- * may have been seen before — same object from the map). Nested models carry NO
- * op-level @d2Redact state (they are transport containers, not direct op-context
- * objects), so each is walked against an EMPTY redact map → every nested field's
- * `redact` is false.
+ * may have been seen before — same object from the map). Redaction metadata is
+ * threaded ONLY for top-level op-context properties, so nested fields carry no
+ * `redactReason` — each is resolved against an EMPTY redact map. A @d2Redact on a
+ * nested-model property is therefore UNSUPPORTED: rather than silently dropping it
+ * (a latent PII leak — the field would emit with no `[RedactData]`), the walker
+ * fails loud with D2TSP012 so the author restructures (move the sensitive field to
+ * a direct op input/output property, or remove @d2Redact).
  *
  * Depth-N: a nested model's own fields are resolved by the SAME `resolveProperty`
  * logic the top-level op model uses — so a nested model that itself references a
@@ -794,10 +815,10 @@ function sanitizeIdentifier(literal: string): string {
  * or self-referential model terminates: the recursive `collectNested` for the same
  * name finds the in-progress entry and returns it instead of recursing forever.
  *
- * Strict fail-loud: an unmapped nested scalar / unsupported nested type fires the
- * SAME loud diagnostic (D2TSP001 / D2TSP002 / D2TSP007) as a top-level field — it
- * is NEVER silently omitted. The field is dropped only AFTER the loud diagnostic,
- * exactly like a top-level field.
+ * Strict fail-loud: an unmapped nested scalar / unsupported nested type / a nested
+ * @d2Redact fires the SAME loud diagnostic (D2TSP001 / D2TSP002 / D2TSP007 /
+ * D2TSP012) as a top-level field — it is NEVER silently omitted. The field is
+ * dropped only AFTER the loud diagnostic, exactly like a top-level field.
  */
 function collectNested(
   program: Program,
@@ -820,16 +841,34 @@ function collectNested(
   };
   nestedByName.set(model.name, nested);
 
-  // Nested models carry no redact state — walk against an empty redact map so every
-  // resolved field's `redact` is false. Resolution is otherwise identical to a
-  // top-level field (scalars, optionals, arrays, deeper nested models, enums/unions),
+  // Nested models carry no redact state — resolved fields always have an undefined
+  // `redactReason` (walk against an empty redact map). Resolution is otherwise identical
+  // to a top-level field (scalars, optionals, arrays, deeper nested models, enums/unions),
   // which is what makes nested support depth-agnostic + uniformly loud.
   // The fieldMap (for @d2Field pins) is shared from the outer walkModel so nested
   // model properties can carry their own field-number pins.
   const emptyRedactMap = new Map<object, unknown>();
   const resolvedFieldMap = fieldMap ?? new Map<object, unknown>();
+  // The REAL redact map (the same one walkModel reads) — consulted ONLY to detect an
+  // unsupported nested @d2Redact and fail loud; it is never threaded into resolved
+  // nested fields (those stay unredacted via emptyRedactMap).
+  const redactMap = program.stateMap(D2_REDACT_KEY);
 
   for (const [propName, prop] of model.properties) {
+    // Fail loud: @d2Redact on a nested-model property is unsupported. Redaction is
+    // applied only to top-level op-context properties; a nested @d2Redact would
+    // otherwise be silently dropped (the field would emit with no `[RedactData]` — a
+    // latent PII leak). Fire D2TSP012, then drop the field only AFTER the loud
+    // diagnostic, exactly like a top-level unsupported field.
+    if (typeof redactMap.get(prop) === "string") {
+      onError(
+        "nested-redact-unsupported",
+        `D2TSP012: @d2Redact on nested-model property '${model.name}.${propName}' is unsupported — redaction is applied only to top-level operation-context properties; move the sensitive field to a direct op input/output property or remove @d2Redact`,
+      );
+
+      continue;
+    }
+
     const fieldInfo = resolveProperty(
       program,
       model.name,

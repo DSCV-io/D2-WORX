@@ -234,4 +234,52 @@ public static class KeyCustodianFailures<T>
             category: ErrorCategory.PolicyDenied);
     }
 
+    /// <summary>The request origin was not positively established by any trust boundary (the fail-closed RequestOrigin.Unestablished default), so the signing authority denies. The origin is recomputed locally by the receiving boundary from its own unforgeable transport facts and is never propagated; a capability authority that has not had its origin established denies rather than assume a plane. Typed result.</summary>
+    /// <param name="messages">Optional translation messages; defaults to <c>[TK.Keycustodian.Authorization.REQUEST_ORIGIN_UNESTABLISHED]</c>. Pass a message bound via <c>TKMessage.With(...)</c> to name the offending argument.</param>
+    /// <returns>A pre-built typed <see cref="D2Result{T}"/> failure.</returns>
+    public static D2Result<T> RequestOriginUnestablished(IReadOnlyList<TKMessage>? messages = null)
+    {
+        messages ??= [TK.Keycustodian.Authorization.REQUEST_ORIGIN_UNESTABLISHED];
+        return D2Result<T>.Forbidden(
+            messages: messages,
+            errorCode: KeyCustodianErrorCodes.KEYCUSTODIAN_REQUEST_ORIGIN_UNESTABLISHED,
+            category: ErrorCategory.PolicyDenied);
+    }
+
+    /// <summary>The requested key domain is the cluster-signing root (jwks-signing) and is structurally unreachable on the general signing surface for every established origin. It is signable only through the dedicated JWT minter capability, which is registered solely in the auth-module composition (possession plus the in-process-module plane is the authority). This kills the confused-deputy: a request that became in-process downstream cannot reach the root, and there is no caller id to spoof. Typed result.</summary>
+    /// <param name="messages">Optional translation messages; defaults to <c>[TK.Keycustodian.Authorization.MINTER_CAPABILITY_REQUIRED]</c>. Pass a message bound via <c>TKMessage.With(...)</c> to name the offending argument.</param>
+    /// <returns>A pre-built typed <see cref="D2Result{T}"/> failure.</returns>
+    public static D2Result<T> MinterCapabilityRequired(IReadOnlyList<TKMessage>? messages = null)
+    {
+        messages ??= [TK.Keycustodian.Authorization.MINTER_CAPABILITY_REQUIRED];
+        return D2Result<T>.Forbidden(
+            messages: messages,
+            errorCode: KeyCustodianErrorCodes.KEYCUSTODIAN_MINTER_CAPABILITY_REQUIRED,
+            category: ErrorCategory.PolicyDenied);
+    }
+
+    /// <summary>No active signing key is available for the requested key domain. Retryable not-ready-yet condition (the domain has not been seeded or is mid-rotation with no active key). Typed result.</summary>
+    /// <param name="messages">Optional translation messages; defaults to <c>[TK.Keycustodian.Infrastructure.SIGNING_KEY_UNAVAILABLE]</c>. Pass a message bound via <c>TKMessage.With(...)</c> to name the offending argument.</param>
+    /// <returns>A pre-built typed <see cref="D2Result{T}"/> failure.</returns>
+    public static D2Result<T> SigningKeyUnavailable(IReadOnlyList<TKMessage>? messages = null)
+    {
+        messages ??= [TK.Keycustodian.Infrastructure.SIGNING_KEY_UNAVAILABLE];
+        return D2Result<T>.ServiceUnavailable(
+            messages: messages,
+            errorCode: KeyCustodianErrorCodes.KEYCUSTODIAN_SIGNING_KEY_UNAVAILABLE,
+            category: ErrorCategory.InfrastructureUnavailable);
+    }
+
+    /// <summary>The signing input was empty. There is nothing to sign — a zero-length payload is a client error, rejected before any key load or crypto. Typed result.</summary>
+    /// <param name="messages">Optional translation messages; defaults to <c>[TK.Keycustodian.Validation.EMPTY_SIGNING_INPUT]</c>. Pass a message bound via <c>TKMessage.With(...)</c> to name the offending argument.</param>
+    /// <returns>A pre-built typed <see cref="D2Result{T}"/> failure.</returns>
+    public static D2Result<T> EmptySigningInput(IReadOnlyList<TKMessage>? messages = null)
+    {
+        messages ??= [TK.Keycustodian.Validation.EMPTY_SIGNING_INPUT];
+        return D2Result<T>.ValidationFailed(
+            messages: messages,
+            errorCode: KeyCustodianErrorCodes.KEYCUSTODIAN_EMPTY_SIGNING_INPUT,
+            category: ErrorCategory.ValidationFailure);
+    }
+
 }

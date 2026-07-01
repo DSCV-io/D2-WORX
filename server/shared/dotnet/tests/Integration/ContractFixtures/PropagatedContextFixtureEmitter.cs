@@ -7,6 +7,7 @@
 namespace D2.Shared.Tests.Integration.ContractFixtures;
 
 using System.Collections.Generic;
+using D2.Shared.Auth.Abstractions;
 using D2.Shared.Context.Abstractions;
 using Xunit;
 
@@ -97,6 +98,28 @@ public sealed class PropagatedContextFixtureEmitter
         FixturePathHelpers.WriteFixture(CATALOG, "at-cap-boundaries", data);
     }
 
+    [Fact]
+    [Trait("Category", "ContractFixtures")]
+    public void Emit_CallPath()
+    {
+        // The first propagated list-of-records field. Each entry carries its
+        // own id, the hop kind (serialized as the enum member name), and a
+        // timestamp (ISO "O" round-trip form). Coexists with a scalar field.
+        var t0 = new DateTimeOffset(2026, 5, 1, 12, 0, 0, TimeSpan.Zero);
+        var ctx = new PropagatedContext
+        {
+            RequestId = "req-callpath",
+            CallPath =
+            [
+                new CallPathEntry("edge", CallPathKind.Edge, t0),
+                new CallPathEntry("key-custodian", CallPathKind.WorkloadHop, t0.AddSeconds(1)),
+                new CallPathEntry("audit", CallPathKind.ModuleHop, t0.AddSeconds(2)),
+            ],
+        };
+        var data = SerializedShape(ctx);
+        FixturePathHelpers.WriteFixture(CATALOG, "call-path", data);
+    }
+
     /// <summary>
     /// Materialize the wire-shape JSON object that the .NET serializer
     /// would emit (camelCase property names, omit-null). We construct it
@@ -124,6 +147,23 @@ public sealed class PropagatedContextFixtureEmitter
         if (ctx.OrgPlanTier is not null) d["orgPlanTier"] = ctx.OrgPlanTier;
         if (ctx.FeatureFlagsCsv is not null) d["featureFlagsCsv"] = ctx.FeatureFlagsCsv;
         if (ctx.WhoIsHashId is not null) d["whoIsHashId"] = ctx.WhoIsHashId;
+
+        if (ctx.CallPath is { Count: > 0 })
+        {
+            var entries = new List<Dictionary<string, object?>>();
+            foreach (var e in ctx.CallPath)
+            {
+                entries.Add(new Dictionary<string, object?>
+                {
+                    ["id"] = e.Id,
+                    ["kind"] = e.Kind.ToString(),
+                    ["timestamp"] = e.Timestamp.ToString("O"),
+                });
+            }
+
+            d["callPath"] = entries;
+        }
+
         return d;
     }
 }

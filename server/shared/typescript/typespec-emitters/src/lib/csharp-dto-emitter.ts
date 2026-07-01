@@ -14,10 +14,13 @@
 //   - sealed record with positional parameters.
 //   - T? when ModelProperty.optional === true.
 //   - IReadOnlyList<T> for collections.
-//   - [property: RedactData(Reason = RedactReason.PersonalInformation)] on
-//     every @d2Redact-bearing parameter (the [property:] target is MANDATORY —
-//     a bare positional-param attribute would NOT be seen by the property-
-//     reflecting RedactDataDestructuringPolicy).
+//   - [property: RedactData(Reason = RedactReason.<reason>)] on every
+//     @d2Redact-bearing parameter, where <reason> is the RedactReason member
+//     threaded from the @d2Redact decorator — never defaulted. An unknown or
+//     missing reason is a loud emit failure, so a secret-adjacent field is never
+//     silently classified as PersonalInformation. The [property:] target is
+//     MANDATORY — a bare positional-param attribute would NOT be seen by the
+//     property-reflecting RedactDataDestructuringPolicy.
 //   - Sibling `public enum` declarations for every collected enum, each carrying
 //     [JsonConverter(typeof(JsonStringEnumConverter))] so the JSON wire form is
 //     the member-name string (never the numeric backing). A member whose wire
@@ -30,6 +33,41 @@
 
 import { buildBanner } from "./banner.js";
 import type { FieldInfo, NestedEnum, NestedModel } from "./model-walk.js";
+
+// Mirrors the member names of D2.Shared.Utilities.Enums.RedactReason — the
+// closed data-class taxonomy the emitter maps a @d2Redact reason onto. The
+// decorator layer already validates the reason, so an unknown value reaching
+// the emitter is an invariant break; the emitter fails loud rather than emit an
+// un-mappable RedactReason.<value> or silently drop the redaction.
+const REDACT_REASONS: ReadonlySet<string> = new Set([
+  "Unspecified",
+  "PersonalInformation",
+  "FinancialInformation",
+  "SecretInformation",
+  "VerboseContent",
+  "Other",
+]);
+
+/**
+ * Resolve the RedactReason member for a redacted field, failing loud on an
+ * unknown reason. The reason is threaded from @d2Redact — never defaulted — so a
+ * secret-adjacent field can never be silently emitted as PersonalInformation.
+ * Called only for fields whose `redactReason` is set (guaranteed by the caller),
+ * so the reason is non-undefined here; the only failure mode is an unrecognized
+ * value, which is an invariant break the decorator layer should have rejected.
+ */
+function resolveRedactReason(field: FieldInfo): string {
+  const reason = field.redactReason!;
+
+  if (!REDACT_REASONS.has(reason))
+    throw new Error(
+      `csharp-dto-emitter: @d2Redact field '${field.csName}' has an unrecognized ` +
+        `RedactReason '${reason}' — expected one of: ${[...REDACT_REASONS].join(", ")}. ` +
+        `Fix the @d2Redact reason on the source model.`,
+    );
+
+  return reason;
+}
 
 // ---------------------------------------------------------------------------
 // Public types
@@ -117,7 +155,7 @@ function emitInput(
   enums: readonly NestedEnum[],
 ): EmittedFile {
   const typeName = `${pascalOp}Input`;
-  const needsRedactUsings = fields.some((f) => f.redact);
+  const needsRedactUsings = fields.some((f) => f.redactReason !== undefined);
   const content = emitRecord(
     namespace,
     banner,
@@ -139,7 +177,7 @@ function emitOutput(
   enums: readonly NestedEnum[],
 ): EmittedFile {
   const typeName = `${pascalOp}Output`;
-  const needsRedactUsings = fields.some((f) => f.redact);
+  const needsRedactUsings = fields.some((f) => f.redactReason !== undefined);
   const content = emitRecord(
     namespace,
     banner,
@@ -155,8 +193,9 @@ function emitOutput(
 /**
  * Emit one sealed record, optionally with nested model records appended.
  *
- * `[property: RedactData(Reason = RedactReason.PersonalInformation)]` is
- * emitted on every @d2Redact field. The `[property:]` attribute target is
+ * `[property: RedactData(Reason = RedactReason.<reason>)]` is emitted on every
+ * @d2Redact field, where `<reason>` is the RedactReason member threaded from the
+ * decorator (never defaulted). The `[property:]` attribute target is
  * load-bearing: positional record parameters synthesize a backing property,
  * and the RedactDataDestructuringPolicy reflects over PUBLIC PROPERTIES (not
  * constructor params). A bare attribute on the param targets the parameter,
@@ -288,7 +327,9 @@ function emitEnumBlock(lines: string[], en: NestedEnum): void {
  * the default camelCase wire name) gets
  * `[property: JsonPropertyName("<jsonName>")]` prepended so System.Text.Json
  * serializes the property under the canonical wire name (e.g. "jwks_uri").
- * Redacted fields get `[property: RedactData(Reason = RedactReason.PersonalInformation)]`.
+ * Redacted fields get `[property: RedactData(Reason = RedactReason.<reason>)]`,
+ * where `<reason>` is the RedactReason member threaded from @d2Redact (never
+ * defaulted; an unknown/missing reason is a loud emit failure).
  * Both use the `[property:]` target — mandatory because positional record
  * parameters synthesize the backing property the serializer / redaction policy
  * reflect over (a bare param-target attribute is not seen). When both are
@@ -299,9 +340,10 @@ function buildParam(field: FieldInfo): string {
     field.jsonName !== undefined
       ? `[property: JsonPropertyName("${field.jsonName}")] `
       : "";
-  const redactAttr = field.redact
-    ? "[property: RedactData(Reason = RedactReason.PersonalInformation)] "
-    : "";
+  const redactAttr =
+    field.redactReason !== undefined
+      ? `[property: RedactData(Reason = RedactReason.${resolveRedactReason(field)})] `
+      : "";
   return `${jsonNameAttr}${redactAttr}${field.csType} ${field.csName}`;
 }
 

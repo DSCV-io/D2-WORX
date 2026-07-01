@@ -83,7 +83,9 @@
             "Role?",
             "ActorKind?",
             "ImpersonationKind?",
+            "RequestOrigin",
             "IReadOnlyList<ActorEntry>",
+            "IReadOnlyList<CallPathEntry>",
             "IReadOnlyList<string>",
             "IReadOnlySet<string>"
           ],
@@ -119,7 +121,12 @@
         "maxLength": {
           "type": "integer",
           "minimum": 1,
-          "description": "Wire-level per-field length cap, enforced by the codegen-emitted PropagatedContextSerializer.TryDecode. A forged x-d2-context header with any propagatable field exceeding its cap is dropped wholesale (propagation is opportunistic, never required). Only meaningful when propagate=true on a string-typed field."
+          "description": "Wire-level per-field cap, enforced by the codegen-emitted PropagatedContextSerializer.TryDecode. A forged x-d2-context header with any propagatable field exceeding its cap is dropped wholesale (propagation is opportunistic, never required). On a string-typed field this is the max character length; on a propagated list-of-records field (e.g. CallPath) it is reinterpreted as the max entry count (the call-path depth bound). Only meaningful when propagate=true."
+        },
+        "entryIdMaxLength": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Per-entry id length cap for a propagated list-of-records field (e.g. CallPath). Bounds a single forged entry id so it cannot bloat log scope keys / audit columns even when the entry count is within maxLength. Single source of the cap: both the .NET and TypeScript PropagatedContextSerializer.TryDecode derive it from this value (neither hard-codes the number). Only meaningful on a propagated list-of-records field."
         },
         "redact": {
           "type": "boolean",

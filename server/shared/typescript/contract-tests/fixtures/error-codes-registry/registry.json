@@ -232,6 +232,17 @@
       "userMessageKeyPath": "TK.Keycustodian.Authorization.CROSS_PROCESS_DOMAIN_REJECTED",
       "userMessageKeySnake": "keycustodian_authorization_CROSS_PROCESS_DOMAIN_REJECTED"
     },
+    "KEYCUSTODIAN_EMPTY_SIGNING_INPUT": {
+      "category": "validation_failure",
+      "code": "KEYCUSTODIAN_EMPTY_SIGNING_INPUT",
+      "doc": "The signing input was empty. There is nothing to sign \u2014 a zero-length payload is a client error, rejected before any key load or crypto.",
+      "domain": "keycustodian",
+      "factoryName": "EmptySigningInput",
+      "factoryShape": "standard",
+      "httpStatus": 400,
+      "userMessageKeyPath": "TK.Keycustodian.Validation.EMPTY_SIGNING_INPUT",
+      "userMessageKeySnake": "keycustodian_validation_EMPTY_SIGNING_INPUT"
+    },
     "KEYCUSTODIAN_GRACE_NOT_ELAPSED": {
       "category": "validation_failure",
       "code": "KEYCUSTODIAN_GRACE_NOT_ELAPSED",
@@ -320,6 +331,17 @@
       "userMessageKeyPath": "TK.Common.Errors.TOO_LONG",
       "userMessageKeySnake": "common_errors_TOO_LONG"
     },
+    "KEYCUSTODIAN_MINTER_CAPABILITY_REQUIRED": {
+      "category": "policy_denied",
+      "code": "KEYCUSTODIAN_MINTER_CAPABILITY_REQUIRED",
+      "doc": "The requested key domain is the cluster-signing root (jwks-signing) and is structurally unreachable on the general signing surface for every established origin. It is signable only through the dedicated JWT minter capability, which is registered solely in the auth-module composition (possession plus the in-process-module plane is the authority). This kills the confused-deputy: a request that became in-process downstream cannot reach the root, and there is no caller id to spoof.",
+      "domain": "keycustodian",
+      "factoryName": "MinterCapabilityRequired",
+      "factoryShape": "standard",
+      "httpStatus": 403,
+      "userMessageKeyPath": "TK.Keycustodian.Authorization.MINTER_CAPABILITY_REQUIRED",
+      "userMessageKeySnake": "keycustodian_authorization_MINTER_CAPABILITY_REQUIRED"
+    },
     "KEYCUSTODIAN_NO_ACTIVE_ISSUING_CA": {
       "category": "infrastructure_unavailable",
       "code": "KEYCUSTODIAN_NO_ACTIVE_ISSUING_CA",
@@ -353,6 +375,17 @@
       "userMessageKeyPath": "TK.Keycustodian.Internal.PRECONDITION_VIOLATED",
       "userMessageKeySnake": "keycustodian_internal_PRECONDITION_VIOLATED"
     },
+    "KEYCUSTODIAN_REQUEST_ORIGIN_UNESTABLISHED": {
+      "category": "policy_denied",
+      "code": "KEYCUSTODIAN_REQUEST_ORIGIN_UNESTABLISHED",
+      "doc": "The request origin was not positively established by any trust boundary (the fail-closed RequestOrigin.Unestablished default), so the signing authority denies. The origin is recomputed locally by the receiving boundary from its own unforgeable transport facts and is never propagated; a capability authority that has not had its origin established denies rather than assume a plane.",
+      "domain": "keycustodian",
+      "factoryName": "RequestOriginUnestablished",
+      "factoryShape": "standard",
+      "httpStatus": 403,
+      "userMessageKeyPath": "TK.Keycustodian.Authorization.REQUEST_ORIGIN_UNESTABLISHED",
+      "userMessageKeySnake": "keycustodian_authorization_REQUEST_ORIGIN_UNESTABLISHED"
+    },
     "KEYCUSTODIAN_SIGNING_DOMAIN_NOT_AUTHORIZED": {
       "category": "policy_denied",
       "code": "KEYCUSTODIAN_SIGNING_DOMAIN_NOT_AUTHORIZED",
@@ -363,6 +396,17 @@
       "httpStatus": 403,
       "userMessageKeyPath": "TK.Keycustodian.Authorization.SIGNING_DOMAIN_NOT_AUTHORIZED",
       "userMessageKeySnake": "keycustodian_authorization_SIGNING_DOMAIN_NOT_AUTHORIZED"
+    },
+    "KEYCUSTODIAN_SIGNING_KEY_UNAVAILABLE": {
+      "category": "infrastructure_unavailable",
+      "code": "KEYCUSTODIAN_SIGNING_KEY_UNAVAILABLE",
+      "doc": "No active signing key is available for the requested key domain. Retryable not-ready-yet condition (the domain has not been seeded or is mid-rotation with no active key).",
+      "domain": "keycustodian",
+      "factoryName": "SigningKeyUnavailable",
+      "factoryShape": "standard",
+      "httpStatus": 503,
+      "userMessageKeyPath": "TK.Keycustodian.Infrastructure.SIGNING_KEY_UNAVAILABLE",
+      "userMessageKeySnake": "keycustodian_infrastructure_SIGNING_KEY_UNAVAILABLE"
     },
     "KEYCUSTODIAN_SMOKE_PROOF_TYPE_MISMATCH": {
       "category": "validation_failure",

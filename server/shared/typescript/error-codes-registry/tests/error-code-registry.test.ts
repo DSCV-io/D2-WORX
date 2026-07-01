@@ -162,8 +162,8 @@ describe("ErrorCodeFactoryShape type — 2 schema values", () => {
 // ---------------------------------------------------------------------------
 
 describe("errorCodeRegistry — generated merged registry", () => {
-  it("all: contains the expected total count (14 auth + 15 generic + 17 keycustodian = 46)", () => {
-    expect(errorCodeRegistry.all).toHaveLength(46);
+  it("all: contains the expected total count (14 auth + 15 generic + 21 keycustodian = 50)", () => {
+    expect(errorCodeRegistry.all).toHaveLength(50);
   });
 
   it("resolve: every generic code resolves with domain 'common'", () => {

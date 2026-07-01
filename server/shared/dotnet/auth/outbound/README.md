@@ -6,11 +6,12 @@ Copyright (c) DCSV. All rights reserved.
 
 > Parent: [`server/shared/dotnet/`](../../README.md)
 
-The caller-side companion to the inbound auth runtime. A host that makes internal cross-process calls reaches for three outbound factors here, each opt-in and independent:
+The caller-side companion to the inbound auth runtime. A host that makes internal cross-process calls reaches for four outbound factors here, each opt-in and independent:
 
 - **Forwarded transaction-token** (`AddD2ForwardedJwt` / `ForwardedJwtCallCredentials`) — the per-request gRPC `CallCredentials` that re-attaches the current inbound request's validated transaction-token unchanged on each outbound hop ([ADR-0022](../../../../../docs/adrs/0022-service-auth-mint-once-forward.md)). This is the service-to-service business default: the downstream receiver re-validates the same token and reads the user's identity *and* scopes straight from it.
 - **Workload certificate** (`AddD2WorkloadCertificate` / `AddD2WorkloadCertificateOutbound`) — the mTLS leaf the calling workload presents on outbound gRPC channels. The mutually-authenticated TLS channel is what establishes *which workload is calling* ([ADR-0023](../../../../../docs/adrs/0023-mtls-workload-identity.md)).
 - **RFC 8693 token exchange** (`ITokenExchangeClient`) — the boundary mint plus the deliberate exception cases. Edge mints exactly one internal transaction-token at the trust boundary; exchange is the explicit tool for the single boundary mint and the enumerated exceptions — cross-trust-domain calls, justified narrowing, asynchronous scope reduction, and establishing/extending an impersonation `act` chain — never the per-hop business default.
+- **Propagated context** (`AddD2PropagatedContext` / `PropagatedContextClientInterceptor`) — the gRPC client interceptor that writes the `x-d2-context` header (the operational propagation subset PLUS the accumulated call-path) on every outbound RPC ([ADR-0025](../../../../../docs/adrs/0025-request-context-establishment.md)). Closes the sync-hop gap ADR-0022 left open: the propagated subset now rides gRPC, not only AMQP.
 
 Pure consumer of Edge's OAuth `token_endpoint`; this lib does NOT issue tokens. OIDC discovery is canonical: a single `D2_AUTH_ISSUER` env var drives `<issuer>/.well-known/openid-configuration`, and `token_endpoint` is read from the discovery doc — no separate URL knobs.
 
@@ -104,6 +105,22 @@ The chain context is resolved **once, at channel construction** (a `ClientCertif
 
 The `IWorkloadCertificateIssuer` port is the in-process / harness seam — the host-supplied adapter that proves the full refresh-ahead + presentation path locally. The cross-process bootstrap (a service obtaining its first leaf from KeyCustodian over the wire via a gRPC issuance contract + bootstrap-identity provisioning) is tracked in [ADR-0023](../../../../../docs/adrs/0023-mtls-workload-identity.md) § Cross-process issuance.
 
+### Propagated context — `PropagatedContextClientInterceptor` (the outbound half of ADR-0025)
+
+```csharp
+// Composition root (registers the interceptor singleton; idempotent):
+services.AddD2PropagatedContextOutbound();
+
+// Per-channel opt-in — the GENERATED gRPC-client DI extension AUTO-CHAINS this
+// alongside .AddD2ForwardedJwt().AddD2WorkloadCertificate(); a host never calls
+// it directly:
+services
+    .AddGrpcClient<FilesGrpc.FilesGrpcClient>(o => o.Address = new Uri("https://files.internal"))
+    .AddD2PropagatedContext();
+```
+
+Per outbound RPC (all five client call shapes — blocking + async unary, client-streaming, server-streaming, duplex — route through one shared method, so a call shape cannot silently skip propagation), `PropagatedContextClientInterceptor` resolves the CURRENT inbound request's scope through the same framework-free `IAmbientRequestScopeAccessor` port the forwarded-JWT credential uses, reads that scope's `IRequestContext`, projects it via `ToPropagatedContext()` (which includes the accumulated `CallPath` the inbound establishment boundaries appended), and attaches the encoded `x-d2-context` header. Opportunistic, never required: no inbound scope, no request-context, or an empty projection means no header and no throw — a genuinely system-initiated call with no inbound request simply propagates nothing. A plain client interceptor (not `CallCredentials`) is used deliberately so it works on plaintext / loopback channels too — the call-path is non-secret operational telemetry, not a credential. `AddD2PropagatedContextOutbound()` registers ONLY the interceptor type; the `IAmbientRequestScopeAccessor` it depends on is supplied by whichever inbound transport the host uses (`AddD2AuthHttp()` / `AddD2AuthGrpc()`), mirroring `AddD2ForwardedJwtOutbound()`.
+
 ---
 
 ## File layout
@@ -114,7 +131,9 @@ auth/outbound/
 ├── AuthOutboundServiceCollectionExtensions.cs        # AddD2AuthOutbound + AddD2WorkloadCertificateOutbound + AddD2ForwardedJwtOutbound composition roots
 ├── Grpc/
 │   ├── ForwardedJwtCallCredentials.cs                # per-request CallCredentials — reveals the request-scoped ForwardedJwt + attaches Bearer (the sole reveal caller)
-│   └── GrpcClientBuilderExtensions.cs                # .AddD2ForwardedJwt() (forwarded token) + .AddD2WorkloadCertificate() (leaf-chain context) per-channel opt-ins
+│   ├── GrpcClientBuilderExtensions.cs                # .AddD2ForwardedJwt() (forwarded token) + .AddD2WorkloadCertificate() (leaf-chain context) per-channel opt-ins
+│   ├── PropagatedContextClientInterceptor.cs         # per-call Interceptor — writes the x-d2-context header (propagated subset + call-path) on every outbound RPC
+│   └── PropagatedContextOutboundExtensions.cs        # AddD2PropagatedContextOutbound() (host) + .AddD2PropagatedContext() (per-channel opt-in)
 ├── WorkloadCertificate/
 │   ├── IWorkloadLeafSource.cs                        # interface — current live leaf accessor
 │   ├── IWorkloadCertificateIssuer.cs                 # host-supplied reissue port (BCL DER+PKCS#8 boundary)
@@ -189,7 +208,7 @@ Tag-key + tag-value constants are emitted by [`D2.Shared.Telemetry.Tags.SourceGe
 
 ## Bootstrap order
 
-The three outbound factors are independent composition roots — a host wires whichever it needs, in any order relative to each other. Cross-process workload identity is supplied by the mTLS channel (`AddD2WorkloadCertificateOutbound` + the refresh-ahead leaf), so a host's outbound calls to Edge (keyring / JWKS fetches) present a client certificate; the forwarded transaction-token is ambient on each request (no acquire step). Neither factor imposes a startup-ordering requirement on the inbound `D2.Shared.Auth` lib.
+The four outbound factors are independent composition roots — a host wires whichever it needs, in any order relative to each other. Cross-process workload identity is supplied by the mTLS channel (`AddD2WorkloadCertificateOutbound` + the refresh-ahead leaf), so a host's outbound calls to Edge (keyring / JWKS fetches) present a client certificate; the forwarded transaction-token is ambient on each request (no acquire step); propagated context is opportunistic and reads the same ambient scope. None of the four factors imposes a startup-ordering requirement on the inbound `D2.Shared.Auth` lib.
 
 ---
 
@@ -197,8 +216,10 @@ The three outbound factors are independent composition roots — a host wires wh
 
 - [`D2.Shared.Auth`](../core/README.md) — inbound auth runtime (JWT validator + session liveness + `AddD2Auth` composition root); transport bindings in `D2.Shared.Auth.Http` + `D2.Shared.Auth.Grpc` siblings
 - [`D2.Shared.Auth.Abstractions`](../abstractions/README.md) — `Audiences.*` / `JwtClaimTypes.*` constants + the `IForwardedJwtAccessor` holder + the `IAmbientRequestScopeAccessor` port
+- [`D2.Shared.Context.Abstractions`](../../context/abstractions/README.md) — `IRequestContext.ToPropagatedContext()`, the projection `PropagatedContextClientInterceptor` encodes onto the outbound header
 - [`D2.Shared.Caching.Abstractions`](../../caching/abstractions/README.md) — `ILocalCache` + `ICacheInvalidationBackplane` interfaces
 - [`D2.Shared.Resilience`](../../resilience/README.md) — `Singleflight` for fetch-path deduplication + `CircuitBreaker` to fast-fail during sustained outage
 - [ADR-0022](../../../../../docs/adrs/0022-service-auth-mint-once-forward.md) — mint-once-at-the-Edge, forward-unchanged service-to-service model; token exchange repurposed to the boundary mint + exceptions
 - [ADR-0023](../../../../../docs/adrs/0023-mtls-workload-identity.md) — mTLS workload identity for cross-process hops
+- [ADR-0025](../../../../../docs/adrs/0025-request-context-establishment.md) — `Origin` / `ImmediateCaller` / `CallPath` establishment model; `PropagatedContextClientInterceptor` is the outbound half that carries `CallPath` across gRPC hops
 - [RFC 8693](https://datatracker.ietf.org/doc/html/rfc8693) — token-exchange grant (the boundary mint + the exception cases)

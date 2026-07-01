@@ -83,7 +83,10 @@ function makeRedactProp(type: Scalar): {
   redactMap: Map<object, unknown>;
 } {
   const prop = { type, optional: false } as unknown as ModelProperty;
-  return { prop, redactMap: new Map([[prop, true]]) };
+  // @d2Redact stores the RedactReason member-name string; the sign fixture's
+  // payload is secret-adjacent material (SecretInformation), matching the
+  // committed SignFixtureInput.g.cs fixture.
+  return { prop, redactMap: new Map([[prop, "SecretInformation"]]) };
 }
 
 function makeProgram(redactMap: Map<object, unknown> = new Map()): Program {
@@ -772,7 +775,7 @@ function signWithKindReqFields(): readonly FieldInfo[] {
       protoType: "string",
       repeated: false,
       optional: false,
-      redact: false,
+      redactReason: undefined,
       fieldNumber: 1,
     },
     {
@@ -784,7 +787,7 @@ function signWithKindReqFields(): readonly FieldInfo[] {
       protoType: "string",
       repeated: false,
       optional: false,
-      redact: false,
+      redactReason: undefined,
       enumRef: SIGN_WITH_KIND_KEY_KIND,
       fieldNumber: 2,
     },
@@ -802,7 +805,7 @@ function signWithKindRespFields(): readonly FieldInfo[] {
       protoType: "string",
       repeated: false,
       optional: false,
-      redact: false,
+      redactReason: undefined,
       fieldNumber: 1,
     },
     {
@@ -815,7 +818,7 @@ function signWithKindRespFields(): readonly FieldInfo[] {
       protoType: "string",
       repeated: false,
       optional: false,
-      redact: false,
+      redactReason: undefined,
       enumRef: SIGN_WITH_KIND_KEY_KIND,
       fieldNumber: 2,
     },

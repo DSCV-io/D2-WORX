@@ -6,6 +6,10 @@
 
 namespace D2.Edge.KeyCustodian.App.Application.Handlers.Commands.RotateKey;
 
+using H = D2.Edge.KeyCustodian.App.Application.Handlers.Commands.RotateKey.IRotateKeyHandler;
+using I = RotateKeyInput;
+using O = RotateKeyOutput;
+
 /// <summary>
 /// Atomically rotates a domain's active incumbent to its soaked pending
 /// successor.
@@ -26,8 +30,8 @@ public sealed class RotateKeyHandler(
     IKeyRotationAnnouncer announcer,
     [FromKeyedServices(KeyCustodianRootKey.ROOT_SERVICE_KEY)] IPayloadCrypto rootCrypto,
     IClock clock)
-    : BaseRepoHandler<RotateKeyHandler, RotateKeyInput, RotateKeyOutput>(ctx, classifier),
-      IRotateKeyHandler
+    : BaseRepoHandler<RotateKeyHandler, I, O>(ctx, classifier),
+      H
 {
     /// <inheritdoc/>
     /// <remarks>
@@ -42,12 +46,12 @@ public sealed class RotateKeyHandler(
     };
 
     /// <inheritdoc/>
-    protected override async ValueTask<D2Result<RotateKeyOutput?>> ExecuteAsync(
-        RotateKeyInput input, CancellationToken ct)
+    protected override async ValueTask<D2Result<O?>> ExecuteAsync(
+        I input, CancellationToken ct)
     {
         var domainResult = KeyDomain.Create(input.Domain);
 
-        if (domainResult.BubbleOnFailure<KeyDomain, RotateKeyOutput>(
+        if (domainResult.BubbleOnFailure<KeyDomain, O>(
             out var bubbled, out var domain))
             return bubbled;
 
@@ -58,7 +62,7 @@ public sealed class RotateKeyHandler(
             .ConfigureAwait(false);
 
         if (incumbentRecord is null)
-            return KeyCustodianFailures<RotateKeyOutput?>.KeyNotFound();
+            return KeyCustodianFailures<O?>.KeyNotFound();
 
         var successorRecord = await db.Keys
             .ForDomain(domain.Value)
@@ -67,7 +71,7 @@ public sealed class RotateKeyHandler(
             .ConfigureAwait(false);
 
         if (successorRecord is null)
-            return KeyCustodianFailures<RotateKeyOutput?>.KeyNotFound();
+            return KeyCustodianFailures<O?>.KeyNotFound();
 
         var incumbent = (ActiveKey)incumbentRecord.ToDomain();
         var successor = (PendingKey)successorRecord.ToDomain();
@@ -95,18 +99,18 @@ public sealed class RotateKeyHandler(
             KeyCustodianLog.SmokeTestFailed(
                 Context.Logger, successor.Kid.Value, successor.KeyType.ToString());
             KeyCustodianMetrics.SR_SmokeTestFailuresTotal.Add(1);
-            return D2Result<RotateKeyOutput?>.BubbleFail(smokeResult);
+            return D2Result<O?>.BubbleFail(smokeResult);
         }
 
         var proofResult = SmokeProof.ForPassedSmokeTest(successor.KeyType, clock);
 
-        if (proofResult.BubbleOnFailure<SmokeProof, RotateKeyOutput>(
+        if (proofResult.BubbleOnFailure<SmokeProof, O>(
             out var proofBubble, out var proof))
             return proofBubble;
 
         var policyResult = policyProvider.ForDomain(domain);
 
-        if (policyResult.BubbleOnFailure<RotationPolicy, RotateKeyOutput>(
+        if (policyResult.BubbleOnFailure<RotationPolicy, O>(
             out var policyBubble, out var policy))
             return policyBubble;
 
@@ -114,14 +118,14 @@ public sealed class RotateKeyHandler(
         var rotateResult = incumbent.Rotate(successor, clock);
 
         if (rotateResult
-            .BubbleOnFailure<(RetiringKey Retiring, PendingKey Successor), RotateKeyOutput>(
+            .BubbleOnFailure<(RetiringKey Retiring, PendingKey Successor), O>(
                 out var rotateBubble, out var rotated))
             return rotateBubble;
 
         // 2) successor → active (soak already elapsed for a rotation candidate).
         var activateResult = successor.Activate(proof, policy, clock);
 
-        if (activateResult.BubbleOnFailure<ActiveKey, RotateKeyOutput>(
+        if (activateResult.BubbleOnFailure<ActiveKey, O>(
             out var activateBubble, out var activated))
             return activateBubble;
 
@@ -154,7 +158,7 @@ public sealed class RotateKeyHandler(
                 1, new KeyValuePair<string, object?>("urgent", "false"));
         }
 
-        return D2Result<RotateKeyOutput?>.Ok(
-            new RotateKeyOutput(incumbent.Kid.Value, activated.Kid.Value));
+        return D2Result<O?>.Ok(
+            new O(incumbent.Kid.Value, activated.Kid.Value));
     }
 }

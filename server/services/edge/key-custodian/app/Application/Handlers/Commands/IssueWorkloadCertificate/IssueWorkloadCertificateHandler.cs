@@ -8,6 +8,10 @@ namespace D2.Edge.KeyCustodian.App.Application.Handlers.Commands.IssueWorkloadCe
 
 using System.Security.Cryptography.X509Certificates;
 
+using H = D2.Edge.KeyCustodian.App.Application.Handlers.Commands.IssueWorkloadCertificate.IIssueWorkloadCertificateHandler;
+using I = IssueWorkloadCertificateInput;
+using O = IssueWorkloadCertificateOutput;
+
 /// <summary>
 /// Issues a short-lived workload leaf certificate signed by the active issuing
 /// intermediate certificate authority.
@@ -30,9 +34,9 @@ public sealed class IssueWorkloadCertificateHandler(
     IClock clock)
     : BaseRepoHandler<
         IssueWorkloadCertificateHandler,
-        IssueWorkloadCertificateInput,
-        IssueWorkloadCertificateOutput>(ctx, classifier),
-      IIssueWorkloadCertificateHandler
+        I,
+        O>(ctx, classifier),
+      H
 {
     /// <inheritdoc/>
     /// <remarks>
@@ -46,13 +50,14 @@ public sealed class IssueWorkloadCertificateHandler(
     };
 
     /// <inheritdoc/>
-    protected override async ValueTask<D2Result<IssueWorkloadCertificateOutput?>> ExecuteAsync(
-        IssueWorkloadCertificateInput input, CancellationToken ct)
+    protected override async ValueTask<D2Result<O?>> ExecuteAsync(
+        I input, CancellationToken ct)
     {
         // 1) Validate the workload identity at the top — invalid / unknown / wrong
         //    charset all surface as INVALID_WORKLOAD_IDENTITY before any DB or crypto.
         var workloadResult = WorkloadIdentity.Create(input.WorkloadServiceId);
-        if (workloadResult.BubbleOnFailure<WorkloadIdentity, IssueWorkloadCertificateOutput>(
+
+        if (workloadResult.BubbleOnFailure<WorkloadIdentity, O>(
             out var workloadBubble, out var workload))
             return workloadBubble;
 
@@ -63,6 +68,7 @@ public sealed class IssueWorkloadCertificateHandler(
             .Active()
             .FirstOrDefaultAsync(ct)
             .ConfigureAwait(false);
+
         if (intermediateRecord is null)
             return NoActiveIssuingCa(workload!);
 
@@ -77,6 +83,7 @@ public sealed class IssueWorkloadCertificateHandler(
         //    key, and issue the leaf. Zero the unwrapped private key in finally.
         var issuerKeyPkcs8 = rootCrypto.Decrypt(intermediate.KeyMaterialEncrypted.Bytes.Span);
         D2Result<IssuedWorkloadCertificate> issuanceResult;
+
         try
         {
             using var issuerKey = ECDsa.Create();
@@ -96,7 +103,7 @@ public sealed class IssueWorkloadCertificateHandler(
             CryptographicOperations.ZeroMemory(issuerKeyPkcs8);
         }
 
-        if (issuanceResult.BubbleOnFailure<IssuedWorkloadCertificate, IssueWorkloadCertificateOutput>(
+        if (issuanceResult.BubbleOnFailure<IssuedWorkloadCertificate, O>(
             out var issuanceBubble, out var issued))
             return issuanceBubble;
 
@@ -109,14 +116,14 @@ public sealed class IssueWorkloadCertificateHandler(
 
         KeyCustodianMetrics.SR_LeafCertificatesIssuedTotal.Add(1);
 
-        return D2Result<IssueWorkloadCertificateOutput?>.Ok(
-            new IssueWorkloadCertificateOutput(issued));
+        return D2Result<O?>.Ok(
+            new O(issued));
     }
 
-    private D2Result<IssueWorkloadCertificateOutput?> NoActiveIssuingCa(WorkloadIdentity workload)
+    private D2Result<O?> NoActiveIssuingCa(WorkloadIdentity workload)
     {
         KeyCustodianLog.NoActiveIssuingCa(Context.Logger, workload.ServiceId);
         KeyCustodianMetrics.SR_NoActiveIssuingCaTotal.Add(1);
-        return KeyCustodianFailures<IssueWorkloadCertificateOutput?>.NoActiveIssuingCa();
+        return KeyCustodianFailures<O?>.NoActiveIssuingCa();
     }
 }

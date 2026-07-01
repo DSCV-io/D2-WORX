@@ -228,7 +228,23 @@ App stays vendor-blind (ONE capability port per concern); infra registers keyed 
 
 ### Handler Pattern
 
-`.NET`: `BaseHandler<TSelf, TInput, TOutput>` with using aliases (`H`, `I`, `O`), `IHandlerContext`, `DefaultOptions` override. Per-handler PII redaction via the `[RedactData]` attribute on data types (KEEP) + `DefaultOptions` overrides for proto-generated DTOs that can't carry the attribute.
+`.NET`: every concrete handler is `BaseHandler<TSelf, I, O>` / `BaseRepoHandler<TSelf, I, O>` with three **file-scoped** `using` aliases — `H` = the handler's own interface (`I<Op>Handler`), `I` = the input type, `O` = the output type. The aliases appear in the type args, the implemented-interface position (`, H`), the `ExecuteAsync(I input, CancellationToken ct)` signature, and the `ValueTask<D2Result<O?>>` return. **`TSelf` (the handler's own class name) is spelled out, NEVER aliased** — it names the type for OTel span naming. Aliases are per-file (each op needs a different `H`/`I`/`O`), never global. Canonical form:
+
+```csharp
+namespace D2.Edge.KeyCustodian.App.Application.Handlers.Commands.GenerateKey;
+
+using H = D2.Edge.KeyCustodian.App.Application.Handlers.Commands.GenerateKey.IGenerateKeyHandler;
+using I = GenerateKeyInput;
+using O = KeySummary;
+
+public sealed class GenerateKeyHandler(HandlerContext<GenerateKeyHandler> ctx, …)
+    : BaseRepoHandler<GenerateKeyHandler, I, O>(ctx, classifier), H
+{
+    protected override async ValueTask<D2Result<O?>> ExecuteAsync(I input, CancellationToken ct) { … }
+}
+```
+
+Handler context is injected via the primary-constructor `HandlerContext<TSelf>` parameter. Per-handler PII redaction via the `[RedactData]` attribute on data types (KEEP) + `DefaultOptions` overrides for proto-generated DTOs that can't carry the attribute. (Full predicate: [rules.md §5.29](docs/dev/rules.md#5-c-code-conventions).)
 
 ### D2Result Pattern
 
@@ -314,6 +330,7 @@ _Canonical form (full service-structure standard with rationale + carve-outs): [
 
 - **`[LoggerMessage]` MUST NOT accept `Exception`** — `ex.Message` leaks broker URI passwords, user input. Use `SanitizedExceptionRender.TypeName(ex)` + `FirstFrame(ex)` separately. [rules.md §3.1]
 - **`[RedactData]` on PII types** — emails, phones, IPs, addresses, names, message content, filenames, presigned URLs, AMQP URIs. [rules.md §3.3]
+- **Redaction marker declares an ACCURATE `RedactReason` — no silent PII default** — every `[RedactData]` / `@d2Redact` marker names its true data class (`SecretInformation` for secret-adjacent material, `PersonalInformation` for personal data); the codegen emitter FAILS LOUD on a bare marker instead of defaulting to `PersonalInformation`, so secrets are never misclassified as PII (the reason drives data-governance routing — PII and secret regimes are strictly separate). [rules.md §3.17]
 - **At-rest PII anonymization via `D2.Shared.DataGovernance`** — GDPR right-to-erasure uses `[Anonymizable]` / fluent `.Anonymize*` + `IAnonymizationEngine`; faux/tombstone values are non-i18n literals; STRICTLY SEPARATE from `[RedactData]` (log-masking); engine logs omit the subject id. [rules.md §3.15]
 - **Sensitive context in encrypted RMQ payload, NOT plaintext headers.** [rules.md §3.4]
 - **Constant-time comparisons for API keys / tokens / secrets** (`CryptographicOperations.FixedTimeEquals`). [rules.md §3.9]
@@ -334,12 +351,17 @@ _Canonical form (full service-structure standard with rationale + carve-outs): [
 - **`namespace` BEFORE `using` directives** in C#. [rules.md §5.10]
 - **Global-usings policy** (frequency-driven per project): globalize ANY namespace repeated across ≥3 files in that project — including EF Core, DI, Options, `System.Security.Cryptography`, vendor SDKs. The dependency law is enforced by `<ProjectReference>` edges, not using-directive visibility; a global using is per-project and cannot leak across the layer boundary. Per-file usings stay for low-frequency (1–2 file) namespaces. Use `global using IClock = D2.Shared.Time.IClock;` in every project that uses both NodaTime and `D2.Shared.Time`. Never duplicate SDK ImplicitUsings or Tier-1 entries. [rules.md §5.26]
 - **Blank-line padding in method bodies**: single blank line before AND after every `if`/`else`/`while`/`for`/`foreach`/`switch`/`using`-statement block AND every multi-line statement (wrapped call, chained `.Method()` that spans ≥2 lines, wrapped `return`). Consecutive simple single-liners stay grouped. Single blanks only (no doubles — SA1507; none at block open/close — SA1505/SA1508; **none immediately before a `catch`/`finally`/`else`/`do…while`-`while` continuation — SA1510**). Does NOT apply to generated files or EF migrations. [rules.md §5.8a]
+- **Handler I/O/H aliases**: every concrete handler declares file-scoped `using H = I<Op>Handler;` / `using I = <Op>Input;` / `using O = <Op>Output;` and uses them in the `BaseHandler<TSelf, I, O>` args, the `, H` interface slot, `ExecuteAsync(I input, …)`, and `ValueTask<D2Result<O?>>`. TSelf (own class name) is NEVER aliased; aliases are per-file, never global. A `using`-alias directive is exempt from the 100-char line-length ceiling — the fully-qualified alias target is indivisible with no legal wrap (a mandatory alias can exceed 100 chars on its own). [rules.md §5.29, §7.14]
 - Other convention predicates (string.Empty, no this., brace rules, C# 14 extension members, sealed default, American English, line length, no phase verbiage, tests next to feature) → [rules.md §5/§7](docs/dev/rules.md#5-c-code-conventions) (also covered by MEMORY.md feedback entries).
 
 ### Architectural layer hygiene
 
 - **JWT validations at TRANSPORT layer (auth middleware), NOT per-handler `HandlerOptions`.** `RequiredScopes` IS per-handler; `ValidateAudience` is NOT. [rules.md §9.2]
 - **A captured live credential enters request-scoped state ONLY after ALL inbound auth gates pass (incl. session-liveness / revocation) — symmetrically across every transport.** Capture into the holder is the last pre-continuation op; a holder-state test per failing gate per transport pins that the holder stays unset on every reject path. [rules.md §9.39]
+- **Authority-grade facts (`RequestOrigin`, `ImmediateCaller`) are recomputed FRESH from local unforgeable transport evidence at every establishment boundary — a propagated / forwarded wire value is NEVER trusted for an authority decision.** Cross-process `ImmediateCaller` = mTLS peer cert (SPIFFE SAN via `GetD2PeerWorkloadIdentity()`) ONLY, never a header / claim / payload; establishment fields carry no `propagate:true` slot. [rules.md §9.41]
+- **Fail-closed default — the establishment enum's type-zero value (`RequestOrigin.Unestablished`) is an explicit, FIRST-checked DENY in every authority rule.** A context no boundary established fails closed (loud universal rejection), never falls through to an allow branch. [rules.md §9.42]
+- **Telemetry-only accumulating hop-trace fields (CallPath) stay a DIFFERENT TYPE than the authority-grade fields and are NEVER a parameter to any authority rule** — structural exclusion, not a convention / comment. [rules.md §9.43]
+- **Authority over a cluster-root-grade secret routes through a DEDICATED capability seam registered in exactly ONE composition root (structurally unreachable from the general registration), plus a structural deny on the general surface — NOT a boolean / branch guard inside the general rule.** Ship the DI-isolation test proving the general registration can't resolve it and the dedicated one can (confused-deputy structural fix). [rules.md §9.44]
 - **Handlers validate input via `Domain.Create(input) → D2Result<Domain>` at the TOP of `ExecuteAsync`** — never let Redis / DB be the first to reject invalid data. [rules.md §9.4]
 - **EF-as-DDD — CQRS handlers use `I<Service>DbContext` + aggregates + LINQ directly; the per-op Repository handler layer is retired.** `BaseHandler`/`BaseRepoHandler` retain all cross-cutting. No `I<Op>Repository` wrapper between handler and EF. [rules.md §9.37]
 - **Stateful domain aggregates use abstract base + sealed per-state types — illegal transitions are uncompilable.** The `Status` enum is a derived persistence discriminator only; domain logic branches on type, not enum value. For entities not yet migrated to sum-type shape, an explicit valid-transitions table is mandatory. [rules.md §9.31]
@@ -364,6 +386,8 @@ _Canonical form (full service-structure standard with rationale + carve-outs): [
 - **Hand-authored files MUST NOT carry a generated banner or `.g.*` extension** — that mislabels them as reproducible; hand-authored fixtures beside generated output carry a normal header + plain extension + a ledger note. [rules.md §26.18]
 - **Consumable shared packages are versioned per-package** (`D2.Shared.*`, KeyCustodian client, `@d2/*`) — semver + CHANGELOG derived from the **build-free artifact diff** (`tools/release-runner` default engine); commit footers are escalation overrides only (they can raise the diff-derived bump but never lower it); wire/contract breaks auto-gated by `tools/contract-gate`; library-API breaks author-declared via footer; registry publishing never automatic. [rules.md §26.19]
 - **After touching any consumable source, re-seed `.release-fingerprint` before committing** — `pnpm --filter release-runner check-baselines` (also enforced by `.husky/pre-commit`); for `.NET` also promote `PublicAPI.Unshipped.txt` to empty via the seed script. Stale baseline = FINDING-HIGH. [rules.md §26.20]
+- **Compare against emitted constants, never raw spec-emitted literals** — a `switch`/`==`/`is` over an error code (or any spec/codegen-emitted value with a generated constant) references `KeyCustodianErrorCodes.KEYCUSTODIAN_*` (or the generic `ErrorCodes.*`), never a hand-typed `"KEYCUSTODIAN_…"` string. Test assertions pinning the wire value are exempt. [rules.md §26.21]
+- **Closed-set telemetry tag keys / values / reason codes = named constants** — one source of truth, referenced at every emit / switch / `==` site; never scattered raw literals ("bounded metric-tag value" is not a license for magic strings; hand-authored meters name their closed sets too). [rules.md §21.11]
 
 > Need a specific category (security / concurrency / disposal / D2Result / OOTB libs / logging / PII / graceful degradation / UX / DX / observability / idempotency / configuration / codegen) → [rules.md table of contents](docs/dev/rules.md#table-of-contents) routes by §-number.
 

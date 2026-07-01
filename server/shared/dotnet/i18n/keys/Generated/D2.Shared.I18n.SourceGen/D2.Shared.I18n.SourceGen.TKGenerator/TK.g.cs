@@ -1291,6 +1291,14 @@ public static partial class TK
             /// </summary>
             public static readonly global::D2.Shared.I18n.TKMessage CROSS_PROCESS_DOMAIN_REJECTED = new("keycustodian_authorization_CROSS_PROCESS_DOMAIN_REJECTED");
             /// <summary>
+            /// Translation key <c>keycustodian_authorization_MINTER_CAPABILITY_REQUIRED</c>.
+            /// </summary>
+            public static readonly global::D2.Shared.I18n.TKMessage MINTER_CAPABILITY_REQUIRED = new("keycustodian_authorization_MINTER_CAPABILITY_REQUIRED");
+            /// <summary>
+            /// Translation key <c>keycustodian_authorization_REQUEST_ORIGIN_UNESTABLISHED</c>.
+            /// </summary>
+            public static readonly global::D2.Shared.I18n.TKMessage REQUEST_ORIGIN_UNESTABLISHED = new("keycustodian_authorization_REQUEST_ORIGIN_UNESTABLISHED");
+            /// <summary>
             /// Translation key <c>keycustodian_authorization_SIGNING_DOMAIN_NOT_AUTHORIZED</c>.
             /// </summary>
             public static readonly global::D2.Shared.I18n.TKMessage SIGNING_DOMAIN_NOT_AUTHORIZED = new("keycustodian_authorization_SIGNING_DOMAIN_NOT_AUTHORIZED");
@@ -1305,6 +1313,10 @@ public static partial class TK
             /// Translation key <c>keycustodian_infrastructure_NO_ACTIVE_ISSUING_CA</c>.
             /// </summary>
             public static readonly global::D2.Shared.I18n.TKMessage NO_ACTIVE_ISSUING_CA = new("keycustodian_infrastructure_NO_ACTIVE_ISSUING_CA");
+            /// <summary>
+            /// Translation key <c>keycustodian_infrastructure_SIGNING_KEY_UNAVAILABLE</c>.
+            /// </summary>
+            public static readonly global::D2.Shared.I18n.TKMessage SIGNING_KEY_UNAVAILABLE = new("keycustodian_infrastructure_SIGNING_KEY_UNAVAILABLE");
         }
 
         /// <summary>
@@ -1350,6 +1362,10 @@ public static partial class TK
         /// </summary>
         public static partial class Validation
         {
+            /// <summary>
+            /// Translation key <c>keycustodian_validation_EMPTY_SIGNING_INPUT</c>.
+            /// </summary>
+            public static readonly global::D2.Shared.I18n.TKMessage EMPTY_SIGNING_INPUT = new("keycustodian_validation_EMPTY_SIGNING_INPUT");
             /// <summary>
             /// Translation key <c>keycustodian_validation_GRACE_NOT_ELAPSED</c>.
             /// </summary>

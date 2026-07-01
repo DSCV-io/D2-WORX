@@ -10,7 +10,9 @@ using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
 using D2.Edge.KeyCustodian.App.Application;
+using D2.Edge.KeyCustodian.App.Application.Handlers.Queries.Sign;
 using D2.Edge.KeyCustodian.App.Application.Routes;
+using D2.Edge.KeyCustodian.App.Infrastructure.Vault;
 using D2.Edge.KeyCustodian.Clients;
 using D2.Edge.Tests.Unit.KeyCustodian.App;
 using D2.Shared.Context.Abstractions;
@@ -242,6 +244,19 @@ public sealed class WellKnownRouteTests
                         services.AddTransient<IGetJwksHandler, GetJwksHandler>();
                         services.AddTransient<
                             IGetOidcConfigurationHandler, GetOidcConfigurationHandler>();
+
+                        // The generated façade ctor requires ISignHandler too; register it
+                        // plus its dependencies (keyed root crypto + signing-domain policy)
+                        // so IKeyCustodianApi resolves. The well-known routes never invoke
+                        // sign — the façade is one transient that pulls in every handler.
+                        services.AddTransient<ISignHandler, SignHandler>();
+                        services.AddKeyedSingleton(
+                            KeyCustodianRootKey.ROOT_SERVICE_KEY,
+                            KcAppTestKit.BuildTestRootCrypto());
+                        services.AddSingleton<ISigningDomainAuthorityPolicy>(
+                            new OptionsSigningDomainAuthorityPolicy(
+                                Options.Create(new SigningDomainAuthorityOptions())));
+
                         services.AddTransient<IKeyCustodianApi, KeyCustodianApi>();
                     })
                     .Configure(app =>

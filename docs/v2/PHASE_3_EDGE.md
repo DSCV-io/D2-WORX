@@ -125,6 +125,15 @@ shared Redis lock surface.
 > freshly-rotated leaf (currently the consumer's responsibility, undocumented in host wiring).
 > See [ADR-0023](../adrs/0023-mtls-workload-identity.md) "Negative / new work".
 
+> **Deferred sign-scope grant to wire here.** Nothing currently mints `internal.kc.sign`
+> into a caller's token — the production grant is host-blocked (no Edge boundary minter
+> exists yet). The KeyCustodian general `sign` handler already enforces the scope in-process
+> via a `BaseHandler` `ScopeRequirement` gate (`Scopes.Internal.Kc.Sign`, read from
+> `IRequestContext.Scopes`), which is **fail-closed** — every general-surface `sign` call is
+> denied `Forbidden` at the scope pre-check until the Edge boundary minter grants
+> `internal.kc.sign` to authorized sign callers. That mint-and-grant is the genuine build
+> dependency (no Edge minter host exists yet); the in-process gate ships fail-closed now.
+
 ---
 
 ## §4. Session storage layers (3-tier)

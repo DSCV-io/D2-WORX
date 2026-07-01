@@ -209,7 +209,7 @@ function makePlaceOrderClientOp(): GrpcClientOp {
     protoType: "string",
     repeated: false,
     optional: false,
-    redact: false,
+    redactReason: undefined,
     fieldNumber,
   });
   return {
@@ -233,7 +233,7 @@ function makePlaceOrderClientOp(): GrpcClientOp {
         protoType: "string",
         repeated: true,
         optional: false,
-        redact: false,
+        redactReason: undefined,
         fieldNumber: 2,
       },
       {
@@ -245,7 +245,7 @@ function makePlaceOrderClientOp(): GrpcClientOp {
         protoType: "bool",
         repeated: false,
         optional: false,
-        redact: false,
+        redactReason: undefined,
         fieldNumber: 3,
       },
     ],

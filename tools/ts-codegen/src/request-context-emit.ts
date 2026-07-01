@@ -21,13 +21,20 @@ import { contractsPath, tsPackagePath } from "./lib/paths.js";
 import { loadSpec } from "./lib/spec-loader.js";
 import { StringBuilder } from "./lib/string-builder.js";
 
+/** The single propagated list-of-records vocabulary type (CallPath). */
+const CALL_PATH_LIST_TYPE = "IReadOnlyList<CallPathEntry>";
+
 /**
  * Spec-driven property → IPropagatedContext field type. Strings map to
  * `string | undefined`; numbers map to `number | undefined`; booleans map to
- * `boolean | undefined`. Uses `undefined` (not `null`) per the codebase
- * convention. Mirrors the .NET PropagatedEmitter mapping.
+ * `boolean | undefined`; the call-path list maps to
+ * `readonly CallPathEntry[] | undefined` (optional, omit-when-empty). Uses
+ * `undefined` (not `null`) per the codebase convention. Mirrors the .NET
+ * PropagatedEmitter mapping.
  */
 function tsTypeFor(prop: PropertySpec): string {
+  if (prop.type === CALL_PATH_LIST_TYPE)
+    return "readonly CallPathEntry[] | undefined";
   if (prop.type === "int?" || prop.type === "double?")
     return "number | undefined";
   if (prop.type === "bool?") return "boolean | undefined";
@@ -43,6 +50,16 @@ function camelCase(pascal: string): string {
     : pascal[0]!.toLowerCase() + pascal.slice(1);
 }
 
+/** True when the spec carries a propagated call-path list-of-records field. */
+function hasPropagatedCallPath(spec: ContextSpec): boolean {
+  for (const section of spec.sections)
+    for (const prop of section.properties)
+      if (prop.propagate === true && prop.type === CALL_PATH_LIST_TYPE)
+        return true;
+
+  return false;
+}
+
 /**
  * Emit `IPropagatedContext.g.ts` — the cross-hop subset (`propagate: true`
  * properties only).
@@ -54,6 +71,13 @@ export function emitPropagatedContextInterface(spec: ContextSpec): string {
   );
   sb.appendLine("/* eslint-disable */");
   sb.appendLine();
+  if (hasPropagatedCallPath(spec)) {
+    sb.appendLine(
+      'import type { CallPathEntry } from "@d2/auth-context-abstractions";',
+    );
+    sb.appendLine();
+  }
+
   sb.appendLine("/**");
   sb.appendLine(
     " * Cross-hop propagated subset of IRequestContext. Identity fields",
@@ -148,21 +172,23 @@ function emitSerializeMethod(sb: StringBuilder, spec: ContextSpec): void {
 function emitTryDecodeMethod(sb: StringBuilder, spec: ContextSpec): void {
   sb.appendLine("/**");
   sb.appendLine(
-    " * Decode an envelope from a wire string. Wire-boundary carve-out per",
+    " * Decode an envelope from a wire string. Wire-boundary carve-out: the",
   );
   sb.appendLine(
-    " * rules.md §6.15: the input is `string | null | undefined` because the",
+    " * input is `string | null | undefined` because the primary caller passes",
   );
   sb.appendLine(
-    " * primary caller passes `Headers.get(...)` directly, and the Web `Headers`",
+    " * `Headers.get(...)` directly, and the Web `Headers` API contract returns",
   );
   sb.appendLine(
-    " * API contract returns `string | null` (`null` for absent headers). The",
+    " * `string | null` (`null` for absent headers). The tryDecode boundary",
   );
   sb.appendLine(
-    " * tryDecode boundary normalizes to `undefined` immediately — no `null`",
+    " * normalizes to `undefined` immediately — no `null` propagates inward",
   );
-  sb.appendLine(" * propagates inward.");
+  sb.appendLine(
+    " * (TypeScript uses `undefined`, never `null`, as the absent sentinel).",
+  );
   sb.appendLine(" */");
   sb.appendLine(
     "static tryDecode(input: string | null | undefined): IPropagatedContext | undefined {",
@@ -190,6 +216,11 @@ function emitTryDecodeMethod(sb: StringBuilder, spec: ContextSpec): void {
     for (const prop of section.properties) {
       if (prop.propagate !== true) continue;
       const camel = camelCase(prop.name);
+      if (prop.type === CALL_PATH_LIST_TYPE) {
+        emitCallPathDecode(sb, prop, camel);
+        continue;
+      }
+
       const isString =
         prop.type !== "int?" &&
         prop.type !== "double?" &&
@@ -231,6 +262,63 @@ function emitTryDecodeMethod(sb: StringBuilder, spec: ContextSpec): void {
   sb.appendLine("return out as unknown as IPropagatedContext;");
   sb.decreaseIndent();
   sb.appendLine("}");
+}
+
+/**
+ * Emit the decode block for the propagated call-path list-of-records field:
+ * must be an array; bounded by `maxLength` (the depth = max entry count); each
+ * entry is an object with a string `id` (≤ the spec's `entryIdMaxLength`), a
+ * string `kind`, and a string `timestamp`. Any violation drops the whole context
+ * (returns undefined) — propagation is opportunistic, never required. Mirrors
+ * the .NET FieldsWithinBounds depth-bound + per-entry-id-cap loop; both derive
+ * the per-entry-id cap from the same spec field (neither hard-codes it).
+ */
+function emitCallPathDecode(
+  sb: StringBuilder,
+  prop: PropertySpec,
+  camel: string,
+): void {
+  // Single source of the cap — read from the spec field, never hard-coded.
+  // A record-list field with no declared cap is a spec error (fail loud),
+  // matching the .NET emitter's ResolveCallPathEntryIdMax.
+  if (prop.entryIdMaxLength === undefined)
+    throw new Error(
+      `propagated list-of-records field '${prop.name}' must declare ` +
+        `'entryIdMaxLength' in the request-context spec`,
+    );
+
+  const entryIdMax = prop.entryIdMaxLength;
+  sb.appendLine(`{`);
+  sb.increaseIndent();
+  sb.appendLine(`const v = parsed["${camel}"];`);
+  sb.appendLine(`if (v === undefined || v === null) {`);
+  sb.increaseIndent();
+  sb.appendLine(`// absent — leave out["${camel}"] unset (undefined)`);
+  sb.decreaseIndent();
+  sb.appendLine(`} else {`);
+  sb.increaseIndent();
+  sb.appendLine(`if (!Array.isArray(v)) return undefined;`);
+  if (prop.maxLength !== undefined)
+    sb.appendLine(`if (v.length > ${prop.maxLength}) return undefined;`);
+  sb.appendLine(`for (const e of v) {`);
+  sb.increaseIndent();
+  sb.appendLine(`if (e === null || typeof e !== "object") return undefined;`);
+  sb.appendLine(`const entry = e as Record<string, unknown>;`);
+  sb.appendLine(`const entryId = entry["id"];`);
+  sb.appendLine(
+    `if (typeof entryId !== "string" || entryId.length > ${entryIdMax}) return undefined;`,
+  );
+  sb.appendLine(`if (typeof entry["kind"] !== "string") return undefined;`);
+  sb.appendLine(
+    `if (typeof entry["timestamp"] !== "string") return undefined;`,
+  );
+  sb.decreaseIndent();
+  sb.appendLine(`}`);
+  sb.appendLine(`out["${camel}"] = v;`);
+  sb.decreaseIndent();
+  sb.appendLine(`}`);
+  sb.decreaseIndent();
+  sb.appendLine(`}`);
 }
 
 const SPEC_PATH = contractsPath("request-context", "IRequestContext.spec.json");

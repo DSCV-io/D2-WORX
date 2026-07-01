@@ -6,6 +6,10 @@
 
 namespace D2.Edge.KeyCustodian.App.Application.Handlers.Queries.GetOidcConfiguration;
 
+using H = D2.Edge.KeyCustodian.App.Application.Handlers.Queries.GetOidcConfiguration.IGetOidcConfigurationHandler;
+using I = D2.Edge.KeyCustodian.Clients.GetOidcConfigurationInput;
+using O = D2.Edge.KeyCustodian.Clients.GetOidcConfigurationOutput;
+
 /// <summary>
 /// Serves the minimal OIDC discovery document so OIDC/JWKS clients auto-discover
 /// the JWKS endpoint.
@@ -25,11 +29,7 @@ namespace D2.Edge.KeyCustodian.App.Application.Handlers.Queries.GetOidcConfigura
 public sealed class GetOidcConfigurationHandler(
     HandlerContext<GetOidcConfigurationHandler> ctx,
     IOptions<KeyCustodianOptions> options)
-    : BaseHandler<
-        GetOidcConfigurationHandler,
-        D2.Edge.KeyCustodian.Clients.GetOidcConfigurationInput,
-        D2.Edge.KeyCustodian.Clients.GetOidcConfigurationOutput>(ctx),
-      IGetOidcConfigurationHandler
+    : BaseHandler<GetOidcConfigurationHandler, I, O>(ctx), H
 {
     /// <summary>The cluster's only JWT signing algorithm (RS256, per the auth design).</summary>
     private static readonly string[] sr_signingAlgs = ["RS256"];
@@ -41,8 +41,8 @@ public sealed class GetOidcConfigurationHandler(
     private static readonly string[] sr_subjectTypes = ["public"];
 
     /// <inheritdoc/>
-    protected override ValueTask<D2Result<D2.Edge.KeyCustodian.Clients.GetOidcConfigurationOutput?>> ExecuteAsync(
-        D2.Edge.KeyCustodian.Clients.GetOidcConfigurationInput input, CancellationToken ct)
+    protected override ValueTask<D2Result<O?>> ExecuteAsync(
+        I input, CancellationToken ct)
     {
         // IssuerBaseUrl is required + startup-validated (fail-loud), so it is
         // non-empty here. Trim a single trailing slash so the composed jwks_uri
@@ -50,7 +50,7 @@ public sealed class GetOidcConfigurationHandler(
         var issuer = options.Value.IssuerBaseUrl.TrimEnd('/');
         var jwksUri = $"{issuer}/.well-known/jwks.json";
 
-        var output = new D2.Edge.KeyCustodian.Clients.GetOidcConfigurationOutput(
+        var output = new O(
             issuer,
             jwksUri,
             sr_signingAlgs,
@@ -58,6 +58,6 @@ public sealed class GetOidcConfigurationHandler(
             sr_subjectTypes);
 
         return ValueTask.FromResult(
-            D2Result<D2.Edge.KeyCustodian.Clients.GetOidcConfigurationOutput?>.Ok(output));
+            D2Result<O?>.Ok(output));
     }
 }

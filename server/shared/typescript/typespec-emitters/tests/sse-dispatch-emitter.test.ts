@@ -65,7 +65,7 @@ function scalarField(
     protoType: proto,
     repeated: false,
     optional: false,
-    redact: false,
+    redactReason: undefined,
   };
 }
 
@@ -93,7 +93,7 @@ const ORDER_SHIPPED_OUTPUT_FIELDS: FieldInfo[] = [
     protoType: undefined,
     repeated: true,
     optional: false,
-    redact: false,
+    redactReason: undefined,
     nested: { name: "OrderFixtureLine", fields: ORDER_LINE_FIELDS },
   },
 ];

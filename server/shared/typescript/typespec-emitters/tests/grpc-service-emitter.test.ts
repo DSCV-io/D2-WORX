@@ -37,7 +37,7 @@ function makeStringField(name: string): FieldInfo {
     protoType: "string",
     repeated: false,
     optional: false,
-    redact: false,
+    redactReason: undefined,
   };
 }
 
@@ -51,7 +51,7 @@ function makeBytesField(name: string): FieldInfo {
     protoType: "bytes",
     repeated: false,
     optional: false,
-    redact: true,
+    redactReason: "SecretInformation",
   };
 }
 
@@ -611,7 +611,7 @@ describe("emitGrpcService_EnumRequestField_ParseBridgeAndAlias", () => {
         protoType: "string",
         repeated: false,
         optional: false,
-        redact: false,
+        redactReason: undefined,
       },
       {
         name: "keyKind",
@@ -622,7 +622,7 @@ describe("emitGrpcService_EnumRequestField_ParseBridgeAndAlias", () => {
         protoType: "string",
         repeated: false,
         optional: false,
-        redact: false,
+        redactReason: undefined,
         enumRef: KEY_KIND,
       },
     ];
@@ -697,7 +697,7 @@ describe("emitGrpcService_EnumRequestField_ParseBridgeAndAlias", () => {
           protoType: "string",
           repeated: false,
           optional: false,
-          redact: false,
+          redactReason: undefined,
           enumRef: KEY_KIND,
         },
       ],
@@ -731,7 +731,7 @@ describe("emitGrpcService_NestedModel_SubMapperRecursion", () => {
       protoType: undefined,
       repeated: true,
       optional: false,
-      redact: false,
+      redactReason: undefined,
       nested,
     };
   }
@@ -750,7 +750,7 @@ describe("emitGrpcService_NestedModel_SubMapperRecursion", () => {
       protoType: undefined,
       repeated: false,
       optional,
-      redact: false,
+      redactReason: undefined,
       nested,
     };
   }

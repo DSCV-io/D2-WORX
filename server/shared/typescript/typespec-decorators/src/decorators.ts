@@ -38,6 +38,7 @@ import {
   validateIdempotent,
   validatePushTarget,
   validateRateLimitTier,
+  validateRedactReason,
   validateResilience,
   validateResultPredicate,
   validateReservedName,
@@ -142,16 +143,23 @@ export function $d2GrpcMethod(
 }
 
 /**
- * Marks a model property as PII to be redacted in structured logs.
- * Stores `true` on the property; emitters check for presence.
+ * Marks a model property as sensitive — redacted from structured logs. The
+ * required `reason` names the data class; it is validated against the
+ * `D2.Shared.Utilities.Enums.RedactReason` member set (fail-loud on an unknown
+ * value) and stored verbatim on the property. Emitters read back the reason
+ * string and map it to `RedactReason.<reason>`. Storing the reason (not a bare
+ * `true`) is what lets the emitter fail closed rather than default a
+ * secret-adjacent field to `PersonalInformation`.
  * The target type `ModelProperty` is enforced by the `extern dec` declaration
- * in lib/main.tsp — no additional runtime check is needed here.
+ * in lib/main.tsp — no additional runtime target check is needed here.
  */
 export function $d2Redact(
   context: DecoratorContext,
   target: ModelProperty,
+  reason: string,
 ): void {
-  context.program.stateMap(D2_REDACT_KEY).set(target, true);
+  validateRedactReason(context, target, reason);
+  context.program.stateMap(D2_REDACT_KEY).set(target, reason);
 }
 
 /**

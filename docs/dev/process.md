@@ -546,7 +546,7 @@ The orchestrator consumes Auditor verdicts; it cannot promote a step to CLEAN by
 
 ### Auditor cluster partition (canonical K=12)
 
-The `rules.md` catalog (~24 categories, ~145 numbered subsections) partitions into 12 thematic clusters. Each Auditor sub-agent owns exactly one cluster and walks every numbered subsection inside that cluster against the step's (or deliverable's, at final-review) file scope. The partition is fixed — orchestrator dispatch consistently sends the same §-range to the same cluster code across deliverables so accumulated muscle memory carries forward.
+The `rules.md` catalog (~24 categories, ~450 numbered subsections) partitions into 12 thematic clusters. Each Auditor sub-agent owns exactly one cluster and walks every numbered subsection inside that cluster against the step's (or deliverable's, at final-review) file scope. The partition is fixed — orchestrator dispatch consistently sends the same §-range to the same cluster code across deliverables so accumulated muscle memory carries forward.
 
 | Cluster  | Name                                                                   | rules.md sections        | ~predicates | Theme                                                                                                |
 | -------- | ---------------------------------------------------------------------- | ------------------------ | ----------- | ---------------------------------------------------------------------------------------------------- |
@@ -556,7 +556,7 @@ The `rules.md` catalog (~24 categories, ~145 numbered subsections) partitions in
 | **B2**   | TS conventions + naming                                                | §6, §7                   | ~20         | TypeScript / SvelteKit conventions, naming / file headers / folder casing                            |
 | **B3**   | Shared-lib hygiene + D2Result                                          | §16, §17                 | ~15         | OOTB shared-lib catalog use, D2Result usage + extensions                                             |
 | **C1**   | PII/logging + operations                                               | §3, §8                   | ~20         | PII / logging safety, build cleanliness + operational hygiene                                        |
-| **C2**   | Architectural layer                                                    | §9                       | ~30         | Architectural layer hygiene                                                                          |
+| **C2**   | Architectural layer                                                    | §9                       | ~45         | Architectural layer hygiene                                                                          |
 | **C3**   | Security + permissions                                                 | §10, §13                 | ~25         | Security (endpoints / auth / secrets / input), permission / action discipline                        |
 | **D1**   | KEEP doc parity                                                        | §11                      | ~40         | KEEP-doc updates + forward-framing + per-lib README parity                                           |
 | **D2**   | i18n + no-phase verbiage                                               | §12, §14                 | ~10         | i18n / Paraglide / TK constants, no-phase-verbiage / no-conversation-scoped-IDs hygiene              |

@@ -9,7 +9,10 @@ namespace D2.Edge.KeyCustodian.Infra.Scheduling.Hosted;
 using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.SeedCertificateAuthority;
 using D2.Edge.KeyCustodian.Infra.Configuration;
 using D2.Edge.KeyCustodian.Infra.Observability;
+using D2.Shared.Auth.Abstractions;
+using D2.Shared.Context.Abstractions;
 using D2.Shared.EntityFrameworkCore.Postgres;
+using D2.Shared.Time;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -46,10 +49,14 @@ using Microsoft.Extensions.Options;
 public sealed class CaSeedingService(
     IServiceScopeFactory scopeFactory,
     IOptions<KeyCustodianInfraOptions> options,
+    IOptions<D2WorkloadIdentityOptions> workloadIdentity,
+    IClock clock,
     ILogger<CaSeedingService> logger)
     : BackgroundService
 {
     private readonly KeyCustodianInfraOptions r_options = options.Value;
+    private readonly string r_hostServiceId = workloadIdentity.Value.ServiceId;
+    private readonly IClock r_clock = clock;
 
     /// <summary>
     /// Gets or sets the advisory-lock acquisition seam used by unit tests. When set,
@@ -59,6 +66,34 @@ public sealed class CaSeedingService(
     /// another instance holding it. The delegate must NOT perform I/O.
     /// </summary>
     internal Func<CancellationToken, Task<bool>>? TryAcquireLockAsync { get; set; }
+
+    /// <summary>
+    /// Resolves a fresh DI scope, establishes the worker's
+    /// <see cref="RequestOrigin.System"/> request context on it, then runs
+    /// <see cref="ISeedCertificateAuthorityHandler"/> and logs the outcome. Internal so
+    /// a unit test can drive it directly — the real advisory-lock acquire in
+    /// <see cref="ExecuteAsync"/> requires a live PostgreSQL connection.
+    /// </summary>
+    /// <param name="ct">Cancellation token.</param>
+    internal async Task SeedAsync(CancellationToken ct)
+    {
+        await using var scope = scopeFactory.CreateAsyncScope();
+        scope.ServiceProvider.EstablishSystemContext(r_hostServiceId, r_clock);
+        var handler = scope.ServiceProvider.GetRequiredService<ISeedCertificateAuthorityHandler>();
+
+        var result = await handler
+            .HandleAsync(new SeedCertificateAuthorityInput(), ct)
+            .ConfigureAwait(false);
+
+        if (!result.Success)
+        {
+            // A CA-load failure (missing/invalid chain) returns a typed failure result.
+            // Log a clear degrade warning and continue boot — workload-certificate
+            // issuance returns 503 until the CA files are installed and the seeder
+            // re-runs on the next startup.
+            KeyCustodianInfraLog.CaSeedRunFailed(logger, result.ErrorCode);
+        }
+    }
 
     /// <inheritdoc/>
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -108,25 +143,6 @@ public sealed class CaSeedingService(
                 logger,
                 SanitizedExceptionRender.TypeName(ex),
                 SanitizedExceptionRender.FirstFrame(ex));
-        }
-    }
-
-    private async Task SeedAsync(CancellationToken ct)
-    {
-        await using var scope = scopeFactory.CreateAsyncScope();
-        var handler = scope.ServiceProvider.GetRequiredService<ISeedCertificateAuthorityHandler>();
-
-        var result = await handler
-            .HandleAsync(new SeedCertificateAuthorityInput(), ct)
-            .ConfigureAwait(false);
-
-        if (!result.Success)
-        {
-            // A CA-load failure (missing/invalid chain) returns a typed failure result.
-            // Log a clear degrade warning and continue boot — workload-certificate
-            // issuance returns 503 until the CA files are installed and the seeder
-            // re-runs on the next startup.
-            KeyCustodianInfraLog.CaSeedRunFailed(logger, result.ErrorCode);
         }
     }
 }

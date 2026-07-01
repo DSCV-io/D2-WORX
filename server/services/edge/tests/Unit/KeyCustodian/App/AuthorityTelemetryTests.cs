@@ -17,9 +17,10 @@ using Microsoft.Extensions.Logging;
 /// rejection counter, and the general capability-authority rejection counter with
 /// bounded closed-enum tags) and the <c>AuthorityRejected</c> log delegate (EventId
 /// 9512, no <see cref="System.Exception"/> parameter, workload / capability / target
-/// loggable). The counters are CALLED from the live sign / seal handlers (authored
-/// later); the authority foundation declares them and proves they exist + emit + are
-/// reachable on the deny path.
+/// loggable). The counters are CALLED from the live sign handler; the seal /
+/// cert-issuance path that also reports them is still deferred. The authority
+/// foundation declares them and proves they exist + emit + are reachable on the
+/// deny path.
 /// </summary>
 public sealed class AuthorityTelemetryTests
 {
@@ -77,10 +78,10 @@ public sealed class AuthorityTelemetryTests
 
             foreach (var tag in tags)
             {
-                if (tag.Key == "capability")
+                if (tag.Key == KeyCustodianMetrics.AuthorityRejections.TAG_CAPABILITY)
                     capability = tag.Value?.ToString() ?? string.Empty;
 
-                if (tag.Key == "reason")
+                if (tag.Key == KeyCustodianMetrics.AuthorityRejections.TAG_REASON)
                     reason = tag.Value?.ToString() ?? string.Empty;
             }
 
@@ -88,17 +89,22 @@ public sealed class AuthorityTelemetryTests
         });
         listener.Start();
 
-        // Tags are CLOSED-enum string literals inlined at the call site (never free
-        // text), so cardinality is bounded.
+        // Tags are CLOSED-enum values from the AuthorityRejections named-constant set
+        // (never free text), so cardinality is bounded.
         KeyCustodianMetrics.SR_AuthorityRejectionsTotal.Add(
             delta: 1,
-            tag1: new("capability", "sign"),
-            tag2: new("reason", "cross-process-domain"));
+            tag1: new(
+                KeyCustodianMetrics.AuthorityRejections.TAG_CAPABILITY,
+                KeyCustodianMetrics.AuthorityRejections.Capability.SIGN),
+            tag2: new(
+                KeyCustodianMetrics.AuthorityRejections.TAG_REASON,
+                KeyCustodianMetrics.AuthorityRejections.Reason.MINTER_REQUIRED));
 
         listener.Dispose();
 
         tagPairs.Should().Contain(
-            ("sign", "cross-process-domain"),
+            (KeyCustodianMetrics.AuthorityRejections.Capability.SIGN,
+                KeyCustodianMetrics.AuthorityRejections.Reason.MINTER_REQUIRED),
             "the general authority-rejection counter carries bounded closed-enum tags");
     }
 
@@ -107,15 +113,44 @@ public sealed class AuthorityTelemetryTests
     {
         var logger = new CapturingLogger();
 
-        KeyCustodianLog.AuthorityRejected(logger, "files", "sign", "jwks-signing");
+        KeyCustodianLog.AuthorityRejected(
+            logger, "files", KeyCustodianMetrics.AuthorityRejections.Capability.SIGN, "jwks-signing");
 
         var entry = logger.Entries.Should().ContainSingle().Subject;
         entry.EventId.Id.Should().Be(9512, "AuthorityRejected is the next free App EventId");
         entry.Level.Should().Be(LogLevel.Warning);
-        entry.Message.Should().Contain("files").And.Contain("sign");
+        entry.Message.Should().Contain("files");
+        entry.Message.Should().Contain(KeyCustodianMetrics.AuthorityRejections.Capability.SIGN);
         entry.Message.Should().Contain(
             "jwks-signing",
             "the denial log carries the (non-PII) workload / capability / target for forensics");
+    }
+
+    [Fact]
+    public void AuthorityRejectionTags_PinWireContract()
+    {
+        // The single place that re-types the wire strings: a rename of any constant VALUE
+        // is a breaking dashboard / SLO / alert change and must fail a test here. Every
+        // other site references the constant.
+        KeyCustodianMetrics.AuthorityRejections.TAG_CAPABILITY.Should().Be("capability");
+        KeyCustodianMetrics.AuthorityRejections.TAG_REASON.Should().Be("reason");
+
+        KeyCustodianMetrics.AuthorityRejections.Capability.SIGN.Should().Be("sign");
+
+        KeyCustodianMetrics.AuthorityRejections.Reason.ORIGIN_UNESTABLISHED
+            .Should().Be("origin-unestablished");
+        KeyCustodianMetrics.AuthorityRejections.Reason.MINTER_REQUIRED
+            .Should().Be("minter-required");
+        KeyCustodianMetrics.AuthorityRejections.Reason.NOT_IN_ALLOWED_SET
+            .Should().Be("not-in-allowed-set");
+        KeyCustodianMetrics.AuthorityRejections.Reason.IDENTITY_ABSENT
+            .Should().Be("identity-absent");
+        KeyCustodianMetrics.AuthorityRejections.Reason.NOT_IN_PROCESS
+            .Should().Be("not-in-process");
+
+        KeyCustodianMetrics.AuthorityRejections.Workload.NONE.Should().Be("<none>");
+        KeyCustodianMetrics.AuthorityRejections.Workload.IN_PROCESS_MINTER
+            .Should().Be("<in-process-minter>");
     }
 
     /// <summary>Thread-safe capturing logger for asserting log entries by EventId.</summary>

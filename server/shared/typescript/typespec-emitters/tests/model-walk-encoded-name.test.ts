@@ -15,7 +15,7 @@
 //   3. A property with NO @encodedName → jsonName === undefined.
 //   4. @encodedName on an array field → jsonName threaded onto the array FieldInfo.
 
-import { describe, it, expect, beforeAll } from "vitest";
+import { describe, it, expect } from "vitest";
 import type { Model, Program } from "@typespec/compiler";
 import {
   createTestLibrary,

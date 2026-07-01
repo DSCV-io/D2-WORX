@@ -125,8 +125,11 @@ public sealed class KeyCustodianOptions : IValidatableObject
 
     /// <inheritdoc/>
     /// <remarks>
-    /// Validates <see cref="IssuerBaseUrl"/> for whitespace-only values (which pass
-    /// <c>[Required]</c> + <c>[MinLength(1)]</c> but are semantically invalid) and
+    /// Applies a defense-in-depth <c>Falsey()</c> check to <see cref="IssuerBaseUrl"/>
+    /// (redundant with the <c>[Required]</c> attribute, which already rejects
+    /// null / empty / whitespace via its <c>Trim()</c> rule in the
+    /// <c>ValidateDataAnnotations</c> path, but load-bearing if that attribute is ever
+    /// relaxed or this method is invoked directly) and
     /// validates the nested <see cref="Default"/> policy and every per-domain entry
     /// in <see cref="Policies"/>. Each nested <see cref="RotationPolicyOptions"/>
     /// is validated with <c>validateAllProperties: true</c> so its
@@ -137,9 +140,13 @@ public sealed class KeyCustodianOptions : IValidatableObject
     /// </remarks>
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {
-        // [Required] rejects null; [MinLength(1)] rejects empty — but neither rejects
-        // a whitespace-only value ("   "). A whitespace IssuerBaseUrl would boot and
-        // serve issuer:"   " and jwks_uri:"   /.well-known/jwks.json". Fail-loud here.
+        // [Required] (AllowEmptyStrings defaults to false) already rejects null, empty,
+        // and whitespace-only IssuerBaseUrl in the ValidateDataAnnotations startup path:
+        // its rule is value.Trim().Length != 0, and Validator.TryValidateObject
+        // short-circuits this Validate() the moment that property-level check fails. This
+        // explicit Falsey() check is defense-in-depth — it stays load-bearing if [Required]
+        // is ever relaxed to AllowEmptyStrings = true, or when Validate() is called
+        // directly, so a whitespace IssuerBaseUrl can never boot and serve issuer:"   ".
         if (IssuerBaseUrl.Falsey())
         {
             yield return new ValidationResult(

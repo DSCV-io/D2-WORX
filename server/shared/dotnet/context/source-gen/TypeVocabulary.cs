@@ -48,8 +48,16 @@ internal static class TypeVocabulary
     /// <summary>Nullable ImpersonationKind vocabulary key.</summary>
     public const string ImpersonationKindNullable = "ImpersonationKind?";
 
+    /// <summary>Non-nullable RequestOrigin vocabulary key (the establishment-boundary
+    /// discriminator; the <c>Unestablished</c> zero is the fail-closed default).</summary>
+    public const string RequestOrigin = "RequestOrigin";
+
     /// <summary>Actor-chain (RFC 8693) read-only list vocabulary key.</summary>
     public const string ActorChainList = "IReadOnlyList<ActorEntry>";
+
+    /// <summary>Call-path read-only list-of-records vocabulary key (the first
+    /// propagated list-of-records field).</summary>
+    public const string CallPathEntryList = "IReadOnlyList<CallPathEntry>";
 
     /// <summary>
     /// Read-only string list vocabulary key (used for multi-valued audience claim per
@@ -72,7 +80,9 @@ internal static class TypeVocabulary
         RoleNullable,
         ActorKindNullable,
         ImpersonationKindNullable,
+        RequestOrigin,
         ActorChainList,
+        CallPathEntryList,
         StringList,
         StringSet,
     };
@@ -110,7 +120,9 @@ internal static class TypeVocabulary
     /// <returns>A C# expression suitable for use as a field initializer.</returns>
     public static string DefaultExpression(string type) => type switch
     {
+        RequestOrigin => "RequestOrigin.Unestablished",
         ActorChainList => "[]",
+        CallPathEntryList => "[]",
         StringList => "[]",
         StringSet => "new HashSet<string>(StringComparer.Ordinal)",
         _ => "null",

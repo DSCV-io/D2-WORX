@@ -64,13 +64,25 @@ public sealed class KeyCustodianErrorCodesGeneratedTests
     [InlineData(
         KeyCustodianErrorCodes.KEYCUSTODIAN_SIGNING_DOMAIN_NOT_AUTHORIZED,
         "KEYCUSTODIAN_SIGNING_DOMAIN_NOT_AUTHORIZED")]
+    [InlineData(
+        KeyCustodianErrorCodes.KEYCUSTODIAN_REQUEST_ORIGIN_UNESTABLISHED,
+        "KEYCUSTODIAN_REQUEST_ORIGIN_UNESTABLISHED")]
+    [InlineData(
+        KeyCustodianErrorCodes.KEYCUSTODIAN_MINTER_CAPABILITY_REQUIRED,
+        "KEYCUSTODIAN_MINTER_CAPABILITY_REQUIRED")]
+    [InlineData(
+        KeyCustodianErrorCodes.KEYCUSTODIAN_SIGNING_KEY_UNAVAILABLE,
+        "KEYCUSTODIAN_SIGNING_KEY_UNAVAILABLE")]
+    [InlineData(
+        KeyCustodianErrorCodes.KEYCUSTODIAN_EMPTY_SIGNING_INPUT,
+        "KEYCUSTODIAN_EMPTY_SIGNING_INPUT")]
     public void Constant_ValueEqualsWireLiteral(string constant, string expected_wire_literal)
     {
         constant.Should().Be(expected_wire_literal);
     }
 
     // -----------------------------------------------------------------------
-    // AllCodes membership — set equals the 12 spec codes in spec order
+    // AllCodes membership — set equals the 21 spec codes in spec order
     // -----------------------------------------------------------------------
 
     [Fact]
@@ -95,6 +107,10 @@ public sealed class KeyCustodianErrorCodesGeneratedTests
             "KEYCUSTODIAN_NO_ACTIVE_ISSUING_CA",
             "KEYCUSTODIAN_CROSS_PROCESS_DOMAIN_REJECTED",
             "KEYCUSTODIAN_SIGNING_DOMAIN_NOT_AUTHORIZED",
+            "KEYCUSTODIAN_REQUEST_ORIGIN_UNESTABLISHED",
+            "KEYCUSTODIAN_MINTER_CAPABILITY_REQUIRED",
+            "KEYCUSTODIAN_SIGNING_KEY_UNAVAILABLE",
+            "KEYCUSTODIAN_EMPTY_SIGNING_INPUT",
         ];
 
         KeyCustodianErrorCodes.AllCodes.Should().BeEquivalentTo(
@@ -103,9 +119,9 @@ public sealed class KeyCustodianErrorCodesGeneratedTests
     }
 
     [Fact]
-    public void AllCodes_CountIsSeventeenCodes()
+    public void AllCodes_CountIsTwentyOneCodes()
     {
-        KeyCustodianErrorCodes.AllCodes.Should().HaveCount(17);
+        KeyCustodianErrorCodes.AllCodes.Should().HaveCount(21);
     }
 
     // -----------------------------------------------------------------------
@@ -128,6 +144,10 @@ public sealed class KeyCustodianErrorCodesGeneratedTests
     [InlineData("KEYCUSTODIAN_NO_ACTIVE_ISSUING_CA", 503)]
     [InlineData("KEYCUSTODIAN_CROSS_PROCESS_DOMAIN_REJECTED", 403)]
     [InlineData("KEYCUSTODIAN_SIGNING_DOMAIN_NOT_AUTHORIZED", 403)]
+    [InlineData("KEYCUSTODIAN_REQUEST_ORIGIN_UNESTABLISHED", 403)]
+    [InlineData("KEYCUSTODIAN_MINTER_CAPABILITY_REQUIRED", 403)]
+    [InlineData("KEYCUSTODIAN_SIGNING_KEY_UNAVAILABLE", 503)]
+    [InlineData("KEYCUSTODIAN_EMPTY_SIGNING_INPUT", 400)]
     public void GetHttpStatus_KnownCode_ReturnsDeclaredStatus(string code, int expected_status)
     {
         KeyCustodianErrorCodes.GetHttpStatus(code).Should().Be(expected_status);
@@ -176,6 +196,10 @@ public sealed class KeyCustodianErrorCodesGeneratedTests
             ["KEYCUSTODIAN_NO_ACTIVE_ISSUING_CA"] = 503,
             ["KEYCUSTODIAN_CROSS_PROCESS_DOMAIN_REJECTED"] = 403,
             ["KEYCUSTODIAN_SIGNING_DOMAIN_NOT_AUTHORIZED"] = 403,
+            ["KEYCUSTODIAN_REQUEST_ORIGIN_UNESTABLISHED"] = 403,
+            ["KEYCUSTODIAN_MINTER_CAPABILITY_REQUIRED"] = 403,
+            ["KEYCUSTODIAN_SIGNING_KEY_UNAVAILABLE"] = 503,
+            ["KEYCUSTODIAN_EMPTY_SIGNING_INPUT"] = 400,
         };
 
         foreach (var code in KeyCustodianErrorCodes.AllCodes)
@@ -487,9 +511,8 @@ public sealed class KeyCustodianErrorCodesGeneratedTests
     }
 
     // -----------------------------------------------------------------------
-    // Capability-authority denial factories — 403 / policy_denied (the Step-3
-    // additions). Both delegate to D2Result.Forbidden, stamping the KC code +
-    // PolicyDenied category.
+    // Capability-authority denial factories — 403 / policy_denied. Both delegate
+    // to D2Result.Forbidden, stamping the KC code + PolicyDenied category.
     // -----------------------------------------------------------------------
 
     [Fact]
@@ -546,5 +569,122 @@ public sealed class KeyCustodianErrorCodesGeneratedTests
         result.ErrorCode.Should().Be(
             KeyCustodianErrorCodes.KEYCUSTODIAN_SIGNING_DOMAIN_NOT_AUTHORIZED);
         result.Category.Should().Be(ErrorCategory.PolicyDenied);
+    }
+
+    // -----------------------------------------------------------------------
+    // Authority-refinement denial factories — 403 / policy_denied. Both delegate
+    // to D2Result.Forbidden, stamping the KC code + PolicyDenied category.
+    // -----------------------------------------------------------------------
+
+    [Fact]
+    public void RequestOriginUnestablished_NonGeneric_ReturnsForbiddenPolicyDenied()
+    {
+        var result = KeyCustodianFailures.RequestOriginUnestablished();
+
+        result.Success.Should().BeFalse();
+        result.StatusCode.Should().Be(
+            System.Net.HttpStatusCode.Forbidden,
+            "an unestablished request origin is fail-closed and denies signing");
+        result.ErrorCode.Should().Be(
+            KeyCustodianErrorCodes.KEYCUSTODIAN_REQUEST_ORIGIN_UNESTABLISHED);
+        result.Category.Should().Be(ErrorCategory.PolicyDenied);
+        result.Messages.Should().Contain(
+            m => m.Key == "keycustodian_authorization_REQUEST_ORIGIN_UNESTABLISHED");
+    }
+
+    [Fact]
+    public void RequestOriginUnestablished_Generic_ReturnsTypedForbiddenPolicyDenied()
+    {
+        var result = KeyCustodianFailures<int>.RequestOriginUnestablished();
+
+        result.Success.Should().BeFalse();
+        result.StatusCode.Should().Be(System.Net.HttpStatusCode.Forbidden);
+        result.ErrorCode.Should().Be(
+            KeyCustodianErrorCodes.KEYCUSTODIAN_REQUEST_ORIGIN_UNESTABLISHED);
+        result.Category.Should().Be(ErrorCategory.PolicyDenied);
+    }
+
+    [Fact]
+    public void MinterCapabilityRequired_NonGeneric_ReturnsForbiddenPolicyDenied()
+    {
+        var result = KeyCustodianFailures.MinterCapabilityRequired();
+
+        result.Success.Should().BeFalse();
+        result.StatusCode.Should().Be(
+            System.Net.HttpStatusCode.Forbidden,
+            "the cluster-signing root is reachable only via the minter capability");
+        result.ErrorCode.Should().Be(
+            KeyCustodianErrorCodes.KEYCUSTODIAN_MINTER_CAPABILITY_REQUIRED);
+        result.Category.Should().Be(ErrorCategory.PolicyDenied);
+        result.Messages.Should().Contain(
+            m => m.Key == "keycustodian_authorization_MINTER_CAPABILITY_REQUIRED");
+    }
+
+    [Fact]
+    public void MinterCapabilityRequired_Generic_ReturnsTypedForbiddenPolicyDenied()
+    {
+        var result = KeyCustodianFailures<int>.MinterCapabilityRequired();
+
+        result.Success.Should().BeFalse();
+        result.StatusCode.Should().Be(System.Net.HttpStatusCode.Forbidden);
+        result.ErrorCode.Should().Be(
+            KeyCustodianErrorCodes.KEYCUSTODIAN_MINTER_CAPABILITY_REQUIRED);
+        result.Category.Should().Be(ErrorCategory.PolicyDenied);
+    }
+
+    // -----------------------------------------------------------------------
+    // Sign-op factories. SigningKeyUnavailable is a
+    // 503 / infrastructure_unavailable retryable not-ready condition;
+    // EmptySigningInput is a 400 / validation_failure client error.
+    // -----------------------------------------------------------------------
+
+    [Fact]
+    public void SigningKeyUnavailable_NonGeneric_ReturnsServiceUnavailableFailure()
+    {
+        var result = KeyCustodianFailures.SigningKeyUnavailable();
+
+        result.Success.Should().BeFalse();
+        result.StatusCode.Should().Be(
+            System.Net.HttpStatusCode.ServiceUnavailable,
+            "no active signing key for the domain is a retryable not-ready-yet condition");
+        result.ErrorCode.Should().Be(KeyCustodianErrorCodes.KEYCUSTODIAN_SIGNING_KEY_UNAVAILABLE);
+        result.Category.Should().Be(ErrorCategory.InfrastructureUnavailable);
+        result.Messages.Should().Contain(
+            m => m.Key == "keycustodian_infrastructure_SIGNING_KEY_UNAVAILABLE");
+    }
+
+    [Fact]
+    public void SigningKeyUnavailable_Generic_ReturnsTypedServiceUnavailableFailure()
+    {
+        var result = KeyCustodianFailures<int>.SigningKeyUnavailable();
+
+        result.Success.Should().BeFalse();
+        result.StatusCode.Should().Be(System.Net.HttpStatusCode.ServiceUnavailable);
+        result.ErrorCode.Should().Be(KeyCustodianErrorCodes.KEYCUSTODIAN_SIGNING_KEY_UNAVAILABLE);
+        result.Category.Should().Be(ErrorCategory.InfrastructureUnavailable);
+    }
+
+    [Fact]
+    public void EmptySigningInput_NonGeneric_ReturnsValidationFailure()
+    {
+        var result = KeyCustodianFailures.EmptySigningInput();
+
+        result.Success.Should().BeFalse();
+        result.StatusCode.Should().Be(System.Net.HttpStatusCode.BadRequest);
+        result.ErrorCode.Should().Be(KeyCustodianErrorCodes.KEYCUSTODIAN_EMPTY_SIGNING_INPUT);
+        result.Category.Should().Be(ErrorCategory.ValidationFailure);
+        result.Messages.Should().Contain(
+            m => m.Key == "keycustodian_validation_EMPTY_SIGNING_INPUT");
+    }
+
+    [Fact]
+    public void EmptySigningInput_Generic_ReturnsTypedValidationFailure()
+    {
+        var result = KeyCustodianFailures<int>.EmptySigningInput();
+
+        result.Success.Should().BeFalse();
+        result.StatusCode.Should().Be(System.Net.HttpStatusCode.BadRequest);
+        result.ErrorCode.Should().Be(KeyCustodianErrorCodes.KEYCUSTODIAN_EMPTY_SIGNING_INPUT);
+        result.Category.Should().Be(ErrorCategory.ValidationFailure);
     }
 }

@@ -33,16 +33,17 @@ export class PropagatedContextSerializer {
     if (ctx.orgPlanTier !== null && ctx.orgPlanTier !== undefined) o["orgPlanTier"] = ctx.orgPlanTier;
     if (ctx.featureFlagsCsv !== null && ctx.featureFlagsCsv !== undefined) o["featureFlagsCsv"] = ctx.featureFlagsCsv;
     if (ctx.whoIsHashId !== null && ctx.whoIsHashId !== undefined) o["whoIsHashId"] = ctx.whoIsHashId;
+    if (ctx.callPath !== null && ctx.callPath !== undefined) o["callPath"] = ctx.callPath;
     return JSON.stringify(o);
   }
 
   /**
-   * Decode an envelope from a wire string. Wire-boundary carve-out per
-   * rules.md §6.15: the input is `string | null | undefined` because the
-   * primary caller passes `Headers.get(...)` directly, and the Web `Headers`
-   * API contract returns `string | null` (`null` for absent headers). The
-   * tryDecode boundary normalizes to `undefined` immediately — no `null`
-   * propagates inward.
+   * Decode an envelope from a wire string. Wire-boundary carve-out: the
+   * input is `string | null | undefined` because the primary caller passes
+   * `Headers.get(...)` directly, and the Web `Headers` API contract returns
+   * `string | null` (`null` for absent headers). The tryDecode boundary
+   * normalizes to `undefined` immediately — no `null` propagates inward
+   * (TypeScript uses `undefined`, never `null`, as the absent sentinel).
    */
   static tryDecode(input: string | null | undefined): IPropagatedContext | undefined {
     if (input === null || input === undefined || input === "") return undefined;
@@ -184,6 +185,24 @@ export class PropagatedContextSerializer {
         if (typeof v !== "string") return undefined;
         if (v.length > 128) return undefined;
         out["whoIsHashId"] = v;
+      }
+    }
+    {
+      const v = parsed["callPath"];
+      if (v === undefined || v === null) {
+        // absent — leave out["callPath"] unset (undefined)
+      } else {
+        if (!Array.isArray(v)) return undefined;
+        if (v.length > 16) return undefined;
+        for (const e of v) {
+          if (e === null || typeof e !== "object") return undefined;
+          const entry = e as Record<string, unknown>;
+          const entryId = entry["id"];
+          if (typeof entryId !== "string" || entryId.length > 128) return undefined;
+          if (typeof entry["kind"] !== "string") return undefined;
+          if (typeof entry["timestamp"] !== "string") return undefined;
+        }
+        out["callPath"] = v;
       }
     }
     return out as unknown as IPropagatedContext;

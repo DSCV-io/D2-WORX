@@ -8,7 +8,9 @@
 
 #nullable enable
 
+using System.Collections.Generic;
 using System.Text.Json.Serialization;
+using D2.Shared.Auth.Abstractions;
 
 namespace D2.Shared.Context.Abstractions;
 
@@ -98,6 +100,11 @@ public sealed record PropagatedContext
     /// </summary>
     public string? WhoIsHashId { get; init; }
 
+    /// <summary>
+    /// Ordered sequence of the workloads/modules that have handled this request, oldest-first. Each boundary appends its OWN identity + a timestamp on receipt and logs the field; the chain reconstructs 'entered at Edge, went through A, then B, reached me' even when a trace span is dropped. Operational TELEMETRY ONLY — authority NEVER reads it. Propagated on x-d2-context alongside the other operational subset (it is the first propagated list-of-records field); depth-bounded (maxLength = max entry count) so a request cannot grow it without limit. Distinct from the impersonation act chain (which records on-whose-behalf and is signed identity).
+    /// </summary>
+    public IReadOnlyList<CallPathEntry>? CallPath { get; init; }
+
     /// <summary>Gets a value indicating whether any propagated
     /// field is set — lets callers skip the encode/serialize round-
     /// trip when nothing meaningful is in the context.</summary>
@@ -116,5 +123,6 @@ public sealed record PropagatedContext
         CurrencyIso4217Code is not null ||
         OrgPlanTier is not null ||
         FeatureFlagsCsv is not null ||
-        WhoIsHashId is not null;
+        WhoIsHashId is not null ||
+        CallPath is { Count: > 0 };
 }

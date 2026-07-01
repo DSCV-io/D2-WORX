@@ -57,6 +57,12 @@
       "actionSensitivity": "Critical",
       "impersonationBlocked": true,
       "grantedTo": { "Customer": ["Owner"] }
+    },
+    {
+      "name": "internal.kc.sign",
+      "description": "Sign a payload with a KeyCustodian-managed signing key (internal service-to-service / in-process minter).",
+      "actionSensitivity": "Critical",
+      "impersonationBlocked": true
     }
   ]
 }

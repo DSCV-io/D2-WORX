@@ -1080,7 +1080,8 @@ function emitDtoPair(
     code:
       | "unmapped-scalar"
       | "unsupported-property-type"
-      | "unsupported-union-shape",
+      | "unsupported-union-shape"
+      | "nested-redact-unsupported",
     message: string,
   ): void => {
     errors.push(message);
@@ -1097,6 +1098,12 @@ function emitDtoPair(
       $lib.reportDiagnostic(program, {
         code: "unsupported-union-shape",
         format: { property: message },
+        target: NoTarget,
+      });
+    else if (code === "nested-redact-unsupported")
+      $lib.reportDiagnostic(program, {
+        code: "nested-redact-unsupported",
+        format: { detail: message },
         target: NoTarget,
       });
     else
@@ -1183,7 +1190,8 @@ function emitProtoAndGrpcService(
       | "unsupported-union-shape"
       | "invalid-streaming-mode"
       | "unpinned-proto-field"
-      | "duplicate-field-number",
+      | "duplicate-field-number"
+      | "nested-redact-unsupported",
     message: string,
   ): void => {
     errors.push(message);
@@ -1214,6 +1222,12 @@ function emitProtoAndGrpcService(
     else if (code === "duplicate-field-number")
       $lib.reportDiagnostic(program, {
         code: "duplicate-field-number",
+        format: { detail: message },
+        target: NoTarget,
+      });
+    else if (code === "nested-redact-unsupported")
+      $lib.reportDiagnostic(program, {
+        code: "nested-redact-unsupported",
         format: { detail: message },
         target: NoTarget,
       });

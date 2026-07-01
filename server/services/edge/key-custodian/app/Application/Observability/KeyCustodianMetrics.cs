@@ -19,8 +19,10 @@ using System.Diagnostics.Metrics;
 /// domain-semantic events (compromise, rotation announce, key generation, smoke
 /// failure, empty JWKS) dashboards alert on independently.
 ///
-/// Tag convention: camelCase tag names; closed-enum values are inlined as string
-/// literals at the call site so no external tag-constants type is needed here.
+/// Tag convention: camelCase tag names; closed-enum tag values are named constants
+/// (see <see cref="AuthorityRejections"/>) referenced at every write site — the single
+/// source of truth so the tag cardinality stays bounded and the switch/compare arms
+/// cannot drift from the emitted wire values.
 /// </remarks>
 public static class KeyCustodianMetrics
 {
@@ -119,10 +121,11 @@ public static class KeyCustodianMetrics
                 + "and returned 503. A sustained non-zero rate blocks the entire mTLS mesh.");
 
     /// <summary>
-    /// Counter — total cross-process signing requests rejected for an
-    /// in-process-only key domain (<c>jwks-signing</c>). The highest-severity
-    /// authority signal: any non-zero value means a separate process attempted to
-    /// mint with the cluster signing key — the root of mint-once-forward, which must
+    /// Counter — total general-surface signing requests rejected for attempting to reach
+    /// the cluster-signing root (<c>jwks-signing</c>) — the <c>MinterCapabilityRequired</c>
+    /// arm. The highest-severity authority signal: any non-zero value means a caller tried
+    /// to mint with the cluster signing key on the general surface (possible from ANY
+    /// origin), which is reachable only through the dedicated minter capability and must
     /// never leave the Edge host process. Pages on any non-zero value.
     /// </summary>
     public static readonly Counter<long> SR_CrossProcessSigningRejections =
@@ -130,18 +133,21 @@ public static class KeyCustodianMetrics
             name: "d2.keycustodian.cross_process_signing_rejections",
             unit: "{rejection}",
             description:
-                "Total cross-process signing requests rejected for an in-process-only key "
-                + "domain (jwks-signing). Any non-zero value is a security signal — a "
-                + "separate process attempted to mint with the cluster signing key.");
+                "Total general-surface signing requests rejected for attempting to reach the "
+                + "cluster-signing root (jwks-signing). Any non-zero value is a security "
+                + "signal — a caller tried to mint with the cluster signing key on the "
+                + "general surface, which only the dedicated minter capability may reach.");
 
     /// <summary>
     /// Counter — total capability-authority rejections across every capability. The
     /// broad dashboard counter complementing the specific
     /// <see cref="SR_CrossProcessSigningRejections"/>. Tagged <c>capability</c>
     /// (<c>sign</c> / <c>seal-encrypt</c> / <c>seal-decrypt</c>) and <c>reason</c>
-    /// (<c>cross-process-domain</c> / <c>not-in-allowed-set</c> /
-    /// <c>identity-absent</c>) — both CLOSED-enum string literals inlined at the call
-    /// site, never free text, so the tag cardinality is bounded.
+    /// (<c>origin-unestablished</c> / <c>minter-required</c> / <c>not-in-allowed-set</c> /
+    /// <c>identity-absent</c> / <c>not-in-process</c>) — both CLOSED-enum values drawn from
+    /// the <see cref="AuthorityRejections"/> named constants (never free text), so the tag
+    /// cardinality is bounded. The <c>not-in-process</c> reason is minter-only: the dedicated
+    /// JWT-minter capability was invoked from a plane other than the in-process module.
     /// </summary>
     public static readonly Counter<long> SR_AuthorityRejectionsTotal =
         SR_Meter.CreateCounter<long>(
@@ -149,6 +155,84 @@ public static class KeyCustodianMetrics
             unit: "{rejection}",
             description:
                 "Total capability-authority rejections. Tags: capability "
-                + "(sign / seal-encrypt / seal-decrypt), reason (cross-process-domain / "
-                + "not-in-allowed-set / identity-absent) — both closed-enum values.");
+                + "(sign / seal-encrypt / seal-decrypt), reason (origin-unestablished / "
+                + "minter-required / not-in-allowed-set / identity-absent / not-in-process) "
+                + "— closed-enum values.");
+
+    /// <summary>
+    /// Counter — total Sign requests that found no active signing key for the
+    /// requested domain and returned 503. A sustained non-zero rate means a signing
+    /// domain has not been seeded or is mid-rotation with no active key — JWT minting
+    /// for that domain is blocked until a key is active.
+    /// </summary>
+    public static readonly Counter<long> SR_SigningKeyUnavailableTotal =
+        SR_Meter.CreateCounter<long>(
+            name: "d2.keycustodian.signing_key_unavailable",
+            unit: "{response}",
+            description:
+                "Total Sign requests that found no active signing key and returned 503. "
+                + "A sustained non-zero rate blocks JWT minting for the affected domain.");
+
+    /// <summary>
+    /// Named tag-key + closed-enum tag-value constants for
+    /// <see cref="SR_AuthorityRejectionsTotal"/> — the single source of truth for the
+    /// bounded <c>capability</c> / <c>reason</c> dimensions plus the forensic
+    /// <c>AuthorityRejected</c> workload sentinels. Every deny site references these
+    /// constants (never a raw literal) so the emitted wire values, the <c>switch</c> arms
+    /// that produce them, and the <c>==</c> compares that branch on them share one
+    /// definition and cannot drift.
+    /// </summary>
+    public static class AuthorityRejections
+    {
+        /// <summary>The wire-format tag key (<c>capability</c>).</summary>
+        public const string TAG_CAPABILITY = "capability";
+
+        /// <summary>The wire-format tag key (<c>reason</c>).</summary>
+        public const string TAG_REASON = "reason";
+
+        /// <summary>Closed-enum values for the <c>capability</c> tag.</summary>
+        public static class Capability
+        {
+            /// <summary>The <c>sign</c> capability.</summary>
+            public const string SIGN = "sign";
+        }
+
+        /// <summary>Closed-enum values for the <c>reason</c> tag.</summary>
+        public static class Reason
+        {
+            /// <summary>The origin was never established (fail-closed first arm).</summary>
+            public const string ORIGIN_UNESTABLISHED = "origin-unestablished";
+
+            /// <summary>
+            /// A general-surface attempt to reach the cluster-signing root (<c>jwks-signing</c>),
+            /// reachable only through the dedicated minter capability.
+            /// </summary>
+            public const string MINTER_REQUIRED = "minter-required";
+
+            /// <summary>The caller's policy does not grant the requested signing domain.</summary>
+            public const string NOT_IN_ALLOWED_SET = "not-in-allowed-set";
+
+            /// <summary>A cross-process call carried no caller identity.</summary>
+            public const string IDENTITY_ABSENT = "identity-absent";
+
+            /// <summary>
+            /// The dedicated JWT-minter capability was invoked from a plane other than the
+            /// in-process module.
+            /// </summary>
+            public const string NOT_IN_PROCESS = "not-in-process";
+        }
+
+        /// <summary>
+        /// Workload-identity sentinels for the <c>AuthorityRejected</c> forensic log when
+        /// no live caller identity is available.
+        /// </summary>
+        public static class Workload
+        {
+            /// <summary>The general surface denied a call carrying no caller identity.</summary>
+            public const string NONE = "<none>";
+
+            /// <summary>The dedicated in-process JWT-minter capability.</summary>
+            public const string IN_PROCESS_MINTER = "<in-process-minter>";
+        }
+    }
 }

@@ -24,7 +24,7 @@ function field(
   name: string,
   tsType: string,
   optional = false,
-  redact = false,
+  redactReason?: string,
 ): FieldInfo {
   const csType = optional ? `${tsType}?` : tsType;
   return {
@@ -34,7 +34,7 @@ function field(
     tsName: name,
     tsType,
     optional,
-    redact,
+    redactReason,
     repeated: false,
   };
 }
@@ -107,7 +107,7 @@ describe("emitTsDtos_RedactedField_EmittedNormally", () => {
   it("@d2Redact field is emitted as a normal TS field (no attribute in TS)", () => {
     const inputFields = [
       field("kid", "string"),
-      field("payload", "Uint8Array", false, true), // redacted — ignored in TS
+      field("payload", "Uint8Array", false, "SecretInformation"), // redacted — ignored in TS
     ];
     const file = emitTsDtos("sign", TEST_SPEC, inputFields, [], []);
 
@@ -205,7 +205,7 @@ function enumField(name: string, enumRef: NestedEnum): FieldInfo {
     tsType: enumRef.name,
     protoType: "string",
     optional: false,
-    redact: false,
+    redactReason: undefined,
     repeated: false,
     enumRef,
   };

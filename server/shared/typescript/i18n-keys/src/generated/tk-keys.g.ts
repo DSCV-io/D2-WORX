@@ -346,10 +346,13 @@ export const TK = {
   keycustodian: {
     authorization: {
       CROSS_PROCESS_DOMAIN_REJECTED: tk("keycustodian_authorization_CROSS_PROCESS_DOMAIN_REJECTED"),
+      MINTER_CAPABILITY_REQUIRED: tk("keycustodian_authorization_MINTER_CAPABILITY_REQUIRED"),
+      REQUEST_ORIGIN_UNESTABLISHED: tk("keycustodian_authorization_REQUEST_ORIGIN_UNESTABLISHED"),
       SIGNING_DOMAIN_NOT_AUTHORIZED: tk("keycustodian_authorization_SIGNING_DOMAIN_NOT_AUTHORIZED")
     },
     infrastructure: {
-      NO_ACTIVE_ISSUING_CA: tk("keycustodian_infrastructure_NO_ACTIVE_ISSUING_CA")
+      NO_ACTIVE_ISSUING_CA: tk("keycustodian_infrastructure_NO_ACTIVE_ISSUING_CA"),
+      SIGNING_KEY_UNAVAILABLE: tk("keycustodian_infrastructure_SIGNING_KEY_UNAVAILABLE")
     },
     internal: {
       INVALID_CERTIFICATE_REQUEST: tk("keycustodian_internal_INVALID_CERTIFICATE_REQUEST"),
@@ -362,6 +365,7 @@ export const TK = {
       PENDING_KEY_ALREADY_EXISTS: tk("keycustodian_lifecycle_PENDING_KEY_ALREADY_EXISTS")
     },
     validation: {
+      EMPTY_SIGNING_INPUT: tk("keycustodian_validation_EMPTY_SIGNING_INPUT"),
       GRACE_NOT_ELAPSED: tk("keycustodian_validation_GRACE_NOT_ELAPSED"),
       INVALID_ROTATION_POLICY: tk("keycustodian_validation_INVALID_ROTATION_POLICY"),
       INVALID_WORKLOAD_IDENTITY: tk("keycustodian_validation_INVALID_WORKLOAD_IDENTITY"),

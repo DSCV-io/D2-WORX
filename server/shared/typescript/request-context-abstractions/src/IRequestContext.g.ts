@@ -9,6 +9,8 @@
 /* eslint-disable */
 
 import type { IAuthContext } from "@d2/auth-context-abstractions";
+import type { CallPathEntry, RequestOrigin } from "@d2/auth-context-abstractions";
+export type { CallPathEntry, RequestOrigin };
 
 /**
  * Per-request runtime context. Extends IAuthContext with transport-level (tracing) and network/enrichment information. Populated by transport-specific middleware (aspnetcore for HTTP, messaging-rabbitmq for RabbitMQ, etc.) into a MutableRequestContext concrete instance; downstream consumers see only the read-only IRequestContext interface.
@@ -152,6 +154,19 @@ export interface IRequestContext extends IAuthContext {
    * ASN type — typically one of: business / isp / hosting / mobile / education / government. Datacenter/Tor policies key on this. Free-form string for now (no enum) — promote to enum if a real handler benefits from typed dispatch.
    */
   readonly asnType?: string;
+  // --- Establishment ---
+  /**
+   * What KIND of trust boundary produced THIS hop's context, recomputed LOCALLY by the receiving boundary from its own unforgeable transport facts (HTTP edge inbound / cross-process mTLS gRPC / in-process module call / in-host system worker). NEVER propagated: a wire-supplied Origin is ignored — every boundary derives it fresh. The default RequestOrigin.Unestablished is fail-closed: a capability authority that has not had its Origin positively established by a boundary DENIES, never assumes a plane. Authority-grade BECAUSE it is local and unforgeable.
+   */
+  readonly origin: RequestOrigin;
+  /**
+   * The id of the workload or module that called THIS hop. Cross-process: the authenticated mutual-TLS peer workload service id from the validated client certificate SPIFFE SAN (unforgeable, fail-closed null on no cert). In-process: the calling module/host id (trusted because the whole process is trusted — telemetry-grade, not a spoofing surface). Edge inbound / System: null (no upstream internal workload). NEVER propagated and NEVER request-controlled.
+   */
+  readonly immediateCaller?: string;
+  /**
+   * Ordered sequence of the workloads/modules that have handled this request, oldest-first. Each boundary appends its OWN identity + a timestamp on receipt and logs the field; the chain reconstructs 'entered at Edge, went through A, then B, reached me' even when a trace span is dropped. Operational TELEMETRY ONLY — authority NEVER reads it. Propagated on x-d2-context alongside the other operational subset (it is the first propagated list-of-records field); depth-bounded (maxLength = max entry count) so a request cannot grow it without limit. Distinct from the impersonation act chain (which records on-whose-behalf and is signed identity).
+   */
+  readonly callPath: readonly CallPathEntry[];
 }
 
 /**

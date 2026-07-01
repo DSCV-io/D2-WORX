@@ -204,10 +204,28 @@ describe("directUnit_$d2GrpcMethod", () => {
 });
 
 describe("directUnit_$d2Redact", () => {
-  it("stores true under D2_REDACT_KEY on the model property", () => {
+  it("stores the RedactReason string under D2_REDACT_KEY on the model property", () => {
     const { ctx, maps } = makeMockContext();
-    $d2Redact(ctx, mockProperty);
-    expect(maps.get(D2_REDACT_KEY)!.get(mockProperty)).toBe(true);
+    $d2Redact(ctx, mockProperty, "SecretInformation");
+    expect(maps.get(D2_REDACT_KEY)!.get(mockProperty)).toBe(
+      "SecretInformation",
+    );
+  });
+
+  it("reports invalid-redact-reason for an unknown reason string", () => {
+    const diags: Array<{ code: string }> = [];
+    const { ctx } = makeMockContext();
+    (
+      ctx.program as unknown as {
+        reportDiagnostic: (d: { code: string }) => void;
+      }
+    ).reportDiagnostic = (d) => {
+      diags.push(d);
+    };
+    $d2Redact(ctx, mockProperty, "NotARealReason");
+    expect(diags.some((d) => d.code.endsWith("invalid-redact-reason"))).toBe(
+      true,
+    );
   });
 });
 
@@ -988,14 +1006,37 @@ it("d2GrpcMethod_StoresExplicitStreamingMode", async () => {
   });
 });
 
-it("d2Redact_StoresTrueUnderRedactKeyOnModelProperty", async () => {
+it("d2Redact_StoresReasonUnderRedactKeyOnModelProperty", async () => {
   await runner.compile(`
+    model UserInput {
+      @d2Redact("PersonalInformation") email: string;
+    }
+  `);
+  const values = [...runner.program.stateMap(D2_REDACT_KEY).values()];
+  expect(values).toContain("PersonalInformation");
+});
+
+it("d2Redact_BareMarkerWithoutReasonIsCompilerRejected", async () => {
+  // The reason argument is REQUIRED — a bare @d2Redact is a missing-argument
+  // compile error, so a sensitive field can never be marked without naming its
+  // data class (fail-closed; no silent PersonalInformation default).
+  await runner.diagnose(`
     model UserInput {
       @d2Redact email: string;
     }
   `);
-  const values = [...runner.program.stateMap(D2_REDACT_KEY).values()];
-  expect(values).toContain(true);
+  expect(runner.program.hasError()).toBe(true);
+});
+
+it("d2Redact_UnknownReasonEmitsInvalidRedactReason", async () => {
+  await runner.diagnose(`
+    model UserInput {
+      @d2Redact("NotARealReason") email: string;
+    }
+  `);
+  expect(getDiagCodes(runner)).toContain(
+    "@d2/typespec-decorators/invalid-redact-reason",
+  );
 });
 
 it("d2ServerPush_StoresTargetStringUnderServerPushKey", async () => {
@@ -1144,7 +1185,7 @@ it("d2Internal_StoresTrueUnderInternalKeyOnOperation", async () => {
 it("allSixteenDecorators_CoApplyAndRoundTripIndependently", async () => {
   await httpRunner.compile(`
     model RequestBody {
-      @d2Redact sensitiveField: string;
+      @d2Redact("SecretInformation") sensitiveField: string;
     }
 
     @d2Command
@@ -1218,7 +1259,7 @@ it("allSixteenDecorators_CoApplyAndRoundTripIndependently", async () => {
   ).toBe(true);
 
   const redactValues = [...program.stateMap(D2_REDACT_KEY).values()];
-  expect(redactValues).toContain(true);
+  expect(redactValues).toContain("SecretInformation");
 
   const serverPushValues = [...program.stateMap(D2_SERVER_PUSH_KEY).values()];
   expect(serverPushValues).toContain("session");
@@ -3289,7 +3330,7 @@ describe("d2Resilience_AcceptsValidExpressions", () => {
 describe("redact_OnOperationIsCompilerRejected", () => {
   it("program has errors when @d2Redact is applied to an op (wrong target type)", async () => {
     await runner.diagnose(`
-      @d2Redact
+      @d2Redact("PersonalInformation")
       op badOp(): void;
     `);
     // The TypeSpec compiler enforces the extern dec target: ModelProperty constraint.

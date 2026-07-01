@@ -11,6 +11,9 @@ using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.GenerateKey;
 using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.RetireKey;
 using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.RotateKey;
 using D2.Edge.KeyCustodian.App.Application.Handlers.Queries.GetRotationPlan;
+using H = D2.Edge.KeyCustodian.App.Application.Handlers.Commands.RunDueRotations.IRunDueRotationsHandler;
+using I = RunDueRotationsInput;
+using O = RunDueRotationsOutput;
 
 /// <summary>
 /// Orchestrates all key-lifecycle actions that are currently due across all
@@ -48,8 +51,8 @@ public sealed class RunDueRotationsHandler(
     IActivateKeyHandler activate,
     IRotateKeyHandler rotate,
     IRetireKeyHandler retire)
-    : BaseHandler<RunDueRotationsHandler, RunDueRotationsInput, RunDueRotationsOutput>(ctx),
-      IRunDueRotationsHandler
+    : BaseHandler<RunDueRotationsHandler, I, O>(ctx),
+      H
 {
     /// <inheritdoc/>
     /// <remarks>
@@ -64,14 +67,15 @@ public sealed class RunDueRotationsHandler(
     };
 
     /// <inheritdoc/>
-    protected override async ValueTask<D2Result<RunDueRotationsOutput?>> ExecuteAsync(
-        RunDueRotationsInput input, CancellationToken ct)
+    protected override async ValueTask<D2Result<O?>> ExecuteAsync(
+        I input, CancellationToken ct)
     {
         var planResult = await getPlan
             .HandleAsync(new GetRotationPlanInput(), ct)
             .ConfigureAwait(false);
+
         if (!planResult.Success)
-            return D2Result<RunDueRotationsOutput?>.BubbleFail(planResult);
+            return D2Result<O?>.BubbleFail(planResult);
 
         var plan = planResult.Data!;
 
@@ -96,6 +100,7 @@ public sealed class RunDueRotationsHandler(
             var result = await generate
                 .HandleAsync(new GenerateKeyInput(domain, keyType), ct)
                 .ConfigureAwait(false);
+
             if (result.Success)
             {
                 bootstrapped.Add(domain);
@@ -129,6 +134,7 @@ public sealed class RunDueRotationsHandler(
             var result = await activate
                 .HandleAsync(new ActivateKeyInput(pendingRecord.Kid), ct)
                 .ConfigureAwait(false);
+
             if (result.Success)
             {
                 activated.Add(domain);
@@ -147,6 +153,7 @@ public sealed class RunDueRotationsHandler(
             var result = await rotate
                 .HandleAsync(new RotateKeyInput(domain), ct)
                 .ConfigureAwait(false);
+
             if (result.Success)
             {
                 rotated.Add(domain);
@@ -180,6 +187,7 @@ public sealed class RunDueRotationsHandler(
             var result = await generate
                 .HandleAsync(new GenerateKeyInput(domain, activeRecord.KeyType), ct)
                 .ConfigureAwait(false);
+
             if (result.Success)
             {
                 successorsGenerated.Add(domain);
@@ -213,6 +221,7 @@ public sealed class RunDueRotationsHandler(
             var result = await retire
                 .HandleAsync(new RetireKeyInput(retiringRecord.Kid), ct)
                 .ConfigureAwait(false);
+
             if (result.Success)
             {
                 retired.Add(domain);
@@ -225,8 +234,8 @@ public sealed class RunDueRotationsHandler(
             }
         }
 
-        return D2Result<RunDueRotationsOutput?>.Ok(
-            new RunDueRotationsOutput(
+        return D2Result<O?>.Ok(
+            new O(
                 bootstrapped, activated, rotated, successorsGenerated, retired, skipped, errors));
     }
 }

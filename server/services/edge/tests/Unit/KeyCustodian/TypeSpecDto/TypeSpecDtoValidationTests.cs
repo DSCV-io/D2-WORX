@@ -55,7 +55,7 @@ public sealed class TypeSpecDtoValidationTests
         var rendered = sink.RenderAll();
 
         // The Payload property must be redacted.
-        rendered.Should().Contain("[REDACTED: PersonalInformation]");
+        rendered.Should().Contain("[REDACTED: SecretInformation]");
 
         // The raw secret must NOT appear.
         rendered.Should().NotContain("SECRET_PAYLOAD");
@@ -83,6 +83,6 @@ public sealed class TypeSpecDtoValidationTests
         rendered.Should().Contain(knownKid);
 
         // The policy must be selective — at least one field unmasked.
-        rendered.Should().Contain("[REDACTED: PersonalInformation]");
+        rendered.Should().Contain("[REDACTED: SecretInformation]");
     }
 }

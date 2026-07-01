@@ -70,7 +70,7 @@ function buildSignFixtureInputFields(): readonly FieldInfo[] {
       protoType: "string",
       repeated: false,
       optional: false,
-      redact: false,
+      redactReason: undefined,
       fieldNumber: 1,
     },
     {
@@ -82,7 +82,7 @@ function buildSignFixtureInputFields(): readonly FieldInfo[] {
       protoType: "bytes",
       repeated: false,
       optional: false,
-      redact: true,
+      redactReason: "SecretInformation",
       fieldNumber: 2,
     },
   ];
@@ -99,7 +99,7 @@ function buildSignFixtureOutputFields(): readonly FieldInfo[] {
       protoType: "string",
       repeated: false,
       optional: false,
-      redact: false,
+      redactReason: undefined,
       fieldNumber: 1,
     },
   ];
@@ -495,6 +495,275 @@ describe("byteParity_WireIdentityManifest_CommittedFixtureIdentical", () => {
     );
     expect(file.content).not.toBe(
       readFixture(join(GRPC_HOME, "wire-identity.manifest.g.json")),
+    );
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Real KeyCustodian sign — the FIRST non-fixture gRPC wire surface. The
+// server-side artifacts (proto + service + transport mappers + wire identity) are
+// committed + byte-pinned here (proto package d2.keycustodian.v2alpha; the service
+// delegates to IKeyCustodianApi.SignAsync). The cross-process gRPC CLIENT is
+// deferred (it lives in the production D2.Edge.KeyCustodian.Clients namespace and
+// needs the host composition + the clients project to become gRPC-aware).
+// ---------------------------------------------------------------------------
+
+const KC_SOURCE = "contracts/typespec/key-custodian/key-custodian.tsp";
+const KC_PROTO_CS_NS = "D2.Services.Protos.KeyCustodian.V2Alpha";
+const KC_GRPC_NS = "D2.Edge.Tests.TypeSpecGrpc.Generated";
+const KC_DTO_NS = "D2.Edge.KeyCustodian.Clients";
+const KC_WIRE_HOME = join(GRPC_HOME, "KeyCustodian");
+
+function buildKcSignInputFields(): readonly FieldInfo[] {
+  return [
+    {
+      name: "keyDomain",
+      csName: "KeyDomain",
+      csType: "string",
+      tsName: "keyDomain",
+      tsType: "string",
+      protoType: "string",
+      repeated: false,
+      optional: false,
+      redactReason: undefined,
+      fieldNumber: 1,
+    },
+    {
+      name: "signingInput",
+      csName: "SigningInput",
+      csType: "byte[]",
+      tsName: "signingInput",
+      tsType: "Uint8Array",
+      protoType: "bytes",
+      repeated: false,
+      optional: false,
+      redactReason: "SecretInformation",
+      fieldNumber: 2,
+    },
+  ];
+}
+
+function buildKcSignOutputFields(): readonly FieldInfo[] {
+  return [
+    {
+      name: "signature",
+      csName: "Signature",
+      csType: "string",
+      tsName: "signature",
+      tsType: "string",
+      protoType: "string",
+      repeated: false,
+      optional: false,
+      redactReason: undefined,
+      fieldNumber: 1,
+    },
+    {
+      name: "kid",
+      csName: "Kid",
+      csType: "string",
+      tsName: "kid",
+      tsType: "string",
+      protoType: "string",
+      repeated: false,
+      optional: false,
+      redactReason: undefined,
+      fieldNumber: 2,
+    },
+  ];
+}
+
+/** Real-KC façade delegation target (matches the committed KeyCustodianSignerService.g.cs). */
+const KC_SIGN_FACADE_TARGET: GrpcDelegationTarget = {
+  kind: "facade",
+  typeName: "IKeyCustodianApi",
+  methodName: "SignAsync",
+  targetNamespace: "D2.Edge.KeyCustodian.Clients",
+};
+
+describe("byteParity_KcSignProto_CommittedFixtureIdentical", () => {
+  it("re-emitted real KC .proto is byte-identical to the committed fixture", () => {
+    const result = emitProto(
+      "sign",
+      "KeyCustodianSigner",
+      "Sign",
+      "unary",
+      "d2.keycustodian.v2alpha",
+      KC_PROTO_CS_NS,
+      KC_SOURCE,
+      "SignRequest",
+      buildKcSignInputFields(),
+      undefined,
+      "SignOutput",
+      buildKcSignOutputFields(),
+      undefined,
+      [],
+      () => {},
+    );
+    expect(result).toBeDefined();
+    expect(result!.content).toBe(
+      readFixture(join(GRPC_PROTOS, "key_custodian_signer_sign.g.proto")),
+    );
+  });
+
+  it("deliberate-drift detection: mutated fixture does NOT match re-emitted output", () => {
+    const drifted = readFixture(
+      join(GRPC_PROTOS, "key_custodian_signer_sign.g.proto"),
+    ).replace("D2ResultProto", "D2ResultProtoDRIFTED");
+    const result = emitProto(
+      "sign",
+      "KeyCustodianSigner",
+      "Sign",
+      "unary",
+      "d2.keycustodian.v2alpha",
+      KC_PROTO_CS_NS,
+      KC_SOURCE,
+      "SignRequest",
+      buildKcSignInputFields(),
+      undefined,
+      "SignOutput",
+      buildKcSignOutputFields(),
+      undefined,
+      [],
+      () => {},
+    );
+    expect(result!.content).not.toBe(drifted);
+  });
+});
+
+describe("byteParity_KeyCustodianSignerService_FacadeDelegation_CommittedFixtureIdentical", () => {
+  it("re-emitted real KC service .g.cs (façade delegation) is byte-identical to the committed fixture", () => {
+    const [svc] = emitGrpcService(
+      "sign",
+      "KeyCustodianSigner",
+      "Sign",
+      KC_PROTO_CS_NS,
+      KC_GRPC_NS,
+      KC_DTO_NS,
+      KC_SOURCE,
+      "SignRequest",
+      "SignResponse",
+      "SignInput",
+      buildKcSignInputFields(),
+      "SignOutput",
+      buildKcSignOutputFields(),
+      KC_SIGN_FACADE_TARGET,
+    );
+    expect(svc.content).toBe(
+      readFixture(join(GRPC_HOME, "KeyCustodianSignerService.g.cs")),
+    );
+  });
+
+  it("deliberate-drift detection: handler delegation does NOT match façade fixture", () => {
+    const drifted = readFixture(
+      join(GRPC_HOME, "KeyCustodianSignerService.g.cs"),
+    ).replace("facade.SignAsync", "handler.HandleAsync");
+    const [svc] = emitGrpcService(
+      "sign",
+      "KeyCustodianSigner",
+      "Sign",
+      KC_PROTO_CS_NS,
+      KC_GRPC_NS,
+      KC_DTO_NS,
+      KC_SOURCE,
+      "SignRequest",
+      "SignResponse",
+      "SignInput",
+      buildKcSignInputFields(),
+      "SignOutput",
+      buildKcSignOutputFields(),
+      KC_SIGN_FACADE_TARGET,
+    );
+    expect(svc.content).not.toBe(drifted);
+  });
+});
+
+describe("byteParity_KcSignTransportMappers_CommittedFixtureIdentical", () => {
+  it("re-emitted real KC mapper .g.cs is byte-identical to the committed fixture", () => {
+    const [, mapper] = emitGrpcService(
+      "sign",
+      "KeyCustodianSigner",
+      "Sign",
+      KC_PROTO_CS_NS,
+      KC_GRPC_NS,
+      KC_DTO_NS,
+      KC_SOURCE,
+      "SignRequest",
+      "SignResponse",
+      "SignInput",
+      buildKcSignInputFields(),
+      "SignOutput",
+      buildKcSignOutputFields(),
+    );
+    expect(mapper.content).toBe(
+      readFixture(join(GRPC_HOME, "SignTransportMappers.g.cs")),
+    );
+  });
+
+  it("deliberate-drift detection: mutated fixture does NOT match re-emitted output", () => {
+    const drifted = readFixture(
+      join(GRPC_HOME, "SignTransportMappers.g.cs"),
+    ).replace("SignTransportMappers", "SignTransportMappersDRIFTED");
+    const [, mapper] = emitGrpcService(
+      "sign",
+      "KeyCustodianSigner",
+      "Sign",
+      KC_PROTO_CS_NS,
+      KC_GRPC_NS,
+      KC_DTO_NS,
+      KC_SOURCE,
+      "SignRequest",
+      "SignResponse",
+      "SignInput",
+      buildKcSignInputFields(),
+      "SignOutput",
+      buildKcSignOutputFields(),
+    );
+    expect(mapper.content).not.toBe(drifted);
+  });
+});
+
+describe("byteParity_KcWireVersionConstant_CommittedFixtureIdentical", () => {
+  const channel = parseChannel("d2.keycustodian.v2alpha")!;
+
+  it("re-emitted real KC WireVersion.g.cs is byte-identical to the committed fixture", () => {
+    const file = emitWireVersionConstant(KC_PROTO_CS_NS, channel, KC_SOURCE);
+    expect(file.content).toBe(
+      readFixture(join(KC_WIRE_HOME, "WireVersion.g.cs")),
+    );
+  });
+
+  it("deliberate-drift detection: mutated channel does NOT match committed fixture", () => {
+    const mutated = parseChannel("d2.sample.v3beta")!;
+    const file = emitWireVersionConstant(KC_PROTO_CS_NS, mutated, KC_SOURCE);
+    expect(file.content).not.toBe(
+      readFixture(join(KC_WIRE_HOME, "WireVersion.g.cs")),
+    );
+  });
+});
+
+describe("byteParity_KcWireIdentityManifest_CommittedFixtureIdentical", () => {
+  const channel = parseChannel("d2.keycustodian.v2alpha")!;
+
+  it("re-emitted real KC wire-identity.manifest.g.json is byte-identical to the committed fixture", () => {
+    const file = emitWireIdentityManifest(
+      "d2.keycustodian.v2alpha",
+      KC_PROTO_CS_NS,
+      channel,
+    );
+    expect(file.content).toBe(
+      readFixture(join(KC_WIRE_HOME, "wire-identity.manifest.g.json")),
+    );
+  });
+
+  it("deliberate-drift detection: mutated channel does NOT match committed fixture", () => {
+    const mutated = parseChannel("d2.sample.v3beta")!;
+    const file = emitWireIdentityManifest(
+      "d2.keycustodian.v2alpha",
+      KC_PROTO_CS_NS,
+      mutated,
+    );
+    expect(file.content).not.toBe(
+      readFixture(join(KC_WIRE_HOME, "wire-identity.manifest.g.json")),
     );
   });
 });

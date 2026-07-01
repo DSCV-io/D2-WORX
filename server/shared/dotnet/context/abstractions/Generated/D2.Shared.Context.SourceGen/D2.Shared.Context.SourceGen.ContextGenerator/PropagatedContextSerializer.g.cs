@@ -35,11 +35,17 @@ public static class PropagatedContextSerializer
     /// legitimate <see cref="PropagatedContext"/> payload.</summary>
     public const int MAX_HEADER_LENGTH = 2048;
 
+    /// <summary>Per-entry id length cap for a propagated call-path
+    /// entry. Bounds a single forged entry id so it cannot bloat log
+    /// scope keys / audit columns even when the entry count is legal.</summary>
+    private const int _CALL_PATH_ENTRY_ID_MAX = 128;
+
     private static readonly JsonSerializerOptions sr_jsonOptions = new()
     {
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
         WriteIndented = false,
+        Converters = { new JsonStringEnumConverter() },
     };
 
     /// <summary>Encodes a <see cref="PropagatedContext"/> as a
@@ -100,6 +106,17 @@ public static class PropagatedContextSerializer
         if (ctx.SessionFingerprint is { Length: > 512 }) return false;
         if (ctx.CurrentFingerprint is { Length: > 512 }) return false;
         if (ctx.WhoIsHashId is { Length: > 128 }) return false;
+        if (ctx.CallPath is { Count: > 16 }) return false;
+
+        if (ctx.CallPath is not null)
+        {
+            foreach (var entry in ctx.CallPath)
+            {
+                if (entry.Id is { Length: > _CALL_PATH_ENTRY_ID_MAX })
+                    return false;
+            }
+        }
+
         return true;
     }
 

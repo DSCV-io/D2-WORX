@@ -50,11 +50,17 @@ exchange, and default routing key.
     `ActivityContext.TryParse` and starts a `Consumer`-kind span whose parent
     is the publish span — cross-hop trace assembly works in any OTel backend.
 - **Operational subset** — `RequestId` / `RequestPath` / fingerprints /
-  `WhoIsHashId` ride in the `x-d2-context` AMQP header (base64url-of-JSON
-  encoded `PropagatedContext`; same shape on every transport).
+  `WhoIsHashId` / the accumulated service **call-path** (`CallPath`) ride
+  in the `x-d2-context` header (base64url-of-JSON encoded
+  `PropagatedContext`; same shape on every transport — AMQP is not
+  special-cased). The call-path also rides every synchronous gRPC hop
+  via a dedicated outbound client interceptor + inbound establishment
+  interceptor (`D2.Shared.Auth.Outbound` / `D2.Shared.Auth.Grpc`) — see
+  [ADR-0025](../../../../../docs/adrs/0025-request-context-establishment.md).
   `PropagatedContextSerializer.TryDecode` enforces both a wire-level cap
   (`MAX_HEADER_LENGTH = 2 KiB`) AND per-field length caps (RequestPath ≤
-  2048, RequestId ≤ 256, fingerprints ≤ 512, WhoIsHashId ≤ 128). A forged
+  2048, RequestId ≤ 256, fingerprints ≤ 512, WhoIsHashId ≤ 128; `CallPath`
+  entry count ≤ its spec `maxLength`). A forged
   header that fits under the wire cap but contains an oversized single
   field is dropped wholesale — propagation is opportunistic, never
   required, so a partial / sanitized context is wrong; a null context is

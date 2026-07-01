@@ -33,7 +33,7 @@ function scalar(name: string): FieldInfo {
     protoType: "string",
     repeated: false,
     optional: false,
-    redact: false,
+    redactReason: undefined,
   };
 }
 
@@ -51,7 +51,7 @@ function single(
     protoType: undefined,
     repeated: false,
     optional,
-    redact: false,
+    redactReason: undefined,
     nested,
   };
 }
@@ -66,7 +66,7 @@ function array(name: string, nested: NestedModel, optional = false): FieldInfo {
     protoType: undefined,
     repeated: true,
     optional,
-    redact: false,
+    redactReason: undefined,
     nested,
   };
 }

@@ -6,6 +6,10 @@
 
 namespace D2.Edge.KeyCustodian.App.Application.Handlers.Commands.ActivateKey;
 
+using H = D2.Edge.KeyCustodian.App.Application.Handlers.Commands.ActivateKey.IActivateKeyHandler;
+using I = ActivateKeyInput;
+using O = D2.Edge.KeyCustodian.Domain.Rules.KeySummary;
+
 /// <summary>
 /// Smoke-tests and activates a pending key.
 /// </summary>
@@ -25,8 +29,8 @@ public sealed class ActivateKeyHandler(
     IRotationPolicyProvider policyProvider,
     [FromKeyedServices(KeyCustodianRootKey.ROOT_SERVICE_KEY)] IPayloadCrypto rootCrypto,
     IClock clock)
-    : BaseRepoHandler<ActivateKeyHandler, ActivateKeyInput, KeySummary>(ctx, classifier),
-      IActivateKeyHandler
+    : BaseRepoHandler<ActivateKeyHandler, I, O>(ctx, classifier),
+      H
 {
     /// <inheritdoc/>
     /// <remarks>
@@ -40,27 +44,30 @@ public sealed class ActivateKeyHandler(
     };
 
     /// <inheritdoc/>
-    protected override async ValueTask<D2Result<KeySummary?>> ExecuteAsync(
-        ActivateKeyInput input, CancellationToken ct)
+    protected override async ValueTask<D2Result<O?>> ExecuteAsync(
+        I input, CancellationToken ct)
     {
         var kidResult = Kid.Create(input.Kid);
-        if (kidResult.BubbleOnFailure<Kid, KeySummary>(out var bubbled, out var kid))
+
+        if (kidResult.BubbleOnFailure<Kid, O>(out var bubbled, out var kid))
             return bubbled;
 
         var record = await db.Keys
             .FirstOrDefaultAsync(k => k.Kid == kid!.Value, ct)
             .ConfigureAwait(false);
+
         if (record is null)
-            return KeyCustodianFailures<KeySummary?>.KeyNotFound();
+            return KeyCustodianFailures<O?>.KeyNotFound();
 
         if (record.Status != KeyStatus.Pending)
-            return KeyCustodianFailures<KeySummary?>.KeyStateConflict();
+            return KeyCustodianFailures<O?>.KeyStateConflict();
 
         var pending = (PendingKey)record.ToDomain();
 
         // Unwrap, smoke-test, and zero the unwrapped bytes on every path.
         var unwrapped = rootCrypto.Decrypt(pending.KeyMaterialEncrypted.Bytes.Span);
         D2Result smokeResult;
+
         try
         {
             smokeResult = SmokeTesting.Verify(
@@ -75,31 +82,36 @@ public sealed class ActivateKeyHandler(
         {
             KeyCustodianLog.SmokeTestFailed(
                 Context.Logger, kid!.Value, pending.KeyType.ToString());
+
             KeyCustodianMetrics.SR_SmokeTestFailuresTotal.Add(1);
-            return D2Result<KeySummary?>.BubbleFail(smokeResult);
+            return D2Result<O?>.BubbleFail(smokeResult);
         }
 
         var proofResult = SmokeProof.ForPassedSmokeTest(pending.KeyType, clock);
-        if (proofResult.BubbleOnFailure<SmokeProof, KeySummary>(out var proofBubble, out var proof))
+
+        if (proofResult.BubbleOnFailure<SmokeProof, O>(out var proofBubble, out var proof))
             return proofBubble;
 
         var policyResult = policyProvider.ForDomain(pending.KeyDomain);
-        if (policyResult.BubbleOnFailure<RotationPolicy, KeySummary>(
+
+        if (policyResult.BubbleOnFailure<RotationPolicy, O>(
             out var policyBubble, out var policy))
             return policyBubble;
 
         var activateResult = pending.Activate(proof, policy, clock);
-        if (activateResult.BubbleOnFailure<ActiveKey, KeySummary>(
+
+        if (activateResult.BubbleOnFailure<ActiveKey, O>(
             out var activateBubble, out var active))
             return activateBubble;
 
         active!.ProjectOnto(record);
+
         db.Audit.Add(
             EncryptionKeyAudit.Record(kid!, KeyAuditAction.Activated, KeyStatus.Active, clock)
             .ToRecord());
 
         await db.SaveChangesAsync(ct).ConfigureAwait(false);
 
-        return D2Result<KeySummary?>.Ok(KeySummary.From(active!));
+        return D2Result<O?>.Ok(O.From(active!));
     }
 }

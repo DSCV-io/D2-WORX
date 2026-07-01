@@ -13,6 +13,7 @@ import {
   Role,
   ActorKind,
   ImpersonationKind,
+  RequestOrigin,
 } from "@d2/request-context-abstractions";
 import type { D2Result } from "@d2/result";
 import { ok } from "@d2/result";
@@ -156,6 +157,14 @@ function _composeRequestContext(
     asn: undefined,
     asnName: undefined,
     asnType: undefined,
+    // Establishment — Origin is recomputed locally by each trust boundary and
+    // is never propagated, so a header-parse reconstruction leaves it
+    // fail-closed Unestablished; ImmediateCaller is the (non-propagated) mTLS
+    // peer id, absent on this path; CallPath is propagated telemetry inherited
+    // from the envelope (empty when absent).
+    origin: RequestOrigin.Unestablished,
+    immediateCaller: undefined,
+    callPath: propagated?.callPath ?? [],
     // Auth identity — JWT-sourced.
     isAuthenticated,
     audience: payload?.aud ?? [],

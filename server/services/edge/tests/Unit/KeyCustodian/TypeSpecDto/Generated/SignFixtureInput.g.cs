@@ -16,4 +16,4 @@ using D2.Shared.Utilities.Enums;
 /// <summary>Generated DTO for the <c>SignFixtureInput</c> operation.</summary>
 public sealed record SignFixtureInput(
     string Kid,
-    [property: RedactData(Reason = RedactReason.PersonalInformation)] byte[] Payload);
+    [property: RedactData(Reason = RedactReason.SecretInformation)] byte[] Payload);

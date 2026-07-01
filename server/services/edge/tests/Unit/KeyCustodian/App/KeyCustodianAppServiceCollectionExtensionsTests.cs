@@ -14,6 +14,7 @@ using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.RunDueRotations;
 using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.SeedCertificateAuthority;
 using D2.Edge.KeyCustodian.App.Application.Handlers.Queries.GetOidcConfiguration;
 using D2.Edge.KeyCustodian.App.Application.Handlers.Queries.GetRotationPlan;
+using D2.Edge.KeyCustodian.App.Application.Handlers.Queries.Sign;
 using D2.Edge.KeyCustodian.App.Infrastructure.Configuration;
 using D2.Edge.KeyCustodian.App.Infrastructure.Messaging;
 using D2.Edge.KeyCustodian.App.Infrastructure.Vault;
@@ -48,6 +49,7 @@ public sealed class KeyCustodianAppServiceCollectionExtensionsTests
         services.Should().Contain(d => d.ServiceType == typeof(IGetJwksHandler));
         services.Should().Contain(d => d.ServiceType == typeof(IGetOidcConfigurationHandler));
         services.Should().Contain(d => d.ServiceType == typeof(IGetRotationPlanHandler));
+        services.Should().Contain(d => d.ServiceType == typeof(ISignHandler));
         services.Should().Contain(d => d.ServiceType == typeof(IKeyCustodianApi));
         services.Should().Contain(d => d.ServiceType == typeof(ISigningDomainAuthorityPolicy));
     }
@@ -136,6 +138,9 @@ public sealed class KeyCustodianAppServiceCollectionExtensionsTests
             .Should().BeOfType<GetJwksHandler>();
         sp.GetRequiredService<IGetRotationPlanHandler>()
             .Should().BeOfType<GetRotationPlanHandler>();
+        sp.GetRequiredService<ISignHandler>()
+            .Should().BeOfType<SignHandler>(
+                "AddD2KeyCustodianApp registers the general sign query handler");
         sp.GetRequiredService<IRotationPolicyProvider>()
             .Should().BeOfType<OptionsRotationPolicyProvider>();
         sp.GetRequiredService<ISigningDomainAuthorityPolicy>()

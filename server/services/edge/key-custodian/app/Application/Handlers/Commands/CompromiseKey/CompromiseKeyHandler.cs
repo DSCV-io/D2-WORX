@@ -6,6 +6,10 @@
 
 namespace D2.Edge.KeyCustodian.App.Application.Handlers.Commands.CompromiseKey;
 
+using H = D2.Edge.KeyCustodian.App.Application.Handlers.Commands.CompromiseKey.ICompromiseKeyHandler;
+using I = CompromiseKeyInput;
+using O = CompromiseKeyOutput;
+
 /// <summary>
 /// Marks a live key compromised and (by default) auto-generates a replacement
 /// pending key.
@@ -28,9 +32,9 @@ public sealed class CompromiseKeyHandler(
     IKeyRotationAnnouncer announcer,
     [FromKeyedServices(KeyCustodianRootKey.ROOT_SERVICE_KEY)] IPayloadCrypto rootCrypto,
     IClock clock)
-    : BaseRepoHandler<CompromiseKeyHandler, CompromiseKeyInput, CompromiseKeyOutput>(
+    : BaseRepoHandler<CompromiseKeyHandler, I, O>(
         ctx, classifier),
-      ICompromiseKeyHandler
+      H
 {
     private const string _AUDIT_DETAIL = "operator-initiated";
 
@@ -51,24 +55,24 @@ public sealed class CompromiseKeyHandler(
     };
 
     /// <inheritdoc/>
-    protected override async ValueTask<D2Result<CompromiseKeyOutput?>> ExecuteAsync(
-        CompromiseKeyInput input, CancellationToken ct)
+    protected override async ValueTask<D2Result<O?>> ExecuteAsync(
+        I input, CancellationToken ct)
     {
         // Operator input — a missing reason is a 400 validation error, NOT the
         // domain's 500 precondition guard.
         if (input.Reason.Falsey())
         {
-            return D2Result<CompromiseKeyOutput?>.ValidationFailed(
+            return D2Result<O?>.ValidationFailed(
                 inputErrors:
                 [
                     new InputError(
-                        nameof(CompromiseKeyInput.Reason), [TK.Common.Errors.NOT_NULL_VIOLATION]),
+                        nameof(I.Reason), [TK.Common.Errors.NOT_NULL_VIOLATION]),
                 ]);
         }
 
         var kidResult = Kid.Create(input.Kid);
 
-        if (kidResult.BubbleOnFailure<Kid, CompromiseKeyOutput>(out var bubbled, out var kid))
+        if (kidResult.BubbleOnFailure<Kid, O>(out var bubbled, out var kid))
             return bubbled;
 
         var record = await db.Keys
@@ -77,11 +81,11 @@ public sealed class CompromiseKeyHandler(
             .ConfigureAwait(false);
 
         if (record is null)
-            return KeyCustodianFailures<CompromiseKeyOutput?>.KeyNotFound();
+            return KeyCustodianFailures<O?>.KeyNotFound();
 
         var compromiseResult = CompromiseLiveKey(record.ToDomain(), input.Reason!);
 
-        if (compromiseResult.BubbleOnFailure<CompromisedKey, CompromiseKeyOutput>(
+        if (compromiseResult.BubbleOnFailure<CompromisedKey, O>(
             out var compBubble, out var compromised))
             return compBubble;
 
@@ -99,7 +103,7 @@ public sealed class CompromiseKeyHandler(
             var replacementResult = await BuildReplacementAsync(compromised!, ct)
                 .ConfigureAwait(false);
 
-            if (replacementResult.BubbleOnFailure<PendingKey, CompromiseKeyOutput>(
+            if (replacementResult.BubbleOnFailure<PendingKey, O>(
                 out var replBubble, out var replacementNullable))
                 return replBubble;
 
@@ -141,8 +145,8 @@ public sealed class CompromiseKeyHandler(
                 1, new KeyValuePair<string, object?>("urgent", "true"));
         }
 
-        return D2Result<CompromiseKeyOutput?>.Ok(
-            new CompromiseKeyOutput(compromised.Kid.Value, replacementKid));
+        return D2Result<O?>.Ok(
+            new O(compromised.Kid.Value, replacementKid));
     }
 
     // Compromise lives only on the live sealed states (Pending / Active /

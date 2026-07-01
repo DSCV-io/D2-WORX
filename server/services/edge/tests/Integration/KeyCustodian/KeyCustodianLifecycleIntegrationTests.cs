@@ -6,6 +6,7 @@
 
 namespace D2.Edge.Tests.Integration.KeyCustodian;
 
+using System.Buffers.Text;
 using System.Security.Cryptography;
 using D2.Edge.KeyCustodian.App.Application;
 using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.ActivateKey;
@@ -13,10 +14,12 @@ using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.GenerateKey;
 using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.RetireKey;
 using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.RotateKey;
 using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.RunDueRotations;
+using D2.Edge.KeyCustodian.App.Application.Handlers.Queries.Sign;
 using D2.Edge.KeyCustodian.App.Infrastructure.Configuration;
 using D2.Edge.KeyCustodian.App.Infrastructure.Messaging;
 using D2.Edge.KeyCustodian.App.Infrastructure.Persistence;
 using D2.Edge.KeyCustodian.App.Infrastructure.Vault;
+using D2.Edge.KeyCustodian.Clients;
 using D2.Edge.KeyCustodian.Infra.Persistence.Postgres;
 using D2.Edge.Tests.Unit.KeyCustodian.App.Fixtures;
 using D2.Shared.Context.Abstractions;
@@ -138,6 +141,72 @@ public sealed class KeyCustodianLifecycleIntegrationTests(KeyCustodianPostgresFi
             .Should().Be(1, "the successor must be Active and no other key active after rotation");
     }
 
+    [Fact]
+    public async Task Sign_CrossProcessGrantedDomain_VerifiesAgainstPublishedKey_AgainstRealDb()
+    {
+        await fixture.EnsureMigratedAsync();
+        var clock = new TestClock(Instant.FromUtc(2026, 6, 1, 0, 0));
+
+        // Distinct per-test domain: the shared-collection PostgreSQL is not reset
+        // between tests, so a domain another test in this collection also seeds
+        // (e.g. "audit", used by the persistence + concurrency tests) would leave a
+        // live pending key that makes GenerateKey short-circuit to
+        // PendingKeyAlreadyExists — the incumbent tests deliberately pick disjoint
+        // domains for the same reason (client-secret, cookie).
+        const string domain = "notifications";
+
+        var requestContext = new MutableRequestContext
+        {
+            Origin = RequestOrigin.CrossProcessHop,
+            ImmediateCaller = "edge",
+
+            // The SignHandler's per-handler ScopeRequirement is fail-closed: BaseHandler
+            // enforces internal.kc.sign in-process from IRequestContext.Scopes before the
+            // authority rule or any crypto runs. A cross-process caller carries it here.
+            Scopes = new HashSet<string>(StringComparer.Ordinal) { Scopes.Internal.Kc.Sign },
+        };
+        var signingAuth = new SigningDomainAuthorityOptions();
+        signingAuth.AllowedSigningDomainsByWorkload["edge"] = [domain];
+
+        await using var provider = BuildProvider(
+            clock, new RecordingAnnouncer(), requestContext, signingAuth);
+
+        // Generate + activate a real RSA signing key in a non-root domain through the
+        // real handler graph (RSA gen → root-wrap → persist → soak → smoke → activate).
+        await Handler<IGenerateKeyHandler>(provider)
+            .HandleAsync(new GenerateKeyInput(domain, KeyType.RsaSigning), CancellationToken.None);
+        var kid = await SingleKidAsync(domain, KeyStatus.Pending);
+        clock.Advance(Duration.FromHours(2));
+        var activated = await Handler<IActivateKeyHandler>(provider)
+            .HandleAsync(new ActivateKeyInput(kid), CancellationToken.None);
+        activated.Success.Should().BeTrue();
+
+        // Sign through the real handler over real PostgreSQL, authority-gated by the
+        // established cross-process Origin + the caller's allowed-signing-domains policy.
+        var payload = "header.payload"u8.ToArray();
+        var signed = await Handler<ISignHandler>(provider)
+            .HandleAsync(new SignInput(domain, payload), CancellationToken.None);
+
+        signed.Success.Should().BeTrue();
+        signed.Data!.Kid.Should().Be(kid);
+
+        // Verify the signature against the published signing key (the stored SPKI public
+        // half) exactly as a cluster consumer would after fetching the JWKS.
+        byte[] spki;
+        await using (var verifyCtx = fixture.NewContext())
+        {
+            spki = (await verifyCtx.Keys.AsNoTracking()
+                .FirstAsync(k => k.Kid == kid)).PublicKeyMaterial!;
+        }
+
+        using var verifier = RSA.Create();
+        verifier.ImportSubjectPublicKeyInfo(spki, out _);
+
+        var signature = Base64Url.DecodeFromChars(signed.Data!.Signature);
+        verifier.VerifyData(payload, signature, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1)
+            .Should().BeTrue("the signature verifies against the published signing key over real PG");
+    }
+
     private static THandler Handler<THandler>(ServiceProvider provider)
         where THandler : notnull =>
         provider.CreateScope().ServiceProvider.GetRequiredService<THandler>();
@@ -190,14 +259,21 @@ public sealed class KeyCustodianLifecycleIntegrationTests(KeyCustodianPostgresFi
             .FirstAsync();
     }
 
-    private ServiceProvider BuildProvider(TestClock clock, IKeyRotationAnnouncer announcer)
+    private ServiceProvider BuildProvider(
+        TestClock clock,
+        IKeyRotationAnnouncer announcer,
+        IRequestContext? requestContext = null,
+        SigningDomainAuthorityOptions? signingAuthority = null)
     {
         var services = new ServiceCollection();
         services.AddLogging();
         services.AddD2Handler();
-        services.AddSingleton<IRequestContext>(_ => new MutableRequestContext());
+        services.AddSingleton(requestContext ?? new MutableRequestContext());
         services.AddSingleton<IClock>(clock);
         services.AddSingleton(announcer);
+        services.AddSingleton(
+            Microsoft.Extensions.Options.Options.Create(
+                signingAuthority ?? new SigningDomainAuthorityOptions()));
 
         // Real DbContext against the container (scoped, like production).
         services.AddDbContext<KeyCustodianDbContext>(opts =>

@@ -55,6 +55,13 @@ import { createTypeSpecLibrary, paramMessage } from "@typespec/compiler";
 //                                         model carry the same @d2Field(N) pin. Duplicate
 //                                         field numbers produce invalid proto3 that protoc
 //                                         rejects; caught early at tsp compile time.
+//   D2TSP012  nested-redact-unsupported   — a @d2Redact on a NESTED-model property. Redaction
+//                                         metadata is threaded only for top-level op-context
+//                                         properties, so a nested @d2Redact has no cross-
+//                                         language representation and would be silently dropped
+//                                         (a latent PII leak). Failed loud so the author moves
+//                                         the sensitive field to a direct op input/output
+//                                         property (or removes @d2Redact).
 // -----------------------------------------------------------------------
 
 /**
@@ -215,6 +222,20 @@ export const $lib = createTypeSpecLibrary({
      * protoc rejects. Assign each property a unique field number.
      */
     "duplicate-field-number": {
+      severity: "error",
+      messages: {
+        default: paramMessage`${"detail"}`,
+      },
+    },
+
+    /**
+     * D2TSP012 — @d2Redact appears on a NESTED-model property. Redaction metadata is
+     * threaded only for top-level operation-context properties; a nested @d2Redact has
+     * no cross-language representation and would be silently dropped (the field would
+     * emit with no `[RedactData]` — a latent PII leak). Move the sensitive field to a
+     * direct op input/output property, or remove @d2Redact from the nested property.
+     */
+    "nested-redact-unsupported": {
       severity: "error",
       messages: {
         default: paramMessage`${"detail"}`,

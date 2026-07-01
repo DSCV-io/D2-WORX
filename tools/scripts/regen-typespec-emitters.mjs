@@ -133,8 +133,18 @@ const COPY_MANIFEST = [
     to: "server/services/edge/key-custodian/clients/GetOidcConfigurationOutput.g.cs",
   },
 
+  // ---- Sign DTOs (Clients namespace — matches tsp compile routing) ----
+  {
+    from: "SignInput.g.cs",
+    to: "server/services/edge/key-custodian/clients/SignInput.g.cs",
+  },
+  {
+    from: "SignOutput.g.cs",
+    to: "server/services/edge/key-custodian/clients/SignOutput.g.cs",
+  },
+
   // ---- Module façade interface + impl (real KC ops only — getJwks +
-  //      getOidcConfiguration). After the Step-1 fixture wire-identity rename
+  //      getOidcConfiguration). After the fixture wire-identity rename
   //      the fixtures no longer serve-as "KeyCustodian", so tsp compile's
   //      IKeyCustodianApi / KeyCustodianApi carry ONLY the real KC ops and are
   //      namespace-stable — scattered here (the facade-emitter.test.ts byte-gate
@@ -163,6 +173,10 @@ const COPY_MANIFEST = [
     from: "IGetOidcConfigurationHandler.g.cs",
     to: "server/services/edge/key-custodian/app/Application/Handlers/Queries/GetOidcConfiguration/IGetOidcConfigurationHandler.g.cs",
   },
+  {
+    from: "ISignHandler.g.cs",
+    to: "server/services/edge/key-custodian/app/Application/Handlers/Queries/Sign/ISignHandler.g.cs",
+  },
 
   // ---- Well-known route registrations (real-KC namespace
   //      D2.Edge.KeyCustodian.App.Application.Routes — matches tsp compile;
@@ -174,7 +188,7 @@ const COPY_MANIFEST = [
   //      MarkAsD2HarmlessEndpoint, which the app layer (ADR-0020 — App is
   //      transport-agnostic, no AspNetCore) cannot reference. The production
   //      HOST wiring (the Edge composition root calling MapGetJwksRoute /
-  //      MapGetOidcConfigurationRoute) is A1-deferred (PHASE_3 §G); these files
+  //      MapGetOidcConfigurationRoute) is deferred until the Edge host exists; these files
   //      are compiled + TestServer-proven in the test assembly now. ----
   {
     from: "GetJwksRouteRegistration.g.cs",

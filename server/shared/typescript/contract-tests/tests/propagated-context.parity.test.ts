@@ -4,10 +4,17 @@
 
 import { describe, expect, it } from "vitest";
 import {
+  CallPathKind,
   type IPropagatedContext,
   PropagatedContextSerializer,
 } from "@d2/request-context-abstractions";
 import { canonicalize, loadFixture } from "../src/index.js";
+
+interface CallPathEntryShape {
+  readonly id: string;
+  readonly kind: string;
+  readonly timestamp: string;
+}
 
 interface PropagatedShape {
   readonly requestId?: string;
@@ -24,6 +31,7 @@ interface PropagatedShape {
   readonly orgPlanTier?: string;
   readonly featureFlagsCsv?: string;
   readonly whoIsHashId?: string;
+  readonly callPath?: readonly CallPathEntryShape[];
 }
 
 /**
@@ -96,6 +104,26 @@ const SCENARIO_INPUTS: Readonly<Record<string, IPropagatedContext>> = {
     orgPlanTier: "o".repeat(64),
     featureFlagsCsv: "f".repeat(2048),
     whoIsHashId: "w".repeat(128),
+  },
+  "call-path": {
+    requestId: "req-callpath",
+    callPath: [
+      {
+        id: "edge",
+        kind: CallPathKind.Edge,
+        timestamp: "2026-05-01T12:00:00.0000000+00:00",
+      },
+      {
+        id: "key-custodian",
+        kind: CallPathKind.WorkloadHop,
+        timestamp: "2026-05-01T12:00:01.0000000+00:00",
+      },
+      {
+        id: "audit",
+        kind: CallPathKind.ModuleHop,
+        timestamp: "2026-05-01T12:00:02.0000000+00:00",
+      },
+    ],
   },
 };
 
@@ -171,4 +199,19 @@ describe("propagated-context parity (.NET emit ↔ TS PropagatedContextSerialize
       });
     });
   }
+});
+
+describe("propagated-context parity — multi-entry call-path (.NET fixture ↔ TS tryDecode)", () => {
+  it("TS tryDecode reconstructs the .NET-emitted multi-entry call-path", () => {
+    const fixture = loadFixture<PropagatedShape>(
+      "propagated-context",
+      "call-path",
+    );
+    const decoded = PropagatedContextSerializer.tryDecode(
+      JSON.stringify(fixture.data),
+    );
+
+    expect(decoded).toBeDefined();
+    expect(decoded!.callPath).toEqual(SCENARIO_INPUTS["call-path"]!.callPath);
+  });
 });

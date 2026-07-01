@@ -17,9 +17,10 @@ using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.SeedCertificateAuth
 using D2.Edge.KeyCustodian.App.Application.Handlers.Queries.GetJwks;
 using D2.Edge.KeyCustodian.App.Application.Handlers.Queries.GetOidcConfiguration;
 using D2.Edge.KeyCustodian.App.Application.Handlers.Queries.GetRotationPlan;
+using D2.Edge.KeyCustodian.App.Application.Handlers.Queries.Sign;
 
 /// <summary>
-/// DI registration for the KeyCustodian App layer: the 10 lifecycle handlers and
+/// DI registration for the KeyCustodian App layer: the 12 lifecycle handlers and
 /// the options-backed rotation-policy provider.
 /// </summary>
 /// <remarks>
@@ -63,6 +64,7 @@ public static class KeyCustodianAppServiceCollectionExtensions
             services.AddTransient<
                 IGetOidcConfigurationHandler, GetOidcConfigurationHandler>();
             services.AddTransient<IGetRotationPlanHandler, GetRotationPlanHandler>();
+            services.AddTransient<ISignHandler, SignHandler>();
 
             // Policy providers.
             services.AddSingleton<IRotationPolicyProvider, OptionsRotationPolicyProvider>();
@@ -70,7 +72,8 @@ public static class KeyCustodianAppServiceCollectionExtensions
                 ISigningDomainAuthorityPolicy, OptionsSigningDomainAuthorityPolicy>();
 
             // Generated façade layer — registers IKeyCustodianApi → KeyCustodianApi (Transient).
-            // The generated extension is overwritten on rebuild; this call site is the stable hand-written anchor.
+            // The generated extension is overwritten on rebuild; this call site is the
+            // stable hand-written anchor.
             services.AddD2KeyCustodianClients();
 
             return services;

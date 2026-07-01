@@ -52,9 +52,24 @@ Copyright (c) DCSV. All rights reserved.
     <ProjectReference Include="..\..\..\..\shared\dotnet\encryption\core\D2.Shared.Encryption.csproj" />
     <!--
       D2.Shared.Time — SystemClock bind in DI + AddD2NodaTime() EF wiring
-      (UseNodaTime on the DbContext options).
+      (UseNodaTime on the DbContext options) + the IClock the System-worker
+      bootstrap (KeyRotationService/CaSeedingService) timestamps the call-path
+      entry with.
     -->
     <ProjectReference Include="..\..\..\..\shared\dotnet\time\D2.Shared.Time.csproj" />
+    <!--
+      D2.Shared.Auth.Abstractions — D2WorkloadIdentityOptions: the host's own
+      workload service id the System-worker bootstrap stamps onto its
+      established request context.
+    -->
+    <ProjectReference Include="..\..\..\..\shared\dotnet\auth\abstractions\D2.Shared.Auth.Abstractions.csproj" />
+    <!--
+      D2.Shared.Context.Abstractions — MutableRequestContext/IRequestContext (the
+      worker's own scoped resolver registration) + SystemRequestContextBootstrap's
+      EstablishSystemContext extension that KeyRotationService/CaSeedingService call
+      before resolving their handler on each scope.
+    -->
+    <ProjectReference Include="..\..\..\..\shared\dotnet\context\abstractions\D2.Shared.Context.Abstractions.csproj" />
     <!--
       D2.Shared.Messaging.RabbitMq — the concrete publisher for the
       d2.security.key-rotated rotation event. Infra is the composition/DI

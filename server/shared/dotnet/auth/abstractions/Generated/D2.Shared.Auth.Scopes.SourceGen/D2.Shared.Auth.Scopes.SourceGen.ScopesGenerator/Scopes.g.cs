@@ -117,6 +117,23 @@ public static partial class Scopes
     }
 
     /// <summary>
+    /// Scopes nested under <c>internal</c>.
+    /// </summary>
+    public static class Internal
+    {
+        /// <summary>
+        /// Scopes nested under <c>kc</c>.
+        /// </summary>
+        public static class Kc
+        {
+            /// <summary>
+            /// Sign a payload with a KeyCustodian-managed signing key (internal service-to-service / in-process minter).
+            /// </summary>
+            public const string Sign = "internal.kc.sign";
+        }
+    }
+
+    /// <summary>
     /// Scopes nested under <c>self</c>.
     /// </summary>
     public static class Self
@@ -210,6 +227,7 @@ public static partial class Scopes
         "auth.user.impersonate.consent",
         "auth.user.impersonate.force",
         "billing.payment.charge",
+        "internal.kc.sign",
         "self.read",
         "self.write",
     };
@@ -228,6 +246,7 @@ public static partial class Scopes
         "auth.user.impersonate.consent",
         "auth.user.impersonate.force",
         "billing.payment.charge",
+        "internal.kc.sign",
     };
 
     private static readonly Dictionary<string, ActionSensitivity> sr_actionSensitivity =
@@ -239,6 +258,7 @@ public static partial class Scopes
         ["auth.user.impersonate.consent"] = ActionSensitivity.Sensitive,
         ["auth.user.impersonate.force"] = ActionSensitivity.Critical,
         ["billing.payment.charge"] = ActionSensitivity.Critical,
+        ["internal.kc.sign"] = ActionSensitivity.Critical,
         ["self.read"] = ActionSensitivity.Routine,
         ["self.write"] = ActionSensitivity.Routine,
     };

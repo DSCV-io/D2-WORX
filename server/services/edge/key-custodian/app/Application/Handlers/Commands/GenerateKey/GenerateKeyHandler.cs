@@ -6,6 +6,10 @@
 
 namespace D2.Edge.KeyCustodian.App.Application.Handlers.Commands.GenerateKey;
 
+using H = D2.Edge.KeyCustodian.App.Application.Handlers.Commands.GenerateKey.IGenerateKeyHandler;
+using I = GenerateKeyInput;
+using O = D2.Edge.KeyCustodian.Domain.Rules.KeySummary;
+
 /// <summary>
 /// Generates a new pending key for a domain.
 /// </summary>
@@ -26,8 +30,8 @@ public sealed class GenerateKeyHandler(
     IOptions<KeyCustodianOptions> options,
     [FromKeyedServices(KeyCustodianRootKey.ROOT_SERVICE_KEY)] IPayloadCrypto rootCrypto,
     IClock clock)
-    : BaseRepoHandler<GenerateKeyHandler, GenerateKeyInput, KeySummary>(ctx, classifier),
-      IGenerateKeyHandler
+    : BaseRepoHandler<GenerateKeyHandler, I, O>(ctx, classifier),
+      H
 {
     /// <inheritdoc/>
     /// <remarks>
@@ -41,12 +45,12 @@ public sealed class GenerateKeyHandler(
     };
 
     /// <inheritdoc/>
-    protected override async ValueTask<D2Result<KeySummary?>> ExecuteAsync(
-        GenerateKeyInput input, CancellationToken ct)
+    protected override async ValueTask<D2Result<O?>> ExecuteAsync(
+        I input, CancellationToken ct)
     {
         var domainResult = KeyDomain.Create(input.Domain);
 
-        if (domainResult.BubbleOnFailure<KeyDomain, KeySummary>(out var bubbled, out var domain))
+        if (domainResult.BubbleOnFailure<KeyDomain, O>(out var bubbled, out var domain))
             return bubbled;
 
         // Reject a second live pending key for the domain — exactly one pending
@@ -58,7 +62,7 @@ public sealed class GenerateKeyHandler(
             .ConfigureAwait(false);
 
         if (hasPending)
-            return KeyCustodianFailures<KeySummary?>.PendingKeyAlreadyExists();
+            return KeyCustodianFailures<O?>.PendingKeyAlreadyExists();
 
         // CA-certificate keys take the dedicated generation path (subject + issuer
         // are not expressible through the symmetric/RSA KeyGeneration rule). The
@@ -70,7 +74,7 @@ public sealed class GenerateKeyHandler(
                 .ConfigureAwait(false)
             : GenerateNonCaPending(input.KeyType, domain);
 
-        if (pendingResult.BubbleOnFailure<PendingKey, KeySummary>(
+        if (pendingResult.BubbleOnFailure<PendingKey, O>(
             out var pendingBubble, out var pendingNullable))
             return pendingBubble;
 
@@ -86,7 +90,7 @@ public sealed class GenerateKeyHandler(
 
         KeyCustodianMetrics.SR_KeyGenerationsTotal.Add(1);
 
-        return D2Result<KeySummary?>.Created(KeySummary.From(pending));
+        return D2Result<O?>.Created(O.From(pending));
     }
 
     private D2Result<PendingKey> GenerateNonCaPending(KeyType keyType, KeyDomain domain)

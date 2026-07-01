@@ -27,7 +27,7 @@ function field(
   csType: string,
   tsType: string,
   optional = false,
-  redact = false,
+  redactReason?: string,
   jsonName?: string,
 ): FieldInfo {
   return {
@@ -37,7 +37,7 @@ function field(
     tsName: name,
     tsType,
     optional,
-    redact,
+    redactReason,
     jsonName,
     repeated: false,
   };
@@ -52,7 +52,7 @@ function enumField(name: string, enumRef: NestedEnum): FieldInfo {
     tsType: enumRef.name,
     protoType: "string",
     optional: false,
-    redact: false,
+    redactReason: undefined,
     repeated: false,
     enumRef,
   };
@@ -143,7 +143,7 @@ describe("emitCsharpDtos_RedactedField_PropertyTarget", () => {
   it("emits [property: RedactData] on redacted param and adds using directives", () => {
     const inputFields = [
       field("kid", "string", "string"),
-      field("payload", "byte[]", "Uint8Array", false, true), // redacted
+      field("payload", "byte[]", "Uint8Array", false, "SecretInformation"), // redacted
     ];
     const [inputFile] = emitCsharpDtos(
       "sign",
@@ -157,7 +157,7 @@ describe("emitCsharpDtos_RedactedField_PropertyTarget", () => {
     // The [property:] attribute target is mandatory — a bare param attribute
     // would NOT be seen by the property-reflecting RedactDataDestructuringPolicy.
     expect(inputFile!.content).toContain(
-      "[property: RedactData(Reason = RedactReason.PersonalInformation)] byte[] Payload",
+      "[property: RedactData(Reason = RedactReason.SecretInformation)] byte[] Payload",
     );
     expect(inputFile!.content).toContain(
       "using D2.Shared.Utilities.Attributes;",
@@ -189,12 +189,44 @@ describe("emitCsharpDtos_RedactedField_PropertyTarget", () => {
   });
 });
 
+describe("emitCsharpDtos_RedactedField_ReasonThreadedFailLoud", () => {
+  it("emits the exact threaded RedactReason, never a hard-coded default", () => {
+    const inputFields = [
+      field("token", "string", "string", false, "FinancialInformation"),
+    ];
+    const [inputFile] = emitCsharpDtos(
+      "store",
+      TEST_NAMESPACE,
+      TEST_SPEC,
+      inputFields,
+      [],
+      [],
+    );
+
+    expect(inputFile!.content).toContain(
+      "[property: RedactData(Reason = RedactReason.FinancialInformation)] string Token",
+    );
+    // The reason is threaded from @d2Redact — never defaulted to PersonalInformation.
+    expect(inputFile!.content).not.toContain("PersonalInformation");
+  });
+
+  it("fails loud when a redacted field carries an unrecognized RedactReason", () => {
+    const inputFields = [
+      field("payload", "byte[]", "Uint8Array", false, "NotARealReason"),
+    ];
+
+    expect(() =>
+      emitCsharpDtos("sign", TEST_NAMESPACE, TEST_SPEC, inputFields, [], []),
+    ).toThrow(/RedactReason/);
+  });
+});
+
 describe("emitCsharpDtos_JsonPropertyName_WireOverride", () => {
   it("jsonName set (differs from default) → [property: JsonPropertyName] + System.Text.Json using", () => {
     // The OIDC discovery doc's snake_case field: a property JwksUri whose JSON
     // wire form must be jwks_uri.
     const outputFields = [
-      field("jwksUri", "string", "string", false, false, "jwks_uri"),
+      field("jwksUri", "string", "string", false, undefined, "jwks_uri"),
     ];
     const [, outputFile] = emitCsharpDtos(
       "getOidcConfiguration",
@@ -232,7 +264,14 @@ describe("emitCsharpDtos_JsonPropertyName_WireOverride", () => {
 
   it("jsonName + redact on the same field → BOTH attributes, JsonPropertyName first", () => {
     const outputFields = [
-      field("secretWire", "string", "string", false, true, "secret_wire"),
+      field(
+        "secretWire",
+        "string",
+        "string",
+        false,
+        "SecretInformation",
+        "secret_wire",
+      ),
     ];
     const [, outputFile] = emitCsharpDtos(
       "combo",
@@ -244,7 +283,7 @@ describe("emitCsharpDtos_JsonPropertyName_WireOverride", () => {
     );
 
     expect(outputFile!.content).toContain(
-      '[property: JsonPropertyName("secret_wire")] [property: RedactData(Reason = RedactReason.PersonalInformation)] string SecretWire',
+      '[property: JsonPropertyName("secret_wire")] [property: RedactData(Reason = RedactReason.SecretInformation)] string SecretWire',
     );
     // Both namespaces are present.
     expect(outputFile!.content).toContain(
@@ -265,7 +304,7 @@ describe("emitCsharpDtos_JsonPropertyName_WireOverride", () => {
         tsType: "readonly string[]",
         protoType: "string",
         optional: false,
-        redact: false,
+        redactReason: undefined,
         jsonName: "id_token_signing_alg_values_supported",
         repeated: true,
       },
@@ -286,7 +325,7 @@ describe("emitCsharpDtos_JsonPropertyName_WireOverride", () => {
 
   it("jsonName on a nested-model field → the System.Text.Json using is added for the owning record", () => {
     const nestedWithJsonName = nested("Inner", [
-      field("wireField", "string", "string", false, false, "wire_field"),
+      field("wireField", "string", "string", false, undefined, "wire_field"),
     ]);
     const [, outputFile] = emitCsharpDtos(
       "withNested",

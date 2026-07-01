@@ -67,7 +67,7 @@ function field(
     protoType,
     repeated,
     optional: false,
-    redact: false,
+    redactReason: undefined,
     ...(enumRef ? { enumRef } : {}),
   };
 }

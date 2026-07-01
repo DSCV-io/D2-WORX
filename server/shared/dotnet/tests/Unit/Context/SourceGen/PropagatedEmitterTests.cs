@@ -83,7 +83,7 @@ public sealed class PropagatedEmitterTests
     }
 
     // ------------------------------------------------------------------
-    // [JsonIgnore] on HasAnyField — regression-pin target (F-A1-04)
+    // [JsonIgnore] on HasAnyField — regression-pin target
     // ------------------------------------------------------------------
 
     [Fact]
@@ -200,6 +200,121 @@ public sealed class PropagatedEmitterTests
     }
 
     // ------------------------------------------------------------------
+    // OQ-1 — propagated list-of-records field (CallPath). The first
+    // propagate:true list-of-records field; drives the type-aware emitter
+    // branch. The existing SCALAR emission must stay byte-stable when a
+    // list field is also present (the scalar regression pin at the emitter).
+    // ------------------------------------------------------------------
+
+    [Fact]
+    public void EmitAll_RecordFile_ListField_EmittedAsNullableList()
+    {
+        var (auth, request) = PropagateSpecsWithCallPath();
+        var record = PropagatedEmitter.EmitAll(auth, request)
+            .Single(r => r.HintName == "PropagatedContext.g.cs");
+
+        record.GeneratedSource.Should().Contain(
+            "public IReadOnlyList<CallPathEntry>? CallPath { get; init; }");
+    }
+
+    [Fact]
+    public void EmitAll_RecordFile_ListField_PullsInListAndVocabularyUsings()
+    {
+        var (auth, request) = PropagateSpecsWithCallPath();
+        var record = PropagatedEmitter.EmitAll(auth, request)
+            .Single(r => r.HintName == "PropagatedContext.g.cs");
+
+        record.GeneratedSource.Should().Contain("using System.Collections.Generic;");
+        record.GeneratedSource.Should().Contain("using D2.Shared.Auth.Abstractions;");
+    }
+
+    [Fact]
+    public void EmitAll_RecordFile_ListField_HasAnyFieldUsesCountArm()
+    {
+        var (auth, request) = PropagateSpecsWithCallPath();
+        var record = PropagatedEmitter.EmitAll(auth, request)
+            .Single(r => r.HintName == "PropagatedContext.g.cs");
+
+        record.GeneratedSource.Should().Contain("CallPath is { Count: > 0 }");
+    }
+
+    [Fact]
+    public void EmitAll_RecordFile_ScalarFieldsStayByteStable_WhenListFieldPresent()
+    {
+        // The scalar regression pin: introducing the list field must not
+        // perturb scalar emission — string fields stay `string? X { get; init; }`
+        // (NOT nullable-doubled) and their HasAnyField arm stays `is not null`.
+        var (auth, request) = PropagateSpecsWithCallPath();
+        var record = PropagatedEmitter.EmitAll(auth, request)
+            .Single(r => r.HintName == "PropagatedContext.g.cs");
+
+        record.GeneratedSource.Should().Contain("public string? RequestId { get; init; }");
+        record.GeneratedSource.Should().Contain("public string? RequestPath { get; init; }");
+        record.GeneratedSource.Should().Contain("RequestId is not null");
+        record.GeneratedSource.Should().Contain("RequestPath is not null");
+        record.GeneratedSource.Should().NotContain("IReadOnlyList<CallPathEntry>?? ");
+    }
+
+    [Fact]
+    public void EmitAll_SerializerFile_ListField_EmitsDepthBoundAndPerEntryIdCap()
+    {
+        var (auth, request) = PropagateSpecsWithCallPath();
+        var serializer = PropagatedEmitter.EmitAll(auth, request)
+            .Single(r => r.HintName == "PropagatedContextSerializer.g.cs");
+        var src = serializer.GeneratedSource;
+
+        // Depth bound: maxLength on the list field reinterpreted as the max
+        // entry count.
+        src.Should().Contain("if (ctx.CallPath is { Count: > 16 }) return false;");
+
+        // Per-entry id cap.
+        src.Should().Contain("private const int _CALL_PATH_ENTRY_ID_MAX = 128;");
+        src.Should().Contain("foreach (var entry in ctx.CallPath)");
+        src.Should().Contain("if (entry.Id is { Length: > _CALL_PATH_ENTRY_ID_MAX })");
+
+        // Enum members serialize as human-readable strings for log-grep-ability.
+        src.Should().Contain("Converters = { new JsonStringEnumConverter() },");
+    }
+
+    [Fact]
+    public void EmitAll_ExtensionsFile_ListField_NullWhenEmptyProjectionAndReplaceApply()
+    {
+        var (auth, request) = PropagateSpecsWithCallPath();
+        var ext = PropagatedEmitter.EmitAll(auth, request)
+            .Single(r => r.HintName == "PropagatedContextExtensions.g.cs");
+        var src = Normalize(ext.GeneratedSource);
+
+        // Projection: an empty path projects to null so it drops from the wire.
+        src.Should().Contain(
+            "CallPath = context.CallPath is { Count: > 0 } ? context.CallPath : null,");
+
+        // Apply: a non-empty inbound path replaces (the receiving hop then
+        // appends itself).
+        src.Should().Contain("if (propagated.CallPath is { Count: > 0 })");
+        src.Should().Contain("context.CallPath = propagated.CallPath;");
+    }
+
+    [Fact]
+    public void EmitAll_ScalarOnlySpec_OmitsListMachinery()
+    {
+        // A scalar-only spec must NOT carry any of the list-of-records machinery
+        // — the conditional emission keeps scalar-only outputs byte-identical to
+        // the pre-CallPath generation.
+        var (auth, request) = PropagateSpecs();
+        var results = PropagatedEmitter.EmitAll(auth, request);
+        var record = results.Single(r => r.HintName == "PropagatedContext.g.cs").GeneratedSource;
+        var serializer = results
+            .Single(r => r.HintName == "PropagatedContextSerializer.g.cs").GeneratedSource;
+
+        record.Should().NotContain("using System.Collections.Generic;");
+        record.Should().NotContain("using D2.Shared.Auth.Abstractions;");
+        record.Should().NotContain("CallPathEntry");
+        serializer.Should().NotContain("_CALL_PATH_ENTRY_ID_MAX");
+        serializer.Should().NotContain("JsonStringEnumConverter");
+        serializer.Should().NotContain("foreach (var entry in");
+    }
+
+    // ------------------------------------------------------------------
     // Helpers — mirrors MutableEmitterTests factory style
     // (private members after public test methods per SA1202)
     // ------------------------------------------------------------------
@@ -237,6 +352,34 @@ public sealed class PropagatedEmitterTests
         return (auth, request);
     }
 
+    /// <summary>
+    /// Specs that add the propagated list-of-records field <c>CallPath</c>
+    /// (<c>IReadOnlyList&lt;CallPathEntry&gt;</c>, depth bound 16) alongside the
+    /// two scalar fields — exercises the OQ-1 type-aware emitter branch while
+    /// keeping the scalar emission in the same output for the regression pin.
+    /// </summary>
+    private static (ContextSpec Auth, ContextSpec Request) PropagateSpecsWithCallPath()
+    {
+        var auth = Spec("IAuthContext", "D2.Shared.AuthContext.Abstractions");
+        var request = Spec(
+            "IRequestContext",
+            "D2.Shared.Context.Abstractions",
+            extends: "D2.Shared.AuthContext.Abstractions.IAuthContext",
+            Section(
+                "Tracing",
+                Property("RequestId", "string?", propagate: true, maxLength: 128),
+                Property("RequestPath", "string?", propagate: true, maxLength: 512)),
+            Section(
+                "Establishment",
+                Property(
+                    "CallPath",
+                    "IReadOnlyList<CallPathEntry>",
+                    propagate: true,
+                    maxLength: 16,
+                    entryIdMaxLength: 128)));
+        return (auth, request);
+    }
+
     private static ContextSpec Spec(
         string name,
         string @namespace,
@@ -251,7 +394,8 @@ public sealed class PropagatedEmitterTests
         string name,
         string type,
         bool propagate = false,
-        int? maxLength = null) =>
+        int? maxLength = null,
+        int? entryIdMaxLength = null) =>
         new(
             name,
             type,
@@ -262,6 +406,7 @@ public sealed class PropagatedEmitterTests
             Doc: null,
             propagate,
             maxLength,
+            entryIdMaxLength,
             Redact: false);
 
     private static string Normalize(string s) => s.Replace("\r\n", "\n").Trim();

@@ -275,5 +275,11 @@ public sealed class ForwardedJwtEnrichmentExclusionTests
         public Role? ImpersonatorOrgRole { get; init; }
 
         public IReadOnlySet<string> Scopes { get; init; } = new HashSet<string>();
+
+        public RequestOrigin Origin { get; init; } = RequestOrigin.Unestablished;
+
+        public string? ImmediateCaller { get; init; }
+
+        public IReadOnlyList<CallPathEntry> CallPath { get; init; } = [];
     }
 }

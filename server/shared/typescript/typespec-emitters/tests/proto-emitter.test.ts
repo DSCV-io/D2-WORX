@@ -22,7 +22,11 @@ import { WIRE_CHANNEL_GRAMMAR } from "../src/lib/wire-channel.js";
 // ---------------------------------------------------------------------------
 
 type OnError = (
-  code: "unmapped-scalar" | "invalid-streaming-mode" | "unpinned-proto-field",
+  code:
+    | "unmapped-scalar"
+    | "invalid-streaming-mode"
+    | "unpinned-proto-field"
+    | "duplicate-field-number",
   message: string,
 ) => void;
 
@@ -36,7 +40,7 @@ function makeStringField(name: string, fieldNumber?: number): FieldInfo {
     protoType: "string",
     repeated: false,
     optional: false,
-    redact: false,
+    redactReason: undefined,
     fieldNumber,
   };
 }
@@ -51,7 +55,7 @@ function makeBytesField(name: string, fieldNumber?: number): FieldInfo {
     protoType: "bytes",
     repeated: false,
     optional: false,
-    redact: false,
+    redactReason: undefined,
     fieldNumber,
   };
 }
@@ -66,7 +70,7 @@ function makeDecimalField(name: string, fieldNumber?: number): FieldInfo {
     protoType: "string",
     repeated: false,
     optional: false,
-    redact: false,
+    redactReason: undefined,
     fieldNumber,
   };
 }
@@ -86,7 +90,7 @@ function makeCollectionField(
     protoType: elemProtoType,
     repeated: true,
     optional: false,
-    redact: false,
+    redactReason: undefined,
     fieldNumber,
   };
 }
@@ -105,7 +109,7 @@ function makeNestedField(
     protoType: undefined,
     repeated: false,
     optional: false,
-    redact: false,
+    redactReason: undefined,
     nested,
     fieldNumber,
   };
@@ -297,7 +301,7 @@ describe("emitProto_FieldNaming_SnakeCaseFields_PascalCaseMessages", () => {
         protoType: "string",
         repeated: false,
         optional: false,
-        redact: false,
+        redactReason: undefined,
         fieldNumber: 1,
       },
     ];
@@ -408,7 +412,7 @@ describe("emitProto_UnpinnedField_LoudFailure", () => {
       protoType: "string",
       repeated: false,
       optional: false,
-      redact: false,
+      redactReason: undefined,
       // fieldNumber intentionally absent — simulates missing @d2Field
     };
     const onError = vi.fn();
@@ -446,7 +450,7 @@ describe("emitProto_UnpinnedField_LoudFailure", () => {
       protoType: "string",
       repeated: false,
       optional: false,
-      redact: false,
+      redactReason: undefined,
       // fieldNumber intentionally absent
     };
     const onError = vi.fn();
@@ -684,7 +688,7 @@ describe("emitProto_UnmappedScalar_LoudFailure", () => {
       protoType: undefined, // no proto column (would fail)
       repeated: false,
       optional: false,
-      redact: false,
+      redactReason: undefined,
       fieldNumber: 1, // pinned — passes the pin check; fails at scalar resolution
     };
     const onError = vi.fn();
@@ -727,7 +731,7 @@ describe("emitProto_UnmappedArrayElementScalar_LoudFailure", () => {
       protoType: undefined,
       repeated: true,
       optional: false,
-      redact: false,
+      redactReason: undefined,
       fieldNumber: 1,
     };
     const onError = vi.fn();
@@ -820,7 +824,7 @@ describe("emitProto_DateTimeOffset_MapsToProtoString", () => {
       protoType: "string",
       repeated: false,
       optional: false,
-      redact: false,
+      redactReason: undefined,
       fieldNumber: 1,
     };
     const errors: string[] = [];
@@ -856,7 +860,7 @@ describe("emitProto_DateTimeOffset_MapsToProtoString", () => {
       protoType: "string",
       repeated: false,
       optional: true,
-      redact: false,
+      redactReason: undefined,
       fieldNumber: 1,
     };
     const errors: string[] = [];
@@ -977,7 +981,7 @@ describe("emitProto_UnmappedResponseField_EarlyReturn", () => {
       protoType: undefined,
       repeated: false,
       optional: false,
-      redact: false,
+      redactReason: undefined,
       fieldNumber: 1,
     };
     const onError = vi.fn();
@@ -1019,7 +1023,7 @@ describe("emitProto_NestedModel_UnmappedField_EarlyReturn", () => {
       protoType: undefined,
       repeated: false,
       optional: false,
-      redact: false,
+      redactReason: undefined,
       fieldNumber: 1,
     };
     const nestedModel: NestedModel = {
@@ -1070,7 +1074,7 @@ describe("emitProto_ModelTypedCollection_RepeatedWithModelName", () => {
       protoType: undefined, // model type — no scalar proto type
       repeated: true,
       optional: false,
-      redact: false,
+      redactReason: undefined,
       nested: nestedModel,
       fieldNumber: 1,
     };
@@ -1127,7 +1131,7 @@ describe("emitProto_EnumField_EmitsStringField", () => {
       protoType: "string",
       repeated,
       optional: false,
-      redact: false,
+      redactReason: undefined,
       enumRef: KEY_KIND,
       fieldNumber,
     };
@@ -1195,7 +1199,7 @@ describe("emitProto_EnumField_EmitsStringField", () => {
       // protoType deliberately omitted — the resolver must fall back to "string".
       repeated: false,
       optional: false,
-      redact: false,
+      redactReason: undefined,
       enumRef: KEY_KIND,
       fieldNumber: 1,
     };
@@ -1242,7 +1246,7 @@ describe("emitProto_NestedModel_WireShape", () => {
       protoType: undefined,
       repeated: false,
       optional: true,
-      redact: false,
+      redactReason: undefined,
       nested: customer,
       fieldNumber: 1,
     };
@@ -1285,7 +1289,7 @@ describe("emitProto_NestedModel_WireShape", () => {
       protoType: undefined,
       repeated: true,
       optional: false,
-      redact: false,
+      redactReason: undefined,
       nested: line,
       fieldNumber: 1,
     };
@@ -1333,7 +1337,7 @@ describe("emitProto_NestedModel_WireShape", () => {
           protoType: undefined,
           repeated: true,
           optional: false,
-          redact: false,
+          redactReason: undefined,
           nested: part,
           fieldNumber: 2,
         },
@@ -1348,7 +1352,7 @@ describe("emitProto_NestedModel_WireShape", () => {
       protoType: undefined,
       repeated: false,
       optional: true,
-      redact: false,
+      redactReason: undefined,
       nested: widget,
       fieldNumber: 2,
     };

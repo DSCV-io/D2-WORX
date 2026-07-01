@@ -6,6 +6,8 @@
 
 namespace D2.Edge.KeyCustodian.Domain.Rules;
 
+using D2.Shared.Auth.Abstractions;
+
 /// <summary>
 /// The capability-general workload→target authority — the pure decision every
 /// signing / sealing consumer plugs into. It answers "may workload W use
@@ -25,13 +27,15 @@ namespace D2.Edge.KeyCustodian.Domain.Rules;
 /// </para>
 /// <list type="bullet">
 ///   <item>
-///     <b>Signing</b> is policy-driven with a structural in-process-only backstop.
-///     A cross-process caller can NEVER sign with an in-process-only domain
-///     (<c>jwks-signing</c>) even if the policy were misconfigured to grant it — the
-///     structural deny runs BEFORE the policy check (defense-in-depth: two
-///     independent guards must fail to reach the cluster signing key — this
-///     structural one, and the boot-time config validator that refuses to grant an
-///     in-process-only domain to any workload).
+///     <b>Signing</b> is gated on the locally-established request
+///     <see cref="RequestOrigin"/> (recomputed by the receiving boundary from its own
+///     unforgeable transport facts, never a propagated wire value) plus the per-workload
+///     policy. The cluster-signing root (<c>jwks-signing</c>) is STRUCTURALLY unreachable
+///     on this general surface for EVERY established origin — it is signable only through
+///     the dedicated minter capability (possession-based, wired in the auth-module
+///     composition; see <see cref="AuthorizeMinterSigning"/>). An unestablished origin
+///     fails closed; every non-root domain signs cross-process only, per the caller's
+///     allowed-signing-domains set.
 ///   </item>
 ///   <item>
 ///     <b>Seal-encrypt</b> is broad — any caller with an authenticated identity may
@@ -59,55 +63,66 @@ namespace D2.Edge.KeyCustodian.Domain.Rules;
 public static class WorkloadCapabilityAuthority
 {
     /// <summary>
-    /// The closed set of key domains whose key material is in-process-only — it MUST
-    /// never be reachable by a cross-process caller. <c>jwks-signing</c> is the root
-    /// of mint-once-forward (the cluster JWT signing key); it never leaves the Edge
-    /// host process. The structural <see cref="AuthorizeSigning"/> deny + the
-    /// boot-time config validator both key on this set.
+    /// The closed set of key domains that are signable ONLY through the dedicated JWT
+    /// minter capability — <c>jwks-signing</c>, the cluster JWT signing key and the root
+    /// of mint-once-forward. The general <see cref="AuthorizeSigning"/> surface rejects
+    /// every member for EVERY established origin (returning <c>MinterCapabilityRequired</c>);
+    /// the boot-time config validator <c>SigningDomainAuthorityOptions.Validate()</c> also
+    /// refuses to grant a member to any cross-process workload. The key material never
+    /// leaves the Edge host process.
     /// </summary>
     /// <remarks>
     /// The comparer is <c>OrdinalIgnoreCase</c> so a value stored verbatim via
     /// <c>KeyDomain.FromTrusted</c> (EF read path) or typed non-lowercase in
     /// configuration still matches — a case variant must not silently bypass the
-    /// in-process-only deny or the boot-gate check in
-    /// <c>SigningDomainAuthorityOptions.Validate()</c>.
+    /// minter-only deny or the boot-gate check.
     /// </remarks>
-    public static readonly IReadOnlySet<string> InProcessOnlySigningDomains =
+    public static readonly IReadOnlySet<string> MinterOnlySigningDomains =
         new HashSet<string>(StringComparer.OrdinalIgnoreCase) { KeyDomain.JWKS_SIGNING };
 
     /// <summary>
-    /// Decides whether a caller may sign with a key domain. Layered deny
-    /// (defense-in-depth):
+    /// Decides whether a caller may sign with a key domain on the GENERAL signing
+    /// surface, keyed on the locally-established <see cref="RequestOrigin"/> (never a
+    /// propagated / wire-supplied value). Layered, fail-closed:
     /// <list type="number">
     ///   <item>
-    ///     <b>Structural in-process-only deny</b> — when the call is cross-process AND
-    ///     the target is an in-process-only domain, deny with
-    ///     <c>CrossProcessDomainRejected</c> REGARDLESS of policy.
+    ///     <b>Unestablished-origin deny</b> — an origin that no boundary positively
+    ///     established denies with <c>RequestOriginUnestablished</c>. The scoped default
+    ///     is <see cref="RequestOrigin.Unestablished"/>, so a context no boundary
+    ///     established can never reach an allow branch.
     ///   </item>
     ///   <item>
-    ///     <b>In-process clean-dual invariant</b> — the in-process plane may sign
-    ///     ONLY with in-process-only domains (<c>jwks-signing</c>); a request from
-    ///     the in-process leaf for any other domain is denied with
-    ///     <c>SigningDomainNotAuthorized</c>. Each domain is signable from exactly
-    ///     one plane: in-process-only domains in-process; all others cross-process
-    ///     via policy.
+    ///     <b>Minter-only structural deny</b> — the cluster-signing root
+    ///     (<c>jwks-signing</c>) is rejected with <c>MinterCapabilityRequired</c> for
+    ///     EVERY established origin; it is reachable only through the dedicated minter
+    ///     capability. This kills the confused-deputy: a request that became in-process
+    ///     downstream cannot reach the root, and there is no caller id to spoof.
     ///   </item>
     ///   <item>
-    ///     <b>Policy deny</b> — cross-process allow when the target is in the caller's
-    ///     allowed-signing-domains set; else deny with
+    ///     <b>Plane deny</b> — every non-root domain signs cross-process only; a
+    ///     non-<see cref="RequestOrigin.CrossProcessHop"/> origin is denied with
     ///     <c>SigningDomainNotAuthorized</c>.
+    ///   </item>
+    ///   <item>
+    ///     <b>Fail-closed peer</b> — a cross-process hop with no authenticated peer
+    ///     identity is denied with <c>Forbidden</c>.
+    ///   </item>
+    ///   <item>
+    ///     <b>Policy deny</b> — the target must be in the caller's allowed-signing-domains
+    ///     set; else deny with <c>SigningDomainNotAuthorized</c>.
     ///   </item>
     /// </list>
     /// </summary>
-    /// <param name="callerWorkloadId">
-    /// The authenticated caller workload id (from the peer-identity accessor), or
-    /// <see langword="null"/> when no mTLS peer identity is present (fail-closed).
+    /// <param name="immediateCaller">
+    /// The authenticated caller workload id this hop (the established
+    /// <c>IRequestContext.ImmediateCaller</c>, sourced from the validated mTLS peer
+    /// certificate on a cross-process hop), or <see langword="null"/> when none is
+    /// present (fail-closed).
     /// </param>
-    /// <param name="isCrossProcess">
-    /// Whether this request crossed a process boundary (set <c>true</c> by the
-    /// gRPC-service-layer guard; the in-process minter passes <c>false</c>). Defaults
-    /// to the cross-process-safe value <c>true</c> so a caller that fails to set it
-    /// cannot reach the in-process-allow branch.
+    /// <param name="origin">
+    /// The locally-established <see cref="RequestOrigin"/> for this hop. The default
+    /// <see cref="RequestOrigin.Unestablished"/> fails closed — only a boundary that has
+    /// positively established the origin can reach an allow branch.
     /// </param>
     /// <param name="target">The signing key domain the caller wants to sign with.</param>
     /// <param name="allowedSigningDomainsForCaller">
@@ -117,48 +132,78 @@ public static class WorkloadCapabilityAuthority
     /// </param>
     /// <returns>
     /// <c>Ok</c> when the caller may sign with <paramref name="target"/>;
-    /// <c>CrossProcessDomainRejected</c> (403) for a cross-process in-process-only-domain
-    /// request; <c>SigningDomainNotAuthorized</c> (403) when the domain is not in the
-    /// caller's allowed set or when an in-process caller requests a non-in-process-only
-    /// domain; <c>Forbidden</c> (403) when no caller identity is present.
+    /// <c>RequestOriginUnestablished</c> (403) for an unestablished origin;
+    /// <c>MinterCapabilityRequired</c> (403) for the cluster-signing root on the general
+    /// surface; <c>SigningDomainNotAuthorized</c> (403) for a non-cross-process origin or
+    /// a domain outside the caller's allowed set; <c>Forbidden</c> (403) when a
+    /// cross-process hop presents no caller identity.
     /// </returns>
     public static D2Result AuthorizeSigning(
-        string? callerWorkloadId,
-        bool isCrossProcess,
+        string? immediateCaller,
+        RequestOrigin origin,
         KeyDomain target,
         IReadOnlySet<string> allowedSigningDomainsForCaller)
     {
         ArgumentNullException.ThrowIfNull(target);
         ArgumentNullException.ThrowIfNull(allowedSigningDomainsForCaller);
 
-        // Fail-closed: a cross-process call with no authenticated peer identity can
-        // never be authorized. (The in-process leaf legitimately has no peer cert —
-        // it passes isCrossProcess=false and is callable in-process only.)
-        if (isCrossProcess && callerWorkloadId.Falsey())
+        // (1) Fail-closed: an unestablished origin never authorizes signing. The scoped
+        // default IRequestContext.Origin is Unestablished, so a context that no boundary
+        // established can never reach an allow branch.
+        if (origin == RequestOrigin.Unestablished)
+            return KeyCustodianFailures.RequestOriginUnestablished();
+
+        // (2) The cluster-signing root is STRUCTURALLY unreachable on the general surface
+        // — only the dedicated minter capability (possession-based, wired in the auth
+        // module composition) may sign it. Kills the confused-deputy: a request that
+        // became in-process downstream cannot reach the root, and there is no caller id
+        // to spoof on the in-process plane.
+        if (MinterOnlySigningDomains.Contains(target.Value))
+            return KeyCustodianFailures.MinterCapabilityRequired();
+
+        // (3) Every other (non-root) domain signs cross-process only.
+        if (origin != RequestOrigin.CrossProcessHop)
+            return KeyCustodianFailures.SigningDomainNotAuthorized();
+
+        // (4) Cross-process requires an authenticated peer (fail-closed on no cert).
+        if (immediateCaller.Falsey())
             return D2Result.Forbidden();
 
-        // 1) Structural in-process-only deny — independent of policy. A cross-process
-        // caller can NEVER sign with jwks-signing even if the policy granted it.
-        if (isCrossProcess && InProcessOnlySigningDomains.Contains(target.Value))
-            return KeyCustodianFailures.CrossProcessDomainRejected();
-
-        // 2) In-process clean-dual invariant: the in-process leaf may sign ONLY with
-        // in-process-only domains (jwks-signing). An in-process request for any other
-        // domain is denied — each domain is signable from exactly one plane.
-        // (The in-process leaf is structurally reachable ONLY from within the Edge host
-        // process; the gRPC entry always carries a peer cert because RequireCertificate
-        // is on, so it can never present isCrossProcess=false.)
-        if (!isCrossProcess)
-        {
-            return InProcessOnlySigningDomains.Contains(target.Value)
-                ? D2Result.Ok()
-                : KeyCustodianFailures.SigningDomainNotAuthorized();
-        }
-
-        // 3) Cross-process policy deny — the target must be in the caller's
-        // allowed-signing-domains set (a non-in-process-only domain reaches here).
+        // (5) Per-workload policy — the target must be in the caller's allowed set (an
+        // unknown workload resolves to the empty set — default-deny).
         if (!allowedSigningDomainsForCaller.Contains(target.Value))
             return KeyCustodianFailures.SigningDomainNotAuthorized();
+
+        return D2Result.Ok();
+    }
+
+    /// <summary>
+    /// Decides whether the dedicated JWT minter capability may sign with the
+    /// cluster-signing root. The minter runs IN-PROCESS inside the auth module;
+    /// possession of the capability (it is registered ONLY in the auth-module
+    /// composition, never in the general client composition) PLUS the in-process-module
+    /// plane IS the authority — there is no caller id to read. Fail-closed on any other
+    /// origin.
+    /// </summary>
+    /// <param name="origin">
+    /// The locally-established <see cref="RequestOrigin"/> for this hop. Only
+    /// <see cref="RequestOrigin.InProcessModule"/> authorizes the minter.
+    /// </param>
+    /// <returns>
+    /// <c>Ok</c> when <paramref name="origin"/> is
+    /// <see cref="RequestOrigin.InProcessModule"/>; <c>RequestOriginUnestablished</c>
+    /// (403) for an unestablished origin; <c>Forbidden</c> (403) for any other origin.
+    /// </returns>
+    public static D2Result AuthorizeMinterSigning(RequestOrigin origin)
+    {
+        // Fail-closed: an unestablished origin never authorizes the minter.
+        if (origin == RequestOrigin.Unestablished)
+            return KeyCustodianFailures.RequestOriginUnestablished();
+
+        // The minter is an in-process auth-module capability; only the in-process-module
+        // plane may reach the cluster-signing root. Possession + plane = authority.
+        if (origin != RequestOrigin.InProcessModule)
+            return D2Result.Forbidden();
 
         return D2Result.Ok();
     }

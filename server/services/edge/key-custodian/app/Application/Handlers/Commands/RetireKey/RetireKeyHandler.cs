@@ -6,6 +6,10 @@
 
 namespace D2.Edge.KeyCustodian.App.Application.Handlers.Commands.RetireKey;
 
+using H = D2.Edge.KeyCustodian.App.Application.Handlers.Commands.RetireKey.IRetireKeyHandler;
+using I = RetireKeyInput;
+using O = D2.Edge.KeyCustodian.Domain.Rules.KeySummary;
+
 /// <summary>
 /// Retires a retiring key once its grace window has elapsed.
 /// </summary>
@@ -20,46 +24,51 @@ public sealed class RetireKeyHandler(
     IKeyCustodianDbContext db,
     IRotationPolicyProvider policyProvider,
     IClock clock)
-    : BaseRepoHandler<RetireKeyHandler, RetireKeyInput, KeySummary>(ctx, classifier),
-      IRetireKeyHandler
+    : BaseRepoHandler<RetireKeyHandler, I, O>(ctx, classifier),
+      H
 {
     /// <inheritdoc/>
-    protected override async ValueTask<D2Result<KeySummary?>> ExecuteAsync(
-        RetireKeyInput input, CancellationToken ct)
+    protected override async ValueTask<D2Result<O?>> ExecuteAsync(
+        I input, CancellationToken ct)
     {
         var kidResult = Kid.Create(input.Kid);
-        if (kidResult.BubbleOnFailure<Kid, KeySummary>(out var bubbled, out var kid))
+
+        if (kidResult.BubbleOnFailure<Kid, O>(out var bubbled, out var kid))
             return bubbled;
 
         var record = await db.Keys
             .FirstOrDefaultAsync(k => k.Kid == kid!.Value, ct)
             .ConfigureAwait(false);
+
         if (record is null)
-            return KeyCustodianFailures<KeySummary?>.KeyNotFound();
+            return KeyCustodianFailures<O?>.KeyNotFound();
 
         if (record.Status != KeyStatus.Retiring)
-            return KeyCustodianFailures<KeySummary?>.KeyStateConflict();
+            return KeyCustodianFailures<O?>.KeyStateConflict();
 
         if (record.ToDomain() is not RetiringKey retiring)
-            return KeyCustodianFailures<KeySummary?>.KeyStateConflict();
+            return KeyCustodianFailures<O?>.KeyStateConflict();
 
         var policyResult = policyProvider.ForDomain(retiring.KeyDomain);
-        if (policyResult.BubbleOnFailure<RotationPolicy, KeySummary>(
+
+        if (policyResult.BubbleOnFailure<RotationPolicy, O>(
             out var policyBubble, out var policy))
             return policyBubble;
 
         var retireResult = retiring.Retire(policy, clock);
-        if (retireResult.BubbleOnFailure<RetiredKey, KeySummary>(
+
+        if (retireResult.BubbleOnFailure<RetiredKey, O>(
             out var retireBubble, out var retired))
             return retireBubble;
 
         retired!.ProjectOnto(record);
+
         db.Audit.Add(
             EncryptionKeyAudit.Record(kid!, KeyAuditAction.Retired, KeyStatus.Retired, clock)
             .ToRecord());
 
         await db.SaveChangesAsync(ct).ConfigureAwait(false);
 
-        return D2Result<KeySummary?>.Ok(KeySummary.From(retired!));
+        return D2Result<O?>.Ok(O.From(retired!));
     }
 }

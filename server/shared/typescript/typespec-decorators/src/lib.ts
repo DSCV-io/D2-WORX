@@ -22,6 +22,14 @@ export const $lib = createTypeSpecLibrary({
       },
     },
 
+    /** @d2Redact reason is not one of the allowed RedactReason member names. */
+    "invalid-redact-reason": {
+      severity: "error",
+      messages: {
+        default: paramMessage`@d2Redact reason '${"value"}' is invalid — expected one of: Unspecified, PersonalInformation, FinancialInformation, SecretInformation, VerboseContent, Other`,
+      },
+    },
+
     /** @d2GrpcMethod streaming value is not one of the allowed mode strings. */
     "invalid-grpc-streaming": {
       severity: "error",

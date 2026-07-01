@@ -237,8 +237,11 @@ carries `{ name, csName, csType, tsName, tsType, optional, redact }`. Nested
 models (e.g., the `Jwk` inside `GetJwksOutput`) are collected into `nestedModels`
 and deduplicated by name.
 
-**Redact flag**: `walkModel` reads `D2_REDACT_KEY` from the TypeSpec state map.
-Properties decorated with `@d2Redact` get `redact: true` in their `FieldInfo`.
+**Redact reason**: `walkModel` reads `D2_REDACT_KEY` from the TypeSpec state map.
+A property decorated with `@d2Redact("<reason>")` gets `redactReason: "<reason>"`
+(a `RedactReason` member name) in its `FieldInfo`; the C# DTO emitter maps it to
+`[property: RedactData(Reason = RedactReason.<reason>)]` and fails loud on an
+unrecognized reason (the reason is threaded from the decorator, never defaulted).
 
 ### C# DTO emitter (`src/lib/csharp-dto-emitter.ts`)
 

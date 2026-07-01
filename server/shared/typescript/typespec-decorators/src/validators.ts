@@ -44,6 +44,20 @@ const PUSH_TARGETS = new Set(["user", "session"]);
 const CSRF_POSTURES = new Set(["required", "exempt"]);
 const IDEMPOTENT_KEY_SOURCES = new Set(["header", "derived"]);
 
+// Mirrors the member names of D2.Shared.Utilities.Enums.RedactReason. The C#
+// enum is the single source of truth for the data-class taxonomy; this set is
+// the TypeSpec-side gate so the emitter can map a validated reason to
+// RedactReason.<value> and never default a secret-adjacent field to
+// PersonalInformation.
+const REDACT_REASONS = new Set([
+  "Unspecified",
+  "PersonalInformation",
+  "FinancialInformation",
+  "SecretInformation",
+  "VerboseContent",
+  "Other",
+]);
+
 /** Validate the tier string for @d2RateLimitTier. */
 export function validateRateLimitTier(
   context: DecoratorContext,
@@ -82,6 +96,20 @@ export function validatePushTarget(
     $lib.reportDiagnostic(context.program, {
       code: "invalid-push-target",
       format: { value: pushTarget },
+      target,
+    });
+}
+
+/** Validate the reason string for @d2Redact against the RedactReason member set. */
+export function validateRedactReason(
+  context: DecoratorContext,
+  target: ModelProperty,
+  reason: string,
+): void {
+  if (!REDACT_REASONS.has(reason))
+    $lib.reportDiagnostic(context.program, {
+      code: "invalid-redact-reason",
+      format: { value: reason },
       target,
     });
 }

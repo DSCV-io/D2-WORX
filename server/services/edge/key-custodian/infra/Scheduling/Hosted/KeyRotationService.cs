@@ -9,7 +9,10 @@ namespace D2.Edge.KeyCustodian.Infra.Scheduling.Hosted;
 using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.RunDueRotations;
 using D2.Edge.KeyCustodian.Infra.Configuration;
 using D2.Edge.KeyCustodian.Infra.Observability;
+using D2.Shared.Auth.Abstractions;
+using D2.Shared.Context.Abstractions;
 using D2.Shared.EntityFrameworkCore.Postgres;
+using D2.Shared.Time;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -45,10 +48,14 @@ using Microsoft.Extensions.Options;
 public sealed class KeyRotationService(
     IServiceScopeFactory scopeFactory,
     IOptions<KeyCustodianInfraOptions> options,
+    IOptions<D2WorkloadIdentityOptions> workloadIdentity,
+    IClock clock,
     ILogger<KeyRotationService> logger)
     : BackgroundService
 {
     private readonly KeyCustodianInfraOptions r_options = options.Value;
+    private readonly string r_hostServiceId = workloadIdentity.Value.ServiceId;
+    private readonly IClock r_clock = clock;
 
     /// <summary>
     /// Builds the compiled domain → <see cref="KeyType"/> map used to bootstrap
@@ -108,6 +115,42 @@ public sealed class KeyRotationService(
         // symmetric payload-encryption keyrings.
         _ => KeyType.AesPayload,
     };
+
+    /// <summary>
+    /// Resolves a fresh DI scope, establishes the worker's
+    /// <see cref="RequestOrigin.System"/> request context on it, then runs
+    /// <see cref="IRunDueRotationsHandler"/> and logs the outcome. Internal so a unit
+    /// test can drive it directly — the real advisory-lock acquire in
+    /// <see cref="RunTickAsync"/> requires a live PostgreSQL connection.
+    /// </summary>
+    /// <param name="ct">Cancellation token.</param>
+    internal async Task ExecuteRotationAsync(CancellationToken ct)
+    {
+        await using var scope = scopeFactory.CreateAsyncScope();
+        scope.ServiceProvider.EstablishSystemContext(r_hostServiceId, r_clock);
+        var handler = scope.ServiceProvider.GetRequiredService<IRunDueRotationsHandler>();
+
+        var input = new RunDueRotationsInput(BuildBootstrapKeyTypes());
+        var result = await handler.HandleAsync(input, ct).ConfigureAwait(false);
+
+        if (!result.Success)
+        {
+            KeyCustodianInfraLog.RotationRunFailed(logger, result.ErrorCode);
+            return;
+        }
+
+        var output = result.Data!;
+
+        KeyCustodianInfraLog.RotationRunCompleted(
+            logger,
+            output.Bootstrapped.Count,
+            output.Activated.Count,
+            output.Rotated.Count,
+            output.SuccessorsGenerated.Count,
+            output.Retired.Count,
+            output.Skipped.Count,
+            output.Errors);
+    }
 
     /// <inheritdoc/>
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -172,32 +215,5 @@ public sealed class KeyRotationService(
                 SanitizedExceptionRender.TypeName(ex),
                 SanitizedExceptionRender.FirstFrame(ex));
         }
-    }
-
-    private async Task ExecuteRotationAsync(CancellationToken ct)
-    {
-        await using var scope = scopeFactory.CreateAsyncScope();
-        var handler = scope.ServiceProvider.GetRequiredService<IRunDueRotationsHandler>();
-
-        var input = new RunDueRotationsInput(BuildBootstrapKeyTypes());
-        var result = await handler.HandleAsync(input, ct).ConfigureAwait(false);
-
-        if (!result.Success)
-        {
-            KeyCustodianInfraLog.RotationRunFailed(logger, result.ErrorCode);
-            return;
-        }
-
-        var output = result.Data!;
-
-        KeyCustodianInfraLog.RotationRunCompleted(
-            logger,
-            output.Bootstrapped.Count,
-            output.Activated.Count,
-            output.Rotated.Count,
-            output.SuccessorsGenerated.Count,
-            output.Retired.Count,
-            output.Skipped.Count,
-            output.Errors);
     }
 }

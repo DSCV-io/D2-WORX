@@ -108,7 +108,7 @@ function field(
     protoType,
     repeated,
     optional: false,
-    redact: false,
+    redactReason: undefined,
     ...(enumRef ? { enumRef } : {}),
   };
 }
@@ -701,7 +701,7 @@ describe("tsGrpcClient_Behavioral_PlaceOrder_RealSeam", () => {
 
   function buildClient(): {
     create: (stub: unknown) => {
-      placeOrder: (
+      placeOrderFixture: (
         input: unknown,
         opts?: unknown,
       ) => Promise<D2Result<unknown>>;
@@ -709,7 +709,7 @@ describe("tsGrpcClient_Behavioral_PlaceOrder_RealSeam", () => {
   } {
     const [file] = emitTsGrpcClient("PredicateFixtures", [placeOrderOp()]);
     const create = reconstructFactory<{
-      placeOrder: (
+      placeOrderFixture: (
         input: unknown,
         opts?: unknown,
       ) => Promise<D2Result<unknown>>;
@@ -1004,14 +1004,14 @@ describe("tsGrpcClient_Behavioral_SignWithKind_ResponseEnum_RealSeam", () => {
   const KeyKindConst = { Rsa: "Rsa", Aes: "Aes", Secret: "Secret" } as const;
 
   function buildClient(): (stub: unknown) => {
-    signWithKind: (
+    signWithKindFixture: (
       input: unknown,
       opts?: unknown,
     ) => Promise<D2Result<unknown>>;
   } {
     const [file] = emitTsGrpcClient("EnumFixtures", [signWithKindOp()]);
     return reconstructFactory<{
-      signWithKind: (
+      signWithKindFixture: (
         input: unknown,
         opts?: unknown,
       ) => Promise<D2Result<unknown>>;
@@ -1113,11 +1113,14 @@ describe("tsGrpcClient_CrossRuntimePredicateConsumptionParity", () => {
   const twin = loadCommittedPredicateTwin();
 
   function buildClient(): (stub: unknown) => {
-    placeOrder: (input: unknown, opts?: unknown) => Promise<D2Result<unknown>>;
+    placeOrderFixture: (
+      input: unknown,
+      opts?: unknown,
+    ) => Promise<D2Result<unknown>>;
   } {
     const [file] = emitTsGrpcClient("PredicateFixtures", [placeOrderOp()]);
     return reconstructFactory<{
-      placeOrder: (
+      placeOrderFixture: (
         input: unknown,
         opts?: unknown,
       ) => Promise<D2Result<unknown>>;
@@ -1219,7 +1222,7 @@ describe("tsGrpcClient_TolerantReader", () => {
 
   function buildClient(): {
     create: (stub: unknown) => {
-      placeOrder: (
+      placeOrderFixture: (
         input: unknown,
         opts?: unknown,
       ) => Promise<D2Result<unknown>>;
@@ -1227,7 +1230,7 @@ describe("tsGrpcClient_TolerantReader", () => {
   } {
     const [file] = emitTsGrpcClient("PredicateFixtures", [placeOrderOp()]);
     const create = reconstructFactory<{
-      placeOrder: (
+      placeOrderFixture: (
         input: unknown,
         opts?: unknown,
       ) => Promise<D2Result<unknown>>;

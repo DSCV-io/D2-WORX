@@ -75,6 +75,18 @@ public static class KeyCustodianErrorCodes
     /// <summary>The calling workload is not authorized to sign with the requested key domain (the domain is not in the workload's allowed-signing-domains policy set). Distinct from the in-process-only rejection: this is a policy-scope denial, not an in-process-only-domain denial.</summary>
     public const string KEYCUSTODIAN_SIGNING_DOMAIN_NOT_AUTHORIZED = "KEYCUSTODIAN_SIGNING_DOMAIN_NOT_AUTHORIZED";
 
+    /// <summary>The request origin was not positively established by any trust boundary (the fail-closed RequestOrigin.Unestablished default), so the signing authority denies. The origin is recomputed locally by the receiving boundary from its own unforgeable transport facts and is never propagated; a capability authority that has not had its origin established denies rather than assume a plane.</summary>
+    public const string KEYCUSTODIAN_REQUEST_ORIGIN_UNESTABLISHED = "KEYCUSTODIAN_REQUEST_ORIGIN_UNESTABLISHED";
+
+    /// <summary>The requested key domain is the cluster-signing root (jwks-signing) and is structurally unreachable on the general signing surface for every established origin. It is signable only through the dedicated JWT minter capability, which is registered solely in the auth-module composition (possession plus the in-process-module plane is the authority). This kills the confused-deputy: a request that became in-process downstream cannot reach the root, and there is no caller id to spoof.</summary>
+    public const string KEYCUSTODIAN_MINTER_CAPABILITY_REQUIRED = "KEYCUSTODIAN_MINTER_CAPABILITY_REQUIRED";
+
+    /// <summary>No active signing key is available for the requested key domain. Retryable not-ready-yet condition (the domain has not been seeded or is mid-rotation with no active key).</summary>
+    public const string KEYCUSTODIAN_SIGNING_KEY_UNAVAILABLE = "KEYCUSTODIAN_SIGNING_KEY_UNAVAILABLE";
+
+    /// <summary>The signing input was empty. There is nothing to sign — a zero-length payload is a client error, rejected before any key load or crypto.</summary>
+    public const string KEYCUSTODIAN_EMPTY_SIGNING_INPUT = "KEYCUSTODIAN_EMPTY_SIGNING_INPUT";
+
     /// <summary>
     /// All declared <c>KEYCUSTODIAN_*</c> codes in spec order. Useful for
     /// registry membership checks and cross-spec consistency tests.
@@ -100,6 +112,10 @@ public static class KeyCustodianErrorCodes
         "KEYCUSTODIAN_NO_ACTIVE_ISSUING_CA",
         "KEYCUSTODIAN_CROSS_PROCESS_DOMAIN_REJECTED",
         "KEYCUSTODIAN_SIGNING_DOMAIN_NOT_AUTHORIZED",
+        "KEYCUSTODIAN_REQUEST_ORIGIN_UNESTABLISHED",
+        "KEYCUSTODIAN_MINTER_CAPABILITY_REQUIRED",
+        "KEYCUSTODIAN_SIGNING_KEY_UNAVAILABLE",
+        "KEYCUSTODIAN_EMPTY_SIGNING_INPUT",
     };
 
     /// <summary>
@@ -129,6 +145,10 @@ public static class KeyCustodianErrorCodes
         "KEYCUSTODIAN_NO_ACTIVE_ISSUING_CA" => 503,
         "KEYCUSTODIAN_CROSS_PROCESS_DOMAIN_REJECTED" => 403,
         "KEYCUSTODIAN_SIGNING_DOMAIN_NOT_AUTHORIZED" => 403,
+        "KEYCUSTODIAN_REQUEST_ORIGIN_UNESTABLISHED" => 403,
+        "KEYCUSTODIAN_MINTER_CAPABILITY_REQUIRED" => 403,
+        "KEYCUSTODIAN_SIGNING_KEY_UNAVAILABLE" => 503,
+        "KEYCUSTODIAN_EMPTY_SIGNING_INPUT" => 400,
         _ => 500,
     };
 }

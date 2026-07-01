@@ -8,6 +8,7 @@ namespace D2.Shared.Tests.Unit.RequestContext;
 
 using System;
 using AwesomeAssertions;
+using D2.Shared.Auth.Abstractions;
 using D2.Shared.Context.Abstractions;
 using Xunit;
 
@@ -192,5 +193,65 @@ public sealed class PropagatedContextExtensionsTests
         ctx.CurrencyIso4217Code.Should().Be("EUR");
         ctx.OrgPlanTier.Should().Be("Enterprise");
         ctx.FeatureFlagsCsv.Should().Be("new-billing");
+    }
+
+    // ------------------------------------------------------------------
+    // CallPath (the propagated list-of-records field) — null-when-empty
+    // projection + replace-on-apply semantics.
+    // ------------------------------------------------------------------
+
+    [Fact]
+    public void ToPropagatedContext_NonEmptyCallPath_Projected()
+    {
+        var path = new[]
+        {
+            new CallPathEntry("edge", CallPathKind.Edge, DateTimeOffset.UnixEpoch),
+            new CallPathEntry("kc", CallPathKind.WorkloadHop, DateTimeOffset.UnixEpoch),
+        };
+        var ctx = new MutableRequestContext { CallPath = path };
+
+        ctx.ToPropagatedContext().CallPath.Should().BeEquivalentTo(
+            path, o => o.WithStrictOrdering());
+    }
+
+    [Fact]
+    public void ToPropagatedContext_EmptyCallPath_ProjectsNull()
+    {
+        // Null-when-empty: an empty path projects to null so it drops from the
+        // wire (the receiving hop appends itself).
+        var ctx = new MutableRequestContext { CallPath = [] };
+
+        ctx.ToPropagatedContext().CallPath.Should().BeNull();
+    }
+
+    [Fact]
+    public void ApplyPropagatedContext_NonEmptyCallPath_Replaces()
+    {
+        var inbound = new[]
+        {
+            new CallPathEntry("edge", CallPathKind.Edge, DateTimeOffset.UnixEpoch),
+        };
+        var ctx = new MutableRequestContext();
+
+        ctx.ApplyPropagatedContext(new PropagatedContext { CallPath = inbound });
+
+        ctx.CallPath.Should().BeEquivalentTo(inbound, o => o.WithStrictOrdering());
+    }
+
+    [Fact]
+    public void ApplyPropagatedContext_NullOrEmptyCallPath_DoesNotOverwrite()
+    {
+        // A null/empty inbound path must not clobber an already-started path.
+        var existing = new[]
+        {
+            new CallPathEntry("edge", CallPathKind.Edge, DateTimeOffset.UnixEpoch),
+        };
+        var ctx = new MutableRequestContext { CallPath = existing };
+
+        ctx.ApplyPropagatedContext(new PropagatedContext { CallPath = null });
+        ctx.CallPath.Should().BeSameAs(existing);
+
+        ctx.ApplyPropagatedContext(new PropagatedContext { CallPath = [] });
+        ctx.CallPath.Should().BeSameAs(existing);
     }
 }

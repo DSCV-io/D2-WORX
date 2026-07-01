@@ -38,6 +38,27 @@ export const ActorKind: {
 export type ActorKind = (typeof ActorKind)[keyof typeof ActorKind];
 
 // @public
+export interface CallPathEntry {
+    // (undocumented)
+    readonly id: string;
+    // (undocumented)
+    readonly kind: CallPathKind;
+    // (undocumented)
+    readonly timestamp: string;
+}
+
+// @public (undocumented)
+export const CallPathKind: {
+    readonly Edge: "Edge";
+    readonly WorkloadHop: "WorkloadHop";
+    readonly ModuleHop: "ModuleHop";
+    readonly System: "System";
+};
+
+// @public (undocumented)
+export type CallPathKind = (typeof CallPathKind)[keyof typeof CallPathKind];
+
+// @public
 export interface IAuthContext {
     readonly actorChain: readonly ActorEntry[];
     readonly audience: readonly string[];
@@ -94,6 +115,18 @@ const OrgType: {
 type OrgType = (typeof OrgType)[keyof typeof OrgType];
 export { OrgType }
 export { OrgType as OrgTypeT }
+
+// @public (undocumented)
+export const RequestOrigin: {
+    readonly Unestablished: "Unestablished";
+    readonly EdgeInbound: "EdgeInbound";
+    readonly CrossProcessHop: "CrossProcessHop";
+    readonly InProcessModule: "InProcessModule";
+    readonly System: "System";
+};
+
+// @public (undocumented)
+export type RequestOrigin = (typeof RequestOrigin)[keyof typeof RequestOrigin];
 
 // @public (undocumented)
 export const Role: {

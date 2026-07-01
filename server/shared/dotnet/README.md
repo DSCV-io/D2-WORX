@@ -238,8 +238,10 @@ flowchart BT
 | --- | --- |
 | `auth/abstractions` | `result/core` · `i18n/abstractions` · _auth/scopes-source-gen_ · _auth/audiences-source-gen_ · _auth/protocol-audiences-source-gen_ · _auth/jwt-claims-source-gen_ · _encryption/in-process-keys-source-gen_ |
 | `auth/context-abstractions` | `auth/abstractions` · `utilities` |
-| `context/abstractions` | `auth/context-abstractions` · `auth/abstractions` · `utilities` · _context/source-gen_ |
+| `context/abstractions` | `auth/context-abstractions` · `auth/abstractions` · `utilities` · `time` · _context/source-gen_ |
 | `i18n/core` | `i18n/abstractions` · `utilities` |
+
+> `context/abstractions` pulls in `time` (Layer 4) — it is the one upward dep in this band. `time`'s own deps are Layer 1/2 primitives only (no cycle); the `InProcessModuleBoundary` / `SystemRequestContextBootstrap` establishment boundaries need `IClock` to timestamp the call-path entry they append.
 
 #### Layer 4 — Domain primitives
 
@@ -276,8 +278,8 @@ flowchart BT
 
 | Lib | Direct deps |
 | --- | --- |
-| `auth/http` | `auth/core` · `auth/abstractions` · `context/abstractions` · `problem-details/abstractions` · `headers/http` · `result/core` · `i18n/abstractions` · `utilities` |
-| `auth/grpc` | `auth/core` · `auth/abstractions` · `context/abstractions` · `result/core` · `i18n/abstractions` · `utilities` · _result/grpc-trailers-source-gen_ · _encryption/in-process-keys-source-gen_ |
+| `auth/http` | `auth/core` · `auth/abstractions` · `context/abstractions` · `problem-details/abstractions` · `headers/http` · `result/core` · `i18n/abstractions` · `utilities` · `time` |
+| `auth/grpc` | `auth/core` · `auth/abstractions` · `context/abstractions` · `result/core` · `i18n/abstractions` · `utilities` · `time` · `headers/grpc` · _result/grpc-trailers-source-gen_ · _encryption/in-process-keys-source-gen_ |
 | `auth/outbound` | `auth/abstractions` · `context/abstractions` · `caching/abstractions` · `resilience` · _telemetry/tags-source-gen_ |
 | `auth/startup` | `auth/http` · `auth/grpc` · `aspnetcore` |
 | `entity-framework-core/core` | `utilities` |

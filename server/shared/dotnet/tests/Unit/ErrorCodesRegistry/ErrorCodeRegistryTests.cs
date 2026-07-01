@@ -276,8 +276,8 @@ public sealed class ErrorCodeRegistryTests
         // The merged registry globs every *-error-codes.spec.json surfaced to the
         // D2.Shared.ErrorCodes.Registry build (its csproj AdditionalFiles pattern
         // is contracts/**/*-error-codes.spec.json): 15 generic + 14 auth +
-        // 17 keycustodian = 46 total. Update if new spec entries are added.
-        const int expected_count = 46;
+        // 21 keycustodian = 50 total. Update if new spec entries are added.
+        const int expected_count = 50;
         ErrorCodeRegistry.All.Count.Should().Be(expected_count);
     }
 
@@ -343,6 +343,8 @@ public sealed class ErrorCodeRegistryTests
         codes.Should().Contain(i => i.Code == "KEYCUSTODIAN_NO_ACTIVE_ISSUING_CA");
         codes.Should().Contain(i => i.Code == "KEYCUSTODIAN_CROSS_PROCESS_DOMAIN_REJECTED");
         codes.Should().Contain(i => i.Code == "KEYCUSTODIAN_SIGNING_DOMAIN_NOT_AUTHORIZED");
+        codes.Should().Contain(i => i.Code == "KEYCUSTODIAN_REQUEST_ORIGIN_UNESTABLISHED");
+        codes.Should().Contain(i => i.Code == "KEYCUSTODIAN_MINTER_CAPABILITY_REQUIRED");
     }
 
     [Fact]

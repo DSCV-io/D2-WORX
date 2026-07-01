@@ -46,8 +46,18 @@ extern dec d2GrpcMethod(
   streaming?: valueof string
 );
 
-/** Marks a model property as PII to be redacted in structured logs. */
-extern dec d2Redact(target: ModelProperty);
+/**
+ * Marks a model property as sensitive — redacted from structured logs. The
+ * REQUIRED `reason` names the data class and must be one of the
+ * `D2.Shared.Utilities.Enums.RedactReason` member names: `Unspecified`,
+ * `PersonalInformation`, `FinancialInformation`, `SecretInformation`,
+ * `VerboseContent`, `Other`. The C# DTO emitter maps it to
+ * `[property: RedactData(Reason = RedactReason.<reason>)]`. The reason is
+ * mandatory and fail-closed: a bare `@d2Redact` does not compile (missing
+ * argument) and an unknown reason string is a compile error, so secret-adjacent
+ * material is never silently misclassified as personal information.
+ */
+extern dec d2Redact(target: ModelProperty, reason: valueof string);
 
 /** Binds an operation to a server-initiated push; `pushTarget` selects the channel class. */
 extern dec d2ServerPush(target: Operation, pushTarget: valueof string);

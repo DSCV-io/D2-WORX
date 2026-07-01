@@ -25,6 +25,12 @@ D2.Shared.Auth.Http.Middleware.HttpContextRequestContextExtensions.extension(Mic
 D2.Shared.Auth.Http.ProblemDetails.D2ProblemDetailsExtensions
 D2.Shared.Auth.Http.ProblemDetails.D2ProblemDetailsExtensions.extension(D2.Shared.Result.D2Result?)
 D2.Shared.Auth.Http.ProblemDetails.D2ProblemDetailsExtensions.extension(D2.Shared.Result.D2Result?).ToProblemDetails(Microsoft.AspNetCore.Http.HttpContext! context) -> Microsoft.AspNetCore.Mvc.ProblemDetails!
+D2.Shared.Auth.Http.RequestOriginEdgeAppBuilderExtensions
+D2.Shared.Auth.Http.RequestOriginEdgeAppBuilderExtensions.extension(Microsoft.AspNetCore.Builder.IApplicationBuilder!)
+D2.Shared.Auth.Http.RequestOriginEdgeAppBuilderExtensions.extension(Microsoft.AspNetCore.Builder.IApplicationBuilder!).UseD2RequestOriginEdge() -> Microsoft.AspNetCore.Builder.IApplicationBuilder!
+D2.Shared.Auth.Http.RequestOriginEdgeServiceCollectionExtensions
+D2.Shared.Auth.Http.RequestOriginEdgeServiceCollectionExtensions.extension(Microsoft.Extensions.DependencyInjection.IServiceCollection!)
+D2.Shared.Auth.Http.RequestOriginEdgeServiceCollectionExtensions.extension(Microsoft.Extensions.DependencyInjection.IServiceCollection!).AddD2RequestOriginEdge(System.Action<D2.Shared.Auth.Abstractions.D2WorkloadIdentityOptions!>? configure = null) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
 override D2.Shared.Auth.Http.Endpoints.EndpointScopeMetadata.Equals(object? obj) -> bool
 override D2.Shared.Auth.Http.Endpoints.EndpointScopeMetadata.GetHashCode() -> int
 override D2.Shared.Auth.Http.Endpoints.EndpointScopeMetadata.ToString() -> string!
@@ -38,4 +44,6 @@ static D2.Shared.Auth.Http.Endpoints.RequireD2ScopeExtensions.RequireAllScopes<T
 static D2.Shared.Auth.Http.Endpoints.RequireD2ScopeExtensions.RequireAnyScope<TBuilder>(this TBuilder builder, string! scope, params string![]! additionalScopes) -> TBuilder
 static D2.Shared.Auth.Http.Middleware.HttpContextRequestContextExtensions.GetD2RequestContext(this Microsoft.AspNetCore.Http.HttpContext! context) -> D2.Shared.Context.Abstractions.IRequestContext?
 static D2.Shared.Auth.Http.ProblemDetails.D2ProblemDetailsExtensions.ToProblemDetails(this D2.Shared.Result.D2Result? result, Microsoft.AspNetCore.Http.HttpContext! context) -> Microsoft.AspNetCore.Mvc.ProblemDetails!
+static D2.Shared.Auth.Http.RequestOriginEdgeAppBuilderExtensions.UseD2RequestOriginEdge(this Microsoft.AspNetCore.Builder.IApplicationBuilder! app) -> Microsoft.AspNetCore.Builder.IApplicationBuilder!
+static D2.Shared.Auth.Http.RequestOriginEdgeServiceCollectionExtensions.AddD2RequestOriginEdge(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services, System.Action<D2.Shared.Auth.Abstractions.D2WorkloadIdentityOptions!>? configure = null) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
 static readonly D2.Shared.Auth.Http.Endpoints.EndpointScopeMetadata.HarmlessEndpoint -> D2.Shared.Auth.Http.Endpoints.EndpointScopeMetadata!

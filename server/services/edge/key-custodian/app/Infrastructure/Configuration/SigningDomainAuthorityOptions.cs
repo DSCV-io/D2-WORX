@@ -67,7 +67,7 @@ public sealed class SigningDomainAuthorityOptions
     ///   <item>A value naming a non-catalog key domain (incl. a <c>*</c> wildcard).</item>
     ///   <item>
     ///     A grant of an in-process-only domain (<c>jwks-signing</c>) to ANY workload —
-    ///     the load-bearing control: an in-process-only key is never cross-process grantable.
+    ///     an in-process-only key is never cross-process grantable.
     ///   </item>
     /// </list>
     /// </summary>
@@ -92,7 +92,7 @@ public sealed class SigningDomainAuthorityOptions
                 // also rejects a "*" wildcard value). KeyDomain.Create normalizes to
                 // lowercase — use the normalized value for the in-process-only check so
                 // "JWKS-SIGNING" / "Jwks-Signing" are caught by the case-robust
-                // OrdinalIgnoreCase set in WorkloadCapabilityAuthority (C-01).
+                // OrdinalIgnoreCase set in WorkloadCapabilityAuthority.
                 var createResult = KeyDomain.Create(domain);
 
                 if (!createResult.Success)
@@ -103,13 +103,13 @@ public sealed class SigningDomainAuthorityOptions
                         + $"a non-catalog signing domain '{domain}'.");
                 }
 
-                // The load-bearing control: an in-process-only domain (jwks-signing)
-                // must NEVER be granted to a cross-process workload. Compare the
+                // An in-process-only domain (jwks-signing) must NEVER be granted to a
+                // cross-process workload. Compare the
                 // normalized value (from KeyDomain.Create) against the OrdinalIgnoreCase
                 // set so a non-lowercase input like "JWKS-SIGNING" is still caught.
                 var normalized = createResult.Data!.Value;
 
-                if (WorkloadCapabilityAuthority.InProcessOnlySigningDomains.Contains(normalized))
+                if (WorkloadCapabilityAuthority.MinterOnlySigningDomains.Contains(normalized))
                 {
                     return string.Create(
                         CultureInfo.InvariantCulture,

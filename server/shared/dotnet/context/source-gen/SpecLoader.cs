@@ -32,6 +32,7 @@ internal static class SpecLoader
     private const string _DOC_KEY = "doc";
     private const string _PROPAGATE_KEY = "propagate";
     private const string _MAX_LENGTH_KEY = "maxLength";
+    private const string _ENTRY_ID_MAX_LENGTH_KEY = "entryIdMaxLength";
     private const string _REDACT_KEY = "redact";
 
     /// <summary>
@@ -232,6 +233,11 @@ internal static class SpecLoader
             maxLengthElement.ValueKind == JsonValueKind.Number)
             maxLength = maxLengthElement.GetInt32();
 
+        int? entryIdMaxLength = null;
+        if (element.TryGetProperty(_ENTRY_ID_MAX_LENGTH_KEY, out var entryIdMaxElement) &&
+            entryIdMaxElement.ValueKind == JsonValueKind.Number)
+            entryIdMaxLength = entryIdMaxElement.GetInt32();
+
         var redact = false;
         if (element.TryGetProperty(_REDACT_KEY, out var redactElement) &&
             (redactElement.ValueKind == JsonValueKind.True ||
@@ -248,6 +254,7 @@ internal static class SpecLoader
             Doc: doc,
             Propagate: propagate,
             MaxLength: maxLength,
+            EntryIdMaxLength: entryIdMaxLength,
             Redact: redact);
 
         return (prop, null);

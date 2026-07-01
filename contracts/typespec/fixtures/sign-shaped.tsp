@@ -31,7 +31,7 @@ model SignFixtureInput {
   kid: string;
 
   /** The payload to sign. Redacted in structured logs (secret material). */
-  @d2Redact
+  @d2Redact("SecretInformation")
   @d2Field(2)
   payload: bytes;
 }

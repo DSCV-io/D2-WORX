@@ -60,8 +60,10 @@ Each operation lives in its own folder under `Application/Handlers/{Commands,Que
 | `IssueWorkloadCertificateHandler`  | `Commands` | `BaseRepoHandler` | `IssueWorkloadCertificateInput` → `IssueWorkloadCertificateOutput` | Validate the workload identity, load + decrypt the active `mtls-ca-intermediate` key, issue a short-lived leaf via the domain rule, write a `LeafIssuanceAuditRecord`, and return the leaf + chain to the caller. Private key bytes are zeroed in `finally`. |
 | `SeedCertificateAuthorityHandler`  | `Commands` | `BaseRepoHandler` | `SeedCertificateAuthorityInput` → `SeedCertificateAuthorityOutput` | Idempotent bootstrap: loads the root + intermediate from `ICaProvider`, persists both as active `X509CaCertificate` managed keys (genuine pending → smoke-test → activate path), and writes the generated + activated audit entries in one `SaveChangesAsync`. No-op when both CA domains already hold an active key. |
 | `GetJwksHandler`                   | `Queries`  | `BaseHandler`     | `GetJwksInput` → `GetJwksOutput`                            | Assemble the RFC 7517 JWKS from active + retiring signing keys (active first). |
+| `GetOidcConfigurationHandler`      | `Queries`  | `BaseHandler`     | `GetOidcConfigurationInput` → `GetOidcConfigurationOutput`  | Serve the minimal OIDC discovery document (pure config read — no DB, no crypto) so OIDC/JWKS clients auto-discover the JWKS endpoint. |
 | `GetRotationPlanHandler`           | `Queries`  | `BaseHandler`     | `GetRotationPlanInput` → `GetRotationPlanOutput`            | Report the lifecycle actions due across all domains (pure read). |
 | `RunDueRotationsHandler`           | `Commands` | `BaseHandler`     | `RunDueRotationsInput` → `RunDueRotationsOutput`            | Orchestrate all due lifecycle actions across domains (bootstrap → activate → rotate → generate-successor → retire) by composing `GetRotationPlan` with the per-action command handlers; per-domain failures are isolated and counted in `Errors`. |
+| `SignHandler`                      | `Queries`  | `BaseHandler`     | `SignInput` → `SignOutput`                                  | Load a key domain's active `RsaSigning` key, decrypt the private key via root crypto, sign the input (RS256) via the pure `RsaSigning` domain rule (zeroing the unwrapped key in a `finally`), and return the signature + kid. Authority-gated through `WorkloadCapabilityAuthority.AuthorizeSigning` on the established `IRequestContext.Origin` / `.ImmediateCaller` ([ADR-0025](../../../../../docs/adrs/0025-request-context-establishment.md)) — categorically rejects the `jwks-signing` root, reachable only via the dedicated `IJwtSigningCapability` minter seam. |
 
 `KeySummary` is a shared domain projection (`domain/Rules/KeySummary.cs`) returned by the generate / activate / retire commands; the other operations declare an operation-specific `<Op>Output`. Every command handler validates input at the top via the domain `Create` / transition smart constructors (`Kid.Create`, `KeyDomain.Create`), surfaces failures only via the generated `KeyCustodianFailures.*` factories + the domain's results, and checks every nested result. Outputs carry NO key material.
 
@@ -83,12 +85,14 @@ The pure crypto-over-domain logic lives in `domain/Rules/` and is called directl
 - **`SmokeTesting.Verify(...)`** — RSA sign/verify, AES-GCM round-trip, HMAC usability; returns a `D2Result` (never throws on bad material).
 - **`KidMinting.Mint()`** — 16 random bytes → unpadded base64url, JWKS-safe.
 - **`JwkProjection.ToJwk(...)`** — SPKI bytes → RFC 7517 `Jwk`.
+- **`RsaSigning.Sign(privatePkcs8, signingInput)`** — RS256 (RSASSA-PKCS1-v1_5 over SHA-256) sign over an already-unwrapped private key; returns `D2Result<string>` (base64url signature). BCL crypto only, never throws — a crypto import/sign failure surfaces as `KEYCUSTODIAN_PRECONDITION_VIOLATED`. Called from the App-internal `KeyDomainSigner.SignActiveKeyAsync` helper shared by `SignHandler` and the `JwtSigningCapability` minter.
 
 ## App-owned ports + shapes (`Infrastructure/`)
 
 - **`IRootKeyProvider`** (`Infrastructure/Vault/`) — port for the root keyring; the file-backed implementation is Infra's. **`KeyCustodianRootKey.ROOT_SERVICE_KEY`** is the keyed-services discriminator handlers inject the root `IPayloadCrypto` under.
 - **`KeyCustodianOptions` / `RotationPolicyOptions`** (`Infrastructure/Configuration/`) — the default + per-domain rotation policies (`TimeSpan` for config binding) + generator sizing.
 - **`IRotationPolicyProvider`** (`OptionsRotationPolicyProvider`, `Infrastructure/Configuration/`) — converts `TimeSpan` → `Duration` and validates through `RotationPolicy.Create`; an invalid configured policy surfaces `KEYCUSTODIAN_INVALID_ROTATION_POLICY`. The one defensible "impl lives in App" case — it reads `IOptions`, touches no vendor SDK or IO.
+- **`ISigningDomainAuthorityPolicy`** (`OptionsSigningDomainAuthorityPolicy`, `Infrastructure/Configuration/`) — resolves the set of signing key domains a cross-process workload may sign with (`AllowedSigningDomainsFor(workloadId)`); an unknown workload resolves to the EMPTY set (default-deny). `SignHandler` resolves this policy and passes the result into the pure `WorkloadCapabilityAuthority.AuthorizeSigning` rule. Binds from `SigningDomainAuthorityOptions` (`KEYCUSTODIAN_SIGNING_AUTHORITY` section); its `Validate()` fail-loud-refuses to boot if the in-process-only domain `jwks-signing` is ever granted to a workload.
 - **`IKeyRotationAnnouncer`** (`Infrastructure/Messaging/`) — the domain-shaped publisher port; App references no messaging library. Infra implements it over the message bus.
 
 ---
@@ -112,6 +116,11 @@ The pure crypto-over-domain logic lives in `domain/Rules/` and is called directl
 | `d2.keycustodian.key_generations` | `{generation}` | — | Incremented after each successful `GenerateKey` commit. |
 | `d2.keycustodian.smoke_test_failures` | `{failure}` | — | Smoke-test failures on activation/rotation attempts. A sustained non-zero rate indicates crypto-subsystem degradation. |
 | `d2.keycustodian.empty_jwks_served` | `{response}` | — | `GetJwks` responses that found zero signing keys and returned 503. Any non-zero value is critical — JWT verification is broken cluster-wide. |
+| `d2.keycustodian.leaf_certificates_issued` | `{certificate}` | — | Incremented after each successful `IssueWorkloadCertificate` commit (the durable commit of the leaf-issuance audit row). |
+| `d2.keycustodian.no_active_issuing_ca` | `{response}` | — | `IssueWorkloadCertificate` requests that found no active issuing intermediate CA and returned 503. A sustained non-zero rate means the CA has not been seeded or is between rotations — no workload can obtain a leaf, so the mTLS mesh cannot form. |
+| `d2.keycustodian.cross_process_signing_rejections` | `{rejection}` | — | Total general-surface `Sign` requests rejected for attempting to reach the cluster-signing root (`jwks-signing`) — the `MinterCapabilityRequired` arm. The highest-severity authority signal: any non-zero value means a caller tried to mint with the cluster signing key on the general surface (from ANY established origin), which is reachable only through the dedicated `IJwtSigningCapability` minter capability. Pages on any non-zero value. |
+| `d2.keycustodian.authority_rejections` | `{rejection}` | `capability` (`sign` / `seal-encrypt` / `seal-decrypt`), `reason` (`origin-unestablished` / `minter-required` / `not-in-allowed-set` / `identity-absent` / `not-in-process`) | Total capability-authority rejections across every capability — the broad dashboard counter complementing the specific `cross_process_signing_rejections` counter above. Both tag values are closed-enum string literals inlined at the call site, never free text. |
+| `d2.keycustodian.signing_key_unavailable` | `{response}` | — | `Sign` requests that found no active signing key for the requested domain and returned 503. A sustained non-zero rate means a signing domain has not been seeded or is mid-rotation with no active key — JWT minting for that domain is blocked until a key is active. |
 
 These counters complement the cross-cutting per-handler invocation/failure counters that `BaseHandler` already increments; they surface domain-semantic lifecycle events that dashboards alert on independently.
 
@@ -119,7 +128,7 @@ These counters complement the cross-cutting per-handler invocation/failure count
 
 ## DI
 
-`services.AddD2KeyCustodianApp()` registers the 10 handlers (transient) and the policy provider. Key generation + smoke testing are pure domain rules with no DI, so there are no generator / smoke-tester registrations. The seams App depends on but does not own — the concrete `IKeyCustodianDbContext`, the keyed root `IPayloadCrypto`, `IRootKeyProvider`, `IKeyRotationAnnouncer`, and `ICaProvider` — are registered by the Infra layer, along with the options binding + startup validation.
+`services.AddD2KeyCustodianApp()` registers the 12 handlers (transient) and the policy providers (rotation-policy + signing-domain-authority). Key generation + smoke testing are pure domain rules with no DI, so there are no generator / smoke-tester registrations. The seams App depends on but does not own — the concrete `IKeyCustodianDbContext`, the keyed root `IPayloadCrypto`, `IRootKeyProvider`, `IKeyRotationAnnouncer`, and `ICaProvider` — are registered by the Infra layer, along with the options binding + startup validation. The dedicated minter capability `IJwtSigningCapability` is registered SEPARATELY, via `AddD2JwtSigningCapability()`, called ONLY from the JWT minter's (auth module's) composition — never from `AddD2KeyCustodianApp()` / `AddD2KeyCustodianClients()`.
 
 ---
 
@@ -133,6 +142,7 @@ Project references:
 - `D2.Shared.Result` — `D2Result<T>` semantic factories (`Ok`, `NotFound`, `ValidationFailed`, `Conflict`, etc.) used directly by command/query handlers.
 - `D2.Shared.Encryption` — `IPayloadCrypto` for root-wrapping `KeyMaterialEncrypted` in command handlers; `PayloadCryptoKeyring` resolution via keyed DI.
 - `D2.Shared.Time` — `IClock` for rotation-planner due-key math and transition timestamps inside command handlers.
+- `D2.Shared.Context.Abstractions` — `IRequestContext` (the established `Origin` / `ImmediateCaller`, [ADR-0025](../../../../../docs/adrs/0025-request-context-establishment.md)) `SignHandler` reads and `JwtSigningCapability` injects to assert its in-process plane. Read side only — App stays gRPC-free and ASP.NET-Core-free.
 - `D2.Shared.Utilities` — `[RedactData]` on `CompromiseKeyInput.Reason` + `Falsey()` input guards. Carried transitively via Domain but listed explicitly ("declare what you use").
 - `D2.Shared.I18n.Keys` — the generated `TK.*` translation-key constants passed to `D2Result` factories (e.g. precondition arg-naming messages).
 
@@ -170,6 +180,10 @@ Rotation policies use `TimeSpan` fields so they bind cleanly from `IConfiguratio
 #### `Policies` — per-domain overrides
 
 A `Dictionary<string, RotationPolicyOptions>` keyed by the normalized domain string (e.g. `"jwks-signing"`, `"cookie"`, `"client-secret"`). A domain absent from this map uses `Default`.
+
+### Signing-domain authority policy
+
+`SigningDomainAuthorityOptions` binds from its own `KEYCUSTODIAN_SIGNING_AUTHORITY` section (prefix `KEYCUSTODIAN_SIGNING_AUTHORITY__`), validated fail-loud at startup (`ValidateOnStart`, Infra layer). `AllowedSigningDomainsByWorkload` is a `Dictionary<string, List<string>>` keyed by lowercase SPIFFE workload id (e.g. `"edge"`); a workload absent from the map resolves to the empty set (default-deny). The in-process-only domain `jwks-signing` must NEVER appear under any workload — `Validate()` refuses to boot if it does. An empty policy is valid (every lookup denies).
 
 Example environment variables (`__` maps to IConfiguration hierarchy):
 

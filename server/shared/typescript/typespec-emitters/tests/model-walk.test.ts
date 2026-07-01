@@ -33,7 +33,8 @@ function makeProp(
 ): { prop: ModelProperty; redactMap: Map<object, unknown> } {
   const prop = { type, optional } as unknown as ModelProperty;
   const redactMap = new Map<object, unknown>();
-  if (redact) redactMap.set(prop, true);
+  // @d2Redact stores its RedactReason member-name string on the property.
+  if (redact) redactMap.set(prop, "SecretInformation");
   return { prop, redactMap };
 }
 
@@ -73,7 +74,7 @@ describe("walkModel_ScalarField_ResolvesCorrectly", () => {
     expect(fields[0]!.tsType).toBe("string");
     expect(fields[0]!.csName).toBe("Name");
     expect(fields[0]!.optional).toBe(false);
-    expect(fields[0]!.redact).toBe(false);
+    expect(fields[0]!.redactReason).toBeUndefined();
   });
 
   it("boolean scalar → bool / boolean", () => {
@@ -234,14 +235,87 @@ describe("walkModel_NestedModel_RecursionAndDedup", () => {
   });
 });
 
-describe("walkModel_RedactField_RedactFlagTrue", () => {
-  it("@d2Redact property → redact: true", () => {
+describe("walkModel_RedactField_RedactReasonThreaded", () => {
+  it("@d2Redact property → redactReason carries the RedactReason member", () => {
     const { prop, redactMap } = makeProp(makeScalar("bytes"), false, true);
     const model = makeModel([["payload", prop]]);
     const { fields } = walkModel(makeProgram(redactMap), model, () => {});
 
-    expect(fields[0]!.redact).toBe(true);
+    expect(fields[0]!.redactReason).toBe("SecretInformation");
     expect(fields[0]!.name).toBe("payload");
+  });
+});
+
+describe("walkModel_NestedRedact_FailsLoudD2TSP012", () => {
+  it("@d2Redact on a nested-model property → onError D2TSP012, field dropped", () => {
+    // Inner (nested) model whose property carries a @d2Redact reason string.
+    const innerProp = {
+      type: makeScalar("string"),
+      optional: false,
+    } as unknown as ModelProperty;
+    const inner: Model = {
+      kind: "Model",
+      name: "NestedPayload",
+      properties: new Map([["secret", innerProp]]),
+    } as unknown as Model;
+
+    // Outer property references the nested model.
+    const outerProp = {
+      type: inner,
+      optional: false,
+    } as unknown as ModelProperty;
+    const model = makeModel([["payload", outerProp]]);
+
+    // Register @d2Redact on the NESTED property (string RedactReason member).
+    const redactMap = new Map<object, unknown>();
+    redactMap.set(innerProp, "SecretInformation");
+
+    const errors: Array<{ code: string; message: string }> = [];
+    const { nestedModels } = walkModel(
+      makeProgram(redactMap),
+      model,
+      (code, message) => {
+        errors.push({ code, message });
+      },
+    );
+
+    // Loud diagnostic fired with the dedicated code + D2TSP012 marker + location.
+    expect(errors).toHaveLength(1);
+    expect(errors[0]!.code).toBe("nested-redact-unsupported");
+    expect(errors[0]!.message).toContain("D2TSP012");
+    expect(errors[0]!.message).toContain("NestedPayload.secret");
+
+    // The nested field is dropped only AFTER the loud diagnostic — never silently
+    // emitted unredacted (which would be the latent PII leak this guards against).
+    expect(nestedModels).toHaveLength(1);
+    expect(nestedModels[0]!.fields).toHaveLength(0);
+  });
+
+  it("nested-model property WITHOUT @d2Redact → resolves normally, no diagnostic", () => {
+    const innerProp = {
+      type: makeScalar("string"),
+      optional: false,
+    } as unknown as ModelProperty;
+    const inner: Model = {
+      kind: "Model",
+      name: "NestedPayload",
+      properties: new Map([["label", innerProp]]),
+    } as unknown as Model;
+    const outerProp = {
+      type: inner,
+      optional: false,
+    } as unknown as ModelProperty;
+    const model = makeModel([["payload", outerProp]]);
+
+    const codes: string[] = [];
+    const { nestedModels } = walkModel(makeProgram(new Map()), model, (c) =>
+      codes.push(c),
+    );
+
+    // No diagnostic — a plain nested field is fully supported.
+    expect(codes).toHaveLength(0);
+    expect(nestedModels[0]!.fields).toHaveLength(1);
+    expect(nestedModels[0]!.fields[0]!.redactReason).toBeUndefined();
   });
 });
 

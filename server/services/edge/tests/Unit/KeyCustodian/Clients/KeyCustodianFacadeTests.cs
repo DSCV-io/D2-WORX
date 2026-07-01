@@ -7,6 +7,7 @@
 namespace D2.Edge.Tests.Unit.KeyCustodian.Clients;
 
 using D2.Edge.KeyCustodian.App.Application;
+using D2.Edge.KeyCustodian.App.Application.Handlers.Queries.Sign;
 using D2.Edge.KeyCustodian.Clients;
 using D2.Shared.Handler.Abstractions;
 using D2.Shared.Result;
@@ -64,6 +65,7 @@ public sealed class KeyCustodianFacadeTests
         services.AddTransient<IGetOidcConfigurationHandler>(
             _ => new StubGetOidcConfigurationHandler(
                 D2Result<GetOidcConfigurationOutput?>.Ok(SampleOidc())));
+        services.AddTransient<ISignHandler>(_ => SignStub());
 
         using var sp = services.BuildServiceProvider();
 
@@ -91,6 +93,7 @@ public sealed class KeyCustodianFacadeTests
         services.AddTransient<IGetOidcConfigurationHandler>(
             _ => new StubGetOidcConfigurationHandler(
                 D2Result<GetOidcConfigurationOutput?>.Ok(SampleOidc())));
+        services.AddTransient<ISignHandler>(_ => SignStub());
 
         using var sp = services.BuildServiceProvider();
 
@@ -108,7 +111,7 @@ public sealed class KeyCustodianFacadeTests
         var jwk = new Jwk("kid-001", "modulus", "AQAB", "RSA", "sig", "RS256");
         var expected = D2Result<GetJwksOutput?>.Ok(new GetJwksOutput([jwk]));
         var stub = new StubGetJwksHandler(expected);
-        var facade = new KeyCustodianApi(stub, OidcStub());
+        var facade = new KeyCustodianApi(stub, OidcStub(), SignStub());
 
         var result = await facade.GetJwksAsync(new GetJwksInput());
 
@@ -121,7 +124,7 @@ public sealed class KeyCustodianFacadeTests
     {
         var stub = new StubGetJwksHandler(D2Result<GetJwksOutput?>.Ok(new GetJwksOutput([])));
         using var cts = new CancellationTokenSource();
-        var facade = new KeyCustodianApi(stub, OidcStub());
+        var facade = new KeyCustodianApi(stub, OidcStub(), SignStub());
 
         await facade.GetJwksAsync(new GetJwksInput(), cts.Token);
 
@@ -138,7 +141,7 @@ public sealed class KeyCustodianFacadeTests
         // Ensures the façade does not swallow failures — result identity must be preserved.
         var failure = D2Result<GetJwksOutput?>.ServiceUnavailable();
         var stub = new StubGetJwksHandler(failure);
-        var facade = new KeyCustodianApi(stub, OidcStub());
+        var facade = new KeyCustodianApi(stub, OidcStub(), SignStub());
 
         var result = await facade.GetJwksAsync(new GetJwksInput());
 
@@ -152,7 +155,7 @@ public sealed class KeyCustodianFacadeTests
     {
         var canceled = D2Result<GetJwksOutput?>.Canceled();
         var stub = new StubGetJwksHandler(canceled);
-        var facade = new KeyCustodianApi(stub, OidcStub());
+        var facade = new KeyCustodianApi(stub, OidcStub(), SignStub());
 
         var result = await facade.GetJwksAsync(new GetJwksInput());
 
@@ -171,7 +174,8 @@ public sealed class KeyCustodianFacadeTests
         var oidcStub = new StubGetOidcConfigurationHandler(expected);
         var facade = new KeyCustodianApi(
             new StubGetJwksHandler(D2Result<GetJwksOutput?>.Ok(new GetJwksOutput([]))),
-            oidcStub);
+            oidcStub,
+            SignStub());
 
         var result = await facade.GetOidcConfigurationAsync(new GetOidcConfigurationInput());
 
@@ -187,7 +191,8 @@ public sealed class KeyCustodianFacadeTests
         using var cts = new CancellationTokenSource();
         var facade = new KeyCustodianApi(
             new StubGetJwksHandler(D2Result<GetJwksOutput?>.Ok(new GetJwksOutput([]))),
-            oidcStub);
+            oidcStub,
+            SignStub());
 
         await facade.GetOidcConfigurationAsync(new GetOidcConfigurationInput(), cts.Token);
 
@@ -200,7 +205,8 @@ public sealed class KeyCustodianFacadeTests
         var failure = D2Result<GetOidcConfigurationOutput?>.ServiceUnavailable();
         var facade = new KeyCustodianApi(
             new StubGetJwksHandler(D2Result<GetJwksOutput?>.Ok(new GetJwksOutput([]))),
-            new StubGetOidcConfigurationHandler(failure));
+            new StubGetOidcConfigurationHandler(failure),
+            SignStub());
 
         var result = await facade.GetOidcConfigurationAsync(new GetOidcConfigurationInput());
 
@@ -246,6 +252,49 @@ public sealed class KeyCustodianFacadeTests
             .Should().NotBeNull();
     }
 
+    [Fact]
+    public void IKeyCustodianApi_HasSignAsyncMethod()
+    {
+        typeof(IKeyCustodianApi).GetMethod("SignAsync")
+            .Should().NotBeNull();
+    }
+
+    // -------------------------------------------------------------------------
+    // Sign delegation
+    // -------------------------------------------------------------------------
+
+    [Fact]
+    public async Task SignAsync_DelegatesTo_SignHandler()
+    {
+        var expected = D2Result<SignOutput?>.Ok(new SignOutput("c2ln", "kid-001"));
+        var signStub = new StubSignHandler(expected);
+        var facade = new KeyCustodianApi(
+            new StubGetJwksHandler(D2Result<GetJwksOutput?>.Ok(new GetJwksOutput([]))),
+            OidcStub(),
+            signStub);
+
+        var result = await facade.SignAsync(new SignInput("audit", [0x01]));
+
+        signStub.CallCount.Should().Be(1);
+        result.Should().Be(expected);
+    }
+
+    [Fact]
+    public async Task SignAsync_PassesCancellationToken_ToHandler()
+    {
+        var signStub = new StubSignHandler(
+            D2Result<SignOutput?>.Ok(new SignOutput("c2ln", "kid-001")));
+        using var cts = new CancellationTokenSource();
+        var facade = new KeyCustodianApi(
+            new StubGetJwksHandler(D2Result<GetJwksOutput?>.Ok(new GetJwksOutput([]))),
+            OidcStub(),
+            signStub);
+
+        await facade.SignAsync(new SignInput("audit", [0x01]), cts.Token);
+
+        signStub.LastCancellationToken.Should().Be(cts.Token);
+    }
+
     // -------------------------------------------------------------------------
     // Test helpers + stub handlers (test doubles for the façade's dependencies)
     // -------------------------------------------------------------------------
@@ -260,6 +309,9 @@ public sealed class KeyCustodianFacadeTests
 
     private static StubGetOidcConfigurationHandler OidcStub() =>
         new(D2Result<GetOidcConfigurationOutput?>.Ok(SampleOidc()));
+
+    private static StubSignHandler SignStub() =>
+        new(D2Result<SignOutput?>.Ok(new SignOutput("c2ln", "kid")));
 
     private sealed class StubGetJwksHandler(D2Result<GetJwksOutput?> result) : IGetJwksHandler
     {
@@ -287,6 +339,23 @@ public sealed class KeyCustodianFacadeTests
 
         public ValueTask<D2Result<GetOidcConfigurationOutput?>> HandleAsync(
             GetOidcConfigurationInput input,
+            CancellationToken ct = default,
+            HandlerOptions? options = null)
+        {
+            CallCount++;
+            LastCancellationToken = ct;
+            return ValueTask.FromResult(result);
+        }
+    }
+
+    private sealed class StubSignHandler(D2Result<SignOutput?> result) : ISignHandler
+    {
+        public int CallCount { get; private set; }
+
+        public CancellationToken LastCancellationToken { get; private set; }
+
+        public ValueTask<D2Result<SignOutput?>> HandleAsync(
+            SignInput input,
             CancellationToken ct = default,
             HandlerOptions? options = null)
         {

@@ -295,6 +295,25 @@ public sealed class ScopesEmitterTests
             d => d.DescriptorId == DiagnosticIds.MissingGrantedTo);
     }
 
+    [Fact]
+    public void Emit_InternalScopeMissingGrantedTo_IsExemptFromD2SCP008_AndEmitsConstant()
+    {
+        // internal.* workload scopes are granted by the internal transaction-token mint at
+        // the Edge boundary, NOT the org-role grant matrix, so omitting grantedTo is
+        // legitimate (no D2SCP008) — yet they are NOT anonymous (no user org-role can ever
+        // hold them, which is the intended reachability for a service-to-service scope).
+        var spec = SpecOf(Scope("internal.kc.sign", sensitivity: "Critical", impBlocked: true));
+
+        var result = ScopesEmitter.Emit(spec, sr_orgTypes, sr_roles);
+
+        result.Diagnostics.Should().NotContain(
+            d => d.DescriptorId == DiagnosticIds.MissingGrantedTo,
+            "internal.* workload scopes are token-granted, not org-role-granted");
+        result.GeneratedSource.Should().Contain(
+            "\"internal.kc.sign\"",
+            "the internal scope constant is still emitted despite omitting grantedTo");
+    }
+
     // ----------------------------------------------------------------------
     // D2SCP007 — tree-position collision
     // ----------------------------------------------------------------------

@@ -137,4 +137,10 @@ internal sealed class TestRequestContext : IRequestContext
     public string? AsnName { get; init; }
 
     public string? AsnType { get; init; }
+
+    public RequestOrigin Origin { get; init; } = RequestOrigin.Unestablished;
+
+    public string? ImmediateCaller { get; init; }
+
+    public IReadOnlyList<CallPathEntry> CallPath { get; init; } = [];
 }

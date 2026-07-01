@@ -48,6 +48,26 @@ This is a deliberate tiny duplicate of the HTTP adapter, not a shared type: the 
 
 > See [`../core/README.md` § Composing with siblings](../core/README.md#composing-with-siblings) for the canonical dual-transport composition pattern (fluent chain, identical `IRequestContext` resolver across both transports, HTTP-only / gRPC-only carve-outs).
 
+### Cross-process establishment — `RequestOriginCrossProcessInterceptor` + `AddD2RequestOriginGrpc()`
+
+A second gRPC server interceptor, registered AFTER `JwtAuthInterceptor`, establishes the [`RequestOrigin.CrossProcessHop`](../abstractions/README.md#requestorigin--callpath--local-establishment-facts-vs-propagated-telemetry) plane on the same scoped `IRequestContext` the auth interceptor populated ([ADR-0025](../../../../../docs/adrs/0025-request-context-establishment.md)):
+
+```csharp
+services
+    .AddD2Auth(opts => { /* ... */ })
+    .AddD2AuthGrpc()
+    .AddD2RequestOriginGrpc(opts => opts.ServiceId = "files"); // this host's own workload id
+```
+
+Per inbound call, `RequestOriginCrossProcessInterceptor`:
+
+1. Applies the inbound `x-d2-context` header (the propagated operational subset PLUS the inherited call-path) via `ApplyPropagatedContext`.
+2. Sets `IRequestContext.Origin = RequestOrigin.CrossProcessHop` and `ImmediateCaller` from the validated mutual-TLS peer certificate (`GetD2PeerWorkloadIdentity()` — reads `Connection.ClientCertificate`, never a header/claim/payload). No validated certificate means a `null` caller — fail-closed downstream. A wire-supplied `Origin` or caller is structurally impossible: neither field is ever serialized.
+3. Appends this hop's OWN identity (`D2WorkloadIdentityOptions.ServiceId`) to the call-path as a `CallPathKind.WorkloadHop` entry.
+4. Logs the received call-path's entry count.
+
+All four gRPC server-handler shapes (unary, client-streaming, server-streaming, duplex) dispatch through the single shared establishment path, so a streaming method added later cannot silently bypass it. No-op-safe when no `MutableRequestContext` is on the resolved `HttpContext.Items` slot (e.g. a harmless endpoint the auth interceptor already short-circuited). `AddD2RequestOriginGrpc()` binds `D2WorkloadIdentityOptions` with a required-`ServiceId` startup validation and registers `IClock` as `SystemClock` when the host has not already bound one (`TryAdd`); idempotent — repeat calls do not double-register the interceptor.
+
 ### Per-method scope declaration
 
 Two surfaces declare scope requirements on a gRPC method: the **attribute path** (on the service class or method) and the **fluent path** (on the `IEndpointConventionBuilder` returned by `MapGrpcService<T>()`). Both project onto endpoint metadata and are enforced at runtime by the `JwtAuthInterceptor`.
@@ -240,6 +260,9 @@ All four server-side handler methods — `UnaryServerHandler`, `ClientStreamingS
 | `D2.Shared.Result` | `D2Result` typed factories. |
 | `D2.Shared.I18n.Abstractions` | `TKMessage` shape. |
 | `D2.Shared.Utilities` | `Falsey()` / `Truthy()` extensions. |
+| `D2.Shared.Time` | `IClock` / `SystemClock` — timestamps the call-path entry `RequestOriginCrossProcessInterceptor` appends on each inbound hop. |
+| `D2.Shared.Headers.Grpc` | `GrpcHeaders.PROPAGATED_CONTEXT` (`"x-d2-context"`) — the wire constant `RequestOriginCrossProcessInterceptor` reads on inbound calls (the same generated constant the outbound `PropagatedContextClientInterceptor` writes). |
+| `D2.Shared.AspNetCore` | `PeerWorkloadIdentityAccessor.GetD2PeerWorkloadIdentity()` — the capability-general mTLS peer-identity accessor `RequestOriginCrossProcessInterceptor` calls (via `ServerCallContext.GetHttpContext()`) to derive `ImmediateCaller` from the validated client certificate. |
 | `Grpc.AspNetCore.Server` | Server-side gRPC binding (`Interceptor`, `ServerCallContext`, `Metadata`, `Status`, `RpcException`, `IServerCallContextFeature`). |
 | `Microsoft.AspNetCore.App` (framework ref via `Sdk.Web`) | Hosts gRPC services; provides `HttpContext`, `IEndpointConventionBuilder`, `IApplicationBuilder`. |
 | `Microsoft.Extensions.{DependencyInjection,Logging,Options}.Abstractions` | DI / logging / options. |
@@ -261,6 +284,13 @@ All four server-side handler methods — `UnaryServerHandler`, `ClientStreamingS
 - `AuthGrpcServiceCollectionExtensionsTests.cs` — DI registration; `AddD2Auth` precondition fail-fast; idempotent re-call; interceptor type registered as singleton; appears in `GrpcServiceOptions.Interceptors` exactly once; scoped `IRequestContext` adapter resolution; `IAmbientRequestScopeAccessor` port resolves (not descriptor-presence) to `GrpcHttpContextAmbientRequestScopeAccessor` as a singleton that reads the call's request scope; **dual-transport (`AddD2AuthHttp()` + `AddD2AuthGrpc()`) first-wins in both registration orders — a single ambient-port registration that resolves and reads the scope under either order.**
 - `Ambient/GrpcHttpContextAmbientRequestScopeAccessorTests.cs` — the gRPC-inbound adapter directly: present-context (`Current` is the request scope), absent-context (null), ambient-swap on a shared singleton, and the null-ctor-arg parity decision (constructs but NREs on first read, mirroring the HTTP sibling's no-explicit-guard posture).
 - `GrpcInboundForwardingIntegrationTests.cs` — real-`TestServer` gRPC host wired with `AddD2AuthGrpc()` ONLY: inbound bearer → interceptor capture → adapter read-back → verbatim outbound forward (the outbound credential's interceptor invoked directly inside the call, asserting the attached `Authorization` equals `Bearer <inbound token>`); harmless endpoint short-circuits capture so the outbound credential hard-fails `Unauthenticated`; a root-provider (no inbound call) resolution hard-fails `Unauthenticated`.
+
+`server/shared/dotnet/tests/Unit/Auth/Inbound/Grpc/Establishment/`:
+
+- `RequestOriginCrossProcessInterceptorTests.cs` — all four RPC-kind dispatch shapes establish `Origin = CrossProcessHop`; `ImmediateCaller` sourced ONLY from `GetD2PeerWorkloadIdentity()` (null on no certificate); inbound `x-d2-context` applied before establishment; call-path append + received-count log; no-op when no `MutableRequestContext` is present.
+- `RequestOriginGrpcServiceCollectionExtensionsTests.cs` — `D2WorkloadIdentityOptions.ServiceId` required-startup-validation; `IClock` `TryAdd`; interceptor registered exactly once across repeat calls; appears in `GrpcServiceOptions.Interceptors`.
+
+`server/shared/dotnet/tests/Unit/Auth/Inbound/Grpc/RequestOriginPropagationA2BIntegrationTests.cs` — a real two-process `TestServer` harness (process A's outbound `PropagatedContextClientInterceptor` → process B's inbound `RequestOriginCrossProcessInterceptor`) proving `Origin` recomputes fresh on B while `CallPath` accumulates correctly across the hop.
 
 Run: `dotnet test server/shared/dotnet/tests`.
 

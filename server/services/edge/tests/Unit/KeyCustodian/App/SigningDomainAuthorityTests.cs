@@ -93,13 +93,13 @@ public sealed class SigningDomainAuthorityTests
         var provider = new OptionsSigningDomainAuthorityPolicy(Options.Create(options));
 
         var allow = WorkloadCapabilityAuthority.AuthorizeSigning(
-            callerWorkloadId: "files",
-            isCrossProcess: true,
+            immediateCaller: "files",
+            origin: RequestOrigin.CrossProcessHop,
             target: KeyDomain.Create("audit").Data!,
             allowedSigningDomainsForCaller: provider.AllowedSigningDomainsFor("files"));
         var deny = WorkloadCapabilityAuthority.AuthorizeSigning(
-            callerWorkloadId: "files",
-            isCrossProcess: true,
+            immediateCaller: "files",
+            origin: RequestOrigin.CrossProcessHop,
             target: KeyDomain.Create("notifications").Data!,
             allowedSigningDomainsForCaller: provider.AllowedSigningDomainsFor("files"));
 
@@ -130,7 +130,7 @@ public sealed class SigningDomainAuthorityTests
     [Fact]
     public void Validate_GrantsJwksSigning_FailsLoud()
     {
-        // The load-bearing boot invariant: no workload may be granted jwks-signing.
+        // The boot invariant: no workload may be granted jwks-signing.
         var options = new SigningDomainAuthorityOptions();
         options.AllowedSigningDomainsByWorkload["edge"] = [KeyDomain.JWKS_SIGNING];
 
@@ -145,10 +145,10 @@ public sealed class SigningDomainAuthorityTests
     [InlineData("Jwks-Signing")]
     public void Validate_GrantsJwksSigningUppercase_FailsLoud(string domainValue)
     {
-        // C-01: the boot gate must catch non-lowercase variants of jwks-signing.
+        // The boot gate must catch non-lowercase variants of jwks-signing.
         // The normalized path (KeyDomain.Create + OrdinalIgnoreCase set) means
         // "JWKS-SIGNING" and "Jwks-Signing" are both rejected as in-process-only
-        // grants, preventing a case-bypass of the load-bearing control.
+        // grants, preventing a case-bypass of the in-process-only-domain control.
         var options = new SigningDomainAuthorityOptions();
         options.AllowedSigningDomainsByWorkload["edge"] = [domainValue];
 
@@ -163,7 +163,7 @@ public sealed class SigningDomainAuthorityTests
     public void ValidateOnStart_GrantsJwksSigningUppercase_ThrowsOnOptionsResolution(
         string domainValue)
     {
-        // C-01 + C-02: end-to-end DI gate for uppercase jwks-signing grants. Mirrors
+        // End-to-end DI gate for uppercase jwks-signing grants. Mirrors
         // ValidateOnStart_GrantsJwksSigning_ThrowsOnOptionsResolution but drives the
         // non-lowercase variant that was previously bypassing the raw-string check.
         var services = new ServiceCollection();

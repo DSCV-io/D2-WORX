@@ -26,6 +26,7 @@ global using D2.Edge.KeyCustodian.Domain.Rules;
 global using D2.Edge.KeyCustodian.Domain.ValueObjects;
 global using D2.Edge.Tests.Unit.KeyCustodian.App.Fixtures;
 global using D2.Edge.Tests.Unit.KeyCustodian.SourceGen;
+global using D2.Shared.Auth.Abstractions;
 global using D2.Shared.Encryption;
 global using D2.Shared.ErrorCodes.Category;
 global using D2.Shared.Time;

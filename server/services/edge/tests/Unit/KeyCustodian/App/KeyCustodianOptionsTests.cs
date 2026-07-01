@@ -246,46 +246,89 @@ public sealed class KeyCustodianOptionsTests
     }
 
     // -----------------------------------------------------------------------
-    // IssuerBaseUrl whitespace-only guard (IValidatableObject.Validate regression)
-    // [Required] rejects null; [MinLength(1)] rejects empty — but neither rejects
-    // a whitespace-only value. The Falsey() guard in Validate() closes the gap:
-    // "   " must fail validation rather than boot and serve issuer:"   ".
+    // IssuerBaseUrl rejection — two layers:
+    //   1. The ValidateDataAnnotations startup path (Validator.TryValidateObject):
+    //      [Required] (AllowEmptyStrings=false, so its rule is Trim().Length != 0)
+    //      rejects null, empty, AND whitespace; [MinLength(1)] also rejects empty.
+    //   2. IValidatableObject.Validate()'s explicit Falsey() defense-in-depth guard,
+    //      which TryValidateObject short-circuits past once layer 1 fails, so it is
+    //      pinned by calling Validate() directly.
     // -----------------------------------------------------------------------
 
     [Theory]
+    [InlineData(null)]
+    [InlineData("")]
     [InlineData("   ")]
     [InlineData("\t")]
     [InlineData(" \t ")]
-    public void WhitespaceOnlyIssuerBaseUrl_FailsValidation(string whitespace)
+    public void TryValidateObject_BlankIssuerBaseUrl_FailsValidation(string? issuerBaseUrl)
     {
-        // Arrange — valid rotation policy so the Default-policy recursion does
-        // not produce noise findings; the only invalid field is IssuerBaseUrl.
+        // Pins the startup-path contract: ValidateOnStart uses ValidateDataAnnotations,
+        // which runs Validator.TryValidateObject. [Required]'s Trim() rule rejects null,
+        // empty, and whitespace alike. Relaxing [Required] to AllowEmptyStrings = true (or
+        // dropping it) would let a blank issuer boot — this assertion would then fail.
         var options = new KeyCustodianOptions
         {
-            IssuerBaseUrl = whitespace,
-            Default = new RotationPolicyOptions
-            {
-                Cadence = TimeSpan.FromDays(30),
-                Grace = TimeSpan.FromDays(2),
-                SmokeSoak = TimeSpan.FromDays(1),
-            },
+            IssuerBaseUrl = issuerBaseUrl!,
+            Default = ValidDefaultPolicy(),
         };
 
         var results = new List<ValidationResult>();
 
-        // Act — TryValidateObject invokes IValidatableObject.Validate() (where the
-        // Falsey() guard lives) in addition to checking data-annotation attributes.
         var valid = Validator.TryValidateObject(
             options, new ValidationContext(options), results, validateAllProperties: true);
 
-        // Assert — validation must fail and name IssuerBaseUrl in the member list,
-        // pinning the Falsey() guard: removing it would let whitespace through
-        // [Required]+[MinLength(1)] and this assertion would fail.
         valid.Should().BeFalse(
-            because: "a whitespace-only IssuerBaseUrl must fail IValidatableObject.Validate");
+            because: "a null, empty, or whitespace IssuerBaseUrl must fail validation");
         results.Should().Contain(
             r => r.MemberNames.Contains(nameof(KeyCustodianOptions.IssuerBaseUrl)),
             because: "the validation error must be attributed to IssuerBaseUrl");
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("   ")]
+    [InlineData("\t")]
+    public void Validate_BlankIssuerBaseUrl_YieldsIssuerBaseUrlResult(string? issuerBaseUrl)
+    {
+        // Pins the Falsey() defense-in-depth guard itself. TryValidateObject short-circuits
+        // Validate() once [Required] rejects the value at property level, so a direct call
+        // is the only way to reach the guard. Deleting the Falsey() block makes Validate()
+        // yield no IssuerBaseUrl result and this assertion fails — a genuine
+        // fails-without-the-guard regression pin.
+        var options = new KeyCustodianOptions
+        {
+            IssuerBaseUrl = issuerBaseUrl!,
+            Default = ValidDefaultPolicy(),
+        };
+
+        var results = options.Validate(new ValidationContext(options)).ToList();
+
+        results.Should().Contain(
+            r => r.MemberNames.Contains(nameof(KeyCustodianOptions.IssuerBaseUrl)),
+            because: "the Falsey() guard must flag a blank IssuerBaseUrl on a direct Validate call");
+    }
+
+    [Fact]
+    public void TryValidateObject_ValidIssuerBaseUrl_Passes()
+    {
+        // Positive case — a well-formed issuer with a valid default policy must pass, so the
+        // blank-issuer guards above cannot regress into rejecting legitimate configuration.
+        var options = new KeyCustodianOptions
+        {
+            IssuerBaseUrl = "https://edge.internal",
+            Default = ValidDefaultPolicy(),
+        };
+
+        var results = new List<ValidationResult>();
+
+        var valid = Validator.TryValidateObject(
+            options, new ValidationContext(options), results, validateAllProperties: true);
+
+        valid.Should().BeTrue(
+            because: "a well-formed IssuerBaseUrl with a valid default policy is valid");
+        results.Should().BeEmpty();
     }
 
     [Fact]
@@ -314,4 +357,14 @@ public sealed class KeyCustodianOptionsTests
             TimeSpan.FromDays(14),
             because: "the lowercase write should overwrite the uppercase entry");
     }
+
+    // A valid default rotation policy so the Default-policy recursion in
+    // KeyCustodianOptions.Validate() produces no noise results — leaving IssuerBaseUrl
+    // as the only field under test in the blank-issuer cases.
+    private static RotationPolicyOptions ValidDefaultPolicy() => new()
+    {
+        Cadence = TimeSpan.FromDays(30),
+        Grace = TimeSpan.FromDays(2),
+        SmokeSoak = TimeSpan.FromDays(1),
+    };
 }

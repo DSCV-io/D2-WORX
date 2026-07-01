@@ -544,6 +544,58 @@ Canonical: [`server/shared/dotnet/auth/outbound/README.md`](../server/shared/dot
 
 ---
 
+## Request-context establishment (`Origin` / `ImmediateCaller` / `CallPath`)
+
+Every trust boundary a request can pass through recomputes two local, non-propagated facts on `IRequestContext` — `Origin` (`RequestOrigin`: which kind of boundary produced this hop's context) and `ImmediateCaller` (`string?`: who called this hop) — and appends one entry to a propagated, telemetry-only `CallPath`. `Origin`/`ImmediateCaller` are never carried in from the wire; each boundary derives them fresh from its own transport evidence, so a capability authority can trust them the same way it trusts a validated JWT claim. `CallPath` is the opposite shape on purpose — it accumulates across hops and rides `x-d2-context`, so no authority rule ever takes it as a parameter.
+
+Five establishment boundaries populate these fields, one per way a request-scoped context can originate plus the outbound leg that carries the propagated subset forward:
+
+```csharp
+// Inbound HTTP (D2.Shared.Auth.Http) — sets Origin = EdgeInbound, starts the call-path.
+app.UseD2RequestOriginEdge();
+
+// Inbound gRPC (D2.Shared.Auth.Grpc) — sets Origin = CrossProcessHop, ImmediateCaller
+// from the validated mTLS client certificate, appends a WorkloadHop entry.
+services.AddD2RequestOriginGrpc();   // registers RequestOriginCrossProcessInterceptor
+
+// In-process module call (D2.Shared.Context.Abstractions) — the generated I<Module>Api
+// leaf calls this before dispatching; sets Origin = InProcessModule.
+requestContext.EstablishInProcessModule(callingModuleId, targetModuleId, clock);
+
+// System worker (D2.Shared.Context.Abstractions) — a background service's per-iteration
+// scope calls this before resolving a handler; sets Origin = System.
+scopedServices.EstablishSystemContext(hostServiceId, clock);
+
+// Outbound gRPC (D2.Shared.Auth.Outbound) — writes x-d2-context (operational subset +
+// accumulated call-path) on every outbound call; auto-chained by the generated client.
+builder.AddD2PropagatedContext();
+```
+
+**Fail-closed by construction.** A freshly-constructed context's `Origin` is `RequestOrigin.Unestablished` — the enum's zero member — so any authority rule consulting `Origin` denies unless a boundary has positively established it. There is no "assume a plane" fallback; a missing establishment call is a loud, rejected request, not a silent over-grant.
+
+Canonical: [ADR-0025](adrs/0025-request-context-establishment.md).
+
+### Minter capability — possession-gated authority over a cluster-root secret
+
+A capability over the single highest-value secret in a service (KeyCustodian's cluster JWT signing key, `jwks-signing`) is never a branch inside the general-purpose authority rule every request eventually reaches. It is a **separate interface**, registered by a **dedicated DI extension** called only from the one composition root allowed to hold it:
+
+```csharp
+public interface IJwtSigningCapability
+{
+    ValueTask<D2Result<SignOutput>> SignJwtAsync(SignInput input, CancellationToken ct = default);
+}
+
+// Called ONLY from the owning composition (the JWT minter / auth module) —
+// never from the general client registration (AddD2KeyCustodianClients()).
+services.AddD2JwtSigningCapability();
+```
+
+**Possession of the resolved interface is the authority.** A provider built without the dedicated registration cannot resolve `IJwtSigningCapability` at all — there is no runtime flag to flip and no caller identity to spoof, because the capability either was wired into this composition root or it was not, and that is a build-time, review-visible fact. The implementation adds a second, independent guard — an origin check (`Origin == InProcessModule`) — so even a reference that somehow escaped its owning composition cannot be used from the wrong plane. The general-purpose authority rule structurally excludes the guarded target for every caller and every origin, so the capability is the *only* path to it, not merely the *recommended* one.
+
+Canonical: [ADR-0025](adrs/0025-request-context-establishment.md) §"The authority model."
+
+---
+
 ## Deny-by-default endpoint boot guard
 
 Every mapped `RouteEndpoint` must declare its auth intent before the service may serve traffic. An endpoint with no declaration silently admits any authenticated caller at runtime — a class of misconfiguration that is impossible to observe from a passing test run. The `AuthEndpointGuardStartupFilter` (in `D2.Shared.Auth.Startup`, wired automatically by `AddD2ServiceDefaults`) converts this silent failure into a fast, deterministic startup failure.

@@ -111,4 +111,43 @@ namespace D2.KeyCustodian {
   @get
   @d2Harmless
   op getOidcConfiguration(): GetOidcConfigurationOutput;
+
+  /** Input to sign: the key domain to sign with, and the bytes to sign. */
+  model SignInput {
+    /** The signing key domain. Cross-process callers may NOT request "jwks-signing". */
+    @d2Field(1)
+    keyDomain: string;
+
+    /** The exact bytes to sign (e.g. the JWT signing-input). Secret-adjacent — redacted in logs. */
+    @d2Redact("SecretInformation")
+    @d2Field(2)
+    signingInput: bytes;
+  }
+
+  /** Output of sign: the signature + the kid that produced it (so the verifier picks the right JWK). */
+  model SignOutput {
+    /** The signature over signingInput, base64url-encoded (unpadded). */
+    @d2Field(1)
+    signature: string;
+
+    /** The kid of the active signing key used (matches a JWKS entry). */
+    @d2Field(2)
+    kid: string;
+  }
+
+  /**
+   * Sign a payload with a KeyCustodian-managed signing key. Read-only Query (no
+   * persistent mutation). In-process + gRPC only — never a public REST surface
+   * (signing is internal service-to-service / in-process minter). The general sign
+   * surface signs every domain EXCEPT the cluster-signing root "jwks-signing" (which
+   * is reachable only through the dedicated minter capability); a cross-process caller
+   * signs per its allowed-signing-domains policy.
+   */
+  @d2Query
+  @d2ServedBy("KeyCustodian")
+  @d2InProcess
+  @d2GrpcMethod("KeyCustodianSigner", "Sign")
+  @d2RequireAnyScope("internal.kc.sign")
+  @d2Audience("d2.internal")
+  op sign(input: SignInput): SignOutput;
 }

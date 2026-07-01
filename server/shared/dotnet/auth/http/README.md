@@ -46,6 +46,23 @@ The read-back door for the forwarded-JWT holder. The outbound forwarding credent
 
 > See [`../core/README.md` § Composing with siblings](../core/README.md#composing-with-siblings) for the canonical dual-transport composition pattern (fluent chain, identical `IRequestContext` resolver across both transports, HTTP-only / gRPC-only carve-outs).
 
+### Edge-inbound establishment — `RequestOriginEdgeInboundMiddleware` + `AddD2RequestOriginEdge()` / `UseD2RequestOriginEdge()`
+
+A second convention-based middleware, inserted AFTER `UseD2Auth()`, establishes the [`RequestOrigin.EdgeInbound`](../abstractions/README.md#requestorigin--callpath--local-establishment-facts-vs-propagated-telemetry) plane — the external trust boundary, the START of the call-path — on the same scoped `IRequestContext` the auth middleware populated ([ADR-0025](../../../../../docs/adrs/0025-request-context-establishment.md)):
+
+```csharp
+services
+    .AddD2Auth(opts => { /* ... */ })
+    .AddD2AuthHttp()
+    .AddD2RequestOriginEdge(opts => opts.ServiceId = "edge"); // this host's own workload id
+
+app.UseRouting();
+app.UseD2Auth();
+app.UseD2RequestOriginEdge();
+```
+
+`RequestOriginEdgeInboundMiddleware` sets `IRequestContext.Origin = RequestOrigin.EdgeInbound`, `ImmediateCaller = null` (the external client is not an internal workload), and STARTS a fresh call-path with a single `CallPathKind.Edge` entry carrying the host's own service id (`D2WorkloadIdentityOptions.ServiceId`). No-op-safe when no `MutableRequestContext` is on `HttpContext.Items` (e.g. a harmless endpoint the auth middleware already short-circuited). `AddD2RequestOriginEdge()` binds `D2WorkloadIdentityOptions` with a required-`ServiceId` startup validation and registers `IClock` as `SystemClock` when the host has not already bound one (`TryAdd`).
+
 ### Endpoint metadata — `EndpointScopeMetadata`
 
 Carries the per-endpoint scope requirement (or harmless-endpoint opt-in). Two flavors:
@@ -134,6 +151,7 @@ Or better, constructor-inject `IRequestContext` directly — the scoped resolver
 | `D2.Shared.Result`                                                        | `D2Result` typed factories.                                                                                                              |
 | `D2.Shared.I18n.Abstractions`                                             | `TKMessage` shape.                                                                                                                       |
 | `D2.Shared.Utilities`                                                     | `Falsey()` / `Truthy()` extensions.                                                                                                      |
+| `D2.Shared.Time`                                                          | `IClock` / `SystemClock` — timestamps the Edge call-path entry `RequestOriginEdgeInboundMiddleware` starts the path with.                |
 | `Microsoft.AspNetCore.App` (framework ref via `Sdk.Web`)                  | `HttpContext`, `IEndpointConventionBuilder`, `Microsoft.AspNetCore.Mvc.ProblemDetails`, `IApplicationBuilder`.                           |
 | `Microsoft.Extensions.{DependencyInjection,Logging,Options}.Abstractions` | DI / logging / options.                                                                                                                  |
 | `JetBrains.Annotations`                                                   | Standard annotations.                                                                                                                    |
@@ -151,6 +169,11 @@ Or better, constructor-inject `IRequestContext` directly — the scoped resolver
 - `Middleware/HttpContextRequestContextExtensionsTests.cs` — typed accessor returns null pre-middleware, populated value post-middleware.
 - `Middleware/D2HttpContextItemsTests.cs` — slot-key constant value pinned.
 - `Errors/AuthFailuresScopeInsufficientTests.cs` (in the existing `AuthFailures` test folder) — `ScopeInsufficient()` status code + error code + TK key.
+
+`server/shared/dotnet/tests/Unit/Auth/Inbound/Http/Establishment/`:
+
+- `RequestOriginEdgeInboundMiddlewareTests.cs` — establishes `Origin = EdgeInbound`, `ImmediateCaller = null`, and a fresh single-`CallPathKind.Edge`-entry call-path; no-op when no `MutableRequestContext` is present.
+- `RequestOriginEdgeServiceCollectionExtensionsTests.cs` — `D2WorkloadIdentityOptions.ServiceId` required-startup-validation; `IClock` `TryAdd`.
 
 Cross-transport companions (in `tests/Unit/Auth/Inbound/`):
 
