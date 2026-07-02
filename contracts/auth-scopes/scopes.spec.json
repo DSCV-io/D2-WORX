@@ -63,6 +63,12 @@
       "description": "Sign a payload with a KeyCustodian-managed signing key (internal service-to-service / in-process minter).",
       "actionSensitivity": "Critical",
       "impersonationBlocked": true
+    },
+    {
+      "name": "internal.kc.keyring",
+      "description": "Fetch a payload-encryption keyring from KeyCustodian (internal service-to-service / in-process). The scope gates whether a caller may reach the keyring surface at all; a per-workload domain policy decides which domains it may fetch.",
+      "actionSensitivity": "Critical",
+      "impersonationBlocked": true
     }
   ]
 }

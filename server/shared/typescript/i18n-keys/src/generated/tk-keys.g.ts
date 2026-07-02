@@ -346,11 +346,13 @@ export const TK = {
   keycustodian: {
     authorization: {
       CROSS_PROCESS_DOMAIN_REJECTED: tk("keycustodian_authorization_CROSS_PROCESS_DOMAIN_REJECTED"),
+      KEYRING_DOMAIN_NOT_AUTHORIZED: tk("keycustodian_authorization_KEYRING_DOMAIN_NOT_AUTHORIZED"),
       MINTER_CAPABILITY_REQUIRED: tk("keycustodian_authorization_MINTER_CAPABILITY_REQUIRED"),
       REQUEST_ORIGIN_UNESTABLISHED: tk("keycustodian_authorization_REQUEST_ORIGIN_UNESTABLISHED"),
       SIGNING_DOMAIN_NOT_AUTHORIZED: tk("keycustodian_authorization_SIGNING_DOMAIN_NOT_AUTHORIZED")
     },
     infrastructure: {
+      KEYRING_KEY_UNAVAILABLE: tk("keycustodian_infrastructure_KEYRING_KEY_UNAVAILABLE"),
       NO_ACTIVE_ISSUING_CA: tk("keycustodian_infrastructure_NO_ACTIVE_ISSUING_CA"),
       SIGNING_KEY_UNAVAILABLE: tk("keycustodian_infrastructure_SIGNING_KEY_UNAVAILABLE")
     },

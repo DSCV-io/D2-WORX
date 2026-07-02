@@ -59,5 +59,12 @@ public static class KeyRecordQueryExtensions
         /// <returns>The filtered query.</returns>
         public IQueryable<KeyRecord> Signing() =>
             source.Where(k => k.KeyType == KeyType.RsaSigning);
+
+        /// <summary>
+        /// Filters to symmetric payload-encryption keys (<see cref="KeyType.AesPayload"/>).
+        /// </summary>
+        /// <returns>The filtered query.</returns>
+        public IQueryable<KeyRecord> Payload() =>
+            source.Where(k => k.KeyType == KeyType.AesPayload);
     }
 }

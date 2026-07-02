@@ -181,6 +181,66 @@ describe("dtoEmitIntegration_Sign_RedactedFieldInGeneratedCSharp", () => {
   });
 });
 
+describe("dtoEmitIntegration_NestedRedact_ReasonThreadedThroughRealCompile", () => {
+  let host: Awaited<ReturnType<typeof createTestHost>>;
+
+  beforeAll(async () => {
+    host = await createTestHost({
+      libraries: [D2DecoratorTestLibrary, D2EmitterTestLibrary],
+    });
+  });
+
+  it("@d2Redact on an array-element nested-model field → attribute + both usings, zero diagnostics", async () => {
+    // The exact GetKeyringOutput shape: entries is KeyringEntry[], whose keyBytes
+    // field carries @d2Redact("SecretInformation") — a NESTED-model property.
+    host.addTypeSpecFile(
+      "main.tsp",
+      `
+      import "@d2/typespec-decorators";
+      using D2;
+      namespace D2.KeyCustodian;
+
+      model KeyringEntry { kid: string; @d2Redact("SecretInformation") keyBytes: bytes; }
+      model GetKeyringOutput { activeKid: string; entries: KeyringEntry[]; aadContext: bytes; }
+      model GetKeyringInput { keyDomain: string; }
+
+      @d2Query
+      @d2InProcess
+      @d2ServedBy("KeyCustodian")
+      op getKeyring(input: GetKeyringInput): GetKeyringOutput;
+      `,
+    );
+
+    await host.compile("main.tsp", {
+      emit: ["@d2/typespec-emitters"],
+      options: { "@d2/typespec-emitters": { "csharp-namespace": "D2.Test" } },
+      outputDir: "testing:/out",
+    });
+
+    // Zero diagnostics — the formerly-refused nested @d2Redact now compiles clean.
+    const errors = host.program.diagnostics.filter(
+      (d) => d.severity === "error",
+    );
+    expect(errors).toHaveLength(0);
+
+    const outputContent = getEmittedFile(host, "GetKeyringOutput.g.cs");
+    expect(outputContent).toBeDefined();
+    // The attribute lands on the nested KeyringEntry record's keyBytes param.
+    expect(outputContent).toContain(
+      "[property: RedactData(Reason = RedactReason.SecretInformation)] byte[] KeyBytes",
+    );
+    // Both usings are present (the CS0246 regression the usings-scan fix closes).
+    expect(outputContent).toContain("using D2.Shared.Utilities.Attributes;");
+    expect(outputContent).toContain("using D2.Shared.Utilities.Enums;");
+    // aadContext (non-redacted, top-level) is present but unadorned.
+    expect(outputContent).toContain("byte[] AadContext");
+    // Exactly one redacted param (keyBytes only).
+    const redactCount = (outputContent!.match(/\[property: RedactData/g) ?? [])
+      .length;
+    expect(redactCount).toBe(1);
+  });
+});
+
 // ---------------------------------------------------------------------------
 // Handler-interface emitter integration tests (items 23-26).
 // ---------------------------------------------------------------------------

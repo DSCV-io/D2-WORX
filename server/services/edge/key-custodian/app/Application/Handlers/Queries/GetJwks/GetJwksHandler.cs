@@ -6,7 +6,6 @@
 
 namespace D2.Edge.KeyCustodian.App.Application.Handlers.Queries.GetJwks;
 
-using D2.Shared.Utilities.Extensions;
 using H = D2.Edge.KeyCustodian.App.Application.Handlers.Queries.GetJwks.IGetJwksHandler;
 using I = D2.Edge.KeyCustodian.Clients.GetJwksInput;
 using O = D2.Edge.KeyCustodian.Clients.GetJwksOutput;

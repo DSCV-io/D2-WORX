@@ -221,6 +221,99 @@ describe("emitCsharpDtos_RedactedField_ReasonThreadedFailLoud", () => {
   });
 });
 
+describe("emitCsharpDtos_NestedRedactedField_PropertyTarget", () => {
+  it("redacted field on a NESTED record → [property: RedactData] on the nested param", () => {
+    // The exact GetKeyringOutput/KeyringEntry shape: the output's only redacted
+    // field lives on the nested KeyringEntry record (keyBytes).
+    const keyringEntry = nested("KeyringEntry", [
+      field("kid", "string", "string"),
+      field("keyBytes", "byte[]", "Uint8Array", false, "SecretInformation"),
+    ]);
+    const outputFields = [
+      field("activeKid", "string", "string"),
+      field(
+        "entries",
+        "IReadOnlyList<KeyringEntry>",
+        "readonly KeyringEntry[]",
+      ),
+    ];
+    const [, outputFile] = emitCsharpDtos(
+      "getKeyring",
+      TEST_NAMESPACE,
+      TEST_SPEC,
+      [],
+      outputFields,
+      [keyringEntry],
+    );
+
+    // The attribute lands on the NESTED record param.
+    expect(outputFile!.content).toContain(
+      "[property: RedactData(Reason = RedactReason.SecretInformation)] byte[] KeyBytes",
+    );
+    // The nested non-secret field (kid) stays unadorned.
+    expect(outputFile!.content).toContain("string Kid");
+  });
+
+  it("output whose ONLY redaction is nested → both redact usings present exactly once (CS0246 regression pin)", () => {
+    // Fails-without-fix: before the needsRedactUsings nested scan, this emitted the
+    // [RedactData] attribute on the nested param with NO using directives → CS0246.
+    const keyringEntry = nested("KeyringEntry", [
+      field("kid", "string", "string"),
+      field("keyBytes", "byte[]", "Uint8Array", false, "SecretInformation"),
+    ]);
+    const outputFields = [
+      field("activeKid", "string", "string"),
+      field(
+        "entries",
+        "IReadOnlyList<KeyringEntry>",
+        "readonly KeyringEntry[]",
+      ),
+    ];
+    const [, outputFile] = emitCsharpDtos(
+      "getKeyring",
+      TEST_NAMESPACE,
+      TEST_SPEC,
+      [],
+      outputFields,
+      [keyringEntry],
+    );
+
+    const attrUsings = (
+      outputFile!.content.match(/using D2\.Shared\.Utilities\.Attributes;/g) ??
+      []
+    ).length;
+    const enumUsings = (
+      outputFile!.content.match(/using D2\.Shared\.Utilities\.Enums;/g) ?? []
+    ).length;
+    expect(attrUsings).toBe(1);
+    expect(enumUsings).toBe(1);
+  });
+
+  it("unknown RedactReason on a NESTED field → fails loud (closed-set check through the nested path)", () => {
+    const keyringEntry = nested("KeyringEntry", [
+      field("keyBytes", "byte[]", "Uint8Array", false, "NotARealReason"),
+    ]);
+    const outputFields = [
+      field(
+        "entries",
+        "IReadOnlyList<KeyringEntry>",
+        "readonly KeyringEntry[]",
+      ),
+    ];
+
+    expect(() =>
+      emitCsharpDtos(
+        "getKeyring",
+        TEST_NAMESPACE,
+        TEST_SPEC,
+        [],
+        outputFields,
+        [keyringEntry],
+      ),
+    ).toThrow(/RedactReason/);
+  });
+});
+
 describe("emitCsharpDtos_JsonPropertyName_WireOverride", () => {
   it("jsonName set (differs from default) → [property: JsonPropertyName] + System.Text.Json using", () => {
     // The OIDC discovery doc's snake_case field: a property JwksUri whose JSON

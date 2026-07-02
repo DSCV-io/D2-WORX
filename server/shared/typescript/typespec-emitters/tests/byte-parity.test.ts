@@ -403,6 +403,122 @@ describe("byteParity_SignFixtureOutput_CommittedFixtureIdentical", () => {
   });
 });
 
+// ---------------------------------------------------------------------------
+// GetKeyring DTOs — the REAL KC keyring op (Clients namespace). The output carries
+// a nested KeyringEntry record whose keyBytes field is @d2Redact("SecretInformation")
+// — the nested-model redaction path this deliverable's emitter change enables.
+// ---------------------------------------------------------------------------
+
+const KC_SPEC = "contracts/typespec/key-custodian/key-custodian.tsp";
+
+function buildGetKeyringInputWalk() {
+  const model: Model = {
+    kind: "Model",
+    name: "GetKeyringInput",
+    properties: new Map<string, ModelProperty>([
+      ["keyDomain", makeProp(makeScalar("string"))],
+    ]),
+  } as unknown as Model;
+
+  return walkModel(makeProgram(), model, () => {});
+}
+
+function buildGetKeyringOutputWalk() {
+  // KeyringEntry.keyBytes carries @d2Redact("SecretInformation") — a NESTED-model
+  // property; the redact map keys on that property object.
+  const { prop: keyBytesProp, redactMap } = makeRedactProp(makeScalar("bytes"));
+  const keyringEntry: Model = {
+    kind: "Model",
+    name: "KeyringEntry",
+    properties: new Map<string, ModelProperty>([
+      ["kid", makeProp(makeScalar("string"))],
+      ["keyBytes", keyBytesProp],
+    ]),
+  } as unknown as Model;
+
+  const entriesArray: Model = {
+    kind: "Model",
+    name: "Array",
+    indexer: { value: keyringEntry },
+    properties: new Map(),
+  } as unknown as Model;
+
+  const model: Model = {
+    kind: "Model",
+    name: "GetKeyringOutput",
+    properties: new Map<string, ModelProperty>([
+      ["activeKid", makeProp(makeScalar("string"))],
+      [
+        "entries",
+        { type: entriesArray, optional: false } as unknown as ModelProperty,
+      ],
+      ["aadContext", makeProp(makeScalar("bytes"))],
+    ]),
+  } as unknown as Model;
+
+  return walkModel(makeProgram(redactMap), model, () => {});
+}
+
+describe("byteParity_GetKeyringInput_CommittedFixtureIdentical", () => {
+  it("regenerated GetKeyringInput.g.cs is byte-identical to the committed fixture", () => {
+    const { fields, nestedModels } = buildGetKeyringInputWalk();
+    const [inputFile] = emitCsharpDtos(
+      "getKeyring",
+      "D2.Edge.KeyCustodian.Clients",
+      KC_SPEC,
+      fields,
+      [],
+      nestedModels,
+    );
+
+    expect(inputFile!.content).toBe(
+      readFixture(join(CLIENTS_HOME, "GetKeyringInput.g.cs")),
+    );
+  });
+});
+
+describe("byteParity_GetKeyringOutput_CommittedFixtureIdentical", () => {
+  it("regenerated GetKeyringOutput.g.cs (nested KeyringEntry, keyBytes redacted) is byte-identical", () => {
+    const { fields, nestedModels } = buildGetKeyringOutputWalk();
+    const [, outputFile] = emitCsharpDtos(
+      "getKeyring",
+      "D2.Edge.KeyCustodian.Clients",
+      KC_SPEC,
+      [],
+      fields,
+      nestedModels,
+    );
+
+    // Sanity: the nested redaction actually landed (guards against a vacuous compare).
+    expect(outputFile!.content).toContain(
+      "[property: RedactData(Reason = RedactReason.SecretInformation)] byte[] KeyBytes",
+    );
+    expect(outputFile!.content).toBe(
+      readFixture(join(CLIENTS_HOME, "GetKeyringOutput.g.cs")),
+    );
+  });
+
+  it("deliberate-drift detection: a mutated GetKeyringOutput fixture does NOT match", () => {
+    const drifted = readFixture(
+      join(CLIENTS_HOME, "GetKeyringOutput.g.cs"),
+    ).replace(
+      "public sealed record KeyringEntry(",
+      "public sealed record KeyringEntryDRIFTED(",
+    );
+    const { fields, nestedModels } = buildGetKeyringOutputWalk();
+    const [, outputFile] = emitCsharpDtos(
+      "getKeyring",
+      "D2.Edge.KeyCustodian.Clients",
+      KC_SPEC,
+      [],
+      fields,
+      nestedModels,
+    );
+
+    expect(outputFile!.content).not.toBe(drifted);
+  });
+});
+
 describe("byteParity_TemporalFixtureInput_CommittedFixtureIdentical", () => {
   it("regenerated TemporalFixtureInput.g.cs is byte-identical to the committed fixture", () => {
     const { input, output } = buildTemporalWalks();

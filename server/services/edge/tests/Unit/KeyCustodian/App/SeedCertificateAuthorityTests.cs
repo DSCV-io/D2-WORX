@@ -168,7 +168,7 @@ public sealed class SeedCertificateAuthorityTests
             .Should().Be(1, because: "only the missing intermediate must be seeded");
     }
 
-    // Regression test for B1-F1/B2-F1: BubbleOnFailure guard is now live.
+    // Regression test: BubbleOnFailure guard is now live.
     // When the provider returns a typed failure, the handler must propagate it and
     // persist nothing — the host continues degraded (not crashed).
     [Fact]

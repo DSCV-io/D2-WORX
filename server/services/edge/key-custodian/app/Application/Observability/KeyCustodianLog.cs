@@ -212,7 +212,7 @@ internal static partial class KeyCustodianLog
     /// </summary>
     /// <param name="logger">The logger.</param>
     /// <param name="workloadServiceId">The workload that was denied (a non-PII service label).</param>
-    /// <param name="capability">The requested capability (sign / seal-encrypt / seal-decrypt).</param>
+    /// <param name="capability">The requested capability (sign / keyring / seal-encrypt / seal-decrypt).</param>
     /// <param name="target">The requested target (e.g. the key domain), or a marker when none.</param>
     [LoggerMessage(
         EventId = 9512,
@@ -222,4 +222,20 @@ internal static partial class KeyCustodianLog
             + "{capability} on target {target}.")]
     public static partial void AuthorityRejected(
         ILogger logger, string workloadServiceId, string capability, string target);
+
+    /// <summary>
+    /// Logs that a GetKeyring request found no active payload key for the requested
+    /// domain and returned 503. The domain is loggable (a non-PII label); no kid and no
+    /// key material is logged, and there is no exception parameter (§3.1).
+    /// </summary>
+    /// <param name="logger">The logger.</param>
+    /// <param name="domain">The payload key domain whose keyring has no active key.</param>
+    // long log template — cannot wrap
+    [LoggerMessage(
+        EventId = 9513,
+        Level = LogLevel.Warning,
+        Message =
+            "Keyring fetch for domain {domain} found no active payload key and returned 503; "
+            + "payload encryption for the domain is blocked until a key is active.")]
+    public static partial void KeyringKeyUnavailable(ILogger logger, string domain);
 }

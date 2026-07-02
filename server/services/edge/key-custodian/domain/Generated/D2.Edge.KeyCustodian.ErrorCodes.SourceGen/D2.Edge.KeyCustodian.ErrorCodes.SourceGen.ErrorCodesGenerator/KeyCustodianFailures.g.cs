@@ -306,7 +306,7 @@ public static class KeyCustodianFailures
             category: ErrorCategory.ValidationFailure);
     }
 
-    /// <summary>The requested key type disagrees with the canonical key type bound to the key domain (every catalog domain declares exactly one key type: jwks-signing is RSA-signing, cookie/client-secret are opaque secrets, the CA domains are X.509 CA certificates, and the payload-encryption domains are AES). A mismatched pair is a permanent client error rejected before any store or crypto work — including a sign request against a domain whose bound type can never hold a signing key (a 400, never the retryable 503 signing-key-unavailable).</summary>
+    /// <summary>The requested key type disagrees with the canonical key type bound to the key domain (every catalog domain declares exactly one key type: jwks-signing is RSA-signing, cookie/client-secret are opaque secrets, the CA domains are X.509 CA certificates, and the payload-encryption domains are AES). A mismatched pair is a permanent client error rejected before any store or crypto work — including a sign request against a domain whose bound type can never hold a signing key, and a keyring fetch against a domain whose bound type is not AES payload (both a 400, never the retryable 503). On the keyring surface this fork is defense-in-depth only: in production a non-payload domain is denied earlier by the keyring authority arm (403), because the boot validator refuses to grant any non-payload domain, so no caller can ever hold such a grant.</summary>
     /// <param name="messages">Optional translation messages; defaults to <c>[TK.Common.Errors.VALIDATION_FAILED]</c>. Pass a message bound via <c>TKMessage.With(...)</c> to name the offending argument.</param>
     /// <returns>A pre-built <see cref="D2Result"/> failure.</returns>
     public static D2Result KeyTypeDomainMismatch(IReadOnlyList<TKMessage>? messages = null)
@@ -328,6 +328,43 @@ public static class KeyCustodianFailures
             messages: messages,
             errorCode: KeyCustodianErrorCodes.KEYCUSTODIAN_SIGNING_INPUT_TOO_LARGE,
             category: ErrorCategory.ValidationFailure);
+    }
+
+    /// <summary>No active payload-encryption key is available for the requested key domain. Retryable not-ready-yet condition (the domain's keyring has not been provisioned or is mid-rotation with no active key). Surfaced as a 503 service-unavailable result so callers retry rather than treat it as a client-side conflict.</summary>
+    /// <param name="messages">Optional translation messages; defaults to <c>[TK.Keycustodian.Infrastructure.KEYRING_KEY_UNAVAILABLE]</c>. Pass a message bound via <c>TKMessage.With(...)</c> to name the offending argument.</param>
+    /// <returns>A pre-built <see cref="D2Result"/> failure.</returns>
+    public static D2Result KeyringKeyUnavailable(IReadOnlyList<TKMessage>? messages = null)
+    {
+        messages ??= [TK.Keycustodian.Infrastructure.KEYRING_KEY_UNAVAILABLE];
+        return D2Result.ServiceUnavailable(
+            messages: messages,
+            errorCode: KeyCustodianErrorCodes.KEYCUSTODIAN_KEYRING_KEY_UNAVAILABLE,
+            category: ErrorCategory.InfrastructureUnavailable);
+    }
+
+    /// <summary>No active payload-encryption key is available for the requested key domain. Retryable not-ready-yet condition (the domain's keyring has not been provisioned or is mid-rotation with no active key). Surfaced as a 503 service-unavailable result so callers retry rather than treat it as a client-side conflict. Typed overload.</summary>
+    /// <typeparam name="T">The payload type the caller would have returned on success.</typeparam>
+    /// <param name="messages">Optional translation messages; defaults to <c>[TK.Keycustodian.Infrastructure.KEYRING_KEY_UNAVAILABLE]</c>. Pass a message bound via <c>TKMessage.With(...)</c> to name the offending argument.</param>
+    /// <returns>A pre-built typed <see cref="D2Result{T}"/> failure.</returns>
+    public static D2Result<T> KeyringKeyUnavailable<T>(IReadOnlyList<TKMessage>? messages = null)
+    {
+        messages ??= [TK.Keycustodian.Infrastructure.KEYRING_KEY_UNAVAILABLE];
+        return D2Result<T>.ServiceUnavailable(
+            messages: messages,
+            errorCode: KeyCustodianErrorCodes.KEYCUSTODIAN_KEYRING_KEY_UNAVAILABLE,
+            category: ErrorCategory.InfrastructureUnavailable);
+    }
+
+    /// <summary>The calling workload is not authorized to fetch the requested key domain's payload keyring (the domain is not in the workload's allowed-keyring-domains policy set, or the request arrived on a plane the keyring surface does not serve). A keyring is a full encrypt+decrypt capability for its domain — holding the internal.kc.keyring scope alone never releases it. Uniform across both the plane-deny and the policy-miss so a caller cannot probe which domains exist.</summary>
+    /// <param name="messages">Optional translation messages; defaults to <c>[TK.Keycustodian.Authorization.KEYRING_DOMAIN_NOT_AUTHORIZED]</c>. Pass a message bound via <c>TKMessage.With(...)</c> to name the offending argument.</param>
+    /// <returns>A pre-built <see cref="D2Result"/> failure.</returns>
+    public static D2Result KeyringDomainNotAuthorized(IReadOnlyList<TKMessage>? messages = null)
+    {
+        messages ??= [TK.Keycustodian.Authorization.KEYRING_DOMAIN_NOT_AUTHORIZED];
+        return D2Result.Forbidden(
+            messages: messages,
+            errorCode: KeyCustodianErrorCodes.KEYCUSTODIAN_KEYRING_DOMAIN_NOT_AUTHORIZED,
+            category: ErrorCategory.PolicyDenied);
     }
 
 }

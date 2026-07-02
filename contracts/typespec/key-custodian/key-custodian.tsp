@@ -150,4 +150,65 @@ namespace D2.KeyCustodian {
   @d2RequireAnyScope("internal.kc.sign")
   @d2Audience("d2.internal")
   op sign(input: SignInput): SignOutput;
+
+  /** Input to fetch a payload keyring: the payload-encryption key domain whose keyring to assemble. */
+  model GetKeyringInput {
+    /** The payload-encryption key domain whose Active + Retiring keyring to fetch. */
+    @d2Field(1)
+    keyDomain: string;
+  }
+
+  /** A single decryptable key in a payload keyring: its kid plus the raw AES key bytes. */
+  model KeyringEntry {
+    /** The kid identifying this key (matches an encryption-frame recipient kid). */
+    @d2Field(1)
+    kid: string;
+
+    /**
+     * The raw AES-256 key bytes. Custody transfers to the caller (which copies them
+     * into a PayloadCryptoKeyring). Secret material — redacted in logs.
+     */
+    @d2Redact("SecretInformation")
+    @d2Field(2)
+    keyBytes: bytes;
+  }
+
+  /** Output of getKeyring: the active kid, every decryptable entry, and the AAD context. */
+  model GetKeyringOutput {
+    /** The kid new encryptions must use (the single Active key). */
+    @d2Field(1)
+    activeKid: string;
+
+    /** Every decryptable key (Active + Retiring), active first then retiring newest-activated-first. */
+    @d2Field(2)
+    entries: KeyringEntry[];
+
+    /**
+     * The AEAD additional-authenticated-data bound to every (en|de)crypt operation for
+     * this domain (UTF-8 "d2/<domain>"). Authenticated, not secret (GCM AAD is public
+     * context by construction) — deliberately NOT redacted, so operators can debug a
+     * cross-service AAD disagreement. Stable-per-domain-for-life: changing it breaks
+     * decryption of everything already encrypted under the domain.
+     */
+    @d2Field(3)
+    aadContext: bytes;
+  }
+
+  /**
+   * Fetch the payload-encryption keyring for a key domain: the active kid, every
+   * decryptable (Active + Retiring) AES key, and the domain's AAD context. Read-only
+   * Query (no persistent mutation). In-process + gRPC only — never a public REST surface
+   * (keyring distribution is internal service-to-service / in-process). Custody of the
+   * raw key bytes transfers to the caller, which assembles a PayloadCryptoKeyring; the
+   * aadContext is stable-per-domain-for-life. A non-payload key domain is denied by the
+   * keyring authority arm (403); a payload domain with no active key yet returns the
+   * retryable 503.
+   */
+  @d2Query
+  @d2ServedBy("KeyCustodian")
+  @d2InProcess
+  @d2GrpcMethod("KeyCustodianKeyring", "GetKeyring")
+  @d2RequireAnyScope("internal.kc.keyring")
+  @d2Audience("d2.internal")
+  op getKeyring(input: GetKeyringInput): GetKeyringOutput;
 }

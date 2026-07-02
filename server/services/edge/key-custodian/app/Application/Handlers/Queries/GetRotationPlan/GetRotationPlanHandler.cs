@@ -6,7 +6,6 @@
 
 namespace D2.Edge.KeyCustodian.App.Application.Handlers.Queries.GetRotationPlan;
 
-using D2.Shared.Utilities.Extensions;
 using H = D2.Edge.KeyCustodian.App.Application.Handlers.Queries.GetRotationPlan.IGetRotationPlanHandler;
 using I = GetRotationPlanInput;
 using O = GetRotationPlanOutput;

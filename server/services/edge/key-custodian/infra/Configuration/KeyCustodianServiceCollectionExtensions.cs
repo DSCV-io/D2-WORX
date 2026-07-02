@@ -92,6 +92,23 @@ public static class KeyCustodianServiceCollectionExtensions
                     + "empty workload key, or non-catalog signing domain).")
                 .ValidateOnStart();
 
+            // Keyring-domain authority policy — bound + fail-loud validated. The validator
+            // REFUSES to boot a dangerous configuration (it rejects VALUES, not just shape):
+            // no workload may be granted a non-payload domain (a keyring is a full
+            // encrypt+decrypt capability; the non-payload crown-jewel domains are never
+            // keyring-grantable), no key may be empty / non-grammar, no value may name a
+            // non-catalog domain. An EMPTY policy is legitimately fine (deny-all). This is
+            // the boot-gate production guard behind the handler's defense-in-depth key-type
+            // fork (structural authority deny alongside).
+            services.AddOptions<KeyringDomainAuthorityOptions>()
+                .Bind(configuration.GetSection(KeyringDomainAuthorityOptions.SECTION))
+                .Validate(
+                    static o => o.Validate() is null,
+                    "KEYCUSTODIAN_KEYRING_AUTHORITY is misconfigured. See the host log "
+                    + "for the specific invariant violated (non-payload-domain grant, "
+                    + "empty workload key, or non-catalog key domain).")
+                .ValidateOnStart();
+
             // Host workload identity — presence + validity gate (fail-loud). The host OWNS
             // the bind (its establishment-boundary registration binds
             // D2WorkloadIdentityOptions.ServiceId); this module does NOT re-bind it — it

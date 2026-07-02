@@ -127,6 +127,11 @@ public static partial class Scopes
         public static class Kc
         {
             /// <summary>
+            /// Fetch a payload-encryption keyring from KeyCustodian (internal service-to-service / in-process). The scope gates whether a caller may reach the keyring surface at all; a per-workload domain policy decides which domains it may fetch.
+            /// </summary>
+            public const string Keyring = "internal.kc.keyring";
+
+            /// <summary>
             /// Sign a payload with a KeyCustodian-managed signing key (internal service-to-service / in-process minter).
             /// </summary>
             public const string Sign = "internal.kc.sign";
@@ -227,6 +232,7 @@ public static partial class Scopes
         "auth.user.impersonate.consent",
         "auth.user.impersonate.force",
         "billing.payment.charge",
+        "internal.kc.keyring",
         "internal.kc.sign",
         "self.read",
         "self.write",
@@ -246,6 +252,7 @@ public static partial class Scopes
         "auth.user.impersonate.consent",
         "auth.user.impersonate.force",
         "billing.payment.charge",
+        "internal.kc.keyring",
         "internal.kc.sign",
     };
 
@@ -258,6 +265,7 @@ public static partial class Scopes
         ["auth.user.impersonate.consent"] = ActionSensitivity.Sensitive,
         ["auth.user.impersonate.force"] = ActionSensitivity.Critical,
         ["billing.payment.charge"] = ActionSensitivity.Critical,
+        ["internal.kc.keyring"] = ActionSensitivity.Critical,
         ["internal.kc.sign"] = ActionSensitivity.Critical,
         ["self.read"] = ActionSensitivity.Routine,
         ["self.write"] = ActionSensitivity.Routine,

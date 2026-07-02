@@ -17,10 +17,11 @@
 //   D2TSP007  unsupported-union-shape     — a union whose variants are NOT a
 //                                           closed set of string literals
 //                                           (mixed-primitive / numeric / model)
-//   D2TSP012  nested-redact-unsupported   — a @d2Redact on a NESTED-model property;
-//                                           redaction is threaded only for top-level
-//                                           op-context properties, so a nested one is
-//                                           failed loud (never silently dropped)
+//
+// @d2Redact is supported on top-level AND nested-model properties at any depth
+// (incl. array elements): the reason is threaded into the resolved field
+// identically to a top-level op-context property. D2TSP001/002/007 still fire
+// identically in nested positions.
 
 import type {
   Enum,
@@ -188,8 +189,7 @@ export interface WalkResult {
 export type WalkErrorCode =
   | "unmapped-scalar"
   | "unsupported-property-type"
-  | "unsupported-union-shape"
-  | "nested-redact-unsupported";
+  | "unsupported-union-shape";
 
 // ---------------------------------------------------------------------------
 // Walk implementation
@@ -799,26 +799,31 @@ function sanitizeIdentifier(literal: string): string {
 
 /**
  * Collect a nested model into the dedup map. Returns the NestedModel (which
- * may have been seen before — same object from the map). Redaction metadata is
- * threaded ONLY for top-level op-context properties, so nested fields carry no
- * `redactReason` — each is resolved against an EMPTY redact map. A @d2Redact on a
- * nested-model property is therefore UNSUPPORTED: rather than silently dropping it
- * (a latent PII leak — the field would emit with no `[RedactData]`), the walker
- * fails loud with D2TSP012 so the author restructures (move the sensitive field to
- * a direct op input/output property, or remove @d2Redact).
+ * may have been seen before — same object from the map). Nested-model properties
+ * thread their @d2Redact reason into the resolved field IDENTICALLY to top-level
+ * op-context properties: the same real redact map `walkModel` reads is threaded
+ * into `resolveProperty`, so a `@d2Redact("SecretInformation")` on a nested field
+ * yields `FieldInfo.redactReason === "SecretInformation"` and the C# DTO emitter
+ * renders `[property: RedactData(Reason = RedactReason.<reason>)]` on the nested
+ * record parameter (the runtime's RedactDataDestructuringPolicy already recurses
+ * into nested types + collection elements, so the mask applies per element).
  *
  * Depth-N: a nested model's own fields are resolved by the SAME `resolveProperty`
  * logic the top-level op model uses — so a nested model that itself references a
  * deeper nested model (or an array of one), an enum, a union, a scalar, or a
- * scalar/model array all resolve identically and recurse to arbitrary depth. The
- * dedup map is registered BEFORE the field walk (with a placeholder), so a cyclic
- * or self-referential model terminates: the recursive `collectNested` for the same
- * name finds the in-progress entry and returns it instead of recursing forever.
+ * scalar/model array all resolve identically and recurse to arbitrary depth. A
+ * deeper model re-enters `collectNested`, which re-derives this same map, so the
+ * redact reason threads at any depth. The dedup map is registered BEFORE the field
+ * walk (with a placeholder), so a cyclic or self-referential model terminates: the
+ * recursive `collectNested` for the same name finds the in-progress entry and
+ * returns it instead of recursing forever.
  *
- * Strict fail-loud: an unmapped nested scalar / unsupported nested type / a nested
- * @d2Redact fires the SAME loud diagnostic (D2TSP001 / D2TSP002 / D2TSP007 /
- * D2TSP012) as a top-level field — it is NEVER silently omitted. The field is
- * dropped only AFTER the loud diagnostic, exactly like a top-level field.
+ * Strict fail-loud: an unmapped nested scalar / unsupported nested type / ambiguous
+ * nested union fires the SAME loud diagnostic (D2TSP001 / D2TSP002 / D2TSP007) as a
+ * top-level field — it is NEVER silently omitted. The field is dropped only AFTER
+ * the loud diagnostic, exactly like a top-level field. An unknown/misclassified
+ * redact reason is caught at the decorator layer (required, validated argument) and
+ * again by the emitter's closed-set `resolveRedactReason` throw — never here.
  */
 function collectNested(
   program: Program,
@@ -841,40 +846,21 @@ function collectNested(
   };
   nestedByName.set(model.name, nested);
 
-  // Nested models carry no redact state — resolved fields always have an undefined
-  // `redactReason` (walk against an empty redact map). Resolution is otherwise identical
-  // to a top-level field (scalars, optionals, arrays, deeper nested models, enums/unions),
-  // which is what makes nested support depth-agnostic + uniformly loud.
+  // The redact map (the same one walkModel reads) — nested-model properties thread
+  // their @d2Redact reason identically to top-level op-context properties, at any
+  // depth (deeper models re-enter collectNested, which re-derives this map).
   // The fieldMap (for @d2Field pins) is shared from the outer walkModel so nested
   // model properties can carry their own field-number pins.
-  const emptyRedactMap = new Map<object, unknown>();
-  const resolvedFieldMap = fieldMap ?? new Map<object, unknown>();
-  // The REAL redact map (the same one walkModel reads) — consulted ONLY to detect an
-  // unsupported nested @d2Redact and fail loud; it is never threaded into resolved
-  // nested fields (those stay unredacted via emptyRedactMap).
   const redactMap = program.stateMap(D2_REDACT_KEY);
+  const resolvedFieldMap = fieldMap ?? new Map<object, unknown>();
 
   for (const [propName, prop] of model.properties) {
-    // Fail loud: @d2Redact on a nested-model property is unsupported. Redaction is
-    // applied only to top-level op-context properties; a nested @d2Redact would
-    // otherwise be silently dropped (the field would emit with no `[RedactData]` — a
-    // latent PII leak). Fire D2TSP012, then drop the field only AFTER the loud
-    // diagnostic, exactly like a top-level unsupported field.
-    if (typeof redactMap.get(prop) === "string") {
-      onError(
-        "nested-redact-unsupported",
-        `D2TSP012: @d2Redact on nested-model property '${model.name}.${propName}' is unsupported — redaction is applied only to top-level operation-context properties; move the sensitive field to a direct op input/output property or remove @d2Redact`,
-      );
-
-      continue;
-    }
-
     const fieldInfo = resolveProperty(
       program,
       model.name,
       propName,
       prop,
-      emptyRedactMap,
+      redactMap,
       resolvedFieldMap,
       nestedByName,
       enumsByName,

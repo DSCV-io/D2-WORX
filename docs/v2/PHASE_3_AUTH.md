@@ -893,6 +893,7 @@ public interface IKeyringClient
   KeyCustodian-issued leaf ([ADR-0023](../adrs/0023-mtls-workload-identity.md) / §6.5); the
   cross-process mTLS issuance + Edge host wiring is a later deliverable (a domain keyring is
   supplied directly via `AddD2EncryptionFor` until then).
+  - **Server-half as-built.** The `GetKeyringOutput` carries `{ activeKid, entries[{ kid, keyBytes }], aadContext }` — `keyBytes` is `[RedactData(SecretInformation)]`, `aadContext` is the domain's AEAD additional-authenticated-data (`"d2/<domain>"`, authenticated-not-secret, NOT redacted) which the client feeds verbatim into its `PayloadCryptoKeyring` so AAD agreement is structural. The server is **authority-gated**: beyond the `internal.kc.keyring` scope, a dedicated fail-closed `AuthorizeKeyringFetch` arm serves only the cross-process-hop + in-process-module planes and enforces a per-workload `KEYCUSTODIAN_KEYRING_AUTHORITY` policy (boot-validated to refuse any non-payload grant); the initial grant map ships EMPTY (deny-all) — each consumer's grant is a forward-wire-up obligation (PHASE_3 §G).
 - TTL: 1 hour (per V2.md §5.4).
 - RMQ subscription (Q3): on `d2.security.key-rotated` event for `domain X`, force-invalidate
   `keyring:X` in cache, drop in-memory `PayloadCryptoKeyring` reference, next `GetKeyringAsync`

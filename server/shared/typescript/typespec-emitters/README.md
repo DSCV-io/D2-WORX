@@ -62,8 +62,10 @@ Current output per `tsp compile`:
    `@d2ServedBy` / `@d2GrpcMethod` / `@d2InProcess` flags.
 2. **`<Op>Input.g.cs` + `<Op>Output.g.cs`** — C# `sealed record` DTO pairs for
    every operation with a concrete input or output model. Parameterless records
-   use the semicolon form. Redacted fields carry
-   `[property: RedactData(Reason = RedactReason.PersonalInformation)]`.
+   use the semicolon form. A `@d2Redact`-decorated field — top-level OR on a
+   nested model at any depth (including array elements) — carries
+   `[property: RedactData(Reason = RedactReason.<reason>)]`, with `<reason>`
+   threaded from the decorator (never defaulted).
    Namespace is read from the `csharp-namespace` tspconfig emitter option.
 3. **`<op>-dto.g.ts`** — TypeScript interface pair for the same operations.
    Collections map to `readonly T[]`, optional fields use `?:`, `@d2Redact`
@@ -238,10 +240,12 @@ models (e.g., the `Jwk` inside `GetJwksOutput`) are collected into `nestedModels
 and deduplicated by name.
 
 **Redact reason**: `walkModel` reads `D2_REDACT_KEY` from the TypeSpec state map.
-A property decorated with `@d2Redact("<reason>")` gets `redactReason: "<reason>"`
-(a `RedactReason` member name) in its `FieldInfo`; the C# DTO emitter maps it to
-`[property: RedactData(Reason = RedactReason.<reason>)]` and fails loud on an
-unrecognized reason (the reason is threaded from the decorator, never defaulted).
+A property decorated with `@d2Redact("<reason>")` — on a top-level op field OR on a
+nested-model property at any depth (including array elements) — gets
+`redactReason: "<reason>"` (a `RedactReason` member name) in its `FieldInfo`; the C#
+DTO emitter maps it to `[property: RedactData(Reason = RedactReason.<reason>)]` and
+fails loud on an unrecognized reason (the reason is threaded from the decorator,
+never defaulted).
 
 ### C# DTO emitter (`src/lib/csharp-dto-emitter.ts`)
 
@@ -261,12 +265,15 @@ const [inputFile, outputFile] = emitCsharpDtos(
 ```
 
 Always returns exactly two files. Parameterless records (no input fields) use the
-`public sealed record GetJwksInput;` semicolon form. Redacted fields emit
-`[property: RedactData(Reason = RedactReason.PersonalInformation)]` on the
-positional param (the `property:` attribute target is mandatory — bare param target
-is not seen by `RedactDataDestructuringPolicy`). Conditional `using` directives
-for `D2.Shared.Utilities.Attributes` and `D2.Shared.Utilities.Enums` are emitted
-only when at least one field is redacted.
+`public sealed record GetJwksInput;` semicolon form. A redacted field — whether a
+top-level op field OR a property on a nested model at any depth (including array
+elements) — emits `[property: RedactData(Reason = RedactReason.<reason>)]` on the
+positional param, with `<reason>` threaded from the `@d2Redact` decorator (never
+defaulted; the emitter fails loud on an unrecognized reason). The `property:`
+attribute target is mandatory — a bare param target is not seen by
+`RedactDataDestructuringPolicy`. Conditional `using` directives for
+`D2.Shared.Utilities.Attributes` and `D2.Shared.Utilities.Enums` are emitted when
+at least one field — top-level OR nested — is redacted.
 
 The emitter also honors the stock TypeSpec `@encodedName("application/json", "<wire>")`
 decorator by emitting `[property: JsonPropertyName("<wire>")]` on the positional param,

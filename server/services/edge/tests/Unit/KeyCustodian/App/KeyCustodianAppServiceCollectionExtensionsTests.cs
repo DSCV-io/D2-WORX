@@ -12,6 +12,7 @@ using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.IssueWorkloadCertif
 using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.RetireKey;
 using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.RunDueRotations;
 using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.SeedCertificateAuthority;
+using D2.Edge.KeyCustodian.App.Application.Handlers.Queries.GetKeyring;
 using D2.Edge.KeyCustodian.App.Application.Handlers.Queries.GetOidcConfiguration;
 using D2.Edge.KeyCustodian.App.Application.Handlers.Queries.GetRotationPlan;
 using D2.Edge.KeyCustodian.App.Application.Handlers.Queries.Sign;
@@ -50,8 +51,10 @@ public sealed class KeyCustodianAppServiceCollectionExtensionsTests
         services.Should().Contain(d => d.ServiceType == typeof(IGetOidcConfigurationHandler));
         services.Should().Contain(d => d.ServiceType == typeof(IGetRotationPlanHandler));
         services.Should().Contain(d => d.ServiceType == typeof(ISignHandler));
+        services.Should().Contain(d => d.ServiceType == typeof(IGetKeyringHandler));
         services.Should().Contain(d => d.ServiceType == typeof(IKeyCustodianApi));
         services.Should().Contain(d => d.ServiceType == typeof(ISigningDomainAuthorityPolicy));
+        services.Should().Contain(d => d.ServiceType == typeof(IKeyringDomainAuthorityPolicy));
     }
 
     [Fact]
@@ -114,6 +117,9 @@ public sealed class KeyCustodianAppServiceCollectionExtensionsTests
         // IOptions<SigningDomainAuthorityOptions> — App-owned; OptionsSigningDomainAuthorityPolicy.
         services.AddSingleton(Options.Create(new SigningDomainAuthorityOptions()));
 
+        // IOptions<KeyringDomainAuthorityOptions> — App-owned; OptionsKeyringDomainAuthorityPolicy.
+        services.AddSingleton(Options.Create(new KeyringDomainAuthorityOptions()));
+
         using var sp = services.BuildServiceProvider();
 
         // Act + Assert: resolve every registered handler interface and the policy
@@ -141,11 +147,17 @@ public sealed class KeyCustodianAppServiceCollectionExtensionsTests
         sp.GetRequiredService<ISignHandler>()
             .Should().BeOfType<SignHandler>(
                 "AddD2KeyCustodianApp registers the general sign query handler");
+        sp.GetRequiredService<IGetKeyringHandler>()
+            .Should().BeOfType<GetKeyringHandler>(
+                "AddD2KeyCustodianApp registers the keyring-fetch query handler");
         sp.GetRequiredService<IRotationPolicyProvider>()
             .Should().BeOfType<OptionsRotationPolicyProvider>();
         sp.GetRequiredService<ISigningDomainAuthorityPolicy>()
             .Should().BeOfType<OptionsSigningDomainAuthorityPolicy>(
                 "AddD2KeyCustodianApp registers the singleton policy provider");
+        sp.GetRequiredService<IKeyringDomainAuthorityPolicy>()
+            .Should().BeOfType<OptionsKeyringDomainAuthorityPolicy>(
+                "AddD2KeyCustodianApp registers the singleton keyring policy provider");
         sp.GetRequiredService<IGetOidcConfigurationHandler>()
             .Should().BeOfType<GetOidcConfigurationHandler>(
                 "AddD2KeyCustodianApp registers the OIDC-discovery query handler");

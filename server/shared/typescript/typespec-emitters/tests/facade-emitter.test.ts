@@ -507,9 +507,9 @@ describe("facadeEmitter_ZeroOps_AndAdversarial", () => {
 // Byte-gate: IKeyCustodianApi.g.cs (interface)
 // ---------------------------------------------------------------------------
 
-// The committed KC façade carries the two well-known ops plus the sign op
-// (getJwks + getOidcConfiguration + sign) in source order; the byte-gates
-// regenerate from that exact op list.
+// The committed KC façade carries the two well-known ops plus the sign + getKeyring
+// ops (getJwks + getOidcConfiguration + sign + getKeyring) in source order; the
+// byte-gates regenerate from that exact op list.
 const _KC_FACADE_OPS = [
   makeOp("getJwks", "GetJwksInput", "GetJwksOutput"),
   makeOp(
@@ -518,6 +518,7 @@ const _KC_FACADE_OPS = [
     "GetOidcConfigurationOutput",
   ),
   makeOp("sign", "SignInput", "SignOutput"),
+  makeOp("getKeyring", "GetKeyringInput", "GetKeyringOutput"),
 ];
 
 describe("facadeEmitter_ByteGate_Interface", () => {

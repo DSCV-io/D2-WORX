@@ -217,6 +217,106 @@ public static class WorkloadCapabilityAuthority
     }
 
     /// <summary>
+    /// Decides whether a caller may fetch a payload domain's encryption keyring on the
+    /// general keyring-distribution surface, keyed on the locally-established
+    /// <see cref="RequestOrigin"/> (never a propagated / wire-supplied value) plus the
+    /// per-workload keyring policy. Layered, fail-closed:
+    /// <list type="number">
+    ///   <item>
+    ///     <b>Unestablished-origin deny</b> — an origin that no boundary positively
+    ///     established denies with <c>RequestOriginUnestablished</c> (the fail-closed
+    ///     first arm; the scoped default is <see cref="RequestOrigin.Unestablished"/>).
+    ///   </item>
+    ///   <item>
+    ///     <b>Plane deny</b> — the keyring surface serves the cross-process hop and the
+    ///     in-process module planes ONLY (the two designed keyring consumers: a
+    ///     cross-process backend service authenticated by its mTLS peer id, and the
+    ///     in-host module consuming the leaf). Any other established plane
+    ///     (<see cref="RequestOrigin.EdgeInbound"/>, <see cref="RequestOrigin.System"/>)
+    ///     is denied with <c>KeyringDomainNotAuthorized</c> — the same uniform 403 wire
+    ///     code as the policy miss, so a caller cannot probe which domains exist.
+    ///   </item>
+    ///   <item>
+    ///     <b>Fail-closed peer</b> — an authorized plane with no caller identity is denied
+    ///     with <c>Forbidden</c>.
+    ///   </item>
+    ///   <item>
+    ///     <b>Policy deny</b> — the target must be in the caller's allowed-keyring-domains
+    ///     set; else deny with <c>KeyringDomainNotAuthorized</c>. An unknown caller
+    ///     resolves to the empty set (default-deny). This arm is what denies a
+    ///     non-payload domain IN PRODUCTION: the boot validator refuses to grant any
+    ///     non-payload domain, so no caller can ever hold such a grant, and a non-payload
+    ///     domain is therefore never in any allowed set.
+    ///   </item>
+    /// </list>
+    /// A keyring is a full encrypt+decrypt capability for its domain, so there is no
+    /// broad "any authenticated caller" arm (unlike seal-encrypt's public-key fetch);
+    /// every plane is policy-gated. The crown-jewel non-payload domains
+    /// (<c>jwks-signing</c> / <c>cookie</c> / <c>client-secret</c> / the CA domains) are
+    /// excluded in layers — the boot validator refuses to grant them, this arm denies
+    /// them structurally (never in an allowed set), and the handler's key-type fork is
+    /// belt-and-braces.
+    /// </summary>
+    /// <param name="immediateCaller">
+    /// The authenticated caller id this hop — the validated mTLS peer workload id on a
+    /// cross-process hop, or the calling module id on an in-process hop (both surfaced as
+    /// the established <c>IRequestContext.ImmediateCaller</c>), or <see langword="null"/>
+    /// when none is present (fail-closed).
+    /// </param>
+    /// <param name="origin">
+    /// The locally-established <see cref="RequestOrigin"/> for this hop. The default
+    /// <see cref="RequestOrigin.Unestablished"/> fails closed.
+    /// </param>
+    /// <param name="target">The payload key domain whose keyring the caller wants to fetch.</param>
+    /// <param name="allowedKeyringDomainsForCaller">
+    /// The set of keyring-domain wire values the caller is permitted to fetch (resolved
+    /// from the keyring-domain authority policy; an unknown workload resolves to the empty
+    /// set — default-deny).
+    /// </param>
+    /// <returns>
+    /// <c>Ok</c> when the caller may fetch <paramref name="target"/>'s keyring;
+    /// <c>RequestOriginUnestablished</c> (403) for an unestablished origin;
+    /// <c>KeyringDomainNotAuthorized</c> (403) for an unauthorized plane or a domain
+    /// outside the caller's allowed set; <c>Forbidden</c> (403) when an authorized plane
+    /// presents no caller identity.
+    /// </returns>
+    public static D2Result AuthorizeKeyringFetch(
+        string? immediateCaller,
+        RequestOrigin origin,
+        KeyDomain target,
+        IReadOnlySet<string> allowedKeyringDomainsForCaller)
+    {
+        ArgumentNullException.ThrowIfNull(target);
+        ArgumentNullException.ThrowIfNull(allowedKeyringDomainsForCaller);
+
+        // (1) Fail-closed: an unestablished origin never authorizes a keyring fetch. The
+        // scoped default IRequestContext.Origin is Unestablished, so a context that no
+        // boundary established can never reach an allow branch.
+        if (origin == RequestOrigin.Unestablished)
+            return KeyCustodianFailures.RequestOriginUnestablished();
+
+        // (2) Plane deny — the keyring surface serves the cross-process hop + the
+        // in-process module planes only. Any other established plane (EdgeInbound /
+        // System) is denied with the uniform 403 (telemetry distinguishes the plane deny
+        // from the policy miss; the wire code stays uniform so no domain-existence oracle).
+        if (origin is not (RequestOrigin.CrossProcessHop or RequestOrigin.InProcessModule))
+            return KeyCustodianFailures.KeyringDomainNotAuthorized();
+
+        // (3) An authorized plane with no caller identity is fail-closed.
+        if (immediateCaller.Falsey())
+            return D2Result.Forbidden();
+
+        // (4) Per-workload policy — the target must be in the caller's allowed set (an
+        // unknown workload resolves to the empty set — default-deny). In production this
+        // is what denies a non-payload domain: no caller can ever hold a non-payload
+        // grant (the boot validator refuses it), so it is never in any allowed set.
+        if (!allowedKeyringDomainsForCaller.Contains(target.Value))
+            return KeyCustodianFailures.KeyringDomainNotAuthorized();
+
+        return D2Result.Ok();
+    }
+
+    /// <summary>
     /// Decides whether the dedicated JWT minter capability may sign with the
     /// cluster-signing root. The minter runs IN-PROCESS inside the auth module;
     /// possession of the capability (it is registered ONLY in the auth-module

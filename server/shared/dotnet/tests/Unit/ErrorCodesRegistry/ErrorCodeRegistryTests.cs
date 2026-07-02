@@ -276,8 +276,8 @@ public sealed class ErrorCodeRegistryTests
         // The merged registry globs every *-error-codes.spec.json surfaced to the
         // D2.Shared.ErrorCodes.Registry build (its csproj AdditionalFiles pattern
         // is contracts/**/*-error-codes.spec.json): 15 generic + 14 auth +
-        // 23 keycustodian = 52 total. Update if new spec entries are added.
-        const int expected_count = 52;
+        // 25 keycustodian = 54 total. Update if new spec entries are added.
+        const int expected_count = 54;
         ErrorCodeRegistry.All.Count.Should().Be(expected_count);
     }
 

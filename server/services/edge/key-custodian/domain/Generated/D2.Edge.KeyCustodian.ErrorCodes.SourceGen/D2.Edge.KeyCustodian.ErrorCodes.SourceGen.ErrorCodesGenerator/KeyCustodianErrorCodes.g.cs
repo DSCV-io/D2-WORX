@@ -87,11 +87,17 @@ public static class KeyCustodianErrorCodes
     /// <summary>The signing input was empty. There is nothing to sign — a zero-length payload is a client error, rejected before any key load or crypto.</summary>
     public const string KEYCUSTODIAN_EMPTY_SIGNING_INPUT = "KEYCUSTODIAN_EMPTY_SIGNING_INPUT";
 
-    /// <summary>The requested key type disagrees with the canonical key type bound to the key domain (every catalog domain declares exactly one key type: jwks-signing is RSA-signing, cookie/client-secret are opaque secrets, the CA domains are X.509 CA certificates, and the payload-encryption domains are AES). A mismatched pair is a permanent client error rejected before any store or crypto work — including a sign request against a domain whose bound type can never hold a signing key (a 400, never the retryable 503 signing-key-unavailable).</summary>
+    /// <summary>The requested key type disagrees with the canonical key type bound to the key domain (every catalog domain declares exactly one key type: jwks-signing is RSA-signing, cookie/client-secret are opaque secrets, the CA domains are X.509 CA certificates, and the payload-encryption domains are AES). A mismatched pair is a permanent client error rejected before any store or crypto work — including a sign request against a domain whose bound type can never hold a signing key, and a keyring fetch against a domain whose bound type is not AES payload (both a 400, never the retryable 503). On the keyring surface this fork is defense-in-depth only: in production a non-payload domain is denied earlier by the keyring authority arm (403), because the boot validator refuses to grant any non-payload domain, so no caller can ever hold such a grant.</summary>
     public const string KEYCUSTODIAN_KEY_TYPE_DOMAIN_MISMATCH = "KEYCUSTODIAN_KEY_TYPE_DOMAIN_MISMATCH";
 
     /// <summary>The signing input exceeds the maximum permitted size (16 KiB). A legitimate signing input (e.g. a JWT header.payload base64url) is comfortably under this bound; a larger payload is a client error rejected in the shared signing core before any key load or crypto, so both the general sign surface and the in-process minter inherit the cap.</summary>
     public const string KEYCUSTODIAN_SIGNING_INPUT_TOO_LARGE = "KEYCUSTODIAN_SIGNING_INPUT_TOO_LARGE";
+
+    /// <summary>No active payload-encryption key is available for the requested key domain. Retryable not-ready-yet condition (the domain's keyring has not been provisioned or is mid-rotation with no active key). Surfaced as a 503 service-unavailable result so callers retry rather than treat it as a client-side conflict.</summary>
+    public const string KEYCUSTODIAN_KEYRING_KEY_UNAVAILABLE = "KEYCUSTODIAN_KEYRING_KEY_UNAVAILABLE";
+
+    /// <summary>The calling workload is not authorized to fetch the requested key domain's payload keyring (the domain is not in the workload's allowed-keyring-domains policy set, or the request arrived on a plane the keyring surface does not serve). A keyring is a full encrypt+decrypt capability for its domain — holding the internal.kc.keyring scope alone never releases it. Uniform across both the plane-deny and the policy-miss so a caller cannot probe which domains exist.</summary>
+    public const string KEYCUSTODIAN_KEYRING_DOMAIN_NOT_AUTHORIZED = "KEYCUSTODIAN_KEYRING_DOMAIN_NOT_AUTHORIZED";
 
     /// <summary>
     /// All declared <c>KEYCUSTODIAN_*</c> codes in spec order. Useful for
@@ -124,6 +130,8 @@ public static class KeyCustodianErrorCodes
         "KEYCUSTODIAN_EMPTY_SIGNING_INPUT",
         "KEYCUSTODIAN_KEY_TYPE_DOMAIN_MISMATCH",
         "KEYCUSTODIAN_SIGNING_INPUT_TOO_LARGE",
+        "KEYCUSTODIAN_KEYRING_KEY_UNAVAILABLE",
+        "KEYCUSTODIAN_KEYRING_DOMAIN_NOT_AUTHORIZED",
     };
 
     /// <summary>
@@ -159,6 +167,8 @@ public static class KeyCustodianErrorCodes
         "KEYCUSTODIAN_EMPTY_SIGNING_INPUT" => 400,
         "KEYCUSTODIAN_KEY_TYPE_DOMAIN_MISMATCH" => 400,
         "KEYCUSTODIAN_SIGNING_INPUT_TOO_LARGE" => 400,
+        "KEYCUSTODIAN_KEYRING_KEY_UNAVAILABLE" => 503,
+        "KEYCUSTODIAN_KEYRING_DOMAIN_NOT_AUTHORIZED" => 403,
         _ => 500,
     };
 }

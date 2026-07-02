@@ -224,7 +224,7 @@ public sealed class RotateKeyTests
         db.Audit.Should().BeEmpty(because: "no state transition occurred");
     }
 
-    // Regression test for B3-F2: a CA-intermediate successor whose soak has not yet
+    // Regression test: a CA-intermediate successor whose soak has not yet
     // elapsed must return SoakNotElapsed and leave the incumbent unchanged —
     // mirroring the RSA Rotate_SuccessorNotYetSoaked_ReturnsSoakNotElapsed test.
     [Fact]

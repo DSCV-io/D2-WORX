@@ -15,8 +15,9 @@ import { describe, it, expect } from "vitest";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { findRepoRoot } from "./repo-root.js";
-import type { FieldInfo } from "../src/lib/model-walk.js";
+import type { FieldInfo, NestedModel } from "../src/lib/model-walk.js";
 import { emitProto } from "../src/lib/proto-emitter.js";
+import type { NestedMessageDescriptor } from "../src/lib/proto-emitter.js";
 import { emitGrpcService } from "../src/lib/grpc-service-emitter.js";
 import type { GrpcDelegationTarget } from "../src/lib/grpc-service-emitter.js";
 import {
@@ -719,6 +720,235 @@ describe("byteParity_KcSignTransportMappers_CommittedFixtureIdentical", () => {
       buildKcSignOutputFields(),
     );
     expect(mapper.content).not.toBe(drifted);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Real KeyCustodian KEYRING gRPC wire surface — the getKeyring op (a DISTINCT
+// service KeyCustodianKeyring on the same package). The output carries a nested
+// KeyringEntry model (kid + keyBytes) so this exercises the array-of-model proto +
+// the nested sub-mapper recursion. The service delegates to
+// IKeyCustodianApi.GetKeyringAsync; the cross-process gRPC CLIENT is deferred (same
+// as the sign op). keyBytes redaction is a DTO concern (byte-gated in
+// byte-parity.test.ts + reflection-pinned in the .NET GrpcKeyringServiceTests); the
+// proto / mappers carry no redaction concept.
+// ---------------------------------------------------------------------------
+
+const KC_KEYRING_ENTRY_MODEL: NestedModel = {
+  name: "KeyringEntry",
+  fields: [
+    {
+      name: "kid",
+      csName: "Kid",
+      csType: "string",
+      tsName: "kid",
+      tsType: "string",
+      protoType: "string",
+      repeated: false,
+      optional: false,
+      redactReason: undefined,
+      fieldNumber: 1,
+    },
+    {
+      name: "keyBytes",
+      csName: "KeyBytes",
+      csType: "byte[]",
+      tsName: "keyBytes",
+      tsType: "Uint8Array",
+      protoType: "bytes",
+      repeated: false,
+      optional: false,
+      redactReason: "SecretInformation",
+      fieldNumber: 2,
+    },
+  ],
+};
+
+function buildKcGetKeyringInputFields(): readonly FieldInfo[] {
+  return [
+    {
+      name: "keyDomain",
+      csName: "KeyDomain",
+      csType: "string",
+      tsName: "keyDomain",
+      tsType: "string",
+      protoType: "string",
+      repeated: false,
+      optional: false,
+      redactReason: undefined,
+      fieldNumber: 1,
+    },
+  ];
+}
+
+function buildKcGetKeyringOutputFields(): readonly FieldInfo[] {
+  return [
+    {
+      name: "activeKid",
+      csName: "ActiveKid",
+      csType: "string",
+      tsName: "activeKid",
+      tsType: "string",
+      protoType: "string",
+      repeated: false,
+      optional: false,
+      redactReason: undefined,
+      fieldNumber: 1,
+    },
+    {
+      name: "entries",
+      csName: "Entries",
+      csType: "IReadOnlyList<KeyringEntry>",
+      tsName: "entries",
+      tsType: "readonly KeyringEntry[]",
+      protoType: undefined,
+      repeated: true,
+      optional: false,
+      redactReason: undefined,
+      fieldNumber: 2,
+      nested: KC_KEYRING_ENTRY_MODEL,
+    },
+    {
+      name: "aadContext",
+      csName: "AadContext",
+      csType: "byte[]",
+      tsName: "aadContext",
+      tsType: "Uint8Array",
+      protoType: "bytes",
+      repeated: false,
+      optional: false,
+      redactReason: undefined,
+      fieldNumber: 3,
+    },
+  ];
+}
+
+/** Real-KC keyring façade delegation target (matches the committed KeyCustodianKeyringService.g.cs). */
+const KC_KEYRING_FACADE_TARGET: GrpcDelegationTarget = {
+  kind: "facade",
+  typeName: "IKeyCustodianApi",
+  methodName: "GetKeyringAsync",
+  targetNamespace: "D2.Edge.KeyCustodian.Clients",
+};
+
+describe("byteParity_KcKeyringProto_CommittedFixtureIdentical", () => {
+  function emit(): string {
+    return emitProto(
+      "getKeyring",
+      "KeyCustodianKeyring",
+      "GetKeyring",
+      "unary",
+      "d2.keycustodian.v2alpha",
+      KC_PROTO_CS_NS,
+      KC_SOURCE,
+      "GetKeyringRequest",
+      buildKcGetKeyringInputFields(),
+      undefined,
+      "GetKeyringOutput",
+      buildKcGetKeyringOutputFields(),
+      undefined,
+      [{ model: KC_KEYRING_ENTRY_MODEL } as NestedMessageDescriptor],
+      (c, m) => {
+        throw new Error(`${c}: ${m}`);
+      },
+    )!.content;
+  }
+
+  it("re-emitted real KC keyring .proto is byte-identical to the committed fixture", () => {
+    // Non-vacuity: the array-of-model + nested message must be present.
+    const p = emit();
+    expect(p).toContain("repeated KeyringEntry entries = 2;");
+    expect(p).toContain("message KeyringEntry {");
+    expect(p).toBe(
+      readFixture(
+        join(GRPC_PROTOS, "key_custodian_keyring_get_keyring.g.proto"),
+      ),
+    );
+  });
+
+  it("deliberate-drift detection: mutated fixture does NOT match re-emitted output", () => {
+    const drifted = readFixture(
+      join(GRPC_PROTOS, "key_custodian_keyring_get_keyring.g.proto"),
+    ).replace("message KeyringEntry", "message KeyringEntryDRIFTED");
+    expect(emit()).not.toBe(drifted);
+  });
+});
+
+describe("byteParity_KeyCustodianKeyringService_FacadeDelegation_CommittedFixtureIdentical", () => {
+  function emitService(): string {
+    const [svc] = emitGrpcService(
+      "getKeyring",
+      "KeyCustodianKeyring",
+      "GetKeyring",
+      KC_PROTO_CS_NS,
+      KC_GRPC_NS,
+      KC_DTO_NS,
+      KC_SOURCE,
+      "GetKeyringRequest",
+      "GetKeyringResponse",
+      "GetKeyringInput",
+      buildKcGetKeyringInputFields(),
+      "GetKeyringOutput",
+      buildKcGetKeyringOutputFields(),
+      KC_KEYRING_FACADE_TARGET,
+    );
+
+    return svc.content;
+  }
+
+  it("re-emitted real KC keyring service .g.cs (façade delegation) is byte-identical", () => {
+    expect(emitService()).toBe(
+      readFixture(join(GRPC_HOME, "KeyCustodianKeyringService.g.cs")),
+    );
+  });
+
+  it("deliberate-drift detection: handler delegation does NOT match façade fixture", () => {
+    const drifted = readFixture(
+      join(GRPC_HOME, "KeyCustodianKeyringService.g.cs"),
+    ).replace("facade.GetKeyringAsync", "handler.HandleAsync");
+    expect(emitService()).not.toBe(drifted);
+  });
+});
+
+describe("byteParity_GetKeyringTransportMappers_CommittedFixtureIdentical", () => {
+  function emitMapper(): string {
+    const [, mapper] = emitGrpcService(
+      "getKeyring",
+      "KeyCustodianKeyring",
+      "GetKeyring",
+      KC_PROTO_CS_NS,
+      KC_GRPC_NS,
+      KC_DTO_NS,
+      KC_SOURCE,
+      "GetKeyringRequest",
+      "GetKeyringResponse",
+      "GetKeyringInput",
+      buildKcGetKeyringInputFields(),
+      "GetKeyringOutput",
+      buildKcGetKeyringOutputFields(),
+    );
+
+    return mapper.content;
+  }
+
+  it("re-emitted real KC keyring transport mappers .g.cs (with nested sub-mappers) is byte-identical", () => {
+    const m = emitMapper();
+    // Non-vacuity: the nested KeyringEntry sub-mappers + array recursion are present.
+    expect(m).toContain("ToProtoKeyringEntry()");
+    expect(m).toContain("ToKeyringEntry()");
+    expect(m).toBe(
+      readFixture(join(GRPC_HOME, "GetKeyringTransportMappers.g.cs")),
+    );
+  });
+
+  it("deliberate-drift detection: mutated fixture does NOT match re-emitted output", () => {
+    const drifted = readFixture(
+      join(GRPC_HOME, "GetKeyringTransportMappers.g.cs"),
+    ).replace(
+      "GetKeyringTransportMappers",
+      "GetKeyringTransportMappersDRIFTED",
+    );
+    expect(emitMapper()).not.toBe(drifted);
   });
 });
 

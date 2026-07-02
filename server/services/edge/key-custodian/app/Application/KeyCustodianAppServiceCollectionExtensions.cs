@@ -15,13 +15,14 @@ using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.RotateKey;
 using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.RunDueRotations;
 using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.SeedCertificateAuthority;
 using D2.Edge.KeyCustodian.App.Application.Handlers.Queries.GetJwks;
+using D2.Edge.KeyCustodian.App.Application.Handlers.Queries.GetKeyring;
 using D2.Edge.KeyCustodian.App.Application.Handlers.Queries.GetOidcConfiguration;
 using D2.Edge.KeyCustodian.App.Application.Handlers.Queries.GetRotationPlan;
 using D2.Edge.KeyCustodian.App.Application.Handlers.Queries.Sign;
 
 /// <summary>
-/// DI registration for the KeyCustodian App layer: the 12 lifecycle handlers and
-/// the options-backed rotation-policy provider.
+/// DI registration for the KeyCustodian App layer: the 13 operation handlers and
+/// the options-backed rotation-policy + authority providers.
 /// </summary>
 /// <remarks>
 /// This extension registers ONLY what the App layer owns. The seams the handlers
@@ -65,11 +66,14 @@ public static class KeyCustodianAppServiceCollectionExtensions
                 IGetOidcConfigurationHandler, GetOidcConfigurationHandler>();
             services.AddTransient<IGetRotationPlanHandler, GetRotationPlanHandler>();
             services.AddTransient<ISignHandler, SignHandler>();
+            services.AddTransient<IGetKeyringHandler, GetKeyringHandler>();
 
             // Policy providers.
             services.AddSingleton<IRotationPolicyProvider, OptionsRotationPolicyProvider>();
             services.AddSingleton<
                 ISigningDomainAuthorityPolicy, OptionsSigningDomainAuthorityPolicy>();
+            services.AddSingleton<
+                IKeyringDomainAuthorityPolicy, OptionsKeyringDomainAuthorityPolicy>();
 
             // Generated façade layer — registers IKeyCustodianApi → KeyCustodianApi (Transient).
             // The generated extension is overwritten on rebuild; this call site is the

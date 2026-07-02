@@ -22,4 +22,6 @@ public interface IKeyCustodianApi
     ValueTask<D2Result<GetOidcConfigurationOutput?>> GetOidcConfigurationAsync(GetOidcConfigurationInput input, CancellationToken ct = default);
     /// <summary>Dispatches the <c>Sign</c> operation.</summary>
     ValueTask<D2Result<SignOutput?>> SignAsync(SignInput input, CancellationToken ct = default);
+    /// <summary>Dispatches the <c>GetKeyring</c> operation.</summary>
+    ValueTask<D2Result<GetKeyringOutput?>> GetKeyringAsync(GetKeyringInput input, CancellationToken ct = default);
 }

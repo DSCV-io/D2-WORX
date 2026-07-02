@@ -200,5 +200,10 @@ public sealed class GrpcSignerServiceTests
         public ValueTask<D2Result<GetOidcConfigurationOutput?>> GetOidcConfigurationAsync(
             GetOidcConfigurationInput input, CancellationToken ct = default)
             => ValueTask.FromResult(D2Result<GetOidcConfigurationOutput?>.ServiceUnavailable());
+
+        public ValueTask<D2Result<D2.Edge.KeyCustodian.Clients.GetKeyringOutput?>> GetKeyringAsync(
+            GetKeyringInput input, CancellationToken ct = default)
+            => ValueTask.FromResult(
+                D2Result<D2.Edge.KeyCustodian.Clients.GetKeyringOutput?>.ServiceUnavailable());
     }
 }

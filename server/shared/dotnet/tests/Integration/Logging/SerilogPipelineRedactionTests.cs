@@ -103,6 +103,42 @@ public sealed class SerilogPipelineRedactionTests
     }
 
     [Fact]
+    public void CollectionOfNestedRecords_PropertyLevelRedactedBytes_EachElementMasked_KidIntact()
+    {
+        // The exact emitted GetKeyringOutput/KeyringEntry shape: a collection of nested
+        // records, each carrying a property-level [RedactData(SecretInformation)] byte[]
+        // KeyBytes plus a plain Kid. Every element's KeyBytes must mask; every Kid stays.
+        var (logger, sink) = BuildLogger();
+        var output = new OuterWithKeyringEntriesFixture
+        {
+            ActiveKid = "kid-alpha",
+            Entries =
+            [
+                new KeyringEntryFixture("kid-alpha", [1, 2, 3, 4]),
+                new KeyringEntryFixture("kid-beta", [5, 6, 7, 8]),
+            ],
+        };
+
+        logger.Information("captured {@Keyring}", output);
+
+        var rendered = Render(sink);
+        rendered.Should().Contain("kid-alpha");
+        rendered.Should().Contain("kid-beta");
+
+        const string placeholder = "[REDACTED: SecretInformation]";
+        var occurrences = 0;
+        var idx = 0;
+        while ((idx = rendered.IndexOf(placeholder, idx, StringComparison.Ordinal)) >= 0)
+        {
+            occurrences++;
+            idx += placeholder.Length;
+        }
+
+        occurrences.Should().BeGreaterThanOrEqualTo(
+            2, "each nested KeyringEntry element's KeyBytes must be masked independently");
+    }
+
+    [Fact]
     public void NoRedaction_OutputContainsRawValues()
     {
         var (logger, sink) = BuildLogger();

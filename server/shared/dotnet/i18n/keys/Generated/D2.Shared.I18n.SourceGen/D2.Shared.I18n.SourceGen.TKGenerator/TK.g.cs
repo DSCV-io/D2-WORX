@@ -1291,6 +1291,10 @@ public static partial class TK
             /// </summary>
             public static readonly global::D2.Shared.I18n.TKMessage CROSS_PROCESS_DOMAIN_REJECTED = new("keycustodian_authorization_CROSS_PROCESS_DOMAIN_REJECTED");
             /// <summary>
+            /// Translation key <c>keycustodian_authorization_KEYRING_DOMAIN_NOT_AUTHORIZED</c>.
+            /// </summary>
+            public static readonly global::D2.Shared.I18n.TKMessage KEYRING_DOMAIN_NOT_AUTHORIZED = new("keycustodian_authorization_KEYRING_DOMAIN_NOT_AUTHORIZED");
+            /// <summary>
             /// Translation key <c>keycustodian_authorization_MINTER_CAPABILITY_REQUIRED</c>.
             /// </summary>
             public static readonly global::D2.Shared.I18n.TKMessage MINTER_CAPABILITY_REQUIRED = new("keycustodian_authorization_MINTER_CAPABILITY_REQUIRED");
@@ -1309,6 +1313,10 @@ public static partial class TK
         /// </summary>
         public static partial class Infrastructure
         {
+            /// <summary>
+            /// Translation key <c>keycustodian_infrastructure_KEYRING_KEY_UNAVAILABLE</c>.
+            /// </summary>
+            public static readonly global::D2.Shared.I18n.TKMessage KEYRING_KEY_UNAVAILABLE = new("keycustodian_infrastructure_KEYRING_KEY_UNAVAILABLE");
             /// <summary>
             /// Translation key <c>keycustodian_infrastructure_NO_ACTIVE_ISSUING_CA</c>.
             /// </summary>

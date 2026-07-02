@@ -147,15 +147,18 @@ public static class KeyCustodianMetrics
     /// Counter — total capability-authority rejections across every capability. The
     /// broad dashboard counter complementing the specific
     /// <see cref="SR_CrossProcessSigningRejections"/>. Tagged <c>capability</c>
-    /// (<c>sign</c> / <c>lifecycle</c> / <c>seal-encrypt</c> / <c>seal-decrypt</c>) and
-    /// <c>reason</c> (<c>origin-unestablished</c> / <c>minter-required</c> /
-    /// <c>never-signable</c> / <c>not-in-allowed-set</c> / <c>identity-absent</c> /
-    /// <c>not-in-process</c> / <c>not-system</c>) — both CLOSED-enum values drawn from
-    /// the <see cref="AuthorityRejections"/> named constants (never free text), so the tag
+    /// (<c>sign</c> / <c>lifecycle</c> / <c>keyring</c> / <c>seal-encrypt</c> /
+    /// <c>seal-decrypt</c>) and <c>reason</c> (<c>origin-unestablished</c> /
+    /// <c>minter-required</c> / <c>never-signable</c> / <c>not-in-allowed-set</c> /
+    /// <c>unauthorized-plane</c> / <c>identity-absent</c> / <c>not-in-process</c> /
+    /// <c>not-system</c>) — both CLOSED-enum values drawn from the
+    /// <see cref="AuthorityRejections"/> named constants (never free text), so the tag
     /// cardinality is bounded. The <c>not-in-process</c> reason is minter-only (the
     /// dedicated JWT-minter capability was invoked from a plane other than the in-process
     /// module); the <c>not-system</c> reason is lifecycle-only (a lifecycle mutation was
-    /// attempted from a plane other than the in-host System worker plane).
+    /// attempted from a plane other than the in-host System worker plane); the
+    /// <c>unauthorized-plane</c> reason is keyring-only (a keyring fetch arrived on a
+    /// plane the keyring surface does not serve).
     /// </summary>
     public static readonly Counter<long> SR_AuthorityRejectionsTotal =
         SR_Meter.CreateCounter<long>(
@@ -163,10 +166,10 @@ public static class KeyCustodianMetrics
             unit: "{rejection}",
             description:
                 "Total capability-authority rejections. Tags: capability "
-                + "(sign / lifecycle / seal-encrypt / seal-decrypt), reason "
+                + "(sign / lifecycle / keyring / seal-encrypt / seal-decrypt), reason "
                 + "(origin-unestablished / minter-required / never-signable / "
-                + "not-in-allowed-set / identity-absent / not-in-process / not-system) "
-                + "— closed-enum values.");
+                + "not-in-allowed-set / unauthorized-plane / identity-absent / "
+                + "not-in-process / not-system) — closed-enum values.");
 
     /// <summary>
     /// Counter — total Sign requests that found no active signing key for the
@@ -181,6 +184,21 @@ public static class KeyCustodianMetrics
             description:
                 "Total Sign requests that found no active signing key and returned 503. "
                 + "A sustained non-zero rate blocks JWT minting for the affected domain.");
+
+    /// <summary>
+    /// Counter — total GetKeyring requests that found no active payload key for the
+    /// requested domain and returned 503. A sustained non-zero rate means a payload
+    /// domain's keyring is unprovisioned or mid-rotation with no active key — encryption
+    /// for that domain is blocked until a key is active. Mirrors
+    /// <see cref="SR_EmptyJwksServed"/> for the keyring-distribution surface.
+    /// </summary>
+    public static readonly Counter<long> SR_EmptyKeyringServed =
+        SR_Meter.CreateCounter<long>(
+            name: "d2.keycustodian.empty_keyring_served",
+            unit: "{response}",
+            description:
+                "Total GetKeyring requests that found no active payload key and returned 503. "
+                + "A sustained non-zero rate blocks payload encryption for the affected domain.");
 
     /// <summary>
     /// Named tag-key + closed-enum tag-value constants for
@@ -210,6 +228,13 @@ public static class KeyCustodianMetrics
             /// rotate / retire / compromise / run-due-rotations / seed-CA) — System-plane-only.
             /// </summary>
             public const string LIFECYCLE = "lifecycle";
+
+            /// <summary>
+            /// The payload-keyring distribution capability (fetch a payload domain's
+            /// Active + Retiring AES keyring) — cross-process + in-process planes, per the
+            /// per-workload keyring policy.
+            /// </summary>
+            public const string KEYRING = "keyring";
         }
 
         /// <summary>Closed-enum values for the <c>reason</c> tag.</summary>
@@ -230,8 +255,18 @@ public static class KeyCustodianMetrics
             /// </summary>
             public const string NEVER_SIGNABLE = "never-signable";
 
-            /// <summary>The caller's policy does not grant the requested signing domain.</summary>
+            /// <summary>
+            /// The caller's policy does not grant the requested signing / keyring domain.
+            /// </summary>
             public const string NOT_IN_ALLOWED_SET = "not-in-allowed-set";
+
+            /// <summary>
+            /// A keyring fetch arrived on an established plane the keyring surface does not
+            /// serve (only the cross-process hop + in-process module planes are served).
+            /// Keyring-only; distinct from <see cref="NOT_IN_ALLOWED_SET"/> so a plane
+            /// deny is dashboard-distinguishable, though both ride the same uniform 403.
+            /// </summary>
+            public const string UNAUTHORIZED_PLANE = "unauthorized-plane";
 
             /// <summary>A cross-process call carried no caller identity.</summary>
             public const string IDENTITY_ABSENT = "identity-absent";

@@ -10,6 +10,7 @@ using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
 using D2.Edge.KeyCustodian.App.Application;
+using D2.Edge.KeyCustodian.App.Application.Handlers.Queries.GetKeyring;
 using D2.Edge.KeyCustodian.App.Application.Handlers.Queries.Sign;
 using D2.Edge.KeyCustodian.App.Application.Routes;
 using D2.Edge.KeyCustodian.App.Infrastructure.Vault;
@@ -256,6 +257,13 @@ public sealed class WellKnownRouteTests
                         services.AddSingleton<ISigningDomainAuthorityPolicy>(
                             new OptionsSigningDomainAuthorityPolicy(
                                 Options.Create(new SigningDomainAuthorityOptions())));
+
+                        // The façade ctor also requires IGetKeyringHandler; register it plus
+                        // its keyring-domain policy (deny-all) so IKeyCustodianApi resolves.
+                        services.AddTransient<IGetKeyringHandler, GetKeyringHandler>();
+                        services.AddSingleton<IKeyringDomainAuthorityPolicy>(
+                            new OptionsKeyringDomainAuthorityPolicy(
+                                Options.Create(new KeyringDomainAuthorityOptions())));
 
                         services.AddTransient<IKeyCustodianApi, KeyCustodianApi>();
                     })

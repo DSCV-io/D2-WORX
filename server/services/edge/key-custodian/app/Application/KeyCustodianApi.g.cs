@@ -11,6 +11,7 @@
 namespace D2.Edge.KeyCustodian.App.Application;
 
 using D2.Edge.KeyCustodian.App.Application.Handlers.Queries.GetJwks;
+using D2.Edge.KeyCustodian.App.Application.Handlers.Queries.GetKeyring;
 using D2.Edge.KeyCustodian.App.Application.Handlers.Queries.GetOidcConfiguration;
 using D2.Edge.KeyCustodian.App.Application.Handlers.Queries.Sign;
 using D2.Edge.KeyCustodian.Clients;
@@ -22,7 +23,8 @@ using D2.Edge.KeyCustodian.Clients;
 public sealed class KeyCustodianApi(
     IGetJwksHandler getJwksHandler,
     IGetOidcConfigurationHandler getOidcConfigurationHandler,
-    ISignHandler signHandler) : IKeyCustodianApi
+    ISignHandler signHandler,
+    IGetKeyringHandler getKeyringHandler) : IKeyCustodianApi
 {
     /// <inheritdoc/>
     public ValueTask<D2Result<GetJwksOutput?>> GetJwksAsync(GetJwksInput input, CancellationToken ct = default)
@@ -33,4 +35,7 @@ public sealed class KeyCustodianApi(
     /// <inheritdoc/>
     public ValueTask<D2Result<SignOutput?>> SignAsync(SignInput input, CancellationToken ct = default)
         => signHandler.HandleAsync(input, ct);
+    /// <inheritdoc/>
+    public ValueTask<D2Result<GetKeyringOutput?>> GetKeyringAsync(GetKeyringInput input, CancellationToken ct = default)
+        => getKeyringHandler.HandleAsync(input, ct);
 }

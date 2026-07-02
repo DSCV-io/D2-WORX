@@ -143,6 +143,18 @@ const COPY_MANIFEST = [
     to: "server/services/edge/key-custodian/clients/SignOutput.g.cs",
   },
 
+  // ---- GetKeyring DTOs (Clients namespace — matches tsp compile routing;
+  //      GetKeyringOutput.g.cs also carries the nested KeyringEntry record with
+  //      keyBytes redacted SecretInformation) ----
+  {
+    from: "GetKeyringInput.g.cs",
+    to: "server/services/edge/key-custodian/clients/GetKeyringInput.g.cs",
+  },
+  {
+    from: "GetKeyringOutput.g.cs",
+    to: "server/services/edge/key-custodian/clients/GetKeyringOutput.g.cs",
+  },
+
   // ---- Module façade interface + impl (real KC ops only — getJwks +
   //      getOidcConfiguration). After the fixture wire-identity rename
   //      the fixtures no longer serve-as "KeyCustodian", so tsp compile's
@@ -176,6 +188,10 @@ const COPY_MANIFEST = [
   {
     from: "ISignHandler.g.cs",
     to: "server/services/edge/key-custodian/app/Application/Handlers/Queries/Sign/ISignHandler.g.cs",
+  },
+  {
+    from: "IGetKeyringHandler.g.cs",
+    to: "server/services/edge/key-custodian/app/Application/Handlers/Queries/GetKeyring/IGetKeyringHandler.g.cs",
   },
 
   // ---- Well-known route registrations (real-KC namespace

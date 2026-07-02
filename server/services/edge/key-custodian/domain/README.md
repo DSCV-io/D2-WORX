@@ -140,8 +140,8 @@ The `error-codes-source-gen/` sibling project emits three files into `Generated/
 
 | File                              | Content                                                                     |
 | --------------------------------- | --------------------------------------------------------------------------- |
-| `KeyCustodianErrorCodes.g.cs`     | 23 `const string` error-code constants + `AllCodes` + `GetHttpStatus`        |
-| `KeyCustodianFailures.g.cs`       | 23 `static D2Result FactoryName(...)` semantic factory methods                |
+| `KeyCustodianErrorCodes.g.cs`     | 25 `const string` error-code constants + `AllCodes` + `GetHttpStatus`        |
+| `KeyCustodianFailures.g.cs`       | 25 `static D2Result FactoryName(...)` semantic factory methods                |
 | `KeyCustodianFailures.Generic.g.cs` | The `KeyCustodianFailures<T>` typed twin                                  |
 
 All transition methods and VO smart constructors use the generated `KeyCustodianFailures<T>.*` factories — never raw `D2Result.ValidationFailed(...)` with hand-written codes. See [`error-codes-source-gen/README.md`](../error-codes-source-gen/README.md).

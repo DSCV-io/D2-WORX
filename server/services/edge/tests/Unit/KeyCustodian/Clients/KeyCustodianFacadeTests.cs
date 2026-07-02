@@ -7,6 +7,7 @@
 namespace D2.Edge.Tests.Unit.KeyCustodian.Clients;
 
 using D2.Edge.KeyCustodian.App.Application;
+using D2.Edge.KeyCustodian.App.Application.Handlers.Queries.GetKeyring;
 using D2.Edge.KeyCustodian.App.Application.Handlers.Queries.Sign;
 using D2.Edge.KeyCustodian.Clients;
 using D2.Shared.Handler.Abstractions;
@@ -66,6 +67,7 @@ public sealed class KeyCustodianFacadeTests
             _ => new StubGetOidcConfigurationHandler(
                 D2Result<GetOidcConfigurationOutput?>.Ok(SampleOidc())));
         services.AddTransient<ISignHandler>(_ => SignStub());
+        services.AddTransient<IGetKeyringHandler>(_ => KeyringStub());
 
         using var sp = services.BuildServiceProvider();
 
@@ -94,6 +96,7 @@ public sealed class KeyCustodianFacadeTests
             _ => new StubGetOidcConfigurationHandler(
                 D2Result<GetOidcConfigurationOutput?>.Ok(SampleOidc())));
         services.AddTransient<ISignHandler>(_ => SignStub());
+        services.AddTransient<IGetKeyringHandler>(_ => KeyringStub());
 
         using var sp = services.BuildServiceProvider();
 
@@ -111,7 +114,7 @@ public sealed class KeyCustodianFacadeTests
         var jwk = new Jwk("kid-001", "modulus", "AQAB", "RSA", "sig", "RS256");
         var expected = D2Result<GetJwksOutput?>.Ok(new GetJwksOutput([jwk]));
         var stub = new StubGetJwksHandler(expected);
-        var facade = new KeyCustodianApi(stub, OidcStub(), SignStub());
+        var facade = new KeyCustodianApi(stub, OidcStub(), SignStub(), KeyringStub());
 
         var result = await facade.GetJwksAsync(new GetJwksInput());
 
@@ -124,7 +127,7 @@ public sealed class KeyCustodianFacadeTests
     {
         var stub = new StubGetJwksHandler(D2Result<GetJwksOutput?>.Ok(new GetJwksOutput([])));
         using var cts = new CancellationTokenSource();
-        var facade = new KeyCustodianApi(stub, OidcStub(), SignStub());
+        var facade = new KeyCustodianApi(stub, OidcStub(), SignStub(), KeyringStub());
 
         await facade.GetJwksAsync(new GetJwksInput(), cts.Token);
 
@@ -141,7 +144,7 @@ public sealed class KeyCustodianFacadeTests
         // Ensures the façade does not swallow failures — result identity must be preserved.
         var failure = D2Result<GetJwksOutput?>.ServiceUnavailable();
         var stub = new StubGetJwksHandler(failure);
-        var facade = new KeyCustodianApi(stub, OidcStub(), SignStub());
+        var facade = new KeyCustodianApi(stub, OidcStub(), SignStub(), KeyringStub());
 
         var result = await facade.GetJwksAsync(new GetJwksInput());
 
@@ -155,7 +158,7 @@ public sealed class KeyCustodianFacadeTests
     {
         var canceled = D2Result<GetJwksOutput?>.Canceled();
         var stub = new StubGetJwksHandler(canceled);
-        var facade = new KeyCustodianApi(stub, OidcStub(), SignStub());
+        var facade = new KeyCustodianApi(stub, OidcStub(), SignStub(), KeyringStub());
 
         var result = await facade.GetJwksAsync(new GetJwksInput());
 
@@ -175,7 +178,8 @@ public sealed class KeyCustodianFacadeTests
         var facade = new KeyCustodianApi(
             new StubGetJwksHandler(D2Result<GetJwksOutput?>.Ok(new GetJwksOutput([]))),
             oidcStub,
-            SignStub());
+            SignStub(),
+            KeyringStub());
 
         var result = await facade.GetOidcConfigurationAsync(new GetOidcConfigurationInput());
 
@@ -192,7 +196,8 @@ public sealed class KeyCustodianFacadeTests
         var facade = new KeyCustodianApi(
             new StubGetJwksHandler(D2Result<GetJwksOutput?>.Ok(new GetJwksOutput([]))),
             oidcStub,
-            SignStub());
+            SignStub(),
+            KeyringStub());
 
         await facade.GetOidcConfigurationAsync(new GetOidcConfigurationInput(), cts.Token);
 
@@ -206,7 +211,8 @@ public sealed class KeyCustodianFacadeTests
         var facade = new KeyCustodianApi(
             new StubGetJwksHandler(D2Result<GetJwksOutput?>.Ok(new GetJwksOutput([]))),
             new StubGetOidcConfigurationHandler(failure),
-            SignStub());
+            SignStub(),
+            KeyringStub());
 
         var result = await facade.GetOidcConfigurationAsync(new GetOidcConfigurationInput());
 
@@ -259,6 +265,13 @@ public sealed class KeyCustodianFacadeTests
             .Should().NotBeNull();
     }
 
+    [Fact]
+    public void IKeyCustodianApi_HasGetKeyringAsyncMethod()
+    {
+        typeof(IKeyCustodianApi).GetMethod("GetKeyringAsync")
+            .Should().NotBeNull();
+    }
+
     // -------------------------------------------------------------------------
     // Sign delegation
     // -------------------------------------------------------------------------
@@ -271,7 +284,8 @@ public sealed class KeyCustodianFacadeTests
         var facade = new KeyCustodianApi(
             new StubGetJwksHandler(D2Result<GetJwksOutput?>.Ok(new GetJwksOutput([]))),
             OidcStub(),
-            signStub);
+            signStub,
+            KeyringStub());
 
         var result = await facade.SignAsync(new SignInput("audit", [0x01]));
 
@@ -288,11 +302,70 @@ public sealed class KeyCustodianFacadeTests
         var facade = new KeyCustodianApi(
             new StubGetJwksHandler(D2Result<GetJwksOutput?>.Ok(new GetJwksOutput([]))),
             OidcStub(),
-            signStub);
+            signStub,
+            KeyringStub());
 
         await facade.SignAsync(new SignInput("audit", [0x01]), cts.Token);
 
         signStub.LastCancellationToken.Should().Be(cts.Token);
+    }
+
+    // -------------------------------------------------------------------------
+    // GetKeyring delegation
+    // -------------------------------------------------------------------------
+
+    [Fact]
+    public async Task GetKeyringAsync_DelegatesTo_GetKeyringHandler()
+    {
+        var expected = D2Result<GetKeyringOutput?>.Ok(
+            new GetKeyringOutput(
+                "kid-001",
+                [new KeyringEntry("kid-001", new byte[32])],
+                "d2/audit"u8.ToArray()));
+        var keyringStub = new StubGetKeyringHandler(expected);
+        var facade = new KeyCustodianApi(
+            new StubGetJwksHandler(D2Result<GetJwksOutput?>.Ok(new GetJwksOutput([]))),
+            OidcStub(),
+            SignStub(),
+            keyringStub);
+
+        var result = await facade.GetKeyringAsync(new GetKeyringInput("audit"));
+
+        keyringStub.CallCount.Should().Be(1);
+        result.Should().Be(expected);
+    }
+
+    [Fact]
+    public async Task GetKeyringAsync_PassesCancellationToken_ToHandler()
+    {
+        var keyringStub = KeyringStub();
+        using var cts = new CancellationTokenSource();
+        var facade = new KeyCustodianApi(
+            new StubGetJwksHandler(D2Result<GetJwksOutput?>.Ok(new GetJwksOutput([]))),
+            OidcStub(),
+            SignStub(),
+            keyringStub);
+
+        await facade.GetKeyringAsync(new GetKeyringInput("audit"), cts.Token);
+
+        keyringStub.LastCancellationToken.Should().Be(cts.Token);
+    }
+
+    [Fact]
+    public async Task GetKeyringAsync_HandlerFails_FacadeSurfacesSameFailure()
+    {
+        var failure = KeyCustodianFailures<GetKeyringOutput?>.KeyringKeyUnavailable();
+        var facade = new KeyCustodianApi(
+            new StubGetJwksHandler(D2Result<GetJwksOutput?>.Ok(new GetJwksOutput([]))),
+            OidcStub(),
+            SignStub(),
+            new StubGetKeyringHandler(failure));
+
+        var result = await facade.GetKeyringAsync(new GetKeyringInput("audit"));
+
+        result.Success.Should().BeFalse();
+        result.StatusCode.Should().Be(System.Net.HttpStatusCode.ServiceUnavailable);
+        result.Should().Be(failure);
     }
 
     // -------------------------------------------------------------------------
@@ -312,6 +385,10 @@ public sealed class KeyCustodianFacadeTests
 
     private static StubSignHandler SignStub() =>
         new(D2Result<SignOutput?>.Ok(new SignOutput("c2ln", "kid")));
+
+    private static StubGetKeyringHandler KeyringStub() =>
+        new(D2Result<GetKeyringOutput?>.Ok(
+            new GetKeyringOutput("kid", [new KeyringEntry("kid", new byte[32])], "d2/audit"u8.ToArray())));
 
     private sealed class StubGetJwksHandler(D2Result<GetJwksOutput?> result) : IGetJwksHandler
     {
@@ -356,6 +433,24 @@ public sealed class KeyCustodianFacadeTests
 
         public ValueTask<D2Result<SignOutput?>> HandleAsync(
             SignInput input,
+            CancellationToken ct = default,
+            HandlerOptions? options = null)
+        {
+            CallCount++;
+            LastCancellationToken = ct;
+            return ValueTask.FromResult(result);
+        }
+    }
+
+    private sealed class StubGetKeyringHandler(D2Result<GetKeyringOutput?> result)
+        : IGetKeyringHandler
+    {
+        public int CallCount { get; private set; }
+
+        public CancellationToken LastCancellationToken { get; private set; }
+
+        public ValueTask<D2Result<GetKeyringOutput?>> HandleAsync(
+            GetKeyringInput input,
             CancellationToken ct = default,
             HandlerOptions? options = null)
         {

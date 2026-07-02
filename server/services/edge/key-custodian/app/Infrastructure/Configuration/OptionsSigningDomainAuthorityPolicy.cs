@@ -6,8 +6,6 @@
 
 namespace D2.Edge.KeyCustodian.App.Infrastructure.Configuration;
 
-using D2.Shared.Utilities.Extensions;
-
 /// <summary>
 /// Resolves a workload's allowed cross-process signing domains from
 /// <see cref="SigningDomainAuthorityOptions"/>. A workload absent from the policy

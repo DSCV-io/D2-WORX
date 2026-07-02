@@ -39,6 +39,8 @@ from `contracts/typespec/key-custodian/key-custodian.tsp`. Do not edit by hand
 | `GetOidcConfigurationOutput.g.cs` | `GetOidcConfigurationOutput(Issuer, JwksUri, IdTokenSigningAlgValuesSupported, ResponseTypesSupported, SubjectTypesSupported)` | `getOidcConfiguration` |
 | `SignInput.g.cs`    | `SignInput(string KeyDomain, byte[] SigningInput)` — `SigningInput` carries `[RedactData]` | `sign` |
 | `SignOutput.g.cs`   | `SignOutput(string Signature, string Kid)`  | `sign` |
+| `GetKeyringInput.g.cs` | `GetKeyringInput(string KeyDomain)`         | `getKeyring` |
+| `GetKeyringOutput.g.cs`| `GetKeyringOutput(string ActiveKid, IReadOnlyList<KeyringEntry> Entries, byte[] AadContext)` + nested `KeyringEntry(string Kid, byte[] KeyBytes)` — `KeyBytes` (the raw AES-256 key) carries `[RedactData(SecretInformation)]` so it is masked in logs; `AadContext` is deliberately NOT redacted (authenticated-not-secret AEAD context, the UTF-8 bytes of `"d2/<domain>"`) | `getKeyring` |
 
 All types live in `namespace D2.Edge.KeyCustodian.Clients`.
 
@@ -83,6 +85,7 @@ implementation would satisfy the same signature without modification:
 ValueTask<D2Result<GetJwksOutput?>> GetJwksAsync(GetJwksInput input, CancellationToken ct = default);
 ValueTask<D2Result<GetOidcConfigurationOutput?>> GetOidcConfigurationAsync(GetOidcConfigurationInput input, CancellationToken ct = default);
 ValueTask<D2Result<SignOutput?>> SignAsync(SignInput input, CancellationToken ct = default);
+ValueTask<D2Result<GetKeyringOutput?>> GetKeyringAsync(GetKeyringInput input, CancellationToken ct = default);
 ```
 
 The façade implementation (`KeyCustodianApi`) and the generated DI extension

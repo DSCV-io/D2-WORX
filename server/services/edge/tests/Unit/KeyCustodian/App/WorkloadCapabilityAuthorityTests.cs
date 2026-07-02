@@ -22,6 +22,7 @@ public sealed class WorkloadCapabilityAuthorityTests
 {
     private const string _EDGE = "edge";
     private const string _FILES = "files";
+    private const string _AUDIT = "audit";
 
     private static readonly IReadOnlySet<string> sr_empty =
         new HashSet<string>(StringComparer.Ordinal);
@@ -435,6 +436,171 @@ public sealed class WorkloadCapabilityAuthorityTests
     {
         var act = () => WorkloadCapabilityAuthority.AuthorizeSigning(
             _EDGE, RequestOrigin.CrossProcessHop, target: KeyDomain.JwksSigning, allowedSigningDomainsForCaller: null!);
+
+        act.Should().Throw<ArgumentNullException>();
+    }
+
+    // =======================================================================
+    // AuthorizeKeyringFetch — the payload-keyring distribution arm
+    // =======================================================================
+
+    // -----------------------------------------------------------------------
+    // Allow path — both served planes, in policy
+    // -----------------------------------------------------------------------
+
+    [Theory]
+    [InlineData(RequestOrigin.CrossProcessHop)]
+    [InlineData(RequestOrigin.InProcessModule)]
+    public void AuthorizeKeyringFetch_ServedPlane_DomainInAllowedSet_Allowed(RequestOrigin origin)
+    {
+        var result = WorkloadCapabilityAuthority.AuthorizeKeyringFetch(
+            immediateCaller: _AUDIT,
+            origin: origin,
+            target: KeyDomain.Create(_AUDIT).Data!,
+            allowedKeyringDomainsForCaller: SetOf(_AUDIT));
+
+        result.Success.Should().BeTrue(
+            "the keyring surface serves both the cross-process hop and the in-process module "
+            + "planes, policy-gated by caller id");
+    }
+
+    // -----------------------------------------------------------------------
+    // Fail-closed: unestablished origin is denied FIRST (before the plane arm)
+    // -----------------------------------------------------------------------
+
+    [Theory]
+    [InlineData(_AUDIT)]
+    [InlineData(KeyDomain.JWKS_SIGNING)]
+    public void AuthorizeKeyringFetch_UnestablishedOrigin_Denied_RequestOriginUnestablished(
+        string domainValue)
+    {
+        var result = WorkloadCapabilityAuthority.AuthorizeKeyringFetch(
+            immediateCaller: _AUDIT,
+            origin: RequestOrigin.Unestablished,
+            target: KeyDomain.Create(domainValue).Data!,
+            allowedKeyringDomainsForCaller: SetOf(domainValue));
+
+        result.Success.Should().BeFalse();
+        result.ErrorCode.Should().Be(
+            "KEYCUSTODIAN_REQUEST_ORIGIN_UNESTABLISHED",
+            "an origin no boundary established fails closed, before the plane arm");
+    }
+
+    // -----------------------------------------------------------------------
+    // Plane deny — EdgeInbound / System are NOT served (uniform 403)
+    // -----------------------------------------------------------------------
+
+    [Theory]
+    [InlineData(RequestOrigin.EdgeInbound)]
+    [InlineData(RequestOrigin.System)]
+    public void AuthorizeKeyringFetch_UnservedPlane_Denied_KeyringDomainNotAuthorized(
+        RequestOrigin origin)
+    {
+        // Even a caller WITH the domain in its policy set is denied on an unserved plane —
+        // the plane deny (arm 2) runs before the policy check.
+        var result = WorkloadCapabilityAuthority.AuthorizeKeyringFetch(
+            immediateCaller: _AUDIT,
+            origin: origin,
+            target: KeyDomain.Create(_AUDIT).Data!,
+            allowedKeyringDomainsForCaller: SetOf(_AUDIT));
+
+        result.Success.Should().BeFalse();
+        result.ErrorCode.Should().Be(
+            "KEYCUSTODIAN_KEYRING_DOMAIN_NOT_AUTHORIZED",
+            "the keyring surface serves only the cross-process + in-process planes");
+    }
+
+    // -----------------------------------------------------------------------
+    // Fail-closed: a served plane with no caller identity
+    // -----------------------------------------------------------------------
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("   ")]
+    public void AuthorizeKeyringFetch_ServedPlane_NoCallerIdentity_DeniedForbidden(string? callerId)
+    {
+        var result = WorkloadCapabilityAuthority.AuthorizeKeyringFetch(
+            immediateCaller: callerId,
+            origin: RequestOrigin.CrossProcessHop,
+            target: KeyDomain.Create(_AUDIT).Data!,
+            allowedKeyringDomainsForCaller: SetOf(_AUDIT));
+
+        result.Success.Should().BeFalse();
+        result.StatusCode.Should().Be(HttpStatusCode.Forbidden);
+    }
+
+    // -----------------------------------------------------------------------
+    // Policy-scope deny — served plane + present caller, domain not in set
+    // -----------------------------------------------------------------------
+
+    [Fact]
+    public void AuthorizeKeyringFetch_DomainNotInAllowedSet_Denied_KeyringDomainNotAuthorized()
+    {
+        var result = WorkloadCapabilityAuthority.AuthorizeKeyringFetch(
+            immediateCaller: _AUDIT,
+            origin: RequestOrigin.CrossProcessHop,
+            target: KeyDomain.Create(_AUDIT).Data!,
+            allowedKeyringDomainsForCaller: SetOf("notifications"));
+
+        result.ErrorCode.Should().Be(
+            "KEYCUSTODIAN_KEYRING_DOMAIN_NOT_AUTHORIZED",
+            "a domain outside the caller's allowed set is a policy-scope denial");
+    }
+
+    [Fact]
+    public void AuthorizeKeyringFetch_UnknownWorkload_EmptySet_Denied()
+    {
+        var result = WorkloadCapabilityAuthority.AuthorizeKeyringFetch(
+            immediateCaller: "ghost",
+            origin: RequestOrigin.CrossProcessHop,
+            target: KeyDomain.Create(_AUDIT).Data!,
+            allowedKeyringDomainsForCaller: sr_empty);
+
+        result.ErrorCode.Should().Be(
+            "KEYCUSTODIAN_KEYRING_DOMAIN_NOT_AUTHORIZED",
+            "an unknown workload's empty allowed set denies every domain");
+    }
+
+    [Theory]
+    [InlineData(KeyDomain.JWKS_SIGNING)]
+    [InlineData(KeyDomain.COOKIE)]
+    [InlineData(KeyDomain.MTLS_CA_ROOT)]
+    public void AuthorizeKeyringFetch_NonPayloadDomain_ServedPlane_Denied_NoOracle(string nonPayload)
+    {
+        // In production a non-payload domain can never be in any allowed set (the boot
+        // validator refuses the grant), so arm (4) denies it with the SAME uniform 403 as
+        // an unauthorized payload domain — no domain-fact oracle. This pins that the rule
+        // does not special-case a non-payload domain to a different code.
+        var result = WorkloadCapabilityAuthority.AuthorizeKeyringFetch(
+            immediateCaller: _AUDIT,
+            origin: RequestOrigin.CrossProcessHop,
+            target: KeyDomain.Create(nonPayload).Data!,
+            allowedKeyringDomainsForCaller: SetOf(_AUDIT));
+
+        result.ErrorCode.Should().Be(
+            "KEYCUSTODIAN_KEYRING_DOMAIN_NOT_AUTHORIZED",
+            "a non-payload domain is denied with the uniform 403, not a distinct code");
+    }
+
+    // -----------------------------------------------------------------------
+    // Argument guards
+    // -----------------------------------------------------------------------
+
+    [Fact]
+    public void AuthorizeKeyringFetch_NullTarget_Throws()
+    {
+        var act = () => WorkloadCapabilityAuthority.AuthorizeKeyringFetch(
+            _AUDIT, RequestOrigin.CrossProcessHop, target: null!, allowedKeyringDomainsForCaller: sr_empty);
+
+        act.Should().Throw<ArgumentNullException>();
+    }
+
+    [Fact]
+    public void AuthorizeKeyringFetch_NullPolicySet_Throws()
+    {
+        var act = () => WorkloadCapabilityAuthority.AuthorizeKeyringFetch(
+            _AUDIT, RequestOrigin.CrossProcessHop, target: KeyDomain.Create(_AUDIT).Data!, allowedKeyringDomainsForCaller: null!);
 
         act.Should().Throw<ArgumentNullException>();
     }

@@ -152,6 +152,7 @@ const D2.Shared.Auth.Abstractions.Scopes.Auth.Password.Change = "auth.password.c
 const D2.Shared.Auth.Abstractions.Scopes.Auth.User.Impersonate.Consent = "auth.user.impersonate.consent" -> string!
 const D2.Shared.Auth.Abstractions.Scopes.Auth.User.Impersonate.Force = "auth.user.impersonate.force" -> string!
 const D2.Shared.Auth.Abstractions.Scopes.Billing.Payment.Charge = "billing.payment.charge" -> string!
+const D2.Shared.Auth.Abstractions.Scopes.Internal.Kc.Keyring = "internal.kc.keyring" -> string!
 const D2.Shared.Auth.Abstractions.Scopes.Internal.Kc.Sign = "internal.kc.sign" -> string!
 const D2.Shared.Auth.Abstractions.Scopes.Self.Read = "self.read" -> string!
 const D2.Shared.Auth.Abstractions.Scopes.Self.Write = "self.write" -> string!

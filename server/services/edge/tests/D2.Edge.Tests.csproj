@@ -270,6 +270,25 @@ Copyright (c) DCSV. All rights reserved.
               ProtoRoot="$(MSBuildThisFileDirectory)"
               AdditionalImportDirs="$(D2ContractsRoot)protos" />
     <!--
+      Real KeyCustodian keyring proto — the payload-keyring distribution wire surface
+      (key-custodian.tsp getKeyring op; package d2.keycustodian.v2alpha, csharp_namespace
+      D2.Services.Protos.KeyCustodian.V2Alpha — a DISTINCT service KeyCustodianKeyring from
+      the signer). Generates the KeyCustodianKeyring service base + GetKeyringRequest/
+      GetKeyringResponse/GetKeyringOutput/KeyringEntry messages. The generated
+      KeyCustodianKeyringService delegates to IKeyCustodianApi.GetKeyringAsync; hosted via
+      MapGrpcService<T>() + dialed via the generated stub in GrpcKeyringServiceTests. The
+      live host wiring (the Edge composition root mapping + the cross-process client) is
+      deferred until the Edge host exists; the serving plane is TestServer-proven here.
+      Compiled in Both mode; the D2ResultProto type still comes solely from the
+      D2.Shared.Result.Grpc ProjectReference above (this proto's import
+      "common/v1/d2_result.proto" resolves via the same AdditionalImportDirs proto_path;
+      no second d2_result.proto Protobuf include).
+    -->
+    <Protobuf Include="$(MSBuildThisFileDirectory)Unit/KeyCustodian/TypeSpecGrpc/Protos/key_custodian_keyring_get_keyring.g.proto"
+              GrpcServices="Both"
+              ProtoRoot="$(MSBuildThisFileDirectory)"
+              AdditionalImportDirs="$(D2ContractsRoot)protos" />
+    <!--
       Second TypeSpec gRPC fixture proto — the enum-string-field bridge fixture
       (enum-shaped.tsp signWithKindFixture op). An enum DTO field maps to a proto `string`
       field; the generated SignWithKindFixtureTransportMappers.g.cs parses the wire string

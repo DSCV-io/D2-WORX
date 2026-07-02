@@ -15,12 +15,15 @@
 //   - T? when ModelProperty.optional === true.
 //   - IReadOnlyList<T> for collections.
 //   - [property: RedactData(Reason = RedactReason.<reason>)] on every
-//     @d2Redact-bearing parameter, where <reason> is the RedactReason member
-//     threaded from the @d2Redact decorator — never defaulted. An unknown or
-//     missing reason is a loud emit failure, so a secret-adjacent field is never
-//     silently classified as PersonalInformation. The [property:] target is
-//     MANDATORY — a bare positional-param attribute would NOT be seen by the
-//     property-reflecting RedactDataDestructuringPolicy.
+//     @d2Redact-bearing parameter — on the top-level record AND on nested-model
+//     records (the shared model walker threads the reason at any depth), where
+//     <reason> is the RedactReason member threaded from the @d2Redact decorator —
+//     never defaulted. An unknown or missing reason is a loud emit failure, so a
+//     secret-adjacent field is never silently classified as PersonalInformation.
+//     The [property:] target is MANDATORY — a bare positional-param attribute
+//     would NOT be seen by the property-reflecting RedactDataDestructuringPolicy.
+//     The redact-usings scan covers nested fields too, so a record whose only
+//     redacted field is nested still imports the attribute + enum namespaces.
 //   - Sibling `public enum` declarations for every collected enum, each carrying
 //     [JsonConverter(typeof(JsonStringEnumConverter))] so the JSON wire form is
 //     the member-name string (never the numeric backing). A member whose wire
@@ -155,16 +158,7 @@ function emitInput(
   enums: readonly NestedEnum[],
 ): EmittedFile {
   const typeName = `${pascalOp}Input`;
-  const needsRedactUsings = fields.some((f) => f.redactReason !== undefined);
-  const content = emitRecord(
-    namespace,
-    banner,
-    typeName,
-    fields,
-    needsRedactUsings,
-    [],
-    enums,
-  );
+  const content = emitRecord(namespace, banner, typeName, fields, [], enums);
   return { fileName: `${typeName}.g.cs`, content };
 }
 
@@ -177,13 +171,11 @@ function emitOutput(
   enums: readonly NestedEnum[],
 ): EmittedFile {
   const typeName = `${pascalOp}Output`;
-  const needsRedactUsings = fields.some((f) => f.redactReason !== undefined);
   const content = emitRecord(
     namespace,
     banner,
     typeName,
     fields,
-    needsRedactUsings,
     nested,
     enums,
   );
@@ -207,7 +199,6 @@ function emitRecord(
   banner: string,
   typeName: string,
   fields: readonly FieldInfo[],
-  needsRedactUsings: boolean,
   nested: readonly NestedModel[],
   enums: readonly NestedEnum[],
 ): string {
@@ -230,6 +221,13 @@ function emitRecord(
   // the SAME namespace supplies [JsonConverter] / JsonStringEnumConverter,
   // [JsonStringEnumMemberName] (the .NET 9+ custom-wire-name attribute), AND
   // [JsonPropertyName]. One using covers all of them; it is pushed at most once.
+  // Both the redact-usings and the JSON-name scan cover top-level AND nested
+  // fields: a record whose ONLY redacted (or wire-name-overridden) field lives on
+  // a nested record still needs the corresponding usings, else the emitted
+  // attribute references an un-imported namespace (CS0246).
+  const needsRedactUsings =
+    fields.some((f) => f.redactReason !== undefined) ||
+    nested.some((nm) => nm.fields.some((f) => f.redactReason !== undefined));
   const anyJsonName =
     fields.some((f) => f.jsonName !== undefined) ||
     nested.some((nm) => nm.fields.some((f) => f.jsonName !== undefined));

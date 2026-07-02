@@ -55,12 +55,13 @@ comparing a buffer to itself — the guard covers `GetJwksInput`, `GetJwksOutput
 | `D2.Edge.KeyCustodian.Clients.GetJwksInput` (parameterless)              | `D2.Edge.KeyCustodian.Clients.GetJwksInput` (committed `clients/GetJwksInput.g.cs`)                  | `GetJwksTransportDtoTests.GetJwksInput_IsParameterless`                                                        |
 | `D2.Edge.KeyCustodian.Clients.GetJwksOutput` (`IReadOnlyList<Jwk> Keys`) | `D2.Edge.KeyCustodian.Clients.GetJwksOutput` (committed `clients/GetJwksOutput.g.cs`)                | `GetJwksTransportDtoTests.GetJwksOutput_HasKeysProperty_OfCorrectType`                                         |
 | `D2.Edge.KeyCustodian.Domain.ValueObjects.Jwk` (6 public members)        | `D2.Edge.KeyCustodian.Clients.Jwk` (6-field positional record)                                       | `GetJwksTransportDtoTests.Jwk_MatchesDomainVoPublicShape`                                                      |
-| `[property: RedactData]` on `SignFixtureInput.Payload`                          | `[property: RedactData(Reason = RedactReason.PersonalInformation)]` on generated `SignFixtureInput.Payload` | `TypeSpecDtoValidationTests.GeneratedSignFixtureInput_PayloadProperty_IsRedactedByRealPolicy` (real Serilog pipeline) |
+| `[property: RedactData]` on `SignFixtureInput.Payload`                          | `[property: RedactData(Reason = RedactReason.SecretInformation)]` on generated `SignFixtureInput.Payload` | `TypeSpecDtoValidationTests.GeneratedSignFixtureInput_PayloadProperty_IsRedactedByRealPolicy` (real Serilog pipeline) |
+| `[property: RedactData(SecretInformation)]` on a NESTED-model property at ANY depth (incl. array elements) — e.g. `KeyringEntry.KeyBytes` inside `GetKeyringOutput.Entries[]` | `[property: RedactData(Reason = RedactReason.SecretInformation)]` threaded onto the nested C# record parameter (reason threaded from `@d2Redact`, never defaulted; conditional redact `using`s computed from top-level AND nested fields) | emitter vitest unit + integration cases (`csharp-dto-emitter.test.ts` `emitCsharpDtos_NestedRedactedField_PropertyTarget`, `model-walk.test.ts`, `dto-emit.integration.test.ts`) + the .NET Serilog collection-of-nested-records masking pin `SerilogPipelineRedactionTests.CollectionOfNestedRecords_PropertyLevelRedactedBytes_EachElementMasked_KidIntact` (`server/shared/dotnet/tests/Integration/Logging/SerilogPipelineRedactionTests.cs`) |
 
 **Redaction proof**: `GeneratedSignFixtureInput_PayloadProperty_IsRedactedByRealPolicy` builds a
 real `LoggerConfiguration().Destructure.With<RedactDataDestructuringPolicy>()` pipeline (not a
 mock), logs the generated `SignFixtureInput` record, and asserts the rendered output contains
-`"[REDACTED: PersonalInformation]"` and does NOT contain `"SECRET_PAYLOAD"`.
+`"[REDACTED: SecretInformation]"` and does NOT contain `"SECRET_PAYLOAD"`.
 
 **Transport-vs-domain-VO divergence note**: the domain `Jwk` VO has 3 positional ctor params + 3
 init-only properties with constant defaults (`Kty="RSA"`, `Use="sig"`, `Alg="RS256"`). The

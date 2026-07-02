@@ -88,7 +88,7 @@ public sealed class KeyCustodianErrorCodesGeneratedTests
     }
 
     // -----------------------------------------------------------------------
-    // AllCodes membership — set equals the 23 spec codes in spec order
+    // AllCodes membership — set equals the 25 spec codes in spec order
     // -----------------------------------------------------------------------
 
     [Fact]
@@ -119,6 +119,8 @@ public sealed class KeyCustodianErrorCodesGeneratedTests
             "KEYCUSTODIAN_EMPTY_SIGNING_INPUT",
             "KEYCUSTODIAN_KEY_TYPE_DOMAIN_MISMATCH",
             "KEYCUSTODIAN_SIGNING_INPUT_TOO_LARGE",
+            "KEYCUSTODIAN_KEYRING_KEY_UNAVAILABLE",
+            "KEYCUSTODIAN_KEYRING_DOMAIN_NOT_AUTHORIZED",
         ];
 
         KeyCustodianErrorCodes.AllCodes.Should().BeEquivalentTo(
@@ -127,9 +129,9 @@ public sealed class KeyCustodianErrorCodesGeneratedTests
     }
 
     [Fact]
-    public void AllCodes_CountIsTwentyThreeCodes()
+    public void AllCodes_CountIsTwentyFiveCodes()
     {
-        KeyCustodianErrorCodes.AllCodes.Should().HaveCount(23);
+        KeyCustodianErrorCodes.AllCodes.Should().HaveCount(25);
     }
 
     // -----------------------------------------------------------------------
@@ -212,6 +214,8 @@ public sealed class KeyCustodianErrorCodesGeneratedTests
             ["KEYCUSTODIAN_EMPTY_SIGNING_INPUT"] = 400,
             ["KEYCUSTODIAN_KEY_TYPE_DOMAIN_MISMATCH"] = 400,
             ["KEYCUSTODIAN_SIGNING_INPUT_TOO_LARGE"] = 400,
+            ["KEYCUSTODIAN_KEYRING_KEY_UNAVAILABLE"] = 503,
+            ["KEYCUSTODIAN_KEYRING_DOMAIN_NOT_AUTHORIZED"] = 403,
         };
 
         foreach (var code in KeyCustodianErrorCodes.AllCodes)
