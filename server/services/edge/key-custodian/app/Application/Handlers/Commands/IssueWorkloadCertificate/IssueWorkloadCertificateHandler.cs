@@ -17,7 +17,13 @@ using O = IssueWorkloadCertificateOutput;
 /// intermediate certificate authority.
 /// </summary>
 /// <remarks>
-/// Validates the workload identity at the top, loads + decrypts the active
+/// <b>Fail-closed TODAY</b>: the FIRST gate is the interim
+/// <see cref="WorkloadCertificateAuthority.AuthorizeIssuance"/> deny-all skeleton —
+/// EVERY origin is denied until the real caller↔subject binding rule (fail-closed
+/// origin + mTLS-peer-equals-requested-workload, plus the per-handler scope) lands
+/// together with the cross-process issuance transport wiring. A premature wiring
+/// therefore denies 100% instead of minting leaves for arbitrary identities.
+/// Below the gate: validates the workload identity, loads + decrypts the active
 /// <c>mtls-ca-intermediate</c> managed key (none → <c>503</c>), reconstructs the
 /// issuer certificate + private key, issues the leaf via the pure
 /// <see cref="WorkloadCertificateIssuance"/> rule, and writes a leaf-issuance
@@ -53,6 +59,16 @@ public sealed class IssueWorkloadCertificateHandler(
     protected override async ValueTask<D2Result<O?>> ExecuteAsync(
         I input, CancellationToken ct)
     {
+        // 0) Authority precedes work — the interim fail-closed DENY-ALL issuance gate.
+        //    No caller↔subject binding authority exists yet, so every origin is denied;
+        //    the real rule replaces the deny arm WITH the cross-process transport wiring
+        //    (see the WorkloadCertificateAuthority replacement contract).
+        var authorityResult = WorkloadCertificateAuthority.AuthorizeIssuance(
+            Context.Request.Origin);
+
+        if (authorityResult.Failed)
+            return D2Result<O?>.BubbleFail(authorityResult);
+
         // 1) Validate the workload identity at the top — invalid / unknown / wrong
         //    charset all surface as INVALID_WORKLOAD_IDENTITY before any DB or crypto.
         var workloadResult = WorkloadIdentity.Create(input.WorkloadServiceId);

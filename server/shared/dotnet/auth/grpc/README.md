@@ -62,8 +62,8 @@ services
 Per inbound call, `RequestOriginCrossProcessInterceptor`:
 
 1. Applies the inbound `x-d2-context` header (the propagated operational subset PLUS the inherited call-path) via `ApplyPropagatedContext`.
-2. Sets `IRequestContext.Origin = RequestOrigin.CrossProcessHop` and `ImmediateCaller` from the validated mutual-TLS peer certificate (`GetD2PeerWorkloadIdentity()` — reads `Connection.ClientCertificate`, never a header/claim/payload). No validated certificate means a `null` caller — fail-closed downstream. A wire-supplied `Origin` or caller is structurally impossible: neither field is ever serialized.
-3. Appends this hop's OWN identity (`D2WorkloadIdentityOptions.ServiceId`) to the call-path as a `CallPathKind.WorkloadHop` entry.
+2. Derives `IRequestContext.Origin` and `ImmediateCaller` ATOMICALLY from the single unforgeable local fact — the validated mutual-TLS peer certificate (`GetD2PeerWorkloadIdentity()` — reads `Connection.ClientCertificate`, never a header/claim/payload). When a peer identity is present, BOTH are set together (`Origin = RequestOrigin.CrossProcessHop`, `ImmediateCaller` = the peer id); when absent, BOTH are left unset so `Origin` stays the fail-closed `RequestOrigin.Unestablished` (every downstream authority rule denies at its first arm) and a Warning is logged so a misconfigured non-mTLS hop is observable. The contradictory "cross-process plane with no authenticated caller" state is never produced. A wire-supplied `Origin` or caller is structurally impossible: neither field is ever serialized.
+3. Appends this hop's OWN identity (`D2WorkloadIdentityOptions.ServiceId`) to the call-path as a `CallPathKind.WorkloadHop` entry — unconditional telemetry, structurally excluded from authority, so it runs whether or not the peer identity established the origin.
 4. Logs the received call-path's entry count.
 
 All four gRPC server-handler shapes (unary, client-streaming, server-streaming, duplex) dispatch through the single shared establishment path, so a streaming method added later cannot silently bypass it. No-op-safe when no `MutableRequestContext` is on the resolved `HttpContext.Items` slot (e.g. a harmless endpoint the auth interceptor already short-circuited). `AddD2RequestOriginGrpc()` binds `D2WorkloadIdentityOptions` with a required-`ServiceId` startup validation and registers `IClock` as `SystemClock` when the host has not already bound one (`TryAdd`); idempotent — repeat calls do not double-register the interceptor.
@@ -126,7 +126,7 @@ The interceptor resolves the effective scope declaration from the endpoint's met
    - Class-level `[D2RequireAnyScope]` + method-level `[D2HarmlessEndpoint]` → harmless wins (method-level is last).
    - Class-level `[D2HarmlessEndpoint]` + method-level `[D2RequireAllScopes]` → all-scopes wins (method-level is last).
    - Class-level `[D2RequireAnyScope]` + method-level `[D2RequireAllScopes]` → all-scopes wins (method-level is last).
-3. **No declaration** — deny-by-default: the interceptor runs the full pipeline (validator + liveness); the scope check passes for any authenticated caller (empty required set). See [Deny-by-default boot guard](#deny-by-default-boot-guard).
+3. **No declaration** — deny-by-default: the interceptor runs the full pipeline (validator + liveness); the scope check passes for any authenticated caller (ABSENT metadata). See [Deny-by-default boot guard](#deny-by-default-boot-guard). A metadata that is PRESENT and non-harmless but carries an EMPTY scope set is a configuration anomaly and fails CLOSED (`ScopeInsufficient` + a config-anomaly log) rather than admitting any authenticated caller — symmetric with the HTTP middleware; the public `ForScopes` factory rejects empty sets, so such a metadata can only arise from a serializer / clone / reflection path.
 
 #### Deny-by-default boot guard
 

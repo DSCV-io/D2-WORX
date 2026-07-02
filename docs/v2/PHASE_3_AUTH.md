@@ -267,7 +267,8 @@ locale, …) per ADR-0007 §2. No hop mutates the token to append itself.
   cookie signing secret, service-identity client_secrets, root key.
 - **State machine** per `kid` in `keycustodian_db.key_record`: `pending → active → retiring → retired`
   (+ terminal `compromised`).
-- **Distribution**: pull-based via gRPC `internal/keys/{domain}` endpoint, hourly TTL refresh,
+- **Distribution**: pull-based via the keyring gRPC endpoint (design-era name `internal/keys/{domain}`;
+  built op: `KeyCustodianKeyring/GetKeyring`), hourly TTL refresh,
   `d2.security.key-rotated` event-driven invalidation.
 - **Rotation cadences**: JWKS 90d, payload keys quarterly, cookie 90d, client_secret 180d, root key
   1-2y manual.
@@ -298,6 +299,29 @@ locale, …) per ADR-0007 §2. No hop mutates the token to append itself.
   `d2.keycustodian.cross_process_signing_rejections` (pages on any non-zero value — a general-surface
   attempt to reach the cluster root) + `d2.keycustodian.authority_rejections` (tagged `capability` +
   `reason`) + the `AuthorityRejected` log delegate.
+- **Domain→key-type binding (first-class)**: every key domain carries its bound key type in the
+  domain catalog (payload domains: AES; `jwks-signing`: RSA; `cookie`/`client-secret`: secret;
+  the CA domains: X.509 CA). Generate and sign reject a (domain, type) mismatch up front with
+  `KEYCUSTODIAN_KEY_TYPE_DOMAIN_MISMATCH` (400), so a wrong-type key can never be created under,
+  or used for, a domain it does not belong to. Both CA domains are additionally members of the
+  structural never-signable set on the general signing surface (rejected for every origin,
+  independent of the `jwks-signing` minter deny).
+- **Lifecycle mutations are System-plane-only (fail-closed)**: generate / activate / rotate /
+  retire / compromise / seed authorize through a dedicated lifecycle authority that denies an
+  unestablished origin FIRST and allows only the locally-established System origin; any
+  request-plane caller is `Forbidden`.
+- **Leaf issuance is deny-all until the real rule lands**: the issuance handler calls a committed
+  fail-closed deny-all issuance authority (it mints for nobody, on every origin). The real
+  caller→subject binding rule (the requested workload id must equal the authenticated mTLS
+  caller, or route through an explicit isolated delegated-issuer capability, never the general
+  surface) must land in the handler with or before the cross-process issuance transport; tracked
+  as a hard gate in [PHASE_3.md](PHASE_3.md) §G.
+- **Host-wiring gates for the KC signer** (tracked in [PHASE_3.md](PHASE_3.md) §G — not duplicated here):
+  the minter capability's DI isolation is proven at module scope today, but the running Edge host must add
+  a host-level **assembly-scan DI-isolation test** proving no type outside the auth-mint composition can
+  resolve `IJwtSigningCapability`; and the host must **hard-require mTLS at boot** for the KC signer (fail
+  loud when cross-process services are mapped but mTLS is disabled) and wire the transport scope + the
+  `d2.internal` audience validators, each with resolvability + negative tests.
 
 ### 3.6 Fingerprint binding (composite, 10-slot)
 
@@ -863,11 +887,12 @@ public interface IKeyringClient
 **Backing**:
 
 - `ITieredCache` keyed by `keyring:{domain}` for the keyring snapshot.
-- gRPC channel to Edge's `internal/keys/{domain}` endpoint — the calling workload authenticates over
-  mutually-authenticated TLS with a KeyCustodian-issued leaf
-  ([ADR-0023](../adrs/0023-mtls-workload-identity.md) / §6.5); the cross-process mTLS issuance + Edge
-  host wiring is a later deliverable (a domain keyring is supplied directly via `AddD2EncryptionFor`
-  until then).
+- gRPC channel to Edge's keyring endpoint (`internal/keys/{domain}` is the design-era name; the
+  built operation is the `KeyCustodianKeyring/GetKeyring` gRPC method, which takes the domain as
+  input) — the calling workload authenticates over mutually-authenticated TLS with a
+  KeyCustodian-issued leaf ([ADR-0023](../adrs/0023-mtls-workload-identity.md) / §6.5); the
+  cross-process mTLS issuance + Edge host wiring is a later deliverable (a domain keyring is
+  supplied directly via `AddD2EncryptionFor` until then).
 - TTL: 1 hour (per V2.md §5.4).
 - RMQ subscription (Q3): on `d2.security.key-rotated` event for `domain X`, force-invalidate
   `keyring:X` in cache, drop in-memory `PayloadCryptoKeyring` reference, next `GetKeyringAsync`

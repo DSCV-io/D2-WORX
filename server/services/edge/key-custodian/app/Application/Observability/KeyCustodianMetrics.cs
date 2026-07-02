@@ -122,32 +122,40 @@ public static class KeyCustodianMetrics
 
     /// <summary>
     /// Counter — total general-surface signing requests rejected for attempting to reach
-    /// the cluster-signing root (<c>jwks-signing</c>) — the <c>MinterCapabilityRequired</c>
-    /// arm. The highest-severity authority signal: any non-zero value means a caller tried
-    /// to mint with the cluster signing key on the general surface (possible from ANY
-    /// origin), which is reachable only through the dedicated minter capability and must
-    /// never leave the Edge host process. Pages on any non-zero value.
+    /// a crown-jewel key: the cluster-signing root (<c>jwks-signing</c>, the
+    /// <c>MinterCapabilityRequired</c> arm) or a certificate-authority domain
+    /// (<c>mtls-ca-root</c> / <c>mtls-ca-intermediate</c>, the
+    /// <c>CrossProcessDomainRejected</c> never-signable arm). The highest-severity
+    /// authority signal: any non-zero value means a caller tried to sign with a key that
+    /// is structurally unreachable on the general surface (possible from ANY origin) —
+    /// the root is reachable only through the dedicated minter capability, and a CA
+    /// private key signs only certificates through the dedicated issuance path. Pages on
+    /// any non-zero value.
     /// </summary>
     public static readonly Counter<long> SR_CrossProcessSigningRejections =
         SR_Meter.CreateCounter<long>(
             name: "d2.keycustodian.cross_process_signing_rejections",
             unit: "{rejection}",
             description:
-                "Total general-surface signing requests rejected for attempting to reach the "
-                + "cluster-signing root (jwks-signing). Any non-zero value is a security "
-                + "signal — a caller tried to mint with the cluster signing key on the "
-                + "general surface, which only the dedicated minter capability may reach.");
+                "Total general-surface signing requests rejected for attempting to reach a "
+                + "crown-jewel key (the cluster-signing root jwks-signing, or a "
+                + "certificate-authority domain). Any non-zero value is a security signal — "
+                + "a caller tried to sign with a key that is structurally unreachable on "
+                + "the general surface.");
 
     /// <summary>
     /// Counter — total capability-authority rejections across every capability. The
     /// broad dashboard counter complementing the specific
     /// <see cref="SR_CrossProcessSigningRejections"/>. Tagged <c>capability</c>
-    /// (<c>sign</c> / <c>seal-encrypt</c> / <c>seal-decrypt</c>) and <c>reason</c>
-    /// (<c>origin-unestablished</c> / <c>minter-required</c> / <c>not-in-allowed-set</c> /
-    /// <c>identity-absent</c> / <c>not-in-process</c>) — both CLOSED-enum values drawn from
+    /// (<c>sign</c> / <c>lifecycle</c> / <c>seal-encrypt</c> / <c>seal-decrypt</c>) and
+    /// <c>reason</c> (<c>origin-unestablished</c> / <c>minter-required</c> /
+    /// <c>never-signable</c> / <c>not-in-allowed-set</c> / <c>identity-absent</c> /
+    /// <c>not-in-process</c> / <c>not-system</c>) — both CLOSED-enum values drawn from
     /// the <see cref="AuthorityRejections"/> named constants (never free text), so the tag
-    /// cardinality is bounded. The <c>not-in-process</c> reason is minter-only: the dedicated
-    /// JWT-minter capability was invoked from a plane other than the in-process module.
+    /// cardinality is bounded. The <c>not-in-process</c> reason is minter-only (the
+    /// dedicated JWT-minter capability was invoked from a plane other than the in-process
+    /// module); the <c>not-system</c> reason is lifecycle-only (a lifecycle mutation was
+    /// attempted from a plane other than the in-host System worker plane).
     /// </summary>
     public static readonly Counter<long> SR_AuthorityRejectionsTotal =
         SR_Meter.CreateCounter<long>(
@@ -155,8 +163,9 @@ public static class KeyCustodianMetrics
             unit: "{rejection}",
             description:
                 "Total capability-authority rejections. Tags: capability "
-                + "(sign / seal-encrypt / seal-decrypt), reason (origin-unestablished / "
-                + "minter-required / not-in-allowed-set / identity-absent / not-in-process) "
+                + "(sign / lifecycle / seal-encrypt / seal-decrypt), reason "
+                + "(origin-unestablished / minter-required / never-signable / "
+                + "not-in-allowed-set / identity-absent / not-in-process / not-system) "
                 + "— closed-enum values.");
 
     /// <summary>
@@ -195,6 +204,12 @@ public static class KeyCustodianMetrics
         {
             /// <summary>The <c>sign</c> capability.</summary>
             public const string SIGN = "sign";
+
+            /// <summary>
+            /// The destructive key-lifecycle mutation capability (generate / activate /
+            /// rotate / retire / compromise / run-due-rotations / seed-CA) — System-plane-only.
+            /// </summary>
+            public const string LIFECYCLE = "lifecycle";
         }
 
         /// <summary>Closed-enum values for the <c>reason</c> tag.</summary>
@@ -209,6 +224,12 @@ public static class KeyCustodianMetrics
             /// </summary>
             public const string MINTER_REQUIRED = "minter-required";
 
+            /// <summary>
+            /// A general-surface attempt to sign with a never-signable domain (a
+            /// certificate-authority trust anchor) — structurally denied for every origin.
+            /// </summary>
+            public const string NEVER_SIGNABLE = "never-signable";
+
             /// <summary>The caller's policy does not grant the requested signing domain.</summary>
             public const string NOT_IN_ALLOWED_SET = "not-in-allowed-set";
 
@@ -220,6 +241,12 @@ public static class KeyCustodianMetrics
             /// in-process module.
             /// </summary>
             public const string NOT_IN_PROCESS = "not-in-process";
+
+            /// <summary>
+            /// A destructive key-lifecycle mutation was attempted from an established plane
+            /// other than the in-host System worker plane.
+            /// </summary>
+            public const string NOT_SYSTEM = "not-system";
         }
 
         /// <summary>

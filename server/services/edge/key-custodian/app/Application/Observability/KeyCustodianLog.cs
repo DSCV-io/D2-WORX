@@ -151,6 +151,29 @@ internal static partial class KeyCustodianLog
     public static partial void NoActiveIssuingCa(ILogger logger, string workloadServiceId);
 
     /// <summary>
+    /// Logs that replacement-key generation failed AFTER the compromise durably
+    /// committed. The compromised key is already dead; the missing replacement is
+    /// non-fatal (the scheduler or an operator provisions one on the next cycle), so
+    /// the handler still returns success with a null replacement kid.
+    /// </summary>
+    /// <param name="logger">The logger.</param>
+    /// <param name="domain">The key domain whose replacement generation failed.</param>
+    /// <param name="reason">
+    /// The failure reason — the build result's error code, or the classified
+    /// second-save failure kind. Never an exception message (§3.1).
+    /// </param>
+    // long log template — cannot wrap
+    [LoggerMessage(
+        EventId = 9508,
+        Level = LogLevel.Warning,
+        Message =
+            "Replacement pending key generation failed for domain {domain} after the compromise "
+            + "committed (reason {reason}); the compromised key is already dead — a replacement "
+            + "is generated on the next cycle.")]
+    public static partial void ReplacementGenerationFailed(
+        ILogger logger, string domain, string? reason);
+
+    /// <summary>
     /// Logs that the certificate-authority hierarchy was seeded on startup: the
     /// root + intermediate were loaded from the CA provider and persisted as active
     /// managed keys. No certificate or key material is logged.

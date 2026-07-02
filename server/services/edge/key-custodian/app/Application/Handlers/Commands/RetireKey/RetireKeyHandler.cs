@@ -14,7 +14,10 @@ using O = D2.Edge.KeyCustodian.Domain.Rules.KeySummary;
 /// Retires a retiring key once its grace window has elapsed.
 /// </summary>
 /// <remarks>
-/// Validates the kid at the top, loads the tracked record (not found → 404; not
+/// Authority precedes work: the System-plane-only
+/// <see cref="KeyLifecycleAuthority.AuthorizeLifecycleMutation"/> gate runs FIRST
+/// (fail-closed; deny emits the lifecycle authority-rejection telemetry). Then
+/// validates the kid, loads the tracked record (not found → 404; not
 /// retiring → 409), retires the aggregate (propagating <c>GRACE_NOT_ELAPSED</c>),
 /// projects the result, appends a <c>Retired</c> audit entry, and saves once.
 /// </remarks>
@@ -31,6 +34,16 @@ public sealed class RetireKeyHandler(
     protected override async ValueTask<D2Result<O?>> ExecuteAsync(
         I input, CancellationToken ct)
     {
+        // Authority precedes work: lifecycle mutations are System-plane-only, fail-closed.
+        var authorityResult =
+            KeyLifecycleAuthority.AuthorizeLifecycleMutation(Context.Request.Origin);
+
+        if (authorityResult.Failed)
+        {
+            return LifecycleAuthorityTelemetry.Deny<O>(
+                Context.Logger, authorityResult, Context.Request.ImmediateCaller, "retire-key");
+        }
+
         var kidResult = Kid.Create(input.Kid);
 
         if (kidResult.BubbleOnFailure<Kid, O>(out var bubbled, out var kid))

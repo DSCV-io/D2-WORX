@@ -57,7 +57,7 @@ domain/
     Jwk.cs                  RFC 7517 JSON Web Key (the JWKS-projection result)
   Enums/
     KeyStatus.cs            derived state-machine discriminator enum
-    KeyType.cs              RsaSigning / AesPayload / Secret
+    KeyType.cs              RsaSigning / AesPayload / Secret / X509CaCertificate
     KeyAuditAction.cs       enum of audit actions (Generated / Activated / Rotated / ...)
   Rules/
     KeyGeneration.cs        pure key-material generator (size as method parameter)
@@ -66,7 +66,11 @@ domain/
     JwkProjection.cs        pure SPKI → RFC 7517 JWK projection
     KeySummary.cs           pure projection over EncryptionKey (shared command output)
     RsaSigning.cs           pure RS256 sign over an already-unwrapped private key
+    CaCertificateGeneration.cs       pure root / intermediate CA certificate generator
+    WorkloadCertificateIssuance.cs   pure workload leaf-certificate builder
     WorkloadCapabilityAuthority.cs   pure capability-general workload→target authority rule
+    KeyLifecycleAuthority.cs         pure System-plane-only lifecycle-mutation authority rule
+    WorkloadCertificateAuthority.cs  interim fail-closed DENY-ALL issuance authority skeleton
   Generated/
     (codegen output — see below; do not hand-edit)
 ```
@@ -78,7 +82,7 @@ domain/
 | VO                     | Smart constructor                                                   | Notes                                                                                                  |
 | ---------------------- | ------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
 | `Kid`                  | `Create(string?) → D2Result<Kid>`                                   | JWKS-safe charset `[A-Za-z0-9_-]`, max 64 chars. `FromTrusted(string)` for rehydration.               |
-| `KeyDomain`            | `Create(string?) → D2Result<KeyDomain>`                             | Must be a member of the static catalog (EncryptionDomains minus `plaintext` + 3 KC-only domains).     |
+| `KeyDomain`            | `Create(string?) → D2Result<KeyDomain>`                             | Must be a member of the static catalog (EncryptionDomains minus `plaintext` + 5 KC-only domains). Every entry carries its bound `KeyType` (`jwks-signing`→RsaSigning, `cookie`/`client-secret`→Secret, `mtls-ca-*`→X509CaCertificate, encryption domains→AesPayload) — the single domain→type source of truth. `FromTrusted(string)` resolves the canonical entry case-insensitively and THROWS on a non-catalog stored value (data corruption). |
 | `KeyMaterialEncrypted` | `FromTrusted(ReadOnlyMemory<byte>)`                                 | Non-empty root-wrapped ciphertext. `ToString` / `PrintMembers` emit a redaction sentinel.             |
 | `PublicKeyMaterial`    | `FromTrusted(ReadOnlyMemory<byte>)`                                 | Non-empty unencrypted public-key bytes (RSA SPKI). Not secret — may appear in logs.                   |
 | `RotationPolicy`       | `Create(Duration, Duration, Duration) → D2Result<RotationPolicy>`   | Validates cadence ≥ grace + smoke-soak; all durations positive.                         |
@@ -101,6 +105,14 @@ domain/
 
 Rules hold no DI, no `IOptions`, no logger, and no clock-as-dependency (`IClock` is a permitted method parameter). A tunable is a parameter the App handler passes in, not configuration the rule reads.
 
+## Lifecycle authority — `KeyLifecycleAuthority`
+
+The System-plane-only authority over every destructive key-lifecycle mutation (generate / activate / rotate / retire / compromise / run-due-rotations / seed-CA). `AuthorizeLifecycleMutation(RequestOrigin)` is layered and fail-closed: `Unestablished` denies FIRST with the specific origin-unestablished failure (the type-zero explicit deny); `System` (the in-host workers that establish it via `EstablishSystemContext`) is the only allow; every other established plane is `Forbidden`. The System plane deliberately carries no scopes, so the origin gate — not a `ScopeRequirement` — is the control; a future admin transport (the operator compromise-key action is the standing candidate) must consciously extend this rule and add its own per-op scope. Every lifecycle command handler calls it at the TOP of `ExecuteAsync` and emits the `capability = lifecycle` authority-rejection counter + `AuthorityRejected` log on a deny.
+
+## Issuance authority — `WorkloadCertificateAuthority` (interim DENY-ALL)
+
+The authority over workload leaf-certificate issuance. The committed body is a fail-closed DENY-ALL skeleton — `Unestablished` denies first with the specific origin-unestablished failure; EVERY established origin is `Forbidden` — so a premature transport wiring denies 100% instead of minting workload identities for arbitrary callers. The cross-process issuance transport must land WITH the real rule replacing the deny arm: fail-closed on non-cross-process origin / absent peer identity, requested-workload-equals-authenticated-caller binding (or an explicit isolated delegated-issuer capability), plus the per-handler scope.
+
 ## Capability authority — `WorkloadCapabilityAuthority`
 
 The capability-general workload→target authority rule — answers "may workload W
@@ -113,7 +125,7 @@ policy and owns the counter / log on a deny.
 
 | Method                | Keyed on                                                                 | Notes |
 | ---------------------- | ------------------------------------------------------------------------ | ----- |
-| `AuthorizeSigning`     | `RequestOrigin` (the locally-established, never-propagated hop fact, from `D2.Shared.Auth.Abstractions`) + `ImmediateCaller` + the target `KeyDomain` + the caller's allowed-signing-domains set | Fail-closed layered decision: `Unestablished` origin denies; the cluster-signing root `jwks-signing` is STRUCTURALLY unreachable here for EVERY established origin (`MinterCapabilityRequired`) — reachable only via `AuthorizeMinterSigning`; every other domain requires `CrossProcessHop` + an authenticated peer + membership in the caller's allowed set. |
+| `AuthorizeSigning`     | `RequestOrigin` (the locally-established, never-propagated hop fact, from `D2.Shared.Auth.Abstractions`) + `ImmediateCaller` + the target `KeyDomain` + the caller's allowed-signing-domains set | Fail-closed layered decision: `Unestablished` origin denies; the cluster-signing root `jwks-signing` is STRUCTURALLY unreachable here for EVERY established origin (`MinterCapabilityRequired`) — reachable only via `AuthorizeMinterSigning`; every other `NeverCrossProcessSignableDomains` member (the CA trust anchors) is denied for EVERY origin (`CrossProcessDomainRejected`); every other domain requires `CrossProcessHop` + an authenticated peer + membership in the caller's allowed set. |
 | `AuthorizeMinterSigning` | `RequestOrigin` only                                                    | The dedicated JWT-minter capability's own gate — requires `Origin == InProcessModule`; possession of the capability (registered only in the auth-module composition) plus this plane check IS the authority. |
 | `AuthorizeSealEncrypt` | The caller's authenticated workload id (presence only)                   | Broad — any authenticated caller may fetch any public seal key (public material is harmless to over-share). |
 | `AuthorizeSealDecrypt` | The caller's authenticated workload id (presence only)                   | Self-only, enforced by the op SHAPE (`getOwnSealPrivateKey()` carries no target) — no in-handler `caller == target` comparison exists because there is no target. |
@@ -128,8 +140,8 @@ The `error-codes-source-gen/` sibling project emits three files into `Generated/
 
 | File                              | Content                                                                     |
 | --------------------------------- | --------------------------------------------------------------------------- |
-| `KeyCustodianErrorCodes.g.cs`     | 21 `const string` error-code constants + `AllCodes` + `GetHttpStatus`        |
-| `KeyCustodianFailures.g.cs`       | 21 `static D2Result FactoryName(...)` semantic factory methods                |
+| `KeyCustodianErrorCodes.g.cs`     | 23 `const string` error-code constants + `AllCodes` + `GetHttpStatus`        |
+| `KeyCustodianFailures.g.cs`       | 23 `static D2Result FactoryName(...)` semantic factory methods                |
 | `KeyCustodianFailures.Generic.g.cs` | The `KeyCustodianFailures<T>` typed twin                                  |
 
 All transition methods and VO smart constructors use the generated `KeyCustodianFailures<T>.*` factories — never raw `D2Result.ValidationFailed(...)` with hand-written codes. See [`error-codes-source-gen/README.md`](../error-codes-source-gen/README.md).

@@ -76,13 +76,19 @@ public sealed class KeyCustodianErrorCodesGeneratedTests
     [InlineData(
         KeyCustodianErrorCodes.KEYCUSTODIAN_EMPTY_SIGNING_INPUT,
         "KEYCUSTODIAN_EMPTY_SIGNING_INPUT")]
+    [InlineData(
+        KeyCustodianErrorCodes.KEYCUSTODIAN_KEY_TYPE_DOMAIN_MISMATCH,
+        "KEYCUSTODIAN_KEY_TYPE_DOMAIN_MISMATCH")]
+    [InlineData(
+        KeyCustodianErrorCodes.KEYCUSTODIAN_SIGNING_INPUT_TOO_LARGE,
+        "KEYCUSTODIAN_SIGNING_INPUT_TOO_LARGE")]
     public void Constant_ValueEqualsWireLiteral(string constant, string expected_wire_literal)
     {
         constant.Should().Be(expected_wire_literal);
     }
 
     // -----------------------------------------------------------------------
-    // AllCodes membership — set equals the 21 spec codes in spec order
+    // AllCodes membership — set equals the 23 spec codes in spec order
     // -----------------------------------------------------------------------
 
     [Fact]
@@ -111,6 +117,8 @@ public sealed class KeyCustodianErrorCodesGeneratedTests
             "KEYCUSTODIAN_MINTER_CAPABILITY_REQUIRED",
             "KEYCUSTODIAN_SIGNING_KEY_UNAVAILABLE",
             "KEYCUSTODIAN_EMPTY_SIGNING_INPUT",
+            "KEYCUSTODIAN_KEY_TYPE_DOMAIN_MISMATCH",
+            "KEYCUSTODIAN_SIGNING_INPUT_TOO_LARGE",
         ];
 
         KeyCustodianErrorCodes.AllCodes.Should().BeEquivalentTo(
@@ -119,9 +127,9 @@ public sealed class KeyCustodianErrorCodesGeneratedTests
     }
 
     [Fact]
-    public void AllCodes_CountIsTwentyOneCodes()
+    public void AllCodes_CountIsTwentyThreeCodes()
     {
-        KeyCustodianErrorCodes.AllCodes.Should().HaveCount(21);
+        KeyCustodianErrorCodes.AllCodes.Should().HaveCount(23);
     }
 
     // -----------------------------------------------------------------------
@@ -148,6 +156,8 @@ public sealed class KeyCustodianErrorCodesGeneratedTests
     [InlineData("KEYCUSTODIAN_MINTER_CAPABILITY_REQUIRED", 403)]
     [InlineData("KEYCUSTODIAN_SIGNING_KEY_UNAVAILABLE", 503)]
     [InlineData("KEYCUSTODIAN_EMPTY_SIGNING_INPUT", 400)]
+    [InlineData("KEYCUSTODIAN_KEY_TYPE_DOMAIN_MISMATCH", 400)]
+    [InlineData("KEYCUSTODIAN_SIGNING_INPUT_TOO_LARGE", 400)]
     public void GetHttpStatus_KnownCode_ReturnsDeclaredStatus(string code, int expected_status)
     {
         KeyCustodianErrorCodes.GetHttpStatus(code).Should().Be(expected_status);
@@ -200,6 +210,8 @@ public sealed class KeyCustodianErrorCodesGeneratedTests
             ["KEYCUSTODIAN_MINTER_CAPABILITY_REQUIRED"] = 403,
             ["KEYCUSTODIAN_SIGNING_KEY_UNAVAILABLE"] = 503,
             ["KEYCUSTODIAN_EMPTY_SIGNING_INPUT"] = 400,
+            ["KEYCUSTODIAN_KEY_TYPE_DOMAIN_MISMATCH"] = 400,
+            ["KEYCUSTODIAN_SIGNING_INPUT_TOO_LARGE"] = 400,
         };
 
         foreach (var code in KeyCustodianErrorCodes.AllCodes)
@@ -685,6 +697,29 @@ public sealed class KeyCustodianErrorCodesGeneratedTests
         result.Success.Should().BeFalse();
         result.StatusCode.Should().Be(System.Net.HttpStatusCode.BadRequest);
         result.ErrorCode.Should().Be(KeyCustodianErrorCodes.KEYCUSTODIAN_EMPTY_SIGNING_INPUT);
+        result.Category.Should().Be(ErrorCategory.ValidationFailure);
+    }
+
+    [Fact]
+    public void SigningInputTooLarge_NonGeneric_ReturnsValidationFailure()
+    {
+        var result = KeyCustodianFailures.SigningInputTooLarge();
+
+        result.Success.Should().BeFalse();
+        result.StatusCode.Should().Be(System.Net.HttpStatusCode.BadRequest);
+        result.ErrorCode.Should().Be(KeyCustodianErrorCodes.KEYCUSTODIAN_SIGNING_INPUT_TOO_LARGE);
+        result.Category.Should().Be(ErrorCategory.ValidationFailure);
+        result.Messages.Should().Contain(m => m.Key == "common_errors_TOO_LONG");
+    }
+
+    [Fact]
+    public void SigningInputTooLarge_Generic_ReturnsTypedValidationFailure()
+    {
+        var result = KeyCustodianFailures<int>.SigningInputTooLarge();
+
+        result.Success.Should().BeFalse();
+        result.StatusCode.Should().Be(System.Net.HttpStatusCode.BadRequest);
+        result.ErrorCode.Should().Be(KeyCustodianErrorCodes.KEYCUSTODIAN_SIGNING_INPUT_TOO_LARGE);
         result.Category.Should().Be(ErrorCategory.ValidationFailure);
     }
 }

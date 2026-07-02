@@ -188,7 +188,7 @@ public sealed class ActivateKeyTests
 
     private ActivateKeyHandler Build(KeyCustodianTestDbContext db, TestClock clock) =>
         new(
-            KcAppTestKit.Context<ActivateKeyHandler>(),
+            KcAppTestKit.SystemContext<ActivateKeyHandler>(),
             KcAppTestKit.NullClassifier(),
             db,
             KcAppTestKit.BuildPolicyProvider(r_options),

@@ -76,23 +76,38 @@ internal static class KcAppTestKit
         new OptionsRotationPolicyProvider(Options.Create(options));
 
     /// <summary>
-    /// Builds a handler context for the given handler type with an empty request.
+    /// Builds a handler context for the given handler type with an empty request
+    /// (the fail-closed <see cref="RequestOrigin.Unestablished"/> default).
     /// </summary>
     /// <typeparam name="THandler">The handler type.</typeparam>
     /// <returns>A handler context with a null logger + empty request context.</returns>
     public static HandlerContext<THandler> Context<THandler>() =>
-        new(new MutableRequestContext(), NullLogger<THandler>.Instance);
+        ContextWithOrigin<THandler>(RequestOrigin.Unestablished);
 
     /// <summary>
-    /// Builds a handler context with a caller-supplied logger (used by tests that
-    /// assert log output).
+    /// Builds a handler context whose request carries the given established
+    /// <see cref="RequestOrigin"/> — used by the per-origin authority deny matrices.
     /// </summary>
     /// <typeparam name="THandler">The handler type.</typeparam>
-    /// <param name="logger">The logger to inject into the context.</param>
-    /// <returns>A handler context bound to the supplied logger.</returns>
-    public static HandlerContext<THandler> ContextWithLogger<THandler>(
-        ILogger<THandler> logger) =>
-        new(new MutableRequestContext(), logger);
+    /// <param name="origin">The established origin to stamp on the request context.</param>
+    /// <param name="logger">Optional logger (used by tests that assert log output).</param>
+    /// <returns>A handler context bound to the given origin.</returns>
+    public static HandlerContext<THandler> ContextWithOrigin<THandler>(
+        RequestOrigin origin, ILogger<THandler>? logger = null) =>
+        new(new MutableRequestContext { Origin = origin }, logger ?? NullLogger<THandler>.Instance);
+
+    /// <summary>
+    /// Builds a handler context whose request carries the established
+    /// <see cref="RequestOrigin.System"/> plane — what the in-host workers establish
+    /// via <c>EstablishSystemContext</c>, and the only plane the lifecycle authority
+    /// admits. Every lifecycle-handler happy-path test drives through this.
+    /// </summary>
+    /// <typeparam name="THandler">The handler type.</typeparam>
+    /// <param name="logger">Optional logger (used by tests that assert log output).</param>
+    /// <returns>A handler context on the System plane.</returns>
+    public static HandlerContext<THandler> SystemContext<THandler>(
+        ILogger<THandler>? logger = null) =>
+        ContextWithOrigin(RequestOrigin.System, logger);
 
     /// <summary>
     /// Builds a null DB-exception classifier (no provider mapping in unit tests).

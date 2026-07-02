@@ -7,6 +7,7 @@
 namespace D2.Edge.Tests.Integration.KeyCustodian;
 
 using System.Buffers.Text;
+using System.Collections.Concurrent;
 using System.Security.Cryptography;
 using D2.Edge.KeyCustodian.App.Application;
 using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.ActivateKey;
@@ -28,6 +29,7 @@ using D2.Shared.Handler;
 using D2.Shared.Handler.Repo.Postgres;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Xunit;
 
 /// <summary>
@@ -142,17 +144,78 @@ public sealed class KeyCustodianLifecycleIntegrationTests(KeyCustodianPostgresFi
     }
 
     [Fact]
-    public async Task Sign_CrossProcessGrantedDomain_VerifiesAgainstPublishedKey_AgainstRealDb()
+    public async Task Sign_MinterCapability_VerifiesAgainstPublishedKey_AgainstRealDb()
+    {
+        await fixture.EnsureMigratedAsync();
+        var clock = new TestClock(Instant.FromUtc(2026, 6, 1, 0, 0));
+
+        // ONE root crypto shared across the providers — the System-plane provider
+        // wraps the generated key, the minter provider must unwrap the same material.
+        var rootCrypto = BuildRootCrypto();
+
+        // 1) Generate + activate the cluster-signing key through the REAL handler
+        //    graph over real PostgreSQL, on the System plane (the only plane the
+        //    lifecycle authority admits). jwks-signing is the sole RSA-signing-bound
+        //    domain, and no other test in this shared-DB collection seeds it.
+        await using (var systemProvider = BuildProvider(
+            clock, new RecordingAnnouncer(), rootCrypto: rootCrypto))
+        {
+            await Handler<IGenerateKeyHandler>(systemProvider)
+                .HandleAsync(
+                    new GenerateKeyInput(KeyDomain.JWKS_SIGNING, KeyType.RsaSigning),
+                    CancellationToken.None);
+            var pendingKid = await SingleKidAsync(KeyDomain.JWKS_SIGNING, KeyStatus.Pending);
+            clock.Advance(Duration.FromHours(2));
+            var activated = await Handler<IActivateKeyHandler>(systemProvider)
+                .HandleAsync(new ActivateKeyInput(pendingKid), CancellationToken.None);
+            activated.Success.Should().BeTrue();
+        }
+
+        var kid = await SingleKidAsync(KeyDomain.JWKS_SIGNING, KeyStatus.Active);
+
+        // 2) Sign through the dedicated minter capability (the ONLY path to the
+        //    cluster-signing root) on the in-process-module plane, over real PG.
+        var minterContext = new MutableRequestContext { Origin = RequestOrigin.InProcessModule };
+        var payload = "header.payload"u8.ToArray();
+        SignOutput signOutput;
+
+        await using (var minterProvider = BuildProvider(
+            clock, new RecordingAnnouncer(), minterContext, rootCrypto: rootCrypto, minter: true))
+        {
+            var signed = await Handler<IJwtSigningCapability>(minterProvider)
+                .SignJwtAsync(
+                    new SignInput(KeyDomain.JWKS_SIGNING, payload), CancellationToken.None);
+
+            signed.Success.Should().BeTrue();
+            signed.Data!.Kid.Should().Be(kid);
+            signOutput = signed.Data!;
+        }
+
+        // 3) Verify the signature against the published signing key (the stored SPKI
+        //    public half) exactly as a cluster consumer would after fetching the JWKS.
+        byte[] spki;
+        await using (var verifyCtx = fixture.NewContext())
+        {
+            spki = (await verifyCtx.Keys.AsNoTracking()
+                .FirstAsync(k => k.Kid == kid)).PublicKeyMaterial!;
+        }
+
+        using var verifier = RSA.Create();
+        verifier.ImportSubjectPublicKeyInfo(spki, out _);
+
+        var signature = Base64Url.DecodeFromChars(signOutput.Signature);
+        verifier.VerifyData(payload, signature, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1)
+            .Should().BeTrue("the signature verifies against the published signing key over real PG");
+    }
+
+    [Fact]
+    public async Task Sign_GeneralSurface_NonSigningBoundDomain_Returns400Mismatch_AgainstRealDb()
     {
         await fixture.EnsureMigratedAsync();
         var clock = new TestClock(Instant.FromUtc(2026, 6, 1, 0, 0));
 
         // Distinct per-test domain: the shared-collection PostgreSQL is not reset
-        // between tests, so a domain another test in this collection also seeds
-        // (e.g. "audit", used by the persistence + concurrency tests) would leave a
-        // live pending key that makes GenerateKey short-circuit to
-        // PendingKeyAlreadyExists — the incumbent tests deliberately pick disjoint
-        // domains for the same reason (client-secret, cookie).
+        // between tests, so this test uses a domain no other test seeds.
         const string domain = "notifications";
 
         var requestContext = new MutableRequestContext
@@ -171,40 +234,162 @@ public sealed class KeyCustodianLifecycleIntegrationTests(KeyCustodianPostgresFi
         await using var provider = BuildProvider(
             clock, new RecordingAnnouncer(), requestContext, signingAuth);
 
-        // Generate + activate a real RSA signing key in a non-root domain through the
-        // real handler graph (RSA gen → root-wrap → persist → soak → smoke → activate).
-        await Handler<IGenerateKeyHandler>(provider)
-            .HandleAsync(new GenerateKeyInput(domain, KeyType.RsaSigning), CancellationToken.None);
-        var kid = await SingleKidAsync(domain, KeyStatus.Pending);
-        clock.Advance(Duration.FromHours(2));
-        var activated = await Handler<IActivateKeyHandler>(provider)
-            .HandleAsync(new ActivateKeyInput(kid), CancellationToken.None);
-        activated.Success.Should().BeTrue();
-
-        // Sign through the real handler over real PostgreSQL, authority-gated by the
-        // established cross-process Origin + the caller's allowed-signing-domains policy.
-        var payload = "header.payload"u8.ToArray();
+        // The caller + policy authorize, but the domain's bound key type (AES payload)
+        // can never hold a signing key — a permanent 400 over real PG, never the
+        // retryable 503 a not-yet-provisioned key would produce.
         var signed = await Handler<ISignHandler>(provider)
-            .HandleAsync(new SignInput(domain, payload), CancellationToken.None);
+            .HandleAsync(
+                new SignInput(domain, "header.payload"u8.ToArray()), CancellationToken.None);
 
-        signed.Success.Should().BeTrue();
-        signed.Data!.Kid.Should().Be(kid);
+        signed.Success.Should().BeFalse();
+        signed.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        signed.ErrorCode.Should().Be(
+            KeyCustodianErrorCodes.KEYCUSTODIAN_KEY_TYPE_DOMAIN_MISMATCH);
+    }
 
-        // Verify the signature against the published signing key (the stored SPKI public
-        // half) exactly as a cluster consumer would after fetching the JWKS.
-        byte[] spki;
-        await using (var verifyCtx = fixture.NewContext())
-        {
-            spki = (await verifyCtx.Keys.AsNoTracking()
-                .FirstAsync(k => k.Kid == kid)).PublicKeyMaterial!;
-        }
+    [Fact]
+    public async Task CompromiseKey_PendingWithReplacement_SwapsInOneSave_AgainstRealDb()
+    {
+        await fixture.EnsureMigratedAsync();
+        var clock = new TestClock(Instant.FromUtc(2026, 6, 1, 0, 0));
+        await using var provider = BuildProvider(clock, new RecordingAnnouncer());
 
-        using var verifier = RSA.Create();
-        verifier.ImportSubjectPublicKeyInfo(spki, out _);
+        // Distinct per-test domain the shared-collection PostgreSQL is not reset
+        // between tests; courier is an AES-payload-bound domain no other test seeds.
+        const string domain = "courier";
 
-        var signature = Base64Url.DecodeFromChars(signed.Data!.Signature);
-        verifier.VerifyData(payload, signature, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1)
-            .Should().BeTrue("the signature verifies against the published signing key over real PG");
+        // Generate a pending key, then compromise it WITH a replacement: the handler
+        // marks the original Compromised AND inserts a fresh Pending in ONE
+        // SaveChangesAsync, exercising the "one Pending per domain" partial unique
+        // index's release-before-acquire statement ordering against the real schema.
+        await Handler<IGenerateKeyHandler>(provider)
+            .HandleAsync(new GenerateKeyInput(domain, KeyType.AesPayload), CancellationToken.None);
+        var pendingKid = await SingleKidAsync(domain, KeyStatus.Pending);
+
+        var compromised = await Handler<ICompromiseKeyHandler>(provider)
+            .HandleAsync(
+                new CompromiseKeyInput
+                {
+                    Kid = pendingKid,
+                    Reason = "integration",
+                    GenerateReplacement = true,
+                },
+                CancellationToken.None);
+
+        compromised.Success.Should().BeTrue();
+
+        await using var verify = fixture.NewContext();
+        (await verify.Keys.AsNoTracking()
+                .CountAsync(k => k.KeyDomain == domain && k.Status == KeyStatus.Pending))
+            .Should().Be(1, "the replacement Pending is the only Pending after the swap");
+        (await verify.Keys.AsNoTracking()
+                .CountAsync(k => k.KeyDomain == domain && k.Status == KeyStatus.Compromised))
+            .Should().Be(1, "the original key is Compromised after the swap");
+    }
+
+    [Fact]
+    public async Task CompromiseKey_ExistingPending_CommitsWithoutSecondPending_AgainstRealDb()
+    {
+        await fixture.EnsureMigratedAsync();
+        var clock = new TestClock(Instant.FromUtc(2026, 6, 1, 0, 0));
+        await using var provider = BuildProvider(clock, new RecordingAnnouncer());
+
+        // Distinct per-test domain the shared-collection PostgreSQL is not reset between
+        // tests; notifications is an AES-payload-bound domain no other test persists keys
+        // in (the sign-mismatch test signs it but never seeds a key).
+        const string domain = "notifications";
+
+        // Seed the mid-rotation state: an Active incumbent AND a live Pending successor.
+        await Handler<IGenerateKeyHandler>(provider)
+            .HandleAsync(new GenerateKeyInput(domain, KeyType.AesPayload), CancellationToken.None);
+        var incumbentKid = await SingleKidAsync(domain, KeyStatus.Pending);
+        clock.Advance(Duration.FromHours(2));
+        await Handler<IActivateKeyHandler>(provider)
+            .HandleAsync(new ActivateKeyInput(incumbentKid), CancellationToken.None);
+
+        await Handler<IGenerateKeyHandler>(provider)
+            .HandleAsync(new GenerateKeyInput(domain, KeyType.AesPayload), CancellationToken.None);
+        var successorKid = await SingleKidAsync(domain, KeyStatus.Pending);
+
+        // Compromise the ACTIVE incumbent WITH a replacement requested. A live pending
+        // successor already exists, so the handler must NOT insert a second Pending
+        // (that would breach the one-pending-per-domain unique index and roll the WHOLE
+        // transaction — including the compromise — back). The compromise MUST commit and
+        // the pre-existing successor is reported as the replacement.
+        var activeKid = await SingleKidAsync(domain, KeyStatus.Active);
+        var compromised = await Handler<ICompromiseKeyHandler>(provider)
+            .HandleAsync(
+                new CompromiseKeyInput
+                {
+                    Kid = activeKid,
+                    Reason = "integration",
+                    GenerateReplacement = true,
+                },
+                CancellationToken.None);
+
+        compromised.Success.Should().BeTrue("the compromise always commits, never rolls back");
+        compromised.Data!.ReplacementKid.Should().Be(
+            successorKid, "the pre-existing successor is reported as the replacement");
+
+        await using var verify = fixture.NewContext();
+        (await verify.Keys.AsNoTracking()
+                .CountAsync(k => k.KeyDomain == domain && k.Status == KeyStatus.Pending))
+            .Should().Be(1, "no second Pending is inserted; only the successor remains");
+        (await verify.Keys.AsNoTracking()
+                .SingleAsync(k => k.KeyDomain == domain && k.Status == KeyStatus.Compromised))
+            .Kid.Should().Be(activeKid, "the compromised incumbent is durably Compromised");
+    }
+
+    [Fact]
+    public async Task CompromiseKey_ReplacementBuildFails_CompromiseStillCommitsDurably_AgainstRealDb()
+    {
+        await fixture.EnsureMigratedAsync();
+        var clock = new TestClock(Instant.FromUtc(2026, 6, 1, 0, 0));
+        var rootCrypto = BuildRootCrypto();
+        var logs = new CapturingLoggerProvider();
+        await using var provider = BuildProvider(
+            clock, new RecordingAnnouncer(), rootCrypto: rootCrypto, loggerProvider: logs);
+
+        // The intermediate-CA domain: no other test in this shared-DB collection seeds it.
+        // Seed a LIVE (active) intermediate but leave its issuing root ABSENT — so building a
+        // replacement intermediate (which must be signed by an active root) cannot succeed.
+        const string domain = KeyDomain.MTLS_CA_INTERMEDIATE;
+        var incumbentKid = await SeedActiveCaKeyAsync(domain, clock, rootCrypto);
+
+        // Compromise the active intermediate WITH a replacement requested. The replacement
+        // build fails (no active root to sign a new intermediate), but that is a best-effort
+        // follow-up AFTER the durable kill: the compromise MUST still commit and the op
+        // returns Ok with a null replacement — never a rollback that leaves the key live.
+        var compromised = await Handler<ICompromiseKeyHandler>(provider)
+            .HandleAsync(
+                new CompromiseKeyInput
+                {
+                    Kid = incumbentKid,
+                    Reason = "integration",
+                    GenerateReplacement = true,
+                },
+                CancellationToken.None);
+
+        compromised.Success.Should().BeTrue(
+            "the compromise commits durably even when the replacement cannot be built");
+        compromised.Data!.ReplacementKid.Should().BeNull(
+            "the replacement build failed — a null kid is returned, never a rollback");
+
+        // Re-query the DB: the incumbent is DURABLY Compromised (the kill survived the
+        // failed replacement generation), and no orphan replacement Pending was written.
+        await using var verify = fixture.NewContext();
+        (await verify.Keys.AsNoTracking()
+                .SingleAsync(k => k.Kid == incumbentKid))
+            .Status.Should().Be(
+                KeyStatus.Compromised, "the compromised intermediate is durably Compromised");
+        (await verify.Keys.AsNoTracking()
+                .CountAsync(k => k.KeyDomain == domain && k.Status == KeyStatus.Pending))
+            .Should().Be(0, "no replacement Pending is inserted when the build fails");
+
+        // The best-effort failure is observable, not silent.
+        logs.Entries.Should().Contain(
+            e => e.EventId.Id == 9508,
+            "a replacement-generation-failed warning is logged after the durable commit");
     }
 
     private static THandler Handler<THandler>(ServiceProvider provider)
@@ -259,16 +444,71 @@ public sealed class KeyCustodianLifecycleIntegrationTests(KeyCustodianPostgresFi
             .FirstAsync();
     }
 
+    // Seeds a live (active) CA-certificate key directly. Real CA material is generated (a
+    // self-signed cert stands in for the incumbent — the compromise path never parses it,
+    // and a replacement build fails on the absent active root before touching it). The
+    // private key is root-wrapped with the shared crypto so ToDomain rehydrates cleanly.
+    private async Task<string> SeedActiveCaKeyAsync(
+        string domain, TestClock clock, IPayloadCrypto rootCrypto)
+    {
+        var generated = CaCertificateGeneration.GenerateRootCa(
+            CaCertificateGeneration.ROOT_CA_SUBJECT, Duration.FromDays(365), clock).Data!;
+
+        byte[] wrapped;
+
+        try
+        {
+            wrapped = rootCrypto.Encrypt(generated.PrivateKeyPkcs8);
+        }
+        finally
+        {
+            generated.Zero();
+        }
+
+        var kid = KidMinting.Mint();
+
+        await using var seed = fixture.NewContext();
+        seed.Keys.Add(new KeyRecord
+        {
+            Kid = kid,
+            KeyDomain = domain,
+            KeyType = KeyType.X509CaCertificate,
+            KeyMaterialEncrypted = wrapped,
+            CaCertificate = generated.CertificateDer,
+            CreatedAt = clock.GetCurrentInstant(),
+            Status = KeyStatus.Active,
+            ActivatedAt = clock.GetCurrentInstant(),
+        });
+
+        await seed.SaveChangesAsync();
+
+        return kid;
+    }
+
     private ServiceProvider BuildProvider(
         TestClock clock,
         IKeyRotationAnnouncer announcer,
         IRequestContext? requestContext = null,
-        SigningDomainAuthorityOptions? signingAuthority = null)
+        SigningDomainAuthorityOptions? signingAuthority = null,
+        IPayloadCrypto? rootCrypto = null,
+        bool minter = false,
+        ILoggerProvider? loggerProvider = null)
     {
         var services = new ServiceCollection();
-        services.AddLogging();
+        services.AddLogging(b =>
+        {
+            if (loggerProvider is not null)
+            {
+                b.SetMinimumLevel(LogLevel.Trace);
+                b.AddProvider(loggerProvider);
+            }
+        });
         services.AddD2Handler();
-        services.AddSingleton(requestContext ?? new MutableRequestContext());
+
+        // Default plane: the in-host System worker plane — the only plane the
+        // lifecycle authority admits, mirroring the schedulers' established context.
+        services.AddSingleton(
+            requestContext ?? new MutableRequestContext { Origin = RequestOrigin.System });
         services.AddSingleton<IClock>(clock);
         services.AddSingleton(announcer);
         services.AddSingleton(
@@ -286,14 +526,52 @@ public sealed class KeyCustodianLifecycleIntegrationTests(KeyCustodianPostgresFi
 
         services.AddD2Postgres();
 
-        // Real root crypto over a throwaway keyring (genuine wrap/unwrap path).
+        // Real root crypto over a throwaway keyring (genuine wrap/unwrap path). Tests
+        // spanning multiple providers pass ONE shared instance so material wrapped by
+        // one provider unwraps in another.
+        var resolvedCrypto = rootCrypto ?? BuildRootCrypto();
         services.AddKeyedSingleton<IPayloadCrypto>(
-            KeyCustodianRootKey.ROOT_SERVICE_KEY, (_, _) => BuildRootCrypto());
+            KeyCustodianRootKey.ROOT_SERVICE_KEY, (_, _) => resolvedCrypto);
 
         services.AddSingleton(Microsoft.Extensions.Options.Options.Create(BuildOptions()));
 
         services.AddD2KeyCustodianApp();
 
+        // The dedicated minter capability is granted ONLY where the auth-module
+        // composition would grant it — never in the general registration.
+        if (minter)
+            services.AddD2JwtSigningCapability();
+
         return services.BuildServiceProvider();
+    }
+
+    // Captures log entries (level + EventId) across all categories so a test can assert a
+    // specific delegate fired (e.g. the best-effort replacement-generation-failed warning).
+    private sealed class CapturingLoggerProvider : ILoggerProvider
+    {
+        public ConcurrentQueue<(LogLevel Level, EventId EventId)> Entries { get; } = new();
+
+        public ILogger CreateLogger(string categoryName) => new CapturingLogger(Entries);
+
+        public void Dispose()
+        {
+        }
+
+        private sealed class CapturingLogger(
+            ConcurrentQueue<(LogLevel Level, EventId EventId)> entries) : ILogger
+        {
+            public IDisposable? BeginScope<TState>(TState state)
+                where TState : notnull => null;
+
+            public bool IsEnabled(LogLevel logLevel) => true;
+
+            public void Log<TState>(
+                LogLevel logLevel,
+                EventId eventId,
+                TState state,
+                Exception? exception,
+                Func<TState, Exception?, string> formatter)
+                => entries.Enqueue((logLevel, eventId));
+        }
     }
 }

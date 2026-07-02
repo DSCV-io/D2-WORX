@@ -18,9 +18,11 @@ using O = D2.Edge.KeyCustodian.Clients.SignOutput;
 /// returns the signature + kid. Authority-gated through
 /// <see cref="WorkloadCapabilityAuthority.AuthorizeSigning"/> using the established
 /// <c>IRequestContext.Origin</c> + <c>IRequestContext.ImmediateCaller</c> surfaced on
-/// the handler context. The general surface signs every domain except
-/// <c>jwks-signing</c> (categorically rejected here — reachable only via the dedicated
-/// minter capability).
+/// the handler context. The general surface categorically rejects <c>jwks-signing</c>
+/// (reachable only via the dedicated minter capability) and both CA domains
+/// (never signable anywhere), and sharply rejects any domain whose bound
+/// <see cref="KeyType"/> is not <see cref="KeyType.RsaSigning"/> with a permanent 400
+/// (a non-signing-bound domain can never hold a signing key — never the retryable 503).
 /// </summary>
 /// <remarks>
 /// Transport-agnostic — reads ONLY the scoped request context (<c>Context.Request</c>),
@@ -82,17 +84,24 @@ public sealed class SignHandler(
         if (authResult.Failed)
             return DenyWithTelemetry(authResult, immediateCaller, domain!);
 
-        // 3) Sign via the shared core (empty-input reject + active-key load + decrypt +
+        // 3) Sharp fail-loud reject for a structurally-unsignable domain: only an
+        //    RsaSigning-bound domain can EVER hold an active signing key, so a domain
+        //    bound to any other key type is a permanent 400 — never the retryable 503
+        //    the signer core returns for a not-yet-provisioned key.
+        if (domain!.KeyType != KeyType.RsaSigning)
+            return KeyCustodianFailures<O?>.KeyTypeDomainMismatch();
+
+        // 4) Sign via the shared core (empty-input reject + active-key load + decrypt +
         //    sign + zero). The general surface never reaches jwks-signing — step (2) above
         //    rejected it categorically before this point.
         var signResult = await KeyDomainSigner
-            .SignActiveKeyAsync(db, rootCrypto, domain!, input.SigningInput, ct)
+            .SignActiveKeyAsync(db, rootCrypto, domain, input.SigningInput, ct)
             .ConfigureAwait(false);
 
         if (signResult.BubbleOnFailure<O, O>(out var signBubble, out var output))
             return signBubble;
 
-        // 4) Return the signature + the kid that produced it (Query — no DB write, no audit).
+        // 5) Return the signature + the kid that produced it (Query — no DB write, no audit).
         return D2Result<O?>.Ok(output);
     }
 
@@ -109,6 +118,8 @@ public sealed class SignHandler(
                 KeyCustodianMetrics.AuthorityRejections.Reason.ORIGIN_UNESTABLISHED,
             KeyCustodianErrorCodes.KEYCUSTODIAN_MINTER_CAPABILITY_REQUIRED =>
                 KeyCustodianMetrics.AuthorityRejections.Reason.MINTER_REQUIRED,
+            KeyCustodianErrorCodes.KEYCUSTODIAN_CROSS_PROCESS_DOMAIN_REJECTED =>
+                KeyCustodianMetrics.AuthorityRejections.Reason.NEVER_SIGNABLE,
             KeyCustodianErrorCodes.KEYCUSTODIAN_SIGNING_DOMAIN_NOT_AUTHORIZED =>
                 KeyCustodianMetrics.AuthorityRejections.Reason.NOT_IN_ALLOWED_SET,
 
@@ -130,11 +141,13 @@ public sealed class SignHandler(
             new KeyValuePair<string, object?>(
                 KeyCustodianMetrics.AuthorityRejections.TAG_REASON, reason));
 
-        // The dedicated highest-severity counter fires when a caller tried to reach the
-        // cluster-signing root on the general surface (MinterCapabilityRequired) — the
-        // crown-jewel-key attempt. The bounded reason tag is a named closed-set constant
+        // The dedicated highest-severity counter fires when a caller tried to reach a
+        // crown-jewel key on the general surface: the cluster-signing root
+        // (MinterCapabilityRequired) or a CA trust anchor (CrossProcessDomainRejected —
+        // never-signable). The bounded reason tag is a named closed-set constant
         // (KeyCustodianMetrics.AuthorityRejections.Reason), not a raw literal.
-        if (reason == KeyCustodianMetrics.AuthorityRejections.Reason.MINTER_REQUIRED)
+        if (reason is KeyCustodianMetrics.AuthorityRejections.Reason.MINTER_REQUIRED
+            or KeyCustodianMetrics.AuthorityRejections.Reason.NEVER_SIGNABLE)
             KeyCustodianMetrics.SR_CrossProcessSigningRejections.Add(1);
 
         return D2Result<O?>.BubbleFail(authResult);

@@ -68,5 +68,17 @@ namespace D2.Shared.Auth.Grpc.Telemetry
                     __CallPathReceivedStruct.Format);
             }
         }
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.Extensions.Logging.Generators", "10.0.14.21808")]
+        private static readonly global::System.Action<global::Microsoft.Extensions.Logging.ILogger, global::System.String, global::System.Exception?> __CrossProcessPeerIdentityAbsentCallback =
+            global::Microsoft.Extensions.Logging.LoggerMessage.Define<global::System.String>(global::Microsoft.Extensions.Logging.LogLevel.Warning, new global::Microsoft.Extensions.Logging.EventId(4104, nameof(CrossProcessPeerIdentityAbsent)), "Cross-process hop at {SelfServiceId} carried no validated mTLS peer identity; request origin left unestablished (fail-closed) — a misconfigured non-mTLS hop, not silently accepted.", new global::Microsoft.Extensions.Logging.LogDefineOptions() { SkipEnabledCheck = true }); 
+
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.Extensions.Logging.Generators", "10.0.14.21808")]
+        public static partial void CrossProcessPeerIdentityAbsent(this global::Microsoft.Extensions.Logging.ILogger logger, global::System.String selfServiceId)
+        {
+            if (logger.IsEnabled(global::Microsoft.Extensions.Logging.LogLevel.Warning))
+            {
+                __CrossProcessPeerIdentityAbsentCallback(logger, selfServiceId, null);
+            }
+        }
     }
 }

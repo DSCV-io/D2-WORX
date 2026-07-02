@@ -70,6 +70,21 @@ public sealed class RunDueRotationsHandler(
     protected override async ValueTask<D2Result<O?>> ExecuteAsync(
         I input, CancellationToken ct)
     {
+        // Authority precedes work: lifecycle mutations are System-plane-only, fail-closed.
+        // The sub-handlers re-check the same scoped context — this gate rejects a
+        // non-System caller before even the read-only plan is computed.
+        var authorityResult =
+            KeyLifecycleAuthority.AuthorizeLifecycleMutation(Context.Request.Origin);
+
+        if (authorityResult.Failed)
+        {
+            return LifecycleAuthorityTelemetry.Deny<O>(
+                Context.Logger,
+                authorityResult,
+                Context.Request.ImmediateCaller,
+                "run-due-rotations");
+        }
+
         var planResult = await getPlan
             .HandleAsync(new GetRotationPlanInput(), ct)
             .ConfigureAwait(false);

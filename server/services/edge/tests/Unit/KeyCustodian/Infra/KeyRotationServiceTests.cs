@@ -28,24 +28,38 @@ public sealed class KeyRotationServiceTests
     // (a) Bootstrap key-type mapping — internal statics, no I/O.
     // =========================================================================
 
-    [Theory]
-    [InlineData(KeyDomain.JWKS_SIGNING, KeyType.RsaSigning)]
-    [InlineData(KeyDomain.COOKIE, KeyType.Secret)]
-    [InlineData(KeyDomain.CLIENT_SECRET, KeyType.Secret)]
-    public void KeyTypeForDomain_KnownDomains_ReturnsExpectedType(
-        string domain, KeyType expectedType)
+    [Fact]
+    public void BuildBootstrapKeyTypes_SameMapAsTheRetiredPerServiceSwitch()
     {
-        var actual = KeyRotationService.KeyTypeForDomain(domain);
+        // Regression pin: the map is now DERIVED from the KeyDomain catalog's
+        // per-domain key-type binding (no infra-local switch, no catch-all arm), and
+        // must equal the exact map the retired switch produced.
+        var expected = new Dictionary<string, KeyType>(StringComparer.Ordinal)
+        {
+            [KeyDomain.JWKS_SIGNING] = KeyType.RsaSigning,
+            [KeyDomain.COOKIE] = KeyType.Secret,
+            [KeyDomain.CLIENT_SECRET] = KeyType.Secret,
+            ["audit"] = KeyType.AesPayload,
+            ["notifications"] = KeyType.AesPayload,
+            ["courier"] = KeyType.AesPayload,
+        };
 
-        actual.Should().Be(expectedType);
+        KeyRotationService.BuildBootstrapKeyTypes().Should().Equal(expected);
     }
 
-    [Fact]
-    public void KeyTypeForDomain_UnknownDomain_ReturnsAesPayload()
+    [Theory]
+    [InlineData(KeyDomain.JWKS_SIGNING, false)]
+    [InlineData(KeyDomain.COOKIE, false)]
+    [InlineData("audit", false)]
+    [InlineData(KeyDomain.MTLS_CA_ROOT, true)]
+    [InlineData(KeyDomain.MTLS_CA_INTERMEDIATE, true)]
+    public void IsCaDomain_DerivedFromTheKeyTypeBinding(string domainValue, bool expected)
     {
-        var actual = KeyRotationService.KeyTypeForDomain("unknown-domain-sentinel");
+        var domain = KeyDomain.Create(domainValue).Data!;
 
-        actual.Should().Be(KeyType.AesPayload);
+        KeyRotationService.IsCaDomain(domain).Should().Be(
+            expected,
+            "CA classification derives from the domain's bound key type, not a name list");
     }
 
     [Fact]
@@ -57,7 +71,7 @@ public sealed class KeyRotationServiceTests
 
         foreach (var domain in KeyDomain.All)
         {
-            if (KeyRotationService.IsCaDomain(domain.Value))
+            if (KeyRotationService.IsCaDomain(domain))
             {
                 map.Should().NotContainKey(
                     domain.Value, because: "CA domains are excluded from auto-bootstrap");
@@ -117,7 +131,7 @@ public sealed class KeyRotationServiceTests
                 d.Value != KeyDomain.JWKS_SIGNING
                 && d.Value != KeyDomain.COOKIE
                 && d.Value != KeyDomain.CLIENT_SECRET
-                && !KeyRotationService.IsCaDomain(d.Value))
+                && !KeyRotationService.IsCaDomain(d))
             .ToList();
 
         encryptionDomains.Should().NotBeEmpty(

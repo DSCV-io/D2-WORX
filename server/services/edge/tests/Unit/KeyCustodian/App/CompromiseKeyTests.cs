@@ -406,7 +406,7 @@ public sealed class CompromiseKeyTests
     private CompromiseKeyHandler Build(
         KeyCustodianTestDbContext db, TestClock clock, RecordingAnnouncer announcer) =>
         new(
-            KcAppTestKit.Context<CompromiseKeyHandler>(),
+            KcAppTestKit.SystemContext<CompromiseKeyHandler>(),
             KcAppTestKit.NullClassifier(),
             db,
             Options.Create(r_options),

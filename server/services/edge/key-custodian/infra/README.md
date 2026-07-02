@@ -12,7 +12,7 @@ The infrastructure layer for the KeyCustodian module — the concrete adapters b
 
 | Concern | Adapter | Notes |
 | --- | --- | --- |
-| `Persistence/Postgres/` | `KeyCustodianDbContext` + the two `IEntityTypeConfiguration<>`s + the design-time factory | Maps the flat `KeyRecord` / `KeyAuditRecord` rows to `keycustodian_db`. `Status` is a settable value column (not a discriminator); `xmin` is the optimistic-concurrency token; the audit FK is delete-restricted. |
+| `Persistence/Postgres/` | `KeyCustodianDbContext` + the two `IEntityTypeConfiguration<>`s + the design-time factory | Maps the flat `KeyRecord` / `KeyAuditRecord` rows to `keycustodian_db`. `Status` is a settable value column (not a discriminator); `xmin` is the optimistic-concurrency token; the audit FK is delete-restricted. Two per-domain lifecycle invariants are DB-enforced — at most one Pending and at most one Active key per domain (see [Per-domain key invariants](#per-domain-key-invariants)). |
 | `Vault/File/` | `FileRootKeyProvider` | Builds the root keyring from a root-key directory (see below). |
 | `Messaging/RabbitMq/` | `RabbitMqKeyRotationAnnouncer` + `KeyRotatedEventMapper` | Publishes the `KeyRotatedEvent` after a committed transition. Fire-and-log — a failed publish never bubbles. |
 | `Scheduling/Hosted/` | `KeyRotationService` | In-process timer that drives `RunDueRotations` under a try-advisory-lock (skip-if-held). |
@@ -57,3 +57,14 @@ In local dev, `tools/scripts/gen-dev-keys.sh` generates `root.key` by default; s
 ## Database lifecycle
 
 `keycustodian_db` is created on first boot by the migrator's ensure-database step (it connects to the `postgres` maintenance database and issues a `CREATE DATABASE` if absent), then the Initial migration is applied under the blocking migration advisory lock. The step is idempotent and multi-replica-safe: concurrent instances all attempt the lock, the first migrates, the rest block then find nothing pending. The connecting role needs `CREATEDB`. Migrations are generated (`dotnet ef migrations add`) and committed — never hand-edited.
+
+One migration (`OnePendingIndexAndActiveExclusion`) installs the `btree_gist` extension (see below), so the connecting role also needs `CREATE` on `keycustodian_db`. `btree_gist` is a trusted extension (PostgreSQL 13+), so a non-superuser role with `CREATE` on the database can install it; the migration creates it idempotently (`CREATE EXTENSION IF NOT EXISTS`).
+
+## Per-domain key invariants
+
+Two lifecycle invariants are enforced by the schema, not by application discipline alone (the rotation advisory lock is the coordination mechanism; these constraints are the structural backstop for its race window):
+
+- **At most one Pending key per domain** — a partial UNIQUE index `ux_key_record_one_pending_per_domain` filtered to `status = 'Pending'`. It is declared in the EF model (`KeyRecordConfiguration`), so EF's command-batch preparer uses the unique-index value dependency to emit the releasing `UPDATE` before the acquiring `INSERT` within one `SaveChangesAsync` — this is why the CompromiseKey "mark the old Pending compromised + insert a fresh Pending" swap succeeds. A duplicate raises SQLSTATE `23505` (unique_violation), which `PostgresDbExceptionClassifier` maps to a typed 409 conflict.
+- **At most one Active key per domain** — a partial, **DEFERRABLE** EXCLUSION constraint `ux_key_record_one_active_per_domain` (`EXCLUDE USING gist (key_domain WITH =) WHERE (status = 'Active') DEFERRABLE INITIALLY DEFERRED`). EF's fluent API cannot model an EXCLUDE constraint, so it is added in raw SQL inside the scaffolded `OnePendingIndexAndActiveExclusion` migration (a partial UNIQUE index cannot be `DEFERRABLE`, and the RotateKey `Active → Retiring` + `Pending → Active` swap needs the check deferred to COMMIT so the transient two-Active state inside one transaction is tolerated). The constraint is intentionally invisible to the EF model and model snapshot. A duplicate raises SQLSTATE `23P01` (exclusion_violation) — distinct from the Pending index's `23505` — at transaction commit.
+
+The `'Pending'` / `'Active'` SQL filter literals are the persisted `KeyStatus` string names (the enum is stored via `HasConversion<string>()`); `KeyCustodianPersistedEnumStabilityTests` pins those names so a rename cannot silently break the filters. Both invariants are per-domain — keys in different domains never collide.

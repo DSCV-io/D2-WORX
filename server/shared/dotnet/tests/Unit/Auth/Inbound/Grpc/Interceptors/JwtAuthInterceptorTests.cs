@@ -6,6 +6,7 @@
 
 namespace D2.Shared.Tests.Unit.Auth.Inbound.Grpc.Interceptors;
 
+using System.Reflection;
 using AwesomeAssertions;
 using D2.Shared.Auth;
 using D2.Shared.Auth.Abstractions;
@@ -577,7 +578,7 @@ public sealed class JwtAuthInterceptorTests
     [Fact]
     public async Task UnaryServerHandler_BearerMissing_LeavesHolderUnset()
     {
-        // Parity (L-1): mirrors InvokeAsync_BearerMissing_LeavesHolderUnset on
+        // Parity: mirrors InvokeAsync_BearerMissing_LeavesHolderUnset on
         // the HTTP middleware. Bearer-missing short-circuits before capture — the
         // holder must stay empty after the RpcException is thrown.
         using var builder = new TestJwtBuilder();
@@ -1434,7 +1435,58 @@ public sealed class JwtAuthInterceptorTests
         await act.Should().ThrowAsync<ArgumentNullException>();
     }
 
+    [Fact]
+    public async Task UnaryServerHandler_PresentNonHarmlessButEmptyScopeMetadata_FailsClosed()
+    {
+        // The public factories reject empty scope sets, so a present, non-harmless method
+        // metadata with an EMPTY scope set can only arise from a serializer / record-clone /
+        // reflection path. The interceptor's enforcement guard must fail CLOSED (deny) rather
+        // than silently admit any authenticated caller — symmetric with the HTTP middleware.
+        using var builder = new TestJwtBuilder();
+        var token = builder.MintToken(_ISSUER, _AUDIENCE);
+        var interceptor = MakeInterceptor(builder);
+        var ctx = MakeContext(
+            authorization: $"{_BEARER_PREFIX}{token}", metadata: BuildAnomalousEmptyMetadata());
+
+        var act = async () =>
+            await interceptor.UnaryServerHandler<string, string>(
+                "req", ctx, (_, _) => Task.FromResult("reply"));
+
+        var ex = await act.Should().ThrowAsync<RpcException>();
+        ex.Which.StatusCode.Should().Be(GrpcStatusCode.Unauthenticated);
+        ReadTrailer(ex.Which.Trailers, D2GrpcTrailers.ERROR_CODE)
+            .Should().Be(AuthErrorCodes.AUTH_SCOPE_INSUFFICIENT);
+    }
+
+    [Fact]
+    public void MethodScopeMetadata_ForScopes_EmptySet_Throws()
+    {
+        // Re-pin: the public factory rejects empty scope sets — the enforcement guard's
+        // empty-set anomaly path is only reachable via reflection / a serializer.
+        var act = () => MethodScopeMetadata.ForScopes([], ScopeMatch.Any);
+
+        act.Should().Throw<ArgumentException>();
+    }
+
     // ---- Helpers ----
+
+    private static MethodScopeMetadata BuildAnomalousEmptyMetadata()
+    {
+        // The public factory (ForScopes) throws on an empty set and HarmlessEndpoint is a
+        // singleton, so a present, non-harmless, EMPTY-scope metadata is unconstructible via
+        // the public surface — only the private ctor (reached here by reflection) can produce
+        // one, standing in for a future serializer / record-clone path.
+        var ctor = typeof(MethodScopeMetadata).GetConstructor(
+            BindingFlags.Instance | BindingFlags.NonPublic,
+            binder: null,
+            [typeof(IReadOnlySet<string>), typeof(ScopeMatch), typeof(bool)],
+            modifiers: null)
+            ?? throw new InvalidOperationException(
+                "the private (scopes, match, isHarmless) ctor must exist");
+
+        return (MethodScopeMetadata)ctor.Invoke(
+            [new HashSet<string>(StringComparer.Ordinal), ScopeMatch.Any, false]);
+    }
 
     private static JwtAuthInterceptor MakeInterceptor(
         TestJwtBuilder builder,

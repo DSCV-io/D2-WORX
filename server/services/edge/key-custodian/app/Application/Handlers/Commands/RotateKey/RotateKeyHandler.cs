@@ -15,7 +15,10 @@ using O = RotateKeyOutput;
 /// successor.
 /// </summary>
 /// <remarks>
-/// Validates the domain at the top, loads the tracked active incumbent + the
+/// Authority precedes work: the System-plane-only
+/// <see cref="KeyLifecycleAuthority.AuthorizeLifecycleMutation"/> gate runs FIRST
+/// (fail-closed; deny emits the lifecycle authority-rejection telemetry). Then
+/// validates the domain, loads the tracked active incumbent + the
 /// tracked pending successor (each missing → 404), smoke-tests the successor,
 /// rotates the incumbent to retiring AND activates the successor in ONE
 /// <see cref="IKeyCustodianDbContext.SaveChangesAsync"/> (no gap with no active
@@ -49,6 +52,16 @@ public sealed class RotateKeyHandler(
     protected override async ValueTask<D2Result<O?>> ExecuteAsync(
         I input, CancellationToken ct)
     {
+        // Authority precedes work: lifecycle mutations are System-plane-only, fail-closed.
+        var authorityResult =
+            KeyLifecycleAuthority.AuthorizeLifecycleMutation(Context.Request.Origin);
+
+        if (authorityResult.Failed)
+        {
+            return LifecycleAuthorityTelemetry.Deny<O>(
+                Context.Logger, authorityResult, Context.Request.ImmediateCaller, "rotate-key");
+        }
+
         var domainResult = KeyDomain.Create(input.Domain);
 
         if (domainResult.BubbleOnFailure<KeyDomain, O>(

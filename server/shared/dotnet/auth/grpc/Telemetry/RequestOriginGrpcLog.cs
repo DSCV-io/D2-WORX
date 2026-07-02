@@ -32,4 +32,14 @@ internal static partial class RequestOriginGrpcLog
         this ILogger logger,
         int hopCount,
         string selfServiceId);
+
+    [LoggerMessage(
+        EventId = 4104,
+        Level = LogLevel.Warning,
+        Message = "Cross-process hop at {SelfServiceId} carried no validated mTLS peer "
+                + "identity; request origin left unestablished (fail-closed) — a "
+                + "misconfigured non-mTLS hop, not silently accepted.")]
+    public static partial void CrossProcessPeerIdentityAbsent(
+        this ILogger logger,
+        string selfServiceId);
 }

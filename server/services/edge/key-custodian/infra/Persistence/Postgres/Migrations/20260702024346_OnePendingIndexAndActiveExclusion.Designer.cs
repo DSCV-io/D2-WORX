@@ -2,6 +2,7 @@
 using D2.Edge.KeyCustodian.Infra.Persistence.Postgres;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using NodaTime;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace D2.Edge.KeyCustodian.Infra.Persistence.Postgres.Migrations
 {
     [DbContext(typeof(KeyCustodianDbContext))]
-    partial class KeyCustodianDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260702024346_OnePendingIndexAndActiveExclusion")]
+    partial class OnePendingIndexAndActiveExclusion
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

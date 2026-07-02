@@ -39,7 +39,7 @@ public sealed class KeyCustodianMetricsTests
         // Build an instance (dependency values don't matter for reading DefaultOptions).
         using var db = KeyCustodianTestDbContext.CreateEmpty();
         var handler = new CompromiseKeyHandler(
-            KcAppTestKit.Context<CompromiseKeyHandler>(),
+            KcAppTestKit.SystemContext<CompromiseKeyHandler>(),
             KcAppTestKit.NullClassifier(),
             db,
             Options.Create(r_options),
@@ -109,7 +109,7 @@ public sealed class KeyCustodianMetricsTests
         // Verify the counter is wired — smoke test: a successful generate returns Created.
         await using var db = KeyCustodianTestDbContext.CreateEmpty();
         var handler = new GenerateKeyHandler(
-            KcAppTestKit.Context<GenerateKeyHandler>(),
+            KcAppTestKit.SystemContext<GenerateKeyHandler>(),
             KcAppTestKit.NullClassifier(),
             db,
             KcAppTestKit.BuildOptionsAccessor(),
@@ -146,7 +146,7 @@ public sealed class KeyCustodianMetricsTests
             activatedAt: created);
 
         var result = await new CompromiseKeyHandler(
-            KcAppTestKit.Context<CompromiseKeyHandler>(),
+            KcAppTestKit.SystemContext<CompromiseKeyHandler>(),
             KcAppTestKit.NullClassifier(),
             db,
             Options.Create(r_options),
@@ -357,7 +357,7 @@ public sealed class KeyCustodianMetricsTests
         try
         {
             result = await new CompromiseKeyHandler(
-                KcAppTestKit.Context<CompromiseKeyHandler>(),
+                KcAppTestKit.SystemContext<CompromiseKeyHandler>(),
                 KcAppTestKit.NullClassifier(),
                 db,
                 Options.Create(r_options),
@@ -648,7 +648,7 @@ public sealed class KeyCustodianMetricsTests
 
     private ActivateKeyHandler BuildActivateKey(KeyCustodianTestDbContext db, TestClock clock) =>
         new(
-            KcAppTestKit.Context<ActivateKeyHandler>(),
+            KcAppTestKit.SystemContext<ActivateKeyHandler>(),
             KcAppTestKit.NullClassifier(),
             db,
             KcAppTestKit.BuildPolicyProvider(r_options),
@@ -660,7 +660,7 @@ public sealed class KeyCustodianMetricsTests
         TestClock clock,
         RecordingAnnouncer announcer) =>
         new(
-            KcAppTestKit.Context<RotateKeyHandler>(),
+            KcAppTestKit.SystemContext<RotateKeyHandler>(),
             KcAppTestKit.NullClassifier(),
             db,
             KcAppTestKit.BuildPolicyProvider(r_options),

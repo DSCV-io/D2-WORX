@@ -136,17 +136,22 @@ public sealed class AuthorityTelemetryTests
         KeyCustodianMetrics.AuthorityRejections.TAG_REASON.Should().Be("reason");
 
         KeyCustodianMetrics.AuthorityRejections.Capability.SIGN.Should().Be("sign");
+        KeyCustodianMetrics.AuthorityRejections.Capability.LIFECYCLE.Should().Be("lifecycle");
 
         KeyCustodianMetrics.AuthorityRejections.Reason.ORIGIN_UNESTABLISHED
             .Should().Be("origin-unestablished");
         KeyCustodianMetrics.AuthorityRejections.Reason.MINTER_REQUIRED
             .Should().Be("minter-required");
+        KeyCustodianMetrics.AuthorityRejections.Reason.NEVER_SIGNABLE
+            .Should().Be("never-signable");
         KeyCustodianMetrics.AuthorityRejections.Reason.NOT_IN_ALLOWED_SET
             .Should().Be("not-in-allowed-set");
         KeyCustodianMetrics.AuthorityRejections.Reason.IDENTITY_ABSENT
             .Should().Be("identity-absent");
         KeyCustodianMetrics.AuthorityRejections.Reason.NOT_IN_PROCESS
             .Should().Be("not-in-process");
+        KeyCustodianMetrics.AuthorityRejections.Reason.NOT_SYSTEM
+            .Should().Be("not-system");
 
         KeyCustodianMetrics.AuthorityRejections.Workload.NONE.Should().Be("<none>");
         KeyCustodianMetrics.AuthorityRejections.Workload.IN_PROCESS_MINTER

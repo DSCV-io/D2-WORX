@@ -85,6 +85,59 @@ public sealed class SigningDomainAuthorityTests
             "a null / empty caller id resolves to the empty set (default-deny)");
     }
 
+    [Theory]
+    [InlineData("Audit")]
+    [InlineData(" audit ")]
+    [InlineData("AUDIT")]
+    public void AllowedSigningDomainsFor_NonCanonicalGrant_NormalizedToCatalogValue(string grant)
+    {
+        // The enforce-set is built from KeyDomain.Create-normalized values (the same
+        // normalization the boot validator applies), so a legitimately-configured but
+        // non-canonical grant ("Audit", " audit ", "AUDIT") resolves to the lowercase
+        // catalog value the rule compares against — instead of booting clean then silently
+        // never matching. Fails-without-fix: the raw-string Ordinal set never contained
+        // "audit" for a "Audit" grant.
+        var options = new SigningDomainAuthorityOptions();
+        options.AllowedSigningDomainsByWorkload["files"] = [grant];
+        var provider = new OptionsSigningDomainAuthorityPolicy(Options.Create(options));
+
+        provider.AllowedSigningDomainsFor("files").Should().Contain(
+            "audit", $"the grant '{grant}' normalizes to the canonical catalog value");
+    }
+
+    [Fact]
+    public void AllowedSigningDomainsFor_NonCatalogGrant_SkippedDefensively()
+    {
+        // An entry that fails KeyDomain.Create cannot exist post-boot (the fail-loud
+        // validator rejects it), but the enforce-side skips it defensively rather than
+        // leaking a non-catalog value into the set — a valid sibling grant still resolves.
+        var options = new SigningDomainAuthorityOptions();
+        options.AllowedSigningDomainsByWorkload["files"] = ["audit", "not-a-real-domain"];
+        var provider = new OptionsSigningDomainAuthorityPolicy(Options.Create(options));
+
+        provider.AllowedSigningDomainsFor("files").Should().BeEquivalentTo(["audit"]);
+    }
+
+    [Fact]
+    public void Provider_NonCanonicalGrant_RoundTripsThroughRule_Allows()
+    {
+        // End-to-end through the authority rule: a "Audit" grant authorizes a sign of the
+        // canonical "audit" domain. Without the enforce-side normalization the rule would
+        // deny with SIGNING_DOMAIN_NOT_AUTHORIZED (the raw "Audit" never matched "audit").
+        var options = new SigningDomainAuthorityOptions();
+        options.AllowedSigningDomainsByWorkload["files"] = ["Audit"];
+        var provider = new OptionsSigningDomainAuthorityPolicy(Options.Create(options));
+
+        var allow = WorkloadCapabilityAuthority.AuthorizeSigning(
+            immediateCaller: "files",
+            origin: RequestOrigin.CrossProcessHop,
+            target: KeyDomain.Create("audit").Data!,
+            allowedSigningDomainsForCaller: provider.AllowedSigningDomainsFor("files"));
+
+        allow.Success.Should().BeTrue(
+            "the non-canonical grant normalizes so the rule authorizes the canonical domain");
+    }
+
     [Fact]
     public void Provider_RoundTripsThroughRule_AllowAndDeny()
     {
@@ -176,6 +229,41 @@ public sealed class SigningDomainAuthorityTests
 
         thrown.Should().BeOfType<OptionsValidationException>(
             $"the host must refuse to start when a workload is granted '{domainValue}'");
+    }
+
+    [Theory]
+    [InlineData(KeyDomain.MTLS_CA_ROOT)]
+    [InlineData(KeyDomain.MTLS_CA_INTERMEDIATE)]
+    [InlineData("MTLS-CA-INTERMEDIATE")]
+    [InlineData("Mtls-Ca-Root")]
+    public void Validate_GrantsCaDomain_FailsLoud(string domainValue)
+    {
+        // The boot invariant covers the whole never-cross-process-signable superset:
+        // a certificate-authority trust anchor (any case variant) must never be
+        // granted to a workload — same fail-loud gate as jwks-signing.
+        var options = new SigningDomainAuthorityOptions();
+        options.AllowedSigningDomainsByWorkload["files"] = [domainValue];
+
+        options.Validate().Should().NotBeNull(
+            $"granting the never-signable CA domain '{domainValue}' to any workload "
+            + "must refuse to boot (fail-loud, case-robust)");
+    }
+
+    [Fact]
+    public void ValidateOnStart_GrantsCaDomain_ThrowsOnOptionsResolution()
+    {
+        // End-to-end DI gate for a CA-domain grant, mirroring the Infra registration.
+        var services = new ServiceCollection();
+        services.AddOptions<SigningDomainAuthorityOptions>()
+            .Configure(o =>
+                o.AllowedSigningDomainsByWorkload["files"] = [KeyDomain.MTLS_CA_ROOT])
+            .Validate(static o => o.Validate() is null, "never-signable-domain grant rejected")
+            .ValidateOnStart();
+
+        var thrown = Record.Exception(() => ResolveSigningAuthorityOptions(services));
+
+        thrown.Should().BeOfType<OptionsValidationException>(
+            "the host must refuse to start when a workload is granted a CA domain");
     }
 
     [Fact]

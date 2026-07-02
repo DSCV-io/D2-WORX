@@ -133,4 +133,12 @@ internal static partial class AuthLog
         Level = LogLevel.Warning,
         Message = "Session liveness lookup returned revoked; emitting 401 SessionRevoked.")]
     public static partial void LivenessRevoked(this ILogger logger);
+
+    [LoggerMessage(
+        EventId = 4004,
+        Level = LogLevel.Warning,
+        Message = "Endpoint/method scope metadata is present and non-harmless but declares "
+                + "an EMPTY scope set (configuration anomaly — the public factories reject "
+                + "empty sets); failing closed with 401 ScopeInsufficient.")]
+    public static partial void ScopeMetadataEmptyAnomaly(this ILogger logger);
 }

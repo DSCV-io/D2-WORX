@@ -103,6 +103,80 @@ public sealed class JwtSigningCapabilityTests
     }
 
     [Fact]
+    public async Task SignJwt_EmptySigningInput_ReturnsEmptySigningInput()
+    {
+        // The shared signing core rejects a zero-length payload before any key load or
+        // crypto — proven through the minter, the surface that reaches the core.
+        await using var db = KeyCustodianTestDbContext.CreateEmpty();
+        await SeedJwksSigningKey(db);
+
+        var result = await Build(db, RequestOrigin.InProcessModule)
+            .SignJwtAsync(new SignInput(KeyDomain.JWKS_SIGNING, []));
+
+        result.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        result.ErrorCode.Should().Be(KeyCustodianErrorCodes.KEYCUSTODIAN_EMPTY_SIGNING_INPUT);
+    }
+
+    [Fact]
+    public async Task SignJwt_CapSizedInput_Signs()
+    {
+        // A signing input exactly at the 16 KiB cap is accepted and signs — the cap is a
+        // ceiling, not an off-by-one exclusive bound. Proven through the minter, the surface
+        // that reaches the shared core where the cap lives.
+        await using var db = KeyCustodianTestDbContext.CreateEmpty();
+        await SeedJwksSigningKey(db);
+        var input = new byte[16 * 1024];
+
+        var result = await Build(db, RequestOrigin.InProcessModule)
+            .SignJwtAsync(new SignInput(KeyDomain.JWKS_SIGNING, input));
+
+        result.Success.Should().BeTrue("a 16 KiB signing input is exactly at the cap");
+    }
+
+    [Fact]
+    public async Task SignJwt_OverCapInput_ReturnsSigningInputTooLarge()
+    {
+        // One byte over the 16 KiB cap → permanent 400, rejected in the shared signing core
+        // before any key load or crypto (asserted via the emitted constant, §26.21) — both
+        // the general sign surface and this minter inherit the cap.
+        await using var db = KeyCustodianTestDbContext.CreateEmpty();
+        await SeedJwksSigningKey(db);
+        var input = new byte[(16 * 1024) + 1];
+
+        var result = await Build(db, RequestOrigin.InProcessModule)
+            .SignJwtAsync(new SignInput(KeyDomain.JWKS_SIGNING, input));
+
+        result.Success.Should().BeFalse();
+        result.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        result.ErrorCode.Should().Be(
+            KeyCustodianErrorCodes.KEYCUSTODIAN_SIGNING_INPUT_TOO_LARGE);
+    }
+
+    [Fact]
+    public async Task SignJwt_CorruptKeyMaterial_ReturnsPreconditionViolated()
+    {
+        // Real-wrapped but cryptographically corrupt material — decrypts cleanly then
+        // fails PKCS#8 import in the signing rule → flagged 500 (no throw), proven
+        // through the minter, the surface that reaches the shared core.
+        await using var db = KeyCustodianTestDbContext.CreateEmpty();
+        await KcAppTestKit.SeedKeyWithCorruptMaterialAsync(
+            db,
+            r_crypto,
+            KeyDomain.JWKS_SIGNING,
+            KeyType.RsaSigning,
+            KeyStatus.Active,
+            KcAppTestKit.SR_BaseInstant,
+            corruptPlaintext: [0x01, 0x02, 0x03, 0x04],
+            activatedAt: KcAppTestKit.SR_BaseInstant);
+
+        var result = await Build(db, RequestOrigin.InProcessModule)
+            .SignJwtAsync(new SignInput(KeyDomain.JWKS_SIGNING, sr_input));
+
+        result.StatusCode.Should().Be(HttpStatusCode.InternalServerError);
+        result.ErrorCode.Should().Be(KeyCustodianErrorCodes.KEYCUSTODIAN_PRECONDITION_VIOLATED);
+    }
+
+    [Fact]
     public async Task SignJwt_NullInput_Throws()
     {
         await using var db = KeyCustodianTestDbContext.CreateEmpty();

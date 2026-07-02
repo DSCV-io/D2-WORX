@@ -88,8 +88,13 @@ public sealed class RequestOriginPropagationA2BIntegrationTests
         probe.Observed.Should().BeTrue("B's service method must have run");
 
         // Origin is recomputed FRESH at B from the transport — never taken from the wire
-        // (it is not a propagated field).
-        probe.Origin.Should().Be(RequestOrigin.CrossProcessHop);
+        // (it is not a propagated field). B derives Origin + ImmediateCaller ATOMICALLY
+        // from the mTLS peer cert; over the in-memory TestServer there is no real mTLS
+        // peer, so the peer id is null and both are left Unestablished/null (the A8
+        // fail-closed strengthening). This is consistent with the null-caller assertion
+        // below — the CrossProcessHop-with-real-peer path is proven in the interceptor
+        // unit tests.
+        probe.Origin.Should().Be(RequestOrigin.Unestablished);
 
         // The operational propagation subset crossed A → B.
         probe.RequestId.Should().Be("req-from-A");

@@ -101,6 +101,21 @@ public sealed class EstablishmentLogDelegateContractTests
         entry.Message.Should().Contain("edge").And.Contain("1");
     }
 
+    [Fact]
+    public void CrossProcessPeerIdentityAbsent_EmitsAtEventId4104_AtWarning_WithServiceId()
+    {
+        var logger = new CapturingLogger();
+
+        logger.CrossProcessPeerIdentityAbsent(selfServiceId: "key-custodian");
+
+        var entry = logger.Entries.Should().ContainSingle().Subject;
+        entry.EventId.Id.Should().Be(
+            4104, "an absent mTLS peer identity on a cross-process hop logs at 4104");
+        entry.Level.Should().Be(
+            LogLevel.Warning, "a misconfigured non-mTLS hop is a Warning, not silent");
+        entry.Message.Should().Contain("key-custodian");
+    }
+
     private static IEnumerable<Type> SafeGetTypes(Assembly assembly)
     {
         try

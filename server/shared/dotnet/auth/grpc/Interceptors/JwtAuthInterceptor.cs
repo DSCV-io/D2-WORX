@@ -62,7 +62,10 @@ using Microsoft.Extensions.Logging;
 ///     <see cref="StatusCode.Unauthenticated"/> (NOT
 ///     <see cref="StatusCode.PermissionDenied"/>; uniform 401-shape policy
 ///     mirrors HTTP middleware — see
-///     <see cref="AuthErrorCodes.AUTH_SCOPE_INSUFFICIENT"/> remarks).</item>
+///     <see cref="AuthErrorCodes.AUTH_SCOPE_INSUFFICIENT"/> remarks). Absent metadata
+///     admits any authenticated caller; a PRESENT non-harmless metadata with an EMPTY
+///     scope set is a configuration anomaly and fails CLOSED (the public factories reject
+///     empty sets, so only a serializer / clone / reflection path could produce one).</item>
 ///   <item>Set the populated <see cref="IRequestContext"/> on BOTH
 ///     <see cref="ServerCallContext.UserState"/> (under
 ///     <see cref="D2GrpcUserStateKeys.REQUEST_CONTEXT"/>; the gRPC-specific
@@ -471,13 +474,24 @@ internal sealed class JwtAuthInterceptor : Interceptor
             }
         }
 
-        // Per-method scope enforcement (any-of or all-of, per meta.Match).
-        // Empty / null required set = "any authenticated caller passes."
-        if (metadata is { Scopes.Count: > 0 } meta)
+        // Per-method scope enforcement (any-of or all-of, per meta.Match). Absent
+        // metadata = "any authenticated caller passes" (deny-by-default lives in the
+        // ABSENCE of metadata, not an empty scope set). A PRESENT, non-harmless metadata
+        // with an EMPTY scope set is a configuration anomaly: the public factories reject
+        // empty sets, so only a serializer / record-clone / reflection path could produce
+        // one — fail CLOSED rather than silently admit any authenticated caller.
+        if (metadata is { IsHarmlessEndpoint: false } meta)
         {
+            if (meta.Scopes.Falsey())
+            {
+                r_logger.ScopeMetadataEmptyAnomaly();
+                throw AuthFailures.ScopeInsufficient().ToRpcException();
+            }
+
             var passes = meta.Match == ScopeMatch.All
                 ? RequestContextHasAllScopes(requestContext, meta.Scopes)
                 : RequestContextHasAnyScope(requestContext, meta.Scopes);
+
             if (!passes)
             {
                 r_logger.ScopeRequirementUnmet(SummarizeScopes(meta.Scopes));

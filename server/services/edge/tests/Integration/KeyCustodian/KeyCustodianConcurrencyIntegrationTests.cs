@@ -107,12 +107,17 @@ public sealed class KeyCustodianConcurrencyIntegrationTests(KeyCustodianPostgres
 
     private static string NewKid() => "kid-" + Guid.NewGuid().ToString("N");
 
+    // Per-test-unique domain: the shared container is not reset between tests, and
+    // the one-Active / one-Pending-per-domain invariants hold across the whole
+    // table — a fixed domain would collide with sibling tests' rows.
+    private static string NewDomain() => "dom-" + Guid.NewGuid().ToString("N");
+
     private static Instant Now() => Instant.FromUtc(2026, 1, 1, 0, 0);
 
     private static KeyRecord MakePending(string kid) => new()
     {
         Kid = kid,
-        KeyDomain = "audit",
+        KeyDomain = NewDomain(),
         KeyType = KeyType.AesPayload,
         KeyMaterialEncrypted = RandomNumberGenerator.GetBytes(48),
         CreatedAt = Now(),

@@ -114,8 +114,14 @@ shared Redis lock surface.
 > (server require+validate in `D2.Shared.AspNetCore`, client leaf-present + refresh-ahead
 > in `D2.Shared.Auth.Outbound`, the `D2.Shared.WorkloadIdentity` SPIFFE grammar), proven
 > end-to-end on a local harness. **Four cross-process pieces remain for the Edge build:**
-> (1) expose `IssueWorkloadCertificate` over the gRPC contract — today `IKeyCustodianApi`
-> exposes only `GetJwks`, and issuance is an in-process command; (2) the workload
+> (1) expose `IssueWorkloadCertificate` over the gRPC contract — issuance is an in-process
+> command today with no cross-process transport (the in-process façade serves JWKS, OIDC
+> discovery, and sign). Exposing the transport is NOT the whole job: the issuance handler
+> currently calls a committed fail-closed deny-all authority (it mints for nobody), and the
+> real caller→subject rule (the requested workload id must equal the authenticated mTLS
+> caller, or route through an explicit isolated delegated-issuer capability) must land in the
+> handler with or before the transport, because a transport scope alone is an
+> impersonation-issuance oracle (a hard gate tracked in [PHASE_3.md](PHASE_3.md) §G); (2) the workload
 > **first-leaf bootstrap identity** — chicken-and-egg (a workload needs a leaf to mTLS-call
 > KeyCustodian for a leaf), provisioned by the deployment orchestrator; (3) wire the mTLS
 > server + the leaf-refresh client into the running Edge host (the shipped client uses an
@@ -124,6 +130,15 @@ shared Redis lock surface.
 > construction; callers holding long-lived channels must rebuild on rotation to adopt a
 > freshly-rotated leaf (currently the consumer's responsibility, undocumented in host wiring).
 > See [ADR-0023](../adrs/0023-mtls-workload-identity.md) "Negative / new work".
+>
+> **Host-boot gates surfaced by the KeyCustodian foundation hardening** (tracked in
+> [PHASE_3.md](PHASE_3.md) §G, not duplicated): when the Edge host wires mTLS it must
+> **hard-require it at boot** — fail loud when cross-process services are mapped but mTLS is
+> disabled (a fail-closed deny that would otherwise be silently dead) — and wire the KC signer's
+> transport scope + the `d2.internal` audience validators with resolvability + negative tests;
+> and it must add a host-level **assembly-scan DI-isolation test** proving no type outside the
+> auth-mint composition can resolve the JWT-signing minter capability (proven at module scope
+> today, not yet at host scope).
 
 > **Deferred sign-scope grant to wire here.** Nothing currently mints `internal.kc.sign`
 > into a caller's token — the production grant is host-blocked (no Edge boundary minter
@@ -182,7 +197,9 @@ Every new Edge service (Phase 3+) verifies the following at registration time:
 - **Connection strings** — externalized via `.env.local` / `.env.secrets`, never
   hardcoded.
 - **DB constraints** — unique violations (PG `23505`) caught and mapped via
-  `BaseRepoHandler` + `IDbExceptionClassifier` → returns 409, not 500.
+  `BaseRepoHandler` + `IDbExceptionClassifier` → returns 409, not 500. Exclusion violations
+  (PG `23P01`, raised by deferrable EXCLUDE constraints — e.g. KeyCustodian's
+  one-active-key-per-domain invariant) classify the same way → 409.
 - **Migrations** — never hand-written. Always `dotnet ef migrations add <Name>`.
   Multi-replica safety via PG advisory lock at the startup migrator.
 - **Cross-service mutations** — uses the SAGA pattern (§6) for foreground

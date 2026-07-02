@@ -67,6 +67,20 @@ public sealed class SeedCertificateAuthorityHandler(
     protected override async ValueTask<D2Result<O?>> ExecuteAsync(
         I input, CancellationToken ct)
     {
+        // 0) Authority precedes work: lifecycle mutations are System-plane-only,
+        //    fail-closed (the CA seeder establishes the System context on its scope).
+        var authorityResult =
+            KeyLifecycleAuthority.AuthorizeLifecycleMutation(Context.Request.Origin);
+
+        if (authorityResult.Failed)
+        {
+            return LifecycleAuthorityTelemetry.Deny<O>(
+                Context.Logger,
+                authorityResult,
+                Context.Request.ImmediateCaller,
+                "seed-certificate-authority");
+        }
+
         // 1) Per-tier idempotency gate — check each tier INDEPENDENTLY so a partial
         //    seed (crash after root was persisted but before intermediate) re-runs
         //    only the missing tier on the next boot, not both. If both are already

@@ -330,7 +330,7 @@ public sealed class RotateKeyTests
     private RotateKeyHandler Build(
         KeyCustodianTestDbContext db, TestClock clock, RecordingAnnouncer announcer) =>
         new(
-            KcAppTestKit.Context<RotateKeyHandler>(),
+            KcAppTestKit.SystemContext<RotateKeyHandler>(),
             KcAppTestKit.NullClassifier(),
             db,
             KcAppTestKit.BuildPolicyProvider(r_options),

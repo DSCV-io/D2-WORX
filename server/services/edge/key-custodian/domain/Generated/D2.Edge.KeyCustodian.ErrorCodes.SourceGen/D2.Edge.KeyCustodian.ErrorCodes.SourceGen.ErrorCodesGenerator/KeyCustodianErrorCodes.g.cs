@@ -69,7 +69,7 @@ public static class KeyCustodianErrorCodes
     /// <summary>No active issuing intermediate certificate authority is available to sign a workload leaf certificate. A retryable not-ready-yet condition: the CA either has not been seeded yet or is between rotations. Surfaced as a 503 service-unavailable result so callers retry rather than treat it as a client-side conflict.</summary>
     public const string KEYCUSTODIAN_NO_ACTIVE_ISSUING_CA = "KEYCUSTODIAN_NO_ACTIVE_ISSUING_CA";
 
-    /// <summary>The requested key domain is in-process-only (e.g. jwks-signing) and may not be signed with by a cross-process caller. The jwks-signing key is the root of mint-once-forward and never leaves the Edge host process. Enforced structurally (independent of policy) and backed by a boot-time config-validation invariant that refuses to grant an in-process-only domain to any workload.</summary>
+    /// <summary>The requested key domain is never signable on the general signing surface, for any origin: the certificate-authority domains (mtls-ca-root / mtls-ca-intermediate — trust anchors whose private keys sign only certificates through the dedicated issuance path, never arbitrary caller-supplied bytes) and the cluster-signing root (jwks-signing, which surfaces as the more specific MINTER_CAPABILITY_REQUIRED). Enforced structurally (independent of policy) and backed by a boot-time config-validation invariant that refuses to grant a never-signable domain to any workload.</summary>
     public const string KEYCUSTODIAN_CROSS_PROCESS_DOMAIN_REJECTED = "KEYCUSTODIAN_CROSS_PROCESS_DOMAIN_REJECTED";
 
     /// <summary>The calling workload is not authorized to sign with the requested key domain (the domain is not in the workload's allowed-signing-domains policy set). Distinct from the in-process-only rejection: this is a policy-scope denial, not an in-process-only-domain denial.</summary>
@@ -86,6 +86,12 @@ public static class KeyCustodianErrorCodes
 
     /// <summary>The signing input was empty. There is nothing to sign — a zero-length payload is a client error, rejected before any key load or crypto.</summary>
     public const string KEYCUSTODIAN_EMPTY_SIGNING_INPUT = "KEYCUSTODIAN_EMPTY_SIGNING_INPUT";
+
+    /// <summary>The requested key type disagrees with the canonical key type bound to the key domain (every catalog domain declares exactly one key type: jwks-signing is RSA-signing, cookie/client-secret are opaque secrets, the CA domains are X.509 CA certificates, and the payload-encryption domains are AES). A mismatched pair is a permanent client error rejected before any store or crypto work — including a sign request against a domain whose bound type can never hold a signing key (a 400, never the retryable 503 signing-key-unavailable).</summary>
+    public const string KEYCUSTODIAN_KEY_TYPE_DOMAIN_MISMATCH = "KEYCUSTODIAN_KEY_TYPE_DOMAIN_MISMATCH";
+
+    /// <summary>The signing input exceeds the maximum permitted size (16 KiB). A legitimate signing input (e.g. a JWT header.payload base64url) is comfortably under this bound; a larger payload is a client error rejected in the shared signing core before any key load or crypto, so both the general sign surface and the in-process minter inherit the cap.</summary>
+    public const string KEYCUSTODIAN_SIGNING_INPUT_TOO_LARGE = "KEYCUSTODIAN_SIGNING_INPUT_TOO_LARGE";
 
     /// <summary>
     /// All declared <c>KEYCUSTODIAN_*</c> codes in spec order. Useful for
@@ -116,6 +122,8 @@ public static class KeyCustodianErrorCodes
         "KEYCUSTODIAN_MINTER_CAPABILITY_REQUIRED",
         "KEYCUSTODIAN_SIGNING_KEY_UNAVAILABLE",
         "KEYCUSTODIAN_EMPTY_SIGNING_INPUT",
+        "KEYCUSTODIAN_KEY_TYPE_DOMAIN_MISMATCH",
+        "KEYCUSTODIAN_SIGNING_INPUT_TOO_LARGE",
     };
 
     /// <summary>
@@ -149,6 +157,8 @@ public static class KeyCustodianErrorCodes
         "KEYCUSTODIAN_MINTER_CAPABILITY_REQUIRED" => 403,
         "KEYCUSTODIAN_SIGNING_KEY_UNAVAILABLE" => 503,
         "KEYCUSTODIAN_EMPTY_SIGNING_INPUT" => 400,
+        "KEYCUSTODIAN_KEY_TYPE_DOMAIN_MISMATCH" => 400,
+        "KEYCUSTODIAN_SIGNING_INPUT_TOO_LARGE" => 400,
         _ => 500,
     };
 }

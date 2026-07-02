@@ -12,6 +12,7 @@ global using D2.Edge.KeyCustodian.Domain.Entities;
 global using D2.Edge.KeyCustodian.Domain.Enums;
 global using D2.Edge.KeyCustodian.Domain.Errors;
 global using D2.Edge.KeyCustodian.Domain.ValueObjects;
+global using D2.Shared.Auth.Abstractions;
 global using D2.Shared.Encryption;
 global using NodaTime;
 global using IClock = D2.Shared.Time.IClock;

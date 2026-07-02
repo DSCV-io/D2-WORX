@@ -36,13 +36,18 @@ using Microsoft.Extensions.Options;
 ///   <item>Apply the inbound <c>x-d2-context</c> (the operational propagation subset
 ///     PLUS the inherited call-path) via <c>ApplyPropagatedContext</c> — the gRPC half
 ///     of the cross-hop propagation rail.</item>
-///   <item>Set <see cref="IRequestContext.Origin"/> = <see cref="RequestOrigin.CrossProcessHop"/>
-///     and <see cref="IRequestContext.ImmediateCaller"/> from the validated mutual-TLS
-///     peer certificate (<c>GetD2PeerWorkloadIdentity()</c> — reads
-///     <c>Connection.ClientCertificate</c>, never a header/claim/payload). A
-///     wire-supplied Origin or caller is structurally IGNORED: <c>Origin</c> /
-///     <c>ImmediateCaller</c> are non-propagated and recomputed FRESH here every hop.
-///     No validated cert → <see langword="null"/> caller → fail-closed downstream.</item>
+///   <item>Derive <see cref="IRequestContext.Origin"/> and
+///     <see cref="IRequestContext.ImmediateCaller"/> ATOMICALLY from the single
+///     unforgeable local fact — the validated mutual-TLS peer certificate
+///     (<c>GetD2PeerWorkloadIdentity()</c> — reads <c>Connection.ClientCertificate</c>,
+///     never a header/claim/payload). A wire-supplied Origin or caller is structurally
+///     IGNORED: both are non-propagated and recomputed FRESH here every hop. Only when a
+///     peer identity is present are BOTH set together (<c>Origin</c> =
+///     <see cref="RequestOrigin.CrossProcessHop"/>, <c>ImmediateCaller</c> = the peer id);
+///     when absent, BOTH are left unset so <c>Origin</c> stays the fail-closed
+///     <see cref="RequestOrigin.Unestablished"/> — every downstream authority rule then
+///     denies at its first arm. The contradictory "cross-process plane with no
+///     authenticated caller" state is never produced.</item>
 ///   <item>Append THIS hop's OWN identity (the configured workload service id) to the
 ///     call-path as a <see cref="CallPathKind.WorkloadHop"/> entry.</item>
 ///   <item>Log the received call-path's entry count (every hop logs the field on receipt).</item>
@@ -202,9 +207,28 @@ internal sealed class RequestOriginCrossProcessInterceptor : Interceptor
             var propagated = PropagatedContextSerializer.TryDecode(ReadPropagatedHeader(context));
             ctx.ApplyPropagatedContext(propagated);
 
-            ctx.Origin = RequestOrigin.CrossProcessHop;
-            ctx.ImmediateCaller = httpContext.GetD2PeerWorkloadIdentity();
+            // Derive the two authority-grade facts ATOMICALLY from the ONE unforgeable
+            // local fact (the validated mTLS peer identity). Both are set together only
+            // when a peer identity is present; when absent, BOTH stay unset so Origin
+            // remains the fail-closed RequestOrigin.Unestablished (every downstream
+            // authority rule denies at its first arm — §9.41/§9.42). A "CrossProcessHop +
+            // null caller" state — an authority-bearing plane with no authenticated peer —
+            // is never produced.
+            var peer = httpContext.GetD2PeerWorkloadIdentity();
 
+            if (peer is not null)
+            {
+                ctx.Origin = RequestOrigin.CrossProcessHop;
+                ctx.ImmediateCaller = peer;
+            }
+            else
+            {
+                r_logger.CrossProcessPeerIdentityAbsent(r_selfServiceId);
+            }
+
+            // Telemetry-only (§9.43): the call-path hop append + received-log are
+            // structurally excluded from authority and run unconditionally every hop,
+            // independent of whether the peer identity established the origin.
             var timestamp = r_clock.GetCurrentInstant().ToDateTimeOffset();
 
             ctx.CallPath = CallPathOps.Append(

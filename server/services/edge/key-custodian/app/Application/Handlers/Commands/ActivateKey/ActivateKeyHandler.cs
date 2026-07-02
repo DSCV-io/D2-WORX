@@ -14,7 +14,10 @@ using O = D2.Edge.KeyCustodian.Domain.Rules.KeySummary;
 /// Smoke-tests and activates a pending key.
 /// </summary>
 /// <remarks>
-/// Validates the kid at the top, loads the tracked pending record (not found →
+/// Authority precedes work: the System-plane-only
+/// <see cref="KeyLifecycleAuthority.AuthorizeLifecycleMutation"/> gate runs FIRST
+/// (fail-closed; deny emits the lifecycle authority-rejection telemetry). Then
+/// validates the kid, loads the tracked pending record (not found →
 /// 404; not pending → 409), unwraps + smoke-tests the material (failure →
 /// <c>KEYCUSTODIAN_SMOKE_TEST_FAILED</c>, with the unwrapped bytes zeroed on
 /// every path), builds the <see cref="SmokeProof"/>, resolves the domain policy,
@@ -47,6 +50,16 @@ public sealed class ActivateKeyHandler(
     protected override async ValueTask<D2Result<O?>> ExecuteAsync(
         I input, CancellationToken ct)
     {
+        // Authority precedes work: lifecycle mutations are System-plane-only, fail-closed.
+        var authorityResult =
+            KeyLifecycleAuthority.AuthorizeLifecycleMutation(Context.Request.Origin);
+
+        if (authorityResult.Failed)
+        {
+            return LifecycleAuthorityTelemetry.Deny<O>(
+                Context.Logger, authorityResult, Context.Request.ImmediateCaller, "activate-key");
+        }
+
         var kidResult = Kid.Create(input.Kid);
 
         if (kidResult.BubbleOnFailure<Kid, O>(out var bubbled, out var kid))

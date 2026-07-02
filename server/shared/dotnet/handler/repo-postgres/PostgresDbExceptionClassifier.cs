@@ -88,6 +88,15 @@ public sealed class PostgresDbExceptionClassifier : IDbExceptionClassifier
         => sqlState switch
         {
             PgErrorCodes.UNIQUE_VIOLATION => DbFailureKind.UniqueViolation,
+
+            // exclusion_violation (23P01): a partial deferrable EXCLUDE
+            // constraint breach (e.g. "one Active key per domain"). PostgreSQL
+            // raises this — NOT 23505 — for an EXCLUDE collision, yet it is
+            // semantically a uniqueness conflict, so it shares
+            // DbFailureKind.UniqueViolation → 409 Conflict with 23505. Uses
+            // Npgsql's own named constant (not a PgErrorCodes const) so this
+            // internal mapping does not expand the package's public API.
+            PostgresErrorCodes.ExclusionViolation => DbFailureKind.UniqueViolation,
             PgErrorCodes.FOREIGN_KEY_VIOLATION => DbFailureKind.ForeignKeyViolation,
             PgErrorCodes.NOT_NULL_VIOLATION => DbFailureKind.NotNullViolation,
             PgErrorCodes.CHECK_VIOLATION => DbFailureKind.CheckViolation,

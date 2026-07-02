@@ -6,14 +6,19 @@
 
 namespace D2.Edge.Tests.Unit.KeyCustodian.App;
 
-using System.Security.Cryptography.X509Certificates;
 using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.IssueWorkloadCertificate;
 
 /// <summary>
-/// Tests for <see cref="IssueWorkloadCertificateHandler"/> — happy-path issuance
-/// (leaf SAN + chain + LeafIssuanceAudit record), the no-active-CA 503, the retired-CA 503,
-/// adversarial workload inputs (no audit, no leaf), and the issuer-private-key
-/// zeroize contract.
+/// Pins the interim fail-closed DENY-ALL issuance gate on
+/// <see cref="IssueWorkloadCertificateHandler"/>: until the real caller↔subject
+/// binding rule lands with the cross-process issuance transport wiring, EVERY origin
+/// is denied THROUGH the real handler — no leaf is returned, no issuance-audit row is
+/// written, and the managed-key store is untouched, even with a fully seeded active
+/// CA and a valid workload identity. The pure-rule matrix for
+/// <see cref="WorkloadCertificateIssuance"/> (the leaf-building crypto) and for the
+/// deny-all <see cref="WorkloadCertificateAuthority"/> skeleton live in their own
+/// suites; this suite proves the gate at the handler seam. The wiring step that
+/// replaces the deny-all arm replaces these pins with the real allow/deny matrix.
 /// </summary>
 public sealed class IssueWorkloadCertificateTests
 {
@@ -21,140 +26,87 @@ public sealed class IssueWorkloadCertificateTests
     private readonly IPayloadCrypto r_crypto = KcAppTestKit.BuildTestRootCrypto();
 
     // -----------------------------------------------------------------------
-    // Happy path
-    // -----------------------------------------------------------------------
-
-    [Fact]
-    public async Task Issue_WithActiveCa_ReturnsLeaf_WritesAudit()
-    {
-        await using var db = KeyCustodianTestDbContext.CreateEmpty();
-        var (intermediateKid, rootCertDer) = await KcAppTestKit.SeedCaAsync(
-            db, r_crypto, KcAppTestKit.SR_BaseInstant);
-
-        var result = await Build(db).HandleAsync(new IssueWorkloadCertificateInput("edge"));
-
-        result.Success.Should().BeTrue();
-        result.StatusCode.Should().Be(HttpStatusCode.OK);
-
-        var leaf = result.Data!.Certificate;
-        leaf.Workload.ServiceId.Should().Be("edge");
-        leaf.PrivateKeyPkcs8.Should().NotBeEmpty();
-
-        // The leaf carries the SPIFFE SAN.
-        using var leafCert = X509CertificateLoader.LoadCertificate(leaf.CertificateDer);
-        var san = leafCert.Extensions.OfType<X509SubjectAlternativeNameExtension>().Single();
-        san.Format(multiLine: false).Should().Contain("spiffe://d2.internal/workload/edge");
-
-        // The leaf chains root → intermediate → leaf.
-        using var rootCert = X509CertificateLoader.LoadCertificate(rootCertDer);
-        using var issuerCert = X509CertificateLoader.LoadCertificate(leaf.IssuerCertificateDer);
-        ChainBuilds(leafCert, rootCert, issuerCert).Should().BeTrue();
-
-        // An issuance LeafIssuanceAudit record referencing the issuing CA was written.
-        db.LeafIssuanceAudit.Should().ContainSingle();
-        var audit = db.LeafIssuanceAudit.Single();
-        audit.WorkloadServiceId.Should().Be("edge");
-        audit.IssuingCaKid.Should().Be(intermediateKid);
-        audit.LeafNotAfter.Should().Be(leaf.NotAfter);
-    }
-
-    // -----------------------------------------------------------------------
-    // No active CA → 503, no audit
-    // -----------------------------------------------------------------------
-
-    [Fact]
-    public async Task Issue_NoActiveCaSeeded_ReturnsServiceUnavailable_NoAudit()
-    {
-        await using var db = KeyCustodianTestDbContext.CreateEmpty();
-
-        var result = await Build(db).HandleAsync(new IssueWorkloadCertificateInput("edge"));
-
-        result.Success.Should().BeFalse();
-        result.StatusCode.Should().Be(
-            HttpStatusCode.ServiceUnavailable,
-            "no active issuing CA is a retryable 503, not a client conflict");
-        result.ErrorCode.Should().Be(KeyCustodianErrorCodes.KEYCUSTODIAN_NO_ACTIVE_ISSUING_CA);
-        result.Category.Should().Be(ErrorCategory.InfrastructureUnavailable);
-        db.LeafIssuanceAudit.Should().BeEmpty();
-    }
-
-    [Fact]
-    public async Task Issue_OnlyRetiredCa_ReturnsServiceUnavailable_NoAudit()
-    {
-        // A retired CA is excluded by the .Active() filter — there is no active issuer.
-        await using var db = KeyCustodianTestDbContext.CreateEmpty();
-        await KcAppTestKit.SeedCaAsync(
-            db, r_crypto, KcAppTestKit.SR_BaseInstant, KeyStatus.Retired);
-
-        var result = await Build(db).HandleAsync(new IssueWorkloadCertificateInput("edge"));
-
-        result.Success.Should().BeFalse();
-        result.StatusCode.Should().Be(HttpStatusCode.ServiceUnavailable);
-        result.ErrorCode.Should().Be(KeyCustodianErrorCodes.KEYCUSTODIAN_NO_ACTIVE_ISSUING_CA);
-        db.LeafIssuanceAudit.Should().BeEmpty();
-    }
-
-    // -----------------------------------------------------------------------
-    // Adversarial workload inputs → INVALID_WORKLOAD_IDENTITY, no audit, no leaf
+    // Deny-all through the REAL handler — every established origin Forbidden,
+    // even with an active CA seeded and a valid workload requested.
     // -----------------------------------------------------------------------
 
     [Theory]
-    [InlineData(null)]
-    [InlineData("")]
-    [InlineData("   ")]
-    [InlineData("Edge With Spaces")]
-    [InlineData("svc/slash")]
-    [InlineData("svc_underscore")]
-    public async Task Issue_InvalidWorkload_ReturnsInvalidWorkloadIdentity_NoAudit(
-        string? workloadServiceId)
+    [InlineData(RequestOrigin.EdgeInbound)]
+    [InlineData(RequestOrigin.CrossProcessHop)]
+    [InlineData(RequestOrigin.InProcessModule)]
+    [InlineData(RequestOrigin.System)]
+    public async Task Issue_EveryEstablishedOrigin_DeniedForbidden_NoLeaf_NoAudit(
+        RequestOrigin origin)
     {
         await using var db = KeyCustodianTestDbContext.CreateEmpty();
         await KcAppTestKit.SeedCaAsync(db, r_crypto, KcAppTestKit.SR_BaseInstant);
+        var keysBefore = db.Keys.Count();
 
-        var result = await Build(db).HandleAsync(
-            new IssueWorkloadCertificateInput(workloadServiceId));
+        var result = await Build(db, origin)
+            .HandleAsync(new IssueWorkloadCertificateInput("edge"));
 
         result.Success.Should().BeFalse();
-        result.StatusCode.Should().Be(HttpStatusCode.BadRequest);
-        result.ErrorCode.Should().Be(
-            KeyCustodianErrorCodes.KEYCUSTODIAN_INVALID_WORKLOAD_IDENTITY);
-        db.LeafIssuanceAudit.Should().BeEmpty(
-            because: "an invalid workload is rejected before any CA load or audit write");
+        result.StatusCode.Should().Be(
+            HttpStatusCode.Forbidden,
+            "no caller↔subject binding authority exists yet — every established origin "
+            + "is denied until the real issuance rule lands with the transport wiring");
+        result.Data.Should().BeNull(because: "no leaf may be minted through the deny-all gate");
+        db.LeafIssuanceAudit.Should().BeEmpty(because: "a denied issuance writes no audit row");
+        db.Keys.Count().Should().Be(keysBefore, because: "the managed-key store is untouched");
     }
 
-    // -----------------------------------------------------------------------
-    // Issuance does not disturb the managed-key store
-    // -----------------------------------------------------------------------
-
     [Fact]
-    public async Task Issue_DoesNotPersistTheLeafAsAManagedKey()
+    public async Task Issue_UnestablishedOrigin_DeniedRequestOriginUnestablished_First()
     {
+        // The type-zero fail-closed arm runs FIRST: a context no boundary established
+        // surfaces the specific origin-unestablished code, not the generic Forbidden.
         await using var db = KeyCustodianTestDbContext.CreateEmpty();
         await KcAppTestKit.SeedCaAsync(db, r_crypto, KcAppTestKit.SR_BaseInstant);
 
-        var keysBefore = db.Keys.Count();
-        var result = await Build(db).HandleAsync(new IssueWorkloadCertificateInput("edge"));
+        var result = await Build(db, RequestOrigin.Unestablished)
+            .HandleAsync(new IssueWorkloadCertificateInput("edge"));
 
-        result.Success.Should().BeTrue();
-        db.Keys.Count().Should().Be(
-            keysBefore, because: "a leaf is on-demand and is never persisted as a managed key");
+        result.Success.Should().BeFalse();
+        result.ErrorCode.Should().Be(
+            KeyCustodianErrorCodes.KEYCUSTODIAN_REQUEST_ORIGIN_UNESTABLISHED);
+        db.LeafIssuanceAudit.Should().BeEmpty();
     }
 
-    private static bool ChainBuilds(
-        X509Certificate2 leaf, X509Certificate2 rootAnchor, X509Certificate2 intermediate)
+    [Fact]
+    public async Task Issue_DeniedBeforeInputValidation_InvalidWorkloadStillForbidden()
     {
-        using var chain = new X509Chain();
-        chain.ChainPolicy.RevocationMode = X509RevocationMode.NoCheck;
-        chain.ChainPolicy.TrustMode = X509ChainTrustMode.CustomRootTrust;
-        chain.ChainPolicy.VerificationFlags = X509VerificationFlags.IgnoreNotTimeValid;
-        chain.ChainPolicy.CustomTrustStore.Add(rootAnchor);
-        chain.ChainPolicy.ExtraStore.Add(intermediate);
-        return chain.Build(leaf);
+        // Authority precedes work: even a garbage workload id surfaces the authority
+        // deny, not INVALID_WORKLOAD_IDENTITY — the gate runs before any validation.
+        await using var db = KeyCustodianTestDbContext.CreateEmpty();
+
+        var result = await Build(db, RequestOrigin.CrossProcessHop)
+            .HandleAsync(new IssueWorkloadCertificateInput("NOT A VALID ID"));
+
+        result.StatusCode.Should().Be(HttpStatusCode.Forbidden);
+        result.ErrorCode.Should().NotBe(
+            KeyCustodianErrorCodes.KEYCUSTODIAN_INVALID_WORKLOAD_IDENTITY,
+            "the deny-all authority gate fires before input validation");
     }
 
-    private IssueWorkloadCertificateHandler Build(KeyCustodianTestDbContext db) =>
+    [Fact]
+    public async Task Issue_DeniedBeforeCaLoad_NoActiveCaStillForbidden_Not503()
+    {
+        // With NO CA seeded, a 503 NO_ACTIVE_ISSUING_CA would prove the handler
+        // reached the CA load — the deny-all gate must fire before it.
+        await using var db = KeyCustodianTestDbContext.CreateEmpty();
+
+        var result = await Build(db, RequestOrigin.CrossProcessHop)
+            .HandleAsync(new IssueWorkloadCertificateInput("edge"));
+
+        result.StatusCode.Should().Be(
+            HttpStatusCode.Forbidden,
+            "the authority gate denies before the CA dependency is even consulted");
+    }
+
+    private IssueWorkloadCertificateHandler Build(
+        KeyCustodianTestDbContext db, RequestOrigin origin) =>
         new(
-            KcAppTestKit.Context<IssueWorkloadCertificateHandler>(),
+            KcAppTestKit.ContextWithOrigin<IssueWorkloadCertificateHandler>(origin),
             KcAppTestKit.NullClassifier(),
             db,
             Options.Create(r_options),

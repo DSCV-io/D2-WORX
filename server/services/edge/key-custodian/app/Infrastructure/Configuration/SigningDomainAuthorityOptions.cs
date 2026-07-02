@@ -20,12 +20,13 @@ using D2.Shared.WorkloadIdentity;
 /// configuration live in the Infra layer; this type is the App-owned options shape.
 /// </para>
 /// <para>
-/// <b>This is the CROSS-PROCESS signing policy.</b> The in-process-only domains
-/// (<c>jwks-signing</c> — the root of mint-once-forward) must NEVER appear in any
-/// workload's allowed set; the in-process Edge minter signs with them directly
-/// (bypassing the gRPC gate), and a cross-process caller is denied structurally by
-/// the authority rule AND at boot by the config validator. Granting an
-/// in-process-only domain here is a fail-loud startup error.
+/// <b>This is the CROSS-PROCESS signing policy.</b> The never-cross-process-signable
+/// domains (<c>jwks-signing</c> — the root of mint-once-forward, signable only by the
+/// in-process Edge minter — plus the <c>mtls-ca-*</c> trust anchors, whose private
+/// keys sign only certificates through the dedicated issuance path) must NEVER appear
+/// in any workload's allowed set; a cross-process caller is denied structurally by
+/// the authority rule AND at boot by the config validator. Granting a never-signable
+/// domain here is a fail-loud startup error.
 /// </para>
 /// <para>
 /// <b>Empty is legitimately fine (fail-CLOSED).</b> In dev there may be no
@@ -44,9 +45,9 @@ public sealed class SigningDomainAuthorityOptions
     /// Gets the per-workload allowed cross-process signing domains. Key = lowercase
     /// SPIFFE workload service id (e.g. <c>"edge"</c>); value = the signing key
     /// domains that workload may sign with. A workload absent from this map resolves
-    /// to the empty set (default-deny). <c>jwks-signing</c> (and any future
-    /// in-process-only domain) must NOT appear under ANY key — the config validator
-    /// rejects it at boot.
+    /// to the empty set (default-deny). A never-cross-process-signable domain
+    /// (<c>jwks-signing</c>, <c>mtls-ca-root</c>, <c>mtls-ca-intermediate</c>) must NOT
+    /// appear under ANY key — the config validator rejects it at boot.
     /// </summary>
     /// <remarks>
     /// The comparer is <c>OrdinalIgnoreCase</c> because <c>IConfiguration</c>'s
@@ -66,8 +67,9 @@ public sealed class SigningDomainAuthorityOptions
     ///   <item>An empty / whitespace / non-grammar workload key (incl. a <c>*</c> wildcard).</item>
     ///   <item>A value naming a non-catalog key domain (incl. a <c>*</c> wildcard).</item>
     ///   <item>
-    ///     A grant of an in-process-only domain (<c>jwks-signing</c>) to ANY workload —
-    ///     an in-process-only key is never cross-process grantable.
+    ///     A grant of a never-cross-process-signable domain (<c>jwks-signing</c> or a
+    ///     certificate-authority domain) to ANY workload — a crown-jewel key is never
+    ///     cross-process grantable.
     ///   </item>
     /// </list>
     /// </summary>
@@ -103,20 +105,24 @@ public sealed class SigningDomainAuthorityOptions
                         + $"a non-catalog signing domain '{domain}'.");
                 }
 
-                // An in-process-only domain (jwks-signing) must NEVER be granted to a
-                // cross-process workload. Compare the
+                // A never-cross-process-signable domain (jwks-signing + both CA trust
+                // anchors) must NEVER be granted to a cross-process workload. Compare the
                 // normalized value (from KeyDomain.Create) against the OrdinalIgnoreCase
                 // set so a non-lowercase input like "JWKS-SIGNING" is still caught.
                 var normalized = createResult.Data!.Value;
 
-                if (WorkloadCapabilityAuthority.MinterOnlySigningDomains.Contains(normalized))
+                var neverSignable =
+                    WorkloadCapabilityAuthority.NeverCrossProcessSignableDomains;
+
+                if (neverSignable.Contains(normalized))
                 {
                     return string.Create(
                         CultureInfo.InvariantCulture,
                         $"KEYCUSTODIAN_SIGNING_AUTHORITY workload '{workloadKey}' is granted "
-                        + $"the in-process-only domain '{domain}', which must never be "
-                        + $"cross-process grantable (it is the root of mint-once-forward "
-                        + $"and never leaves the Edge host process).");
+                        + $"the never-cross-process-signable domain '{domain}' (the "
+                        + $"cluster-signing root and the certificate-authority trust anchors "
+                        + $"are never signable on the general surface and must not be "
+                        + $"granted to any workload).");
                 }
             }
         }

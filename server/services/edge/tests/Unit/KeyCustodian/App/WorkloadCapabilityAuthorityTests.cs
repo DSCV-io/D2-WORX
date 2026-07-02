@@ -126,9 +126,10 @@ public sealed class WorkloadCapabilityAuthorityTests
     [Fact]
     public void AuthorizeSigning_FromTrustedUppercase_JwksSigning_Denied_MinterCapabilityRequired()
     {
-        // The EF read-path (FromTrusted) preserves verbatim casing — "JWKS-SIGNING"
-        // from a corrupt/legacy DB row. The OrdinalIgnoreCase MinterOnlySigningDomains
-        // set catches it, so the structural minter-only deny still fires.
+        // The EF read-path (FromTrusted) canonicalizes case-insensitively —
+        // "JWKS-SIGNING" from a legacy non-lowercase DB row resolves to the canonical
+        // jwks-signing entry, and the structural minter-only deny still fires (the
+        // OrdinalIgnoreCase set is belt-and-braces for any non-Create path).
         var upperTarget = KeyDomain.FromTrusted("JWKS-SIGNING");
 
         var result = WorkloadCapabilityAuthority.AuthorizeSigning(
@@ -139,7 +140,55 @@ public sealed class WorkloadCapabilityAuthorityTests
 
         result.ErrorCode.Should().Be(
             "KEYCUSTODIAN_MINTER_CAPABILITY_REQUIRED",
-            "OrdinalIgnoreCase set catches 'JWKS-SIGNING' from the FromTrusted EF path");
+            "a non-lowercase legacy value from the FromTrusted EF path still denies");
+    }
+
+    // -----------------------------------------------------------------------
+    // AuthorizeSigning — never-signable structural deny: both CA trust-anchor
+    // domains are rejected for EVERY origin, independent of policy.
+    // -----------------------------------------------------------------------
+
+    [Theory]
+    [InlineData(KeyDomain.MTLS_CA_ROOT, RequestOrigin.EdgeInbound)]
+    [InlineData(KeyDomain.MTLS_CA_ROOT, RequestOrigin.CrossProcessHop)]
+    [InlineData(KeyDomain.MTLS_CA_ROOT, RequestOrigin.InProcessModule)]
+    [InlineData(KeyDomain.MTLS_CA_ROOT, RequestOrigin.System)]
+    [InlineData(KeyDomain.MTLS_CA_INTERMEDIATE, RequestOrigin.EdgeInbound)]
+    [InlineData(KeyDomain.MTLS_CA_INTERMEDIATE, RequestOrigin.CrossProcessHop)]
+    [InlineData(KeyDomain.MTLS_CA_INTERMEDIATE, RequestOrigin.InProcessModule)]
+    [InlineData(KeyDomain.MTLS_CA_INTERMEDIATE, RequestOrigin.System)]
+    public void AuthorizeSigning_CaDomain_EveryEstablishedOrigin_Denied_CrossProcessDomainRejected(
+        string caDomain, RequestOrigin origin)
+    {
+        // Even a (hypothetically misconfigured) policy that grants the CA domain cannot
+        // make the general surface allow it — the authority layer itself denies, so the
+        // control no longer rests on the incidental key-type filter downstream.
+        var misconfiguredPolicy = SetOf(caDomain, "audit");
+
+        var result = WorkloadCapabilityAuthority.AuthorizeSigning(
+            immediateCaller: _EDGE,
+            origin: origin,
+            target: KeyDomain.Create(caDomain).Data!,
+            allowedSigningDomainsForCaller: misconfiguredPolicy);
+
+        result.Success.Should().BeFalse();
+        result.ErrorCode.Should().Be(
+            "KEYCUSTODIAN_CROSS_PROCESS_DOMAIN_REJECTED",
+            "a certificate-authority trust anchor is never signable on the general "
+            + "surface, for any origin, independent of policy");
+    }
+
+    [Fact]
+    public void AuthorizeSigning_CaDomain_Unestablished_OriginDenyStillFirst()
+    {
+        // The fail-closed type-zero arm outranks even the never-signable arm.
+        var result = WorkloadCapabilityAuthority.AuthorizeSigning(
+            immediateCaller: _EDGE,
+            origin: RequestOrigin.Unestablished,
+            target: KeyDomain.MtlsCaRoot,
+            allowedSigningDomainsForCaller: sr_empty);
+
+        result.ErrorCode.Should().Be("KEYCUSTODIAN_REQUEST_ORIGIN_UNESTABLISHED");
     }
 
     // -----------------------------------------------------------------------
@@ -340,6 +389,32 @@ public sealed class WorkloadCapabilityAuthorityTests
                 "exactly one domain is minter-only — jwks-signing, the root of "
                 + "mint-once-forward; a second entry here would change the security "
                 + "surface and must be a deliberate, reviewed change");
+    }
+
+    [Fact]
+    public void NeverCrossProcessSignableDomains_IsExactlyRootAndBothCaDomains()
+    {
+        // Closed-set pin over the crown-jewel superset: the cluster-signing root plus
+        // both CA trust anchors — and nothing else. An accidental addition or removal
+        // changes the security surface and must be a deliberate, reviewed change.
+        WorkloadCapabilityAuthority.NeverCrossProcessSignableDomains
+            .Should().BeEquivalentTo(
+                new[]
+                {
+                    KeyDomain.JWKS_SIGNING,
+                    KeyDomain.MTLS_CA_ROOT,
+                    KeyDomain.MTLS_CA_INTERMEDIATE,
+                });
+    }
+
+    [Fact]
+    public void MinterOnlySigningDomains_IsSubsetOf_NeverCrossProcessSignableDomains()
+    {
+        // The two sets answer different questions ("signable only via the minter" vs
+        // "never signable on the general surface") but the subset relation must hold:
+        // everything minter-only is also never-generally-signable.
+        WorkloadCapabilityAuthority.MinterOnlySigningDomains
+            .Should().BeSubsetOf(WorkloadCapabilityAuthority.NeverCrossProcessSignableDomains);
     }
 
     // -----------------------------------------------------------------------

@@ -221,7 +221,7 @@ public static class KeyCustodianFailures
             category: ErrorCategory.InfrastructureUnavailable);
     }
 
-    /// <summary>The requested key domain is in-process-only (e.g. jwks-signing) and may not be signed with by a cross-process caller. The jwks-signing key is the root of mint-once-forward and never leaves the Edge host process. Enforced structurally (independent of policy) and backed by a boot-time config-validation invariant that refuses to grant an in-process-only domain to any workload.</summary>
+    /// <summary>The requested key domain is never signable on the general signing surface, for any origin: the certificate-authority domains (mtls-ca-root / mtls-ca-intermediate — trust anchors whose private keys sign only certificates through the dedicated issuance path, never arbitrary caller-supplied bytes) and the cluster-signing root (jwks-signing, which surfaces as the more specific MINTER_CAPABILITY_REQUIRED). Enforced structurally (independent of policy) and backed by a boot-time config-validation invariant that refuses to grant a never-signable domain to any workload.</summary>
     /// <param name="messages">Optional translation messages; defaults to <c>[TK.Keycustodian.Authorization.CROSS_PROCESS_DOMAIN_REJECTED]</c>. Pass a message bound via <c>TKMessage.With(...)</c> to name the offending argument.</param>
     /// <returns>A pre-built <see cref="D2Result"/> failure.</returns>
     public static D2Result CrossProcessDomainRejected(IReadOnlyList<TKMessage>? messages = null)
@@ -303,6 +303,30 @@ public static class KeyCustodianFailures
         return D2Result.ValidationFailed(
             messages: messages,
             errorCode: KeyCustodianErrorCodes.KEYCUSTODIAN_EMPTY_SIGNING_INPUT,
+            category: ErrorCategory.ValidationFailure);
+    }
+
+    /// <summary>The requested key type disagrees with the canonical key type bound to the key domain (every catalog domain declares exactly one key type: jwks-signing is RSA-signing, cookie/client-secret are opaque secrets, the CA domains are X.509 CA certificates, and the payload-encryption domains are AES). A mismatched pair is a permanent client error rejected before any store or crypto work — including a sign request against a domain whose bound type can never hold a signing key (a 400, never the retryable 503 signing-key-unavailable).</summary>
+    /// <param name="messages">Optional translation messages; defaults to <c>[TK.Common.Errors.VALIDATION_FAILED]</c>. Pass a message bound via <c>TKMessage.With(...)</c> to name the offending argument.</param>
+    /// <returns>A pre-built <see cref="D2Result"/> failure.</returns>
+    public static D2Result KeyTypeDomainMismatch(IReadOnlyList<TKMessage>? messages = null)
+    {
+        messages ??= [TK.Common.Errors.VALIDATION_FAILED];
+        return D2Result.ValidationFailed(
+            messages: messages,
+            errorCode: KeyCustodianErrorCodes.KEYCUSTODIAN_KEY_TYPE_DOMAIN_MISMATCH,
+            category: ErrorCategory.ValidationFailure);
+    }
+
+    /// <summary>The signing input exceeds the maximum permitted size (16 KiB). A legitimate signing input (e.g. a JWT header.payload base64url) is comfortably under this bound; a larger payload is a client error rejected in the shared signing core before any key load or crypto, so both the general sign surface and the in-process minter inherit the cap.</summary>
+    /// <param name="messages">Optional translation messages; defaults to <c>[TK.Common.Errors.TOO_LONG]</c>. Pass a message bound via <c>TKMessage.With(...)</c> to name the offending argument.</param>
+    /// <returns>A pre-built <see cref="D2Result"/> failure.</returns>
+    public static D2Result SigningInputTooLarge(IReadOnlyList<TKMessage>? messages = null)
+    {
+        messages ??= [TK.Common.Errors.TOO_LONG];
+        return D2Result.ValidationFailed(
+            messages: messages,
+            errorCode: KeyCustodianErrorCodes.KEYCUSTODIAN_SIGNING_INPUT_TOO_LARGE,
             category: ErrorCategory.ValidationFailure);
     }
 

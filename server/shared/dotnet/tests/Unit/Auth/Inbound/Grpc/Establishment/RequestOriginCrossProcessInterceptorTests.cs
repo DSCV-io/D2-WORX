@@ -15,10 +15,12 @@ using D2.Shared.Auth.Grpc.Interceptors;
 using D2.Shared.Context.Abstractions;
 using D2.Shared.Headers.Grpc;
 using D2.Shared.Tests.Unit.Auth.Inbound.Grpc.Fixtures;
+using D2.Shared.Tests.Unit.Handler;
 using D2.Shared.Tests.Unit.Mtls;
 using D2.Shared.Time;
 using global::Grpc.Core;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using NodaTime;
@@ -93,16 +95,48 @@ public sealed class RequestOriginCrossProcessInterceptorTests
     }
 
     [Fact]
-    public async Task Establish_NoPeerCert_LeavesCallerNull_FailClosed()
+    public async Task Establish_NoPeerCert_LeavesOriginUnestablishedAndCallerNull_FailClosed()
     {
         var ctx = new MutableRequestContext { IsAuthenticated = true };
         var scc = BuildContext(ctx, clientCertificate: null);
 
         await InvokeAsync(scc);
 
-        ctx.Origin.Should().Be(RequestOrigin.CrossProcessHop);
+        // Both authority-grade facts are derived ATOMICALLY from the one peer identity: no
+        // validated peer cert ⇒ NEITHER is set, so the origin stays the fail-closed
+        // Unestablished default (never the contradictory CrossProcessHop-with-null-caller
+        // state) and every downstream authority rule denies at its first arm.
+        ctx.Origin.Should().Be(
+            RequestOrigin.Unestablished,
+            "a call with no validated peer certificate does NOT establish the cross-process "
+            + "origin — the origin + caller are derived together from the single peer fact");
         ctx.ImmediateCaller.Should().BeNull(
             "a call with no validated peer certificate yields a null caller — fail-closed");
+    }
+
+    [Fact]
+    public async Task Establish_NoPeerCert_StillAppendsCallPathAndLogsPeerAbsentWarning()
+    {
+        // Telemetry (the call-path hop append) is structurally excluded from authority and
+        // runs unconditionally even when the origin stays unestablished; and a misconfigured
+        // non-mTLS hop is observable (a Warning), never silent.
+        var logger = new TestLogger<RequestOriginCrossProcessInterceptor>();
+        var interceptor = new RequestOriginCrossProcessInterceptor(
+            Options.Create(new D2WorkloadIdentityOptions { ServiceId = _SELF_ID }),
+            new TestClock(sr_now),
+            logger);
+        var ctx = new MutableRequestContext { IsAuthenticated = true };
+        var scc = BuildContext(ctx, clientCertificate: null);
+
+        await interceptor.UnaryServerHandler<string, string>(
+            "req", scc, (_, _) => Task.FromResult("resp"));
+
+        ctx.Origin.Should().Be(RequestOrigin.Unestablished);
+        ctx.CallPath.Should().ContainSingle("the call-path append is unconditional telemetry");
+        ctx.CallPath[0].Id.Should().Be(_SELF_ID);
+        logger.Entries.Should().Contain(
+            e => e.EventId.Id == 4104 && e.Level == LogLevel.Warning,
+            "an absent peer identity on a cross-process hop fires the observability warning");
     }
 
     [Fact]
@@ -145,9 +179,13 @@ public sealed class RequestOriginCrossProcessInterceptorTests
     public async Task Establish_MalformedInboundHeader_IsIgnoredButHopStillEstablished()
     {
         // A forged / oversize / garbage header decodes to null and is a no-op — propagation
-        // is opportunistic — but the origin + this hop are still established fresh.
+        // is opportunistic — but the origin + this hop are still established fresh from the
+        // validated peer certificate (which is what establishes the origin now).
+        using var ca = new TestCertificateAuthority();
+        using var leaf = ca.IssueLeaf("edge");
         var ctx = new MutableRequestContext { IsAuthenticated = true };
-        var scc = BuildContext(ctx, clientCertificate: null, propagatedHeader: "!!!not-base64url!!!");
+        var scc = BuildContext(
+            ctx, clientCertificate: leaf, propagatedHeader: "!!!not-base64url!!!");
 
         await InvokeAsync(scc);
 

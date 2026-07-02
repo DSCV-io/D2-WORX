@@ -149,7 +149,7 @@ public sealed class KeyDomainTests
     // -----------------------------------------------------------------------
 
     [Fact]
-    public void FromTrusted_ValidValue_WrapsVerbatim()
+    public void FromTrusted_CatalogValue_ResolvesCanonicalEntry()
     {
         var domain = KeyDomain.FromTrusted("audit");
         domain.Value.Should().Be("audit");

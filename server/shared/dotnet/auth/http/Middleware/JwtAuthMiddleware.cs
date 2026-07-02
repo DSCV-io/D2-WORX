@@ -49,15 +49,19 @@ using Microsoft.Extensions.Primitives;
 ///   <item>If the validated context carries a session id, check liveness via
 ///     <see cref="ISessionLivenessTracker.IsAliveAsync"/>. Revoked → 401.
 ///     ServiceUnavailable → 503 (fail-closed).</item>
-///   <item>Stash the raw bearer in the request-scoped
-///     <see cref="IForwardedJwtAccessor"/> (best-effort). Capture is the LAST
-///     guard-passing operation before request continuation — a token that fails
-///     harmless, bearer-missing, validation, or liveness checks never enters the
-///     holder.</item>
 ///   <item>Enforce per-endpoint scope set (any-of or all-of, per
 ///     <see cref="EndpointScopeMetadata.Match"/>). Mismatch →
 ///     <see cref="AuthFailures.ScopeInsufficient"/> 401 (NOT 403; see
-///     <see cref="AuthErrorCodes.AUTH_SCOPE_INSUFFICIENT"/> remarks).</item>
+///     <see cref="AuthErrorCodes.AUTH_SCOPE_INSUFFICIENT"/> remarks). Absent metadata
+///     admits any authenticated caller; a PRESENT non-harmless metadata with an EMPTY
+///     scope set is a configuration anomaly and fails CLOSED (the public factories
+///     reject empty sets, so only a serializer / clone / reflection path could produce
+///     one).</item>
+///   <item>Stash the raw bearer in the request-scoped
+///     <see cref="IForwardedJwtAccessor"/> (best-effort). Capture is the LAST
+///     pre-continuation operation — placed AFTER the scope gate so a token that fails
+///     harmless, bearer-missing, validation, liveness, OR scope enforcement never enters
+///     the holder (mirrors the gRPC <c>JwtAuthInterceptor</c>).</item>
 ///   <item>Set the populated <see cref="IRequestContext"/> on
 ///     <see cref="HttpContext.Items"/> under
 ///     <see cref="D2HttpContextItems.REQUEST_CONTEXT"/> and continue.</item>
@@ -199,29 +203,26 @@ internal sealed class JwtAuthMiddleware
             }
         }
 
-        // Stash the validated raw bearer in the request-scoped forwarded-JWT
-        // holder so an outbound hop can replay it byte-for-byte. Captured AFTER
-        // validation success AND liveness pass — only a token that cleared the
-        // harmless, bearer-missing, validation-failure, and liveness-failure gates
-        // ever reaches this point, so a revoked or otherwise rejected token never
-        // enters the holder, preventing transient holder population during the
-        // error-response phase. Best-effort: a host that does not register the
-        // holder (does not forward) simply no-ops; a null RequestServices (outside
-        // a DI scope) also no-ops rather than throwing. The bearer is never logged.
-        // RequestServices is non-null-annotated but can be null at runtime
-        // (e.g. resolution outside a DI scope), so guard explicitly.
-        var serviceProvider = (IServiceProvider?)context.RequestServices;
-
-        if (serviceProvider is not null)
-            serviceProvider.GetService<IForwardedJwtAccessor>()?.Capture(bearerResult.Data!);
-
-        // Per-endpoint scope enforcement (any-of or all-of, per meta.Match).
-        // Empty / null required set = "any authenticated caller passes."
-        if (endpointMetadata is { Scopes.Count: > 0 } meta)
+        // Per-endpoint scope enforcement (any-of or all-of, per meta.Match). Absent
+        // metadata = "any authenticated caller passes" (deny-by-default lives in the
+        // ABSENCE of metadata, not an empty scope set). A PRESENT, non-harmless metadata
+        // with an EMPTY scope set is a configuration anomaly: the public factories reject
+        // empty sets, so only a serializer / record-clone / reflection path could produce
+        // one — fail CLOSED rather than silently admit any authenticated caller.
+        if (endpointMetadata is { IsHarmlessEndpoint: false } meta)
         {
+            if (meta.Scopes.Falsey())
+            {
+                r_logger.ScopeMetadataEmptyAnomaly();
+                await WriteProblemAsync(
+                    context, AuthFailures.ScopeInsufficient(), ct).ConfigureAwait(false);
+                return;
+            }
+
             var passes = meta.Match == ScopeMatch.All
                 ? RequestContextHasAllScopes(requestContext, meta.Scopes)
                 : RequestContextHasAnyScope(requestContext, meta.Scopes);
+
             if (!passes)
             {
                 r_logger.ScopeRequirementUnmet(SummarizeScopes(meta.Scopes));
@@ -230,6 +231,23 @@ internal sealed class JwtAuthMiddleware
                 return;
             }
         }
+
+        // Stash the validated raw bearer in the request-scoped forwarded-JWT holder so an
+        // outbound hop can replay it byte-for-byte. Capture is the LAST pre-continuation
+        // operation — placed AFTER every inbound gate (harmless short-circuit, bearer
+        // extraction, JWT validation, session liveness, AND per-endpoint scope
+        // enforcement), mirroring the gRPC JwtAuthInterceptor. Only a token that cleared
+        // ALL gates ever enters the holder, so a scope-insufficient (or revoked, or
+        // otherwise rejected) token never populates it — no transient holder population
+        // during the error-response phase. Best-effort: a host that does not register the
+        // holder (does not forward) simply no-ops; a null RequestServices (outside a DI
+        // scope) also no-ops rather than throwing. The bearer is never logged.
+        // RequestServices is non-null-annotated but can be null at runtime (e.g.
+        // resolution outside a DI scope), so guard explicitly.
+        var serviceProvider = (IServiceProvider?)context.RequestServices;
+
+        if (serviceProvider is not null)
+            serviceProvider.GetService<IForwardedJwtAccessor>()?.Capture(bearerResult.Data!);
 
         // Plumb the populated context to downstream handlers + continue.
         context.Items[D2HttpContextItems.REQUEST_CONTEXT] = requestContext;

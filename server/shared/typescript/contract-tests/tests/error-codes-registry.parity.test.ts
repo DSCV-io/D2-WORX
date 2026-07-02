@@ -34,7 +34,7 @@ import { canonicalize, loadFixture } from "../src/index.js";
 //     TK.*.* constant path, so the snake forms must be byte-identical)
 //
 // ADVERSARIAL ASSERTIONS (registry-level):
-//   - Total count pinned at 50 (15 generic + 14 auth + 21 keycustodian).
+//   - Total count pinned at 52 (15 generic + 14 auth + 23 keycustodian).
 //   - Code sets are identical: no code present in one runtime only.
 //   - No duplicate codes within either side.
 //   - Every category value is one of the 9 canonical wire strings.
@@ -44,7 +44,7 @@ import { canonicalize, loadFixture } from "../src/index.js";
 //   - Case sensitivity: lowercase code does NOT resolve.
 // ---------------------------------------------------------------------------
 
-const _EXPECTED_COUNT = 50;
+const _EXPECTED_COUNT = 52;
 
 const _VALID_CATEGORIES = new Set<string>([
   "validation_failure",

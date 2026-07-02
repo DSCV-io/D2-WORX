@@ -6,8 +6,6 @@
 
 namespace D2.Edge.KeyCustodian.Domain.Rules;
 
-using D2.Shared.Auth.Abstractions;
-
 /// <summary>
 /// The capability-general workload→target authority — the pure decision every
 /// signing / sealing consumer plugs into. It answers "may workload W use
@@ -72,13 +70,39 @@ public static class WorkloadCapabilityAuthority
     /// leaves the Edge host process.
     /// </summary>
     /// <remarks>
-    /// The comparer is <c>OrdinalIgnoreCase</c> so a value stored verbatim via
-    /// <c>KeyDomain.FromTrusted</c> (EF read path) or typed non-lowercase in
-    /// configuration still matches — a case variant must not silently bypass the
-    /// minter-only deny or the boot-gate check.
+    /// The comparer is <c>OrdinalIgnoreCase</c> so a value typed non-lowercase in
+    /// configuration (or reaching the rule through any non-<c>Create</c> path) still
+    /// matches — a case variant must not silently bypass the minter-only deny or the
+    /// boot-gate check.
     /// </remarks>
     public static readonly IReadOnlySet<string> MinterOnlySigningDomains =
         new HashSet<string>(StringComparer.OrdinalIgnoreCase) { KeyDomain.JWKS_SIGNING };
+
+    /// <summary>
+    /// The closed superset of key domains that are NEVER signable on the general
+    /// cross-process signing surface: the cluster-signing root (<c>jwks-signing</c>,
+    /// the <see cref="MinterOnlySigningDomains"/> subset — signable only through the
+    /// dedicated minter capability) plus both certificate-authority domains
+    /// (<c>mtls-ca-root</c> / <c>mtls-ca-intermediate</c> — trust anchors whose private
+    /// keys sign ONLY certificates through the dedicated issuance path, never arbitrary
+    /// caller-supplied bytes). <see cref="AuthorizeSigning"/> structurally denies every
+    /// member for EVERY origin, and the boot-time config validator
+    /// <c>SigningDomainAuthorityOptions.Validate()</c> refuses to grant a member to any
+    /// workload. The two sets answer different questions: "never signable on the
+    /// general surface" (this set) vs "signable only via the minter"
+    /// (<see cref="MinterOnlySigningDomains"/>).
+    /// </summary>
+    /// <remarks>
+    /// Same <c>OrdinalIgnoreCase</c> rationale as <see cref="MinterOnlySigningDomains"/>:
+    /// a case variant must not silently bypass the structural deny or the boot gate.
+    /// </remarks>
+    public static readonly IReadOnlySet<string> NeverCrossProcessSignableDomains =
+        new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+        {
+            KeyDomain.JWKS_SIGNING,
+            KeyDomain.MTLS_CA_ROOT,
+            KeyDomain.MTLS_CA_INTERMEDIATE,
+        };
 
     /// <summary>
     /// Decides whether a caller may sign with a key domain on the GENERAL signing
@@ -97,6 +121,13 @@ public static class WorkloadCapabilityAuthority
     ///     EVERY established origin; it is reachable only through the dedicated minter
     ///     capability. This kills the confused-deputy: a request that became in-process
     ///     downstream cannot reach the root, and there is no caller id to spoof.
+    ///   </item>
+    ///   <item>
+    ///     <b>Never-signable structural deny</b> — every other member of
+    ///     <see cref="NeverCrossProcessSignableDomains"/> (the CA domains) is rejected
+    ///     with <c>CrossProcessDomainRejected</c> for EVERY origin, independent of
+    ///     policy: a trust anchor's private key signs only certificates through the
+    ///     dedicated issuance path, never arbitrary caller-supplied bytes.
     ///   </item>
     ///   <item>
     ///     <b>Plane deny</b> — every non-root domain signs cross-process only; a
@@ -134,7 +165,9 @@ public static class WorkloadCapabilityAuthority
     /// <c>Ok</c> when the caller may sign with <paramref name="target"/>;
     /// <c>RequestOriginUnestablished</c> (403) for an unestablished origin;
     /// <c>MinterCapabilityRequired</c> (403) for the cluster-signing root on the general
-    /// surface; <c>SigningDomainNotAuthorized</c> (403) for a non-cross-process origin or
+    /// surface; <c>CrossProcessDomainRejected</c> (403) for a certificate-authority
+    /// domain (never signable on this surface for any origin);
+    /// <c>SigningDomainNotAuthorized</c> (403) for a non-cross-process origin or
     /// a domain outside the caller's allowed set; <c>Forbidden</c> (403) when a
     /// cross-process hop presents no caller identity.
     /// </returns>
@@ -160,6 +193,12 @@ public static class WorkloadCapabilityAuthority
         // to spoof on the in-process plane.
         if (MinterOnlySigningDomains.Contains(target.Value))
             return KeyCustodianFailures.MinterCapabilityRequired();
+
+        // (2b) Every other never-signable domain (the CA trust anchors) is rejected for
+        // EVERY origin, independent of policy — a CA private key signs only certificates
+        // through the dedicated issuance path, never arbitrary caller-supplied bytes.
+        if (NeverCrossProcessSignableDomains.Contains(target.Value))
+            return KeyCustodianFailures.CrossProcessDomainRejected();
 
         // (3) Every other (non-root) domain signs cross-process only.
         if (origin != RequestOrigin.CrossProcessHop)

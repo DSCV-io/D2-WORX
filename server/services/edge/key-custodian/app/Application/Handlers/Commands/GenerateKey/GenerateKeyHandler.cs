@@ -14,11 +14,16 @@ using O = D2.Edge.KeyCustodian.Domain.Rules.KeySummary;
 /// Generates a new pending key for a domain.
 /// </summary>
 /// <remarks>
-/// Validates the domain at the top, rejects a second live pending key, generates
-/// material via the pure <see cref="KeyGeneration"/> rule (or, for a CA domain, the
-/// shared <see cref="CaSuccessorFactory"/>), root-wraps it (zeroing the plaintext
-/// immediately after), mints a kid, builds the <see cref="PendingKey"/> aggregate,
-/// and persists the new row + a <c>Generated</c> audit entry in one
+/// Authority precedes work: the System-plane-only
+/// <see cref="KeyLifecycleAuthority.AuthorizeLifecycleMutation"/> gate runs FIRST
+/// (fail-closed; deny emits the lifecycle authority-rejection telemetry). Then
+/// validates the domain, enforces the canonical domain→key-type binding
+/// (mismatch → <c>KEYCUSTODIAN_KEY_TYPE_DOMAIN_MISMATCH</c>), rejects a second live
+/// pending key, generates material via the pure <see cref="KeyGeneration"/> rule
+/// (or, for a CA domain, the shared <see cref="CaSuccessorFactory"/>), root-wraps
+/// it (zeroing the plaintext immediately after), mints a kid, builds the
+/// <see cref="PendingKey"/> aggregate, and persists the new row + a
+/// <c>Generated</c> audit entry in one
 /// <see cref="IKeyCustodianDbContext.SaveChangesAsync"/>. Routing CA generation
 /// through this handler keeps <c>RunDueRotations</c> type-agnostic — it dispatches
 /// <c>GenerateKey(domain, inheritedType)</c> and the handler forks by type.
@@ -48,15 +53,30 @@ public sealed class GenerateKeyHandler(
     protected override async ValueTask<D2Result<O?>> ExecuteAsync(
         I input, CancellationToken ct)
     {
+        // Authority precedes work: lifecycle mutations are System-plane-only, fail-closed.
+        var authorityResult =
+            KeyLifecycleAuthority.AuthorizeLifecycleMutation(Context.Request.Origin);
+
+        if (authorityResult.Failed)
+        {
+            return LifecycleAuthorityTelemetry.Deny<O>(
+                Context.Logger, authorityResult, Context.Request.ImmediateCaller, "generate-key");
+        }
+
         var domainResult = KeyDomain.Create(input.Domain);
 
         if (domainResult.BubbleOnFailure<KeyDomain, O>(out var bubbled, out var domain))
             return bubbled;
 
+        // Enforce the canonical domain→key-type binding BEFORE any store access — a
+        // mismatched (domain, type) pair is a permanent client error, never persisted.
+        if (input.KeyType != domain!.KeyType)
+            return KeyCustodianFailures<O?>.KeyTypeDomainMismatch();
+
         // Reject a second live pending key for the domain — exactly one pending
         // key may exist at a time.
         var hasPending = await db.Keys
-            .ForDomain(domain!.Value)
+            .ForDomain(domain.Value)
             .Pending()
             .AnyAsync(ct)
             .ConfigureAwait(false);

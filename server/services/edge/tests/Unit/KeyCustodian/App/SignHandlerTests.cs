@@ -6,9 +6,9 @@
 
 namespace D2.Edge.Tests.Unit.KeyCustodian.App;
 
-using System.Buffers.Text;
 using System.Collections.Concurrent;
 using System.Diagnostics.Metrics;
+using D2.Edge.KeyCustodian.App.Application;
 using D2.Edge.KeyCustodian.App.Application.Handlers.Queries.Sign;
 using D2.Edge.KeyCustodian.App.Application.Observability;
 using D2.Edge.KeyCustodian.Clients;
@@ -23,9 +23,14 @@ using Microsoft.Extensions.Logging.Abstractions;
 /// over an in-memory DbContext + a controllable <c>MutableRequestContext</c>: the
 /// established <c>Origin</c> + <c>ImmediateCaller</c> gate every request through the
 /// refined rule (Unestablished denies; <c>jwks-signing</c> is categorically
-/// minter-required on this surface; every other domain signs cross-process per policy),
-/// the deny-path telemetry fires THROUGH the handler (closing the call-site gap), and a
-/// granted sign produces a signature that verifies against the key's public half.
+/// minter-required on this surface; the CA trust anchors are never-signable for every
+/// origin; every other domain signs cross-process per policy), the deny-path telemetry
+/// fires THROUGH the handler (closing the call-site gap), and an authority-passing
+/// request against a non-signing-bound domain is sharply rejected with the permanent
+/// 400 key-type mismatch — never the retryable 503. The shared signing core's
+/// happy path (signature verification, empty input, no active key, corrupt material)
+/// is exercised through the minter capability in <c>JwtSigningCapabilityTests</c> —
+/// at this catalog no generally-signable RSA-bound domain exists.
 /// </summary>
 public sealed class SignHandlerTests
 {
@@ -38,24 +43,51 @@ public sealed class SignHandlerTests
     private readonly IPayloadCrypto r_crypto = KcAppTestKit.BuildTestRootCrypto();
 
     [Fact]
-    public async Task Sign_CrossProcessGrantedDomain_ReturnsSignatureAndKid_VerifiableAgainstPublicKey()
+    public void KeyDomainSigner_StaysInternal_NoExternalSigningOracle()
     {
+        // Invariant: KeyDomainSigner stays internal, so the shared signing core is never
+        // reachable from outside the App assembly — no external caller can bypass an
+        // authority gate to reach a raw signing oracle over every managed signing key.
+        typeof(KeyDomainSigner).IsNotPublic.Should().BeTrue(
+            "the signing core stays internal so every path to it clears an authority gate");
+    }
+
+    [Theory]
+    [InlineData(_AUDIT)]
+    [InlineData(KeyDomain.COOKIE)]
+    public async Task Sign_CrossProcessGrantedNonSigningDomain_Returns400Mismatch_Not503(
+        string domain)
+    {
+        // The caller + policy authorize, but the domain's bound key type can never
+        // hold a signing key — a PERMANENT 400, not the retryable 503 that "no active
+        // key yet" would produce. No key is seeded on purpose: the 400 (rather than
+        // SIGNING_KEY_UNAVAILABLE) proves the sharp reject fires before the key load.
         await using var db = KeyCustodianTestDbContext.CreateEmpty();
-        var kid = await SeedSigningKey(db, _AUDIT);
+
+        var result = await Build(
+                db, RequestOrigin.CrossProcessHop, "files", Policy(("files", [domain])))
+            .HandleAsync(new SignInput(domain, sr_input));
+
+        result.Success.Should().BeFalse();
+        result.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        result.ErrorCode.Should().Be(
+            KeyCustodianErrorCodes.KEYCUSTODIAN_KEY_TYPE_DOMAIN_MISMATCH);
+    }
+
+    [Fact]
+    public async Task Sign_CrossProcessGrantedNonSigningDomain_WithAnomalousRsaKey_Still400()
+    {
+        // Even an anomalous store row (an RSA key persisted in an AES-bound domain)
+        // cannot resurrect the general surface — the binding, not the store contents,
+        // decides. Regression-pins that the reject is structural.
+        await using var db = KeyCustodianTestDbContext.CreateEmpty();
+        await SeedSigningKey(db, _AUDIT);
 
         var result = await Build(db, RequestOrigin.CrossProcessHop, "files", Policy(("files", [_AUDIT])))
             .HandleAsync(new SignInput(_AUDIT, sr_input));
 
-        result.Success.Should().BeTrue();
-        result.Data!.Kid.Should().Be(kid);
-
-        var spki = db.Keys.Single(k => k.Kid == kid).PublicKeyMaterial!;
-        using var verifier = RSA.Create();
-        verifier.ImportSubjectPublicKeyInfo(spki, out _);
-
-        var signature = Base64Url.DecodeFromChars(result.Data!.Signature);
-        verifier.VerifyData(sr_input, signature, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1)
-            .Should().BeTrue("the handler signed with the active audit signing key");
+        result.ErrorCode.Should().Be(
+            KeyCustodianErrorCodes.KEYCUSTODIAN_KEY_TYPE_DOMAIN_MISMATCH);
     }
 
     [Fact]
@@ -156,61 +188,13 @@ public sealed class SignHandlerTests
     }
 
     [Fact]
-    public async Task Sign_EmptyInput_ReturnsEmptySigningInput()
-    {
-        await using var db = KeyCustodianTestDbContext.CreateEmpty();
-        await SeedSigningKey(db, _AUDIT);
-
-        var result = await Build(db, RequestOrigin.CrossProcessHop, "files", Policy(("files", [_AUDIT])))
-            .HandleAsync(new SignInput(_AUDIT, []));
-
-        result.ErrorCode.Should().Be(KeyCustodianErrorCodes.KEYCUSTODIAN_EMPTY_SIGNING_INPUT);
-        result.StatusCode.Should().Be(HttpStatusCode.BadRequest);
-    }
-
-    [Fact]
-    public async Task Sign_NoActiveKey_ReturnsSigningKeyUnavailable()
-    {
-        await using var db = KeyCustodianTestDbContext.CreateEmpty();
-
-        var result = await Build(db, RequestOrigin.CrossProcessHop, "files", Policy(("files", [_AUDIT])))
-            .HandleAsync(new SignInput(_AUDIT, sr_input));
-
-        result.ErrorCode.Should().Be(KeyCustodianErrorCodes.KEYCUSTODIAN_SIGNING_KEY_UNAVAILABLE);
-        result.StatusCode.Should().Be(HttpStatusCode.ServiceUnavailable);
-    }
-
-    [Fact]
-    public async Task Sign_CorruptKeyMaterial_ReturnsPreconditionViolated()
-    {
-        // Real-wrapped but cryptographically corrupt material — decrypts cleanly then fails
-        // PKCS#8 import in the signing rule → flagged 500 (no throw).
-        await using var db = KeyCustodianTestDbContext.CreateEmpty();
-        await KcAppTestKit.SeedKeyWithCorruptMaterialAsync(
-            db,
-            r_crypto,
-            _AUDIT,
-            KeyType.RsaSigning,
-            KeyStatus.Active,
-            KcAppTestKit.SR_BaseInstant,
-            corruptPlaintext: [0x01, 0x02, 0x03, 0x04],
-            activatedAt: KcAppTestKit.SR_BaseInstant);
-
-        var result = await Build(db, RequestOrigin.CrossProcessHop, "files", Policy(("files", [_AUDIT])))
-            .HandleAsync(new SignInput(_AUDIT, sr_input));
-
-        result.ErrorCode.Should().Be(KeyCustodianErrorCodes.KEYCUSTODIAN_PRECONDITION_VIOLATED);
-        result.StatusCode.Should().Be(HttpStatusCode.InternalServerError);
-    }
-
-    [Fact]
-    public async Task Sign_WithoutRequiredScope_ReturnsForbidden_BeforeAuthorityOrCrypto()
+    public async Task Sign_WithoutRequiredScope_ReturnsForbidden_BeforeAuthorityOrBinding()
     {
         // No internal.kc.sign scope on the request context → BaseHandler's per-handler
-        // ScopeRequirement gate rejects with Forbidden BEFORE the authority rule, the DB, or
-        // any crypto runs. The caller + policy WOULD otherwise authorize (files → audit,
-        // cross-process) and no key is seeded, so a Forbidden (not 503 SIGNING_KEY_UNAVAILABLE)
-        // proves the scope gate fired first.
+        // ScopeRequirement gate rejects with Forbidden BEFORE the authority rule, the
+        // binding check, the DB, or any crypto runs. The caller + policy WOULD otherwise
+        // authorize (files → audit, cross-process) and audit would then surface the 400
+        // type mismatch — so a Forbidden (not the 400) proves the scope gate fired first.
         await using var db = KeyCustodianTestDbContext.CreateEmpty();
 
         var result = await Build(
@@ -224,15 +208,19 @@ public sealed class SignHandlerTests
         result.StatusCode.Should().Be(
             HttpStatusCode.Forbidden,
             "the in-process internal.kc.sign scope gate is fail-closed");
+        result.ErrorCode.Should().NotBe(
+            KeyCustodianErrorCodes.KEYCUSTODIAN_KEY_TYPE_DOMAIN_MISMATCH,
+            "the scope gate fires before the domain binding check");
     }
 
     [Fact]
-    public async Task Sign_WithRequiredScope_PassesScopeGate_AndSigns()
+    public async Task Sign_WithRequiredScope_PassesScopeGate_ReachesAuthorityAndBinding()
     {
         await using var db = KeyCustodianTestDbContext.CreateEmpty();
-        var kid = await SeedSigningKey(db, _AUDIT);
 
-        // internal.kc.sign present → the scope gate admits the call; a granted domain signs.
+        // internal.kc.sign present → the scope gate admits the call; the request then
+        // reaches the authority rule + the binding check, whose 400 mismatch (not a
+        // Forbidden) proves the scope gate passed.
         var result = await Build(
                 db,
                 RequestOrigin.CrossProcessHop,
@@ -241,8 +229,9 @@ public sealed class SignHandlerTests
                 scopes: new HashSet<string>(StringComparer.Ordinal) { Scopes.Internal.Kc.Sign })
             .HandleAsync(new SignInput(_AUDIT, sr_input));
 
-        result.Success.Should().BeTrue("the request carries the required internal.kc.sign scope");
-        result.Data!.Kid.Should().Be(kid);
+        result.ErrorCode.Should().Be(
+            KeyCustodianErrorCodes.KEYCUSTODIAN_KEY_TYPE_DOMAIN_MISMATCH,
+            "the request carrying the required scope reaches the binding check");
     }
 
     [Fact]
@@ -274,6 +263,47 @@ public sealed class SignHandlerTests
                 && e.Message.Contains(
                     KeyCustodianMetrics.AuthorityRejections.Capability.SIGN, StringComparison.Ordinal)
                 && e.Message.Contains("jwks-signing", StringComparison.Ordinal));
+    }
+
+    [Theory]
+    [InlineData(KeyDomain.MTLS_CA_ROOT)]
+    [InlineData(KeyDomain.MTLS_CA_INTERMEDIATE)]
+    public async Task Sign_CaDomainDeny_FiresNeverSignableTelemetry_AndCrossProcessCounter(
+        string caDomain)
+    {
+        // A CA-domain signing attempt is a crown-jewel attempt: 403 through the real
+        // handler with the never-signable reason tag, the highest-severity
+        // cross-process rejection counter, AND the AuthorityRejected forensic log.
+        await using var db = KeyCustodianTestDbContext.CreateEmpty();
+        var logger = new CapturingLogger<SignHandler>();
+
+        var authorityTags = new List<(string Capability, string Reason)>();
+        var crossProcess = new List<long>();
+
+        using (var listener = BuildListener(authorityTags, crossProcess))
+        {
+            listener.Start();
+
+            var result = await Build(
+                    db, RequestOrigin.CrossProcessHop, "edge", Policy(("edge", [caDomain])), logger)
+                .HandleAsync(new SignInput(caDomain, sr_input));
+
+            result.ErrorCode.Should().Be(
+                KeyCustodianErrorCodes.KEYCUSTODIAN_CROSS_PROCESS_DOMAIN_REJECTED);
+            result.StatusCode.Should().Be(HttpStatusCode.Forbidden);
+        }
+
+        authorityTags.Should().Contain(
+            (KeyCustodianMetrics.AuthorityRejections.Capability.SIGN,
+                KeyCustodianMetrics.AuthorityRejections.Reason.NEVER_SIGNABLE));
+        crossProcess.Should().Contain(
+            1L, "a CA-domain signing attempt fires the highest-severity counter");
+        logger.Entries.Should().Contain(
+            e => e.EventId.Id == 9512
+                && e.Message.Contains(
+                    KeyCustodianMetrics.AuthorityRejections.Capability.SIGN,
+                    StringComparison.Ordinal)
+                && e.Message.Contains(caDomain, StringComparison.Ordinal));
     }
 
     [Fact]

@@ -85,8 +85,12 @@ public sealed class SeedCertificateAuthorityTests
     [Fact]
     public async Task Seed_ThenIssueLeaf_LeafChainsToSeededRoot()
     {
-        // Integration-style: seed via the provider, then issue a leaf through the
-        // real issuance handler — the leaf must chain to the seeded root.
+        // Seed via the provider, then issue a leaf via the pure issuance rule using
+        // the seeded intermediate (unwrapped exactly like the issuance path does) —
+        // the leaf must chain to the seeded root. The issuance HANDLER itself is
+        // deny-all until the real caller↔subject issuance rule lands with the
+        // cross-process transport wiring, so the chain property is proven at the
+        // rule seam.
         await using var db = KeyCustodianTestDbContext.CreateEmpty();
         var clock = new TestClock(KcAppTestKit.SR_BaseInstant);
         var provider = BuildValidChainProvider(clock);
@@ -94,30 +98,39 @@ public sealed class SeedCertificateAuthorityTests
         await Build(db, clock, provider).HandleAsync(new SeedCertificateAuthorityInput());
 
         var rootCertDer = db.Keys.Single(k => k.KeyDomain == KeyDomain.MTLS_CA_ROOT).CaCertificate!;
+        var intermediateRow = db.Keys.Single(k => k.KeyDomain == KeyDomain.MTLS_CA_INTERMEDIATE);
 
-        var issuer = new D2.Edge.KeyCustodian.App.Application.Handlers.Commands
-            .IssueWorkloadCertificate.IssueWorkloadCertificateHandler(
-                KcAppTestKit.Context<D2.Edge.KeyCustodian.App.Application.Handlers.Commands
-                    .IssueWorkloadCertificate.IssueWorkloadCertificateHandler>(),
-                KcAppTestKit.NullClassifier(),
-                db,
-                Options.Create(r_options),
-                r_crypto,
+        var issuerKeyPkcs8 = r_crypto.Decrypt(intermediateRow.KeyMaterialEncrypted);
+        D2Result<IssuedWorkloadCertificate> issued;
+
+        try
+        {
+            using var issuerKey = ECDsa.Create();
+            issuerKey.ImportPkcs8PrivateKey(issuerKeyPkcs8, out _);
+
+            using var issuerCert =
+                X509CertificateLoader.LoadCertificate(intermediateRow.CaCertificate!);
+
+            issued = WorkloadCertificateIssuance.IssueLeaf(
+                WorkloadIdentity.Create("edge").Data!,
+                issuerCert,
+                issuerKey,
+                Duration.FromTimeSpan(r_options.LeafValidity),
                 clock);
-
-        var issued = await issuer.HandleAsync(
-            new D2.Edge.KeyCustodian.App.Application.Handlers.Commands
-                .IssueWorkloadCertificate.IssueWorkloadCertificateInput("edge"));
+        }
+        finally
+        {
+            CryptographicOperations.ZeroMemory(issuerKeyPkcs8);
+        }
 
         issued.Success.Should().BeTrue();
 
         // leaf → intermediate → root must chain (full path).
-        var intermediateDer = db.Keys
-            .Single(k => k.KeyDomain == KeyDomain.MTLS_CA_INTERMEDIATE).CaCertificate!;
-        AssertLeafChainsToRoot(issued.Data!.Certificate.CertificateDer, intermediateDer, rootCertDer);
+        AssertLeafChainsToRoot(
+            issued.Data!.CertificateDer, intermediateRow.CaCertificate!, rootCertDer);
     }
 
-    // Regression test for B2-F2: partial-seed idempotency.
+    // Regression pin for partial-seed idempotency.
     // If a crash left the root active but intermediate absent, a re-run must seed only
     // the intermediate — NOT re-insert a duplicate root row.
     [Fact]
@@ -236,7 +249,7 @@ public sealed class SeedCertificateAuthorityTests
     private SeedCertificateAuthorityHandler Build(
         KeyCustodianTestDbContext db, TestClock clock, ICaProvider provider) =>
         new(
-            KcAppTestKit.Context<SeedCertificateAuthorityHandler>(),
+            KcAppTestKit.SystemContext<SeedCertificateAuthorityHandler>(),
             KcAppTestKit.NullClassifier(),
             db,
             provider,
