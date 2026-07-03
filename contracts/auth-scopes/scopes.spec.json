@@ -69,6 +69,18 @@
       "description": "Fetch a payload-encryption keyring from KeyCustodian (internal service-to-service / in-process). The scope gates whether a caller may reach the keyring surface at all; a per-workload domain policy decides which domains it may fetch.",
       "actionSensitivity": "Critical",
       "impersonationBlocked": true
+    },
+    {
+      "name": "internal.kc.issue",
+      "description": "Request a workload leaf certificate from KeyCustodian by submitting a certificate-signing request (internal service-to-service, cross-process only). The scope gates whether a caller may reach the issuance surface at all; the leaf subject-alternative-name is always the authenticated mTLS peer identity, never caller-supplied.",
+      "actionSensitivity": "Critical",
+      "impersonationBlocked": true
+    },
+    {
+      "name": "internal.kc.cacert",
+      "description": "Fetch the certificate-authority chain (root + issuing intermediate) from KeyCustodian (internal service-to-service / in-process). Public trust-anchor material distributed over already-trusted internal channels only.",
+      "actionSensitivity": "Sensitive",
+      "impersonationBlocked": false
     }
   ]
 }

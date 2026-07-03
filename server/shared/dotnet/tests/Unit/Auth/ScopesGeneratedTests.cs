@@ -199,6 +199,10 @@ public sealed class ScopesGeneratedTests
             "anon.public.health",
             "anon.auth.signin.attempt",
             "billing.payment.charge",
+            "internal.kc.sign",
+            "internal.kc.keyring",
+            "internal.kc.issue",
+            "internal.kc.cacert",
         ]);
     }
 

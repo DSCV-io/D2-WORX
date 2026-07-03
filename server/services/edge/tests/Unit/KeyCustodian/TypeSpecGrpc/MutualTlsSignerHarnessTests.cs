@@ -734,16 +734,19 @@ public sealed class MutualTlsSignerHarnessTests
     }
 
     /// <summary>
-    /// An in-process <see cref="IWorkloadCertificateIssuer"/> that mints a real leaf
-    /// (via the production issuance rule) from the test CA, returning the neutral
-    /// <see cref="WorkloadLeafMaterial"/> DER + PKCS#8 shape the shipped client builds
-    /// a live leaf from. The harness's drop-in for the host-supplied issuer adapter.
+    /// An in-process <see cref="IWorkloadCertificateIssuer"/> that signs the shipped
+    /// client's CSR into a real leaf via the production CSR-flow rules
+    /// (proof-of-possession + P-256 verification, then intermediate-signing), returning
+    /// the neutral cert-only <see cref="WorkloadLeafMaterial"/> shape. The harness's
+    /// drop-in for the host-supplied issuer adapter — the full CSR flow (workload
+    /// keygen → CSR → production-rule-signed leaf → chain presentation) runs end-to-end.
     /// </summary>
     private sealed class SeedingIssuer(RealCertAuthority ca, string serviceId)
         : IWorkloadCertificateIssuer
     {
-        public ValueTask<D2Result<WorkloadLeafMaterial>> IssueAsync(CancellationToken ct = default) =>
-            new(D2Result<WorkloadLeafMaterial>.Ok(ca.IssueLeafMaterial(serviceId)));
+        public ValueTask<D2Result<WorkloadLeafMaterial>> IssueAsync(
+            byte[] csrDer, CancellationToken ct = default) =>
+            new(D2Result<WorkloadLeafMaterial>.Ok(ca.IssueLeafMaterial(csrDer, serviceId)));
     }
 
     /// <summary>

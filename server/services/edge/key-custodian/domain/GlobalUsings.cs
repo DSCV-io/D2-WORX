@@ -7,6 +7,7 @@
 global using System.Buffers.Text;
 global using System.Globalization;
 global using System.Security.Cryptography;
+global using System.Security.Cryptography.X509Certificates;
 global using System.Text;
 global using D2.Edge.KeyCustodian.Domain.Entities;
 global using D2.Edge.KeyCustodian.Domain.Enums;

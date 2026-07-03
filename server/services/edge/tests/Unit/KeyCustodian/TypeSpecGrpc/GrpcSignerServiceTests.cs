@@ -19,6 +19,8 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using ClientsGetCaCertificateOutput = D2.Edge.KeyCustodian.Clients.GetCaCertificateOutput;
+using ClientsIssueLeafOutput = D2.Edge.KeyCustodian.Clients.IssueLeafOutput;
 using ClientsSignOutput = D2.Edge.KeyCustodian.Clients.SignOutput;
 
 /// <summary>
@@ -205,5 +207,13 @@ public sealed class GrpcSignerServiceTests
             GetKeyringInput input, CancellationToken ct = default)
             => ValueTask.FromResult(
                 D2Result<D2.Edge.KeyCustodian.Clients.GetKeyringOutput?>.ServiceUnavailable());
+
+        public ValueTask<D2Result<ClientsIssueLeafOutput?>> IssueLeafAsync(
+            IssueLeafInput input, CancellationToken ct = default)
+            => ValueTask.FromResult(D2Result<ClientsIssueLeafOutput?>.ServiceUnavailable());
+
+        public ValueTask<D2Result<ClientsGetCaCertificateOutput?>> GetCaCertificateAsync(
+            GetCaCertificateInput input, CancellationToken ct = default)
+            => ValueTask.FromResult(D2Result<ClientsGetCaCertificateOutput?>.ServiceUnavailable());
     }
 }

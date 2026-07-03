@@ -198,7 +198,7 @@ public static class KeyCustodianFailures<T>
             category: ErrorCategory.InternalError);
     }
 
-    /// <summary>No active issuing intermediate certificate authority is available to sign a workload leaf certificate. A retryable not-ready-yet condition: the CA either has not been seeded yet or is between rotations. Surfaced as a 503 service-unavailable result so callers retry rather than treat it as a client-side conflict. Typed result.</summary>
+    /// <summary>No active issuing certificate-authority tier is available: either no active intermediate to sign a workload leaf certificate, or no active root/intermediate to return from the CA-certificate fetch. A retryable not-ready-yet condition: the CA either has not been seeded yet or is between rotations. Surfaced as a 503 service-unavailable result so callers retry rather than treat it as a client-side conflict. Typed result.</summary>
     /// <param name="messages">Optional translation messages; defaults to <c>[TK.Keycustodian.Infrastructure.NO_ACTIVE_ISSUING_CA]</c>. Pass a message bound via <c>TKMessage.With(...)</c> to name the offending argument.</param>
     /// <returns>A pre-built typed <see cref="D2Result{T}"/> failure.</returns>
     public static D2Result<T> NoActiveIssuingCa(IReadOnlyList<TKMessage>? messages = null)
@@ -327,6 +327,42 @@ public static class KeyCustodianFailures<T>
         return D2Result<T>.Forbidden(
             messages: messages,
             errorCode: KeyCustodianErrorCodes.KEYCUSTODIAN_KEYRING_DOMAIN_NOT_AUTHORIZED,
+            category: ErrorCategory.PolicyDenied);
+    }
+
+    /// <summary>The calling context is not authorized to be issued a workload leaf certificate. Workload-certificate issuance is a cross-process-only plane: a non-cross-process origin (the in-process plane whose immediate caller is caller-supplied, or an edge-inbound / system origin) can never authorize minting a workload identity. Uniform 403 across the plane deny — the telemetry reason split (origin-unestablished / unauthorized-plane / identity-absent) carries the granularity so the wire code leaks no probing signal. Self-issue is structural: the leaf subject-alternative-name is always the authenticated mTLS peer identity, never a caller-supplied subject. Typed result.</summary>
+    /// <param name="messages">Optional translation messages; defaults to <c>[TK.Keycustodian.Authorization.ISSUANCE_NOT_AUTHORIZED]</c>. Pass a message bound via <c>TKMessage.With(...)</c> to name the offending argument.</param>
+    /// <returns>A pre-built typed <see cref="D2Result{T}"/> failure.</returns>
+    public static D2Result<T> IssuanceNotAuthorized(IReadOnlyList<TKMessage>? messages = null)
+    {
+        messages ??= [TK.Keycustodian.Authorization.ISSUANCE_NOT_AUTHORIZED];
+        return D2Result<T>.Forbidden(
+            messages: messages,
+            errorCode: KeyCustodianErrorCodes.KEYCUSTODIAN_ISSUANCE_NOT_AUTHORIZED,
+            category: ErrorCategory.PolicyDenied);
+    }
+
+    /// <summary>The supplied PKCS#10 certificate-signing request is invalid: it exceeds the maximum permitted DER size, is malformed / unparseable, failed proof-of-possession (the self-signature does not validate against the embedded public key), or carries a public key that is not ECDSA P-256 by curve OID (RSA or a wrong-curve elliptic-curve key). Coarse on purpose so the surface does not leak which check failed, mirroring INVALID_WORKLOAD_IDENTITY. Rejected before any certificate-authority load or signing. Typed result.</summary>
+    /// <param name="messages">Optional translation messages; defaults to <c>[TK.Keycustodian.Validation.INVALID_CSR]</c>. Pass a message bound via <c>TKMessage.With(...)</c> to name the offending argument.</param>
+    /// <returns>A pre-built typed <see cref="D2Result{T}"/> failure.</returns>
+    public static D2Result<T> InvalidCsr(IReadOnlyList<TKMessage>? messages = null)
+    {
+        messages ??= [TK.Keycustodian.Validation.INVALID_CSR];
+        return D2Result<T>.ValidationFailed(
+            messages: messages,
+            errorCode: KeyCustodianErrorCodes.KEYCUSTODIAN_INVALID_CSR,
+            category: ErrorCategory.ValidationFailure);
+    }
+
+    /// <summary>The calling context is not authorized to fetch the certificate-authority chain. The trust anchor is distributed over already-trusted internal channels only — the cross-process hop and the in-process module planes; an edge-inbound origin (the public plane) and an unestablished origin are denied. The material returned is public trust anchor / chain material, so the authority is broad within the served planes (no per-workload policy map); the plane gate keeps the internal anchor off the public plane. Typed result.</summary>
+    /// <param name="messages">Optional translation messages; defaults to <c>[TK.Keycustodian.Authorization.CA_CERTIFICATE_NOT_AUTHORIZED]</c>. Pass a message bound via <c>TKMessage.With(...)</c> to name the offending argument.</param>
+    /// <returns>A pre-built typed <see cref="D2Result{T}"/> failure.</returns>
+    public static D2Result<T> CaCertificateNotAuthorized(IReadOnlyList<TKMessage>? messages = null)
+    {
+        messages ??= [TK.Keycustodian.Authorization.CA_CERTIFICATE_NOT_AUTHORIZED];
+        return D2Result<T>.Forbidden(
+            messages: messages,
+            errorCode: KeyCustodianErrorCodes.KEYCUSTODIAN_CA_CERTIFICATE_NOT_AUTHORIZED,
             category: ErrorCategory.PolicyDenied);
     }
 

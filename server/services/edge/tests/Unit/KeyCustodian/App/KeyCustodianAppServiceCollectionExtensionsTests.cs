@@ -8,10 +8,12 @@ namespace D2.Edge.Tests.Unit.KeyCustodian.App;
 
 using D2.Edge.KeyCustodian.App.Application;
 using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.ActivateKey;
+using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.IssueLeaf;
 using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.IssueWorkloadCertificate;
 using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.RetireKey;
 using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.RunDueRotations;
 using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.SeedCertificateAuthority;
+using D2.Edge.KeyCustodian.App.Application.Handlers.Queries.GetCaCertificate;
 using D2.Edge.KeyCustodian.App.Application.Handlers.Queries.GetKeyring;
 using D2.Edge.KeyCustodian.App.Application.Handlers.Queries.GetOidcConfiguration;
 using D2.Edge.KeyCustodian.App.Application.Handlers.Queries.GetRotationPlan;
@@ -27,9 +29,13 @@ using Microsoft.Extensions.Options;
 
 /// <summary>
 /// Registration tests for <see cref="KeyCustodianAppServiceCollectionExtensions"/>:
-/// all 10 handlers and the policy provider are registered with the correct
-/// service type and lifetime. Key generation + smoke testing are pure domain
-/// rules with no DI, so there are no generator / smoke-tester registrations.
+/// every handler and policy provider is registered with the correct service type
+/// and lifetime, the resolvability composition (the general registration + the
+/// dedicated leaf-signing capability extension TOGETHER — mirroring the future
+/// host composition root) resolves EVERY registered seam, and the isolation
+/// composition (the general registration ALONE) CANNOT resolve the leaf-signing
+/// capability — the issuance path is structurally absent from a host that does
+/// not opt in.
 /// </summary>
 public sealed class KeyCustodianAppServiceCollectionExtensionsTests
 {
@@ -46,12 +52,14 @@ public sealed class KeyCustodianAppServiceCollectionExtensionsTests
         services.Should().Contain(d => d.ServiceType == typeof(ICompromiseKeyHandler));
         services.Should().Contain(d => d.ServiceType == typeof(IRunDueRotationsHandler));
         services.Should().Contain(d => d.ServiceType == typeof(IIssueWorkloadCertificateHandler));
+        services.Should().Contain(d => d.ServiceType == typeof(IIssueLeafHandler));
         services.Should().Contain(d => d.ServiceType == typeof(ISeedCertificateAuthorityHandler));
         services.Should().Contain(d => d.ServiceType == typeof(IGetJwksHandler));
         services.Should().Contain(d => d.ServiceType == typeof(IGetOidcConfigurationHandler));
         services.Should().Contain(d => d.ServiceType == typeof(IGetRotationPlanHandler));
         services.Should().Contain(d => d.ServiceType == typeof(ISignHandler));
         services.Should().Contain(d => d.ServiceType == typeof(IGetKeyringHandler));
+        services.Should().Contain(d => d.ServiceType == typeof(IGetCaCertificateHandler));
         services.Should().Contain(d => d.ServiceType == typeof(IKeyCustodianApi));
         services.Should().Contain(d => d.ServiceType == typeof(ISigningDomainAuthorityPolicy));
         services.Should().Contain(d => d.ServiceType == typeof(IKeyringDomainAuthorityPolicy));
@@ -77,11 +85,38 @@ public sealed class KeyCustodianAppServiceCollectionExtensionsTests
     }
 
     [Fact]
-    public void AddD2KeyCustodianApp_ResolvesEveryHandlerAndPolicyProvider_FromBuiltProvider()
+    public void AddD2KeyCustodianApp_Alone_CannotResolveLeafSigningCapability()
     {
-        // Arrange: register the App layer + all Infra-owned seams the handlers need.
+        // THE isolation composition: the general registration ALONE must not be
+        // able to resolve the issuance leaf-signing capability — and therefore
+        // cannot sign a workload leaf via the issuance path. The capability is
+        // granted ONLY by its own dedicated extension from the composition root
+        // that serves the issuance surface. Structural, not a branch guard.
         var services = new ServiceCollection();
         services.AddD2KeyCustodianApp();
+
+        services.Should().NotContain(
+            d => d.ServiceType == typeof(ICaLeafSigningCapability),
+            "the general registration never registers the leaf-signing capability");
+
+        using var sp = services.BuildServiceProvider();
+
+        sp.GetService<ICaLeafSigningCapability>().Should().BeNull(
+            "a provider built from the general registration alone cannot resolve "
+            + "the leaf-signing capability");
+    }
+
+    [Fact]
+    public void AddD2KeyCustodianApp_ResolvesEveryHandlerAndPolicyProvider_FromBuiltProvider()
+    {
+        // THE resolvability composition: the general registration + the dedicated
+        // leaf-signing capability extension TOGETHER — mirroring how the host
+        // composition root that serves the issuance surface wires them. (The
+        // dedicated extension has no production caller until the Edge host lands;
+        // this composition is the test-side stand-in.)
+        var services = new ServiceCollection();
+        services.AddD2KeyCustodianApp();
+        services.AddD2CaLeafSigningCapability();
         services.AddLogging();
         services.AddD2Handler();
 
@@ -161,6 +196,15 @@ public sealed class KeyCustodianAppServiceCollectionExtensionsTests
         sp.GetRequiredService<IGetOidcConfigurationHandler>()
             .Should().BeOfType<GetOidcConfigurationHandler>(
                 "AddD2KeyCustodianApp registers the OIDC-discovery query handler");
+        sp.GetRequiredService<IGetCaCertificateHandler>()
+            .Should().BeOfType<GetCaCertificateHandler>(
+                "AddD2KeyCustodianApp registers the CA-chain query handler");
+        sp.GetRequiredService<IIssueLeafHandler>()
+            .Should().BeOfType<IssueLeafHandler>(
+                "AddD2KeyCustodianApp registers the generated-op issuance shell");
+        sp.GetRequiredService<ICaLeafSigningCapability>()
+            .Should().BeOfType<CaLeafSigningCapability>(
+                "the dedicated extension grants the leaf-signing capability");
         sp.GetRequiredService<IKeyCustodianApi>()
             .Should().NotBeNull();
     }

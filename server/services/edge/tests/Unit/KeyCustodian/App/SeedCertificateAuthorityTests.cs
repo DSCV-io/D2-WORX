@@ -85,12 +85,10 @@ public sealed class SeedCertificateAuthorityTests
     [Fact]
     public async Task Seed_ThenIssueLeaf_LeafChainsToSeededRoot()
     {
-        // Seed via the provider, then issue a leaf via the pure issuance rule using
-        // the seeded intermediate (unwrapped exactly like the issuance path does) —
-        // the leaf must chain to the seeded root. The issuance HANDLER itself is
-        // deny-all until the real caller↔subject issuance rule lands with the
-        // cross-process transport wiring, so the chain property is proven at the
-        // rule seam.
+        // Seed via the provider, then issue a leaf via the pure CSR-flow issuance
+        // rule using the seeded intermediate (unwrapped exactly like the issuance
+        // capability does) — the leaf must chain to the seeded root. The chain
+        // property is proven at the rule seam; the handler matrix has its own suite.
         await using var db = KeyCustodianTestDbContext.CreateEmpty();
         var clock = new TestClock(KcAppTestKit.SR_BaseInstant);
         var provider = BuildValidChainProvider(clock);
@@ -99,6 +97,9 @@ public sealed class SeedCertificateAuthorityTests
 
         var rootCertDer = db.Keys.Single(k => k.KeyDomain == KeyDomain.MTLS_CA_ROOT).CaCertificate!;
         var intermediateRow = db.Keys.Single(k => k.KeyDomain == KeyDomain.MTLS_CA_INTERMEDIATE);
+
+        var (csrDer, _) = KcAppTestKit.BuildP256Csr();
+        var leafPublicKey = CsrVerification.Verify(csrDer).Data!;
 
         var issuerKeyPkcs8 = r_crypto.Decrypt(intermediateRow.KeyMaterialEncrypted);
         D2Result<IssuedWorkloadCertificate> issued;
@@ -113,6 +114,7 @@ public sealed class SeedCertificateAuthorityTests
 
             issued = WorkloadCertificateIssuance.IssueLeaf(
                 WorkloadIdentity.Create("edge").Data!,
+                leafPublicKey,
                 issuerCert,
                 issuerKey,
                 Duration.FromTimeSpan(r_options.LeafValidity),

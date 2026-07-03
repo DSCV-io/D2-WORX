@@ -345,7 +345,9 @@ export const TK = {
   },
   keycustodian: {
     authorization: {
+      CA_CERTIFICATE_NOT_AUTHORIZED: tk("keycustodian_authorization_CA_CERTIFICATE_NOT_AUTHORIZED"),
       CROSS_PROCESS_DOMAIN_REJECTED: tk("keycustodian_authorization_CROSS_PROCESS_DOMAIN_REJECTED"),
+      ISSUANCE_NOT_AUTHORIZED: tk("keycustodian_authorization_ISSUANCE_NOT_AUTHORIZED"),
       KEYRING_DOMAIN_NOT_AUTHORIZED: tk("keycustodian_authorization_KEYRING_DOMAIN_NOT_AUTHORIZED"),
       MINTER_CAPABILITY_REQUIRED: tk("keycustodian_authorization_MINTER_CAPABILITY_REQUIRED"),
       REQUEST_ORIGIN_UNESTABLISHED: tk("keycustodian_authorization_REQUEST_ORIGIN_UNESTABLISHED"),
@@ -369,6 +371,7 @@ export const TK = {
     validation: {
       EMPTY_SIGNING_INPUT: tk("keycustodian_validation_EMPTY_SIGNING_INPUT"),
       GRACE_NOT_ELAPSED: tk("keycustodian_validation_GRACE_NOT_ELAPSED"),
+      INVALID_CSR: tk("keycustodian_validation_INVALID_CSR"),
       INVALID_ROTATION_POLICY: tk("keycustodian_validation_INVALID_ROTATION_POLICY"),
       INVALID_WORKLOAD_IDENTITY: tk("keycustodian_validation_INVALID_WORKLOAD_IDENTITY"),
       SMOKE_PROOF_TYPE_MISMATCH: tk("keycustodian_validation_SMOKE_PROOF_TYPE_MISMATCH"),

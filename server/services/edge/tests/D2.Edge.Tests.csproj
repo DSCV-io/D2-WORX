@@ -289,6 +289,47 @@ Copyright (c) DCSV. All rights reserved.
               ProtoRoot="$(MSBuildThisFileDirectory)"
               AdditionalImportDirs="$(D2ContractsRoot)protos" />
     <!--
+      Real KeyCustodian certificate-authority issuance proto — the workload leaf-issuance
+      wire surface (key-custodian.tsp issueLeaf op; wire method IssueWorkloadCertificate;
+      package d2.keycustodian.v2alpha, csharp_namespace
+      D2.Services.Protos.KeyCustodian.V2Alpha — a DISTINCT service
+      KeyCustodianCertificateAuthority). CSR bytes in, leaf + issuing-intermediate DER out —
+      all-public material (the leaf private key never crosses the wire). Generates the
+      KeyCustodianCertificateAuthority service base + IssueWorkloadCertificateRequest/
+      IssueWorkloadCertificateResponse/IssueLeafOutput messages. The generated
+      KeyCustodianCertificateAuthorityService delegates to IKeyCustodianApi.IssueLeafAsync;
+      hosted via MapGrpcService<T>() + dialed via the generated stub in
+      GrpcCertificateAuthorityServiceTests. The live host wiring is deferred until the Edge
+      host exists; the serving plane is TestServer-proven here. Compiled in Both mode; the
+      D2ResultProto type still comes solely from the D2.Shared.Result.Grpc ProjectReference
+      above (same AdditionalImportDirs proto_path resolution; no second d2_result.proto
+      Protobuf include).
+    -->
+    <Protobuf Include="$(MSBuildThisFileDirectory)Unit/KeyCustodian/TypeSpecGrpc/Protos/key_custodian_certificate_authority_issue_workload_certificate.g.proto"
+              GrpcServices="Both"
+              ProtoRoot="$(MSBuildThisFileDirectory)"
+              AdditionalImportDirs="$(D2ContractsRoot)protos" />
+    <!--
+      Real KeyCustodian CA-certificate proto — the trust-anchor distribution wire surface
+      (key-custodian.tsp getCaCertificate op; package d2.keycustodian.v2alpha,
+      csharp_namespace D2.Services.Protos.KeyCustodian.V2Alpha — a DISTINCT service
+      KeyCustodianCaCertificate; one gRPC service per op so each service carries its own
+      transport scope policy). Empty request in, root + issuing-intermediate DER out
+      (public trust material). Generates the KeyCustodianCaCertificate service base +
+      GetCaCertificateRequest/GetCaCertificateResponse/GetCaCertificateOutput messages.
+      The generated KeyCustodianCaCertificateService delegates to
+      IKeyCustodianApi.GetCaCertificateAsync; hosted via MapGrpcService<T>() + dialed via
+      the generated stub in GrpcCertificateAuthorityServiceTests. The live host wiring is
+      deferred until the Edge host exists; the serving plane is TestServer-proven here.
+      Compiled in Both mode; the D2ResultProto type still comes solely from the
+      D2.Shared.Result.Grpc ProjectReference above (same AdditionalImportDirs proto_path
+      resolution; no second d2_result.proto Protobuf include).
+    -->
+    <Protobuf Include="$(MSBuildThisFileDirectory)Unit/KeyCustodian/TypeSpecGrpc/Protos/key_custodian_ca_certificate_get_ca_certificate.g.proto"
+              GrpcServices="Both"
+              ProtoRoot="$(MSBuildThisFileDirectory)"
+              AdditionalImportDirs="$(D2ContractsRoot)protos" />
+    <!--
       Second TypeSpec gRPC fixture proto — the enum-string-field bridge fixture
       (enum-shaped.tsp signWithKindFixture op). An enum DTO field maps to a proto `string`
       field; the generated SignWithKindFixtureTransportMappers.g.cs parses the wire string

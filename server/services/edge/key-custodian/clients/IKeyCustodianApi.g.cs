@@ -24,4 +24,8 @@ public interface IKeyCustodianApi
     ValueTask<D2Result<SignOutput?>> SignAsync(SignInput input, CancellationToken ct = default);
     /// <summary>Dispatches the <c>GetKeyring</c> operation.</summary>
     ValueTask<D2Result<GetKeyringOutput?>> GetKeyringAsync(GetKeyringInput input, CancellationToken ct = default);
+    /// <summary>Dispatches the <c>IssueLeaf</c> operation.</summary>
+    ValueTask<D2Result<IssueLeafOutput?>> IssueLeafAsync(IssueLeafInput input, CancellationToken ct = default);
+    /// <summary>Dispatches the <c>GetCaCertificate</c> operation.</summary>
+    ValueTask<D2Result<GetCaCertificateOutput?>> GetCaCertificateAsync(GetCaCertificateInput input, CancellationToken ct = default);
 }

@@ -40,22 +40,20 @@ D2.Shared.Auth.Outbound.Telemetry.OutboundTelemetryTags.TokenExchangeRequests.Ou
 D2.Shared.Auth.Outbound.TokenExchange.ITokenExchangeClient
 D2.Shared.Auth.Outbound.TokenExchange.ITokenExchangeClient.ExchangeAsync(string! subjectToken, string! targetAudience, System.Collections.Generic.IReadOnlySet<string!>? narrowedScopes = null, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<D2.Shared.Result.D2Result<string!>!>
 D2.Shared.Auth.Outbound.WorkloadCertificate.IWorkloadCertificateIssuer
-D2.Shared.Auth.Outbound.WorkloadCertificate.IWorkloadCertificateIssuer.IssueAsync(System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<D2.Shared.Result.D2Result<D2.Shared.Auth.Outbound.WorkloadCertificate.WorkloadLeafMaterial!>!>
+D2.Shared.Auth.Outbound.WorkloadCertificate.IWorkloadCertificateIssuer.IssueAsync(byte[]! csrDer, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<D2.Shared.Result.D2Result<D2.Shared.Auth.Outbound.WorkloadCertificate.WorkloadLeafMaterial!>!>
 D2.Shared.Auth.Outbound.WorkloadCertificate.IWorkloadLeafSource
 D2.Shared.Auth.Outbound.WorkloadCertificate.IWorkloadLeafSource.GetCurrentLeafAsync(System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<D2.Shared.Result.D2Result<System.Security.Cryptography.X509Certificates.X509Certificate2!>!>
 D2.Shared.Auth.Outbound.WorkloadCertificate.WorkloadLeafMaterial
 D2.Shared.Auth.Outbound.WorkloadCertificate.WorkloadLeafMaterial.<Clone>$() -> D2.Shared.Auth.Outbound.WorkloadCertificate.WorkloadLeafMaterial!
 D2.Shared.Auth.Outbound.WorkloadCertificate.WorkloadLeafMaterial.CertificateDer.get -> byte[]!
 D2.Shared.Auth.Outbound.WorkloadCertificate.WorkloadLeafMaterial.CertificateDer.init -> void
-D2.Shared.Auth.Outbound.WorkloadCertificate.WorkloadLeafMaterial.Deconstruct(out byte[]! CertificateDer, out byte[]! PrivateKeyPkcs8, out byte[]! IssuerCertificateDer, out NodaTime.Instant NotAfter) -> void
+D2.Shared.Auth.Outbound.WorkloadCertificate.WorkloadLeafMaterial.Deconstruct(out byte[]! CertificateDer, out byte[]! IssuerCertificateDer, out NodaTime.Instant NotAfter) -> void
 D2.Shared.Auth.Outbound.WorkloadCertificate.WorkloadLeafMaterial.Equals(D2.Shared.Auth.Outbound.WorkloadCertificate.WorkloadLeafMaterial? other) -> bool
 D2.Shared.Auth.Outbound.WorkloadCertificate.WorkloadLeafMaterial.IssuerCertificateDer.get -> byte[]!
 D2.Shared.Auth.Outbound.WorkloadCertificate.WorkloadLeafMaterial.IssuerCertificateDer.init -> void
 D2.Shared.Auth.Outbound.WorkloadCertificate.WorkloadLeafMaterial.NotAfter.get -> NodaTime.Instant
 D2.Shared.Auth.Outbound.WorkloadCertificate.WorkloadLeafMaterial.NotAfter.init -> void
-D2.Shared.Auth.Outbound.WorkloadCertificate.WorkloadLeafMaterial.PrivateKeyPkcs8.get -> byte[]!
-D2.Shared.Auth.Outbound.WorkloadCertificate.WorkloadLeafMaterial.PrivateKeyPkcs8.init -> void
-D2.Shared.Auth.Outbound.WorkloadCertificate.WorkloadLeafMaterial.WorkloadLeafMaterial(byte[]! CertificateDer, byte[]! PrivateKeyPkcs8, byte[]! IssuerCertificateDer, NodaTime.Instant NotAfter) -> void
+D2.Shared.Auth.Outbound.WorkloadCertificate.WorkloadLeafMaterial.WorkloadLeafMaterial(byte[]! CertificateDer, byte[]! IssuerCertificateDer, NodaTime.Instant NotAfter) -> void
 const D2.Shared.Auth.Outbound.AuthOutboundHttpClientNames.OIDC_DISCOVERY = "d2-auth-oidc-discovery" -> string!
 const D2.Shared.Auth.Outbound.AuthOutboundHttpClientNames.TOKEN_EXCHANGE = "d2-auth-token-exchange" -> string!
 const D2.Shared.Auth.Outbound.Telemetry.OutboundTelemetry.ACTIVITY_SOURCE_NAME = "D2.Shared.Auth.Outbound" -> string!

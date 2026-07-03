@@ -10,6 +10,9 @@ using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
 using D2.Edge.KeyCustodian.App.Application;
+using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.IssueLeaf;
+using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.IssueWorkloadCertificate;
+using D2.Edge.KeyCustodian.App.Application.Handlers.Queries.GetCaCertificate;
 using D2.Edge.KeyCustodian.App.Application.Handlers.Queries.GetKeyring;
 using D2.Edge.KeyCustodian.App.Application.Handlers.Queries.Sign;
 using D2.Edge.KeyCustodian.App.Application.Routes;
@@ -264,6 +267,21 @@ public sealed class WellKnownRouteTests
                         services.AddSingleton<IKeyringDomainAuthorityPolicy>(
                             new OptionsKeyringDomainAuthorityPolicy(
                                 Options.Create(new KeyringDomainAuthorityOptions())));
+
+                        // The façade ctor also requires the issuance shell + CA-chain
+                        // handlers (never invoked by the well-known routes). The shell's
+                        // inner issuance handler needs the isolated leaf-signing
+                        // capability — its dedicated extension is the composition-root
+                        // opt-in — plus a clock and the DB-exception classifier.
+                        services.AddD2CaLeafSigningCapability();
+                        services.AddSingleton<D2.Shared.Time.IClock>(
+                            new TestClock(KcAppTestKit.SR_BaseInstant));
+                        services.AddSingleton(KcAppTestKit.NullClassifier());
+                        services.AddTransient<
+                            IIssueWorkloadCertificateHandler, IssueWorkloadCertificateHandler>();
+                        services.AddTransient<IIssueLeafHandler, IssueLeafHandler>();
+                        services.AddTransient<
+                            IGetCaCertificateHandler, GetCaCertificateHandler>();
 
                         services.AddTransient<IKeyCustodianApi, KeyCustodianApi>();
                     })

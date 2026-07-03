@@ -107,18 +107,22 @@ public static class KeyCustodianMetrics
             description: "Total workload leaf certificates issued.");
 
     /// <summary>
-    /// Counter — total <c>IssueWorkloadCertificate</c> requests that found no
-    /// active issuing intermediate CA and returned <c>503 Service Unavailable</c>.
-    /// A sustained non-zero rate means the CA has not been seeded or is between
-    /// rotations — no workload can obtain a leaf, so the mTLS mesh cannot form.
+    /// Counter — total requests that found a certificate-authority tier missing and
+    /// returned <c>503 Service Unavailable</c>: an <c>IssueWorkloadCertificate</c>
+    /// request with no active issuing intermediate, or a <c>GetCaCertificate</c>
+    /// fetch with no active root / intermediate. A sustained non-zero rate means the
+    /// CA has not been seeded or is between rotations — no workload can obtain a
+    /// leaf or the trust anchor, so the mTLS mesh cannot form.
     /// </summary>
     public static readonly Counter<long> SR_NoActiveIssuingCaTotal =
         SR_Meter.CreateCounter<long>(
             name: "d2.keycustodian.no_active_issuing_ca",
             unit: "{response}",
             description:
-                "Total IssueWorkloadCertificate requests that found no active issuing CA "
-                + "and returned 503. A sustained non-zero rate blocks the entire mTLS mesh.");
+                "Total requests that found a certificate-authority tier missing and "
+                + "returned 503 (issuance with no active intermediate; CA-certificate "
+                + "fetch with no active root/intermediate). A sustained non-zero rate "
+                + "blocks the entire mTLS mesh.");
 
     /// <summary>
     /// Counter — total general-surface signing requests rejected for attempting to reach
@@ -147,18 +151,18 @@ public static class KeyCustodianMetrics
     /// Counter — total capability-authority rejections across every capability. The
     /// broad dashboard counter complementing the specific
     /// <see cref="SR_CrossProcessSigningRejections"/>. Tagged <c>capability</c>
-    /// (<c>sign</c> / <c>lifecycle</c> / <c>keyring</c> / <c>seal-encrypt</c> /
-    /// <c>seal-decrypt</c>) and <c>reason</c> (<c>origin-unestablished</c> /
-    /// <c>minter-required</c> / <c>never-signable</c> / <c>not-in-allowed-set</c> /
-    /// <c>unauthorized-plane</c> / <c>identity-absent</c> / <c>not-in-process</c> /
-    /// <c>not-system</c>) — both CLOSED-enum values drawn from the
-    /// <see cref="AuthorityRejections"/> named constants (never free text), so the tag
-    /// cardinality is bounded. The <c>not-in-process</c> reason is minter-only (the
+    /// (<c>sign</c> / <c>lifecycle</c> / <c>keyring</c> / <c>issuance</c> /
+    /// <c>ca-cert</c> / <c>seal-encrypt</c> / <c>seal-decrypt</c>) and <c>reason</c>
+    /// (<c>origin-unestablished</c> / <c>minter-required</c> / <c>never-signable</c> /
+    /// <c>not-in-allowed-set</c> / <c>unauthorized-plane</c> / <c>identity-absent</c> /
+    /// <c>not-in-process</c> / <c>not-system</c>) — both CLOSED-enum values drawn from
+    /// the <see cref="AuthorityRejections"/> named constants (never free text), so the
+    /// tag cardinality is bounded. The <c>not-in-process</c> reason is minter-only (the
     /// dedicated JWT-minter capability was invoked from a plane other than the in-process
     /// module); the <c>not-system</c> reason is lifecycle-only (a lifecycle mutation was
     /// attempted from a plane other than the in-host System worker plane); the
-    /// <c>unauthorized-plane</c> reason is keyring-only (a keyring fetch arrived on a
-    /// plane the keyring surface does not serve).
+    /// <c>unauthorized-plane</c> reason fires when a keyring / issuance / ca-cert
+    /// request arrived on a plane that surface does not serve.
     /// </summary>
     public static readonly Counter<long> SR_AuthorityRejectionsTotal =
         SR_Meter.CreateCounter<long>(
@@ -166,7 +170,8 @@ public static class KeyCustodianMetrics
             unit: "{rejection}",
             description:
                 "Total capability-authority rejections. Tags: capability "
-                + "(sign / lifecycle / keyring / seal-encrypt / seal-decrypt), reason "
+                + "(sign / lifecycle / keyring / issuance / ca-cert / seal-encrypt / "
+                + "seal-decrypt), reason "
                 + "(origin-unestablished / minter-required / never-signable / "
                 + "not-in-allowed-set / unauthorized-plane / identity-absent / "
                 + "not-in-process / not-system) — closed-enum values.");
@@ -235,6 +240,20 @@ public static class KeyCustodianMetrics
             /// per-workload keyring policy.
             /// </summary>
             public const string KEYRING = "keyring";
+
+            /// <summary>
+            /// The workload leaf-certificate issuance capability (sign a PKCS#10 CSR
+            /// into a leaf whose SAN is the authenticated mTLS peer) —
+            /// cross-process-only plane.
+            /// </summary>
+            public const string ISSUANCE = "issuance";
+
+            /// <summary>
+            /// The CA-chain distribution capability (fetch the root + issuing
+            /// intermediate certificates) — cross-process + in-process planes, broad
+            /// within the served planes (public trust material).
+            /// </summary>
+            public const string CA_CERT = "ca-cert";
         }
 
         /// <summary>Closed-enum values for the <c>reason</c> tag.</summary>
@@ -261,10 +280,12 @@ public static class KeyCustodianMetrics
             public const string NOT_IN_ALLOWED_SET = "not-in-allowed-set";
 
             /// <summary>
-            /// A keyring fetch arrived on an established plane the keyring surface does not
-            /// serve (only the cross-process hop + in-process module planes are served).
-            /// Keyring-only; distinct from <see cref="NOT_IN_ALLOWED_SET"/> so a plane
-            /// deny is dashboard-distinguishable, though both ride the same uniform 403.
+            /// A request arrived on an established plane its surface does not serve —
+            /// a keyring fetch outside the cross-process / in-process planes, an
+            /// issuance request outside the cross-process plane, or a CA-chain fetch
+            /// outside the cross-process / in-process planes. Distinct from
+            /// <see cref="NOT_IN_ALLOWED_SET"/> so a plane deny is
+            /// dashboard-distinguishable, though both ride the same uniform 403.
             /// </summary>
             public const string UNAUTHORIZED_PLANE = "unauthorized-plane";
 
@@ -295,6 +316,19 @@ public static class KeyCustodianMetrics
 
             /// <summary>The dedicated in-process JWT-minter capability.</summary>
             public const string IN_PROCESS_MINTER = "<in-process-minter>";
+        }
+
+        /// <summary>
+        /// Target sentinels for the <c>AuthorityRejected</c> forensic log's
+        /// <c>target</c> field. Key-domain-targeted capabilities (sign / keyring)
+        /// pass the domain value; TARGETLESS capabilities (issuance / ca-cert —
+        /// no key-domain target exists on those surfaces) pass the closed-set
+        /// <see cref="NONE"/> marker, never a raw literal.
+        /// </summary>
+        public static class Target
+        {
+            /// <summary>The denied capability carries no key-domain target.</summary>
+            public const string NONE = "none";
         }
     }
 }

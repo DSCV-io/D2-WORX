@@ -30,7 +30,9 @@ using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
+using ClientsGetCaCertificateOutput = D2.Edge.KeyCustodian.Clients.GetCaCertificateOutput;
 using ClientsGetKeyringOutput = D2.Edge.KeyCustodian.Clients.GetKeyringOutput;
+using ClientsIssueLeafOutput = D2.Edge.KeyCustodian.Clients.IssueLeafOutput;
 using ClientsSignOutput = D2.Edge.KeyCustodian.Clients.SignOutput;
 using GrpcStatusCode = Grpc.Core.StatusCode;
 
@@ -200,5 +202,13 @@ public sealed class GrpcKeyringScopeEnforcementTests
         public ValueTask<D2Result<GetOidcConfigurationOutput?>> GetOidcConfigurationAsync(
             GetOidcConfigurationInput input, CancellationToken ct = default)
             => ValueTask.FromResult(D2Result<GetOidcConfigurationOutput?>.ServiceUnavailable());
+
+        public ValueTask<D2Result<ClientsIssueLeafOutput?>> IssueLeafAsync(
+            IssueLeafInput input, CancellationToken ct = default)
+            => ValueTask.FromResult(D2Result<ClientsIssueLeafOutput?>.ServiceUnavailable());
+
+        public ValueTask<D2Result<ClientsGetCaCertificateOutput?>> GetCaCertificateAsync(
+            GetCaCertificateInput input, CancellationToken ct = default)
+            => ValueTask.FromResult(D2Result<ClientsGetCaCertificateOutput?>.ServiceUnavailable());
     }
 }

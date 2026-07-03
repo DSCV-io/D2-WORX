@@ -211,4 +211,91 @@ namespace D2.KeyCustodian {
   @d2RequireAnyScope("internal.kc.keyring")
   @d2Audience("d2.internal")
   op getKeyring(input: GetKeyringInput): GetKeyringOutput;
+
+  /** Input to issueLeaf: the workload's PKCS#10 certificate-signing request. */
+  model IssueLeafInput {
+    /**
+     * The DER-encoded PKCS#10 certificate-signing request. PUBLIC material — a CSR
+     * carries the workload's public key, request metadata, and a self-signature
+     * proving possession of the corresponding private key; it never carries the
+     * private key. Deliberately NOT redacted. KeyCustodian verifies the proof-of-
+     * possession and the P-256 key policy, IGNORES the CSR's subject/SAN, and signs
+     * the extracted public key against the authenticated mTLS peer identity.
+     */
+    @d2Field(1)
+    csrDer: bytes;
+  }
+
+  /** Output of issueLeaf: the signed leaf + its issuing intermediate + validity window. */
+  model IssueLeafOutput {
+    /** The DER-encoded signed leaf certificate. PUBLIC — presented on the wire in the TLS handshake. */
+    @d2Field(1)
+    certificateDer: bytes;
+
+    /** The DER-encoded issuing-intermediate certificate so the workload can present the full chain. PUBLIC. */
+    @d2Field(2)
+    issuerCertificateDer: bytes;
+
+    /** The leaf's not-before instant (ISO-8601). */
+    @d2Field(3)
+    notBefore: utcDateTime;
+
+    /** The leaf's not-after instant (ISO-8601) — drives the refresh-ahead reissue condition. */
+    @d2Field(4)
+    notAfter: utcDateTime;
+  }
+
+  /** Input to getCaCertificate: none — the CA chain is selected entirely from the active managed keys. */
+  model GetCaCertificateInput {}
+
+  /** Output of getCaCertificate: the full CA chain (root + issuing intermediate). */
+  model GetCaCertificateOutput {
+    /**
+     * The DER-encoded root CA certificate — the trust anchor a workload pins. PUBLIC
+     * trust material presented on the wire in every TLS handshake; deliberately NOT
+     * redacted so operators can debug a chain disagreement, exactly like the CA cert
+     * material's not-redacted posture.
+     */
+    @d2Field(1)
+    rootCertificateDer: bytes;
+
+    /** The DER-encoded issuing-intermediate CA certificate — chain convenience. PUBLIC. */
+    @d2Field(2)
+    intermediateCertificateDer: bytes;
+  }
+
+  /**
+   * Issue a short-lived workload leaf certificate from a PKCS#10 certificate-signing
+   * request. Cross-process only (the hard gate) — a non-cross-process origin can never
+   * authorize minting a workload identity. The leaf subject-alternative-name is ALWAYS
+   * the authenticated mTLS peer identity (structural self-issue); the CSR's subject/SAN
+   * is ignored by construction. KeyCustodian verifies the CSR's proof-of-possession,
+   * enforces the ECDSA P-256 key policy, and signs the extracted public key — it never
+   * sees or returns the leaf private key. Output = leaf + issuing intermediate (the
+   * trust anchor distributes via getCaCertificate, never on issuance). All wire material
+   * is public — no redaction anywhere on this op.
+   */
+  @d2Command
+  @d2ServedBy("KeyCustodian")
+  @d2InProcess
+  @d2GrpcMethod("KeyCustodianCertificateAuthority", "IssueWorkloadCertificate")
+  @d2RequireAnyScope("internal.kc.issue")
+  @d2Audience("d2.internal")
+  op issueLeaf(input: IssueLeafInput): IssueLeafOutput;
+
+  /**
+   * Fetch the certificate-authority chain (root + issuing intermediate). Read-only Query
+   * (no persistent mutation). In-process + gRPC only — the trust anchor is distributed
+   * over already-trusted internal channels, never the public plane. The material is public
+   * trust anchor / chain material (presented on the wire in every TLS handshake) so the
+   * authority is broad within the served planes (no per-workload policy map). A missing
+   * active root or intermediate returns the retryable 503.
+   */
+  @d2Query
+  @d2ServedBy("KeyCustodian")
+  @d2InProcess
+  @d2GrpcMethod("KeyCustodianCaCertificate", "GetCaCertificate")
+  @d2RequireAnyScope("internal.kc.cacert")
+  @d2Audience("d2.internal")
+  op getCaCertificate(input: GetCaCertificateInput): GetCaCertificateOutput;
 }

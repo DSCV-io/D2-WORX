@@ -296,6 +296,12 @@ function buildOutboundFieldAssign(
       expr: `global::Google.Protobuf.ByteString.CopyFrom(${source}.${propName})`,
     };
 
+  // Instant-bearing temporal scalars ride the proto wire as ISO-8601 round-trip
+  // strings (scalar registry: DateTimeOffset → proto string; the "O" specifier
+  // is culture-invariant by definition) — mirrors the top-level mapper arm.
+  if (f.csType === "DateTimeOffset")
+    return { kind: "assign", expr: `${source}.${propName}.ToString("O")` };
+
   return { kind: "assign", expr: `${source}.${propName}` };
 }
 

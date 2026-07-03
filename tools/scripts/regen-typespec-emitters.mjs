@@ -155,6 +155,28 @@ const COPY_MANIFEST = [
     to: "server/services/edge/key-custodian/clients/GetKeyringOutput.g.cs",
   },
 
+  // ---- IssueLeaf DTOs (Clients namespace — matches tsp compile routing;
+  //      all-public issuance material, no redaction — CSR in, cert out) ----
+  {
+    from: "IssueLeafInput.g.cs",
+    to: "server/services/edge/key-custodian/clients/IssueLeafInput.g.cs",
+  },
+  {
+    from: "IssueLeafOutput.g.cs",
+    to: "server/services/edge/key-custodian/clients/IssueLeafOutput.g.cs",
+  },
+
+  // ---- GetCaCertificate DTOs (Clients namespace — matches tsp compile routing;
+  //      empty input, public root+intermediate chain output) ----
+  {
+    from: "GetCaCertificateInput.g.cs",
+    to: "server/services/edge/key-custodian/clients/GetCaCertificateInput.g.cs",
+  },
+  {
+    from: "GetCaCertificateOutput.g.cs",
+    to: "server/services/edge/key-custodian/clients/GetCaCertificateOutput.g.cs",
+  },
+
   // ---- Module façade interface + impl (real KC ops only — getJwks +
   //      getOidcConfiguration). After the fixture wire-identity rename
   //      the fixtures no longer serve-as "KeyCustodian", so tsp compile's
@@ -192,6 +214,14 @@ const COPY_MANIFEST = [
   {
     from: "IGetKeyringHandler.g.cs",
     to: "server/services/edge/key-custodian/app/Application/Handlers/Queries/GetKeyring/IGetKeyringHandler.g.cs",
+  },
+  {
+    from: "IIssueLeafHandler.g.cs",
+    to: "server/services/edge/key-custodian/app/Application/Handlers/Commands/IssueLeaf/IIssueLeafHandler.g.cs",
+  },
+  {
+    from: "IGetCaCertificateHandler.g.cs",
+    to: "server/services/edge/key-custodian/app/Application/Handlers/Queries/GetCaCertificate/IGetCaCertificateHandler.g.cs",
   },
 
   // ---- Well-known route registrations (real-KC namespace

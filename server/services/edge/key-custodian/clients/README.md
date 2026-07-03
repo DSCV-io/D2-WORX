@@ -41,6 +41,10 @@ from `contracts/typespec/key-custodian/key-custodian.tsp`. Do not edit by hand
 | `SignOutput.g.cs`   | `SignOutput(string Signature, string Kid)`  | `sign` |
 | `GetKeyringInput.g.cs` | `GetKeyringInput(string KeyDomain)`         | `getKeyring` |
 | `GetKeyringOutput.g.cs`| `GetKeyringOutput(string ActiveKid, IReadOnlyList<KeyringEntry> Entries, byte[] AadContext)` + nested `KeyringEntry(string Kid, byte[] KeyBytes)` — `KeyBytes` (the raw AES-256 key) carries `[RedactData(SecretInformation)]` so it is masked in logs; `AadContext` is deliberately NOT redacted (authenticated-not-secret AEAD context, the UTF-8 bytes of `"d2/<domain>"`) | `getKeyring` |
+| `IssueLeafInput.g.cs`  | `IssueLeafInput(byte[] CsrDer)` — a PKCS#10 CSR is PUBLIC material by construction (public key + metadata + self-signature, never a private key), so it is deliberately NOT redacted | `issueLeaf` |
+| `IssueLeafOutput.g.cs` | `IssueLeafOutput(byte[] CertificateDer, byte[] IssuerCertificateDer, DateTimeOffset NotBefore, DateTimeOffset NotAfter)` — all-public: the leaf + issuing-intermediate certificates and the validity window; **no private key exists anywhere on the issuance wire** (the workload generates its own keypair — CSR flow) | `issueLeaf` |
+| `GetCaCertificateInput.g.cs` | `GetCaCertificateInput` (parameterless record) | `getCaCertificate` |
+| `GetCaCertificateOutput.g.cs`| `GetCaCertificateOutput(byte[] RootCertificateDer, byte[] IntermediateCertificateDer)` — public trust anchor / chain material (presented on the wire in every TLS handshake), deliberately NOT redacted | `getCaCertificate` |
 
 All types live in `namespace D2.Edge.KeyCustodian.Clients`.
 
@@ -86,6 +90,8 @@ ValueTask<D2Result<GetJwksOutput?>> GetJwksAsync(GetJwksInput input, Cancellatio
 ValueTask<D2Result<GetOidcConfigurationOutput?>> GetOidcConfigurationAsync(GetOidcConfigurationInput input, CancellationToken ct = default);
 ValueTask<D2Result<SignOutput?>> SignAsync(SignInput input, CancellationToken ct = default);
 ValueTask<D2Result<GetKeyringOutput?>> GetKeyringAsync(GetKeyringInput input, CancellationToken ct = default);
+ValueTask<D2Result<IssueLeafOutput?>> IssueLeafAsync(IssueLeafInput input, CancellationToken ct = default);
+ValueTask<D2Result<GetCaCertificateOutput?>> GetCaCertificateAsync(GetCaCertificateInput input, CancellationToken ct = default);
 ```
 
 The façade implementation (`KeyCustodianApi`) and the generated DI extension

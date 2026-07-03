@@ -18,5 +18,18 @@ Keep a Changelog, and this package adheres to Semantic Versioning.
   (`keyBytes` carries `[RedactData(SecretInformation)]`; `aadContext` is deliberately
   unredacted authenticated context). Served on both planes (the in-process leaf + the
   new `KeyCustodianKeyring` gRPC service). The consumer client library is a later step.
+- `IKeyCustodianApi.IssueLeafAsync` — issue a short-lived workload leaf certificate
+  from a PKCS#10 certificate-signing request (CSR flow: the workload generates its
+  own keypair; the leaf private key never crosses the wire). New DTOs
+  `IssueLeafInput(csrDer)` + `IssueLeafOutput(certificateDer, issuerCertificateDer,
+  notBefore, notAfter)` — all-public material, nothing redacted. Served on both
+  planes (the in-process leaf + the new `KeyCustodianCertificateAuthority` gRPC
+  service, wire method `IssueWorkloadCertificate`).
+- `IKeyCustodianApi.GetCaCertificateAsync` — fetch the CA chain (the active root
+  trust anchor + the active issuing intermediate) as public DER certificate
+  material. New DTOs `GetCaCertificateInput` (parameterless) +
+  `GetCaCertificateOutput(rootCertificateDer, intermediateCertificateDer)`. Served
+  on both planes (the in-process leaf + the new `KeyCustodianCaCertificate` gRPC
+  service).
 
 ### Fixed

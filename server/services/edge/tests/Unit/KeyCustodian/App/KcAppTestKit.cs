@@ -6,6 +6,7 @@
 
 namespace D2.Edge.Tests.Unit.KeyCustodian.App;
 
+using System.Security.Cryptography.X509Certificates;
 using D2.Shared.Context.Abstractions;
 using D2.Shared.Handler;
 using D2.Shared.Handler.Repo.Abstractions;
@@ -108,6 +109,120 @@ internal static class KcAppTestKit
     public static HandlerContext<THandler> SystemContext<THandler>(
         ILogger<THandler>? logger = null) =>
         ContextWithOrigin(RequestOrigin.System, logger);
+
+    /// <summary>
+    /// Builds a handler context whose request carries the given established
+    /// <see cref="RequestOrigin"/> + <c>ImmediateCaller</c> + granted scopes — the
+    /// faithful stand-in for the interceptor-established peer context: the authority
+    /// rules consume exactly the fields the peer-workload boundary establishes
+    /// (<c>Origin</c> recomputed locally; <c>ImmediateCaller</c> from the validated
+    /// mTLS peer SPIFFE SAN). Replace-trigger: the live Edge-host wiring.
+    /// </summary>
+    /// <typeparam name="THandler">The handler type.</typeparam>
+    /// <param name="origin">The established origin to stamp on the request context.</param>
+    /// <param name="immediateCaller">The established caller id (the validated peer view), or null.</param>
+    /// <param name="scopes">The granted scopes (null → empty set — the scope gate denies).</param>
+    /// <param name="logger">Optional logger (used by tests that assert log output).</param>
+    /// <returns>A handler context bound to the given origin + caller + scopes.</returns>
+    public static HandlerContext<THandler> ContextWithOriginAndCaller<THandler>(
+        RequestOrigin origin,
+        string? immediateCaller,
+        IReadOnlySet<string>? scopes = null,
+        ILogger<THandler>? logger = null) =>
+        new(
+            new MutableRequestContext
+            {
+                Origin = origin,
+                ImmediateCaller = immediateCaller,
+                Scopes = scopes ?? new HashSet<string>(StringComparer.Ordinal),
+            },
+            logger ?? NullLogger<THandler>.Instance);
+
+    /// <summary>
+    /// Builds a well-formed ECDSA P-256 PKCS#10 certificate-signing request (the
+    /// shape a real workload submits) and returns its DER + the certified public
+    /// key's SubjectPublicKeyInfo (for pairing assertions).
+    /// </summary>
+    /// <param name="subject">The CSR subject (the fixed client placeholder by default).</param>
+    /// <returns>The CSR DER + the SPKI of the key it certifies.</returns>
+    public static (byte[] Der, byte[] PublicKeySpki) BuildP256Csr(
+        string subject = "CN=d2-workload")
+    {
+        using var key = ECDsa.Create(ECCurve.NamedCurves.nistP256);
+        var request = new CertificateRequest(subject, key, HashAlgorithmName.SHA256);
+
+        return (request.CreateSigningRequest(), key.ExportSubjectPublicKeyInfo());
+    }
+
+    /// <summary>
+    /// Builds a well-formed P-256 CSR that REQUESTS a forged SPIFFE SAN (plus a
+    /// forged subject) — the no-forgery-invariant input: the issuance surface must
+    /// ignore both and mint the SAN from the authenticated peer instead.
+    /// </summary>
+    /// <param name="forgedServiceId">The service id the CSR tries to claim.</param>
+    /// <returns>The CSR DER + the SPKI of the key it certifies.</returns>
+    public static (byte[] Der, byte[] PublicKeySpki) BuildP256CsrWithForgedSan(
+        string forgedServiceId)
+    {
+        using var key = ECDsa.Create(ECCurve.NamedCurves.nistP256);
+        var request = new CertificateRequest(
+            $"CN={forgedServiceId}", key, HashAlgorithmName.SHA256);
+
+        var sanBuilder = new System.Security.Cryptography.X509Certificates
+            .SubjectAlternativeNameBuilder();
+        sanBuilder.AddUri(new Uri($"spiffe://d2.internal/workload/{forgedServiceId}"));
+        request.CertificateExtensions.Add(sanBuilder.Build(critical: false));
+
+        return (request.CreateSigningRequest(), key.ExportSubjectPublicKeyInfo());
+    }
+
+    /// <summary>
+    /// Builds a structurally-valid P-256 CSR whose self-signature is BROKEN (one
+    /// signature byte flipped) — the failed proof-of-possession input.
+    /// </summary>
+    /// <returns>The tampered CSR DER.</returns>
+    public static byte[] BuildPopBrokenCsr()
+    {
+        var (der, _) = BuildP256Csr();
+
+        // The self-signature is the trailing BIT STRING of the PKCS#10 structure —
+        // flipping the LAST byte keeps the DER parseable but invalidates the
+        // signature over certificationRequestInfo.
+        der[^1] ^= 0x01;
+        return der;
+    }
+
+    /// <summary>
+    /// Builds a well-formed RSA-2048 CSR — the wrong-KEY-TYPE input the leaf key
+    /// policy rejects.
+    /// </summary>
+    /// <returns>The CSR DER.</returns>
+    public static byte[] BuildRsaCsr()
+    {
+        using var key = RSA.Create(2048);
+        var request = new CertificateRequest(
+            "CN=d2-workload",
+            key,
+            HashAlgorithmName.SHA256,
+            RSASignaturePadding.Pkcs1);
+
+        return request.CreateSigningRequest();
+    }
+
+    /// <summary>
+    /// Builds a well-formed ECDSA P-384 CSR — the right-type-WRONG-CURVE input
+    /// pinning that the leaf key policy checks the curve OID, not merely
+    /// key-type-is-elliptic-curve.
+    /// </summary>
+    /// <returns>The CSR DER.</returns>
+    public static byte[] BuildP384Csr()
+    {
+        using var key = ECDsa.Create(ECCurve.NamedCurves.nistP384);
+        var request = new CertificateRequest(
+            "CN=d2-workload", key, HashAlgorithmName.SHA384);
+
+        return request.CreateSigningRequest();
+    }
 
     /// <summary>
     /// Builds a null DB-exception classifier (no provider mapping in unit tests).
@@ -308,6 +423,83 @@ internal static class KcAppTestKit
         db.Keys.Add(record);
         await db.SaveChangesAsync(CancellationToken.None).ConfigureAwait(false);
         return (kid, rootCertDer);
+    }
+
+    /// <summary>
+    /// Seeds a COHERENT two-tier CA hierarchy: ONE self-signed root persisted as the
+    /// active <c>mtls-ca-root</c> managed key AND the intermediate it signed persisted
+    /// as the active <c>mtls-ca-intermediate</c> managed key — the shape the real
+    /// seeder produces, where the served intermediate chains to the served root.
+    /// (<see cref="SeedCaAsync"/> + <see cref="SeedCaRootAsync"/> each mint an
+    /// INDEPENDENT hierarchy — fine for single-tier tests, wrong for chain proofs.)
+    /// </summary>
+    /// <param name="db">The test context to seed.</param>
+    /// <param name="rootCrypto">The root crypto used to wrap both private keys.</param>
+    /// <param name="createdAt">The creation instant.</param>
+    /// <returns>The seeded kids + the root certificate DER (the trust anchor).</returns>
+    public static async Task<(string RootKid, string IntermediateKid, byte[] RootCertificateDer)>
+        SeedCaHierarchyAsync(
+            IKeyCustodianDbContext db,
+            IPayloadCrypto rootCrypto,
+            Instant createdAt)
+    {
+        var clock = new TestClock(createdAt);
+
+        var root = CaCertificateGeneration.GenerateRootCa(
+            "D2 Test Root CA", Duration.FromDays(3650), clock).Data!;
+
+        byte[] intermediateCertDer;
+        byte[] wrappedIntermediate;
+        var rootCertDer = root.CertificateDer;
+
+        using (var rootKey = ECDsa.Create())
+        {
+            rootKey.ImportPkcs8PrivateKey(root.PrivateKeyPkcs8, out _);
+
+            using var rootCert = System.Security.Cryptography.X509Certificates
+                .X509CertificateLoader.LoadCertificate(root.CertificateDer);
+
+            var intermediate = CaCertificateGeneration.GenerateIntermediateCa(
+                "D2 Test Issuing CA", rootCert, rootKey, Duration.FromDays(365), clock).Data!;
+
+            intermediateCertDer = intermediate.CertificateDer;
+            wrappedIntermediate = rootCrypto.Encrypt(intermediate.PrivateKeyPkcs8);
+            intermediate.Zero();
+        }
+
+        var wrappedRoot = rootCrypto.Encrypt(root.PrivateKeyPkcs8);
+        root.Zero();
+
+        var rootKid = KidMinting.Mint();
+        db.Keys.Add(new KeyRecord
+        {
+            Kid = rootKid,
+            KeyDomain = KeyDomain.MTLS_CA_ROOT,
+            KeyType = KeyType.X509CaCertificate,
+            KeyMaterialEncrypted = wrappedRoot,
+            PublicKeyMaterial = null,
+            CaCertificate = rootCertDer,
+            CreatedAt = createdAt,
+            Status = KeyStatus.Active,
+            ActivatedAt = createdAt,
+        });
+
+        var intermediateKid = KidMinting.Mint();
+        db.Keys.Add(new KeyRecord
+        {
+            Kid = intermediateKid,
+            KeyDomain = KeyDomain.MTLS_CA_INTERMEDIATE,
+            KeyType = KeyType.X509CaCertificate,
+            KeyMaterialEncrypted = wrappedIntermediate,
+            PublicKeyMaterial = null,
+            CaCertificate = intermediateCertDer,
+            CreatedAt = createdAt,
+            Status = KeyStatus.Active,
+            ActivatedAt = createdAt,
+        });
+
+        await db.SaveChangesAsync(CancellationToken.None).ConfigureAwait(false);
+        return (rootKid, intermediateKid, rootCertDer);
     }
 
     /// <summary>

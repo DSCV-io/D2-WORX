@@ -6,6 +6,7 @@
 
 global using System.Globalization;
 global using System.Security.Cryptography;
+global using System.Security.Cryptography.X509Certificates;
 global using D2.Edge.KeyCustodian.App.Application.Observability;
 global using D2.Edge.KeyCustodian.App.Infrastructure.Configuration;
 global using D2.Edge.KeyCustodian.App.Infrastructure.Messaging;

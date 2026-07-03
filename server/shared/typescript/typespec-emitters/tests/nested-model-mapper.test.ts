@@ -224,6 +224,22 @@ describe("emitNestedModelMapperHelpers_BothDirections", () => {
     expect(c).toContain("return new Dto.Empty();");
   });
 
+  it('a nested DateTimeOffset field maps outbound via ToString("O") (ISO-8601 round-trip)', () => {
+    const temporal: FieldInfo = {
+      name: "notAfter",
+      csName: "NotAfter",
+      csType: "DateTimeOffset",
+      tsName: "notAfter",
+      tsType: "string",
+      protoType: "string",
+      repeated: false,
+      optional: false,
+      redactReason: undefined,
+    };
+    const c = emit([{ name: "Window", fields: [temporal] }]);
+    expect(c).toContain('NotAfter = source.NotAfter.ToString("O"),');
+  });
+
   it("emits nothing for an empty model list", () => {
     expect(emit([])).toBe("");
   });

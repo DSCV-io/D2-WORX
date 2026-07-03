@@ -12,9 +12,11 @@ using System.Security.Cryptography;
 using D2.Edge.KeyCustodian.App.Application;
 using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.ActivateKey;
 using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.GenerateKey;
+using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.IssueLeaf;
 using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.RetireKey;
 using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.RotateKey;
 using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.RunDueRotations;
+using D2.Edge.KeyCustodian.App.Application.Handlers.Queries.GetCaCertificate;
 using D2.Edge.KeyCustodian.App.Application.Handlers.Queries.Sign;
 using D2.Edge.KeyCustodian.App.Infrastructure.Configuration;
 using D2.Edge.KeyCustodian.App.Infrastructure.Messaging;
@@ -392,6 +394,108 @@ public sealed class KeyCustodianLifecycleIntegrationTests(KeyCustodianPostgresFi
             "a replacement-generation-failed warning is logged after the durable commit");
     }
 
+    [Fact]
+    public async Task IssueLeafThenFetchChain_LeafValidatesAgainstFetchedRootOnly_AgainstRealDb()
+    {
+        // The full certificate-authority consumer round-trip against PostgreSQL:
+        // seed a coherent two-tier CA → workload-side keypair + CSR → issue a leaf
+        // through the generated-op shell (peer-derived SAN) → fetch the chain →
+        // an X509Chain over (leaf, issuance-returned intermediate) validates with
+        // the FETCHED root as the ONLY trust anchor — and the leaf certifies
+        // exactly the workload keypair's public key.
+        await fixture.EnsureMigratedAsync();
+        var clock = new TestClock(Instant.FromUtc(2026, 6, 1, 0, 0));
+        var rootCrypto = BuildRootCrypto();
+
+        // The certificate-authority consumer plane: an authenticated cross-process
+        // peer carrying both CA-surface scopes (the interceptor-established shape).
+        var context = new MutableRequestContext
+        {
+            Origin = RequestOrigin.CrossProcessHop,
+            ImmediateCaller = "edge",
+            Scopes = new HashSet<string>(StringComparer.Ordinal)
+            {
+                D2.Shared.Auth.Abstractions.Scopes.Internal.Kc.Issue,
+                D2.Shared.Auth.Abstractions.Scopes.Internal.Kc.Cacert,
+            },
+        };
+
+        await using var provider = BuildProvider(
+            clock, new RecordingAnnouncer(), requestContext: context, rootCrypto: rootCrypto);
+
+        // Shared-DB hygiene: other tests in this collection may have left rows in
+        // the CA domains; retire any still-active ones so the coherent hierarchy
+        // seeded below is the single active pair.
+        await using (var clean = fixture.NewContext())
+        {
+            var stale = await clean.Keys
+                .Where(k =>
+                    (k.KeyDomain == KeyDomain.MTLS_CA_ROOT
+                        || k.KeyDomain == KeyDomain.MTLS_CA_INTERMEDIATE)
+                    && k.Status == KeyStatus.Active)
+                .ToListAsync();
+
+            foreach (var record in stale)
+            {
+                record.Status = KeyStatus.Retired;
+                record.RetiringAt = clock.GetCurrentInstant();
+                record.RetiredAt = clock.GetCurrentInstant();
+            }
+
+            await clean.SaveChangesAsync();
+        }
+
+        await using (var seed = fixture.NewContext())
+        {
+            await Unit.KeyCustodian.App.KcAppTestKit.SeedCaHierarchyAsync(
+                seed, rootCrypto, clock.GetCurrentInstant());
+        }
+
+        // The workload role: generate the keypair + CSR locally.
+        var (csrDer, workloadSpki) = Unit.KeyCustodian.App.KcAppTestKit.BuildP256Csr();
+
+        // Issue through the generated-op shell (shell → inner handler → the
+        // isolated leaf-signing capability → audit write).
+        var issued = await Handler<IIssueLeafHandler>(provider)
+            .HandleAsync(new IssueLeafInput(csrDer), CancellationToken.None);
+        issued.Success.Should().BeTrue();
+
+        // Fetch the chain through the real query handler.
+        var chainFetch = await Handler<IGetCaCertificateHandler>(provider)
+            .HandleAsync(new GetCaCertificateInput(), CancellationToken.None);
+        chainFetch.Success.Should().BeTrue();
+
+        using var leaf = System.Security.Cryptography.X509Certificates
+            .X509CertificateLoader.LoadCertificate(issued.Data!.CertificateDer);
+        using var issuanceIssuer = System.Security.Cryptography.X509Certificates
+            .X509CertificateLoader.LoadCertificate(issued.Data.IssuerCertificateDer);
+        using var fetchedRoot = System.Security.Cryptography.X509Certificates
+            .X509CertificateLoader.LoadCertificate(chainFetch.Data!.RootCertificateDer);
+
+        // The leaf certifies EXACTLY the workload keypair's public key.
+        leaf.PublicKey.ExportSubjectPublicKeyInfo().Should().Equal(workloadSpki);
+
+        // leaf → issuance-issuer → FETCHED root (the only trust anchor) validates.
+        using var chain = new System.Security.Cryptography.X509Certificates.X509Chain();
+        chain.ChainPolicy.RevocationMode =
+            System.Security.Cryptography.X509Certificates.X509RevocationMode.NoCheck;
+        chain.ChainPolicy.TrustMode = System.Security.Cryptography.X509Certificates
+            .X509ChainTrustMode.CustomRootTrust;
+        chain.ChainPolicy.VerificationFlags = System.Security.Cryptography.X509Certificates
+            .X509VerificationFlags.IgnoreNotTimeValid;
+        chain.ChainPolicy.CustomTrustStore.Add(fetchedRoot);
+        chain.ChainPolicy.ExtraStore.Add(issuanceIssuer);
+        chain.Build(leaf).Should().BeTrue(
+            "the issued leaf validates against the fetched trust anchor alone");
+
+        // The durable audit row landed in PostgreSQL.
+        await using var verify = fixture.NewContext();
+        (await verify.LeafIssuanceAudit.AsNoTracking()
+                .Where(a => a.WorkloadServiceId == "edge")
+                .CountAsync())
+            .Should().BeGreaterThan(0, "the issuance audit row is the durable record");
+    }
+
     private static THandler Handler<THandler>(ServiceProvider provider)
         where THandler : notnull =>
         provider.CreateScope().ServiceProvider.GetRequiredService<THandler>();
@@ -536,6 +640,12 @@ public sealed class KeyCustodianLifecycleIntegrationTests(KeyCustodianPostgresFi
         services.AddSingleton(Microsoft.Extensions.Options.Options.Create(BuildOptions()));
 
         services.AddD2KeyCustodianApp();
+
+        // The dedicated issuance leaf-signing capability — the composition-root
+        // opt-in a host serving the issuance surface makes (the general
+        // registration deliberately does not provide it; the isolation property
+        // is pinned in the unit DI suite).
+        services.AddD2CaLeafSigningCapability();
 
         // The dedicated minter capability is granted ONLY where the auth-module
         // composition would grant it — never in the general registration.

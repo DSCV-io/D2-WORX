@@ -82,13 +82,22 @@ public sealed class KeyCustodianErrorCodesGeneratedTests
     [InlineData(
         KeyCustodianErrorCodes.KEYCUSTODIAN_SIGNING_INPUT_TOO_LARGE,
         "KEYCUSTODIAN_SIGNING_INPUT_TOO_LARGE")]
+    [InlineData(
+        KeyCustodianErrorCodes.KEYCUSTODIAN_ISSUANCE_NOT_AUTHORIZED,
+        "KEYCUSTODIAN_ISSUANCE_NOT_AUTHORIZED")]
+    [InlineData(
+        KeyCustodianErrorCodes.KEYCUSTODIAN_INVALID_CSR,
+        "KEYCUSTODIAN_INVALID_CSR")]
+    [InlineData(
+        KeyCustodianErrorCodes.KEYCUSTODIAN_CA_CERTIFICATE_NOT_AUTHORIZED,
+        "KEYCUSTODIAN_CA_CERTIFICATE_NOT_AUTHORIZED")]
     public void Constant_ValueEqualsWireLiteral(string constant, string expected_wire_literal)
     {
         constant.Should().Be(expected_wire_literal);
     }
 
     // -----------------------------------------------------------------------
-    // AllCodes membership — set equals the 25 spec codes in spec order
+    // AllCodes membership — set equals the 28 spec codes in spec order
     // -----------------------------------------------------------------------
 
     [Fact]
@@ -121,6 +130,9 @@ public sealed class KeyCustodianErrorCodesGeneratedTests
             "KEYCUSTODIAN_SIGNING_INPUT_TOO_LARGE",
             "KEYCUSTODIAN_KEYRING_KEY_UNAVAILABLE",
             "KEYCUSTODIAN_KEYRING_DOMAIN_NOT_AUTHORIZED",
+            "KEYCUSTODIAN_ISSUANCE_NOT_AUTHORIZED",
+            "KEYCUSTODIAN_INVALID_CSR",
+            "KEYCUSTODIAN_CA_CERTIFICATE_NOT_AUTHORIZED",
         ];
 
         KeyCustodianErrorCodes.AllCodes.Should().BeEquivalentTo(
@@ -129,9 +141,9 @@ public sealed class KeyCustodianErrorCodesGeneratedTests
     }
 
     [Fact]
-    public void AllCodes_CountIsTwentyFiveCodes()
+    public void AllCodes_CountIsTwentyEightCodes()
     {
-        KeyCustodianErrorCodes.AllCodes.Should().HaveCount(25);
+        KeyCustodianErrorCodes.AllCodes.Should().HaveCount(28);
     }
 
     // -----------------------------------------------------------------------
@@ -216,6 +228,9 @@ public sealed class KeyCustodianErrorCodesGeneratedTests
             ["KEYCUSTODIAN_SIGNING_INPUT_TOO_LARGE"] = 400,
             ["KEYCUSTODIAN_KEYRING_KEY_UNAVAILABLE"] = 503,
             ["KEYCUSTODIAN_KEYRING_DOMAIN_NOT_AUTHORIZED"] = 403,
+            ["KEYCUSTODIAN_ISSUANCE_NOT_AUTHORIZED"] = 403,
+            ["KEYCUSTODIAN_INVALID_CSR"] = 400,
+            ["KEYCUSTODIAN_CA_CERTIFICATE_NOT_AUTHORIZED"] = 403,
         };
 
         foreach (var code in KeyCustodianErrorCodes.AllCodes)
@@ -725,5 +740,93 @@ public sealed class KeyCustodianErrorCodesGeneratedTests
         result.StatusCode.Should().Be(System.Net.HttpStatusCode.BadRequest);
         result.ErrorCode.Should().Be(KeyCustodianErrorCodes.KEYCUSTODIAN_SIGNING_INPUT_TOO_LARGE);
         result.Category.Should().Be(ErrorCategory.ValidationFailure);
+    }
+
+    // -----------------------------------------------------------------------
+    // Certificate-authority consumer-surface factories: the issuance +
+    // CA-certificate plane denials (403 / policy_denied) and the coarse
+    // invalid-CSR rejection (400 / validation_failure).
+    // -----------------------------------------------------------------------
+
+    [Fact]
+    public void IssuanceNotAuthorized_NonGeneric_ReturnsForbiddenPolicyDenied()
+    {
+        var result = KeyCustodianFailures.IssuanceNotAuthorized();
+
+        result.Success.Should().BeFalse();
+        result.StatusCode.Should().Be(
+            System.Net.HttpStatusCode.Forbidden,
+            "leaf issuance is cross-process-only; every other plane is denied");
+        result.ErrorCode.Should().Be(
+            KeyCustodianErrorCodes.KEYCUSTODIAN_ISSUANCE_NOT_AUTHORIZED);
+        result.Category.Should().Be(ErrorCategory.PolicyDenied);
+        result.Messages.Should().Contain(
+            m => m.Key == "keycustodian_authorization_ISSUANCE_NOT_AUTHORIZED");
+    }
+
+    [Fact]
+    public void IssuanceNotAuthorized_Generic_ReturnsTypedForbiddenPolicyDenied()
+    {
+        var result = KeyCustodianFailures<int>.IssuanceNotAuthorized();
+
+        result.Success.Should().BeFalse();
+        result.StatusCode.Should().Be(System.Net.HttpStatusCode.Forbidden);
+        result.ErrorCode.Should().Be(
+            KeyCustodianErrorCodes.KEYCUSTODIAN_ISSUANCE_NOT_AUTHORIZED);
+        result.Category.Should().Be(ErrorCategory.PolicyDenied);
+    }
+
+    [Fact]
+    public void InvalidCsr_NonGeneric_ReturnsValidationFailure()
+    {
+        var result = KeyCustodianFailures.InvalidCsr();
+
+        result.Success.Should().BeFalse();
+        result.StatusCode.Should().Be(
+            System.Net.HttpStatusCode.BadRequest,
+            "an oversized / malformed / possession-unproven / wrong-curve CSR is a client error");
+        result.ErrorCode.Should().Be(KeyCustodianErrorCodes.KEYCUSTODIAN_INVALID_CSR);
+        result.Category.Should().Be(ErrorCategory.ValidationFailure);
+        result.Messages.Should().Contain(
+            m => m.Key == "keycustodian_validation_INVALID_CSR");
+    }
+
+    [Fact]
+    public void InvalidCsr_Generic_ReturnsTypedValidationFailure()
+    {
+        var result = KeyCustodianFailures<int>.InvalidCsr();
+
+        result.Success.Should().BeFalse();
+        result.StatusCode.Should().Be(System.Net.HttpStatusCode.BadRequest);
+        result.ErrorCode.Should().Be(KeyCustodianErrorCodes.KEYCUSTODIAN_INVALID_CSR);
+        result.Category.Should().Be(ErrorCategory.ValidationFailure);
+    }
+
+    [Fact]
+    public void CaCertificateNotAuthorized_NonGeneric_ReturnsForbiddenPolicyDenied()
+    {
+        var result = KeyCustodianFailures.CaCertificateNotAuthorized();
+
+        result.Success.Should().BeFalse();
+        result.StatusCode.Should().Be(
+            System.Net.HttpStatusCode.Forbidden,
+            "the CA chain is distributed over already-trusted internal channels only");
+        result.ErrorCode.Should().Be(
+            KeyCustodianErrorCodes.KEYCUSTODIAN_CA_CERTIFICATE_NOT_AUTHORIZED);
+        result.Category.Should().Be(ErrorCategory.PolicyDenied);
+        result.Messages.Should().Contain(
+            m => m.Key == "keycustodian_authorization_CA_CERTIFICATE_NOT_AUTHORIZED");
+    }
+
+    [Fact]
+    public void CaCertificateNotAuthorized_Generic_ReturnsTypedForbiddenPolicyDenied()
+    {
+        var result = KeyCustodianFailures<int>.CaCertificateNotAuthorized();
+
+        result.Success.Should().BeFalse();
+        result.StatusCode.Should().Be(System.Net.HttpStatusCode.Forbidden);
+        result.ErrorCode.Should().Be(
+            KeyCustodianErrorCodes.KEYCUSTODIAN_CA_CERTIFICATE_NOT_AUTHORIZED);
+        result.Category.Should().Be(ErrorCategory.PolicyDenied);
     }
 }

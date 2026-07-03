@@ -508,8 +508,9 @@ describe("facadeEmitter_ZeroOps_AndAdversarial", () => {
 // ---------------------------------------------------------------------------
 
 // The committed KC façade carries the two well-known ops plus the sign + getKeyring
-// ops (getJwks + getOidcConfiguration + sign + getKeyring) in source order; the
-// byte-gates regenerate from that exact op list.
+// + issueLeaf + getCaCertificate ops in source order; the byte-gates regenerate from
+// that exact op list. issueLeaf is the sole Command (leaf-issuance audit write); the
+// rest are Queries.
 const _KC_FACADE_OPS = [
   makeOp("getJwks", "GetJwksInput", "GetJwksOutput"),
   makeOp(
@@ -519,6 +520,14 @@ const _KC_FACADE_OPS = [
   ),
   makeOp("sign", "SignInput", "SignOutput"),
   makeOp("getKeyring", "GetKeyringInput", "GetKeyringOutput"),
+  makeOp(
+    "issueLeaf",
+    "IssueLeafInput",
+    "IssueLeafOutput",
+    undefined,
+    "Commands",
+  ),
+  makeOp("getCaCertificate", "GetCaCertificateInput", "GetCaCertificateOutput"),
 ];
 
 describe("facadeEmitter_ByteGate_Interface", () => {

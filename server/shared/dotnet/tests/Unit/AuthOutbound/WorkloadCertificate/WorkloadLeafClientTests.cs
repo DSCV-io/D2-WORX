@@ -6,9 +6,14 @@
 
 namespace D2.Shared.Tests.Unit.AuthOutbound.WorkloadCertificate;
 
+using System.Diagnostics.Metrics;
 using System.Net;
+using System.Security.Cryptography;
+using System.Security.Cryptography.X509Certificates;
 using AwesomeAssertions;
+using D2.Shared.Auth.Outbound.Telemetry;
 using D2.Shared.Auth.Outbound.WorkloadCertificate;
+using D2.Shared.Tests.Unit.Handler;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Time.Testing;
 using Xunit;
@@ -16,9 +21,17 @@ using Xunit;
 /// <summary>
 /// The refresh-ahead leaf-client matrix — first-call issuance, cache-hit reuse,
 /// serve-stale on transient failure, hard-fail when expired-and-unreachable,
-/// singleflight dedup, and the private-key-zeroize contract — exercised over a
-/// certificate reissue.
+/// singleflight dedup — plus the CSR-flow custody pins: the issuer receives a
+/// well-formed proof-of-possession-valid P-256 CSR, the private key never crosses
+/// the seam (structural), the returned leaf pairs with the locally-generated key,
+/// the CSR's placeholder subject is ignored, rotation mints a fresh keypair, and a
+/// mismatched-key leaf is rejected before any cache write.
 /// </summary>
+/// <remarks>
+/// In the OutboundTelemetrySerial collection because the mismatch-reject pins
+/// assert the process-wide <c>SR_LeafReissueFailures</c> counter.
+/// </remarks>
+[Collection("OutboundTelemetrySerial")]
 [Trait("Category", "Unit")]
 public sealed class WorkloadLeafClientTests
 {
@@ -201,23 +214,229 @@ public sealed class WorkloadLeafClientTests
     }
 
     [Fact]
-    public async Task GetCurrentLeafAsync_BuildLiveLeaf_ZeroesPkcs8BufferAfterImport()
+    public async Task GetCurrentLeafAsync_IssuerReceivesWellFormedPopValidP256Csr()
     {
-        // M-4 regression pin — WorkloadLeafClient.BuildLiveLeaf MUST call
-        // CryptographicOperations.ZeroMemory on the PKCS#8 buffer after importing the
-        // private key into the live ECDsa handle. Failure would leave the raw key
-        // bytes in the GC heap across the leaf's lifetime — a secret-pinning risk.
+        // The seam carries a REAL PKCS#10 CSR: it loads with proof-of-possession
+        // validation ON (a broken self-signature would throw here) and certifies an
+        // ECDSA P-256 key — the leaf key policy the issuer enforces.
         using var harness = new Harness();
 
         await harness.Client.GetCurrentLeafAsync();
 
-        // LastIssuedPkcs8 is the SAME array reference passed through WorkloadLeafMaterial
-        // to BuildLiveLeaf; ZeroMemory zeroes the buffer in-place.
-        var pkcs8 = harness.Issuer.LastIssuedPkcs8;
-        pkcs8.Should().NotBeNull("an issuance must have completed")
-            .And.Subject.Should().OnlyContain(
-                b => b == 0,
-                "CryptographicOperations.ZeroMemory must zero the PKCS#8 buffer after import");
+        var csrDer = harness.Issuer.LastReceivedCsrDer;
+        csrDer.Should().NotBeNull("an issuance must have completed");
+
+        var loaded = CertificateRequest.LoadSigningRequest(csrDer, HashAlgorithmName.SHA256);
+
+        using var ecdsa = loaded.PublicKey.GetECDsaPublicKey();
+        ecdsa.Should().NotBeNull("the CSR must certify an elliptic-curve key");
+        ecdsa.KeySize.Should().Be(256, "the leaf key policy is ECDSA P-256");
+    }
+
+    [Fact]
+    public void IssuerPort_IsStructurallyPrivateKeyFree()
+    {
+        // The strictly-stronger successor to the received-buffer zeroize pin: no
+        // private key is ever received, because the port's only data parameter is
+        // the CSR (public by construction) and the returned material carries no
+        // private-key member — the custody guarantee is structural, not procedural.
+        var issueAsync = typeof(IWorkloadCertificateIssuer).GetMethod("IssueAsync")!;
+        var dataParams = issueAsync.GetParameters()
+            .Where(p => p.ParameterType != typeof(CancellationToken))
+            .ToArray();
+
+        dataParams.Should().ContainSingle("the port carries exactly one data parameter");
+        dataParams[0].ParameterType.Should().Be<byte[]>(
+            "the sole data crossing the seam is the CSR DER");
+        dataParams[0].Name.Should().Be("csrDer");
+
+        typeof(WorkloadLeafMaterial).GetProperties()
+            .Should().NotContain(
+                p => p.Name.Contains("PrivateKey") || p.Name.Contains("Pkcs8"),
+                "the returned material is all-public — no private-key member exists");
+    }
+
+    [Fact]
+    public async Task GetCurrentLeafAsync_ReturnedLeafPairsWithLocalKey()
+    {
+        // The live leaf must hold the LOCALLY-generated private key, and its
+        // certified public key must equal the CSR's — the pairing proof.
+        using var harness = new Harness();
+
+        var result = await harness.Client.GetCurrentLeafAsync();
+
+        result.Data!.HasPrivateKey.Should().BeTrue(
+            "the leaf pairs with the locally-generated key");
+        result.Data.PublicKey.ExportSubjectPublicKeyInfo()
+            .Should().Equal(
+                harness.Issuer.LastCsrPublicKeySpki,
+                "the leaf certifies exactly the key the CSR carried");
+    }
+
+    [Fact]
+    public async Task GetCurrentLeafAsync_LeafIdentityFromIssuerPeerView_CsrSubjectIgnored()
+    {
+        // The consumer-seam mirror of the issuer's no-forgery invariant: the leaf's
+        // SAN + subject come from the ISSUER's authenticated peer view (the fake's
+        // configured serviceId), never from the CSR's placeholder subject.
+        using var harness = new Harness();
+
+        var result = await harness.Client.GetCurrentLeafAsync();
+
+        // The CSR itself carried the fixed placeholder subject…
+        var csr = CertificateRequest.LoadSigningRequest(
+            harness.Issuer.LastReceivedCsrDer!, HashAlgorithmName.SHA256);
+        csr.SubjectName.Name.Should().Be("CN=d2-workload");
+
+        // …but the leaf's identity is the issuer's peer view.
+        result.Data!.Subject.Should().Be(
+            "CN=edge", "the leaf subject comes from the issuer's peer view");
+
+        var sanUris = ReadUriSans(result.Data);
+        sanUris.Should().ContainSingle()
+            .Which.Should().Be(
+                "spiffe://d2.internal/workload/edge",
+                "the SAN is minted from the issuer's authenticated peer view");
+    }
+
+    [Fact]
+    public async Task GetCurrentLeafAsync_RotationMintsFreshKeypair()
+    {
+        // Per-rotation key freshness: a second reissue submits a CSR certifying a
+        // DIFFERENT public key than the first — no long-lived reused keypair.
+        using var harness = new Harness(validity: TimeSpan.FromMinutes(10));
+
+        await harness.Client.GetCurrentLeafAsync();
+        var firstSpki = harness.Issuer.LastCsrPublicKeySpki!.ToArray();
+
+        harness.Clock.Advance(TimeSpan.FromMinutes(20));
+        await harness.Client.GetCurrentLeafAsync();
+        var secondSpki = harness.Issuer.LastCsrPublicKeySpki!.ToArray();
+
+        harness.Issuer.IssuanceCount.Should().Be(2, "expiry forces a second issuance");
+        secondSpki.Should().NotEqual(
+            firstSpki, "every reissue generates a fresh keypair");
+    }
+
+    [Fact]
+    public async Task GetCurrentLeafAsync_MismatchedIssuerKey_RejectedWithTelemetry_NoCacheWrite()
+    {
+        // ADVERSARIAL: a returned leaf certifying a DIFFERENT key than the CSR's can
+        // never be presented (no private key exists for it) — the client rejects it
+        // BEFORE any cache write, fires the mismatch log + the reissue-failure
+        // counter, and surfaces the transient 503.
+        using var harness = new Harness();
+        var logger = new TestLogger<WorkloadLeafClient>();
+        using var client = new WorkloadLeafClient(
+            harness.Issuer, harness.Cache, logger, harness.Clock);
+
+        harness.Issuer.SetMintMismatchedKey(true);
+
+        using var listener = new LeafReissueFailuresListener();
+
+        var result = await client.GetCurrentLeafAsync();
+
+        result.Success.Should().BeFalse("a mismatched-key leaf is rejected");
+        result.StatusCode.Should().Be(HttpStatusCode.ServiceUnavailable);
+        harness.Cache.PeekRaw().Should().BeNull("a rejected leaf never enters the cache");
+        listener.Total.Should().Be(1, "the mismatch counts as a reissue failure");
+        logger.Entries.Should().Contain(
+            e => e.EventId.Id == 3006,
+            "the issuer-key-mismatch warning names the rejection");
+    }
+
+    [Fact]
+    public async Task GetCurrentLeafAsync_MismatchedReissue_KeepsStaleSnapshotUntouched()
+    {
+        // The serve-stale posture survives the mismatch reject: the previously-cached
+        // snapshot is NOT overwritten by the rejected leaf.
+        using var harness = new Harness(validity: TimeSpan.FromMinutes(10));
+
+        await harness.Client.GetCurrentLeafAsync();
+        var staleNotAfter = harness.Cache.PeekRaw()!.NotAfter;
+
+        harness.Clock.Advance(TimeSpan.FromMinutes(20));
+        harness.Issuer.SetMintMismatchedKey(true);
+
+        var result = await harness.Client.GetCurrentLeafAsync();
+
+        result.Success.Should().BeFalse("the expired cache cannot serve and the reissue was rejected");
+        harness.Cache.PeekRaw()!.NotAfter.Should().Be(
+            staleNotAfter, "the rejected leaf never overwrites the stale snapshot");
+    }
+
+    /// <summary>
+    /// Reads every URI subject-alternative-name from a certificate (GeneralName
+    /// CHOICE [6] IA5String — the same ASN.1 walk the shipped peer validator uses).
+    /// </summary>
+    /// <param name="certificate">The certificate whose SAN URIs to read.</param>
+    /// <returns>The URI SAN values, in encounter order.</returns>
+    private static List<string> ReadUriSans(X509Certificate2 certificate)
+    {
+        var uriSanTag = new System.Formats.Asn1.Asn1Tag(
+            System.Formats.Asn1.TagClass.ContextSpecific, 6);
+        var uris = new List<string>();
+
+        var sanExtension = certificate.Extensions
+            .OfType<X509SubjectAlternativeNameExtension>()
+            .FirstOrDefault();
+
+        if (sanExtension is null)
+            return uris;
+
+        var outer = new System.Formats.Asn1.AsnReader(
+            sanExtension.RawData, System.Formats.Asn1.AsnEncodingRules.DER);
+        var names = outer.ReadSequence();
+
+        while (names.HasData)
+        {
+            if (names.PeekTag().HasSameClassAndValue(uriSanTag))
+            {
+                uris.Add(names.ReadCharacterString(
+                    System.Formats.Asn1.UniversalTagNumber.IA5String, uriSanTag));
+            }
+            else
+            {
+                names.ReadEncodedValue();
+            }
+        }
+
+        return uris;
+    }
+
+    /// <summary>
+    /// Captures measurements from <c>d2.auth.outbound.workload_leaf.reissue_failures</c>
+    /// and exposes the cumulative total count (the same shape as the regression
+    /// suite's listener — a private test helper, duplicated rather than shared to
+    /// keep each suite self-contained).
+    /// </summary>
+    private sealed class LeafReissueFailuresListener : IDisposable
+    {
+        private const string _INSTRUMENT = "d2.auth.outbound.workload_leaf.reissue_failures";
+
+        private readonly MeterListener r_listener = new();
+        private long _total;
+
+        public LeafReissueFailuresListener()
+        {
+            r_listener.InstrumentPublished = (instrument, listener) =>
+            {
+                if (instrument.Meter.Name == OutboundTelemetry.METER_NAME &&
+                    instrument.Name == _INSTRUMENT)
+                    listener.EnableMeasurementEvents(instrument);
+            };
+
+            r_listener.SetMeasurementEventCallback<long>((_, value, _, _) =>
+            {
+                Interlocked.Add(ref _total, value);
+            });
+
+            r_listener.Start();
+        }
+
+        public long Total => Interlocked.Read(ref _total);
+
+        public void Dispose() => r_listener.Dispose();
     }
 
     private sealed class Harness : IDisposable

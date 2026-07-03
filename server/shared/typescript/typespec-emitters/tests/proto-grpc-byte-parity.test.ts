@@ -997,3 +997,391 @@ describe("byteParity_KcWireIdentityManifest_CommittedFixtureIdentical", () => {
     );
   });
 });
+
+// ---------------------------------------------------------------------------
+// Real KeyCustodian CERTIFICATE-AUTHORITY issuance gRPC wire surface — the
+// issueLeaf op (its own service KeyCustodianCertificateAuthority; wire method
+// IssueWorkloadCertificate — one gRPC service per op so each service carries
+// its own transport scope policy). CSR bytes in, leaf + issuing-intermediate
+// DER + validity window out — ALL-PUBLIC material (the leaf private key never
+// crosses the wire; no redaction anywhere on this op). The two DateTimeOffset
+// output fields exercise the temporal outbound arm (ISO-8601 "O" → proto
+// string). The service delegates to IKeyCustodianApi.IssueLeafAsync; the
+// cross-process gRPC CLIENT is deferred (same as the sign / keyring ops).
+// ---------------------------------------------------------------------------
+
+function buildKcIssueLeafInputFields(): readonly FieldInfo[] {
+  return [
+    {
+      name: "csrDer",
+      csName: "CsrDer",
+      csType: "byte[]",
+      tsName: "csrDer",
+      tsType: "Uint8Array",
+      protoType: "bytes",
+      repeated: false,
+      optional: false,
+      redactReason: undefined,
+      fieldNumber: 1,
+    },
+  ];
+}
+
+function buildKcIssueLeafOutputFields(): readonly FieldInfo[] {
+  return [
+    {
+      name: "certificateDer",
+      csName: "CertificateDer",
+      csType: "byte[]",
+      tsName: "certificateDer",
+      tsType: "Uint8Array",
+      protoType: "bytes",
+      repeated: false,
+      optional: false,
+      redactReason: undefined,
+      fieldNumber: 1,
+    },
+    {
+      name: "issuerCertificateDer",
+      csName: "IssuerCertificateDer",
+      csType: "byte[]",
+      tsName: "issuerCertificateDer",
+      tsType: "Uint8Array",
+      protoType: "bytes",
+      repeated: false,
+      optional: false,
+      redactReason: undefined,
+      fieldNumber: 2,
+    },
+    {
+      name: "notBefore",
+      csName: "NotBefore",
+      csType: "DateTimeOffset",
+      tsName: "notBefore",
+      tsType: "string",
+      protoType: "string",
+      repeated: false,
+      optional: false,
+      redactReason: undefined,
+      fieldNumber: 3,
+    },
+    {
+      name: "notAfter",
+      csName: "NotAfter",
+      csType: "DateTimeOffset",
+      tsName: "notAfter",
+      tsType: "string",
+      protoType: "string",
+      repeated: false,
+      optional: false,
+      redactReason: undefined,
+      fieldNumber: 4,
+    },
+  ];
+}
+
+/** Real-KC issuance façade delegation target (matches the committed KeyCustodianCertificateAuthorityService.g.cs). */
+const KC_ISSUE_FACADE_TARGET: GrpcDelegationTarget = {
+  kind: "facade",
+  typeName: "IKeyCustodianApi",
+  methodName: "IssueLeafAsync",
+  targetNamespace: "D2.Edge.KeyCustodian.Clients",
+};
+
+describe("byteParity_KcIssueLeafProto_CommittedFixtureIdentical", () => {
+  function emit(): string {
+    return emitProto(
+      "issueLeaf",
+      "KeyCustodianCertificateAuthority",
+      "IssueWorkloadCertificate",
+      "unary",
+      "d2.keycustodian.v2alpha",
+      KC_PROTO_CS_NS,
+      KC_SOURCE,
+      "IssueWorkloadCertificateRequest",
+      buildKcIssueLeafInputFields(),
+      undefined,
+      "IssueLeafOutput",
+      buildKcIssueLeafOutputFields(),
+      undefined,
+      [],
+      (c, m) => {
+        throw new Error(`${c}: ${m}`);
+      },
+    )!.content;
+  }
+
+  it("re-emitted real KC issuance .proto is byte-identical to the committed fixture", () => {
+    // Non-vacuity: the temporal fields ride the wire as proto strings.
+    const p = emit();
+    expect(p).toContain("string not_before = 3;");
+    expect(p).toContain("string not_after = 4;");
+    expect(p).toBe(
+      readFixture(
+        join(
+          GRPC_PROTOS,
+          "key_custodian_certificate_authority_issue_workload_certificate.g.proto",
+        ),
+      ),
+    );
+  });
+
+  it("deliberate-drift detection: mutated fixture does NOT match re-emitted output", () => {
+    const drifted = readFixture(
+      join(
+        GRPC_PROTOS,
+        "key_custodian_certificate_authority_issue_workload_certificate.g.proto",
+      ),
+    ).replace("bytes csr_der", "bytes csr_der_drifted");
+    expect(emit()).not.toBe(drifted);
+  });
+});
+
+describe("byteParity_KeyCustodianCertificateAuthorityService_FacadeDelegation_CommittedFixtureIdentical", () => {
+  function emitService(): string {
+    const [svc] = emitGrpcService(
+      "issueLeaf",
+      "KeyCustodianCertificateAuthority",
+      "IssueWorkloadCertificate",
+      KC_PROTO_CS_NS,
+      KC_GRPC_NS,
+      KC_DTO_NS,
+      KC_SOURCE,
+      "IssueWorkloadCertificateRequest",
+      "IssueWorkloadCertificateResponse",
+      "IssueLeafInput",
+      buildKcIssueLeafInputFields(),
+      "IssueLeafOutput",
+      buildKcIssueLeafOutputFields(),
+      KC_ISSUE_FACADE_TARGET,
+    );
+
+    return svc.content;
+  }
+
+  it("re-emitted real KC issuance service .g.cs (façade delegation) is byte-identical", () => {
+    expect(emitService()).toBe(
+      readFixture(
+        join(GRPC_HOME, "KeyCustodianCertificateAuthorityService.g.cs"),
+      ),
+    );
+  });
+
+  it("deliberate-drift detection: handler delegation does NOT match façade fixture", () => {
+    const drifted = readFixture(
+      join(GRPC_HOME, "KeyCustodianCertificateAuthorityService.g.cs"),
+    ).replace("facade.IssueLeafAsync", "handler.HandleAsync");
+    expect(emitService()).not.toBe(drifted);
+  });
+});
+
+describe("byteParity_IssueLeafTransportMappers_CommittedFixtureIdentical", () => {
+  function emitMapper(): string {
+    const [, mapper] = emitGrpcService(
+      "issueLeaf",
+      "KeyCustodianCertificateAuthority",
+      "IssueWorkloadCertificate",
+      KC_PROTO_CS_NS,
+      KC_GRPC_NS,
+      KC_DTO_NS,
+      KC_SOURCE,
+      "IssueWorkloadCertificateRequest",
+      "IssueWorkloadCertificateResponse",
+      "IssueLeafInput",
+      buildKcIssueLeafInputFields(),
+      "IssueLeafOutput",
+      buildKcIssueLeafOutputFields(),
+    );
+
+    return mapper.content;
+  }
+
+  it("re-emitted real KC issuance transport mappers .g.cs (temporal outbound arm) is byte-identical", () => {
+    const m = emitMapper();
+    // Non-vacuity: the DateTimeOffset outbound conversion is present.
+    expect(m).toContain('NotBefore = output.NotBefore.ToString("O"),');
+    expect(m).toContain('NotAfter = output.NotAfter.ToString("O"),');
+    expect(m).toBe(
+      readFixture(join(GRPC_HOME, "IssueLeafTransportMappers.g.cs")),
+    );
+  });
+
+  it("deliberate-drift detection: mutated fixture does NOT match re-emitted output", () => {
+    const drifted = readFixture(
+      join(GRPC_HOME, "IssueLeafTransportMappers.g.cs"),
+    ).replace("IssueLeafTransportMappers", "IssueLeafTransportMappersDRIFTED");
+    expect(emitMapper()).not.toBe(drifted);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Real KeyCustodian CA-CERTIFICATE gRPC wire surface — the getCaCertificate op
+// (its own service KeyCustodianCaCertificate — one gRPC service per op). Empty
+// request in, root + issuing-intermediate DER out (public trust material). The
+// empty request exercises the parameterless proto message + parameterless C#
+// record end-to-end. The service delegates to
+// IKeyCustodianApi.GetCaCertificateAsync.
+// ---------------------------------------------------------------------------
+
+function buildKcGetCaCertificateOutputFields(): readonly FieldInfo[] {
+  return [
+    {
+      name: "rootCertificateDer",
+      csName: "RootCertificateDer",
+      csType: "byte[]",
+      tsName: "rootCertificateDer",
+      tsType: "Uint8Array",
+      protoType: "bytes",
+      repeated: false,
+      optional: false,
+      redactReason: undefined,
+      fieldNumber: 1,
+    },
+    {
+      name: "intermediateCertificateDer",
+      csName: "IntermediateCertificateDer",
+      csType: "byte[]",
+      tsName: "intermediateCertificateDer",
+      tsType: "Uint8Array",
+      protoType: "bytes",
+      repeated: false,
+      optional: false,
+      redactReason: undefined,
+      fieldNumber: 2,
+    },
+  ];
+}
+
+/** Real-KC CA-certificate façade delegation target (matches the committed KeyCustodianCaCertificateService.g.cs). */
+const KC_CACERT_FACADE_TARGET: GrpcDelegationTarget = {
+  kind: "facade",
+  typeName: "IKeyCustodianApi",
+  methodName: "GetCaCertificateAsync",
+  targetNamespace: "D2.Edge.KeyCustodian.Clients",
+};
+
+describe("byteParity_KcCaCertificateProto_CommittedFixtureIdentical", () => {
+  function emit(): string {
+    return emitProto(
+      "getCaCertificate",
+      "KeyCustodianCaCertificate",
+      "GetCaCertificate",
+      "unary",
+      "d2.keycustodian.v2alpha",
+      KC_PROTO_CS_NS,
+      KC_SOURCE,
+      "GetCaCertificateRequest",
+      [],
+      undefined,
+      "GetCaCertificateOutput",
+      buildKcGetCaCertificateOutputFields(),
+      undefined,
+      [],
+      (c, m) => {
+        throw new Error(`${c}: ${m}`);
+      },
+    )!.content;
+  }
+
+  it("re-emitted real KC CA-certificate .proto is byte-identical to the committed fixture", () => {
+    // Non-vacuity: the empty request message + the distinct per-op service.
+    const p = emit();
+    expect(p).toContain("message GetCaCertificateRequest {}");
+    expect(p).toContain("service KeyCustodianCaCertificate {");
+    expect(p).toBe(
+      readFixture(
+        join(
+          GRPC_PROTOS,
+          "key_custodian_ca_certificate_get_ca_certificate.g.proto",
+        ),
+      ),
+    );
+  });
+
+  it("deliberate-drift detection: mutated fixture does NOT match re-emitted output", () => {
+    const drifted = readFixture(
+      join(
+        GRPC_PROTOS,
+        "key_custodian_ca_certificate_get_ca_certificate.g.proto",
+      ),
+    ).replace("root_certificate_der", "root_certificate_der_drifted");
+    expect(emit()).not.toBe(drifted);
+  });
+});
+
+describe("byteParity_KeyCustodianCaCertificateService_FacadeDelegation_CommittedFixtureIdentical", () => {
+  function emitService(): string {
+    const [svc] = emitGrpcService(
+      "getCaCertificate",
+      "KeyCustodianCaCertificate",
+      "GetCaCertificate",
+      KC_PROTO_CS_NS,
+      KC_GRPC_NS,
+      KC_DTO_NS,
+      KC_SOURCE,
+      "GetCaCertificateRequest",
+      "GetCaCertificateResponse",
+      "GetCaCertificateInput",
+      [],
+      "GetCaCertificateOutput",
+      buildKcGetCaCertificateOutputFields(),
+      KC_CACERT_FACADE_TARGET,
+    );
+
+    return svc.content;
+  }
+
+  it("re-emitted real KC CA-certificate service .g.cs (façade delegation) is byte-identical", () => {
+    expect(emitService()).toBe(
+      readFixture(join(GRPC_HOME, "KeyCustodianCaCertificateService.g.cs")),
+    );
+  });
+
+  it("deliberate-drift detection: handler delegation does NOT match façade fixture", () => {
+    const drifted = readFixture(
+      join(GRPC_HOME, "KeyCustodianCaCertificateService.g.cs"),
+    ).replace("facade.GetCaCertificateAsync", "handler.HandleAsync");
+    expect(emitService()).not.toBe(drifted);
+  });
+});
+
+describe("byteParity_GetCaCertificateTransportMappers_CommittedFixtureIdentical", () => {
+  function emitMapper(): string {
+    const [, mapper] = emitGrpcService(
+      "getCaCertificate",
+      "KeyCustodianCaCertificate",
+      "GetCaCertificate",
+      KC_PROTO_CS_NS,
+      KC_GRPC_NS,
+      KC_DTO_NS,
+      KC_SOURCE,
+      "GetCaCertificateRequest",
+      "GetCaCertificateResponse",
+      "GetCaCertificateInput",
+      [],
+      "GetCaCertificateOutput",
+      buildKcGetCaCertificateOutputFields(),
+    );
+
+    return mapper.content;
+  }
+
+  it("re-emitted real KC CA-certificate transport mappers .g.cs (empty-input arm) is byte-identical", () => {
+    const m = emitMapper();
+    // Non-vacuity: the parameterless-request inbound arm constructs the empty DTO.
+    expect(m).toContain("return new GetCaCertificateInput();");
+    expect(m).toBe(
+      readFixture(join(GRPC_HOME, "GetCaCertificateTransportMappers.g.cs")),
+    );
+  });
+
+  it("deliberate-drift detection: mutated fixture does NOT match re-emitted output", () => {
+    const drifted = readFixture(
+      join(GRPC_HOME, "GetCaCertificateTransportMappers.g.cs"),
+    ).replace(
+      "GetCaCertificateTransportMappers",
+      "GetCaCertificateTransportMappersDRIFTED",
+    );
+    expect(emitMapper()).not.toBe(drifted);
+  });
+});

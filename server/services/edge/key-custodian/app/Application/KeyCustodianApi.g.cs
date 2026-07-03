@@ -10,6 +10,8 @@
 
 namespace D2.Edge.KeyCustodian.App.Application;
 
+using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.IssueLeaf;
+using D2.Edge.KeyCustodian.App.Application.Handlers.Queries.GetCaCertificate;
 using D2.Edge.KeyCustodian.App.Application.Handlers.Queries.GetJwks;
 using D2.Edge.KeyCustodian.App.Application.Handlers.Queries.GetKeyring;
 using D2.Edge.KeyCustodian.App.Application.Handlers.Queries.GetOidcConfiguration;
@@ -24,7 +26,9 @@ public sealed class KeyCustodianApi(
     IGetJwksHandler getJwksHandler,
     IGetOidcConfigurationHandler getOidcConfigurationHandler,
     ISignHandler signHandler,
-    IGetKeyringHandler getKeyringHandler) : IKeyCustodianApi
+    IGetKeyringHandler getKeyringHandler,
+    IIssueLeafHandler issueLeafHandler,
+    IGetCaCertificateHandler getCaCertificateHandler) : IKeyCustodianApi
 {
     /// <inheritdoc/>
     public ValueTask<D2Result<GetJwksOutput?>> GetJwksAsync(GetJwksInput input, CancellationToken ct = default)
@@ -38,4 +42,10 @@ public sealed class KeyCustodianApi(
     /// <inheritdoc/>
     public ValueTask<D2Result<GetKeyringOutput?>> GetKeyringAsync(GetKeyringInput input, CancellationToken ct = default)
         => getKeyringHandler.HandleAsync(input, ct);
+    /// <inheritdoc/>
+    public ValueTask<D2Result<IssueLeafOutput?>> IssueLeafAsync(IssueLeafInput input, CancellationToken ct = default)
+        => issueLeafHandler.HandleAsync(input, ct);
+    /// <inheritdoc/>
+    public ValueTask<D2Result<GetCaCertificateOutput?>> GetCaCertificateAsync(GetCaCertificateInput input, CancellationToken ct = default)
+        => getCaCertificateHandler.HandleAsync(input, ct);
 }

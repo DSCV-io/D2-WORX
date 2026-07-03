@@ -584,6 +584,9 @@ function buildProtoToDto(f: FieldInfo): string {
  * sub-mapper (an array-of-model uses the `Field = { … }` collection-init form
  * because a proto3 `repeated` field has no setter); byte[] → ByteString.CopyFrom;
  * enum → output.PascalName.ToWire() (DTO enum → proto member-name wire string);
+ * DateTimeOffset → output.PascalName.ToString("O") (the instant-bearing temporal
+ * scalars ride the proto wire as ISO-8601 round-trip strings per the scalar
+ * registry — the "O" specifier is culture-invariant by definition);
  * all others → output.PascalName.
  */
 function buildDtoToProtoAssign(f: FieldInfo): OutboundAssign {
@@ -602,6 +605,8 @@ function buildDtoToProtoAssign(f: FieldInfo): OutboundAssign {
     return { kind: "assign", expr: `ByteString.CopyFrom(output.${propName})` };
   if (f.enumRef !== undefined)
     return { kind: "assign", expr: `output.${propName}.ToWire()` };
+  if (f.csType === "DateTimeOffset")
+    return { kind: "assign", expr: `output.${propName}.ToString("O")` };
 
   return { kind: "assign", expr: `output.${propName}` };
 }

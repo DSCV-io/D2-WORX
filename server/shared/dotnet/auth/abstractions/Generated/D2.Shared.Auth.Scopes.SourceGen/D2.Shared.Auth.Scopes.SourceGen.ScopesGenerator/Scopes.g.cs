@@ -127,6 +127,16 @@ public static partial class Scopes
         public static class Kc
         {
             /// <summary>
+            /// Fetch the certificate-authority chain (root + issuing intermediate) from KeyCustodian (internal service-to-service / in-process). Public trust-anchor material distributed over already-trusted internal channels only.
+            /// </summary>
+            public const string Cacert = "internal.kc.cacert";
+
+            /// <summary>
+            /// Request a workload leaf certificate from KeyCustodian by submitting a certificate-signing request (internal service-to-service, cross-process only). The scope gates whether a caller may reach the issuance surface at all; the leaf subject-alternative-name is always the authenticated mTLS peer identity, never caller-supplied.
+            /// </summary>
+            public const string Issue = "internal.kc.issue";
+
+            /// <summary>
             /// Fetch a payload-encryption keyring from KeyCustodian (internal service-to-service / in-process). The scope gates whether a caller may reach the keyring surface at all; a per-workload domain policy decides which domains it may fetch.
             /// </summary>
             public const string Keyring = "internal.kc.keyring";
@@ -232,6 +242,8 @@ public static partial class Scopes
         "auth.user.impersonate.consent",
         "auth.user.impersonate.force",
         "billing.payment.charge",
+        "internal.kc.cacert",
+        "internal.kc.issue",
         "internal.kc.keyring",
         "internal.kc.sign",
         "self.read",
@@ -252,6 +264,7 @@ public static partial class Scopes
         "auth.user.impersonate.consent",
         "auth.user.impersonate.force",
         "billing.payment.charge",
+        "internal.kc.issue",
         "internal.kc.keyring",
         "internal.kc.sign",
     };
@@ -265,6 +278,8 @@ public static partial class Scopes
         ["auth.user.impersonate.consent"] = ActionSensitivity.Sensitive,
         ["auth.user.impersonate.force"] = ActionSensitivity.Critical,
         ["billing.payment.charge"] = ActionSensitivity.Critical,
+        ["internal.kc.cacert"] = ActionSensitivity.Sensitive,
+        ["internal.kc.issue"] = ActionSensitivity.Critical,
         ["internal.kc.keyring"] = ActionSensitivity.Critical,
         ["internal.kc.sign"] = ActionSensitivity.Critical,
         ["self.read"] = ActionSensitivity.Routine,

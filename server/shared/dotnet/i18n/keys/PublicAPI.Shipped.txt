@@ -318,7 +318,9 @@ static readonly D2.Shared.I18n.TK.Geo.Validation.LONGITUDE_RANGE -> D2.Shared.I1
 static readonly D2.Shared.I18n.TK.Geo.Validation.POSTAL_CODE_INVALID -> D2.Shared.I18n.TKMessage!
 static readonly D2.Shared.I18n.TK.Geo.Validation.POSTAL_CODE_TOO_LONG -> D2.Shared.I18n.TKMessage!
 static readonly D2.Shared.I18n.TK.Geo.Validation.STREET_LINE_TOO_LONG -> D2.Shared.I18n.TKMessage!
+static readonly D2.Shared.I18n.TK.Keycustodian.Authorization.CA_CERTIFICATE_NOT_AUTHORIZED -> D2.Shared.I18n.TKMessage!
 static readonly D2.Shared.I18n.TK.Keycustodian.Authorization.CROSS_PROCESS_DOMAIN_REJECTED -> D2.Shared.I18n.TKMessage!
+static readonly D2.Shared.I18n.TK.Keycustodian.Authorization.ISSUANCE_NOT_AUTHORIZED -> D2.Shared.I18n.TKMessage!
 static readonly D2.Shared.I18n.TK.Keycustodian.Authorization.KEYRING_DOMAIN_NOT_AUTHORIZED -> D2.Shared.I18n.TKMessage!
 static readonly D2.Shared.I18n.TK.Keycustodian.Authorization.MINTER_CAPABILITY_REQUIRED -> D2.Shared.I18n.TKMessage!
 static readonly D2.Shared.I18n.TK.Keycustodian.Authorization.REQUEST_ORIGIN_UNESTABLISHED -> D2.Shared.I18n.TKMessage!
@@ -334,6 +336,7 @@ static readonly D2.Shared.I18n.TK.Keycustodian.Lifecycle.KEY_STATE_CONFLICT -> D
 static readonly D2.Shared.I18n.TK.Keycustodian.Lifecycle.PENDING_KEY_ALREADY_EXISTS -> D2.Shared.I18n.TKMessage!
 static readonly D2.Shared.I18n.TK.Keycustodian.Validation.EMPTY_SIGNING_INPUT -> D2.Shared.I18n.TKMessage!
 static readonly D2.Shared.I18n.TK.Keycustodian.Validation.GRACE_NOT_ELAPSED -> D2.Shared.I18n.TKMessage!
+static readonly D2.Shared.I18n.TK.Keycustodian.Validation.INVALID_CSR -> D2.Shared.I18n.TKMessage!
 static readonly D2.Shared.I18n.TK.Keycustodian.Validation.INVALID_ROTATION_POLICY -> D2.Shared.I18n.TKMessage!
 static readonly D2.Shared.I18n.TK.Keycustodian.Validation.INVALID_WORKLOAD_IDENTITY -> D2.Shared.I18n.TKMessage!
 static readonly D2.Shared.I18n.TK.Keycustodian.Validation.SMOKE_PROOF_TYPE_MISMATCH -> D2.Shared.I18n.TKMessage!

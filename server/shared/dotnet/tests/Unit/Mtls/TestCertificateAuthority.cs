@@ -110,22 +110,21 @@ internal sealed class TestCertificateAuthority : IDisposable
     }
 
     /// <summary>
-    /// Issues a valid workload leaf as RAW material (DER + PKCS#8 + issuer DER) —
-    /// the DER/PKCS#8 shape an <c>IWorkloadCertificateIssuer</c> returns. The
-    /// cache-relevant not-after is supplied by the caller (the fake issuer derives
-    /// it from its injected clock for deterministic refresh-ahead tests).
+    /// Issues a valid workload leaf as RAW public material (leaf DER + issuer DER)
+    /// over a fixture-internal keypair the caller never sees — the mismatched-key
+    /// shape the fake issuer's mismatch arm returns (a leaf certifying a key OTHER
+    /// than the caller's CSR key).
     /// </summary>
     /// <param name="serviceId">The workload service id placed in the SAN.</param>
     /// <param name="validity">How long the X509 leaf's own validity window is (default 24h).</param>
-    /// <returns>The DER leaf, raw PKCS#8 private key, and issuer DER.</returns>
-    public (byte[] CertDer, byte[] Pkcs8, byte[] IssuerDer) IssueLeafMaterial(
+    /// <returns>The DER leaf and issuer DER (public material only).</returns>
+    public (byte[] CertDer, byte[] IssuerDer) IssueLeafMaterial(
         string serviceId, TimeSpan? validity = null)
     {
         var notBefore = DateTimeOffset.UtcNow.AddMinutes(-5);
         var notAfter = DateTimeOffset.UtcNow.Add(validity ?? TimeSpan.FromHours(24));
 
         using var leafKey = ECDsa.Create(sr_curve);
-        var pkcs8 = leafKey.ExportPkcs8PrivateKey();
 
         var sanBuilder = new SubjectAlternativeNameBuilder();
         sanBuilder.AddUri(new Uri($"spiffe://{TrustDomain}/workload/{serviceId}"));
@@ -133,7 +132,39 @@ internal sealed class TestCertificateAuthority : IDisposable
         using var leaf = BuildLeafFromKey(
             serviceId, leafKey, sanBuilder, isCa: false, (notBefore, notAfter));
 
-        return (leaf.RawData, pkcs8, IntermediateCertificate.RawData);
+        return (leaf.RawData, IntermediateCertificate.RawData);
+    }
+
+    /// <summary>
+    /// Signs a provided PKCS#10 certificate-signing request into a workload leaf —
+    /// the CSR-flow shape an <c>IWorkloadCertificateIssuer</c> implements. Loads the
+    /// CSR with proof-of-possession validation ON (a malformed or PoP-broken CSR
+    /// throws — failing the test at the seam), IGNORES the CSR's subject, and mints
+    /// the SPIFFE SAN from <paramref name="serviceId"/> — exactly the real issuer's
+    /// subject-ignored posture. Only the CSR's public key reaches the leaf; this
+    /// fixture never sees a caller private key.
+    /// </summary>
+    /// <param name="csrDer">The DER-encoded PKCS#10 CSR.</param>
+    /// <param name="serviceId">The workload service id placed in the SAN (the issuer's peer view).</param>
+    /// <param name="validity">How long the X509 leaf's own validity window is (default 24h).</param>
+    /// <returns>The DER leaf + issuer DER (all public — no private key exists here).</returns>
+    public (byte[] CertDer, byte[] IssuerDer) SignLeafFromCsr(
+        byte[] csrDer, string serviceId, TimeSpan? validity = null)
+    {
+        // The DEFAULT load options verify the self-signature (proof-of-possession)
+        // and do NOT load the CSR's requested extensions.
+        var csr = CertificateRequest.LoadSigningRequest(csrDer, sr_hash);
+
+        var sanBuilder = new SubjectAlternativeNameBuilder();
+        sanBuilder.AddUri(new Uri($"spiffe://{TrustDomain}/workload/{serviceId}"));
+
+        var notBefore = DateTimeOffset.UtcNow.AddMinutes(-5);
+        var notAfter = DateTimeOffset.UtcNow.Add(validity ?? TimeSpan.FromHours(24));
+
+        using var leaf = BuildLeafFromPublicKey(
+            serviceId, csr.PublicKey, sanBuilder, (notBefore, notAfter));
+
+        return (leaf.RawData, IntermediateCertificate.RawData);
     }
 
     /// <summary>
@@ -274,6 +305,48 @@ internal sealed class TestCertificateAuthority : IDisposable
 
         // Reattach the private key so callers can present a working client cert.
         return leaf.CopyWithPrivateKey(leafKey);
+    }
+
+    /// <summary>
+    /// Builds an intermediate-signed workload leaf over a bare PUBLIC key (the
+    /// CSR-flow signing shape — no private key is ever handled).
+    /// </summary>
+    /// <param name="serviceId">The CN service id.</param>
+    /// <param name="publicKey">The public key the leaf certifies.</param>
+    /// <param name="sanBuilder">The SAN to stamp (the issuer's peer view).</param>
+    /// <param name="window">The validity window.</param>
+    /// <returns>The signed leaf (public certificate only).</returns>
+    private X509Certificate2 BuildLeafFromPublicKey(
+        string serviceId,
+        PublicKey publicKey,
+        SubjectAlternativeNameBuilder sanBuilder,
+        (DateTimeOffset NotBefore, DateTimeOffset NotAfter) window)
+    {
+        var request = new CertificateRequest(
+            new X500DistinguishedName($"CN={serviceId}"), publicKey, sr_hash);
+
+        request.CertificateExtensions.Add(
+            new X509BasicConstraintsExtension(false, false, 0, true));
+        request.CertificateExtensions.Add(
+            new X509KeyUsageExtension(X509KeyUsageFlags.DigitalSignature, true));
+        request.CertificateExtensions.Add(
+            new X509EnhancedKeyUsageExtension(
+                [new Oid(_CLIENT_AUTH_OID), new Oid(_SERVER_AUTH_OID)], false));
+        request.CertificateExtensions.Add(sanBuilder.Build(critical: false));
+        request.CertificateExtensions.Add(
+            new X509SubjectKeyIdentifierExtension(request.PublicKey, false));
+        request.CertificateExtensions.Add(
+            X509AuthorityKeyIdentifierExtension.CreateFromCertificate(
+                IntermediateCertificate, true, false));
+
+        var generator = X509SignatureGenerator.CreateForECDsa(r_intermediateKey);
+
+        return request.Create(
+            IntermediateCertificate.SubjectName,
+            generator,
+            window.NotBefore,
+            window.NotAfter,
+            RandomNumberGenerator.GetBytes(16));
     }
 
     private X509Certificate2 BuildLeafFromKey(

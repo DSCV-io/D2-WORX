@@ -1287,9 +1287,17 @@ public static partial class TK
         public static partial class Authorization
         {
             /// <summary>
+            /// Translation key <c>keycustodian_authorization_CA_CERTIFICATE_NOT_AUTHORIZED</c>.
+            /// </summary>
+            public static readonly global::D2.Shared.I18n.TKMessage CA_CERTIFICATE_NOT_AUTHORIZED = new("keycustodian_authorization_CA_CERTIFICATE_NOT_AUTHORIZED");
+            /// <summary>
             /// Translation key <c>keycustodian_authorization_CROSS_PROCESS_DOMAIN_REJECTED</c>.
             /// </summary>
             public static readonly global::D2.Shared.I18n.TKMessage CROSS_PROCESS_DOMAIN_REJECTED = new("keycustodian_authorization_CROSS_PROCESS_DOMAIN_REJECTED");
+            /// <summary>
+            /// Translation key <c>keycustodian_authorization_ISSUANCE_NOT_AUTHORIZED</c>.
+            /// </summary>
+            public static readonly global::D2.Shared.I18n.TKMessage ISSUANCE_NOT_AUTHORIZED = new("keycustodian_authorization_ISSUANCE_NOT_AUTHORIZED");
             /// <summary>
             /// Translation key <c>keycustodian_authorization_KEYRING_DOMAIN_NOT_AUTHORIZED</c>.
             /// </summary>
@@ -1378,6 +1386,10 @@ public static partial class TK
             /// Translation key <c>keycustodian_validation_GRACE_NOT_ELAPSED</c>.
             /// </summary>
             public static readonly global::D2.Shared.I18n.TKMessage GRACE_NOT_ELAPSED = new("keycustodian_validation_GRACE_NOT_ELAPSED");
+            /// <summary>
+            /// Translation key <c>keycustodian_validation_INVALID_CSR</c>.
+            /// </summary>
+            public static readonly global::D2.Shared.I18n.TKMessage INVALID_CSR = new("keycustodian_validation_INVALID_CSR");
             /// <summary>
             /// Translation key <c>keycustodian_validation_INVALID_ROTATION_POLICY</c>.
             /// </summary>

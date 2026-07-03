@@ -212,8 +212,12 @@ internal static partial class KeyCustodianLog
     /// </summary>
     /// <param name="logger">The logger.</param>
     /// <param name="workloadServiceId">The workload that was denied (a non-PII service label).</param>
-    /// <param name="capability">The requested capability (sign / keyring / seal-encrypt / seal-decrypt).</param>
-    /// <param name="target">The requested target (e.g. the key domain), or a marker when none.</param>
+    /// <param name="capability">The requested capability (sign / lifecycle / keyring / issuance / ca-cert / seal-encrypt / seal-decrypt).</param>
+    /// <param name="target">
+    /// The requested target (e.g. the key domain), or the closed-set
+    /// <c>AuthorityRejections.Target.NONE</c> marker for a targetless capability
+    /// (issuance / ca-cert).
+    /// </param>
     [LoggerMessage(
         EventId = 9512,
         Level = LogLevel.Warning,
@@ -238,4 +242,41 @@ internal static partial class KeyCustodianLog
             "Keyring fetch for domain {domain} found no active payload key and returned 503; "
             + "payload encryption for the domain is blocked until a key is active.")]
     public static partial void KeyringKeyUnavailable(ILogger logger, string domain);
+
+    /// <summary>
+    /// Logs that a CA-certificate fetch found no active root or issuing-intermediate
+    /// tier and returned 503. The caller id is loggable (a non-PII service label); no
+    /// certificate or key material is logged, and there is no exception parameter
+    /// (§3.1).
+    /// </summary>
+    /// <param name="logger">The logger.</param>
+    /// <param name="callerId">The caller that requested the chain (a non-PII service label).</param>
+    // long log template — cannot wrap
+    [LoggerMessage(
+        EventId = 9514,
+        Level = LogLevel.Warning,
+        Message =
+            "CA-certificate fetch for caller {callerId} found no active root/intermediate "
+            + "tier and returned 503; the chain cannot be distributed until the CA is seeded "
+            + "or rotated in.")]
+    public static partial void CaCertificateUnavailable(ILogger logger, string callerId);
+
+    /// <summary>
+    /// Logs that a workload leaf certificate was issued (the log-side forensic
+    /// complement to the durable issuance audit row). The workload id and kid are
+    /// loggable non-PII labels; no certificate or key material is logged.
+    /// </summary>
+    /// <param name="logger">The logger.</param>
+    /// <param name="workloadServiceId">The workload the leaf was issued to (its SAN identity).</param>
+    /// <param name="kid">The issuing-intermediate kid that signed the leaf.</param>
+    /// <param name="notAfter">The leaf's not-after instant (ISO-8601).</param>
+    // long log template — cannot wrap
+    [LoggerMessage(
+        EventId = 9515,
+        Level = LogLevel.Information,
+        Message =
+            "Workload leaf certificate issued to {workloadServiceId} by intermediate {kid}; "
+            + "valid until {notAfter}.")]
+    public static partial void LeafCertificateIssued(
+        ILogger logger, string workloadServiceId, string kid, string notAfter);
 }

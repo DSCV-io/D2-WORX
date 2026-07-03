@@ -9,11 +9,13 @@ namespace D2.Edge.KeyCustodian.App.Application;
 using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.ActivateKey;
 using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.CompromiseKey;
 using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.GenerateKey;
+using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.IssueLeaf;
 using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.IssueWorkloadCertificate;
 using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.RetireKey;
 using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.RotateKey;
 using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.RunDueRotations;
 using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.SeedCertificateAuthority;
+using D2.Edge.KeyCustodian.App.Application.Handlers.Queries.GetCaCertificate;
 using D2.Edge.KeyCustodian.App.Application.Handlers.Queries.GetJwks;
 using D2.Edge.KeyCustodian.App.Application.Handlers.Queries.GetKeyring;
 using D2.Edge.KeyCustodian.App.Application.Handlers.Queries.GetOidcConfiguration;
@@ -21,7 +23,7 @@ using D2.Edge.KeyCustodian.App.Application.Handlers.Queries.GetRotationPlan;
 using D2.Edge.KeyCustodian.App.Application.Handlers.Queries.Sign;
 
 /// <summary>
-/// DI registration for the KeyCustodian App layer: the 13 operation handlers and
+/// DI registration for the KeyCustodian App layer: the 15 operation handlers and
 /// the options-backed rotation-policy + authority providers.
 /// </summary>
 /// <remarks>
@@ -30,7 +32,12 @@ using D2.Edge.KeyCustodian.App.Application.Handlers.Queries.Sign;
 /// <c>IKeyCustodianDbContext</c>, the keyed root <c>IPayloadCrypto</c>, the
 /// <c>IRootKeyProvider</c>, and the <c>IKeyRotationAnnouncer</c> implementation —
 /// are registered by the Infra layer. The options binding +
-/// startup validation also live in Infra.
+/// startup validation also live in Infra. The issuance leaf-signing capability
+/// (<c>ICaLeafSigningCapability</c>) is deliberately NOT registered here — it is
+/// granted solely by its own dedicated extension
+/// (<c>AddD2CaLeafSigningCapability()</c>) from the composition root that serves
+/// the issuance surface, so a provider built from this registration alone cannot
+/// sign a workload leaf via the issuance path.
 /// </remarks>
 public static class KeyCustodianAppServiceCollectionExtensions
 {
@@ -57,6 +64,7 @@ public static class KeyCustodianAppServiceCollectionExtensions
             services.AddTransient<IRunDueRotationsHandler, RunDueRotationsHandler>();
             services.AddTransient<
                 IIssueWorkloadCertificateHandler, IssueWorkloadCertificateHandler>();
+            services.AddTransient<IIssueLeafHandler, IssueLeafHandler>();
             services.AddTransient<
                 ISeedCertificateAuthorityHandler, SeedCertificateAuthorityHandler>();
 
@@ -67,6 +75,7 @@ public static class KeyCustodianAppServiceCollectionExtensions
             services.AddTransient<IGetRotationPlanHandler, GetRotationPlanHandler>();
             services.AddTransient<ISignHandler, SignHandler>();
             services.AddTransient<IGetKeyringHandler, GetKeyringHandler>();
+            services.AddTransient<IGetCaCertificateHandler, GetCaCertificateHandler>();
 
             // Policy providers.
             services.AddSingleton<IRotationPolicyProvider, OptionsRotationPolicyProvider>();

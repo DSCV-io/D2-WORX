@@ -8,9 +8,11 @@ namespace D2.Edge.Tests.Unit.KeyCustodian;
 
 /// <summary>
 /// Adversarial unit tests for <see cref="IssuedWorkloadCertificate"/> — the
-/// on-demand leaf handed back to the caller. The leaf private key is secret (must
-/// zero on demand + never appear in <c>ToString</c>); the certificate, chain, and
-/// validity are public.
+/// on-demand leaf handed back to the caller. All-public material under the CSR
+/// flow: the workload generates its own keypair and the leaf private key never
+/// enters KeyCustodian, so the type carries no secret member (asserted
+/// STRUCTURALLY — the strictly-stronger successor to the old private-key pins)
+/// and its <c>ToString</c> stays material-free.
 /// </summary>
 public sealed class IssuedWorkloadCertificateTests
 {
@@ -22,7 +24,7 @@ public sealed class IssuedWorkloadCertificateTests
     public void Ctor_NullWorkload_Throws()
     {
         var act = () => new IssuedWorkloadCertificate(
-            null!, [1], [2], [3], sr_notBefore, sr_notAfter);
+            null!, [1], [2], sr_notBefore, sr_notAfter);
         act.Should().Throw<ArgumentNullException>();
     }
 
@@ -30,15 +32,7 @@ public sealed class IssuedWorkloadCertificateTests
     public void Ctor_EmptyCertificate_Throws()
     {
         var act = () => new IssuedWorkloadCertificate(
-            sr_workload, [], [2], [3], sr_notBefore, sr_notAfter);
-        act.Should().Throw<ArgumentException>();
-    }
-
-    [Fact]
-    public void Ctor_EmptyPrivateKey_Throws()
-    {
-        var act = () => new IssuedWorkloadCertificate(
-            sr_workload, [1], [], [3], sr_notBefore, sr_notAfter);
+            sr_workload, [], [2], sr_notBefore, sr_notAfter);
         act.Should().Throw<ArgumentException>();
     }
 
@@ -46,7 +40,7 @@ public sealed class IssuedWorkloadCertificateTests
     public void Ctor_EmptyIssuerCertificate_Throws()
     {
         var act = () => new IssuedWorkloadCertificate(
-            sr_workload, [1], [2], [], sr_notBefore, sr_notAfter);
+            sr_workload, [1], [], sr_notBefore, sr_notAfter);
         act.Should().Throw<ArgumentException>();
     }
 
@@ -54,46 +48,44 @@ public sealed class IssuedWorkloadCertificateTests
     public void Ctor_ValidArguments_ExposesAllFields()
     {
         var leaf = new IssuedWorkloadCertificate(
-            sr_workload, [1, 2], [3, 4], [5, 6], sr_notBefore, sr_notAfter);
+            sr_workload, [1, 2], [5, 6], sr_notBefore, sr_notAfter);
 
         leaf.Workload.ServiceId.Should().Be("edge");
         leaf.CertificateDer.Should().Equal([1, 2]);
-        leaf.PrivateKeyPkcs8.Should().Equal([3, 4]);
         leaf.IssuerCertificateDer.Should().Equal([5, 6]);
         leaf.NotBefore.Should().Be(sr_notBefore);
         leaf.NotAfter.Should().Be(sr_notAfter);
     }
 
     [Fact]
-    public void Zero_WipesPrivateKey_LeavesPublicMaterial()
+    public void Type_HasNoPrivateKeyMember_Structural()
     {
-        var privateKey = RandomNumberGenerator.GetBytes(32);
-        var cert = RandomNumberGenerator.GetBytes(16);
-        var issuer = RandomNumberGenerator.GetBytes(16);
-        var leaf = new IssuedWorkloadCertificate(
-            sr_workload, cert, privateKey, issuer, sr_notBefore, sr_notAfter);
+        // The strictly-stronger successor to the old empty-private-key / Zero() /
+        // ToString-redaction pins: under the CSR flow no private key exists here at
+        // all, so a secret member is unrepresentable on the type.
+        typeof(IssuedWorkloadCertificate).GetProperties()
+            .Should().NotContain(
+                p => p.Name.Contains("PrivateKey") || p.Name.Contains("Pkcs8"),
+                "the CSR flow keeps the leaf private key workload-side — never here");
 
-        leaf.Zero();
-
-        leaf.PrivateKeyPkcs8.Should().OnlyContain(b => b == 0);
-        leaf.CertificateDer.Should().Equal(cert);
-        leaf.IssuerCertificateDer.Should().Equal(issuer);
+        typeof(IssuedWorkloadCertificate).GetMethods()
+            .Should().NotContain(
+                m => m.Name == "Zero",
+                "with no secret member there is nothing to zero");
     }
 
     [Fact]
-    public void ToString_RedactsPrivateKey()
+    public void ToString_EmitsByteCounts_NeverRawMaterial()
     {
+        var cert = RandomNumberGenerator.GetBytes(4);
+        var issuer = RandomNumberGenerator.GetBytes(4);
         var leaf = new IssuedWorkloadCertificate(
-            sr_workload,
-            RandomNumberGenerator.GetBytes(4),
-            RandomNumberGenerator.GetBytes(8),
-            RandomNumberGenerator.GetBytes(4),
-            sr_notBefore,
-            sr_notAfter);
+            sr_workload, cert, issuer, sr_notBefore, sr_notAfter);
 
         var str = leaf.ToString();
-        str.Should().Contain("REDACTED");
         str.Should().Contain("edge");
-        str.Should().NotContain(Convert.ToHexString(leaf.PrivateKeyPkcs8));
+        str.Should().Contain("[4 bytes]", "byte arrays render as counts, not dumps");
+        str.Should().NotContain(
+            Convert.ToHexString(cert), "even public DER never dumps raw into a log line");
     }
 }

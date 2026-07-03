@@ -188,5 +188,17 @@ namespace D2.Shared.Auth.Outbound.Telemetry
                 __WorkloadLeafStartupAcquireSucceededCallback(logger, notAfter, null);
             }
         }
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.Extensions.Logging.Generators", "10.0.14.21808")]
+        private static readonly global::System.Action<global::Microsoft.Extensions.Logging.ILogger, global::System.Exception?> __WorkloadLeafIssuerKeyMismatchCallback =
+            global::Microsoft.Extensions.Logging.LoggerMessage.Define(global::Microsoft.Extensions.Logging.LogLevel.Warning, new global::Microsoft.Extensions.Logging.EventId(3006, nameof(WorkloadLeafIssuerKeyMismatch)), "Workload leaf reissue rejected: the returned certificate's public key does not match the local keypair; keeping the cached leaf.", new global::Microsoft.Extensions.Logging.LogDefineOptions() { SkipEnabledCheck = true }); 
+
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.Extensions.Logging.Generators", "10.0.14.21808")]
+        public static partial void WorkloadLeafIssuerKeyMismatch(this global::Microsoft.Extensions.Logging.ILogger logger)
+        {
+            if (logger.IsEnabled(global::Microsoft.Extensions.Logging.LogLevel.Warning))
+            {
+                __WorkloadLeafIssuerKeyMismatchCallback(logger, null);
+            }
+        }
     }
 }

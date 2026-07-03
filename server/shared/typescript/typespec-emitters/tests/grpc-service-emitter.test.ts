@@ -930,3 +930,48 @@ describe("emitGrpcService_NestedModel_SubMapperRecursion", () => {
     );
   });
 });
+
+// ---------------------------------------------------------------------------
+// Temporal output field — DateTimeOffset DTO → proto ISO-8601 string
+// ---------------------------------------------------------------------------
+
+describe("emitGrpcService_TemporalOutputField_MapsViaRoundTripFormat", () => {
+  function makeTemporalField(name: string): FieldInfo {
+    return {
+      name,
+      csName: name.charAt(0).toUpperCase() + name.slice(1),
+      csType: "DateTimeOffset",
+      tsName: name,
+      tsType: "string",
+      protoType: "string",
+      repeated: false,
+      optional: false,
+      redactReason: undefined,
+    };
+  }
+
+  it('a DateTimeOffset output field maps outbound via ToString("O") (ISO-8601 round-trip)', () => {
+    const [, mapper] = emitGrpcService(
+      "issue",
+      "SampleIssuer",
+      "Issue",
+      PROTO_NS,
+      IMPL_NS,
+      DTO_NS,
+      SOURCE,
+      "IssueRequest",
+      "IssueResponse",
+      "IssueInput",
+      [makeBytesField("csrDer")],
+      "IssueOutput",
+      [makeBytesField("certificateDer"), makeTemporalField("notAfter")],
+    );
+    expect(mapper.content).toContain(
+      'NotAfter = output.NotAfter.ToString("O"),',
+    );
+    // The non-temporal sibling keeps its own arm (no cross-contamination).
+    expect(mapper.content).toContain(
+      "CertificateDer = ByteString.CopyFrom(output.CertificateDer),",
+    );
+  });
+});

@@ -310,12 +310,16 @@ locale, …) per ADR-0007 §2. No hop mutates the token to append itself.
   retire / compromise / seed authorize through a dedicated lifecycle authority that denies an
   unestablished origin FIRST and allows only the locally-established System origin; any
   request-plane caller is `Forbidden`.
-- **Leaf issuance is deny-all until the real rule lands**: the issuance handler calls a committed
-  fail-closed deny-all issuance authority (it mints for nobody, on every origin). The real
-  caller→subject binding rule (the requested workload id must equal the authenticated mTLS
-  caller, or route through an explicit isolated delegated-issuer capability, never the general
-  surface) must land in the handler with or before the cross-process issuance transport; tracked
-  as a hard gate in [PHASE_3.md](PHASE_3.md) §G.
+- **Leaf issuance is CSR-based structural self-issue**: the issuance handler runs the real
+  fail-closed `AuthorizeIssuance` rule (cross-process only; authenticated mTLS peer required),
+  which landed WITH the gRPC issuance transport. The workload generates its own P-256 keypair
+  and submits a PKCS#10 CSR; KeyCustodian verifies proof-of-possession + the curve OID, IGNORES
+  the CSR's subject/SAN, and mints the leaf SAN from the authenticated peer — no subject travels
+  on the D2 wire, so an impersonation request is unrepresentable (the caller↔subject binding in
+  its strongest structural form). The leaf private key never crosses the wire; the intermediate-CA
+  signing is isolated behind `ICaLeafSigningCapability` (its own DI extension, unreachable from
+  the general registration). The delegated-issuer decision belongs to the first-leaf bootstrap
+  ADR; the live host wiring stays tracked in [PHASE_3.md](PHASE_3.md) §G.
 - **Host-wiring gates for the KC signer** (tracked in [PHASE_3.md](PHASE_3.md) §G — not duplicated here):
   the minter capability's DI isolation is proven at module scope today, but the running Edge host must add
   a host-level **assembly-scan DI-isolation test** proving no type outside the auth-mint composition can

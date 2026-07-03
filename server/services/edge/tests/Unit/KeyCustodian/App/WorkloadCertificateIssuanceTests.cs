@@ -10,9 +10,12 @@ using System.Security.Cryptography.X509Certificates;
 
 /// <summary>
 /// Tests for the pure <see cref="WorkloadCertificateIssuance"/> rule — real BCL
-/// crypto. Asserts the leaf is signed by the intermediate (full chain builds), the
-/// SPIFFE SAN, the client-auth + server-auth EKU, the digital-signature key usage,
-/// that the leaf is NOT a CA, the validity window, and that the rule never throws.
+/// crypto over a CALLER-SUPPLIED public key. Asserts the leaf certifies EXACTLY
+/// the supplied key (its SubjectPublicKeyInfo round-trips), is signed by the
+/// intermediate (full chain builds), carries the supplied identity's SPIFFE SAN,
+/// the client-auth + server-auth EKU, the digital-signature key usage, is NOT a
+/// CA, honors the validity window, produces NO private-key output anywhere
+/// (structural — the rule generates no keypair), and never throws.
 /// </summary>
 public sealed class WorkloadCertificateIssuanceTests
 {
@@ -33,9 +36,11 @@ public sealed class WorkloadCertificateIssuanceTests
         try
         {
             var workload = WorkloadIdentity.FromTrusted("edge");
+            var leafPublicKey = BuildLeafPublicKey(out var suppliedSpki);
 
             var result = WorkloadCertificateIssuance.IssueLeaf(
                 workload,
+                leafPublicKey,
                 intermediateCert,
                 intermediateKey,
                 Duration.FromHours(24),
@@ -44,7 +49,12 @@ public sealed class WorkloadCertificateIssuanceTests
             result.Success.Should().BeTrue();
             using var leaf = X509CertificateLoader.LoadCertificate(result.Data!.CertificateDer);
 
-            // SAN carries the SPIFFE URI.
+            // The leaf certifies EXACTLY the supplied public key.
+            leaf.PublicKey.ExportSubjectPublicKeyInfo().Should().Equal(
+                suppliedSpki,
+                "the rule signs the supplied key — it never substitutes one of its own");
+
+            // SAN carries the SPIFFE URI of the SUPPLIED identity.
             var san = leaf.Extensions
                 .OfType<X509SubjectAlternativeNameExtension>()
                 .Single();
@@ -72,9 +82,6 @@ public sealed class WorkloadCertificateIssuanceTests
             // Full chain root → intermediate → leaf builds with the root anchor +
             // the intermediate as an extra store cert.
             BuildsChain(leaf, [rootCert], [intermediateCert]).Should().BeTrue();
-
-            // The returned leaf private key is present + zeroizable.
-            result.Data!.PrivateKeyPkcs8.Should().NotBeEmpty();
         }
         finally
         {
@@ -82,6 +89,23 @@ public sealed class WorkloadCertificateIssuanceTests
             intermediateCert.Dispose();
             intermediateKey.Dispose();
         }
+    }
+
+    [Fact]
+    public void IssueLeaf_ProducesNoPrivateKeyOutput_Structural()
+    {
+        // The strictly-stronger successor to the returned-PKCS#8 pins: the result
+        // type carries NO private-key member at all — the rule generates no keypair,
+        // so a private key is unrepresentable in its output.
+        typeof(IssuedWorkloadCertificate).GetProperties()
+            .Should().NotContain(
+                p => p.Name.Contains("PrivateKey") || p.Name.Contains("Pkcs8"),
+                "the issuance output is all-public — the leaf key never exists in KeyCustodian");
+
+        typeof(IssuedWorkloadCertificate).GetMethods()
+            .Should().NotContain(
+                m => m.Name == "Zero",
+                "with no private member there is nothing to zero");
     }
 
     [Fact]
@@ -93,12 +117,15 @@ public sealed class WorkloadCertificateIssuanceTests
         {
             var result = WorkloadCertificateIssuance.IssueLeaf(
                 WorkloadIdentity.FromTrusted("files"),
+                BuildLeafPublicKey(out _),
                 intermediateCert,
                 intermediateKey,
                 Duration.FromHours(12),
                 new TestClock(sr_now));
 
-            result.Data!.NotBefore.Should().Be(sr_now);
+            // notBefore is front-backdated by the fixed clock-skew allowance (5 min);
+            // notAfter = now + validity is unchanged (forward validity never shortened).
+            result.Data!.NotBefore.Should().Be(sr_now - Duration.FromMinutes(5));
             result.Data!.NotAfter.Should().Be(sr_now + Duration.FromHours(12));
         }
         finally
@@ -121,6 +148,34 @@ public sealed class WorkloadCertificateIssuanceTests
         try
         {
             var result = WorkloadCertificateIssuance.IssueLeaf(
+                null,
+                BuildLeafPublicKey(out _),
+                intermediateCert,
+                intermediateKey,
+                Duration.FromHours(24),
+                new TestClock(sr_now));
+
+            result.Success.Should().BeFalse();
+            result.ErrorCode.Should().Be(
+                KeyCustodianErrorCodes.KEYCUSTODIAN_INVALID_CERTIFICATE_REQUEST);
+        }
+        finally
+        {
+            rootCert.Dispose();
+            intermediateCert.Dispose();
+            intermediateKey.Dispose();
+        }
+    }
+
+    [Fact]
+    public void IssueLeaf_NullLeafPublicKey_ReturnsInvalidCertificateRequest()
+    {
+        var (rootCert, intermediateCert, intermediateKey) = BuildCa();
+
+        try
+        {
+            var result = WorkloadCertificateIssuance.IssueLeaf(
+                WorkloadIdentity.FromTrusted("edge"),
                 null,
                 intermediateCert,
                 intermediateKey,
@@ -145,6 +200,7 @@ public sealed class WorkloadCertificateIssuanceTests
         using var key = ECDsa.Create();
         var result = WorkloadCertificateIssuance.IssueLeaf(
             WorkloadIdentity.FromTrusted("edge"),
+            BuildLeafPublicKey(out _),
             null,
             key,
             Duration.FromHours(24),
@@ -166,6 +222,7 @@ public sealed class WorkloadCertificateIssuanceTests
         {
             var result = WorkloadCertificateIssuance.IssueLeaf(
                 WorkloadIdentity.FromTrusted("edge"),
+                BuildLeafPublicKey(out _),
                 intermediateCert,
                 intermediateKey,
                 Duration.FromHours(hours),
@@ -192,6 +249,7 @@ public sealed class WorkloadCertificateIssuanceTests
         {
             var result = WorkloadCertificateIssuance.IssueLeaf(
                 WorkloadIdentity.FromTrusted("edge"),
+                BuildLeafPublicKey(out _),
                 intermediateCert,
                 intermediateKey,
                 Duration.FromHours(24),
@@ -207,6 +265,26 @@ public sealed class WorkloadCertificateIssuanceTests
             intermediateCert.Dispose();
             intermediateKey.Dispose();
         }
+    }
+
+    /// <summary>
+    /// Builds the caller-side P-256 public key the rule signs (the shape
+    /// <c>CsrVerification</c> extracts from a verified CSR) and surfaces its SPKI
+    /// for the pairing assertion.
+    /// </summary>
+    /// <param name="spki">The SubjectPublicKeyInfo of the built key.</param>
+    /// <returns>The public key.</returns>
+    private static PublicKey BuildLeafPublicKey(out byte[] spki)
+    {
+        using var key = ECDsa.Create(ECCurve.NamedCurves.nistP256);
+        spki = key.ExportSubjectPublicKeyInfo();
+
+        var request = new CertificateRequest(
+            "CN=keyholder", key, HashAlgorithmName.SHA256);
+        var loaded = CertificateRequest.LoadSigningRequest(
+            request.CreateSigningRequest(), HashAlgorithmName.SHA256);
+
+        return loaded.PublicKey;
     }
 
     private static (

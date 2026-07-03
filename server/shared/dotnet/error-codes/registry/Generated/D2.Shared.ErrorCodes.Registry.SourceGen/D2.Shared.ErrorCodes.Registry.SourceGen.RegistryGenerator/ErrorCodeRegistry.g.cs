@@ -523,7 +523,7 @@ public static class ErrorCodeRegistry
                 UserMessageKey: TK.Keycustodian.Infrastructure.NO_ACTIVE_ISSUING_CA,
                 FactoryName: "NoActiveIssuingCa",
                 FactoryShape: "standard",
-                Doc: "No active issuing intermediate certificate authority is available to sign a workload leaf certificate. A retryable not-ready-yet condition: the CA either has not been seeded yet or is between rotations. Surfaced as a 503 service-unavailable result so callers retry rather than treat it as a client-side conflict.",
+                Doc: "No active issuing certificate-authority tier is available: either no active intermediate to sign a workload leaf certificate, or no active root/intermediate to return from the CA-certificate fetch. A retryable not-ready-yet condition: the CA either has not been seeded yet or is between rotations. Surfaced as a 503 service-unavailable result so callers retry rather than treat it as a client-side conflict.",
                 Domain: "keycustodian",
                 IsDeprecated: false),
             ["KEYCUSTODIAN_CROSS_PROCESS_DOMAIN_REJECTED"] = new ErrorCodeInfo(
@@ -626,6 +626,36 @@ public static class ErrorCodeRegistry
                 Doc: "The calling workload is not authorized to fetch the requested key domain's payload keyring (the domain is not in the workload's allowed-keyring-domains policy set, or the request arrived on a plane the keyring surface does not serve). A keyring is a full encrypt+decrypt capability for its domain — holding the internal.kc.keyring scope alone never releases it. Uniform across both the plane-deny and the policy-miss so a caller cannot probe which domains exist.",
                 Domain: "keycustodian",
                 IsDeprecated: false),
+            ["KEYCUSTODIAN_ISSUANCE_NOT_AUTHORIZED"] = new ErrorCodeInfo(
+                Code: "KEYCUSTODIAN_ISSUANCE_NOT_AUTHORIZED",
+                HttpStatus: 403,
+                Category: ErrorCategory.PolicyDenied,
+                UserMessageKey: TK.Keycustodian.Authorization.ISSUANCE_NOT_AUTHORIZED,
+                FactoryName: "IssuanceNotAuthorized",
+                FactoryShape: "standard",
+                Doc: "The calling context is not authorized to be issued a workload leaf certificate. Workload-certificate issuance is a cross-process-only plane: a non-cross-process origin (the in-process plane whose immediate caller is caller-supplied, or an edge-inbound / system origin) can never authorize minting a workload identity. Uniform 403 across the plane deny — the telemetry reason split (origin-unestablished / unauthorized-plane / identity-absent) carries the granularity so the wire code leaks no probing signal. Self-issue is structural: the leaf subject-alternative-name is always the authenticated mTLS peer identity, never a caller-supplied subject.",
+                Domain: "keycustodian",
+                IsDeprecated: false),
+            ["KEYCUSTODIAN_INVALID_CSR"] = new ErrorCodeInfo(
+                Code: "KEYCUSTODIAN_INVALID_CSR",
+                HttpStatus: 400,
+                Category: ErrorCategory.ValidationFailure,
+                UserMessageKey: TK.Keycustodian.Validation.INVALID_CSR,
+                FactoryName: "InvalidCsr",
+                FactoryShape: "standard",
+                Doc: "The supplied PKCS#10 certificate-signing request is invalid: it exceeds the maximum permitted DER size, is malformed / unparseable, failed proof-of-possession (the self-signature does not validate against the embedded public key), or carries a public key that is not ECDSA P-256 by curve OID (RSA or a wrong-curve elliptic-curve key). Coarse on purpose so the surface does not leak which check failed, mirroring INVALID_WORKLOAD_IDENTITY. Rejected before any certificate-authority load or signing.",
+                Domain: "keycustodian",
+                IsDeprecated: false),
+            ["KEYCUSTODIAN_CA_CERTIFICATE_NOT_AUTHORIZED"] = new ErrorCodeInfo(
+                Code: "KEYCUSTODIAN_CA_CERTIFICATE_NOT_AUTHORIZED",
+                HttpStatus: 403,
+                Category: ErrorCategory.PolicyDenied,
+                UserMessageKey: TK.Keycustodian.Authorization.CA_CERTIFICATE_NOT_AUTHORIZED,
+                FactoryName: "CaCertificateNotAuthorized",
+                FactoryShape: "standard",
+                Doc: "The calling context is not authorized to fetch the certificate-authority chain. The trust anchor is distributed over already-trusted internal channels only — the cross-process hop and the in-process module planes; an edge-inbound origin (the public plane) and an unestablished origin are denied. The material returned is public trust anchor / chain material, so the authority is broad within the served planes (no per-workload policy map); the plane gate keeps the internal anchor off the public plane.",
+                Domain: "keycustodian",
+                IsDeprecated: false),
         }.ToFrozenDictionary(StringComparer.Ordinal);
 
     /// <summary>
@@ -689,6 +719,9 @@ public static class ErrorCodeRegistry
                 sr_lookup["KEYCUSTODIAN_SIGNING_INPUT_TOO_LARGE"],
                 sr_lookup["KEYCUSTODIAN_KEYRING_KEY_UNAVAILABLE"],
                 sr_lookup["KEYCUSTODIAN_KEYRING_DOMAIN_NOT_AUTHORIZED"],
+                sr_lookup["KEYCUSTODIAN_ISSUANCE_NOT_AUTHORIZED"],
+                sr_lookup["KEYCUSTODIAN_INVALID_CSR"],
+                sr_lookup["KEYCUSTODIAN_CA_CERTIFICATE_NOT_AUTHORIZED"],
             ]);
 
     /// <summary>

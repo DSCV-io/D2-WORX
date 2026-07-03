@@ -18,7 +18,9 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using ClientsGetCaCertificateOutput = D2.Edge.KeyCustodian.Clients.GetCaCertificateOutput;
 using ClientsGetKeyringOutput = D2.Edge.KeyCustodian.Clients.GetKeyringOutput;
+using ClientsIssueLeafOutput = D2.Edge.KeyCustodian.Clients.IssueLeafOutput;
 using ClientsKeyringEntry = D2.Edge.KeyCustodian.Clients.KeyringEntry;
 using ClientsSignOutput = D2.Edge.KeyCustodian.Clients.SignOutput;
 
@@ -230,5 +232,13 @@ public sealed class GrpcKeyringServiceTests
         public ValueTask<D2Result<GetOidcConfigurationOutput?>> GetOidcConfigurationAsync(
             GetOidcConfigurationInput input, CancellationToken ct = default)
             => ValueTask.FromResult(D2Result<GetOidcConfigurationOutput?>.ServiceUnavailable());
+
+        public ValueTask<D2Result<ClientsIssueLeafOutput?>> IssueLeafAsync(
+            IssueLeafInput input, CancellationToken ct = default)
+            => ValueTask.FromResult(D2Result<ClientsIssueLeafOutput?>.ServiceUnavailable());
+
+        public ValueTask<D2Result<ClientsGetCaCertificateOutput?>> GetCaCertificateAsync(
+            GetCaCertificateInput input, CancellationToken ct = default)
+            => ValueTask.FromResult(D2Result<ClientsGetCaCertificateOutput?>.ServiceUnavailable());
     }
 }

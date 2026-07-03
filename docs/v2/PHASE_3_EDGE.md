@@ -114,14 +114,17 @@ shared Redis lock surface.
 > (server require+validate in `D2.Shared.AspNetCore`, client leaf-present + refresh-ahead
 > in `D2.Shared.Auth.Outbound`, the `D2.Shared.WorkloadIdentity` SPIFFE grammar), proven
 > end-to-end on a local harness. **Four cross-process pieces remain for the Edge build:**
-> (1) expose `IssueWorkloadCertificate` over the gRPC contract — issuance is an in-process
-> command today with no cross-process transport (the in-process façade serves JWKS, OIDC
-> discovery, and sign). Exposing the transport is NOT the whole job: the issuance handler
-> currently calls a committed fail-closed deny-all authority (it mints for nobody), and the
-> real caller→subject rule (the requested workload id must equal the authenticated mTLS
-> caller, or route through an explicit isolated delegated-issuer capability) must land in the
-> handler with or before the transport, because a transport scope alone is an
-> impersonation-issuance oracle (a hard gate tracked in [PHASE_3.md](PHASE_3.md) §G); (2) the workload
+> (1) ~~expose `IssueWorkloadCertificate` over the gRPC contract~~ — **BUILT + proven in
+> isolation (0026)**: the `IssueWorkloadCertificate` gRPC method (on its own
+> `KeyCustodianCertificateAuthority` service) and the `GetCaCertificate` trust-anchor
+> fetch (its own `KeyCustodianCaCertificate` service) are generated, committed, and
+> TestServer-proven, and the REAL fail-closed issuance rule landed in the handler WITH the
+> transport: CSR-based structural self-issue (no subject on the D2 wire — the leaf SAN is
+> always the authenticated mTLS peer; proof-of-possession + P-256 curve enforced; the
+> per-handler `internal.kc.issue` scope; leaf signing isolated behind
+> `ICaLeafSigningCapability`). The remaining Edge-build work on this piece is the LIVE
+> host wiring — `MapGrpcService` + the host-supplied issuer adapter dialing the built
+> endpoint (items 3–4); (2) the workload
 > **first-leaf bootstrap identity** — chicken-and-egg (a workload needs a leaf to mTLS-call
 > KeyCustodian for a leaf), provisioned by the deployment orchestrator; (3) wire the mTLS
 > server + the leaf-refresh client into the running Edge host (the shipped client uses an

@@ -6,8 +6,6 @@
 
 namespace D2.Edge.KeyCustodian.App.Application;
 
-using System.Security.Cryptography.X509Certificates;
-
 /// <summary>
 /// Builds a pending CA-certificate key for a CA domain, shared by the
 /// generate-successor path (<c>GenerateKeyHandler</c>) and the

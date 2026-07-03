@@ -7,6 +7,8 @@
     "Auth.User.Impersonate.Consent": "auth.user.impersonate.consent",
     "Auth.User.Impersonate.Force": "auth.user.impersonate.force",
     "Billing.Payment.Charge": "billing.payment.charge",
+    "Internal.Kc.Cacert": "internal.kc.cacert",
+    "Internal.Kc.Issue": "internal.kc.issue",
     "Internal.Kc.Keyring": "internal.kc.keyring",
     "Internal.Kc.Sign": "internal.kc.sign",
     "Self.Read": "self.read",

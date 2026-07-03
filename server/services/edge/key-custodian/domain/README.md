@@ -67,10 +67,11 @@ domain/
     KeySummary.cs           pure projection over EncryptionKey (shared command output)
     RsaSigning.cs           pure RS256 sign over an already-unwrapped private key
     CaCertificateGeneration.cs       pure root / intermediate CA certificate generator
-    WorkloadCertificateIssuance.cs   pure workload leaf-certificate builder
+    WorkloadCertificateIssuance.cs   pure workload leaf-certificate builder (signs a supplied public key)
+    CsrVerification.cs               pure PKCS#10 CSR verifier (size cap / parse / PoP / P-256 curve OID)
     WorkloadCapabilityAuthority.cs   pure capability-general workload→target authority rule
     KeyLifecycleAuthority.cs         pure System-plane-only lifecycle-mutation authority rule
-    WorkloadCertificateAuthority.cs  interim fail-closed DENY-ALL issuance authority skeleton
+    WorkloadCertificateAuthority.cs  pure CA-surface authority (issuance + CA-chain fetch arms)
   Generated/
     (codegen output — see below; do not hand-edit)
 ```
@@ -109,9 +110,13 @@ Rules hold no DI, no `IOptions`, no logger, and no clock-as-dependency (`IClock`
 
 The System-plane-only authority over every destructive key-lifecycle mutation (generate / activate / rotate / retire / compromise / run-due-rotations / seed-CA). `AuthorizeLifecycleMutation(RequestOrigin)` is layered and fail-closed: `Unestablished` denies FIRST with the specific origin-unestablished failure (the type-zero explicit deny); `System` (the in-host workers that establish it via `EstablishSystemContext`) is the only allow; every other established plane is `Forbidden`. The System plane deliberately carries no scopes, so the origin gate — not a `ScopeRequirement` — is the control; a future admin transport (the operator compromise-key action is the standing candidate) must consciously extend this rule and add its own per-op scope. Every lifecycle command handler calls it at the TOP of `ExecuteAsync` and emits the `capability = lifecycle` authority-rejection counter + `AuthorityRejected` log on a deny.
 
-## Issuance authority — `WorkloadCertificateAuthority` (interim DENY-ALL)
+## CA-surface authority — `WorkloadCertificateAuthority`
 
-The authority over workload leaf-certificate issuance. The committed body is a fail-closed DENY-ALL skeleton — `Unestablished` denies first with the specific origin-unestablished failure; EVERY established origin is `Forbidden` — so a premature transport wiring denies 100% instead of minting workload identities for arbitrary callers. The cross-process issuance transport must land WITH the real rule replacing the deny arm: fail-closed on non-cross-process origin / absent peer identity, requested-workload-equals-authenticated-caller binding (or an explicit isolated delegated-issuer capability), plus the per-handler scope.
+The authority over the certificate-authority consumer surface, two arms. `AuthorizeIssuance(immediateCaller, origin)` — layered, fail-closed: `Unestablished` denies FIRST with the specific origin-unestablished failure; issuance is CROSS-PROCESS ONLY (every other established plane gets the uniform 403 `IssuanceNotAuthorized` — the in-process plane's `ImmediateCaller` is caller-supplied and can never authorize minting an identity); a cross-process hop with no authenticated mTLS peer is `Forbidden`; an authenticated cross-process caller is allowed. There is NO subject arm: self-issue is structural — the handler derives the leaf SAN from the authenticated peer and never reads the CSR's subject, so an impersonation request is unrepresentable on this surface (delegated issuance is not an arm here; a dedicated capability would be its own isolated seam, decided by the first-leaf bootstrap design). `AuthorizeCaCertificateFetch(immediateCaller, origin)` — `Unestablished` first; served planes are cross-process + in-process module only (`CaCertificateNotAuthorized` otherwise); identity absent is `Forbidden`; broad within the served planes (public trust material — no per-workload policy map).
+
+## CSR verification — `CsrVerification`
+
+The pure PKCS#10 verifier for workload leaf issuance: bounds the DER against the named `MAX_CSR_DER_BYTES` cap BEFORE any parse, loads via `CertificateRequest.LoadSigningRequest` with proof-of-possession validation ON and requested extensions ignored, and enforces the leaf key policy by CURVE OID (`1.2.840.10045.3.1.7` / prime256v1 — RSA, wrong-curve EC such as P-384, and explicit-parameters encodings all rejected). Every failure class folds into ONE coarse `KEYCUSTODIAN_INVALID_CSR` (400) so the surface never leaks which check failed. Only the verified public key is surfaced — the CSR's subject / SAN / extensions are never read.
 
 ## Capability authority — `WorkloadCapabilityAuthority`
 
@@ -140,8 +145,8 @@ The `error-codes-source-gen/` sibling project emits three files into `Generated/
 
 | File                              | Content                                                                     |
 | --------------------------------- | --------------------------------------------------------------------------- |
-| `KeyCustodianErrorCodes.g.cs`     | 25 `const string` error-code constants + `AllCodes` + `GetHttpStatus`        |
-| `KeyCustodianFailures.g.cs`       | 25 `static D2Result FactoryName(...)` semantic factory methods                |
+| `KeyCustodianErrorCodes.g.cs`     | 28 `const string` error-code constants + `AllCodes` + `GetHttpStatus`        |
+| `KeyCustodianFailures.g.cs`       | 28 `static D2Result FactoryName(...)` semantic factory methods                |
 | `KeyCustodianFailures.Generic.g.cs` | The `KeyCustodianFailures<T>` typed twin                                  |
 
 All transition methods and VO smart constructors use the generated `KeyCustodianFailures<T>.*` factories — never raw `D2Result.ValidationFailed(...)` with hand-written codes. See [`error-codes-source-gen/README.md`](../error-codes-source-gen/README.md).
