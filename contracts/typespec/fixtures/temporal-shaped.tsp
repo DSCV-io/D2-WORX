@@ -103,4 +103,5 @@ model TemporalFixtureOutput {
 @d2Query
 @d2InProcess
 @d2ServedBy("TemporalFixtures")
+@d2Concern("TemporalFixture")
 op temporalFixture(input: TemporalFixtureInput): TemporalFixtureOutput;

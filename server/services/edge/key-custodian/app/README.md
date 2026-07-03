@@ -18,6 +18,11 @@ app/
     Handlers/
       Commands/<Operation>/   per-op folder: I<Op>Handler.cs, <Op>Handler.cs, <Op>Input.cs[, <Op>Output.cs]
       Queries/<Operation>/     same shape for the read operations
+    Facade/                    KeyCustodianApi.g.cs + KeyCustodianClientGenerated.g.cs (generated façade impl + AddD2KeyCustodianClient())
+    Signing/                   KeyDomainSigner + JwtSigningCapability + JwtSigningCapabilityServiceCollectionExtensions
+    Issuance/                  ICaLeafSigningCapability + CaLeafSigningCapability + CaSignedLeaf + its DI extension (the isolated CA-leaf signer)
+    CertificateAuthority/      CaSuccessorFactory (successor-key factory serving GenerateKey / CompromiseKey / RunDueRotations)
+    Keyring/                   InProcessKeyringClient + KeyringConsumerServiceCollectionExtensions (the in-process keyring consumer source)
     Observability/             KeyCustodianLog (+ metrics)
     KeyCustodianAppServiceCollectionExtensions.cs   AddD2KeyCustodianApp()
   Infrastructure/
@@ -26,6 +31,8 @@ app/
     Vault/                     IRootKeyProvider (port) + KeyCustodianRootKey (keyed-DI discriminator)
     Configuration/             KeyCustodianOptions + RotationPolicyOptions + IRotationPolicyProvider (+ options impl)
 ```
+
+`Handlers/` + `Observability/` follow ADR-0020 exactly; the op-noun concern folders (`Signing/`, `Issuance/`, `CertificateAuthority/`, `Keyring/`) are siblings of `Handlers/` holding the app-side support types that serve one-or-more handlers or the consumer side (never nested inside `Handlers/<Op>/`), and `Facade/` holds the generated module-façade impl + registration. The layer root keeps only the composition-root extension.
 
 `Application/` is what the service *does*; `Infrastructure/` is what it *needs from the outside* (ports + the shapes those ports speak). The `infra/` project mirrors the `Infrastructure/` concern folders with the concrete adapters.
 
@@ -138,7 +145,9 @@ These counters complement the cross-cutting per-handler invocation/failure count
 
 ## DI
 
-`services.AddD2KeyCustodianApp()` registers the 15 handlers (transient) and the policy providers (rotation-policy + signing-domain-authority + keyring-domain-authority). Key generation + smoke testing are pure domain rules with no DI, so there are no generator / smoke-tester registrations. The seams App depends on but does not own — the concrete `IKeyCustodianDbContext`, the keyed root `IPayloadCrypto`, `IRootKeyProvider`, `IKeyRotationAnnouncer`, and `ICaProvider` — are registered by the Infra layer, along with the options binding + startup validation. The dedicated minter capability `IJwtSigningCapability` is registered SEPARATELY, via `AddD2JwtSigningCapability()`, called ONLY from the JWT minter's (auth module's) composition — never from `AddD2KeyCustodianApp()` / `AddD2KeyCustodianClients()`. The issuance leaf-signing capability `ICaLeafSigningCapability` follows the same discipline: registered SEPARATELY via `AddD2CaLeafSigningCapability()`, called ONLY from the composition root that serves the issuance surface — a provider built from the general registration alone cannot resolve it, so the issuance path is structurally absent from a host that does not opt in.
+`services.AddD2KeyCustodianApp()` registers the 15 handlers (transient) and the policy providers (rotation-policy + signing-domain-authority + keyring-domain-authority). Key generation + smoke testing are pure domain rules with no DI, so there are no generator / smoke-tester registrations. The seams App depends on but does not own — the concrete `IKeyCustodianDbContext`, the keyed root `IPayloadCrypto`, `IRootKeyProvider`, `IKeyRotationAnnouncer`, and `ICaProvider` — are registered by the Infra layer, along with the options binding + startup validation. The dedicated minter capability `IJwtSigningCapability` is registered SEPARATELY, via `AddD2JwtSigningCapability()`, called ONLY from the JWT minter's (auth module's) composition — never from `AddD2KeyCustodianApp()` / `AddD2KeyCustodianClient()`. The issuance leaf-signing capability `ICaLeafSigningCapability` (`Application/Issuance/`) follows the same discipline: registered SEPARATELY via `AddD2CaLeafSigningCapability()`, called ONLY from the composition root that serves the issuance surface — a provider built from the general registration alone cannot resolve it, so the issuance path is structurally absent from a host that does not opt in.
+
+App also hosts the module's IN-PROCESS keyring consumer source: `services.AddD2EncryptionFromKeyCustodian(domain, callingModuleId)` (`Application/Keyring/KeyringConsumerServiceCollectionExtensions.cs`) backs a keyed `IPayloadCrypto` with the co-hosted leaf via the `internal` `Application/Keyring/InProcessKeyringClient.cs` — each fetch establishes the in-process-module plane (`RequestOrigin.InProcessModule`, explicit `callingModuleId`, the `internal.kc.keyring` scope) on a fresh scope and flows through the real fail-closed `AuthorizeKeyringFetch`. It composes the client package's shared hot-swap machinery (rotation channel + refresh subscriber + `KeyringBackedPayloadCrypto` + the KeyCustodian provenance marker) through the same-module internals grant; the cross-process sibling `AddD2EncryptionForViaKeyring` lives in the client package. This source lives in App (not the client package) because it references the leaf `IKeyCustodianApi`, which the client package cannot reach under the dependency law.
 
 ---
 

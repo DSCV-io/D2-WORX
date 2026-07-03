@@ -51,6 +51,7 @@ model SignFixtureOutput {
  */
 @d2Command
 @d2ServedBy("SignFixture")
+@d2Concern("SignFixture")
 @d2InProcess
 @d2GrpcMethod("SignFixtureSigner", "SignFixture")
 @route("/internal/v1/fixtures/sign-fixture")
@@ -68,6 +69,7 @@ op signFixture(input: SignFixtureInput): SignFixtureOutput;
  */
 @d2Command
 @d2ServedBy("SignFixture")
+@d2Concern("SignFixture")
 @d2InProcess
 @route("/internal/v1/fixtures/sign-fixture-derived")
 @post

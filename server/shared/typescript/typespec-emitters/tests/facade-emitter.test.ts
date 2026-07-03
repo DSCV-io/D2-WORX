@@ -41,7 +41,7 @@ const _REPO = findRepoRoot(import.meta.url);
 /** Committed home for GetJwks DTOs + façade interface (Clients namespace). */
 const _KC_CLIENTS_HOME = join(
   _REPO,
-  "server/services/edge/key-custodian/clients",
+  "server/services/edge/key-custodian/client",
 );
 
 /** Committed home for façade impl + DI extension (app/Application/). */
@@ -63,7 +63,7 @@ function readFacadeFixture(absPath: string): string {
 // Test helpers
 // ---------------------------------------------------------------------------
 
-const _KC_CLIENTS_NS = "D2.Edge.KeyCustodian.Clients";
+const _KC_CLIENTS_NS = "D2.Edge.KeyCustodian.Client";
 const _KC_APP_NS = "D2.Edge.KeyCustodian.App.Application";
 const _SPEC = "contracts/typespec/key-custodian/key-custodian.tsp";
 
@@ -73,7 +73,11 @@ function makeOp(
   outputTypeName?: string,
   sourceSpec?: string,
   category?: "Commands" | "Queries",
+  concern?: string,
 ) {
+  // The concern-qualified DTO namespace (<clients-ns>.<Concern>) the façade
+  // interface + impl import. Defaults to the op's Pascal name when unspecified.
+  const c = concern ?? `${opName.charAt(0).toUpperCase()}${opName.slice(1)}`;
   return {
     opName,
     inputTypeName:
@@ -84,6 +88,7 @@ function makeOp(
       `${opName.charAt(0).toUpperCase()}${opName.slice(1)}Output`,
     sourceSpec: sourceSpec ?? _SPEC,
     category: category ?? "Queries",
+    dtoNamespace: `${_KC_CLIENTS_NS}.${c}`,
   };
 }
 
@@ -236,7 +241,7 @@ describe("facadeEmitter_ModuleNameDrivesTypeNames", () => {
     expect(impl!.fileName).toBe("KeyCustodianApi.g.cs");
   });
 
-  it("DI-extension file name is KeyCustodianClientsGenerated.g.cs", () => {
+  it("DI-extension file name derives from the clients-ns leaf (non-plural): KeyCustodianClientGenerated.g.cs", () => {
     const [, , di] = emitFacade(
       "KeyCustodian",
       [makeOp("getJwks", "GetJwksInput", "GetJwksOutput")],
@@ -244,7 +249,28 @@ describe("facadeEmitter_ModuleNameDrivesTypeNames", () => {
       _KC_APP_NS,
     );
 
-    expect(di!.fileName).toBe("KeyCustodianClientsGenerated.g.cs");
+    expect(di!.fileName).toBe("KeyCustodianClientGenerated.g.cs");
+  });
+
+  it("DI file + method names derive from a non-Client clients-ns leaf (regression pin)", () => {
+    // A different clients-namespace leaf must flow through to BOTH the DI file name
+    // and the extension-method name. A regression that hard-coded the "Client" leaf
+    // would leave every other façade test green (their leaf IS "Client"); only a
+    // varying leaf pins that the derivation (clientsNamespace.split(".").pop()) is real.
+    const [, , di] = emitFacade(
+      "KeyCustodian",
+      [makeOp("getJwks", "GetJwksInput", "GetJwksOutput")],
+      "D2.Edge.KeyCustodian.Gateway",
+      _KC_APP_NS,
+    );
+
+    expect(di!.fileName).toBe("KeyCustodianGatewayGenerated.g.cs");
+    expect(di!.content).toContain(
+      "public IServiceCollection AddD2KeyCustodianGateway()",
+    );
+    // A hard-coded "Client" leaf would produce these instead — must NOT appear.
+    expect(di!.fileName).not.toBe("KeyCustodianClientGenerated.g.cs");
+    expect(di!.content).not.toContain("AddD2KeyCustodianClient");
   });
 });
 
@@ -306,7 +332,7 @@ describe("facadeEmitter_DiExtension_TransientCSharp14", () => {
     );
   });
 
-  it("DI extension method name is AddD2KeyCustodianClients()", () => {
+  it("DI extension method name derives from the clients-ns leaf: AddD2KeyCustodianClient()", () => {
     const [, , di] = emitFacade(
       "KeyCustodian",
       [makeOp("getJwks", "GetJwksInput", "GetJwksOutput")],
@@ -315,7 +341,7 @@ describe("facadeEmitter_DiExtension_TransientCSharp14", () => {
     );
 
     expect(di!.content).toContain(
-      "public IServiceCollection AddD2KeyCustodianClients()",
+      "public IServiceCollection AddD2KeyCustodianClient()",
     );
   });
 
@@ -432,7 +458,7 @@ describe("facadeEmitter_ConventionsAndBanner", () => {
     );
   });
 
-  it("interface namespace is the Clients namespace", () => {
+  it("interface namespace is the Facade sub-namespace of the Clients namespace", () => {
     const [iface] = emitFacade(
       "KeyCustodian",
       [makeOp("getJwks", "GetJwksInput", "GetJwksOutput")],
@@ -440,10 +466,10 @@ describe("facadeEmitter_ConventionsAndBanner", () => {
       _KC_APP_NS,
     );
 
-    expect(iface!.content).toContain(`namespace ${_KC_CLIENTS_NS};`);
+    expect(iface!.content).toContain(`namespace ${_KC_CLIENTS_NS}.Facade;`);
   });
 
-  it("impl and DI extension namespace is the app namespace", () => {
+  it("impl and DI extension namespace is the Facade sub-namespace of the app namespace", () => {
     const [, impl, di] = emitFacade(
       "KeyCustodian",
       [makeOp("getJwks", "GetJwksInput", "GetJwksOutput")],
@@ -451,8 +477,8 @@ describe("facadeEmitter_ConventionsAndBanner", () => {
       _KC_APP_NS,
     );
 
-    expect(impl!.content).toContain(`namespace ${_KC_APP_NS};`);
-    expect(di!.content).toContain(`namespace ${_KC_APP_NS};`);
+    expect(impl!.content).toContain(`namespace ${_KC_APP_NS}.Facade;`);
+    expect(di!.content).toContain(`namespace ${_KC_APP_NS}.Facade;`);
   });
 
   it("emitted files contain no phase/step/audit/round identifiers", () => {
@@ -512,22 +538,47 @@ describe("facadeEmitter_ZeroOps_AndAdversarial", () => {
 // that exact op list. issueLeaf is the sole Command (leaf-issuance audit write); the
 // rest are Queries.
 const _KC_FACADE_OPS = [
-  makeOp("getJwks", "GetJwksInput", "GetJwksOutput"),
+  makeOp(
+    "getJwks",
+    "GetJwksInput",
+    "GetJwksOutput",
+    undefined,
+    "Queries",
+    "Jwks",
+  ),
   makeOp(
     "getOidcConfiguration",
     "GetOidcConfigurationInput",
     "GetOidcConfigurationOutput",
+    undefined,
+    "Queries",
+    "OidcConfiguration",
   ),
-  makeOp("sign", "SignInput", "SignOutput"),
-  makeOp("getKeyring", "GetKeyringInput", "GetKeyringOutput"),
+  makeOp("sign", "SignInput", "SignOutput", undefined, "Queries", "Signing"),
+  makeOp(
+    "getKeyring",
+    "GetKeyringInput",
+    "GetKeyringOutput",
+    undefined,
+    "Queries",
+    "Keyring",
+  ),
   makeOp(
     "issueLeaf",
     "IssueLeafInput",
     "IssueLeafOutput",
     undefined,
     "Commands",
+    "Issuance",
   ),
-  makeOp("getCaCertificate", "GetCaCertificateInput", "GetCaCertificateOutput"),
+  makeOp(
+    "getCaCertificate",
+    "GetCaCertificateInput",
+    "GetCaCertificateOutput",
+    undefined,
+    "Queries",
+    "CaCertificate",
+  ),
 ];
 
 describe("facadeEmitter_ByteGate_Interface", () => {
@@ -540,13 +591,15 @@ describe("facadeEmitter_ByteGate_Interface", () => {
     );
 
     expect(iface!.content).toBe(
-      readFacadeFixture(join(_KC_CLIENTS_HOME, "IKeyCustodianApi.g.cs")),
+      readFacadeFixture(
+        join(_KC_CLIENTS_HOME, "Facade", "IKeyCustodianApi.g.cs"),
+      ),
     );
   });
 
   it("deliberate-drift detection: mutated fixture does NOT match regenerated output", () => {
     const drifted = readFacadeFixture(
-      join(_KC_CLIENTS_HOME, "IKeyCustodianApi.g.cs"),
+      join(_KC_CLIENTS_HOME, "Facade", "IKeyCustodianApi.g.cs"),
     ).replace("IKeyCustodianApi", "IKeyCustodianApiDRIFTED");
     const [iface] = emitFacade(
       "KeyCustodian",
@@ -573,13 +626,13 @@ describe("facadeEmitter_ByteGate_Impl", () => {
     );
 
     expect(impl!.content).toBe(
-      readFacadeFixture(join(_KC_APP_HOME, "KeyCustodianApi.g.cs")),
+      readFacadeFixture(join(_KC_APP_HOME, "Facade", "KeyCustodianApi.g.cs")),
     );
   });
 
   it("deliberate-drift detection: mutated fixture does NOT match regenerated output", () => {
     const drifted = readFacadeFixture(
-      join(_KC_APP_HOME, "KeyCustodianApi.g.cs"),
+      join(_KC_APP_HOME, "Facade", "KeyCustodianApi.g.cs"),
     ).replace("KeyCustodianApi", "KeyCustodianApiDRIFTED");
     const [, impl] = emitFacade(
       "KeyCustodian",
@@ -593,11 +646,11 @@ describe("facadeEmitter_ByteGate_Impl", () => {
 });
 
 // ---------------------------------------------------------------------------
-// Byte-gate: KeyCustodianClientsGenerated.g.cs (DI extension)
+// Byte-gate: KeyCustodianClientGenerated.g.cs (DI extension)
 // ---------------------------------------------------------------------------
 
 describe("facadeEmitter_ByteGate_DiExtension", () => {
-  it("regenerated KeyCustodianClientsGenerated.g.cs is byte-identical to the committed fixture", () => {
+  it("regenerated KeyCustodianClientGenerated.g.cs is byte-identical to the committed fixture", () => {
     const [, , di] = emitFacade(
       "KeyCustodian",
       _KC_FACADE_OPS,
@@ -607,15 +660,15 @@ describe("facadeEmitter_ByteGate_DiExtension", () => {
 
     expect(di!.content).toBe(
       readFacadeFixture(
-        join(_KC_APP_HOME, "KeyCustodianClientsGenerated.g.cs"),
+        join(_KC_APP_HOME, "Facade", "KeyCustodianClientGenerated.g.cs"),
       ),
     );
   });
 
   it("deliberate-drift detection: mutated fixture does NOT match regenerated output", () => {
     const drifted = readFacadeFixture(
-      join(_KC_APP_HOME, "KeyCustodianClientsGenerated.g.cs"),
-    ).replace("AddD2KeyCustodianClients", "AddD2KeyCustodianClientsDRIFTED");
+      join(_KC_APP_HOME, "Facade", "KeyCustodianClientGenerated.g.cs"),
+    ).replace("AddD2KeyCustodianClient", "AddD2KeyCustodianClientDRIFTED");
     const [, , di] = emitFacade(
       "KeyCustodian",
       _KC_FACADE_OPS,
@@ -682,6 +735,7 @@ describe("facadeEmitter_Integration_getJwks", () => {
       @d2Query
       @d2InProcess
       @d2ServedBy("KeyCustodian")
+      @d2Concern("Jwks")
       op getJwks(): GetJwksOutput;
       `,
     );
@@ -691,7 +745,7 @@ describe("facadeEmitter_Integration_getJwks", () => {
       options: {
         "@d2/typespec-emitters": {
           "csharp-namespace": "D2.Fixture.Ns",
-          "csharp-clients-namespace": "D2.Edge.KeyCustodian.Clients",
+          "csharp-clients-namespace": "D2.Edge.KeyCustodian.Client",
           "csharp-app-namespace-base":
             "D2.Edge.KeyCustodian.App.Application.Handlers",
         },
@@ -704,10 +758,12 @@ describe("facadeEmitter_Integration_getJwks", () => {
     );
     expect(errors).toHaveLength(0);
 
-    // Interface file — in Clients namespace.
+    // Interface file — in the Clients Facade namespace.
     const ifaceContent = getEmittedFile(host, "IKeyCustodianApi.g.cs");
     expect(ifaceContent).toBeDefined();
-    expect(ifaceContent).toContain("namespace D2.Edge.KeyCustodian.Clients;");
+    expect(ifaceContent).toContain(
+      "namespace D2.Edge.KeyCustodian.Client.Facade;",
+    );
     expect(ifaceContent).toContain("public interface IKeyCustodianApi");
     expect(ifaceContent).toContain("GetJwksAsync(");
 
@@ -715,15 +771,15 @@ describe("facadeEmitter_Integration_getJwks", () => {
     const implContent = getEmittedFile(host, "/KeyCustodianApi.g.cs");
     expect(implContent).toBeDefined();
     expect(implContent).toContain(
-      "namespace D2.Edge.KeyCustodian.App.Application;",
+      "namespace D2.Edge.KeyCustodian.App.Application.Facade;",
     );
     expect(implContent).toContain("public sealed class KeyCustodianApi");
     expect(implContent).toContain("=> getJwksHandler.HandleAsync(input, ct);");
 
-    // DI extension file.
-    const diContent = getEmittedFile(host, "KeyCustodianClientsGenerated.g.cs");
+    // DI extension file — non-plural name derived from the clients-ns leaf.
+    const diContent = getEmittedFile(host, "KeyCustodianClientGenerated.g.cs");
     expect(diContent).toBeDefined();
-    expect(diContent).toContain("AddD2KeyCustodianClients");
+    expect(diContent).toContain("AddD2KeyCustodianClient");
     expect(diContent).toContain(
       "AddTransient<IKeyCustodianApi, KeyCustodianApi>",
     );
@@ -754,6 +810,7 @@ describe("facadeEmitter_Integration_InternalOp_AbsentFromFacade", () => {
       @d2Query
       @d2InProcess
       @d2ServedBy("KeyCustodian")
+      @d2Concern("Jwks")
       op getJwks(): GetJwksOutput;
 
       @d2Command
@@ -768,7 +825,7 @@ describe("facadeEmitter_Integration_InternalOp_AbsentFromFacade", () => {
       options: {
         "@d2/typespec-emitters": {
           "csharp-namespace": "D2.Fixture.Ns",
-          "csharp-clients-namespace": "D2.Edge.KeyCustodian.Clients",
+          "csharp-clients-namespace": "D2.Edge.KeyCustodian.Client",
           "csharp-app-namespace-base":
             "D2.Edge.KeyCustodian.App.Application.Handlers",
         },

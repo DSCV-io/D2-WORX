@@ -19,7 +19,7 @@ using D2.Edge.KeyCustodian.App.Application.Observability;
 using D2.Edge.KeyCustodian.App.Infrastructure.Configuration;
 using D2.Edge.KeyCustodian.App.Infrastructure.Messaging;
 using D2.Edge.KeyCustodian.App.Infrastructure.Vault;
-using D2.Edge.KeyCustodian.Clients;
+using D2.Edge.KeyCustodian.Client.Keyring;
 using D2.Edge.KeyCustodian.Infra.Persistence.Postgres;
 using D2.Edge.Tests.Unit.KeyCustodian.App.Fixtures;
 using D2.Shared.Context.Abstractions;
@@ -239,6 +239,17 @@ public sealed class KeyCustodianKeyringDistributionIntegrationTests(
     private async Task CleanDomainAsync()
     {
         await using var ctx = fixture.NewContext();
+
+        // Audit rows FK-reference key_record with RESTRICT (same-transaction audit
+        // writes are never orphaned), so the domain's audit children go first. The
+        // kid list is materialized so no query lambda captures the disposable ctx.
+        var kids = await ctx.Keys
+            .Where(k => k.KeyDomain == _DOMAIN)
+            .Select(k => k.Kid)
+            .ToListAsync();
+
+        await ctx.Audit.Where(a => kids.Contains(a.Kid)).ExecuteDeleteAsync();
+
         await ctx.Keys.Where(k => k.KeyDomain == _DOMAIN).ExecuteDeleteAsync();
     }
 

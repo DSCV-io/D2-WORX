@@ -64,7 +64,7 @@ function makeHandlerInput(
       "D2.Edge.KeyCustodian.App.Application.Handlers.Queries.GetJwks",
     inputTypeName: "GetJwksInput",
     outputTypeName: "GetJwksOutput",
-    dtoNamespace: "D2.Edge.KeyCustodian.Clients",
+    dtoNamespace: "D2.Edge.KeyCustodian.Client",
     scopePolicy: { kind: "harmless" },
     registrationNamespace: "D2.Edge.Tests.TypeSpecRoute.Generated",
     sourceSpec: "contracts/typespec/key-custodian/key-custodian.tsp",

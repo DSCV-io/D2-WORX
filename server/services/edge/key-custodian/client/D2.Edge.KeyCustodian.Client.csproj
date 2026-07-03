@@ -1,0 +1,171 @@
+<!--
+Copyright (c) DCSV. All rights reserved.
+-->
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>D2.Edge.KeyCustodian.Client</RootNamespace>
+  </PropertyGroup>
+
+  <!--
+    Client package — the consumer-facing surface for the KeyCustodian module.
+    Holds:
+      - transport DTOs for exposed operations (generated .g.cs files, namespace
+        D2.Edge.KeyCustodian.Client — regenerated from the TypeSpec emitter via a
+        codegen-input change, never a hand-edit of .g.cs output),
+      - the module façade interface IKeyCustodianApi (generated),
+      - the compiled keyring gRPC client stub + wire messages (below),
+      - the rotation-aware keyring consumer runtime (hand-authored, namespace
+        D2.Edge.KeyCustodian.Client): the internal IKeyringClient fetch seam +
+        GrpcKeyringClient, the KeyringBackedPayloadCrypto hot-swap capability,
+        the rotation-event channel + refresh subscriber, the
+        AddD2EncryptionForViaKeyring registration source, and the keyring meter.
+
+    Dependency law: references contracts + shared libs ONLY. No Domain,
+    App, or Infra reference. The App project references Client (App ← Client
+    is the legal edge; Client is below App in the dependency order, exactly
+    as Domain is). Service-client runtime code lives HERE, never under
+    server/shared/ (shared holds only service-agnostic abstractions).
+
+    net10.0 / CPM / Nullable / ImplicitUsings / StyleCop / TreatWarningsAsErrors /
+    GenerateDocumentationFile inherited from server/Directory.Build.props.
+  -->
+
+  <ItemGroup>
+    <!--
+      D2.Shared.Result — D2Result<T> is the return type of the module façade
+      interface methods and of the generated handler-interface extends chain.
+    -->
+    <ProjectReference Include="..\..\..\..\shared\dotnet\result\core\D2.Shared.Result.csproj" />
+    <!--
+      D2.Shared.Utilities — required to satisfy the Tier-1 global using injected
+      by server/services/Directory.Build.targets (D2.Shared.Utilities.Extensions/
+      Attributes/Enums are unconditionally injected into every service-tree project).
+      When an exposed DTO carries [RedactData] the Attributes global using also
+      covers that annotation.
+    -->
+    <ProjectReference Include="..\..\..\..\shared\dotnet\utilities\D2.Shared.Utilities.csproj" />
+    <!--
+      D2.Shared.Result.Grpc — the sole source of D2Result <-> D2ResultProto and the
+      AsyncUnaryCall.HandleAsync() envelope extension the keyring reply rides. Compiling
+      the keyring proto here (below) makes GetKeyringResponse.Result resolve to the
+      D2ResultProto this package already ships (its import "common/v1/d2_result.proto"
+      resolves at protoc time via AdditionalImportDirs; never a second Protobuf include —
+      that would double-generate the message and fail with CS0433).
+    -->
+    <ProjectReference Include="..\..\..\..\shared\dotnet\result\grpc\D2.Shared.Result.Grpc.csproj" />
+    <!--
+      D2.Shared.Encryption — IPayloadCrypto / PayloadCrypto / PayloadCryptoKeyring
+      (the primitive the keyring runtime hot-swaps) + the source-provenance marker
+      API (MarkD2EncryptionSource / AddD2EncryptionSourceCheck).
+    -->
+    <ProjectReference Include="..\..\..\..\shared\dotnet\encryption\core\D2.Shared.Encryption.csproj" />
+    <!--
+      D2.Shared.Messaging.Abstractions — [MqSub] / MqSubscriptions / AddD2Subscriber
+      for the KeyRotatedEvent refresh subscriber.
+    -->
+    <ProjectReference Include="..\..\..\..\shared\dotnet\messaging\abstractions\D2.Shared.Messaging.Abstractions.csproj" />
+    <!--
+      D2.Shared.Handler — BaseHandler / HandlerContext for the refresh subscriber.
+    -->
+    <ProjectReference Include="..\..\..\..\shared\dotnet\handler\core\D2.Shared.Handler.csproj" />
+    <!--
+      D2.Shared.Auth.Events — KeyRotatedEvent, the fanout the refresh subscriber consumes.
+    -->
+    <ProjectReference Include="..\..\..\..\shared\dotnet\auth\events\D2.Shared.Auth.Events.csproj" />
+    <!--
+      D2.Shared.Resilience — RetryHelper.RetryD2ResultAsync backs the bounded,
+      transient-classified rotation-refresh retry in KeyringBackedPayloadCrypto
+      (a shared -> shared reference, the legal dependency direction).
+    -->
+    <ProjectReference Include="..\..\..\..\shared\dotnet\resilience\D2.Shared.Resilience.csproj" />
+  </ItemGroup>
+
+  <!--
+    Promoted KeyCustodian keyring gRPC surface. The generated .g.proto lives in
+    the Edge test tree (the TypeSpec emitter's current output location); only its
+    <Protobuf> COMPILATION moves here so the consumer client stub + wire messages ship in
+    a product assembly. GrpcServices="Both" — NOT a bare "Client": the message types
+    (GetKeyringRequest/Response/Output/Entry in D2.Services.Protos.KeyCustodian.V2Alpha)
+    are generated for any GrpcServices value, so they must compile EXACTLY ONCE. The Edge
+    test project drops its own keyring <Protobuf> item and references these types (+ the
+    generated server base, which its generated KeyCustodianKeyringService extends) through
+    this project. Compiling only "Client" here would leave the test's server base
+    ungenerated; compiling "Server" there too would duplicate the messages (CS0433). "Both"
+    here is the single-message-compilation mechanism.
+  -->
+  <ItemGroup>
+    <PackageReference Include="Google.Protobuf" />
+    <PackageReference Include="Grpc.Net.Client" />
+    <PackageReference Include="Grpc.Tools">
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!--
+      Root-anchored via the solution-wide $(D2RepoRoot) property (server/Directory.Build.props)
+      rather than a depth-counted $(MSBuildThisFileDirectory)..\..\ relative path, so this
+      project's folder-nesting depth can change without breaking the cross-tree reference
+      (rules.md §9.34).
+    -->
+    <Protobuf Include="$(D2RepoRoot)server\services\edge\tests\Unit\KeyCustodian\TypeSpecGrpc\Protos\key_custodian_keyring_get_keyring.g.proto"
+              GrpcServices="Both"
+              ProtoRoot="$(D2RepoRoot)server\services\edge\tests\"
+              AdditionalImportDirs="$(D2ContractsRoot)protos" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="D2.Edge.Tests" />
+    <!--
+      The module's own App project hosts the in-process keyring source
+      (InProcessKeyringClient + AddD2EncryptionFromKeyCustodian), which composes
+      this package's internal fetch seam + registration helper. Same-module
+      grant; external consumers still see only the public capability surface.
+    -->
+    <InternalsVisibleTo Include="D2.Edge.KeyCustodian.App" />
+  </ItemGroup>
+
+  <!--
+    Public-API surface tracking. This consumable sits OUTSIDE server/shared/dotnet,
+    so the shared-tree Directory.Build.props analyzer wiring does not reach it —
+    the analyzer + the two AdditionalFiles are declared inline here instead.
+    RS0016 = a public member missing from the declared API (an unrecorded ADD);
+    RS0017 = a recorded member that no longer exists (a REMOVE). Both are build
+    failures under the solution-wide TreatWarningsAsErrors policy. The committed
+    PublicAPI.Shipped.txt / PublicAPI.Unshipped.txt pair IS the baseline.
+  -->
+  <ItemGroup>
+    <PackageReference Include="Microsoft.CodeAnalysis.PublicApiAnalyzers">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <AdditionalFiles Include="PublicAPI.Shipped.txt" />
+    <AdditionalFiles Include="PublicAPI.Unshipped.txt" />
+  </ItemGroup>
+
+  <!-- Publish metadata (per-package semver + NuGet identity). -->
+  <PropertyGroup>
+    <Version>0.1.0</Version>
+    <PackageId>D2.Edge.KeyCustodian.Client</PackageId>
+    <Description>KeyCustodian client surface for D2-WORX — the transport DTOs, the IKeyCustodianApi module facade, and the rotation-aware keyring consumer runtime (hot-swappable, in-process-memory-only IPayloadCrypto).</Description>
+    <IsPackable>true</IsPackable>
+    <Authors>DCSV</Authors>
+    <Company>DCSV</Company>
+    <Product>D2-WORX</Product>
+    <RepositoryUrl>https://github.com/DCSV-io/D2-WORX</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageProjectUrl>https://github.com/DCSV-io/D2-WORX</PackageProjectUrl>
+    <PackageLicenseFile>LICENSE.md</PackageLicenseFile>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="\" />
+    <None Include="$(D2RepoRoot)LICENSE.md" Pack="true" PackagePath="\" Visible="false" />
+  </ItemGroup>
+</Project>

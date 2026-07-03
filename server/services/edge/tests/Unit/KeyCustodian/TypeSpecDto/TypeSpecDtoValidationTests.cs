@@ -23,8 +23,8 @@ using GenSignFixtureInput = D2.Edge.Tests.TypeSpecDto.Generated.SignFixtureInput
 /// Generated fixtures live in Unit/KeyCustodian/TypeSpecDto/Generated/*.g.cs,
 /// in namespace D2.Edge.Tests.TypeSpecDto.Generated.
 /// GetJwks DTO structural-equivalence tests live in
-/// Unit/KeyCustodian/Clients/GetJwksTransportDtoTests.cs (those types now
-/// reside in D2.Edge.KeyCustodian.Clients, not in this fixture namespace).
+/// Unit/KeyCustodian/Client/Jwks/GetJwksTransportDtoTests.cs (those types now
+/// reside in D2.Edge.KeyCustodian.Client, not in this fixture namespace).
 /// </summary>
 public sealed class TypeSpecDtoValidationTests
 {

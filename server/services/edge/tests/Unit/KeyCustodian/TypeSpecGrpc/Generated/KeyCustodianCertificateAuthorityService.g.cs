@@ -11,11 +11,11 @@ namespace D2.Edge.Tests.TypeSpecGrpc.Generated;
 
 using IssueWorkloadCertificateRequest = global::D2.Services.Protos.KeyCustodian.V2Alpha.IssueWorkloadCertificateRequest;
 using IssueWorkloadCertificateResponse = global::D2.Services.Protos.KeyCustodian.V2Alpha.IssueWorkloadCertificateResponse;
-using IssueLeafInput = global::D2.Edge.KeyCustodian.Clients.IssueLeafInput;
-using IssueLeafOutput = global::D2.Edge.KeyCustodian.Clients.IssueLeafOutput;
+using IssueLeafInput = global::D2.Edge.KeyCustodian.Client.Issuance.IssueLeafInput;
+using IssueLeafOutput = global::D2.Edge.KeyCustodian.Client.Issuance.IssueLeafOutput;
 using D2.Shared.Result.Grpc;
 using Grpc.Core;
-using D2.Edge.KeyCustodian.Clients;
+using D2.Edge.KeyCustodian.Client.Facade;
 
 /// <summary>Generated gRPC service for the <c>IssueWorkloadCertificate</c> operation, delegating to <see cref="IKeyCustodianApi"/>.</summary>
 public sealed class KeyCustodianCertificateAuthorityService(IKeyCustodianApi facade)

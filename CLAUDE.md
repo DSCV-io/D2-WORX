@@ -197,7 +197,7 @@ Per-service / per-library `README.md` files appear in `server/services/{service}
 
 Every service under `server/services/` takes one fixed layered shape — canonical: [docs/adrs/0020-service-project-structure.md](docs/adrs/0020-service-project-structure.md); daily-driver: [docs/PATTERNS.md "Service project structure"](docs/PATTERNS.md#service-project-structure).
 
-**Five projects + the dependency law.** A standalone service is `domain/` + `app/` + `infra/` + `api/` + `tests/` (+ consumer-facing `clients/` + a `netstandard2.0` source-gen shell when it owns error codes). Layers depend in one direction:
+**Five projects + the dependency law.** A standalone service is `domain/` + `app/` + `infra/` + `api/` + `tests/` (+ a consumer-facing `client/` package — SINGULAR, matching its `.Client` assembly name — + a `netstandard2.0` source-gen shell when it owns error codes). Service-client RUNTIME code lives in the service's `client/` package, never under `server/shared/` (shared holds only service-agnostic abstractions). Layers depend in one direction:
 
 ```
 Domain  ←  App  ←  Infra  ←  Api      (Tests reference what they test; Clients reference contracts + shared libs only)
@@ -208,6 +208,8 @@ Domain references shared primitives only (NO EF / Options / DI / logging / vendo
 **Domain** = `Entities/` + `ValueObjects/` + `Enums/` + `Rules/` (pure no-port no-IO logic — generators, verifiers, projections; a tunable is a method param, not `IOptions<>`). Pure logic lives in domain `Rules/`, NOT in app handlers.
 
 **App = two sections.** `app/Application/` (per-op handlers + `Observability/` + `AddD2<Service>App()`) and `app/Infrastructure/` (ports + shapes by concern + `Configuration/`). The `infra/` project mirrors `app/Infrastructure/`'s concern folders with the adapters.
+
+**Op-noun concern folders + `Facade/` (both sides).** App-layer support types (helpers, capabilities, consumer-side sources) live in **op-noun concern folders that are siblings of `Handlers/`** (namespace = folder), NOT nested inside `Handlers/<Op>/` — the `Application/` root keeps ONLY the composition-root extension. KC app: `Signing/`, `Issuance/`, `CertificateAuthority/`, `Keyring/`, plus `Facade/` (the generated `<Module>Api.g.cs` impl + DI registration). The `client/` package mirrors this: root = package metadata only; `Facade/` holds `I<Module>Api.g.cs`; each concern folder (`Jwks/`, `Signing/`, `Keyring/`, …) holds its ops' generated `.g.cs` DTOs + the hand-written runtime that serves them. Concern→folder is spec-driven via the `@d2Concern("<Segment>")` TypeSpec decorator (drives DTO namespace AND committed-home folder in lockstep — fail-loud `D2TSP013` on a client-exposed op missing it). Support files NEVER nest in `Handlers/<Op>/` (many serve several handlers or the consumer side). Canonical: [ADR-0020](docs/adrs/0020-service-project-structure.md) + [PATTERNS.md](docs/PATTERNS.md) + [SRC_GEN.md](docs/SRC_GEN.md).
 
 **Per-operation handler folders.** One folder per op under its category: `Application/Handlers/{Commands,Queries}/<Op>/{I<Op>Handler.cs, <Op>Handler.cs, <Op>Input.cs, <Op>Output.cs}`. File name = type name; input always `<Op>Input`, output always `<Op>Output`. NO `Models/` bucket — a DTO co-locates with its op or promotes to a domain VO. NO `Interfaces/`/`Implementations/` mirror — co-locate the interface with its impl.
 

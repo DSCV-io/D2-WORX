@@ -130,7 +130,7 @@ All supported `tspconfig.yaml` options are listed below.
 |--------|------|-----------|---------|---------|
 | `emitter-output-dir` | `string` | Required | — | Directory where emitted files are written. Pass `{output-dir}` to inherit the TypeSpec compiler default (fixture mode) or an explicit path (real-module mode). |
 | `csharp-namespace` | `string` | Required | `D2.Generated` | C# namespace for fixture-mode DTOs and the gRPC service-impl class when `csharp-app-namespace-base` is absent. Kept for backward compatibility; in real-module mode this namespace is used only for internal fixture ops. |
-| `csharp-clients-namespace` | `string` | Optional (real-module mode) | — | C# namespace for the Clients project: exposed-op DTOs (`@d2InProcess`, `@d2GrpcMethod`, `@d2ServerPush`, `@route`) and the per-module façade interface land here. Omit when emitting fixture ops only. |
+| `csharp-clients-namespace` | `string` | Optional (real-module mode) | — | C# namespace for the Client project: exposed-op DTOs (`@d2InProcess`, `@d2GrpcMethod`, `@d2ServerPush`, `@route`) and the per-module façade interface land here. Omit when emitting fixture ops only. |
 | `csharp-app-namespace-base` | `string` | Optional (real-module mode) | — | Base C# namespace for app-layer handler interfaces. Per-op CQRS path is `<base>.<Category>.<PascalOp>` (e.g. `D2.Edge.KeyCustodian.App.Application.Handlers.Queries.GetJwks`). When absent, the emitter falls back to fixture mode (handler interfaces land under `csharp-namespace`). |
 | `proto-package` | `string` | Optional | `d2.generated.v1` | proto3 `package` declaration written into the emitted `.proto` file. Use a service-specific value in real-module mode (e.g. `d2.signfixtures.v2alpha`). |
 | `proto-csharp-namespace` | `string` | Optional | `D2.Generated.Protos.V1` | C# namespace declared via `option csharp_namespace` in the emitted `.proto` file. Must match the namespace Grpc.Tools generates for message + service types. |
@@ -495,7 +495,7 @@ const interfaceFile = emitHandlerInterface(
   "GetJwksOutput",
   /*emitUsing*/ false,
   "contracts/typespec/key-custodian/key-custodian.tsp",
-  /*dtoNamespace*/ "D2.Edge.KeyCustodian.Clients",
+  /*dtoNamespace*/ "D2.Edge.KeyCustodian.Client",
 );
 // interfaceFile.fileName → "IGetJwksHandler.g.cs"
 ```
@@ -512,7 +512,7 @@ Parameters:
   `true`, the file must carry a per-file `using D2.Shared.Handler.Abstractions;`
   (fixture namespaces where no global using is present).
 - `dtoNamespace` — optional. When the DTO types live in a different namespace than
-  the handler interface (e.g. exposed ops whose DTOs are in the `Clients` project),
+  the handler interface (e.g. exposed ops whose DTOs are in the `Client` project),
   pass the DTO namespace here. The emitter adds a per-file
   `using <dtoNamespace>;` so the interface declaration can reference the types.
   Omit for internal ops where DTO and interface share the same namespace.
@@ -535,12 +535,12 @@ const [ifaceFile, implFile, diFile] = emitFacade(
       category: "Queries",
     },
   ],
-  "D2.Edge.KeyCustodian.Clients",
+  "D2.Edge.KeyCustodian.Client",
   "D2.Edge.KeyCustodian.App.Application",
 );
 // ifaceFile.fileName → "IKeyCustodianApi.g.cs"
 // implFile.fileName  → "KeyCustodianApi.g.cs"
-// diFile.fileName    → "KeyCustodianClientsGenerated.g.cs"
+// diFile.fileName    → "KeyCustodianClientGenerated.g.cs"
 ```
 
 Emits the three-file façade layer for one module. Always returns exactly three
@@ -549,7 +549,7 @@ zero-exposed-op module produces no façade).
 
 The three files:
 
-1. **`I<Module>Api.g.cs`** (targets the Clients project namespace) — the
+1. **`I<Module>Api.g.cs`** (targets the Client project namespace) — the
    curated public interface listing only the exposed operations. Internal-only
    operations (`@d2Internal`) are structurally absent so callers cannot
    accidentally invoke an op that was never meant to cross a boundary.
@@ -557,7 +557,7 @@ The three files:
    `sealed` delegating implementation. One primary-constructor parameter per
    exposed op (`I<Op>Handler`); each method delegates to the matching handler's
    `HandleAsync` call.
-3. **`<Module>ClientsGenerated.g.cs`** (targets the app/ project namespace) — the
+3. **`<Module>ClientGenerated.g.cs`** (targets the app/ project namespace) — the
    generated DI extension using C# 14 `extension(IServiceCollection services)`
    block syntax. Registers the impl as `Transient` (not `Singleton`) to match
    handler lifetime — a Singleton façade would capture scoped DbContext dependencies
@@ -571,7 +571,7 @@ Parameters:
   (determines method order in the interface and constructor-parameter order in
   the impl). The `category` field (`"Commands"` | `"Queries"`) drives the
   per-op handler `using` directive namespace in the impl.
-- `clientsNamespace` — the C# namespace for the Clients project (interface +
+- `clientsNamespace` — the C# namespace for the Client project (interface +
   DTO types).
 - `appNamespace` — the C# namespace for the generated app-layer files (impl +
   DI extension).
@@ -856,7 +856,7 @@ round-trips, temporal scalars + adversarial matrix, enum wire-round-trip, guard 
 The byte-parity test suites pin the emitter output against committed fixture files in:
 
 ```
-server/services/edge/key-custodian/clients/                           ← GetJwks DTO fixtures + façade interface (Clients namespace)
+server/services/edge/key-custodian/client/                            ← GetJwks DTO fixtures + façade interface (Client namespace)
 server/services/edge/key-custodian/app/Application/                   ← façade impl + DI extension fixtures (app namespace)
 server/services/edge/key-custodian/app/Application/Handlers/…/GetJwks/ ← GetJwks handler interface (app CQRS namespace)
 server/services/edge/tests/Unit/KeyCustodian/TypeSpecGrpc/Generated/  ← gRPC service + mapper fixtures
@@ -871,10 +871,11 @@ server/services/edge/tests/Unit/KeyCustodian/TypeSpecSse/Generated/        ← s
 ```
 
 The Sign operation DTOs live in the gRPC generated directory because they are emitted
-alongside the gRPC service and mappers. The GetJwks DTOs and the façade interface live in
-`key-custodian/clients/` because they are exposed through the `Clients` façade (the
-transport boundary for external callers). The façade impl (`KeyCustodianApi.g.cs`)
-and the generated DI extension (`KeyCustodianClientsGenerated.g.cs`) live in `app/Application/`
+alongside the gRPC service and mappers. Exposed-op DTOs live under
+`key-custodian/client/<Concern>/` (the concern from each op's `@d2Concern`) because they
+are the module's transport boundary for external callers; the façade interface lives in
+`key-custodian/client/Facade/`. The façade impl (`KeyCustodianApi.g.cs`)
+and the generated DI extension (`KeyCustodianClientGenerated.g.cs`) live in `app/Application/Facade/`
 because they reference app-layer handler interfaces. The handler-interface root
 (`IGetJwksHandler.g.cs`) lives in the per-op CQRS handler folder.
 
@@ -910,9 +911,19 @@ The scatter script (`tools/scripts/regen-typespec-emitters.mjs`):
 
 **Which files are covered by `pnpm regen`:**
 
-- `GetJwksInput.g.cs` / `GetJwksOutput.g.cs` — GetJwks DTOs (Clients namespace)
-- `KeyCustodianClientsGenerated.g.cs` — DI extension (app/Application/)
-- `IGetJwksHandler.g.cs` — GetJwks handler interface (per-op CQRS folder)
+- All real-KC exposed-op DTO pairs (`GetJwks`, `GetOidcConfiguration`, `Sign`,
+  `GetKeyring`, `IssueLeaf`, `GetCaCertificate`) — scattered to their
+  `client/<Concern>/` homes (the concern comes from each op's `@d2Concern`)
+- `IKeyCustodianApi.g.cs` (client `Facade/`) + `KeyCustodianApi.g.cs` and
+  `KeyCustodianClientGenerated.g.cs` (app `Application/Facade/`) — the façade layer
+- The real-KC gRPC service impls + transport mappers
+  (`KeyCustodianSignerService`, `KeyCustodianKeyringService`,
+  `KeyCustodianCertificateAuthorityService`, `KeyCustodianCaCertificateService` and
+  the four `<Op>TransportMappers`) — committed under the Edge test tree's
+  `TypeSpecGrpc/Generated/`
+- `I<Op>Handler.g.cs` for the six exposed KC ops — per-op CQRS handler folders
+- `GetJwksRouteRegistration.g.cs` / `GetOidcConfigurationRouteRegistration.g.cs` —
+  well-known route registrations (Edge test tree)
 - `enum-fixture-dto.g.ts`, `sign-fixture-grpc-client.g.ts`, `sign-fixture-rest-client.g.ts`, `temporal-fixture-dto.g.ts` — TypeScript DTOs
 - `enum-fixtures-grpc-client.g.ts` — enum gRPC TypeScript client
 - `place-order-fixture-dto.g.ts`, `place-order-fixture-resilience-predicates.g.ts`, `place-order-v2-fixture-dto.g.ts`, `place-order-v2-fixture-resilience-predicates.g.ts`, `deep-nest-fixture-dto.g.ts` — predicate TypeScript files
@@ -924,9 +935,10 @@ The scatter script (`tools/scripts/regen-typespec-emitters.mjs`):
 - All C# DTO files for fixture ops (sign, temporal, enum, placeOrder, deepNest, …):
   update by running the relevant byte-gate test suite (e.g. `byte-parity.test.ts`,
   `proto-grpc-byte-parity.test.ts`) and committing the output.
-- gRPC service / transport-mapper / C# client files: same.
-- `IKeyCustodianApi.g.cs` / `KeyCustodianApi.g.cs`: update via `facade-emitter.test.ts`.
-- Route registration C# files: update via `route-emit.integration.test.ts`.
+- FIXTURE gRPC service / transport-mapper / C# client files: same (the real-KC
+  services + mappers ARE regen-covered — see above).
+- FIXTURE route registration C# files: update via `route-emit.integration.test.ts`
+  (the two real-KC well-known route registrations ARE regen-covered — see above).
 - OpenAPI / SSE committed fixtures: update via `openapi-byte-parity.test.ts` /
   `sse-dispatch-emit.integration.test.ts`.
 - `WireVersion.g.cs` / `wire-identity.manifest.g.json`: byte-gated by

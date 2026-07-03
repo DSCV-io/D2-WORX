@@ -4,21 +4,26 @@
 
 // Façade emitter — pure string-template emission of the three generated
 // files that form the module façade layer for one module (one module = one
-// @d2ServedBy value):
+// @d2ServedBy value). All three live under a `Facade/` folder (namespace
+// segment `.Facade`) so the façade is a crisp sibling of the concern folders:
 //
-//   1. I<Module>Api.g.cs  → Clients project
+//   1. I<Module>Api.g.cs  → Clients project, `<clients-ns>.Facade`
 //      The curated public interface listing ONLY the exposed operations.
 //      Internal-only (@d2Internal) ops are structurally absent — the
 //      structural-absence property prevents callers from accidentally calling
-//      an op that was never meant to cross a boundary.
+//      an op that was never meant to cross a boundary. It imports each op's
+//      concern namespace (<clients-ns>.<Concern>) so the DTO types resolve.
 //
-//   2. <Module>Api.g.cs   → app/ project
+//   2. <Module>Api.g.cs   → app/ project, `<app-ns>.Facade`
 //      The thin delegating implementation. One primary-constructor parameter
 //      per exposed op (I<Op>Handler). Each method delegates to the matching
 //      handler's HandleAsync call.
 //
-//   3. <Module>ClientsGenerated.g.cs  → app/ project
+//   3. <Module><ClientsSegment>Generated.g.cs  → app/ project, `<app-ns>.Facade`
 //      The generated DI extension that registers the façade impl as Transient.
+//      The <ClientsSegment> is the clients-namespace leaf (e.g. "Client"), so
+//      the file + method names are derived, never hard-coded — a singular
+//      clients namespace yields AddD2<Module>Client() (no dangling plural).
 //      Lifetime is Transient (not Singleton) to match the handler lifetime —
 //      the impl injects transient handlers that depend on the scoped DbContext;
 //      a Singleton façade would capture the scoped DbContext (captive-dependency).
@@ -63,6 +68,13 @@ export interface ExposedOp {
    * Used to compute the handler-interface namespace for the impl using directive.
    */
   readonly category: "Commands" | "Queries";
+  /**
+   * The concern-qualified C# namespace the op's transport DTOs were emitted to
+   * (e.g. "D2.Edge.KeyCustodian.Client.Keyring"). The façade interface + impl
+   * add a `using` for each distinct value so the `<Op>Input`/`<Op>Output` types
+   * resolve from their concern folders.
+   */
+  readonly dtoNamespace: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -85,14 +97,17 @@ export interface ExposedOp {
  *                           order determines the method order in the interface
  *                           and the constructor-parameter order in the impl).
  *                           Must not be empty (a zero-op module produces no file).
- * @param clientsNamespace - The C# namespace for the Clients project (where the
- *                           interface and DTO types live). Used for both the
- *                           namespace declaration of the interface file AND the
- *                           `using` directive in the app-ns files.
- * @param appNamespace     - The C# namespace for the generated app-layer files
- *                           (impl + DI extension). Typically the module's
- *                           Application namespace root (e.g.
- *                           "D2.Edge.KeyCustodian.App.Application").
+ * @param clientsNamespace - The C# BASE namespace for the Clients project (the
+ *                           concern folders sit under it, e.g.
+ *                           "D2.Edge.KeyCustodian.Client"). The façade interface
+ *                           lands in `<clientsNamespace>.Facade`; the DI file +
+ *                           method names derive from its leaf segment.
+ * @param appNamespace     - The C# BASE namespace for the generated app-layer
+ *                           files. The impl + DI extension land in
+ *                           `<appNamespace>.Facade`; handler-interface `using`
+ *                           directives derive from `<appNamespace>.Handlers.…`.
+ *                           Typically the module's Application namespace root
+ *                           (e.g. "D2.Edge.KeyCustodian.App.Application").
  * @returns An array of exactly three EmittedFile instances, or an empty array
  *          when `exposedOps` is empty (zero-exposed-op module → no façade).
  */
@@ -115,17 +130,27 @@ export function emitFacade(
   const interfaceName = `I${moduleName}Api`;
   const implName = `${moduleName}Api`;
 
+  // The façade lives in a `Facade/` folder → namespace segment `.Facade`.
+  const facadeClientsNamespace = `${clientsNamespace}.Facade`;
+  const facadeAppNamespace = `${appNamespace}.Facade`;
+
+  // The DI file + method names derive from the clients-namespace LEAF segment
+  // (e.g. "Client") so a singular clients namespace produces a non-plural
+  // AddD2<Module>Client() — never a hard-coded "Clients" literal.
+  const clientsSegment = clientsNamespace.split(".").pop() ?? clientsNamespace;
+
   // Use the first op's sourceSpec for the banner (all ops in a module share the same spec).
   const sourceSpec = exposedOps[0]!.sourceSpec;
   const banner = buildBanner(sourceSpec);
 
   return [
-    emitInterface(interfaceName, exposedOps, clientsNamespace, banner),
+    emitInterface(interfaceName, exposedOps, facadeClientsNamespace, banner),
     emitImpl(
       interfaceName,
       implName,
       exposedOps,
-      clientsNamespace,
+      facadeClientsNamespace,
+      facadeAppNamespace,
       appNamespace,
       banner,
     ),
@@ -133,8 +158,9 @@ export function emitFacade(
       interfaceName,
       implName,
       moduleName,
-      clientsNamespace,
-      appNamespace,
+      clientsSegment,
+      facadeClientsNamespace,
+      facadeAppNamespace,
       banner,
     ),
   ];
@@ -144,10 +170,15 @@ export function emitFacade(
 // Private helpers — one per generated file
 // ---------------------------------------------------------------------------
 
+/** Distinct, alphabetically-sorted concern DTO namespaces across the ops. */
+function distinctDtoNamespaces(exposedOps: readonly ExposedOp[]): string[] {
+  return [...new Set(exposedOps.map((op) => op.dtoNamespace))].sort();
+}
+
 function emitInterface(
   interfaceName: string,
   exposedOps: readonly ExposedOp[],
-  clientsNamespace: string,
+  facadeClientsNamespace: string,
   banner: string,
 ): EmittedFile {
   const lines: string[] = [];
@@ -155,7 +186,11 @@ function emitInterface(
   lines.push(banner);
   lines.push("#nullable enable");
   lines.push("");
-  lines.push(`namespace ${clientsNamespace};`);
+  lines.push(`namespace ${facadeClientsNamespace};`);
+  lines.push("");
+  // Import each op's concern namespace so the <Op>Input/<Op>Output types resolve.
+  for (const ns of distinctDtoNamespaces(exposedOps))
+    lines.push(`using ${ns};`);
   lines.push("");
 
   lines.push(`/// <summary>`);
@@ -190,16 +225,21 @@ function emitImpl(
   interfaceName: string,
   implName: string,
   exposedOps: readonly ExposedOp[],
-  clientsNamespace: string,
+  facadeClientsNamespace: string,
+  facadeAppNamespace: string,
   appNamespace: string,
   banner: string,
 ): EmittedFile {
   const lines: string[] = [];
 
-  // Compute all using namespaces and sort alphabetically (SA1210 compliance).
-  // Handler namespaces: e.g. D2.Edge.KeyCustodian.App.Application.Handlers.Queries.GetJwks
+  // Compute all using namespaces and sort alphabetically (SA1210 compliance):
+  //   - the façade interface namespace (<clients-ns>.Facade),
+  //   - each op's concern DTO namespace (<clients-ns>.<Concern>),
+  //   - each op's handler-interface namespace
+  //     (e.g. D2.Edge.KeyCustodian.App.Application.Handlers.Queries.GetJwks).
   const allUsings = [
-    clientsNamespace,
+    facadeClientsNamespace,
+    ...distinctDtoNamespaces(exposedOps),
     ...exposedOps.map(
       (op) => `${appNamespace}.Handlers.${op.category}.${toPascal(op.opName)}`,
     ),
@@ -208,7 +248,7 @@ function emitImpl(
   lines.push(banner);
   lines.push("#nullable enable");
   lines.push("");
-  lines.push(`namespace ${appNamespace};`);
+  lines.push(`namespace ${facadeAppNamespace};`);
   lines.push("");
   for (const ns of allUsings) lines.push(`using ${ns};`);
   lines.push("");
@@ -255,22 +295,26 @@ function emitDiExtension(
   interfaceName: string,
   implName: string,
   moduleName: string,
-  clientsNamespace: string,
-  appNamespace: string,
+  clientsSegment: string,
+  facadeClientsNamespace: string,
+  facadeAppNamespace: string,
   banner: string,
 ): EmittedFile {
-  const extensionMethodName = `AddD2${moduleName}Clients`;
-  const fileName = `${moduleName}ClientsGenerated.g.cs`;
+  // File + method names derive from the clients-namespace leaf segment so a
+  // singular clients namespace yields AddD2<Module>Client() with no plural.
+  const extensionMethodName = `AddD2${moduleName}${clientsSegment}`;
+  const fileName = `${moduleName}${clientsSegment}Generated.g.cs`;
 
   const lines: string[] = [];
 
   lines.push(banner);
   lines.push("#nullable enable");
   lines.push("");
-  lines.push(`namespace ${appNamespace};`);
+  lines.push(`namespace ${facadeAppNamespace};`);
   lines.push("");
-  // The interface lives in the Clients namespace — a using is required.
-  lines.push(`using ${clientsNamespace};`);
+  // The interface lives in the façade clients namespace — a using is required.
+  // The impl shares this file's namespace, so it needs no using.
+  lines.push(`using ${facadeClientsNamespace};`);
   lines.push("");
 
   lines.push(`/// <summary>`);
@@ -280,7 +324,7 @@ function emitDiExtension(
   lines.push(`/// Called from the hand-written app DI extension.`);
   lines.push(`/// </summary>`);
   lines.push(
-    `public static class ${moduleName}ClientsGeneratedServiceCollectionExtensions`,
+    `public static class ${moduleName}${clientsSegment}GeneratedServiceCollectionExtensions`,
   );
   lines.push("{");
   lines.push(`    extension(IServiceCollection services)`);

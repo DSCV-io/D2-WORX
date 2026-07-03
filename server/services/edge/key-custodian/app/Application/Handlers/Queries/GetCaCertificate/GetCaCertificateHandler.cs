@@ -9,8 +9,8 @@ namespace D2.Edge.KeyCustodian.App.Application.Handlers.Queries.GetCaCertificate
 using D2.Shared.Auth.Abstractions;
 
 using H = D2.Edge.KeyCustodian.App.Application.Handlers.Queries.GetCaCertificate.IGetCaCertificateHandler;
-using I = D2.Edge.KeyCustodian.Clients.GetCaCertificateInput;
-using O = D2.Edge.KeyCustodian.Clients.GetCaCertificateOutput;
+using I = D2.Edge.KeyCustodian.Client.CaCertificate.GetCaCertificateInput;
+using O = D2.Edge.KeyCustodian.Client.CaCertificate.GetCaCertificateOutput;
 
 /// <summary>
 /// Returns the certificate-authority chain — the active root (the trust anchor a

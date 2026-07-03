@@ -24,6 +24,16 @@ export const D2_AUDIENCE_KEY = Symbol.for("D2.d2Audience");
 /** State key for @d2ServedBy — stores the owning module/service string. */
 export const D2_SERVED_BY_KEY = Symbol.for("D2.d2ServedBy");
 
+/**
+ * State key for @d2Concern — stores the co-location concern segment string on
+ * the operation. The C# DTO emitter appends it to the clients namespace
+ * (`<csharp-clients-namespace>.<Concern>`) so a client-exposed op's transport
+ * DTOs land in a concern-named folder beside the hand-written runtime that
+ * serves them. Emitters read back: program.stateMap(D2_CONCERN_KEY).get(op) →
+ * string.
+ */
+export const D2_CONCERN_KEY = Symbol.for("D2.d2Concern");
+
 /** State key for @d2GrpcMethod — stores the {@link GrpcMethodPayload}. */
 export const D2_GRPC_METHOD_KEY = Symbol.for("D2.d2GrpcMethod");
 

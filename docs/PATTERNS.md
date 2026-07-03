@@ -101,7 +101,7 @@ Domain  ←  App  ←  Infra  ←  Api      (Tests reference what they test; Cli
 | `infra/` | `D2.<Area>.<Service>.Infra` | `Microsoft.NET.Sdk` | Adapters implementing the app's ports — the **only** vendor-SDK-touching layer. |
 | `api/` | `D2.<Area>.<Service>.Api` | `Microsoft.NET.Sdk.Web` | Composition root — `Program.cs` + host wiring + transport adapters (gRPC/REST/SSE) + transport mappers. The **only** project allowed to reference `infra/`. |
 | `tests/` | `D2.<Area>.<Service>.Tests` | `Microsoft.NET.Sdk` | One project per service — `Unit/` + `Integration/` mirroring source. |
-| `clients/dotnet/` | `D2.<Area>.<Service>.Client` | `Microsoft.NET.Sdk` | Consumer-facing — references **contracts + shared libs only**, never the service's internals. |
+| `client/` | `D2.<Area>.<Service>.Client` | `Microsoft.NET.Sdk` | Consumer-facing client package (SINGULAR, matching its `.Client` assembly name) — references **contracts + shared libs only**, never the service's internals. Service-client RUNTIME code lives here, never under `server/shared/`. |
 
 `<Area>` = `Edge` (or the service's own name when standalone). **WHY one direction:** vendor churn touches infra only; the domain stays testable with zero infrastructure; the api is the one place every concrete adapter + transport binding is named. The tie-breaker for an ambiguous placement: *"which layer still compiles if I delete the layer below the candidate?"*
 
@@ -122,6 +122,8 @@ app/
 │   ├── Handlers/
 │   │   ├── Commands/<Operation>/       # one folder per command operation
 │   │   └── Queries/<Operation>/        # one folder per query operation
+│   ├── <Concern>/                      # op-noun concern folder — support types (siblings of Handlers/)
+│   ├── Facade/                         # generated module façade impl + DI registration (<app-ns>.Facade)
 │   ├── Observability/                  # <Service>Log + <Service>Metrics
 │   └── <Service>AppServiceCollectionExtensions.cs   # AddD2<Service>App()
 └── Infrastructure/
@@ -142,6 +144,8 @@ Application/Handlers/Commands/RotateKey/
 ```
 
 Naming law: handler interface `I<Operation>Handler`, impl `<Operation>Handler` (file = type; the bare `<Operation>` type name is not used), input `<Operation>Input` (never `Request`/`Command`), output `<Operation>Output` (never document-style `Outcome`/`Plan`). An operation-private record is `<Operation><Role>` (suffixed) or a `private` nested type. One interface per file; consumers `using` the folder namespace directly — no `partial` aggregation, no grouping aliases. **WHY co-locate:** an interface and its impl are read together nearly always; two unrelated operations' interfaces are read together nearly never. A DTO bucket (`Models/`) is not used — a DTO either co-locates with its operation or, when a shape is shared by 2+ operations, is promoted to a domain VO.
+
+**App-layer op-noun concern folders + `Facade/`.** The app's *support types* — helpers, capabilities, and consumer-side sources a handler leans on — go in **op-noun concern folders that are siblings of `Handlers/`** (namespace = folder, `<app-ns>.<Concern>`), NOT nested inside `Handlers/<Op>/`. The `Application/` root keeps ONLY the composition-root extension. KeyCustodian: `Signing/` (`KeyDomainSigner`, `JwtSigningCapability` + DI extension), `Issuance/` (the isolated CA-leaf-signing capability), `CertificateAuthority/` (`CaSuccessorFactory`, serving several lifecycle handlers), `Keyring/` (the in-process keyring source + DI extension), and `Facade/` (the generated `<Module>Api.g.cs` façade impl + its DI registration). **WHY not nest in `Handlers/<Op>/`:** the per-op folder has a fixed four-file shape, and a support type usually serves *several* handlers or the *consumer side* — no single op folder is its home; a concern folder keeps the shape crisp and folder=namespace intact.
 
 ### Command vs Query — the binary side-effect rule
 
@@ -167,6 +171,8 @@ infra/Observability/                                  (infra-side log delegates 
 ```
 
 **WHY mandatory even for a sole impl:** the subfolder is the seam a second vendor lands on without a reshuffle — the day Resend gains an SES fallback, the new adapter drops into a sibling folder and nothing else moves. The generic `Providers/` wrapper is dead; concern + vendor replaces it. The concern-noun set is open-but-deliberate — adding a noun is a standard amendment (this doc + [ADR-0020](adrs/0020-service-project-structure.md)), not an ad-hoc per-service invention.
+
+**Client package layout — same concern convention.** The consumer-facing `client/` package mirrors the app-layer concern convention: the package root holds metadata only (csproj / README / CHANGELOG / `PublicAPI.*.txt` / `.release-fingerprint`); a `Facade/` folder holds the generated module façade interface (`I<Module>Api.g.cs`, namespace `<clients-ns>.Facade`); and each op-aligned concern folder holds that concern's generated wire `.g.cs` DTOs **plus** the hand-written runtime that serves them (namespace `<clients-ns>.<Concern>`). KeyCustodian: `Jwks/`, `OidcConfiguration/`, `Signing/` (Sign DTOs + `IJwtSigningCapability`), `Keyring/` (GetKeyring DTOs + the rotation-aware consumer runtime + the proto redaction partial `KeyringEntry.Redaction.cs`), `Issuance/`, `CaCertificate/`. The concern-to-folder assignment is spec-driven via the TypeSpec `@d2Concern("<Segment>")` decorator ([SRC_GEN.md](SRC_GEN.md)), which drives the emitted DTO namespace AND the committed-home folder in lockstep, so folder and namespace never diverge.
 
 ### Multi-provider — the keyed-resolver recipe
 
@@ -428,6 +434,12 @@ public sealed class GetEntityByIdHandler(ITieredCache cache, IEntityRepo repo) :
 
 Canonical: [`server/shared/dotnet/caching/abstractions/README.md`](../server/shared/dotnet/caching/abstractions/README.md). Default impls: [`caching/local-default/`](../server/shared/dotnet/caching/local-default/README.md), [`caching/distributed-redis/`](../server/shared/dotnet/caching/distributed-redis/README.md), [`caching/tiered/`](../server/shared/dotnet/caching/tiered/README.md).
 
+### Keyring-backed payload crypto — in-process-only, never a shared cache tier
+
+The KC client package `D2.Edge.KeyCustodian.Client` turns the KeyCustodian keyring surface into a keyed, hot-swappable `IPayloadCrypto` for a payload domain. The key material is held **in-process-memory-only** and refreshed by the `KeyRotatedEvent` rotation event (atomic hot-swap on receipt) — it is NEVER placed in Redis / `IDistributedCache` / `ITieredCache` / any shared cache tier, because the payload keyring is itself the key material that protects cache-bound data (caching it in the tier it protects would be circular). A failed refresh keeps serving the current keyring (bounded — no tight-loop, no dead-letter). Wire it with `AddD2EncryptionFromKeyCustodian(domain, callingModuleId)` (in-process leaf source, in the KC app) or `AddD2EncryptionForViaKeyring(domain)` (cross-process gRPC source, in the client package); consumers resolve `[FromKeyedServices(domain)] IPayloadCrypto` and call `Encrypt` / `Decrypt` — they never see a raw keyring.
+
+Canonical: [`server/services/edge/key-custodian/client/README.md`](../server/services/edge/key-custodian/client/README.md).
+
 ---
 
 ## Composition root
@@ -586,7 +598,7 @@ public interface IJwtSigningCapability
 }
 
 // Called ONLY from the owning composition (the JWT minter / auth module) —
-// never from the general client registration (AddD2KeyCustodianClients()).
+// never from the general client registration (AddD2KeyCustodianClient()).
 services.AddD2JwtSigningCapability();
 ```
 

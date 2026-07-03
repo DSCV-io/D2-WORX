@@ -11,11 +11,11 @@ namespace D2.Edge.Tests.TypeSpecGrpc.Generated;
 
 using GetCaCertificateRequest = global::D2.Services.Protos.KeyCustodian.V2Alpha.GetCaCertificateRequest;
 using GetCaCertificateResponse = global::D2.Services.Protos.KeyCustodian.V2Alpha.GetCaCertificateResponse;
-using GetCaCertificateInput = global::D2.Edge.KeyCustodian.Clients.GetCaCertificateInput;
-using GetCaCertificateOutput = global::D2.Edge.KeyCustodian.Clients.GetCaCertificateOutput;
+using GetCaCertificateInput = global::D2.Edge.KeyCustodian.Client.CaCertificate.GetCaCertificateInput;
+using GetCaCertificateOutput = global::D2.Edge.KeyCustodian.Client.CaCertificate.GetCaCertificateOutput;
 using D2.Shared.Result.Grpc;
 using Grpc.Core;
-using D2.Edge.KeyCustodian.Clients;
+using D2.Edge.KeyCustodian.Client.Facade;
 
 /// <summary>Generated gRPC service for the <c>GetCaCertificate</c> operation, delegating to <see cref="IKeyCustodianApi"/>.</summary>
 public sealed class KeyCustodianCaCertificateService(IKeyCustodianApi facade)

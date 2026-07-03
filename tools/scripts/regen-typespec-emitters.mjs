@@ -90,7 +90,7 @@ const TEMP_MAIN_TSP = join(CONTRACTS_DIR, "main.tsp");
 // test-host output are listed. This constraint exists because the main
 // tsp compile run processes all fixtures together with the real tspconfig.yaml
 // (csharp-app-namespace-base set), which routes ALL @d2InProcess / @d2GrpcMethod
-// fixture ops into the Clients namespace. In contrast, the byte-gate test suites
+// fixture ops into the Client namespace. In contrast, the byte-gate test suites
 // call emitter functions directly with explicit fixture namespaces
 // (D2.Edge.Tests.TypeSpecDto.Generated, etc.), producing different C# content
 // for the same logical fixtures.
@@ -113,89 +113,129 @@ const TEMP_MAIN_TSP = join(CONTRACTS_DIR, "main.tsp");
 
 /** @type {ReadonlyArray<{ from: string; to: string }>} */
 const COPY_MANIFEST = [
-  // ---- GetJwks DTOs (Clients namespace — matches tsp compile routing) ----
+  // ---- GetJwks DTOs (Client namespace, Jwks concern — @d2Concern("Jwks")) ----
   {
     from: "GetJwksInput.g.cs",
-    to: "server/services/edge/key-custodian/clients/GetJwksInput.g.cs",
+    to: "server/services/edge/key-custodian/client/Jwks/GetJwksInput.g.cs",
   },
   {
     from: "GetJwksOutput.g.cs",
-    to: "server/services/edge/key-custodian/clients/GetJwksOutput.g.cs",
+    to: "server/services/edge/key-custodian/client/Jwks/GetJwksOutput.g.cs",
   },
 
-  // ---- OIDC discovery DTOs (Clients namespace — matches tsp compile routing) ----
+  // ---- OIDC discovery DTOs (Client namespace, OidcConfiguration concern) ----
   {
     from: "GetOidcConfigurationInput.g.cs",
-    to: "server/services/edge/key-custodian/clients/GetOidcConfigurationInput.g.cs",
+    to: "server/services/edge/key-custodian/client/OidcConfiguration/GetOidcConfigurationInput.g.cs",
   },
   {
     from: "GetOidcConfigurationOutput.g.cs",
-    to: "server/services/edge/key-custodian/clients/GetOidcConfigurationOutput.g.cs",
+    to: "server/services/edge/key-custodian/client/OidcConfiguration/GetOidcConfigurationOutput.g.cs",
   },
 
-  // ---- Sign DTOs (Clients namespace — matches tsp compile routing) ----
+  // ---- Sign DTOs (Client namespace, Signing concern) ----
   {
     from: "SignInput.g.cs",
-    to: "server/services/edge/key-custodian/clients/SignInput.g.cs",
+    to: "server/services/edge/key-custodian/client/Signing/SignInput.g.cs",
   },
   {
     from: "SignOutput.g.cs",
-    to: "server/services/edge/key-custodian/clients/SignOutput.g.cs",
+    to: "server/services/edge/key-custodian/client/Signing/SignOutput.g.cs",
   },
 
-  // ---- GetKeyring DTOs (Clients namespace — matches tsp compile routing;
-  //      GetKeyringOutput.g.cs also carries the nested KeyringEntry record with
-  //      keyBytes redacted SecretInformation) ----
+  // ---- GetKeyring DTOs (Client namespace, Keyring concern; GetKeyringOutput.g.cs
+  //      also carries the nested KeyringEntry record with keyBytes redacted
+  //      SecretInformation) ----
   {
     from: "GetKeyringInput.g.cs",
-    to: "server/services/edge/key-custodian/clients/GetKeyringInput.g.cs",
+    to: "server/services/edge/key-custodian/client/Keyring/GetKeyringInput.g.cs",
   },
   {
     from: "GetKeyringOutput.g.cs",
-    to: "server/services/edge/key-custodian/clients/GetKeyringOutput.g.cs",
+    to: "server/services/edge/key-custodian/client/Keyring/GetKeyringOutput.g.cs",
   },
 
-  // ---- IssueLeaf DTOs (Clients namespace — matches tsp compile routing;
-  //      all-public issuance material, no redaction — CSR in, cert out) ----
+  // ---- IssueLeaf DTOs (Client namespace, Issuance concern; all-public issuance
+  //      material, no redaction — CSR in, cert out) ----
   {
     from: "IssueLeafInput.g.cs",
-    to: "server/services/edge/key-custodian/clients/IssueLeafInput.g.cs",
+    to: "server/services/edge/key-custodian/client/Issuance/IssueLeafInput.g.cs",
   },
   {
     from: "IssueLeafOutput.g.cs",
-    to: "server/services/edge/key-custodian/clients/IssueLeafOutput.g.cs",
+    to: "server/services/edge/key-custodian/client/Issuance/IssueLeafOutput.g.cs",
   },
 
-  // ---- GetCaCertificate DTOs (Clients namespace — matches tsp compile routing;
-  //      empty input, public root+intermediate chain output) ----
+  // ---- GetCaCertificate DTOs (Client namespace, CaCertificate concern; empty
+  //      input, public root+intermediate chain output) ----
   {
     from: "GetCaCertificateInput.g.cs",
-    to: "server/services/edge/key-custodian/clients/GetCaCertificateInput.g.cs",
+    to: "server/services/edge/key-custodian/client/CaCertificate/GetCaCertificateInput.g.cs",
   },
   {
     from: "GetCaCertificateOutput.g.cs",
-    to: "server/services/edge/key-custodian/clients/GetCaCertificateOutput.g.cs",
+    to: "server/services/edge/key-custodian/client/CaCertificate/GetCaCertificateOutput.g.cs",
   },
 
-  // ---- Module façade interface + impl (real KC ops only — getJwks +
-  //      getOidcConfiguration). After the fixture wire-identity rename
-  //      the fixtures no longer serve-as "KeyCustodian", so tsp compile's
-  //      IKeyCustodianApi / KeyCustodianApi carry ONLY the real KC ops and are
-  //      namespace-stable — scattered here (the facade-emitter.test.ts byte-gate
-  //      pins them independently). ----
+  // ---- Module façade interface + impl (real KC ops only). The façade lives in
+  //      a Facade/ folder → namespace <clients-ns>.Facade (interface) /
+  //      <app-ns>.Facade (impl). The facade-emitter.test.ts byte-gate pins them
+  //      independently. ----
   {
     from: "IKeyCustodianApi.g.cs",
-    to: "server/services/edge/key-custodian/clients/IKeyCustodianApi.g.cs",
+    to: "server/services/edge/key-custodian/client/Facade/IKeyCustodianApi.g.cs",
   },
   {
     from: "KeyCustodianApi.g.cs",
-    to: "server/services/edge/key-custodian/app/Application/KeyCustodianApi.g.cs",
+    to: "server/services/edge/key-custodian/app/Application/Facade/KeyCustodianApi.g.cs",
   },
 
-  // ---- Façade DI extension (app/Application/) ----
+  // ---- Façade DI extension (app/Application/Facade/). The file + method names
+  //      derive from the clients-namespace leaf ("Client"), so the identifier is
+  //      the non-plural KeyCustodianClientGenerated.g.cs / AddD2KeyCustodianClient(). ----
   {
-    from: "KeyCustodianClientsGenerated.g.cs",
-    to: "server/services/edge/key-custodian/app/Application/KeyCustodianClientsGenerated.g.cs",
+    from: "KeyCustodianClientGenerated.g.cs",
+    to: "server/services/edge/key-custodian/app/Application/Facade/KeyCustodianClientGenerated.g.cs",
+  },
+
+  // ---- KeyCustodian gRPC service impls + transport mappers. The global tsp
+  //      compile emits these into grpc-service-namespace
+  //      (D2.Edge.Tests.TypeSpecGrpc.Generated) — matching the committed home —
+  //      delegating to the facade IKeyCustodianApi (<clients-ns>.Facade) and
+  //      mapping the concern-qualified DTOs. Scattered here (closing the prior
+  //      pipeline-coverage gap); the fixture gRPC services stay excluded
+  //      (their committed namespaces differ from the global compile). ----
+  {
+    from: "KeyCustodianSignerService.g.cs",
+    to: "server/services/edge/tests/Unit/KeyCustodian/TypeSpecGrpc/Generated/KeyCustodianSignerService.g.cs",
+  },
+  {
+    from: "KeyCustodianKeyringService.g.cs",
+    to: "server/services/edge/tests/Unit/KeyCustodian/TypeSpecGrpc/Generated/KeyCustodianKeyringService.g.cs",
+  },
+  {
+    from: "KeyCustodianCertificateAuthorityService.g.cs",
+    to: "server/services/edge/tests/Unit/KeyCustodian/TypeSpecGrpc/Generated/KeyCustodianCertificateAuthorityService.g.cs",
+  },
+  {
+    from: "KeyCustodianCaCertificateService.g.cs",
+    to: "server/services/edge/tests/Unit/KeyCustodian/TypeSpecGrpc/Generated/KeyCustodianCaCertificateService.g.cs",
+  },
+  {
+    from: "SignTransportMappers.g.cs",
+    to: "server/services/edge/tests/Unit/KeyCustodian/TypeSpecGrpc/Generated/SignTransportMappers.g.cs",
+  },
+  {
+    from: "GetKeyringTransportMappers.g.cs",
+    to: "server/services/edge/tests/Unit/KeyCustodian/TypeSpecGrpc/Generated/GetKeyringTransportMappers.g.cs",
+  },
+  {
+    from: "IssueLeafTransportMappers.g.cs",
+    to: "server/services/edge/tests/Unit/KeyCustodian/TypeSpecGrpc/Generated/IssueLeafTransportMappers.g.cs",
+  },
+  {
+    from: "GetCaCertificateTransportMappers.g.cs",
+    to: "server/services/edge/tests/Unit/KeyCustodian/TypeSpecGrpc/Generated/GetCaCertificateTransportMappers.g.cs",
   },
 
   // ---- Handler interfaces (per-op CQRS folder) ----

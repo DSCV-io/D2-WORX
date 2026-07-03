@@ -218,6 +218,29 @@ export function validateServedBy(
     });
 }
 
+/**
+ * Valid concern segment: a PascalCase C# identifier segment (a leading letter
+ * followed by letters/digits). The concern becomes a namespace segment
+ * (`<clients-ns>.<Concern>`) and a folder name, so it must be a legal single
+ * C# identifier — no dots, whitespace, or leading digit. Bounded-length
+ * identifier input, linear pattern (Bucket 2 per regex-redos-discipline).
+ */
+const _CONCERN_SEGMENT = /^[A-Za-z][A-Za-z0-9]*$/;
+
+/** Validate the concern segment for @d2Concern. */
+export function validateConcern(
+  context: DecoratorContext,
+  target: Operation,
+  concern: string,
+): void {
+  if (!_CONCERN_SEGMENT.test(concern))
+    $lib.reportDiagnostic(context.program, {
+      code: "invalid-concern",
+      format: { value: concern },
+      target,
+    });
+}
+
 // ----------------------------------------------------------------
 // @d2Field field-number validation
 // ----------------------------------------------------------------

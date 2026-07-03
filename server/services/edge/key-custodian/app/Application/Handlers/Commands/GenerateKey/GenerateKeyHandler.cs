@@ -6,6 +6,8 @@
 
 namespace D2.Edge.KeyCustodian.App.Application.Handlers.Commands.GenerateKey;
 
+using D2.Edge.KeyCustodian.App.Application.CertificateAuthority;
+
 using H = D2.Edge.KeyCustodian.App.Application.Handlers.Commands.GenerateKey.IGenerateKeyHandler;
 using I = GenerateKeyInput;
 using O = D2.Edge.KeyCustodian.Domain.Rules.KeySummary;

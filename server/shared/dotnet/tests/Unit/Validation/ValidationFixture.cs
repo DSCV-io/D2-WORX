@@ -142,14 +142,19 @@ internal static class ValidationFixture
         [CallerFilePath] string thisSourcePath = "")
     {
         // Walk up from this source file's directory until the repo root is
-        // found — identified by a '.git' directory (only present at the true
-        // root, unlike 'D2.slnx' which sits in server/). This is robust under
-        // any depth rearrangement of the tests folder — no fixed iteration
-        // count, no silent wrong-root on partial matches.
+        // found — identified by a '.git' entry (only present at the true
+        // root, unlike 'D2.slnx' which sits in server/). In a primary clone
+        // '.git' is a DIRECTORY; in a linked git worktree it is a FILE
+        // pointing at the shared gitdir — accept both so the suite runs in
+        // worktrees. This is robust under any depth rearrangement of the
+        // tests folder — no fixed iteration count, no silent wrong-root on
+        // partial matches.
         var dir = Path.GetDirectoryName(thisSourcePath) ?? string.Empty;
         while (dir.Truthy())
         {
-            if (Directory.Exists(Path.Combine(dir, ".git")))
+            var gitEntry = Path.Combine(dir, ".git");
+
+            if (Directory.Exists(gitEntry) || File.Exists(gitEntry))
                 return Path.Combine(dir, "contracts", "validation", "fixtures", $"{name}.json");
 
             var parent = Path.GetDirectoryName(dir);
@@ -160,7 +165,7 @@ internal static class ValidationFixture
         }
 
         throw new InvalidOperationException(
-            $"Could not locate the repo root (no '.git' directory found) " +
+            $"Could not locate the repo root (no '.git' entry found) " +
             $"walking up from '{Path.GetDirectoryName(thisSourcePath)}'. " +
             $"The fixture path for corpus '{name}' cannot be resolved.");
     }

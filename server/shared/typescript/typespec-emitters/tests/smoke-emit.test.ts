@@ -33,6 +33,7 @@ import {
 } from "@typespec/compiler/testing";
 import {
   D2_SERVED_BY_KEY,
+  D2_CONCERN_KEY,
   D2_GRPC_METHOD_KEY,
   D2_IN_PROCESS_KEY,
   D2_COMMAND_KEY,
@@ -1061,14 +1062,17 @@ describe("$onEmit_directUnit_NamespaceRouting", () => {
     directUnitOps.push(op);
 
     // @d2Query + @d2InProcess → isExposed=true, category="Queries".
+    // @d2Concern("Jwks") → DTOs route to the concern-qualified Clients namespace.
     const queryMap = new Map<object, unknown>([[op, true]]);
     const inProcessMap = new Map<object, unknown>([[op, true]]);
+    const concernMap = new Map<object, unknown>([[op, "Jwks"]]);
 
     const mockProgram = {
       diagnostics: [],
       stateMap(key: symbol): Map<object, unknown> {
         if (key === D2_QUERY_KEY) return queryMap;
         if (key === D2_IN_PROCESS_KEY) return inProcessMap;
+        if (key === D2_CONCERN_KEY) return concernMap;
         return new Map();
       },
     } as unknown as Program;
@@ -1078,7 +1082,7 @@ describe("$onEmit_directUnit_NamespaceRouting", () => {
       emitterOutputDir: "/out",
       options: {
         "csharp-namespace": "D2.Test.Fixture",
-        "csharp-clients-namespace": "D2.Edge.KeyCustodian.Clients",
+        "csharp-clients-namespace": "D2.Edge.KeyCustodian.Client",
         "csharp-app-namespace-base":
           "D2.Edge.KeyCustodian.App.Application.Handlers",
         "grpc-service-namespace": "D2.Test.Grpc",
@@ -1087,13 +1091,14 @@ describe("$onEmit_directUnit_NamespaceRouting", () => {
 
     await $onEmit(mockContext);
 
-    // DTOs should land in the Clients namespace, not the fixture or app namespace.
+    // DTOs should land in the concern-qualified Clients namespace, not the
+    // fixture or app namespace.
     const csOutput = directUnitEmitted.find((e) =>
       e.path.includes("GetJwksOutput.g.cs"),
     );
     expect(csOutput).toBeDefined();
     expect(csOutput!.content).toContain(
-      "namespace D2.Edge.KeyCustodian.Clients;",
+      "namespace D2.Edge.KeyCustodian.Client.Jwks;",
     );
   });
 
@@ -1144,7 +1149,7 @@ describe("$onEmit_directUnit_NamespaceRouting", () => {
       emitterOutputDir: "/out",
       options: {
         "csharp-namespace": "D2.Test.Fixture",
-        "csharp-clients-namespace": "D2.Edge.KeyCustodian.Clients",
+        "csharp-clients-namespace": "D2.Edge.KeyCustodian.Client",
         "csharp-app-namespace-base":
           "D2.Edge.KeyCustodian.App.Application.Handlers",
         "grpc-service-namespace": "D2.Test.Grpc",
@@ -1500,6 +1505,7 @@ describe("$onEmit_directUnit_NamespaceRouting", () => {
     const queryMap = new Map<object, unknown>([[op, true]]);
     const inProcessMap = new Map<object, unknown>([[op, true]]);
     const servedByMap = new Map<object, unknown>([[op, "KeyCustodian"]]);
+    const concernMap = new Map<object, unknown>([[op, "Jwks"]]);
 
     const mockProgram = {
       diagnostics: [],
@@ -1507,6 +1513,7 @@ describe("$onEmit_directUnit_NamespaceRouting", () => {
         if (key === D2_QUERY_KEY) return queryMap;
         if (key === D2_IN_PROCESS_KEY) return inProcessMap;
         if (key === D2_SERVED_BY_KEY) return servedByMap;
+        if (key === D2_CONCERN_KEY) return concernMap;
         return new Map();
       },
       reportDiagnostic() {},
@@ -1517,7 +1524,7 @@ describe("$onEmit_directUnit_NamespaceRouting", () => {
       emitterOutputDir: "/out",
       options: {
         "csharp-namespace": "D2.Test.Fixture",
-        "csharp-clients-namespace": "D2.Edge.KeyCustodian.Clients",
+        "csharp-clients-namespace": "D2.Edge.KeyCustodian.Client",
         "csharp-app-namespace-base":
           "D2.Edge.KeyCustodian.App.Application.Handlers",
       },
@@ -1533,28 +1540,28 @@ describe("$onEmit_directUnit_NamespaceRouting", () => {
     // Impl file emitted (the concrete class, not the interface — ends with /KeyCustodianApi.g.cs).
     expect(paths.some((p) => p.endsWith("/KeyCustodianApi.g.cs"))).toBe(true);
 
-    // DI extension file emitted.
+    // DI extension file emitted (non-plural name from the clients-ns leaf).
     expect(
-      paths.some((p) => p.includes("KeyCustodianClientsGenerated.g.cs")),
+      paths.some((p) => p.includes("KeyCustodianClientGenerated.g.cs")),
     ).toBe(true);
 
-    // Interface content is in the Clients namespace (Clients-project file).
+    // Interface content is in the Clients Facade namespace (Clients-project file).
     const ifaceFile = directUnitEmitted.find((e) =>
       e.path.includes("IKeyCustodianApi.g.cs"),
     );
     expect(ifaceFile).toBeDefined();
     expect(ifaceFile!.content).toContain(
-      "namespace D2.Edge.KeyCustodian.Clients;",
+      "namespace D2.Edge.KeyCustodian.Client.Facade;",
     );
     expect(ifaceFile!.content).toContain("GetJwksAsync(");
 
-    // Impl file is in the app namespace root (stripped .Handlers suffix).
+    // Impl file is in the app namespace root's Facade sub-namespace.
     const implFile = directUnitEmitted.find((e) =>
       e.path.endsWith("/KeyCustodianApi.g.cs"),
     );
     expect(implFile).toBeDefined();
     expect(implFile!.content).toContain(
-      "namespace D2.Edge.KeyCustodian.App.Application;",
+      "namespace D2.Edge.KeyCustodian.App.Application.Facade;",
     );
   });
 
@@ -1614,7 +1621,7 @@ describe("$onEmit_directUnit_NamespaceRouting", () => {
       emitterOutputDir: "/out",
       options: {
         "csharp-namespace": "D2.Test.Fixture",
-        "csharp-clients-namespace": "D2.Edge.KeyCustodian.Clients",
+        "csharp-clients-namespace": "D2.Edge.KeyCustodian.Client",
         "csharp-app-namespace-base":
           "D2.Edge.KeyCustodian.App.Application.Handlers",
         "grpc-service-namespace": "D2.Test.Grpc",
@@ -1629,7 +1636,7 @@ describe("$onEmit_directUnit_NamespaceRouting", () => {
     );
     expect(csOutput).toBeDefined();
     expect(csOutput!.content).toContain(
-      "namespace D2.Edge.KeyCustodian.Clients;",
+      "namespace D2.Edge.KeyCustodian.Client;",
     );
 
     // Handler interface emitted — namespace falls back to grpcServiceNs because category=undefined.

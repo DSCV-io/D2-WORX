@@ -6,9 +6,9 @@
 
 namespace D2.Edge.Tests.Unit.KeyCustodian.App;
 
-using D2.Edge.KeyCustodian.App.Application;
 using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.IssueLeaf;
 using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.IssueWorkloadCertificate;
+using D2.Edge.KeyCustodian.App.Application.Issuance;
 using D2.Shared.Auth.Abstractions;
 
 /// <summary>
@@ -38,7 +38,7 @@ public sealed class IssueLeafHandlerTests
             inner);
 
         var result = await shell.HandleAsync(
-            new D2.Edge.KeyCustodian.Clients.IssueLeafInput(csr));
+            new D2.Edge.KeyCustodian.Client.Issuance.IssueLeafInput(csr));
 
         result.Success.Should().BeTrue();
         var output = result.Data!;
@@ -74,7 +74,7 @@ public sealed class IssueLeafHandlerTests
             inner);
 
         var result = await shell.HandleAsync(
-            new D2.Edge.KeyCustodian.Clients.IssueLeafInput(csr));
+            new D2.Edge.KeyCustodian.Client.Issuance.IssueLeafInput(csr));
 
         result.Success.Should().BeFalse();
         result.StatusCode.Should().Be(HttpStatusCode.Forbidden);
@@ -96,7 +96,7 @@ public sealed class IssueLeafHandlerTests
             inner);
 
         var result = await shell.HandleAsync(
-            new D2.Edge.KeyCustodian.Clients.IssueLeafInput(
+            new D2.Edge.KeyCustodian.Client.Issuance.IssueLeafInput(
                 RandomNumberGenerator.GetBytes(64)));
 
         result.Success.Should().BeFalse();

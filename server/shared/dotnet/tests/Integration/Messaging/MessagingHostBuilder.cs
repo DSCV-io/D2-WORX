@@ -56,7 +56,20 @@ internal static class MessagingHostBuilder
                 keys[kvp.Key] = kvp.Value;
         }
 
+        // This integration host wires a static in-process test keyring via the raw
+        // AddD2EncryptionFor seam, which is deny-by-default under the encryption-source
+        // startup check and would crash a non-Development host. Declaring Development is
+        // the intended escape hatch (a dev/test host without a running KeyCustodian) — the
+        // check downgrades to a warning. ValidateScopes / ValidateOnBuild are pinned to the
+        // pre-check (Production) behavior so declaring Development does not also change what
+        // this host exercises.
         var hostBuilder = Host.CreateDefaultBuilder()
+            .UseEnvironment(Environments.Development)
+            .UseDefaultServiceProvider((_, options) =>
+            {
+                options.ValidateScopes = false;
+                options.ValidateOnBuild = false;
+            })
             .ConfigureServices((_, services) =>
             {
                 services.AddD2EncryptionFor(EncryptionDomains.AUDIT, _ =>

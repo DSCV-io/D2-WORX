@@ -6,15 +6,16 @@
 
 namespace D2.Edge.Tests.Unit.KeyCustodian.WellKnown;
 
-using D2.Edge.KeyCustodian.App.Application;
+using D2.Edge.KeyCustodian.App.Application.Facade;
 using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.IssueLeaf;
 using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.IssueWorkloadCertificate;
 using D2.Edge.KeyCustodian.App.Application.Handlers.Queries.GetCaCertificate;
 using D2.Edge.KeyCustodian.App.Application.Handlers.Queries.GetKeyring;
 using D2.Edge.KeyCustodian.App.Application.Handlers.Queries.Sign;
+using D2.Edge.KeyCustodian.App.Application.Issuance;
 using D2.Edge.KeyCustodian.App.Application.Routes;
 using D2.Edge.KeyCustodian.App.Infrastructure.Vault;
-using D2.Edge.KeyCustodian.Clients;
+using D2.Edge.KeyCustodian.Client.Facade;
 using D2.Edge.Tests.Unit.KeyCustodian.App;
 using D2.Shared.Context.Abstractions;
 using D2.Shared.Handler;

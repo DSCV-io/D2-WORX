@@ -505,14 +505,17 @@ describe("byteParity_WireIdentityManifest_CommittedFixtureIdentical", () => {
 // server-side artifacts (proto + service + transport mappers + wire identity) are
 // committed + byte-pinned here (proto package d2.keycustodian.v2alpha; the service
 // delegates to IKeyCustodianApi.SignAsync). The cross-process gRPC CLIENT is
-// deferred (it lives in the production D2.Edge.KeyCustodian.Clients namespace and
+// deferred (it lives in the production D2.Edge.KeyCustodian.Client namespace and
 // needs the host composition + the clients project to become gRPC-aware).
 // ---------------------------------------------------------------------------
 
 const KC_SOURCE = "contracts/typespec/key-custodian/key-custodian.tsp";
 const KC_PROTO_CS_NS = "D2.Services.Protos.KeyCustodian.V2Alpha";
 const KC_GRPC_NS = "D2.Edge.Tests.TypeSpecGrpc.Generated";
-const KC_DTO_NS = "D2.Edge.KeyCustodian.Clients";
+const KC_SIGNING_NS = "D2.Edge.KeyCustodian.Client.Signing";
+const KC_KEYRING_NS = "D2.Edge.KeyCustodian.Client.Keyring";
+const KC_ISSUANCE_NS = "D2.Edge.KeyCustodian.Client.Issuance";
+const KC_CACERT_NS = "D2.Edge.KeyCustodian.Client.CaCertificate";
 const KC_WIRE_HOME = join(GRPC_HOME, "KeyCustodian");
 
 function buildKcSignInputFields(): readonly FieldInfo[] {
@@ -578,7 +581,7 @@ const KC_SIGN_FACADE_TARGET: GrpcDelegationTarget = {
   kind: "facade",
   typeName: "IKeyCustodianApi",
   methodName: "SignAsync",
-  targetNamespace: "D2.Edge.KeyCustodian.Clients",
+  targetNamespace: "D2.Edge.KeyCustodian.Client.Facade",
 };
 
 describe("byteParity_KcSignProto_CommittedFixtureIdentical", () => {
@@ -639,7 +642,7 @@ describe("byteParity_KeyCustodianSignerService_FacadeDelegation_CommittedFixture
       "Sign",
       KC_PROTO_CS_NS,
       KC_GRPC_NS,
-      KC_DTO_NS,
+      KC_SIGNING_NS,
       KC_SOURCE,
       "SignRequest",
       "SignResponse",
@@ -664,7 +667,7 @@ describe("byteParity_KeyCustodianSignerService_FacadeDelegation_CommittedFixture
       "Sign",
       KC_PROTO_CS_NS,
       KC_GRPC_NS,
-      KC_DTO_NS,
+      KC_SIGNING_NS,
       KC_SOURCE,
       "SignRequest",
       "SignResponse",
@@ -686,7 +689,7 @@ describe("byteParity_KcSignTransportMappers_CommittedFixtureIdentical", () => {
       "Sign",
       KC_PROTO_CS_NS,
       KC_GRPC_NS,
-      KC_DTO_NS,
+      KC_SIGNING_NS,
       KC_SOURCE,
       "SignRequest",
       "SignResponse",
@@ -710,7 +713,7 @@ describe("byteParity_KcSignTransportMappers_CommittedFixtureIdentical", () => {
       "Sign",
       KC_PROTO_CS_NS,
       KC_GRPC_NS,
-      KC_DTO_NS,
+      KC_SIGNING_NS,
       KC_SOURCE,
       "SignRequest",
       "SignResponse",
@@ -828,7 +831,7 @@ const KC_KEYRING_FACADE_TARGET: GrpcDelegationTarget = {
   kind: "facade",
   typeName: "IKeyCustodianApi",
   methodName: "GetKeyringAsync",
-  targetNamespace: "D2.Edge.KeyCustodian.Clients",
+  targetNamespace: "D2.Edge.KeyCustodian.Client.Facade",
 };
 
 describe("byteParity_KcKeyringProto_CommittedFixtureIdentical", () => {
@@ -882,7 +885,7 @@ describe("byteParity_KeyCustodianKeyringService_FacadeDelegation_CommittedFixtur
       "GetKeyring",
       KC_PROTO_CS_NS,
       KC_GRPC_NS,
-      KC_DTO_NS,
+      KC_KEYRING_NS,
       KC_SOURCE,
       "GetKeyringRequest",
       "GetKeyringResponse",
@@ -918,7 +921,7 @@ describe("byteParity_GetKeyringTransportMappers_CommittedFixtureIdentical", () =
       "GetKeyring",
       KC_PROTO_CS_NS,
       KC_GRPC_NS,
-      KC_DTO_NS,
+      KC_KEYRING_NS,
       KC_SOURCE,
       "GetKeyringRequest",
       "GetKeyringResponse",
@@ -1085,7 +1088,7 @@ const KC_ISSUE_FACADE_TARGET: GrpcDelegationTarget = {
   kind: "facade",
   typeName: "IKeyCustodianApi",
   methodName: "IssueLeafAsync",
-  targetNamespace: "D2.Edge.KeyCustodian.Clients",
+  targetNamespace: "D2.Edge.KeyCustodian.Client.Facade",
 };
 
 describe("byteParity_KcIssueLeafProto_CommittedFixtureIdentical", () => {
@@ -1145,7 +1148,7 @@ describe("byteParity_KeyCustodianCertificateAuthorityService_FacadeDelegation_Co
       "IssueWorkloadCertificate",
       KC_PROTO_CS_NS,
       KC_GRPC_NS,
-      KC_DTO_NS,
+      KC_ISSUANCE_NS,
       KC_SOURCE,
       "IssueWorkloadCertificateRequest",
       "IssueWorkloadCertificateResponse",
@@ -1183,7 +1186,7 @@ describe("byteParity_IssueLeafTransportMappers_CommittedFixtureIdentical", () =>
       "IssueWorkloadCertificate",
       KC_PROTO_CS_NS,
       KC_GRPC_NS,
-      KC_DTO_NS,
+      KC_ISSUANCE_NS,
       KC_SOURCE,
       "IssueWorkloadCertificateRequest",
       "IssueWorkloadCertificateResponse",
@@ -1257,7 +1260,7 @@ const KC_CACERT_FACADE_TARGET: GrpcDelegationTarget = {
   kind: "facade",
   typeName: "IKeyCustodianApi",
   methodName: "GetCaCertificateAsync",
-  targetNamespace: "D2.Edge.KeyCustodian.Clients",
+  targetNamespace: "D2.Edge.KeyCustodian.Client.Facade",
 };
 
 describe("byteParity_KcCaCertificateProto_CommittedFixtureIdentical", () => {
@@ -1317,7 +1320,7 @@ describe("byteParity_KeyCustodianCaCertificateService_FacadeDelegation_Committed
       "GetCaCertificate",
       KC_PROTO_CS_NS,
       KC_GRPC_NS,
-      KC_DTO_NS,
+      KC_CACERT_NS,
       KC_SOURCE,
       "GetCaCertificateRequest",
       "GetCaCertificateResponse",
@@ -1353,7 +1356,7 @@ describe("byteParity_GetCaCertificateTransportMappers_CommittedFixtureIdentical"
       "GetCaCertificate",
       KC_PROTO_CS_NS,
       KC_GRPC_NS,
-      KC_DTO_NS,
+      KC_CACERT_NS,
       KC_SOURCE,
       "GetCaCertificateRequest",
       "GetCaCertificateResponse",

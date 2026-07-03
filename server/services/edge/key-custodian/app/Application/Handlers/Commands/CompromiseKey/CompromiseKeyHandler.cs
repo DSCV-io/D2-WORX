@@ -6,6 +6,8 @@
 
 namespace D2.Edge.KeyCustodian.App.Application.Handlers.Commands.CompromiseKey;
 
+using D2.Edge.KeyCustodian.App.Application.CertificateAuthority;
+
 using H = D2.Edge.KeyCustodian.App.Application.Handlers.Commands.CompromiseKey.ICompromiseKeyHandler;
 using I = CompromiseKeyInput;
 using O = CompromiseKeyOutput;

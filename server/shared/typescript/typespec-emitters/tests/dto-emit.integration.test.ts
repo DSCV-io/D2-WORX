@@ -268,6 +268,7 @@ describe("dtoEmitIntegration_HandlerInterface_EmittedForEveryOp", () => {
       @d2Query
       @d2InProcess
       @d2ServedBy("KeyCustodian")
+      @d2Concern("Jwks")
       op getJwks(): GetJwksOutput;
       `,
     );
@@ -277,7 +278,7 @@ describe("dtoEmitIntegration_HandlerInterface_EmittedForEveryOp", () => {
       options: {
         "@d2/typespec-emitters": {
           "csharp-namespace": "D2.Test",
-          "csharp-clients-namespace": "D2.Edge.KeyCustodian.Clients",
+          "csharp-clients-namespace": "D2.Edge.KeyCustodian.Client",
           "csharp-app-namespace-base":
             "D2.Edge.KeyCustodian.App.Application.Handlers",
         },
@@ -374,7 +375,7 @@ describe("dtoEmitIntegration_HandlerInterface_EmittedForEveryOp", () => {
       options: {
         "@d2/typespec-emitters": {
           "csharp-namespace": "D2.Fixture.Ns",
-          "csharp-clients-namespace": "D2.Edge.KeyCustodian.Clients",
+          "csharp-clients-namespace": "D2.Edge.KeyCustodian.Client",
           "csharp-app-namespace-base":
             "D2.Edge.KeyCustodian.App.Application.Handlers",
         },
@@ -400,7 +401,7 @@ describe("dtoEmitIntegration_HandlerInterface_EmittedForEveryOp", () => {
     expect(inputContent).toContain(
       "namespace D2.Edge.KeyCustodian.App.Application.Handlers.Commands.Reconcile;",
     );
-    expect(inputContent).not.toContain("D2.Edge.KeyCustodian.Clients");
+    expect(inputContent).not.toContain("D2.Edge.KeyCustodian.Client");
   });
 });
 

@@ -10,7 +10,7 @@
 
 namespace D2.Edge.KeyCustodian.App.Application.Handlers.Queries.GetCaCertificate;
 
-using D2.Edge.KeyCustodian.Clients;
+using D2.Edge.KeyCustodian.Client.CaCertificate;
 
 /// <summary>Generated handler interface for the <c>GetCaCertificate</c> operation.</summary>
 public interface IGetCaCertificateHandler : IHandler<GetCaCertificateInput, GetCaCertificateOutput>;

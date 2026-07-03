@@ -176,12 +176,55 @@ public sealed class EncryptedBodyComposerTests
     [Fact]
     public void ReadKidFromFrame_UnknownVersionByte_Throws()
     {
-        // Version byte 2 (unknown) — the version gate must reject before
-        // attempting to read the rest of the frame as a v1 kid.
-        var frame = new byte[] { 2, 5, (byte)'k', (byte)'i', (byte)'d', (byte)'-', (byte)'a' };
+        // Version byte 3 (unknown — 1 is symmetric, 2 is sealed) — the
+        // version gate must reject before attempting to read the rest of
+        // the frame as a kid.
+        var frame = new byte[] { 3, 5, (byte)'k', (byte)'i', (byte)'d', (byte)'-', (byte)'a' };
         var act = () => EncryptedBodyComposer.ReadKidFromFrame(frame);
         act.Should().Throw<InvalidOperationException>()
             .WithMessage("*Unknown encryption frame version*");
+    }
+
+    [Fact]
+    public void ReadKidFromFrame_SealedV2Frame_ReturnsRecipientKid()
+    {
+        // A REAL sealed frame (production sealer) — the version-aware header
+        // read must surface the recipient kid for the x-d2-encryption-kid
+        // AMQP header so DLQ triage can identify the archive-opener key
+        // without decrypting.
+        using var recipient = System.Security.Cryptography.ECDiffieHellman.Create(
+            System.Security.Cryptography.ECCurve.NamedCurves.nistP256);
+        var keyring = new RecipientPublicKeyring(
+            "audit",
+            "seal-kid-7",
+            new Dictionary<string, byte[]>
+            {
+                ["seal-kid-7"] = recipient.ExportSubjectPublicKeyInfo(),
+            });
+        var frame = new PayloadSealer(keyring).Seal("payload"u8);
+
+        EncryptedBodyComposer.ReadKidFromFrame(frame).Should().Be("seal-kid-7");
+    }
+
+    [Fact]
+    public void ReadKidFromFrame_SealedV2FrameTooShortForKid_Throws()
+    {
+        var bogus = new byte[] { 2, 100 };
+        var act = () => EncryptedBodyComposer.ReadKidFromFrame(bogus);
+        act.Should().Throw<InvalidOperationException>().WithMessage("*declared kid length*");
+    }
+
+    [Fact]
+    public void ReadKidFromFrame_V1Frame_UnchangedBehavior()
+    {
+        // Regression pin: the v1 read path is byte-for-byte the pre-sealed
+        // behavior — same kid, same offsets.
+        var sp = BuildProviderForAudit("kid-v1-pin");
+        var descriptor = EncryptedDescriptor(EncryptionDomains.AUDIT);
+        var (body, _) = EncryptedBodyComposer.Compose(new SampleAuditEvent(), descriptor, sp);
+
+        body[0].Should().Be(1);
+        EncryptedBodyComposer.ReadKidFromFrame(body).Should().Be("kid-v1-pin");
     }
 
     [Fact]

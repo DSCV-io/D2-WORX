@@ -113,6 +113,15 @@ export const $lib = createTypeSpecLibrary({
       },
     },
 
+    /** @d2Concern segment is not a legal single C# identifier (it becomes a
+     *  namespace segment + folder name, so no dots/whitespace/leading digit). */
+    "invalid-concern": {
+      severity: "error",
+      messages: {
+        default: paramMessage`@d2Concern segment '${"value"}' is invalid — expected a PascalCase C# identifier segment (a leading letter followed by letters/digits, no dots or whitespace)`,
+      },
+    },
+
     // ----------------------------------------------------------------
     // $onValidate cross-decorator checks (run once after all decorators apply)
     // ----------------------------------------------------------------

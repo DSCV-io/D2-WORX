@@ -19,6 +19,7 @@
 import {
   $d2Audience,
   $d2Command,
+  $d2Concern,
   $d2Csrf,
   $d2Field,
   $d2GrpcMethod,
@@ -53,6 +54,7 @@ export const $decorators = {
     d2RateLimitTier: $d2RateLimitTier,
     d2Audience: $d2Audience,
     d2ServedBy: $d2ServedBy,
+    d2Concern: $d2Concern,
     d2GrpcMethod: $d2GrpcMethod,
     d2Redact: $d2Redact,
     d2ServerPush: $d2ServerPush,

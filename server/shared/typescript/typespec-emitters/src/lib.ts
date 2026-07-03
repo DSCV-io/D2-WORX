@@ -55,6 +55,13 @@ import { createTypeSpecLibrary, paramMessage } from "@typespec/compiler";
 //                                         model carry the same @d2Field(N) pin. Duplicate
 //                                         field numbers produce invalid proto3 that protoc
 //                                         rejects; caught early at tsp compile time.
+//   D2TSP013  missing-concern           — a client-exposed op (real-module mode:
+//                                         csharp-clients-namespace + csharp-app-namespace-base
+//                                         set, @d2ServedBy present, not @d2Internal) carries no
+//                                         @d2Concern. The concern names the folder + namespace
+//                                         segment the op's transport DTOs live in
+//                                         (<clients-ns>.<Concern>); without it the emitter cannot
+//                                         place them by concern. Add @d2Concern("<Segment>") to the op.
 //   D2TSP012  RETIRED — nested-model redaction is now fully supported; the number
 //                                         is NOT reused. (Formerly nested-redact-unsupported:
 //                                         a @d2Redact on a nested-model property. The shared
@@ -227,6 +234,21 @@ export const $lib = createTypeSpecLibrary({
       severity: "error",
       messages: {
         default: paramMessage`${"detail"}`,
+      },
+    },
+
+    /**
+     * D2TSP013 — A client-exposed operation carries no @d2Concern. In real-module
+     * mode (csharp-clients-namespace + csharp-app-namespace-base configured), an
+     * exposed op's transport DTOs are placed in a concern-named namespace + folder
+     * (<clients-ns>.<Concern>) co-located with the hand-written runtime that serves
+     * them. Without a concern the emitter cannot route them. Add
+     * @d2Concern("<Segment>") to the operation.
+     */
+    "missing-concern": {
+      severity: "error",
+      messages: {
+        default: paramMessage`client-exposed operation '${"op"}' has no @d2Concern — an exposed op's transport DTOs are placed by concern (<clients-ns>.<Concern>); add @d2Concern("<Segment>")`,
       },
     },
   },

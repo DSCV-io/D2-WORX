@@ -6,11 +6,11 @@
 
 namespace D2.Edge.KeyCustodian.App.Application.Handlers.Queries.GetKeyring;
 
-using D2.Edge.KeyCustodian.Clients;
+using D2.Edge.KeyCustodian.Client.Keyring;
 using D2.Shared.Auth.Abstractions;
 using H = D2.Edge.KeyCustodian.App.Application.Handlers.Queries.GetKeyring.IGetKeyringHandler;
-using I = D2.Edge.KeyCustodian.Clients.GetKeyringInput;
-using O = D2.Edge.KeyCustodian.Clients.GetKeyringOutput;
+using I = D2.Edge.KeyCustodian.Client.Keyring.GetKeyringInput;
+using O = D2.Edge.KeyCustodian.Client.Keyring.GetKeyringOutput;
 
 /// <summary>
 /// Loads a payload key domain's Active + Retiring <see cref="KeyType.AesPayload"/> keys,

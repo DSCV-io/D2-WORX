@@ -85,6 +85,7 @@ model PlaceOrderFixtureOutput {
  */
 @d2Command
 @d2ServedBy("PredicateFixtures")
+@d2Concern("PredicateFixture")
 @d2GrpcMethod("PredicateFixturesOrders", "PlaceOrderFixture")
 @d2Resilience(
   "retry(3)",
@@ -172,6 +173,7 @@ model PlaceOrderV2FixtureOutput {
  */
 @d2Command
 @d2ServedBy("PredicateFixtures")
+@d2Concern("PredicateFixture")
 @d2GrpcMethod("PredicateFixturesOrders", "PlaceOrderV2Fixture")
 @d2Resilience(
   "retry(3)",
@@ -240,5 +242,6 @@ model DeepNestFixtureOutput {
  */
 @d2Command
 @d2ServedBy("PredicateFixtures")
+@d2Concern("PredicateFixture")
 @d2GrpcMethod("PredicateFixturesGizmosDeep", "DeepNestFixture")
 op deepNestFixture(input: DeepNestFixtureInput): DeepNestFixtureOutput;

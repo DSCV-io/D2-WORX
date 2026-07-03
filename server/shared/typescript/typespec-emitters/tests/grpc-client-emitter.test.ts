@@ -28,7 +28,7 @@ import type { PredicateNode } from "@d2/typespec-decorators";
 // ---------------------------------------------------------------------------
 
 const SOURCE = "contracts/typespec/fixtures/sign-shaped.tsp";
-const CLIENTS_NS = "D2.Edge.KeyCustodian.Clients";
+const CLIENTS_NS = "D2.Edge.KeyCustodian.Client";
 const PROTO_NS = "D2.Services.Protos.Sample.V1";
 
 function makeSignOp(overrides: Partial<GrpcClientOp> = {}): GrpcClientOp {
@@ -372,7 +372,7 @@ describe("emitGrpcClient_MapperFile", () => {
     const content = getMapper();
     // The SignOutput->DTO mapper: signature field is a string, direct copy
     expect(content).toContain(
-      "return new global::D2.Edge.KeyCustodian.Clients.SignOutput(data.Signature);",
+      "return new global::D2.Edge.KeyCustodian.Client.SignOutput(data.Signature);",
     );
   });
 
@@ -381,13 +381,11 @@ describe("emitGrpcClient_MapperFile", () => {
     expect(content).toContain(
       "global::D2.Services.Protos.Sample.V1.SignRequest",
     );
-    expect(content).toContain("global::D2.Edge.KeyCustodian.Clients.SignInput");
+    expect(content).toContain("global::D2.Edge.KeyCustodian.Client.SignInput");
     expect(content).toContain(
       "global::D2.Services.Protos.Sample.V1.SignOutput",
     );
-    expect(content).toContain(
-      "global::D2.Edge.KeyCustodian.Clients.SignOutput",
-    );
+    expect(content).toContain("global::D2.Edge.KeyCustodian.Client.SignOutput");
   });
 
   it("mapper class is internal static", () => {
@@ -398,7 +396,7 @@ describe("emitGrpcClient_MapperFile", () => {
   it("extension blocks use C#14 extension(T x) form", () => {
     const content = getMapper();
     expect(content).toContain(
-      "extension(global::D2.Edge.KeyCustodian.Clients.SignInput input)",
+      "extension(global::D2.Edge.KeyCustodian.Client.SignInput input)",
     );
     expect(content).toContain(
       "extension(global::D2.Services.Protos.Sample.V1.SignOutput data)",
@@ -448,7 +446,7 @@ describe("emitGrpcClient_MapperBytesField", () => {
     });
     const [, , mapper] = emitGrpcClient("Sample", [op], CLIENTS_NS);
     expect(mapper!.content).toContain(
-      "return new global::D2.Edge.KeyCustodian.Clients.EmptyOutput();",
+      "return new global::D2.Edge.KeyCustodian.Client.EmptyOutput();",
     );
   });
 
@@ -1141,7 +1139,7 @@ describe("emitGrpcClient_EnumResponseField_ParseAndSurface", () => {
       CLIENTS_NS,
     );
     expect(mapper!.content).toContain(
-      "internal global::D2.Edge.KeyCustodian.Clients.SignOutput ToSignOutput()",
+      "internal global::D2.Edge.KeyCustodian.Client.SignOutput ToSignOutput()",
     );
     expect(mapper!.content).not.toContain("D2Result<");
     expect(impl!.content).not.toContain("responseParseFailure");

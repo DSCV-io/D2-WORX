@@ -38,9 +38,9 @@ options:
     # C# namespace for fixture ops (signFixture) — retained for backward compatibility.
     csharp-namespace: "D2.Edge.Tests.TypeSpecDto.Generated"
 
-    # Clients project namespace: exposed-op DTOs (GetJwksInput, GetJwksOutput + nested
+    # Client project namespace: exposed-op DTOs (GetJwksInput, GetJwksOutput + nested
     # Jwk) and the module façade interface land here.
-    csharp-clients-namespace: "D2.Edge.KeyCustodian.Clients"
+    csharp-clients-namespace: "D2.Edge.KeyCustodian.Client"
 
     # App handler-namespace base: per-op CQRS path = <base>.<Category>.<PascalOp>.
     # I<Op>Handler for getJwks lands at D2.Edge.KeyCustodian.App.Application.Handlers.Queries.GetJwks.

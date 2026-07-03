@@ -9,7 +9,7 @@ namespace D2.Edge.Tests.Unit.KeyCustodian.App;
 using System.Diagnostics.Metrics;
 using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.ActivateKey;
 using D2.Edge.KeyCustodian.App.Application.Observability;
-using D2.Edge.KeyCustodian.Clients;
+using D2.Edge.KeyCustodian.Client.Jwks;
 using D2.Shared.Handler.Abstractions;
 
 /// <summary>

@@ -10,7 +10,7 @@
 
 namespace D2.Edge.KeyCustodian.App.Application.Handlers.Queries.Sign;
 
-using D2.Edge.KeyCustodian.Clients;
+using D2.Edge.KeyCustodian.Client.Signing;
 
 /// <summary>Generated handler interface for the <c>Sign</c> operation.</summary>
 public interface ISignHandler : IHandler<SignInput, SignOutput>;

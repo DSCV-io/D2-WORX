@@ -101,38 +101,65 @@ internal static class EncryptedBodyComposer
     /// <summary>
     /// Extracts the kid from an encryption frame's header bytes (used to
     /// populate the <c>x-d2-encryption-kid</c> AMQP header alongside the
-    /// encrypted body).
+    /// encrypted body). Version-aware: a symmetric version-1 frame yields
+    /// its keyring kid; a sealed version-2 frame yields its recipient kid —
+    /// both header families share the same
+    /// <c>[version:1][kid_len:1][kid:UTF-8]</c> prefix shape, so the read
+    /// path is identical and only the layout constants differ. For a sealed
+    /// frame the recipient kid is what DLQ triage needs to identify the
+    /// archive-opener key without decrypting.
     /// </summary>
     /// <param name="frame">The encryption frame produced by
-    /// <see cref="IPayloadCrypto.Encrypt"/>.</param>
+    /// <see cref="IPayloadCrypto.Encrypt"/> or <see cref="IPayloadSealer.Seal"/>.</param>
     /// <returns>The kid string parsed from the frame's header.</returns>
     public static string ReadKidFromFrame(ReadOnlySpan<byte> frame)
     {
-        // Frame layout: [version=1][kid_len:1][kid:UTF-8][nonce:12][ct+tag]
+        // v1: [version=1][kid_len:1][kid:UTF-8][nonce:12][ct+tag]
+        // v2: [version=2][recipient_kid_len:1][recipient_kid:UTF-8][eph_pub_len:2 BE][eph_pub][nonce:12][ct+tag]
         if (frame.Length < 2)
         {
             throw new InvalidOperationException(
                 "Frame too short to read kid header.");
         }
 
-        // L2: version byte must match the only format we know how to read.
+        // L2: version byte must match a format we know how to read.
         // A future format bump (different field ordering, longer kid_len
         // prefix, etc.) MUST surface here — silently parsing an unknown
         // frame would emit a garbage `x-d2-encryption-kid` header that
         // ops use for archive-key triage, which is worse than a hard fail.
-        if (frame[0] != 1)
+        var version = frame[0];
+
+        if (version == EncryptionFrameLayout.CURRENT_VERSION)
         {
-            throw new InvalidOperationException(
-                $"Unknown encryption frame version: {frame[0]}. Expected 1.");
+            var kidLen = frame[EncryptionFrameLayout.KID_LENGTH_OFFSET];
+
+            if (frame.Length < EncryptionFrameLayout.KID_OFFSET + kidLen)
+            {
+                throw new InvalidOperationException(
+                    "Frame too short for declared kid length.");
+            }
+
+            return Encoding.UTF8.GetString(
+                frame.Slice(EncryptionFrameLayout.KID_OFFSET, kidLen));
         }
 
-        var kidLen = frame[1];
-        if (frame.Length < 2 + kidLen)
+        if (version == SealedFrameLayout.CURRENT_VERSION)
         {
-            throw new InvalidOperationException(
-                "Frame too short for declared kid length.");
+            var kidLen = frame[SealedFrameLayout.RECIPIENT_KID_LENGTH_OFFSET];
+
+            if (frame.Length < SealedFrameLayout.RECIPIENT_KID_OFFSET + kidLen)
+            {
+                throw new InvalidOperationException(
+                    "Frame too short for declared kid length.");
+            }
+
+            return Encoding.UTF8.GetString(
+                frame.Slice(SealedFrameLayout.RECIPIENT_KID_OFFSET, kidLen));
         }
 
-        return Encoding.UTF8.GetString(frame.Slice(2, kidLen));
+        throw new InvalidOperationException(
+            $"Unknown encryption frame version: {version}. Expected " +
+            $"{EncryptionFrameLayout.CURRENT_VERSION} (symmetric) or " +
+            $"{SealedFrameLayout.CURRENT_VERSION} (sealed).");
     }
 }

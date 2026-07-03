@@ -9,7 +9,8 @@
 
 namespace D2.Edge.KeyCustodian.App.Application.Routes;
 
-using D2.Edge.KeyCustodian.Clients;
+using D2.Edge.KeyCustodian.Client.Facade;
+using D2.Edge.KeyCustodian.Client.Jwks;
 using D2.Shared.Auth.Http.Endpoints;
 using D2.Shared.Auth.Http.ProblemDetails;
 using D2.Shared.Result;

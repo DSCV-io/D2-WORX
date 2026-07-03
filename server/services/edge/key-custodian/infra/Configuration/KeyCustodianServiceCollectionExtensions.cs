@@ -163,6 +163,13 @@ public static class KeyCustodianServiceCollectionExtensions
                 KeyCustodianRootKey.ROOT_SERVICE_KEY,
                 sp => sp.GetRequiredService<IRootKeyProvider>().GetRootKeyring());
 
+            // The KC root key is the operator-provisioned root of trust from which all
+            // custodian material derives — definitionally the custodian's own material,
+            // not the static-key footgun the deny-by-default source guard exists to catch.
+            // Marking it KeyCustodian lets the guard pass in a non-Development host.
+            services.MarkD2EncryptionSource(
+                KeyCustodianRootKey.ROOT_SERVICE_KEY, EncryptionKeyringSource.KeyCustodian);
+
             services.AddD2EncryptionStartupCheck();
 
             // --- Messaging: RabbitMQ rotation announcer --------------------------

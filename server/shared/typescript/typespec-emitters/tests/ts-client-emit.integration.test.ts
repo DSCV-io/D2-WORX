@@ -55,7 +55,7 @@ function getEmittedFile(
 // gRPC client reuses that collection. The REST client collects unconditionally.
 const REAL_MODULE_OPTIONS = {
   "csharp-namespace": "D2.Test",
-  "csharp-clients-namespace": "D2.Edge.KeyCustodian.Clients",
+  "csharp-clients-namespace": "D2.Edge.KeyCustodian.Client",
   "csharp-app-namespace-base": "D2.Edge.KeyCustodian.App.Application.Handlers",
 };
 
@@ -87,6 +87,7 @@ describe("tsClientEmitIntegration_GrpcClient_DispatchedForGrpcOp", () => {
 
       @d2Command
       @d2ServedBy("SignFixture")
+      @d2Concern("SignFixture")
       @d2InProcess
       @d2GrpcMethod("SignFixtureSigner", "SignFixture")
       @route("/internal/v1/fixtures/sign-fixture")
@@ -149,6 +150,7 @@ describe("tsClientEmitIntegration_PredicateRetryArm_FoldedIn", () => {
 
       @d2Command
       @d2ServedBy("PredicateFixtures")
+      @d2Concern("PredicateFixture")
       @d2GrpcMethod("PredicateFixturesOrders", "PlaceOrderFixture")
       @d2Resilience(
         "retry(3)",
@@ -218,6 +220,7 @@ describe("tsClientEmitIntegration_PredicateRetryArm_FoldedIn", () => {
 
       @d2Command
       @d2ServedBy("BareFixtures")
+      @d2Concern("BareFixture")
       @d2GrpcMethod("BareFixturesOrders", "BarePlace")
       @d2Resilience(
         "retry()",

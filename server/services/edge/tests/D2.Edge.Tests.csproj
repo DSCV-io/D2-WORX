@@ -61,6 +61,10 @@ Copyright (c) DCSV. All rights reserved.
     <!-- Testcontainers.PostgreSql — for the integration-key-rotation gate (real PG
          container with own PostgresFixture + [Collection("Postgres")]). -->
     <PackageReference Include="Testcontainers.PostgreSql" />
+    <!-- Testcontainers.RabbitMq — real broker for the keyring rotation hot-swap
+         headline integration test (real RotateKeyHandler → KeyRotatedEvent over the
+         broker → consumer-driven wrapper swap). -->
+    <PackageReference Include="Testcontainers.RabbitMq" />
     <PackageReference Include="coverlet.msbuild">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
@@ -159,7 +163,7 @@ Copyright (c) DCSV. All rights reserved.
   <ItemGroup>
     <ProjectReference Include="..\key-custodian\domain\D2.Edge.KeyCustodian.Domain.csproj" />
     <ProjectReference Include="..\key-custodian\app\D2.Edge.KeyCustodian.App.csproj" />
-    <ProjectReference Include="..\key-custodian\clients\D2.Edge.KeyCustodian.Clients.csproj" />
+    <ProjectReference Include="..\key-custodian\client\D2.Edge.KeyCustodian.Client.csproj" />
     <ProjectReference Include="..\key-custodian\infra\D2.Edge.KeyCustodian.Infra.csproj" />
     <!--
       D2.Shared.Resilience — ResilientPipeline<TKey,TValue> + AddResilientPipeline +
@@ -270,24 +274,16 @@ Copyright (c) DCSV. All rights reserved.
               ProtoRoot="$(MSBuildThisFileDirectory)"
               AdditionalImportDirs="$(D2ContractsRoot)protos" />
     <!--
-      Real KeyCustodian keyring proto — the payload-keyring distribution wire surface
-      (key-custodian.tsp getKeyring op; package d2.keycustodian.v2alpha, csharp_namespace
-      D2.Services.Protos.KeyCustodian.V2Alpha — a DISTINCT service KeyCustodianKeyring from
-      the signer). Generates the KeyCustodianKeyring service base + GetKeyringRequest/
-      GetKeyringResponse/GetKeyringOutput/KeyringEntry messages. The generated
-      KeyCustodianKeyringService delegates to IKeyCustodianApi.GetKeyringAsync; hosted via
-      MapGrpcService<T>() + dialed via the generated stub in GrpcKeyringServiceTests. The
-      live host wiring (the Edge composition root mapping + the cross-process client) is
-      deferred until the Edge host exists; the serving plane is TestServer-proven here.
-      Compiled in Both mode; the D2ResultProto type still comes solely from the
-      D2.Shared.Result.Grpc ProjectReference above (this proto's import
-      "common/v1/d2_result.proto" resolves via the same AdditionalImportDirs proto_path;
-      no second d2_result.proto Protobuf include).
+      Real KeyCustodian keyring proto — PROMOTED: its <Protobuf> compilation now
+      lives in D2.Edge.KeyCustodian.Client (GrpcServices="Both"), which this test project
+      references. The keyring client stub, the wire messages
+      (D2.Services.Protos.KeyCustodian.V2Alpha.*), AND the server base its generated
+      KeyCustodianKeyringService extends all come from that project — so the messages
+      compile EXACTLY ONCE. Re-adding a keyring <Protobuf> item here would double-generate
+      the messages (CS0433). The .g.proto file itself still lives under
+      Unit/KeyCustodian/TypeSpecGrpc/Protos/ (the emitter's output location) — only the
+      compilation moved.
     -->
-    <Protobuf Include="$(MSBuildThisFileDirectory)Unit/KeyCustodian/TypeSpecGrpc/Protos/key_custodian_keyring_get_keyring.g.proto"
-              GrpcServices="Both"
-              ProtoRoot="$(MSBuildThisFileDirectory)"
-              AdditionalImportDirs="$(D2ContractsRoot)protos" />
     <!--
       Real KeyCustodian certificate-authority issuance proto — the workload leaf-issuance
       wire surface (key-custodian.tsp issueLeaf op; wire method IssueWorkloadCertificate;

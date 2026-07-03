@@ -123,8 +123,8 @@ const kcClient = path.join(
   "services",
   "edge",
   "key-custodian",
-  "clients",
-  "D2.Edge.KeyCustodian.Clients.csproj",
+  "client",
+  "D2.Edge.KeyCustodian.Client.csproj",
 );
 
 // The FULL consumable set (never filtered) — needed to resolve dependency

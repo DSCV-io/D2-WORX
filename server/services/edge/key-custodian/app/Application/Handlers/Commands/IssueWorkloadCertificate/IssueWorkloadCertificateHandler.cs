@@ -6,6 +6,7 @@
 
 namespace D2.Edge.KeyCustodian.App.Application.Handlers.Commands.IssueWorkloadCertificate;
 
+using D2.Edge.KeyCustodian.App.Application.Issuance;
 using D2.Shared.Auth.Abstractions;
 
 using H = D2.Edge.KeyCustodian.App.Application.Handlers.Commands.IssueWorkloadCertificate.IIssueWorkloadCertificateHandler;

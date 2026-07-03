@@ -9,6 +9,7 @@ import { runD2ResultEnvelopeEmit } from "./d2result-envelope-emit.js";
 import { runDlqFailureMetadataEmit } from "./dlq-failure-metadata-emit.js";
 import { runEncryptionDomainsEmit } from "./encryption-domains-emit.js";
 import { runEncryptionFrameEmit } from "./encryption-frame-emit.js";
+import { runSealedFrameEmit } from "./encryption-frame-sealed-emit.js";
 import { runErrorCategoryEmit } from "./error-category-emit.js";
 import {
   runAuthErrorCodesEmit,
@@ -110,6 +111,11 @@ function main(): void {
     // as field-offset constants + byte-length constants. Consumed by ops
     // tooling and any TS reader of the on-wire encryption frame.
     ...runEncryptionFrameEmit(force),
+    // SEALED encryption frame binary layout (version 2, the asymmetric
+    // ECDH-ES hybrid) — emits into @d2/encryption-abstractions from the
+    // sibling contracts/encryption-frame-sealed/ spec. A separate spec +
+    // emitter so the version-1 artifacts stay byte-identical.
+    ...runSealedFrameEmit(force),
     // Geo catalogs — emits TS record shapes + branded code types + Zod
     // schemas + closed-set validation tables into @d2/geo-abstractions from
     // the seven contracts/geo/*.spec.json Tier-2 files. Catalog DATA

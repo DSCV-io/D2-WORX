@@ -71,6 +71,7 @@ namespace D2.KeyCustodian {
   @d2Query
   @d2InProcess
   @d2ServedBy("KeyCustodian")
+  @d2Concern("Jwks")
   @route("/.well-known/jwks.json")
   @get
   @d2Harmless
@@ -107,6 +108,7 @@ namespace D2.KeyCustodian {
   @d2Query
   @d2InProcess
   @d2ServedBy("KeyCustodian")
+  @d2Concern("OidcConfiguration")
   @route("/.well-known/openid-configuration")
   @get
   @d2Harmless
@@ -145,6 +147,7 @@ namespace D2.KeyCustodian {
    */
   @d2Query
   @d2ServedBy("KeyCustodian")
+  @d2Concern("Signing")
   @d2InProcess
   @d2GrpcMethod("KeyCustodianSigner", "Sign")
   @d2RequireAnyScope("internal.kc.sign")
@@ -206,6 +209,7 @@ namespace D2.KeyCustodian {
    */
   @d2Query
   @d2ServedBy("KeyCustodian")
+  @d2Concern("Keyring")
   @d2InProcess
   @d2GrpcMethod("KeyCustodianKeyring", "GetKeyring")
   @d2RequireAnyScope("internal.kc.keyring")
@@ -277,6 +281,7 @@ namespace D2.KeyCustodian {
    */
   @d2Command
   @d2ServedBy("KeyCustodian")
+  @d2Concern("Issuance")
   @d2InProcess
   @d2GrpcMethod("KeyCustodianCertificateAuthority", "IssueWorkloadCertificate")
   @d2RequireAnyScope("internal.kc.issue")
@@ -293,6 +298,7 @@ namespace D2.KeyCustodian {
    */
   @d2Query
   @d2ServedBy("KeyCustodian")
+  @d2Concern("CaCertificate")
   @d2InProcess
   @d2GrpcMethod("KeyCustodianCaCertificate", "GetCaCertificate")
   @d2RequireAnyScope("internal.kc.cacert")

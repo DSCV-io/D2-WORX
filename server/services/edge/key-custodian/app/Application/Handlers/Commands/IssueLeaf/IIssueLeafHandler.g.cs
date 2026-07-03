@@ -10,7 +10,7 @@
 
 namespace D2.Edge.KeyCustodian.App.Application.Handlers.Commands.IssueLeaf;
 
-using D2.Edge.KeyCustodian.Clients;
+using D2.Edge.KeyCustodian.Client.Issuance;
 
 /// <summary>Generated handler interface for the <c>IssueLeaf</c> operation.</summary>
 public interface IIssueLeafHandler : IHandler<IssueLeafInput, IssueLeafOutput>;

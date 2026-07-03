@@ -50,11 +50,11 @@ const D2EmitterTestLibrary = createTestLibrary({
 // The real-KC csharp options (mirrors contracts/typespec/tspconfig.yaml).
 const KC_OPTIONS = {
   "csharp-namespace": "D2.Edge.Tests.TypeSpecDto.Generated",
-  "csharp-clients-namespace": "D2.Edge.KeyCustodian.Clients",
+  "csharp-clients-namespace": "D2.Edge.KeyCustodian.Client",
   "csharp-app-namespace-base": "D2.Edge.KeyCustodian.App.Application.Handlers",
   "proto-package": "d2.keycustodian.v2alpha",
   "proto-csharp-namespace": "D2.Services.Protos.KeyCustodian.V2Alpha",
-  "grpc-service-namespace": "D2.Edge.KeyCustodian.Clients.Grpc",
+  "grpc-service-namespace": "D2.Edge.KeyCustodian.Client.Grpc",
 };
 
 const _REPO = findRepoRoot(import.meta.url);
@@ -213,7 +213,8 @@ describe("keyCustodianWellKnown_ByteGate_CommittedArtifactsIdentical", () => {
         "services",
         "edge",
         "key-custodian",
-        "clients",
+        "client",
+        "OidcConfiguration",
         "GetOidcConfigurationOutput.g.cs",
       ],
     },
@@ -224,7 +225,8 @@ describe("keyCustodianWellKnown_ByteGate_CommittedArtifactsIdentical", () => {
         "services",
         "edge",
         "key-custodian",
-        "clients",
+        "client",
+        "OidcConfiguration",
         "GetOidcConfigurationInput.g.cs",
       ],
     },

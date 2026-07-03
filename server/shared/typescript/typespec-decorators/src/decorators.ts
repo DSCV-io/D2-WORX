@@ -11,6 +11,7 @@ import type {
 import {
   D2_AUDIENCE_KEY,
   D2_COMMAND_KEY,
+  D2_CONCERN_KEY,
   D2_CSRF_KEY,
   D2_FIELD_KEY,
   D2_GRPC_METHOD_KEY,
@@ -32,6 +33,7 @@ import {
 } from "./state-keys.js";
 import {
   validateAudience,
+  validateConcern,
   validateCsrfPosture,
   validateFieldNumber,
   validateGrpcStreaming,
@@ -119,6 +121,23 @@ export function $d2ServedBy(
 ): void {
   validateServedBy(context, target, owner);
   context.program.stateMap(D2_SERVED_BY_KEY).set(target, owner);
+}
+
+/**
+ * Stores the co-location concern segment on the operation. The concern names
+ * the folder + namespace segment a client-exposed op's transport DTOs live in
+ * (`<csharp-clients-namespace>.<Concern>`), co-located with the hand-written
+ * runtime that serves them. Shape-check only — the segment must be a legal
+ * single C# identifier. Emitters read back:
+ * program.stateMap(D2_CONCERN_KEY).get(op) → string.
+ */
+export function $d2Concern(
+  context: DecoratorContext,
+  target: Operation,
+  concern: string,
+): void {
+  validateConcern(context, target, concern);
+  context.program.stateMap(D2_CONCERN_KEY).set(target, concern);
 }
 
 /**

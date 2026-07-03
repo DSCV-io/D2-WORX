@@ -8,10 +8,10 @@ namespace D2.Edge.Tests.Unit.KeyCustodian.App;
 
 using System.Collections.Concurrent;
 using System.Diagnostics.Metrics;
-using D2.Edge.KeyCustodian.App.Application;
 using D2.Edge.KeyCustodian.App.Application.Handlers.Queries.Sign;
 using D2.Edge.KeyCustodian.App.Application.Observability;
-using D2.Edge.KeyCustodian.Clients;
+using D2.Edge.KeyCustodian.App.Application.Signing;
+using D2.Edge.KeyCustodian.Client.Signing;
 using D2.Shared.Auth.Abstractions;
 using D2.Shared.Context.Abstractions;
 using D2.Shared.Handler;

@@ -37,7 +37,7 @@ import type { FieldInfo, NestedEnum } from "../src/lib/model-walk.js";
 const REPO = findRepoRoot(import.meta.url);
 
 /** Committed home for GetJwks DTOs + façade interface (Clients namespace). */
-const CLIENTS_HOME = join(REPO, "server/services/edge/key-custodian/clients");
+const CLIENTS_HOME = join(REPO, "server/services/edge/key-custodian/client");
 
 /** Committed home for Sign + Temporal + Enum fixture DTOs (TypeSpecDto/Generated/). */
 const DTO_HOME = join(
@@ -245,7 +245,7 @@ describe("byteParity_GetJwksInput_CommittedFixtureIdentical", () => {
     const { fields, nestedModels } = buildGetJwksInputWalk();
     const [inputFile] = emitCsharpDtos(
       "getJwks",
-      "D2.Edge.KeyCustodian.Clients",
+      "D2.Edge.KeyCustodian.Client.Jwks",
       "contracts/typespec/key-custodian/key-custodian.tsp",
       fields,
       [],
@@ -253,20 +253,20 @@ describe("byteParity_GetJwksInput_CommittedFixtureIdentical", () => {
     );
 
     expect(inputFile!.content).toBe(
-      readFixture(join(CLIENTS_HOME, "GetJwksInput.g.cs")),
+      readFixture(join(CLIENTS_HOME, "Jwks", "GetJwksInput.g.cs")),
     );
   });
 
   it("deliberate-drift detection: mutated fixture does NOT match regenerated output", () => {
     // Non-vacuous guard: deliberately corrupt the fixture by one byte.
     const driftedFixture = readFixture(
-      join(CLIENTS_HOME, "GetJwksInput.g.cs"),
+      join(CLIENTS_HOME, "Jwks", "GetJwksInput.g.cs"),
     ).replace("GetJwksInput", "GetJwksInputDRIFTED");
 
     const { fields, nestedModels } = buildGetJwksInputWalk();
     const [inputFile] = emitCsharpDtos(
       "getJwks",
-      "D2.Edge.KeyCustodian.Clients",
+      "D2.Edge.KeyCustodian.Client.Jwks",
       "contracts/typespec/key-custodian/key-custodian.tsp",
       fields,
       [],
@@ -283,7 +283,7 @@ describe("byteParity_GetJwksOutput_CommittedFixtureIdentical", () => {
     const { fields, nestedModels } = buildGetJwksOutputWalk();
     const [, outputFile] = emitCsharpDtos(
       "getJwks",
-      "D2.Edge.KeyCustodian.Clients",
+      "D2.Edge.KeyCustodian.Client.Jwks",
       "contracts/typespec/key-custodian/key-custodian.tsp",
       [],
       fields,
@@ -291,20 +291,20 @@ describe("byteParity_GetJwksOutput_CommittedFixtureIdentical", () => {
     );
 
     expect(outputFile!.content).toBe(
-      readFixture(join(CLIENTS_HOME, "GetJwksOutput.g.cs")),
+      readFixture(join(CLIENTS_HOME, "Jwks", "GetJwksOutput.g.cs")),
     );
   });
 
   it("deliberate-drift detection: mutated fixture does NOT match regenerated output", () => {
     // Non-vacuous guard: deliberately corrupt the fixture by one byte.
     const driftedFixture = readFixture(
-      join(CLIENTS_HOME, "GetJwksOutput.g.cs"),
+      join(CLIENTS_HOME, "Jwks", "GetJwksOutput.g.cs"),
     ).replace("GetJwksOutput", "GetJwksOutputDRIFTED");
 
     const { fields, nestedModels } = buildGetJwksOutputWalk();
     const [, outputFile] = emitCsharpDtos(
       "getJwks",
-      "D2.Edge.KeyCustodian.Clients",
+      "D2.Edge.KeyCustodian.Client.Jwks",
       "contracts/typespec/key-custodian/key-custodian.tsp",
       [],
       fields,
@@ -464,7 +464,7 @@ describe("byteParity_GetKeyringInput_CommittedFixtureIdentical", () => {
     const { fields, nestedModels } = buildGetKeyringInputWalk();
     const [inputFile] = emitCsharpDtos(
       "getKeyring",
-      "D2.Edge.KeyCustodian.Clients",
+      "D2.Edge.KeyCustodian.Client.Keyring",
       KC_SPEC,
       fields,
       [],
@@ -472,7 +472,7 @@ describe("byteParity_GetKeyringInput_CommittedFixtureIdentical", () => {
     );
 
     expect(inputFile!.content).toBe(
-      readFixture(join(CLIENTS_HOME, "GetKeyringInput.g.cs")),
+      readFixture(join(CLIENTS_HOME, "Keyring", "GetKeyringInput.g.cs")),
     );
   });
 });
@@ -482,7 +482,7 @@ describe("byteParity_GetKeyringOutput_CommittedFixtureIdentical", () => {
     const { fields, nestedModels } = buildGetKeyringOutputWalk();
     const [, outputFile] = emitCsharpDtos(
       "getKeyring",
-      "D2.Edge.KeyCustodian.Clients",
+      "D2.Edge.KeyCustodian.Client.Keyring",
       KC_SPEC,
       [],
       fields,
@@ -494,13 +494,13 @@ describe("byteParity_GetKeyringOutput_CommittedFixtureIdentical", () => {
       "[property: RedactData(Reason = RedactReason.SecretInformation)] byte[] KeyBytes",
     );
     expect(outputFile!.content).toBe(
-      readFixture(join(CLIENTS_HOME, "GetKeyringOutput.g.cs")),
+      readFixture(join(CLIENTS_HOME, "Keyring", "GetKeyringOutput.g.cs")),
     );
   });
 
   it("deliberate-drift detection: a mutated GetKeyringOutput fixture does NOT match", () => {
     const drifted = readFixture(
-      join(CLIENTS_HOME, "GetKeyringOutput.g.cs"),
+      join(CLIENTS_HOME, "Keyring", "GetKeyringOutput.g.cs"),
     ).replace(
       "public sealed record KeyringEntry(",
       "public sealed record KeyringEntryDRIFTED(",
@@ -508,7 +508,7 @@ describe("byteParity_GetKeyringOutput_CommittedFixtureIdentical", () => {
     const { fields, nestedModels } = buildGetKeyringOutputWalk();
     const [, outputFile] = emitCsharpDtos(
       "getKeyring",
-      "D2.Edge.KeyCustodian.Clients",
+      "D2.Edge.KeyCustodian.Client.Keyring",
       KC_SPEC,
       [],
       fields,
@@ -1036,7 +1036,7 @@ describe("byteParity_SignWithKindEnumGrpc_CommittedFixtures", () => {
   });
 });
 
-// The CLIENT-side gRPC enum fixtures (mapper + impl) carry the F-3 response-enum
+// The CLIENT-side gRPC enum fixtures (mapper + impl) carry the response-enum
 // parse (To<Output>() returns D2Result<<Output>> + the impl surfaces a parse
 // failure via BubbleFail). Pin them byte-identical so the committed fixtures stay
 // emitter-determined (never hand-edited, §26.5).

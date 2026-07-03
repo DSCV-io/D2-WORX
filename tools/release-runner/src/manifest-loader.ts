@@ -15,7 +15,7 @@
 //          csproj must carry a <Version> element (it was seeded in Wave A).
 //
 // The loader also accepts the KC client csproj if present under
-// server/services/edge/key-custodian/clients/.
+// server/services/edge/key-custodian/client/.
 //
 // Both the npm and nuget loaders read the version from the manifest so the
 // caller does not need a separate readManifestVersion call.
@@ -231,7 +231,7 @@ export function loadNugetPackages(repoRoot: string): PackageDescriptor[] {
   const dotnetSharedRoot = resolve(repoRoot, "server/shared/dotnet");
   const kcClientPath = resolve(
     repoRoot,
-    "server/services/edge/key-custodian/clients",
+    "server/services/edge/key-custodian/client",
   );
 
   const searchRoots: string[] = [];

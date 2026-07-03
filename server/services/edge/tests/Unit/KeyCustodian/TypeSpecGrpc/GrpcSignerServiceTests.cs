@@ -7,10 +7,15 @@
 namespace D2.Edge.Tests.Unit.KeyCustodian.TypeSpecGrpc;
 
 using System.Threading.Tasks;
-using D2.Edge.KeyCustodian.Clients;
+using D2.Edge.KeyCustodian.Client.CaCertificate;
+using D2.Edge.KeyCustodian.Client.Facade;
+using D2.Edge.KeyCustodian.Client.Issuance;
+using D2.Edge.KeyCustodian.Client.Jwks;
+using D2.Edge.KeyCustodian.Client.Keyring;
+using D2.Edge.KeyCustodian.Client.OidcConfiguration;
+using D2.Edge.KeyCustodian.Client.Signing;
 using D2.Edge.Tests.TypeSpecGrpc.Generated;
 using D2.Services.Protos.KeyCustodian.V2Alpha;
-using D2.Shared.Result;
 using Google.Protobuf;
 using Grpc.Core;
 using Grpc.Net.Client;
@@ -19,9 +24,9 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using ClientsGetCaCertificateOutput = D2.Edge.KeyCustodian.Clients.GetCaCertificateOutput;
-using ClientsIssueLeafOutput = D2.Edge.KeyCustodian.Clients.IssueLeafOutput;
-using ClientsSignOutput = D2.Edge.KeyCustodian.Clients.SignOutput;
+using ClientsGetCaCertificateOutput = D2.Edge.KeyCustodian.Client.CaCertificate.GetCaCertificateOutput;
+using ClientsIssueLeafOutput = D2.Edge.KeyCustodian.Client.Issuance.IssueLeafOutput;
+using ClientsSignOutput = D2.Edge.KeyCustodian.Client.Signing.SignOutput;
 
 /// <summary>
 /// In-memory gRPC harness tests for the REAL TypeSpec-emitted
@@ -132,7 +137,7 @@ public sealed class GrpcSignerServiceTests
         // The signing input is secret-adjacent material: the generated DTO field carries
         // [RedactData] so it is masked in structured logs (proof of @d2Redact).
         var property = typeof(ClientsSignOutput).Assembly
-            .GetType("D2.Edge.KeyCustodian.Clients.SignInput")!
+            .GetType("D2.Edge.KeyCustodian.Client.Signing.SignInput")!
             .GetProperty("SigningInput");
 
         property.Should().NotBeNull();
@@ -203,10 +208,10 @@ public sealed class GrpcSignerServiceTests
             GetOidcConfigurationInput input, CancellationToken ct = default)
             => ValueTask.FromResult(D2Result<GetOidcConfigurationOutput?>.ServiceUnavailable());
 
-        public ValueTask<D2Result<D2.Edge.KeyCustodian.Clients.GetKeyringOutput?>> GetKeyringAsync(
+        public ValueTask<D2Result<D2.Edge.KeyCustodian.Client.Keyring.GetKeyringOutput?>> GetKeyringAsync(
             GetKeyringInput input, CancellationToken ct = default)
             => ValueTask.FromResult(
-                D2Result<D2.Edge.KeyCustodian.Clients.GetKeyringOutput?>.ServiceUnavailable());
+                D2Result<D2.Edge.KeyCustodian.Client.Keyring.GetKeyringOutput?>.ServiceUnavailable());
 
         public ValueTask<D2Result<ClientsIssueLeafOutput?>> IssueLeafAsync(
             IssueLeafInput input, CancellationToken ct = default)

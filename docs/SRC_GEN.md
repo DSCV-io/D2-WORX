@@ -132,7 +132,7 @@ abbreviation, 3-digit number). Examples currently in use:
 | OTel messaging tags     | `D2OTM`  | [`messaging/otel-messaging-tags-source-gen`](../server/shared/dotnet/messaging/otel-messaging-tags-source-gen/README.md)                                                 |
 | Telemetry tags          | `D2TT`   | [`telemetry/tags-source-gen`](../server/shared/dotnet/telemetry/tags-source-gen/README.md)                                                                               |
 | Encryption domains      | `D2ENCD` | [`encryption/domains-source-gen`](../server/shared/dotnet/encryption/domains-source-gen/README.md)                                                                       |
-| Encryption frame        | `D2ENCF` | [`encryption/frame-source-gen`](../server/shared/dotnet/encryption/frame-source-gen/README.md)                                                                           |
+| Encryption frame        | `D2EF`   | [`encryption/frame-source-gen`](../server/shared/dotnet/encryption/frame-source-gen/README.md) — two arms: symmetric v1 (`D2EF001-005`, `EncryptionFrameLayout`) + sealed v2 (`D2EF006-012`, `SealedFrameLayout` from the sibling `contracts/encryption-frame-sealed/` spec; adds the `variable_binary_u16be` field kind — raw binary behind a 2-byte big-endian length prefix — with a build-time rule that such a field must sit immediately behind its `byte_fixed` length-prefix field) |
 | ProblemDetails          | `D2PD`   | [`problem-details/source-gen`](../server/shared/dotnet/problem-details/source-gen/README.md)                                                                             |
 | Wire shapes             | `D2WS`   | [`source-gen-shared/wire-shapes-source-gen`](../server/shared/dotnet/source-gen-shared/wire-shapes-source-gen/README.md)                                                 |
 | Context                 | `D2CTX`  | [`context/source-gen`](../server/shared/dotnet/context/source-gen/README.md)                                                                                             |
@@ -319,6 +319,7 @@ tools/ts-codegen/
 │   ├── dlq-failure-metadata-emit.ts
 │   ├── encryption-domains-emit.ts
 │   ├── encryption-frame-emit.ts
+│   ├── encryption-frame-sealed-emit.ts
 │   ├── error-category-emit.ts       ← emits @d2/error-category (ErrorCategory union + ErrorCategoryWire + ALL_ERROR_CATEGORIES)
 │   ├── error-codes-emit.ts          ← unified error-code engine (generic + auth catalogs + AuthFailures + base factories)
 │   ├── error-codes-registry-emit.ts ← emits @d2/error-codes-registry (merged code → ErrorCodeInfo registry)
@@ -705,6 +706,13 @@ IDs are allocated in `server/shared/typescript/typespec-emitters/src/lib.ts`. Al
 | `D2TSP008` | `server-push-requires-payload` | A `@d2ServerPush` op whose output has no emittable payload (void return, or an output model with zero fields and zero nested models). The op's output model is the dispatched event payload, so a payload-less push is almost certainly a mistake. |
 | `D2TSP009` | `unpinned-proto-field`      | A model property on a `@d2GrpcMethod`-bound model lacks a `@d2Field(N)` author-pinned field number. Positional assignment is permanently disabled — every field on every proto-bound model must carry an explicit `@d2Field(N)` pin. Fires only inside the proto emitter; DTO-only and in-process ops are unaffected. |
 | `D2TSP010` | `channel-segment-mismatch`  | The wire-channel segment derived from `proto-package` disagrees with the trailing segment of `proto-csharp-namespace` OR with the `@versioned` enum value on the primary namespace. All three surfaces must carry the same generation (`V<N>(alpha|beta)?`) — they are cross-validation surfaces, not independent declarations. |
+| `D2TSP011` | `duplicate-field-number`    | Two or more properties on the same proto-bound model carry the same `@d2Field(N)` pin. Duplicate field numbers produce invalid proto3; each property needs a unique number.                                                                  |
+| `D2TSP012` | _retired_                   | Formerly `nested-redact-unsupported`. Nested-model `@d2Redact` is now fully supported (the model walker threads the reason into nested fields at any depth); the number stays retired so historical build-failure reports remain traceable.   |
+| `D2TSP013` | `missing-concern`           | A client-exposed op (real-module mode — `csharp-clients-namespace` + `csharp-app-namespace-base` set, `@d2ServedBy` present, not `@d2Internal`) carries no `@d2Concern`. The concern names the folder + namespace segment the op's transport DTOs live in (`<clients-ns>.<Concern>`); without it the emitter cannot place them. Add `@d2Concern("<Segment>")` to the op. |
+
+### Concern-based client namespace routing (`@d2Concern`)
+
+`@d2Concern("<Segment>")` on a client-exposed op names its **co-location concern** — the folder + namespace segment that op's transport DTOs live in. It is a general, spec/config-driven mechanism exactly parallel to the app-handler arm (`csharp-app-namespace-base` + the `.<Category>.<PascalOp>` derivation): the C# DTO emitter routes an exposed op's DTOs to `<csharp-clients-namespace>.<Concern>` (folder = namespace), and the regen `COPY_MANIFEST` places them in `client/<Concern>/` alongside the hand-written runtime that serves them. The module façade splits into a `Facade/` folder — the interface lands in `<clients-ns>.Facade`, the impl + generated DI registration in `<app-ns>.Facade` — and the registration's file + method names derive from the clients-namespace **leaf** segment (leaf `Client` → `KeyCustodianClientGenerated.g.cs` / `AddD2KeyCustodianClient()`), never a hard-coded literal. There are ZERO hard-coded file/name special cases in emitter code: the maintenance surface is the `.tsp` (`@d2Concern` decorators) + `tspconfig.yaml` only. A client-exposed op that omits `@d2Concern` is a loud build failure (`D2TSP013`); `@d2/typespec-decorators` additionally fires `invalid-concern` when the segment is not a legal C# identifier. The routing is C#-only — the TypeScript DTO mirror has no namespace, so it is unaffected.
 
 ### Wire-channel single source
 

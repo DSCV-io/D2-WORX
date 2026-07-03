@@ -76,6 +76,7 @@ describe("exposedDtoRouting_ExposedOp_DtosGoToClientsNamespace", () => {
       @d2Query
       @d2InProcess
       @d2ServedBy("KeyCustodian")
+      @d2Concern("Jwks")
       op getJwks(): GetJwksOutput;
       `,
     );
@@ -85,7 +86,7 @@ describe("exposedDtoRouting_ExposedOp_DtosGoToClientsNamespace", () => {
       options: {
         "@d2/typespec-emitters": {
           "csharp-namespace": "D2.Fixture.Ns",
-          "csharp-clients-namespace": "D2.Edge.KeyCustodian.Clients",
+          "csharp-clients-namespace": "D2.Edge.KeyCustodian.Client",
           "csharp-app-namespace-base":
             "D2.Edge.KeyCustodian.App.Application.Handlers",
         },
@@ -98,10 +99,12 @@ describe("exposedDtoRouting_ExposedOp_DtosGoToClientsNamespace", () => {
     );
     expect(errors).toHaveLength(0);
 
-    // GetJwksOutput should be in the Clients namespace.
+    // GetJwksOutput should be in the concern-qualified Clients namespace.
     const outputContent = getEmittedFile(host, "GetJwksOutput.g.cs");
     expect(outputContent).toBeDefined();
-    expect(outputContent).toContain("namespace D2.Edge.KeyCustodian.Clients;");
+    expect(outputContent).toContain(
+      "namespace D2.Edge.KeyCustodian.Client.Jwks;",
+    );
 
     // Handler interface should be in the app CQRS namespace (Queries.GetJwks).
     const handlerContent = getEmittedFile(host, "IGetJwksHandler.g.cs");
@@ -148,7 +151,7 @@ describe("exposedDtoRouting_InternalOp_DtosGoToAppCqrsNamespace", () => {
       options: {
         "@d2/typespec-emitters": {
           "csharp-namespace": "D2.Fixture.Ns",
-          "csharp-clients-namespace": "D2.Edge.KeyCustodian.Clients",
+          "csharp-clients-namespace": "D2.Edge.KeyCustodian.Client",
           "csharp-app-namespace-base":
             "D2.Edge.KeyCustodian.App.Application.Handlers",
         },
@@ -168,7 +171,7 @@ describe("exposedDtoRouting_InternalOp_DtosGoToAppCqrsNamespace", () => {
       "namespace D2.Edge.KeyCustodian.App.Application.Handlers.Commands.ReconcileKeyState;",
     );
     // NOT in the Clients namespace.
-    expect(inputContent).not.toContain("D2.Edge.KeyCustodian.Clients");
+    expect(inputContent).not.toContain("D2.Edge.KeyCustodian.Client");
   });
 });
 
@@ -260,6 +263,7 @@ describe("exposedDtoRouting_FacadeEmission_ExposedOpCollected", () => {
       @d2Query
       @d2InProcess
       @d2ServedBy("KeyCustodian")
+      @d2Concern("Jwks")
       op getJwks(): GetJwksOutput;
       `,
     );
@@ -269,7 +273,7 @@ describe("exposedDtoRouting_FacadeEmission_ExposedOpCollected", () => {
       options: {
         "@d2/typespec-emitters": {
           "csharp-namespace": "D2.Fixture.Ns",
-          "csharp-clients-namespace": "D2.Edge.KeyCustodian.Clients",
+          "csharp-clients-namespace": "D2.Edge.KeyCustodian.Client",
           "csharp-app-namespace-base":
             "D2.Edge.KeyCustodian.App.Application.Handlers",
         },
@@ -282,7 +286,7 @@ describe("exposedDtoRouting_FacadeEmission_ExposedOpCollected", () => {
     );
     expect(errors).toHaveLength(0);
 
-    // The façade interface must be emitted in the Clients namespace.
+    // The façade interface must be emitted in the Clients Facade namespace.
     const stored = (host as unknown as { fs?: Map<string, string> }).fs;
     expect(stored instanceof Map).toBe(true);
     const ifaceKey = [...(stored as Map<string, string>).keys()].find((k) =>
@@ -290,8 +294,76 @@ describe("exposedDtoRouting_FacadeEmission_ExposedOpCollected", () => {
     );
     expect(ifaceKey).toBeDefined();
     const ifaceContent = (stored as Map<string, string>).get(ifaceKey!);
-    expect(ifaceContent).toContain("namespace D2.Edge.KeyCustodian.Clients;");
+    expect(ifaceContent).toContain(
+      "namespace D2.Edge.KeyCustodian.Client.Facade;",
+    );
     expect(ifaceContent).toContain("GetJwksAsync(");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Missing @d2Concern on a client-exposed op (real-module mode) → D2TSP013.
+// A client-exposed op's transport DTOs are placed by concern; omitting the
+// @d2Concern is a loud build failure (the emitter cannot route them).
+// ---------------------------------------------------------------------------
+
+describe("exposedDtoRouting_MissingConcern_D2TSP013Fires", () => {
+  let host: Awaited<ReturnType<typeof createTestHost>>;
+
+  beforeAll(async () => {
+    host = await createTestHost({
+      libraries: [D2DecoratorTestLibrary, D2EmitterTestLibrary],
+    });
+  });
+
+  it("client-exposed op without @d2Concern → missing-concern error diagnostic naming the op", async () => {
+    host.addTypeSpecFile(
+      "main.tsp",
+      `
+      import "@d2/typespec-decorators";
+      using D2;
+      namespace D2.KeyCustodian;
+
+      model GetJwksOutput { keys: string[]; }
+
+      // Deliberately omit @d2Concern to trigger D2TSP013 (client-exposed op).
+      @d2Query
+      @d2InProcess
+      @d2ServedBy("KeyCustodian")
+      op getJwks(): GetJwksOutput;
+      `,
+    );
+
+    let compileError: unknown = undefined;
+    try {
+      await host.compile("main.tsp", {
+        emit: ["@d2/typespec-emitters"],
+        options: {
+          "@d2/typespec-emitters": {
+            "csharp-namespace": "D2.Fixture.Ns",
+            "csharp-clients-namespace": "D2.Edge.KeyCustodian.Client",
+            "csharp-app-namespace-base":
+              "D2.Edge.KeyCustodian.App.Application.Handlers",
+          },
+        },
+        outputDir: "testing:/out",
+      });
+    } catch (err) {
+      compileError = err;
+    }
+
+    void compileError;
+    const errors = host.program.diagnostics.filter(
+      (d) => d.severity === "error",
+    );
+    const missingConcern = errors.find(
+      (d) =>
+        String(d.code).includes("missing-concern") ||
+        String(d.message).includes("@d2Concern"),
+    );
+    expect(missingConcern).toBeDefined();
+    expect(missingConcern!.severity).toBe("error");
+    expect(String(missingConcern!.message)).toContain("getJwks");
   });
 });
 

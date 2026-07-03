@@ -9,10 +9,15 @@ namespace D2.Edge.Tests.Unit.KeyCustodian.TypeSpecGrpc;
 using System.Collections.Concurrent;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
-using D2.Edge.KeyCustodian.Clients;
+using D2.Edge.KeyCustodian.Client.CaCertificate;
+using D2.Edge.KeyCustodian.Client.Facade;
+using D2.Edge.KeyCustodian.Client.Issuance;
+using D2.Edge.KeyCustodian.Client.Jwks;
+using D2.Edge.KeyCustodian.Client.Keyring;
+using D2.Edge.KeyCustodian.Client.OidcConfiguration;
+using D2.Edge.KeyCustodian.Client.Signing;
 using D2.Edge.Tests.TypeSpecGrpc.Generated;
 using D2.Services.Protos.KeyCustodian.V2Alpha;
-using D2.Shared.Result;
 using Google.Protobuf;
 using Grpc.Net.Client;
 using Microsoft.AspNetCore.Builder;
@@ -21,10 +26,10 @@ using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using ClientsGetCaCertificateOutput = D2.Edge.KeyCustodian.Clients.GetCaCertificateOutput;
-using ClientsGetKeyringOutput = D2.Edge.KeyCustodian.Clients.GetKeyringOutput;
-using ClientsIssueLeafOutput = D2.Edge.KeyCustodian.Clients.IssueLeafOutput;
-using ClientsSignOutput = D2.Edge.KeyCustodian.Clients.SignOutput;
+using ClientsGetCaCertificateOutput = D2.Edge.KeyCustodian.Client.CaCertificate.GetCaCertificateOutput;
+using ClientsGetKeyringOutput = D2.Edge.KeyCustodian.Client.Keyring.GetKeyringOutput;
+using ClientsIssueLeafOutput = D2.Edge.KeyCustodian.Client.Issuance.IssueLeafOutput;
+using ClientsSignOutput = D2.Edge.KeyCustodian.Client.Signing.SignOutput;
 
 /// <summary>
 /// In-memory gRPC harness tests for the TypeSpec-emitted

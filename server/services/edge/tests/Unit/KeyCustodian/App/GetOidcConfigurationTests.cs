@@ -7,7 +7,7 @@
 namespace D2.Edge.Tests.Unit.KeyCustodian.App;
 
 using System.Text.Json;
-using D2.Edge.KeyCustodian.Clients;
+using D2.Edge.KeyCustodian.Client.OidcConfiguration;
 
 /// <summary>
 /// Tests for <see cref="GetOidcConfigurationHandler"/>: composes the minimal OIDC

@@ -117,6 +117,7 @@ model EnumFixtureWalkOutput {
 @d2Query
 @d2InProcess
 @d2ServedBy("EnumFixtures")
+@d2Concern("EnumFixture")
 op enumFixture(input: EnumFixtureWalkInput): EnumFixtureWalkOutput;
 
 /** gRPC request carrying a single REQUIRED enum (the proto string + parse bridge). */
@@ -156,5 +157,6 @@ model SignWithKindFixtureOutput {
  */
 @d2Command
 @d2ServedBy("EnumFixtures")
+@d2Concern("EnumFixture")
 @d2GrpcMethod("EnumFixturesSigner", "SignWithKindFixture")
 op signWithKindFixture(input: SignWithKindFixtureInput): SignWithKindFixtureOutput;

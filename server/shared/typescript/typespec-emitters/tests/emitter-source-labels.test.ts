@@ -163,7 +163,7 @@ const PHASE_LABEL = /\bPhase\s+\d+\b/;
 //   CB7, CB8           (conversation-branch IDs)
 //   D-R4, D-R8, D-R9  (decision-revision IDs)
 //   D3, D4, D7, D18   (bare decision IDs — known range: D3–D9, D10+)
-//   F-HOME, F-XYZ      (finding-label IDs — two or more uppercase letters)
+//   F-HOME, F-XYZ, F-3 (finding-label IDs — 2+ uppercase letters, or digits)
 //   D-b, D-c           (lowercase decision shorthands — single lowercase letter)
 //   SC1, SC2, SC3      (session-scoped shorthand tokens)
 //
@@ -190,11 +190,11 @@ const PHASE_LABEL = /\bPhase\s+\d+\b/;
 //   \bD-R\d+\b                 D-R4, D-R8, D-R9
 //   \bD[3-9]\d*\b              D3, D4, D7, D9 (single-digit range 3–9)
 //   \bD[12]\d+\b               D10..D19, D20+ (two+ digits starting with 1 or 2)
-//   \bF-[A-Z]{2,}\b            F-HOME, F-XYZ (two+ uppercase letters after hyphen)
+//   \bF-(?:[A-Z]{2,}|\d+)\b    F-HOME, F-XYZ, F-3 (2+ upper letters OR digits)
 //   \bD-[a-z]\b                D-b, D-c (lowercase decision shorthands)
 //   \bSC\d+\b                  SC1, SC2, SC3 (session-scoped shorthand tokens)
 const CONVERSATION_ID =
-  /\bR-O\d+[a-z]*\b|\bD-[SO]\d+\b|\bC-\d+\b|\bCB\d+\b|\bD-R\d+\b|\bD[3-9]\d*\b|\bD[12]\d+\b|\bF-[A-Z]{2,}\b|\bD-[a-z]\b|\bSC\d+\b/;
+  /\bR-O\d+[a-z]*\b|\bD-[SO]\d+\b|\bC-\d+\b|\bCB\d+\b|\bD-R\d+\b|\bD[3-9]\d*\b|\bD[12]\d+\b|\bF-(?:[A-Z]{2,}|\d+)\b|\bD-[a-z]\b|\bSC\d+\b/;
 
 // Combined check for any of the above patterns.
 function hasLeak(line: string): boolean {
@@ -205,6 +205,31 @@ function hasLeak(line: string): boolean {
     CONVERSATION_ID.test(line)
   );
 }
+
+// ---------------------------------------------------------------------------
+// CONVERSATION_ID pattern unit checks
+//
+// This file is excluded from the tests/ scan (see `thisFile` filter below), so
+// the example ID tokens embedded in these assertions never self-trip the guard.
+// ---------------------------------------------------------------------------
+
+describe("conversation_id_pattern_matches_finding_labels", () => {
+  it("matches digit-suffixed finding-label IDs (e.g. F-3, F-12)", () => {
+    expect(CONVERSATION_ID.test("carry the F-3 response-enum parse")).toBe(
+      true,
+    );
+    expect(CONVERSATION_ID.test("see F-12 for context")).toBe(true);
+  });
+
+  it("matches letter-suffixed finding-label IDs (e.g. F-HOME, F-XYZ)", () => {
+    expect(CONVERSATION_ID.test("the F-HOME finding")).toBe(true);
+    expect(CONVERSATION_ID.test("the F-XYZ finding")).toBe(true);
+  });
+
+  it("does not false-positive on a hyphenated word with an embedded F-digit (UTF-8)", () => {
+    expect(CONVERSATION_ID.test("encoded as UTF-8 bytes")).toBe(false);
+  });
+});
 
 // ---------------------------------------------------------------------------
 // Shared scan helper

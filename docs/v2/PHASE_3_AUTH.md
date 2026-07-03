@@ -10,8 +10,9 @@ Copyright (c) DCSV. All rights reserved.
 > (see the relevant ADRs and per-lib READMEs).
 
 > **D2.Shared.Auth shipped** (deliverable 0002). The auth runtime library (`D2.Shared.Auth`,
-> `D2.Shared.Auth.Http`, `D2.Shared.Auth.Grpc`, `D2.Shared.Auth.Outbound`,
-> `D2.Shared.Auth.Keyring`) is live on `nova`. This doc is the **auth-runtime and Edge-auth
+> `D2.Shared.Auth.Http`, `D2.Shared.Auth.Grpc`, `D2.Shared.Auth.Outbound`) is live on `nova`.
+> The keyring consumer runtime is service-owned in the KC client package
+> `D2.Edge.KeyCustodian.Client`, not a shared lib. This doc is the **auth-runtime and Edge-auth
 > design reference** that Phase 3 A1–A6 builds on — not an in-progress working doc.
 
 > **⚠ Deliverable 0002 scope tightening (2026-05-10)** — the inbound runtime's authoritative
@@ -37,12 +38,13 @@ Copyright (c) DCSV. All rights reserved.
 2. **Fetch + cache JWKS** from Edge (verify keys for inbound JWT signature checks).
 3. **Track session liveness** so revoked sessions are rejected immediately even when the JWT
    hasn't expired yet (subscribes to revocation backplane).
-4. **Fetch + cache `PayloadCryptoKeyring`s** from KeyCustodian (encryption keys for AMQP and
-   sensitive at-rest data).
+4. **Fetch + hold `PayloadCryptoKeyring`s in-process** from KeyCustodian (encryption keys for
+   AMQP and sensitive at-rest data).
 5. **Forward the once-minted internal transaction-token unchanged** on cross-service calls (the
    receiver re-validates it); request + cache tokens from Edge only for the retained RFC 8693
-   exception paths (cross-trust-domain / narrowing / async scope reduction / impersonation) and the
-   BFF → Edge boundary token. Internal workload identity is **mTLS** (ADR-0023), not a forwarded
+   exception paths (cross-trust-domain / narrowing / async scope reduction / impersonation). The
+   BFF forwards the transaction token Edge attaches on the inbound proxy pass, like any internal
+   first hop. Internal workload identity is **mTLS** (ADR-0023), not a forwarded
    service-identity JWT — the `client_credentials` service-identity layer is superseded on internal
    hops.
 
@@ -81,7 +83,8 @@ doc names an outbound type whose name ends in `Client` — `ITokenExchangeClient
   contrast is informative: rate-limit state is write-heavy (every request increments multi-
   dimensional counters across replicas) and uses `IDistributedCache` only — no L1, no tiered cache,
   because L1 would diverge under concurrent writes from different replicas. This lib's caches are
-  read-heavy (validation, JWKS lookup, keyring lookup) and benefit from L1 + tiered + backplane.
+  read-heavy (validation, JWKS lookup) and benefit from L1 + tiered + backplane; keyring material
+  is held in-process-memory-only, never a shared cache tier.
 
 The split is: **Edge produces auth signal; D2.Shared.Auth consumes it everywhere.**
 
@@ -172,9 +175,12 @@ Citations inline.
   audience), **deliberate narrowing exceptions**, **asynchronous scope reduction**, and
   **impersonation `act`-chain** establishment. Exchange is the explicit, exceptional tool — not the
   implicit per-hop tax (ADR-0022 §"RFC 8693 token exchange is retained, repurposed").
-- **The BFF → Edge boundary token** uses RFC 6749 §4.4 `client_credentials`: the SvelteKit BFF is an
-  external client of Edge and presents a `client_credentials` token to reach Edge's edge-facing
-  surface. That hop survives unchanged. What is superseded is the *internal* service-to-service
+- **The SvelteKit BFF is a mesh-member internal workload**, not an external client of Edge: Edge
+  resolves the session + mints the transaction token once on the inbound pass (browser → Edge →
+  SvelteKit, private network — only Edge can reach it), attaches it to the proxied request, and the
+  BFF makes direct mTLS calls to internal services forwarding that token unchanged (ADR-0022 —
+  the BFF is simply the first internal hop). Boundary `client_credentials` remains only for
+  genuinely-external clients of Edge. What is superseded is the *internal* service-to-service
   `client_credentials` service-identity layer (one service proving "I am Files" to another) —
   workload identity on internal hops now comes from **mTLS**
   ([ADR-0023](../adrs/0023-mtls-workload-identity.md)), not a second forwarded service-identity JWT.
@@ -268,8 +274,9 @@ locale, …) per ADR-0007 §2. No hop mutates the token to append itself.
 - **State machine** per `kid` in `keycustodian_db.key_record`: `pending → active → retiring → retired`
   (+ terminal `compromised`).
 - **Distribution**: pull-based via the keyring gRPC endpoint (design-era name `internal/keys/{domain}`;
-  built op: `KeyCustodianKeyring/GetKeyring`), hourly TTL refresh,
-  `d2.security.key-rotated` event-driven invalidation.
+  built op: `KeyCustodianKeyring/GetKeyring`); the consuming runtime holds the fetched keyring
+  in-process-memory-only (never a shared cache tier) and refreshes it on the
+  `d2.security.key-rotated` event.
 - **Rotation cadences**: JWKS 90d, payload keys quarterly, cookie 90d, client_secret 180d, root key
   1-2y manual.
 - **Grace window**: default 7 days for `retiring` state — old kids decrypt in-flight traffic; new
@@ -703,19 +710,21 @@ server/shared/dotnet/
 │   │   └── OutboundTelemetry.cs         # static Meter + ActivitySource ("D2.Shared.Auth.Outbound") (Q22)
 │   └── AuthOutboundServiceCollectionExtensions.cs   # services.AddD2AuthOutbound(opts)
 │
-└── auth-keyring/                        # NEW — KeyringClient + Encryption wrapper
-    ├── D2.Shared.Auth.Keyring.csproj
-    ├── README.md
-    ├── IKeyringClient.cs                # GetKeyringAsync per domain
-    ├── GrpcKeyringClient.cs             # gRPC + ITieredCache-backed
-    ├── KeyringClientOptions.cs          # Edge gRPC channel, refresh TTL
-    ├── KeyringBackedPayloadCrypto.cs    # IPayloadCrypto wrapper with backplane swap (Q9)
-    ├── IRotationEventChannel.cs         # subscribes to RMQ d2.security.key-rotated (Q3)
-    ├── RabbitMqRotationEventChannel.cs  # default impl using D2.Shared.Messaging
-    ├── KeyringServiceCollectionExtensions.cs   # services.AddD2AuthKeyring(opts)
-    │                                            # services.AddD2EncryptionForViaKeyring(domain)
-    └── README.md
+└── (no keyring lib — the keyring consumer runtime is service-owned, not a shared lib; see the
+    placement note below)
 ```
+
+**Placement — keyring consumer runtime (service-owned, not a shared lib).** The keyring consumer
+machinery (`IKeyringClient` + `GrpcKeyringClient`, `KeyringBackedPayloadCrypto` (the Q9 hot-swap
+wrapper), `IRotationEventChannel` / `RabbitMqRotationEventChannel` (Q3), `KeyringRefreshSubscriber`,
+`AddD2EncryptionForViaKeyring`) lives in the KC client package `D2.Edge.KeyCustodian.Client`
+(`server/services/edge/key-custodian/client/`). The in-process source (`InProcessKeyringClient` +
+`AddD2EncryptionFromKeyCustodian`) lives in the KC app
+(`server/services/edge/key-custodian/app/Application/`), because it composes the leaf
+`IKeyCustodianApi`, which the client package cannot reference under the dependency law.
+Convention: Edge/KC-client runtime code lives in service-owned client packages — `server/shared/`
+holds only service-agnostic abstractions. This pre-decides the future JWKS-fetch and
+session-liveness client components too: service-owned client packages, not shared libs.
 
 ### Dependency graph between the new csprojs
 
@@ -727,21 +736,21 @@ server/shared/dotnet/
 - `auth` → `auth-abstractions`, `auth-context-abstractions`, `context-abstractions`,
   `caching-abstractions`, `caching-tiered`, `result`, `i18n-abstractions`,
   `Microsoft.AspNetCore.Authentication.JwtBearer`, `Microsoft.IdentityModel.Tokens`
-- `auth-keyring` → `auth-outbound` (uses the workload-certificate leaf source to authn its gRPC
-  calls to Edge over mTLS per ADR-0023),
-  `caching-abstractions`, `caching-tiered`, `encryption`, `messaging` (Wave 6 prerequisite per
-  Q3 — now shipped), `result`
+- keyring consumer runtime → not one of these csprojs; it lives in the KC client package
+  `D2.Edge.KeyCustodian.Client`, which references contracts + shared libs only (`encryption`,
+  `messaging-abstractions`, `handler`, `auth-events`, `result`); its gRPC channel to Edge is
+  host-composed (the host supplies the keyring client stub over the mTLS channel per ADR-0023)
 
 ### Who consumes what
 
 - **Pure inbound-only service** (rare; receives requests, never calls anything): `auth` only.
 - **Standard backend** (receives + calls): `auth` + `auth-outbound`.
 - **Backend that publishes/consumes encrypted RMQ messages** (most): `auth` + `auth-outbound` +
-  `auth-keyring`.
+  the KC client package `D2.Edge.KeyCustodian.Client` (keyring consumer runtime).
 - **Edge** (Phase 3, the issuer side): all three plus its own issuer-side code that ships in Edge,
   not here.
 
-Approximate size: 35-45 files across the three new csprojs, ~3500-4500 LoC.
+Approximate size: 35-45 files across the new csprojs, ~3500-4500 LoC.
 
 ---
 
@@ -865,7 +874,7 @@ decides a session is alive. Edge owns the durable row in `auth_db.session` and w
 the sentinel on session create / revoke / role change / org switch (all mutations modeled as
 invalidate-then-repopulate-on-next-request).
 
-### 6.4 KeyringClient (cached payload-encryption keyrings from KeyCustodian)
+### 6.4 KeyringClient (in-process payload-encryption keyrings from KeyCustodian)
 
 **Interface**:
 
@@ -873,9 +882,9 @@ invalidate-then-repopulate-on-next-request).
 public interface IKeyringClient
 {
     /// <summary>
-    /// Returns the current PayloadCryptoKeyring for a domain.
-    /// L1 hit: ~free. L1 miss → L2 hit (if backplane was active): ~5ms.
-    /// L1 + L2 miss: gRPC fetch from Edge (~50-100ms).
+    /// Returns the current PayloadCryptoKeyring for a domain via a gRPC fetch
+    /// from Edge (~50-100ms). The consuming runtime holds the keyring
+    /// in-process-memory-only — there is no shared cache tier.
     /// </summary>
     ValueTask<D2Result<PayloadCryptoKeyring>> GetKeyringAsync(
         string domain, CancellationToken ct = default);
@@ -890,7 +899,10 @@ public interface IKeyringClient
 
 **Backing**:
 
-- `ITieredCache` keyed by `keyring:{domain}` for the keyring snapshot.
+- The keyring is held **in-process-memory-only** (an atomically-swappable reference); it is never
+  placed in Redis / `IDistributedCache` / `ITieredCache` / any shared cache tier. The payload
+  keyring is itself the key material that protects cache-bound data, so caching it in the tier it
+  protects would be circular.
 - gRPC channel to Edge's keyring endpoint (`internal/keys/{domain}` is the design-era name; the
   built operation is the `KeyCustodianKeyring/GetKeyring` gRPC method, which takes the domain as
   input) — the calling workload authenticates over mutually-authenticated TLS with a
@@ -898,13 +910,13 @@ public interface IKeyringClient
   cross-process mTLS issuance + Edge host wiring is a later deliverable (a domain keyring is
   supplied directly via `AddD2EncryptionFor` until then).
   - **Server-half as-built.** The `GetKeyringOutput` carries `{ activeKid, entries[{ kid, keyBytes }], aadContext }` — `keyBytes` is `[RedactData(SecretInformation)]`, `aadContext` is the domain's AEAD additional-authenticated-data (`"d2/<domain>"`, authenticated-not-secret, NOT redacted) which the client feeds verbatim into its `PayloadCryptoKeyring` so AAD agreement is structural. The server is **authority-gated**: beyond the `internal.kc.keyring` scope, a dedicated fail-closed `AuthorizeKeyringFetch` arm serves only the cross-process-hop + in-process-module planes and enforces a per-workload `KEYCUSTODIAN_KEYRING_AUTHORITY` policy (boot-validated to refuse any non-payload grant); the initial grant map ships EMPTY (deny-all) — each consumer's grant is a forward-wire-up obligation (PHASE_3 §G).
-- TTL: 1 hour (per V2.md §5.4).
-- RMQ subscription (Q3): on `d2.security.key-rotated` event for `domain X`, force-invalidate
-  `keyring:X` in cache, drop in-memory `PayloadCryptoKeyring` reference, next `GetKeyringAsync`
-  call refetches. RabbitMQ chosen over Redis pub/sub because rotations need durable / retryable
-  delivery (a service offline at rotation time gets the event when it comes back online).
+- RMQ subscription: on `d2.security.key-rotated` event for `domain X`, re-fetch the keyring and
+  atomically swap the in-process reference; a failed refresh keeps serving the current keyring
+  (bounded — no tight-loop, no dead-letter). RabbitMQ chosen over Redis pub/sub because rotations
+  need durable / retryable delivery (a service offline at rotation time gets the event when it
+  comes back online).
 
-**Bridge to Encryption lib** (Q9 = wrapper with backplane swap): the `KeyringBackedPayloadCrypto`
+**Bridge to Encryption lib** (wrapper with rotation-event swap): the `KeyringBackedPayloadCrypto`
 wrapper holds an `IKeyringClient` ref + a volatile `(currentKeyring, currentCrypto)` tuple. At
 startup, fetches the keyring synchronously and seeds the tuple. Subscribes to the rotation event
 channel; on receipt, re-fetches and atomically swaps via `Volatile.Write`. `Encrypt` / `Decrypt`
@@ -960,8 +972,9 @@ Wired via `services.AddD2EncryptionForViaKeyring("audit")` (sibling helper to En
 > service-identity JWT. A service-identity token carried as a second forwarded JWT is the wrong shape
 > under forward-unchanged: it reintroduces a per-hop service-token mint and hits the audience-targeting
 > problem at a strict receiver (ADR-0023 §Context). The internal `client_credentials` service-identity
-> client described below has been removed from the caller-side lib; the **BFF → Edge boundary token** is
-> a *different* `client_credentials` use (the BFF is an external client of Edge) and **survives**. The
+> client described below has been removed from the caller-side lib; boundary `client_credentials`
+> survives only for genuinely-external clients of Edge — the BFF is NOT one (a mesh-member workload:
+> mTLS leaf, direct internal calls, forwarding the Edge-attached transaction token). The
 > design below is retained as a record of the original mechanism mTLS replaces — read it as the
 > superseded design, not a current surface.
 
@@ -1127,8 +1140,8 @@ better than silent degradation):
    > in-process leaf-presentation path (cache + refresh-ahead + per-channel opt-in) is built; the
    > **cross-process leaf issuance + first-leaf bootstrap + Edge host wiring** that makes this run
    > end-to-end is a later deliverable, so a domain keyring is supplied directly via
-   > `AddD2EncryptionFor` until then. The **BFF → Edge boundary `client_credentials`** is a separate,
-   > surviving use (the BFF is an external client of Edge).
+   > `AddD2EncryptionFor` until then. Boundary `client_credentials` survives only for
+   > genuinely-external clients of Edge (the BFF is a mesh-member workload, not one of them).
 
 3. `ISessionLivenessTracker` initializes (no-op at startup — cache populates lazily on first
    request per session).
@@ -1150,8 +1163,9 @@ Picking the right cache marker comes down to the read/write pattern of the data 
 
 - **Read-heavy + revocation-driven invalidation** → `ITieredCache`. L1 absorbs the per-request hit
   rate; L2 (Redis) is the cluster source of truth; backplane events invalidate L1 on revocation.
-  This describes JWKS, payload-encryption keyrings, and session liveness — all auth caches in this
-  lib that aren't single-writer-per-process.
+  This describes JWKS and session liveness — the auth caches in this lib that aren't
+  single-writer-per-process. Payload-encryption keyrings are the exception: they are held
+  in-process-memory-only and rotation-event-refreshed, never in the shared cache tier.
 - **Write-heavy + cluster-coordinated** → `IDistributedCache` (Redis only, no L1). L1 would diverge
   across replicas under concurrent writes. **Rate-limit middleware (Edge / Phase 3) is the
   canonical example** — every request increments multi-dimensional counters (per-user, per-IP,
@@ -1176,10 +1190,11 @@ Invalidation: backplane `key-rotated:jwks` event + reactive refresh on unknown `
 Why: L1 keeps validation fast; L2 amortizes the fetch across replicas; backplane is
 critical for instant rotation propagation.
 
-**Per-domain `PayloadCryptoKeyring`** — `ITieredCache`, L1+L2 1 hour.
-Invalidation: backplane `key-rotated:{domain}` event.
-Why: hourly TTL per V2.md §5.4; backplane gets emergency rotations there in <100ms
-instead of waiting for next hour.
+**Per-domain `PayloadCryptoKeyring`** — in-process-memory-only, no shared cache tier.
+Refresh: the `key-rotated:{domain}` rotation event atomically swaps the in-process keyring; a
+failed refresh keeps serving the current keyring.
+Why: the payload keyring is itself the key material that protects cache-bound data, so it is never
+held in the tier it protects.
 
 **Session liveness** — `ITieredCache` keyed by `session:{id}`, L1 5min / L2 = session lifetime.
 Invalidation: backplane `session-revoked` event + TTL expire.
@@ -1210,17 +1225,21 @@ allocation, no cache needed.
 ### Cache key conventions
 
 - `jwks:default` (single JWKS set per cluster)
-- `keyring:{domain}` (one per encryption domain — `audit`, `notifications`, `courier`, …)
 - `session:{session_id}` (UUIDv7 string)
+
+Payload keyrings have no cache key — they are held in-process-memory-only, never in a shared
+cache tier.
 
 ### Backplane event schema (proposed — needs locking)
 
 Backplane payload is a single string per the existing
 `ICacheInvalidationBackplane.PublishInvalidationAsync(string key, ...)` shape. So:
 
-- Key rotation event: publish key `"keyring:audit"` (or `"jwks:default"`) — every subscriber sees
-  this and invalidates the matching cache entry. Auth's `KeyRotatedBackplaneSubscriber` filters for
-  `keyring:*` and `jwks:*` prefixes.
+- Key rotation event (JWKS): publish key `"jwks:default"` — every subscriber sees this and
+  invalidates the matching cache entry. Auth's `KeyRotatedBackplaneSubscriber` filters for the
+  `jwks:*` prefix. Payload-keyring rotation is NOT a backplane key — it is the RMQ
+  `KeyRotatedEvent` (`d2.security.key-rotated`), which triggers the in-process refetch + atomic
+  keyring swap.
 - Session revocation event: publish key `"session:{session_id}"` —
   `SessionRevokedBackplaneSubscriber` invalidates that single session.
 
@@ -1337,8 +1356,9 @@ token never rescues a bad leaf (check 0 rejects at the channel). Both factors ar
 > §3.2 / §6.6 (cross-trust-domain, narrowing exceptions, async scope reduction, impersonation). A pure
 > service-identity fetch with no user in the loop — e.g. KeyringClient / JwksProvider calling Edge's
 > `internal/keys` — is its own case (§6.5, Scenario 4); under the pivot that hop's *workload* identity
-> is mTLS, and the BFF → Edge boundary `client_credentials` token (an external client of Edge)
-> survives unchanged.
+> is mTLS. The BFF is a mesh workload (mTLS leaf per the ADR-0023 scope extension): its user-context
+> calls forward the Edge-minted transaction token attached on the inbound proxy pass, and a pure
+> no-user BFF fetch is the same mTLS Scenario-4 case as any other workload.
 
 **Build-state**: the forwarded-token `CallCredentials` attach + mTLS leaf-presentation machinery are
 **built** in `D2.Shared.Auth.Outbound` (proven in-memory / loopback, no live host); the build-time
@@ -1500,8 +1520,8 @@ Q, it's flagged.
   non-harmless request → 401 `BearerMissing`. "Anonymous" requires the not-yet-built anon-JWT
   (Pattern A), not a no-token pass-through
 - `JwtAuthInterceptor` (gRPC) — same set, gRPC flavor
-- `KeyringClient` — fetch from in-process gRPC fixture; cache hit; backplane invalidation triggers
-  refresh
+- `KeyringClient` — fetch from in-process gRPC fixture; rotation event triggers refetch + atomic
+  in-process swap; a failed refresh keeps serving the current keyring
 - `JwksProvider` — fetch from in-process HTTP fixture; reactive refresh on unknown kid
 - `SessionLivenessTracker` — receive `session:{id}` revocation event → next `IsAliveAsync` returns
   false; backplane delivery → L1 invalidation across replicas
@@ -1509,8 +1529,9 @@ Q, it's flagged.
   fixture; refresh-ahead reissue before expiry; issuance unreachable → keep the still-valid leaf
 - `HttpTokenExchangeClient` — built + unit-tested against the mocked-Edge `/oauth/token` fixture;
   wired into no request flow (test-only callers); backs the retained RFC 8693 exception paths
-- `Backplane subscribers` — receive `keyring:{domain}` event → refresh that domain only; receive
-  `session:{id}` event → invalidate that session only / add to revoked set
+- `Backplane subscribers` — receive `session:{id}` event → invalidate that session only / add to
+  revoked set; the keyring rotation event (RMQ, not the cache backplane) → refetch + atomic
+  in-process swap for that domain only
 - **`KeyringClient + Encryption integration`** — `AddD2EncryptionFor` factory uses `IKeyringClient`;
   round-trip encrypt → decrypt; rotate kid mid-test; verify in-flight messages still decrypt during
   overlap window
@@ -1608,8 +1629,9 @@ the resolved contradiction record (C1–C7) are in **§13**. The three coupled i
   fingerprint scoring + ProblemDetails converter
 - `D2.Shared.Auth.Outbound` — outbound: workload-certificate leaf source (mTLS) + forwarded-token
   call-credentials + TokenExchangeClient (the RFC 8693 exception paths)
-- `D2.Shared.Auth.Keyring` — KeyringClient + KeyringBackedPayloadCrypto wrapper (depends on
-  Encryption + Messaging)
+- Keyring consumer runtime — KeyringClient + KeyringBackedPayloadCrypto wrapper (depends on
+  Encryption + Messaging); service-owned in the KC client package `D2.Edge.KeyCustodian.Client`,
+  not a shared auth lib
 
 ### Q2 — Bootstrap auth → **(a) `client_id` + `client_secret` env vars**
 
@@ -1697,7 +1719,7 @@ on the Node side. The wire format is RFC 7519 (JWT) + RFC 7517 (JWK), both libra
 consume identical tokens. Node side will use `jose` (npm), the canonical Node JOSE lib. Parity
 test ensures Edge-issued tokens validate identically on both — standards-driven, not lib-driven.
 
-### Q9 — KeyringClient → IPayloadCrypto bridge → **(b) wrapper with backplane-driven swap**
+### Q9 — KeyringClient → IPayloadCrypto bridge → **(b) wrapper with rotation-event-driven swap**
 
 **Decided**: 2026-05-07.
 
@@ -1753,8 +1775,9 @@ Wired via `services.AddD2EncryptionForViaKeyring("audit")` (sibling to Encryptio
 > reads identity + scopes from that JWT — no exchange, no second token, no per-hop mint); RFC 8693
 > token-exchange is **retained only as the exception tool** (the Edge boundary mint + cross-trust-domain
 > / narrowing / async scope-reduction / impersonation cases). Internal workload identity is **mTLS**
-> ([ADR-0023](../adrs/0023-mtls-workload-identity.md)), not a forwarded service-identity JWT; the
-> **BFF → Edge `client_credentials` boundary token survives** (the BFF is an external client of Edge).
+> ([ADR-0023](../adrs/0023-mtls-workload-identity.md)), not a forwarded service-identity JWT;
+> **boundary `client_credentials` survives only for genuinely-external clients of Edge** (the BFF is
+> a mesh-member workload — mTLS leaf, direct internal calls, Edge-attached transaction tokens).
 > The "both fully implemented" claim below also over-stated build-state: the service-identity client
 > has since been **removed from the lib** entirely (workload identity is mTLS), and the token-exchange
 > client is built but wired into **no request flow** (test-only callers), with the Edge `/oauth/token`
@@ -1790,8 +1813,9 @@ Phase 3 just swaps the fixture for the actual `/oauth/token` endpoint.
   Session-liveness re-checked at every hop is the faster revocation path; the TTL is the backstop.
 - **Service-identity tokens**: 5 min — short-lived, cached in-memory, refreshed by a background
   `IHostedService`; short TTL limits blast radius if a service-secret leaks. Applies to the
-  **retained** service-identity uses (the BFF → Edge boundary token; any remaining Edge-targeted
-  fetch) — internal service-to-service *workload* identity is now mTLS, not a service-identity JWT
+  **retained** service-identity uses (genuinely-external boundary clients of Edge; any remaining
+  Edge-targeted fetch — the BFF is a mesh-member workload, not one of these) — internal
+  service-to-service *workload* identity is now mTLS, not a service-identity JWT
   (ADR-0023), so this TTL no longer governs a per-hop internal service token.
 - **Token-exchange-derived tokens** (the retained RFC 8693 exception paths — boundary mint excepted,
   which produces the 15-min transaction-token above): inherit a short lifetime as derivatives; they
@@ -2204,8 +2228,9 @@ that mints the inbound token).
 > **Workload identity on internal hops is mTLS ([ADR-0023](../adrs/0023-mtls-workload-identity.md)).**
 > "Which workload is calling" — including this KeyringClient/JwksProvider fetch to Edge — is established
 > by the verified mTLS client certificate on a mutually-authenticated channel. No second bearer is
-> forwarded to identify the workload. The separate **BFF → Edge** `client_credentials` boundary token
-> (the BFF is an external client of Edge) is a distinct, surviving mechanism. The row below shows the
+> forwarded to identify the workload. The BFF is a mesh-member workload (mTLS leaf per the ADR-0023
+> scope extension) — a pure no-user BFF fetch is this same Scenario-4 case; boundary
+> `client_credentials` remains only for genuinely-external clients of Edge. The row below shows the
 > mTLS workload-auth target for this fetch.
 
 | Step | Token | aud + claims | Issued by / how | Mint callback? | Receiver validates | Build-state |
@@ -2216,8 +2241,8 @@ that mints the inbound token).
 
 | Step | Token / credential | aud + claims | Issued by / how | Mint callback? | Receiver validates | Build-state |
 | --- | --- | --- | --- | --- | --- | --- |
-| Edge publishes | **NO JWT.** `PropagatedContext` — the **operational subset only** — serialized + **encrypted** into the message frame | n/a (no `aud` — not a JWT); carries the `propagate:true` fields (request id, fingerprints, risk score, locale, `WhoIsHashId`, etc.) — **no `UserId`/`OrgId`/`Scopes`/`ActorChain`/`SessionId`** (ADR-0007 §Decision-2: the AMQP frame carries no bearer identity) | `RabbitMqMessageBus` serializes `PropagatedContext` (`messaging/rabbitmq/Publishing/RabbitMqMessageBus.cs`), `D2.Shared.Encryption` encrypts via the `notifications`-domain keyring | **no mint, no validation** — the *encryption* is the trust act | — (publish side) | **✅ built** on the messaging+encryption primitives (`PropagatedContext` is referenced by `RabbitMqMessageBus.cs` + `SubscriberChannel.cs`). The **keyring source** (`auth-keyring`/KeyringClient) is **❌ unbuilt** (Step 3) — today a domain keyring must be supplied directly via `AddD2EncryptionFor`. |
-| Notifications consumes | decrypted `PropagatedContext` (operational subset) | same | `SubscriberChannel` decrypts frame (active/retiring kid) → applies the operational subset to its context; does **NOT** reconstruct bearer identity (no JWT, no identity fields in `PropagatedContext` — ADR-0007) | none | **NO JWT validation** — "encryption boundary = trust boundary" (§8 Scenario C). Decrypt-clean-with-production-kid ⇒ the operational subset is trusted. | **✅ built** (decrypt + operational-subset apply on the messaging path); keyring auto-wiring ❌ unbuilt. |
+| Edge publishes | **NO JWT.** `PropagatedContext` — the **operational subset only** — serialized + **encrypted** into the message frame | n/a (no `aud` — not a JWT); carries the `propagate:true` fields (request id, fingerprints, risk score, locale, `WhoIsHashId`, etc.) — **no `UserId`/`OrgId`/`Scopes`/`ActorChain`/`SessionId`** (ADR-0007 §Decision-2: the AMQP frame carries no bearer identity) | `RabbitMqMessageBus` serializes `PropagatedContext` (`messaging/rabbitmq/Publishing/RabbitMqMessageBus.cs`), `D2.Shared.Encryption` encrypts via the `notifications`-domain keyring | **no mint, no validation** — the *encryption* is the trust act | — (publish side) | **✅ built** on the messaging+encryption primitives (`PropagatedContext` is referenced by `RabbitMqMessageBus.cs` + `SubscriberChannel.cs`). The **keyring source** (KeyringClient in the KC client package `D2.Edge.KeyCustodian.Client`) is **✅ built** — a domain's `IPayloadCrypto` is backed by the KeyCustodian keyring via `AddD2EncryptionForViaKeyring` (cross-process) / `AddD2EncryptionFromKeyCustodian` (in-process); the live Edge-host wiring is the remaining piece. |
+| Notifications consumes | decrypted `PropagatedContext` (operational subset) | same | `SubscriberChannel` decrypts frame (active/retiring kid) → applies the operational subset to its context; does **NOT** reconstruct bearer identity (no JWT, no identity fields in `PropagatedContext` — ADR-0007) | none | **NO JWT validation** — "encryption boundary = trust boundary" (§8 Scenario C). Decrypt-clean-with-production-kid ⇒ the operational subset is trusted. | **✅ built** (decrypt + operational-subset apply on the messaging path); keyring auto-wiring ✅ built (the KC client package's consumer runtime). |
 
 ### Contradictions found — RESOLVED record
 
@@ -2250,8 +2275,9 @@ callee-scopes check** remains **designed, not built** (a code follow-up of the p
 `ITokenExchangeClient` is **built as a client but wired into no request flow** (test-only callers) and
 backs the **retained RFC 8693 exception paths**, not the per-hop business default. The calling workload's
 identity is the mTLS channel (ADR-0023), and the user's identity rides in the forwarded token (ADR-0022).
-The BFF → Edge boundary `client_credentials` token survives (the BFF is an external client of Edge). The
-**issuer** (Edge `/oauth/token`) + anon-JWT minting + `auth-keyring` + the cross-process mTLS issuance +
+The BFF is a mesh-member workload — it forwards the Edge-attached transaction token over its own mTLS
+leaf; boundary `client_credentials` survives only for genuinely-external clients of Edge. The
+**issuer** (Edge `/oauth/token`) + anon-JWT minting + the cross-process mTLS issuance +
 the **live Edge host** to run any of the above as a real multi-process deployment are **Phase-3 /
 unbuilt** — so end-to-end cross-service auth does not yet run anywhere, even though every piece of its
 machinery is now built and proven in isolation.
@@ -2374,7 +2400,7 @@ Each csproj lands as its own buildable unit; tests pass at every checkpoint; zer
    events are the only thing that goes via RMQ per Q3) + tests
 8. `services.AddD2Auth(opts)` composition root
 
-#### Step 3 — `D2.Shared.Auth.Keyring` (depends on Encryption + Messaging)
+#### Step 3 — Keyring consumer runtime (KC client package `D2.Edge.KeyCustodian.Client`; depends on Encryption + Messaging)
 
 1. csproj skeleton + DI extension stub
 2. `IKeyringClient` + `GrpcKeyringClient` + tests against in-memory gRPC fixture
@@ -2382,7 +2408,8 @@ Each csproj lands as its own buildable unit; tests pass at every checkpoint; zer
    Wave 6) + tests
 4. `KeyringBackedPayloadCrypto` + tests (round-trip encrypt/decrypt, mid-test rotation, in-flight
    message during overlap window)
-5. `services.AddD2AuthKeyring(opts)` + `services.AddD2EncryptionForViaKeyring(domain)`
+5. `services.AddD2EncryptionForViaKeyring(domain)` (client package) +
+   `services.AddD2EncryptionFromKeyCustodian(domain, callingModuleId)` (KC app in-process source)
 6. **End-to-end integration test**: KeyringClient + KeyringBackedPayloadCrypto + Encryption lib
    round-trip, with a mid-test rotation triggered via the rotation event channel.
 

@@ -6,10 +6,11 @@
 
 namespace D2.Edge.KeyCustodian.App.Application.Handlers.Queries.Sign;
 
+using D2.Edge.KeyCustodian.App.Application.Signing;
 using D2.Shared.Auth.Abstractions;
 using H = D2.Edge.KeyCustodian.App.Application.Handlers.Queries.Sign.ISignHandler;
-using I = D2.Edge.KeyCustodian.Clients.SignInput;
-using O = D2.Edge.KeyCustodian.Clients.SignOutput;
+using I = D2.Edge.KeyCustodian.Client.Signing.SignInput;
+using O = D2.Edge.KeyCustodian.Client.Signing.SignOutput;
 
 /// <summary>
 /// Loads a key domain's active <see cref="KeyType.RsaSigning"/> key, decrypts the

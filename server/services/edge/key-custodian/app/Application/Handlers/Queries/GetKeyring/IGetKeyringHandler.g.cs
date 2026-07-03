@@ -10,7 +10,7 @@
 
 namespace D2.Edge.KeyCustodian.App.Application.Handlers.Queries.GetKeyring;
 
-using D2.Edge.KeyCustodian.Clients;
+using D2.Edge.KeyCustodian.Client.Keyring;
 
 /// <summary>Generated handler interface for the <c>GetKeyring</c> operation.</summary>
 public interface IGetKeyringHandler : IHandler<GetKeyringInput, GetKeyringOutput>;

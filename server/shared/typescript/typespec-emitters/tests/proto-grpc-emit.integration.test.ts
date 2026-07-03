@@ -260,6 +260,7 @@ describe("protoGrpcEmitIntegration_RealModule_InProcessGrpc_UsesApiFacade", () =
 
       @d2Command
       @d2ServedBy("KeyCustodian")
+      @d2Concern("SignFixture")
       @d2InProcess
       @d2GrpcMethod("SignFixtureSigner", "SignFixture")
       op signFixture(input: SignFixtureInput): SignFixtureOutput;
@@ -271,7 +272,7 @@ describe("protoGrpcEmitIntegration_RealModule_InProcessGrpc_UsesApiFacade", () =
       options: {
         "@d2/typespec-emitters": {
           "csharp-namespace": "D2.Fixture.Ns",
-          "csharp-clients-namespace": "D2.Edge.KeyCustodian.Clients",
+          "csharp-clients-namespace": "D2.Edge.KeyCustodian.Client",
           "csharp-app-namespace-base":
             "D2.Edge.KeyCustodian.App.Application.Handlers",
           "proto-package": "d2.signfixtures.v2alpha",
@@ -297,7 +298,7 @@ describe("protoGrpcEmitIntegration_RealModule_InProcessGrpc_UsesApiFacade", () =
     // Real-module façade type name.
     expect(serviceContent).toContain("IKeyCustodianApi");
     // Must use the Clients namespace as the using target.
-    expect(serviceContent).toContain("D2.Edge.KeyCustodian.Clients");
+    expect(serviceContent).toContain("D2.Edge.KeyCustodian.Client");
     // Delegates via SignFixtureAsync (the façade method name).
     expect(serviceContent).toContain("SignFixtureAsync");
     // Must NOT fall through to ISignFixtureHandler.
@@ -336,12 +337,14 @@ describe("protoGrpcEmitIntegration_RealModule_ParameterlessAndVoidGrpcOps", () =
       // No input model — exercises the inputModel-undefined fallback in the client collection.
       @d2Query
       @d2ServedBy("KeyCustodian")
+      @d2Concern("Ping")
       @d2GrpcMethod("KeyCustodianPinger", "Ping")
       op ping(): PingOutput;
 
       // No output model (void) — exercises the outputModel-undefined fallback.
       @d2Command
       @d2ServedBy("KeyCustodian")
+      @d2Concern("Fire")
       @d2GrpcMethod("KeyCustodianFirer", "Fire")
       op fire(input: FireInput): void;
       `,
@@ -351,7 +354,7 @@ describe("protoGrpcEmitIntegration_RealModule_ParameterlessAndVoidGrpcOps", () =
       emit: ["@d2/typespec-emitters"],
       options: {
         "@d2/typespec-emitters": {
-          "csharp-clients-namespace": "D2.Edge.KeyCustodian.Clients",
+          "csharp-clients-namespace": "D2.Edge.KeyCustodian.Client",
           "csharp-app-namespace-base":
             "D2.Edge.KeyCustodian.App.Application.Handlers",
           "proto-package": "d2.signfixtures.v2alpha",
@@ -467,6 +470,7 @@ describe("protoGrpcEmitIntegration_Resilience_PredicateAndSentinelEmitted", () =
 
       @d2Command
       @d2ServedBy("PredicateFixtures")
+      @d2Concern("PredicateFixture")
       @d2GrpcMethod("PredicateFixturesOrders", "PlaceOrderFixture")
       @d2Resilience(
         "retry(3)",
@@ -484,6 +488,7 @@ describe("protoGrpcEmitIntegration_Resilience_PredicateAndSentinelEmitted", () =
 
       @d2Command
       @d2ServedBy("PlainFixtures")
+      @d2Concern("PlainFixture")
       @d2GrpcMethod("PlainFixturesPinger", "Ping")
       op ping(input: PingInput): PingOutput;
       `,
@@ -1091,6 +1096,7 @@ describe("protoGrpcEmitIntegration_VersionedAdoption_ByteNeutralForExistingFixtu
         @d2Query
         @d2InProcess
         @d2ServedBy("KeyCustodian")
+        @d2Concern("Jwks")
         op getJwks(): GetJwksOutput;
       }
       `,
@@ -1101,7 +1107,7 @@ describe("protoGrpcEmitIntegration_VersionedAdoption_ByteNeutralForExistingFixtu
       options: {
         "@d2/typespec-emitters": {
           "csharp-namespace": "D2.Test",
-          "csharp-clients-namespace": "D2.Edge.KeyCustodian.Clients",
+          "csharp-clients-namespace": "D2.Edge.KeyCustodian.Client",
           "csharp-app-namespace-base":
             "D2.Edge.KeyCustodian.App.Application.Handlers",
           "proto-package": "d2.signfixtures.v2alpha",

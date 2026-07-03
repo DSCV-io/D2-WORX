@@ -6,6 +6,7 @@
 
 namespace D2.Edge.KeyCustodian.App.Application;
 
+using D2.Edge.KeyCustodian.App.Application.Facade;
 using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.ActivateKey;
 using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.CompromiseKey;
 using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.GenerateKey;
@@ -87,7 +88,7 @@ public static class KeyCustodianAppServiceCollectionExtensions
             // Generated façade layer — registers IKeyCustodianApi → KeyCustodianApi (Transient).
             // The generated extension is overwritten on rebuild; this call site is the
             // stable hand-written anchor.
-            services.AddD2KeyCustodianClients();
+            services.AddD2KeyCustodianClient();
 
             return services;
         }

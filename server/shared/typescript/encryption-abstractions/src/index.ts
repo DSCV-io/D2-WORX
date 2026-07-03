@@ -12,3 +12,8 @@ export {
   type EncryptionFrameField,
   ALL_ENCRYPTION_FRAME_FIELDS,
 } from "./encryption-frame.g.js";
+export {
+  SealedFrame,
+  type SealedFrameField,
+  ALL_SEALED_FRAME_FIELDS,
+} from "./encryption-frame-sealed.g.js";

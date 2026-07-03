@@ -7,8 +7,8 @@
 namespace D2.Edge.KeyCustodian.App.Application.Handlers.Queries.GetOidcConfiguration;
 
 using H = D2.Edge.KeyCustodian.App.Application.Handlers.Queries.GetOidcConfiguration.IGetOidcConfigurationHandler;
-using I = D2.Edge.KeyCustodian.Clients.GetOidcConfigurationInput;
-using O = D2.Edge.KeyCustodian.Clients.GetOidcConfigurationOutput;
+using I = D2.Edge.KeyCustodian.Client.OidcConfiguration.GetOidcConfigurationInput;
+using O = D2.Edge.KeyCustodian.Client.OidcConfiguration.GetOidcConfigurationOutput;
 
 /// <summary>
 /// Serves the minimal OIDC discovery document so OIDC/JWKS clients auto-discover

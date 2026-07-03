@@ -14,6 +14,7 @@ import { getVersion } from "@typespec/versioning";
 import { getHttpOperation, getOperationVerb } from "@typespec/http";
 import {
   D2_SERVED_BY_KEY,
+  D2_CONCERN_KEY,
   D2_GRPC_METHOD_KEY,
   D2_IN_PROCESS_KEY,
   D2_COMMAND_KEY,
@@ -471,6 +472,9 @@ export async function $onEmit(context: EmitContext): Promise<void> {
               outputTypeName,
               sourceSpec: specHint,
               category: category as "Commands" | "Queries",
+              // The concern-qualified namespace the op's DTOs were emitted to
+              // (<clients-ns>.<Concern>) — the façade interface + impl import it.
+              dtoNamespace: dtoCsNamespace,
             });
             exposedOpsByModule.set(servedBy, existing);
           }
@@ -523,7 +527,7 @@ export async function $onEmit(context: EmitContext): Promise<void> {
               : `I${grpcServedBy}SignerFacade`;
           const facadeNs =
             csAppNamespaceBase !== undefined && csClientsNamespace !== undefined
-              ? csClientsNamespace
+              ? `${csClientsNamespace}.Facade`
               : `${grpcServiceNs}.Facade`;
           grpcDelegationTarget = {
             kind: "facade",
@@ -986,6 +990,22 @@ function resolveCategory(
 }
 
 /**
+ * Resolve the co-location concern segment for an operation (the @d2Concern
+ * value). Returns the segment string, or undefined when the op carries no
+ * @d2Concern. Drives the concern-qualified clients namespace + folder for a
+ * client-exposed op.
+ */
+function resolveConcern(
+  program: Parameters<typeof walkModel>[0],
+  op: Operation,
+): string | undefined {
+  const concern = program.stateMap(D2_CONCERN_KEY).get(op) as
+    | string
+    | undefined;
+  return concern !== undefined && concern.length > 0 ? concern : undefined;
+}
+
+/**
  * Resolve the C# namespace for emitting DTOs.
  *
  * Routing table:
@@ -1014,7 +1034,25 @@ function resolveDtoNamespace(
     // Fixture mode — use the legacy csharp-namespace.
     return csNamespace;
 
-  if (isExposed && csClientsNamespace !== undefined) return csClientsNamespace;
+  if (isExposed && csClientsNamespace !== undefined) {
+    // Real-module client-exposed op: its transport DTOs live in a concern-named
+    // namespace + folder (<clients-ns>.<Concern>) co-located with the runtime
+    // that serves them. The concern is declared via @d2Concern; a missing concern
+    // is a loud build failure (D2TSP013) — the emitter cannot place them by concern.
+    const concern = resolveConcern(program, op);
+    if (concern === undefined) {
+      $lib.reportDiagnostic(program, {
+        code: "missing-concern",
+        format: { op: opName },
+        target: op,
+      });
+      // Fall back to the un-suffixed clients namespace to avoid a crash; the
+      // error-severity diagnostic already fails the compile.
+      return csClientsNamespace;
+    }
+
+    return `${csClientsNamespace}.${concern}`;
+  }
 
   if (isInternal || !isExposed) {
     if (category !== undefined) {
@@ -1492,7 +1530,7 @@ function emitRouteIfPresent(
         : `I${servedBy}SignerFacade`;
     const facadeNs =
       csAppNamespaceBase !== undefined && csClientsNamespace !== undefined
-        ? csClientsNamespace
+        ? `${csClientsNamespace}.Facade`
         : `${grpcServiceNs}.Facade`;
     delegationTarget = {
       kind: "facade",

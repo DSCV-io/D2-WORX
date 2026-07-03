@@ -55,6 +55,13 @@ public static class EncryptionServiceCollectionExtensions
             services.TryAddSingleton<EncryptionRegistry>();
             services.AddSingleton(new EncryptionRegistration(serviceKey));
 
+            // Deny-by-default provenance guard: the raw seam registers NO source
+            // marker, so EncryptionSourceStartupCheck classifies this registration
+            // as a static factory and — outside a Development host — crashes the
+            // host. A KeyCustodian-sourced registration marks itself KeyCustodian
+            // and passes. Hooked here so no encryption host can dodge the check.
+            services.AddD2EncryptionSourceCheck();
+
             return services;
         }
 

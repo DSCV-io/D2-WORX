@@ -26,6 +26,7 @@ import {
   D2_RATE_LIMIT_TIER_KEY,
   D2_AUDIENCE_KEY,
   D2_SERVED_BY_KEY,
+  D2_CONCERN_KEY,
   D2_GRPC_METHOD_KEY,
   D2_REDACT_KEY,
   D2_SERVER_PUSH_KEY,
@@ -68,6 +69,7 @@ import {
   validateScopes,
   validateAudience,
   validateServedBy,
+  validateConcern,
   validateResilience,
   validateResultPredicate,
   validateFieldNumber,
@@ -80,6 +82,7 @@ import {
   $d2RateLimitTier,
   $d2Audience,
   $d2ServedBy,
+  $d2Concern,
   $d2GrpcMethod,
   $d2Harmless,
   $d2Idempotent,
@@ -178,6 +181,14 @@ describe("directUnit_$d2ServedBy", () => {
     const { ctx, maps } = makeMockContext();
     $d2ServedBy(ctx, mockTarget, "Edge");
     expect(maps.get(D2_SERVED_BY_KEY)!.get(mockTarget)).toBe("Edge");
+  });
+});
+
+describe("directUnit_$d2Concern", () => {
+  it("stores the concern segment under D2_CONCERN_KEY", () => {
+    const { ctx, maps } = makeMockContext();
+    $d2Concern(ctx, mockTarget, "Keyring");
+    expect(maps.get(D2_CONCERN_KEY)!.get(mockTarget)).toBe("Keyring");
   });
 });
 
@@ -878,11 +889,12 @@ it("lib_HasExpectedPackageName", () => {
 // Unit tests: $decorators registry key-set pin (§1.18 per-VALUE pin)
 // ---------------------------------------------------------------------------
 
-it("decorators_RegistryMapsAllEighteenDecoratorsUnderD2Namespace", () => {
+it("decorators_RegistryMapsAllNineteenDecoratorsUnderD2Namespace", () => {
   const keys = Object.keys($decorators.D2).sort();
   expect(keys).toEqual([
     "d2Audience",
     "d2Command",
+    "d2Concern",
     "d2Csrf",
     "d2Field",
     "d2GrpcMethod",
@@ -1646,6 +1658,32 @@ describe("directUnit_validateServedBy", () => {
     const { ctx, target, diags } = makeMockCtxWithDiags();
     validateServedBy(ctx, target, "   ");
     expect(diags.some((d) => d.code.endsWith("empty-served-by"))).toBe(true);
+  });
+});
+
+describe("directUnit_validateConcern", () => {
+  it("no diagnostic for a valid PascalCase segment", () => {
+    const { ctx, target, diags } = makeMockCtxWithDiags();
+    validateConcern(ctx, target, "Keyring");
+    expect(diags).toHaveLength(0);
+  });
+
+  it("emits invalid-concern for a dotted segment", () => {
+    const { ctx, target, diags } = makeMockCtxWithDiags();
+    validateConcern(ctx, target, "Bad.Name");
+    expect(diags.some((d) => d.code.endsWith("invalid-concern"))).toBe(true);
+  });
+
+  it("emits invalid-concern for an empty segment", () => {
+    const { ctx, target, diags } = makeMockCtxWithDiags();
+    validateConcern(ctx, target, "");
+    expect(diags.some((d) => d.code.endsWith("invalid-concern"))).toBe(true);
+  });
+
+  it("emits invalid-concern for a leading-digit segment", () => {
+    const { ctx, target, diags } = makeMockCtxWithDiags();
+    validateConcern(ctx, target, "1Keyring");
+    expect(diags.some((d) => d.code.endsWith("invalid-concern"))).toBe(true);
   });
 });
 

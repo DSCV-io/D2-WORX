@@ -10,7 +10,7 @@
 
 namespace D2.Edge.KeyCustodian.App.Application.Handlers.Queries.GetOidcConfiguration;
 
-using D2.Edge.KeyCustodian.Clients;
+using D2.Edge.KeyCustodian.Client.OidcConfiguration;
 
 /// <summary>Generated handler interface for the <c>GetOidcConfiguration</c> operation.</summary>
 public interface IGetOidcConfigurationHandler : IHandler<GetOidcConfigurationInput, GetOidcConfigurationOutput>;

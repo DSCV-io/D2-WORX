@@ -35,6 +35,15 @@ extern dec d2Audience(target: Operation, audience: valueof string);
 extern dec d2ServedBy(target: Operation, owner: valueof string);
 
 /**
+ * Co-location concern for a client-exposed operation. The `concern` segment
+ * names the folder + namespace segment the op's transport DTOs live in
+ * (`<csharp-clients-namespace>.<concern>`), co-located with the hand-written
+ * runtime that serves them. The C# DTO emitter fails loud (D2TSP013) when a
+ * client-exposed op omits it.
+ */
+extern dec d2Concern(target: Operation, concern: valueof string);
+
+/**
  * Dual-binding marker: binds this operation to a gRPC service+method.
  * `streaming` selects the proto rpc form (unary | serverStream | clientStream |
  * bidiStream); omit to default to `unary`.
