@@ -6,6 +6,8 @@ Copyright (c) DCSV. All rights reserved.
 <a name="top"></a>
 _[← rules index](../rules.md) · §21 of the D2-WORX rules catalog._
 
+**Predicate index:** §21.1–§21.11 · 11 predicates.
+
 Production code that you can't observe is production code you can't debug, can't optimize, and can't trust. Every operation must emit traces + metrics + logs at the right granularity.
 
 ### Predicates — §21 observability completeness

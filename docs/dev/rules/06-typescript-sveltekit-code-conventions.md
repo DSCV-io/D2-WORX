@@ -6,6 +6,8 @@ Copyright (c) DCSV. All rights reserved.
 <a name="top"></a>
 _[← rules index](../rules.md) · §6 of the D2-WORX rules catalog._
 
+**Predicate index:** §6.1–§6.15 · 15 predicates.
+
 ### Predicates — §6 TypeScript / SvelteKit conventions
 
 - **6.1** Is TypeScript `strict` mode enabled in every `tsconfig.json`?

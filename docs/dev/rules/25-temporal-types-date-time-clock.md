@@ -6,6 +6,8 @@ Copyright (c) DCSV. All rights reserved.
 <a name="top"></a>
 _[← rules index](../rules.md) · §25 of the D2-WORX rules catalog._
 
+**Predicate index:** §25.1–§25.12 · 12 predicates.
+
 Temporal bugs are silent until they fire — DST twice a year, leap days every four years, tzdb updates every few months; failure modes are scheduled jobs that don't fire, fire twice, fire at non-existent local times, or crash on tzdb update. This category enforces the temporal-design discipline codified at `D2.Shared.Time` (.NET) + `@d2/time` (TS) so the same disciplines carry to every consumer.
 
 **The catalog**: `IClock` is the single injection seam. `NodaTime` (.NET) / `Temporal` (TS) types are mandatory in production — never BCL `DateTime` / JS `Date`. Every temporal field is assigned one of three categories at design time (Cat 1 `ZonedInstant` / Cat 2 bare `Instant` / Cat 3 `LocalAnchoredEvent`). Cat 1 + Cat 3 records are constructed only via `Create(...)` smart-constructor factories returning `D2Result<T>`. DST resolution is encapsulated in `LocalAnchoredEvent.ComputeNextFire()`. Wire format is ISO 8601. Adversarial coverage at lib-introduction time is mandatory per `feedback_temporal_adversarial_test_required`.

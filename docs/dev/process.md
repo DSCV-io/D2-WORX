@@ -157,7 +157,7 @@ Baseline currency: PASS | <packages needing re-seed>
 
 If any consumable shared package's source was modified, the Implementer runs `pnpm --filter release-runner check-baselines` before declaring complete; on stale baselines it re-seeds, re-stages the baseline files, and records `Baseline currency: PASS` only after the gate exits 0 (a stale baseline left for "later" is FINDING-HIGH at audit, §26.20). The orchestrator consumes the summary — it does NOT read the source files itself.
 
-**3. Audit loop (the core forcing function).** Per round the orchestrator dispatches a **K=12 batch of fresh Auditors** in parallel (READ-ONLY — cannot edit source), then a **fresh Aggregator** once all 12 partials return. Each cluster Auditor walks its slice per the [§3 cluster partition](#auditor-cluster-partition-canonical-k12), produces per-predicate evidence (grep results, file:line, "checked X by Y, found Z" — vibes are not evidence), and writes its own partial (`r{N}-partial-{CLUSTER}-{cluster-name}.md`, CLUSTER ∈ {A1, A2, B1, B2, B3, C1, C2, C3, D1, D2, E1, E2}). The Aggregator merges the 12 into the canonical big table (REPLACES `## Latest sweep results`) + appends one `### Round N findings` subsection (per [§3 Aggregator role](#aggregator-role-post-cluster-consolidation)). Workflow: [§4 Per-round dispatch protocol](#per-round-dispatch-protocol).
+**3. Audit loop (the core forcing function).** Per round the orchestrator dispatches a **K=12 batch of fresh Auditors** in parallel (READ-ONLY — cannot edit source), then a **fresh Aggregator** once all 12 partials return. Each cluster Auditor walks its slice per the [§3 cluster partition](#auditor-cluster-partition-canonical-k12), produces per-predicate evidence (grep results, file:line, "checked X by Y, found Z" — vibes are not evidence), and writes its own partial (`r{N}-partial-{CLUSTER}-{cluster-name}.md`, CLUSTER ∈ {A1, A2, B1, B2, B3, C1, C2, C3, D1, E1, E2, E3}). The Aggregator merges the 12 into the canonical big table (REPLACES `## Latest sweep results`) + appends one `### Round N findings` subsection (per [§3 Aggregator role](#aggregator-role-post-cluster-consolidation)). Workflow: [§4 Per-round dispatch protocol](#per-round-dispatch-protocol).
 
 On FINDING rows, spawn a **fresh Fixer** with the consolidated list. The Fixer applies fixes + appends fix-log entries — it cannot mark anything CLEAN; closure is proven only by the NEXT round's fresh K=12 batch + Aggregator not surfacing the finding. **A second audit round is a BRAND-NEW K=12 batch + brand-new Aggregator, never the same ones re-running** — the fresh-context property is non-negotiable. **K=1 carve-out** requires explicit per-round user permission per [§4 K=1 carve-out usage policy](#k1-carve-out-usage-policy) + [rules.md §24.0h](rules/24-audit-evidence-discipline-meta-how-to-audit.md#24-audit-evidence-discipline-meta--how-to-audit); NEVER self-invoked. Detailed mechanics: [§4](#4-audit-loop-mechanics).
 
@@ -345,37 +345,37 @@ The `rules.md` catalog (~24 categories, ~450 numbered subsections) partitions in
 
 | Cluster | Name | rules.md sections | ~preds | Theme |
 | --- | --- | --- | --- | --- |
-| **A1** | Tests / coverage | §1 | ~30 | Tests / coverage |
-| **A2** | Regression, races, disposal, degradation, idempotency | §2, §4, §15, §18, §22 | ~25 | Regression-pinning, concurrency / races, object disposal / resource lifetime, graceful degradation, idempotency / exactly-once |
-| **B1** | C# conventions | §5 | ~25 | C# conventions |
-| **B2** | TS conventions + naming | §6, §7 | ~20 | TypeScript / SvelteKit conventions, naming / file headers / folder casing |
+| **A1** | Tests / coverage + regression | §1, §2 | ~35 | Test discipline / coverage, bug-fix regression-pinning |
+| **A2** | Races, disposal, degradation, idempotency | §4, §15, §18, §22 | ~45 | concurrency / races, object disposal / resource lifetime, graceful degradation, idempotency / exactly-once |
+| **B1** | C# conventions | §5 | ~35 | C# conventions |
+| **B2** | TS conventions + naming + i18n | §6, §7, §12 | ~45 | TypeScript / SvelteKit conventions, naming / file headers / folder casing, i18n / Paraglide / TK constants |
 | **B3** | Shared-lib hygiene + D2Result | §16, §17 | ~15 | OOTB shared-lib catalog use, D2Result usage + extensions |
-| **C1** | PII/logging + operations | §3, §8 | ~20 | PII / logging safety, build cleanliness + operational hygiene |
+| **C1** | PII/logging + operations | §3, §8 | ~25 | PII / logging safety, build cleanliness + operational hygiene |
 | **C2** | Architectural layer | §9 | ~45 | Architectural layer hygiene |
-| **C3** | Security + permissions | §10, §13 | ~25 | Security (endpoints / auth / secrets / input), permission / action discipline |
-| **D1** | KEEP doc parity | §11 | ~40 | KEEP-doc updates + forward-framing + per-lib README parity |
-| **D2** | i18n + no-phase verbiage | §12, §14 | ~10 | i18n / Paraglide / TK constants, no-phase-verbiage / no-conversation-scoped-IDs hygiene |
-| **E1** | UX + DX + observability + config | §19, §20, §21, §23 | ~25 | UX, DX, observability completeness, configuration hygiene |
-| **E2** | Audit-meta + temporal + codegen | §24, §25, §26 | ~35 | Audit evidence discipline (incl. self-audit per §24.12), temporal-types discipline, codegen discipline |
+| **C3** | Security + permissions | §10, §13 | ~35 | Security (endpoints / auth / secrets / input), permission / action discipline |
+| **D1** | KEEP doc parity + verbiage hygiene | §11, §14 | ~50 | KEEP-doc updates + forward-framing + per-lib README parity, no-phase-verbiage / no-conversation-scoped-IDs hygiene |
+| **E1** | UX + DX + observability + config | §19, §20, §21, §23 | ~45 | UX, DX, observability completeness, configuration hygiene |
+| **E2** | Audit-meta | §24 | ~50 | Audit evidence discipline (incl. self-audit per §24.12) |
+| **E3** | Temporal + codegen | §25, §26 | ~35 | temporal-types discipline, codegen discipline |
 
 **Per-cluster category-file reading list.** `rules.md` is split into one file per category under [`rules/`](rules/) with `rules.md` retained as the index. Each cluster Auditor reads ONLY its own category files below — not the whole catalog — plus the index-level [Deliverable completeness checklist](rules.md#deliverable-completeness-checklist-the-gate-before-user-review) (read by every cluster). This is the context cut the split buys: ~one cluster's worth of predicates instead of the full ~710 KB catalog.
 
 | Cluster | Category files to read |
 | --- | --- |
-| **A1** | [rules/01-test-discipline.md](rules/01-test-discipline.md) |
-| **A2** | [rules/02-bug-fix-regression-testing.md](rules/02-bug-fix-regression-testing.md), [rules/04-concurrency-race-conditions.md](rules/04-concurrency-race-conditions.md), [rules/15-object-disposal-resource-lifetime.md](rules/15-object-disposal-resource-lifetime.md), [rules/18-graceful-degradation-failure-modes.md](rules/18-graceful-degradation-failure-modes.md), [rules/22-idempotency-exactly-once-semantics.md](rules/22-idempotency-exactly-once-semantics.md) |
+| **A1** | [rules/01-test-discipline.md](rules/01-test-discipline.md), [rules/02-bug-fix-regression-testing.md](rules/02-bug-fix-regression-testing.md) |
+| **A2** | [rules/04-concurrency-race-conditions.md](rules/04-concurrency-race-conditions.md), [rules/15-object-disposal-resource-lifetime.md](rules/15-object-disposal-resource-lifetime.md), [rules/18-graceful-degradation-failure-modes.md](rules/18-graceful-degradation-failure-modes.md), [rules/22-idempotency-exactly-once-semantics.md](rules/22-idempotency-exactly-once-semantics.md) |
 | **B1** | [rules/05-csharp-code-conventions.md](rules/05-csharp-code-conventions.md) |
-| **B2** | [rules/06-typescript-sveltekit-code-conventions.md](rules/06-typescript-sveltekit-code-conventions.md), [rules/07-naming-file-headers-folder-casing.md](rules/07-naming-file-headers-folder-casing.md) |
+| **B2** | [rules/06-typescript-sveltekit-code-conventions.md](rules/06-typescript-sveltekit-code-conventions.md), [rules/07-naming-file-headers-folder-casing.md](rules/07-naming-file-headers-folder-casing.md), [rules/12-i18n-discipline.md](rules/12-i18n-discipline.md) |
 | **B3** | [rules/16-ootb-shared-lib-tooling-use-whats-there.md](rules/16-ootb-shared-lib-tooling-use-whats-there.md), [rules/17-d2result-usage-extensions.md](rules/17-d2result-usage-extensions.md) |
 | **C1** | [rules/03-pii-logging-safety.md](rules/03-pii-logging-safety.md), [rules/08-build-tooling-hygiene.md](rules/08-build-tooling-hygiene.md) |
 | **C2** | [rules/09-architectural-layer-hygiene.md](rules/09-architectural-layer-hygiene.md) |
 | **C3** | [rules/10-security-endpoints-auth-secrets-input.md](rules/10-security-endpoints-auth-secrets-input.md), [rules/13-permission-action-discipline.md](rules/13-permission-action-discipline.md) |
-| **D1** | [rules/11-documentation-parity-best-practices.md](rules/11-documentation-parity-best-practices.md) |
-| **D2** | [rules/12-i18n-discipline.md](rules/12-i18n-discipline.md), [rules/14-phase-audit-conversation-verbiage-hygiene.md](rules/14-phase-audit-conversation-verbiage-hygiene.md) |
+| **D1** | [rules/11-documentation-parity-best-practices.md](rules/11-documentation-parity-best-practices.md), [rules/14-phase-audit-conversation-verbiage-hygiene.md](rules/14-phase-audit-conversation-verbiage-hygiene.md) |
 | **E1** | [rules/19-user-experience-ux.md](rules/19-user-experience-ux.md), [rules/20-developer-experience-dx.md](rules/20-developer-experience-dx.md), [rules/21-observability-completeness.md](rules/21-observability-completeness.md), [rules/23-configuration-hygiene.md](rules/23-configuration-hygiene.md) |
-| **E2** | [rules/24-audit-evidence-discipline-meta-how-to-audit.md](rules/24-audit-evidence-discipline-meta-how-to-audit.md), [rules/25-temporal-types-date-time-clock.md](rules/25-temporal-types-date-time-clock.md), [rules/26-codegen-discipline-spec-proto-schema-derived-types.md](rules/26-codegen-discipline-spec-proto-schema-derived-types.md) |
+| **E2** | [rules/24-audit-evidence-discipline-meta-how-to-audit.md](rules/24-audit-evidence-discipline-meta-how-to-audit.md) |
+| **E3** | [rules/25-temporal-types-date-time-clock.md](rules/25-temporal-types-date-time-clock.md), [rules/26-codegen-discipline-spec-proto-schema-derived-types.md](rules/26-codegen-discipline-spec-proto-schema-derived-types.md) |
 
-**Why this partition (K=12):** D1 (§11 alone, the densest section, ~40 predicates) gets dedicated focus separate from lighter §12/§14; E1 (operational quality §19/§20/§21/§23) splits from E2 (process integrity §24/§25/§26) — no predicate overlap, separate mental frames; A/B/C split along natural §-boundaries keeping §9 (largest architectural section) standalone. K=12 gives ~35-45% wall-clock reduction vs prior smaller-K splits + tighter per-Auditor focus; the higher Aggregator dedup cost is absorbed by running the Aggregator on Fable. Stable §-ownership threads a repeat finding's history through past partials by cluster code. **Cross-cutting concerns belong to the Aggregator**, not any one cluster. When a predicate seems to straddle clusters, the mapping is §-number → cluster (NOT topic → cluster) — the §-number wins; the Aggregator's cross-cluster verification ([Aggregator role](#aggregator-role-post-cluster-consolidation) step 3) resolves straddle concerns.
+**Why this partition (K=12):** D1 pairs §11 (the densest doc-parity section) with §14 (verbiage hygiene) — the two halves of what may appear in a KEEP doc / source surface, under one auditor; A1 keeps all test discipline together (§1 coverage + §2 regression-pinning) under one mind; §24 (the audit-law, the single heaviest category file) stands alone as E2 so one auditor owns audit-evidence coherence, while E3 pairs the two spec-driven / process-integrity files (§25 temporal + §26 codegen); E1 (operational quality §19/§20/§21/§23) stays separate from the process-integrity clusters — no predicate overlap, separate mental frames; A/B/C split along natural §-boundaries keeping §9 (largest architectural section) standalone. Isolating §24 as its own cluster roughly halves the critical-path byte-load vs bundling it with §25/§26. K=12 gives ~35-45% wall-clock reduction vs prior smaller-K splits + tighter per-Auditor focus; the higher Aggregator dedup cost is absorbed by running the Aggregator on Fable. Stable §-ownership threads a repeat finding's history through past partials by cluster code. **Cross-cutting concerns belong to the Aggregator**, not any one cluster. When a predicate seems to straddle clusters, the mapping is §-number → cluster (NOT topic → cluster) — the §-number wins; the Aggregator's cross-cluster verification ([Aggregator role](#aggregator-role-post-cluster-consolidation) step 3) resolves straddle concerns.
 
 ### Aggregator role (post-cluster consolidation)
 
@@ -383,7 +383,7 @@ A single sub-agent spawned per audit round AFTER all K=12 cluster Auditors retur
 
 **Six responsibilities (in order):**
 
-1. **Mechanical merge.** Read all 12 partials (`r{N}-partial-{A1|…|E2}-{cluster-name}.md`). Combine the 12 big-table chunks into ONE canonical sorted-by-§ big table under `## Latest sweep results`, REPLACING the prior sweep's table (§24 sweep-replacement rule). Anti-laziness preamble verbatim above it.
+1. **Mechanical merge.** Read all 12 partials (`r{N}-partial-{A1|…|E3}-{cluster-name}.md`). Combine the 12 big-table chunks into ONE canonical sorted-by-§ big table under `## Latest sweep results`, REPLACING the prior sweep's table (§24 sweep-replacement rule). Anti-laziness preamble verbatim above it.
 2. **Dedupe.** A finding surfaced by multiple Auditors collapses into one entry with combined provenance (all citation paths preserved).
 3. **Cross-cutting verification.** Walk the deliverable's cross-step focus areas spanning multiple clusters (defined in the final-review journal's Plan section — e.g. "TYPE LIE FIX still verified end-to-end across .NET emitter + TS consumer", "wire-shape leakage class — does the originating sample class exist anywhere else in scope?", "spec-driven catalog parity — every cross-language wire identifier cataloged + parity-tested"). No per-cluster Auditor could see these.
 4. **Cross-cluster sister-sweep.** Cluster Auditors sister-sweep WITHIN their §-scope (§24.13.3); the Aggregator runs sister-sweeps at CROSS-cluster scope — baseline commands in [§4 Cross-cluster sister-sweep checklist](#cross-cluster-sister-sweep-checklist-aggregator-baseline), run every round.
@@ -519,7 +519,7 @@ The orchestrator's workflow for one K=12 + Aggregator audit round. Same shape fo
 
 **Step 5 — Orchestrator routes on the recommendation:** **CLEAN** (zero FINDING rows + zero new cross-cluster findings) → advance to next phase (next step, or SHIP for final-review). **FINDINGS present** → dispatch a fresh Fixer with the consolidated list; after it returns, dispatch round R+1 (brand-new K=12 batch + brand-new Aggregator, fresh context across the board).
 
-**Wall-clock:** a K=12 batch's wall-clock is dominated by the slowest cluster (typically D1 / C2 / E2 depending on scope), NOT the sum. A round (one K=12 + Aggregator + optional Fixer) ≈ 1/4-1/5 of a sequential K=1 walk covering the same predicate count (~35-45% reduction vs prior smaller-K splits). 10-iteration ceiling per step (one iteration = one full round).
+**Wall-clock:** a K=12 batch's wall-clock is dominated by the slowest cluster (typically E2 / E3 / D1 / C2 depending on scope), NOT the sum. A round (one K=12 + Aggregator + optional Fixer) ≈ 1/4-1/5 of a sequential K=1 walk covering the same predicate count (~35-45% reduction vs prior smaller-K splits). 10-iteration ceiling per step (one iteration = one full round).
 
 ### Orchestrator verification of sub-agent outputs
 
@@ -578,7 +578,7 @@ Every cluster Auditor writes to its partial file with this structure (cluster co
 # R{N} Partial — Cluster {CLUSTER}: {Cluster name}
 
 **Auditor agent**: <agent ID if known>
-**Cluster code**: one of A1, A2, B1, B2, B3, C1, C2, C3, D1, D2, E1, E2
+**Cluster code**: one of A1, A2, B1, B2, B3, C1, C2, C3, D1, E1, E2, E3
 **Predicate scope**: §{A}–§{B} ({list cluster sections})
 **Sweep timestamp**: <UTC>
 **Deliverable HEAD**: `git rev-parse HEAD` + any uncommitted changes from prior Fixer round
@@ -638,10 +638,7 @@ The append-only logs preserve the audit trail table-replacement would lose. Anyo
 
 ### Loop count expectations
 
-- A WELL-PLANNED step typically converges in 1-3 sweep rounds.
-- A POORLY-PLANNED step (or one introducing complex new patterns) may need 5-8 rounds.
-- 10-iteration ceiling per step (per [Mandatory round sequence](#mandatory-round-sequence)). Iteration 11 = escalate — something is structurally wrong.
-- Final-review surfaces 0-2 deliverable-wide consistency findings — typically 1-2 rounds.
+Canonical: [rules.md index — Loop count expectations](rules.md#loop-count-expectations) (well-planned step 1-3 rounds; complex/poorly-planned 5-8; final-review typically 1-2). 10-iteration ceiling per step ([Mandatory round sequence](#mandatory-round-sequence)); iteration 11 = escalate — something is structurally wrong.
 
 ---
 

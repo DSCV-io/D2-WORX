@@ -6,6 +6,8 @@ Copyright (c) DCSV. All rights reserved.
 <a name="top"></a>
 _[← rules index](../rules.md) · §13 of the D2-WORX rules catalog._
 
+**Predicate index:** §13.1–§13.15 · 15 predicates.
+
 Inferring permission from prior turns is a class of bug that compounds quickly. Each occurrence of a high-blast-radius action needs explicit fresh permission.
 
 ### Predicates — §13 permission / action discipline
@@ -28,8 +30,8 @@ Inferring permission from prior turns is a class of bug that compounds quickly. 
 - **13.6** When the user gave feedback during REVIEW, was each item captured first and confirmed before fixing (not fixed-on-sight)?
   - Evidence: per review feedback → capture entry → user confirmation → fix.
 
-- **13.7** Were ALL errors / warnings encountered anywhere in the project fixed (not just in branch-modified files)? (Zero-tolerance rule — never dismiss as "pre-existing.")
-  - Evidence: per error/warning seen → fix or escalation note.
+- **13.7** Consolidated into §5.23 (fix ALL warnings anywhere, not just branch-modified files, never dismissed as "pre-existing") — ID retained for citation stability. This is the §13 permission-sweep cross-pointer.
+  - Evidence: walk §5.23.
 
 ### Sub-agent discipline (when delegating work to spawned agents)
 

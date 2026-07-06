@@ -6,6 +6,8 @@ Copyright (c) DCSV. All rights reserved.
 <a name="top"></a>
 _[← rules index](../rules.md) · §18 of the D2-WORX rules catalog._
 
+**Predicate index:** §18.1–§18.12 · 12 predicates.
+
 Production code MUST degrade gracefully. Identify every dependency, document its failure mode, and make sure the handler doesn't crash / hang / silently break when the dependency fails.
 
 ### Predicates — §18 graceful degradation & failure modes

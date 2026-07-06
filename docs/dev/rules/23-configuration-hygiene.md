@@ -6,6 +6,8 @@ Copyright (c) DCSV. All rights reserved.
 <a name="top"></a>
 _[← rules index](../rules.md) · §23 of the D2-WORX rules catalog._
 
+**Predicate index:** §23.1–§23.8 · 8 predicates.
+
 Secrets, env vars, defaults, and the `.env.local` / `.env.secrets` split.
 
 ### Predicates — §23 configuration hygiene

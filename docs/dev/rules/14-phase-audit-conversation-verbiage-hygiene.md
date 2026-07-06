@@ -6,6 +6,8 @@ Copyright (c) DCSV. All rights reserved.
 <a name="top"></a>
 _[← rules index](../rules.md) · §14 of the D2-WORX rules catalog._
 
+**Predicate index:** §14.1–§14.5 · 5 predicates.
+
 KEEP docs (see §11 for the full surface enumeration: READMEs, cross-cutting framework docs, all source code comments, spec / contract JSON `$note` fields, test method names, generated-code source-of-truth surfaces, reference data file headers) describe CURRENT reality. Phase / round / amendment / dev-journey tracking lives EXCLUSIVELY in the allowlisted dev-tracking docs (`docs/v2/`, `docs/dev/deliverables/`, `docs/wip/`, `docs/archive/`, `MEMORY.md`, `CHANGELOG.md`). This category's predicates enforce the boundary.
 
 ### Predicates — §14 phase / audit verbiage hygiene
@@ -26,7 +28,7 @@ KEEP docs (see §11 for the full surface enumeration: READMEs, cross-cutting fra
 
 - **14.4** Comments-minimal discipline (no WHAT-explaining comments, no conversation-scoped IDs). See §7.16 for the canonical predicate — the §7.16 Forbidden / Allowed lists are authoritative. This row is the §14 cross-pointer; walk §7.16 for evidence.
 
-- **14.5 (folder-move / relocation steps sweep moved source for PRE-EXISTING conversation / audit-scoped IDs that rode along)** For any step that moves files or relocates folders, does the audit sweep the MOVED source for pre-existing conversation- / audit-scoped IDs that rode along from a prior deliverable — `Step-N`, hypothesis IDs (`H-N`), finding IDs (`F-N`), round IDs (`R-N`), `Amendment N` — wherever they appear in `//` / `/* */` comments, xmldoc `///` summaries / remarks, test-method names, or test `ActivitySource` / span / trace names? The move "touches" the file, so branch hygiene (per the §5.21 / §14.3 own-what-you-touch discipline) owns the cleanup even though the author of the IDs was a prior deliverable.
+- **14.5** For any step that moves files or relocates folders, does the audit sweep the MOVED source for pre-existing conversation- / audit-scoped IDs that rode along from a prior deliverable — `Step-N`, hypothesis IDs (`H-N`), finding IDs (`F-N`), round IDs (`R-N`), `Amendment N` — wherever they appear in `//` / `/* */` comments, xmldoc `///` summaries / remarks, test-method names, or test `ActivitySource` / span / trace names? The move "touches" the file, so branch hygiene (per the §5.21 / §14.3 own-what-you-touch discipline) owns the cleanup even though the author of the IDs was a prior deliverable.
   - **Scope**: every move / relocation step's moved-file set (`git status --short` `R` / `RM` rows). The sweep covers comments, xmldoc, test-method names, and test ActivitySource / span / trace string names — NOT just code identifiers. Pure-content steps with no moves are N/A (cite the step-scope reason).
   - **Required**: grep the moved files for conversation- / audit-scoped ID forms in comment / name contexts and strip any survivors per §14.3 (reasoning stays; provenance moves to git / PR). The move step OWNS these even though it didn't author them.
   - **Forbidden**: leaving a `// H3: ...` comment, an `Amendment 2` xmldoc note, an `R5_` test-method prefix, or a `new ActivitySource("Step3.Foo")` span name in a moved file because "it was already there." A move that touches the file inherits ownership of its cleanliness.

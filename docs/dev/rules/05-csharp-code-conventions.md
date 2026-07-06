@@ -6,6 +6,8 @@ Copyright (c) DCSV. All rights reserved.
 <a name="top"></a>
 _[← rules index](../rules.md) · §5 of the D2-WORX rules catalog._
 
+**Predicate index:** §5.1–§5.30 · 33 predicates · irregular sub-IDs: 5.1a, 5.8a, 5.25a.
+
 The set of in-language rules that show up everywhere. Memory of these is the difference between first-pass clean and round-3 cleanup.
 
 ### Null / empty / parse helpers (highest-frequency)
@@ -184,7 +186,7 @@ The set of in-language rules that show up everywhere. Memory of these is the dif
 - **5.22** Does `jb inspectcode server/D2.slnx --severity=WARNING` produce zero JetBrains/Rider warnings? (Catches `[MustDisposeResource]` misuse, captured variable/closure issues, `AccessToModifiedClosure`, `AccessToDisposedClosure` — invisible to `dotnet build`.)
   - Evidence: inspectcode output.
 
-- **5.23** Are ALL warnings/errors encountered ANYWHERE in the project fixed (zero-tolerance)? Never dismiss as "pre-existing."
+- **5.23** Are ALL warnings/errors encountered ANYWHERE in the project fixed (zero-tolerance, not just branch-modified files)? Never dismiss as "pre-existing." (Canonical home for the branch-hygiene zero-warnings gate; §13.7 is the §13 cross-pointer.)
   - Evidence: `git diff main` cross-check confirms no leftover warnings.
 
 - **5.24** Foundational shared libs (the lib that DEFINES a convention) MUST eat their own dogfood. The lib exporting `Falsey()` cannot use `string.IsNullOrEmpty` internally; the lib exporting `TryParseTruthyNull` cannot hand-roll `Guid.TryParse` + null check; the lib exporting `[RedactData]` cannot log raw user input. Any lib that publishes a "use this not that" helper must be the canonical demonstration of using it.

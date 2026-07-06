@@ -6,6 +6,8 @@ Copyright (c) DCSV. All rights reserved.
 <a name="top"></a>
 _[← rules index](../rules.md) · §12 of the D2-WORX rules catalog._
 
+**Predicate index:** §12.1–§12.9 · 9 predicates.
+
 ALL user-visible strings — UI, backend handler messages (`D2Result.messages`), input errors (`D2Result.inputErrors`), notification content (D2.Courier) — go through translation keys. No hardcoded strings, not even for dev/debug pages.
 
 ### Predicates — §12 i18n discipline

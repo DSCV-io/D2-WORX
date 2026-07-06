@@ -6,6 +6,8 @@ Copyright (c) DCSV. All rights reserved.
 <a name="top"></a>
 _[← rules index](../rules.md) · §19 of the D2-WORX rules catalog._
 
+**Predicate index:** §19.1–§19.13 · 13 predicates.
+
 Production-ready UX means: data shows up when expected, loading states tell the user something's happening, errors are actionable, empty states make sense, the UI doesn't crash on weird inputs.
 
 ### Predicates — §19 user experience (UX)

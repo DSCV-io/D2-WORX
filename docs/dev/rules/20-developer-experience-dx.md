@@ -6,6 +6,8 @@ Copyright (c) DCSV. All rights reserved.
 <a name="top"></a>
 _[← rules index](../rules.md) · §20 of the D2-WORX rules catalog._
 
+**Predicate index:** §20.1–§20.14 · 14 predicates.
+
 Code that future engineers (including future-you) can read, debug, extend, and refactor without reverse-engineering. Sensible defaults. Ergonomic call sites. No footguns.
 
 ### Predicates — §20 developer experience (DX)
@@ -20,8 +22,8 @@ Code that future engineers (including future-you) can read, debug, extend, and r
 - **20.3** Are call sites concise? `client.ExchangeAsync(subjectToken, ct)` beats `client.ExchangeAsync(new TokenExchangeOptions { ... }, ct)` when defaults work.
   - Evidence: per public method → call-site readability.
 
-- **20.4** Do error messages include enough context to debug WITHOUT including PII? (e.g., "JWKS fetch failed for issuer=<issuer>; status=<httpStatus>; outcome=<outcome>" — issuer is config, not PII).
-  - Evidence: per error message → context sufficiency.
+- **20.4** Error / exception-message debuggability facet (enough context to debug, no PII) — consolidated into §3.14 (canonical message-context gate); ID retained for citation stability.
+  - Evidence: walk §3.14.
 
 - **20.5** Are exceptions thrown only for truly exceptional conditions (system invariant violations, programmer errors), not for control flow? (`D2Result` is the control-flow type.)
   - Evidence: per `throw` → exceptional-condition justification.
@@ -38,8 +40,8 @@ Code that future engineers (including future-you) can read, debug, extend, and r
 - **20.9** Do tests serve as documentation (clear names, focused assertions, "given-when-then" structure where helpful)?
   - Evidence: per test → readability check.
 
-- **20.10** Are XML doc summaries on public APIs accurate and helpful for IntelliSense / hover? (Not just `<summary>does the thing</summary>`.)
-  - Evidence: per public symbol → summary quality.
+- **20.10** DX / IntelliSense-hover facet of XML-doc quality — consolidated into §11.17 (canonical xmldoc-quality gate); ID retained for citation stability.
+  - Evidence: walk §11.17.
 
 - **20.11** Is debug logging available at appropriate verbosity? (Production logs at INFO; DEBUG / TRACE available for troubleshooting.)
   - Evidence: per non-trivial flow → logging coverage.

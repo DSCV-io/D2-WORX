@@ -6,6 +6,8 @@ Copyright (c) DCSV. All rights reserved.
 <a name="top"></a>
 _[← rules index](../rules.md) · §4 of the D2-WORX rules catalog._
 
+**Predicate index:** §4.1–§4.18 · 18 predicates.
+
 The bugs that don't fail unit tests because unit tests are sequential.
 
 ### Predicates — §4 concurrency / race conditions

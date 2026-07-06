@@ -6,6 +6,8 @@ Copyright (c) DCSV. All rights reserved.
 <a name="top"></a>
 _[← rules index](../rules.md) · §17 of the D2-WORX rules catalog._
 
+**Predicate index:** §17.1–§17.8 · 8 predicates.
+
 `D2Result` replaces exceptions for control flow. Every operation that can fail returns a `D2Result<T>`. Master the extension methods so call sites stay clean.
 
 ### Predicates — §17 D2Result usage & extensions

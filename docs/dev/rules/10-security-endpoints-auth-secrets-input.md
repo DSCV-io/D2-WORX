@@ -6,6 +6,8 @@ Copyright (c) DCSV. All rights reserved.
 <a name="top"></a>
 _[← rules index](../rules.md) · §10 of the D2-WORX rules catalog._
 
+**Predicate index:** §10.1–§10.22 · 22 predicates.
+
 Security predicates recur and need explicit checking. **D²-WORX is being built to ship to production with real users; security predicates are non-negotiable.**
 
 ### Predicates — §10 security

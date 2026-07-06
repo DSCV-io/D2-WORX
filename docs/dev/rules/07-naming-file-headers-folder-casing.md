@@ -6,6 +6,8 @@ Copyright (c) DCSV. All rights reserved.
 <a name="top"></a>
 _[← rules index](../rules.md) · §7 of the D2-WORX rules catalog._
 
+**Predicate index:** §7.1–§7.23 · 23 predicates.
+
 ### C# Naming
 
 - **7.1** Do C# identifiers follow the convention table?

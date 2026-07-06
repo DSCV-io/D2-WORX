@@ -6,6 +6,8 @@ Copyright (c) DCSV. All rights reserved.
 <a name="top"></a>
 _[← rules index](../rules.md) · §2 of the D2-WORX rules catalog._
 
+**Predicate index:** §2.1–§2.5 · 5 predicates.
+
 Every bug fix in this scope must land with a regression test that **fails-without-fix** and **passes-with-fix** in the same change. Without it, "fixed" is unverifiable and a future refactor can silently regress the same bug.
 
 ### Predicates — §2 bug-fix regression testing
