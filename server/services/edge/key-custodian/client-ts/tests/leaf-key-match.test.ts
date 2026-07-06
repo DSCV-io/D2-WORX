@@ -3,9 +3,9 @@
 // -----------------------------------------------------------------------
 
 import { describe, expect, it, beforeAll } from "vitest";
-import { leafMatchesLocalKey } from "../src/leaf-key-match.js";
-import { generateLeafKeypair } from "../src/leaf-keypair.js";
-import { buildCsr } from "../src/csr-builder.js";
+import { leafMatchesLocalKey } from "../src/issuance/leaf-key-match.js";
+import { generateLeafKeypair } from "../src/issuance/leaf-keypair.js";
+import { buildCsr } from "../src/issuance/csr-builder.js";
 import { TestCertificateAuthority } from "./support/test-certificate-authority.js";
 
 describe("leafMatchesLocalKey", () => {

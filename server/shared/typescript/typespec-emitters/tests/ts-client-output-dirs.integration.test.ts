@@ -7,13 +7,15 @@
 // When a @d2ServedBy module is named in the option map, the emitted TS SSR gRPC
 // client (<module>-grpc-client.g.ts) AND the TS DTOs of that module's
 // @d2GrpcMethod ops are ALSO written to the mapped directory (a service-owned TS
-// client package's generated/ folder), in addition to the standard emitter
-// output dir. Routing is config-only + concern-driven — a module NOT in the map
-// is emitted only to the standard dir.
+// client package's src/ folder), in addition to the standard emitter output dir.
+// The mirror is co-located BY CONCERN (mirroring the .NET client): the gRPC
+// client lands in `facade/`, each op's DTO in its `<concern-kebab>/` folder.
+// Routing is config-only + @d2Concern-driven — a module NOT in the map is emitted
+// only to the standard dir (flat).
 //
 // These tests drive $onEmit via the TypeSpec test host and assert the in-memory
-// FS carries BOTH copies (standard + mirror) for a mapped module, and only the
-// standard copy for an unmapped module.
+// FS carries BOTH copies (standard + mirror) for a mapped module, the mirror
+// under its concern subfolder, and only the standard copy for an unmapped module.
 
 import { describe, it, expect, beforeAll } from "vitest";
 import {
@@ -90,7 +92,7 @@ describe("tsClientOutputDirs_MirrorsClientAndDtosForMappedModule", () => {
           ...BASE_OPTIONS,
           "csharp-clients-namespace": "D2.Edge.MintFixtures.Clients",
           "ts-client-output-dirs": {
-            MintFixtures: "server/services/edge/mint/client-ts/src/generated",
+            MintFixtures: "server/services/edge/mint/client-ts/src",
           },
         },
       },
@@ -102,21 +104,24 @@ describe("tsClientOutputDirs_MirrorsClientAndDtosForMappedModule", () => {
     );
     expect(errors).toHaveLength(0);
 
-    // The TS gRPC client is emitted twice: the standard dir + the mirror dir.
+    // The TS gRPC client is emitted twice: the standard dir + the mirror dir. The
+    // mirror copy lands in the `facade/` concern folder (mirroring the .NET client).
     const clientKeys = emittedKeysEndingWith(
       host,
       "mint-fixtures-grpc-client.g.ts",
     );
     expect(clientKeys.length).toBe(2);
     expect(
-      clientKeys.some((k) => k.includes("mint/client-ts/src/generated")),
+      clientKeys.some((k) => k.includes("mint/client-ts/src/facade")),
     ).toBe(true);
 
-    // The gRPC op's DTO is likewise mirrored (the client imports it, co-located).
+    // The gRPC op's DTO is likewise mirrored, routed into its @d2Concern subfolder
+    // (concern "MintFixture" → `mint-fixture/`) — the client's concern-relative
+    // import (`../mint-fixture/mint-fixture-dto.js`) resolves exactly this file.
     const dtoKeys = emittedKeysEndingWith(host, "mint-fixture-dto.g.ts");
     expect(dtoKeys.length).toBe(2);
     expect(
-      dtoKeys.some((k) => k.includes("mint/client-ts/src/generated")),
+      dtoKeys.some((k) => k.includes("mint/client-ts/src/mint-fixture")),
     ).toBe(true);
   });
 });

@@ -3,7 +3,7 @@
 // -----------------------------------------------------------------------
 
 import { describe, expect, it } from "vitest";
-import { derToPem } from "../src/der-pem.js";
+import { derToPem } from "../src/issuance/der-pem.js";
 
 describe("derToPem", () => {
   it("wraps a small DER in a labeled PEM block with a trailing newline", () => {

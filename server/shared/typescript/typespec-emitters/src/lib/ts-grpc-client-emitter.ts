@@ -49,7 +49,7 @@
 // phase / deliverable / audit-round identifiers in emitted code or source.
 
 import { buildBanner } from "./banner.js";
-import { toPascal } from "./name-transforms.js";
+import { toKebab, toPascal } from "./name-transforms.js";
 import type { FieldInfo } from "./model-walk.js";
 import type { EmittedTsFile } from "./ts-dto-emitter.js";
 import type { PredicateNode } from "@d2/typespec-decorators";
@@ -81,6 +81,16 @@ export interface TsGrpcClientOp {
   readonly responseModelName: string;
   /** Fields of the response DTO (for the proto-data→DTO response mapper). */
   readonly responseFields: readonly FieldInfo[];
+  /**
+   * The op's `@d2Concern` segment (e.g. "Signing", "CaCertificate"), present only
+   * when this client is mirrored into a concern-subfoldered consumable package (a
+   * `ts-client-output-dirs` target — the module's DTOs are then written to
+   * `<concern-kebab>/` and the gRPC client to `facade/`). Present ⇒ the emitted DTO
+   * import specifiers are concern-relative (`../<concern-kebab>/<file>.js`, from
+   * `facade/`); absent ⇒ the flat co-located form (`./<file>.js`) — the standard
+   * emitter-output layout used by fixtures and non-mirrored modules.
+   */
+  readonly concern?: string;
   /**
    * Parsed @d2Resilience `retryWhen` predicate AST, when the op carries one.
    * Present ⇒ the client folds in the predicate retry-arm (throw the sentinel
@@ -198,7 +208,7 @@ export function emitTsGrpcClient(
     const predImports = [`${op.opName}RetryWhen`];
     if (op.failWhenAst !== undefined) predImports.push(`${op.opName}FailWhen`);
     lines.push(
-      `import { ${predImports.join(", ")} } from "./${kebab(op.opName)}-resilience-predicates.js";`,
+      `import { ${predImports.join(", ")} } from "./${toKebab(op.opName)}-resilience-predicates.js";`,
     );
   }
   lines.push("");
@@ -259,7 +269,7 @@ export function emitTsGrpcClient(
 
   return [
     {
-      fileName: `${kebab(moduleName)}-grpc-client.g.ts`,
+      fileName: `${toKebab(moduleName)}-grpc-client.g.ts`,
       content: lines.join("\n"),
     },
   ];
@@ -285,30 +295,46 @@ function opHasResponseEnum(op: TsGrpcClientOp): boolean {
 }
 
 /**
- * Distinct `import type { <Type>, … } from "./<file>-dto.js";` lines for the DTO
+ * Distinct `import type { <Type>, … } from "<specifier>";` lines for the DTO
  * request/response types across all ops, grouped by the dto FILE the type lives
  * in. The file is derived from the type name (the DTO emitter names a type
  * <PascalOp>Input/Output in <kebab-op>-dto.g.ts → stripping the Input/Output
  * suffix recovers the owning op), so a model shared across ops (e.g. a single
  * SignInput used by two ops) resolves to ONE import — no redeclaration.
+ *
+ * The specifier is concern-relative (`../<concern-kebab>/<file>.js`, from the
+ * `facade/`-homed client) when the op carries a concern (a mirrored consumable
+ * package), else flat co-located (`./<file>.js`) for fixtures / non-mirrored
+ * modules.
  */
 function collectDtoTypeImports(ops: readonly TsGrpcClientOp[]): string[] {
   // file → ordered distinct type names declared in that file.
   const byFile = new Map<string, string[]>();
-  const add = (typeName: string): void => {
+  // file → the concern folder its DTOs live in (undefined ⇒ flat co-located). The
+  // first op that references a file fixes its concern — a DTO shared across ops of
+  // one module shares one concern folder, matching the first-op-wins rule the DTO
+  // mirror uses when writing the file, so folder and import always agree.
+  const concernByFile = new Map<string, string | undefined>();
+  const add = (typeName: string, concern: string | undefined): void => {
     const file = dtoFileForType(typeName);
     const names = byFile.get(file) ?? [];
     if (!names.includes(typeName)) names.push(typeName);
     byFile.set(file, names);
+    if (!concernByFile.has(file)) concernByFile.set(file, concern);
   };
   for (const op of ops) {
-    add(op.requestModelName);
-    add(op.responseModelName);
+    add(op.requestModelName, op.concern);
+    add(op.responseModelName, op.concern);
   }
-  return [...byFile.entries()].map(
-    ([file, names]) =>
-      `import type { ${names.join(", ")} } from "./${file}.js";`,
-  );
+  return [...byFile.entries()].map(([file, names]) => {
+    const concern = concernByFile.get(file);
+    const specifier =
+      concern !== undefined
+        ? `../${toKebab(concern)}/${file}.js`
+        : `./${file}.js`;
+
+    return `import type { ${names.join(", ")} } from "${specifier}";`;
+  });
 }
 
 /**
@@ -319,15 +345,19 @@ function collectDtoTypeImports(ops: readonly TsGrpcClientOp[]): string[] {
 function dtoFileForType(typeName: string): string {
   /* v8 ignore start — defensive: a request/response DTO type always ends in Input or Output, so this guard never fires */
   if (!typeName.endsWith("Output") && !typeName.endsWith("Input"))
-    return `${kebab(lowerFirst(typeName))}-dto`;
+    return `${toKebab(lowerFirst(typeName))}-dto`;
   /* v8 ignore stop */
   const base = typeName.endsWith("Output")
     ? typeName.slice(0, -"Output".length)
     : typeName.slice(0, -"Input".length);
-  return `${kebab(lowerFirst(base))}-dto`;
+  return `${toKebab(lowerFirst(base))}-dto`;
 }
 
-/** Distinct `import { <Enum> } from "./<op>-dto.js";` lines for response enums. */
+/**
+ * Distinct `import { <Enum> } from "<specifier>";` lines for response enums. The
+ * specifier is concern-relative (`../<concern-kebab>/<op>-dto.js`) for a mirrored
+ * consumable package, else flat co-located (`./<op>-dto.js`).
+ */
 function collectResponseEnumImports(ops: readonly TsGrpcClientOp[]): string[] {
   const seen = new Set<string>();
   const imports: string[] = [];
@@ -335,8 +365,10 @@ function collectResponseEnumImports(ops: readonly TsGrpcClientOp[]): string[] {
     for (const f of op.responseFields) {
       if (f.enumRef === undefined || seen.has(f.enumRef.name)) continue;
       seen.add(f.enumRef.name);
+      const dir =
+        op.concern !== undefined ? `../${toKebab(op.concern)}/` : "./";
       imports.push(
-        `import { ${f.enumRef.name} } from "./${kebab(op.opName)}-dto.js";`,
+        `import { ${f.enumRef.name} } from "${dir}${toKebab(op.opName)}-dto.js";`,
       );
     }
   }
@@ -695,13 +727,4 @@ function lowerFirst(s: string): string {
   /* v8 ignore start — defensive: gRPC method names are never empty */
   return s.length === 0 ? s : s[0]!.toLowerCase() + s.slice(1);
   /* v8 ignore stop */
-}
-
-/**
- * Convert a lowerCamelCase op/module name to kebab-case for the file / import
- * name. Linear with bounded input (identifier strings) — Bucket 2 per the
- * regex-redos discipline; no matchTimeout needed.
- */
-function kebab(s: string): string {
-  return s.replace(/([a-z0-9])([A-Z])/g, "$1-$2").toLowerCase();
 }

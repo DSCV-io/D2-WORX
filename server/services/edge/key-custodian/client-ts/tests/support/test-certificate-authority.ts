@@ -22,7 +22,7 @@ import { Temporal } from "temporal-polyfill";
 import type {
   CaChainMaterial,
   WorkloadLeafMaterial,
-} from "../../src/workload-leaf-material.js";
+} from "../../src/issuance/workload-leaf-material.js";
 
 cryptoProvider.set(globalThis.crypto);
 

@@ -27,8 +27,8 @@ import {
   SubjectAlternativeNameExtension,
   cryptoProvider,
 } from "@peculiar/x509";
-import { buildCsr, CSR_SUBJECT } from "../src/csr-builder.js";
-import { generateLeafKeypair } from "../src/leaf-keypair.js";
+import { buildCsr, CSR_SUBJECT } from "../src/issuance/csr-builder.js";
+import { generateLeafKeypair } from "../src/issuance/leaf-keypair.js";
 
 cryptoProvider.set(globalThis.crypto);
 

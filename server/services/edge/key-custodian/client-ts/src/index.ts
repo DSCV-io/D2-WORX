@@ -9,40 +9,49 @@
 // + trust assembly, refresh-ahead + serve-stale, and mutual-TLS channel
 // presentation.
 
-export { WorkloadLeafClient } from "./workload-leaf-client.js";
-export type { WorkloadLeafClientOptions } from "./leaf-client-options.js";
-export { GrpcWorkloadCertificateIssuer } from "./grpc-issuer-adapter.js";
-export type { WorkloadCertificateIssuer } from "./workload-certificate-issuer.js";
+export { WorkloadLeafClient } from "./issuance/workload-leaf-client.js";
+export type { WorkloadLeafClientOptions } from "./issuance/leaf-client-options.js";
+export { GrpcWorkloadCertificateIssuer } from "./issuance/grpc-issuer-adapter.js";
+export type { WorkloadCertificateIssuer } from "./issuance/workload-certificate-issuer.js";
 
 export type {
   WorkloadLeafMaterial,
   CaChainMaterial,
   LeafSnapshot,
   CaTrustBundle,
-} from "./workload-leaf-material.js";
+} from "./issuance/workload-leaf-material.js";
 
-export { generateLeafKeypair, type LeafKeypair } from "./leaf-keypair.js";
-export { buildCsr, CSR_SUBJECT, MAX_CSR_DER_BYTES } from "./csr-builder.js";
-export { leafMatchesLocalKey } from "./leaf-key-match.js";
-export { derToPem } from "./der-pem.js";
-export { assembleTrustStore } from "./trust-assembly.js";
+export {
+  generateLeafKeypair,
+  type LeafKeypair,
+} from "./issuance/leaf-keypair.js";
+export {
+  buildCsr,
+  CSR_SUBJECT,
+  MAX_CSR_DER_BYTES,
+} from "./issuance/csr-builder.js";
+export { leafMatchesLocalKey } from "./issuance/leaf-key-match.js";
+export { derToPem } from "./issuance/der-pem.js";
+export { assembleTrustStore } from "./issuance/trust-assembly.js";
 export {
   buildMutualTlsCredentials,
   type MutualTlsCredentialsInput,
-} from "./mtls-channel.js";
+} from "./issuance/mtls-channel.js";
 
 // The emitted KeyCustodian gRPC wire client + its wire DTOs — re-exported so a
 // host composes the client over a ts-proto grpc-js stub bound to a mutual-TLS
-// channel, then passes it to GrpcWorkloadCertificateIssuer.
+// channel, then passes it to GrpcWorkloadCertificateIssuer. The generated surface
+// is co-located by concern: the gRPC client in facade/, each DTO in its concern
+// folder.
 export {
   createKeyCustodianGrpcClient,
   type KeyCustodianGrpcClient,
-} from "./generated/key-custodian-grpc-client.g.js";
+} from "./facade/key-custodian-grpc-client.g.js";
 export type {
   IssueLeafInput,
   IssueLeafOutput,
-} from "./generated/issue-leaf-dto.g.js";
+} from "./issuance/issue-leaf-dto.g.js";
 export type {
   GetCaCertificateInput,
   GetCaCertificateOutput,
-} from "./generated/get-ca-certificate-dto.g.js";
+} from "./ca-certificate/get-ca-certificate-dto.g.js";

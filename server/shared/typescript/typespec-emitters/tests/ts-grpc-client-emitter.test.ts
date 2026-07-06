@@ -623,6 +623,33 @@ describe("emitTsGrpcClient_FileNameAndShape", () => {
     expect(importLines[0]).toContain('from "./sign-fixture-dto.js"');
   });
 
+  it("a concern-bearing op emits concern-relative DTO imports (../<concern-kebab>/<file>.js from facade/)", () => {
+    // A ts-client-output-dirs mirror target threads @d2Concern → the client lives
+    // in facade/ and its DTOs in <concern-kebab>/, so the import is concern-relative.
+    // "CaCertificate" also pins the multi-word kebab (→ ca-certificate).
+    const withConcern: TsGrpcClientOp = {
+      ...signGrpcOp(),
+      concern: "CaCertificate",
+    };
+    const [file] = emitTsGrpcClient("SignFixture", [withConcern]);
+    expect(file!.content).toContain(
+      'import type { SignFixtureInput, SignFixtureOutput } from "../ca-certificate/sign-fixture-dto.js";',
+    );
+    // The flat co-located form must NOT appear for a concern-bearing op.
+    expect(file!.content).not.toContain('from "./sign-fixture-dto.js"');
+  });
+
+  it("a concern-bearing response-enum op emits a concern-relative enum import", () => {
+    const withConcern: TsGrpcClientOp = {
+      ...signWithKindOp(),
+      concern: "Signing",
+    };
+    const [file] = emitTsGrpcClient("EnumFixtures", [withConcern]);
+    expect(file!.content).toContain(
+      'import { FixtureKeyKind } from "../signing/sign-with-kind-fixture-dto.js";',
+    );
+  });
+
   it("the emitted source carries no phase / deliverable / audit-round identifiers", () => {
     const [file] = emitTsGrpcClient("PredicateFixtures", [placeOrderOp()]);
     expect(file!.content).not.toMatch(/\bC-6\b|\bStep 9c\b|audit-round/i);

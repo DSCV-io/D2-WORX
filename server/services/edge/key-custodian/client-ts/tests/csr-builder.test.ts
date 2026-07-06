@@ -8,8 +8,8 @@ import {
   buildCsr,
   CSR_SUBJECT,
   MAX_CSR_DER_BYTES,
-} from "../src/csr-builder.js";
-import { generateLeafKeypair } from "../src/leaf-keypair.js";
+} from "../src/issuance/csr-builder.js";
+import { generateLeafKeypair } from "../src/issuance/leaf-keypair.js";
 
 function toArrayBuffer(u: Uint8Array): ArrayBuffer {
   const b = new ArrayBuffer(u.byteLength);

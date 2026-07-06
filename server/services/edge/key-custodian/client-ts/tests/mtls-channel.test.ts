@@ -4,11 +4,11 @@
 
 import { describe, expect, it } from "vitest";
 import { ChannelCredentials } from "@grpc/grpc-js";
-import { buildMutualTlsCredentials } from "../src/mtls-channel.js";
-import { assembleTrustStore } from "../src/trust-assembly.js";
-import { derToPem } from "../src/der-pem.js";
-import { generateLeafKeypair } from "../src/leaf-keypair.js";
-import { buildCsr } from "../src/csr-builder.js";
+import { buildMutualTlsCredentials } from "../src/issuance/mtls-channel.js";
+import { assembleTrustStore } from "../src/issuance/trust-assembly.js";
+import { derToPem } from "../src/issuance/der-pem.js";
+import { generateLeafKeypair } from "../src/issuance/leaf-keypair.js";
+import { buildCsr } from "../src/issuance/csr-builder.js";
 import { TestCertificateAuthority } from "./support/test-certificate-authority.js";
 
 describe("buildMutualTlsCredentials", () => {

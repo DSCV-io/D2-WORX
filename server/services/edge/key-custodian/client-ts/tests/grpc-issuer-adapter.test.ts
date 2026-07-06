@@ -11,16 +11,16 @@
 import { describe, expect, it } from "vitest";
 import { Temporal } from "temporal-polyfill";
 import { type D2Result, ok, forbidden, serviceUnavailable } from "@d2/result";
-import { GrpcWorkloadCertificateIssuer } from "../src/grpc-issuer-adapter.js";
-import type { KeyCustodianGrpcClient } from "../src/generated/key-custodian-grpc-client.g.js";
+import { GrpcWorkloadCertificateIssuer } from "../src/issuance/grpc-issuer-adapter.js";
+import type { KeyCustodianGrpcClient } from "../src/facade/key-custodian-grpc-client.g.js";
 import type {
   IssueLeafInput,
   IssueLeafOutput,
-} from "../src/generated/issue-leaf-dto.g.js";
+} from "../src/issuance/issue-leaf-dto.g.js";
 import type {
   GetCaCertificateInput,
   GetCaCertificateOutput,
-} from "../src/generated/get-ca-certificate-dto.g.js";
+} from "../src/ca-certificate/get-ca-certificate-dto.g.js";
 
 interface CapturedCall {
   readonly input: unknown;

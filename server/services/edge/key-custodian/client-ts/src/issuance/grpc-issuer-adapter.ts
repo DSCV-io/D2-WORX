@@ -9,7 +9,7 @@ import type {
   CaChainMaterial,
   WorkloadLeafMaterial,
 } from "./workload-leaf-material.js";
-import type { KeyCustodianGrpcClient } from "./generated/key-custodian-grpc-client.g.js";
+import type { KeyCustodianGrpcClient } from "../facade/key-custodian-grpc-client.g.js";
 
 /**
  * gRPC adapter binding the {@link WorkloadCertificateIssuer} port to the emitted

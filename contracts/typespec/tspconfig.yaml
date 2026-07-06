@@ -61,15 +61,18 @@ options:
     # Distinct from proto-csharp-namespace so proto types and service impl do not collide.
     grpc-service-namespace: "D2.Edge.Tests.TypeSpecGrpc.Generated"
 
-    # TS-client production-emission target — per @d2ServedBy module → repo-relative
-    # dir. For each named module, the emitted TS SSR gRPC client + the TS DTOs of
-    # its @d2GrpcMethod ops are ALSO written here (in addition to dist/generated),
-    # so the service-owned TS client package imports the generated wire surface
-    # directly. Config-only + concern-driven — routing is by module membership, no
-    # per-op special cases. The generated surface is @ts-nocheck / .prettierignore'd
-    # (byte-gate-governed); the hand-written runtime wraps it.
+    # TS-client production-emission target — per @d2ServedBy module → the package
+    # `src` root (repo-relative). For each named module, the emitted TS SSR gRPC
+    # client + the TS DTOs of its @d2GrpcMethod ops are ALSO written here (in
+    # addition to dist/generated), co-located BY CONCERN under this root: the gRPC
+    # client lands in `facade/`, each op's DTO in its `<concern-kebab>/` folder
+    # (mirroring the .NET client). The service-owned TS client package imports the
+    # generated wire surface directly. Config-only + @d2Concern-driven — routing is
+    # by module membership + each op's @d2Concern, no per-op special cases. The
+    # generated surface is @ts-nocheck / .prettierignore'd (byte-gate-governed); the
+    # hand-written runtime wraps it.
     ts-client-output-dirs:
-      KeyCustodian: "server/services/edge/key-custodian/client-ts/src/generated"
+      KeyCustodian: "server/services/edge/key-custodian/client-ts/src"
 
 imports:
   - "./key-custodian/key-custodian.tsp"

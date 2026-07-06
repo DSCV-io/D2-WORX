@@ -9,11 +9,11 @@
 // fixture harness (NodeLeafClient) driving the real CsrVerification + issuance.
 
 import { type D2Result, serviceUnavailable } from "@d2/result";
-import type { WorkloadCertificateIssuer } from "../../src/workload-certificate-issuer.js";
+import type { WorkloadCertificateIssuer } from "../../src/issuance/workload-certificate-issuer.js";
 import type {
   CaChainMaterial,
   WorkloadLeafMaterial,
-} from "../../src/workload-leaf-material.js";
+} from "../../src/issuance/workload-leaf-material.js";
 
 export interface FakeIssuerScript {
   readonly issue?: (

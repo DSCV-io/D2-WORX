@@ -110,10 +110,17 @@ host-gating the .NET real gRPC issuer carries — see ADR-0023).
 
 ## The generated wire surface
 
-`src/generated/` holds the TypeSpec-emitted KeyCustodian gRPC client + its wire
-DTOs (`@ts-nocheck`, byte-gate-governed). They are produced by the
-`@d2/typespec-emitters` pipeline (the `ts-client-output-dirs` emission target) and
-are **not** hand-edited — regenerate via the emitter's regen script.
+The TypeSpec-emitted KeyCustodian gRPC client + its wire DTOs (`@ts-nocheck`,
+byte-gate-governed) are co-located **by concern**, mirroring the .NET client: the
+gRPC client lives in `src/facade/`, and each op's DTO in its concern folder
+(`src/signing/`, `src/keyring/`, `src/sealing/`, `src/issuance/`,
+`src/ca-certificate/`). The cohesive hand-written leaf-issuance / mTLS runtime is
+kept together under `src/issuance/` (co-located with the `issue-leaf` DTO it
+serves). Placement is driven by each op's `@d2Concern` — the emitter routes the
+DTO into `<concern-kebab>/` and rewrites the client's DTO imports to match. They
+are produced by the `@d2/typespec-emitters` pipeline (the `ts-client-output-dirs`
+emission target) and are **not** hand-edited — regenerate via the emitter's regen
+script.
 
 ## Telemetry
 

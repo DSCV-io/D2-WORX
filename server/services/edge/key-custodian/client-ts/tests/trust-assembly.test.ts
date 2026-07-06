@@ -3,8 +3,8 @@
 // -----------------------------------------------------------------------
 
 import { describe, expect, it } from "vitest";
-import { assembleTrustStore } from "../src/trust-assembly.js";
-import type { CaChainMaterial } from "../src/workload-leaf-material.js";
+import { assembleTrustStore } from "../src/issuance/trust-assembly.js";
+import type { CaChainMaterial } from "../src/issuance/workload-leaf-material.js";
 
 describe("assembleTrustStore", () => {
   const chain: CaChainMaterial = {

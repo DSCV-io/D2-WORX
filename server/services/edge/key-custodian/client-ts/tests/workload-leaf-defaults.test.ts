@@ -16,7 +16,7 @@ import {
   DEFAULT_REFRESH_MARGIN_MS,
   DEFAULT_FAILURE_THRESHOLD,
   DEFAULT_COOLDOWN_MS,
-} from "../src/workload-leaf-client.js";
+} from "../src/issuance/workload-leaf-client.js";
 
 describe("WorkloadLeafClient defaults - .NET parity pins", () => {
   it("refresh margin mirrors .NET WorkloadLeafRefreshLeadTime (5 min)", () => {

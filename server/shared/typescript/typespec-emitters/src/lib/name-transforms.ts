@@ -35,3 +35,18 @@ export function toSnake(s: string): string {
 export function toPascal(s: string): string {
   return s.replace(/(^|_)([a-z0-9])/g, (_, __, c: string) => c.toUpperCase());
 }
+
+/**
+ * Convert a lowerCamelCase or PascalCase identifier to kebab-case.
+ *
+ * Used for TS generated file names (`<kebab-op>-dto.g.ts`) and concern-folder
+ * segments (`@d2Concern("CaCertificate")` → `ca-certificate/`). The concern
+ * folder a DTO is written to and the concern-relative import specifier the gRPC
+ * client emits MUST derive from this one function so folder and import agree.
+ *
+ * @example toKebab("getKeyring")    // "get-keyring"
+ * @example toKebab("CaCertificate") // "ca-certificate"
+ */
+export function toKebab(s: string): string {
+  return s.replace(/([a-z0-9])([A-Z])/g, "$1-$2").toLowerCase();
+}

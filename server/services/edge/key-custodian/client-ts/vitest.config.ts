@@ -11,15 +11,15 @@ export default defineConfig({
     coverage: {
       provider: "v8",
       include: ["src/**/*.ts"],
-      // Barrel index + generated wire stubs + pure-type / pure-options modules
-      // excluded; coverage thresholds apply to logic-bearing modules only.
+      // Barrel index + generated wire stubs (any concern folder) + pure-type /
+      // pure-options modules excluded; coverage thresholds apply to logic-bearing
+      // modules only.
       exclude: [
         "src/index.ts",
         "src/**/*.g.ts",
-        "src/generated/**",
-        "src/workload-certificate-issuer.ts",
-        "src/workload-leaf-material.ts",
-        "src/leaf-client-options.ts",
+        "src/issuance/workload-certificate-issuer.ts",
+        "src/issuance/workload-leaf-material.ts",
+        "src/issuance/leaf-client-options.ts",
       ],
       thresholds: {
         lines: 100,

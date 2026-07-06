@@ -4,8 +4,8 @@
 
 import { describe, expect, it } from "vitest";
 import { Temporal } from "temporal-polyfill";
-import { WorkloadLeafCache } from "../src/leaf-cache.js";
-import type { LeafSnapshot } from "../src/workload-leaf-material.js";
+import { WorkloadLeafCache } from "../src/issuance/leaf-cache.js";
+import type { LeafSnapshot } from "../src/issuance/workload-leaf-material.js";
 
 function snapshotExpiring(atMs: number): LeafSnapshot {
   return {

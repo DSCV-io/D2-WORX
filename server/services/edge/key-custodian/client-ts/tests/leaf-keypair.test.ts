@@ -4,7 +4,7 @@
 
 import { describe, expect, it } from "vitest";
 import { PublicKey } from "@peculiar/x509";
-import { generateLeafKeypair } from "../src/leaf-keypair.js";
+import { generateLeafKeypair } from "../src/issuance/leaf-keypair.js";
 
 function toArrayBuffer(u: Uint8Array): ArrayBuffer {
   const b = new ArrayBuffer(u.byteLength);

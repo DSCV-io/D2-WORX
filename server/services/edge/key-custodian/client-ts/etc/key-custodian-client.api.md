@@ -6,19 +6,19 @@
 
 import { ChannelCredentials } from '@grpc/grpc-js';
 import { D2Result } from '@d2/result';
-import type { GetCaCertificateInput as GetCaCertificateInput_2 } from './get-ca-certificate-dto.js';
-import type { GetCaCertificateOutput as GetCaCertificateOutput_2 } from './get-ca-certificate-dto.js';
-import type { GetKeyringInput } from './get-keyring-dto.js';
-import type { GetKeyringOutput } from './get-keyring-dto.js';
-import type { GetOrLazyProvisionOwnSealPrivateKeyInput } from './get-or-lazy-provision-own-seal-private-key-dto.js';
-import type { GetOrLazyProvisionOwnSealPrivateKeyOutput } from './get-or-lazy-provision-own-seal-private-key-dto.js';
-import type { GetOrLazyProvisionSealPublicKeyInput } from './get-or-lazy-provision-seal-public-key-dto.js';
-import type { GetOrLazyProvisionSealPublicKeyOutput } from './get-or-lazy-provision-seal-public-key-dto.js';
+import type { GetCaCertificateInput as GetCaCertificateInput_2 } from '../ca-certificate/get-ca-certificate-dto.js';
+import type { GetCaCertificateOutput as GetCaCertificateOutput_2 } from '../ca-certificate/get-ca-certificate-dto.js';
+import type { GetKeyringInput } from '../keyring/get-keyring-dto.js';
+import type { GetKeyringOutput } from '../keyring/get-keyring-dto.js';
+import type { GetOrLazyProvisionOwnSealPrivateKeyInput } from '../sealing/get-or-lazy-provision-own-seal-private-key-dto.js';
+import type { GetOrLazyProvisionOwnSealPrivateKeyOutput } from '../sealing/get-or-lazy-provision-own-seal-private-key-dto.js';
+import type { GetOrLazyProvisionSealPublicKeyInput } from '../sealing/get-or-lazy-provision-seal-public-key-dto.js';
+import type { GetOrLazyProvisionSealPublicKeyOutput } from '../sealing/get-or-lazy-provision-seal-public-key-dto.js';
 import type { ILogger } from '@d2/logging';
-import type { IssueLeafInput as IssueLeafInput_2 } from './issue-leaf-dto.js';
-import type { IssueLeafOutput as IssueLeafOutput_2 } from './issue-leaf-dto.js';
-import type { SignInput } from './sign-dto.js';
-import type { SignOutput } from './sign-dto.js';
+import type { IssueLeafInput as IssueLeafInput_2 } from '../issuance/issue-leaf-dto.js';
+import type { IssueLeafOutput as IssueLeafOutput_2 } from '../issuance/issue-leaf-dto.js';
+import type { SignInput } from '../signing/sign-dto.js';
+import type { SignOutput } from '../signing/sign-dto.js';
 import type { Temporal } from 'temporal-polyfill';
 
 // @public

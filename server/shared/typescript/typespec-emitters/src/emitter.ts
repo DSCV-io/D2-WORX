@@ -84,6 +84,7 @@ import type {
   HttpVerb,
   ScopePolicy,
 } from "./lib/route-policy-emitter.js";
+import { toKebab } from "./lib/name-transforms.js";
 import { $lib } from "./lib.js";
 import { validateChannelAgreement } from "./lib/wire-channel.js";
 import type { WireChannel } from "./lib/wire-channel.js";
@@ -197,6 +198,13 @@ interface CollectedGrpcOp {
    * (`maxAttempts`). Undefined when the op carries no @d2Resilience pipeline DSL.
    */
   readonly retryBudget?: number;
+  /**
+   * The op's @d2Concern segment, threaded into the TS SSR gRPC client's DTO
+   * import-path builder ONLY for a `ts-client-output-dirs` mirror target (where
+   * the DTOs are written to `<concern-kebab>/` and the client to `facade/`).
+   * Undefined when the op carries no concern.
+   */
+  readonly concern: string | undefined;
 }
 
 /**
@@ -318,9 +326,14 @@ export async function $onEmit(context: EmitContext): Promise<void> {
   // module has a configured ts-client-output-dir. Captured during the per-op walk
   // (the TS DTO content is produced there) and mirrored to the production target
   // dir alongside the module's TS gRPC client after the walk. Deduped by file name
-  // (a DTO model shared across ops emits one file). Empty unless tsClientOutputDirs
-  // names the op's module.
-  const tsDtoFilesByModule = new Map<string, EmittedTsFile[]>();
+  // (a DTO model shared across ops emits one file). Each entry carries the op's
+  // @d2Concern so the mirror writes the DTO into its `<concern-kebab>/` subfolder
+  // (co-located with the concern's runtime, mirroring the .NET client). Empty
+  // unless tsClientOutputDirs names the op's module.
+  const tsDtoFilesByModule = new Map<
+    string,
+    { file: EmittedTsFile; concern: string | undefined }[]
+  >();
 
   // Gate for WireVersion.g.cs + wire-identity manifest: tracks whether any @d2GrpcMethod op
   // successfully produced a proto. Populated in fixture mode (no csClientsNamespace) AND real-
@@ -560,10 +573,11 @@ export async function $onEmit(context: EmitContext): Promise<void> {
           tsClientOutputDirs.has(grpcServedBy)
         ) {
           const dtoFile = emittedTsDto;
+          const dtoConcern = resolveConcern(program, op);
           const files = tsDtoFilesByModule.get(grpcServedBy) ?? [];
 
-          if (!files.some((f) => f.fileName === dtoFile.fileName))
-            files.push(dtoFile);
+          if (!files.some((f) => f.file.fileName === dtoFile.fileName))
+            files.push({ file: dtoFile, concern: dtoConcern });
 
           tsDtoFilesByModule.set(grpcServedBy, files);
         }
@@ -695,7 +709,12 @@ export async function $onEmit(context: EmitContext): Promise<void> {
           const retryBudget = parseRetryBudget(program, op);
 
           const existing = grpcOpsByModule.get(grpcServedBy) ?? [];
-          existing.push({ clientOp, outputModel, retryBudget });
+          existing.push({
+            clientOp,
+            outputModel,
+            retryBudget,
+            concern: resolveConcern(program, op),
+          });
           grpcOpsByModule.set(grpcServedBy, existing);
         }
       }
@@ -823,19 +842,39 @@ export async function $onEmit(context: EmitContext): Promise<void> {
   // @d2/grpc-client seam over the ts-proto grpc-js stub; folds the emitted TS
   // predicate twin into the retry-arm for a @d2Resilience op.
   for (const [moduleName, moduleOps] of grpcOpsByModule) {
-    const tsOps: TsGrpcClientOp[] = moduleOps.map((m) => ({
-      opName: m.clientOp.opName,
-      grpcService: m.clientOp.grpcService,
-      grpcMethod: m.clientOp.grpcMethod,
-      sourceSpec: m.clientOp.sourceSpec,
-      requestModelName: m.clientOp.requestModelName,
-      requestFields: m.clientOp.requestFields,
-      responseModelName: m.clientOp.responseModelName,
-      responseFields: m.clientOp.responseFields,
-      retryWhenAst: m.clientOp.retryWhenAst,
-      failWhenAst: m.clientOp.failWhenAst,
-      retryBudget: m.retryBudget,
-    }));
+    // Thread each op's @d2Concern into the TS client ONLY when this module is a
+    // ts-client-output-dirs mirror target — the mirror writes DTOs into
+    // `<concern-kebab>/` and the client into `facade/`, so the client's DTO
+    // imports are concern-relative (`../<concern-kebab>/<file>.js`). A non-mirrored
+    // module (fixtures + the standard emitter-output copy) keeps the flat
+    // co-located layout, so concern stays unset there and imports remain `./`.
+    const isMirrorTarget = tsClientOutputDirs.has(moduleName);
+    const tsOps: TsGrpcClientOp[] = moduleOps.map((m) => {
+      // Concern is threaded ONLY for a ts-client-output-dirs mirror target; the
+      // mapped path (isMirrorTarget true → the concern-relative import layout) is
+      // exercised end-to-end by ts-client-output-dirs.integration.test.ts
+      // (dist-loaded, not src-instrumented — same reason the mirror block below is
+      // v8-ignored), so the true arm is not visible to src coverage.
+      let concern: string | undefined;
+      /* v8 ignore start — mirror-target concern threading: exercised end-to-end by ts-client-output-dirs.integration.test.ts (dist-loaded, not src-instrumented), same as the mirror block below */
+      if (isMirrorTarget) concern = m.concern;
+      /* v8 ignore stop */
+
+      return {
+        opName: m.clientOp.opName,
+        grpcService: m.clientOp.grpcService,
+        grpcMethod: m.clientOp.grpcMethod,
+        sourceSpec: m.clientOp.sourceSpec,
+        requestModelName: m.clientOp.requestModelName,
+        requestFields: m.clientOp.requestFields,
+        responseModelName: m.clientOp.responseModelName,
+        responseFields: m.clientOp.responseFields,
+        concern,
+        retryWhenAst: m.clientOp.retryWhenAst,
+        failWhenAst: m.clientOp.failWhenAst,
+        retryBudget: m.retryBudget,
+      };
+    });
     const tsClientFiles = emitTsGrpcClient(moduleName, tsOps);
     for (const f of tsClientFiles) {
       const tsClientPath = resolveOutputPath(context, f.fileName);
@@ -845,24 +884,30 @@ export async function $onEmit(context: EmitContext): Promise<void> {
     // Production-emission mirror: when this module is named in
     // ts-client-output-dirs, ALSO write its TS gRPC client + the TS DTOs of its
     // @d2GrpcMethod ops (captured during the walk) to the mapped directory so a
-    // real consumer package can import the generated wire surface directly. The
-    // set is complete + self-consistent by construction: the grpc client imports
-    // exactly those DTO files (co-located, flat).
+    // real consumer package can import the generated wire surface directly,
+    // co-located by concern (mirroring the .NET client): the gRPC client lands in
+    // `facade/`, each DTO in its `<concern-kebab>/` folder. The set is complete +
+    // self-consistent by construction — the client's concern-relative imports
+    // resolve exactly those DTO files.
     const tsClientTargetDir = tsClientOutputDirs.get(moduleName);
     /* v8 ignore start — ts-client-output-dirs production mirror: exercised end-to-end by ts-client-output-dirs.integration.test.ts (dist/-loaded, not src-instrumented) */
     if (tsClientTargetDir !== undefined) {
       for (const f of tsClientFiles) {
         void emitGeneratedFile(
           program,
-          join(tsClientTargetDir, f.fileName),
+          join(tsClientTargetDir, "facade", f.fileName),
           f.content,
         );
       }
       for (const dto of tsDtoFilesByModule.get(moduleName) ?? []) {
+        const dtoDir =
+          dto.concern !== undefined
+            ? join(tsClientTargetDir, toKebab(dto.concern))
+            : tsClientTargetDir;
         void emitGeneratedFile(
           program,
-          join(tsClientTargetDir, dto.fileName),
-          dto.content,
+          join(dtoDir, dto.file.fileName),
+          dto.file.content,
         );
       }
     }

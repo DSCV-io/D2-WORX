@@ -14,8 +14,8 @@ import { Temporal } from "temporal-polyfill";
 import { ok, serviceUnavailable } from "@d2/result";
 import { Pkcs10CertificateRequest } from "@peculiar/x509";
 import type { ILogger, LogBindings } from "@d2/logging";
-import { WorkloadLeafClient } from "../src/workload-leaf-client.js";
-import type { WorkloadLeafMaterial } from "../src/workload-leaf-material.js";
+import { WorkloadLeafClient } from "../src/issuance/workload-leaf-client.js";
+import type { WorkloadLeafMaterial } from "../src/issuance/workload-leaf-material.js";
 import { FakeWorkloadCertificateIssuer } from "./support/fake-workload-certificate-issuer.js";
 import { TestCertificateAuthority } from "./support/test-certificate-authority.js";
 

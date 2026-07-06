@@ -19,12 +19,12 @@ import type { D2Result } from "@d2/result";
 
 // Emitted DTO types + (predicate ops) the result-predicate twin. Paths resolve
 // in the BFF SSR consumer; @ts-nocheck erases them here.
-import type { SignInput, SignOutput } from "./sign-dto.js";
-import type { GetKeyringInput, GetKeyringOutput } from "./get-keyring-dto.js";
-import type { IssueLeafInput, IssueLeafOutput } from "./issue-leaf-dto.js";
-import type { GetCaCertificateInput, GetCaCertificateOutput } from "./get-ca-certificate-dto.js";
-import type { GetOrLazyProvisionSealPublicKeyInput, GetOrLazyProvisionSealPublicKeyOutput } from "./get-or-lazy-provision-seal-public-key-dto.js";
-import type { GetOrLazyProvisionOwnSealPrivateKeyInput, GetOrLazyProvisionOwnSealPrivateKeyOutput } from "./get-or-lazy-provision-own-seal-private-key-dto.js";
+import type { SignInput, SignOutput } from "../signing/sign-dto.js";
+import type { GetKeyringInput, GetKeyringOutput } from "../keyring/get-keyring-dto.js";
+import type { IssueLeafInput, IssueLeafOutput } from "../issuance/issue-leaf-dto.js";
+import type { GetCaCertificateInput, GetCaCertificateOutput } from "../ca-certificate/get-ca-certificate-dto.js";
+import type { GetOrLazyProvisionSealPublicKeyInput, GetOrLazyProvisionSealPublicKeyOutput } from "../sealing/get-or-lazy-provision-seal-public-key-dto.js";
+import type { GetOrLazyProvisionOwnSealPrivateKeyInput, GetOrLazyProvisionOwnSealPrivateKeyOutput } from "../sealing/get-or-lazy-provision-own-seal-private-key-dto.js";
 
 /** Per-call options for a generated gRPC client method. */
 export interface GrpcCallOptions {
