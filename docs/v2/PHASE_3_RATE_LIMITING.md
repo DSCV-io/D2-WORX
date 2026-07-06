@@ -374,7 +374,7 @@ batching, rate-limit middleware becomes the dominant request latency.
 ```
 
 Per-tier caps + window TTLs come from `IConfiguration` at startup. See
-[`docs/dev/rules.md §22.6`](../dev/rules.md#22-idempotency--exactly-once-semantics)
+[`docs/dev/rules.md §22.6`](../dev/rules/22-idempotency-exactly-once-semantics.md#22-idempotency--exactly-once-semantics)
 for the TTL-set-on-first-INCR-only invariant this sketch obeys.
 
 ### Endpoint attribute discovery
