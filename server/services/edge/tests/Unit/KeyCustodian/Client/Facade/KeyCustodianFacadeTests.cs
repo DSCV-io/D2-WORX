@@ -8,6 +8,8 @@ namespace D2.Edge.Tests.Unit.KeyCustodian.Client.Facade;
 
 using D2.Edge.KeyCustodian.App.Application;
 using D2.Edge.KeyCustodian.App.Application.Facade;
+using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.GetOrLazyProvisionOwnSealPrivateKey;
+using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.GetOrLazyProvisionSealPublicKey;
 using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.IssueLeaf;
 using D2.Edge.KeyCustodian.App.Application.Handlers.Queries.GetCaCertificate;
 using D2.Edge.KeyCustodian.App.Application.Handlers.Queries.GetKeyring;
@@ -18,6 +20,7 @@ using D2.Edge.KeyCustodian.Client.Issuance;
 using D2.Edge.KeyCustodian.Client.Jwks;
 using D2.Edge.KeyCustodian.Client.Keyring;
 using D2.Edge.KeyCustodian.Client.OidcConfiguration;
+using D2.Edge.KeyCustodian.Client.Sealing;
 using D2.Edge.KeyCustodian.Client.Signing;
 using D2.Shared.Handler.Abstractions;
 using Microsoft.Extensions.DependencyInjection;
@@ -78,6 +81,8 @@ public sealed class KeyCustodianFacadeTests
         services.AddTransient<IGetKeyringHandler>(_ => KeyringStub());
         services.AddTransient<IIssueLeafHandler>(_ => IssueLeafStub());
         services.AddTransient<IGetCaCertificateHandler>(_ => CaCertStub());
+        services.AddTransient<IGetOrLazyProvisionSealPublicKeyHandler>(_ => SealPubStub());
+        services.AddTransient<IGetOrLazyProvisionOwnSealPrivateKeyHandler>(_ => SealPrivStub());
 
         using var sp = services.BuildServiceProvider();
 
@@ -109,6 +114,8 @@ public sealed class KeyCustodianFacadeTests
         services.AddTransient<IGetKeyringHandler>(_ => KeyringStub());
         services.AddTransient<IIssueLeafHandler>(_ => IssueLeafStub());
         services.AddTransient<IGetCaCertificateHandler>(_ => CaCertStub());
+        services.AddTransient<IGetOrLazyProvisionSealPublicKeyHandler>(_ => SealPubStub());
+        services.AddTransient<IGetOrLazyProvisionOwnSealPrivateKeyHandler>(_ => SealPrivStub());
 
         using var sp = services.BuildServiceProvider();
 
@@ -132,7 +139,9 @@ public sealed class KeyCustodianFacadeTests
             SignStub(),
             KeyringStub(),
             IssueLeafStub(),
-            CaCertStub());
+            CaCertStub(),
+            SealPubStub(),
+            SealPrivStub());
 
         var result = await facade.GetJwksAsync(new GetJwksInput());
 
@@ -151,7 +160,9 @@ public sealed class KeyCustodianFacadeTests
             SignStub(),
             KeyringStub(),
             IssueLeafStub(),
-            CaCertStub());
+            CaCertStub(),
+            SealPubStub(),
+            SealPrivStub());
 
         await facade.GetJwksAsync(new GetJwksInput(), cts.Token);
 
@@ -174,7 +185,9 @@ public sealed class KeyCustodianFacadeTests
             SignStub(),
             KeyringStub(),
             IssueLeafStub(),
-            CaCertStub());
+            CaCertStub(),
+            SealPubStub(),
+            SealPrivStub());
 
         var result = await facade.GetJwksAsync(new GetJwksInput());
 
@@ -194,7 +207,9 @@ public sealed class KeyCustodianFacadeTests
             SignStub(),
             KeyringStub(),
             IssueLeafStub(),
-            CaCertStub());
+            CaCertStub(),
+            SealPubStub(),
+            SealPrivStub());
 
         var result = await facade.GetJwksAsync(new GetJwksInput());
 
@@ -217,7 +232,9 @@ public sealed class KeyCustodianFacadeTests
             SignStub(),
             KeyringStub(),
             IssueLeafStub(),
-            CaCertStub());
+            CaCertStub(),
+            SealPubStub(),
+            SealPrivStub());
 
         var result = await facade.GetOidcConfigurationAsync(new GetOidcConfigurationInput());
 
@@ -237,7 +254,9 @@ public sealed class KeyCustodianFacadeTests
             SignStub(),
             KeyringStub(),
             IssueLeafStub(),
-            CaCertStub());
+            CaCertStub(),
+            SealPubStub(),
+            SealPrivStub());
 
         await facade.GetOidcConfigurationAsync(new GetOidcConfigurationInput(), cts.Token);
 
@@ -254,7 +273,9 @@ public sealed class KeyCustodianFacadeTests
             SignStub(),
             KeyringStub(),
             IssueLeafStub(),
-            CaCertStub());
+            CaCertStub(),
+            SealPubStub(),
+            SealPrivStub());
 
         var result = await facade.GetOidcConfigurationAsync(new GetOidcConfigurationInput());
 
@@ -328,6 +349,20 @@ public sealed class KeyCustodianFacadeTests
             .Should().NotBeNull();
     }
 
+    [Fact]
+    public void IKeyCustodianApi_HasGetOrLazyProvisionSealPublicKeyAsyncMethod()
+    {
+        typeof(IKeyCustodianApi).GetMethod("GetOrLazyProvisionSealPublicKeyAsync")
+            .Should().NotBeNull();
+    }
+
+    [Fact]
+    public void IKeyCustodianApi_HasGetOrLazyProvisionOwnSealPrivateKeyAsyncMethod()
+    {
+        typeof(IKeyCustodianApi).GetMethod("GetOrLazyProvisionOwnSealPrivateKeyAsync")
+            .Should().NotBeNull();
+    }
+
     // -------------------------------------------------------------------------
     // IssueLeaf + GetCaCertificate delegation
     // -------------------------------------------------------------------------
@@ -344,7 +379,9 @@ public sealed class KeyCustodianFacadeTests
             SignStub(),
             KeyringStub(),
             issueStub,
-            CaCertStub());
+            CaCertStub(),
+            SealPubStub(),
+            SealPrivStub());
 
         var result = await facade.IssueLeafAsync(new IssueLeafInput([0x30]));
 
@@ -362,7 +399,9 @@ public sealed class KeyCustodianFacadeTests
             SignStub(),
             KeyringStub(),
             new StubIssueLeafHandler(failure),
-            CaCertStub());
+            CaCertStub(),
+            SealPubStub(),
+            SealPrivStub());
 
         var result = await facade.IssueLeafAsync(new IssueLeafInput([0x30]));
 
@@ -382,7 +421,9 @@ public sealed class KeyCustodianFacadeTests
             SignStub(),
             KeyringStub(),
             IssueLeafStub(),
-            caCertStub);
+            caCertStub,
+            SealPubStub(),
+            SealPrivStub());
 
         var result = await facade.GetCaCertificateAsync(new GetCaCertificateInput());
 
@@ -400,7 +441,9 @@ public sealed class KeyCustodianFacadeTests
             SignStub(),
             KeyringStub(),
             IssueLeafStub(),
-            new StubGetCaCertificateHandler(failure));
+            new StubGetCaCertificateHandler(failure),
+            SealPubStub(),
+            SealPrivStub());
 
         var result = await facade.GetCaCertificateAsync(new GetCaCertificateInput());
 
@@ -423,7 +466,9 @@ public sealed class KeyCustodianFacadeTests
             signStub,
             KeyringStub(),
             IssueLeafStub(),
-            CaCertStub());
+            CaCertStub(),
+            SealPubStub(),
+            SealPrivStub());
 
         var result = await facade.SignAsync(new SignInput("audit", [0x01]));
 
@@ -443,7 +488,9 @@ public sealed class KeyCustodianFacadeTests
             signStub,
             KeyringStub(),
             IssueLeafStub(),
-            CaCertStub());
+            CaCertStub(),
+            SealPubStub(),
+            SealPrivStub());
 
         await facade.SignAsync(new SignInput("audit", [0x01]), cts.Token);
 
@@ -469,7 +516,9 @@ public sealed class KeyCustodianFacadeTests
             SignStub(),
             keyringStub,
             IssueLeafStub(),
-            CaCertStub());
+            CaCertStub(),
+            SealPubStub(),
+            SealPrivStub());
 
         var result = await facade.GetKeyringAsync(new GetKeyringInput("audit"));
 
@@ -488,7 +537,9 @@ public sealed class KeyCustodianFacadeTests
             SignStub(),
             keyringStub,
             IssueLeafStub(),
-            CaCertStub());
+            CaCertStub(),
+            SealPubStub(),
+            SealPrivStub());
 
         await facade.GetKeyringAsync(new GetKeyringInput("audit"), cts.Token);
 
@@ -505,12 +556,143 @@ public sealed class KeyCustodianFacadeTests
             SignStub(),
             new StubGetKeyringHandler(failure),
             IssueLeafStub(),
-            CaCertStub());
+            CaCertStub(),
+            SealPubStub(),
+            SealPrivStub());
 
         var result = await facade.GetKeyringAsync(new GetKeyringInput("audit"));
 
         result.Success.Should().BeFalse();
         result.StatusCode.Should().Be(System.Net.HttpStatusCode.ServiceUnavailable);
+        result.Should().Be(failure);
+    }
+
+    // -------------------------------------------------------------------------
+    // Seal delegation (getOrLazyProvisionSealPublicKey / getOrLazyProvisionOwnSealPrivateKey)
+    // -------------------------------------------------------------------------
+
+    [Fact]
+    public async Task GetOrLazyProvisionSealPublicKeyAsync_DelegatesTo_GetOrLazyProvisionSealPublicKeyHandler()
+    {
+        var expected = D2Result<GetOrLazyProvisionSealPublicKeyOutput?>.Ok(
+            new GetOrLazyProvisionSealPublicKeyOutput("kid-001", [new SealPublicEntry("kid-001", new byte[65])]));
+        var sealStub = new StubGetOrLazyProvisionSealPublicKeyHandler(expected);
+        var facade = new KeyCustodianApi(
+            new StubGetJwksHandler(D2Result<GetJwksOutput?>.Ok(new GetJwksOutput([]))),
+            OidcStub(),
+            SignStub(),
+            KeyringStub(),
+            IssueLeafStub(),
+            CaCertStub(),
+            sealStub,
+            SealPrivStub());
+
+        var result = await facade.GetOrLazyProvisionSealPublicKeyAsync(new GetOrLazyProvisionSealPublicKeyInput("audit"));
+
+        sealStub.CallCount.Should().Be(1);
+        result.Should().Be(expected);
+    }
+
+    [Fact]
+    public async Task GetOrLazyProvisionSealPublicKeyAsync_PassesCancellationToken_ToHandler()
+    {
+        var sealStub = SealPubStub();
+        using var cts = new CancellationTokenSource();
+        var facade = new KeyCustodianApi(
+            new StubGetJwksHandler(D2Result<GetJwksOutput?>.Ok(new GetJwksOutput([]))),
+            OidcStub(),
+            SignStub(),
+            KeyringStub(),
+            IssueLeafStub(),
+            CaCertStub(),
+            sealStub,
+            SealPrivStub());
+
+        await facade.GetOrLazyProvisionSealPublicKeyAsync(new GetOrLazyProvisionSealPublicKeyInput("audit"), cts.Token);
+
+        sealStub.LastCancellationToken.Should().Be(cts.Token);
+    }
+
+    [Fact]
+    public async Task GetOrLazyProvisionSealPublicKeyAsync_HandlerFails_FacadeSurfacesSameFailure()
+    {
+        var failure = KeyCustodianFailures<GetOrLazyProvisionSealPublicKeyOutput?>.SealKeyUnavailable();
+        var facade = new KeyCustodianApi(
+            new StubGetJwksHandler(D2Result<GetJwksOutput?>.Ok(new GetJwksOutput([]))),
+            OidcStub(),
+            SignStub(),
+            KeyringStub(),
+            IssueLeafStub(),
+            CaCertStub(),
+            new StubGetOrLazyProvisionSealPublicKeyHandler(failure),
+            SealPrivStub());
+
+        var result = await facade.GetOrLazyProvisionSealPublicKeyAsync(new GetOrLazyProvisionSealPublicKeyInput("audit"));
+
+        result.Success.Should().BeFalse();
+        result.Should().Be(failure);
+    }
+
+    [Fact]
+    public async Task GetOrLazyProvisionOwnSealPrivateKeyAsync_DelegatesTo_GetOrLazyProvisionOwnSealPrivateKeyHandler()
+    {
+        var expected = D2Result<GetOrLazyProvisionOwnSealPrivateKeyOutput?>.Ok(
+            new GetOrLazyProvisionOwnSealPrivateKeyOutput(
+                "kid-001", [new SealPrivateEntry("kid-001", new byte[121])]));
+        var sealStub = new StubGetOrLazyProvisionOwnSealPrivateKeyHandler(expected);
+        var facade = new KeyCustodianApi(
+            new StubGetJwksHandler(D2Result<GetJwksOutput?>.Ok(new GetJwksOutput([]))),
+            OidcStub(),
+            SignStub(),
+            KeyringStub(),
+            IssueLeafStub(),
+            CaCertStub(),
+            SealPubStub(),
+            sealStub);
+
+        var result = await facade.GetOrLazyProvisionOwnSealPrivateKeyAsync(new GetOrLazyProvisionOwnSealPrivateKeyInput());
+
+        sealStub.CallCount.Should().Be(1);
+        result.Should().Be(expected);
+    }
+
+    [Fact]
+    public async Task GetOrLazyProvisionOwnSealPrivateKeyAsync_PassesCancellationToken_ToHandler()
+    {
+        var sealStub = SealPrivStub();
+        using var cts = new CancellationTokenSource();
+        var facade = new KeyCustodianApi(
+            new StubGetJwksHandler(D2Result<GetJwksOutput?>.Ok(new GetJwksOutput([]))),
+            OidcStub(),
+            SignStub(),
+            KeyringStub(),
+            IssueLeafStub(),
+            CaCertStub(),
+            SealPubStub(),
+            sealStub);
+
+        await facade.GetOrLazyProvisionOwnSealPrivateKeyAsync(new GetOrLazyProvisionOwnSealPrivateKeyInput(), cts.Token);
+
+        sealStub.LastCancellationToken.Should().Be(cts.Token);
+    }
+
+    [Fact]
+    public async Task GetOrLazyProvisionOwnSealPrivateKeyAsync_HandlerFails_FacadeSurfacesSameFailure()
+    {
+        var failure = KeyCustodianFailures<GetOrLazyProvisionOwnSealPrivateKeyOutput?>.SealNotAuthorized();
+        var facade = new KeyCustodianApi(
+            new StubGetJwksHandler(D2Result<GetJwksOutput?>.Ok(new GetJwksOutput([]))),
+            OidcStub(),
+            SignStub(),
+            KeyringStub(),
+            IssueLeafStub(),
+            CaCertStub(),
+            SealPubStub(),
+            new StubGetOrLazyProvisionOwnSealPrivateKeyHandler(failure));
+
+        var result = await facade.GetOrLazyProvisionOwnSealPrivateKeyAsync(new GetOrLazyProvisionOwnSealPrivateKeyInput());
+
+        result.Success.Should().BeFalse();
         result.Should().Be(failure);
     }
 
@@ -543,6 +725,14 @@ public sealed class KeyCustodianFacadeTests
 
     private static StubGetCaCertificateHandler CaCertStub() =>
         new(D2Result<GetCaCertificateOutput?>.Ok(new GetCaCertificateOutput([0x01], [0x02])));
+
+    private static StubGetOrLazyProvisionSealPublicKeyHandler SealPubStub() =>
+        new(D2Result<GetOrLazyProvisionSealPublicKeyOutput?>.Ok(
+            new GetOrLazyProvisionSealPublicKeyOutput("kid", [new SealPublicEntry("kid", new byte[65])])));
+
+    private static StubGetOrLazyProvisionOwnSealPrivateKeyHandler SealPrivStub() =>
+        new(D2Result<GetOrLazyProvisionOwnSealPrivateKeyOutput?>.Ok(
+            new GetOrLazyProvisionOwnSealPrivateKeyOutput("kid", [new SealPrivateEntry("kid", new byte[121])])));
 
     private sealed class StubGetJwksHandler(D2Result<GetJwksOutput?> result) : IGetJwksHandler
     {
@@ -640,6 +830,42 @@ public sealed class KeyCustodianFacadeTests
             HandlerOptions? options = null)
         {
             CallCount++;
+            return ValueTask.FromResult(result);
+        }
+    }
+
+    private sealed class StubGetOrLazyProvisionSealPublicKeyHandler(D2Result<GetOrLazyProvisionSealPublicKeyOutput?> result)
+        : IGetOrLazyProvisionSealPublicKeyHandler
+    {
+        public int CallCount { get; private set; }
+
+        public CancellationToken LastCancellationToken { get; private set; }
+
+        public ValueTask<D2Result<GetOrLazyProvisionSealPublicKeyOutput?>> HandleAsync(
+            GetOrLazyProvisionSealPublicKeyInput input,
+            CancellationToken ct = default,
+            HandlerOptions? options = null)
+        {
+            CallCount++;
+            LastCancellationToken = ct;
+            return ValueTask.FromResult(result);
+        }
+    }
+
+    private sealed class StubGetOrLazyProvisionOwnSealPrivateKeyHandler(
+        D2Result<GetOrLazyProvisionOwnSealPrivateKeyOutput?> result) : IGetOrLazyProvisionOwnSealPrivateKeyHandler
+    {
+        public int CallCount { get; private set; }
+
+        public CancellationToken LastCancellationToken { get; private set; }
+
+        public ValueTask<D2Result<GetOrLazyProvisionOwnSealPrivateKeyOutput?>> HandleAsync(
+            GetOrLazyProvisionOwnSealPrivateKeyInput input,
+            CancellationToken ct = default,
+            HandlerOptions? options = null)
+        {
+            CallCount++;
+            LastCancellationToken = ct;
             return ValueTask.FromResult(result);
         }
     }

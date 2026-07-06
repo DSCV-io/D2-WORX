@@ -50,6 +50,7 @@ public static class KeyGeneration
                 GenerateRsaSigning(rsaModulusBits)),
             KeyType.AesPayload => D2Result<GeneratedKeyMaterial>.Ok(GenerateAesPayload()),
             KeyType.Secret => D2Result<GeneratedKeyMaterial>.Ok(GenerateSecret(secretLengthBytes)),
+            KeyType.EcdhSealing => D2Result<GeneratedKeyMaterial>.Ok(GenerateEcdhSealing()),
             _ => KeyCustodianFailures<GeneratedKeyMaterial>.PreconditionViolated(
                 messages: [TK.Keycustodian.Internal.PRECONDITION_VIOLATED]),
         };
@@ -59,6 +60,14 @@ public static class KeyGeneration
         using var rsa = RSA.Create(rsaModulusBits);
         var pkcs8 = rsa.ExportPkcs8PrivateKey();
         var spki = rsa.ExportSubjectPublicKeyInfo();
+        return new GeneratedKeyMaterial(pkcs8, spki);
+    }
+
+    private static GeneratedKeyMaterial GenerateEcdhSealing()
+    {
+        using var ecdh = ECDiffieHellman.Create(ECCurve.NamedCurves.nistP256);
+        var pkcs8 = ecdh.ExportPkcs8PrivateKey();
+        var spki = ecdh.ExportSubjectPublicKeyInfo();
         return new GeneratedKeyMaterial(pkcs8, spki);
     }
 

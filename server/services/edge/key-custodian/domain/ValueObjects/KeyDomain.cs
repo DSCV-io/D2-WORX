@@ -6,6 +6,8 @@
 
 namespace D2.Edge.KeyCustodian.Domain.ValueObjects;
 
+using D2.Shared.WorkloadIdentity;
+
 /// <summary>
 /// Strong-typed value object identifying which independently-rotated keyring
 /// a managed key belongs to.
@@ -32,6 +34,17 @@ namespace D2.Edge.KeyCustodian.Domain.ValueObjects;
 /// binding — there is no second domain→type map anywhere. A <c>(domain, type)</c>
 /// pair that disagrees with the binding is rejected with
 /// <c>KEYCUSTODIAN_KEY_TYPE_DOMAIN_MISMATCH</c> by the generate/sign surfaces.
+///
+/// <b>Seal family (pattern-based, not in <see cref="All"/>).</b> The per-service
+/// sealing keys live under a structured-prefix family <c>seal:&lt;serviceId&gt;</c>
+/// (e.g. <c>"seal:audit"</c>) built by <see cref="ForSeal(string?)"/>, which validates the
+/// service-id suffix against the shared workload-identity grammar and binds
+/// <see cref="Enums.KeyType.EcdhSealing"/>. This family is UNBOUNDED (one domain per
+/// service, provisioned lazily on first use), so it is NOT a member of the closed
+/// <see cref="All"/> catalog — it is resolved by <see cref="TryResolveCatalogEntry"/>
+/// via the <see cref="SEAL_PREFIX"/> pattern instead, so <see cref="Create"/> accepts
+/// and <see cref="FromTrusted"/> rehydrates a <c>seal:&lt;id&gt;</c> value and every
+/// lifecycle op (rotate / compromise / retire) works on a seal domain unchanged.
 ///
 /// <b>Wire-format constants.</b> The KC-only literal strings are
 /// wire/spec-anchored constants (§5.25 exemption — the literal value IS the wire
@@ -64,6 +77,13 @@ public sealed record KeyDomain
     /// Wire value for the mTLS issuing-intermediate certificate-authority key domain.
     /// </summary>
     public const string MTLS_CA_INTERMEDIATE = "mtls-ca-intermediate";
+
+    /// <summary>
+    /// Wire-value prefix for the per-service ECDH sealing key domain family
+    /// (<c>seal:&lt;serviceId&gt;</c>). A structured-prefix, pattern-based family —
+    /// see the type remarks. The literal is wire/spec-anchored (§5.25 exemption).
+    /// </summary>
+    public const string SEAL_PREFIX = "seal:";
 
     /// <summary>Gets the normalized domain string (lowercase, trimmed).</summary>
     public required string Value { get; init; }
@@ -136,6 +156,56 @@ public sealed record KeyDomain
     }
 
     /// <summary>
+    /// Validates and constructs a per-service sealing <see cref="KeyDomain"/>
+    /// (<c>seal:&lt;serviceId&gt;</c>, bound to <see cref="Enums.KeyType.EcdhSealing"/>)
+    /// from a raw service identifier. The single seal-grammar seam: the suffix is
+    /// validated against the shared workload-identity service-id grammar (lowercase
+    /// <c>[a-z0-9-]</c>, at most 64 characters) — the recipient of a sealed frame IS a
+    /// workload — and the normalized service id is prefixed with <see cref="SEAL_PREFIX"/>.
+    /// </summary>
+    /// <param name="serviceId">Raw service identifier (may be null or whitespace).</param>
+    /// <returns>
+    /// <c>Ok</c> with the normalized <c>seal:&lt;serviceId&gt;</c> <see cref="KeyDomain"/>
+    /// on success; <c>ValidationFailed</c> carrying
+    /// <c>KEYCUSTODIAN_UNKNOWN_KEY_DOMAIN</c> when the service id fails the grammar.
+    /// </returns>
+    public static D2Result<KeyDomain> ForSeal(string? serviceId)
+    {
+        var identity = SpiffeWorkloadIdentity.Create(serviceId);
+
+        if (!identity.Success)
+            return KeyCustodianFailures<KeyDomain>.UnknownKeyDomain();
+
+        return D2Result<KeyDomain>.Ok(new KeyDomain
+        {
+            Value = SEAL_PREFIX + identity.Data!.ServiceId,
+            KeyType = KeyType.EcdhSealing,
+        });
+    }
+
+    /// <summary>
+    /// Builds a per-service sealing <see cref="KeyDomain"/>
+    /// (<c>seal:&lt;serviceId&gt;</c>, bound to <see cref="Enums.KeyType.EcdhSealing"/>)
+    /// from an ALREADY-VALIDATED <see cref="WorkloadIdentity"/>. The identity's service-id
+    /// grammar was enforced when the identity was created, so this overload does NOT re-run
+    /// the grammar and cannot fail — it exists so a caller that already holds a validated
+    /// identity validates the service id EXACTLY ONCE. Use <see cref="ForSeal(string?)"/>
+    /// for a raw, untrusted service identifier.
+    /// </summary>
+    /// <param name="identity">A validated workload identity (its service id is trusted).</param>
+    /// <returns>The normalized <c>seal:&lt;serviceId&gt;</c> <see cref="KeyDomain"/>.</returns>
+    public static KeyDomain ForSeal(WorkloadIdentity identity)
+    {
+        ArgumentNullException.ThrowIfNull(identity);
+
+        return new KeyDomain
+        {
+            Value = SEAL_PREFIX + identity.ServiceId,
+            KeyType = KeyType.EcdhSealing,
+        };
+    }
+
+    /// <summary>
     /// Reconstructs a <see cref="KeyDomain"/> from a trusted, previously-validated
     /// store value by resolving the canonical catalog entry (carrying the bound
     /// <see cref="KeyType"/>). For the EF Core read side only — use
@@ -184,8 +254,22 @@ public sealed record KeyDomain
     /// </summary>
     /// <param name="normalized">The normalized (lowercase, trimmed) domain value.</param>
     /// <returns>The canonical entry, or <see langword="null"/> when unknown.</returns>
-    private static KeyDomain? TryResolveCatalogEntry(string normalized) =>
-        All.FirstOrDefault(d => string.Equals(d.Value, normalized, StringComparison.Ordinal));
+    private static KeyDomain? TryResolveCatalogEntry(string normalized)
+    {
+        // Pattern-based seal family: a "seal:<serviceId>" value is not a closed-catalog
+        // literal — it resolves by validating the service-id suffix against the shared
+        // workload-identity grammar and binding EcdhSealing (the seam this method's doc
+        // anticipates). A malformed suffix returns null (Create → UnknownKeyDomain;
+        // FromTrusted → throw), the same fail-closed shape as an unknown catalog literal.
+        if (normalized.StartsWith(SEAL_PREFIX, StringComparison.Ordinal))
+        {
+            var sealResult = ForSeal(normalized[SEAL_PREFIX.Length..]);
+
+            return sealResult.Success ? sealResult.Data : null;
+        }
+
+        return All.FirstOrDefault(d => string.Equals(d.Value, normalized, StringComparison.Ordinal));
+    }
 
     private static IReadOnlyList<KeyDomain> BuildCatalog()
     {

@@ -110,6 +110,41 @@ public sealed class EncryptionKeyMaterialShapeTests
     }
 
     // -----------------------------------------------------------------------
+    // EcdhSealing key — public material required (bare SPKI), no CA cert
+    // -----------------------------------------------------------------------
+
+    [Fact]
+    public void Create_EcdhSealingWithPublicMaterial_Succeeds()
+    {
+        var result = PendingKey.Create(
+            sr_kid, sr_domain, KeyType.EcdhSealing, sr_mat, sr_pub, null, sr_created);
+
+        result.Success.Should().BeTrue();
+        result.Data!.KeyType.Should().Be(KeyType.EcdhSealing);
+        result.Data!.PublicKeyMaterial.Should().Be(sr_pub);
+        result.Data!.CaCertificateMaterial.Should().BeNull();
+    }
+
+    [Fact]
+    public void Create_EcdhSealingWithoutPublicMaterial_FailsPreconditionViolated()
+    {
+        var result = PendingKey.Create(
+            sr_kid, sr_domain, KeyType.EcdhSealing, sr_mat, null, null, sr_created);
+
+        AssertPreconditionViolated(result);
+    }
+
+    [Fact]
+    public void Create_EcdhSealingWithCaCertificate_FailsPreconditionViolated()
+    {
+        // A sealing key carrying CA certificate material (wrong slot) is an invalid shape.
+        var result = PendingKey.Create(
+            sr_kid, sr_domain, KeyType.EcdhSealing, sr_mat, sr_pub, sr_caCert, sr_created);
+
+        AssertPreconditionViolated(result);
+    }
+
+    // -----------------------------------------------------------------------
     // Symmetric keys — must NOT have public material or CA cert
     // -----------------------------------------------------------------------
 

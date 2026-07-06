@@ -177,6 +177,19 @@ export const DiagnosticIds = {
   OMT_INVALID_CONST_NAME: "D2OMT004",
   OMT_EMPTY_VALUE: "D2OMT005",
 
+  // MQ messages descriptor catalog (contracts/mq-messages/). Mirror the .NET
+  // D2.Shared.Messaging.SourceGen.MqGenerator DiagnosticIds values — same spec
+  // source on both sides means the same predicate-violation surface, so
+  // identical IDs are correct. D2MQ003 (duplicate constant) + D2MQ004
+  // (missing/unknown encryption default-deny) are named in the spec schema;
+  // the remainder allocate consistently in the D2MQ family.
+  MQ_MALFORMED_SPEC: "D2MQ001",
+  MQ_INVALID_CONST_NAME: "D2MQ002",
+  MQ_DUPLICATE_CONSTANT: "D2MQ003",
+  MQ_MISSING_ENCRYPTION: "D2MQ004",
+  MQ_DUPLICATE_MESSAGE_TYPE: "D2MQ005",
+  MQ_EMPTY_VALUE: "D2MQ006",
+
   // Encryption domains. Mirror the .NET
   // D2.Shared.EncryptionDomains.SourceGen DiagnosticIds values
   // byte-for-byte — same spec source on both sides.

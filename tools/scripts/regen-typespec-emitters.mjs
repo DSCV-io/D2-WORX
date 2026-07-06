@@ -177,6 +177,27 @@ const COPY_MANIFEST = [
     to: "server/services/edge/key-custodian/client/CaCertificate/GetCaCertificateOutput.g.cs",
   },
 
+  // ---- Sealing DTOs (Client namespace, Sealing concern; getOrLazyProvisionSealPublicKey =
+  //      public SPKI entries (no redaction), getOrLazyProvisionOwnSealPrivateKey = private PKCS#8
+  //      entries with privatePkcs8 redacted SecretInformation; getOrLazyProvisionOwnSealPrivateKey
+  //      is parameterless so its Input DTO is the synthesized empty record) ----
+  {
+    from: "GetOrLazyProvisionSealPublicKeyInput.g.cs",
+    to: "server/services/edge/key-custodian/client/Sealing/GetOrLazyProvisionSealPublicKeyInput.g.cs",
+  },
+  {
+    from: "GetOrLazyProvisionSealPublicKeyOutput.g.cs",
+    to: "server/services/edge/key-custodian/client/Sealing/GetOrLazyProvisionSealPublicKeyOutput.g.cs",
+  },
+  {
+    from: "GetOrLazyProvisionOwnSealPrivateKeyInput.g.cs",
+    to: "server/services/edge/key-custodian/client/Sealing/GetOrLazyProvisionOwnSealPrivateKeyInput.g.cs",
+  },
+  {
+    from: "GetOrLazyProvisionOwnSealPrivateKeyOutput.g.cs",
+    to: "server/services/edge/key-custodian/client/Sealing/GetOrLazyProvisionOwnSealPrivateKeyOutput.g.cs",
+  },
+
   // ---- Module façade interface + impl (real KC ops only). The façade lives in
   //      a Facade/ folder → namespace <clients-ns>.Facade (interface) /
   //      <app-ns>.Facade (impl). The facade-emitter.test.ts byte-gate pins them
@@ -237,6 +258,22 @@ const COPY_MANIFEST = [
     from: "GetCaCertificateTransportMappers.g.cs",
     to: "server/services/edge/tests/Unit/KeyCustodian/TypeSpecGrpc/Generated/GetCaCertificateTransportMappers.g.cs",
   },
+  {
+    from: "KeyCustodianSealPublicKeyService.g.cs",
+    to: "server/services/edge/tests/Unit/KeyCustodian/TypeSpecGrpc/Generated/KeyCustodianSealPublicKeyService.g.cs",
+  },
+  {
+    from: "KeyCustodianOwnSealPrivateKeyService.g.cs",
+    to: "server/services/edge/tests/Unit/KeyCustodian/TypeSpecGrpc/Generated/KeyCustodianOwnSealPrivateKeyService.g.cs",
+  },
+  {
+    from: "GetOrLazyProvisionSealPublicKeyTransportMappers.g.cs",
+    to: "server/services/edge/tests/Unit/KeyCustodian/TypeSpecGrpc/Generated/GetOrLazyProvisionSealPublicKeyTransportMappers.g.cs",
+  },
+  {
+    from: "GetOrLazyProvisionOwnSealPrivateKeyTransportMappers.g.cs",
+    to: "server/services/edge/tests/Unit/KeyCustodian/TypeSpecGrpc/Generated/GetOrLazyProvisionOwnSealPrivateKeyTransportMappers.g.cs",
+  },
 
   // ---- Handler interfaces (per-op CQRS folder) ----
   {
@@ -262,6 +299,14 @@ const COPY_MANIFEST = [
   {
     from: "IGetCaCertificateHandler.g.cs",
     to: "server/services/edge/key-custodian/app/Application/Handlers/Queries/GetCaCertificate/IGetCaCertificateHandler.g.cs",
+  },
+  {
+    from: "IGetOrLazyProvisionSealPublicKeyHandler.g.cs",
+    to: "server/services/edge/key-custodian/app/Application/Handlers/Commands/GetOrLazyProvisionSealPublicKey/IGetOrLazyProvisionSealPublicKeyHandler.g.cs",
+  },
+  {
+    from: "IGetOrLazyProvisionOwnSealPrivateKeyHandler.g.cs",
+    to: "server/services/edge/key-custodian/app/Application/Handlers/Commands/GetOrLazyProvisionOwnSealPrivateKey/IGetOrLazyProvisionOwnSealPrivateKeyHandler.g.cs",
   },
 
   // ---- Well-known route registrations (real-KC namespace

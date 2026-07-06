@@ -330,46 +330,110 @@ public sealed class WorkloadCapabilityAuthorityTests
     }
 
     // -----------------------------------------------------------------------
-    // AuthorizeSealEncrypt — broad (any present identity) / fail-closed when absent
+    // AuthorizeSealEncrypt — reshaped (origin, identity): served planes =
+    // cross-process hop + in-process module (broad, any present identity);
+    // fail-closed on Unestablished, unserved plane, and absent identity.
     // -----------------------------------------------------------------------
 
     [Fact]
-    public void AuthorizeSealEncrypt_PresentIdentity_Allowed_Broad()
+    public void AuthorizeSealEncrypt_Unestablished_Denied_RequestOriginUnestablished()
     {
-        WorkloadCapabilityAuthority.AuthorizeSealEncrypt(_FILES).Success.Should().BeTrue(
-            "seal-encrypt is broad — any scoped producer may fetch any public seal key");
+        var result = WorkloadCapabilityAuthority.AuthorizeSealEncrypt(
+            _FILES, RequestOrigin.Unestablished);
+
+        result.Success.Should().BeFalse();
+        result.ErrorCode.Should().Be(
+            "KEYCUSTODIAN_REQUEST_ORIGIN_UNESTABLISHED",
+            "an origin no boundary established fails closed, before the plane arm");
+    }
+
+    [Theory]
+    [InlineData(RequestOrigin.CrossProcessHop)]
+    [InlineData(RequestOrigin.InProcessModule)]
+    public void AuthorizeSealEncrypt_ServedPlane_PresentIdentity_Allowed_Broad(RequestOrigin origin)
+    {
+        WorkloadCapabilityAuthority.AuthorizeSealEncrypt(_FILES, origin)
+            .Success.Should().BeTrue(
+                "seal-encrypt is broad within its served planes — any authenticated producer "
+                + "may fetch any public seal key");
+    }
+
+    [Theory]
+    [InlineData(RequestOrigin.EdgeInbound)]
+    [InlineData(RequestOrigin.System)]
+    public void AuthorizeSealEncrypt_UnservedPlane_Denied_SealNotAuthorized(RequestOrigin origin)
+    {
+        var result = WorkloadCapabilityAuthority.AuthorizeSealEncrypt(_FILES, origin);
+
+        result.Success.Should().BeFalse();
+        result.ErrorCode.Should().Be(
+            "KEYCUSTODIAN_SEAL_NOT_AUTHORIZED",
+            "seal-encrypt serves only the cross-process + in-process module planes");
     }
 
     [Theory]
     [InlineData(null)]
     [InlineData("")]
     [InlineData("   ")]
-    public void AuthorizeSealEncrypt_NoIdentity_DeniedForbidden(string? callerId)
+    public void AuthorizeSealEncrypt_ServedPlaneNoIdentity_DeniedForbidden(string? callerId)
     {
-        var result = WorkloadCapabilityAuthority.AuthorizeSealEncrypt(callerId);
+        var result = WorkloadCapabilityAuthority.AuthorizeSealEncrypt(
+            callerId, RequestOrigin.CrossProcessHop);
 
         result.Success.Should().BeFalse();
         result.StatusCode.Should().Be(HttpStatusCode.Forbidden);
     }
 
     // -----------------------------------------------------------------------
-    // AuthorizeSealDecrypt — structural self-only (present identity) / fail-closed
+    // AuthorizeSealDecrypt — the seal-decrypt hard gate: cross-process ONLY. Self-only is
+    // structural (the op carries no target). Every other plane is denied.
     // -----------------------------------------------------------------------
 
     [Fact]
-    public void AuthorizeSealDecrypt_PresentIdentity_Allowed_SelfOnlyByOpShape()
+    public void AuthorizeSealDecrypt_CrossProcessHop_PresentIdentity_Allowed_SelfOnlyByOpShape()
     {
-        WorkloadCapabilityAuthority.AuthorizeSealDecrypt(_EDGE).Success.Should().BeTrue(
-            "a present identity may fetch ITS OWN key — self-only is structural (no target)");
+        WorkloadCapabilityAuthority.AuthorizeSealDecrypt(_EDGE, RequestOrigin.CrossProcessHop)
+            .Success.Should().BeTrue(
+                "a cross-process peer may fetch ITS OWN key — self-only is structural (no target)");
+    }
+
+    [Fact]
+    public void AuthorizeSealDecrypt_Unestablished_Denied_RequestOriginUnestablished()
+    {
+        var result = WorkloadCapabilityAuthority.AuthorizeSealDecrypt(
+            _EDGE, RequestOrigin.Unestablished);
+
+        result.ErrorCode.Should().Be(
+            "KEYCUSTODIAN_REQUEST_ORIGIN_UNESTABLISHED",
+            "an unestablished origin fails closed before the plane arm");
+    }
+
+    [Theory]
+    [InlineData(RequestOrigin.InProcessModule)]
+    [InlineData(RequestOrigin.EdgeInbound)]
+    [InlineData(RequestOrigin.System)]
+    public void AuthorizeSealDecrypt_NonCrossProcessPlane_Denied_SealNotAuthorized(
+        RequestOrigin origin)
+    {
+        // The seal-decrypt hard gate: private-key selection trusts the authenticated identity,
+        // which is unforgeable ONLY on the cross-process plane. Every other established plane —
+        // including the in-process module plane — is refused outright.
+        var result = WorkloadCapabilityAuthority.AuthorizeSealDecrypt(_EDGE, origin);
+
+        result.Success.Should().BeFalse();
+        result.ErrorCode.Should().Be(
+            "KEYCUSTODIAN_SEAL_NOT_AUTHORIZED",
+            "seal-decrypt is cross-process ONLY — no unforgeable in-process identity exists");
     }
 
     [Theory]
     [InlineData(null)]
     [InlineData("")]
     [InlineData("   ")]
-    public void AuthorizeSealDecrypt_NoIdentity_DeniedForbidden(string? callerId)
+    public void AuthorizeSealDecrypt_CrossProcessNoIdentity_DeniedForbidden(string? callerId)
     {
-        var result = WorkloadCapabilityAuthority.AuthorizeSealDecrypt(callerId);
+        var result = WorkloadCapabilityAuthority.AuthorizeSealDecrypt(
+            callerId, RequestOrigin.CrossProcessHop);
 
         result.Success.Should().BeFalse();
         result.StatusCode.Should().Be(HttpStatusCode.Forbidden);

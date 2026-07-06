@@ -11,6 +11,9 @@ export const ALL_DLQ_FAILURE_CAUSES: readonly string[];
 export const ALL_DLQ_FAILURE_METADATA_FIELDS: readonly string[];
 
 // @public (undocumented)
+export const ALL_MQ_MESSAGE_CONSTANTS: readonly string[];
+
+// @public (undocumented)
 export type DlqFailureCause = (typeof DlqFailureCauses)[keyof typeof DlqFailureCauses];
 
 // @public
@@ -34,6 +37,28 @@ export const DlqFailureMetadataFields: {
     readonly TRACE_ID: "traceId";
     readonly NACKED_BY: "nackedBy";
 };
+
+// @public (undocumented)
+export type MqMessage = (typeof MqMessages)[keyof typeof MqMessages];
+
+// @public
+export interface MqMessageDescriptor {
+    readonly constant: string;
+    readonly defaultRoutingKey?: string;
+    readonly encryption: string;
+    readonly encryptionReason?: string;
+    readonly exchange: string;
+    readonly exchangeType: string;
+    readonly messageType: string;
+}
+
+// @public
+export const MqMessages: {
+    readonly AuthKeyRotated: "AuthKeyRotated";
+};
+
+// @public
+export const MqMessagesRegistry: Readonly<Record<string, MqMessageDescriptor>>;
 
 // (No @packageDocumentation comment for this package)
 

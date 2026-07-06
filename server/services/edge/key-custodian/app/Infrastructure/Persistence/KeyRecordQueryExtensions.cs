@@ -66,5 +66,12 @@ public static class KeyRecordQueryExtensions
         /// <returns>The filtered query.</returns>
         public IQueryable<KeyRecord> Payload() =>
             source.Where(k => k.KeyType == KeyType.AesPayload);
+
+        /// <summary>
+        /// Filters to asymmetric ECDH sealing keys (<see cref="KeyType.EcdhSealing"/>).
+        /// </summary>
+        /// <returns>The filtered query.</returns>
+        public IQueryable<KeyRecord> Sealing() =>
+            source.Where(k => k.KeyType == KeyType.EcdhSealing);
     }
 }

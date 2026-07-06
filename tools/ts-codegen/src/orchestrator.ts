@@ -24,6 +24,7 @@ import { runGrpcTrailersEmit } from "./grpc-trailers-emit.js";
 import { runHeadersEmit } from "./headers-emit.js";
 import { runJwtClaimsEmit } from "./jwt-claims-emit.js";
 import { formatDiagnostic } from "./lib/diagnostics.js";
+import { runMqMessagesEmit } from "./mq-messages-emit.js";
 import { runOtelMessagingTagsEmit } from "./otel-messaging-tags-emit.js";
 import { runProblemDetailsEmit } from "./problem-details-emit.js";
 import { runRequestContextEmit } from "./request-context-emit.js";
@@ -107,6 +108,11 @@ function main(): void {
     // @d2/messaging-abstractions. Consumed by DLQ ops tooling and any TS
     // RabbitMQ subscriber that reads DLQ entries.
     ...runDlqFailureMetadataEmit(force),
+    // MQ messages descriptor mirror — emits into @d2/messaging-abstractions
+    // from contracts/mq-messages/mq-messages.spec.json. Mirrors .NET
+    // MqMessages + MqMessagesRegistry so the TS RabbitMQ consumer resolves
+    // exchange / exchangeType / encryption per message type identically.
+    ...runMqMessagesEmit(force),
     // Encryption frame binary layout — emits into @d2/encryption-abstractions
     // as field-offset constants + byte-length constants. Consumed by ops
     // tooling and any TS reader of the on-wire encryption frame.

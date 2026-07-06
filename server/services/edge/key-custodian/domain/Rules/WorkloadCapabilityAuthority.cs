@@ -36,17 +36,23 @@ namespace D2.Edge.KeyCustodian.Domain.Rules;
 ///     allowed-signing-domains set.
 ///   </item>
 ///   <item>
-///     <b>Seal-encrypt</b> is broad — any caller with an authenticated identity may
-///     fetch any public seal key (public material is harmless to over-share; the
-///     transport scope already gated WHETHER the caller may seal at all).
+///     <b>Seal-encrypt</b> is broad WITHIN its served planes — a caller on the
+///     cross-process or in-process-module plane with an authenticated identity may
+///     fetch any service's public seal key (public material is harmless to
+///     over-share; the transport scope already gated WHETHER the caller may seal at
+///     all). It is keyed on the locally-established <see cref="RequestOrigin"/> (never
+///     a propagated wire value) plus identity presence — no per-target policy.
 ///   </item>
 ///   <item>
-///     <b>Seal-decrypt</b> is self-only, enforced by the op SHAPE: the
-///     <c>getOwnSealPrivateKey()</c> op carries NO target, so the key is selected by
-///     the authenticated identity alone — there is nothing to compare. This rule's
-///     contribution is the explicit statement that no in-handler
-///     <c>caller == target</c> check is needed; it returns <c>Ok</c> keyed on the
-///     authenticated identity being present (deny when absent — fail-closed).
+///     <b>Seal-decrypt</b> is self-only AND cross-process-only. Self-only is enforced
+///     by the op SHAPE: the <c>getOrLazyProvisionOwnSealPrivateKey()</c> op carries NO target, so the
+///     key is selected by the authenticated identity alone — there is nothing to
+///     compare. Cross-process-only is the seal-decrypt hard gate: the plane arm admits ONLY
+///     <see cref="RequestOrigin.CrossProcessHop"/>, on which <c>ImmediateCaller</c> IS
+///     the unforgeable validated mTLS peer id (the interceptor sets Origin +
+///     ImmediateCaller atomically). No in-process identity is unforgeable, so
+///     in-process decrypt is refused outright — a forged in-process caller never
+///     reaches key selection.
 ///   </item>
 /// </list>
 /// <para>
@@ -349,51 +355,125 @@ public static class WorkloadCapabilityAuthority
 
     /// <summary>
     /// Decides whether a caller may fetch a target service's PUBLIC seal key
-    /// (seal-encrypt). Broad: any caller with an authenticated identity is allowed —
-    /// public key material is harmless to over-share, and the transport scope already
-    /// gated whether the caller may seal at all. The decision is per-caller, not
-    /// per-target (fetching any public key is harmless).
+    /// (seal-encrypt), keyed on the locally-established <see cref="RequestOrigin"/>
+    /// (never a propagated / wire-supplied value). Broad WITHIN its served planes —
+    /// no per-target policy, because public key material is harmless to over-share and
+    /// the transport scope already gated whether the caller may seal at all. Layered,
+    /// fail-closed:
+    /// <list type="number">
+    ///   <item>
+    ///     <b>Unestablished-origin deny</b> — an origin that no boundary positively
+    ///     established denies with <c>RequestOriginUnestablished</c> (the fail-closed
+    ///     first arm; the scoped default is <see cref="RequestOrigin.Unestablished"/>).
+    ///   </item>
+    ///   <item>
+    ///     <b>Plane deny</b> — the seal-public-key surface serves the cross-process hop
+    ///     and the in-process module planes (a backend service authenticated by its
+    ///     mTLS peer id, and the in-host module that seals on publish). Any other
+    ///     established plane (<see cref="RequestOrigin.EdgeInbound"/> /
+    ///     <see cref="RequestOrigin.System"/>) is denied with <c>SealNotAuthorized</c>.
+    ///   </item>
+    ///   <item>
+    ///     <b>Fail-closed peer</b> — an authorized plane with no caller identity is
+    ///     denied with <c>Forbidden</c>.
+    ///   </item>
+    /// </list>
     /// </summary>
-    /// <param name="callerWorkloadId">
-    /// The authenticated caller workload id, or <see langword="null"/> when no peer
-    /// identity is present (fail-closed).
+    /// <param name="immediateCaller">
+    /// The authenticated caller id this hop (the established
+    /// <c>IRequestContext.ImmediateCaller</c>), or <see langword="null"/> when none is
+    /// present (fail-closed).
+    /// </param>
+    /// <param name="origin">
+    /// The locally-established <see cref="RequestOrigin"/> for this hop. The default
+    /// <see cref="RequestOrigin.Unestablished"/> fails closed.
     /// </param>
     /// <returns>
-    /// <c>Ok</c> when a caller identity is present; <c>Forbidden</c> (403) when absent.
+    /// <c>Ok</c> when the caller may fetch a public seal key;
+    /// <c>RequestOriginUnestablished</c> (403) for an unestablished origin;
+    /// <c>SealNotAuthorized</c> (403) for an unserved plane; <c>Forbidden</c> (403)
+    /// when an authorized plane presents no caller identity.
     /// </returns>
-    public static D2Result AuthorizeSealEncrypt(string? callerWorkloadId)
+    public static D2Result AuthorizeSealEncrypt(string? immediateCaller, RequestOrigin origin)
     {
-        // Fail-closed: no authenticated identity ⇒ deny. Any present identity is
-        // authorized (broad) — the per-target check is intentionally absent.
-        if (callerWorkloadId.Falsey())
+        // (1) Fail-closed: an unestablished origin never authorizes a seal-key fetch.
+        if (origin == RequestOrigin.Unestablished)
+            return KeyCustodianFailures.RequestOriginUnestablished();
+
+        // (2) Plane deny — the seal-public-key surface serves the cross-process hop +
+        // the in-process module planes (Edge itself seals on publish). Any other
+        // established plane is denied with the seal 403 (telemetry distinguishes the
+        // plane deny; the wire code stays uniform — no service-existence oracle).
+        if (origin is not (RequestOrigin.CrossProcessHop or RequestOrigin.InProcessModule))
+            return KeyCustodianFailures.SealNotAuthorized();
+
+        // (3) An authorized plane with no caller identity is fail-closed.
+        if (immediateCaller.Falsey())
             return D2Result.Forbidden();
 
         return D2Result.Ok();
     }
 
     /// <summary>
-    /// Decides whether a caller may fetch its OWN PRIVATE seal key (seal-decrypt).
-    /// Self-only is enforced STRUCTURALLY by the op shape — the
-    /// <c>getOwnSealPrivateKey()</c> op carries no target, so the key is selected by
-    /// the authenticated identity alone and there is nothing to compare. This arm's
-    /// only contribution is the fail-closed presence check: a present authenticated
-    /// identity is authorized to fetch its own key; an absent one is denied. No
-    /// in-handler <c>caller == target</c> comparison exists because there is no target.
+    /// Decides whether a caller may fetch its OWN PRIVATE seal key (seal-decrypt),
+    /// keyed on the locally-established <see cref="RequestOrigin"/> (never a propagated
+    /// / wire-supplied value). Self-only is enforced STRUCTURALLY by the op shape — the
+    /// <c>getOrLazyProvisionOwnSealPrivateKey()</c> op carries no target, so the key is selected by the
+    /// authenticated identity alone and there is nothing to compare. Layered,
+    /// fail-closed:
+    /// <list type="number">
+    ///   <item>
+    ///     <b>Unestablished-origin deny</b> — an origin that no boundary positively
+    ///     established denies with <c>RequestOriginUnestablished</c>.
+    ///   </item>
+    ///   <item>
+    ///     <b>Cross-process-only plane deny (the seal-decrypt hard gate)</b> — ANY plane other
+    ///     than <see cref="RequestOrigin.CrossProcessHop"/> is denied with
+    ///     <c>SealNotAuthorized</c>. On the cross-process plane <c>ImmediateCaller</c>
+    ///     IS the unforgeable validated mTLS peer id (the interceptor sets Origin +
+    ///     ImmediateCaller atomically), so key selection can safely trust it. In-process
+    ///     module / edge-inbound / system planes carry no unforgeable workload identity,
+    ///     so a private-key fetch there is refused outright — a forged in-process caller
+    ///     is denied AT THE PLANE ARM, never reaching key selection.
+    ///   </item>
+    ///   <item>
+    ///     <b>Fail-closed peer</b> — a cross-process hop with no caller identity is
+    ///     denied with <c>Forbidden</c>.
+    ///   </item>
+    /// </list>
+    /// No in-handler <c>caller == target</c> comparison exists because there is no target.
     /// </summary>
-    /// <param name="callerWorkloadId">
-    /// The authenticated caller workload id, or <see langword="null"/> when no peer
-    /// identity is present (fail-closed).
+    /// <param name="immediateCaller">
+    /// The authenticated caller id this hop — on the only served plane
+    /// (<see cref="RequestOrigin.CrossProcessHop"/>) the validated mTLS peer workload id
+    /// — or <see langword="null"/> when none is present (fail-closed).
+    /// </param>
+    /// <param name="origin">
+    /// The locally-established <see cref="RequestOrigin"/> for this hop. The default
+    /// <see cref="RequestOrigin.Unestablished"/> fails closed.
     /// </param>
     /// <returns>
-    /// <c>Ok</c> when a caller identity is present (it may fetch its own key);
-    /// <c>Forbidden</c> (403) when absent.
+    /// <c>Ok</c> when the caller may fetch its own private seal key;
+    /// <c>RequestOriginUnestablished</c> (403) for an unestablished origin;
+    /// <c>SealNotAuthorized</c> (403) for any plane other than a cross-process hop;
+    /// <c>Forbidden</c> (403) when a cross-process hop presents no caller identity.
     /// </returns>
-    public static D2Result AuthorizeSealDecrypt(string? callerWorkloadId)
+    public static D2Result AuthorizeSealDecrypt(string? immediateCaller, RequestOrigin origin)
     {
-        // Fail-closed: no authenticated identity ⇒ no key to select ⇒ deny. A present
-        // identity may only ever get ITS OWN key — the op carries no target parameter,
-        // so self-only is structural, not a comparison.
-        if (callerWorkloadId.Falsey())
+        // (1) Fail-closed: an unestablished origin never authorizes a private-key fetch.
+        if (origin == RequestOrigin.Unestablished)
+            return KeyCustodianFailures.RequestOriginUnestablished();
+
+        // (2) The seal-decrypt hard gate: private-key selection trusts the authenticated identity,
+        // which is unforgeable ONLY on the cross-process plane (the interceptor's atomic
+        // Origin⟺ImmediateCaller coupling from the validated mTLS peer cert). Any other
+        // plane is refused outright — a forged in-process caller is denied here, before
+        // key selection.
+        if (origin != RequestOrigin.CrossProcessHop)
+            return KeyCustodianFailures.SealNotAuthorized();
+
+        // (3) A cross-process hop with no caller identity is fail-closed — no key to select.
+        if (immediateCaller.Falsey())
             return D2Result.Forbidden();
 
         return D2Result.Ok();

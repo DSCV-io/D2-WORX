@@ -5,10 +5,12 @@
 // Manifest loader — discovers consumable packages from the repository tree.
 //
 // A package is consumable iff it matches the classification rule:
-//   npm:   a package.json under server/shared/typescript/**  that is NOT
-//          private tooling (typespec-decorators, typespec-emitters) and NOT
-//          a test harness (contract-tests). Specifically: every package whose
-//          name starts with "@d2/" (scoped) and is not in the exclusion list.
+//   npm:   a package.json under server/shared/typescript/**  — OR the
+//          service-owned KeyCustodian client at
+//          server/services/edge/key-custodian/client-ts — that is NOT private
+//          tooling (typespec-decorators, typespec-emitters) and NOT a test
+//          harness (contract-tests). Specifically: every package whose name
+//          starts with "@d2/" (scoped) and is not in the exclusion list.
 //   nuget: a .csproj under server/shared/dotnet/** that is NOT a SourceGen
 //          shell (filename ends *SourceGen.csproj) and NOT the shared test
 //          project (D2.Shared.Tests.csproj). Additionally, the consumable
@@ -146,12 +148,24 @@ export function extractNugetProjectRefs(
  */
 export function loadNpmPackages(repoRoot: string): PackageDescriptor[] {
   const tsSharedRoot = resolve(repoRoot, "server/shared/typescript");
+  // Service-owned TS client packages live beside their service, NOT under
+  // server/shared/typescript — the KeyCustodian client (@d2/key-custodian-client)
+  // is the npm analogue of the special-cased KC .NET client below. Additional
+  // service-owned client roots join this list as they are introduced.
+  const kcClientTsRoot = resolve(
+    repoRoot,
+    "server/services/edge/key-custodian/client-ts",
+  );
 
-  if (!existsSync(tsSharedRoot)) return [];
+  const searchRoots = [tsSharedRoot, kcClientTsRoot].filter(existsSync);
 
-  const packageJsonFiles = walk(
-    tsSharedRoot,
-    (f) => f.endsWith("package.json") && !f.includes("node_modules"),
+  if (searchRoots.length === 0) return [];
+
+  const packageJsonFiles = searchRoots.flatMap((root) =>
+    walk(
+      root,
+      (f) => f.endsWith("package.json") && !f.includes("node_modules"),
+    ),
   );
 
   // First pass: collect name + raw text so we can resolve deps after building

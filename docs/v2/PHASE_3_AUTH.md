@@ -270,6 +270,7 @@ locale, …) per ADR-0007 §2. No hop mutates the token to append itself.
 - **Module within Edge** (peer to Auth) — not a separate service. Extractable later
   via the `IKeyCustodianClient` interface.
 - **Owns**: JWKS (RS256), per-domain payload-encryption keys (audit, notifications, courier, …),
+  per-service ECDH sealing keypairs (the `seal:<serviceId>` family, lazily provisioned),
   cookie signing secret, service-identity client_secrets, root key.
 - **State machine** per `kid` in `keycustodian_db.key_record`: `pending → active → retiring → retired`
   (+ terminal `compromised`).
@@ -299,8 +300,11 @@ locale, …) per ADR-0007 §2. No hop mutates the token to append itself.
   only, per the `KEYCUSTODIAN_SIGNING_AUTHORITY` workload→allowed-signing-domains map: a domain outside
   the set is `KEYCUSTODIAN_SIGNING_DOMAIN_NOT_AUTHORIZED`; a cross-process hop with no authenticated peer
   is `Forbidden`; the boot-time config validator still refuses to grant `jwks-signing` to any workload.
-  Seal-encrypt is broad (any scoped producer fetches any public key); seal-decrypt is self-only (the op
-  carries no target — the key is selected by the authenticated identity). The general `sign` op
+  Seal-encrypt is broad within its served planes — cross-process + in-process module; any scoped
+  producer fetches any service's public key. Seal-decrypt is self-only AND cross-process-only: the op
+  carries no target — the key is selected by the authenticated mTLS peer identity, which is unforgeable
+  only on the cross-process plane, so an in-process private-key fetch is refused at the plane arm and
+  never reaches key selection. The general `sign` op
   (`internal.kc.sign` scope, the first production `AuthorizeSigning(RequestOrigin)` consumer) reads the
   established `IRequestContext.Origin` / `.ImmediateCaller` — the KC app stays gRPC-free. Deny telemetry:
   `d2.keycustodian.cross_process_signing_rejections` (pages on any non-zero value — a general-surface
@@ -327,6 +331,26 @@ locale, …) per ADR-0007 §2. No hop mutates the token to append itself.
   signing is isolated behind `ICaLeafSigningCapability` (its own DI extension, unreachable from
   the general registration). The delegated-issuer decision belongs to the first-leaf bootstrap
   ADR; the live host wiring stays tracked in [PHASE_3.md](PHASE_3.md) §G.
+- **Sealing-key distribution (per-service ECDH, lazy provisioning)**: two ops, each a Command on its
+  own gRPC service + the in-process façade. `getOrLazyProvisionSealPublicKey(serviceId)`
+  (`KeyCustodianSealPublicKey/GetOrLazyProvisionSealPublicKey`, scope `internal.kc.seal.encrypt`) serves a target
+  service's Active + Retiring PUBLIC sealing keys (SPKI — plaintext at rest, no root-decrypt) so a
+  producer can seal TO it; `getOrLazyProvisionOwnSealPrivateKey()`
+  (`KeyCustodianOwnSealPrivateKey/GetOrLazyProvisionOwnSealPrivateKey`, scope `internal.kc.seal.open`) serves the
+  CALLER'S OWN root-unwrapped private keys (redacted `SecretInformation` on the wire DTO) so it can
+  open frames sealed to it. Keys are `EcdhSealing` (P-256) under the pattern-based `seal:<serviceId>`
+  domain family (validated against the workload-identity grammar; resolvable through the ordinary
+  domain seam so rotate/compromise/retire work on seal domains under the `Default` rotation policy).
+  The FIRST request for a service's seal domain provisions its keypair on the spot: generate →
+  inline smoke test (a real self-seal→self-open round-trip) → activate through the genuine
+  pending→activate machinery with a back-dated `CreatedAt` (the CA-seeder pattern — the soak's
+  purpose is satisfied by the inline smoke test), one transaction with its audit rows. Concurrent
+  first-requests converge on one winner (the one-Active DB EXCLUDE absorbs the race; the loser
+  re-reads and serves the winner — no conflict escapes); a not-yet-visible winner or a live Pending
+  is the retryable 503 `KEYCUSTODIAN_SEAL_KEY_UNAVAILABLE`. Both deny paths share the uniform 403
+  `KEYCUSTODIAN_SEAL_NOT_AUTHORIZED` (telemetry `capability = seal-encrypt` / `seal-decrypt`
+  distinguishes the arm; no plane / service-existence oracle). Provisions increment
+  `d2.keycustodian.seal_keypairs_provisioned`.
 - **Host-wiring gates for the KC signer** (tracked in [PHASE_3.md](PHASE_3.md) §G — not duplicated here):
   the minter capability's DI isolation is proven at module scope today, but the running Edge host must add
   a host-level **assembly-scan DI-isolation test** proving no type outside the auth-mint composition can

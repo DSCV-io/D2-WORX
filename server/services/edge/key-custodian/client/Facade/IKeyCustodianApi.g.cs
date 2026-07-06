@@ -15,6 +15,7 @@ using D2.Edge.KeyCustodian.Client.Issuance;
 using D2.Edge.KeyCustodian.Client.Jwks;
 using D2.Edge.KeyCustodian.Client.Keyring;
 using D2.Edge.KeyCustodian.Client.OidcConfiguration;
+using D2.Edge.KeyCustodian.Client.Sealing;
 using D2.Edge.KeyCustodian.Client.Signing;
 
 /// <summary>
@@ -35,4 +36,8 @@ public interface IKeyCustodianApi
     ValueTask<D2Result<IssueLeafOutput?>> IssueLeafAsync(IssueLeafInput input, CancellationToken ct = default);
     /// <summary>Dispatches the <c>GetCaCertificate</c> operation.</summary>
     ValueTask<D2Result<GetCaCertificateOutput?>> GetCaCertificateAsync(GetCaCertificateInput input, CancellationToken ct = default);
+    /// <summary>Dispatches the <c>GetOrLazyProvisionSealPublicKey</c> operation.</summary>
+    ValueTask<D2Result<GetOrLazyProvisionSealPublicKeyOutput?>> GetOrLazyProvisionSealPublicKeyAsync(GetOrLazyProvisionSealPublicKeyInput input, CancellationToken ct = default);
+    /// <summary>Dispatches the <c>GetOrLazyProvisionOwnSealPrivateKey</c> operation.</summary>
+    ValueTask<D2Result<GetOrLazyProvisionOwnSealPrivateKeyOutput?>> GetOrLazyProvisionOwnSealPrivateKeyAsync(GetOrLazyProvisionOwnSealPrivateKeyInput input, CancellationToken ct = default);
 }

@@ -41,12 +41,16 @@ public abstract record EncryptionKey
     public required KeyMaterialEncrypted KeyMaterialEncrypted { get; init; }
 
     /// <summary>
-    /// Gets the unencrypted public key bytes for asymmetric (<c>RsaSigning</c>)
-    /// keys; <see langword="null"/> for symmetric and certificate-authority keys.
+    /// Gets the unencrypted public key bytes for asymmetric keys that carry a bare
+    /// SPKI public component (<c>RsaSigning</c> — published via JWKS;
+    /// <c>EcdhSealing</c> — fetched to seal payloads to the owning service);
+    /// <see langword="null"/> for symmetric and certificate-authority keys.
     /// </summary>
     /// <remarks>
-    /// Public keys are intentionally NOT redacted — they are published via the
-    /// JWKS endpoint and must be visible in logs and telemetry.
+    /// Public keys are intentionally NOT redacted — asymmetric keys carry public
+    /// material that must be visible in logs and telemetry (the JWKS signing key's
+    /// public half is published; a sealing key's SPKI is handed to any workload that
+    /// wants to seal to the owner).
     /// </remarks>
     public PublicKeyMaterial? PublicKeyMaterial { get; init; }
 
@@ -81,8 +85,9 @@ public abstract record EncryptionKey
 
     /// <summary>
     /// Validates the per-type material shape invariant.
-    /// <c>RsaSigning</c> keys carry a non-null <see cref="PublicKeyMaterial"/> and
-    /// no <see cref="CaCertificateMaterial"/>; <c>X509CaCertificate</c> keys carry
+    /// <c>RsaSigning</c> and <c>EcdhSealing</c> keys carry a non-null
+    /// <see cref="PublicKeyMaterial"/> (a bare SPKI public key) and no
+    /// <see cref="CaCertificateMaterial"/>; <c>X509CaCertificate</c> keys carry
     /// a non-null <see cref="CaCertificateMaterial"/> and no
     /// <see cref="PublicKeyMaterial"/>; symmetric keys (<c>AesPayload</c>,
     /// <c>Secret</c>) carry neither.
@@ -100,7 +105,7 @@ public abstract record EncryptionKey
         KeyType type, PublicKeyMaterial? pub, CaCertificateMaterial? caCert) =>
         type switch
         {
-            KeyType.RsaSigning =>
+            KeyType.RsaSigning or KeyType.EcdhSealing =>
                 pub is not null && caCert is null
                     ? D2Result.Ok()
                     : KeyCustodianFailures.PreconditionViolated(),

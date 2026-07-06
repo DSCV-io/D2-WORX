@@ -1540,6 +1540,34 @@ describe("emitProto_Reserved_NumbersAndNames", () => {
     expect(count).toBe(1);
   });
 
+  it("reserved names are deduplicated before emission", () => {
+    const errors: string[] = [];
+    const result = emitProto(
+      "op",
+      "Svc",
+      "Do",
+      "unary",
+      SIGN_PKG,
+      SIGN_CS_NS,
+      SIGN_SOURCE,
+      "Req",
+      [makeStringField("kid", 1)],
+      // A repeated name — exercises the seen-set skip arm of buildReservedNameLines.
+      { numbers: [], names: ["dropped_field", "dropped_field"] },
+      "Resp",
+      [],
+      undefined,
+      [],
+      (_, m) => errors.push(m),
+    );
+    expect(errors).toHaveLength(0);
+    expect(result!.content).toContain('reserved "dropped_field";');
+    // Only one occurrence — the duplicate was skipped by the dedup guard.
+    const count = (result!.content.match(/reserved "dropped_field";/g) ?? [])
+      .length;
+    expect(count).toBe(1);
+  });
+
   it("response reserved payload is emitted in the data message block", () => {
     const errors: string[] = [];
     const result = emitProto(

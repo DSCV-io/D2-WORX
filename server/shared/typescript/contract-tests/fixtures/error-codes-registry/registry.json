@@ -452,6 +452,28 @@
       "userMessageKeyPath": "TK.Keycustodian.Authorization.REQUEST_ORIGIN_UNESTABLISHED",
       "userMessageKeySnake": "keycustodian_authorization_REQUEST_ORIGIN_UNESTABLISHED"
     },
+    "KEYCUSTODIAN_SEAL_KEY_UNAVAILABLE": {
+      "category": "infrastructure_unavailable",
+      "code": "KEYCUSTODIAN_SEAL_KEY_UNAVAILABLE",
+      "doc": "No active sealing key is available for the requested service. Retryable not-ready-yet condition: a concurrent first-request lost the provisioning race and the winner\u0027s key is not yet visible (only a pending key was observed), or the domain is mid-rotation with no active key. Surfaced as a 503 service-unavailable result so callers retry rather than treat it as a client-side conflict.",
+      "domain": "keycustodian",
+      "factoryName": "SealKeyUnavailable",
+      "factoryShape": "standard",
+      "httpStatus": 503,
+      "userMessageKeyPath": "TK.Keycustodian.Infrastructure.SEAL_KEY_UNAVAILABLE",
+      "userMessageKeySnake": "keycustodian_infrastructure_SEAL_KEY_UNAVAILABLE"
+    },
+    "KEYCUSTODIAN_SEAL_NOT_AUTHORIZED": {
+      "category": "policy_denied",
+      "code": "KEYCUSTODIAN_SEAL_NOT_AUTHORIZED",
+      "doc": "The calling workload is not authorized for the requested seal capability (fetch a target service\u0027s public sealing key, or fetch its own private sealing key). Shared by both seal arms: seal-encrypt denies an unauthorized plane; seal-decrypt denies any plane other than a cross-process hop (no unforgeable in-process identity exists, so in-process decrypt is refused outright). The reason telemetry tag distinguishes the deny arm; the wire code stays uniform so a caller cannot probe which planes or services exist.",
+      "domain": "keycustodian",
+      "factoryName": "SealNotAuthorized",
+      "factoryShape": "standard",
+      "httpStatus": 403,
+      "userMessageKeyPath": "TK.Keycustodian.Authorization.SEAL_NOT_AUTHORIZED",
+      "userMessageKeySnake": "keycustodian_authorization_SEAL_NOT_AUTHORIZED"
+    },
     "KEYCUSTODIAN_SIGNING_DOMAIN_NOT_AUTHORIZED": {
       "category": "policy_denied",
       "code": "KEYCUSTODIAN_SIGNING_DOMAIN_NOT_AUTHORIZED",

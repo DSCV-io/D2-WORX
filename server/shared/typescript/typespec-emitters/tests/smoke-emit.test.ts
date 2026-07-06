@@ -79,7 +79,8 @@ vi.mock("@typespec/compiler", async (importOriginal) => {
 });
 
 // Import AFTER the mock registrations so the module under test uses mocked deps.
-const { $onEmit } = await import("../src/emitter.js");
+const { $onEmit, resolveTsClientOutputDirs } =
+  await import("../src/emitter.js");
 
 afterEach(() => {
   // Reset shared state after each test to prevent cross-test contamination.
@@ -1645,6 +1646,241 @@ describe("$onEmit_directUnit_NamespaceRouting", () => {
     );
     expect(handlerFile).toBeDefined();
     expect(handlerFile!.content).toContain("namespace D2.Test.Grpc;");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// resolveTsClientOutputDirs — pure config-parsing of the ts-client-output-dirs
+// option map (repo-root-relative resolution, absolute pass-through, malformed
+// input guards). Exercised directly (pure fn) rather than through $onEmit.
+// ---------------------------------------------------------------------------
+
+describe("resolveTsClientOutputDirs_ConfigParsing", () => {
+  const PROJECT_ROOT = "/repo/contracts/typespec";
+
+  it("resolves relative dirs against the repo root; keeps absolute dirs verbatim; skips empty + non-string dirs", () => {
+    const m = resolveTsClientOutputDirs(
+      {
+        RelMod: "server/services/edge/mint/client-ts/src/generated",
+        AbsMod: "/abs/generated",
+        EmptyMod: "",
+        NonStringMod: 42,
+      },
+      PROJECT_ROOT,
+    );
+
+    const rel = m.get("RelMod")!.replace(/\\/g, "/");
+    expect(
+      rel.endsWith("server/services/edge/mint/client-ts/src/generated"),
+    ).toBe(true);
+    // repoRoot is the grandparent of PROJECT_ROOT — the trailing two segments
+    // (contracts/typespec) are stripped before joining the relative dir.
+    expect(rel).not.toContain("contracts/typespec");
+    expect(m.get("AbsMod")).toBe("/abs/generated");
+    expect(m.has("EmptyMod")).toBe(false);
+    expect(m.has("NonStringMod")).toBe(false);
+  });
+
+  it("returns an empty map for null / array / non-object raw, or an undefined projectRoot", () => {
+    expect(resolveTsClientOutputDirs(null, PROJECT_ROOT).size).toBe(0);
+    expect(resolveTsClientOutputDirs([], PROJECT_ROOT).size).toBe(0);
+    expect(resolveTsClientOutputDirs("not-an-object", PROJECT_ROOT).size).toBe(
+      0,
+    );
+    expect(
+      resolveTsClientOutputDirs({ Mod: "server/x/generated" }, undefined).size,
+    ).toBe(0);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Channel cross-validation (D2TSP010): a proto-package channel that disagrees
+// with the proto-csharp-namespace trailing segment fires channel-segment-mismatch.
+// ---------------------------------------------------------------------------
+
+describe("$onEmit_directUnit_ChannelMismatch", () => {
+  it("proto-package channel vs proto-csharp-namespace segment mismatch → channel-segment-mismatch", async () => {
+    const op = {
+      name: "anyOp",
+      parameters: { kind: "Model", name: "", properties: new Map() },
+      returnType: { kind: "Intrinsic", name: "void" },
+      node: undefined,
+    } as unknown as Operation;
+
+    directUnitOps.push(op);
+
+    const reported: Array<{ code: string }> = [];
+    const libModule = await import("../src/lib.js");
+    vi.spyOn(libModule.$lib, "reportDiagnostic").mockImplementation(
+      (_p, diag: { code: string }) => {
+        reported.push({ code: diag.code });
+      },
+    );
+
+    const mockProgram = {
+      diagnostics: [],
+      stateMap(_key: symbol): Map<object, unknown> {
+        return new Map();
+      },
+    } as unknown as Program;
+
+    const mockContext = {
+      program: mockProgram,
+      emitterOutputDir: "/out",
+      options: {
+        "csharp-namespace": "D2.Test",
+        // v1 channel (→ V1) vs a V2 trailing namespace segment — deliberate mismatch.
+        "proto-package": "d2.test.v1",
+        "proto-csharp-namespace": "D2.Test.Protos.V2",
+      },
+    } as unknown as EmitContext;
+
+    await $onEmit(mockContext);
+
+    expect(reported.some((d) => d.code === "channel-segment-mismatch")).toBe(
+      true,
+    );
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Duplicate @d2Field pin (D2TSP011): two proto fields sharing a field number
+// trip the duplicate-field-number arm of emitProtoAndGrpcService's onError.
+// ---------------------------------------------------------------------------
+
+describe("$onEmit_directUnit_DuplicateFieldNumber", () => {
+  it("op with @d2GrpcMethod + two @d2Field pins sharing a number → duplicate-field-number, no proto emitted", async () => {
+    const stringScalar = {
+      kind: "Scalar",
+      name: "string",
+    } as unknown as Scalar;
+    const a = {
+      type: stringScalar,
+      optional: false,
+    } as unknown as ModelProperty;
+    const b = {
+      type: stringScalar,
+      optional: false,
+    } as unknown as ModelProperty;
+    const inputModel = {
+      kind: "Model",
+      name: "DupFieldInput",
+      properties: new Map<string, ModelProperty>([
+        ["a", a],
+        ["b", b],
+      ]),
+    } as unknown as Model;
+
+    const op = {
+      name: "dupField",
+      parameters: inputModel,
+      returnType: { kind: "Intrinsic", name: "void" } as unknown as Model,
+      node: undefined,
+    } as unknown as Operation;
+
+    directUnitOps.push(op);
+
+    const grpcMap = new Map<object, unknown>([
+      [op, { service: "Svc", method: "Do", streaming: "unary" }],
+    ]);
+    // Both fields pinned to 1 → the second trips the duplicate-field-number guard.
+    const fieldMap = new Map<object, unknown>([
+      [a, 1],
+      [b, 1],
+    ]);
+
+    const reported: Array<{ code: string }> = [];
+    const libModule = await import("../src/lib.js");
+    vi.spyOn(libModule.$lib, "reportDiagnostic").mockImplementation(
+      (_p, diag: { code: string }) => {
+        reported.push({ code: diag.code });
+      },
+    );
+
+    const mockProgram = {
+      diagnostics: [],
+      stateMap(key: symbol): Map<object, unknown> {
+        if (key === D2_GRPC_METHOD_KEY) return grpcMap;
+        if (key === D2_FIELD_KEY) return fieldMap;
+        return new Map();
+      },
+    } as unknown as Program;
+
+    const mockContext = {
+      program: mockProgram,
+      emitterOutputDir: "/out",
+      options: {
+        "csharp-namespace": "D2.Test",
+        "proto-package": "d2.test.v1",
+        "proto-csharp-namespace": "D2.Test.Protos.V1",
+        "grpc-service-namespace": "D2.Test.Grpc",
+      },
+    } as unknown as EmitContext;
+
+    await $onEmit(mockContext);
+
+    expect(reported.some((d) => d.code === "duplicate-field-number")).toBe(
+      true,
+    );
+    expect(
+      directUnitEmitted.filter((e) => e.path.endsWith(".g.proto")),
+    ).toHaveLength(0);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// tryGetSpecPath: an ABSOLUTE op.node.file.path with an undefined projectRoot is
+// returned verbatim (the projectRoot-undefined arm after the isAbsolute guard).
+// ---------------------------------------------------------------------------
+
+describe("$onEmit_directUnit_TryGetSpecPath_AbsolutePath", () => {
+  it("absolute node path + undefined projectRoot → spec hint returned unchanged in the banner", async () => {
+    const stringScalar = {
+      kind: "Scalar",
+      name: "string",
+    } as unknown as Scalar;
+    const prop = {
+      type: stringScalar,
+      optional: false,
+    } as unknown as ModelProperty;
+    const model = {
+      kind: "Model",
+      name: "AbsSpecInput",
+      properties: new Map<string, ModelProperty>([["id", prop]]),
+    } as unknown as Model;
+
+    // Absolute path (leading "/") + no program.projectRoot → tryGetSpecPath skips
+    // the relative early-return AND the relativization, returning rawPath verbatim.
+    const absPath = "/abs/root/contracts/typespec/abs.tsp";
+    const op = {
+      name: "absSpec",
+      parameters: model,
+      returnType: { kind: "Intrinsic", name: "void" },
+      node: { file: { path: absPath } },
+    } as unknown as Operation;
+
+    directUnitOps.push(op);
+
+    const mockProgram = {
+      diagnostics: [],
+      stateMap(_key: symbol): Map<object, unknown> {
+        return new Map();
+      },
+    } as unknown as Program;
+
+    const mockContext = {
+      program: mockProgram,
+      emitterOutputDir: "/out",
+      options: {},
+    } as unknown as EmitContext;
+
+    await $onEmit(mockContext);
+
+    const csFile = directUnitEmitted.find((e) =>
+      e.path.endsWith("AbsSpecInput.g.cs"),
+    );
+    expect(csFile).toBeDefined();
+    expect(csFile!.content).toContain(absPath);
   });
 });
 

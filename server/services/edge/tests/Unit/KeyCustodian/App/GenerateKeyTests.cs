@@ -162,6 +162,34 @@ public sealed class GenerateKeyTests
     }
 
     // -----------------------------------------------------------------------
+    // Seal domain binding — seal:<service> binds EcdhSealing; any other type is a 400.
+    // (The WrongTypeForDomainCases matrix only covers the closed All catalog; the seal
+    // family is pattern-based and NOT in that catalog, so it is exercised explicitly.)
+    // -----------------------------------------------------------------------
+
+    [Theory]
+    [InlineData(KeyType.AesPayload)]
+    [InlineData(KeyType.RsaSigning)]
+    [InlineData(KeyType.Secret)]
+    [InlineData(KeyType.X509CaCertificate)]
+    public async Task Generate_SealDomain_WrongType_Returns400Mismatch_PersistsNothing(
+        KeyType wrongType)
+    {
+        await using var db = KeyCustodianTestDbContext.CreateEmpty();
+        var handler = Build(db, new TestClock(KcAppTestKit.SR_BaseInstant));
+
+        var result = await handler.HandleAsync(new GenerateKeyInput("seal:audit", wrongType));
+
+        result.Success.Should().BeFalse();
+        result.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        result.ErrorCode.Should().Be(
+            KeyCustodianErrorCodes.KEYCUSTODIAN_KEY_TYPE_DOMAIN_MISMATCH,
+            "a seal:<service> domain binds EcdhSealing — any other type is a sharp 400");
+        db.Keys.Should().BeEmpty(because: "a mismatched pair never reaches the store");
+        db.Audit.Should().BeEmpty();
+    }
+
+    // -----------------------------------------------------------------------
     // Duplicate pending conflict
     // -----------------------------------------------------------------------
 

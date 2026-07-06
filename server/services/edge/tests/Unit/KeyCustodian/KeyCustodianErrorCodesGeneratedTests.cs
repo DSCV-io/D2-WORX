@@ -97,7 +97,7 @@ public sealed class KeyCustodianErrorCodesGeneratedTests
     }
 
     // -----------------------------------------------------------------------
-    // AllCodes membership — set equals the 28 spec codes in spec order
+    // AllCodes membership — set equals the 30 spec codes in spec order
     // -----------------------------------------------------------------------
 
     [Fact]
@@ -130,6 +130,8 @@ public sealed class KeyCustodianErrorCodesGeneratedTests
             "KEYCUSTODIAN_SIGNING_INPUT_TOO_LARGE",
             "KEYCUSTODIAN_KEYRING_KEY_UNAVAILABLE",
             "KEYCUSTODIAN_KEYRING_DOMAIN_NOT_AUTHORIZED",
+            "KEYCUSTODIAN_SEAL_NOT_AUTHORIZED",
+            "KEYCUSTODIAN_SEAL_KEY_UNAVAILABLE",
             "KEYCUSTODIAN_ISSUANCE_NOT_AUTHORIZED",
             "KEYCUSTODIAN_INVALID_CSR",
             "KEYCUSTODIAN_CA_CERTIFICATE_NOT_AUTHORIZED",
@@ -141,9 +143,9 @@ public sealed class KeyCustodianErrorCodesGeneratedTests
     }
 
     [Fact]
-    public void AllCodes_CountIsTwentyEightCodes()
+    public void AllCodes_CountIsThirtyCodes()
     {
-        KeyCustodianErrorCodes.AllCodes.Should().HaveCount(28);
+        KeyCustodianErrorCodes.AllCodes.Should().HaveCount(30);
     }
 
     // -----------------------------------------------------------------------
@@ -172,6 +174,8 @@ public sealed class KeyCustodianErrorCodesGeneratedTests
     [InlineData("KEYCUSTODIAN_EMPTY_SIGNING_INPUT", 400)]
     [InlineData("KEYCUSTODIAN_KEY_TYPE_DOMAIN_MISMATCH", 400)]
     [InlineData("KEYCUSTODIAN_SIGNING_INPUT_TOO_LARGE", 400)]
+    [InlineData("KEYCUSTODIAN_SEAL_NOT_AUTHORIZED", 403)]
+    [InlineData("KEYCUSTODIAN_SEAL_KEY_UNAVAILABLE", 503)]
     public void GetHttpStatus_KnownCode_ReturnsDeclaredStatus(string code, int expected_status)
     {
         KeyCustodianErrorCodes.GetHttpStatus(code).Should().Be(expected_status);
@@ -228,6 +232,8 @@ public sealed class KeyCustodianErrorCodesGeneratedTests
             ["KEYCUSTODIAN_SIGNING_INPUT_TOO_LARGE"] = 400,
             ["KEYCUSTODIAN_KEYRING_KEY_UNAVAILABLE"] = 503,
             ["KEYCUSTODIAN_KEYRING_DOMAIN_NOT_AUTHORIZED"] = 403,
+            ["KEYCUSTODIAN_SEAL_NOT_AUTHORIZED"] = 403,
+            ["KEYCUSTODIAN_SEAL_KEY_UNAVAILABLE"] = 503,
             ["KEYCUSTODIAN_ISSUANCE_NOT_AUTHORIZED"] = 403,
             ["KEYCUSTODIAN_INVALID_CSR"] = 400,
             ["KEYCUSTODIAN_CA_CERTIFICATE_NOT_AUTHORIZED"] = 403,

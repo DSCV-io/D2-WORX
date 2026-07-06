@@ -10,6 +10,8 @@
 
 namespace D2.Edge.KeyCustodian.App.Application.Facade;
 
+using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.GetOrLazyProvisionOwnSealPrivateKey;
+using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.GetOrLazyProvisionSealPublicKey;
 using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.IssueLeaf;
 using D2.Edge.KeyCustodian.App.Application.Handlers.Queries.GetCaCertificate;
 using D2.Edge.KeyCustodian.App.Application.Handlers.Queries.GetJwks;
@@ -22,6 +24,7 @@ using D2.Edge.KeyCustodian.Client.Issuance;
 using D2.Edge.KeyCustodian.Client.Jwks;
 using D2.Edge.KeyCustodian.Client.Keyring;
 using D2.Edge.KeyCustodian.Client.OidcConfiguration;
+using D2.Edge.KeyCustodian.Client.Sealing;
 using D2.Edge.KeyCustodian.Client.Signing;
 
 /// <summary>
@@ -34,7 +37,9 @@ public sealed class KeyCustodianApi(
     ISignHandler signHandler,
     IGetKeyringHandler getKeyringHandler,
     IIssueLeafHandler issueLeafHandler,
-    IGetCaCertificateHandler getCaCertificateHandler) : IKeyCustodianApi
+    IGetCaCertificateHandler getCaCertificateHandler,
+    IGetOrLazyProvisionSealPublicKeyHandler getOrLazyProvisionSealPublicKeyHandler,
+    IGetOrLazyProvisionOwnSealPrivateKeyHandler getOrLazyProvisionOwnSealPrivateKeyHandler) : IKeyCustodianApi
 {
     /// <inheritdoc/>
     public ValueTask<D2Result<GetJwksOutput?>> GetJwksAsync(GetJwksInput input, CancellationToken ct = default)
@@ -54,4 +59,10 @@ public sealed class KeyCustodianApi(
     /// <inheritdoc/>
     public ValueTask<D2Result<GetCaCertificateOutput?>> GetCaCertificateAsync(GetCaCertificateInput input, CancellationToken ct = default)
         => getCaCertificateHandler.HandleAsync(input, ct);
+    /// <inheritdoc/>
+    public ValueTask<D2Result<GetOrLazyProvisionSealPublicKeyOutput?>> GetOrLazyProvisionSealPublicKeyAsync(GetOrLazyProvisionSealPublicKeyInput input, CancellationToken ct = default)
+        => getOrLazyProvisionSealPublicKeyHandler.HandleAsync(input, ct);
+    /// <inheritdoc/>
+    public ValueTask<D2Result<GetOrLazyProvisionOwnSealPrivateKeyOutput?>> GetOrLazyProvisionOwnSealPrivateKeyAsync(GetOrLazyProvisionOwnSealPrivateKeyInput input, CancellationToken ct = default)
+        => getOrLazyProvisionOwnSealPrivateKeyHandler.HandleAsync(input, ct);
 }

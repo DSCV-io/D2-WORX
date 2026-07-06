@@ -206,6 +206,38 @@ public static class KeyCustodianMetrics
                 + "A sustained non-zero rate blocks payload encryption for the affected domain.");
 
     /// <summary>
+    /// Counter — total per-service sealing keypairs provisioned lazily by the seal
+    /// surfaces (the first request for a service's <c>seal:&lt;serviceId&gt;</c> domain
+    /// generates, smoke-tests, and activates one on the spot). Incremented after the
+    /// provisioning transaction commits. A spike is expected when a new service first
+    /// participates in sealed encryption; a sustained non-zero rate for an established
+    /// service would indicate provisioning is not converging (e.g. keys not persisting).
+    /// </summary>
+    public static readonly Counter<long> SR_SealKeypairsProvisionedTotal =
+        SR_Meter.CreateCounter<long>(
+            name: "d2.keycustodian.seal_keypairs_provisioned",
+            unit: "{keypair}",
+            description:
+                "Total per-service ECDH sealing keypairs provisioned lazily on first use. "
+                + "Committed after the provisioning transaction; a spike is expected on a "
+                + "service's first seal participation.");
+
+    /// <summary>
+    /// Counter — total seal-key fetches (public or own-private) that found no active sealing
+    /// key for the requested service and returned 503. A sustained non-zero rate means a
+    /// service's seal domain is unprovisioned or mid-rotation with no active key — sealing to
+    /// or opening for that service is blocked until a key is active. Mirrors
+    /// <see cref="SR_EmptyKeyringServed"/> for the seal-distribution surfaces.
+    /// </summary>
+    public static readonly Counter<long> SR_SealKeyUnavailableTotal =
+        SR_Meter.CreateCounter<long>(
+            name: "d2.keycustodian.seal_key_unavailable",
+            unit: "{response}",
+            description:
+                "Total seal-key fetches that found no active sealing key and returned 503. "
+                + "A sustained non-zero rate blocks sealed encryption for the affected service.");
+
+    /// <summary>
     /// Named tag-key + closed-enum tag-value constants for
     /// <see cref="SR_AuthorityRejectionsTotal"/> — the single source of truth for the
     /// bounded <c>capability</c> / <c>reason</c> dimensions plus the forensic
@@ -254,6 +286,20 @@ public static class KeyCustodianMetrics
             /// within the served planes (public trust material).
             /// </summary>
             public const string CA_CERT = "ca-cert";
+
+            /// <summary>
+            /// The seal-public-key distribution capability (fetch a target service's
+            /// public sealing key to seal a payload to it) — cross-process + in-process
+            /// planes, broad within the served planes (public key material).
+            /// </summary>
+            public const string SEAL_ENCRYPT = "seal-encrypt";
+
+            /// <summary>
+            /// The own-private-seal-key distribution capability (fetch the caller's own
+            /// private sealing key to open payloads sealed to it) — cross-process plane
+            /// ONLY (the seal-decrypt hard gate: no unforgeable in-process identity exists).
+            /// </summary>
+            public const string SEAL_DECRYPT = "seal-decrypt";
         }
 
         /// <summary>Closed-enum values for the <c>reason</c> tag.</summary>

@@ -153,6 +153,14 @@ function emitAllArray(
   sb.appendLine("];");
 }
 
+// ---------------------------------------------------------------------------
+// CLI-runner section — mtime-check, disk-write, isMain guard.
+// Excluded from unit-test coverage (requires process/fs mocking to exercise);
+// the exported library function above (emitProtocolAudiences) IS fully
+// unit-tested in protocol-audiences-emit.test.ts.
+// ---------------------------------------------------------------------------
+
+/* v8 ignore start */
 const SPEC_PATH = contractsPath(
   "auth-protocol-audiences",
   "protocol-audiences.spec.json",
@@ -188,3 +196,4 @@ if (isMain) {
   for (const d of diagnostics) console.error(formatDiagnostic(d));
   if (diagnostics.some((d) => d.severity === "error")) process.exit(1);
 }
+/* v8 ignore stop */

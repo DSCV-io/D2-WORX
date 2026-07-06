@@ -10,6 +10,8 @@ using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
 using D2.Edge.KeyCustodian.App.Application.Facade;
+using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.GetOrLazyProvisionOwnSealPrivateKey;
+using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.GetOrLazyProvisionSealPublicKey;
 using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.IssueLeaf;
 using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.IssueWorkloadCertificate;
 using D2.Edge.KeyCustodian.App.Application.Handlers.Queries.GetCaCertificate;
@@ -285,6 +287,16 @@ public sealed class WellKnownRouteTests
                         services.AddTransient<IIssueLeafHandler, IssueLeafHandler>();
                         services.AddTransient<
                             IGetCaCertificateHandler, GetCaCertificateHandler>();
+
+                        // The façade ctor also requires the two seal handlers (never invoked
+                        // by the well-known routes) plus their shared rotation-policy provider,
+                        // so IKeyCustodianApi resolves.
+                        services.AddSingleton<
+                            IRotationPolicyProvider, OptionsRotationPolicyProvider>();
+                        services.AddTransient<
+                            IGetOrLazyProvisionSealPublicKeyHandler, GetOrLazyProvisionSealPublicKeyHandler>();
+                        services.AddTransient<
+                            IGetOrLazyProvisionOwnSealPrivateKeyHandler, GetOrLazyProvisionOwnSealPrivateKeyHandler>();
 
                         services.AddTransient<IKeyCustodianApi, KeyCustodianApi>();
                     })

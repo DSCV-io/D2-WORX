@@ -94,8 +94,8 @@ namespace D2.Edge.KeyCustodian.Infra.Persistence.Postgres.Migrations
 
                     b.Property<string>("KeyDomain")
                         .IsRequired()
-                        .HasMaxLength(64)
-                        .HasColumnType("character varying(64)")
+                        .HasMaxLength(69)
+                        .HasColumnType("character varying(69)")
                         .HasColumnName("key_domain");
 
                     b.Property<byte[]>("KeyMaterialEncrypted")

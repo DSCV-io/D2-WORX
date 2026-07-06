@@ -218,6 +218,24 @@ public sealed class GrpcKeyringServiceTests
 
         public GetKeyringInput? LastKeyringInput { get; private set; }
 
+        // Seal ops — unused by this gRPC harness (no seal service is wired); fully-qualified
+        // to stay collision-safe with the proto types imported in this file.
+        public ValueTask<D2Result<D2.Edge.KeyCustodian.Client.Sealing.GetOrLazyProvisionSealPublicKeyOutput?>>
+            GetOrLazyProvisionSealPublicKeyAsync(
+                D2.Edge.KeyCustodian.Client.Sealing.GetOrLazyProvisionSealPublicKeyInput input,
+                CancellationToken ct = default)
+            => ValueTask.FromResult(
+                D2Result<D2.Edge.KeyCustodian.Client.Sealing.GetOrLazyProvisionSealPublicKeyOutput?>
+                    .ServiceUnavailable());
+
+        public ValueTask<D2Result<D2.Edge.KeyCustodian.Client.Sealing.GetOrLazyProvisionOwnSealPrivateKeyOutput?>>
+            GetOrLazyProvisionOwnSealPrivateKeyAsync(
+                D2.Edge.KeyCustodian.Client.Sealing.GetOrLazyProvisionOwnSealPrivateKeyInput input,
+                CancellationToken ct = default)
+            => ValueTask.FromResult(
+                D2Result<D2.Edge.KeyCustodian.Client.Sealing.GetOrLazyProvisionOwnSealPrivateKeyOutput?>
+                    .ServiceUnavailable());
+
         public ValueTask<D2Result<ClientsGetKeyringOutput?>> GetKeyringAsync(
             GetKeyringInput input, CancellationToken ct = default)
         {

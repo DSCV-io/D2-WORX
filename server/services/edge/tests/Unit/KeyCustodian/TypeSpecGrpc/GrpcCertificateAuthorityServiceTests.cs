@@ -358,6 +358,24 @@ public sealed class GrpcCertificateAuthorityServiceTests
     {
         public byte[]? LastCsrDer { get; private set; }
 
+        // Seal ops — unused by this gRPC harness (no seal service is wired); fully-qualified
+        // to stay collision-safe with the proto types imported in this file.
+        public ValueTask<D2Result<D2.Edge.KeyCustodian.Client.Sealing.GetOrLazyProvisionSealPublicKeyOutput?>>
+            GetOrLazyProvisionSealPublicKeyAsync(
+                D2.Edge.KeyCustodian.Client.Sealing.GetOrLazyProvisionSealPublicKeyInput input,
+                CancellationToken ct = default)
+            => ValueTask.FromResult(
+                D2Result<D2.Edge.KeyCustodian.Client.Sealing.GetOrLazyProvisionSealPublicKeyOutput?>
+                    .ServiceUnavailable());
+
+        public ValueTask<D2Result<D2.Edge.KeyCustodian.Client.Sealing.GetOrLazyProvisionOwnSealPrivateKeyOutput?>>
+            GetOrLazyProvisionOwnSealPrivateKeyAsync(
+                D2.Edge.KeyCustodian.Client.Sealing.GetOrLazyProvisionOwnSealPrivateKeyInput input,
+                CancellationToken ct = default)
+            => ValueTask.FromResult(
+                D2Result<D2.Edge.KeyCustodian.Client.Sealing.GetOrLazyProvisionOwnSealPrivateKeyOutput?>
+                    .ServiceUnavailable());
+
         public ValueTask<D2Result<ClientsIssueLeafOutput?>> IssueLeafAsync(
             IssueLeafInput input, CancellationToken ct = default)
         {
@@ -408,6 +426,24 @@ public sealed class GrpcCertificateAuthorityServiceTests
         D2Result<ClientsGetCaCertificateOutput?>? caCertResult = null)
         : IKeyCustodianApi
     {
+        // Seal ops — unused by this gRPC harness (no seal service is wired); fully-qualified
+        // to stay collision-safe with the proto types imported in this file.
+        public ValueTask<D2Result<D2.Edge.KeyCustodian.Client.Sealing.GetOrLazyProvisionSealPublicKeyOutput?>>
+            GetOrLazyProvisionSealPublicKeyAsync(
+                D2.Edge.KeyCustodian.Client.Sealing.GetOrLazyProvisionSealPublicKeyInput input,
+                CancellationToken ct = default)
+            => ValueTask.FromResult(
+                D2Result<D2.Edge.KeyCustodian.Client.Sealing.GetOrLazyProvisionSealPublicKeyOutput?>
+                    .ServiceUnavailable());
+
+        public ValueTask<D2Result<D2.Edge.KeyCustodian.Client.Sealing.GetOrLazyProvisionOwnSealPrivateKeyOutput?>>
+            GetOrLazyProvisionOwnSealPrivateKeyAsync(
+                D2.Edge.KeyCustodian.Client.Sealing.GetOrLazyProvisionOwnSealPrivateKeyInput input,
+                CancellationToken ct = default)
+            => ValueTask.FromResult(
+                D2Result<D2.Edge.KeyCustodian.Client.Sealing.GetOrLazyProvisionOwnSealPrivateKeyOutput?>
+                    .ServiceUnavailable());
+
         public ValueTask<D2Result<ClientsIssueLeafOutput?>> IssueLeafAsync(
             IssueLeafInput input, CancellationToken ct = default)
             => ValueTask.FromResult(issueResult);

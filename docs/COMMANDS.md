@@ -23,6 +23,8 @@ docker compose -f infra/compose/compose.yml --env-file .env.local --env-file .en
 dotnet build server/D2.slnx                                                # Full .NET solution
 dotnet build server/services/{service}/api/{service}.API.csproj            # Single project
 cd server/web && pnpm install && pnpm exec svelte-check                    # SvelteKit type check
+pnpm --filter @d2/key-custodian-client build                               # KeyCustodian Node client twin (dist for the mTLS harness)
+pnpm --filter @d2/messaging-rabbitmq build                                 # RabbitMQ consumer runtime twin
 ```
 
 ## Rider/ReSharper Inspections (.NET)
@@ -50,7 +52,15 @@ dotnet test server/services/edge/tests                                      # Sp
 # SvelteKit
 cd server/web && pnpm exec vitest run                                       # Unit tests (browser mode)
 cd server/web && pnpm exec playwright test                                  # Playwright (mocked by default)
+
+# KeyCustodian Node client twin + RabbitMQ consumer runtime
+pnpm --filter @d2/key-custodian-client test                                 # client-ts unit + CSR/handshake suite
+pnpm --filter @d2/messaging-rabbitmq test                                    # consumer runtime suite (Testcontainer RabbitMQ)
 ```
+
+### NodeLeafClient cross-runtime mTLS harness prereq
+
+The `.NET` `D2.Edge.Tests` `Integration/KeyCustodian/NodeLeafClient/` suite drives the REAL `@d2/key-custodian-client` over a live Node↔Kestrel loopback handshake. Its cert-presenting cases run ONLY when the client dist is built (`pnpm --filter @d2/key-custodian-client build`) and `node` is on `PATH`; otherwise they SKIP-WITH-REASON (they never silently pass). Build the client dist before `dotnet test server/D2.slnx` so those cases EXECUTE rather than skip. Unlike the Schannel-limited `MutualTlsSignerHarnessTests` below, this harness passes on Windows (Node/OpenSSL presents the private-CA leaf).
 
 ### Real-socket mutual-TLS harness proof (Linux/OpenSSL)
 

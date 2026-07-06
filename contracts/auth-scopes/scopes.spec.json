@@ -81,6 +81,18 @@
       "description": "Fetch the certificate-authority chain (root + issuing intermediate) from KeyCustodian (internal service-to-service / in-process). Public trust-anchor material distributed over already-trusted internal channels only.",
       "actionSensitivity": "Sensitive",
       "impersonationBlocked": false
+    },
+    {
+      "name": "internal.kc.seal.encrypt",
+      "description": "Fetch a target service's PUBLIC sealing key from KeyCustodian to seal a payload TO it (internal service-to-service / in-process). Public key material is harmless to over-share; the scope gates whether a caller may reach the seal-public-key surface at all.",
+      "actionSensitivity": "Sensitive",
+      "impersonationBlocked": true
+    },
+    {
+      "name": "internal.kc.seal.open",
+      "description": "Fetch the caller's OWN PRIVATE sealing key from KeyCustodian to open payloads sealed to it (internal service-to-service, cross-process only). The op carries no target — the key is selected purely from the authenticated mTLS peer identity, so a caller can only ever obtain its own private key.",
+      "actionSensitivity": "Critical",
+      "impersonationBlocked": true
     }
   ]
 }

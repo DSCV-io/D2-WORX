@@ -244,6 +244,72 @@ public sealed class KcCryptoTests
     }
 
     // -----------------------------------------------------------------------
+    // EcdhSealing generator + smoke — the per-service sealing keypair (P-256 ECDH)
+    // -----------------------------------------------------------------------
+
+    [Fact]
+    public void EcdhSealingGenerator_ProducesImportableP256Pkcs8AndMatchingSpki()
+    {
+        var material = KeyGeneration.Generate(KeyType.EcdhSealing, _RSA_BITS, _SECRET_BYTES).Data!;
+        material.PublicSpki.Should().NotBeNull();
+
+        using var fromPrivate = ECDiffieHellman.Create();
+        fromPrivate.ImportPkcs8PrivateKey(material.Plaintext, out _);
+
+        using var fromPublic = ECDiffieHellman.Create();
+        fromPublic.ImportSubjectPublicKeyInfo(material.PublicSpki!, out _);
+
+        // The SPKI must be the public half of the generated P-256 private key.
+        fromPrivate.ExportSubjectPublicKeyInfo().Should().Equal(material.PublicSpki);
+    }
+
+    [Fact]
+    public void Smoke_EcdhSealing_FreshKey_Passes()
+    {
+        // A fresh keypair completes a real self-seal→self-open round-trip.
+        var material = KeyGeneration.Generate(KeyType.EcdhSealing, _RSA_BITS, _SECRET_BYTES).Data!;
+
+        SmokeTesting.Verify(KeyType.EcdhSealing, material.Plaintext, material.PublicSpki)
+            .Success.Should().BeTrue();
+    }
+
+    [Fact]
+    public void Smoke_EcdhSealing_MissingPublic_FailsWithoutThrow()
+    {
+        var material = KeyGeneration.Generate(KeyType.EcdhSealing, _RSA_BITS, _SECRET_BYTES).Data!;
+
+        SmokeTesting.Verify(KeyType.EcdhSealing, material.Plaintext, publicSpki: null)
+            .Success.Should().BeFalse();
+    }
+
+    [Fact]
+    public void Smoke_EcdhSealing_MismatchedKeypair_FailsWithoutThrow()
+    {
+        var a = KeyGeneration.Generate(KeyType.EcdhSealing, _RSA_BITS, _SECRET_BYTES).Data!;
+        var b = KeyGeneration.Generate(KeyType.EcdhSealing, _RSA_BITS, _SECRET_BYTES).Data!;
+
+        // a's private paired with b's public — the round-trip fails the AEAD tag (the
+        // ECDH halves do not agree), surfaced as SmokeTestFailed by the never-throw envelope.
+        var result = SmokeTesting.Verify(KeyType.EcdhSealing, a.Plaintext, b.PublicSpki);
+
+        result.Success.Should().BeFalse();
+        result.ErrorCode.Should().Be("KEYCUSTODIAN_SMOKE_TEST_FAILED");
+    }
+
+    [Fact]
+    public void Smoke_EcdhSealing_GarbagePkcs8_FailsWithoutThrow()
+    {
+        var real = KeyGeneration.Generate(KeyType.EcdhSealing, _RSA_BITS, _SECRET_BYTES).Data!;
+        var garbage = RandomNumberGenerator.GetBytes(64);
+
+        // Garbage private bytes cannot import as a P-256 PKCS#8 key — the keyring
+        // construction throws, caught by the envelope → SmokeTestFailed (no throw).
+        var result = SmokeTesting.Verify(KeyType.EcdhSealing, garbage, real.PublicSpki);
+
+        result.Success.Should().BeFalse();
+    }
+
+    // -----------------------------------------------------------------------
     // Wrap → unwrap round-trip through real PayloadCrypto
     // -----------------------------------------------------------------------
 

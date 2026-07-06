@@ -187,6 +187,12 @@ public sealed class KeyringDomainAuthorityTests
     [InlineData(KeyDomain.CLIENT_SECRET)]
     [InlineData(KeyDomain.MTLS_CA_ROOT)]
     [InlineData(KeyDomain.MTLS_CA_INTERMEDIATE)]
+
+    // A seal-family domain resolves through Create (the ForSeal delegation) with the
+    // EcdhSealing binding — the validator's payload-only check must refuse a seal grant
+    // exactly like every other non-payload domain (a seal PRIVATE key must never be
+    // releasable through the keyring surface).
+    [InlineData(KeyDomain.SEAL_PREFIX + "audit")]
     public void Validate_GrantsNonPayloadDomain_FailsLoud(string nonPayload)
     {
         // The boot invariant: no workload may be granted a non-payload domain — a keyring

@@ -62,9 +62,9 @@ public sealed class KeyCustodianPersistedEnumStabilityTests
     // =========================================================================
 
     [Fact]
-    public void KeyType_Enum_HasExactlyFourMembers()
+    public void KeyType_Enum_HasExactlyFiveMembers()
     {
-        const int expected_count = 4;
+        const int expected_count = 5;
 
         Enum.GetNames<KeyType>().Should().HaveCount(expected_count);
     }
@@ -74,6 +74,7 @@ public sealed class KeyCustodianPersistedEnumStabilityTests
     [InlineData(KeyType.AesPayload, "AesPayload")]
     [InlineData(KeyType.Secret, "Secret")]
     [InlineData(KeyType.X509CaCertificate, "X509CaCertificate")]
+    [InlineData(KeyType.EcdhSealing, "EcdhSealing")]
     public void KeyType_MemberName_EqualsPersistedStringName(
         KeyType keyType, string expectedPersistedName)
     {

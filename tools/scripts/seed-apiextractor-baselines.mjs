@@ -2,7 +2,8 @@
 //
 // Idempotent seeding tool: installs api-extractor.json configs and generates
 // committed baselines (etc/<pkg>.api.md + etc/.release-fingerprint) for all
-// 29 @d2/* consumable packages under server/shared/typescript/.
+// 31 @d2/* consumable packages: 30 under server/shared/typescript/ plus the
+// KeyCustodian client twin under server/services/edge/key-custodian/client-ts/.
 //
 // The fingerprint is SOURCE-BASED + PORTABLE — a SHA-256 over committed text
 // only ( committed src dump + the .api.md report + resolved deps + the declared
@@ -20,7 +21,7 @@
 // is unchanged (fingerprint and api.md are deterministic outputs).
 //
 // Prerequisites:
-//   - All 29 packages must have a built dist/ — api-extractor consumes
+//   - All 31 packages must have a built dist/ — api-extractor consumes
 //     dist/index.d.ts to generate the .api.md report (the fingerprint itself
 //     does NOT read dist/). Run `pnpm -r build` first.
 //   - @microsoft/api-extractor must be installed in tools/release-runner
@@ -49,7 +50,7 @@ const API_EXTRACTOR_BIN = join(
 );
 
 // ---------------------------------------------------------------------------
-// The 29 consumable packages: [pkgDir, shortName] pairs.
+// The 31 consumable packages: [pkgDir, shortName] pairs.
 // Derived from the package names (@d2/<shortName>) so that api.md report
 // filenames are stable regardless of the directory structure.
 // Excludes: typespec-decorators, typespec-emitters, contract-tests.
@@ -148,6 +149,11 @@ const CONSUMABLES = [
     pkgName: "@d2/messaging-abstractions",
   },
   {
+    dir: join(TS_SHARED, "messaging", "rabbitmq"),
+    shortName: "messaging-rabbitmq",
+    pkgName: "@d2/messaging-rabbitmq",
+  },
+  {
     dir: join(TS_SHARED, "problem-details-abstractions"),
     shortName: "problem-details-abstractions",
     pkgName: "@d2/problem-details-abstractions",
@@ -201,6 +207,21 @@ const CONSUMABLES = [
     dir: join(TS_SHARED, "validation", "default"),
     shortName: "validation",
     pkgName: "@d2/validation",
+  },
+  // Consumable outside server/shared/typescript/: the KeyCustodian workload-leaf
+  // client twin lives beside its service. Same baseline mechanism (git-tracked src
+  // dump + api.md report), addressed by an explicit repo-relative dir.
+  {
+    dir: join(
+      REPO_ROOT,
+      "server",
+      "services",
+      "edge",
+      "key-custodian",
+      "client-ts",
+    ),
+    shortName: "key-custodian-client",
+    pkgName: "@d2/key-custodian-client",
   },
 ];
 
@@ -295,15 +316,25 @@ function runApiExtractor(pkgDir, shortName) {
     return null;
   }
 
-  const result = spawnSync(
-    API_EXTRACTOR_BIN,
-    ["run", "--local", "--config", configPath],
-    {
-      cwd: pkgDir,
-      encoding: "utf-8",
-      stdio: ["ignore", "pipe", "pipe"],
-    },
-  );
+  // shell:true is REQUIRED for cross-platform launch. On Windows the
+  // node_modules/.bin/api-extractor entry is a POSIX shell shim that Node's
+  // spawnSync cannot exec directly (the runnable form is the sibling
+  // api-extractor.CMD, and modern Node refuses to spawn a .cmd without a shell);
+  // routing through the shell lets cmd.exe resolve the .CMD via PATHEXT. On POSIX
+  // the shim is a node-shebang script the shell runs directly. Without this the
+  // spawn silently ENOENTs (status !== 0, no report written) and only packages
+  // whose etc/<pkg>.api.md already exists appear to "succeed" — a NEW package's
+  // report never gets generated, and a changed-surface package's report is never
+  // refreshed. The whole invocation is passed as ONE quoted command string (not a
+  // command + args array) so shell:true does not trip DEP0190 and the quoting
+  // tolerates spaces in either path.
+  const command = `"${API_EXTRACTOR_BIN}" run --local --config "${configPath}"`;
+  const result = spawnSync(command, {
+    cwd: pkgDir,
+    encoding: "utf-8",
+    stdio: ["ignore", "pipe", "pipe"],
+    shell: true,
+  });
 
   const reportPath = join(pkgDir, "etc", `${shortName}.api.md`);
 

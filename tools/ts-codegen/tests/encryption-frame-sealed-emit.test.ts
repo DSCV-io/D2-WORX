@@ -234,4 +234,43 @@ describe("encryption-frame-sealed emitter", () => {
     expect(v.diagnostics).toEqual([]);
     expect(v.fields).toHaveLength(2);
   });
+
+  it("rejects a variable_binary_u16be field as the very first field", () => {
+    // The new-kind structural rule walks each field looking at its predecessor;
+    // when the binary field is at index 0 there IS no predecessor — exercises the
+    // `i > 0 ? … : undefined` false arm (previous === undefined → prefix missing).
+    const spec = makeSpec(2, [
+      {
+        constName: "PAYLOAD",
+        offset: -1,
+        length: -1,
+        kind: "variable_binary_u16be",
+        doc: "d",
+      },
+    ]);
+
+    const v = validateSealedFrameSpec(spec);
+
+    expect(
+      v.diagnostics.some(
+        (d) => d.id === DiagnosticIds.EFS_BINARY_LENGTH_PREFIX_MISSING,
+      ),
+    ).toBe(true);
+  });
+
+  it("accepts two non-overlapping fixed-offset fields", () => {
+    // Two fixed-offset fields whose byte ranges abut but do not overlap
+    // (A=[0,2), B=[2,4)) — exercises the false arm of the overlap predicate
+    // `a.offset < bEnd && b.offset < aEnd` (b.offset === aEnd → not overlapping).
+    const spec = makeSpec(2, [
+      { constName: "A", offset: 0, length: 2, kind: "byte_fixed", doc: "d" },
+      { constName: "B", offset: 2, length: 2, kind: "byte_fixed", doc: "d" },
+    ]);
+
+    const v = validateSealedFrameSpec(spec);
+
+    expect(
+      v.diagnostics.some((d) => d.id === DiagnosticIds.EFS_OVERLAPPING_FIELDS),
+    ).toBe(false);
+  });
 });

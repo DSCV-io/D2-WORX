@@ -44,6 +44,7 @@ import { emitGeneratedFile, resolveOutputPath } from "./lib/emit-file.js";
 import { walkModel } from "./lib/model-walk.js";
 import { emitCsharpDtos } from "./lib/csharp-dto-emitter.js";
 import { emitTsDtos } from "./lib/ts-dto-emitter.js";
+import type { EmittedTsFile } from "./lib/ts-dto-emitter.js";
 import { emitProto } from "./lib/proto-emitter.js";
 import type { NestedMessageDescriptor } from "./lib/proto-emitter.js";
 import { emitGrpcService } from "./lib/grpc-service-emitter.js";
@@ -242,6 +243,21 @@ export async function $onEmit(context: EmitContext): Promise<void> {
       ? rawOptions["grpc-service-namespace"]
       : "D2.Generated.Grpc";
 
+  // TS-client production-emission target (per @d2ServedBy module). A config-only,
+  // concern-driven mirror: for every module named in this map, the emitted TS SSR
+  // gRPC client (<module>-grpc-client.g.ts) AND the TS DTOs of that module's
+  // @d2GrpcMethod ops are ALSO written to the mapped directory (a real consumer
+  // package's generated/ folder), in addition to the standard emitter-output-dir.
+  // Zero per-op special cases — routing is driven purely by (module → dir) config
+  // × the op's own @d2ServedBy membership, exactly like the C# clients-namespace
+  // routing. The mapped dir is repo-root-relative (resolved against projectRoot's
+  // grandparent — the same repo-root derivation tryGetSpecPath uses). Absent /
+  // malformed option ⇒ no production mirror (standard dist/generated only).
+  const tsClientOutputDirs = resolveTsClientOutputDirs(
+    rawOptions["ts-client-output-dirs"],
+    (program as { projectRoot?: string }).projectRoot,
+  );
+
   // ---- Channel cross-validation (D2TSP010) ----
   // Resolve the @versioned active-version channel from any @versioned namespace
   // in the program. A @versioned namespace carries a Versions enum whose member
@@ -251,6 +267,7 @@ export async function $onEmit(context: EmitContext): Promise<void> {
 
   navigateProgram(program, {
     namespace(ns: Namespace) {
+      /* v8 ignore start — @versioned VersionMap extraction depends on the @typespec/versioning subsystem; exercised end-to-end by the integration compile suite (dist/-loaded, not src-instrumented). Unit-mocking getVersion would test the mock, not the resolution. */
       const versionMap = getVersion(program, ns);
 
       if (versionMap === undefined) return;
@@ -264,6 +281,7 @@ export async function $onEmit(context: EmitContext): Promise<void> {
       // First @versioned namespace by navigateProgram walk order wins; subsequent ones are ignored.
       if (latestVersion !== undefined && versionedChannel === undefined)
         versionedChannel = latestVersion.value;
+      /* v8 ignore stop */
     },
   });
 
@@ -274,12 +292,14 @@ export async function $onEmit(context: EmitContext): Promise<void> {
     protoCsharpNs,
     versionedChannel,
     (code, message) => {
+      /* v8 ignore start — defensive: onError is typed (code: string) but validateChannelAgreement only ever emits "channel-segment-mismatch", so the guard's false arm is unreachable */
       if (code === "channel-segment-mismatch")
         $lib.reportDiagnostic(program, {
           code: "channel-segment-mismatch",
           format: { detail: message },
           target: NoTarget,
         });
+      /* v8 ignore stop */
     },
   );
 
@@ -293,6 +313,14 @@ export async function $onEmit(context: EmitContext): Promise<void> {
   // the GrpcClientOp (with any parsed @d2Resilience predicate ASTs attached) with the op's output
   // Model so the per-module predicate emitter can do its gen-time data-path crawl.
   const grpcOpsByModule = new Map<string, CollectedGrpcOp[]>();
+
+  // Per-module collection of emitted TS DTO files for @d2GrpcMethod ops whose
+  // module has a configured ts-client-output-dir. Captured during the per-op walk
+  // (the TS DTO content is produced there) and mirrored to the production target
+  // dir alongside the module's TS gRPC client after the walk. Deduped by file name
+  // (a DTO model shared across ops emits one file). Empty unless tsClientOutputDirs
+  // names the op's module.
+  const tsDtoFilesByModule = new Map<string, EmittedTsFile[]>();
 
   // Gate for WireVersion.g.cs + wire-identity manifest: tracks whether any @d2GrpcMethod op
   // successfully produced a proto. Populated in fixture mode (no csClientsNamespace) AND real-
@@ -390,9 +418,13 @@ export async function $onEmit(context: EmitContext): Promise<void> {
       // always defined), which nothing consumes. Suppress it via dtoInputModel.
       const dtoInputModel = isPurePush(program, op) ? undefined : inputModel;
       let dtoEmitSucceeded = false;
+      // The emitted TS DTO file for this op (captured so it can be mirrored to a
+      // configured ts-client-output-dir when the op is a @d2GrpcMethod op of a
+      // targeted module). Undefined when no DTO was emitted.
+      let emittedTsDto: EmittedTsFile | undefined;
 
       if (dtoInputModel !== undefined || outputModel !== undefined) {
-        dtoEmitSucceeded = emitDtoPair(
+        const dtoResult = emitDtoPair(
           context,
           program,
           op.name,
@@ -401,6 +433,8 @@ export async function $onEmit(context: EmitContext): Promise<void> {
           dtoInputModel,
           outputModel,
         );
+        dtoEmitSucceeded = dtoResult.ok;
+        emittedTsDto = dtoResult.tsFile;
       }
 
       // Emit I<Op>Handler.g.cs for every op that has a request side — and
@@ -513,6 +547,27 @@ export async function $onEmit(context: EmitContext): Promise<void> {
           | string
           | undefined;
         const grpcPascalOp = toPascalFromCamel(op.name);
+
+        // Mirror this gRPC op's TS DTO into the module's configured production
+        // TS-client dir (if the module is named in ts-client-output-dirs). This is
+        // exactly the DTO surface the module's emitted TS gRPC client imports
+        // (co-located, flat). Deduped by file name (a DTO shared across ops emits
+        // one file). Standard dist/generated emission already happened above.
+        /* v8 ignore start — ts-client-output-dirs DTO-mirror capture: exercised end-to-end by ts-client-output-dirs.integration.test.ts (dist/-loaded, not src-instrumented); the cross-op DTO-dedup arm needs two gRPC ops in one module sharing a DTO, covered there */
+        if (
+          grpcServedBy !== undefined &&
+          emittedTsDto !== undefined &&
+          tsClientOutputDirs.has(grpcServedBy)
+        ) {
+          const dtoFile = emittedTsDto;
+          const files = tsDtoFilesByModule.get(grpcServedBy) ?? [];
+
+          if (!files.some((f) => f.fileName === dtoFile.fileName))
+            files.push(dtoFile);
+
+          tsDtoFilesByModule.set(grpcServedBy, files);
+        }
+        /* v8 ignore stop */
 
         let grpcDelegationTarget: GrpcDelegationTarget;
         if (
@@ -786,6 +841,32 @@ export async function $onEmit(context: EmitContext): Promise<void> {
       const tsClientPath = resolveOutputPath(context, f.fileName);
       void emitGeneratedFile(program, tsClientPath, f.content);
     }
+
+    // Production-emission mirror: when this module is named in
+    // ts-client-output-dirs, ALSO write its TS gRPC client + the TS DTOs of its
+    // @d2GrpcMethod ops (captured during the walk) to the mapped directory so a
+    // real consumer package can import the generated wire surface directly. The
+    // set is complete + self-consistent by construction: the grpc client imports
+    // exactly those DTO files (co-located, flat).
+    const tsClientTargetDir = tsClientOutputDirs.get(moduleName);
+    /* v8 ignore start — ts-client-output-dirs production mirror: exercised end-to-end by ts-client-output-dirs.integration.test.ts (dist/-loaded, not src-instrumented) */
+    if (tsClientTargetDir !== undefined) {
+      for (const f of tsClientFiles) {
+        void emitGeneratedFile(
+          program,
+          join(tsClientTargetDir, f.fileName),
+          f.content,
+        );
+      }
+      for (const dto of tsDtoFilesByModule.get(moduleName) ?? []) {
+        void emitGeneratedFile(
+          program,
+          join(tsClientTargetDir, dto.fileName),
+          dto.content,
+        );
+      }
+    }
+    /* v8 ignore stop */
   }
 
   // ---- TS browser REST client — one <module>-rest-client.g.ts per @d2ServedBy module ----
@@ -846,7 +927,9 @@ export async function $onEmit(context: EmitContext): Promise<void> {
   if (validatedChannel !== undefined && anyGrpcProtoEmitted) {
     // wireSpecHintCapture is set on the first gRPC op; fall back to protoPackage for safety
     // (unreachable when anyGrpcProtoEmitted is true, since the first op sets the capture).
+    /* v8 ignore start — unreachable: anyGrpcProtoEmitted true ⇒ the first gRPC op already set wireSpecHintCapture, so the ?? protoPackage fallback never fires */
     const wireSpecHint = wireSpecHintCapture ?? protoPackage;
+    /* v8 ignore stop */
 
     const wireVersionFile = emitWireVersionConstant(
       protoCsharpNs,
@@ -1112,7 +1195,7 @@ function emitDtoPair(
   specHint: string,
   inputModel: Model | undefined,
   outputModel: Model | undefined,
-): boolean {
+): { ok: boolean; tsFile: EmittedTsFile | undefined } {
   const errors: string[] = [];
   const onError = (
     code:
@@ -1158,7 +1241,7 @@ function emitDtoPair(
       ? walkModel(program, outputModel, onError)
       : { fields: [], nestedModels: [], nestedEnums: [] };
 
-  if (errors.length > 0) return false; // Diagnostics already reported; don't emit partial files.
+  if (errors.length > 0) return { ok: false, tsFile: undefined }; // Diagnostics already reported; don't emit partial files.
 
   // ---- C# DTO emission ----
   const csFiles = emitCsharpDtos(
@@ -1196,7 +1279,43 @@ function emitDtoPair(
 
   const tsPath = resolveOutputPath(context, tsFile.fileName);
   void emitGeneratedFile(program, tsPath, tsFile.content);
-  return true;
+  return { ok: true, tsFile };
+}
+
+/**
+ * Resolve the `ts-client-output-dirs` emitter option into a
+ * `Map<moduleName, absoluteDir>`. The option is a JSON object mapping a
+ * @d2ServedBy module name to a repo-root-relative output directory; each value
+ * is resolved against the repo root (the grandparent of `projectRoot`, i.e. the
+ * tspconfig.yaml directory — the same derivation `tryGetSpecPath` uses). A
+ * non-object option, a non-string value, or an unresolvable projectRoot yields
+ * an empty map (no production mirror — dist/generated emission is unaffected).
+ */
+export function resolveTsClientOutputDirs(
+  raw: unknown,
+  projectRoot: string | undefined,
+): Map<string, string> {
+  const result = new Map<string, string>();
+
+  if (
+    raw === null ||
+    typeof raw !== "object" ||
+    Array.isArray(raw) ||
+    projectRoot === undefined
+  )
+    return result;
+
+  const repoRoot = join(projectRoot, "../..");
+
+  for (const [moduleName, dir] of Object.entries(
+    raw as Record<string, unknown>,
+  )) {
+    if (typeof dir !== "string" || dir.length === 0) continue;
+
+    result.set(moduleName, isAbsolute(dir) ? dir : join(repoRoot, dir));
+  }
+
+  return result;
 }
 
 function emitProtoAndGrpcService(
@@ -1283,8 +1402,22 @@ function emitProtoAndGrpcService(
   const protoResponseName = `${grpc.method}Response`;
 
   // DTO model names come from the TypeSpec model name (e.g. SignInput / SignOutput).
-  const dtoRequestName = inputModel?.name ?? `${grpc.method}Input`;
-  const dtoResponseName = outputModel?.name ?? `${grpc.method}Output`;
+  // A param-less op (e.g. getOrLazyProvisionOwnSealPrivateKey) has a non-undefined but EMPTY
+  // parameters Model whose `.name` is the empty string — so `?? fallback` (nullish)
+  // does NOT trigger and would yield an empty DTO name, emitting a malformed
+  // `using  = ...;` alias + `internal  To()` in the transport mapper/service. Guard
+  // on `.length > 0` (matching the grpc-client + DTO-collection sites) and fall back
+  // to the synthesized `${toPascalFromCamel(opName)}Input` — byte-identical to the
+  // name the C# DTO emitter (csharp-dto-emitter: `${pascalOp}Input`) writes for the
+  // synthesized empty input record, so the alias resolves to the real DTO type.
+  const dtoRequestName =
+    (inputModel?.name?.length ?? 0) > 0
+      ? inputModel!.name
+      : `${toPascalFromCamel(opName)}Input`;
+  const dtoResponseName =
+    (outputModel?.name?.length ?? 0) > 0
+      ? outputModel!.name
+      : `${toPascalFromCamel(opName)}Output`;
 
   // Read @d2Reserved payloads for request and response models.
   const reservedMap = program.stateMap(D2_RESERVED_KEY);
@@ -1306,17 +1439,22 @@ function emitProtoAndGrpcService(
   const seenNestedNames = new Set<string>();
   const nestedDescriptors: NestedMessageDescriptor[] = [];
 
+  // Assemble nested-message descriptors, deduping by name across the merged input +
+  // output walks and attaching each nested model's optional @d2Reserved payload.
+  // collectNested sets typeModel for every compiled model, so the reservedMap lookup
+  // always runs; the non-null assertion is safe (a missing key yields undefined, and
+  // typeModel is undefined only for hand-built NestedModel test fixtures, which never
+  // reach this $onEmit assembly path).
+  /* v8 ignore start — this $onEmit assembly loop is proven end-to-end by the nested-model gRPC op in proto-grpc-emit.integration.test.ts and at the emitProto layer by nested-model-grpc-byte-parity.test.ts; both load the dist emitter, so this src is not instrumented */
   for (const nm of allNestedModels) {
     if (seenNestedNames.has(nm.name)) continue;
     seenNestedNames.add(nm.name);
     nestedDescriptors.push({
       model: nm,
-      reserved:
-        nm.typeModel !== undefined
-          ? (reservedMap.get(nm.typeModel) as ReservedPayload | undefined)
-          : undefined,
+      reserved: reservedMap.get(nm.typeModel!) as ReservedPayload | undefined,
     });
   }
+  /* v8 ignore stop */
 
   const protoFile = emitProto(
     opName,
@@ -1582,10 +1720,12 @@ function emitRouteIfPresent(
       }
     | undefined;
   if (idempotentPayload !== undefined) {
-    const pascalFields = idempotentPayload.fields.map(
-      /* v8 ignore next 1 — decorator guarantees non-empty; defensive guard for belt-and-suspenders */
-      (f) => (f.length === 0 ? f : f[0]!.toUpperCase() + f.slice(1)),
-    );
+    const pascalFields = idempotentPayload.fields.map((f) => {
+      /* v8 ignore start — defensive: @d2Idempotent guarantees non-empty field names, so this guard never fires */
+      if (f.length === 0) return f;
+      /* v8 ignore stop */
+      return f[0]!.toUpperCase() + f.slice(1);
+    });
     idempotencyConfig = {
       keySource: idempotentPayload.keySource as "header" | "derived",
       ttlSeconds: idempotentPayload.ttlSeconds,
@@ -1695,15 +1835,13 @@ function emitSsePushIfPresent(
   // Emit-gate: a push op must carry an emittable payload. A void return has no
   // output model; an empty output record has zero fields + zero nested models.
   // The walk error sink is inert (the model was validated by emitDtoPair first),
-  // so it is annotated as never-firing for coverage.
+  // so it never fires and is excluded from coverage.
+  /* v8 ignore start — inert: emitDtoPair already validated the output model, so this sink never fires */
+  const inertOutputSink = () => undefined;
+  /* v8 ignore stop */
   const outputWalk =
     outputModel !== undefined
-      ? walkModel(
-          program,
-          outputModel,
-          /* v8 ignore next — defensive: the output model was validated by emitDtoPair first */
-          () => undefined,
-        )
+      ? walkModel(program, outputModel, inertOutputSink)
       : { fields: [], nestedModels: [], nestedEnums: [] };
   if (outputWalk.fields.length === 0 && outputWalk.nestedModels.length === 0) {
     $lib.reportDiagnostic(program, {
@@ -1889,7 +2027,6 @@ function parseRetryBudget(
   // condition), so the inner-walk fallback is defensive for an exotic nesting that
   // no in-scope predicate uses.
   const retryNode = findRetryNode(parsed.root);
-  /* v8 ignore next — defensive: a predicate op always carries a retry policy somewhere in the chain */
   if (retryNode === undefined) return undefined;
 
   const max = retryNode.tunables["maxAttempts"];

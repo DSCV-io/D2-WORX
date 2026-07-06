@@ -117,6 +117,7 @@ D2.Shared.Auth.Abstractions.Scopes.Billing
 D2.Shared.Auth.Abstractions.Scopes.Billing.Payment
 D2.Shared.Auth.Abstractions.Scopes.Internal
 D2.Shared.Auth.Abstractions.Scopes.Internal.Kc
+D2.Shared.Auth.Abstractions.Scopes.Internal.Kc.Seal
 D2.Shared.Auth.Abstractions.Scopes.Self
 D2.Shared.Auth.Abstractions.Sessions.ISessionLivenessTracker
 D2.Shared.Auth.Abstractions.Sessions.ISessionLivenessTracker.IsAliveAsync(System.Guid sessionId, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<D2.Shared.Result.D2Result<bool>!>
@@ -155,6 +156,8 @@ const D2.Shared.Auth.Abstractions.Scopes.Billing.Payment.Charge = "billing.payme
 const D2.Shared.Auth.Abstractions.Scopes.Internal.Kc.Cacert = "internal.kc.cacert" -> string!
 const D2.Shared.Auth.Abstractions.Scopes.Internal.Kc.Issue = "internal.kc.issue" -> string!
 const D2.Shared.Auth.Abstractions.Scopes.Internal.Kc.Keyring = "internal.kc.keyring" -> string!
+const D2.Shared.Auth.Abstractions.Scopes.Internal.Kc.Seal.Encrypt = "internal.kc.seal.encrypt" -> string!
+const D2.Shared.Auth.Abstractions.Scopes.Internal.Kc.Seal.Open = "internal.kc.seal.open" -> string!
 const D2.Shared.Auth.Abstractions.Scopes.Internal.Kc.Sign = "internal.kc.sign" -> string!
 const D2.Shared.Auth.Abstractions.Scopes.Self.Read = "self.read" -> string!
 const D2.Shared.Auth.Abstractions.Scopes.Self.Write = "self.write" -> string!

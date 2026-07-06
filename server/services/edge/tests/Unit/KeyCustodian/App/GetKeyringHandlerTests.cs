@@ -344,6 +344,12 @@ public sealed class GetKeyringHandlerTests
     [InlineData(KeyDomain.CLIENT_SECRET)]
     [InlineData(KeyDomain.MTLS_CA_ROOT)]
     [InlineData(KeyDomain.MTLS_CA_INTERMEDIATE)]
+
+    // A seal-family domain now RESOLVES through Create (delegated to the ForSeal grammar,
+    // so lifecycle ops work on seal domains) — the keyring surface must deny it exactly
+    // like every other non-payload domain: the 403 policy arm in production (no caller
+    // can hold a validator-refused EcdhSealing grant), never a keyring serve.
+    [InlineData(KeyDomain.SEAL_PREFIX + _AUDIT)]
     public async Task GetKeyring_NonPayloadDomain_ValidCaller_Returns403NotAuthorized_NoOracle(
         string nonPayload)
     {
@@ -374,6 +380,11 @@ public sealed class GetKeyringHandlerTests
     [InlineData(KeyDomain.CLIENT_SECRET)]
     [InlineData(KeyDomain.MTLS_CA_ROOT)]
     [InlineData(KeyDomain.MTLS_CA_INTERMEDIATE)]
+
+    // The seal family binds EcdhSealing, so even a validator-bypassed seal grant hits
+    // the belt-and-braces AesPayload type fork — a seal private key can NEVER be served
+    // through the keyring surface.
+    [InlineData(KeyDomain.SEAL_PREFIX + _AUDIT)]
     public async Task GetKeyring_ValidatorBypassedNonPayloadGrant_Returns400TypeMismatch(
         string nonPayload)
     {

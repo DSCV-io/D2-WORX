@@ -852,7 +852,9 @@ function collectNested(
   // The fieldMap (for @d2Field pins) is shared from the outer walkModel so nested
   // model properties can carry their own field-number pins.
   const redactMap = program.stateMap(D2_REDACT_KEY);
+  /* v8 ignore start — unreachable: both collectNested call sites pass a defined fieldMap, so the ?? fallback never fires */
   const resolvedFieldMap = fieldMap ?? new Map<object, unknown>();
+  /* v8 ignore stop */
 
   for (const [propName, prop] of model.properties) {
     const fieldInfo = resolveProperty(

@@ -260,6 +260,14 @@ function escapeJsDoc(value: string): string {
   return value.replace(/\*\//g, "*\\/");
 }
 
+// ---------------------------------------------------------------------------
+// CLI-runner section — mtime-check, disk-write, isMain guard.
+// Excluded from unit-test coverage (requires process/fs mocking to exercise);
+// the exported library functions above (validateSealedFrameSpec,
+// emitSealedFrame) ARE fully unit-tested in encryption-frame-sealed-emit.test.ts.
+// ---------------------------------------------------------------------------
+
+/* v8 ignore start */
 const SPEC_PATH = contractsPath(
   "encryption-frame-sealed",
   "encryption-frame-sealed.spec.json",
@@ -296,3 +304,4 @@ if (isMain) {
   for (const d of diagnostics) console.error(formatDiagnostic(d));
   if (diagnostics.some((d) => d.severity === "error")) process.exit(1);
 }
+/* v8 ignore stop */

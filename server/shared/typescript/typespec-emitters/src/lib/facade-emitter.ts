@@ -137,7 +137,9 @@ export function emitFacade(
   // The DI file + method names derive from the clients-namespace LEAF segment
   // (e.g. "Client") so a singular clients namespace produces a non-plural
   // AddD2<Module>Client() — never a hard-coded "Clients" literal.
+  /* v8 ignore start — unreachable: split(".") always yields ≥1 element, so pop() is never undefined and the ?? fallback never fires */
   const clientsSegment = clientsNamespace.split(".").pop() ?? clientsNamespace;
+  /* v8 ignore stop */
 
   // Use the first op's sourceSpec for the banner (all ops in a module share the same spec).
   const sourceSpec = exposedOps[0]!.sourceSpec;

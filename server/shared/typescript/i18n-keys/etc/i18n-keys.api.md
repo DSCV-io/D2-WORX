@@ -331,8 +331,21 @@ export const TK: {
         };
     };
     readonly keycustodian: {
+        readonly authorization: {
+            readonly CA_CERTIFICATE_NOT_AUTHORIZED: TKMessage;
+            readonly CROSS_PROCESS_DOMAIN_REJECTED: TKMessage;
+            readonly ISSUANCE_NOT_AUTHORIZED: TKMessage;
+            readonly KEYRING_DOMAIN_NOT_AUTHORIZED: TKMessage;
+            readonly MINTER_CAPABILITY_REQUIRED: TKMessage;
+            readonly REQUEST_ORIGIN_UNESTABLISHED: TKMessage;
+            readonly SEAL_NOT_AUTHORIZED: TKMessage;
+            readonly SIGNING_DOMAIN_NOT_AUTHORIZED: TKMessage;
+        };
         readonly infrastructure: {
+            readonly KEYRING_KEY_UNAVAILABLE: TKMessage;
             readonly NO_ACTIVE_ISSUING_CA: TKMessage;
+            readonly SEAL_KEY_UNAVAILABLE: TKMessage;
+            readonly SIGNING_KEY_UNAVAILABLE: TKMessage;
         };
         readonly internal: {
             readonly INVALID_CERTIFICATE_REQUEST: TKMessage;
@@ -345,7 +358,9 @@ export const TK: {
             readonly PENDING_KEY_ALREADY_EXISTS: TKMessage;
         };
         readonly validation: {
+            readonly EMPTY_SIGNING_INPUT: TKMessage;
             readonly GRACE_NOT_ELAPSED: TKMessage;
+            readonly INVALID_CSR: TKMessage;
             readonly INVALID_ROTATION_POLICY: TKMessage;
             readonly INVALID_WORKLOAD_IDENTITY: TKMessage;
             readonly SMOKE_PROOF_TYPE_MISMATCH: TKMessage;

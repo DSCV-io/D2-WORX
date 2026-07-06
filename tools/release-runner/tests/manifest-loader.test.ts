@@ -21,9 +21,14 @@
 // id (without extension) — a condition that fails under the unfixed code on
 // Linux because the whole Include string becomes the filename component.
 
-import { basename, posix } from "node:path";
-import { describe, expect, it } from "vitest";
-import { extractNugetProjectRefs } from "../src/manifest-loader.js";
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { basename, join, posix } from "node:path";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import {
+  extractNugetProjectRefs,
+  loadNpmPackages,
+} from "../src/manifest-loader.js";
 
 // ---------------------------------------------------------------------------
 // BX-1 — backslash Include path normalization
@@ -154,4 +159,64 @@ describe("extractNugetProjectRefs — backslash Include path normalization (BX-1
     // so it is clear why CONSUMABLE_NAMES.has(...) would always return false.
     expect(garbled.endsWith(backslashInclude)).toBe(true);
   });
+});
+
+// ---------------------------------------------------------------------------
+// Service-owned client discovery — the KeyCustodian TS client lives beside its
+// service (server/services/edge/key-custodian/client-ts), not under
+// server/shared/typescript, so the npm loader special-cases that root.
+// ---------------------------------------------------------------------------
+
+describe("loadNpmPackages — service-owned KeyCustodian client discovery", () => {
+  let repoRoot: string;
+
+  beforeEach(() => {
+    repoRoot = mkdtempSync(join(tmpdir(), "d2-manifest-loader-"));
+
+    // A shared package under the primary root.
+    writePackage(
+      join(repoRoot, "server/shared/typescript/result"),
+      '{ "name": "@d2/result", "version": "1.2.3" }',
+    );
+
+    // The service-owned KC client under its own root (NOT the shared tree).
+    writePackage(
+      join(repoRoot, "server/services/edge/key-custodian/client-ts"),
+      '{ "name": "@d2/key-custodian-client", "version": "0.1.0" }',
+    );
+
+    // A node_modules copy that MUST be ignored.
+    writePackage(
+      join(
+        repoRoot,
+        "server/services/edge/key-custodian/client-ts/node_modules/@d2/leaked",
+      ),
+      '{ "name": "@d2/leaked", "version": "9.9.9" }',
+    );
+  });
+
+  afterEach(() => {
+    rmSync(repoRoot, { recursive: true, force: true });
+  });
+
+  it("discovers the KC client beside its service (not under server/shared/typescript)", () => {
+    const packages = loadNpmPackages(repoRoot);
+    const names = packages.map((p) => p.name);
+
+    expect(names).toContain("@d2/key-custodian-client");
+    expect(names).toContain("@d2/result");
+    // The node_modules copy is never discovered.
+    expect(names).not.toContain("@d2/leaked");
+
+    const kc = packages.find((p) => p.name === "@d2/key-custodian-client")!;
+    expect(kc.ecosystem).toBe("npm");
+    expect(kc.currentVersion).toBe("0.1.0");
+    // The dir is repo-root-relative with forward slashes.
+    expect(kc.dir).toBe("server/services/edge/key-custodian/client-ts");
+  });
+
+  function writePackage(dir: string, packageJson: string): void {
+    mkdirSync(dir, { recursive: true });
+    writeFileSync(join(dir, "package.json"), packageJson);
+  }
 });

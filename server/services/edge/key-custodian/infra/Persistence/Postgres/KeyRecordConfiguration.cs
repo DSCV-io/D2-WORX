@@ -36,8 +36,12 @@ public sealed class KeyRecordConfiguration : IEntityTypeConfiguration<KeyRecord>
     /// <summary>Max length of a <c>kid</c> value (the minted identifier).</summary>
     private const int _KID_MAX_LENGTH = 64;
 
-    /// <summary>Max length of a key-domain wire value.</summary>
-    private const int _KEY_DOMAIN_MAX_LENGTH = 64;
+    /// <summary>
+    /// Max length of a key-domain wire value. The longest legal domain is a seal-family
+    /// value: the <c>seal:</c> prefix (5 chars) + a maximum-length workload service id
+    /// (64 chars) = 69. Catalog literals are all far shorter.
+    /// </summary>
+    private const int _KEY_DOMAIN_MAX_LENGTH = 69;
 
     /// <summary>Max length of an operator-supplied compromise reason.</summary>
     private const int _COMPROMISE_REASON_MAX_LENGTH = 512;

@@ -7,6 +7,8 @@
 namespace D2.Edge.Tests.Unit.KeyCustodian.WellKnown;
 
 using D2.Edge.KeyCustodian.App.Application.Facade;
+using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.GetOrLazyProvisionOwnSealPrivateKey;
+using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.GetOrLazyProvisionSealPublicKey;
 using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.IssueLeaf;
 using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.IssueWorkloadCertificate;
 using D2.Edge.KeyCustodian.App.Application.Handlers.Queries.GetCaCertificate;
@@ -155,6 +157,16 @@ public sealed class OidcDiscoveryEndToEndTests
                         services.AddTransient<IIssueLeafHandler, IssueLeafHandler>();
                         services.AddTransient<
                             IGetCaCertificateHandler, GetCaCertificateHandler>();
+
+                        // The façade ctor also requires the two seal handlers (never invoked
+                        // by the discovery routes) plus their shared rotation-policy provider,
+                        // so IKeyCustodianApi resolves.
+                        services.AddSingleton<
+                            IRotationPolicyProvider, OptionsRotationPolicyProvider>();
+                        services.AddTransient<
+                            IGetOrLazyProvisionSealPublicKeyHandler, GetOrLazyProvisionSealPublicKeyHandler>();
+                        services.AddTransient<
+                            IGetOrLazyProvisionOwnSealPrivateKeyHandler, GetOrLazyProvisionOwnSealPrivateKeyHandler>();
 
                         services.AddTransient<IKeyCustodianApi, KeyCustodianApi>();
                     })

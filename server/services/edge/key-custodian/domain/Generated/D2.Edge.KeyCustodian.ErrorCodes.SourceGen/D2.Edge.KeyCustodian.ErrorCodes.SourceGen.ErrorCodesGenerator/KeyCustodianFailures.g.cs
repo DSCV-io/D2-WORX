@@ -367,6 +367,43 @@ public static class KeyCustodianFailures
             category: ErrorCategory.PolicyDenied);
     }
 
+    /// <summary>The calling workload is not authorized for the requested seal capability (fetch a target service's public sealing key, or fetch its own private sealing key). Shared by both seal arms: seal-encrypt denies an unauthorized plane; seal-decrypt denies any plane other than a cross-process hop (no unforgeable in-process identity exists, so in-process decrypt is refused outright). The reason telemetry tag distinguishes the deny arm; the wire code stays uniform so a caller cannot probe which planes or services exist.</summary>
+    /// <param name="messages">Optional translation messages; defaults to <c>[TK.Keycustodian.Authorization.SEAL_NOT_AUTHORIZED]</c>. Pass a message bound via <c>TKMessage.With(...)</c> to name the offending argument.</param>
+    /// <returns>A pre-built <see cref="D2Result"/> failure.</returns>
+    public static D2Result SealNotAuthorized(IReadOnlyList<TKMessage>? messages = null)
+    {
+        messages ??= [TK.Keycustodian.Authorization.SEAL_NOT_AUTHORIZED];
+        return D2Result.Forbidden(
+            messages: messages,
+            errorCode: KeyCustodianErrorCodes.KEYCUSTODIAN_SEAL_NOT_AUTHORIZED,
+            category: ErrorCategory.PolicyDenied);
+    }
+
+    /// <summary>No active sealing key is available for the requested service. Retryable not-ready-yet condition: a concurrent first-request lost the provisioning race and the winner's key is not yet visible (only a pending key was observed), or the domain is mid-rotation with no active key. Surfaced as a 503 service-unavailable result so callers retry rather than treat it as a client-side conflict.</summary>
+    /// <param name="messages">Optional translation messages; defaults to <c>[TK.Keycustodian.Infrastructure.SEAL_KEY_UNAVAILABLE]</c>. Pass a message bound via <c>TKMessage.With(...)</c> to name the offending argument.</param>
+    /// <returns>A pre-built <see cref="D2Result"/> failure.</returns>
+    public static D2Result SealKeyUnavailable(IReadOnlyList<TKMessage>? messages = null)
+    {
+        messages ??= [TK.Keycustodian.Infrastructure.SEAL_KEY_UNAVAILABLE];
+        return D2Result.ServiceUnavailable(
+            messages: messages,
+            errorCode: KeyCustodianErrorCodes.KEYCUSTODIAN_SEAL_KEY_UNAVAILABLE,
+            category: ErrorCategory.InfrastructureUnavailable);
+    }
+
+    /// <summary>No active sealing key is available for the requested service. Retryable not-ready-yet condition: a concurrent first-request lost the provisioning race and the winner's key is not yet visible (only a pending key was observed), or the domain is mid-rotation with no active key. Surfaced as a 503 service-unavailable result so callers retry rather than treat it as a client-side conflict. Typed overload.</summary>
+    /// <typeparam name="T">The payload type the caller would have returned on success.</typeparam>
+    /// <param name="messages">Optional translation messages; defaults to <c>[TK.Keycustodian.Infrastructure.SEAL_KEY_UNAVAILABLE]</c>. Pass a message bound via <c>TKMessage.With(...)</c> to name the offending argument.</param>
+    /// <returns>A pre-built typed <see cref="D2Result{T}"/> failure.</returns>
+    public static D2Result<T> SealKeyUnavailable<T>(IReadOnlyList<TKMessage>? messages = null)
+    {
+        messages ??= [TK.Keycustodian.Infrastructure.SEAL_KEY_UNAVAILABLE];
+        return D2Result<T>.ServiceUnavailable(
+            messages: messages,
+            errorCode: KeyCustodianErrorCodes.KEYCUSTODIAN_SEAL_KEY_UNAVAILABLE,
+            category: ErrorCategory.InfrastructureUnavailable);
+    }
+
     /// <summary>The calling context is not authorized to be issued a workload leaf certificate. Workload-certificate issuance is a cross-process-only plane: a non-cross-process origin (the in-process plane whose immediate caller is caller-supplied, or an edge-inbound / system origin) can never authorize minting a workload identity. Uniform 403 across the plane deny — the telemetry reason split (origin-unestablished / unauthorized-plane / identity-absent) carries the granularity so the wire code leaks no probing signal. Self-issue is structural: the leaf subject-alternative-name is always the authenticated mTLS peer identity, never a caller-supplied subject.</summary>
     /// <param name="messages">Optional translation messages; defaults to <c>[TK.Keycustodian.Authorization.ISSUANCE_NOT_AUTHORIZED]</c>. Pass a message bound via <c>TKMessage.With(...)</c> to name the offending argument.</param>
     /// <returns>A pre-built <see cref="D2Result"/> failure.</returns>

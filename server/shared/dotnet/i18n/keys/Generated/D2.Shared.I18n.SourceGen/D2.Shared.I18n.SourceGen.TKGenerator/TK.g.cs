@@ -1311,6 +1311,10 @@ public static partial class TK
             /// </summary>
             public static readonly global::D2.Shared.I18n.TKMessage REQUEST_ORIGIN_UNESTABLISHED = new("keycustodian_authorization_REQUEST_ORIGIN_UNESTABLISHED");
             /// <summary>
+            /// Translation key <c>keycustodian_authorization_SEAL_NOT_AUTHORIZED</c>.
+            /// </summary>
+            public static readonly global::D2.Shared.I18n.TKMessage SEAL_NOT_AUTHORIZED = new("keycustodian_authorization_SEAL_NOT_AUTHORIZED");
+            /// <summary>
             /// Translation key <c>keycustodian_authorization_SIGNING_DOMAIN_NOT_AUTHORIZED</c>.
             /// </summary>
             public static readonly global::D2.Shared.I18n.TKMessage SIGNING_DOMAIN_NOT_AUTHORIZED = new("keycustodian_authorization_SIGNING_DOMAIN_NOT_AUTHORIZED");
@@ -1329,6 +1333,10 @@ public static partial class TK
             /// Translation key <c>keycustodian_infrastructure_NO_ACTIVE_ISSUING_CA</c>.
             /// </summary>
             public static readonly global::D2.Shared.I18n.TKMessage NO_ACTIVE_ISSUING_CA = new("keycustodian_infrastructure_NO_ACTIVE_ISSUING_CA");
+            /// <summary>
+            /// Translation key <c>keycustodian_infrastructure_SEAL_KEY_UNAVAILABLE</c>.
+            /// </summary>
+            public static readonly global::D2.Shared.I18n.TKMessage SEAL_KEY_UNAVAILABLE = new("keycustodian_infrastructure_SEAL_KEY_UNAVAILABLE");
             /// <summary>
             /// Translation key <c>keycustodian_infrastructure_SIGNING_KEY_UNAVAILABLE</c>.
             /// </summary>

@@ -99,6 +99,12 @@ public static class KeyCustodianErrorCodes
     /// <summary>The calling workload is not authorized to fetch the requested key domain's payload keyring (the domain is not in the workload's allowed-keyring-domains policy set, or the request arrived on a plane the keyring surface does not serve). A keyring is a full encrypt+decrypt capability for its domain — holding the internal.kc.keyring scope alone never releases it. Uniform across both the plane-deny and the policy-miss so a caller cannot probe which domains exist.</summary>
     public const string KEYCUSTODIAN_KEYRING_DOMAIN_NOT_AUTHORIZED = "KEYCUSTODIAN_KEYRING_DOMAIN_NOT_AUTHORIZED";
 
+    /// <summary>The calling workload is not authorized for the requested seal capability (fetch a target service's public sealing key, or fetch its own private sealing key). Shared by both seal arms: seal-encrypt denies an unauthorized plane; seal-decrypt denies any plane other than a cross-process hop (no unforgeable in-process identity exists, so in-process decrypt is refused outright). The reason telemetry tag distinguishes the deny arm; the wire code stays uniform so a caller cannot probe which planes or services exist.</summary>
+    public const string KEYCUSTODIAN_SEAL_NOT_AUTHORIZED = "KEYCUSTODIAN_SEAL_NOT_AUTHORIZED";
+
+    /// <summary>No active sealing key is available for the requested service. Retryable not-ready-yet condition: a concurrent first-request lost the provisioning race and the winner's key is not yet visible (only a pending key was observed), or the domain is mid-rotation with no active key. Surfaced as a 503 service-unavailable result so callers retry rather than treat it as a client-side conflict.</summary>
+    public const string KEYCUSTODIAN_SEAL_KEY_UNAVAILABLE = "KEYCUSTODIAN_SEAL_KEY_UNAVAILABLE";
+
     /// <summary>The calling context is not authorized to be issued a workload leaf certificate. Workload-certificate issuance is a cross-process-only plane: a non-cross-process origin (the in-process plane whose immediate caller is caller-supplied, or an edge-inbound / system origin) can never authorize minting a workload identity. Uniform 403 across the plane deny — the telemetry reason split (origin-unestablished / unauthorized-plane / identity-absent) carries the granularity so the wire code leaks no probing signal. Self-issue is structural: the leaf subject-alternative-name is always the authenticated mTLS peer identity, never a caller-supplied subject.</summary>
     public const string KEYCUSTODIAN_ISSUANCE_NOT_AUTHORIZED = "KEYCUSTODIAN_ISSUANCE_NOT_AUTHORIZED";
 
@@ -141,6 +147,8 @@ public static class KeyCustodianErrorCodes
         "KEYCUSTODIAN_SIGNING_INPUT_TOO_LARGE",
         "KEYCUSTODIAN_KEYRING_KEY_UNAVAILABLE",
         "KEYCUSTODIAN_KEYRING_DOMAIN_NOT_AUTHORIZED",
+        "KEYCUSTODIAN_SEAL_NOT_AUTHORIZED",
+        "KEYCUSTODIAN_SEAL_KEY_UNAVAILABLE",
         "KEYCUSTODIAN_ISSUANCE_NOT_AUTHORIZED",
         "KEYCUSTODIAN_INVALID_CSR",
         "KEYCUSTODIAN_CA_CERTIFICATE_NOT_AUTHORIZED",
@@ -181,6 +189,8 @@ public static class KeyCustodianErrorCodes
         "KEYCUSTODIAN_SIGNING_INPUT_TOO_LARGE" => 400,
         "KEYCUSTODIAN_KEYRING_KEY_UNAVAILABLE" => 503,
         "KEYCUSTODIAN_KEYRING_DOMAIN_NOT_AUTHORIZED" => 403,
+        "KEYCUSTODIAN_SEAL_NOT_AUTHORIZED" => 403,
+        "KEYCUSTODIAN_SEAL_KEY_UNAVAILABLE" => 503,
         "KEYCUSTODIAN_ISSUANCE_NOT_AUTHORIZED" => 403,
         "KEYCUSTODIAN_INVALID_CSR" => 400,
         "KEYCUSTODIAN_CA_CERTIFICATE_NOT_AUTHORIZED" => 403,

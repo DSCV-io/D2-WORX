@@ -271,7 +271,7 @@ public sealed class AspNetCoreMiddlewareE2ETests
     [Fact]
     public async Task ProblemDetails_OnGetThrow_NeverLeaksExceptionMessage()
     {
-        // NEGATIVE regression for §3.2 + §20.4 — the synthetic /throw
+        // NEGATIVE regression for §3.2 + §3.14 — the synthetic /throw
         // exception message ("Synthetic /throw failure (do not log).")
         // must NOT appear in the response body under the COMPOSED
         // pipeline.

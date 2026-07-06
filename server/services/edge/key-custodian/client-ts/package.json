@@ -1,0 +1,42 @@
+{
+  "name": "@d2/key-custodian-client",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -b",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "type-check:test": "tsc -p tsconfig.test.json",
+    "emit-csr-fixtures": "tsx scripts/emit-csr-fixtures.fixture.ts"
+  },
+  "dependencies": {
+    "@d2/grpc-client": "workspace:*",
+    "@d2/logging": "workspace:*",
+    "@d2/resilience": "workspace:*",
+    "@d2/result": "workspace:*",
+    "@d2/utilities": "workspace:*",
+    "@grpc/grpc-js": "1.14.3",
+    "@peculiar/x509": "2.0.0",
+    "reflect-metadata": "0.2.2",
+    "temporal-polyfill": "0.3.2"
+  },
+  "devDependencies": {
+    "@grpc/proto-loader": "0.8.1",
+    "@vitest/coverage-v8": "4.0.18",
+    "tsx": "4.20.6",
+    "typescript": "5.9.3",
+    "vitest": "4.0.18"
+  }
+}

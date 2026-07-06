@@ -61,6 +61,16 @@ options:
     # Distinct from proto-csharp-namespace so proto types and service impl do not collide.
     grpc-service-namespace: "D2.Edge.Tests.TypeSpecGrpc.Generated"
 
+    # TS-client production-emission target — per @d2ServedBy module → repo-relative
+    # dir. For each named module, the emitted TS SSR gRPC client + the TS DTOs of
+    # its @d2GrpcMethod ops are ALSO written here (in addition to dist/generated),
+    # so the service-owned TS client package imports the generated wire surface
+    # directly. Config-only + concern-driven — routing is by module membership, no
+    # per-op special cases. The generated surface is @ts-nocheck / .prettierignore'd
+    # (byte-gate-governed); the hand-written runtime wraps it.
+    ts-client-output-dirs:
+      KeyCustodian: "server/services/edge/key-custodian/client-ts/src/generated"
+
 imports:
   - "./key-custodian/key-custodian.tsp"
   - "./fixtures/sign-shaped.tsp"

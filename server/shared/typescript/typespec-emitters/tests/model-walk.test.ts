@@ -103,6 +103,19 @@ describe("walkModel_ScalarField_ResolvesCorrectly", () => {
     expect(fields[0]!.csType).toBe("int");
     expect(fields[0]!.tsType).toBe("number");
   });
+
+  it("empty property name → empty csName + no JSON-name override", () => {
+    // Adversarial: a zero-length property name. resolveJsonName computes its
+    // default JSON name as `csName.length > 0 ? camelCase : csName` — the empty
+    // csName takes the `: csName` arm, yielding an empty default and no override.
+    const { prop, redactMap } = makeProp(makeScalar("string"));
+    const model = makeModel([["", prop]]);
+    const { fields } = walkModel(makeProgram(redactMap), model, () => {});
+
+    expect(fields).toHaveLength(1);
+    expect(fields[0]!.csName).toBe("");
+    expect(fields[0]!.jsonName).toBeUndefined();
+  });
 });
 
 describe("walkModel_OptionalField_NullableTypes", () => {

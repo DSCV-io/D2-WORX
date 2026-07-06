@@ -8,6 +8,8 @@ namespace D2.Edge.Tests.Unit.KeyCustodian.App;
 
 using D2.Edge.KeyCustodian.App.Application;
 using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.ActivateKey;
+using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.GetOrLazyProvisionOwnSealPrivateKey;
+using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.GetOrLazyProvisionSealPublicKey;
 using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.IssueLeaf;
 using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.IssueWorkloadCertificate;
 using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.RetireKey;
@@ -61,6 +63,8 @@ public sealed class KeyCustodianAppServiceCollectionExtensionsTests
         services.Should().Contain(d => d.ServiceType == typeof(ISignHandler));
         services.Should().Contain(d => d.ServiceType == typeof(IGetKeyringHandler));
         services.Should().Contain(d => d.ServiceType == typeof(IGetCaCertificateHandler));
+        services.Should().Contain(d => d.ServiceType == typeof(IGetOrLazyProvisionSealPublicKeyHandler));
+        services.Should().Contain(d => d.ServiceType == typeof(IGetOrLazyProvisionOwnSealPrivateKeyHandler));
         services.Should().Contain(d => d.ServiceType == typeof(IKeyCustodianApi));
         services.Should().Contain(d => d.ServiceType == typeof(ISigningDomainAuthorityPolicy));
         services.Should().Contain(d => d.ServiceType == typeof(IKeyringDomainAuthorityPolicy));
@@ -200,6 +204,12 @@ public sealed class KeyCustodianAppServiceCollectionExtensionsTests
         sp.GetRequiredService<IGetCaCertificateHandler>()
             .Should().BeOfType<GetCaCertificateHandler>(
                 "AddD2KeyCustodianApp registers the CA-chain query handler");
+        sp.GetRequiredService<IGetOrLazyProvisionSealPublicKeyHandler>()
+            .Should().BeOfType<GetOrLazyProvisionSealPublicKeyHandler>(
+                "AddD2KeyCustodianApp registers the seal-public-key command handler");
+        sp.GetRequiredService<IGetOrLazyProvisionOwnSealPrivateKeyHandler>()
+            .Should().BeOfType<GetOrLazyProvisionOwnSealPrivateKeyHandler>(
+                "AddD2KeyCustodianApp registers the own-seal-private-key command handler");
         sp.GetRequiredService<IIssueLeafHandler>()
             .Should().BeOfType<IssueLeafHandler>(
                 "AddD2KeyCustodianApp registers the generated-op issuance shell");

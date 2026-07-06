@@ -93,4 +93,23 @@ describe("emitProtocolAudiences", () => {
     });
     expect(r.diagnostics.some((d) => d.id === "D2PAUD004")).toBe(true);
   });
+
+  it("emits a description-less entry with no per-entry JSDoc doc comment", () => {
+    // A VALID entry (SCREAMING_SNAKE name, non-empty unique value) carrying no
+    // `description` — exercises the false arm of the emit loop's
+    // `description !== undefined && length > 0` guard: no `/** … */` line is
+    // written immediately before the entry.
+    const r = emitProtocolAudiences({
+      protocolAudiences: [{ name: "NO_DESC_AUDIENCE", value: "d2.nodesc" }],
+    });
+    expect(r.diagnostics).toEqual([]);
+    expect(r.source).toContain('NO_DESC_AUDIENCE: "d2.nodesc"');
+
+    const lines = r.source.split("\n");
+    const entryIdx = lines.findIndex((l) =>
+      l.includes('NO_DESC_AUDIENCE: "d2.nodesc"'),
+    );
+    expect(entryIdx).toBeGreaterThan(0);
+    expect(lines[entryIdx - 1]).not.toContain("/**");
+  });
 });

@@ -10,3 +10,10 @@ export {
   type DlqFailureCause,
   ALL_DLQ_FAILURE_CAUSES,
 } from "./dlq-failure-metadata.g.js";
+export {
+  MqMessages,
+  type MqMessage,
+  type MqMessageDescriptor,
+  MqMessagesRegistry,
+  ALL_MQ_MESSAGE_CONSTANTS,
+} from "./mq-messages.g.js";

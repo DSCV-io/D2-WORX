@@ -10,6 +10,8 @@ using D2.Edge.KeyCustodian.App.Application.Facade;
 using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.ActivateKey;
 using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.CompromiseKey;
 using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.GenerateKey;
+using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.GetOrLazyProvisionOwnSealPrivateKey;
+using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.GetOrLazyProvisionSealPublicKey;
 using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.IssueLeaf;
 using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.IssueWorkloadCertificate;
 using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.RetireKey;
@@ -24,7 +26,7 @@ using D2.Edge.KeyCustodian.App.Application.Handlers.Queries.GetRotationPlan;
 using D2.Edge.KeyCustodian.App.Application.Handlers.Queries.Sign;
 
 /// <summary>
-/// DI registration for the KeyCustodian App layer: the 15 operation handlers and
+/// DI registration for the KeyCustodian App layer: the 17 operation handlers and
 /// the options-backed rotation-policy + authority providers.
 /// </summary>
 /// <remarks>
@@ -68,6 +70,9 @@ public static class KeyCustodianAppServiceCollectionExtensions
             services.AddTransient<IIssueLeafHandler, IssueLeafHandler>();
             services.AddTransient<
                 ISeedCertificateAuthorityHandler, SeedCertificateAuthorityHandler>();
+            services.AddTransient<IGetOrLazyProvisionSealPublicKeyHandler, GetOrLazyProvisionSealPublicKeyHandler>();
+            services.AddTransient<
+                IGetOrLazyProvisionOwnSealPrivateKeyHandler, GetOrLazyProvisionOwnSealPrivateKeyHandler>();
 
             // Query handlers.
             services.AddTransient<IGetJwksHandler, GetJwksHandler>();

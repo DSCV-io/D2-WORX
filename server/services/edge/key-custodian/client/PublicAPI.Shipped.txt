@@ -17,6 +17,8 @@ D2.Edge.KeyCustodian.Client.Facade.IKeyCustodianApi.GetCaCertificateAsync(D2.Edg
 D2.Edge.KeyCustodian.Client.Facade.IKeyCustodianApi.GetJwksAsync(D2.Edge.KeyCustodian.Client.Jwks.GetJwksInput! input, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<D2.Shared.Result.D2Result<D2.Edge.KeyCustodian.Client.Jwks.GetJwksOutput?>!>
 D2.Edge.KeyCustodian.Client.Facade.IKeyCustodianApi.GetKeyringAsync(D2.Edge.KeyCustodian.Client.Keyring.GetKeyringInput! input, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<D2.Shared.Result.D2Result<D2.Edge.KeyCustodian.Client.Keyring.GetKeyringOutput?>!>
 D2.Edge.KeyCustodian.Client.Facade.IKeyCustodianApi.GetOidcConfigurationAsync(D2.Edge.KeyCustodian.Client.OidcConfiguration.GetOidcConfigurationInput! input, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<D2.Shared.Result.D2Result<D2.Edge.KeyCustodian.Client.OidcConfiguration.GetOidcConfigurationOutput?>!>
+D2.Edge.KeyCustodian.Client.Facade.IKeyCustodianApi.GetOrLazyProvisionOwnSealPrivateKeyAsync(D2.Edge.KeyCustodian.Client.Sealing.GetOrLazyProvisionOwnSealPrivateKeyInput! input, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<D2.Shared.Result.D2Result<D2.Edge.KeyCustodian.Client.Sealing.GetOrLazyProvisionOwnSealPrivateKeyOutput?>!>
+D2.Edge.KeyCustodian.Client.Facade.IKeyCustodianApi.GetOrLazyProvisionSealPublicKeyAsync(D2.Edge.KeyCustodian.Client.Sealing.GetOrLazyProvisionSealPublicKeyInput! input, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<D2.Shared.Result.D2Result<D2.Edge.KeyCustodian.Client.Sealing.GetOrLazyProvisionSealPublicKeyOutput?>!>
 D2.Edge.KeyCustodian.Client.Facade.IKeyCustodianApi.IssueLeafAsync(D2.Edge.KeyCustodian.Client.Issuance.IssueLeafInput! input, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<D2.Shared.Result.D2Result<D2.Edge.KeyCustodian.Client.Issuance.IssueLeafOutput?>!>
 D2.Edge.KeyCustodian.Client.Facade.IKeyCustodianApi.SignAsync(D2.Edge.KeyCustodian.Client.Signing.SignInput! input, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<D2.Shared.Result.D2Result<D2.Edge.KeyCustodian.Client.Signing.SignOutput?>!>
 D2.Edge.KeyCustodian.Client.Issuance.IssueLeafInput
@@ -129,6 +131,53 @@ D2.Edge.KeyCustodian.Client.OidcConfiguration.GetOidcConfigurationOutput.Respons
 D2.Edge.KeyCustodian.Client.OidcConfiguration.GetOidcConfigurationOutput.ResponseTypesSupported.init -> void
 D2.Edge.KeyCustodian.Client.OidcConfiguration.GetOidcConfigurationOutput.SubjectTypesSupported.get -> System.Collections.Generic.IReadOnlyList<string!>!
 D2.Edge.KeyCustodian.Client.OidcConfiguration.GetOidcConfigurationOutput.SubjectTypesSupported.init -> void
+D2.Edge.KeyCustodian.Client.Sealing.GetOrLazyProvisionOwnSealPrivateKeyInput
+D2.Edge.KeyCustodian.Client.Sealing.GetOrLazyProvisionOwnSealPrivateKeyInput.<Clone>$() -> D2.Edge.KeyCustodian.Client.Sealing.GetOrLazyProvisionOwnSealPrivateKeyInput!
+D2.Edge.KeyCustodian.Client.Sealing.GetOrLazyProvisionOwnSealPrivateKeyInput.Equals(D2.Edge.KeyCustodian.Client.Sealing.GetOrLazyProvisionOwnSealPrivateKeyInput? other) -> bool
+D2.Edge.KeyCustodian.Client.Sealing.GetOrLazyProvisionOwnSealPrivateKeyInput.GetOrLazyProvisionOwnSealPrivateKeyInput() -> void
+D2.Edge.KeyCustodian.Client.Sealing.GetOrLazyProvisionOwnSealPrivateKeyOutput
+D2.Edge.KeyCustodian.Client.Sealing.GetOrLazyProvisionOwnSealPrivateKeyOutput.<Clone>$() -> D2.Edge.KeyCustodian.Client.Sealing.GetOrLazyProvisionOwnSealPrivateKeyOutput!
+D2.Edge.KeyCustodian.Client.Sealing.GetOrLazyProvisionOwnSealPrivateKeyOutput.ActiveKid.get -> string!
+D2.Edge.KeyCustodian.Client.Sealing.GetOrLazyProvisionOwnSealPrivateKeyOutput.ActiveKid.init -> void
+D2.Edge.KeyCustodian.Client.Sealing.GetOrLazyProvisionOwnSealPrivateKeyOutput.Deconstruct(out string! ActiveKid, out System.Collections.Generic.IReadOnlyList<D2.Edge.KeyCustodian.Client.Sealing.SealPrivateEntry!>! Entries) -> void
+D2.Edge.KeyCustodian.Client.Sealing.GetOrLazyProvisionOwnSealPrivateKeyOutput.Entries.get -> System.Collections.Generic.IReadOnlyList<D2.Edge.KeyCustodian.Client.Sealing.SealPrivateEntry!>!
+D2.Edge.KeyCustodian.Client.Sealing.GetOrLazyProvisionOwnSealPrivateKeyOutput.Entries.init -> void
+D2.Edge.KeyCustodian.Client.Sealing.GetOrLazyProvisionOwnSealPrivateKeyOutput.Equals(D2.Edge.KeyCustodian.Client.Sealing.GetOrLazyProvisionOwnSealPrivateKeyOutput? other) -> bool
+D2.Edge.KeyCustodian.Client.Sealing.GetOrLazyProvisionOwnSealPrivateKeyOutput.GetOrLazyProvisionOwnSealPrivateKeyOutput(string! ActiveKid, System.Collections.Generic.IReadOnlyList<D2.Edge.KeyCustodian.Client.Sealing.SealPrivateEntry!>! Entries) -> void
+D2.Edge.KeyCustodian.Client.Sealing.GetOrLazyProvisionSealPublicKeyInput
+D2.Edge.KeyCustodian.Client.Sealing.GetOrLazyProvisionSealPublicKeyInput.<Clone>$() -> D2.Edge.KeyCustodian.Client.Sealing.GetOrLazyProvisionSealPublicKeyInput!
+D2.Edge.KeyCustodian.Client.Sealing.GetOrLazyProvisionSealPublicKeyInput.Deconstruct(out string! ServiceId) -> void
+D2.Edge.KeyCustodian.Client.Sealing.GetOrLazyProvisionSealPublicKeyInput.Equals(D2.Edge.KeyCustodian.Client.Sealing.GetOrLazyProvisionSealPublicKeyInput? other) -> bool
+D2.Edge.KeyCustodian.Client.Sealing.GetOrLazyProvisionSealPublicKeyInput.GetOrLazyProvisionSealPublicKeyInput(string! ServiceId) -> void
+D2.Edge.KeyCustodian.Client.Sealing.GetOrLazyProvisionSealPublicKeyInput.ServiceId.get -> string!
+D2.Edge.KeyCustodian.Client.Sealing.GetOrLazyProvisionSealPublicKeyInput.ServiceId.init -> void
+D2.Edge.KeyCustodian.Client.Sealing.GetOrLazyProvisionSealPublicKeyOutput
+D2.Edge.KeyCustodian.Client.Sealing.GetOrLazyProvisionSealPublicKeyOutput.<Clone>$() -> D2.Edge.KeyCustodian.Client.Sealing.GetOrLazyProvisionSealPublicKeyOutput!
+D2.Edge.KeyCustodian.Client.Sealing.GetOrLazyProvisionSealPublicKeyOutput.ActiveKid.get -> string!
+D2.Edge.KeyCustodian.Client.Sealing.GetOrLazyProvisionSealPublicKeyOutput.ActiveKid.init -> void
+D2.Edge.KeyCustodian.Client.Sealing.GetOrLazyProvisionSealPublicKeyOutput.Deconstruct(out string! ActiveKid, out System.Collections.Generic.IReadOnlyList<D2.Edge.KeyCustodian.Client.Sealing.SealPublicEntry!>! Entries) -> void
+D2.Edge.KeyCustodian.Client.Sealing.GetOrLazyProvisionSealPublicKeyOutput.Entries.get -> System.Collections.Generic.IReadOnlyList<D2.Edge.KeyCustodian.Client.Sealing.SealPublicEntry!>!
+D2.Edge.KeyCustodian.Client.Sealing.GetOrLazyProvisionSealPublicKeyOutput.Entries.init -> void
+D2.Edge.KeyCustodian.Client.Sealing.GetOrLazyProvisionSealPublicKeyOutput.Equals(D2.Edge.KeyCustodian.Client.Sealing.GetOrLazyProvisionSealPublicKeyOutput? other) -> bool
+D2.Edge.KeyCustodian.Client.Sealing.GetOrLazyProvisionSealPublicKeyOutput.GetOrLazyProvisionSealPublicKeyOutput(string! ActiveKid, System.Collections.Generic.IReadOnlyList<D2.Edge.KeyCustodian.Client.Sealing.SealPublicEntry!>! Entries) -> void
+D2.Edge.KeyCustodian.Client.Sealing.SealPrivateEntry
+D2.Edge.KeyCustodian.Client.Sealing.SealPrivateEntry.<Clone>$() -> D2.Edge.KeyCustodian.Client.Sealing.SealPrivateEntry!
+D2.Edge.KeyCustodian.Client.Sealing.SealPrivateEntry.Deconstruct(out string! Kid, out byte[]! PrivatePkcs8) -> void
+D2.Edge.KeyCustodian.Client.Sealing.SealPrivateEntry.Equals(D2.Edge.KeyCustodian.Client.Sealing.SealPrivateEntry? other) -> bool
+D2.Edge.KeyCustodian.Client.Sealing.SealPrivateEntry.Kid.get -> string!
+D2.Edge.KeyCustodian.Client.Sealing.SealPrivateEntry.Kid.init -> void
+D2.Edge.KeyCustodian.Client.Sealing.SealPrivateEntry.PrivatePkcs8.get -> byte[]!
+D2.Edge.KeyCustodian.Client.Sealing.SealPrivateEntry.PrivatePkcs8.init -> void
+D2.Edge.KeyCustodian.Client.Sealing.SealPrivateEntry.SealPrivateEntry(string! Kid, byte[]! PrivatePkcs8) -> void
+D2.Edge.KeyCustodian.Client.Sealing.SealPublicEntry
+D2.Edge.KeyCustodian.Client.Sealing.SealPublicEntry.<Clone>$() -> D2.Edge.KeyCustodian.Client.Sealing.SealPublicEntry!
+D2.Edge.KeyCustodian.Client.Sealing.SealPublicEntry.Deconstruct(out string! Kid, out byte[]! PublicSpki) -> void
+D2.Edge.KeyCustodian.Client.Sealing.SealPublicEntry.Equals(D2.Edge.KeyCustodian.Client.Sealing.SealPublicEntry? other) -> bool
+D2.Edge.KeyCustodian.Client.Sealing.SealPublicEntry.Kid.get -> string!
+D2.Edge.KeyCustodian.Client.Sealing.SealPublicEntry.Kid.init -> void
+D2.Edge.KeyCustodian.Client.Sealing.SealPublicEntry.PublicSpki.get -> byte[]!
+D2.Edge.KeyCustodian.Client.Sealing.SealPublicEntry.PublicSpki.init -> void
+D2.Edge.KeyCustodian.Client.Sealing.SealPublicEntry.SealPublicEntry(string! Kid, byte[]! PublicSpki) -> void
 D2.Edge.KeyCustodian.Client.Signing.IJwtSigningCapability
 D2.Edge.KeyCustodian.Client.Signing.IJwtSigningCapability.SignJwtAsync(D2.Edge.KeyCustodian.Client.Signing.SignInput! input, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<D2.Shared.Result.D2Result<D2.Edge.KeyCustodian.Client.Signing.SignOutput!>!>
 D2.Edge.KeyCustodian.Client.Signing.SignInput
@@ -219,6 +268,24 @@ override D2.Edge.KeyCustodian.Client.OidcConfiguration.GetOidcConfigurationInput
 override D2.Edge.KeyCustodian.Client.OidcConfiguration.GetOidcConfigurationOutput.Equals(object? obj) -> bool
 override D2.Edge.KeyCustodian.Client.OidcConfiguration.GetOidcConfigurationOutput.GetHashCode() -> int
 override D2.Edge.KeyCustodian.Client.OidcConfiguration.GetOidcConfigurationOutput.ToString() -> string!
+override D2.Edge.KeyCustodian.Client.Sealing.GetOrLazyProvisionOwnSealPrivateKeyInput.Equals(object? obj) -> bool
+override D2.Edge.KeyCustodian.Client.Sealing.GetOrLazyProvisionOwnSealPrivateKeyInput.GetHashCode() -> int
+override D2.Edge.KeyCustodian.Client.Sealing.GetOrLazyProvisionOwnSealPrivateKeyInput.ToString() -> string!
+override D2.Edge.KeyCustodian.Client.Sealing.GetOrLazyProvisionOwnSealPrivateKeyOutput.Equals(object? obj) -> bool
+override D2.Edge.KeyCustodian.Client.Sealing.GetOrLazyProvisionOwnSealPrivateKeyOutput.GetHashCode() -> int
+override D2.Edge.KeyCustodian.Client.Sealing.GetOrLazyProvisionOwnSealPrivateKeyOutput.ToString() -> string!
+override D2.Edge.KeyCustodian.Client.Sealing.GetOrLazyProvisionSealPublicKeyInput.Equals(object? obj) -> bool
+override D2.Edge.KeyCustodian.Client.Sealing.GetOrLazyProvisionSealPublicKeyInput.GetHashCode() -> int
+override D2.Edge.KeyCustodian.Client.Sealing.GetOrLazyProvisionSealPublicKeyInput.ToString() -> string!
+override D2.Edge.KeyCustodian.Client.Sealing.GetOrLazyProvisionSealPublicKeyOutput.Equals(object? obj) -> bool
+override D2.Edge.KeyCustodian.Client.Sealing.GetOrLazyProvisionSealPublicKeyOutput.GetHashCode() -> int
+override D2.Edge.KeyCustodian.Client.Sealing.GetOrLazyProvisionSealPublicKeyOutput.ToString() -> string!
+override D2.Edge.KeyCustodian.Client.Sealing.SealPrivateEntry.Equals(object? obj) -> bool
+override D2.Edge.KeyCustodian.Client.Sealing.SealPrivateEntry.GetHashCode() -> int
+override D2.Edge.KeyCustodian.Client.Sealing.SealPrivateEntry.ToString() -> string!
+override D2.Edge.KeyCustodian.Client.Sealing.SealPublicEntry.Equals(object? obj) -> bool
+override D2.Edge.KeyCustodian.Client.Sealing.SealPublicEntry.GetHashCode() -> int
+override D2.Edge.KeyCustodian.Client.Sealing.SealPublicEntry.ToString() -> string!
 override D2.Edge.KeyCustodian.Client.Signing.SignInput.Equals(object? obj) -> bool
 override D2.Edge.KeyCustodian.Client.Signing.SignInput.GetHashCode() -> int
 override D2.Edge.KeyCustodian.Client.Signing.SignInput.ToString() -> string!
@@ -254,6 +321,18 @@ static D2.Edge.KeyCustodian.Client.OidcConfiguration.GetOidcConfigurationInput.o
 static D2.Edge.KeyCustodian.Client.OidcConfiguration.GetOidcConfigurationInput.operator ==(D2.Edge.KeyCustodian.Client.OidcConfiguration.GetOidcConfigurationInput? left, D2.Edge.KeyCustodian.Client.OidcConfiguration.GetOidcConfigurationInput? right) -> bool
 static D2.Edge.KeyCustodian.Client.OidcConfiguration.GetOidcConfigurationOutput.operator !=(D2.Edge.KeyCustodian.Client.OidcConfiguration.GetOidcConfigurationOutput? left, D2.Edge.KeyCustodian.Client.OidcConfiguration.GetOidcConfigurationOutput? right) -> bool
 static D2.Edge.KeyCustodian.Client.OidcConfiguration.GetOidcConfigurationOutput.operator ==(D2.Edge.KeyCustodian.Client.OidcConfiguration.GetOidcConfigurationOutput? left, D2.Edge.KeyCustodian.Client.OidcConfiguration.GetOidcConfigurationOutput? right) -> bool
+static D2.Edge.KeyCustodian.Client.Sealing.GetOrLazyProvisionOwnSealPrivateKeyInput.operator !=(D2.Edge.KeyCustodian.Client.Sealing.GetOrLazyProvisionOwnSealPrivateKeyInput? left, D2.Edge.KeyCustodian.Client.Sealing.GetOrLazyProvisionOwnSealPrivateKeyInput? right) -> bool
+static D2.Edge.KeyCustodian.Client.Sealing.GetOrLazyProvisionOwnSealPrivateKeyInput.operator ==(D2.Edge.KeyCustodian.Client.Sealing.GetOrLazyProvisionOwnSealPrivateKeyInput? left, D2.Edge.KeyCustodian.Client.Sealing.GetOrLazyProvisionOwnSealPrivateKeyInput? right) -> bool
+static D2.Edge.KeyCustodian.Client.Sealing.GetOrLazyProvisionOwnSealPrivateKeyOutput.operator !=(D2.Edge.KeyCustodian.Client.Sealing.GetOrLazyProvisionOwnSealPrivateKeyOutput? left, D2.Edge.KeyCustodian.Client.Sealing.GetOrLazyProvisionOwnSealPrivateKeyOutput? right) -> bool
+static D2.Edge.KeyCustodian.Client.Sealing.GetOrLazyProvisionOwnSealPrivateKeyOutput.operator ==(D2.Edge.KeyCustodian.Client.Sealing.GetOrLazyProvisionOwnSealPrivateKeyOutput? left, D2.Edge.KeyCustodian.Client.Sealing.GetOrLazyProvisionOwnSealPrivateKeyOutput? right) -> bool
+static D2.Edge.KeyCustodian.Client.Sealing.GetOrLazyProvisionSealPublicKeyInput.operator !=(D2.Edge.KeyCustodian.Client.Sealing.GetOrLazyProvisionSealPublicKeyInput? left, D2.Edge.KeyCustodian.Client.Sealing.GetOrLazyProvisionSealPublicKeyInput? right) -> bool
+static D2.Edge.KeyCustodian.Client.Sealing.GetOrLazyProvisionSealPublicKeyInput.operator ==(D2.Edge.KeyCustodian.Client.Sealing.GetOrLazyProvisionSealPublicKeyInput? left, D2.Edge.KeyCustodian.Client.Sealing.GetOrLazyProvisionSealPublicKeyInput? right) -> bool
+static D2.Edge.KeyCustodian.Client.Sealing.GetOrLazyProvisionSealPublicKeyOutput.operator !=(D2.Edge.KeyCustodian.Client.Sealing.GetOrLazyProvisionSealPublicKeyOutput? left, D2.Edge.KeyCustodian.Client.Sealing.GetOrLazyProvisionSealPublicKeyOutput? right) -> bool
+static D2.Edge.KeyCustodian.Client.Sealing.GetOrLazyProvisionSealPublicKeyOutput.operator ==(D2.Edge.KeyCustodian.Client.Sealing.GetOrLazyProvisionSealPublicKeyOutput? left, D2.Edge.KeyCustodian.Client.Sealing.GetOrLazyProvisionSealPublicKeyOutput? right) -> bool
+static D2.Edge.KeyCustodian.Client.Sealing.SealPrivateEntry.operator !=(D2.Edge.KeyCustodian.Client.Sealing.SealPrivateEntry? left, D2.Edge.KeyCustodian.Client.Sealing.SealPrivateEntry? right) -> bool
+static D2.Edge.KeyCustodian.Client.Sealing.SealPrivateEntry.operator ==(D2.Edge.KeyCustodian.Client.Sealing.SealPrivateEntry? left, D2.Edge.KeyCustodian.Client.Sealing.SealPrivateEntry? right) -> bool
+static D2.Edge.KeyCustodian.Client.Sealing.SealPublicEntry.operator !=(D2.Edge.KeyCustodian.Client.Sealing.SealPublicEntry? left, D2.Edge.KeyCustodian.Client.Sealing.SealPublicEntry? right) -> bool
+static D2.Edge.KeyCustodian.Client.Sealing.SealPublicEntry.operator ==(D2.Edge.KeyCustodian.Client.Sealing.SealPublicEntry? left, D2.Edge.KeyCustodian.Client.Sealing.SealPublicEntry? right) -> bool
 static D2.Edge.KeyCustodian.Client.Signing.SignInput.operator !=(D2.Edge.KeyCustodian.Client.Signing.SignInput? left, D2.Edge.KeyCustodian.Client.Signing.SignInput? right) -> bool
 static D2.Edge.KeyCustodian.Client.Signing.SignInput.operator ==(D2.Edge.KeyCustodian.Client.Signing.SignInput? left, D2.Edge.KeyCustodian.Client.Signing.SignInput? right) -> bool
 static D2.Edge.KeyCustodian.Client.Signing.SignOutput.operator !=(D2.Edge.KeyCustodian.Client.Signing.SignOutput? left, D2.Edge.KeyCustodian.Client.Signing.SignOutput? right) -> bool

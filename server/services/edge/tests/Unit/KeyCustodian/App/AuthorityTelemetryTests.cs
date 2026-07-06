@@ -17,10 +17,9 @@ using Microsoft.Extensions.Logging;
 /// rejection counter, and the general capability-authority rejection counter with
 /// bounded closed-enum tags) and the <c>AuthorityRejected</c> log delegate (EventId
 /// 9512, no <see cref="System.Exception"/> parameter, workload / capability / target
-/// loggable). The counters are CALLED from the live sign handler; the seal /
-/// cert-issuance path that also reports them is still deferred. The authority
-/// foundation declares them and proves they exist + emit + are reachable on the
-/// deny path.
+/// loggable). The counters are CALLED from the live deny paths of the sign, keyring,
+/// issuance, CA-cert, and seal handlers. This test declares them, proves they exist +
+/// emit + are reachable on the deny path, and pins the closed-set tag wire values.
 /// </summary>
 public sealed class AuthorityTelemetryTests
 {
@@ -138,6 +137,10 @@ public sealed class AuthorityTelemetryTests
         KeyCustodianMetrics.AuthorityRejections.Capability.SIGN.Should().Be("sign");
         KeyCustodianMetrics.AuthorityRejections.Capability.LIFECYCLE.Should().Be("lifecycle");
         KeyCustodianMetrics.AuthorityRejections.Capability.KEYRING.Should().Be("keyring");
+        KeyCustodianMetrics.AuthorityRejections.Capability.ISSUANCE.Should().Be("issuance");
+        KeyCustodianMetrics.AuthorityRejections.Capability.CA_CERT.Should().Be("ca-cert");
+        KeyCustodianMetrics.AuthorityRejections.Capability.SEAL_ENCRYPT.Should().Be("seal-encrypt");
+        KeyCustodianMetrics.AuthorityRejections.Capability.SEAL_DECRYPT.Should().Be("seal-decrypt");
 
         KeyCustodianMetrics.AuthorityRejections.Reason.ORIGIN_UNESTABLISHED
             .Should().Be("origin-unestablished");
@@ -159,6 +162,8 @@ public sealed class AuthorityTelemetryTests
         KeyCustodianMetrics.AuthorityRejections.Workload.NONE.Should().Be("<none>");
         KeyCustodianMetrics.AuthorityRejections.Workload.IN_PROCESS_MINTER
             .Should().Be("<in-process-minter>");
+
+        KeyCustodianMetrics.AuthorityRejections.Target.NONE.Should().Be("none");
     }
 
     /// <summary>Thread-safe capturing logger for asserting log entries by EventId.</summary>

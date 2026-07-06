@@ -15,7 +15,7 @@
     "dist"
   ],
   "scripts": {
-    "prebuild": "pnpm --filter ts-codegen exec tsx src/dlq-failure-metadata-emit.ts",
+    "prebuild": "pnpm --filter ts-codegen exec tsx src/dlq-failure-metadata-emit.ts && pnpm --filter ts-codegen exec tsx src/mq-messages-emit.ts",
     "build": "tsc -b",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",

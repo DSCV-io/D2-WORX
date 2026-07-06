@@ -324,9 +324,11 @@ static readonly D2.Shared.I18n.TK.Keycustodian.Authorization.ISSUANCE_NOT_AUTHOR
 static readonly D2.Shared.I18n.TK.Keycustodian.Authorization.KEYRING_DOMAIN_NOT_AUTHORIZED -> D2.Shared.I18n.TKMessage!
 static readonly D2.Shared.I18n.TK.Keycustodian.Authorization.MINTER_CAPABILITY_REQUIRED -> D2.Shared.I18n.TKMessage!
 static readonly D2.Shared.I18n.TK.Keycustodian.Authorization.REQUEST_ORIGIN_UNESTABLISHED -> D2.Shared.I18n.TKMessage!
+static readonly D2.Shared.I18n.TK.Keycustodian.Authorization.SEAL_NOT_AUTHORIZED -> D2.Shared.I18n.TKMessage!
 static readonly D2.Shared.I18n.TK.Keycustodian.Authorization.SIGNING_DOMAIN_NOT_AUTHORIZED -> D2.Shared.I18n.TKMessage!
 static readonly D2.Shared.I18n.TK.Keycustodian.Infrastructure.KEYRING_KEY_UNAVAILABLE -> D2.Shared.I18n.TKMessage!
 static readonly D2.Shared.I18n.TK.Keycustodian.Infrastructure.NO_ACTIVE_ISSUING_CA -> D2.Shared.I18n.TKMessage!
+static readonly D2.Shared.I18n.TK.Keycustodian.Infrastructure.SEAL_KEY_UNAVAILABLE -> D2.Shared.I18n.TKMessage!
 static readonly D2.Shared.I18n.TK.Keycustodian.Infrastructure.SIGNING_KEY_UNAVAILABLE -> D2.Shared.I18n.TKMessage!
 static readonly D2.Shared.I18n.TK.Keycustodian.Internal.INVALID_CERTIFICATE_REQUEST -> D2.Shared.I18n.TKMessage!
 static readonly D2.Shared.I18n.TK.Keycustodian.Internal.PRECONDITION_VIOLATED -> D2.Shared.I18n.TKMessage!

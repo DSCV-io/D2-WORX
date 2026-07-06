@@ -549,6 +549,17 @@ Both seams exist, so both emitters are BUILT + validated now; the ONLY deferrals
 | **SSR gRPC client → BFF composition root** | The real SSR gRPC channel + BFF composition root (`getChannel(...)` → real Edge endpoint + the real ts-proto stub + the generated `<module>GrpcClient` wired in `server/web/src/lib/server/…` + the context-propagation interceptor + boundary-token cache) | The BFF SSR composition root does not exist (the v2 BFF rebuild is a downstream phase) | The REAL `@d2/grpc-client` seam + the REAL fixture ts-proto types (real buf/ts-proto) + a fake stub |
 | **Browser REST client → BFF browser integration** | The real browser fetch-substrate wiring (`server/web/src/lib/client/rest/gateway-client.ts` `apiCall`/`apiCallAnon` wired to the generated `<module>RestClient`; the `$lib` alias resolves) | The substrate is the dormant pre-pivot BFF (not host-typechecked; the tracked `D2Result` static-call gap; `$lib` resolves only in `server/web`) | A FAITHFUL `apiCall`/`apiCallAnon` double (real signature, real `D2Result`) |
 
+### Production-emission routing — `ts-client-output-dirs` (`ts-client-output-dirs.integration.test.ts`)
+
+Config-driven output routing: the `ts-client-output-dirs` emitter option (a `@d2ServedBy`-module → directory map in `contracts/typespec/tspconfig.yaml`) directs the SSR gRPC client (`<module>-grpc-client.g.ts`) AND that module's `@d2GrpcMethod`-op DTOs to ALSO be written into the mapped service-owned client package `generated/` dir — the mechanism that lands the emitted TS client inside a service's own `client-ts/` package — in addition to the standard emitter output dir. `resolveTsClientOutputDirs` (`src/emitter.ts`) resolves the map; a module NOT in the map is emitted only to the standard dir (no mirror copy). Integration-proven via the TypeSpec test-host asserting the in-memory FS (no test doubles — real `$onEmit` compile):
+
+| Test | Scenario | Key assertion |
+| ---- | -------- | ------------- |
+| `tsClientOutputDirs_MirrorsClientAndDtosForMappedModule` | Mapped module | BOTH copies present — `<module>-grpc-client.g.ts` AND its gRPC-op DTO each appear twice (the standard dir + the mapped `…/client-ts/src/generated` mirror) |
+| `tsClientOutputDirs_UnmappedModuleNotMirrored` | Unmapped module | exactly ONE copy (standard dir only); no `client-ts` mirror for a module absent from the map |
+
+**Replace-trigger**: N/A — config-driven routing over the existing byte-gated TS-client emitters (no test doubles); the emitted content itself is pinned by the `ts-client-byte-parity.test.ts` gate above.
+
 ---
 
 ## OpenAPI `x-d2-*` extension emitter — real `getOpenAPI3` + `@d2*` stateMap seams

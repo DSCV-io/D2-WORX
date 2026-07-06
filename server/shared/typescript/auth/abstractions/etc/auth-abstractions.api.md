@@ -11,6 +11,9 @@ import { TKMessage } from '@d2/i18n-abstractions';
 export const ALL_AUTH_ERROR_CODES: readonly string[];
 
 // @public
+export const ALL_PROTOCOL_AUDIENCES: readonly string[];
+
+// @public
 export const ALL_SCOPES: readonly string[];
 
 // @public (undocumented)
@@ -145,6 +148,15 @@ export interface JwtPayload {
     readonly sub?: string;
 }
 
+// @public (undocumented)
+export type ProtocolAudience = (typeof ProtocolAudiences)[keyof typeof ProtocolAudiences];
+
+// @public
+export const ProtocolAudiences: {
+    readonly D2_EDGE_SELF_AUDIENCE: "d2-edge";
+    readonly D2_INTERNAL_AUDIENCE: "d2.internal";
+};
+
 // @public
 export const Scopes: {
     readonly anon: {
@@ -171,6 +183,18 @@ export const Scopes: {
     readonly billing: {
         readonly payment: {
             readonly charge: "billing.payment.charge";
+        };
+    };
+    readonly internal: {
+        readonly kc: {
+            readonly cacert: "internal.kc.cacert";
+            readonly issue: "internal.kc.issue";
+            readonly keyring: "internal.kc.keyring";
+            readonly seal: {
+                readonly encrypt: "internal.kc.seal.encrypt";
+                readonly open: "internal.kc.seal.open";
+            };
+            readonly sign: "internal.kc.sign";
         };
     };
     readonly self: {

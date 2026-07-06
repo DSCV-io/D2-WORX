@@ -579,6 +579,22 @@ const _KC_FACADE_OPS = [
     "Queries",
     "CaCertificate",
   ),
+  makeOp(
+    "getOrLazyProvisionSealPublicKey",
+    "GetOrLazyProvisionSealPublicKeyInput",
+    "GetOrLazyProvisionSealPublicKeyOutput",
+    undefined,
+    "Commands",
+    "Sealing",
+  ),
+  makeOp(
+    "getOrLazyProvisionOwnSealPrivateKey",
+    "GetOrLazyProvisionOwnSealPrivateKeyInput",
+    "GetOrLazyProvisionOwnSealPrivateKeyOutput",
+    undefined,
+    "Commands",
+    "Sealing",
+  ),
 ];
 
 describe("facadeEmitter_ByteGate_Interface", () => {

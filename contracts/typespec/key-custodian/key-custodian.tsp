@@ -304,4 +304,100 @@ namespace D2.KeyCustodian {
   @d2RequireAnyScope("internal.kc.cacert")
   @d2Audience("d2.internal")
   op getCaCertificate(input: GetCaCertificateInput): GetCaCertificateOutput;
+
+  /** Input to getOrLazyProvisionSealPublicKey: the target service whose PUBLIC sealing key to fetch. */
+  model GetOrLazyProvisionSealPublicKeyInput {
+    /** The service id whose seal:<serviceId> public sealing key to fetch (to seal a payload TO it). */
+    @d2Field(1)
+    serviceId: string;
+  }
+
+  /** A single fetchable PUBLIC sealing key: its kid plus the SPKI public key bytes. */
+  model SealPublicEntry {
+    /** The kid identifying this sealing key (matches a sealed-frame recipient kid). */
+    @d2Field(1)
+    kid: string;
+
+    /**
+     * The SPKI-encoded P-256 ECDH public key bytes. PUBLIC material — a producer seals TO
+     * it; harmless to over-share. Deliberately NOT redacted, like the JWKS signing key's
+     * public half.
+     */
+    @d2Field(2)
+    publicSpki: bytes;
+  }
+
+  /** Output of getOrLazyProvisionSealPublicKey: the active kid + every fetchable public sealing key (Active + Retiring). */
+  model GetOrLazyProvisionSealPublicKeyOutput {
+    /** The kid new seals must use (the single Active sealing key). */
+    @d2Field(1)
+    activeKid: string;
+
+    /** Every public sealing key (Active + Retiring), active first then retiring newest-activated-first. */
+    @d2Field(2)
+    entries: SealPublicEntry[];
+  }
+
+  /** A single fetchable PRIVATE sealing key: its kid plus the PKCS#8 private key bytes. */
+  model SealPrivateEntry {
+    /** The kid identifying this sealing key (matches a sealed-frame recipient kid). */
+    @d2Field(1)
+    kid: string;
+
+    /**
+     * The PKCS#8-encoded P-256 ECDH private key bytes. Custody transfers to the caller
+     * (which assembles a RecipientPrivateKeyring to open frames sealed to it). Secret
+     * material — redacted in logs.
+     */
+    @d2Redact("SecretInformation")
+    @d2Field(2)
+    privatePkcs8: bytes;
+  }
+
+  /** Output of getOrLazyProvisionOwnSealPrivateKey: the active kid + every openable private sealing key (Active + Retiring). */
+  model GetOrLazyProvisionOwnSealPrivateKeyOutput {
+    /** The kid new seals to this service use (the single Active sealing key). */
+    @d2Field(1)
+    activeKid: string;
+
+    /** Every private sealing key (Active + Retiring), active first then retiring newest-activated-first. */
+    @d2Field(2)
+    entries: SealPrivateEntry[];
+  }
+
+  /**
+   * Fetch a target service's PUBLIC sealing key (its active + retiring SPKI public keys)
+   * to seal a payload TO it. Any authenticated workload on a served plane (cross-process
+   * or in-process) may fetch ANY service's public key — public material is harmless to
+   * over-share; the transport scope gates whether the caller may seal at all. A @d2Command
+   * because the FIRST request for a service's seal domain provisions its keypair lazily (a
+   * persistent write). The served material is public — no redaction. A no-active-key window
+   * (a lost provisioning race not yet visible) returns the retryable 503.
+   */
+  @d2Command
+  @d2ServedBy("KeyCustodian")
+  @d2Concern("Sealing")
+  @d2InProcess
+  @d2GrpcMethod("KeyCustodianSealPublicKey", "GetOrLazyProvisionSealPublicKey")
+  @d2RequireAnyScope("internal.kc.seal.encrypt")
+  @d2Audience("d2.internal")
+  op getOrLazyProvisionSealPublicKey(input: GetOrLazyProvisionSealPublicKeyInput): GetOrLazyProvisionSealPublicKeyOutput;
+
+  /**
+   * Fetch the caller's OWN PRIVATE sealing key (its active + retiring PKCS#8 private keys)
+   * to open frames sealed to it. Cross-process only (the seal-decrypt hard gate) — a caller can
+   * only ever obtain ITS OWN key because the op carries NO target: the key is selected purely
+   * from the authenticated mTLS peer identity, which is unforgeable only on the cross-process
+   * plane. Impersonation is structurally unrepresentable. A @d2Command because the first
+   * request provisions the service's keypair lazily. The private key bytes are redacted in
+   * logs; a no-active-key window returns the retryable 503.
+   */
+  @d2Command
+  @d2ServedBy("KeyCustodian")
+  @d2Concern("Sealing")
+  @d2InProcess
+  @d2GrpcMethod("KeyCustodianOwnSealPrivateKey", "GetOrLazyProvisionOwnSealPrivateKey")
+  @d2RequireAnyScope("internal.kc.seal.open")
+  @d2Audience("d2.internal")
+  op getOrLazyProvisionOwnSealPrivateKey(): GetOrLazyProvisionOwnSealPrivateKeyOutput;
 }

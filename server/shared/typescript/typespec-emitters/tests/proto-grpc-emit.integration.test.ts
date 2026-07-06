@@ -167,6 +167,178 @@ describe("protoGrpcEmitIntegration_Sign_EmitsProtoAndService", () => {
 });
 
 // ---------------------------------------------------------------------------
+// Test 1b: param-less gRPC op → synthesized <Op>Input drives the mapper/service
+// ---------------------------------------------------------------------------
+//
+// Regression: a param-less op (e.g. the real getOrLazyProvisionOwnSealPrivateKey) has a
+// non-undefined but EMPTY parameters Model whose `.name` is "". The old
+// `inputModel?.name ?? fallback` (nullish) did NOT trigger on the empty string,
+// so dtoRequestName became "", emitting a malformed `using  = ...;` alias and
+// `internal  To()` in the transport mapper (CS1001/CS1002/CS1022 — the build
+// break at integration). The fix guards on `.length > 0` and falls back to the
+// synthesized `${toPascalFromCamel(opName)}Input`, byte-identical to the C# DTO
+// emitter's synthesized empty input record — so the alias resolves to the real
+// DTO type. This pins that a param-less gRPC op emits a valid, non-empty request
+// DTO name everywhere.
+
+describe("protoGrpcEmitIntegration_ParamlessOp_SynthesizedInputDrivesMapper", () => {
+  let host: Awaited<ReturnType<typeof createTestHost>>;
+
+  beforeAll(async () => {
+    host = await createTestHost({
+      libraries: [D2DecoratorTestLibrary, D2EmitterTestLibrary],
+    });
+  });
+
+  it("param-less @d2GrpcMethod op → mapper + service reference synthesized <Op>Input, not an empty alias", async () => {
+    host.addTypeSpecFile(
+      "main.tsp",
+      `
+      import "@d2/typespec-decorators";
+      using D2;
+      namespace D2.Fixtures;
+
+      model FixtureNoInputOutput { @d2Field(1) value: string; }
+
+      @d2Command
+      @d2ServedBy("FixtureNoInput")
+      @d2InProcess
+      @d2GrpcMethod("FixtureNoInputSigner", "GetFixtureNoInput")
+      op getFixtureNoInput(): FixtureNoInputOutput;
+      `,
+    );
+
+    await host.compile("main.tsp", {
+      emit: ["@d2/typespec-emitters"],
+      options: {
+        "@d2/typespec-emitters": {
+          "csharp-namespace": "D2.Test",
+          "proto-package": "d2.test.v1",
+          "proto-csharp-namespace": "D2.Test.Protos.V1",
+          "grpc-service-namespace": "D2.Test.Grpc",
+        },
+      },
+      outputDir: "testing:/out",
+    });
+
+    const errors = host.program.diagnostics.filter(
+      (d) => d.severity === "error",
+    );
+    expect(errors).toHaveLength(0);
+
+    // .proto emitted with an EMPTY request message (no params) — the request
+    // wrapper still exists so the RPC signature is well-formed.
+    const protoContent = getEmittedFile(host, ".g.proto");
+    expect(protoContent).toBeDefined();
+    expect(protoContent).toContain("message GetFixtureNoInputRequest {");
+
+    // Transport mapper: the synthesized GetFixtureNoInputInput drives the
+    // request→DTO mapper (never an empty `using  = ` / `internal  To()`).
+    const mapperContent = getEmittedFile(
+      host,
+      "GetFixtureNoInputTransportMappers.g.cs",
+    );
+    expect(mapperContent).toBeDefined();
+    expect(mapperContent).toContain(
+      "internal GetFixtureNoInputInput ToGetFixtureNoInputInput()",
+    );
+    expect(mapperContent).toContain("return new GetFixtureNoInputInput();");
+    // The load-bearing negative: the malformed empty-name alias must be absent.
+    expect(mapperContent).not.toContain("using  =");
+    expect(mapperContent).not.toContain("internal  To()");
+
+    // gRPC service: the request→DTO conversion names the synthesized DTO type.
+    const serviceContent = getEmittedFile(
+      host,
+      "FixtureNoInputSignerService.g.cs",
+    );
+    expect(serviceContent).toBeDefined();
+    expect(serviceContent).toContain(
+      "GetFixtureNoInputInput input = request.ToGetFixtureNoInputInput();",
+    );
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Test 1c: a gRPC op whose input AND output both reference the SAME nested model
+// src-exercises the $onEmit nested-descriptor assembly loop in
+// emitProtoAndGrpcService (dedup-by-name across the merged input+output walks +
+// the emitted nested `message`). The nested-model-grpc-byte-parity suite proves
+// the emitProto layer directly and does NOT drive this $onEmit assembly, so this
+// is the src-instrumented driver for that loop.
+// ---------------------------------------------------------------------------
+
+describe("protoGrpcEmitIntegration_NestedModel_AssemblesNestedDescriptors", () => {
+  let host: Awaited<ReturnType<typeof createTestHost>>;
+
+  beforeAll(async () => {
+    host = await createTestHost({
+      libraries: [D2DecoratorTestLibrary, D2EmitterTestLibrary],
+    });
+  });
+
+  it("input + output sharing a nested model → one deduped nested message emitted", async () => {
+    host.addTypeSpecFile(
+      "main.tsp",
+      `
+      import "@d2/typespec-decorators";
+      using D2;
+      namespace D2.Fixtures;
+
+      model NestedLineFixture { @d2Field(1) sku: string; @d2Field(2) qty: int32; }
+      model PlaceNestedFixtureInput { @d2Field(1) requestedLines: NestedLineFixture[]; }
+      model PlaceNestedFixtureOutput { @d2Field(1) confirmedLines: NestedLineFixture[]; }
+
+      @d2Command
+      @d2ServedBy("NestedFixtures")
+      @d2GrpcMethod("NestedFixturesSvc", "PlaceNested")
+      op placeNested(input: PlaceNestedFixtureInput): PlaceNestedFixtureOutput;
+      `,
+    );
+
+    await host.compile("main.tsp", {
+      emit: ["@d2/typespec-emitters"],
+      options: {
+        "@d2/typespec-emitters": {
+          "csharp-namespace": "D2.Test",
+          "proto-package": "d2.test.v1",
+          "proto-csharp-namespace": "D2.Test.Protos.V1",
+          "grpc-service-namespace": "D2.Test.Grpc",
+        },
+      },
+      outputDir: "testing:/out",
+    });
+
+    const errors = host.program.diagnostics.filter(
+      (d) => d.severity === "error",
+    );
+    expect(errors).toHaveLength(0);
+
+    const protoContent = getEmittedFile(host, ".g.proto");
+    expect(protoContent).toBeDefined();
+
+    // The shared nested model is emitted EXACTLY ONCE — deduped across the input +
+    // output walks by the $onEmit assembly loop (both the push arm and the
+    // seen-name `continue` arm run) — carrying both nested-scalar fields.
+    const nestedMsgDecls = (
+      protoContent!.match(/message NestedLineFixture \{/g) ?? []
+    ).length;
+    expect(nestedMsgDecls).toBe(1);
+    expect(protoContent).toContain("string sku = 1;");
+    expect(protoContent).toContain("int32 qty = 2;");
+
+    // Both the request and response messages carry the repeated nested field
+    // (proto field names are snake_cased from the TypeSpec property names).
+    expect(protoContent).toContain(
+      "repeated NestedLineFixture requested_lines",
+    );
+    expect(protoContent).toContain(
+      "repeated NestedLineFixture confirmed_lines",
+    );
+  });
+});
+
+// ---------------------------------------------------------------------------
 // Test 2: getJwks op (no @d2GrpcMethod) → NO .proto emitted
 // ---------------------------------------------------------------------------
 

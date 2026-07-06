@@ -266,7 +266,7 @@ other sensitive context.
 | `tracestate`          | producer → consumer | Optional W3C vendor-specific trace state, forwarded as-is.                                                                                                                                                                                     |
 | `x-d2-encryption-kid` | producer → consumer | Encryption key id. Set only on encrypted messages.                                                                                                                                                                                             |
 | `x-d2-context`        | producer → consumer | Base64url-of-JSON encoded `PropagatedContext` — request id, request path, fingerprints, WhoIs hash. NOT identity (UserId / OrgId / Scopes — those rebuild from the JWT at every hop).                                                          |
-| `x-d2-failure-reason` | DLQ-only            | JSON-encoded `DlqFailureMetadata` (cause, errorCode, attemptCount, traceId). Attached by the consumer when republishing to the queue's DLX — see the DLQ section below.                                                                        |
+| `x-d2-failure-reason` | DLQ-only            | JSON-encoded `DlqFailureMetadata` — all six fields: `cause`, `errorCode`, `detail`, `attemptCount`, `traceId`, `nackedBy`. Attached by the consumer when republishing to the queue's DLX — see the DLQ section below.                          |
 
 > The runtime header **direction + purpose** semantic catalog lives in this
 > doc (it's the operational reference). The **wire-value constants**
@@ -743,6 +743,20 @@ cycles via `MaxAttempts`.
   stay transport-free.
 
 ---
+
+## TypeScript consumer twin
+
+A service-agnostic **consumer** runtime for Node lives at
+[`server/shared/typescript/messaging/rabbitmq/`](../../../typescript/messaging/rabbitmq/README.md)
+(`@d2/messaging-rabbitmq`). It declares the same topology (primary + `{q}.dlx` +
+`{q}.dlq` + retry tiers), consumes with manual acks, republishes failures with
+the same `DlqFailureMetadata`, deduplicates via the same 5-point idempotency
+contract, and establishes the same per-delivery context (traceparent-parented
+consume span + `x-d2-context` → per-message operational context; identity and
+`RequestOrigin` never taken from the wire). It is **consumer-only** — publishing
+requires this lib's structural publish/encrypt fusion and is out of scope for the
+Node twin. Its Testcontainer suite replays golden messages emitted by
+`D2.Shared.Tests` `Integration/ContractFixtures/MqGoldenMessageFixtureEmitter`.
 
 ## References
 

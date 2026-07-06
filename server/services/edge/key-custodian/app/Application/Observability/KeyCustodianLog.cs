@@ -279,4 +279,42 @@ internal static partial class KeyCustodianLog
             + "valid until {notAfter}.")]
     public static partial void LeafCertificateIssued(
         ILogger logger, string workloadServiceId, string kid, string notAfter);
+
+    /// <summary>
+    /// Logs that a per-service sealing keypair was provisioned lazily on first use: the
+    /// forensic log-side complement to the durable provisioning audit row. The service id
+    /// and the caller identity that triggered provisioning are loggable non-PII service
+    /// labels; no key material is logged and there is no exception parameter (§3.1). A
+    /// keypair spontaneously materializing under a caller's identity is security-relevant.
+    /// </summary>
+    /// <param name="logger">The logger.</param>
+    /// <param name="serviceId">The service the sealing keypair was provisioned for.</param>
+    /// <param name="kid">The activated seal key's kid.</param>
+    /// <param name="triggeredBy">The authenticated caller that triggered provisioning.</param>
+    // long log template — cannot wrap
+    [LoggerMessage(
+        EventId = 9516,
+        Level = LogLevel.Information,
+        Message =
+            "Sealing keypair provisioned for service {serviceId} (kid {kid}) on first use, "
+            + "triggered by caller {triggeredBy}.")]
+    public static partial void SealKeypairProvisioned(
+        ILogger logger, string serviceId, string kid, string triggeredBy);
+
+    /// <summary>
+    /// Logs that a seal-key fetch found no active sealing key for the requested service
+    /// and returned 503 (a lost provisioning race whose winner is not yet visible, or a
+    /// mid-rotation no-active-key window). The service id is loggable (a non-PII label); no
+    /// kid and no key material is logged, and there is no exception parameter (§3.1).
+    /// </summary>
+    /// <param name="logger">The logger.</param>
+    /// <param name="serviceId">The service whose sealing keyring has no active key.</param>
+    // long log template — cannot wrap
+    [LoggerMessage(
+        EventId = 9517,
+        Level = LogLevel.Warning,
+        Message =
+            "Seal-key fetch for service {serviceId} found no active sealing key and returned 503; "
+            + "a concurrent first-request winner is not yet visible or the domain is mid-rotation.")]
+    public static partial void SealKeyUnavailable(ILogger logger, string serviceId);
 }
