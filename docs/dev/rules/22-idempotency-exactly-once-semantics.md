@@ -6,8 +6,6 @@ Copyright (c) DCSV. All rights reserved.
 <a name="top"></a>
 _[← rules index](../rules.md) · §22 of the D2-WORX rules catalog._
 
-<!-- VERBATIM-BEGIN -->
-
 Distributed systems retry. Operations must tolerate retries without doubling effects.
 
 ### Predicates — §22 idempotency & exactly-once semantics

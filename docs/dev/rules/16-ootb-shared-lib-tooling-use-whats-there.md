@@ -6,8 +6,6 @@ Copyright (c) DCSV. All rights reserved.
 <a name="top"></a>
 _[← rules index](../rules.md) · §16 of the D2-WORX rules catalog._
 
-<!-- VERBATIM-BEGIN -->
-
 This codebase has a substantial shared-lib stack. Reaching for raw .NET / npm primitives when a shared lib exists is the #2 cost driver after deferred testing. **Always check the shared libs before hand-rolling.**
 
 ### What's available (catalog)

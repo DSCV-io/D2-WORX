@@ -6,8 +6,6 @@ Copyright (c) DCSV. All rights reserved.
 <a name="top"></a>
 _[← rules index](../rules.md) · §8 of the D2-WORX rules catalog._
 
-<!-- VERBATIM-BEGIN -->
-
 ### Predicates — §8 build & tooling hygiene
 
 - **8.1** Was any service started manually (`dotnet run`, `pnpm dev`, `pnpm preview`, any long-running server) outside of a test that self-manages its infrastructure (Testcontainers, child processes with cleanup)?

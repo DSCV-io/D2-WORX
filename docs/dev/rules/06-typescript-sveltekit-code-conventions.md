@@ -6,8 +6,6 @@ Copyright (c) DCSV. All rights reserved.
 <a name="top"></a>
 _[← rules index](../rules.md) · §6 of the D2-WORX rules catalog._
 
-<!-- VERBATIM-BEGIN -->
-
 ### Predicates — §6 TypeScript / SvelteKit conventions
 
 - **6.1** Is TypeScript `strict` mode enabled in every `tsconfig.json`?
@@ -62,8 +60,8 @@ _[← rules index](../rules.md) · §6 of the D2-WORX rules catalog._
   - **`boolean | null` exception** (per §6.3): explicit three-state semantics for pre-auth flags only.
   - **Language-forced `T | null` exception**: a `T | null` type that is mandated by a built-in language/runtime API's return type is exempt — there is no idiomatic `undefined`-typed alternative. Canonical example: `RegExpExecArray | null` from `RegExp.prototype.exec()`, required by the `while ((m = re.exec(s)) !== null)` loop idiom. The §6.15 ban targets AUTHORED types, not language-forced return types.
   - **Evidence**: `grep -rEn ": [A-Za-z][A-Za-z0-9<>, ]* \| undefined" server/shared/typescript/**/*.ts` on interface field lines → zero matches expected (interface fields must use `?:` form). `grep -rEn ": [A-Za-z][A-Za-z0-9<>, ]* \| null" server/shared/typescript/**/*.ts` → zero matches expected (excluding the `boolean | null` pre-auth exception and language-forced built-in return types).
-  - **Why**: consistent with C#'s `T?` shorthand convention; call-site ergonomics — `field?: T` callers can omit the field in object literals, while `field: T | undefined` forces `field: undefined` in every object that includes the field. JSON-wire `null` from .NET nullable value types normalizes to `undefined` at the Zod deserialization boundary, so `T | null` in domain types creates a false expectation of a three-state wire value.
-  - **How to apply**: refactor any `field: T | undefined` on interfaces → `field?: T`; audit all call sites when doing so — switching to `?:` form may allow callers to simplify `{ field: undefined }` → `{}`. For JSDoc annotations on optional fields, use `{T} [field]` form (not `{T|undefined}`).
+  - **Why**: matches C#'s `T?` shorthand + call-site ergonomics — `field?: T` callers can omit the field in object literals, while `field: T | undefined` forces `field: undefined` everywhere. JSON-wire `null` from .NET nullable value types normalizes to `undefined` at the Zod boundary, so `T | null` in domain types creates a false three-state expectation.
+  - **How to apply**: refactor `field: T | undefined` on interfaces → `field?: T` and audit call sites (they may simplify `{ field: undefined }` → `{}`). For JSDoc on optional fields use `{T} [field]` (not `{T|undefined}`).
 
 <sup>[↑ jump to top](#top)</sup>
 

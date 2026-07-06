@@ -6,8 +6,6 @@ Copyright (c) DCSV. All rights reserved.
 <a name="top"></a>
 _[← rules index](../rules.md) · §15 of the D2-WORX rules catalog._
 
-<!-- VERBATIM-BEGIN -->
-
 Resource leaks are silent in dev, costly in production. Every `IDisposable` / `IAsyncDisposable` MUST have its lifetime documented and enforced.
 
 ### Predicates — §15 object disposal & resource lifetime

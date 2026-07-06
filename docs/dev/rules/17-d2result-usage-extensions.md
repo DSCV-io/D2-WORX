@@ -6,8 +6,6 @@ Copyright (c) DCSV. All rights reserved.
 <a name="top"></a>
 _[← rules index](../rules.md) · §17 of the D2-WORX rules catalog._
 
-<!-- VERBATIM-BEGIN -->
-
 `D2Result` replaces exceptions for control flow. Every operation that can fail returns a `D2Result<T>`. Master the extension methods so call sites stay clean.
 
 ### Predicates — §17 D2Result usage & extensions
@@ -39,7 +37,7 @@ _[← rules index](../rules.md) · §17 of the D2-WORX rules catalog._
   - **Rule**: `IsTransientRetryable` covers `IsServiceUnavailable || IsRateLimited` only. `IsUnhandledException` MUST NOT appear in any retry-eligibility predicate.
   - **Forbidden**: `if (result.IsTransientRetryable || result.IsUnhandledException) retry(...)` — treating an unknown exception as retryable.
   - **Evidence**: `grep -rEn 'IsUnhandledException' <scope>` → per hit, confirm the hit is NOT inside a retry-eligibility branch. `D2Result.Booleans.cs` + `docs/PATTERNS.md` D2Result section document the intentional exclusion.
-  - **Why**: an unhandled exception means unknown system state. Auto-retrying it risks masking bugs and double-executing side effects on non-idempotent operations. Only `IsServiceUnavailable` and `IsRateLimited` are known-safe to retry — their failure modes are infrastructure-transient, not logic-failure.
+  - **Why**: an unhandled exception means unknown system state — auto-retrying risks masking bugs and double-executing side effects on non-idempotent ops. Only `IsServiceUnavailable` / `IsRateLimited` are known-safe to retry (infrastructure-transient, not logic-failure).
   - **How**: retry helpers use `result.IsTransientRetryable` (which already excludes `IsUnhandledException`). Any hand-rolled retry predicate must enumerate the retryable codes explicitly and omit `IsUnhandledException`.
 
 <sup>[↑ jump to top](#top)</sup>

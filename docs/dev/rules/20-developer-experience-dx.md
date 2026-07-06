@@ -6,8 +6,6 @@ Copyright (c) DCSV. All rights reserved.
 <a name="top"></a>
 _[← rules index](../rules.md) · §20 of the D2-WORX rules catalog._
 
-<!-- VERBATIM-BEGIN -->
-
 Code that future engineers (including future-you) can read, debug, extend, and refactor without reverse-engineering. Sensible defaults. Ergonomic call sites. No footguns.
 
 ### Predicates — §20 developer experience (DX)

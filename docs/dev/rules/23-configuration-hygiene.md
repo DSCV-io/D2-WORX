@@ -6,8 +6,6 @@ Copyright (c) DCSV. All rights reserved.
 <a name="top"></a>
 _[← rules index](../rules.md) · §23 of the D2-WORX rules catalog._
 
-<!-- VERBATIM-BEGIN -->
-
 Secrets, env vars, defaults, and the `.env.local` / `.env.secrets` split.
 
 ### Predicates — §23 configuration hygiene
@@ -42,8 +40,8 @@ Secrets, env vars, defaults, and the `.env.local` / `.env.secrets` split.
   - **Required**: each placeholder either (a) reads as a realistic shape that signals "this needs replacement" (`replace_with_real_value`, `tw_replace_me_with_real_value`, `pk_test_replace_me`, `https://your-tenant.example.com`), OR (b) carries an inline comment that names what the operator should look up.
   - **Forbidden**: bare `<TODO>` / `XXX` / `???` / `tbd` / `placeholder` / `change me` / empty-string values. These look like in-progress dev artifacts accidentally shipped — the operator can't tell whether the placeholder is intentional (waiting for them to fill) or whether the template itself is half-done.
   - **Evidence**: per `*.example` template touched in scope → grep for forbidden placeholder patterns: `grep -nEi '=[[:space:]]*(<?todo>?|xxx+|\?\?\?+|tbd|placeholder|change[_ -]me)[[:space:]]*$' <file>` → expect zero (or per-hit justification — usually fixable to a realistic placeholder).
-  - **Why**: realistic placeholders signal intent (this needs replacement, the template is finished) without looking like in-progress dev artifacts. Empirical surface: operators reading a `.env.secrets.example` with `STRIPE_KEY=<TODO>` can't tell whether the template is complete (and they should fill in their key) OR whether the template author was mid-edit and forgot to come back. The realistic-placeholder convention removes the ambiguity. Origin: prior audit-checklist surface ("`.env.example` placeholder realism").
-  - **How**: when adding any new secret / env var to a `*.example` template, the placeholder reads as a realistic shape that's obviously not a real credential — `tw_replace_me_with_real_value` for a Twilio token, `pk_test_replace_me` for a Stripe key, `https://your-tenant.auth0.com` for an OAuth issuer. Pair with `tools/scripts/gen-dev-keys.sh` for keys the operator generates locally rather than fetches from a third party.
+  - **Why**: realistic placeholders signal intent (needs replacement, template finished) without looking like in-progress dev artifacts. An operator reading `.env.secrets.example` with `STRIPE_KEY=<TODO>` can't tell whether the template is complete or the author was mid-edit — the realistic-placeholder convention removes that ambiguity.
+  - **How**: each `*.example` placeholder reads as a realistic shape that's obviously not a real credential — `tw_replace_me_with_real_value` (Twilio), `pk_test_replace_me` (Stripe), `https://your-tenant.auth0.com` (OAuth issuer). Pair with `tools/scripts/gen-dev-keys.sh` for locally-generated keys.
   - Evidence: per config-using service → startup validation.
 
 <sup>[↑ jump to top](#top)</sup>
