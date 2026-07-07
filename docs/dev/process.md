@@ -228,7 +228,7 @@ The following require explicit user permission **per occurrence**, not implied f
 
 > **Duplicated from [rules.md §13](rules/13-permission-action-discipline.md#13-permission--action-discipline) for at-a-glance protocol context — the canonical full version (Evidence + Why + How per predicate) lives in rules.md; update both in lockstep when either changes (per [rules.md §11.32](rules/11-documentation-parity-best-practices.md#11-documentation-parity--best-practices)).**
 
-- **Commit creation** — "go ahead and commit" approves the batch just discussed; the next commit needs fresh permission. (§13.1)
+- **Commit creation** — "go ahead and commit" approves the batch just discussed; the next commit needs fresh permission. Take every commit through the sanctioned `cycle-commit` marker path (one-shot `.claude/.commit-authorized` marker, EXIT-trap-removed; the `git-guard` hook blocks any raw `git commit`), never a direct git command. (§13.1 / §13.1a)
 - **Bulk file operations** (sed across N files, mass rename, multi-file delete, bulk format-write) — declare scope (file count, glob, what changes) BEFORE executing; user can redirect. (§13.2)
 - **Destructive git operations** (force push, hard reset, branch delete, overwriting checkout) — explicit authorization required. (§13.3)
 - **Deferring planned work** — if a step turns out larger, ASK to defer; don't unilaterally skip. (§13.4)

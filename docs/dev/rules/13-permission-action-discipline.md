@@ -6,7 +6,7 @@ Copyright (c) DCSV. All rights reserved.
 <a name="top"></a>
 _[← rules index](../rules.md) · §13 of the D2-WORX rules catalog._
 
-**Predicate index:** §13.1–§13.15 · 15 predicates.
+**Predicate index:** §13.1–§13.15 · 16 predicates · irregular sub-IDs: 13.1a.
 
 Inferring permission from prior turns is a class of bug that compounds quickly. Each occurrence of a high-blast-radius action needs explicit fresh permission.
 
@@ -14,6 +14,11 @@ Inferring permission from prior turns is a class of bug that compounds quickly. 
 
 - **13.1** Was any commit created during this scope without explicit user permission for THIS commit (not "go ahead" from earlier)?
   - Evidence: `git log` of commits in scope → cross-reference with user messages → confirm explicit ask + approval per commit.
+
+- **13.1a** Is every commit taken through the sanctioned marker-authorized path — the `cycle-commit` skill plants the one-shot `.claude/.commit-authorized` marker (in a Bash call SEPARATE from the git command, since the `git-guard` PreToolUse hook is a command-STRING tripwire) immediately before the commit and ALWAYS removes it via an EXIT trap — with the marker planted ONLY after explicit per-occurrence user commit permission for THIS commit (§13.1)?
+  - **Evidence**: per commit → the tool trace shows the marker planted then removed (EXIT-trapped) around exactly one commit; the marker never persists between commits. A commit that bypassed the marker path (a direct `git commit`), or a marker left in place across commits, is a violation.
+  - **Why**: sub-agents cannot feel a permission gate, so the `git-guard` hook is the structural backstop enforcing §13.1 / §13.3 session-wide (sub-agents included) — it blocks `git commit` / destructive git UNLESS the marker exists. The marker's lifetime is exactly one commit — planting it IS the act of recording that the user authorized this specific commit; a leaked marker (not EXIT-trap-removed) would authorize an unapproved commit.
+  - **How**: never call `git commit` directly; invoke the `cycle-commit` skill (which plants + EXIT-trap-removes the marker via `trap cleanup EXIT` → `rm -f "$MARKER"`, so authorization never leaks even on failure). A prior "go ahead" does not authorize THIS commit (§13.1). Cross-ref §13.1, §13.3.
 
 - **13.2** Was any bulk file operation (sed across N files, mass rename, multi-file delete, bulk format-write) executed without first declaring scope (file count, glob, what changes) and giving the user the chance to redirect?
   - Evidence: per bulk op → journal entry with pre-execution scope statement.

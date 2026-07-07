@@ -6,7 +6,7 @@ Copyright (c) DCSV. All rights reserved.
 <a name="top"></a>
 _[← rules index](../rules.md) · §1 of the D2-WORX rules catalog._
 
-**Predicate index:** §1.1–§1.32 · 32 predicates.
+**Predicate index:** §1.1–§1.33 · 33 predicates.
 
 The #1 cost driver of multi-pass audits is "thin glue" code (DI extensions, gRPC plumbing, factory wrappers, source-generator emitters) shipped without tests. Every public path needs at least one test on the FIRST pass.
 
@@ -199,6 +199,12 @@ The #1 cost driver of multi-pass audits is "thin glue" code (DI extensions, gRPC
   - **Why**: a hollow double gives the impression of coverage while providing none — the seam is the only place the proof can live when the real collaborator is absent, and a double asserting nothing lets a completely wrong emitter output pass green; the regression surfaces only when the real collaborator is wired, at orders-of-magnitude higher fix cost.
   - **How**: (1) use a framework that lets you assert specific argument values; (2) name the specific wire-value / structural property the component must pass (the emitted error-code string, the TK constant path, the exact JSON field-name); (3) return a response that makes the component do something non-trivial downstream (not `null` / `true` / `string.Empty`). Record the double in the §26.16 validation ledger + the retire event.
   - **Cross-refs**: §26.15 (generators validated independently — this governs the QUALITY of the doubles); §26.16 (the ledger); §1.5 (snapshot tests — complementary); §1.2 (the realistic response exercises error/empty/malformed paths).
+
+- **1.33** Does every test wait for an asynchronous condition via a SIGNAL-DRIVEN or ATTEMPT / POLL-BUDGET mechanism — never via an elapsed-wall-clock deadline in the success path? A `DateTime.UtcNow + timeout` / `Stopwatch`-horizon / fixed-`Task.Delay`-then-assert wait that can EXPIRE while the awaited work is still making progress is forbidden; any bounding budget (poll attempts, nudge count) exists ONLY as a genuine-stuck guard, sized so a passing run never reaches it.
+  - **Evidence**: `grep -rEn 'DateTime\.(UtcNow|Now)|Stopwatch|Task\.Delay\(' <integration/test scope>` → per hit in a wait / settle path, confirm termination is signal-driven (semaphore / `TaskCompletionSource` / event) or attempt-budgeted, not elapsed-time-gated. Negative-check settle delays and drain assertions of a DIFFERENT class are cited as deliberately-retained.
+  - **Why**: under full-suite thread-pool saturation a wall-clock horizon expires while the starved SUT continuation has not yet run — a load-only failure, invisible when the test runs solo, that re-flakes the gate suite every merge. Signal-driven / attempt-budgeted waits stretch with the slowdown instead of expiring, so the same code is deterministic under load. Three distinct flake classes in 0026 traced to this exact pattern (a refresh-test count budget that burned before the starved `Task.Delay` continuation ran a single tick; broker-wait helpers using `DateTime.UtcNow + timeout` deadlines; a 30s wall-clock CTS — each replaced with a signal or a poll-attempt budget, no assertion weakened, no sleeps added).
+  - **How**: replace the wall-clock CTS with a signal (a counting semaphore fired per timer registration / a `TaskCompletionSource` completed by the awaited event) or an attempt budget (`_POLL_ATTEMPT_BUDGET`, unreachable on a passing run); remove dead timeout parameters at all call sites; sister-sweep the identical latent helper across sibling integration files and document what is deliberately left. Never weaken an assertion or add a bare sleep to "fix" a flake. Cross-ref §1.2, §1.16, §4.5.
+  - *Provenance: 0026 post-cycle de-flake commits (park-driven clock advance + poll-budget broker waits); "load-only failure, invisible solo" is the diagnostic fingerprint.*
 
 <sup>[↑ jump to top](#top)</sup>
 

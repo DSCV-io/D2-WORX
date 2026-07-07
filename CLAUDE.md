@@ -258,7 +258,7 @@ _Canonical: [ADR-0020](docs/adrs/0020-service-project-structure.md) + [PATTERNS.
 
 ### Permission gates (NEVER bypass)
 
-- **NEVER commit without explicit user permission** for THIS commit (not an earlier "go ahead"). [rules.md §13.1](docs/dev/rules/13-permission-action-discipline.md#13-permission--action-discipline)
+- **NEVER commit without explicit user permission** for THIS commit (not an earlier "go ahead"); take every commit through the sanctioned `cycle-commit` marker path (plants the one-shot `.claude/.commit-authorized` marker + EXIT-trap-removes it — the `git-guard` hook blocks any direct `git commit`), never a raw `git commit`. [rules.md §13.1 / §13.1a](docs/dev/rules/13-permission-action-discipline.md#13-permission--action-discipline)
 - **NEVER bulk-edit / sed / mass-rename without first declaring scope** (count, glob, what changes). [rules.md §13.2]
 - **NEVER destructive git ops** (force push, hard reset, branch delete, `git stash` in sub-agents) without explicit authorization. [rules.md §13.3]
 - **NEVER defer / skip planned work** without asking first. [rules.md §13.4]
