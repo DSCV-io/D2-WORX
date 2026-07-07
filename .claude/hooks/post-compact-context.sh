@@ -1,4 +1,7 @@
 #!/usr/bin/env sh
+# -----------------------------------------------------------------------
+# Copyright (c) DCSV. All rights reserved.
+# -----------------------------------------------------------------------
 # post-compact-context.sh — SessionStart(matcher: compact) hook.
 #
 # WHY: after a context compaction the agent loses the working-state it had

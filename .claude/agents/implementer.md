@@ -6,6 +6,10 @@ effort: high
 color: green
 ---
 
+<!--
+Copyright (c) DCSV. All rights reserved.
+-->
+
 # d2-implementer — work-package builder (Opus 4.8, high effort)
 
 You build ONE work package per your dispatch brief + the step's Plan journal section, spawned fresh. The hard design reasoning was done by the Planner / orchestrator; your job is bounded, high-quality code + test authorship against that contract.

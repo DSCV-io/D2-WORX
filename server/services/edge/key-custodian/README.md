@@ -115,6 +115,79 @@ The Infra layer registers a readiness health check (`keycustodian`) reporting wh
 
 ---
 
+## Onboarding a new service
+
+For an engineer standing up a NEW mesh workload — a .NET service or a Node service — who needs it to (a) present a mutual-TLS identity, (b) encrypt the RabbitMQ payloads it publishes, and (c) open the ones it consumes. This section is the ordered path only; each step links to the package README that carries the depth. Every capability is deny-by-default and fails closed when unconfigured, so a half-wired service crashes at startup rather than shipping unprotected traffic.
+
+The wiring is symmetric across runtimes — every .NET registration below has a Node twin. The one asymmetry is authority: a workload's grants (which signing / keyring / seal capabilities it may reach, and which domains) live in KeyCustodian's own `KEYCUSTODIAN_*_AUTHORITY` configuration, keyed on the caller's authenticated identity — a consumer never self-declares its grants.
+
+### Step 1 — mutual-TLS workload identity
+
+Every cross-process call to KeyCustodian (and to any other mesh service) travels over a mutual-TLS channel whose client certificate is a short-lived KeyCustodian-issued leaf. Obtain one before wiring anything else — the encryption and messaging steps dial KeyCustodian over this channel.
+
+- **.NET** — inject `WorkloadLeafClient` (`server/shared/dotnet/auth/outbound/WorkloadCertificate/WorkloadLeafClient.cs`). It generates a FRESH ECDSA P-256 keypair locally, submits only a DER PKCS#10 certificate-signing request (`issueLeaf`, scope `internal.kc.issue`), and pairs the returned leaf with its local private key — the private key never leaves the process and never crosses any wire. `GetCurrentLeafAsync` serves the current leaf (refresh-ahead: a leaf inside its refresh margin is proactively reissued under a single-flight while the still-valid one keeps serving); `ForceReissueAsync` reissues on demand. A returned leaf whose public key does not equal the local key is rejected before any cache write (mismatch defense).
+- **Node** — use `@d2/key-custodian-client`'s `WorkloadLeafClient` (see [`client-ts/README.md`](client-ts/README.md)) — the behavioral twin: fresh P-256 keypair + PKCS#10 CSR via `@peculiar/x509`, `currentChannelCredentials()` assembles the `ChannelCredentials.createSsl(...)` presenting the leaf chain + key and pinning the fetched CA bundle.
+- **Trust anchor** — fetch the CA chain via `getCaCertificate` (scope `internal.kc.cacert`): the active root (the anchor a workload pins) + the active issuing intermediate, both public DER. KeyCustodian ignores the CSR's subject entirely — the leaf's SPIFFE SAN is ALWAYS KeyCustodian's authenticated view of the caller, so impersonation-by-subject is structurally unrepresentable.
+- **First-leaf bootstrap (open design)** — obtaining the leaf above requires already holding a leaf to mutual-TLS-call KeyCustodian; the chicken-and-egg first-leaf is a deployment-orchestrator concern. The `WorkloadLeafClient` and the KeyCustodian issuance path are complete and cross-runtime-proven; the live cross-process gRPC issuer stub is host-gated (wiring is the A1-phase step, not a gap in the client or issuance implementation). The first-leaf provisioning mechanism is a tracked open design item: a future ADR will settle the orchestrator-provisioned bootstrap approach. Tracked in [`docs/v2/PHASE_3.md`](../../../../docs/v2/PHASE_3.md) (build-order step 6 / open prerequisite: first-leaf bootstrap identity).
+
+### Step 2 — symmetric payload encryption (shared keyring)
+
+A symmetric domain uses one shared AES-256-GCM keyring: every grant-holder both encrypts and decrypts. Wire it when your service publishes or consumes a message on a `symmetric`-mode domain.
+
+- **.NET, separate process** — `services.AddD2EncryptionForViaKeyring("<domain>")` (`client/Keyring/KeyringServiceCollectionExtensions.cs`) registers a keyed `IPayloadCrypto` for the domain, backed by the KeyCustodian keyring surface over the mutual-TLS gRPC channel. Inject it with `[FromKeyedServices("<domain>")] IPayloadCrypto crypto`.
+- **.NET, in-host Edge module** — `services.AddD2EncryptionFromKeyCustodian("<domain>", callingModuleId: "edge")` (`app/Application/Keyring/KeyringConsumerServiceCollectionExtensions.cs`) — same capability with no network hop, via the co-hosted leaf `IKeyCustodianApi`.
+- **Node** — ONE call: `createEncryptionViaKeyring({ keyDomain, keyringClient, rotationSubscription, logger })` in `@d2/key-custodian-client` (`client-ts/src/keyring/create-encryption-via-keyring.ts`) — the twin of the single .NET `AddD2EncryptionForViaKeyring("<domain>")`: it boot-fetches the keyring fail-loud, wires rotation refresh on the bare key domain, and returns the ready `IPayloadCrypto` plus a `dispose` (composition instead of ambient DI — there is no DI container in Node). The `rotationSubscription` is REQUIRED, so a symmetric consumer can never silently skip rotation and serve stale keys. The underlying `KeyringClient` / `KeyringBackedPayloadCrypto` remain available for hosts that compose by hand (see [`client-ts/README.md`](client-ts/README.md)).
+- **Grant model (deny-all default)** — the keyring surface is scoped by `internal.kc.keyring`, but holding the scope alone never releases a keyring. A per-caller policy in KeyCustodian's `KEYCUSTODIAN_KEYRING_AUTHORITY` section decides which domains a caller may fetch: `KEYCUSTODIAN_KEYRING_AUTHORITY__ALLOWEDKEYRINGDOMAINSBYWORKLOAD__<caller>__<i>=<domain>`, keyed on the bare lowercase caller id (a cross-process SPIFFE workload id OR an in-process module id). An unlisted caller resolves to the empty set — deny-all. Only payload domains (`audit` / `notifications` / `courier`) are keyring-grantable; granting any non-payload domain fails host startup loud (a keyring is a full encrypt+decrypt capability).
+- **Rotation hot-swap** — when KeyCustodian rotates a domain's key it announces on the `KeyRotatedEvent` fanout; the consumer runtime refreshes its keyring atomically (single volatile-reference swap, no torn reads), a frame under the previous active kid still decrypts through the retiring-key overlap, and a displaced keyring is zeroized after a short off-thread grace. No consumer code participates — the swap is automatic.
+
+### Step 3 — sealed (asymmetric) payload encryption
+
+A `sealed` domain uses per-consumer-service ECDH: every producer seals to the single consumer service's public key, and only that one consumer opens. Use it when a payload is PII-bearing and must be readable by exactly one downstream service (the `audit` / `notifications` / `courier` domains are sealed, each to its own service). The producer/consumer capability split is compile-time: a sealer has no `Open`, an opener has no `Seal`, so a producer can never open any sealed frame, including its own.
+
+- **.NET, separate process** — ONE spec-driven call: `services.AddD2SealedEncryptionViaKeyCustodian(ownServiceId: "<myServiceId>")` (`client/Sealing/SealingServiceCollectionExtensions.cs`). It wires a keyed `IPayloadSealer` for EVERY sealed-domain consumer service (so this service can seal to any of them), and a keyed `IPayloadOpener` under its own id ONLY when this service is itself named the `consumerService` of a sealed domain (structural least-privilege).
+- **.NET, in-host Edge module** — `services.AddD2SealedEncryptionFromKeyCustodian(ownServiceId: "<myServiceId>", callingModuleId: "edge")` (`app/Application/Sealing/SealingConsumerServiceCollectionExtensions.cs`) — SEALER arms only; no in-process opener source exists because decrypt is cross-process-only (the private key is selected purely from the authenticated mutual-TLS peer identity, which has no unforgeable in-process form).
+- **Node** — `createSealedCryptoViaKeyCustodian({ ownServiceId, sealingClient, rotationSubscription, ... })` in `@d2/key-custodian-client` (see [`client-ts/README.md`](client-ts/README.md)) — the twin of the single .NET call: a sealer per sealed-domain consumer, plus this service's opener only when it is named a consumer. The `rotationSubscription` is REQUIRED (the .NET twin always wires the rotation subscriber) — a sealed consumer can never silently skip rotation and serve stale keys.
+- **Scopes + spec** — sealing draws public keys via `internal.kc.seal.encrypt` (broad within its served planes — public material is harmless to over-share); opening draws the caller's own private keys via `internal.kc.seal.open` (cross-process-only). The `mode` (`symmetric` | `sealed`) and `consumerService` are single-source domain facts declared in [`contracts/encryption-domains/`](../../../../contracts/encryption-domains/README.md) — a sealed domain MUST name its one `consumerService`; a non-sealed domain MUST NOT. Both emitters fail the build on an inconsistent pair.
+- **Fail-loud on a forgotten call** — `SealedConsumerStartupCheck` (registered unconditionally by the messaging stack, never by the sealing call) crashes host startup — before any consumer channel opens — when a subscriber consumes a sealed domain but no matching `IPayloadOpener` is registered. A forgotten `AddD2SealedEncryptionViaKeyCustodian` fails loud rather than DLQ-ing every delivery.
+
+### Step 4 — declaring and wiring a message
+
+A publishable message is spec-declared, then marked with an attribute; encryption is chosen by the domain, never by handler code.
+
+1. **Declare the message** in [`contracts/mq-messages/`](../../../../contracts/mq-messages/) with its `exchange`, `exchangeType`, and `encryption` (a domain value or the `plaintext` sentinel). A `plaintext` entry MUST also carry an `encryptionReason` justifying the choice.
+2. **Mark the type** `[MqPub(MqMessages.<Constant>)]` (attribute in `D2.Shared.Messaging.Abstractions`); a type without it fails the publisher's resolver loud. Consumers mark the handler `[MqSub(MqSubscriptions.<Constant>)]`.
+3. **Publish / consume.** The .NET publisher picks the crypto path from the descriptor automatically — plaintext JSON, a symmetric v1 frame, or a sealed v2 frame — with no per-call choice. In Node, `createPublisher({ crypto })` (`server/shared/typescript/messaging/rabbitmq/src/publishing/publisher.ts`) binds a compile-time type witness (`DomainCryptoMap`, `src/publishing/domain-crypto-map.ts`): `publish(key, message)` accepts only a message whose domain is `plaintext` or was wired into `crypto`, a sealed slot accepts only an `IPayloadSealer` and a symmetric slot only an `IPayloadCrypto`, and there is no raw-bytes publish overload. On consume, `CryptoBodyOpener` (mode-aware) plugs the real crypto into the decompose seam — a wrong-version frame, a plaintext body on an encrypted domain, tampering, or an unknown kid all DLQ with `DECRYPT_FAILURE`, never a silent mis-decode.
+
+The three comms shapes:
+
+- **Plaintext (first-class).** No crypto wiring at all — the body ships as cleartext JSON. This is the correct, deliberate choice for a non-PII broadcast whose payload cannot be encrypted without a bootstrap paradox. The production example is `AuthKeyRotated` (`contracts/mq-messages/mq-messages.spec.json`): a fanout key-rotation broadcast on the `d2.security.key-rotated` exchange carrying the `(domain, kid)` tuple consumers need to refresh their keyrings — encrypting it with the very keys being rotated would create an unrecoverable chicken-and-egg (its `encryptionReason` records exactly this). A per-replica broadcast uses the `FanoutExclusiveAutoDelete` queue pattern so every instance receives every message; the consumer host auto-suffixes the queue name per process.
+- **Symmetric.** Wire per Step 2; publish on a `symmetric`-mode domain. Any grant-holder encrypts and decrypts.
+- **Sealed.** Wire per Step 3; publish on a `sealed`-mode domain. Every producer seals to the consumer service's public key; only that consumer opens.
+
+Today the production message catalog carries the one `AuthKeyRotated` (plaintext) entry; the symmetric and sealed publish/consume paths are proven end-to-end by the cross-runtime known-answer vectors and the .NET-emitted golden-message fixtures the Node consumer replays (see [`server/shared/typescript/messaging/rabbitmq/README.md`](../../../shared/typescript/messaging/rabbitmq/README.md)). A new sealed or symmetric message becomes a spec entry plus the wiring above — no code path is missing.
+
+### Which shape do I pick
+
+Two independent questions — delivery topology, then payload protection:
+
+- **Point-to-point vs fanout (topology).** One consumer in a fleet should handle each message → `CompetingConsumer`. A durable event several consumers may each process → `DurableShared`. Every replica must see every message (cache / keyring refresh, rotation broadcasts) → `FanoutExclusiveAutoDelete`. (Full pattern table: [`server/shared/dotnet/messaging/rabbitmq/README.md`](../../../shared/dotnet/messaging/rabbitmq/README.md).)
+- **Plaintext vs symmetric vs sealed (protection).** Non-PII, or a payload that cannot be encrypted without a bootstrap paradox (a rotation broadcast) → **plaintext** (record the `encryptionReason`). PII-bearing, read by several grant-holding services that share a keyring → **symmetric**. PII-bearing and readable by exactly ONE downstream service, with producers structurally unable to read each other's or their own sealed traffic → **sealed** (declare that one `consumerService`). When in doubt between symmetric and sealed, prefer sealed for single-consumer PII: it removes every non-consumer (including the producer) from the decrypt set.
+
+### Scopes and fail-closed behavior at a glance
+
+| Capability | Scope | Grant policy | Unconfigured → |
+| --- | --- | --- | --- |
+| Leaf issuance | `internal.kc.issue` | cross-process only; leaf SAN = authenticated peer | 403 `KEYCUSTODIAN_ISSUANCE_NOT_AUTHORIZED` |
+| CA-chain fetch | `internal.kc.cacert` | broad within served planes (public material) | 403 `KEYCUSTODIAN_CA_CERTIFICATE_NOT_AUTHORIZED` |
+| Symmetric keyring | `internal.kc.keyring` | `KEYCUSTODIAN_KEYRING_AUTHORITY` per-caller domain policy (deny-all default) | 403 `KEYCUSTODIAN_KEYRING_DOMAIN_NOT_AUTHORIZED` |
+| Seal (encrypt) | `internal.kc.seal.encrypt` | broad within served planes (public keys) | 403 `KEYCUSTODIAN_SEAL_NOT_AUTHORIZED` |
+| Seal (open) | `internal.kc.seal.open` | self-only, cross-process only (key = authenticated peer) | 403 `KEYCUSTODIAN_SEAL_NOT_AUTHORIZED` |
+| Cross-process signing | `internal.kc.sign` | `KEYCUSTODIAN_SIGNING_AUTHORITY` per-workload domain policy (deny-all default) | 403 `KEYCUSTODIAN_SIGNING_DOMAIN_NOT_AUTHORIZED` |
+
+Every deny is fail-closed: an unestablished request origin is the first-checked deny on every rule, and a missing keyed sealer/opener registration surfaces at host startup or on the publish/consume path (loud), never as plaintext or a silent drop. Grants are configured in KeyCustodian, not by the consuming service.
+
+---
+
 ## References
 
 - [ADR-0016](../../../../docs/adrs/0016-keycustodian-lifecycle-store.md) — KeyCustodian lifecycle state machine + dedicated leaderless store

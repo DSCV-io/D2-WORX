@@ -32,8 +32,9 @@ internal static class IntegrationMessageFixtures
         Register, isThreadSafe: true);
 
     /// <summary>Idempotent — first call seeds the resolver cache for
-    /// <see cref="IntegrationAuditEvent"/> (encrypted, audit domain) and
-    /// <see cref="IntegrationPlaintextEvent"/> (plaintext). Subsequent
+    /// <see cref="IntegrationAuditEvent"/> (encrypted, audit domain),
+    /// <see cref="IntegrationPlaintextEvent"/> (plaintext topic), and
+    /// <see cref="BroadcastFixtureEvent"/> (plaintext fanout). Subsequent
     /// calls are no-ops.</summary>
     public static void EnsureRegistered() => _ = sr_registration.Value;
 
@@ -58,6 +59,17 @@ internal static class IntegrationMessageFixtures
                 ExchangeType: "topic",
                 Encryption: MqMessageDescriptor.PLAINTEXT,
                 EncryptionReason: "Integration fixture exercising the plaintext code path.",
+                DefaultRoutingKey: string.Empty));
+        MessageWireResolver.RegisterForTesting(
+            typeof(BroadcastFixtureEvent),
+            new MqMessageDescriptor(
+                Constant: "IntegrationBroadcast",
+                MessageTypeName: typeof(BroadcastFixtureEvent).FullName!,
+                Exchange: "d2.test.integration-broadcast",
+                ExchangeType: "fanout",
+                Encryption: MqMessageDescriptor.PLAINTEXT,
+                EncryptionReason:
+                    "Integration fixture exercising the plaintext fanout broadcast path.",
                 DefaultRoutingKey: string.Empty));
         return true;
     }

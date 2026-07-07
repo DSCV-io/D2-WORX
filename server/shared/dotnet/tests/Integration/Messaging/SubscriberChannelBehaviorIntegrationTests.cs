@@ -310,6 +310,7 @@ public sealed class SubscriberChannelBehaviorIntegrationTests
             Prefetch: 1,
             Idempotency: false,
             TieredRetry: null);
+
         return new SubscriberRegistration(
             HandlerType: typeof(AuditCapturingHandler),
             MessageType: typeof(IntegrationAuditEvent),
@@ -394,6 +395,7 @@ public sealed class SubscriberChannelBehaviorIntegrationTests
                 ["count"] = count,
             },
         };
+
         var props = new BasicProperties
         {
             ContentType = "application/octet-stream",
@@ -413,7 +415,7 @@ public sealed class SubscriberChannelBehaviorIntegrationTests
             routingKey: routingKey,
             mandatory: false,
             basicProperties: props,
-            body: Array.Empty<byte>());
+            body: ReadOnlyMemory<byte>.Empty);
     }
 
     /// <summary>

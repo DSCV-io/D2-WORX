@@ -6,13 +6,17 @@
 
 namespace D2.Edge.Tests.Unit.KeyCustodian.Client.Sealing;
 
+using System.Reflection;
 using System.Text;
 using AwesomeAssertions;
 using D2.Edge.KeyCustodian.App.Application.Sealing;
 using D2.Edge.KeyCustodian.Client.Sealing;
 using D2.Shared.Encryption;
+using D2.Shared.Logging.Destructuring;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Serilog.Core;
+using Serilog.Events;
 using Xunit;
 
 /// <summary>
@@ -153,6 +157,41 @@ public sealed class SealingRegistrationTests
         publicMethods.Should().NotContain(["AddSealerViaKeyCustodian", "AddOpenerViaKeyCustodian"]);
     }
 
+    [Fact]
+    public void PromotedSealPrivateProto_CarriesTypeLevelRedact_AndMasksPrivateKeyBytes()
+    {
+        // The seal-private-keyring wire proto cannot carry [RedactData] in its generated
+        // file; the shipping Client assembly declares it via the hand-authored partial
+        // SealPrivateEntry.Redaction.cs, so a destructured capture of the entry masks the
+        // raw PKCS#8 private key. Mirrors KeyringRegistrationTests' proto-attribute pin
+        // (defense-in-depth: nothing logs this proto today).
+        var secretBytes = new byte[48];
+        for (var i = 0; i < secretBytes.Length; i++)
+            secretBytes[i] = 0x7A;
+
+        var secretBase64 = Convert.ToBase64String(secretBytes);
+
+        // Type-level attribute pin (the hand-authored partial in the Client assembly).
+        typeof(D2.Services.Protos.KeyCustodian.V2Alpha.SealPrivateEntry)
+            .GetCustomAttribute<RedactDataAttribute>().Should().NotBeNull(
+                "the promoted seal-private wire proto must carry a type-level "
+                + "[RedactData(SecretInformation)] partial so no PKCS#8 bytes ever render");
+
+        var protoEntry = new D2.Services.Protos.KeyCustodian.V2Alpha.SealPrivateEntry
+        {
+            Kid = "fixture-kid-1",
+            PrivatePkcs8 = Google.Protobuf.ByteString.CopyFrom(secretBytes),
+        };
+
+        var policy = new RedactDataDestructuringPolicy();
+        policy.TryDestructure(protoEntry, new ScalarPropertyValueFactory(), out var destructured)
+            .Should().BeTrue();
+
+        var rendered = destructured!.ToString();
+        rendered.Should().Contain("[REDACTED: SecretInformation]");
+        rendered.Should().NotContain(secretBase64, "the raw PKCS#8 private key must never render");
+    }
+
     private static ServiceCollection NewServices()
     {
         var services = new ServiceCollection();
@@ -184,5 +223,11 @@ public sealed class SealingRegistrationTests
     {
         foreach (var hosted in sp.GetServices<IHostedService>())
             await hosted.StartAsync(CancellationToken.None);
+    }
+
+    private sealed class ScalarPropertyValueFactory : ILogEventPropertyValueFactory
+    {
+        public LogEventPropertyValue CreatePropertyValue(object? value, bool destructureObjects)
+            => new ScalarValue(value);
     }
 }

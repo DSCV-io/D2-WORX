@@ -36,11 +36,11 @@ using NodaTime;
 /// hosted service prevents the latter in steady state by reissuing ahead of expiry.
 /// </para>
 /// </remarks>
-[MustDisposeResource]
+[MustDisposeResource(false)]
 internal sealed class WorkloadLeafCache : IDisposable
 {
     private WorkloadLeafSnapshot? _current;
-    private bool _disposed;
+    private int _disposed;
 
     /// <summary>
     /// Gets or sets the test hook fired inside <see cref="Set"/> after the
@@ -116,9 +116,11 @@ internal sealed class WorkloadLeafCache : IDisposable
     /// <inheritdoc/>
     public void Dispose()
     {
-        if (Volatile.Read(ref _disposed)) return;
-
-        Volatile.Write(ref _disposed, true);
+        // Atomic claim: only the thread that flips 0 -> 1 disposes the certificates, so two
+        // concurrent disposers cannot both double-dispose the leaf's Schannel key container
+        // (the prior Volatile.Read/Write on a bool was a non-atomic TOCTOU). Mirrors the
+        // sibling KeyringBackedPayloadCrypto's Interlocked.Exchange dispose guard.
+        if (Interlocked.Exchange(ref _disposed, 1) == 1) return;
 
         var current = Volatile.Read(ref _current);
 

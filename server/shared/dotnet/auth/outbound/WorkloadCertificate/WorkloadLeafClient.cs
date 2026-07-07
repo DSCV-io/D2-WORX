@@ -290,11 +290,28 @@ internal sealed class WorkloadLeafClient : IWorkloadLeafSource, IDisposable
     {
         var leaf = BuildLiveLeaf(material, localKey);
 
-        var intermediate = X509CertificateLoader.LoadCertificate(material.IssuerCertificateDer);
+        X509Certificate2? intermediate = null;
 
-        var chainContext = TryBuildChainContext(leaf, intermediate);
+        try
+        {
+            intermediate = X509CertificateLoader.LoadCertificate(material.IssuerCertificateDer);
 
-        return new WorkloadLeafSnapshot(leaf, intermediate, chainContext, material.NotAfter);
+            var chainContext = TryBuildChainContext(leaf, intermediate);
+
+            return new WorkloadLeafSnapshot(leaf, intermediate, chainContext, material.NotAfter);
+        }
+        catch
+        {
+            // A malformed intermediate DER (LoadCertificate) — or a non-Windows chain-build
+            // failure — throws AFTER the live leaf exists; the leaf carries the secret key,
+            // so an un-guarded throw here leaks its Schannel key-container handle. Dispose
+            // both owned handles on the error path, then rethrow so ReissueAsync's serve-
+            // stale catch treats it as transient (the cached leaf keeps serving).
+            leaf.Dispose();
+            intermediate?.Dispose();
+
+            throw;
+        }
     }
 
     /// <summary>
@@ -381,6 +398,7 @@ internal sealed class WorkloadLeafClient : IWorkloadLeafSource, IDisposable
             //    self-signature — public material by construction).
             var csrRequest = new CertificateRequest(
                 _CSR_SUBJECT, localKey, HashAlgorithmName.SHA256);
+
             var csrDer = csrRequest.CreateSigningRequest();
 
             // 3) Obtain the signed leaf. Only the CSR crosses the seam.
@@ -427,6 +445,7 @@ internal sealed class WorkloadLeafClient : IWorkloadLeafSource, IDisposable
             // It cannot be a metric tag (timestamps are high-cardinality, not enumerable
             // dimensions); the log record is the correct OTel home for this value.
             var staleCached = r_cache.PeekRaw();
+
             var cachedLeafNotAfter = staleCached is not null
                 ? staleCached.NotAfter.ToDateTimeOffset().ToString("O")
                 : "none";

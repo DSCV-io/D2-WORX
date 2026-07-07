@@ -3,6 +3,10 @@ name: regen
 description: Codegen regeneration matrix - which pipeline owns which generated output and the exact regen command, plus the byte-stability check. Use before/after editing any spec or generator. Keywords - codegen, regenerate, generated, .g.cs, .g.ts, source-gen, proto, typespec, emitter, §26.5.
 ---
 
+<!--
+Copyright (c) DCSV. All rights reserved.
+-->
+
 # regen — codegen regeneration matrix
 
 Distilled from `docs/SRC_GEN.md` + `docs/COMMANDS.md` (both canonical — if this disagrees, they win; update in lockstep §11.32). **NEVER hand-edit generated output (§26.5)** — fix the GENERATOR / the INPUT / the pipeline and REGENERATE. "Generated" = `*.g.*`, anything under `Generated/`, any documented-pipeline output, anything banner-marked.

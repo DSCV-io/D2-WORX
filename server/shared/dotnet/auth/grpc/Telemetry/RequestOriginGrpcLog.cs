@@ -23,8 +23,13 @@ using Microsoft.Extensions.Logging;
 // is categorically inapplicable here; instance-extension style is correct.
 internal static partial class RequestOriginGrpcLog
 {
+    // EventId 4105: the request-context establishment group is 4102–4105
+    // (CallPathStarted 4102 / SystemContextEstablished 4103 /
+    // CrossProcessPeerIdentityAbsent 4104 / CallPathReceived 4105). 4101 is NOT part
+    // of this group — it belongs to AuthEndpointGuardStartupFilter.LogUndeclaredEndpoints
+    // (documented in auth/startup/README.md); this delegate previously collided on 4101.
     [LoggerMessage(
-        EventId = 4101,
+        EventId = 4105,
         Level = LogLevel.Debug,
         Message = "Cross-process hop established at {SelfServiceId}; call-path now has "
                 + "{HopCount} entries.")]

@@ -21,7 +21,7 @@ using Xunit;
 /// <summary>
 /// PII-safety + emission contract for the request-context establishment
 /// <c>[LoggerMessage]</c> delegates — <c>RequestOriginGrpcLog.CallPathReceived</c>
-/// (EventId 4101) and <c>RequestOriginEdgeLog.CallPathStarted</c> (4102). Each
+/// (EventId 4105) and <c>RequestOriginEdgeLog.CallPathStarted</c> (4102). Each
 /// establishment boundary logs a hop-count summary at Debug; an Exception parameter
 /// on any of them could interpolate JWT bytes / request URIs / configured secrets
 /// into the log pipeline, so the no-Exception contract is pinned assembly-wide (also
@@ -76,14 +76,17 @@ public sealed class EstablishmentLogDelegateContractTests
     }
 
     [Fact]
-    public void CallPathReceived_EmitsAtEventId4101_WithHopCountAndServiceId()
+    public void CallPathReceived_EmitsAtEventId4105_WithHopCountAndServiceId()
     {
         var logger = new CapturingLogger();
 
         logger.CallPathReceived(hopCount: 3, selfServiceId: "edge");
 
         var entry = logger.Entries.Should().ContainSingle().Subject;
-        entry.EventId.Id.Should().Be(4101, "the cross-process establishment hop logs at 4101");
+        entry.EventId.Id.Should().Be(
+            4105,
+            "the cross-process establishment hop logs at 4105 (4101 is the "
+            + "AuthEndpointGuardStartupFilter's; the prior 4101 here was a collision)");
         entry.Level.Should().Be(LogLevel.Debug);
         entry.Message.Should().Contain("edge").And.Contain("3");
     }

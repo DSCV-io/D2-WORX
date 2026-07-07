@@ -6,7 +6,6 @@
 
 namespace D2.Edge.Tests.Integration.KeyCustodian;
 
-using System.Diagnostics;
 using System.Security.Cryptography;
 using D2.Edge.KeyCustodian.App.Application;
 using D2.Edge.KeyCustodian.App.Application.CertificateAuthority;
@@ -70,7 +69,12 @@ public sealed class KeyCustodianKeyringRotationHotSwapIntegrationTests(
     private const string _CALLER = "edge";
     private const string _WARM_UP_KID = "consumer-ready-probe";
 
-    private static readonly TimeSpan sr_overall = TimeSpan.FromSeconds(60);
+    // Genuine-stuck guard for the async waits below: a poll-ATTEMPT budget, never a
+    // wall-clock deadline. Each iteration awaits the delay interval, so under load the
+    // effective wait GROWS with the slowdown instead of expiring. 2400 attempts is a
+    // multi-minute ceiling — far above any healthy broker / keyring round-trip, yet a
+    // permanently-stuck test still terminates (no xunit.runner.json / test timeout here).
+    private const int _POLL_ATTEMPT_BUDGET = 2400;
 
     private readonly IDisposable r_fixtureSeam =
         KeyDomain.RegisterFixturePayloadDomainForTesting(_DOMAIN);
@@ -131,7 +135,6 @@ public sealed class KeyCustodianKeyringRotationHotSwapIntegrationTests(
             // The event flows broker → subscriber → channel → wrapper refetch (real gRPC) → swap.
             await WaitUntilAsync(
                 () => KeyringTestFixtures.ReadFrameKid(crypto.Encrypt("probe"u8)) == secondKid,
-                sr_overall,
                 "the rotation event should hot-swap the wrapper to the new active kid");
 
             KeyringTestFixtures.ReadFrameKid(crypto.Encrypt("post"u8)).Should().Be(secondKid);
@@ -263,11 +266,9 @@ public sealed class KeyCustodianKeyringRotationHotSwapIntegrationTests(
             return Task.CompletedTask;
         });
 
-        var stopwatch = Stopwatch.StartNew();
-        while (!landed.Task.IsCompleted)
+        for (var attempt = 0; attempt < _POLL_ATTEMPT_BUDGET; attempt++)
         {
-            if (stopwatch.Elapsed > sr_overall)
-                throw new TimeoutException("The rotation-event consumer never became ready.");
+            if (landed.Task.IsCompleted) return;
 
             await using (var scope = services.GetRequiredService<IServiceScopeFactory>().CreateAsyncScope())
             {
@@ -282,6 +283,9 @@ public sealed class KeyCustodianKeyringRotationHotSwapIntegrationTests(
 
             await Task.WhenAny(landed.Task, Task.Delay(500));
         }
+
+        if (!landed.Task.IsCompleted)
+            throw new TimeoutException("The rotation-event consumer never became ready.");
     }
 
     private static async Task RunSystemAsync(IServiceProvider services, Func<IServiceProvider, Task> body)
@@ -294,10 +298,9 @@ public sealed class KeyCustodianKeyringRotationHotSwapIntegrationTests(
         await body(scope.ServiceProvider);
     }
 
-    private static async Task WaitUntilAsync(Func<bool> condition, TimeSpan timeout, string because)
+    private static async Task WaitUntilAsync(Func<bool> condition, string because)
     {
-        var stopwatch = Stopwatch.StartNew();
-        while (stopwatch.Elapsed < timeout)
+        for (var attempt = 0; attempt < _POLL_ATTEMPT_BUDGET; attempt++)
         {
             if (condition())
                 return;

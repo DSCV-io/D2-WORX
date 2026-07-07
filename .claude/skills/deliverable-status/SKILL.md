@@ -3,6 +3,10 @@ name: deliverable-status
 description: Quick orientation - current branch, recent commits, uncommitted count, and pointers to the active tracking doc, wip journals, and the memory index. Use to reorient at session start or mid-task. Keywords - status, orient, where am I, branch, deliverable, wip, progress.
 ---
 
+<!--
+Copyright (c) DCSV. All rights reserved.
+-->
+
 # deliverable-status
 
 Live snapshot (injected at skill-load):

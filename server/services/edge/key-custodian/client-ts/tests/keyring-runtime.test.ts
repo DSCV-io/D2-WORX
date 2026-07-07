@@ -15,6 +15,10 @@ import {
 import { describe, expect, it, vi } from "vitest";
 
 import type { KeyCustodianGrpcClient } from "../src/facade/key-custodian-grpc-client.g.js";
+import {
+  createEncryptionViaKeyring,
+  type CreateEncryptionViaKeyringOptions,
+} from "../src/keyring/create-encryption-via-keyring.js";
 import { KeyringBackedPayloadCrypto } from "../src/keyring/keyring-backed-payload-crypto.js";
 import {
   GrpcKeyringClient,
@@ -246,5 +250,179 @@ describe("KeyringBackedPayloadCrypto", () => {
     // alone would skip the zeroize its closure performs (leaking key material).
     expect(disposeA).toHaveBeenCalled();
     expect(disposeB).toHaveBeenCalled();
+  });
+});
+
+describe("createEncryptionViaKeyring", () => {
+  it("boot-fetches and returns the real IPayloadCrypto (round-trips)", async () => {
+    const client = new FakeKeyringClient();
+    const wiring = await createEncryptionViaKeyring({
+      keyDomain: "audit",
+      keyringClient: client,
+      logger: new FakeLogger(),
+      rotationSubscription: { onRotation: () => () => {} },
+    });
+
+    expect(client.calls).toBe(1); // boot fetch happened
+    // §1.3 — the returned instance is the real KeyringBackedPayloadCrypto, not a hollow double.
+    expect(wiring.crypto).toBeInstanceOf(KeyringBackedPayloadCrypto);
+
+    const frame = await wiring.crypto.encrypt(utf8.encode("secret"));
+    expect(new Uint8Array(await wiring.crypto.decrypt(frame))).toEqual(
+      utf8.encode("secret"),
+    );
+
+    wiring.dispose();
+  });
+
+  it("fails loud when the boot fetch fails (no silent/plaintext crypto)", async () => {
+    const client = new FakeKeyringClient();
+    client.fail = true;
+    await expect(
+      createEncryptionViaKeyring({
+        keyDomain: "audit",
+        keyringClient: client,
+        logger: new FakeLogger(),
+        rotationSubscription: { onRotation: () => () => {} },
+      }),
+    ).rejects.toThrow(/fail-closed/);
+  });
+
+  it("rejects a falsey (whitespace) key domain before any fetch", async () => {
+    const client = new FakeKeyringClient();
+    await expect(
+      createEncryptionViaKeyring({
+        keyDomain: "   ",
+        keyringClient: client,
+        logger: new FakeLogger(),
+        rotationSubscription: { onRotation: () => () => {} },
+      }),
+    ).rejects.toThrow(/key domain/);
+    expect(client.calls).toBe(0); // guarded before the boot fetch
+  });
+
+  it("wires rotation on the bare key domain → refresh → hot-swaps to the NEW keyring", async () => {
+    const keyA = webcrypto.getRandomValues(new Uint8Array(32));
+    const keyB = webcrypto.getRandomValues(new Uint8Array(32));
+    const ringA = new PayloadCryptoKeyring(
+      "kid-a",
+      new Map([["kid-a", keyA]]),
+      AAD,
+    );
+    const ringB = new PayloadCryptoKeyring(
+      "kid-b",
+      new Map([["kid-b", keyB]]),
+      AAD,
+    );
+    let calls = 0;
+    const client: KeyringClient = {
+      getKeyring: async () => {
+        calls++;
+
+        return ok(calls === 1 ? ringA : ringB);
+      },
+    };
+    const registered: string[] = [];
+    let fireRotation: (() => void) | undefined;
+    const wiring = await createEncryptionViaKeyring({
+      keyDomain: "audit",
+      keyringClient: client,
+      logger: new FakeLogger(),
+      graceMs: 0,
+      rotationSubscription: {
+        onRotation: (domain, handler) => {
+          registered.push(domain);
+          if (domain === "audit") fireRotation = handler;
+
+          return () => {
+            registered.push(`off:${domain}`);
+          };
+        },
+      },
+    });
+
+    // Symmetric parity: the subscription is on the BARE key domain (the .NET twin
+    // subscribes `channel.Subscribe(domain, ...)`), never a `seal:` prefix.
+    expect(registered).toEqual(["audit"]);
+    expect(calls).toBe(1); // boot fetch only
+
+    fireRotation?.(); // a rotation event fires the handler
+    await flush(); // let the async refresh + zero-grace swap run
+
+    expect(calls).toBe(2); // rotation triggered a refetch
+
+    // Decode the active kid from the post-swap frame `[version:1][kid_len:1][kid:N]`:
+    // the crypto now encrypts under ringB's kid — the hot-swap took effect.
+    const frame = await wiring.crypto.encrypt(utf8.encode("after"));
+    const kidLen = frame[1]!;
+    const kid = new TextDecoder().decode(frame.subarray(2, 2 + kidLen));
+    expect(kid).toBe("kid-b");
+
+    wiring.dispose();
+    expect(registered).toContain("off:audit"); // dispose unsubscribed
+  });
+
+  it("dispose zeroizes the keyring and unsubscribes rotation", async () => {
+    const ring = keyring();
+    const client: KeyringClient = {
+      getKeyring: async () => ok(ring),
+    };
+    const disposeSpy = vi.spyOn(ring, "dispose");
+    let unsubscribed = false;
+    const wiring = await createEncryptionViaKeyring({
+      keyDomain: "audit",
+      keyringClient: client,
+      logger: new FakeLogger(),
+      rotationSubscription: {
+        onRotation: () => () => {
+          unsubscribed = true;
+        },
+      },
+    });
+
+    wiring.dispose();
+
+    expect(unsubscribed).toBe(true); // rotation stopped first
+    expect(disposeSpy).toHaveBeenCalled(); // keyring zeroized
+  });
+
+  it("guards a double dispose() — the second call is a no-op (unsubscribe + dispose fire once)", async () => {
+    const ring = keyring();
+    const client: KeyringClient = {
+      getKeyring: async () => ok(ring),
+    };
+    let unsubscribeCalls = 0;
+    const wiring = await createEncryptionViaKeyring({
+      keyDomain: "audit",
+      keyringClient: client,
+      logger: new FakeLogger(),
+      rotationSubscription: {
+        onRotation: () => () => {
+          unsubscribeCalls++;
+        },
+      },
+    });
+    wiring.dispose();
+    wiring.dispose(); // re-entry must short-circuit
+
+    // RotationSubscription does not guarantee an idempotent unsubscribe, so a second
+    // dispose() must NOT re-fire it — without the _disposed guard the count is 2.
+    expect(unsubscribeCalls).toBe(1);
+  });
+
+  it("makes rotationSubscription REQUIRED at compile time (no silent-stale footgun)", () => {
+    // Compile-time proof (§Gap-2): omitting `rotationSubscription` must no longer
+    // type-check — a symmetric consumer can never silently skip rotation wiring and
+    // serve stale keys after a KeyCustodian rotation. Assigning an options object
+    // WITHOUT the property to the options type is the type error `@ts-expect-error` pins.
+    const optionsWithoutRotation = {
+      keyDomain: "audit",
+      keyringClient: new FakeKeyringClient(),
+      logger: new FakeLogger(),
+    };
+    // @ts-expect-error — rotationSubscription is REQUIRED; omitting it must not type-check.
+    const _proof: CreateEncryptionViaKeyringOptions = optionsWithoutRotation;
+
+    expect(_proof).toBe(optionsWithoutRotation);
   });
 });

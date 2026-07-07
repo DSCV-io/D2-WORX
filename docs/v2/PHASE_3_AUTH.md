@@ -269,9 +269,13 @@ locale, …) per ADR-0007 §2. No hop mutates the token to append itself.
 
 - **Module within Edge** (peer to Auth) — not a separate service. Extractable later
   via the `IKeyCustodianClient` interface.
-- **Owns**: JWKS (RS256), per-domain payload-encryption keys (audit, notifications, courier, …),
-  per-service ECDH sealing keypairs (the `seal:<serviceId>` family, lazily provisioned),
-  cookie signing secret, service-identity client_secrets, root key.
+- **Owns**: JWKS (RS256), the symmetric per-domain payload-encryption key type (preserved for any
+  future `mode: symmetric` domain — `audit` / `notifications` / `courier` are now `mode: sealed`
+  and left the symmetric catalog entirely, 0026 Cycle 3), per-service ECDH sealing keypairs (the
+  `seal:<serviceId>` family, lazily provisioned, backing those sealed domains), the mTLS
+  certificate-authority key (`X509CaCertificate` — root + issuing intermediate, [ADR-0023](../adrs/0023-mtls-workload-identity.md)),
+  cookie signing secret, OAuth `client_secret`s for genuinely-external boundary-token clients
+  (the internal service-identity `client_credentials` surface was retired in 0023), root key.
 - **State machine** per `kid` in `keycustodian_db.key_record`: `pending → active → retiring → retired`
   (+ terminal `compromised`).
 - **Distribution**: pull-based via the keyring gRPC endpoint (design-era name `internal/keys/{domain}`;

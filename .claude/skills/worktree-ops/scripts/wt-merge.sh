@@ -1,4 +1,7 @@
 #!/usr/bin/env bash
+# -----------------------------------------------------------------------
+# Copyright (c) DCSV. All rights reserved.
+# -----------------------------------------------------------------------
 # wt-merge.sh <name> — merge a sibling worktree's uncommitted changes back into
 # the main tree, file-granular. Backs the `worktree-ops` skill.
 #

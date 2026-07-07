@@ -60,10 +60,12 @@
 // "unchanged" for each). A baseline that is already correct is left untouched.
 
 import { spawnSync } from "node:child_process";
-import { createHash } from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+
+import { assertExtractionNotWrongfullyEmpty } from "./lib/publicapi-empty-guard.mjs";
+import { composeSourceFingerprintFromParts } from "./lib/source-fingerprint-compose.mjs";
 
 const REPO_ROOT = path.resolve(
   path.dirname(fileURLToPath(import.meta.url)),
@@ -81,6 +83,28 @@ const args = process.argv.slice(2);
 const packageFilterIdx = args.indexOf("--package");
 const packageFilter =
   packageFilterIdx !== -1 ? args[packageFilterIdx + 1] : undefined;
+
+// Escape hatch for the genuine "this package intentionally exposes no public
+// API" case, which the fail-loud empty-surface guard would otherwise reject.
+// Repeatable `--allow-empty <PackageId>` flags plus a single-package
+// SEED_ALLOW_EMPTY=<PackageId> env var both feed the same allow-list. For
+// multiple packages use repeated CLI flags; the env var accepts exactly one
+// package ID (comma-split lists are not supported — §23.1). The DEFAULT (no
+// opt-in) refuses to persist an empty surface over a non-empty committed one —
+// that transition is the analyzer-didn't-run signature, not a real removal.
+const allowEmptyPackages = new Set();
+
+for (let i = 0; i < args.length; i++) {
+  if (args[i] === "--allow-empty" && args[i + 1]) {
+    allowEmptyPackages.add(args[i + 1]);
+  }
+}
+
+const envAllowEmpty = (process.env.SEED_ALLOW_EMPTY ?? "").trim();
+
+if (envAllowEmpty.length > 0) {
+  allowEmptyPackages.add(envAllowEmpty);
+}
 
 // ---------------------------------------------------------------------------
 // Inventory discovery — the 53 shared-tree consumables + the KC client.
@@ -233,12 +257,25 @@ function writeApiFile(filePath, apiLines) {
   fs.writeFileSync(filePath, body + "\n", "utf8");
 }
 
-/** Read the non-header, non-empty API lines from a baseline .txt. */
-function readApiLines(filePath) {
-  if (!fs.existsSync(filePath)) return [];
+/**
+ * Read the non-header, non-empty API lines from the COMMITTED (HEAD) version of a
+ * baseline .txt. This is the authoritative "prior surface" for the empty-guard:
+ * the working-tree copy is unreliable (the pre-pass resets it to header-only, and
+ * a prior corrupt run may already have emptied it on disk), whereas HEAD holds the
+ * last genuinely-seeded surface. A file not tracked at HEAD (a brand-new package)
+ * yields an empty list, so the guard correctly permits it to seed empty.
+ */
+function readCommittedApiLines(filePath) {
+  const relPosix = path.relative(REPO_ROOT, filePath).replace(/\\/g, "/");
+  const result = spawnSync("git", ["show", `HEAD:${relPosix}`], {
+    cwd: REPO_ROOT,
+    encoding: "utf8",
+    maxBuffer: 32 * 1024 * 1024,
+  });
 
-  return fs
-    .readFileSync(filePath, "utf8")
+  if (result.status !== 0) return [];
+
+  return (result.stdout ?? "")
     .split(/\r?\n/)
     .map((l) => l.trimEnd())
     .filter((l) => l.length > 0 && l !== NULLABLE_HEADER);
@@ -280,6 +317,30 @@ function run(command, commandArgs) {
 const RS0016_PREFIX = "RS0016: Symbol '";
 const RS0016_SUFFIX = "' is not part of the declared public API";
 
+/**
+ * Force the NEXT build of this package to fully recompile so the analyzer
+ * re-runs and re-emits its RS0016 diagnostics. `--no-incremental` alone is an
+ * UNRELIABLE trigger (proven): MSBuild's up-to-date check does not consistently
+ * treat an AdditionalFiles (PublicAPI.*.txt) content change as a recompile
+ * reason, so a warm bin/obj (or a toolchain that skips CoreCompile) leaves zero
+ * RS0016 in the output and yields a wrong, empty extracted surface. Deleting the
+ * package's own bin/ + obj/ removes the compiled outputs and the up-to-date
+ * markers, so the subsequent build MUST run CoreCompile (and therefore the
+ * analyzer) from scratch. Restore assets (project.assets.json) live under obj/
+ * and are deleted with it, so the extraction build below must NOT pass
+ * `--no-restore` — it restores first, then compiles. Only THIS package's
+ * intermediates are removed; its dependencies keep their warm caches (their
+ * RS0016, if any, is filtered out by owner-tag), so the extra cost is one clean
+ * recompile of the target package, not the whole graph.
+ */
+function forceFullRecompile(csprojPath) {
+  const dir = path.dirname(csprojPath);
+
+  for (const sub of ["bin", "obj"]) {
+    fs.rmSync(path.join(dir, sub), { recursive: true, force: true });
+  }
+}
+
 /** Build the package and extract every public-API line from its RS0016 lines. */
 function extractSurfaceViaBuild(csprojPath, packageId) {
   // Debug build with no extra flags — the analyzer runs automatically. RS0016
@@ -308,15 +369,16 @@ function extractSurfaceViaBuild(csprojPath, packageId) {
   // RS0026/RS0027 fire only while a symbol is missing from the baseline; once
   // seeded into Shipped.txt the normal solution build treats them as already-
   // shipped and they do not fire.
-  // --no-incremental forces a full recompile so the analyzer re-runs and re-
-  // emits its RS0016 diagnostics. Without it MSBuild can skip the rebuild when
-  // it judges outputs up-to-date (AdditionalFiles content changes are not always
-  // tracked as recompile triggers), leaving zero RS0016 in the output and an
-  // empty — wrong — extracted surface.
+  // forceFullRecompile removed this package's bin/ + obj/ up front, so the build
+  // MUST run CoreCompile (and the analyzer) from scratch — the RELIABLE trigger
+  // that `--no-incremental` alone is not. Because obj/ (and project.assets.json)
+  // was deleted, this build must NOT pass `--no-restore`: it restores first, then
+  // compiles. `--no-incremental` is kept as belt-and-suspenders.
+  forceFullRecompile(csprojPath);
+
   const result = run("dotnet", [
     "build",
     csprojPath,
-    "--no-restore",
     "--no-incremental",
     "-p:TreatWarningsAsErrors=false",
   ]);
@@ -329,8 +391,11 @@ function extractSurfaceViaBuild(csprojPath, packageId) {
   const csprojBasename = path.basename(csprojPath);
   const ownerTag = `${csprojBasename}]`;
 
-  // A build with zero RS0016 for this package means the baseline already matches
-  // the source — an empty surface is the correct extraction in that case.
+  // Zero RS0016 for this package is AMBIGUOUS: it means EITHER the package
+  // genuinely has no public API, OR the analyzer did not re-run. forceFullRecompile
+  // above makes the second case unlikely, but the caller still fail-loud guards the
+  // "prior-non-empty → extracted-empty" transition (assertExtractionNotWrongfullyEmpty)
+  // rather than trusting an empty extraction unconditionally.
   const lines = output.split(/\r?\n/);
   const surface = [];
 
@@ -377,7 +442,9 @@ function normalizeLf(text) {
 
 // ---------------------------------------------------------------------------
 // Source dump + toolchain pin (mirrors release-runner/src/source-fingerprint.ts
-// BYTE-FOR-BYTE; the seed↔provider identity is pinned by a runner test).
+// BYTE-FOR-BYTE). The final SHA-256 composition is delegated to the shared
+// composeSourceFingerprintFromParts primitive, whose seed↔provider byte-identity
+// is pinned by tools/release-runner/tests/seed-provider-fingerprint-identity.test.ts.
 // ---------------------------------------------------------------------------
 
 const SKIP_DIRS = new Set([
@@ -491,20 +558,19 @@ const TOOLCHAIN_PIN = readNugetToolchainPin();
  */
 function composeFingerprint(csprojPath, packageId, shippedTxt, unshippedTxt) {
   const packageDir = path.dirname(csprojPath);
-  const sourceDump = buildSourceDump(packageDir);
   const csprojText = fs.readFileSync(csprojPath, "utf8");
   const depsJson = buildManifestMeta(packageId, csprojText);
-  // Mirror the provider: apiReport = shippedTxt + unshippedTxt, LF-normalized
-  // once at compose time (composeSourceFingerprint does the single normalizeLf).
-  const apiReport = shippedTxt + unshippedTxt;
 
-  const hash = createHash("sha256");
-  hash.update(`SOURCE:\n${sourceDump}\n`);
-  hash.update(`APIREPORT:\n${normalizeLf(apiReport)}\n`);
-  hash.update(`DEPS:\n${depsJson}\n`);
-  hash.update(`TOOLCHAIN:\n${TOOLCHAIN_PIN}\n`);
-
-  return hash.digest("hex");
+  // Delegate the final SHA-256 composition to the shared primitive so it stays
+  // byte-identical to the release-runner's composeSourceFingerprint (the drift
+  // check recomputes via the runner). Mirror the provider: apiReport =
+  // shippedTxt + unshippedTxt, passed RAW — the primitive LF-normalizes it once.
+  return composeSourceFingerprintFromParts({
+    sourceDump: buildSourceDump(packageDir),
+    apiReport: shippedTxt + unshippedTxt,
+    depsJson,
+    toolchainJson: TOOLCHAIN_PIN,
+  });
 }
 
 // ---------------------------------------------------------------------------
@@ -518,8 +584,12 @@ function seedConsumable(csprojPath) {
   const unshippedPath = path.join(dir, "PublicAPI.Unshipped.txt");
   const fingerprintPath = path.join(dir, ".release-fingerprint");
 
+  // The prior surface is read from HEAD (committed), NOT the working tree: the
+  // pre-pass resets the on-disk file to header-only and a prior corrupt run may
+  // already have emptied it, so only HEAD holds the last genuinely-seeded surface
+  // the empty-guard must compare against.
   const before = {
-    shipped: readApiLines(shippedPath),
+    shipped: readCommittedApiLines(shippedPath),
     fingerprint: fs.existsSync(fingerprintPath)
       ? fs.readFileSync(fingerprintPath, "utf8").trim()
       : undefined,
@@ -537,6 +607,17 @@ function seedConsumable(csprojPath) {
   const surface = normalizeApiLines(
     extractSurfaceViaBuild(csprojPath, packageId),
   );
+
+  // 2a. FAIL-LOUD GUARD: a package that had a non-empty committed surface but
+  //     extracted to zero is the analyzer-didn't-run signature (a successful
+  //     build does not silently drop a whole public API). Refuse to persist the
+  //     wipe unless the package is explicitly allow-listed for a genuine removal.
+  assertExtractionNotWrongfullyEmpty({
+    packageId,
+    priorSurfaceCount: before.shipped.length,
+    extractedSurfaceCount: surface.length,
+    allowEmpty: allowEmptyPackages.has(packageId),
+  });
 
   // 3. Write the surface into Shipped.txt; Unshipped.txt stays header-only.
   writeApiFile(shippedPath, surface);
@@ -579,25 +660,22 @@ function seedConsumable(csprojPath) {
 // build runs. The Directory.Build.props references each file by a literal
 // AdditionalFiles path; a missing file becomes a CS2001 "source file could not
 // be found" the moment a consumable (or any consumable that depends on it
-// transitively) is built. When --package targets a single consumable, only its
-// own baselines are touched and its dependencies keep their committed baselines.
-// A full run (no --package) resets EVERY Shipped.txt to header-only so any
-// cross-package contamination from a prior partial run is cleared before the
-// per-package extraction rebuilds each surface from scratch.
-const fullRun = !packageFilter;
-
+// transitively) is built. This pre-pass GUARANTEES EXISTENCE ONLY — it never
+// empties an existing baseline. Each package's Shipped.txt is emptied-then-
+// immediately-repopulated inside seedConsumable, so at any instant at most ONE
+// package is in the header-only state (the narrowest possible corruption window);
+// the earlier "reset EVERY Shipped.txt up front" widened that window across the
+// whole run for no benefit (per-package RS0016 is attributed by owner-tag, so a
+// dependency retaining its committed surface cannot contaminate another package's
+// extraction). Existence-only also preserves each package's committed surface as
+// the empty-guard's HEAD-independent on-disk fallback until its own turn.
 for (const csprojPath of consumables) {
   const dir = path.dirname(csprojPath);
   const shippedPath = path.join(dir, "PublicAPI.Shipped.txt");
   const unshippedPath = path.join(dir, "PublicAPI.Unshipped.txt");
 
-  if (fullRun) {
-    writeApiFile(shippedPath, []);
-    writeApiFile(unshippedPath, []);
-  } else {
-    ensureHeaderFile(shippedPath);
-    ensureHeaderFile(unshippedPath);
-  }
+  ensureHeaderFile(shippedPath);
+  ensureHeaderFile(unshippedPath);
 }
 
 const results = [];

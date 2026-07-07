@@ -3,6 +3,10 @@ name: audit-round
 description: The K=12 audit-round dispatch pack - cluster partition, per-cluster reading lists, agent routing, dispatch-brief and Aggregator skeletons. Use when dispatching an audit or final-review round. Keywords - audit, K=12, cluster, auditor, aggregator, sweep, dispatch, round.
 ---
 
+<!--
+Copyright (c) DCSV. All rights reserved.
+-->
+
 # audit-round — K=12 dispatch pack
 
 MIRROR of `docs/dev/process.md §3` (Auditor cluster partition + Aggregator role) and `§4` (dispatch-brief template). **`process.md` is canonical — if this and it disagree, process.md wins; update both in lockstep (§11.32).**

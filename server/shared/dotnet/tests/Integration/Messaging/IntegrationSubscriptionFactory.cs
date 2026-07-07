@@ -60,4 +60,25 @@ internal static class IntegrationSubscriptionFactory
             Prefetch: prefetch,
             Idempotency: idempotency,
             TieredRetry: null);
+
+    /// <summary>Builds a descriptor against
+    /// <c>BroadcastFixtureEvent</c> (plaintext fanout). Defaults to the
+    /// <see cref="QueuePattern.FanoutExclusiveAutoDelete"/> pattern with an
+    /// empty routing-key binding — the shape a fanout broadcast subscriber
+    /// declares (each replica / distinct service gets its own exclusive queue
+    /// bound to the shared fanout exchange).</summary>
+    /// <param name="queueName">Base queue name for the test (the runtime
+    /// appends a per-process suffix for the fanout-exclusive pattern).</param>
+    /// <param name="prefetch">Per-channel basic.qos prefetch count.</param>
+    public static MqSubscriptionDescriptor ForBroadcastEvent(
+        string queueName,
+        int prefetch = 10) => new(
+            Constant: "TestSub",
+            MessageTypeName: typeof(BroadcastFixtureEvent).FullName!,
+            QueueName: queueName,
+            Pattern: QueuePattern.FanoutExclusiveAutoDelete,
+            RoutingKeyBinding: string.Empty,
+            Prefetch: prefetch,
+            Idempotency: false,
+            TieredRetry: null);
 }

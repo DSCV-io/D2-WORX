@@ -19,7 +19,11 @@ import {
 import { describe, expect, it, vi } from "vitest";
 
 import type { KeyCustodianGrpcClient } from "../src/facade/key-custodian-grpc-client.g.js";
-import { createSealedCryptoViaKeyCustodian } from "../src/sealing/create-sealed-crypto.js";
+import type { RotationSubscription } from "../src/rotation/rotation-subscription.js";
+import {
+  createSealedCryptoViaKeyCustodian,
+  type CreateSealedCryptoOptions,
+} from "../src/sealing/create-sealed-crypto.js";
 import { KeyringBackedPayloadOpener } from "../src/sealing/keyring-backed-payload-opener.js";
 import { KeyringBackedPayloadSealer } from "../src/sealing/keyring-backed-payload-sealer.js";
 import {
@@ -118,6 +122,15 @@ class FakeSealingClient implements SealingClient {
 
 const flush = (): Promise<void> =>
   new Promise((resolve) => setTimeout(resolve, 5));
+
+/**
+ * A no-op {@link RotationSubscription} (§7.23 test-only) — records nothing and never
+ * fires. Used where a test does not exercise rotation but must still satisfy the now
+ * MANDATORY `rotationSubscription` argument (the silent-stale-keys footgun is gone).
+ */
+const noopRotationFake: RotationSubscription = {
+  onRotation: () => () => {},
+};
 
 describe("GrpcSealingClient", () => {
   function facade(
@@ -496,8 +509,25 @@ describe("createSealedCryptoViaKeyCustodian", () => {
         ownServiceId: "NOT VALID",
         sealingClient: new FakeSealingClient("audit", "k", await keypair()),
         logger: new FakeLogger(),
+        rotationSubscription: noopRotationFake,
       }),
     ).rejects.toThrow(/service-id grammar/);
+  });
+
+  it("makes rotationSubscription REQUIRED at compile time (no silent-stale footgun)", () => {
+    // Compile-time proof (§Gap-2): omitting `rotationSubscription` must no longer
+    // type-check — a caller can never silently skip rotation wiring and serve stale
+    // keys after a KeyCustodian rotation. Assigning an options object WITHOUT the
+    // property to the options type is the type error `@ts-expect-error` pins.
+    const optionsWithoutRotation = {
+      ownServiceId: "audit",
+      sealingClient: {} as SealingClient,
+      logger: new FakeLogger(),
+    };
+    // @ts-expect-error — rotationSubscription is REQUIRED; omitting it must not type-check.
+    const _proof: CreateSealedCryptoOptions = optionsWithoutRotation;
+
+    expect(_proof).toBe(optionsWithoutRotation);
   });
 
   it("wires a sealer per consumer service and the opener when a consumer", async () => {
@@ -535,13 +565,14 @@ describe("createSealedCryptoViaKeyCustodian", () => {
     ).toBeGreaterThan(0);
   });
 
-  it("builds the opener without rotation wiring when no subscription is given", async () => {
+  it("builds and boot-fetches the opener for a consumer service", async () => {
     const kp = await keypair();
     const client = new FakeSealingClient("courier", "seal-1", kp);
     const wiring = await createSealedCryptoViaKeyCustodian({
       ownServiceId: "courier",
       sealingClient: client,
       logger: new FakeLogger(),
+      rotationSubscription: noopRotationFake,
     });
     expect(wiring.ownOpener).toBeDefined(); // courier is a consumer
     expect(client.privCalls).toBe(1); // opener boot fetch
@@ -555,10 +586,39 @@ describe("createSealedCryptoViaKeyCustodian", () => {
       ownServiceId: "edge",
       sealingClient: client,
       logger: new FakeLogger(),
+      rotationSubscription: noopRotationFake,
     });
     expect(wiring.ownOpener).toBeUndefined();
     expect(client.privCalls).toBe(0); // no boot fetch without an opener
     expect(wiring.sealersByConsumerService.size).toBe(3);
     wiring.dispose();
+  });
+
+  it("guards a double dispose() — the second call is a no-op (unsubscribes + disposes fire once)", async () => {
+    const kp = await keypair();
+    const client = new FakeSealingClient("audit", "seal-1", kp);
+    let unsubscribeCalls = 0;
+    const wiring = await createSealedCryptoViaKeyCustodian({
+      ownServiceId: "audit",
+      sealingClient: client,
+      logger: new FakeLogger(),
+      rotationSubscription: {
+        onRotation: () => () => {
+          unsubscribeCalls++;
+        },
+      },
+    });
+    const openerDispose = vi.spyOn(wiring.ownOpener!, "dispose");
+
+    wiring.dispose();
+    const afterFirst = unsubscribeCalls;
+    wiring.dispose(); // re-entry must short-circuit
+
+    // RotationSubscription does not guarantee an idempotent unsubscribe, so a second
+    // dispose() must NOT re-fire any unsubscribe (nor re-dispose the opener) — without
+    // the _disposed guard the second dispose() doubles both counts.
+    expect(afterFirst).toBeGreaterThan(0); // real unsubscribes ran on the first dispose
+    expect(unsubscribeCalls).toBe(afterFirst); // the second dispose added none
+    expect(openerDispose).toHaveBeenCalledTimes(1);
   });
 });

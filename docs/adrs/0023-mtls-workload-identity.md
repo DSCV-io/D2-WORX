@@ -5,8 +5,8 @@ Copyright (c) DCSV. All rights reserved.
 # ADR-0023: mTLS workload identity — KeyCustodian-issued certificates, additive to JWT
 
 - **Status**: Accepted
-- **Date**: 2026-06-17
-- **Deliverable**: 0021-auth-pivot (decision accepted); 0022-mtls-workload-identity (Decision subsections authored)
+- **Date**: 2026-06-17 (CSR-custody / self-issue / mesh-member amendment: 2026-07-02)
+- **Deliverable**: 0021-auth-pivot (decision accepted); 0022-mtls-workload-identity (Decision subsections authored); CSR-custody / self-issue / mesh-member amendment: 0026-kc-crypto-surface
 
 ## Context
 
@@ -125,7 +125,7 @@ mTLS authenticates the peer workload and the channel; it never gates or replaces
 - **A genuinely new PKI subsystem in KeyCustodian.** No certificate-authority capability exists today — KeyCustodian manages only signing keys, payload-encryption keys, and secrets, with no X.509, CSR, or CA surface anywhere, and the dev tooling produces only a symmetric root key. This decision requires building certificate-authority-key custody, certificate-signing-request handling, leaf issuance, leaf rotation, and revocation as new capability — not configuring something already present.
 - **Certificate distribution and bootstrap are new machinery.** Each workload must obtain its leaf certificate, renew it before expiry, and trust the certificate-authority certificate. The mechanism that bootstraps a workload's identity and distributes and renews its material does not exist yet and has to be built and operated.
 - **Rotation must not break in-flight connections.** Leaf rotation has to bring a successor into service before retiring the predecessor so that connections established under the old leaf are not severed mid-flight; KeyCustodian's existing overlap-rotation model applies, but the certificate-specific rotation has to honor it.
-- **Channel rebuild-on-rotation for long-lived gRPC channels.** `AddD2WorkloadCertificate` captures the leaf at channel construction via `SslClientAuthenticationOptions.ClientCertificateContext`; a long-lived channel does not automatically adopt a rotated leaf — the consumer must rebuild the channel to present a freshly-rotated leaf. This responsibility is documented on the extension method but not yet enforced by host-wiring policy; the Edge host build is the point at which channel-lifetime management and rotation-driven rebuild need to be addressed explicitly.
+- **Channel rebuild-on-rotation for long-lived gRPC channels.** `AddD2WorkloadCertificate` captures the leaf at channel construction via `SslClientAuthenticationOptions.ClientCertificateContext`; a long-lived channel does not automatically adopt a rotated leaf — the consumer must rebuild the channel to present a freshly-rotated leaf. This responsibility is documented on the extension method; channel-lifetime management and rotation-driven rebuild are tracked as an explicit requirement at the Edge host wiring step (the A1-gated tail — tracked in `docs/v2/PHASE_3.md`, build-order step 6).
 - **The operational surface grows.** Certificate expiry has to be monitored across every workload, and the certificate-authority key becomes the highest-value secret in the system — its compromise would let an attacker mint a trusted workload identity, so its custody is the most sensitive in the deployment.
 
 The detailed mechanics — the two-tier hierarchy, the ECDSA P-256 key algorithm, the leaf lifetime and refresh-ahead rotation, the expiry-first revocation posture, the SPIFFE subject-alternative-name naming scheme, the certificate-authority-as-managed-key versus leaf-as-on-demand-issuance modeling, and the .NET server-require / client-present mechanism — are settled in the Decision subsections above. What remains for the implementing work is the code: the certificate-authority key custody, the issuance operation, leaf rotation, the dev bootstrap, and the server and client transport wiring.
@@ -140,9 +140,42 @@ The detailed mechanics — the two-tier hierarchy, the ECDSA P-256 key algorithm
 
 **Cloud or managed private certificate authority.** Use a hosted private-CA service to issue and manage the workload certificates. Rejected: a managed private CA is a paid, cloud-bound dependency that breaks the requirement to run the full path locally on a developer machine. The self-signed certificate authority issued through KeyCustodian runs anywhere — on a laptop for development and under production custody in deployment — on one model.
 
+## Amendment — 2026-07-02: CSR-based leaf custody, structural self-issue, and the BFF as a mesh-member workload
+
+The original Decision left the leaf-issuance shape at "issued on demand and returned to the caller" and did not settle how a leaf's private key travels or how the leaf's identity is bound. The implementation settles both in the stronger-custody direction, and a separate ruling settles the SvelteKit BFF's trust posture. The three parts below amend the ADR to reflect what shipped; the two-tier hierarchy, the ECDSA P-256 algorithm, the SPIFFE naming, the refresh-ahead rotation, the expiry-first revocation, and the strictly-additive-to-JWT posture are all unchanged.
+
+### 1. The workload holds the leaf private key; KeyCustodian never does (CSR flow)
+
+The "KeyCustodian modeling" subsection above says a leaf "is issued on demand by an issuance operation and returned to the caller" and that "the leaf private key the workload holds is secret and is zeroed after use." That framing — a key-bearing leaf minted inside KeyCustodian and handed back — is **superseded**. The leaf private key is never generated inside KeyCustodian, never crosses the issuance seam, and is never returned:
+
+- The **workload generates a fresh ECDSA P-256 keypair locally** — a new key every reissue cycle, so per-rotation key freshness holds — and builds a **PKCS#10 certificate-signing request** (public key + a self-signature; public material by construction).
+- **Only the CSR crosses the wire.** KeyCustodian verifies the CSR's **proof-of-possession** (the self-signature must validate against the embedded public key), enforces the **leaf key policy against the CSR's public key** (ECDSA P-256 by named-curve OID, with the DER size-capped before any parse — RSA, wrong-curve, and explicit-parameters encodings are all rejected), signs the public key, and returns the **leaf plus the issuing intermediate — all public material**.
+- There is therefore **no leaf private key at KeyCustodian to return, custody, or zero** on the leaf path; the workload owns its key lifecycle end to end. The consumer pairs the returned certificate with its local key and rejects any leaf that certifies a different key (a certificate it could never present).
+
+The leaf key policy stays ECDSA P-256 — now *enforced* against the presented CSR public key rather than chosen at a server-side generation step. This is realized on both runtimes: the .NET `WorkloadLeafClient` (`server/shared/dotnet/auth/outbound/WorkloadCertificate/WorkloadLeafClient.cs`) and its Node twin `@d2/key-custodian-client` (`server/services/edge/key-custodian/client-ts/src/issuance/`) generate the keypair and build the CSR; `CsrVerification` (`server/services/edge/key-custodian/domain/Rules/CsrVerification.cs`) does the size cap + proof-of-possession + curve-OID checks; `WorkloadCertificateIssuance` (`.../domain/Rules/WorkloadCertificateIssuance.cs`) signs the supplied public key and generates no keypair.
+
+### 2. Self-issue is structural — the SAN is always the authenticated peer
+
+The leaf's subject-alternative-name is **always** derived from KeyCustodian's authenticated view of the caller — the validated mTLS peer identity's SPIFFE SAN, read from the established request context (`ImmediateCaller`; see [ADR-0025](0025-request-context-establishment.md)). The CSR's subject, SAN, and requested extensions are **never read and never reach the leaf** — only the verified public key does. A CSR requesting a different subject or SAN cannot forge an identity: impersonation-by-subject is unrepresentable by construction, not by a compare-and-reject guard.
+
+Signing routes exclusively through a **dedicated, isolated leaf-signing capability** (`ICaLeafSigningCapability`, `server/services/edge/key-custodian/app/Application/Issuance/`): it is the only holder of the issuance-path intermediate-CA unwrap, registered by its own extension and structurally unreachable from the general application registration, so a provider built without that extension cannot sign a workload leaf. Possession grants leaf *signing* only — the authority gate, CSR verification, scope check, audit, and telemetry all stay in the single issuance handler both planes flow through (`IssueWorkloadCertificateHandler`).
+
+**Delegated issuance** (one identity requesting a leaf for another) is deliberately **not** built and is **not** "never needed": it belongs to the first-leaf **bootstrap** ADR — a tracked open design item (see `docs/v2/PHASE_3.md` build-order step 6) that will settle the bootstrap mechanism; that future ADR is the only possible consumer of delegation, and this ADR's own stated direction (an orchestrator-provisioned bootstrap secret authenticating a self-issue) needs no delegation. The general issuance surface stays structurally self-issue-only: no delegated-issuer arm, boolean, or branch exists on it.
+
+### 3. The SvelteKit BFF is a mesh-member workload, not an external client of Edge
+
+The SvelteKit BFF (`server/web`) is a **privileged backend workload — a full mesh member — not "just a frontend."** It sits behind Edge on the private network; by the time a request reaches the BFF, Edge has already resolved the session and established auth. The BFF therefore:
+
+- **holds a KC-issued mTLS leaf** for its workload identity under this ADR — its issuance path is the **Node `WorkloadLeafClient` twin** (`@d2/key-custodian-client`), the behavioral mirror of the .NET client;
+- **makes direct calls to internal services** and **forwards the Edge-minted transaction token unchanged** per [ADR-0022](0022-service-auth-mint-once-forward.md) (the BFF is the first internal hop — looping back through Edge after Edge already established auth is rejected as redundant);
+- holds **least privilege**: the leaf is *all* it holds — **zero KeyCustodian grants** (no keyrings, no signing keys).
+
+This **supersedes** any "the BFF is an external client of Edge" framing in this decision's orbit; the boundary `client_credentials` model survives only for genuinely-external clients. The Node leaf client is built and tested; the live BFF-host wiring that presents the leaf on real internal channels lands with the Edge-host phase (the same host-gating the .NET path carries). The corresponding external-client clause in [ADR-0022](0022-service-auth-mint-once-forward.md) is amended in lockstep.
+
 ## References
 
 - [ADR-0022](0022-service-auth-mint-once-forward.md) — the mint-once-at-the-Edge, forward-unchanged service-auth model; this decision supplies the workload-authentication factor that model layers mTLS on top of, and which it depends on for establishing which workload presents the forwarded token.
+- [ADR-0025](0025-request-context-establishment.md) — the request-context establishment model whose `ImmediateCaller` (recomputed fresh from the validated mTLS peer certificate at each boundary) is the authenticated peer identity the structural-self-issue amendment binds a leaf's subject-alternative-name to.
 - [ADR-0007](0007-request-context-propagation.md) — the request/auth context model and its rejection of the transport-trust fast path (mTLS as a reason to skip per-hop token validation); this decision's additive use of mTLS keeps full per-hop JWT re-validation and therefore does not reactivate that rejection.
 - [ADR-0016](0016-keycustodian-lifecycle-store.md) — KeyCustodian's key-lifecycle state machine and overlap-rotation model; the certificate-authority capability extends this machinery with a new certificate key-type and its issuance, rotation, and revocation operations.
 - [ADR-0012](0012-self-rolled-dotnet-auth.md) — the self-rolled .NET auth surface, including the `client_credentials` service-identity client this decision's workload identity replaces.

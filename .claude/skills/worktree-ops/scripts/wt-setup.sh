@@ -1,4 +1,7 @@
 #!/usr/bin/env bash
+# -----------------------------------------------------------------------
+# Copyright (c) DCSV. All rights reserved.
+# -----------------------------------------------------------------------
 # wt-setup.sh <name> — create a sibling git worktree branched at HEAD and carry
 # the CURRENT uncommitted working state into it, so a parallel implementer works
 # from the same uncommitted base. Backs the `worktree-ops` skill.

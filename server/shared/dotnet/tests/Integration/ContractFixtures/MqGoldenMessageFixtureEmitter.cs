@@ -18,6 +18,7 @@ using D2.Shared.Encryption;
 using D2.Shared.Headers.Amqp;
 using D2.Shared.Messaging;
 using D2.Shared.Messaging.RabbitMq.Encryption;
+using D2.Shared.Utilities.Extensions;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 
@@ -41,9 +42,10 @@ public sealed class MqGoldenMessageFixtureEmitter
     // The sealed golden-message recipient — the SAME synthetic "audit" recipient
     // (serviceId + kid + private PKCS#8) as SealedCryptoKatFixtureEmitter, so the TS
     // consume test opens this .NET-composed message with a self-contained, pinned
-    // (fixture-only, no PII) private keyring. Pinning the recipient bounds the fixture
-    // churn to just the sealed frame, which is non-deterministic by construction (see
-    // Emit_SealedAuditMessage).
+    // (fixture-only, no PII) private keyring. The ECDH ephemeral is still non-deterministic
+    // (a fresh keypair + nonce per emit), but Emit_SealedAuditMessage writes the file ONLY
+    // when it is absent or D2_REGEN_GOLDENS is set, so committed bytes do not churn on
+    // normal runs.
     private const string _SEAL_RECIPIENT_SERVICE_ID = "audit";
     private const string _SEAL_RECIPIENT_KID = "seal-kat-kid";
 
@@ -156,15 +158,18 @@ public sealed class MqGoldenMessageFixtureEmitter
     public void Emit_SealedAuditMessage()
     {
         // A REAL sealed (version-2) golden MESSAGE — the message JSON is composed by the
-        // production EncryptedBodyComposer.Compose sealed branch,
-        // resolving the keyed IPayloadSealer by the descriptor's consumer service exactly
-        // as a live producer host does. It proves the TS @d2/messaging-rabbitmq consumer
-        // (CryptoBodyOpener over @d2/encryption's PayloadOpener) opens a genuinely
-        // .NET-composed sealed body byte-for-byte. Unlike the deterministic
-        // sealed-crypto-kat vector, the frame is NON-deterministic (the sealer mints a
-        // fresh per-message ephemeral keypair + nonce — no injection point by design), so
-        // re-emitting produces a different bodyBase64; the opener material + expected
-        // content stay pinned and the byte-exact KAT gate remains sealed-crypto-kat.
+        // production EncryptedBodyComposer.Compose sealed branch, resolving the keyed
+        // IPayloadSealer by the descriptor's consumer service exactly as a live producer
+        // host does. It proves the TS @d2/messaging-rabbitmq consumer (CryptoBodyOpener
+        // over @d2/encryption's PayloadOpener) opens a genuinely .NET-composed sealed body.
+        // Unlike the deterministic sealed-crypto-kat vector, the frame is NON-deterministic
+        // (the sealer mints a fresh per-message ephemeral keypair + nonce — no injection
+        // point by design), so re-emitting yields a different bodyBase64. The write is
+        // therefore gated: the file is written ONLY when it does not already exist, OR when
+        // D2_REGEN_GOLDENS is set (e.g. D2_REGEN_GOLDENS=1). On a normal run the existing
+        // committed file is left unchanged; the production-code assertions below still run.
+        // The opener material + expected content stay pinned; the byte-exact gate remains
+        // sealed-crypto-kat.
         var descriptor = new MqMessageDescriptor(
             Constant: "AuditSealedGoldenFixture",
             MessageTypeName: typeof(KeyRotatedEvent).FullName!,
@@ -203,6 +208,7 @@ public sealed class MqGoldenMessageFixtureEmitter
         var services = new ServiceCollection();
         services.AddKeyedSingleton<IPayloadSealer>(
             consumerService, new PayloadSealer(publicKeyring));
+
         using var provider = services.BuildServiceProvider();
 
         var (body, kid) = EncryptedBodyComposer.Compose(evt, descriptor, provider);
@@ -236,6 +242,13 @@ public sealed class MqGoldenMessageFixtureEmitter
             },
         };
 
-        FixturePathHelpers.WriteFixture(CATALOG, "sealed-audit-message", data);
+        var goldenPath = FixturePathHelpers.FixturePath(CATALOG, "sealed-audit-message");
+
+        var regenRequested = Environment.GetEnvironmentVariable("D2_REGEN_GOLDENS").Truthy();
+
+        if (!File.Exists(goldenPath) || regenRequested)
+        {
+            FixturePathHelpers.WriteFixture(CATALOG, "sealed-audit-message", data);
+        }
     }
 }

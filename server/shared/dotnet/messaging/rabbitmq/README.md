@@ -764,19 +764,25 @@ cycles via `MaxAttempts`.
 
 ---
 
-## TypeScript consumer twin
+## TypeScript twin — producer and consumer
 
-A service-agnostic **consumer** runtime for Node lives at
+A service-agnostic Node runtime for both directions lives at
 [`server/shared/typescript/messaging/rabbitmq/`](../../../typescript/messaging/rabbitmq/README.md)
-(`@d2/messaging-rabbitmq`). It declares the same topology (primary + `{q}.dlx` +
-`{q}.dlq` + retry tiers), consumes with manual acks, republishes failures with
-the same `DlqFailureMetadata`, deduplicates via the same 5-point idempotency
-contract, and establishes the same per-delivery context (traceparent-parented
-consume span + `x-d2-context` → per-message operational context; identity and
-`RequestOrigin` never taken from the wire). It is **consumer-only** — publishing
-requires this lib's structural publish/encrypt fusion and is out of scope for the
-Node twin. Its Testcontainer suite replays golden messages emitted by
-`D2.Shared.Tests` `Integration/ContractFixtures/MqGoldenMessageFixtureEmitter`.
+(`@d2/messaging-rabbitmq`). On the **consume** side it declares the same topology
+(primary + `{q}.dlx` + `{q}.dlq` + retry tiers), consumes with manual acks,
+republishes failures with the same `DlqFailureMetadata`, deduplicates via the same
+5-point idempotency contract, and establishes the same per-delivery context
+(traceparent-parented consume span + `x-d2-context` → per-message operational
+context; identity and `RequestOrigin` never taken from the wire). On the
+**publish** side it ships the same structural publish/encrypt fusion this lib
+enforces: `createPublisher({ crypto })` binds a compile-time type witness so a
+message can only be published to a `plaintext` domain or one whose composer was
+wired in, a runtime default-deny (`composeBody`) second-locks the dynamic paths,
+and there is no raw-bytes publish overload — the composer for a domain is the only
+path to the socket for that domain. Its Testcontainer suite replays golden
+messages emitted by `D2.Shared.Tests`
+`Integration/ContractFixtures/MqGoldenMessageFixtureEmitter` and round-trips its
+own published frames back through the consumer pipeline.
 
 ## References
 

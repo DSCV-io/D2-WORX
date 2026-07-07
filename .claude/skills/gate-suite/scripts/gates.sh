@@ -1,4 +1,7 @@
 #!/usr/bin/env bash
+# -----------------------------------------------------------------------
+# Copyright (c) DCSV. All rights reserved.
+# -----------------------------------------------------------------------
 # gates.sh — run the zero-warning build/inspect gates + the two .NET test
 # projects, capture full logs, print terse summaries. Backs the `gate-suite`
 # skill (rules.md §5.21/§5.22/§5.23 zero-warning; §1 test discipline).

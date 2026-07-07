@@ -5,27 +5,12 @@
 import { ConsumerServiceByDomain } from "@d2/encryption-abstractions";
 import type { ILogger } from "@d2/logging";
 
+import type { RotationSubscription } from "../rotation/rotation-subscription.js";
 import { KeyringBackedPayloadOpener } from "./keyring-backed-payload-opener.js";
 import { KeyringBackedPayloadSealer } from "./keyring-backed-payload-sealer.js";
 import type { SealingClient } from "./sealing-client.js";
 
 const _SERVICE_ID_GRAMMAR = /^[a-z0-9-]{1,64}$/;
-
-/**
- * The rotation-event subscription port — the host adapts `@d2/messaging-rabbitmq`
- * `subscribe` (domain-filtered on `seal:<serviceId>`) to this shape. Modeled as
- * an injected port so the sealed-crypto wiring stays broker-decoupled and
- * unit-testable (the TS "composition instead of registration" divergence).
- */
-export interface RotationSubscription {
-  /**
-   * Registers a handler for rotation events on a domain; returns an unsubscribe.
-   *
-   * @param domain The rotation domain (e.g. `seal:audit`).
-   * @param handler Invoked on each rotation event for that domain.
-   */
-  onRotation(domain: string, handler: () => void): () => void;
-}
 
 /** The wired sealed-crypto instances the host passes into publisher/consumer composition. */
 export interface SealedCryptoWiring {
@@ -52,8 +37,14 @@ export interface CreateSealedCryptoOptions {
   readonly sealingClient: SealingClient;
   /** Structured logger (never receives an `Error` directly — PII safety). */
   readonly logger: ILogger;
-  /** Optional rotation subscription — wires `seal:<svc>` refresh when supplied. */
-  readonly rotationSubscription?: RotationSubscription;
+  /**
+   * The rotation subscription — REQUIRED. Wires `seal:<svc>` refresh for every
+   * sealer and the opener. Never optional: a sealed consumer that skips rotation
+   * silently serves STALE keys after KeyCustodian rotates until the process
+   * restarts. The .NET twin (`AddD2SealedEncryptionViaKeyCustodian`) always wires
+   * the rotation subscriber.
+   */
+  readonly rotationSubscription: RotationSubscription;
   /** Bounded refresh attempts before serving the current keyring. */
   readonly refreshAttempts?: number;
   /** Grace before a displaced private keyring is zeroized (ms). */
@@ -71,7 +62,8 @@ export interface CreateSealedCryptoOptions {
  * - builds this service's private-keyring opener ONLY when `ConsumerServiceByDomain`
  *   names this service as some sealed domain's consumer (boot fetch awaited = the
  *   fail-loud twin; a non-consumer host gets no opener — least-privilege);
- * - wires rotation refresh on `seal:<svc>` when a rotation subscription is given.
+ * - always wires rotation refresh on `seal:<svc>` (the subscription is required —
+ *   omitting it would silently serve stale keys after a rotation).
  *
  * The returned instances are passed explicitly into `createPublisher({ crypto })`
  * and the consumer `CryptoBodyOpener` composition — the one-call ergonomics as
@@ -106,13 +98,14 @@ export async function createSealedCryptoViaKeyCustodian(
     );
     sealers.set(svc, sealer);
 
-    if (options.rotationSubscription !== undefined) {
-      unsubscribes.push(
-        options.rotationSubscription.onRotation(`seal:${svc}`, () => {
-          void sealer.refresh();
-        }),
-      );
-    }
+    unsubscribes.push(
+      options.rotationSubscription.onRotation(`seal:${svc}`, () => {
+        // Fire-and-forget is intentional (§4.18): the sealer rotation refresh is
+        // best-effort — its bounded retry logs on exhaustion and keeps serving the
+        // current public keyring, so a failed refresh never rejects the handler.
+        void sealer.refresh();
+      }),
+    );
   }
 
   let ownOpener: KeyringBackedPayloadOpener | undefined;
@@ -125,22 +118,31 @@ export async function createSealedCryptoViaKeyCustodian(
     });
     const opener = ownOpener;
 
-    if (options.rotationSubscription !== undefined) {
-      unsubscribes.push(
-        options.rotationSubscription.onRotation(
-          `seal:${options.ownServiceId}`,
-          () => {
-            void opener.refresh();
-          },
-        ),
-      );
-    }
+    unsubscribes.push(
+      options.rotationSubscription.onRotation(
+        `seal:${options.ownServiceId}`,
+        () => {
+          // Fire-and-forget is intentional (§4.18): the opener rotation refresh is
+          // best-effort — its bounded retry logs on exhaustion and keeps serving the
+          // current private keyring, so a failed refresh never rejects the handler.
+          void opener.refresh();
+        },
+      ),
+    );
   }
+
+  let disposed = false;
 
   return {
     sealersByConsumerService: sealers,
     ownOpener,
     dispose: () => {
+      if (disposed) {
+        return;
+      }
+
+      disposed = true;
+
       for (const unsubscribe of unsubscribes) {
         unsubscribe();
       }

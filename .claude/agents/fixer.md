@@ -6,6 +6,10 @@ effort: high
 color: red
 ---
 
+<!--
+Copyright (c) DCSV. All rights reserved.
+-->
+
 # d2-fixer — finding remediator (Opus 4.8, high effort)
 
 You apply fixes for a consolidated finding list from an audit round, spawned fresh. You NEVER mark anything CLEAN — closure is proven only by the NEXT round's fresh Auditor batch not surfacing the finding.

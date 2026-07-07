@@ -28,9 +28,13 @@
 // DOES move the hash).
 //
 // Single-source rule: the seed scripts (seed-publicapi-baselines.mjs /
-// seed-apiextractor-baselines.mjs) compose byte-identical bytes via the SAME
-// algorithm so a no-op drift recompute matches the committed baseline. The
-// seed↔provider byte-identity is pinned by a test (source-fingerprint.test.ts).
+// seed-apiextractor-baselines.mjs) delegate their final composition to the
+// shared composeSourceFingerprintFromParts primitive
+// (tools/scripts/lib/source-fingerprint-compose.mjs), a byte-for-byte
+// re-implementation of composeSourceFingerprint below, so a no-op drift
+// recompute matches the committed baseline. The seed↔provider byte-identity of
+// that primitive vs composeSourceFingerprint is pinned by
+// tools/release-runner/tests/seed-provider-fingerprint-identity.test.ts.
 
 import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";

@@ -6,7 +6,6 @@
 
 namespace D2.Edge.Tests.Integration.KeyCustodian;
 
-using System.Diagnostics;
 using System.Security.Cryptography;
 using D2.Edge.KeyCustodian.App.Application;
 using D2.Edge.KeyCustodian.App.Application.CertificateAuthority;
@@ -73,6 +72,13 @@ public sealed class KeyCustodianSealedMessagingIntegrationTests(
     // the consumer host has finished declaring ALL its topology and is consuming.
     private const string _WARM_UP_DOMAIN = "sealed-messaging-consumer-ready-probe";
     private const string _WARM_UP_KID = "consumer-ready-probe";
+
+    // Genuine-stuck guard for WaitForConsumerReadyAsync: a poll-ATTEMPT budget,
+    // never a wall-clock deadline. Each iteration awaits the delay interval, so
+    // under load the effective wait GROWS instead of expiring. 2400 attempts is a
+    // multi-minute ceiling — far above any healthy broker round-trip, yet a
+    // permanently-stuck test still terminates.
+    private const int _POLL_ATTEMPT_BUDGET = 2400;
 
     private static readonly TimeSpan sr_overall = TimeSpan.FromSeconds(90);
 
@@ -334,12 +340,9 @@ public sealed class KeyCustodianSealedMessagingIntegrationTests(
             return Task.CompletedTask;
         });
 
-        var stopwatch = Stopwatch.StartNew();
-
-        while (!landed.Task.IsCompleted)
+        for (var attempt = 0; attempt < _POLL_ATTEMPT_BUDGET; attempt++)
         {
-            if (stopwatch.Elapsed > sr_overall)
-                throw new TimeoutException("The sealed consumer host never became ready.");
+            if (landed.Task.IsCompleted) return;
 
             await using (var scope = services
                 .GetRequiredService<IServiceScopeFactory>().CreateAsyncScope())
@@ -355,6 +358,9 @@ public sealed class KeyCustodianSealedMessagingIntegrationTests(
 
             await Task.WhenAny(landed.Task, Task.Delay(500));
         }
+
+        if (!landed.Task.IsCompleted)
+            throw new TimeoutException("The sealed consumer host never became ready.");
     }
 
     private static void RegisterSealedFixtureMessage()

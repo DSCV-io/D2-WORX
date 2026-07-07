@@ -1,4 +1,7 @@
 #!/usr/bin/env bash
+# -----------------------------------------------------------------------
+# Copyright (c) DCSV. All rights reserved.
+# -----------------------------------------------------------------------
 # do-commit.sh "<commit message>" — the sanctioned commit path for cycle-commit.
 # Invoke ONLY after EXPLICIT per-occurrence user commit permission (rules.md
 # §13.1). It plants the one-shot .claude/.commit-authorized marker that the

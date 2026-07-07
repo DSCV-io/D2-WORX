@@ -4,6 +4,10 @@ description: Set up a sibling git worktree carrying the current uncommitted stat
 allowed-tools: Bash, Read
 ---
 
+<!--
+Copyright (c) DCSV. All rights reserved.
+-->
+
 # worktree-ops
 
 Two modes for running parallel work off the SAME uncommitted base without committing first.

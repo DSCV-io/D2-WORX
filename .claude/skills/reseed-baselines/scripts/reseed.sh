@@ -1,4 +1,7 @@
 #!/usr/bin/env bash
+# -----------------------------------------------------------------------
+# Copyright (c) DCSV. All rights reserved.
+# -----------------------------------------------------------------------
 # reseed.sh — regenerate every consumable-package release baseline, then prove
 # currency is stable. Backs the `reseed-baselines` skill (rules.md §26.20).
 #

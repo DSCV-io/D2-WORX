@@ -4,6 +4,10 @@ description: Reseed consumable-package release baselines (PublicAPI, .api.md, .r
 allowed-tools: Bash, Read
 ---
 
+<!--
+Copyright (c) DCSV. All rights reserved.
+-->
+
 # reseed-baselines
 
 Regenerate every consumable-package release baseline and prove currency is stable. Backs rules.md §26.20 (re-seed after touching any consumable source; stale baseline = FINDING-HIGH).

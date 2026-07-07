@@ -4,6 +4,10 @@ description: Run the zero-warning gates (dotnet build + jb inspectcode) and the 
 allowed-tools: Bash, Read
 ---
 
+<!--
+Copyright (c) DCSV. All rights reserved.
+-->
+
 # gate-suite
 
 Runs the full zero-warning gate + test suite, captures FULL logs to timestamped files, prints terse summaries. Backs rules.md §5.21/§5.22/§5.23 (zero warnings on BOTH tools) + §1 (tests).

@@ -5,8 +5,8 @@ Copyright (c) DCSV. All rights reserved.
 # ADR-0022: Service-to-service auth — mint once at the Edge, forward the token unchanged
 
 - **Status**: Accepted
-- **Date**: 2026-06-17 (call-path closure: 2026-06-30)
-- **Deliverable**: 0021-auth-pivot; call-path closure: 0026-kc-crypto-surface
+- **Date**: 2026-06-17 (call-path closure: 2026-06-30; CSR port / mesh-member amendment: 2026-07-02)
+- **Deliverable**: 0021-auth-pivot; call-path closure: 0026-kc-crypto-surface; CSR port / mesh-member amendment: 0026-kc-crypto-surface
 
 ## Context
 
@@ -149,6 +149,22 @@ Realizing the credential mechanism carries net-new consequences that fold into t
 **Transport-trust fast path — mTLS plus a trusted plaintext identity header, skipping per-hop JWT validation.** Pass identity in a header that internal services accept *because* the channel is mTLS-authenticated, skipping per-hop token re-validation entirely. This is the variant [ADR-0007](0007-request-context-propagation.md) already weighs and rejects, and that rejection still stands here: it moves the trust anchor from the token (cryptographically bound to the issuer's signature at every boundary) to the network, so one compromised or misconfigured internal workload could forge any identity, and it puts identity material in plaintext headers at rest. This decision's use of mTLS is the opposite of that fast path: **mTLS is additive and every hop still re-validates the JWT.** As ADR-0007 puts it, identity-via-JWT and the operational subset are both still *propagated* — what is declined is *trusting* a propagated identity *without re-verifying its token*. Forwarding the token unchanged and re-validating it at every hop preserves exactly that zero-trust property; mTLS only adds workload authentication on top.
 
 **Offline attenuation with Biscuit / macaroon-style tokens.** Tokens that support cryptographic *attenuation* — a holder can derive a strictly-narrower token offline, with no issuer round-trip — would allow per-hop scope narrowing without reintroducing a per-hop mint. Not adopted now: the forward-unchanged model with per-operation scope enforcement meets the current requirement, and Biscuit would introduce a second token format and verification stack. It is noted as the **upgrade path** if per-hop scope *attenuation* ever becomes a hard requirement — it buys the narrowing of per-hop exchange without the latency of per-hop exchange.
+
+## Amendment — 2026-07-02: the certificate-issuer port carries a CSR, and the BFF is a mesh-member workload
+
+Two items catch this decision up to what shipped in the mTLS certificate-issuance work. Neither touches the mint-once-forward mechanism itself (the boundary mint, the byte-for-byte forward, the per-hop re-validation, and the request-scoped forwarded-JWT holder are all unchanged).
+
+### 1. The consumer certificate-issuer port carries a CSR, not key-bearing material
+
+The consumer-side port a workload uses to obtain its leaf — `IWorkloadCertificateIssuer` (`server/shared/dotnet/auth/outbound/WorkloadCertificate/IWorkloadCertificateIssuer.cs`) — takes a **DER-encoded PKCS#10 certificate-signing request** and returns the **leaf plus the issuing intermediate** as public DER (`WorkloadLeafMaterial`), rather than a parameterless call returning key-bearing material. The workload (`WorkloadLeafClient`) generates a **fresh keypair per rotation**, builds the CSR, obtains the signed leaf, and **verifies the returned certificate pairs with its local key** — a leaf certifying a different key can never be presented and is rejected before any cache write. The leaf private key never crosses the seam. This is the mint-once-forward model's consumer realization of the CSR-custody shape [ADR-0023](0023-mtls-workload-identity.md)'s 2026-07-02 amendment establishes; the certificate-authority and issuance mechanics are specified there.
+
+### 2. The SvelteKit BFF is a mesh-member workload
+
+The subsection above ("The internal audience is a hand-declared constant; the `client_credentials` service-identity surface is retired") closes with:
+
+> The BFF's TypeScript `client_credentials` boundary token (audience `d2.edge`, the `X-D2-Internal-Token` BFF↔Edge rail) is a legitimate *external* client of Edge and is unaffected.
+
+That clause is **superseded** by the 2026-07-03 mesh-member ruling. The SvelteKit BFF is a **privileged backend workload — a mesh member**, not an external client of Edge: it holds a KC-issued mTLS leaf (its issuance path is the Node `WorkloadLeafClient` twin), makes **direct calls to internal services**, and **forwards the Edge-minted transaction token unchanged** per this decision as the **first internal hop**. The boundary `client_credentials` / external-client-of-Edge model for the BFF is retired; the `oauth_client` boundary-token model survives only for genuinely-external clients. The full workload-identity establishment and the BFF's least-privilege posture (its leaf is all it holds — zero KeyCustodian grants) are in [ADR-0023](0023-mtls-workload-identity.md)'s amendment, amended in lockstep with this one.
 
 ## References
 

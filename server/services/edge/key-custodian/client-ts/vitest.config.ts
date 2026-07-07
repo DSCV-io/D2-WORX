@@ -20,6 +20,7 @@ export default defineConfig({
         "src/issuance/workload-certificate-issuer.ts",
         "src/issuance/workload-leaf-material.ts",
         "src/issuance/leaf-client-options.ts",
+        "src/rotation/rotation-subscription.ts",
       ],
       thresholds: {
         lines: 100,

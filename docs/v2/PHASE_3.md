@@ -223,7 +223,7 @@ Walk the **§Deferred-work checklist** §G master table top-to-bottom when the h
 | B8 | Anon-JWT minting (Pattern A) | 📐 specified-deferred | PHASE_3 A3 (sets `d2_whois_id`; needs E1) |
 | B9 | Operational-subset (`PropagatedContext`) reader/writer on .NET→.NET sync gRPC/HTTP hops (absorbs the call-path interceptor deferred from 0023 Step 3) | ✅ done (0026; [ADR-0025](../adrs/0025-request-context-establishment.md)) — `TestServer`-proven; live-host wiring tracked under A1/A4 | — |
 | B10 | Build-time caller-scopes ⊇ callee-scopes check (`@d2Calls`-style annotation) | 📐 specified-deferred | C0 (additive emitter output) |
-| B11 | TS BFF `InternalToken*` → `EdgeBoundaryToken*` rename + BFF forwarding path | 📐 specified-deferred | PHASE_3 BFF (Phase 7) |
+| B11 | TS BFF forwarding path — the BFF forwards the Edge-minted transaction token unchanged over its mTLS leaf as the first internal hop ([ADR-0023](../adrs/0023-mtls-workload-identity.md) 2026-07-02 mesh-member amendment). _(The original `InternalToken*` → `EdgeBoundaryToken*` boundary-token rename is subsumed: the mesh-member BFF mints no boundary token; the `X-D2-Internal-Token` constant survives only for genuinely-external clients.)_ | 📐 specified-deferred | PHASE_3 BFF (Phase 7) |
 | B12 | `contracts/*.spec.json` docstring fixes + `ts-codegen` emitters + regenerate `.g.*` | 📐 specified-deferred | None structural |
 | B13 | Over-the-wire mint↔validate parity test | 📐 specified-deferred | Running minter + validator (PHASE_3 A2) |
 | B14 | Emit `D2_INTERNAL_AUDIENCE` to the TS runtime | ✍ not-yet-specified | Design decision on emission mechanism (see §E open design decisions) |

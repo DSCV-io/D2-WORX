@@ -4,6 +4,10 @@ description: The sanctioned commit ceremony - pre-checks, plant the git-guard au
 allowed-tools: Bash, Read
 ---
 
+<!--
+Copyright (c) DCSV. All rights reserved.
+-->
+
 # cycle-commit
 
 The ONLY sanctioned path through the `git-guard` PreToolUse hook. The hook blocks every commit/destructive-git op unless `.claude/.commit-authorized` exists; this skill plants that marker and always removes it.

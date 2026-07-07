@@ -62,7 +62,7 @@ namespace D2.Shared.Auth.Grpc.Telemetry
             {
                 logger.Log(
                     global::Microsoft.Extensions.Logging.LogLevel.Debug,
-                    new global::Microsoft.Extensions.Logging.EventId(4101, nameof(CallPathReceived)),
+                    new global::Microsoft.Extensions.Logging.EventId(4105, nameof(CallPathReceived)),
                     new __CallPathReceivedStruct(hopCount, selfServiceId),
                     null,
                     __CallPathReceivedStruct.Format);

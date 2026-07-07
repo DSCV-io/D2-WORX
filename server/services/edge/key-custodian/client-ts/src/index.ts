@@ -74,8 +74,8 @@ export {
   createSealedCryptoViaKeyCustodian,
   type SealedCryptoWiring,
   type CreateSealedCryptoOptions,
-  type RotationSubscription,
 } from "./sealing/create-sealed-crypto.js";
+export type { RotationSubscription } from "./rotation/rotation-subscription.js";
 export type {
   GetKeyringInput,
   GetKeyringOutput,
@@ -89,3 +89,8 @@ export {
   KeyringBackedPayloadCrypto,
   type KeyringBackedCryptoOptions,
 } from "./keyring/keyring-backed-payload-crypto.js";
+export {
+  createEncryptionViaKeyring,
+  type CreateEncryptionViaKeyringOptions,
+  type KeyringCryptoWiring,
+} from "./keyring/create-encryption-via-keyring.js";

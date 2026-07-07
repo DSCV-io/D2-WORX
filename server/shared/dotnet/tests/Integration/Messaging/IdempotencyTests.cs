@@ -162,6 +162,7 @@ public sealed class IdempotencyTests
         {
             Uri = new Uri(r_fixture.ConnectionString),
         };
+
         await using var conn = await factory.CreateConnectionAsync();
         await using var channel = await conn.CreateChannelAsync();
 
@@ -190,6 +191,7 @@ public sealed class IdempotencyTests
         {
             Uri = new Uri(r_fixture.ConnectionString),
         };
+
         await using var conn = await factory.CreateConnectionAsync();
         await using var channel = await conn.CreateChannelAsync();
 
@@ -208,7 +210,7 @@ public sealed class IdempotencyTests
             routingKey: queueName,
             mandatory: false,
             basicProperties: props,
-            body: Array.Empty<byte>());
+            body: ReadOnlyMemory<byte>.Empty);
     }
 
     /// <summary>Store whose <c>HasSeenAsync</c> always returns false (so the

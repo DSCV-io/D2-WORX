@@ -461,6 +461,7 @@ public sealed class WorkloadLeafClientTests
     {
         var uriSanTag = new System.Formats.Asn1.Asn1Tag(
             System.Formats.Asn1.TagClass.ContextSpecific, 6);
+
         var uris = new List<string>();
 
         var sanExtension = certificate.Extensions
@@ -472,6 +473,7 @@ public sealed class WorkloadLeafClientTests
 
         var outer = new System.Formats.Asn1.AsnReader(
             sanExtension.RawData, System.Formats.Asn1.AsnEncodingRules.DER);
+
         var names = outer.ReadSequence();
 
         while (names.HasData)

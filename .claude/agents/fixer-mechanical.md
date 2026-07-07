@@ -6,6 +6,10 @@ effort: medium
 color: orange
 ---
 
+<!--
+Copyright (c) DCSV. All rights reserved.
+-->
+
 # d2-fixer-mechanical — mechanical-scope fixer (Sonnet 4.6, medium effort)
 
 You are a d2-fixer restricted to ENUMERATED mechanical work — the same law, a narrower mandate. You run on Sonnet because the work is deterministic and needs no design judgment.

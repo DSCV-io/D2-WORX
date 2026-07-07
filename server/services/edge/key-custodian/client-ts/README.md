@@ -188,10 +188,23 @@ the .NET KC client sealer/opener/crypto sources.
   rotation hot-swap (a plain reference swap — the single-threaded event loop makes
   it atomic, so no `Volatile`/`Interlocked` twin is needed), bounded refresh +
   serve-current, and grace-window zeroize of displaced private keyrings.
-- `createSealedCryptoViaKeyCustodian({ ownServiceId, sealingClient, ... })` — the
-  ONE spec-driven call (the TS twin of `AddD2SealedEncryptionViaKeyCustodian`):
-  builds a sealer for every distinct generated `ConsumerServiceByDomain` entry and
-  this service's opener ONLY when it is named a consumer (least-privilege). The
-  returned instances are passed explicitly into
-  `@d2/messaging-rabbitmq`'s `createPublisher({ crypto })` / `CryptoBodyOpener`
-  composition (composition instead of ambient DI). Key bytes are never logged.
+- `createEncryptionViaKeyring({ keyDomain, keyringClient, rotationSubscription, logger })`
+  — the ONE call for SYMMETRIC (shared-keyring) encryption (the TS twin of the .NET
+  `AddD2EncryptionForViaKeyring("<domain>")`): boot-fetches the keyring fail-loud,
+  wires rotation refresh on the bare key domain (the .NET twin subscribes the same
+  bare domain — a symmetric keyring has no `seal:` prefix), and returns the ready
+  `IPayloadCrypto` + a `dispose`. `rotationSubscription` is REQUIRED — a symmetric
+  consumer can never silently skip rotation and serve stale keys after KeyCustodian
+  rotates.
+- `createSealedCryptoViaKeyCustodian({ ownServiceId, sealingClient, rotationSubscription, ... })`
+  — the ONE spec-driven call for SEALED (per-consumer ECDH) encryption (the TS twin
+  of `AddD2SealedEncryptionViaKeyCustodian`): builds a sealer for every distinct
+  generated `ConsumerServiceByDomain` entry and this service's opener ONLY when it is
+  named a consumer (least-privilege). `rotationSubscription` is REQUIRED here too (the
+  .NET twin always wires the rotation subscriber). The returned instances are passed
+  explicitly into `@d2/messaging-rabbitmq`'s `createPublisher({ crypto })` /
+  `CryptoBodyOpener` composition (composition instead of ambient DI). Key bytes are
+  never logged.
+- Both one-call helpers take a `RotationSubscription` port — the host adapts
+  `@d2/messaging-rabbitmq` `subscribe` (domain-filtered) to it; it is the behavioral
+  twin of the .NET `IRotationEventChannel`.

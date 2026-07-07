@@ -50,6 +50,20 @@ export interface CaTrustBundle {
 }
 
 // @public
+export function createEncryptionViaKeyring(options: CreateEncryptionViaKeyringOptions): Promise<KeyringCryptoWiring>;
+
+// @public
+export interface CreateEncryptionViaKeyringOptions {
+    readonly graceMs?: number;
+    readonly keyDomain: string;
+    readonly keyringClient: KeyringClient;
+    readonly logger: ILogger;
+    readonly refreshAttempts?: number;
+    readonly refreshBaseDelayMs?: number;
+    readonly rotationSubscription: RotationSubscription;
+}
+
+// @public
 export function createKeyCustodianGrpcClient(stub: unknown): KeyCustodianGrpcClient;
 
 // @public
@@ -58,7 +72,7 @@ export interface CreateSealedCryptoOptions {
     readonly logger: ILogger;
     readonly ownServiceId: string;
     readonly refreshAttempts?: number;
-    readonly rotationSubscription?: RotationSubscription;
+    readonly rotationSubscription: RotationSubscription;
     readonly sealingClient: SealingClient;
 }
 
@@ -229,6 +243,12 @@ export interface KeyringBackedSealerOptions {
 // @public
 export interface KeyringClient {
     getKeyring(keyDomain: string, signal?: AbortSignal): Promise<D2Result<PayloadCryptoKeyring>>;
+}
+
+// @public
+export interface KeyringCryptoWiring {
+    readonly crypto: IPayloadCrypto;
+    dispose(): void;
 }
 
 // @public

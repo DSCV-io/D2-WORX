@@ -1,4 +1,7 @@
 #!/usr/bin/env bash
+# -----------------------------------------------------------------------
+# Copyright (c) DCSV. All rights reserved.
+# -----------------------------------------------------------------------
 # precheck.sh — the pre-commit gate for the `cycle-commit` skill. Read-only; it
 # NEVER stages or commits. Run it, read the output, THEN (only after explicit
 # per-occurrence user commit permission, rules.md §13.1) run do-commit.sh.

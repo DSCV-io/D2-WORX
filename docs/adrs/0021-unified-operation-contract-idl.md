@@ -5,7 +5,7 @@ Copyright (c) DCSV. All rights reserved.
 # ADR-0021: Unified operation-contract IDL — one source per operation generates every representation across three transport planes, with TypeSpec as the compiler front-end and a D2-owned emitter fleet
 
 - **Status**: Accepted (validated 2026-06-13 by the supervised TypeSpec spike)
-- **Date**: 2026-06-13 (service-auth cross-ref: 2026-06-18; establishment cross-ref: 2026-06-30)
+- **Date**: 2026-06-13 (service-auth cross-ref: 2026-06-18; establishment cross-ref: 2026-06-30; one-gRPC-service-per-op amendment: 2026-07-02)
 - **Deliverable**: Edge contract-IDL spike
 
 ## Context
@@ -59,6 +59,8 @@ The stock `@typespec/openapi3` emitter validates the HTTP shape correctly and is
 ### The dual-binding convention — proven, not assumed
 
 The load-bearing risk is settled by a concrete, validated convention: **the proto emitter reads `op.parameters` (the raw model graph); the REST emitter reads `getHttpOperation` (the resolved HTTP binding). Both views reference the same model node** — `@typespec/http` does **not** clone or mutate the body model when it resolves the HTTP binding, even when a `@path` parameter is mixed with the `@body`. "Flattening" only re-buckets *parameter references* (a path param moves to its own bucket); it never touches the `@body` model. So one operation carries both a REST route and a gRPC method, the proto emitter recovers the full flat message from `op.parameters` independent of any HTTP path/query splitting, and the source never bifurcates. This is the convention every future op author inherits, and it is verified against real running code (see Validation).
+
+> **Amendment (2026-07-02): one gRPC service per operation.** The proto/gRPC-service emitter produces one `.proto` file and one C# service class **per operation** decorated with `@d2GrpcMethod` (`<Service>_<method>.g.proto` + `<Service>Service.g.cs`; `emitter.ts` item 5/6). Two operations that share a `@d2GrpcMethod` service name therefore collide — two protos declaring the same `service` in one package, and the same C# service class emitted twice. The convention every op author inherits is: **each gRPC-bound operation gets its own gRPC service, named for the capability it serves** (for example `KeyCustodianCertificateAuthority` for leaf issuance and `KeyCustodianCaCertificate` for the CA-certificate fetch — two ops, two services). This aligns with the per-service scope-enforcement model the host wires (`MapGrpcService<T>().RequireAnyScope(...)`): operations with different required scopes belong on different services, because a shared service would force both behind one route policy. Grouping multiple ops under one proto `service` (the natural proto idiom) is not supported and is not the model.
 
 ### The `@d2*` decorator vocabulary — policy as first-class contract data
 
@@ -120,7 +122,7 @@ All six success criteria passed:
 - **The dual-binding kill-switch did not fire.** A custom emitter obtained both `op.parameters` and `getHttpOperation(program, op)` for the `sign` op and proved `rawBodyModel === httpBodyModel` is `true` — the `SignInput` body model is the *referentially identical* node in both views. An adversarial control confirmed the `===` test discriminates (it is `false` against the return type and against an empty object), and the harder `@path`-mixed-with-`@body` case still held (`true`). The companion-interface fallback is **not** required; the dual REST+gRPC binding holds on one op.
 - **The `@d2*` decorators read back.** Every op-level decorator (`@d2Scope`, `@d2GrpcMethod`, `@d2ServedBy`, `@d2Audience`, `@d2RateLimitTier`) and the property-level `@d2Redact` round-tripped via `program.stateMap(KEY).get(...)`.
 - **OpenAPI emitted correctly.** The stock emitter produced `POST /internal/v1/kc/sign` with the `SignInput` body, the `SignOutput` 200, a `D2ErrorResponse` on every error status, and `bytes` rendered as `{ "type": "string", "format": "byte" }` — confirming `bytes` coerces only in the schema projection, never in the model graph the proto emitter reads.
-- **The parity gate works as designed.** The declared scope `internal.kc.sign` is not yet in the scopes registry, so the parity emitter would `reportDiagnostic` — demonstrating the scope-existence gate live.
+- **The parity gate works as designed.** The declared scope `internal.kc.sign` is in the scopes registry (`contracts/auth-scopes/scopes.spec.json:62`); the spike confirmed the parity emitter's `reportDiagnostic` path by using an out-of-registry scope as the adversarial control — demonstrating the scope-existence gate live.
 
 The seed `@d2/typespec-decorators` package and a diagnostic emitter were authored as part of the spike and proved the `extern dec` + JS-impl + `stateMap` pattern on a real compile. The two now-proven build conventions (the dedicated `tsp-index.js` split; the stable `Symbol.for` state keys) are carried into the production emitter fleet as hard requirements.
 
