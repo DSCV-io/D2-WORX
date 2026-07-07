@@ -27,6 +27,19 @@ using Xunit;
 [Collection("RabbitMq")]
 public sealed class SubscriberChannelBehaviorIntegrationTests
 {
+    // Genuine-stuck guard for the async-delivery waits below: a poll-ATTEMPT
+    // budget, never a wall-clock deadline. A DateTime.UtcNow deadline in the success
+    // path flakes because xUnit runs the RabbitMq collection in parallel with the
+    // Unit-test collections — under that thread-pool saturation the wall clock
+    // elapses while the starved pool defers the handler-dispatch continuation and the
+    // broker's async dead-lettering, tripping the deadline mid-progress. An attempt
+    // budget caps the number of polls, not elapsed time: each iteration awaits
+    // pollInterval, so under load the effective wait GROWS with the slowdown instead
+    // of expiring. At 50 ms/attempt this floor is ~2 min — far above any healthy
+    // delivery (<20 attempts), so never load-reachable, yet a permanently-stuck test
+    // still terminates (this project ships no xunit.runner.json / test timeout).
+    private const int _POLL_ATTEMPT_BUDGET = 2400;
+
     private readonly RabbitMqFixture r_fixture;
 
     /// <summary>Initializes the test class with the shared fixture.</summary>
@@ -137,8 +150,7 @@ public sealed class SubscriberChannelBehaviorIntegrationTests
 
             // Handler runs once.
             await WaitFor(
-                () => TestCollector.Count<AuditCapturingHandler>() > 0,
-                timeout: TimeSpan.FromSeconds(15));
+                () => TestCollector.Count<AuditCapturingHandler>() > 0);
             TestCollector.Count<AuditCapturingHandler>().Should().Be(1);
 
             // The DLQ MUST be empty — narrow catch around BasicAck means
@@ -194,7 +206,7 @@ public sealed class SubscriberChannelBehaviorIntegrationTests
             count: 5);
 
         var dlqName = DlqNaming.DlqFor(queue);
-        await WaitForQueueCount(dlqName, expected: 1, timeout: TimeSpan.FromSeconds(15));
+        await WaitForQueueCount(dlqName, expected: 1);
 
         TestCollector.Count<AuditCapturingHandler>().Should().Be(
             0, "RETRIES_EXHAUSTED routes direct to DLQ without invoking "
@@ -305,18 +317,19 @@ public sealed class SubscriberChannelBehaviorIntegrationTests
             ResolvedQueueName: queueName);
     }
 
+    // Attempt-budgeted stuck-guard — see _POLL_ATTEMPT_BUDGET; no wall-clock deadline.
     private static async Task WaitFor(
-        Func<bool> predicate, TimeSpan timeout, TimeSpan? pollInterval = null)
+        Func<bool> predicate, TimeSpan? pollInterval = null)
     {
         pollInterval ??= TimeSpan.FromMilliseconds(50);
-        var deadline = DateTime.UtcNow + timeout;
-        while (DateTime.UtcNow < deadline)
+        for (var attempt = 0; attempt < _POLL_ATTEMPT_BUDGET; attempt++)
         {
             if (predicate()) return;
             await Task.Delay(pollInterval.Value);
         }
 
-        throw new TimeoutException($"Predicate did not become true within {timeout}.");
+        throw new TimeoutException(
+            $"Predicate did not become true within {_POLL_ATTEMPT_BUDGET} poll attempts.");
     }
 
     private async Task<IHost> StartHostAsync(Action<IServiceCollection> configure)
@@ -349,10 +362,12 @@ public sealed class SubscriberChannelBehaviorIntegrationTests
         return (int)ok.MessageCount;
     }
 
-    private async Task WaitForQueueCount(string queueName, int expected, TimeSpan timeout)
+    private async Task WaitForQueueCount(string queueName, int expected)
     {
-        var deadline = DateTime.UtcNow + timeout;
-        while (DateTime.UtcNow < deadline)
+        // Attempt-budgeted stuck-guard (see _POLL_ATTEMPT_BUDGET) — dead-lettering
+        // is async broker-side, so poll a bounded number of times rather than
+        // against a wall-clock deadline a loaded broker can outrun.
+        for (var attempt = 0; attempt < _POLL_ATTEMPT_BUDGET; attempt++)
         {
             if (await GetQueueCountAsync(queueName) >= expected) return;
             await Task.Delay(TimeSpan.FromMilliseconds(100));
@@ -360,8 +375,8 @@ public sealed class SubscriberChannelBehaviorIntegrationTests
 
         var final = await GetQueueCountAsync(queueName);
         throw new TimeoutException(
-            $"Queue '{queueName}' had {final} messages after {timeout}, "
-            + $"expected >= {expected}.");
+            $"Queue '{queueName}' had {final} messages after "
+            + $"{_POLL_ATTEMPT_BUDGET} poll attempts, expected >= {expected}.");
     }
 
     private async Task PublishWithSyntheticXDeathAsync(

@@ -19,6 +19,20 @@ using Xunit;
 [Collection("RabbitMq")]
 public sealed class PublishConsumeRoundTripTests
 {
+    // Genuine-stuck guard for the async-delivery waits below: a poll-ATTEMPT
+    // budget, never a wall-clock deadline. The prior flake was a DateTime.UtcNow
+    // deadline in the success path — xUnit runs the RabbitMq collection in parallel
+    // with the Unit-test collections, and under that thread-pool saturation the wall
+    // clock elapsed while the starved pool deferred the handler-dispatch continuation
+    // and the broker's async dead-lettering, tripping the deadline mid-progress. An
+    // attempt budget caps the number of polls, not elapsed time: each iteration
+    // awaits pollInterval, so under load the effective wait GROWS with the slowdown
+    // instead of expiring. At 50 ms/attempt this floor is ~2 min of real progress —
+    // far above any healthy delivery (which resolves in well under a second, <20
+    // attempts), so it is never load-reachable, yet a permanently-stuck test still
+    // terminates (this project ships no xunit.runner.json / framework test timeout).
+    private const int _POLL_ATTEMPT_BUDGET = 2400;
+
     private readonly RabbitMqFixture r_fixture;
 
     public PublishConsumeRoundTripTests(RabbitMqFixture fixture)
@@ -52,8 +66,7 @@ public sealed class PublishConsumeRoundTripTests
         }
 
         await WaitFor(
-            () => TestCollector.Count<AuditCapturingHandler>() > 0,
-            timeout: TimeSpan.FromSeconds(15));
+            () => TestCollector.Count<AuditCapturingHandler>() > 0);
 
         var captured = TestCollector.Captured<AuditCapturingHandler, IntegrationAuditEvent>();
         captured.Should().ContainSingle();
@@ -86,8 +99,7 @@ public sealed class PublishConsumeRoundTripTests
         }
 
         await WaitFor(
-            () => TestCollector.Count<PlaintextCapturingHandler>() > 0,
-            timeout: TimeSpan.FromSeconds(15));
+            () => TestCollector.Count<PlaintextCapturingHandler>() > 0);
 
         var captured = TestCollector
             .Captured<PlaintextCapturingHandler, IntegrationPlaintextEvent>();
@@ -129,8 +141,7 @@ public sealed class PublishConsumeRoundTripTests
         }
 
         await WaitFor(
-            () => TestCollector.Count<MultiSubA>() > 0 && TestCollector.Count<MultiSubB>() > 0,
-            timeout: TimeSpan.FromSeconds(15));
+            () => TestCollector.Count<MultiSubA>() > 0 && TestCollector.Count<MultiSubB>() > 0);
 
         TestCollector.Captured<MultiSubA, IntegrationAuditEvent>()
             .Should().ContainSingle().Which.Marker.Should().Be("to-a");
@@ -187,8 +198,7 @@ public sealed class PublishConsumeRoundTripTests
                     .Distinct()
                     .Count();
                 return arrivedMarkers >= total;
-            },
-            timeout: TimeSpan.FromSeconds(30));
+            });
 
         var captured = TestCollector.Captured<AuditCapturingHandler, IntegrationAuditEvent>();
 
@@ -252,8 +262,7 @@ public sealed class PublishConsumeRoundTripTests
         }
 
         await WaitFor(
-            () => TestCollector.Count<AuditCapturingHandler>() > 0,
-            timeout: TimeSpan.FromSeconds(15));
+            () => TestCollector.Count<AuditCapturingHandler>() > 0);
 
         // Give the consume span a moment to stop after the handler returns.
         await Task.Delay(TimeSpan.FromMilliseconds(200));
@@ -320,8 +329,7 @@ public sealed class PublishConsumeRoundTripTests
         }
 
         await WaitFor(
-            () => TestCollector.Count<AuditCapturingHandler>() > 0,
-            timeout: TimeSpan.FromSeconds(15));
+            () => TestCollector.Count<AuditCapturingHandler>() > 0);
 
         // Give the consume span a moment to stop after the handler returns.
         await Task.Delay(TimeSpan.FromMilliseconds(200));
@@ -351,19 +359,19 @@ public sealed class PublishConsumeRoundTripTests
                 "consumer emit site must ship the literal value \"receive\"");
     }
 
+    // Attempt-budgeted stuck-guard — see _POLL_ATTEMPT_BUDGET; no wall-clock deadline.
     private static async Task WaitFor(
-        Func<bool> predicate, TimeSpan timeout, TimeSpan? pollInterval = null)
+        Func<bool> predicate, TimeSpan? pollInterval = null)
     {
         pollInterval ??= TimeSpan.FromMilliseconds(50);
-        var deadline = DateTime.UtcNow + timeout;
-        while (DateTime.UtcNow < deadline)
+        for (var attempt = 0; attempt < _POLL_ATTEMPT_BUDGET; attempt++)
         {
             if (predicate()) return;
             await Task.Delay(pollInterval.Value);
         }
 
         throw new TimeoutException(
-            $"Predicate did not become true within {timeout}.");
+            $"Predicate did not become true within {_POLL_ATTEMPT_BUDGET} poll attempts.");
     }
 
     private async Task<IHost> StartHostAsync(Action<IServiceCollection> configure)

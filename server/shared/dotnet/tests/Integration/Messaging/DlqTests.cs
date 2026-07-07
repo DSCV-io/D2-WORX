@@ -25,6 +25,20 @@ using Xunit;
 [Collection("RabbitMq")]
 public sealed class DlqTests
 {
+    // Genuine-stuck guard for the async-delivery waits below: a poll-ATTEMPT
+    // budget, never a wall-clock deadline. The prior flake was a DateTime.UtcNow
+    // deadline in the success path — xUnit runs the RabbitMq collection in parallel
+    // with the Unit-test collections, and under that thread-pool saturation the wall
+    // clock elapsed while the starved pool deferred the handler-dispatch continuation
+    // and the broker's async dead-lettering, tripping the deadline mid-progress. An
+    // attempt budget caps the number of polls, not elapsed time: each iteration
+    // awaits pollInterval, so under load the effective wait GROWS with the slowdown
+    // instead of expiring. At 50 ms/attempt this floor is ~2 min of real progress —
+    // far above any healthy delivery (which resolves in well under a second, <20
+    // attempts), so it is never load-reachable, yet a permanently-stuck test still
+    // terminates (this project ships no xunit.runner.json / framework test timeout).
+    private const int _POLL_ATTEMPT_BUDGET = 2400;
+
     private readonly RabbitMqFixture r_fixture;
 
     public DlqTests(RabbitMqFixture fixture)
@@ -55,13 +69,12 @@ public sealed class DlqTests
 
         // Wait for handler to be invoked (it threw).
         await WaitFor(
-            () => TestCollector.Count<AlwaysThrowsHandler>() > 0,
-            timeout: TimeSpan.FromSeconds(15));
+            () => TestCollector.Count<AlwaysThrowsHandler>() > 0);
 
         // Wait for the message to surface in the DLQ. RabbitMQ's
         // dead-lettering is asynchronous from the consumer's NACK.
         var dlqName = DlqNaming.DlqFor(queue);
-        await WaitForQueueCount(dlqName, expected: 1, timeout: TimeSpan.FromSeconds(10));
+        await WaitForQueueCount(dlqName, expected: 1);
     }
 
     [Fact]
@@ -85,11 +98,10 @@ public sealed class DlqTests
         }
 
         await WaitFor(
-            () => TestCollector.Count<AlwaysFailsHandler>() > 0,
-            timeout: TimeSpan.FromSeconds(15));
+            () => TestCollector.Count<AlwaysFailsHandler>() > 0);
 
         var dlqName = DlqNaming.DlqFor(queue);
-        await WaitForQueueCount(dlqName, expected: 1, timeout: TimeSpan.FromSeconds(10));
+        await WaitForQueueCount(dlqName, expected: 1);
     }
 
     [Fact]
@@ -117,11 +129,10 @@ public sealed class DlqTests
         }
 
         await WaitFor(
-            () => TestCollector.Count<AlwaysThrowsHandler>() > 0,
-            timeout: TimeSpan.FromSeconds(15));
+            () => TestCollector.Count<AlwaysThrowsHandler>() > 0);
 
         var dlqName = DlqNaming.DlqFor(queue);
-        await WaitForQueueCount(dlqName, expected: 1, timeout: TimeSpan.FromSeconds(10));
+        await WaitForQueueCount(dlqName, expected: 1);
 
         // Pull the DLQ message and inspect its x-d2-failure-reason header.
         var factory = new ConnectionFactory { Uri = new Uri(r_fixture.ConnectionString) };
@@ -181,25 +192,25 @@ public sealed class DlqTests
         // Reaching here without exception is the assertion.
     }
 
+    // Attempt-budgeted stuck-guard — see _POLL_ATTEMPT_BUDGET; no wall-clock deadline.
     private static async Task WaitFor(
-        Func<bool> predicate, TimeSpan timeout, TimeSpan? pollInterval = null)
+        Func<bool> predicate, TimeSpan? pollInterval = null)
     {
         pollInterval ??= TimeSpan.FromMilliseconds(50);
-        var deadline = DateTime.UtcNow + timeout;
-        while (DateTime.UtcNow < deadline)
+        for (var attempt = 0; attempt < _POLL_ATTEMPT_BUDGET; attempt++)
         {
             if (predicate()) return;
             await Task.Delay(pollInterval.Value);
         }
 
         throw new TimeoutException(
-            $"Predicate did not become true within {timeout}.");
+            $"Predicate did not become true within {_POLL_ATTEMPT_BUDGET} poll attempts.");
     }
 
     private async Task<IHost> StartHostAsync(Action<IServiceCollection> configure)
         => await MessagingHostBuilder.BuildAndStartAsync(r_fixture, configure);
 
-    private async Task WaitForQueueCount(string queueName, int expected, TimeSpan timeout)
+    private async Task WaitForQueueCount(string queueName, int expected)
     {
         var factory = new ConnectionFactory
         {
@@ -209,8 +220,10 @@ public sealed class DlqTests
         await using var conn = await factory.CreateConnectionAsync();
         await using var channel = await conn.CreateChannelAsync();
 
-        var deadline = DateTime.UtcNow + timeout;
-        while (DateTime.UtcNow < deadline)
+        // Attempt-budgeted stuck-guard (see _POLL_ATTEMPT_BUDGET) — dead-lettering
+        // is async broker-side, so poll a bounded number of times rather than
+        // against a wall-clock deadline a loaded broker can outrun.
+        for (var attempt = 0; attempt < _POLL_ATTEMPT_BUDGET; attempt++)
         {
             var declareOk = await channel.QueueDeclarePassiveAsync(queueName);
             if (declareOk.MessageCount >= expected) return;
@@ -219,7 +232,7 @@ public sealed class DlqTests
 
         var final = await channel.QueueDeclarePassiveAsync(queueName);
         throw new TimeoutException(
-            $"Queue '{queueName}' had {final.MessageCount} messages "
-            + $"after {timeout}, expected >= {expected}.");
+            $"Queue '{queueName}' had {final.MessageCount} messages after "
+            + $"{_POLL_ATTEMPT_BUDGET} poll attempts, expected >= {expected}.");
     }
 }

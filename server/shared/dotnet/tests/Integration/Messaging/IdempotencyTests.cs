@@ -23,6 +23,19 @@ using Xunit;
 [Collection("RabbitMq")]
 public sealed class IdempotencyTests
 {
+    // Genuine-stuck guard for the async-delivery waits below: a poll-ATTEMPT
+    // budget, never a wall-clock deadline. A DateTime.UtcNow deadline in the success
+    // path flakes because xUnit runs the RabbitMq collection in parallel with the
+    // Unit-test collections — under that thread-pool saturation the wall clock
+    // elapses while the starved pool defers the handler-dispatch continuation and the
+    // broker's async dead-lettering, tripping the deadline mid-progress. An attempt
+    // budget caps the number of polls, not elapsed time: each iteration awaits
+    // pollInterval, so under load the effective wait GROWS with the slowdown instead
+    // of expiring. At 50 ms/attempt this floor is ~2 min — far above any healthy
+    // delivery (<20 attempts), so never load-reachable, yet a permanently-stuck test
+    // still terminates (this project ships no xunit.runner.json / test timeout).
+    private const int _POLL_ATTEMPT_BUDGET = 2400;
+
     private readonly RabbitMqFixture r_fixture;
 
     public IdempotencyTests(RabbitMqFixture fixture)
@@ -58,8 +71,7 @@ public sealed class IdempotencyTests
         }
 
         await WaitFor(
-            () => TestCollector.Count<AuditCapturingHandler>() > 0,
-            timeout: TimeSpan.FromSeconds(15));
+            () => TestCollector.Count<AuditCapturingHandler>() > 0);
         var firstCount = TestCollector.Count<AuditCapturingHandler>();
         firstCount.Should().Be(1);
 
@@ -110,14 +122,13 @@ public sealed class IdempotencyTests
 
         // Handler runs once (HasSeen returned false → handler invoked).
         await WaitFor(
-            () => TestCollector.Count<AuditCapturingHandler>() > 0,
-            timeout: TimeSpan.FromSeconds(15));
+            () => TestCollector.Count<AuditCapturingHandler>() > 0);
         TestCollector.Count<AuditCapturingHandler>().Should().Be(1);
 
         // MarkSeen fails → consumer NACKs no-requeue → broker DLX routes
         // the message to the DLQ. Verify it landed there.
         var dlqName = DlqNaming.DlqFor(queue);
-        await WaitForQueueCount(dlqName, expected: 1, timeout: TimeSpan.FromSeconds(10));
+        await WaitForQueueCount(dlqName, expected: 1);
 
         // And ensure the handler was NOT replayed by the broker (the NACK
         // is no-requeue; redelivery only happens via the DLX path which
@@ -127,25 +138,25 @@ public sealed class IdempotencyTests
             1, "handler must not run twice on a MarkSeen-failure NACK path");
     }
 
+    // Attempt-budgeted stuck-guard — see _POLL_ATTEMPT_BUDGET; no wall-clock deadline.
     private static async Task WaitFor(
-        Func<bool> predicate, TimeSpan timeout, TimeSpan? pollInterval = null)
+        Func<bool> predicate, TimeSpan? pollInterval = null)
     {
         pollInterval ??= TimeSpan.FromMilliseconds(50);
-        var deadline = DateTime.UtcNow + timeout;
-        while (DateTime.UtcNow < deadline)
+        for (var attempt = 0; attempt < _POLL_ATTEMPT_BUDGET; attempt++)
         {
             if (predicate()) return;
             await Task.Delay(pollInterval.Value);
         }
 
         throw new TimeoutException(
-            $"Predicate did not become true within {timeout}.");
+            $"Predicate did not become true within {_POLL_ATTEMPT_BUDGET} poll attempts.");
     }
 
     private async Task<IHost> StartHostAsync(Action<IServiceCollection> configure)
         => await MessagingHostBuilder.BuildAndStartAsync(r_fixture, configure);
 
-    private async Task WaitForQueueCount(string queueName, int expected, TimeSpan timeout)
+    private async Task WaitForQueueCount(string queueName, int expected)
     {
         var factory = new ConnectionFactory
         {
@@ -154,8 +165,10 @@ public sealed class IdempotencyTests
         await using var conn = await factory.CreateConnectionAsync();
         await using var channel = await conn.CreateChannelAsync();
 
-        var deadline = DateTime.UtcNow + timeout;
-        while (DateTime.UtcNow < deadline)
+        // Attempt-budgeted stuck-guard (see _POLL_ATTEMPT_BUDGET) — dead-lettering
+        // is async broker-side, so poll a bounded number of times rather than
+        // against a wall-clock deadline a loaded broker can outrun.
+        for (var attempt = 0; attempt < _POLL_ATTEMPT_BUDGET; attempt++)
         {
             var declareOk = await channel.QueueDeclarePassiveAsync(queueName);
             if (declareOk.MessageCount >= expected) return;
@@ -164,8 +177,8 @@ public sealed class IdempotencyTests
 
         var final = await channel.QueueDeclarePassiveAsync(queueName);
         throw new TimeoutException(
-            $"Queue '{queueName}' had {final.MessageCount} messages "
-            + $"after {timeout}, expected >= {expected}.");
+            $"Queue '{queueName}' had {final.MessageCount} messages after "
+            + $"{_POLL_ATTEMPT_BUDGET} poll attempts, expected >= {expected}.");
     }
 
     private async Task PublishRawAsync(string queueName, string messageId)
