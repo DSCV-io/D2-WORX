@@ -275,18 +275,20 @@ The main thread's job is decision-making, not implementation or auditing. **It c
 
 ### Canonical sub-agent roles
 
-Six roles (Final-reviewer added at deliverable end). Each spawned with fresh context + a tightly-scoped prompt. **No reuse across roles or across rounds.**
+Each role is spawned with fresh context + a tightly-scoped prompt (**no reuse across roles or across rounds**) and maps to a git-tracked `.claude/agents/*.md` definition that pins its model / effort / tool-access. Final-reviewer is not a separate agent — it reuses the Auditor definitions at deliverable-wide scope.
 
-| Role | Spawned when | Tool access | Returns |
-| --- | --- | --- | --- |
-| **Planner** | Start of each step | Read, Grep, Glob, Edit (journal Plan section only) | Step Plan section + summary |
-| **Plan-Auditor** (parallel ×K=12) | After Planner (new types / patterns / >50-file scope per §24.16) | Read, Grep, Glob, Bash (read-only) | Partial big-table chunk auditing the Plan section for its cluster |
-| **Plan-amender** | When Plan-Audit Aggregator surfaces findings | Read, Grep, Glob, Edit (journal Plan section + Plan-Audit fix log only) | Plan-section edits + appended Plan-Audit fix-log entries |
-| **Implementer** | After Planner (carve-out steps) OR after Plan-Audit CLEAN | All | Files touched + tests added + build / inspectcode status |
-| **Auditor** (parallel ×K=12) | After Implementer | Read, Grep, Glob, Bash (read-only) | Partial big-table chunk for its cluster ([partition](#auditor-cluster-partition-canonical-k12)) |
-| **Aggregator** (one per audit round) | After all 12 Auditors (or 12 Plan-Auditors) return | Read, Edit (journal + audit artifacts only) | Merged canonical big table + consolidated findings-log entry + cross-cluster verification |
-| **Fixer** | When findings exist | All | Files changed + appended fix-log entries |
-| **Final-reviewer** (parallel ×K=12) | Before SHIP | Same as Auditor | Cluster-scoped partial big tables; Aggregator merges |
+| Role | Definition | Spawned when | Tool access | Returns |
+| --- | --- | --- | --- | --- |
+| **Planner** | `planner.md` | Start of each step | Read, Grep, Glob, Write (journal Plan section; no Edit / NotebookEdit) | Step Plan section + summary |
+| **Plan-Auditor** (parallel ×K=12) | `plan-auditor.md` | After Planner (new types / patterns / >50-file scope per §24.16) | Read, Grep, Glob, Bash (read-only), Write (own partial; no Edit / NotebookEdit / Agent) | Partial big-table chunk auditing the Plan section for its cluster |
+| **Plan-amender** | `plan-amender.md` | When Plan-Audit Aggregator surfaces findings | Read, Grep, Glob, Edit (journal Plan section + Plan-Audit fix log only) | Plan-section edits + appended Plan-Audit fix-log entries |
+| **Implementer** | `implementer.md` | After Planner (carve-out steps) OR after Plan-Audit CLEAN | All | Files touched + tests added + build / inspectcode status |
+| **Auditor** (parallel ×K=12) | `auditor.md` | After Implementer | Read, Grep, Glob, Bash (read-only), Write (own partial; no Edit / NotebookEdit / Agent) | Partial big-table chunk for its cluster ([partition](#auditor-cluster-partition-canonical-k12)) |
+| **Auditor-deep** (parallel ×K) | `auditor-deep.md` | After Implementer, for C2 / C3 / E2 + ruling-critical clusters | Same as Auditor | Partial big-table chunk for its judgment-heavy cluster |
+| **Aggregator** (one per audit round) | `aggregator.md` | After all 12 Auditors (or 12 Plan-Auditors) return | Read, Edit (journal + audit artifacts only; no Agent) | Merged canonical big table + consolidated findings-log entry + cross-cluster verification |
+| **Fixer** | `fixer.md` | When findings exist | All | Files changed + own fix-log file |
+| **Fixer-mechanical** | `fixer-mechanical.md` | When findings are enumerated mechanical scope (rewrites / re-points / renames / spelling / line-wraps) | All | Files changed + own fix-log file; STOPs and hands back on judgment work |
+| **Final-reviewer** (parallel ×K) | (`auditor.md` / `auditor-deep.md`) | Before SHIP | Same as Auditor | Cluster-scoped partial big tables at deliverable scope; Aggregator merges |
 
 **Key design decisions:**
 
@@ -295,28 +297,32 @@ Six roles (Final-reviewer added at deliverable end). Each spawned with fresh con
 - **Auditor adversarial framing** — the prompt states it's rewarded for finding issues, not for declaring CLEAN; its role is hostile critic.
 - **Parallel cluster dispatch is the default** — K=12 Auditors run concurrently per round, each scoped to one [cluster](#auditor-cluster-partition-canonical-k12); the [Aggregator](#aggregator-role-post-cluster-consolidation) merges + cross-verifies.
 - **Effort-scaling in prompts** — each prompt caps effort proportional to the step's surface area; cluster scope already constrains per-Auditor effort to ~10-40 rows.
-- **Aggregator is required whenever K>1** — it produces the canonical big table + consolidated findings entry; it dedupes / merges / adds cross-cluster findings but cannot flip a per-cluster verdict unilaterally (escalates ties to the orchestrator). Runs on Fable per the [model policy](#sub-agent-model-policy-per-role).
+- **Aggregator is required whenever K>1** — it produces the canonical big table + consolidated findings entry; it dedupes / merges / adds cross-cluster findings but cannot flip a per-cluster verdict unilaterally (escalates ties to the orchestrator). Runs on Opus per the [model policy](#sub-agent-model-policy-per-role).
 - **K=1 carve-out requires explicit user permission** (§24.0h + [§4 K=1 carve-out usage policy](#k1-carve-out-usage-policy)); NEVER self-invoked.
 - **Plan-Audit is mandatory before Implementer dispatch for non-trivial steps** (§24.16) — details + carve-outs in [EXECUTE step 1a](#execute).
 
 ### Sub-agent model policy per role
 
-**SINGLE CANONICAL location** for which Claude model each role runs on. All other references (process.md, rules.md, CLAUDE.md) cross-link here. Predicate-of-record (walked every audit round): [rules.md §24.0i](rules/24-audit-evidence-discipline-meta-how-to-audit.md#24-audit-evidence-discipline-meta--how-to-audit).
+**The git-tracked `.claude/agents/*.md` definitions are the CANONICAL source** for each role's model, effort, tool-access, and mission prompt; this section describes how those roles OPERATE and WHY each sits on its tier. All other references (rules.md, CLAUDE.md) cross-link here; on any model / effort / tool specific, the pinned definition wins. Predicate-of-record (walked every audit round): [rules.md §24.0i](rules/24-audit-evidence-discipline-meta-how-to-audit.md#24-audit-evidence-discipline-meta--how-to-audit).
 
-| Role | Default model | Why this model |
-| --- | --- | --- |
-| **Orchestrator** (main thread) | Fable 5 | Judgment + delegation + trust-but-verify discipline ([§4](#orchestrator-verification-of-sub-agent-outputs)); catches sub-agent hallucinations / short-circuits. |
-| **Planner** | Fable 5 | Plan quality drives every downstream sub-agent; high-leverage low-volume — a missed gate cascades into Implementer + Auditor + Fixer cycles. |
-| **Plan-amender** | Fable 5 | Writes to the same canonical Plan artifact; amendments must stay coherent with locked decisions. |
-| **Aggregator** (one per audit round) | Fable 5 | Merges 12 cluster partials + cross-cluster sister-sweep; large context window + Fable-class cross-cluster reasoning. |
-| **Auditor** (per-cluster, K=12) | Opus 4.8 | Predicate pattern-matching + grep + file:line citations; bounded scope, structured output, no synthesis. Workhorse-shape; Fable over-specified. |
-| **Plan-Auditor** (per-cluster, K=12) | Opus 4.8 | Same shape as Auditor; design-phase scope. |
-| **Final-reviewer** (per-cluster, K=12) | Opus 4.8 | Same shape as Auditor; deliverable-wide scope. |
-| **Implementer** | Opus 4.8 | Bounded code/test authorship per a brief; the hard reasoning was done by Plan / Aggregator / orchestrator. Sweeping carve-out applies (below). |
-| **Fixer** | Opus 4.8 | Mechanical application of pre-specified fix scope against a tight contract. Sweeping carve-out applies. |
-| **Investigator / Research** | Opus 4.8 | Bounded investigation returning structured reports (paths, grep counts, citations). |
+Three tiers: **Fable** = planning-shaped reasoning; **Opus** = deep-reasoning workhorse (synthesis + heavy bounded authorship); **Sonnet** = light workhorse (predicate-walking + grep + mechanical). Retier + pinned IDs per user direction 2026-07-07 — Sonnet workhorse for auditors / investigators / mechanical fixes; Fable reserved for planning-shaped reasoning, `max` effort only for the Planner.
 
-**Why this allocation**: spend Fable where capability moves outcomes (synthesis, high-leverage planning, the trust-but-verify orchestrator); use Opus where capability already saturates against a tight contract (predicate walking, bounded code/test, bounded investigation). Fable availability is finite — the K=12 Auditor dispatch is the highest-volume pattern, so spending Fable there would starve the synthesis/planning roles. The [orchestrator verification discipline](#orchestrator-verification-of-sub-agent-outputs) is the structural compensation that makes workhorse dispatch safe.
+| Role | Definition | Model · effort | Why this model |
+| --- | --- | --- | --- |
+| **Orchestrator** (main thread) | (main thread) | Fable 5 | Judgment + delegation + trust-but-verify discipline ([§4](#orchestrator-verification-of-sub-agent-outputs)); catches workhorse hallucinations / short-circuits. |
+| **Planner** | `planner.md` | Fable 5 · max | Plan quality drives every downstream sub-agent; high-leverage low-volume — a missed gate cascades into Implementer + Auditor + Fixer cycles. |
+| **Plan-Auditor** (per-cluster, K=12) | `plan-auditor.md` | Fable 5 · xhigh | Plan-auditing IS planning-shaped reasoning — verifying a plan's claims against real code is design judgment, not mechanical predicate-walking. |
+| **Plan-amender** | `plan-amender.md` | Fable 5 · high | Writes to the same canonical Plan artifact; amendments must stay coherent with locked decisions. |
+| **Aggregator** (one per audit round) | `aggregator.md` | Opus 4.8 · high | Merges 12 cluster partials + cross-cluster sister-sweep + severity arbitration; deep bounded synthesis. |
+| **Auditor** (per-cluster, K=12; mechanical clusters) | `auditor.md` | Sonnet 4.6 · high | Predicate pattern-matching + grep + file:line citations; bounded structured output, no synthesis — Sonnet saturates. |
+| **Auditor-deep** (per-cluster; C2 / C3 / E2 + ruling-critical) | `auditor-deep.md` | Opus 4.8 · high | Same law, reserved for architectural-layer / security / audit-meta clusters where a missed or mis-severitied finding costs most. |
+| **Final-reviewer** (per-cluster) | (`auditor.md` / `auditor-deep.md`) | per auditor tier | NO separate agent — the Auditor definitions at deliverable-wide scope. |
+| **Implementer** | `implementer.md` | Opus 4.8 · high | Bounded code/test authorship per a brief; the hard design reasoning was done by Plan / orchestrator. Sweeping carve-out applies (below). |
+| **Fixer** | `fixer.md` | Opus 4.8 · high | Root-cause remediation + regression test against a tight contract. Sweeping carve-out applies. |
+| **Fixer-mechanical** | `fixer-mechanical.md` | Sonnet 4.6 · medium | Enumerated behavior-preserving fixes (comment rewrites, re-points, renames, spelling, line-wraps); STOPs and hands back for a d2-fixer on any judgment work. |
+| **Investigator / Research** | `investigator.md` | Sonnet 4.6 · high | Bounded read-only investigation returning structured file:line reports; no synthesis. |
+
+**Why this allocation**: spend Fable where design judgment moves outcomes (high-leverage planning, plan-vs-code verification, the trust-but-verify orchestrator); spend Opus on deep bounded work that still needs strong reasoning (the 12-partial cross-cluster merge, the judgment-heavy audit clusters, code/test authorship, root-cause fixing); use Sonnet where capability saturates against a tight contract (mechanical-cluster predicate walking, bounded investigation, enumerated mechanical fixes). The K=12 Auditor dispatch is the highest-volume pattern, so its default tier is Sonnet — d2-auditor-deep escalates the three judgment-heavy clusters (C2 / C3 / E2) + any ruling-critical cluster to Opus. The [orchestrator verification discipline](#orchestrator-verification-of-sub-agent-outputs) is the structural compensation that makes workhorse dispatch (Opus + Sonnet) safe.
 
 **Sweeping carve-out** (Implementer / Fixer Fable escalation — codified bypass, no per-occurrence user approval needed): qualifies when it meets ≥1 criterion below; the dispatch brief MUST cite the triggering criterion + justification, and the return self-attestation MUST echo it.
 
@@ -325,9 +331,11 @@ Six roles (Final-reviewer added at deliverable end). Each spawned with fresh con
 3. **Cross-runtime refactor** — coordinated .NET + TS changes (naming sweep across both, cross-language rename, parity-test alignment).
 4. **Cascading pipeline change** — changes a code-gen pipeline (or its input) and regenerates downstream consumer assemblies.
 
-The carve-out applies ONLY to Implementer / Fixer. Auditor / Plan-Auditor / Final-reviewer / Investigator escalations to Fable require explicit per-occurrence user approval per [rules.md §13.14](rules/13-permission-action-discipline.md#13-permission--action-discipline).
+The carve-out applies ONLY to Implementer / Fixer (Opus → Fable). Escalating any other role ABOVE its pinned tier — an Auditor / Investigator / Fixer-mechanical to Opus or Fable, an Aggregator or a Plan role to a different model — requires explicit per-occurrence user approval per [rules.md §13.14](rules/13-permission-action-discipline.md#13-permission--action-discipline). The codified d2-auditor (Sonnet) → d2-auditor-deep (Opus) split for the C2 / C3 / E2 + ruling-critical clusters is a role CHOICE, not an escalation, and needs no approval.
 
-**Self-documentation requirement** — every sub-agent return summary opens with the model-attestation block (see [Dispatch-brief template](#dispatch-brief-template)); the orchestrator's per-step journal records per dispatch: the model, the role, and (if Fable from an Opus-default role) the carve-out criterion + verbatim justification. This dual-channel attestation gives retroactive auditability for the self-learn loop (which Opus dispatches needed re-do vs which Fable dispatches could've been Opus).
+**Pinned-definition overrides** — the `.claude/agents/*.md` definitions pin each role's model + effort + tool-access. Overriding any pinned value on a specific dispatch (a different `model`, a different `effort`, relaxing a `disallowedTools` fence) requires the same §13.14-style per-occurrence user acknowledgment naming the pinned value bypassed — the codified Sweeping carve-out above is the ONE exception.
+
+**Self-documentation requirement** — every sub-agent return summary opens with the model-attestation block (see [Dispatch-brief template](#dispatch-brief-template)); the orchestrator's per-step journal records per dispatch: the model, the role, and (if the pinned tier was overridden — e.g. an Implementer / Fixer escalated to Fable) the carve-out criterion + verbatim justification. This dual-channel attestation gives retroactive auditability for the self-learn loop (which dispatches needed re-do vs which could've run a tier lower).
 
 **Cross-references:** [rules.md §24.0i](rules/24-audit-evidence-discipline-meta-how-to-audit.md#24-audit-evidence-discipline-meta--how-to-audit) (predicate enforcement) · [rules.md §24.0h](rules/24-audit-evidence-discipline-meta-how-to-audit.md#24-audit-evidence-discipline-meta--how-to-audit) (K=1 discipline; composes with §24.0i) · [§4 orchestrator verification](#orchestrator-verification-of-sub-agent-outputs) · [CLAUDE.md MANDATORY block 0](../../CLAUDE.md#mandatory-block-0-orchestrator-only-main-thread) (its role table cross-links here for the model column).
 
@@ -375,11 +383,11 @@ The `rules.md` catalog (~24 categories, ~450 numbered subsections) partitions in
 | **E2** | [rules/24-audit-evidence-discipline-meta-how-to-audit.md](rules/24-audit-evidence-discipline-meta-how-to-audit.md) |
 | **E3** | [rules/25-temporal-types-date-time-clock.md](rules/25-temporal-types-date-time-clock.md), [rules/26-codegen-discipline-spec-proto-schema-derived-types.md](rules/26-codegen-discipline-spec-proto-schema-derived-types.md) |
 
-**Why this partition (K=12):** D1 pairs §11 (the densest doc-parity section) with §14 (verbiage hygiene) — the two halves of what may appear in a KEEP doc / source surface, under one auditor; A1 keeps all test discipline together (§1 coverage + §2 regression-pinning) under one mind; §24 (the audit-law, the single heaviest category file) stands alone as E2 so one auditor owns audit-evidence coherence, while E3 pairs the two spec-driven / process-integrity files (§25 temporal + §26 codegen); E1 (operational quality §19/§20/§21/§23) stays separate from the process-integrity clusters — no predicate overlap, separate mental frames; A/B/C split along natural §-boundaries keeping §9 (largest architectural section) standalone. Isolating §24 as its own cluster roughly halves the critical-path byte-load vs bundling it with §25/§26. K=12 gives ~35-45% wall-clock reduction vs prior smaller-K splits + tighter per-Auditor focus; the higher Aggregator dedup cost is absorbed by running the Aggregator on Fable. Stable §-ownership threads a repeat finding's history through past partials by cluster code. **Cross-cutting concerns belong to the Aggregator**, not any one cluster. When a predicate seems to straddle clusters, the mapping is §-number → cluster (NOT topic → cluster) — the §-number wins; the Aggregator's cross-cluster verification ([Aggregator role](#aggregator-role-post-cluster-consolidation) step 3) resolves straddle concerns.
+**Why this partition (K=12):** D1 pairs §11 (the densest doc-parity section) with §14 (verbiage hygiene) — the two halves of what may appear in a KEEP doc / source surface, under one auditor; A1 keeps all test discipline together (§1 coverage + §2 regression-pinning) under one mind; §24 (the audit-law, the single heaviest category file) stands alone as E2 so one auditor owns audit-evidence coherence, while E3 pairs the two spec-driven / process-integrity files (§25 temporal + §26 codegen); E1 (operational quality §19/§20/§21/§23) stays separate from the process-integrity clusters — no predicate overlap, separate mental frames; A/B/C split along natural §-boundaries keeping §9 (largest architectural section) standalone. Isolating §24 as its own cluster roughly halves the critical-path byte-load vs bundling it with §25/§26. K=12 gives ~35-45% wall-clock reduction vs prior smaller-K splits + tighter per-Auditor focus; the higher Aggregator dedup cost is absorbed by running the Aggregator on Opus. Stable §-ownership threads a repeat finding's history through past partials by cluster code. **Cross-cutting concerns belong to the Aggregator**, not any one cluster. When a predicate seems to straddle clusters, the mapping is §-number → cluster (NOT topic → cluster) — the §-number wins; the Aggregator's cross-cluster verification ([Aggregator role](#aggregator-role-post-cluster-consolidation) step 3) resolves straddle concerns.
 
 ### Aggregator role (post-cluster consolidation)
 
-A single sub-agent spawned per audit round AFTER all K=12 cluster Auditors return their partials. It is the journal's authoritative writer for the round — per-cluster Auditors write disposable partials; the Aggregator alone writes the canonical journal sections. **Runs on Fable** (per the [model policy](#sub-agent-model-policy-per-role)) for the context budget to consume 12 partials + the reasoning to do cross-cluster dedup + sister-sweep.
+A single sub-agent spawned per audit round AFTER all K=12 cluster Auditors return their partials. It is the journal's authoritative writer for the round — per-cluster Auditors write disposable partials; the Aggregator alone writes the canonical journal sections. **Runs on Opus** (per the [model policy](#sub-agent-model-policy-per-role)) for the deep bounded synthesis to consume 12 partials + do cross-cluster dedup + sister-sweep.
 
 **Six responsibilities (in order):**
 
@@ -412,7 +420,7 @@ Every step / final-review journal contains THREE artifacts under canonical headi
 
 | Artifact | Section heading | Behavior | Written by |
 | --- | --- | --- | --- |
-| **Big table** (latest sweep snapshot) | `## Latest sweep results` | REPLACED every sweep — reflects ONLY the most recent walk against current code. ~85+ rows, one per rules.md subsection. Anti-laziness preamble above it. | Sweep activity ONLY. Fix-applying agents NEVER touch this. Under K=12 the **Aggregator** (Fable) writes the merged table; per-cluster Auditors write only their partials. |
+| **Big table** (latest sweep snapshot) | `## Latest sweep results` | REPLACED every sweep — reflects ONLY the most recent walk against current code. ~85+ rows, one per rules.md subsection. Anti-laziness preamble above it. | Sweep activity ONLY. Fix-applying agents NEVER touch this. Under K=12 the **Aggregator** (Opus) writes the merged table; per-cluster Auditors write only their partials. |
 | **Findings log** (per-round history) | `## Sweep findings log (append-only)` | APPEND-ONLY. Each sweep appends a `### Round N findings (timestamp)` subsection. Never deleted / re-ordered. | Sweep activity ONLY. Under K=12 the **Aggregator** writes the consolidated round subsection (12 clusters + cross-cluster). |
 | **Fix log** (chronological fix activity) | `## Fix log (append-only)` | APPEND-ONLY. Each fix appends one entry: rules.md subsection + finding round + what changed + `file.cs:NN`. Never deleted / re-ordered. | Fix-applying agent ONLY. |
 
@@ -469,7 +477,7 @@ Every sub-agent dispatch brief follows one skeleton; roles differ only in the de
 
 - **Role + scope** — the role + the file/predicate scope (per-step touched files / whole deliverable / one cluster's §-range / one Plan section).
 - **Reading list** — the exact artifacts to read (shared-context file, journal Plan section, cluster category files, rules.md index). A sub-agent reads ONLY what the brief names — it has NO conversation memory.
-- **Model + self-attestation** — dispatched model per the [Sub-agent model policy per role](#sub-agent-model-policy-per-role) table (`model: "opus"` for workhorse roles; `model: "fable"` for Planner / Plan-amender / Aggregator / Sweeping-carve-out). Every return summary MUST open with the model-attestation block (below).
+- **Model + self-attestation** — dispatched model per the role's pinned `.claude/agents` definition (the [Sub-agent model policy per role](#sub-agent-model-policy-per-role) table): `model: "fable"` for Planner / Plan-Auditor / Plan-amender; `model: "opus"` for Aggregator / Auditor-deep / Implementer / Fixer; `model: "sonnet"` for Auditor / Fixer-mechanical / Investigator (or the Implementer / Fixer Sweeping-carve-out escalation to Fable). Every return summary MUST open with the model-attestation block (below).
 - **Return format** — the structured summary shape for the role (files + tests + build state; or a partial big-table chunk; or the merged table + findings).
 - **Journal-artifact requirement** — which of the three artifacts (big table / findings log / fix log) the role writes, if any: Auditors write disposable partials; the Aggregator writes the canonical big table + findings-log subsection; the Fixer writes fix-log entries; the orchestrator writes nothing domain-level.
 - **Constraints** — READ-ONLY tools for Auditors / Aggregator; no sub-agent spawning; no commits; no touching another Auditor's partial.
@@ -477,8 +485,8 @@ Every sub-agent dispatch brief follows one skeleton; roles differ only in the de
 **Model-attestation block (opens every return summary):**
 
 ```
-Model: <claude-model-id — e.g. claude-fable-5 or claude-opus-4-8>
-Fable carve-out reason (if Fable-dispatched from an Opus-default role): <criterion # + justification, verbatim from dispatch brief>
+Model: <claude-model-id — e.g. claude-fable-5 / claude-opus-4-8 / claude-sonnet-4-6>
+Tier-override reason (if the pinned tier was overridden — e.g. an Implementer / Fixer escalated to Fable): <criterion # + justification, verbatim from dispatch brief>
 ```
 
 **Anti-laziness preamble (Auditor / Plan-Auditor / Final-reviewer briefs — verbatim, load-bearing):**
@@ -496,26 +504,28 @@ Fable carve-out reason (if Fable-dispatched from an Opus-default role): <criteri
 
 | Role | Model | Scope | Writes | Delta from skeleton |
 | --- | --- | --- | --- | --- |
-| **Planner** | Fable | one step | journal Plan section | Produce the Plan block (goal, files, decisions, pre-emptive gate checks); no audit artifacts. |
+| **Planner** | Fable · max | one step | journal Plan section | Produce the Plan block (goal, files, decisions, pre-emptive gate checks); no audit artifacts. |
 | **Implementer** | Opus (carve-out → Fable) | files-to-touch | source + tests | Write code + tests; run `check-baselines` if a consumable was touched; return the Implementation block. |
-| **Auditor / Plan-Auditor / Final-reviewer** | Opus | one cluster's §-range | disposable partial | Carry the anti-laziness preamble + shared-context reminders; write the [partial-file template](#partial-file-template-per-auditor); Plan-Auditor scopes to the Plan section, Final-reviewer to the whole deliverable. |
-| **Aggregator** | Fable | 12 partials + cross-cluster | canonical big table + findings-log subsection | Perform the six responsibilities in [Aggregator role](#aggregator-role-post-cluster-consolidation); run the [cross-cluster sister-sweep baseline](#cross-cluster-sister-sweep-checklist-aggregator-baseline). |
-| **Fixer** | Opus (carve-out → Fable) | consolidated finding list | fix-log entries | Apply fixes; sister-sweep + tamper-evident + pattern-class + self-grep per [round sequence](#mandatory-round-sequence) steps 3-4b; cannot mark CLEAN. |
+| **Auditor / Final-reviewer** | Sonnet (C2 / C3 / E2 + ruling-critical → Opus via Auditor-deep) | one cluster's §-range | disposable partial | Carry the anti-laziness preamble + shared-context reminders; write the [partial-file template](#partial-file-template-per-auditor); Final-reviewer scopes to the whole deliverable. |
+| **Plan-Auditor** | Fable | Plan section, one cluster's §-range | disposable partial | Same partial shape scoped to the Plan section; verify the plan's claims against real code. |
+| **Aggregator** | Opus | 12 partials + cross-cluster | canonical big table + findings-log subsection | Perform the responsibilities in [Aggregator role](#aggregator-role-post-cluster-consolidation); run the [cross-cluster sister-sweep baseline](#cross-cluster-sister-sweep-checklist-aggregator-baseline). |
+| **Fixer** | Opus (carve-out → Fable) | consolidated finding list | own fix-log file | Apply fixes; sister-sweep + tamper-evident + pattern-class + self-grep per [round sequence](#mandatory-round-sequence) steps 3-4b; cannot mark CLEAN. |
+| **Fixer-mechanical** | Sonnet | enumerated mechanical finding list | own fix-log file | Apply behavior-preserving rewrites / re-points / renames / spelling / line-wraps; STOP and hand back for a d2-fixer on judgment work. |
 | **Plan-amender** | Fable | Plan-Audit finding list | journal Plan section + Plan-Audit fix log | Address each Plan-Audit finding; append Plan-Audit fix-log entries. |
 
 ### Per-round dispatch protocol
 
 The orchestrator's workflow for one K=12 + Aggregator audit round. Same shape for per-step rounds, final-review rounds, AND Plan-Audit rounds — the difference is scope: per-step code-audit = the step's touched files; final-review = whole deliverable; Plan-Audit = the journal's `## Plan` section + the codebase reality it claims to align with ([rules.md §24.16](rules/24-audit-evidence-discipline-meta-how-to-audit.md#24-audit-evidence-discipline-meta--how-to-audit)).
 
-**Plan-Audit specifics** (when §24.16 applies): write a `plan-audit-r{N}-shared-context.md` (same shape, mission-scoped to the Plan section + §24.16 cluster verification questions), dispatch K=12 Plan-Auditors (`model: "opus"`), then the Aggregator (Fable) → `## Plan-Audit results` lands BEFORE the Implementer. On findings: Plan-amender (Fable) addresses each + appends fix-log entries; then a fresh K=12 Plan-Audit Round 2 verifies closure. Terminate on CLEAN → dispatch the Implementer with the AMENDED Plan. K=1 Plan-Audit follows §24.0h. Carve-outs skip Plan-Audit entirely; the orchestrator log cites the carve-out per occurrence.
+**Plan-Audit specifics** (when §24.16 applies): write a `plan-audit-r{N}-shared-context.md` (same shape, mission-scoped to the Plan section + §24.16 cluster verification questions), dispatch K=12 Plan-Auditors (`model: "fable"`), then the Aggregator (`model: "opus"`) → `## Plan-Audit results` lands BEFORE the Implementer. On findings: Plan-amender (Fable) addresses each + appends fix-log entries; then a fresh K=12 Plan-Audit Round 2 verifies closure. Terminate on CLEAN → dispatch the Implementer with the AMENDED Plan. K=1 Plan-Audit follows §24.0h. Carve-outs skip Plan-Audit entirely; the orchestrator log cites the carve-out per occurrence.
 
 **Step 1 — Orchestrator writes the per-round shared-context file** at `docs/wip/<deliverable>/<NN>-<step>/r{N}-shared-context.md` (or `final-review/r{N}-shared-context.md`). Contents: mission paragraph (what this round audits, why); locked decisions (so cluster Auditors don't re-litigate); deliverable scope (concrete path-set or `git diff --name-only` recipe); special-emphasis user direction (if any); the K=12 [cluster partition table](#auditor-cluster-partition-canonical-k12) verbatim; output format spec (the [Partial-file template](#partial-file-template-per-auditor)); Aggregator role summary (so Auditors flag cross-cluster handoffs); critical constraints + the anti-laziness preamble + shared-context reminders (§24.19/§24.20/§24.21/§24.22) from the [Dispatch-brief template](#dispatch-brief-template).
 
-**Step 2 — Orchestrator dispatches 12 parallel Auditors in ONE message** (a single `Agent` batch of 12 parallel invocations, each `model: "opus"`). Each brief: read the shared-context file; read your cluster's category files end-to-end (per the [per-cluster reading list](#auditor-cluster-partition-canonical-k12)); skim other clusters / the [index](rules.md) for cross-refs; walk YOUR cluster against the scope; write to your `r{N}-partial-{CLUSTER}-{cluster-name}.md`. Concurrent writes are safe (each Auditor owns its file). Run as background (`run_in_background: true`) and let notifications return as each completes. Every K=N Auditor / Plan-Auditor / Final-reviewer invocation MUST include `model: "opus"` explicitly; every Fable dispatch under the Sweeping carve-out MUST cite the triggering criterion in both the brief and the return self-attestation (predicate-of-record [rules.md §24.0i](rules/24-audit-evidence-discipline-meta-how-to-audit.md#24-audit-evidence-discipline-meta--how-to-audit)).
+**Step 2 — Orchestrator dispatches 12 parallel Auditors in ONE message** (a single `Agent` batch of 12 parallel invocations, each dispatched via its pinned definition — `d2-auditor` (`model: "sonnet"`) for the mechanical clusters, `d2-auditor-deep` (`model: "opus"`) for C2 / C3 / E2 + any ruling-critical cluster). Each brief: read the shared-context file; read your cluster's category files end-to-end (per the [per-cluster reading list](#auditor-cluster-partition-canonical-k12)); skim other clusters / the [index](rules.md) for cross-refs; walk YOUR cluster against the scope; write to your `r{N}-partial-{CLUSTER}-{cluster-name}.md`. Concurrent writes are safe (each Auditor owns its file). Run as background (`run_in_background: true`) and let notifications return as each completes. Every Auditor / Auditor-deep / Final-reviewer invocation MUST carry its pinned model explicitly; Plan-Auditors dispatch `model: "fable"`; every Implementer / Fixer dispatch escalated to Fable under the Sweeping carve-out MUST cite the triggering criterion in both the brief and the return self-attestation (predicate-of-record [rules.md §24.0i](rules/24-audit-evidence-discipline-meta-how-to-audit.md#24-audit-evidence-discipline-meta--how-to-audit)).
 
 **Step 3 — Orchestrator waits for all 12 partials.** When ALL 12 notifications return, dispatch the Aggregator with the list of partial paths — the orchestrator does NOT read partials directly.
 
-**Step 4 — Orchestrator dispatches the Aggregator** (Fable; foreground OK, not parallelizable). Brief: read the 12 partials; read the deliverable's cross-cutting focus areas; perform the six responsibilities in [Aggregator role](#aggregator-role-post-cluster-consolidation); write the canonical big table + `### Round N findings` subsection; return summary.
+**Step 4 — Orchestrator dispatches the Aggregator** (Opus; foreground OK, not parallelizable). Brief: read the 12 partials; read the deliverable's cross-cutting focus areas; perform the six responsibilities in [Aggregator role](#aggregator-role-post-cluster-consolidation); write the canonical big table + `### Round N findings` subsection; return summary.
 
 **Step 5 — Orchestrator routes on the recommendation:** **CLEAN** (zero FINDING rows + zero new cross-cluster findings) → advance to next phase (next step, or SHIP for final-review). **FINDINGS present** → dispatch a fresh Fixer with the consolidated list; after it returns, dispatch round R+1 (brand-new K=12 batch + brand-new Aggregator, fresh context across the board).
 
@@ -523,9 +533,9 @@ The orchestrator's workflow for one K=12 + Aggregator audit round. Same shape fo
 
 ### Orchestrator verification of sub-agent outputs
 
-> **Trust-but-verify discipline — the structural compensation for dispatching Opus-default workhorse roles per the [Sub-agent model policy per role](#sub-agent-model-policy-per-role) table. Predicate-of-record: [rules.md §24.0i](rules/24-audit-evidence-discipline-meta-how-to-audit.md#24-audit-evidence-discipline-meta--how-to-audit).**
+> **Trust-but-verify discipline — the structural compensation for dispatching workhorse roles (Opus + Sonnet) per the [Sub-agent model policy per role](#sub-agent-model-policy-per-role) table. Predicate-of-record: [rules.md §24.0i](rules/24-audit-evidence-discipline-meta-how-to-audit.md#24-audit-evidence-discipline-meta--how-to-audit).**
 
-When the orchestrator dispatches Opus-default workhorse sub-agents (Auditor / Plan-Auditor / Final-reviewer / Implementer / Fixer / Investigator) it takes on additional verification responsibility — it cannot blindly accept a sub-agent's outputs as ground truth (the same as for Fable outputs). **The discipline is mandatory**: a workhorse dispatch without trust-but-verify follow-up is structurally weaker. Part of the Orchestrator's Fable context budget is reserved for it (part of why the Orchestrator role is Fable).
+When the orchestrator dispatches workhorse sub-agents (Auditor / Auditor-deep / Final-reviewer / Aggregator / Implementer / Fixer / Fixer-mechanical / Investigator — Opus + Sonnet) it takes on additional verification responsibility — it cannot blindly accept a sub-agent's outputs as ground truth (the same as for Fable outputs). **The discipline is mandatory**: a workhorse dispatch without trust-but-verify follow-up is structurally weaker. Part of the Orchestrator's Fable context budget is reserved for it (part of why the Orchestrator role is Fable).
 
 **Specific verification actions** (apply per dispatch type):
 
