@@ -13,6 +13,7 @@ using System.Security.Cryptography.X509Certificates;
 using AwesomeAssertions;
 using D2.Shared.Auth.Outbound.Telemetry;
 using D2.Shared.Auth.Outbound.WorkloadCertificate;
+using D2.Shared.Result;
 using D2.Shared.Tests.Unit.Handler;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Time.Testing;
@@ -121,6 +122,91 @@ public sealed class WorkloadLeafClientTests
 
         result.Success.Should().BeFalse();
         result.StatusCode.Should().Be(HttpStatusCode.ServiceUnavailable);
+    }
+
+    [Fact]
+    public async Task ForceReissueAsync_WhenValidLeafCachedInsideLeadWindow_MintsFreshLeaf()
+    {
+        // Regression (refresh-ahead lead window): WorkloadLeafRefreshHostedService calls
+        // ForceReissueAsync precisely while the current leaf is STILL VALID but nearing
+        // expiry (inside the lead window). ForceReissueAsync MUST mint a fresh leaf then,
+        // NOT short-circuit on the still-valid cache. Before the force/opportunistic split
+        // in ReissueAsync, the non-expired re-check early-returned Successful() without
+        // minting, so the leaf only ever reissued at/after expiry — defeating refresh-ahead
+        // and exposing on-demand callers to a synchronous mint stall at expiry.
+        using var harness = new Harness(validity: TimeSpan.FromMinutes(10));
+
+        // First force populates the cache with a leaf valid for 10 min.
+        var first = await harness.Client.ForceReissueAsync();
+
+        first.Success.Should().BeTrue();
+        harness.Issuer.IssuanceCount.Should().Be(1);
+
+        var firstNotAfter = harness.Cache.PeekRaw()!.NotAfter;
+        var firstCsrSpki = harness.Issuer.LastCsrPublicKeySpki!.ToArray();
+
+        // Advance INTO the lead window but BEFORE expiry: 6 min in, 4 min of validity left.
+        // The cached leaf is still valid (TryGet returns it), so the pre-split re-check
+        // would have suppressed the mint here.
+        harness.Clock.Advance(TimeSpan.FromMinutes(6));
+
+        var second = await harness.Client.ForceReissueAsync();
+
+        second.Success.Should().BeTrue();
+        harness.Issuer.IssuanceCount.Should().Be(
+            2, "ForceReissueAsync mints a fresh leaf even while a still-valid leaf is cached");
+        harness.Cache.PeekRaw()!.NotAfter.Should().BeGreaterThan(
+            firstNotAfter, "the cached leaf rotated to a fresh, later NotAfter");
+        harness.Issuer.LastCsrPublicKeySpki!.ToArray().Should().NotEqual(
+            firstCsrSpki, "the forced reissue generated a fresh keypair");
+    }
+
+    [Fact]
+    public async Task ForceReissueAsync_RacingConcurrentOnDemandGets_ShareOneMint_NoTornRead()
+    {
+        // ADVERSARIAL concurrency: a proactive ForceReissueAsync racing on-demand
+        // GetCurrentLeafAsync callers on an empty cache. Both entry points share the one
+        // singleflight key, so they dedup to a SINGLE mint (no double-mint), and every
+        // caller observes the one coherent, private-key-bearing leaf (no torn read). The
+        // issuer is GATED so the single in-flight reissue suspends inside IssueAsync until
+        // every caller has attached to it — making the dedup deterministic rather than
+        // scheduler-dependent (a synchronous issuer would let each flight complete before
+        // the next caller attaches, defeating the dedup the test means to prove).
+        var clock = new FakeTimeProvider(SR_Base);
+        using var cache = new WorkloadLeafCache();
+        using var issuer = new GatedWorkloadCertificateIssuer(clock);
+        using var client = new WorkloadLeafClient(
+            issuer, cache, NullLogger<WorkloadLeafClient>.Instance, clock);
+
+        var forceTasks = new List<Task<D2Result>>();
+        var getTasks = new List<Task<D2Result<X509Certificate2>>>();
+
+        // Start every caller synchronously: each runs up to its Singleflight GetOrAdd
+        // before suspending on the shared task, so once the loop returns all 32 have
+        // attached to the one gated flight (its key stays present while it is suspended).
+        for (var i = 0; i < 16; i++)
+        {
+            forceTasks.Add(client.ForceReissueAsync().AsTask());
+            getTasks.Add(client.GetCurrentLeafAsync().AsTask());
+        }
+
+        // The single in-flight reissue has reached the gated issuer; release it so the one
+        // mint completes and every attached caller converges on its result.
+        await issuer.WaitForArrivalAsync();
+        issuer.Release();
+
+        await Task.WhenAll(getTasks.Cast<Task>().Concat(forceTasks));
+
+        forceTasks.Should().AllSatisfy(
+            t => t.Result.Success.Should().BeTrue("every forced reissue resolves to a valid leaf"));
+        getTasks.Should().AllSatisfy(t =>
+        {
+            t.Result.Success.Should().BeTrue();
+            t.Result.Data!.HasPrivateKey.Should().BeTrue(
+                "an on-demand caller observes the one coherent, key-bearing leaf — never a torn snapshot");
+        });
+        issuer.IssuanceCount.Should().Be(
+            1, "force + on-demand callers dedup to a single mint via the shared singleflight key");
     }
 
     [Fact]
@@ -402,6 +488,47 @@ public sealed class WorkloadLeafClientTests
         }
 
         return uris;
+    }
+
+    /// <summary>
+    /// Wraps <see cref="FakeWorkloadCertificateIssuer"/> and BLOCKS inside
+    /// <c>IssueAsync</c> until <see cref="Release"/> is called — so a test can hold the
+    /// single in-flight reissue open while concurrent callers attach to it, making
+    /// singleflight-dedup assertions deterministic instead of scheduler-dependent.
+    /// </summary>
+    private sealed class GatedWorkloadCertificateIssuer : IWorkloadCertificateIssuer, IDisposable
+    {
+        private readonly FakeWorkloadCertificateIssuer r_inner;
+
+        private readonly TaskCompletionSource r_gate =
+            new(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        private readonly SemaphoreSlim r_arrived = new(0);
+
+        public GatedWorkloadCertificateIssuer(TimeProvider clock, TimeSpan? validity = null)
+            => r_inner = new FakeWorkloadCertificateIssuer(clock, validity: validity);
+
+        public int IssuanceCount => r_inner.IssuanceCount;
+
+        public async ValueTask<D2Result<WorkloadLeafMaterial>> IssueAsync(
+            byte[] csrDer, CancellationToken ct = default)
+        {
+            r_arrived.Release();
+
+            await r_gate.Task.WaitAsync(ct);
+
+            return await r_inner.IssueAsync(csrDer, ct);
+        }
+
+        public Task WaitForArrivalAsync() => r_arrived.WaitAsync();
+
+        public void Release() => r_gate.TrySetResult();
+
+        public void Dispose()
+        {
+            r_arrived.Dispose();
+            r_inner.Dispose();
+        }
     }
 
     /// <summary>

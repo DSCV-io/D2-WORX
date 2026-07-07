@@ -133,7 +133,8 @@ internal sealed class WorkloadLeafClient : IWorkloadLeafSource, IDisposable
         {
             var reissueResult = await r_singleflight.ExecuteAsync(
                 _SINGLEFLIGHT_KEY,
-                innerCt => r_circuitBreaker.ExecuteAsync(ReissueAsync, ct: innerCt),
+                innerCt => r_circuitBreaker.ExecuteAsync(
+                    breakerCt => ReissueAsync(force: false, breakerCt), ct: innerCt),
                 ct);
 
             if (!reissueResult.Success)
@@ -157,7 +158,11 @@ internal sealed class WorkloadLeafClient : IWorkloadLeafSource, IDisposable
     /// <summary>
     /// Forces a reissue of the cached leaf. Called by
     /// <see cref="WorkloadLeafRefreshHostedService"/> on the proactive schedule.
-    /// Goes through the same singleflight as on-demand callers.
+    /// Goes through the same singleflight as on-demand callers, but — unlike the
+    /// opportunistic on-demand path — mints a FRESH leaf even when a still-valid
+    /// leaf is cached: this is the refresh-ahead entry point, and it fires precisely
+    /// while the current leaf is valid but inside the lead-time window, so it MUST
+    /// reissue rather than short-circuit on the still-valid cache.
     /// </summary>
     /// <param name="ct">Cancellation token.</param>
     /// <returns>A <see cref="D2Result"/> describing the reissue outcome.</returns>
@@ -169,7 +174,8 @@ internal sealed class WorkloadLeafClient : IWorkloadLeafSource, IDisposable
         {
             var reissueResult = await r_singleflight.ExecuteAsync(
                 _SINGLEFLIGHT_KEY,
-                innerCt => r_circuitBreaker.ExecuteAsync(ReissueAsync, ct: innerCt),
+                innerCt => r_circuitBreaker.ExecuteAsync(
+                    breakerCt => ReissueAsync(force: true, breakerCt), ct: innerCt),
                 ct);
 
             return reissueResult.Success
@@ -338,15 +344,32 @@ internal sealed class WorkloadLeafClient : IWorkloadLeafSource, IDisposable
         return leafSpki.AsSpan().SequenceEqual(localSpki);
     }
 
-    private async ValueTask<ReissueResult> ReissueAsync(CancellationToken ct)
+    private async ValueTask<ReissueResult> ReissueAsync(bool force, CancellationToken ct)
     {
-        // Cache re-check: a sibling caller may have populated the cache between the
-        // GetCurrentLeafAsync TryGet and the Singleflight entry. Without this
-        // re-check we'd issue a redundant reissue right after a peer just refreshed.
-        var preReissueCache = r_cache.TryGet(Instant.FromDateTimeOffset(r_clock.GetUtcNow()));
+        // Opportunistic-path cache re-check (force == false ONLY). A sibling on-demand
+        // caller may have populated the cache between the GetCurrentLeafAsync TryGet and
+        // this Singleflight body; suppressing a redundant mint there is correct — an
+        // on-demand caller only needs SOME non-expired leaf, and one now exists.
+        //
+        // The refresh-ahead FORCE path deliberately SKIPS this suppression. It fires
+        // precisely when the cached leaf is still valid but inside the lead-time window,
+        // so a "still-valid cached leaf" is exactly the state in which it MUST proceed to
+        // mint a fresh leaf ahead of expiry; short-circuiting here would defeat
+        // refresh-ahead entirely (the leaf would only ever reissue at/after expiry,
+        // stalling on-demand callers on a synchronous mint on the hot path).
+        //
+        // Concurrency: both paths share one Singleflight key, so a force + on-demand race
+        // dedups to a single mint (no double-mint; the cache's Interlocked swap makes the
+        // publish torn-read-free). A valid-cache on-demand caller never enters this body
+        // (it returns the cached leaf at the outer GetCurrentLeafAsync TryGet), so a force
+        // follower can never be silently suppressed by a non-force Singleflight leader.
+        if (!force)
+        {
+            var preReissueCache = r_cache.TryGet(Instant.FromDateTimeOffset(r_clock.GetUtcNow()));
 
-        if (preReissueCache is not null)
-            return ReissueResult.Successful();
+            if (preReissueCache is not null)
+                return ReissueResult.Successful();
+        }
 
         try
         {
