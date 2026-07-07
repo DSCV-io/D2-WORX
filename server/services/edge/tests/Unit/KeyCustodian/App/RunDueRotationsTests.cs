@@ -564,10 +564,23 @@ public sealed class RunDueRotationsTests
 
         var runCtx = KcAppTestKit.SystemContext(logger);
 
+        var rootSigning = KcAppTestKit.BuildRootSigningCapability(db, r_crypto, clock);
         var generate = new GenerateKeyHandler(
-            generateCtx, KcAppTestKit.NullClassifier(), db, optionsAccessor, r_crypto, clock);
+            generateCtx,
+            KcAppTestKit.NullClassifier(),
+            db,
+            optionsAccessor,
+            r_crypto,
+            rootSigning,
+            clock);
         var activate = new ActivateKeyHandler(
-            activateCtx, KcAppTestKit.NullClassifier(), db, resolvedPolicy, r_crypto, clock);
+            activateCtx,
+            KcAppTestKit.NullClassifier(),
+            db,
+            resolvedPolicy,
+            r_crypto,
+            rootSigning,
+            clock);
         var rotate = new RotateKeyHandler(
             rotateCtx,
             KcAppTestKit.NullClassifier(),
@@ -575,6 +588,7 @@ public sealed class RunDueRotationsTests
             resolvedPolicy,
             announcer,
             r_crypto,
+            rootSigning,
             clock);
         var retire = new RetireKeyHandler(
             retireCtx, KcAppTestKit.NullClassifier(), db, resolvedPolicy, clock);

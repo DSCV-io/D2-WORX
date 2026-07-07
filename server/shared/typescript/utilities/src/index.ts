@@ -20,6 +20,7 @@ export {
   type CleanOptions,
 } from "./clean.js";
 export { parseEnvArray } from "./env.js";
+export { uuidv7 } from "./uuid.js";
 export {
   WHITESPACE_RE,
   DISPLAY_NAME_INVALID_RE,

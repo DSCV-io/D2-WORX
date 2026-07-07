@@ -46,6 +46,10 @@ public sealed class EncryptionDomainsDiagnosticIdsTests
     [InlineData("D2ED003", nameof(DiagnosticIds.DuplicateValue))]
     [InlineData("D2ED004", nameof(DiagnosticIds.InvalidConstName))]
     [InlineData("D2ED005", nameof(DiagnosticIds.EmptyValue))]
+    [InlineData("D2ED006", nameof(DiagnosticIds.InvalidMode))]
+    [InlineData("D2ED007", nameof(DiagnosticIds.MissingConsumerService))]
+    [InlineData("D2ED008", nameof(DiagnosticIds.UnexpectedConsumerService))]
+    [InlineData("D2ED009", nameof(DiagnosticIds.InvalidConsumerService))]
     public void IdConstants_HaveStableValues(string expectedId, string constantName)
     {
         const BindingFlags flags =

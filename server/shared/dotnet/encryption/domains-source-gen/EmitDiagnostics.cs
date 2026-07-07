@@ -49,4 +49,39 @@ internal static class EmitDiagnostics
     /// <returns>A new <see cref="EmitDiagnostic"/>.</returns>
     public static EmitDiagnostic EmptyValue(string constName) =>
         new(DiagnosticIds.EmptyValue, [constName]);
+
+    /// <summary>Constructs a <see cref="DiagnosticDescriptors.InvalidMode"/> diagnostic.</summary>
+    /// <param name="constName">The offending constName.</param>
+    /// <param name="mode">The invalid mode literal.</param>
+    /// <returns>A new <see cref="EmitDiagnostic"/>.</returns>
+    public static EmitDiagnostic InvalidMode(string constName, string mode) =>
+        new(DiagnosticIds.InvalidMode, [constName, mode]);
+
+    /// <summary>
+    /// Constructs a <see cref="DiagnosticDescriptors.MissingConsumerService"/> diagnostic.
+    /// </summary>
+    /// <param name="constName">The sealed domain missing a consumerService.</param>
+    /// <returns>A new <see cref="EmitDiagnostic"/>.</returns>
+    public static EmitDiagnostic MissingConsumerService(string constName) =>
+        new(DiagnosticIds.MissingConsumerService, [constName]);
+
+    /// <summary>
+    /// Constructs a <see cref="DiagnosticDescriptors.UnexpectedConsumerService"/> diagnostic.
+    /// </summary>
+    /// <param name="constName">The non-sealed domain declaring a consumerService.</param>
+    /// <param name="consumerService">The unexpected consumerService value.</param>
+    /// <returns>A new <see cref="EmitDiagnostic"/>.</returns>
+    public static EmitDiagnostic UnexpectedConsumerService(
+        string constName, string consumerService) =>
+        new(DiagnosticIds.UnexpectedConsumerService, [constName, consumerService]);
+
+    /// <summary>
+    /// Constructs a <see cref="DiagnosticDescriptors.InvalidConsumerService"/> diagnostic.
+    /// </summary>
+    /// <param name="constName">The domain whose consumerService is malformed.</param>
+    /// <param name="consumerService">The offending consumerService value.</param>
+    /// <returns>A new <see cref="EmitDiagnostic"/>.</returns>
+    public static EmitDiagnostic InvalidConsumerService(
+        string constName, string consumerService) =>
+        new(DiagnosticIds.InvalidConsumerService, [constName, consumerService]);
 }

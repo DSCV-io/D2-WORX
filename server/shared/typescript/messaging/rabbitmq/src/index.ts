@@ -2,10 +2,10 @@
 // Copyright (c) DCSV. All rights reserved.
 // -----------------------------------------------------------------------
 
-// Public surface — CONSUMER-ONLY. There is deliberately NO publisher API: a TS
-// publisher must not ship without .NET's structural publish/encrypt fusion (see
-// the package README). The DLQ republish path is an internal detail of the
-// consume pipeline, not a general publish API.
+// Public surface — consumer AND publisher. The publisher ships with .NET's
+// structural publish/encrypt fusion mirrored at the type level: `createPublisher`
+// binds a compile-time type witness (an unwired encrypted domain is a COMPILE
+// error, no raw-bytes publish surface) plus a runtime default-deny second lock.
 
 // Connection.
 export {
@@ -49,7 +49,35 @@ export {
   type BodyOpener,
   PlaintextBodyOpener,
 } from "./subscribing/body-opener.js";
+export {
+  CryptoBodyOpener,
+  assertOpenerMatchesDomain,
+} from "./subscribing/crypto-body-opener.js";
 export { MessageBodyDecodeError } from "./subscribing/message-body-decode-error.js";
+
+// Publisher — the auto-encrypting publish/encrypt fusion.
+export {
+  createPublisher,
+  publishVia,
+  type D2Publisher,
+  type CreatePublisherOptions,
+  type PublishEnvelope,
+  type PublishSender,
+} from "./publishing/publisher.js";
+export {
+  composeBody,
+  type Composer,
+  type ComposedBody,
+} from "./publishing/body-composer.js";
+export {
+  type DomainCryptoMap,
+  type ComposerFor,
+  type EncryptedDomain,
+  type PublishableKey,
+  type PublishableKeyOf,
+  type CatalogEncryption,
+} from "./publishing/domain-crypto-map.js";
+export { readEncryptionKid } from "./publishing/encryption-kid.js";
 
 // Idempotency.
 export {

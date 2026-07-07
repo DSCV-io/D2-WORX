@@ -335,6 +335,13 @@ public sealed class KeyringBackedPayloadCrypto : IPayloadCrypto, IAsyncDisposabl
             {
                 // Shutdown mid-grace — fall through to immediate zeroize.
             }
+            catch (ObjectDisposedException)
+            {
+                // A shutdown drain disposed the CTS before this grace task began (the
+                // register-before-Begin window): accessing the disposed token throws.
+                // Fall through to zeroize the displaced keyring anyway — it must never be
+                // left unzeroized on the drain path.
+            }
 
             r_keyring.Dispose();
             r_registry.TryRemove(this, out _);

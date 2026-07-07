@@ -19,10 +19,19 @@ using Microsoft.Extensions.Options;
 /// cross-process SPIFFE workload id OR an in-process module id (both share the bare
 /// [a-z0-9-] grammar).
 /// </summary>
-public sealed class KeyringDomainAuthorityTests
+public sealed class KeyringDomainAuthorityTests : IDisposable
 {
-    private const string _AUDIT = "audit";
-    private const string _NOTIFICATIONS = "notifications";
+    private const string _PAYLOAD = FixturePayloadDomains.PAYLOAD_A;
+    private const string _PAYLOAD_B = FixturePayloadDomains.PAYLOAD_B;
+
+    // Registers the fixture AES-payload domains for the lifetime of each test instance so the
+    // domain-generic keyring authority policy is exercisable now that no production payload
+    // domain remains.
+    private readonly IDisposable r_fixtureSeam =
+        FixturePayloadDomains.Register(FixturePayloadDomains.PAYLOAD_A, FixturePayloadDomains.PAYLOAD_B);
+
+    /// <summary>Unregisters the fixture payload domains (ref-counted, per-test-instance).</summary>
+    public void Dispose() => r_fixtureSeam.Dispose();
 
     // -----------------------------------------------------------------------
     // Provider — lookup + default-deny
@@ -40,11 +49,11 @@ public sealed class KeyringDomainAuthorityTests
     public void AllowedKeyringDomainsFor_KnownWorkload_ReturnsConfiguredSet()
     {
         var options = new KeyringDomainAuthorityOptions();
-        options.AllowedKeyringDomainsByWorkload["audit"] = [_AUDIT, _NOTIFICATIONS];
+        options.AllowedKeyringDomainsByWorkload["audit"] = [_PAYLOAD, _PAYLOAD_B];
         var provider = new OptionsKeyringDomainAuthorityPolicy(Options.Create(options));
 
         provider.AllowedKeyringDomainsFor("audit")
-            .Should().BeEquivalentTo([_AUDIT, _NOTIFICATIONS]);
+            .Should().BeEquivalentTo([_PAYLOAD, _PAYLOAD_B]);
     }
 
     [Fact]
@@ -62,7 +71,7 @@ public sealed class KeyringDomainAuthorityTests
     public void AllowedKeyringDomainsFor_UnknownWorkload_ReturnsEmptySet_DefaultDeny()
     {
         var options = new KeyringDomainAuthorityOptions();
-        options.AllowedKeyringDomainsByWorkload["audit"] = [_AUDIT];
+        options.AllowedKeyringDomainsByWorkload["audit"] = [_PAYLOAD];
         var provider = new OptionsKeyringDomainAuthorityPolicy(Options.Create(options));
 
         provider.AllowedKeyringDomainsFor("ghost").Should().BeEmpty(
@@ -93,9 +102,9 @@ public sealed class KeyringDomainAuthorityTests
     }
 
     [Theory]
-    [InlineData("Audit")]
-    [InlineData(" audit ")]
-    [InlineData("AUDIT")]
+    [InlineData("Payload-Fixture-A")]
+    [InlineData(" payload-fixture-a ")]
+    [InlineData("PAYLOAD-FIXTURE-A")]
     public void AllowedKeyringDomainsFor_NonCanonicalGrant_NormalizedToCatalogValue(string grant)
     {
         var options = new KeyringDomainAuthorityOptions();
@@ -103,35 +112,35 @@ public sealed class KeyringDomainAuthorityTests
         var provider = new OptionsKeyringDomainAuthorityPolicy(Options.Create(options));
 
         provider.AllowedKeyringDomainsFor("audit").Should().Contain(
-            _AUDIT, $"the grant '{grant}' normalizes to the canonical catalog value");
+            _PAYLOAD, $"the grant '{grant}' normalizes to the canonical catalog value");
     }
 
     [Fact]
     public void AllowedKeyringDomainsFor_NonCatalogGrant_SkippedDefensively()
     {
         var options = new KeyringDomainAuthorityOptions();
-        options.AllowedKeyringDomainsByWorkload["audit"] = [_AUDIT, "not-a-real-domain"];
+        options.AllowedKeyringDomainsByWorkload["audit"] = [_PAYLOAD, "not-a-real-domain"];
         var provider = new OptionsKeyringDomainAuthorityPolicy(Options.Create(options));
 
-        provider.AllowedKeyringDomainsFor("audit").Should().BeEquivalentTo([_AUDIT]);
+        provider.AllowedKeyringDomainsFor("audit").Should().BeEquivalentTo([_PAYLOAD]);
     }
 
     [Fact]
     public void Provider_RoundTripsThroughRule_AllowAndDeny()
     {
         var options = new KeyringDomainAuthorityOptions();
-        options.AllowedKeyringDomainsByWorkload["audit"] = [_AUDIT];
+        options.AllowedKeyringDomainsByWorkload["audit"] = [_PAYLOAD];
         var provider = new OptionsKeyringDomainAuthorityPolicy(Options.Create(options));
 
         var allow = WorkloadCapabilityAuthority.AuthorizeKeyringFetch(
             immediateCaller: "audit",
             origin: RequestOrigin.CrossProcessHop,
-            target: KeyDomain.Create(_AUDIT).Data!,
+            target: KeyDomain.Create(_PAYLOAD).Data!,
             allowedKeyringDomainsForCaller: provider.AllowedKeyringDomainsFor("audit"));
         var deny = WorkloadCapabilityAuthority.AuthorizeKeyringFetch(
             immediateCaller: "audit",
             origin: RequestOrigin.CrossProcessHop,
-            target: KeyDomain.Create(_NOTIFICATIONS).Data!,
+            target: KeyDomain.Create(_PAYLOAD_B).Data!,
             allowedKeyringDomainsForCaller: provider.AllowedKeyringDomainsFor("audit"));
 
         allow.Success.Should().BeTrue();
@@ -153,7 +162,7 @@ public sealed class KeyringDomainAuthorityTests
     public void Validate_ValidPayloadPolicy_IsValid()
     {
         var options = new KeyringDomainAuthorityOptions();
-        options.AllowedKeyringDomainsByWorkload["audit"] = [_AUDIT, _NOTIFICATIONS, "courier"];
+        options.AllowedKeyringDomainsByWorkload["audit"] = [_PAYLOAD, _PAYLOAD_B];
 
         options.Validate().Should().BeNull("payload domains are keyring-grantable");
     }
@@ -163,7 +172,7 @@ public sealed class KeyringDomainAuthorityTests
     {
         // A cross-process caller keyed by its SPIFFE workload service id.
         var options = new KeyringDomainAuthorityOptions();
-        options.AllowedKeyringDomainsByWorkload["audit-service"] = [_AUDIT];
+        options.AllowedKeyringDomainsByWorkload["audit-service"] = [_PAYLOAD];
 
         options.Validate().Should().BeNull(
             "a bare SPIFFE workload id is a valid keyring workload key");
@@ -175,7 +184,7 @@ public sealed class KeyringDomainAuthorityTests
         // The in-host module consumer keyed by its module id (e.g. "edge") — the keyring
         // map admits BOTH namespaces, unlike the signing map.
         var options = new KeyringDomainAuthorityOptions();
-        options.AllowedKeyringDomainsByWorkload["edge"] = [_AUDIT];
+        options.AllowedKeyringDomainsByWorkload["edge"] = [_PAYLOAD];
 
         options.Validate().Should().BeNull(
             "an in-process module id shares the bare [a-z0-9-] grammar and is accepted");
@@ -223,7 +232,7 @@ public sealed class KeyringDomainAuthorityTests
     public void Validate_EmptyStringKey_FailsLoud()
     {
         var options = new KeyringDomainAuthorityOptions();
-        options.AllowedKeyringDomainsByWorkload[" "] = [_AUDIT];
+        options.AllowedKeyringDomainsByWorkload[" "] = [_PAYLOAD];
 
         options.Validate().Should().NotBeNull("an empty / whitespace workload key is rejected");
     }
@@ -232,7 +241,7 @@ public sealed class KeyringDomainAuthorityTests
     public void Validate_WildcardKey_FailsLoud()
     {
         var options = new KeyringDomainAuthorityOptions();
-        options.AllowedKeyringDomainsByWorkload["*"] = [_AUDIT];
+        options.AllowedKeyringDomainsByWorkload["*"] = [_PAYLOAD];
 
         options.Validate().Should().NotBeNull(
             "a '*' wildcard key is outside the [a-z0-9-] grammar and is rejected");
@@ -251,7 +260,7 @@ public sealed class KeyringDomainAuthorityTests
     public void Validate_CaseVariantPayloadGrant_Accepted()
     {
         var options = new KeyringDomainAuthorityOptions();
-        options.AllowedKeyringDomainsByWorkload["audit"] = ["Audit"];
+        options.AllowedKeyringDomainsByWorkload["audit"] = ["Payload-Fixture-A"];
 
         options.Validate().Should().BeNull(
             "a case-variant payload grant normalizes to a valid catalog domain");

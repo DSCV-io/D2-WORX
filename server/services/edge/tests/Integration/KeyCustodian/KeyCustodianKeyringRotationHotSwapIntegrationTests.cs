@@ -9,6 +9,7 @@ namespace D2.Edge.Tests.Integration.KeyCustodian;
 using System.Diagnostics;
 using System.Security.Cryptography;
 using D2.Edge.KeyCustodian.App.Application;
+using D2.Edge.KeyCustodian.App.Application.CertificateAuthority;
 using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.ActivateKey;
 using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.GenerateKey;
 using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.RotateKey;
@@ -58,13 +59,24 @@ using KeyringClientStub = D2.Services.Protos.KeyCustodian.V2Alpha.KeyCustodianKe
 [Trait("Category", "Integration")]
 [Collection(KeyCustodianPostgresCollectionDefinition.NAME)]
 public sealed class KeyCustodianKeyringRotationHotSwapIntegrationTests(
-    KeyCustodianPostgresFixture fixture)
+    KeyCustodianPostgresFixture fixture) : IDisposable
 {
-    private const string _DOMAIN = "audit";
+    // audit is now a SEALED domain (removed from the KC symmetric payload catalog);
+    // exercise the preserved symmetric machinery on a registered fixture payload
+    // domain. The field-initializer registration runs before any per-test host boot (so the
+    // keyring-authority boot validator accepts the grant on the fixture domain); Dispose
+    // unregisters (ref-counted, safe under the sequential postgres collection).
+    private const string _DOMAIN = "payload-fixture-a";
     private const string _CALLER = "edge";
     private const string _WARM_UP_KID = "consumer-ready-probe";
 
     private static readonly TimeSpan sr_overall = TimeSpan.FromSeconds(60);
+
+    private readonly IDisposable r_fixtureSeam =
+        KeyDomain.RegisterFixturePayloadDomainForTesting(_DOMAIN);
+
+    /// <summary>Unregisters the fixture payload domain (ref-counted, per-test-instance).</summary>
+    public void Dispose() => r_fixtureSeam.Dispose();
 
     [Fact]
     public async Task Rotation_RealHandlerToRealBroker_SwapsWrapperToNewActiveKid_AndDecryptsOldFrame()
@@ -186,6 +198,11 @@ public sealed class KeyCustodianKeyringRotationHotSwapIntegrationTests(
                     services.AddSingleton(Options.Create(BuildOptions()));
                     services.AddD2KeyCustodianApp();
                     services.AddD2CaLeafSigningCapability();
+
+                    // The dedicated §9.44 root-signing capability — the lifecycle-mutation
+                    // handlers driven by this hot-swap flow (generate / activate / rotate)
+                    // take it; registered from its own composition seam.
+                    services.AddD2CaRootSigningCapability();
 
                     // The REAL post-commit announcer over the REAL broker.
                     services.AddSingleton<IKeyRotationAnnouncer, RabbitMqKeyRotationAnnouncer>();

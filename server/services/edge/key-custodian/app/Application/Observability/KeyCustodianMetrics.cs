@@ -238,6 +238,71 @@ public static class KeyCustodianMetrics
                 + "A sustained non-zero rate blocks sealed encryption for the affected service.");
 
     /// <summary>
+    /// Counter — total materializations of the stored CA-root SIGNING key plaintext, the
+    /// single §9.44 chokepoint metric. Tagged <c>operation</c>
+    /// (<c>generate-successor</c> / <c>compromise-replacement</c> = the intermediate-minting
+    /// sign path; <c>activate-smoke-test</c> / <c>rotate-smoke-test</c> = the
+    /// root-activation/rotation smoke-verify path) — a CLOSED four-value set drawn from the
+    /// <see cref="CaRootKeyUses"/> named constants (never free text), so the tag cardinality
+    /// is bounded. Every increment happens INSIDE the dedicated
+    /// <c>CaRootSigningCapability</c>; a use outside that seam is impossible by construction
+    /// (the general surface cannot resolve the capability). A non-zero rate is expected
+    /// during CA rotation; each value pins exactly which stored-root use occurred.
+    /// </summary>
+    public static readonly Counter<long> SR_CaRootKeyUsesTotal =
+        SR_Meter.CreateCounter<long>(
+            name: "d2.keycustodian.ca_root_key_uses",
+            unit: "{use}",
+            description:
+                "Total materializations of the stored CA-root signing key plaintext "
+                + "(the §9.44 chokepoint). Tag: operation (generate-successor / "
+                + "compromise-replacement = intermediate-minting sign path; "
+                + "activate-smoke-test / rotate-smoke-test = root activation/rotation "
+                + "smoke-verify path) — closed four-value set.");
+
+    /// <summary>
+    /// Named tag-key + closed-enum tag-value constants for
+    /// <see cref="SR_CaRootKeyUsesTotal"/> — the single source of truth for the bounded
+    /// <c>operation</c> dimension covering the four (and only four) stored-CA-root
+    /// signing-key plaintext uses. Every emit / compare site references these constants
+    /// (never a raw literal) so the counter tag, the calling handlers' operation labels,
+    /// and any test assertion share one definition and cannot drift (§21.11).
+    /// </summary>
+    public static class CaRootKeyUses
+    {
+        /// <summary>The wire-format tag key (<c>operation</c>).</summary>
+        public const string TAG_OPERATION = "operation";
+
+        /// <summary>Closed-enum values for the <c>operation</c> tag.</summary>
+        public static class Operation
+        {
+            /// <summary>
+            /// The scheduled/on-demand generate-successor sign path (a new intermediate
+            /// minted by the active root via <c>GenerateKey</c>).
+            /// </summary>
+            public const string GENERATE_SUCCESSOR = "generate-successor";
+
+            /// <summary>
+            /// The compromise-replacement sign path (a replacement intermediate minted by
+            /// the active root via <c>CompromiseKey</c>).
+            /// </summary>
+            public const string COMPROMISE_REPLACEMENT = "compromise-replacement";
+
+            /// <summary>
+            /// The root-activation smoke-verify path (a pending root's material unwrapped
+            /// + smoke-tested by <c>ActivateKey</c>).
+            /// </summary>
+            public const string ACTIVATE_SMOKE_TEST = "activate-smoke-test";
+
+            /// <summary>
+            /// The root-rotation smoke-verify path (a successor root's material unwrapped
+            /// + smoke-tested by <c>RotateKey</c>).
+            /// </summary>
+            public const string ROTATE_SMOKE_TEST = "rotate-smoke-test";
+        }
+    }
+
+    /// <summary>
     /// Named tag-key + closed-enum tag-value constants for
     /// <see cref="SR_AuthorityRejectionsTotal"/> — the single source of truth for the
     /// bounded <c>capability</c> / <c>reason</c> dimensions plus the forensic

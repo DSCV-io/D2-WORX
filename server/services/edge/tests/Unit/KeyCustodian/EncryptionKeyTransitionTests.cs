@@ -39,7 +39,7 @@ public sealed class EncryptionKeyTransitionTests
     // -----------------------------------------------------------------------
 
     private static readonly Kid sr_kid = Kid.FromTrusted("test-key-abc");
-    private static readonly KeyDomain sr_domain = KeyDomain.FromTrusted("audit");
+    private static readonly KeyDomain sr_domain = KeyDomain.Cookie;
     private static readonly KeyMaterialEncrypted sr_mat =
         KeyMaterialEncrypted.FromTrusted(new byte[] { 1, 2, 3, 4 });
 
@@ -279,7 +279,7 @@ public sealed class EncryptionKeyTransitionTests
         var active = MakeActive(instant, instant + sr_soak);
 
         // Successor in a different domain
-        var wrongDomain = KeyDomain.FromTrusted("courier");
+        var wrongDomain = KeyDomain.ClientSecret;
         var successor = PendingKey.Create(
             sr_kid, wrongDomain, KeyType.AesPayload, sr_mat, null, null, instant + sr_soak).Data!;
 

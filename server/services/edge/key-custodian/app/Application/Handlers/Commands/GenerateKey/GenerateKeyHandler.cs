@@ -36,6 +36,7 @@ public sealed class GenerateKeyHandler(
     IKeyCustodianDbContext db,
     IOptions<KeyCustodianOptions> options,
     [FromKeyedServices(KeyCustodianRootKey.ROOT_SERVICE_KEY)] IPayloadCrypto rootCrypto,
+    ICaRootSigningCapability rootSigning,
     IClock clock)
     : BaseRepoHandler<GenerateKeyHandler, I, O>(ctx, classifier),
       H
@@ -92,7 +93,15 @@ public sealed class GenerateKeyHandler(
         // root, root-wraps the new private key, and builds the pending aggregate.
         var pendingResult = input.KeyType == KeyType.X509CaCertificate
             ? await CaSuccessorFactory
-                .BuildAsync(db, rootCrypto, options.Value, clock, domain, ct)
+                .BuildAsync(
+                    db,
+                    rootCrypto,
+                    rootSigning,
+                    options.Value,
+                    clock,
+                    domain,
+                    KeyCustodianMetrics.CaRootKeyUses.Operation.GENERATE_SUCCESSOR,
+                    ct)
                 .ConfigureAwait(false)
             : GenerateNonCaPending(input.KeyType, domain);
 

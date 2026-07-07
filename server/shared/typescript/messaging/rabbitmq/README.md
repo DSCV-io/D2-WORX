@@ -19,16 +19,32 @@ Built on [`rabbitmq-client`](https://www.npmjs.com/package/rabbitmq-client)
 
 ---
 
-## Consumer-only by design
+## Publish/encrypt fusion
 
-There is deliberately **no publisher API**. In .NET, publishing to an
-encrypted domain and encrypting the payload are one inseparable composed path,
-so "plaintext body on an encrypted domain" is unrepresentable. A TS publisher
-without that structural fusion would break the guarantee the .NET side is built
-on, so this package exposes no publisher: composing an encrypted publish path is
-out of scope here and lives on the .NET side. The DLQ republish inside the
-consume pipeline is an internal detail of dead-lettering — not a general publish
-surface.
+Publishing and encryption are **structurally fused** — the TS twin of .NET's
+spec-driven composer + DI. `createPublisher({ crypto })` binds a compile-time
+type witness: `publish(key, message)` accepts only a message whose encryption
+domain is `plaintext` or was wired into `crypto`. Publishing to an unwired
+encrypted domain is a **compile error**, and there is no raw-bytes publish
+overload — the composer for a domain is the only path to the socket for that
+domain. A sealed domain's slot only accepts an `IPayloadSealer`; a symmetric
+slot only an `IPayloadCrypto` (mode-branded by the generated
+`EncryptionDomainModes` literals). The compile witness is pinned by
+`tests/publisher-type-witness.compile.ts` (`@ts-expect-error` proofs under the
+type-check gate).
+
+A **runtime default-deny** second lock (`composeBody`) covers dynamic / fixture
+paths: the descriptor's domain mode is consulted unconditionally, and a missing
+composer for an encrypted domain, or an unknown domain, fails loud before any
+socket write. The body is composed once (a resend reuses the exact bytes — no
+re-encrypt under a fresh nonce). The KC-backed composer instances are wired by
+the host via `@d2/key-custodian-client`'s `createSealedCryptoViaKeyCustodian`.
+
+On the consume side, `CryptoBodyOpener` (sealed / symmetric) plugs the real
+crypto into the body-decompose seam: a wrong-version frame, a plaintext body on
+an encrypted domain, tampering, or an unknown kid all DLQ with `DECRYPT_FAILURE`
+(never a silent mis-decode); `assertOpenerMatchesDomain` is the consumer-side
+subscriber-vs-opener cross-check.
 
 ---
 

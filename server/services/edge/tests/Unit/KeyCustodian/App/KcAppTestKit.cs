@@ -7,6 +7,7 @@
 namespace D2.Edge.Tests.Unit.KeyCustodian.App;
 
 using System.Security.Cryptography.X509Certificates;
+using D2.Edge.KeyCustodian.App.Application.CertificateAuthority;
 using D2.Shared.Context.Abstractions;
 using D2.Shared.Handler;
 using D2.Shared.Handler.Repo.Abstractions;
@@ -40,6 +41,32 @@ internal static class KcAppTestKit
             aadContext: "keycustodian-test"u8.ToArray());
         return new PayloadCrypto(keyring);
     }
+
+    /// <summary>
+    /// Builds the dedicated CA-root-signing capability over the given test context +
+    /// root crypto — the sole holder of every stored-root-key unwrap (rules §9.44).
+    /// Pass the SAME <paramref name="rootCrypto"/> the handlers use so a seeded root row
+    /// unwraps correctly. An optional <paramref name="logger"/> captures the §9.44
+    /// chokepoint log delegates.
+    /// </summary>
+    /// <param name="db">The test context the capability loads the active root from.</param>
+    /// <param name="rootCrypto">The keyed root crypto (at-rest KEK) for unwraps.</param>
+    /// <param name="clock">The current-time source.</param>
+    /// <param name="options">Optional CA-validity options (default test options otherwise).</param>
+    /// <param name="logger">Optional logger (used by chokepoint-instrumentation tests).</param>
+    /// <returns>The capability bound to the test seams.</returns>
+    public static ICaRootSigningCapability BuildRootSigningCapability(
+        IKeyCustodianDbContext db,
+        IPayloadCrypto rootCrypto,
+        IClock clock,
+        KeyCustodianOptions? options = null,
+        ILogger<CaRootSigningCapability>? logger = null) =>
+        new CaRootSigningCapability(
+            db,
+            rootCrypto,
+            Options.Create(options ?? BuildOptions()),
+            clock,
+            logger ?? NullLogger<CaRootSigningCapability>.Instance);
 
     /// <summary>
     /// Builds default options with a short, valid policy for every domain (cadence

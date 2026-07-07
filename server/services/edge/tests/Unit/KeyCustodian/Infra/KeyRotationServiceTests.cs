@@ -33,15 +33,15 @@ public sealed class KeyRotationServiceTests
     {
         // Regression pin: the map is now DERIVED from the KeyDomain catalog's
         // per-domain key-type binding (no infra-local switch, no catch-all arm), and
-        // must equal the exact map the retired switch produced.
+        // must equal the exact map the retired switch produced. After the sealed-domain catalog
+        // removal (audit / notifications / courier flipped to sealed and left the
+        // symmetric payload catalog) the derived map carries only the remaining non-CA
+        // domains — no AES-payload entry survives.
         var expected = new Dictionary<string, KeyType>(StringComparer.Ordinal)
         {
             [KeyDomain.JWKS_SIGNING] = KeyType.RsaSigning,
             [KeyDomain.COOKIE] = KeyType.Secret,
             [KeyDomain.CLIENT_SECRET] = KeyType.Secret,
-            ["audit"] = KeyType.AesPayload,
-            ["notifications"] = KeyType.AesPayload,
-            ["courier"] = KeyType.AesPayload,
         };
 
         KeyRotationService.BuildBootstrapKeyTypes().Should().Equal(expected);
@@ -50,11 +50,13 @@ public sealed class KeyRotationServiceTests
     [Theory]
     [InlineData(KeyDomain.JWKS_SIGNING, false)]
     [InlineData(KeyDomain.COOKIE, false)]
-    [InlineData("audit", false)]
+    [InlineData(FixturePayloadDomains.PAYLOAD_A, false)]
     [InlineData(KeyDomain.MTLS_CA_ROOT, true)]
     [InlineData(KeyDomain.MTLS_CA_INTERMEDIATE, true)]
     public void IsCaDomain_DerivedFromTheKeyTypeBinding(string domainValue, bool expected)
     {
+        using var fixtureSeam = FixturePayloadDomains.Register();
+
         var domain = KeyDomain.Create(domainValue).Data!;
 
         KeyRotationService.IsCaDomain(domain).Should().Be(
@@ -119,26 +121,6 @@ public sealed class KeyRotationServiceTests
         var map = KeyRotationService.BuildBootstrapKeyTypes();
 
         map[KeyDomain.CLIENT_SECRET].Should().Be(KeyType.Secret);
-    }
-
-    [Fact]
-    public void BuildBootstrapKeyTypes_EncryptionDomainsMapToAesPayload()
-    {
-        var map = KeyRotationService.BuildBootstrapKeyTypes();
-
-        var encryptionDomains = KeyDomain.All
-            .Where(d =>
-                d.Value != KeyDomain.JWKS_SIGNING
-                && d.Value != KeyDomain.COOKIE
-                && d.Value != KeyDomain.CLIENT_SECRET
-                && !KeyRotationService.IsCaDomain(d))
-            .ToList();
-
-        encryptionDomains.Should().NotBeEmpty(
-            "the catalog must include non-KC encryption domains");
-
-        foreach (var domain in encryptionDomains)
-            map[domain.Value].Should().Be(KeyType.AesPayload);
     }
 
     // =========================================================================

@@ -37,6 +37,7 @@ D2.Shared.Messaging.MqMessageDescriptor
 D2.Shared.Messaging.MqMessageDescriptor.<Clone>$() -> D2.Shared.Messaging.MqMessageDescriptor!
 D2.Shared.Messaging.MqMessageDescriptor.Constant.get -> string!
 D2.Shared.Messaging.MqMessageDescriptor.Constant.init -> void
+D2.Shared.Messaging.MqMessageDescriptor.ConsumerService.get -> string?
 D2.Shared.Messaging.MqMessageDescriptor.Deconstruct(out string! Constant, out string! MessageTypeName, out string! Exchange, out string! ExchangeType, out string! Encryption, out string? EncryptionReason, out string? DefaultRoutingKey) -> void
 D2.Shared.Messaging.MqMessageDescriptor.DefaultRoutingKey.get -> string?
 D2.Shared.Messaging.MqMessageDescriptor.DefaultRoutingKey.init -> void
@@ -50,6 +51,7 @@ D2.Shared.Messaging.MqMessageDescriptor.Exchange.init -> void
 D2.Shared.Messaging.MqMessageDescriptor.ExchangeType.get -> string!
 D2.Shared.Messaging.MqMessageDescriptor.ExchangeType.init -> void
 D2.Shared.Messaging.MqMessageDescriptor.IsPlaintext.get -> bool
+D2.Shared.Messaging.MqMessageDescriptor.IsSealed.get -> bool
 D2.Shared.Messaging.MqMessageDescriptor.MessageTypeName.get -> string!
 D2.Shared.Messaging.MqMessageDescriptor.MessageTypeName.init -> void
 D2.Shared.Messaging.MqMessageDescriptor.MqMessageDescriptor(string! Constant, string! MessageTypeName, string! Exchange, string! ExchangeType, string! Encryption, string? EncryptionReason, string? DefaultRoutingKey) -> void

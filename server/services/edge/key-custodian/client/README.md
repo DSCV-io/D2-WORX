@@ -182,6 +182,42 @@ The in-process source (`InProcessKeyringClient` + `AddD2EncryptionFromKeyCustodi
 lives in `app/Application/` — it composes the leaf `IKeyCustodianApi`, which this
 package cannot reference under the dependency law.
 
+### Sealing consumer runtime (hand-authored, `Sealing/`)
+
+The sealed (asymmetric) sibling of the keyring runtime — the producer/consumer twins for
+the version-2 **sealed** encryption mode (per-consumer-service ECDH, a compile-time
+capability split). ONE spec-driven call wires everything:
+
+```csharp
+// Separate process (dials KeyCustodian over the mutual-TLS gRPC channel): wires a keyed
+// IPayloadSealer for every sealed-domain consumer service, and — only when THIS service is
+// itself a sealed consumer — a keyed IPayloadOpener under its own id (structural least-privilege).
+services.AddD2SealedEncryptionViaKeyCustodian(ownServiceId: "audit");
+
+// In-host module (no network hop) — the sibling source lives in app/Application/Sealing/.
+// SEALER arms only: no in-process opener source exists anywhere (decrypt is cross-process-only).
+services.AddD2SealedEncryptionFromKeyCustodian(ownServiceId: "audit", callingModuleId: "edge");
+```
+
+| File                                    | Contents                                                                                                                                                 |
+| --------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `ISealingClient.cs`                     | `internal` raw seal-keyring fetch seam (public + own-private); a raw private keyring never leaves this package.                                          |
+| `GrpcSealingClient.cs`                  | `internal` cross-process source over the two promoted seal gRPC stubs; maps envelope + reply into a `RecipientPublicKeyring` / `RecipientPrivateKeyring`. |
+| `SealingOutputMapper.cs`                | The one boundary mapper (proto → redacted leaf DTO → keyring); the private mapper zeroizes intermediate PKCS#8 copies once the keyring copies them.       |
+| `KeyringBackedPayloadOpener.cs`         | Private-keyring hot-swap opener (`Open` only): fail-loud boot fetch, rotation swap + old-kid overlap, grace-delayed off-thread zeroize.                   |
+| `KeyringBackedPayloadSealer.cs`         | Public-keyring hot-swap sealer (`Seal` only): LAZY first-fetch (no boot fetch), a failed fetch → thrown retryable publish failure (never plaintext), rotation swap (no zeroize — public material). |
+| `SealingServiceCollectionExtensions.cs` | `AddD2SealedEncryptionViaKeyCustodian` (public single call) + the internal sealer/opener building blocks it composes; marks provenance `KeyCustodian`.    |
+| `SealingLog.cs` / `SealingMetrics.cs`   | `[LoggerMessage]` delegates (`seal:<id>` domain + error code only) + fetch / refresh-failure / hot-swap counters on the shared client meter.              |
+| `SealDomainName.cs`                     | The `seal:<serviceId>` rotation-domain / metric-tag family (mirrors `KeyDomain.SEAL_PREFIX`, unreachable here under the dependency law).                  |
+
+The capability split is compile-time: an `IPayloadSealer` has no `Open` and an
+`IPayloadOpener` has no `Seal`, so a producer can never open any sealed frame including
+its own. The opener's private key selection is gated KeyCustodian-side by the
+authenticated mTLS peer identity (the DI shape is hygiene, not the wall). The in-process
+source (`InProcessSealingClient` + `AddD2SealedEncryptionFromKeyCustodian`) lives in
+`app/Application/Sealing/` and registers SEALER arms only — its own-private-key method
+throws (no in-process unwrap exists).
+
 ### Telemetry
 
 The keyring runtime publishes an OpenTelemetry meter `D2.Edge.KeyCustodian.Client`
@@ -194,11 +230,14 @@ named-constant tag keys/values — never key material:
 | `d2.keyring.fetches`            | `domain`, `result`    | Every keyring fetch attempt + its outcome (`success` / `failure`).              |
 | `d2.keyring.refresh_failures`   | `domain`, `errorCode` | Rotation refreshes that exhausted the bounded retry budget (serving-current meanwhile). |
 | `d2.keyring.rotation_hot_swaps` | `domain`              | Successful atomic rotation hot-swaps.                                            |
+| `d2.sealing.fetches`            | `domain`, `result`    | Every seal-keyring fetch (public + own-private) + its outcome.                   |
+| `d2.sealing.refresh_failures`   | `domain`, `errorCode` | Seal-keyring rotation refreshes that exhausted the bounded retry budget.         |
+| `d2.sealing.rotation_hot_swaps` | `domain`              | Successful seal-keyring rotation hot-swaps (`domain` = `seal:<serviceId>`).       |
 
-`KeyringLog` `[LoggerMessage]` delegates occupy EventIds **9570–9579** — the
-KeyCustodian Client range, distinct from App (9500–9529), Infra (9530+), and Mtls
-(9560+). Every delegate carries the domain + an error code only, never key material
-and never an `Exception` parameter.
+`KeyringLog` (9570–9573) + `SealingLog` (9574–9578) `[LoggerMessage]` delegates occupy
+the KeyCustodian Client EventId range **9570–9579**, distinct from App (9500–9529), Infra
+(9530+), and Mtls (9560+). Every delegate carries the domain + an error code only, never
+key material and never an `Exception` parameter.
 
 ---
 

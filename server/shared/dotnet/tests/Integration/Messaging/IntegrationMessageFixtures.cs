@@ -6,7 +6,6 @@
 
 namespace D2.Shared.Tests.Integration.Messaging;
 
-using D2.Shared.Encryption;
 using D2.Shared.Messaging;
 using D2.Shared.Messaging.RabbitMq.Encryption;
 
@@ -20,6 +19,15 @@ using D2.Shared.Messaging.RabbitMq.Encryption;
 /// </summary>
 internal static class IntegrationMessageFixtures
 {
+    /// <summary>
+    /// The synthetic SYMMETRIC encryption domain the encrypted integration fixtures ride.
+    /// The real audit/notifications/courier domains are now SEALED (per-consumer-service
+    /// asymmetric), so the symmetric publish/consume path is exercised on a test-seam
+    /// domain — unknown to the generated catalog, therefore Symmetric by the documented
+    /// <c>EncryptionDomainModes.ModeFor</c> default. §7.23 fixture marker in the value.
+    /// </summary>
+    public const string SYMMETRIC_FIXTURE_DOMAIN = "payload-fixture-symmetric";
+
     private static readonly Lazy<bool> sr_registration = new(
         Register, isThreadSafe: true);
 
@@ -38,7 +46,7 @@ internal static class IntegrationMessageFixtures
                 MessageTypeName: typeof(IntegrationAuditEvent).FullName!,
                 Exchange: "d2.test.integration-audit",
                 ExchangeType: "topic",
-                Encryption: EncryptionDomains.AUDIT,
+                Encryption: SYMMETRIC_FIXTURE_DOMAIN,
                 EncryptionReason: null,
                 DefaultRoutingKey: string.Empty));
         MessageWireResolver.RegisterForTesting(

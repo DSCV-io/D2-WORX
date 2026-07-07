@@ -412,5 +412,6 @@ public sealed class CompromiseKeyTests
             Options.Create(r_options),
             announcer,
             r_crypto,
+            KcAppTestKit.BuildRootSigningCapability(db, r_crypto, clock, r_options),
             clock);
 }

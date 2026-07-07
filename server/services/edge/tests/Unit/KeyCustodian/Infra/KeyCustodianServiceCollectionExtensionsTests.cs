@@ -6,6 +6,7 @@
 
 namespace D2.Edge.Tests.Unit.KeyCustodian.Infra;
 
+using D2.Edge.KeyCustodian.App.Application.CertificateAuthority;
 using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.ActivateKey;
 using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.CompromiseKey;
 using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.GenerateKey;
@@ -279,6 +280,13 @@ public sealed class KeyCustodianServiceCollectionExtensionsTests : IDisposable
         var services = NewServices();
         services.AddD2KeyCustodian(
             KcInfraTestKit.BuildConfiguration(r_rootKeyDir), KcInfraTestKit.FAKE_CONNECTION_STRING);
+
+        // The dedicated §9.44 root-signing capability — the composition-root opt-in the
+        // System-worker host makes; the general Infra registration deliberately omits it,
+        // so the four lifecycle-mutation handlers only resolve once it is added (the
+        // isolation property is pinned in the App DI suite).
+        services.AddD2CaRootSigningCapability();
+
         return services.BuildServiceProvider();
     }
 

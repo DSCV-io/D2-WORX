@@ -8,15 +8,21 @@ import { ChannelCredentials } from '@grpc/grpc-js';
 import { D2Result } from '@d2/result';
 import type { GetCaCertificateInput as GetCaCertificateInput_2 } from '../ca-certificate/get-ca-certificate-dto.js';
 import type { GetCaCertificateOutput as GetCaCertificateOutput_2 } from '../ca-certificate/get-ca-certificate-dto.js';
-import type { GetKeyringInput } from '../keyring/get-keyring-dto.js';
-import type { GetKeyringOutput } from '../keyring/get-keyring-dto.js';
+import type { GetKeyringInput as GetKeyringInput_2 } from '../keyring/get-keyring-dto.js';
+import type { GetKeyringOutput as GetKeyringOutput_2 } from '../keyring/get-keyring-dto.js';
 import type { GetOrLazyProvisionOwnSealPrivateKeyInput } from '../sealing/get-or-lazy-provision-own-seal-private-key-dto.js';
 import type { GetOrLazyProvisionOwnSealPrivateKeyOutput } from '../sealing/get-or-lazy-provision-own-seal-private-key-dto.js';
 import type { GetOrLazyProvisionSealPublicKeyInput } from '../sealing/get-or-lazy-provision-seal-public-key-dto.js';
 import type { GetOrLazyProvisionSealPublicKeyOutput } from '../sealing/get-or-lazy-provision-seal-public-key-dto.js';
 import type { ILogger } from '@d2/logging';
+import { IPayloadCrypto } from '@d2/encryption';
+import { IPayloadOpener } from '@d2/encryption';
+import { IPayloadSealer } from '@d2/encryption';
 import type { IssueLeafInput as IssueLeafInput_2 } from '../issuance/issue-leaf-dto.js';
 import type { IssueLeafOutput as IssueLeafOutput_2 } from '../issuance/issue-leaf-dto.js';
+import { PayloadCryptoKeyring } from '@d2/encryption';
+import { RecipientPrivateKeyring } from '@d2/encryption';
+import { RecipientPublicKeyring } from '@d2/encryption';
 import type { SignInput } from '../signing/sign-dto.js';
 import type { SignOutput } from '../signing/sign-dto.js';
 import type { Temporal } from 'temporal-polyfill';
@@ -47,6 +53,19 @@ export interface CaTrustBundle {
 export function createKeyCustodianGrpcClient(stub: unknown): KeyCustodianGrpcClient;
 
 // @public
+export interface CreateSealedCryptoOptions {
+    readonly graceMs?: number;
+    readonly logger: ILogger;
+    readonly ownServiceId: string;
+    readonly refreshAttempts?: number;
+    readonly rotationSubscription?: RotationSubscription;
+    readonly sealingClient: SealingClient;
+}
+
+// @public
+export function createSealedCryptoViaKeyCustodian(options: CreateSealedCryptoOptions): Promise<SealedCryptoWiring>;
+
+// @public
 export const CSR_SUBJECT = "CN=d2-workload";
 
 // @public
@@ -65,6 +84,38 @@ export interface GetCaCertificateOutput {
     readonly intermediateCertificateDer: Uint8Array;
     // (undocumented)
     readonly rootCertificateDer: Uint8Array;
+}
+
+// @public
+export interface GetKeyringInput {
+    // (undocumented)
+    readonly keyDomain: string;
+}
+
+// @public
+export interface GetKeyringOutput {
+    // (undocumented)
+    readonly aadContext: Uint8Array;
+    // (undocumented)
+    readonly activeKid: string;
+    // (undocumented)
+    readonly entries: readonly KeyringEntry[];
+}
+
+// @public
+export class GrpcKeyringClient implements KeyringClient {
+    constructor(client: KeyCustodianGrpcClient);
+    // (undocumented)
+    getKeyring(keyDomain: string, signal?: AbortSignal): Promise<D2Result<PayloadCryptoKeyring>>;
+}
+
+// @public
+export class GrpcSealingClient implements SealingClient {
+    constructor(client: KeyCustodianGrpcClient, ownServiceId: string);
+    // (undocumented)
+    getOwnPrivateKeyring(signal?: AbortSignal): Promise<D2Result<RecipientPrivateKeyring>>;
+    // (undocumented)
+    getPublicKeyring(recipientServiceId: string, signal?: AbortSignal): Promise<D2Result<RecipientPublicKeyring>>;
 }
 
 // @public
@@ -99,7 +150,7 @@ export interface KeyCustodianGrpcClient {
     // (undocumented)
     getCaCertificate(input: GetCaCertificateInput_2, opts?: GrpcCallOptions): Promise<D2Result<GetCaCertificateOutput_2>>;
     // (undocumented)
-    getKeyring(input: GetKeyringInput, opts?: GrpcCallOptions): Promise<D2Result<GetKeyringOutput>>;
+    getKeyring(input: GetKeyringInput_2, opts?: GrpcCallOptions): Promise<D2Result<GetKeyringOutput_2>>;
     // (undocumented)
     getOrLazyProvisionOwnSealPrivateKey(input: GetOrLazyProvisionOwnSealPrivateKeyInput, opts?: GrpcCallOptions): Promise<D2Result<GetOrLazyProvisionOwnSealPrivateKeyOutput>>;
     // (undocumented)
@@ -110,6 +161,82 @@ export interface KeyCustodianGrpcClient {
     //
     // (undocumented)
     sign(input: SignInput, opts?: GrpcCallOptions): Promise<D2Result<SignOutput>>;
+}
+
+// @public
+export interface KeyringBackedCryptoOptions {
+    // (undocumented)
+    readonly graceMs?: number;
+    // (undocumented)
+    readonly logger: ILogger;
+    // (undocumented)
+    readonly refreshAttempts?: number;
+    // (undocumented)
+    readonly refreshBaseDelayMs?: number;
+}
+
+// @public
+export interface KeyringBackedOpenerOptions {
+    // (undocumented)
+    readonly graceMs?: number;
+    // (undocumented)
+    readonly logger: ILogger;
+    // (undocumented)
+    readonly refreshAttempts?: number;
+    // (undocumented)
+    readonly refreshBaseDelayMs?: number;
+}
+
+// @public
+export class KeyringBackedPayloadCrypto implements IPayloadCrypto {
+    static create(client: KeyringClient, keyDomain: string, options: KeyringBackedCryptoOptions): Promise<KeyringBackedPayloadCrypto>;
+    // (undocumented)
+    decrypt(framed: Uint8Array): Promise<Uint8Array>;
+    dispose(): void;
+    // (undocumented)
+    encrypt(plaintext: Uint8Array): Promise<Uint8Array>;
+    refresh(): Promise<void>;
+}
+
+// @public
+export class KeyringBackedPayloadOpener implements IPayloadOpener {
+    static create(client: SealingClient, options: KeyringBackedOpenerOptions): Promise<KeyringBackedPayloadOpener>;
+    dispose(): void;
+    // (undocumented)
+    open(framed: Uint8Array): Promise<Uint8Array>;
+    refresh(): Promise<void>;
+}
+
+// @public
+export class KeyringBackedPayloadSealer implements IPayloadSealer {
+    static create(client: SealingClient, recipientServiceId: string, options: KeyringBackedSealerOptions): KeyringBackedPayloadSealer;
+    dispose(): void;
+    refresh(): Promise<void>;
+    // (undocumented)
+    seal(plaintext: Uint8Array): Promise<Uint8Array>;
+}
+
+// @public
+export interface KeyringBackedSealerOptions {
+    // (undocumented)
+    readonly logger: ILogger;
+    // (undocumented)
+    readonly refreshAttempts?: number;
+    // (undocumented)
+    readonly refreshBaseDelayMs?: number;
+}
+
+// @public
+export interface KeyringClient {
+    getKeyring(keyDomain: string, signal?: AbortSignal): Promise<D2Result<PayloadCryptoKeyring>>;
+}
+
+// @public
+export interface KeyringEntry {
+    // (undocumented)
+    readonly keyBytes: Uint8Array;
+    // (undocumented)
+    readonly kid: string;
 }
 
 // @public
@@ -137,6 +264,24 @@ export interface MutualTlsCredentialsInput {
     readonly caBundlePem: string;
     readonly certChainPem: string;
     readonly privateKeyPem: string;
+}
+
+// @public
+export interface RotationSubscription {
+    onRotation(domain: string, handler: () => void): () => void;
+}
+
+// @public
+export interface SealedCryptoWiring {
+    dispose(): void;
+    readonly ownOpener?: KeyringBackedPayloadOpener;
+    readonly sealersByConsumerService: ReadonlyMap<string, KeyringBackedPayloadSealer>;
+}
+
+// @public
+export interface SealingClient {
+    getOwnPrivateKeyring(signal?: AbortSignal): Promise<D2Result<RecipientPrivateKeyring>>;
+    getPublicKeyring(recipientServiceId: string, signal?: AbortSignal): Promise<D2Result<RecipientPublicKeyring>>;
 }
 
 // @public

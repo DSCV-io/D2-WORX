@@ -106,6 +106,25 @@ public sealed class KeyringDomainAuthorityOptions
 
             foreach (var domain in domains)
             {
+                // Sealed-mode domains (audit / notifications / courier) have NO symmetric
+                // keyring — they are one-way, per-service sealed. Refuse a grant naming one
+                // with a PRECISE message BEFORE the generic non-catalog arm below. This is
+                // defense-in-depth beneath nonexistence: the sealed domains no longer appear in
+                // the symmetric key-domain catalog, so the non-catalog arm below would reject one
+                // too — but the operator deserves the exact reason (a sealed domain needs no
+                // keyring grant) instead of a generic "non-catalog domain" error.
+                var normalizedDomain = domain.Trim().ToLowerInvariant();
+
+                if (EncryptionDomainModes.ModeFor(normalizedDomain) == EncryptionDomainMode.Sealed)
+                {
+                    return string.Create(
+                        CultureInfo.InvariantCulture,
+                        $"KEYCUSTODIAN_KEYRING_AUTHORITY workload '{workloadKey}' is granted the "
+                        + $"sealed-mode domain '{domain}' — sealed-mode domains have no keyring "
+                        + $"(they are one-way, per-service sealed; sealing is per-service and "
+                        + $"needs no keyring grant).");
+                }
+
                 // The value must be a member of the closed key-domain catalog (this also
                 // rejects a "*" wildcard value).
                 var createResult = KeyDomain.Create(domain);

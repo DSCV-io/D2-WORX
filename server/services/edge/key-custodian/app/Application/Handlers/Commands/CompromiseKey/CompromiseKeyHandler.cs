@@ -44,6 +44,7 @@ public sealed class CompromiseKeyHandler(
     IOptions<KeyCustodianOptions> options,
     IKeyRotationAnnouncer announcer,
     [FromKeyedServices(KeyCustodianRootKey.ROOT_SERVICE_KEY)] IPayloadCrypto rootCrypto,
+    ICaRootSigningCapability rootSigning,
     IClock clock)
     : BaseRepoHandler<CompromiseKeyHandler, I, O>(
         ctx, classifier),
@@ -257,7 +258,15 @@ public sealed class CompromiseKeyHandler(
         if (compromised.KeyType == KeyType.X509CaCertificate)
         {
             return await CaSuccessorFactory
-                .BuildAsync(db, rootCrypto, options.Value, clock, compromised.KeyDomain, ct)
+                .BuildAsync(
+                    db,
+                    rootCrypto,
+                    rootSigning,
+                    options.Value,
+                    clock,
+                    compromised.KeyDomain,
+                    KeyCustodianMetrics.CaRootKeyUses.Operation.COMPROMISE_REPLACEMENT,
+                    ct)
                 .ConfigureAwait(false);
         }
 

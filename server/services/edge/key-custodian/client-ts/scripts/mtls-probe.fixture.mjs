@@ -16,6 +16,11 @@
 //   present-pem  — present a harness-supplied leaf/key/chain PEM set at the
 //                  mTLS endpoint (drives the adversarial reject matrix).
 //   no-cert      — dial the mTLS endpoint with NO client certificate.
+//   get-keyring  — present a harness-supplied leaf/key/chain PEM set at the
+//                  mTLS-REQUIRED KeyCustodian keyring endpoint, run the shipped
+//                  GrpcKeyringClient (over the emitted gRPC facade) to fetch the
+//                  domain's keyring, then decrypt a .NET-produced frame with the
+//                  shipped @d2/encryption PayloadCrypto (cross-runtime pin).
 //
 // The probe TRUSTS the harness's self-signed loopback server certificate via the
 // explicitly-passed PEM (never rejectUnauthorized:false). It writes a JSON result
@@ -26,6 +31,7 @@
 //   <mode> <resultPath> <serverCertPemPath> <mtlsTarget host:port>
 //   [kcTarget host:port]                      (client-flow)
 //   [leafPemPath] [keyPemPath] [extraChainPemPath]  (present-pem)
+//   [leafPemPath] [keyPemPath] [chainPemPath] [keyDomain] [frameBase64]  (get-keyring)
 
 import "reflect-metadata";
 import { readFileSync, writeFileSync } from "node:fs";
@@ -34,11 +40,13 @@ import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import grpc from "@grpc/grpc-js";
 import protoLoader from "@grpc/proto-loader";
+import { PayloadCrypto } from "@d2/encryption";
 import {
   WorkloadLeafClient,
   GrpcWorkloadCertificateIssuer,
   createKeyCustodianGrpcClient,
   buildMutualTlsCredentials,
+  GrpcKeyringClient,
 } from "../dist/index.js";
 
 const SCRIPT_DIR = dirname(fileURLToPath(import.meta.url));
@@ -150,7 +158,7 @@ async function runClientFlow(kcTarget, serverCertPem) {
     };
   }
 
-  // CA-chain fetch + trust assembly (the D4 behavior) — reported as DER hashes so
+  // CA-chain fetch + trust assembly (the CA trust-fetch behavior) — reported as DER hashes so
   // the .NET side pins the served chain equals the real CA's, plus the raw chain
   // for the assembled-bundle length assertion.
   const chain = await issuer.getCaCertificate();
@@ -211,6 +219,76 @@ async function runNoCert(serverCertPem) {
   return { stage: "business-call", ...(await callSignFixture(credentials)) };
 }
 
+async function runGetKeyring(
+  serverCertPem,
+  leafPemPath,
+  keyPemPath,
+  chainPemPath,
+  keyDomain,
+  frameBase64,
+) {
+  const leafPem = readFileSync(leafPemPath, "utf8");
+  const keyPem = readFileSync(keyPemPath, "utf8");
+  const chainPem = readFileSync(chainPemPath, "utf8");
+
+  const credentials = buildMutualTlsCredentials({
+    caBundlePem: serverCertPem,
+    certChainPem: leafPem + chainPem,
+    privateKeyPem: keyPem,
+  });
+
+  // The emitted KeyCustodian keyring service over a proto-loader grpc-js stub, dialed
+  // over the mutual-TLS channel — the exact production wire the SSR host uses.
+  const KeyCustodianKeyring = loadService(
+    "key_custodian_keyring_get_keyring.g.proto",
+    "d2.keycustodian.v2alpha",
+    "KeyCustodianKeyring",
+  );
+  const keyringSvcClient = new KeyCustodianKeyring(mtlsTarget, credentials);
+  const stub = {
+    getKeyring: keyringSvcClient.getKeyring.bind(keyringSvcClient),
+  };
+
+  // The SHIPPED consumer runtime: the emitted facade + GrpcKeyringClient.
+  const keyringClient = new GrpcKeyringClient(
+    createKeyCustodianGrpcClient(stub),
+  );
+  const result = await keyringClient.getKeyring(keyDomain);
+  keyringSvcClient.close();
+
+  if (result.failed || result.data === undefined) {
+    return {
+      stage: "get-keyring",
+      keyringFetched: false,
+      statusCode: result.statusCode,
+      errorCode: result.errorCode,
+    };
+  }
+
+  const keyring = result.data;
+  const activeKid = keyring.activeKid;
+  const crypto = new PayloadCrypto(keyring);
+
+  // Cross-runtime: decrypt the .NET-produced frame with the fetched keyring.
+  const frame = new Uint8Array(Buffer.from(frameBase64, "base64"));
+  const decrypted = Buffer.from(await crypto.decrypt(frame));
+
+  // Same-runtime round-trip: the fetched keyring also encrypts + decrypts.
+  const selfPlain = Buffer.from("ts-self-roundtrip", "utf8");
+  const selfFrame = await crypto.encrypt(new Uint8Array(selfPlain));
+  const selfDecrypted = Buffer.from(await crypto.decrypt(selfFrame));
+
+  keyring.dispose();
+
+  return {
+    stage: "get-keyring",
+    keyringFetched: true,
+    activeKid,
+    decryptedBase64: decrypted.toString("base64"),
+    selfRoundTripOk: selfDecrypted.equals(selfPlain),
+  };
+}
+
 async function main() {
   const serverCertPem = readFileSync(serverCertPemPath, "utf8");
 
@@ -222,6 +300,15 @@ async function main() {
     outcome = await runPresentPem(serverCertPem, rest[0], rest[1], rest[2]);
   } else if (mode === "no-cert") {
     outcome = await runNoCert(serverCertPem);
+  } else if (mode === "get-keyring") {
+    outcome = await runGetKeyring(
+      serverCertPem,
+      rest[0],
+      rest[1],
+      rest[2],
+      rest[3],
+      rest[4],
+    );
   } else {
     throw new Error(`Unknown probe mode: ${mode}`);
   }

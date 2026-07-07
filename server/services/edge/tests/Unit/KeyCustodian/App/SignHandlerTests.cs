@@ -32,15 +32,20 @@ using Microsoft.Extensions.Logging.Abstractions;
 /// is exercised through the minter capability in <c>JwtSigningCapabilityTests</c> —
 /// at this catalog no generally-signable RSA-bound domain exists.
 /// </summary>
-public sealed class SignHandlerTests
+public sealed class SignHandlerTests : IDisposable
 {
-    private const string _AUDIT = "audit";
+    private const string _PAYLOAD = FixturePayloadDomains.PAYLOAD_A;
     private const string _AUTHORITY_REJECTIONS = "d2.keycustodian.authority_rejections";
     private const string _CROSS_PROCESS_REJECTIONS = "d2.keycustodian.cross_process_signing_rejections";
 
     private static readonly byte[] sr_input = "header.payload"u8.ToArray();
+
+    private readonly IDisposable r_fixtureSeam = FixturePayloadDomains.Register();
     private readonly KeyCustodianOptions r_options = KcAppTestKit.BuildOptions();
     private readonly IPayloadCrypto r_crypto = KcAppTestKit.BuildTestRootCrypto();
+
+    /// <summary>Unregisters the fixture payload domain (ref-counted, per-test-instance).</summary>
+    public void Dispose() => r_fixtureSeam.Dispose();
 
     [Fact]
     public void KeyDomainSigner_StaysInternal_NoExternalSigningOracle()
@@ -53,7 +58,7 @@ public sealed class SignHandlerTests
     }
 
     [Theory]
-    [InlineData(_AUDIT)]
+    [InlineData(_PAYLOAD)]
     [InlineData(KeyDomain.COOKIE)]
     public async Task Sign_CrossProcessGrantedNonSigningDomain_Returns400Mismatch_Not503(
         string domain)
@@ -81,10 +86,10 @@ public sealed class SignHandlerTests
         // cannot resurrect the general surface — the binding, not the store contents,
         // decides. Regression-pins that the reject is structural.
         await using var db = KeyCustodianTestDbContext.CreateEmpty();
-        await SeedSigningKey(db, _AUDIT);
+        await SeedSigningKey(db, _PAYLOAD);
 
-        var result = await Build(db, RequestOrigin.CrossProcessHop, "files", Policy(("files", [_AUDIT])))
-            .HandleAsync(new SignInput(_AUDIT, sr_input));
+        var result = await Build(db, RequestOrigin.CrossProcessHop, "files", Policy(("files", [_PAYLOAD])))
+            .HandleAsync(new SignInput(_PAYLOAD, sr_input));
 
         result.ErrorCode.Should().Be(
             KeyCustodianErrorCodes.KEYCUSTODIAN_KEY_TYPE_DOMAIN_MISMATCH);
@@ -124,11 +129,11 @@ public sealed class SignHandlerTests
     public async Task Sign_CrossProcessUnauthorizedDomain_ReturnsSigningDomainNotAuthorized()
     {
         await using var db = KeyCustodianTestDbContext.CreateEmpty();
-        await SeedSigningKey(db, _AUDIT);
+        await SeedSigningKey(db, _PAYLOAD);
 
         var result = await Build(
                 db, RequestOrigin.CrossProcessHop, "files", Policy(("files", ["client-secret"])))
-            .HandleAsync(new SignInput(_AUDIT, sr_input));
+            .HandleAsync(new SignInput(_PAYLOAD, sr_input));
 
         result.ErrorCode.Should().Be(KeyCustodianErrorCodes.KEYCUSTODIAN_SIGNING_DOMAIN_NOT_AUTHORIZED);
     }
@@ -137,10 +142,10 @@ public sealed class SignHandlerTests
     public async Task Sign_CrossProcessNoCaller_ReturnsForbidden()
     {
         await using var db = KeyCustodianTestDbContext.CreateEmpty();
-        await SeedSigningKey(db, _AUDIT);
+        await SeedSigningKey(db, _PAYLOAD);
 
         var result = await Build(db, RequestOrigin.CrossProcessHop, null, Policy())
-            .HandleAsync(new SignInput(_AUDIT, sr_input));
+            .HandleAsync(new SignInput(_PAYLOAD, sr_input));
 
         result.StatusCode.Should().Be(HttpStatusCode.Forbidden);
     }
@@ -149,18 +154,18 @@ public sealed class SignHandlerTests
     public async Task Sign_InProcessNonRootDomain_ReturnsSigningDomainNotAuthorized()
     {
         // The general surface signs non-root domains CROSS-PROCESS only; an in-process
-        // origin on this surface is denied (the minter path is separate, D4).
+        // origin on this surface is denied (the minter path is separate).
         await using var db = KeyCustodianTestDbContext.CreateEmpty();
-        await SeedSigningKey(db, _AUDIT);
+        await SeedSigningKey(db, _PAYLOAD);
 
         var result = await Build(db, RequestOrigin.InProcessModule, null, Policy())
-            .HandleAsync(new SignInput(_AUDIT, sr_input));
+            .HandleAsync(new SignInput(_PAYLOAD, sr_input));
 
         result.ErrorCode.Should().Be(KeyCustodianErrorCodes.KEYCUSTODIAN_SIGNING_DOMAIN_NOT_AUTHORIZED);
     }
 
     [Theory]
-    [InlineData(_AUDIT)]
+    [InlineData(_PAYLOAD)]
     [InlineData(KeyDomain.JWKS_SIGNING)]
     public async Task Sign_UnestablishedOrigin_SignsNothing(string domain)
     {
@@ -180,7 +185,7 @@ public sealed class SignHandlerTests
     {
         await using var db = KeyCustodianTestDbContext.CreateEmpty();
 
-        var result = await Build(db, RequestOrigin.CrossProcessHop, "files", Policy(("files", [_AUDIT])))
+        var result = await Build(db, RequestOrigin.CrossProcessHop, "files", Policy(("files", [_PAYLOAD])))
             .HandleAsync(new SignInput("not-a-real-domain", sr_input));
 
         result.ErrorCode.Should().Be(KeyCustodianErrorCodes.KEYCUSTODIAN_UNKNOWN_KEY_DOMAIN);
@@ -193,17 +198,18 @@ public sealed class SignHandlerTests
         // No internal.kc.sign scope on the request context → BaseHandler's per-handler
         // ScopeRequirement gate rejects with Forbidden BEFORE the authority rule, the
         // binding check, the DB, or any crypto runs. The caller + policy WOULD otherwise
-        // authorize (files → audit, cross-process) and audit would then surface the 400
-        // type mismatch — so a Forbidden (not the 400) proves the scope gate fired first.
+        // authorize (files → the fixture payload domain, cross-process) and the binding check
+        // would then surface the 400 type mismatch — so a Forbidden (not the 400) proves the
+        // scope gate fired first.
         await using var db = KeyCustodianTestDbContext.CreateEmpty();
 
         var result = await Build(
                 db,
                 RequestOrigin.CrossProcessHop,
                 "files",
-                Policy(("files", [_AUDIT])),
+                Policy(("files", [_PAYLOAD])),
                 scopes: new HashSet<string>(StringComparer.Ordinal))
-            .HandleAsync(new SignInput(_AUDIT, sr_input));
+            .HandleAsync(new SignInput(_PAYLOAD, sr_input));
 
         result.StatusCode.Should().Be(
             HttpStatusCode.Forbidden,
@@ -225,9 +231,9 @@ public sealed class SignHandlerTests
                 db,
                 RequestOrigin.CrossProcessHop,
                 "files",
-                Policy(("files", [_AUDIT])),
+                Policy(("files", [_PAYLOAD])),
                 scopes: new HashSet<string>(StringComparer.Ordinal) { Scopes.Internal.Kc.Sign })
-            .HandleAsync(new SignInput(_AUDIT, sr_input));
+            .HandleAsync(new SignInput(_PAYLOAD, sr_input));
 
         result.ErrorCode.Should().Be(
             KeyCustodianErrorCodes.KEYCUSTODIAN_KEY_TYPE_DOMAIN_MISMATCH,
@@ -310,7 +316,7 @@ public sealed class SignHandlerTests
     public async Task Sign_UnauthorizedDomainDeny_FiresNotInAllowedSet_NoCrossProcessCounter()
     {
         await using var db = KeyCustodianTestDbContext.CreateEmpty();
-        await SeedSigningKey(db, _AUDIT);
+        await SeedSigningKey(db, _PAYLOAD);
 
         var authorityTags = new List<(string Capability, string Reason)>();
         var crossProcess = new List<long>();
@@ -320,7 +326,7 @@ public sealed class SignHandlerTests
             listener.Start();
 
             await Build(db, RequestOrigin.CrossProcessHop, "files", Policy(("files", ["client-secret"])))
-                .HandleAsync(new SignInput(_AUDIT, sr_input));
+                .HandleAsync(new SignInput(_PAYLOAD, sr_input));
         }
 
         authorityTags.Should().Contain(
@@ -342,7 +348,7 @@ public sealed class SignHandlerTests
             listener.Start();
 
             await Build(db, RequestOrigin.CrossProcessHop, null, Policy())
-                .HandleAsync(new SignInput(_AUDIT, sr_input));
+                .HandleAsync(new SignInput(_PAYLOAD, sr_input));
         }
 
         authorityTags.Should().Contain(
@@ -362,8 +368,8 @@ public sealed class SignHandlerTests
         {
             listener.Start();
 
-            await Build(db, RequestOrigin.Unestablished, "files", Policy(("files", [_AUDIT])))
-                .HandleAsync(new SignInput(_AUDIT, sr_input));
+            await Build(db, RequestOrigin.Unestablished, "files", Policy(("files", [_PAYLOAD])))
+                .HandleAsync(new SignInput(_PAYLOAD, sr_input));
         }
 
         authorityTags.Should().Contain(

@@ -317,4 +317,46 @@ internal static partial class KeyCustodianLog
             "Seal-key fetch for service {serviceId} found no active sealing key and returned 503; "
             + "a concurrent first-request winner is not yet visible or the domain is mid-rotation.")]
     public static partial void SealKeyUnavailable(ILogger logger, string serviceId);
+
+    /// <summary>
+    /// Logs that the stored CA-root SIGNING key was materialized to sign a successor
+    /// intermediate — the §9.44 chokepoint log for the trust-conferring path. The
+    /// operation label + both kids are loggable non-PII labels; NO key material is
+    /// logged and there is no exception parameter (§3.1).
+    /// </summary>
+    /// <param name="logger">The logger.</param>
+    /// <param name="operation">
+    /// The closed-set chokepoint operation (<c>generate-successor</c> /
+    /// <c>compromise-replacement</c>).
+    /// </param>
+    /// <param name="rootKid">The active root kid whose signing key was used.</param>
+    /// <param name="successorKid">The successor intermediate kid that was minted.</param>
+    // long log template — cannot wrap
+    [LoggerMessage(
+        EventId = 9518,
+        Level = LogLevel.Information,
+        Message =
+            "CA-root signing key used ({operation}): root {rootKid} signed successor "
+            + "intermediate {successorKid}.")]
+    public static partial void CaRootKeySigningUsed(
+        ILogger logger, string operation, string rootKid, string successorKid);
+
+    /// <summary>
+    /// Logs that the stored CA-root key was materialized to smoke-test a pending /
+    /// successor root during its activation or rotation — the §9.44 chokepoint log for
+    /// the non-minting health-check path. The operation label + kid are loggable non-PII
+    /// labels; NO key material is logged and there is no exception parameter (§3.1).
+    /// </summary>
+    /// <param name="logger">The logger.</param>
+    /// <param name="operation">
+    /// The closed-set chokepoint operation (<c>activate-smoke-test</c> /
+    /// <c>rotate-smoke-test</c>).
+    /// </param>
+    /// <param name="kid">The pending / successor root kid whose material was smoke-tested.</param>
+    [LoggerMessage(
+        EventId = 9519,
+        Level = LogLevel.Information,
+        Message = "CA-root key used ({operation}): smoke-tested root material {kid}.")]
+    public static partial void CaRootKeySmokeTested(
+        ILogger logger, string operation, string kid);
 }

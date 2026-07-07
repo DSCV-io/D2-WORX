@@ -72,11 +72,13 @@ internal static class MessagingHostBuilder
             })
             .ConfigureServices((_, services) =>
             {
-                services.AddD2EncryptionFor(EncryptionDomains.AUDIT, _ =>
-                    new PayloadCryptoKeyring(
+                services.AddD2EncryptionFor(
+                    IntegrationMessageFixtures.SYMMETRIC_FIXTURE_DOMAIN,
+                    _ => new PayloadCryptoKeyring(
                         activeKid: activeKid,
                         keys: keys,
-                        aadContext: Encoding.UTF8.GetBytes("d2/" + EncryptionDomains.AUDIT)));
+                        aadContext: Encoding.UTF8.GetBytes(
+                            "d2/" + IntegrationMessageFixtures.SYMMETRIC_FIXTURE_DOMAIN)));
 
                 // Handler stack: HandlerContext<T> for handler activation +
                 // a per-scope MutableRequestContext registered as both the

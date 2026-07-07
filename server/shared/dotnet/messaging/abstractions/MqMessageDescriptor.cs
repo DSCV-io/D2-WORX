@@ -48,4 +48,30 @@ public sealed record MqMessageDescriptor(
     /// equals <see cref="PLAINTEXT"/>.</summary>
     public bool IsPlaintext =>
         string.Equals(Encryption, PLAINTEXT, System.StringComparison.Ordinal);
+
+    /// <summary>Gets a value indicating whether this descriptor's
+    /// <see cref="Encryption"/> domain is in the per-consumer-service SEALED
+    /// (asymmetric) mode rather than shared-keyring symmetric mode. Computed
+    /// from the spec-derived <see cref="D2.Shared.Encryption.EncryptionDomainModes"/>
+    /// catalog — the domain mode is a single-source domain fact, never a second
+    /// generated field on this descriptor. A plaintext or unknown domain is
+    /// <c>false</c> (unknown resolves to symmetric by
+    /// <see cref="D2.Shared.Encryption.EncryptionDomainModes.ModeFor"/>).</summary>
+    public bool IsSealed =>
+        D2.Shared.Encryption.EncryptionDomainModes.ModeFor(Encryption)
+            == D2.Shared.Encryption.EncryptionDomainMode.Sealed;
+
+    /// <summary>Gets the single consumer ServiceId that opens sealed frames on
+    /// this descriptor's domain, or <see langword="null"/> for a symmetric or
+    /// plaintext domain. The keyed <see cref="D2.Shared.Encryption.IPayloadSealer"/>
+    /// (publish) and <see cref="D2.Shared.Encryption.IPayloadOpener"/> (consume)
+    /// are resolved by this value — sealed material is keyed by the recipient
+    /// SERVICE, so two sealed domains sharing a consumer share one sealer/opener.
+    /// Computed from the spec-derived
+    /// <see cref="D2.Shared.Encryption.EncryptionDomainModes.TryGetConsumerService"/>
+    /// lookup — never a constructor/positional record parameter.</summary>
+    public string? ConsumerService =>
+        D2.Shared.Encryption.EncryptionDomainModes.TryGetConsumerService(Encryption, out var svc)
+            ? svc
+            : null;
 }

@@ -26,8 +26,22 @@ internal static class EncryptionDomainsEmitter
     /// <summary>The emitted class name.</summary>
     public const string CLASS_NAME = "EncryptionDomains";
 
+    /// <summary>The emitted per-domain encryption-mode enum name.</summary>
+    public const string MODE_ENUM_NAME = "EncryptionDomainMode";
+
+    /// <summary>The emitted mode / consumer-service lookup class name.</summary>
+    public const string MODES_CLASS_NAME = "EncryptionDomainModes";
+
+    private const string _MODE_SYMMETRIC = "symmetric";
+    private const string _MODE_SEALED = "sealed";
+
     private static readonly Regex sr_constNameRegex = new(
         "^[A-Z][A-Z0-9_]*$",
+        RegexOptions.Compiled,
+        TimeSpan.FromMilliseconds(50));
+
+    private static readonly Regex sr_consumerServiceRegex = new(
+        "^[a-z0-9-]{1,64}$",
         RegexOptions.Compiled,
         TimeSpan.FromMilliseconds(50));
 
@@ -67,6 +81,9 @@ internal static class EncryptionDomainsEmitter
                 diagnostics.Add(EmitDiagnostics.DuplicateValue(entry.Value));
                 continue;
             }
+
+            if (!ValidateModeAndConsumer(entry, diagnostics))
+                continue;
 
             validEntries.Add(entry);
         }
@@ -134,7 +151,187 @@ internal static class EncryptionDomainsEmitter
         EmitAllDomains(sb, entries);
 
         sb.AppendLine("}");
+        sb.AppendLine();
+        EmitModeEnum(sb);
+        sb.AppendLine();
+        EmitModesClass(sb, entries);
         return sb.ToString().LfNormalized();
+    }
+
+    /// <summary>
+    /// Validates an entry's optional <c>mode</c> / <c>consumerService</c> pair.
+    /// Appends the relevant fail-loud diagnostic and returns <c>false</c> when
+    /// the pair is inconsistent; otherwise returns <c>true</c>.
+    /// </summary>
+    private static bool ValidateModeAndConsumer(
+        EncryptionDomainEntry entry,
+        ImmutableArray<EmitDiagnostic>.Builder diagnostics)
+    {
+        var mode = entry.Mode;
+
+        if (mode is not null
+            && !string.Equals(mode, _MODE_SYMMETRIC, StringComparison.Ordinal)
+            && !string.Equals(mode, _MODE_SEALED, StringComparison.Ordinal))
+        {
+            diagnostics.Add(EmitDiagnostics.InvalidMode(entry.ConstName, mode));
+            return false;
+        }
+
+        var consumer = entry.ConsumerService;
+
+        if (IsSealed(entry))
+        {
+            if (consumer.Falsey())
+            {
+                diagnostics.Add(EmitDiagnostics.MissingConsumerService(entry.ConstName));
+                return false;
+            }
+
+            if (!sr_consumerServiceRegex.IsMatch(consumer!))
+            {
+                diagnostics.Add(
+                    EmitDiagnostics.InvalidConsumerService(entry.ConstName, consumer!));
+                return false;
+            }
+
+            return true;
+        }
+
+        if (consumer.Truthy())
+        {
+            diagnostics.Add(
+                EmitDiagnostics.UnexpectedConsumerService(entry.ConstName, consumer!));
+            return false;
+        }
+
+        return true;
+    }
+
+    /// <summary>True when the entry's mode is <c>sealed</c>.</summary>
+    private static bool IsSealed(EncryptionDomainEntry entry) =>
+        string.Equals(entry.Mode, _MODE_SEALED, StringComparison.Ordinal);
+
+    private static void EmitModeEnum(StringBuilder sb)
+    {
+        sb.AppendLine("/// <summary>");
+        sb.AppendLine(
+            "/// Per-domain payload encryption mode. <c>Symmetric</c> = a shared");
+        sb.AppendLine(
+            "/// keyring AES-256-GCM (version-1 frame) where every grant-holder");
+        sb.AppendLine(
+            "/// both encrypts and decrypts; <c>Sealed</c> = per-consumer-service");
+        sb.AppendLine(
+            "/// ephemeral-static ECDH (version-2 frame) where producers seal to a");
+        sb.AppendLine(
+            "/// recipient service's public key and only that service opens.");
+        sb.AppendLine("/// </summary>");
+        sb.AppendLine($"public enum {MODE_ENUM_NAME}");
+        sb.AppendLine("{");
+        sb.AppendLine("    /// <summary>Shared-keyring symmetric mode (the default).</summary>");
+        sb.AppendLine("    Symmetric,");
+        sb.AppendLine();
+        sb.AppendLine("    /// <summary>Per-consumer-service sealed (asymmetric) mode.</summary>");
+        sb.AppendLine("    Sealed,");
+        sb.AppendLine("}");
+    }
+
+    private static void EmitModesClass(StringBuilder sb, List<EncryptionDomainEntry> entries)
+    {
+        sb.AppendLine("/// <summary>");
+        sb.AppendLine(
+            "/// Spec-derived per-domain encryption-mode + consumer-service lookups.");
+        sb.AppendLine(
+            "/// A domain absent from the catalog (e.g. a test-seam synthetic domain)");
+        sb.AppendLine(
+            "/// resolves to <c>Symmetric</c> — sealed-ness can originate only in the");
+        sb.AppendLine(
+            "/// spec catalog, so a value that is not a declared sealed domain is by");
+        sb.AppendLine("/// construction not sealed.");
+        sb.AppendLine("/// </summary>");
+        sb.AppendLine($"public static class {MODES_CLASS_NAME}");
+        sb.AppendLine("{");
+
+        sb.AppendLine(
+            "    private static readonly IReadOnlyDictionary<string, "
+                + $"{MODE_ENUM_NAME}> sr_modeByDomain =");
+        sb.AppendLine(
+            $"        new Dictionary<string, {MODE_ENUM_NAME}>(System.StringComparer.Ordinal)");
+        sb.AppendLine("        {");
+        foreach (var entry in entries)
+        {
+            var mode = IsSealed(entry) ? "Sealed" : "Symmetric";
+            sb.AppendLine(
+                $"            {{ \"{EscapeStringLiteral(entry.Value)}\", "
+                    + $"{MODE_ENUM_NAME}.{mode} }},");
+        }
+
+        sb.AppendLine("        };");
+        sb.AppendLine();
+        sb.AppendLine(
+            "    private static readonly IReadOnlyDictionary<string, string> "
+                + "sr_consumerServiceByDomain =");
+        sb.AppendLine(
+            "        new Dictionary<string, string>(System.StringComparer.Ordinal)");
+        sb.AppendLine("        {");
+        foreach (var entry in entries)
+        {
+            if (!IsSealed(entry))
+                continue;
+
+            sb.AppendLine(
+                $"            {{ \"{EscapeStringLiteral(entry.Value)}\", "
+                    + $"\"{EscapeStringLiteral(entry.ConsumerService!)}\" }},");
+        }
+
+        sb.AppendLine("        };");
+        sb.AppendLine();
+        sb.AppendLine("    /// <summary>");
+        sb.AppendLine(
+            "    /// Consumer ServiceId per SEALED domain (the single decryptor). Only");
+        sb.AppendLine(
+            "    /// sealed domains appear; symmetric / plaintext domains are absent.");
+        sb.AppendLine("    /// </summary>");
+        sb.AppendLine(
+            "    public static IReadOnlyDictionary<string, string> ConsumerServiceByDomain =>");
+        sb.AppendLine("        sr_consumerServiceByDomain;");
+        sb.AppendLine();
+        sb.AppendLine("    /// <summary>");
+        sb.AppendLine(
+            "    /// Resolves the encryption mode for <paramref name=\"domain\"/>. An");
+        sb.AppendLine(
+            "    /// unknown domain resolves to <c>Symmetric</c> (documented default).");
+        sb.AppendLine("    /// </summary>");
+        sb.AppendLine("    /// <param name=\"domain\">The encryption-domain wire value.</param>");
+        sb.AppendLine("    /// <returns>The domain's mode, or <c>Symmetric</c> when unknown.</returns>");
+        sb.AppendLine($"    public static {MODE_ENUM_NAME} ModeFor(string domain) =>");
+        sb.AppendLine("        sr_modeByDomain.TryGetValue(domain, out var mode)");
+        sb.AppendLine("            ? mode");
+        sb.AppendLine($"            : {MODE_ENUM_NAME}.Symmetric;");
+        sb.AppendLine();
+        sb.AppendLine("    /// <summary>");
+        sb.AppendLine(
+            "    /// Gets the consumer ServiceId for a sealed <paramref name=\"domain\"/>.");
+        sb.AppendLine("    /// </summary>");
+        sb.AppendLine("    /// <param name=\"domain\">The encryption-domain wire value.</param>");
+        sb.AppendLine(
+            "    /// <param name=\"consumerService\">The resolved consumer ServiceId "
+                + "when sealed; <c>string.Empty</c> otherwise.</param>");
+        sb.AppendLine(
+            "    /// <returns><c>true</c> when the domain is sealed and mapped; "
+                + "otherwise <c>false</c>.</returns>");
+        sb.AppendLine(
+            "    public static bool TryGetConsumerService(string domain, out string consumerService)");
+        sb.AppendLine("    {");
+        sb.AppendLine("        if (sr_consumerServiceByDomain.TryGetValue(domain, out var svc))");
+        sb.AppendLine("        {");
+        sb.AppendLine("            consumerService = svc;");
+        sb.AppendLine("            return true;");
+        sb.AppendLine("        }");
+        sb.AppendLine();
+        sb.AppendLine("        consumerService = string.Empty;");
+        sb.AppendLine("        return false;");
+        sb.AppendLine("    }");
+        sb.AppendLine("}");
     }
 
     private static void EmitAllDomains(StringBuilder sb, List<EncryptionDomainEntry> entries)

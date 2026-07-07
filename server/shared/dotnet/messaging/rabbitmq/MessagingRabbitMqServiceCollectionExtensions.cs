@@ -9,6 +9,7 @@ namespace D2.Shared.Messaging.RabbitMq;
 using D2.Shared.Context.Abstractions;
 using D2.Shared.Messaging.RabbitMq.Channels;
 using D2.Shared.Messaging.RabbitMq.Connection;
+using D2.Shared.Messaging.RabbitMq.Encryption;
 using D2.Shared.Messaging.RabbitMq.Idempotency;
 using D2.Shared.Messaging.RabbitMq.Publishing;
 using D2.Shared.Messaging.RabbitMq.Subscribing;
@@ -73,7 +74,7 @@ public static class MessagingRabbitMqServiceCollectionExtensions
             if (configurePublisher is not null)
                 publisherBuilder.Configure(configurePublisher);
 
-            // M4: cross-options sanity check — WaitForConfirm requires
+            // Cross-options sanity check — WaitForConfirm requires
             // the channel to actually have publisher confirms enabled.
             // Without this guard, a typo in either option silently turns
             // every "confirmed" publish into an unsynchronized fire-and-
@@ -133,6 +134,15 @@ public static class MessagingRabbitMqServiceCollectionExtensions
             services.TryAddSingleton<IMessageIdempotencyStore, CacheIdempotencyStore>();
             services.TryAddEnumerable(
                 ServiceDescriptor.Singleton<IHostedService, IdempotencyStartupCheck>());
+
+            // Sealed-consumer presence check — registered UNCONDITIONALLY (never
+            // by the KeyCustodian sealing call it guards), and BEFORE the consumer
+            // host so a subscriber on a sealed domain with no matching
+            // IPayloadOpener crashes boot before any consumer channel opens rather
+            // than DLQ'ing every delivery. The forgotten-sealing-call case is
+            // exactly what this catches.
+            services.TryAddEnumerable(
+                ServiceDescriptor.Singleton<IHostedService, SealedConsumerStartupCheck>());
 
             // Hosted services — registered Transient (each AddHostedService
             // call adds an entry; idempotency is enforced by the

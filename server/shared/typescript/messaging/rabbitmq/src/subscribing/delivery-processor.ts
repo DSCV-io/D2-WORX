@@ -205,7 +205,7 @@ export class DeliveryProcessor {
   ): Promise<DeliveryAction | D2Result> {
     const { descriptor, logger, resolvedQueueName: queue } = this.deps;
     try {
-      const decoded = this.deps.opener.open(msg.body);
+      const decoded = await this.deps.opener.open(msg.body);
       return await this.deps.handler(decoded, consumeCtx);
     } catch (err) {
       if (err instanceof MessageBodyDecodeError) {

@@ -6,6 +6,8 @@
 
 namespace D2.Edge.KeyCustodian.App.Application.Handlers.Commands.ActivateKey;
 
+using D2.Edge.KeyCustodian.App.Application.CertificateAuthority;
+
 using H = D2.Edge.KeyCustodian.App.Application.Handlers.Commands.ActivateKey.IActivateKeyHandler;
 using I = ActivateKeyInput;
 using O = D2.Edge.KeyCustodian.Domain.Rules.KeySummary;
@@ -31,6 +33,7 @@ public sealed class ActivateKeyHandler(
     IKeyCustodianDbContext db,
     IRotationPolicyProvider policyProvider,
     [FromKeyedServices(KeyCustodianRootKey.ROOT_SERVICE_KEY)] IPayloadCrypto rootCrypto,
+    ICaRootSigningCapability rootSigning,
     IClock clock)
     : BaseRepoHandler<ActivateKeyHandler, I, O>(ctx, classifier),
       H
@@ -77,18 +80,34 @@ public sealed class ActivateKeyHandler(
 
         var pending = (PendingKey)record.ToDomain();
 
-        // Unwrap, smoke-test, and zero the unwrapped bytes on every path.
-        var unwrapped = rootCrypto.Decrypt(pending.KeyMaterialEncrypted.Bytes.Span);
+        // Smoke-test the pending material. A pending mtls-ca-root routes its unwrap
+        // through the dedicated §9.44 root-signing capability (the sole holder of any
+        // stored-root-key plaintext); every other domain (including
+        // mtls-ca-intermediate) keeps the inline generic smoke — so the rootCrypto param
+        // stays for that arm. Both shapes zero the unwrapped bytes on every path and
+        // detect corruption identically.
         D2Result smokeResult;
 
-        try
+        if (pending.KeyDomain.Value == KeyDomain.MTLS_CA_ROOT)
         {
-            smokeResult = SmokeTesting.Verify(
-                pending.KeyType, unwrapped, pending.PublicKeyMaterial?.Bytes);
+            smokeResult = await rootSigning
+                .SmokeTestRootKeyMaterialAsync(
+                    pending, KeyCustodianMetrics.CaRootKeyUses.Operation.ACTIVATE_SMOKE_TEST, ct)
+                .ConfigureAwait(false);
         }
-        finally
+        else
         {
-            CryptographicOperations.ZeroMemory(unwrapped);
+            var unwrapped = rootCrypto.Decrypt(pending.KeyMaterialEncrypted.Bytes.Span);
+
+            try
+            {
+                smokeResult = SmokeTesting.Verify(
+                    pending.KeyType, unwrapped, pending.PublicKeyMaterial?.Bytes);
+            }
+            finally
+            {
+                CryptographicOperations.ZeroMemory(unwrapped);
+            }
         }
 
         if (!smokeResult.Success)

@@ -87,6 +87,13 @@ public sealed class EncryptionDomainsGenerator : IIncrementalGenerator
         DiagnosticIds.DuplicateValue => DiagnosticDescriptors.DuplicateValue,
         DiagnosticIds.InvalidConstName => DiagnosticDescriptors.InvalidConstName,
         DiagnosticIds.EmptyValue => DiagnosticDescriptors.EmptyValue,
+        DiagnosticIds.InvalidMode => DiagnosticDescriptors.InvalidMode,
+        DiagnosticIds.MissingConsumerService =>
+            DiagnosticDescriptors.MissingConsumerService,
+        DiagnosticIds.UnexpectedConsumerService =>
+            DiagnosticDescriptors.UnexpectedConsumerService,
+        DiagnosticIds.InvalidConsumerService =>
+            DiagnosticDescriptors.InvalidConsumerService,
         _ => throw new InvalidOperationException(
             $"Unknown EmitDiagnostic descriptor id '{id}'."),
     };

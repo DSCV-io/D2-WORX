@@ -10,6 +10,7 @@ using System.Buffers.Text;
 using System.Collections.Concurrent;
 using System.Security.Cryptography;
 using D2.Edge.KeyCustodian.App.Application;
+using D2.Edge.KeyCustodian.App.Application.CertificateAuthority;
 using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.ActivateKey;
 using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.GenerateKey;
 using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.IssueLeaf;
@@ -220,9 +221,12 @@ public sealed class KeyCustodianLifecycleIntegrationTests(KeyCustodianPostgresFi
         await fixture.EnsureMigratedAsync();
         var clock = new TestClock(Instant.FromUtc(2026, 6, 1, 0, 0));
 
-        // Distinct per-test domain: the shared-collection PostgreSQL is not reset
-        // between tests, so this test uses a domain no other test seeds.
-        const string domain = "notifications";
+        // Distinct per-test domain: the shared-collection PostgreSQL is not reset between
+        // tests, so this test uses a domain no other test seeds. notifications is now SEALED
+        // (removed from the catalog); use a registered fixture payload domain
+        // (registered BEFORE BuildProvider so the boot validator accepts the grant).
+        const string domain = "payload-fixture-sign";
+        using var fixtureSeam = KeyDomain.RegisterFixturePayloadDomainForTesting(domain);
 
         var requestContext = new MutableRequestContext
         {
@@ -258,11 +262,13 @@ public sealed class KeyCustodianLifecycleIntegrationTests(KeyCustodianPostgresFi
     {
         await fixture.EnsureMigratedAsync();
         var clock = new TestClock(Instant.FromUtc(2026, 6, 1, 0, 0));
-        await using var provider = BuildProvider(clock, new RecordingAnnouncer());
 
-        // Distinct per-test domain the shared-collection PostgreSQL is not reset
-        // between tests; courier is an AES-payload-bound domain no other test seeds.
-        const string domain = "courier";
+        // Distinct per-test domain the shared-collection PostgreSQL is not reset between
+        // tests; courier is now SEALED (removed from the catalog), so use a
+        // registered fixture AES-payload domain no other test seeds.
+        const string domain = "payload-fixture-compromise";
+        using var fixtureSeam = KeyDomain.RegisterFixturePayloadDomainForTesting(domain);
+        await using var provider = BuildProvider(clock, new RecordingAnnouncer());
 
         // Generate a pending key, then compromise it WITH a replacement: the handler
         // marks the original Compromised AND inserts a fresh Pending in ONE
@@ -298,12 +304,13 @@ public sealed class KeyCustodianLifecycleIntegrationTests(KeyCustodianPostgresFi
     {
         await fixture.EnsureMigratedAsync();
         var clock = new TestClock(Instant.FromUtc(2026, 6, 1, 0, 0));
-        await using var provider = BuildProvider(clock, new RecordingAnnouncer());
 
         // Distinct per-test domain the shared-collection PostgreSQL is not reset between
-        // tests; notifications is an AES-payload-bound domain no other test persists keys
-        // in (the sign-mismatch test signs it but never seeds a key).
-        const string domain = "notifications";
+        // tests; notifications is now SEALED (removed from the catalog), so use a
+        // registered fixture AES-payload domain no other test persists keys in.
+        const string domain = "payload-fixture-pending";
+        using var fixtureSeam = KeyDomain.RegisterFixturePayloadDomainForTesting(domain);
+        await using var provider = BuildProvider(clock, new RecordingAnnouncer());
 
         // Seed the mid-rotation state: an Active incumbent AND a live Pending successor.
         await Handler<IGenerateKeyHandler>(provider)
@@ -650,6 +657,12 @@ public sealed class KeyCustodianLifecycleIntegrationTests(KeyCustodianPostgresFi
         // registration deliberately does not provide it; the isolation property
         // is pinned in the unit DI suite).
         services.AddD2CaLeafSigningCapability();
+
+        // The dedicated §9.44 root-signing capability — the composition-root opt-in the
+        // System-worker host makes. All four lifecycle-mutation handlers (generate /
+        // activate / rotate / compromise) take it, so without this call they cannot
+        // resolve; the isolation property is pinned in the unit DI suite.
+        services.AddD2CaRootSigningCapability();
 
         // The dedicated minter capability is granted ONLY where the auth-module
         // composition would grant it — never in the general registration.

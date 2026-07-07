@@ -331,6 +331,20 @@ locale, …) per ADR-0007 §2. No hop mutates the token to append itself.
   signing is isolated behind `ICaLeafSigningCapability` (its own DI extension, unreachable from
   the general registration). The delegated-issuer decision belongs to the first-leaf bootstrap
   ADR; the live host wiring stays tracked in [PHASE_3.md](PHASE_3.md) §G.
+- **CA-root signing + smoke is isolated behind `ICaRootSigningCapability` (§9.44)**: the mesh trust
+  anchor (`mtls-ca-root`) is a cluster-root-grade secret, so EVERY stored-root-key plaintext use
+  routes through one dedicated capability registered only by `AddD2CaRootSigningCapability()` (the
+  System-worker host's composition) — both the intermediate-minting SIGN path (`CaSuccessorFactory`
+  delegates the root→intermediate unwrap+sign) AND the root-domain SMOKE-VERIFY path (`ActivateKey` /
+  `RotateKey` route a pending/successor `mtls-ca-root` smoke through the capability; every other domain,
+  including `mtls-ca-intermediate`, keeps the inline generic smoke). No stored-root plaintext
+  materializes on the general surface for ANY purpose. Because all four lifecycle-mutation handlers
+  take the capability, a host that does not opt in cannot even construct them (a build-time DI fact,
+  proven by the isolation test); the System-plane lifecycle authority stays as defense-in-depth
+  beneath it. Every use fires the single chokepoint (`SR_CaRootKeyUsesTotal{operation}` +
+  `CaRootKeySigningUsed` 9518 / `CaRootKeySmokeTested` 9519 — kids + operation only, never key
+  material). The live host wiring folds into the existing dedicated-extension row in
+  [PHASE_3.md](PHASE_3.md) §G.
 - **Sealing-key distribution (per-service ECDH, lazy provisioning)**: two ops, each a Command on its
   own gRPC service + the in-process façade. `getOrLazyProvisionSealPublicKey(serviceId)`
   (`KeyCustodianSealPublicKey/GetOrLazyProvisionSealPublicKey`, scope `internal.kc.seal.encrypt`) serves a target
@@ -351,6 +365,20 @@ locale, …) per ADR-0007 §2. No hop mutates the token to append itself.
   `KEYCUSTODIAN_SEAL_NOT_AUTHORIZED` (telemetry `capability = seal-encrypt` / `seal-decrypt`
   distinguishes the arm; no plane / service-existence oracle). Provisions increment
   `d2.keycustodian.seal_keypairs_provisioned`.
+- **Sealed messaging auto-wire (client-side, this lib's Sealing runtime)**: `audit` /
+  `notifications` / `courier` flip to `mode: sealed` in `contracts/encryption-domains`, so the
+  RabbitMQ composer seals to the consumer service's public key on publish and opens with the
+  consumer's own private key on consume (keyed by consumer SERVICE). ONE spec-driven call per
+  service — `AddD2SealedEncryptionViaKeyCustodian(ownServiceId)` — wires a lazy-fetch sealer for
+  every sealed-domain consumer and, only when the service is itself a sealed consumer, its own
+  fail-loud-boot-fetch private-key opener (`KeyringBackedPayloadSealer` / `…Opener`, hot-swap
+  rotation twins of the keyring runtime). A rabbitmq-lib boot check crashes a host whose sealed
+  subscriber forgot the call. **One-way by construction**: a sealed-mode domain has NO
+  symmetric keyring, so `audit` / `notifications` / `courier` LEAVE the KC symmetric payload
+  catalog entirely (`KeyDomain.BuildCatalog` filters sealed-mode domains); the boot validator +
+  `getKeyring` keep a sealed-mode sharp-reject as defense-in-depth beneath nonexistence. The
+  domain-generic symmetric machinery (`getKeyring` op, keyring authority, consumer runtime) is
+  preserved for a future symmetric-mode domain; the payload catalog is empty until one is declared.
 - **Host-wiring gates for the KC signer** (tracked in [PHASE_3.md](PHASE_3.md) §G — not duplicated here):
   the minter capability's DI isolation is proven at module scope today, but the running Edge host must add
   a host-level **assembly-scan DI-isolation test** proving no type outside the auth-mint composition can

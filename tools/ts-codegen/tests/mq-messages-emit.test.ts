@@ -113,6 +113,18 @@ describe("emitMqMessages — snapshot pin", () => {
     expect(r.source).toContain("ALL_MQ_MESSAGE_CONSTANTS");
   });
 
+  it("emits the literal-typed MqMessagesCatalog (publisher type-witness input)", () => {
+    const r = emitMqMessages(validSpec);
+    // The catalog is `as const` (literal types), distinct from the
+    // Readonly<Record> registry — the publisher reads each message's literal
+    // `encryption` to brand its composer slot.
+    expect(r.source).toContain("export const MqMessagesCatalog = {");
+    expect(r.source).toContain("} as const;");
+    expect(r.source).toContain(
+      "export type MqMessageCatalogKey = keyof typeof MqMessagesCatalog;",
+    );
+  });
+
   it("omits encryptionReason key when absent (encrypted domain)", () => {
     const r = emitMqMessages({
       messages: [

@@ -131,7 +131,7 @@ abbreviation, 3-digit number). Examples currently in use:
 | DLQ failure metadata    | `D2DLQ`  | [`messaging/dlq-failure-metadata-source-gen`](../server/shared/dotnet/messaging/dlq-failure-metadata-source-gen/README.md)                                               |
 | OTel messaging tags     | `D2OTM`  | [`messaging/otel-messaging-tags-source-gen`](../server/shared/dotnet/messaging/otel-messaging-tags-source-gen/README.md)                                                 |
 | Telemetry tags          | `D2TT`   | [`telemetry/tags-source-gen`](../server/shared/dotnet/telemetry/tags-source-gen/README.md)                                                                               |
-| Encryption domains      | `D2ENCD` | [`encryption/domains-source-gen`](../server/shared/dotnet/encryption/domains-source-gen/README.md)                                                                       |
+| Encryption domains      | `D2ED`   | [`encryption/domains-source-gen`](../server/shared/dotnet/encryption/domains-source-gen/README.md) — emits `EncryptionDomains` constants + `EncryptionDomainMode` enum + `EncryptionDomainModes` mode/consumer lookups; `D2ED001-005` catalog shape, `D2ED006-009` per-domain `mode`/`consumerService` validation |
 | Encryption frame        | `D2EF`   | [`encryption/frame-source-gen`](../server/shared/dotnet/encryption/frame-source-gen/README.md) — two arms: symmetric v1 (`D2EF001-005`, `EncryptionFrameLayout`) + sealed v2 (`D2EF006-012`, `SealedFrameLayout` from the sibling `contracts/encryption-frame-sealed/` spec; adds the `variable_binary_u16be` field kind — raw binary behind a 2-byte big-endian length prefix — with a build-time rule that such a field must sit immediately behind its `byte_fixed` length-prefix field) |
 | ProblemDetails          | `D2PD`   | [`problem-details/source-gen`](../server/shared/dotnet/problem-details/source-gen/README.md)                                                                             |
 | Wire shapes             | `D2WS`   | [`source-gen-shared/wire-shapes-source-gen`](../server/shared/dotnet/source-gen-shared/wire-shapes-source-gen/README.md)                                                 |
@@ -317,7 +317,7 @@ tools/ts-codegen/
 │   ├── auth-scopes-emit.ts
 │   ├── d2result-envelope-emit.ts
 │   ├── dlq-failure-metadata-emit.ts
-│   ├── encryption-domains-emit.ts
+│   ├── encryption-domains-emit.ts   ← emits @d2/encryption-abstractions (EncryptionDomains + EncryptionDomainModes/EncryptionDomainMode/ConsumerServiceByDomain mode twins)
 │   ├── encryption-frame-emit.ts
 │   ├── encryption-frame-sealed-emit.ts
 │   ├── error-category-emit.ts       ← emits @d2/error-category (ErrorCategory union + ErrorCategoryWire + ALL_ERROR_CATEGORIES)

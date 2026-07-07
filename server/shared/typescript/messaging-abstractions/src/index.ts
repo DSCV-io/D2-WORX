@@ -15,5 +15,7 @@ export {
   type MqMessage,
   type MqMessageDescriptor,
   MqMessagesRegistry,
+  MqMessagesCatalog,
+  type MqMessageCatalogKey,
   ALL_MQ_MESSAGE_CONSTANTS,
 } from "./mq-messages.g.js";

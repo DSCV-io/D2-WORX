@@ -186,6 +186,63 @@ public sealed class ActivateKeyTests
         db.Audit.Should().BeEmpty(because: "no state transition occurred");
     }
 
+    // -----------------------------------------------------------------------
+    // Root-domain smoke routes through the dedicated §9.44 root-signing capability
+    // -----------------------------------------------------------------------
+
+    [Fact]
+    public async Task Activate_PendingRoot_RoutesSmokeThroughCapability_Activates()
+    {
+        await using var db = KeyCustodianTestDbContext.CreateEmpty();
+        var created = KcAppTestKit.SR_BaseInstant;
+        var (rootKid, _) = await KcAppTestKit.SeedCaRootAsync(
+            db, r_crypto, created, KeyStatus.Pending);
+
+        // Soak is 1h — activate at soak elapsed. The mtls-ca-root smoke unwrap routes
+        // through the capability verify op (never inline); a valid root smoke-passes.
+        var clock = new TestClock(created + Duration.FromHours(1));
+        var result = await Build(db, clock).HandleAsync(new ActivateKeyInput(rootKid));
+
+        result.Success.Should().BeTrue();
+        result.Data!.Status.Should().Be(KeyStatus.Active);
+        db.Keys.Single().Status.Should().Be(KeyStatus.Active);
+        db.Audit.Should().Contain(a => a.Action == KeyAuditAction.Activated);
+    }
+
+    [Fact]
+    public async Task Activate_PendingRoot_CorruptMaterial_SmokeFailsViaCapability_LeavesPending()
+    {
+        // The corrupt-material adversarial (decryptable-but-INVALID): the wrapped root
+        // material unwraps cleanly but is not a valid PKCS#8 ECDSA key, so the capability's
+        // smoke-verify op returns the SAME KEYCUSTODIAN_SMOKE_TEST_FAILED the inline path
+        // would — routing changes WHERE the plaintext materializes, not WHETHER corruption
+        // is detected. No state change on failure.
+        await using var db = KeyCustodianTestDbContext.CreateEmpty();
+        var created = KcAppTestKit.SR_BaseInstant;
+
+        var kid = await KcAppTestKit.SeedKeyWithCorruptMaterialAsync(
+            db,
+            r_crypto,
+            KeyDomain.MTLS_CA_ROOT,
+            KeyType.X509CaCertificate,
+            KeyStatus.Pending,
+            created,
+            corruptPlaintext: RandomNumberGenerator.GetBytes(64));
+
+        // Give the corrupt pending root CA cert material so it rehydrates as a CA key.
+        var corruptRow = db.Keys.Single(k => k.Kid == kid);
+        corruptRow.CaCertificate = RandomNumberGenerator.GetBytes(32);
+        await db.SaveChangesAsync();
+
+        var clock = new TestClock(created + Duration.FromHours(1));
+        var result = await Build(db, clock).HandleAsync(new ActivateKeyInput(kid));
+
+        result.Success.Should().BeFalse();
+        result.ErrorCode.Should().Be("KEYCUSTODIAN_SMOKE_TEST_FAILED");
+        db.Keys.Single().Status.Should().Be(KeyStatus.Pending, because: "activation was rejected");
+        db.Audit.Should().BeEmpty(because: "no state transition occurred");
+    }
+
     private ActivateKeyHandler Build(KeyCustodianTestDbContext db, TestClock clock) =>
         new(
             KcAppTestKit.SystemContext<ActivateKeyHandler>(),
@@ -193,5 +250,6 @@ public sealed class ActivateKeyTests
             db,
             KcAppTestKit.BuildPolicyProvider(r_options),
             r_crypto,
+            KcAppTestKit.BuildRootSigningCapability(db, r_crypto, clock, r_options),
             clock);
 }

@@ -8,12 +8,17 @@ namespace D2.Shared.Tests.Integration.ContractFixtures;
 
 using System;
 using System.Collections.Generic;
+using System.Security.Cryptography;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using AwesomeAssertions;
 using D2.Shared.Auth.Events;
 using D2.Shared.Context.Abstractions;
+using D2.Shared.Encryption;
 using D2.Shared.Headers.Amqp;
 using D2.Shared.Messaging;
+using D2.Shared.Messaging.RabbitMq.Encryption;
+using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 
 /// <summary>
@@ -32,6 +37,20 @@ public sealed class MqGoldenMessageFixtureEmitter
     private const string PRODUCER_TRACE_ID = "4bf92f3577b34da6a3ce929d0e0e4736";
     private const string TRACEPARENT =
         "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01";
+
+    // The sealed golden-message recipient — the SAME synthetic "audit" recipient
+    // (serviceId + kid + private PKCS#8) as SealedCryptoKatFixtureEmitter, so the TS
+    // consume test opens this .NET-composed message with a self-contained, pinned
+    // (fixture-only, no PII) private keyring. Pinning the recipient bounds the fixture
+    // churn to just the sealed frame, which is non-deterministic by construction (see
+    // Emit_SealedAuditMessage).
+    private const string _SEAL_RECIPIENT_SERVICE_ID = "audit";
+    private const string _SEAL_RECIPIENT_KID = "seal-kat-kid";
+
+    private const string _SEAL_RECIPIENT_PRIVATE_PKCS8_B64 =
+        "MIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQgAGdQitJuiEOZLHEa1ooL5nxm" +
+        "9k9UDMauc/9PTbrtmbWhRANCAAQcu3gDUuYgdaan/4uF2SnWekAoJSx3nDj2merWTH0mEcok" +
+        "rO0jSFyMpMLRNpOdsFH2i9X8AjOs5+Bk+J6A3U7+";
 
     // Mirrors D2.Shared.Messaging.RabbitMq MessagingJsonOptions (internal to the
     // rabbitmq lib) — camelCase property names + omit-null, the exact shape the
@@ -130,5 +149,93 @@ public sealed class MqGoldenMessageFixtureEmitter
         };
 
         FixturePathHelpers.WriteFixture(CATALOG, "encrypted-frame", data);
+    }
+
+    [Fact]
+    [Trait("Category", "ContractFixtures")]
+    public void Emit_SealedAuditMessage()
+    {
+        // A REAL sealed (version-2) golden MESSAGE — the message JSON is composed by the
+        // production EncryptedBodyComposer.Compose sealed branch,
+        // resolving the keyed IPayloadSealer by the descriptor's consumer service exactly
+        // as a live producer host does. It proves the TS @d2/messaging-rabbitmq consumer
+        // (CryptoBodyOpener over @d2/encryption's PayloadOpener) opens a genuinely
+        // .NET-composed sealed body byte-for-byte. Unlike the deterministic
+        // sealed-crypto-kat vector, the frame is NON-deterministic (the sealer mints a
+        // fresh per-message ephemeral keypair + nonce — no injection point by design), so
+        // re-emitting produces a different bodyBase64; the opener material + expected
+        // content stay pinned and the byte-exact KAT gate remains sealed-crypto-kat.
+        var descriptor = new MqMessageDescriptor(
+            Constant: "AuditSealedGoldenFixture",
+            MessageTypeName: typeof(KeyRotatedEvent).FullName!,
+            Exchange: "d2.audit.events",
+            ExchangeType: "fanout",
+            Encryption: EncryptionDomains.AUDIT,
+            EncryptionReason: null,
+            DefaultRoutingKey: null);
+
+        descriptor.IsSealed.Should().BeTrue("audit is a sealed domain");
+        var consumerService = descriptor.ConsumerService!;
+        consumerService.Should().Be(_SEAL_RECIPIENT_SERVICE_ID);
+
+        var evt = new KeyRotatedEvent
+        {
+            Domain = "audit",
+            Kid = "audit-seal-2026-07",
+            NewStatus = "Active",
+            Urgent = false,
+        };
+
+        var recipientPkcs8 = Convert.FromBase64String(_SEAL_RECIPIENT_PRIVATE_PKCS8_B64);
+
+        using var recipientKey = ECDiffieHellman.Create();
+        recipientKey.ImportPkcs8PrivateKey(recipientPkcs8, out _);
+        var recipientSpki = recipientKey.ExportSubjectPublicKeyInfo();
+
+        var publicKeyring = new RecipientPublicKeyring(
+            _SEAL_RECIPIENT_SERVICE_ID,
+            _SEAL_RECIPIENT_KID,
+            new Dictionary<string, byte[]>(StringComparer.Ordinal)
+            {
+                [_SEAL_RECIPIENT_KID] = recipientSpki,
+            });
+
+        var services = new ServiceCollection();
+        services.AddKeyedSingleton<IPayloadSealer>(
+            consumerService, new PayloadSealer(publicKeyring));
+        using var provider = services.BuildServiceProvider();
+
+        var (body, kid) = EncryptedBodyComposer.Compose(evt, descriptor, provider);
+
+        body[0].Should().Be(2, "sealed golden bodies are version-2 frames");
+        kid.Should().Be(_SEAL_RECIPIENT_KID, "the recipient kid rides x-d2-encryption-kid");
+
+        var headers = new SortedDictionary<string, object?>(StringComparer.Ordinal)
+        {
+            [AmqpHeaders.CONTENT_TYPE] = "application/octet-stream",
+            [AmqpHeaders.PROTO_TYPE] = typeof(KeyRotatedEvent).FullName,
+            [AmqpHeaders.MESSAGE_ID] = "0192f8c1-3333-7000-8000-0000000000cc",
+            [AmqpHeaders.ENCRYPTION_KID] = kid,
+        };
+
+        var data = new SortedDictionary<string, object?>(StringComparer.Ordinal)
+        {
+            ["domain"] = descriptor.Encryption,
+            ["consumerService"] = consumerService,
+            ["recipientServiceId"] = _SEAL_RECIPIENT_SERVICE_ID,
+            ["recipientKid"] = _SEAL_RECIPIENT_KID,
+            ["recipientPrivatePkcs8Base64"] = _SEAL_RECIPIENT_PRIVATE_PKCS8_B64,
+            ["bodyBase64"] = Convert.ToBase64String(body),
+            ["headers"] = headers,
+            ["expectedDecoded"] = new SortedDictionary<string, object?>(StringComparer.Ordinal)
+            {
+                ["domain"] = evt.Domain,
+                ["kid"] = evt.Kid,
+                ["newStatus"] = evt.NewStatus,
+                ["urgent"] = evt.Urgent,
+            },
+        };
+
+        FixturePathHelpers.WriteFixture(CATALOG, "sealed-audit-message", data);
     }
 }

@@ -152,4 +152,88 @@ public sealed class EncryptionDomainsSpecLoaderTests
         result.Diagnostic.Should().BeNull();
         result.Spec!.Domains.Should().BeEmpty();
     }
+
+    [Fact]
+    public void Load_EntryWithoutMode_LeavesModeAndConsumerNull()
+    {
+        var json = """
+        {
+          "domains": [
+            { "constName": "AUDIT", "value": "audit", "doc": "d" }
+          ]
+        }
+        """;
+
+        var result = EncryptionDomainsSpecLoader.Load(_PATH, json);
+
+        result.Diagnostic.Should().BeNull();
+        var entry = result.Spec!.Domains[0];
+        entry.Mode.Should().BeNull();
+        entry.ConsumerService.Should().BeNull();
+    }
+
+    [Fact]
+    public void Load_SealedEntry_ParsesModeAndConsumerService()
+    {
+        var json = """
+        {
+          "domains": [
+            {
+              "constName": "AUDIT",
+              "value": "audit",
+              "mode": "sealed",
+              "consumerService": "audit",
+              "doc": "d"
+            }
+          ]
+        }
+        """;
+
+        var result = EncryptionDomainsSpecLoader.Load(_PATH, json);
+
+        result.Diagnostic.Should().BeNull();
+        var entry = result.Spec!.Domains[0];
+        entry.Mode.Should().Be("sealed");
+        entry.ConsumerService.Should().Be("audit");
+    }
+
+    [Fact]
+    public void Load_ModeNotString_ReturnsMalformedSpecDiagnostic()
+    {
+        var json = """
+        {
+          "domains": [
+            { "constName": "X", "value": "x", "mode": 7, "doc": "d" }
+          ]
+        }
+        """;
+
+        var result = EncryptionDomainsSpecLoader.Load(_PATH, json);
+
+        result.Spec.Should().BeNull();
+        result.Diagnostic!.DescriptorId.Should().Be(DiagnosticIds.MalformedSpec);
+    }
+
+    [Fact]
+    public void Load_ConsumerServiceNotString_ReturnsMalformedSpecDiagnostic()
+    {
+        var json = """
+        {
+          "domains": [
+            {
+              "constName": "X",
+              "value": "x",
+              "mode": "sealed",
+              "consumerService": true,
+              "doc": "d"
+            }
+          ]
+        }
+        """;
+
+        var result = EncryptionDomainsSpecLoader.Load(_PATH, json);
+
+        result.Spec.Should().BeNull();
+        result.Diagnostic!.DescriptorId.Should().Be(DiagnosticIds.MalformedSpec);
+    }
 }

@@ -160,6 +160,12 @@ D2.Edge.KeyCustodian.Client.Sealing.GetOrLazyProvisionSealPublicKeyOutput.Entrie
 D2.Edge.KeyCustodian.Client.Sealing.GetOrLazyProvisionSealPublicKeyOutput.Entries.init -> void
 D2.Edge.KeyCustodian.Client.Sealing.GetOrLazyProvisionSealPublicKeyOutput.Equals(D2.Edge.KeyCustodian.Client.Sealing.GetOrLazyProvisionSealPublicKeyOutput? other) -> bool
 D2.Edge.KeyCustodian.Client.Sealing.GetOrLazyProvisionSealPublicKeyOutput.GetOrLazyProvisionSealPublicKeyOutput(string! ActiveKid, System.Collections.Generic.IReadOnlyList<D2.Edge.KeyCustodian.Client.Sealing.SealPublicEntry!>! Entries) -> void
+D2.Edge.KeyCustodian.Client.Sealing.KeyringBackedPayloadOpener
+D2.Edge.KeyCustodian.Client.Sealing.KeyringBackedPayloadOpener.DisposeAsync() -> System.Threading.Tasks.ValueTask
+D2.Edge.KeyCustodian.Client.Sealing.KeyringBackedPayloadOpener.Open(System.ReadOnlySpan<byte> framed) -> byte[]!
+D2.Edge.KeyCustodian.Client.Sealing.KeyringBackedPayloadSealer
+D2.Edge.KeyCustodian.Client.Sealing.KeyringBackedPayloadSealer.DisposeAsync() -> System.Threading.Tasks.ValueTask
+D2.Edge.KeyCustodian.Client.Sealing.KeyringBackedPayloadSealer.Seal(System.ReadOnlySpan<byte> plaintext) -> byte[]!
 D2.Edge.KeyCustodian.Client.Sealing.SealPrivateEntry
 D2.Edge.KeyCustodian.Client.Sealing.SealPrivateEntry.<Clone>$() -> D2.Edge.KeyCustodian.Client.Sealing.SealPrivateEntry!
 D2.Edge.KeyCustodian.Client.Sealing.SealPrivateEntry.Deconstruct(out string! Kid, out byte[]! PrivatePkcs8) -> void
@@ -178,6 +184,11 @@ D2.Edge.KeyCustodian.Client.Sealing.SealPublicEntry.Kid.init -> void
 D2.Edge.KeyCustodian.Client.Sealing.SealPublicEntry.PublicSpki.get -> byte[]!
 D2.Edge.KeyCustodian.Client.Sealing.SealPublicEntry.PublicSpki.init -> void
 D2.Edge.KeyCustodian.Client.Sealing.SealPublicEntry.SealPublicEntry(string! Kid, byte[]! PublicSpki) -> void
+D2.Edge.KeyCustodian.Client.Sealing.SealingMetrics
+D2.Edge.KeyCustodian.Client.Sealing.SealingMetrics.Tags
+D2.Edge.KeyCustodian.Client.Sealing.SealingServiceCollectionExtensions
+D2.Edge.KeyCustodian.Client.Sealing.SealingServiceCollectionExtensions.extension(Microsoft.Extensions.DependencyInjection.IServiceCollection!)
+D2.Edge.KeyCustodian.Client.Sealing.SealingServiceCollectionExtensions.extension(Microsoft.Extensions.DependencyInjection.IServiceCollection!).AddD2SealedEncryptionViaKeyCustodian(string! ownServiceId) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
 D2.Edge.KeyCustodian.Client.Signing.IJwtSigningCapability
 D2.Edge.KeyCustodian.Client.Signing.IJwtSigningCapability.SignJwtAsync(D2.Edge.KeyCustodian.Client.Signing.SignInput! input, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<D2.Shared.Result.D2Result<D2.Edge.KeyCustodian.Client.Signing.SignOutput!>!>
 D2.Edge.KeyCustodian.Client.Signing.SignInput
@@ -207,15 +218,51 @@ D2.Services.Protos.KeyCustodian.V2Alpha.GetKeyringRequest.GetKeyringRequest() ->
 D2.Services.Protos.KeyCustodian.V2Alpha.GetKeyringResponse
 D2.Services.Protos.KeyCustodian.V2Alpha.GetKeyringResponse.CalculateSize() -> int
 D2.Services.Protos.KeyCustodian.V2Alpha.GetKeyringResponse.GetKeyringResponse() -> void
+D2.Services.Protos.KeyCustodian.V2Alpha.GetOrLazyProvisionOwnSealPrivateKeyOutput
+D2.Services.Protos.KeyCustodian.V2Alpha.GetOrLazyProvisionOwnSealPrivateKeyOutput.CalculateSize() -> int
+D2.Services.Protos.KeyCustodian.V2Alpha.GetOrLazyProvisionOwnSealPrivateKeyOutput.GetOrLazyProvisionOwnSealPrivateKeyOutput() -> void
+D2.Services.Protos.KeyCustodian.V2Alpha.GetOrLazyProvisionOwnSealPrivateKeyRequest
+D2.Services.Protos.KeyCustodian.V2Alpha.GetOrLazyProvisionOwnSealPrivateKeyRequest.CalculateSize() -> int
+D2.Services.Protos.KeyCustodian.V2Alpha.GetOrLazyProvisionOwnSealPrivateKeyRequest.GetOrLazyProvisionOwnSealPrivateKeyRequest() -> void
+D2.Services.Protos.KeyCustodian.V2Alpha.GetOrLazyProvisionOwnSealPrivateKeyResponse
+D2.Services.Protos.KeyCustodian.V2Alpha.GetOrLazyProvisionOwnSealPrivateKeyResponse.CalculateSize() -> int
+D2.Services.Protos.KeyCustodian.V2Alpha.GetOrLazyProvisionOwnSealPrivateKeyResponse.GetOrLazyProvisionOwnSealPrivateKeyResponse() -> void
+D2.Services.Protos.KeyCustodian.V2Alpha.GetOrLazyProvisionSealPublicKeyOutput
+D2.Services.Protos.KeyCustodian.V2Alpha.GetOrLazyProvisionSealPublicKeyOutput.CalculateSize() -> int
+D2.Services.Protos.KeyCustodian.V2Alpha.GetOrLazyProvisionSealPublicKeyOutput.GetOrLazyProvisionSealPublicKeyOutput() -> void
+D2.Services.Protos.KeyCustodian.V2Alpha.GetOrLazyProvisionSealPublicKeyRequest
+D2.Services.Protos.KeyCustodian.V2Alpha.GetOrLazyProvisionSealPublicKeyRequest.CalculateSize() -> int
+D2.Services.Protos.KeyCustodian.V2Alpha.GetOrLazyProvisionSealPublicKeyRequest.GetOrLazyProvisionSealPublicKeyRequest() -> void
+D2.Services.Protos.KeyCustodian.V2Alpha.GetOrLazyProvisionSealPublicKeyResponse
+D2.Services.Protos.KeyCustodian.V2Alpha.GetOrLazyProvisionSealPublicKeyResponse.CalculateSize() -> int
+D2.Services.Protos.KeyCustodian.V2Alpha.GetOrLazyProvisionSealPublicKeyResponse.GetOrLazyProvisionSealPublicKeyResponse() -> void
 D2.Services.Protos.KeyCustodian.V2Alpha.KeyCustodianKeyring
 D2.Services.Protos.KeyCustodian.V2Alpha.KeyCustodianKeyring.KeyCustodianKeyringBase
 D2.Services.Protos.KeyCustodian.V2Alpha.KeyCustodianKeyring.KeyCustodianKeyringBase.KeyCustodianKeyringBase() -> void
 D2.Services.Protos.KeyCustodian.V2Alpha.KeyCustodianKeyring.KeyCustodianKeyringClient
 D2.Services.Protos.KeyCustodian.V2Alpha.KeyCustodianKeyring.KeyCustodianKeyringClient.KeyCustodianKeyringClient() -> void
 D2.Services.Protos.KeyCustodian.V2Alpha.KeyCustodianKeyringGetKeyringGReflection
+D2.Services.Protos.KeyCustodian.V2Alpha.KeyCustodianOwnSealPrivateKey
+D2.Services.Protos.KeyCustodian.V2Alpha.KeyCustodianOwnSealPrivateKey.KeyCustodianOwnSealPrivateKeyBase
+D2.Services.Protos.KeyCustodian.V2Alpha.KeyCustodianOwnSealPrivateKey.KeyCustodianOwnSealPrivateKeyBase.KeyCustodianOwnSealPrivateKeyBase() -> void
+D2.Services.Protos.KeyCustodian.V2Alpha.KeyCustodianOwnSealPrivateKey.KeyCustodianOwnSealPrivateKeyClient
+D2.Services.Protos.KeyCustodian.V2Alpha.KeyCustodianOwnSealPrivateKey.KeyCustodianOwnSealPrivateKeyClient.KeyCustodianOwnSealPrivateKeyClient() -> void
+D2.Services.Protos.KeyCustodian.V2Alpha.KeyCustodianOwnSealPrivateKeyGetOrLazyProvisionOwnSealPrivateKeyGReflection
+D2.Services.Protos.KeyCustodian.V2Alpha.KeyCustodianSealPublicKey
+D2.Services.Protos.KeyCustodian.V2Alpha.KeyCustodianSealPublicKey.KeyCustodianSealPublicKeyBase
+D2.Services.Protos.KeyCustodian.V2Alpha.KeyCustodianSealPublicKey.KeyCustodianSealPublicKeyBase.KeyCustodianSealPublicKeyBase() -> void
+D2.Services.Protos.KeyCustodian.V2Alpha.KeyCustodianSealPublicKey.KeyCustodianSealPublicKeyClient
+D2.Services.Protos.KeyCustodian.V2Alpha.KeyCustodianSealPublicKey.KeyCustodianSealPublicKeyClient.KeyCustodianSealPublicKeyClient() -> void
+D2.Services.Protos.KeyCustodian.V2Alpha.KeyCustodianSealPublicKeyGetOrLazyProvisionSealPublicKeyGReflection
 D2.Services.Protos.KeyCustodian.V2Alpha.KeyringEntry
 D2.Services.Protos.KeyCustodian.V2Alpha.KeyringEntry.CalculateSize() -> int
 D2.Services.Protos.KeyCustodian.V2Alpha.KeyringEntry.KeyringEntry() -> void
+D2.Services.Protos.KeyCustodian.V2Alpha.SealPrivateEntry
+D2.Services.Protos.KeyCustodian.V2Alpha.SealPrivateEntry.CalculateSize() -> int
+D2.Services.Protos.KeyCustodian.V2Alpha.SealPrivateEntry.SealPrivateEntry() -> void
+D2.Services.Protos.KeyCustodian.V2Alpha.SealPublicEntry
+D2.Services.Protos.KeyCustodian.V2Alpha.SealPublicEntry.CalculateSize() -> int
+D2.Services.Protos.KeyCustodian.V2Alpha.SealPublicEntry.SealPublicEntry() -> void
 const D2.Edge.KeyCustodian.Client.Keyring.KeyringMetrics.METER_NAME = "D2.Edge.KeyCustodian.Client" -> string!
 const D2.Edge.KeyCustodian.Client.Keyring.KeyringMetrics.Tags.FAILURE = "failure" -> string!
 const D2.Edge.KeyCustodian.Client.Keyring.KeyringMetrics.Tags.NONE = "<none>" -> string!
@@ -223,14 +270,33 @@ const D2.Edge.KeyCustodian.Client.Keyring.KeyringMetrics.Tags.SUCCESS = "success
 const D2.Edge.KeyCustodian.Client.Keyring.KeyringMetrics.Tags.TAG_DOMAIN = "domain" -> string!
 const D2.Edge.KeyCustodian.Client.Keyring.KeyringMetrics.Tags.TAG_ERROR_CODE = "errorCode" -> string!
 const D2.Edge.KeyCustodian.Client.Keyring.KeyringMetrics.Tags.TAG_RESULT = "result" -> string!
+const D2.Edge.KeyCustodian.Client.Sealing.SealingMetrics.Tags.FAILURE = "failure" -> string!
+const D2.Edge.KeyCustodian.Client.Sealing.SealingMetrics.Tags.NONE = "<none>" -> string!
+const D2.Edge.KeyCustodian.Client.Sealing.SealingMetrics.Tags.SUCCESS = "success" -> string!
+const D2.Edge.KeyCustodian.Client.Sealing.SealingMetrics.Tags.TAG_DOMAIN = "domain" -> string!
+const D2.Edge.KeyCustodian.Client.Sealing.SealingMetrics.Tags.TAG_ERROR_CODE = "errorCode" -> string!
+const D2.Edge.KeyCustodian.Client.Sealing.SealingMetrics.Tags.TAG_RESULT = "result" -> string!
 const D2.Services.Protos.KeyCustodian.V2Alpha.GetKeyringOutput.AadContextFieldNumber = 3 -> int
 const D2.Services.Protos.KeyCustodian.V2Alpha.GetKeyringOutput.ActiveKidFieldNumber = 1 -> int
 const D2.Services.Protos.KeyCustodian.V2Alpha.GetKeyringOutput.EntriesFieldNumber = 2 -> int
 const D2.Services.Protos.KeyCustodian.V2Alpha.GetKeyringRequest.KeyDomainFieldNumber = 1 -> int
 const D2.Services.Protos.KeyCustodian.V2Alpha.GetKeyringResponse.DataFieldNumber = 2 -> int
 const D2.Services.Protos.KeyCustodian.V2Alpha.GetKeyringResponse.ResultFieldNumber = 1 -> int
+const D2.Services.Protos.KeyCustodian.V2Alpha.GetOrLazyProvisionOwnSealPrivateKeyOutput.ActiveKidFieldNumber = 1 -> int
+const D2.Services.Protos.KeyCustodian.V2Alpha.GetOrLazyProvisionOwnSealPrivateKeyOutput.EntriesFieldNumber = 2 -> int
+const D2.Services.Protos.KeyCustodian.V2Alpha.GetOrLazyProvisionOwnSealPrivateKeyResponse.DataFieldNumber = 2 -> int
+const D2.Services.Protos.KeyCustodian.V2Alpha.GetOrLazyProvisionOwnSealPrivateKeyResponse.ResultFieldNumber = 1 -> int
+const D2.Services.Protos.KeyCustodian.V2Alpha.GetOrLazyProvisionSealPublicKeyOutput.ActiveKidFieldNumber = 1 -> int
+const D2.Services.Protos.KeyCustodian.V2Alpha.GetOrLazyProvisionSealPublicKeyOutput.EntriesFieldNumber = 2 -> int
+const D2.Services.Protos.KeyCustodian.V2Alpha.GetOrLazyProvisionSealPublicKeyRequest.ServiceIdFieldNumber = 1 -> int
+const D2.Services.Protos.KeyCustodian.V2Alpha.GetOrLazyProvisionSealPublicKeyResponse.DataFieldNumber = 2 -> int
+const D2.Services.Protos.KeyCustodian.V2Alpha.GetOrLazyProvisionSealPublicKeyResponse.ResultFieldNumber = 1 -> int
 const D2.Services.Protos.KeyCustodian.V2Alpha.KeyringEntry.KeyBytesFieldNumber = 2 -> int
 const D2.Services.Protos.KeyCustodian.V2Alpha.KeyringEntry.KidFieldNumber = 1 -> int
+const D2.Services.Protos.KeyCustodian.V2Alpha.SealPrivateEntry.KidFieldNumber = 1 -> int
+const D2.Services.Protos.KeyCustodian.V2Alpha.SealPrivateEntry.PrivatePkcs8FieldNumber = 2 -> int
+const D2.Services.Protos.KeyCustodian.V2Alpha.SealPublicEntry.KidFieldNumber = 1 -> int
+const D2.Services.Protos.KeyCustodian.V2Alpha.SealPublicEntry.PublicSpkiFieldNumber = 2 -> int
 override D2.Edge.KeyCustodian.Client.CaCertificate.GetCaCertificateInput.Equals(object? obj) -> bool
 override D2.Edge.KeyCustodian.Client.CaCertificate.GetCaCertificateInput.GetHashCode() -> int
 override D2.Edge.KeyCustodian.Client.CaCertificate.GetCaCertificateInput.ToString() -> string!
@@ -280,6 +346,8 @@ override D2.Edge.KeyCustodian.Client.Sealing.GetOrLazyProvisionSealPublicKeyInpu
 override D2.Edge.KeyCustodian.Client.Sealing.GetOrLazyProvisionSealPublicKeyOutput.Equals(object? obj) -> bool
 override D2.Edge.KeyCustodian.Client.Sealing.GetOrLazyProvisionSealPublicKeyOutput.GetHashCode() -> int
 override D2.Edge.KeyCustodian.Client.Sealing.GetOrLazyProvisionSealPublicKeyOutput.ToString() -> string!
+override D2.Edge.KeyCustodian.Client.Sealing.KeyringBackedPayloadOpener.ToString() -> string!
+override D2.Edge.KeyCustodian.Client.Sealing.KeyringBackedPayloadSealer.ToString() -> string!
 override D2.Edge.KeyCustodian.Client.Sealing.SealPrivateEntry.Equals(object? obj) -> bool
 override D2.Edge.KeyCustodian.Client.Sealing.SealPrivateEntry.GetHashCode() -> int
 override D2.Edge.KeyCustodian.Client.Sealing.SealPrivateEntry.ToString() -> string!
@@ -295,7 +363,15 @@ override D2.Edge.KeyCustodian.Client.Signing.SignOutput.ToString() -> string!
 override D2.Services.Protos.KeyCustodian.V2Alpha.GetKeyringOutput.GetHashCode() -> int
 override D2.Services.Protos.KeyCustodian.V2Alpha.GetKeyringRequest.GetHashCode() -> int
 override D2.Services.Protos.KeyCustodian.V2Alpha.GetKeyringResponse.GetHashCode() -> int
+override D2.Services.Protos.KeyCustodian.V2Alpha.GetOrLazyProvisionOwnSealPrivateKeyOutput.GetHashCode() -> int
+override D2.Services.Protos.KeyCustodian.V2Alpha.GetOrLazyProvisionOwnSealPrivateKeyRequest.GetHashCode() -> int
+override D2.Services.Protos.KeyCustodian.V2Alpha.GetOrLazyProvisionOwnSealPrivateKeyResponse.GetHashCode() -> int
+override D2.Services.Protos.KeyCustodian.V2Alpha.GetOrLazyProvisionSealPublicKeyOutput.GetHashCode() -> int
+override D2.Services.Protos.KeyCustodian.V2Alpha.GetOrLazyProvisionSealPublicKeyRequest.GetHashCode() -> int
+override D2.Services.Protos.KeyCustodian.V2Alpha.GetOrLazyProvisionSealPublicKeyResponse.GetHashCode() -> int
 override D2.Services.Protos.KeyCustodian.V2Alpha.KeyringEntry.GetHashCode() -> int
+override D2.Services.Protos.KeyCustodian.V2Alpha.SealPrivateEntry.GetHashCode() -> int
+override D2.Services.Protos.KeyCustodian.V2Alpha.SealPublicEntry.GetHashCode() -> int
 static D2.Edge.KeyCustodian.Client.CaCertificate.GetCaCertificateInput.operator !=(D2.Edge.KeyCustodian.Client.CaCertificate.GetCaCertificateInput? left, D2.Edge.KeyCustodian.Client.CaCertificate.GetCaCertificateInput? right) -> bool
 static D2.Edge.KeyCustodian.Client.CaCertificate.GetCaCertificateInput.operator ==(D2.Edge.KeyCustodian.Client.CaCertificate.GetCaCertificateInput? left, D2.Edge.KeyCustodian.Client.CaCertificate.GetCaCertificateInput? right) -> bool
 static D2.Edge.KeyCustodian.Client.CaCertificate.GetCaCertificateOutput.operator !=(D2.Edge.KeyCustodian.Client.CaCertificate.GetCaCertificateOutput? left, D2.Edge.KeyCustodian.Client.CaCertificate.GetCaCertificateOutput? right) -> bool
@@ -333,6 +409,7 @@ static D2.Edge.KeyCustodian.Client.Sealing.SealPrivateEntry.operator !=(D2.Edge.
 static D2.Edge.KeyCustodian.Client.Sealing.SealPrivateEntry.operator ==(D2.Edge.KeyCustodian.Client.Sealing.SealPrivateEntry? left, D2.Edge.KeyCustodian.Client.Sealing.SealPrivateEntry? right) -> bool
 static D2.Edge.KeyCustodian.Client.Sealing.SealPublicEntry.operator !=(D2.Edge.KeyCustodian.Client.Sealing.SealPublicEntry? left, D2.Edge.KeyCustodian.Client.Sealing.SealPublicEntry? right) -> bool
 static D2.Edge.KeyCustodian.Client.Sealing.SealPublicEntry.operator ==(D2.Edge.KeyCustodian.Client.Sealing.SealPublicEntry? left, D2.Edge.KeyCustodian.Client.Sealing.SealPublicEntry? right) -> bool
+static D2.Edge.KeyCustodian.Client.Sealing.SealingServiceCollectionExtensions.AddD2SealedEncryptionViaKeyCustodian(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services, string! ownServiceId) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
 static D2.Edge.KeyCustodian.Client.Signing.SignInput.operator !=(D2.Edge.KeyCustodian.Client.Signing.SignInput? left, D2.Edge.KeyCustodian.Client.Signing.SignInput? right) -> bool
 static D2.Edge.KeyCustodian.Client.Signing.SignInput.operator ==(D2.Edge.KeyCustodian.Client.Signing.SignInput? left, D2.Edge.KeyCustodian.Client.Signing.SignInput? right) -> bool
 static D2.Edge.KeyCustodian.Client.Signing.SignOutput.operator !=(D2.Edge.KeyCustodian.Client.Signing.SignOutput? left, D2.Edge.KeyCustodian.Client.Signing.SignOutput? right) -> bool
@@ -341,6 +418,9 @@ static readonly D2.Edge.KeyCustodian.Client.Keyring.KeyringMetrics.SR_KeyringFet
 static readonly D2.Edge.KeyCustodian.Client.Keyring.KeyringMetrics.SR_Meter -> System.Diagnostics.Metrics.Meter!
 static readonly D2.Edge.KeyCustodian.Client.Keyring.KeyringMetrics.SR_RefreshFailures -> System.Diagnostics.Metrics.Counter<long>!
 static readonly D2.Edge.KeyCustodian.Client.Keyring.KeyringMetrics.SR_RotationHotSwaps -> System.Diagnostics.Metrics.Counter<long>!
+static readonly D2.Edge.KeyCustodian.Client.Sealing.SealingMetrics.SR_RefreshFailures -> System.Diagnostics.Metrics.Counter<long>!
+static readonly D2.Edge.KeyCustodian.Client.Sealing.SealingMetrics.SR_RotationHotSwaps -> System.Diagnostics.Metrics.Counter<long>!
+static readonly D2.Edge.KeyCustodian.Client.Sealing.SealingMetrics.SR_SealKeyringFetches -> System.Diagnostics.Metrics.Counter<long>!
 ~D2.Services.Protos.KeyCustodian.V2Alpha.GetKeyringOutput.AadContext.get -> Google.Protobuf.ByteString
 ~D2.Services.Protos.KeyCustodian.V2Alpha.GetKeyringOutput.AadContext.set -> void
 ~D2.Services.Protos.KeyCustodian.V2Alpha.GetKeyringOutput.ActiveKid.get -> string
@@ -370,9 +450,67 @@ static readonly D2.Edge.KeyCustodian.Client.Keyring.KeyringMetrics.SR_RotationHo
 ~D2.Services.Protos.KeyCustodian.V2Alpha.GetKeyringResponse.Result.get -> D2.Services.Protos.Common.V1.D2ResultProto
 ~D2.Services.Protos.KeyCustodian.V2Alpha.GetKeyringResponse.Result.set -> void
 ~D2.Services.Protos.KeyCustodian.V2Alpha.GetKeyringResponse.WriteTo(Google.Protobuf.CodedOutputStream output) -> void
+~D2.Services.Protos.KeyCustodian.V2Alpha.GetOrLazyProvisionOwnSealPrivateKeyOutput.ActiveKid.get -> string
+~D2.Services.Protos.KeyCustodian.V2Alpha.GetOrLazyProvisionOwnSealPrivateKeyOutput.ActiveKid.set -> void
+~D2.Services.Protos.KeyCustodian.V2Alpha.GetOrLazyProvisionOwnSealPrivateKeyOutput.Clone() -> D2.Services.Protos.KeyCustodian.V2Alpha.GetOrLazyProvisionOwnSealPrivateKeyOutput
+~D2.Services.Protos.KeyCustodian.V2Alpha.GetOrLazyProvisionOwnSealPrivateKeyOutput.Entries.get -> Google.Protobuf.Collections.RepeatedField<D2.Services.Protos.KeyCustodian.V2Alpha.SealPrivateEntry>
+~D2.Services.Protos.KeyCustodian.V2Alpha.GetOrLazyProvisionOwnSealPrivateKeyOutput.Equals(D2.Services.Protos.KeyCustodian.V2Alpha.GetOrLazyProvisionOwnSealPrivateKeyOutput other) -> bool
+~D2.Services.Protos.KeyCustodian.V2Alpha.GetOrLazyProvisionOwnSealPrivateKeyOutput.GetOrLazyProvisionOwnSealPrivateKeyOutput(D2.Services.Protos.KeyCustodian.V2Alpha.GetOrLazyProvisionOwnSealPrivateKeyOutput other) -> void
+~D2.Services.Protos.KeyCustodian.V2Alpha.GetOrLazyProvisionOwnSealPrivateKeyOutput.MergeFrom(D2.Services.Protos.KeyCustodian.V2Alpha.GetOrLazyProvisionOwnSealPrivateKeyOutput other) -> void
+~D2.Services.Protos.KeyCustodian.V2Alpha.GetOrLazyProvisionOwnSealPrivateKeyOutput.MergeFrom(Google.Protobuf.CodedInputStream input) -> void
+~D2.Services.Protos.KeyCustodian.V2Alpha.GetOrLazyProvisionOwnSealPrivateKeyOutput.WriteTo(Google.Protobuf.CodedOutputStream output) -> void
+~D2.Services.Protos.KeyCustodian.V2Alpha.GetOrLazyProvisionOwnSealPrivateKeyRequest.Clone() -> D2.Services.Protos.KeyCustodian.V2Alpha.GetOrLazyProvisionOwnSealPrivateKeyRequest
+~D2.Services.Protos.KeyCustodian.V2Alpha.GetOrLazyProvisionOwnSealPrivateKeyRequest.Equals(D2.Services.Protos.KeyCustodian.V2Alpha.GetOrLazyProvisionOwnSealPrivateKeyRequest other) -> bool
+~D2.Services.Protos.KeyCustodian.V2Alpha.GetOrLazyProvisionOwnSealPrivateKeyRequest.GetOrLazyProvisionOwnSealPrivateKeyRequest(D2.Services.Protos.KeyCustodian.V2Alpha.GetOrLazyProvisionOwnSealPrivateKeyRequest other) -> void
+~D2.Services.Protos.KeyCustodian.V2Alpha.GetOrLazyProvisionOwnSealPrivateKeyRequest.MergeFrom(D2.Services.Protos.KeyCustodian.V2Alpha.GetOrLazyProvisionOwnSealPrivateKeyRequest other) -> void
+~D2.Services.Protos.KeyCustodian.V2Alpha.GetOrLazyProvisionOwnSealPrivateKeyRequest.MergeFrom(Google.Protobuf.CodedInputStream input) -> void
+~D2.Services.Protos.KeyCustodian.V2Alpha.GetOrLazyProvisionOwnSealPrivateKeyRequest.WriteTo(Google.Protobuf.CodedOutputStream output) -> void
+~D2.Services.Protos.KeyCustodian.V2Alpha.GetOrLazyProvisionOwnSealPrivateKeyResponse.Clone() -> D2.Services.Protos.KeyCustodian.V2Alpha.GetOrLazyProvisionOwnSealPrivateKeyResponse
+~D2.Services.Protos.KeyCustodian.V2Alpha.GetOrLazyProvisionOwnSealPrivateKeyResponse.Data.get -> D2.Services.Protos.KeyCustodian.V2Alpha.GetOrLazyProvisionOwnSealPrivateKeyOutput
+~D2.Services.Protos.KeyCustodian.V2Alpha.GetOrLazyProvisionOwnSealPrivateKeyResponse.Data.set -> void
+~D2.Services.Protos.KeyCustodian.V2Alpha.GetOrLazyProvisionOwnSealPrivateKeyResponse.Equals(D2.Services.Protos.KeyCustodian.V2Alpha.GetOrLazyProvisionOwnSealPrivateKeyResponse other) -> bool
+~D2.Services.Protos.KeyCustodian.V2Alpha.GetOrLazyProvisionOwnSealPrivateKeyResponse.GetOrLazyProvisionOwnSealPrivateKeyResponse(D2.Services.Protos.KeyCustodian.V2Alpha.GetOrLazyProvisionOwnSealPrivateKeyResponse other) -> void
+~D2.Services.Protos.KeyCustodian.V2Alpha.GetOrLazyProvisionOwnSealPrivateKeyResponse.MergeFrom(D2.Services.Protos.KeyCustodian.V2Alpha.GetOrLazyProvisionOwnSealPrivateKeyResponse other) -> void
+~D2.Services.Protos.KeyCustodian.V2Alpha.GetOrLazyProvisionOwnSealPrivateKeyResponse.MergeFrom(Google.Protobuf.CodedInputStream input) -> void
+~D2.Services.Protos.KeyCustodian.V2Alpha.GetOrLazyProvisionOwnSealPrivateKeyResponse.Result.get -> D2.Services.Protos.Common.V1.D2ResultProto
+~D2.Services.Protos.KeyCustodian.V2Alpha.GetOrLazyProvisionOwnSealPrivateKeyResponse.Result.set -> void
+~D2.Services.Protos.KeyCustodian.V2Alpha.GetOrLazyProvisionOwnSealPrivateKeyResponse.WriteTo(Google.Protobuf.CodedOutputStream output) -> void
+~D2.Services.Protos.KeyCustodian.V2Alpha.GetOrLazyProvisionSealPublicKeyOutput.ActiveKid.get -> string
+~D2.Services.Protos.KeyCustodian.V2Alpha.GetOrLazyProvisionSealPublicKeyOutput.ActiveKid.set -> void
+~D2.Services.Protos.KeyCustodian.V2Alpha.GetOrLazyProvisionSealPublicKeyOutput.Clone() -> D2.Services.Protos.KeyCustodian.V2Alpha.GetOrLazyProvisionSealPublicKeyOutput
+~D2.Services.Protos.KeyCustodian.V2Alpha.GetOrLazyProvisionSealPublicKeyOutput.Entries.get -> Google.Protobuf.Collections.RepeatedField<D2.Services.Protos.KeyCustodian.V2Alpha.SealPublicEntry>
+~D2.Services.Protos.KeyCustodian.V2Alpha.GetOrLazyProvisionSealPublicKeyOutput.Equals(D2.Services.Protos.KeyCustodian.V2Alpha.GetOrLazyProvisionSealPublicKeyOutput other) -> bool
+~D2.Services.Protos.KeyCustodian.V2Alpha.GetOrLazyProvisionSealPublicKeyOutput.GetOrLazyProvisionSealPublicKeyOutput(D2.Services.Protos.KeyCustodian.V2Alpha.GetOrLazyProvisionSealPublicKeyOutput other) -> void
+~D2.Services.Protos.KeyCustodian.V2Alpha.GetOrLazyProvisionSealPublicKeyOutput.MergeFrom(D2.Services.Protos.KeyCustodian.V2Alpha.GetOrLazyProvisionSealPublicKeyOutput other) -> void
+~D2.Services.Protos.KeyCustodian.V2Alpha.GetOrLazyProvisionSealPublicKeyOutput.MergeFrom(Google.Protobuf.CodedInputStream input) -> void
+~D2.Services.Protos.KeyCustodian.V2Alpha.GetOrLazyProvisionSealPublicKeyOutput.WriteTo(Google.Protobuf.CodedOutputStream output) -> void
+~D2.Services.Protos.KeyCustodian.V2Alpha.GetOrLazyProvisionSealPublicKeyRequest.Clone() -> D2.Services.Protos.KeyCustodian.V2Alpha.GetOrLazyProvisionSealPublicKeyRequest
+~D2.Services.Protos.KeyCustodian.V2Alpha.GetOrLazyProvisionSealPublicKeyRequest.Equals(D2.Services.Protos.KeyCustodian.V2Alpha.GetOrLazyProvisionSealPublicKeyRequest other) -> bool
+~D2.Services.Protos.KeyCustodian.V2Alpha.GetOrLazyProvisionSealPublicKeyRequest.GetOrLazyProvisionSealPublicKeyRequest(D2.Services.Protos.KeyCustodian.V2Alpha.GetOrLazyProvisionSealPublicKeyRequest other) -> void
+~D2.Services.Protos.KeyCustodian.V2Alpha.GetOrLazyProvisionSealPublicKeyRequest.MergeFrom(D2.Services.Protos.KeyCustodian.V2Alpha.GetOrLazyProvisionSealPublicKeyRequest other) -> void
+~D2.Services.Protos.KeyCustodian.V2Alpha.GetOrLazyProvisionSealPublicKeyRequest.MergeFrom(Google.Protobuf.CodedInputStream input) -> void
+~D2.Services.Protos.KeyCustodian.V2Alpha.GetOrLazyProvisionSealPublicKeyRequest.ServiceId.get -> string
+~D2.Services.Protos.KeyCustodian.V2Alpha.GetOrLazyProvisionSealPublicKeyRequest.ServiceId.set -> void
+~D2.Services.Protos.KeyCustodian.V2Alpha.GetOrLazyProvisionSealPublicKeyRequest.WriteTo(Google.Protobuf.CodedOutputStream output) -> void
+~D2.Services.Protos.KeyCustodian.V2Alpha.GetOrLazyProvisionSealPublicKeyResponse.Clone() -> D2.Services.Protos.KeyCustodian.V2Alpha.GetOrLazyProvisionSealPublicKeyResponse
+~D2.Services.Protos.KeyCustodian.V2Alpha.GetOrLazyProvisionSealPublicKeyResponse.Data.get -> D2.Services.Protos.KeyCustodian.V2Alpha.GetOrLazyProvisionSealPublicKeyOutput
+~D2.Services.Protos.KeyCustodian.V2Alpha.GetOrLazyProvisionSealPublicKeyResponse.Data.set -> void
+~D2.Services.Protos.KeyCustodian.V2Alpha.GetOrLazyProvisionSealPublicKeyResponse.Equals(D2.Services.Protos.KeyCustodian.V2Alpha.GetOrLazyProvisionSealPublicKeyResponse other) -> bool
+~D2.Services.Protos.KeyCustodian.V2Alpha.GetOrLazyProvisionSealPublicKeyResponse.GetOrLazyProvisionSealPublicKeyResponse(D2.Services.Protos.KeyCustodian.V2Alpha.GetOrLazyProvisionSealPublicKeyResponse other) -> void
+~D2.Services.Protos.KeyCustodian.V2Alpha.GetOrLazyProvisionSealPublicKeyResponse.MergeFrom(D2.Services.Protos.KeyCustodian.V2Alpha.GetOrLazyProvisionSealPublicKeyResponse other) -> void
+~D2.Services.Protos.KeyCustodian.V2Alpha.GetOrLazyProvisionSealPublicKeyResponse.MergeFrom(Google.Protobuf.CodedInputStream input) -> void
+~D2.Services.Protos.KeyCustodian.V2Alpha.GetOrLazyProvisionSealPublicKeyResponse.Result.get -> D2.Services.Protos.Common.V1.D2ResultProto
+~D2.Services.Protos.KeyCustodian.V2Alpha.GetOrLazyProvisionSealPublicKeyResponse.Result.set -> void
+~D2.Services.Protos.KeyCustodian.V2Alpha.GetOrLazyProvisionSealPublicKeyResponse.WriteTo(Google.Protobuf.CodedOutputStream output) -> void
 ~D2.Services.Protos.KeyCustodian.V2Alpha.KeyCustodianKeyring.KeyCustodianKeyringClient.KeyCustodianKeyringClient(Grpc.Core.CallInvoker callInvoker) -> void
 ~D2.Services.Protos.KeyCustodian.V2Alpha.KeyCustodianKeyring.KeyCustodianKeyringClient.KeyCustodianKeyringClient(Grpc.Core.ChannelBase channel) -> void
 ~D2.Services.Protos.KeyCustodian.V2Alpha.KeyCustodianKeyring.KeyCustodianKeyringClient.KeyCustodianKeyringClient(Grpc.Core.ClientBase.ClientBaseConfiguration configuration) -> void
+~D2.Services.Protos.KeyCustodian.V2Alpha.KeyCustodianOwnSealPrivateKey.KeyCustodianOwnSealPrivateKeyClient.KeyCustodianOwnSealPrivateKeyClient(Grpc.Core.CallInvoker callInvoker) -> void
+~D2.Services.Protos.KeyCustodian.V2Alpha.KeyCustodianOwnSealPrivateKey.KeyCustodianOwnSealPrivateKeyClient.KeyCustodianOwnSealPrivateKeyClient(Grpc.Core.ChannelBase channel) -> void
+~D2.Services.Protos.KeyCustodian.V2Alpha.KeyCustodianOwnSealPrivateKey.KeyCustodianOwnSealPrivateKeyClient.KeyCustodianOwnSealPrivateKeyClient(Grpc.Core.ClientBase.ClientBaseConfiguration configuration) -> void
+~D2.Services.Protos.KeyCustodian.V2Alpha.KeyCustodianSealPublicKey.KeyCustodianSealPublicKeyClient.KeyCustodianSealPublicKeyClient(Grpc.Core.CallInvoker callInvoker) -> void
+~D2.Services.Protos.KeyCustodian.V2Alpha.KeyCustodianSealPublicKey.KeyCustodianSealPublicKeyClient.KeyCustodianSealPublicKeyClient(Grpc.Core.ChannelBase channel) -> void
+~D2.Services.Protos.KeyCustodian.V2Alpha.KeyCustodianSealPublicKey.KeyCustodianSealPublicKeyClient.KeyCustodianSealPublicKeyClient(Grpc.Core.ClientBase.ClientBaseConfiguration configuration) -> void
 ~D2.Services.Protos.KeyCustodian.V2Alpha.KeyringEntry.Clone() -> D2.Services.Protos.KeyCustodian.V2Alpha.KeyringEntry
 ~D2.Services.Protos.KeyCustodian.V2Alpha.KeyringEntry.Equals(D2.Services.Protos.KeyCustodian.V2Alpha.KeyringEntry other) -> bool
 ~D2.Services.Protos.KeyCustodian.V2Alpha.KeyringEntry.KeyBytes.get -> Google.Protobuf.ByteString
@@ -383,29 +521,101 @@ static readonly D2.Edge.KeyCustodian.Client.Keyring.KeyringMetrics.SR_RotationHo
 ~D2.Services.Protos.KeyCustodian.V2Alpha.KeyringEntry.MergeFrom(D2.Services.Protos.KeyCustodian.V2Alpha.KeyringEntry other) -> void
 ~D2.Services.Protos.KeyCustodian.V2Alpha.KeyringEntry.MergeFrom(Google.Protobuf.CodedInputStream input) -> void
 ~D2.Services.Protos.KeyCustodian.V2Alpha.KeyringEntry.WriteTo(Google.Protobuf.CodedOutputStream output) -> void
+~D2.Services.Protos.KeyCustodian.V2Alpha.SealPrivateEntry.Clone() -> D2.Services.Protos.KeyCustodian.V2Alpha.SealPrivateEntry
+~D2.Services.Protos.KeyCustodian.V2Alpha.SealPrivateEntry.Equals(D2.Services.Protos.KeyCustodian.V2Alpha.SealPrivateEntry other) -> bool
+~D2.Services.Protos.KeyCustodian.V2Alpha.SealPrivateEntry.Kid.get -> string
+~D2.Services.Protos.KeyCustodian.V2Alpha.SealPrivateEntry.Kid.set -> void
+~D2.Services.Protos.KeyCustodian.V2Alpha.SealPrivateEntry.MergeFrom(D2.Services.Protos.KeyCustodian.V2Alpha.SealPrivateEntry other) -> void
+~D2.Services.Protos.KeyCustodian.V2Alpha.SealPrivateEntry.MergeFrom(Google.Protobuf.CodedInputStream input) -> void
+~D2.Services.Protos.KeyCustodian.V2Alpha.SealPrivateEntry.PrivatePkcs8.get -> Google.Protobuf.ByteString
+~D2.Services.Protos.KeyCustodian.V2Alpha.SealPrivateEntry.PrivatePkcs8.set -> void
+~D2.Services.Protos.KeyCustodian.V2Alpha.SealPrivateEntry.SealPrivateEntry(D2.Services.Protos.KeyCustodian.V2Alpha.SealPrivateEntry other) -> void
+~D2.Services.Protos.KeyCustodian.V2Alpha.SealPrivateEntry.WriteTo(Google.Protobuf.CodedOutputStream output) -> void
+~D2.Services.Protos.KeyCustodian.V2Alpha.SealPublicEntry.Clone() -> D2.Services.Protos.KeyCustodian.V2Alpha.SealPublicEntry
+~D2.Services.Protos.KeyCustodian.V2Alpha.SealPublicEntry.Equals(D2.Services.Protos.KeyCustodian.V2Alpha.SealPublicEntry other) -> bool
+~D2.Services.Protos.KeyCustodian.V2Alpha.SealPublicEntry.Kid.get -> string
+~D2.Services.Protos.KeyCustodian.V2Alpha.SealPublicEntry.Kid.set -> void
+~D2.Services.Protos.KeyCustodian.V2Alpha.SealPublicEntry.MergeFrom(D2.Services.Protos.KeyCustodian.V2Alpha.SealPublicEntry other) -> void
+~D2.Services.Protos.KeyCustodian.V2Alpha.SealPublicEntry.MergeFrom(Google.Protobuf.CodedInputStream input) -> void
+~D2.Services.Protos.KeyCustodian.V2Alpha.SealPublicEntry.PublicSpki.get -> Google.Protobuf.ByteString
+~D2.Services.Protos.KeyCustodian.V2Alpha.SealPublicEntry.PublicSpki.set -> void
+~D2.Services.Protos.KeyCustodian.V2Alpha.SealPublicEntry.SealPublicEntry(D2.Services.Protos.KeyCustodian.V2Alpha.SealPublicEntry other) -> void
+~D2.Services.Protos.KeyCustodian.V2Alpha.SealPublicEntry.WriteTo(Google.Protobuf.CodedOutputStream output) -> void
 ~override D2.Services.Protos.KeyCustodian.V2Alpha.GetKeyringOutput.Equals(object other) -> bool
 ~override D2.Services.Protos.KeyCustodian.V2Alpha.GetKeyringOutput.ToString() -> string
 ~override D2.Services.Protos.KeyCustodian.V2Alpha.GetKeyringRequest.Equals(object other) -> bool
 ~override D2.Services.Protos.KeyCustodian.V2Alpha.GetKeyringRequest.ToString() -> string
 ~override D2.Services.Protos.KeyCustodian.V2Alpha.GetKeyringResponse.Equals(object other) -> bool
 ~override D2.Services.Protos.KeyCustodian.V2Alpha.GetKeyringResponse.ToString() -> string
+~override D2.Services.Protos.KeyCustodian.V2Alpha.GetOrLazyProvisionOwnSealPrivateKeyOutput.Equals(object other) -> bool
+~override D2.Services.Protos.KeyCustodian.V2Alpha.GetOrLazyProvisionOwnSealPrivateKeyOutput.ToString() -> string
+~override D2.Services.Protos.KeyCustodian.V2Alpha.GetOrLazyProvisionOwnSealPrivateKeyRequest.Equals(object other) -> bool
+~override D2.Services.Protos.KeyCustodian.V2Alpha.GetOrLazyProvisionOwnSealPrivateKeyRequest.ToString() -> string
+~override D2.Services.Protos.KeyCustodian.V2Alpha.GetOrLazyProvisionOwnSealPrivateKeyResponse.Equals(object other) -> bool
+~override D2.Services.Protos.KeyCustodian.V2Alpha.GetOrLazyProvisionOwnSealPrivateKeyResponse.ToString() -> string
+~override D2.Services.Protos.KeyCustodian.V2Alpha.GetOrLazyProvisionSealPublicKeyOutput.Equals(object other) -> bool
+~override D2.Services.Protos.KeyCustodian.V2Alpha.GetOrLazyProvisionSealPublicKeyOutput.ToString() -> string
+~override D2.Services.Protos.KeyCustodian.V2Alpha.GetOrLazyProvisionSealPublicKeyRequest.Equals(object other) -> bool
+~override D2.Services.Protos.KeyCustodian.V2Alpha.GetOrLazyProvisionSealPublicKeyRequest.ToString() -> string
+~override D2.Services.Protos.KeyCustodian.V2Alpha.GetOrLazyProvisionSealPublicKeyResponse.Equals(object other) -> bool
+~override D2.Services.Protos.KeyCustodian.V2Alpha.GetOrLazyProvisionSealPublicKeyResponse.ToString() -> string
 ~override D2.Services.Protos.KeyCustodian.V2Alpha.KeyCustodianKeyring.KeyCustodianKeyringClient.NewInstance(Grpc.Core.ClientBase.ClientBaseConfiguration configuration) -> D2.Services.Protos.KeyCustodian.V2Alpha.KeyCustodianKeyring.KeyCustodianKeyringClient
+~override D2.Services.Protos.KeyCustodian.V2Alpha.KeyCustodianOwnSealPrivateKey.KeyCustodianOwnSealPrivateKeyClient.NewInstance(Grpc.Core.ClientBase.ClientBaseConfiguration configuration) -> D2.Services.Protos.KeyCustodian.V2Alpha.KeyCustodianOwnSealPrivateKey.KeyCustodianOwnSealPrivateKeyClient
+~override D2.Services.Protos.KeyCustodian.V2Alpha.KeyCustodianSealPublicKey.KeyCustodianSealPublicKeyClient.NewInstance(Grpc.Core.ClientBase.ClientBaseConfiguration configuration) -> D2.Services.Protos.KeyCustodian.V2Alpha.KeyCustodianSealPublicKey.KeyCustodianSealPublicKeyClient
 ~override D2.Services.Protos.KeyCustodian.V2Alpha.KeyringEntry.Equals(object other) -> bool
 ~override D2.Services.Protos.KeyCustodian.V2Alpha.KeyringEntry.ToString() -> string
+~override D2.Services.Protos.KeyCustodian.V2Alpha.SealPrivateEntry.Equals(object other) -> bool
+~override D2.Services.Protos.KeyCustodian.V2Alpha.SealPrivateEntry.ToString() -> string
+~override D2.Services.Protos.KeyCustodian.V2Alpha.SealPublicEntry.Equals(object other) -> bool
+~override D2.Services.Protos.KeyCustodian.V2Alpha.SealPublicEntry.ToString() -> string
 ~static D2.Services.Protos.KeyCustodian.V2Alpha.GetKeyringOutput.Descriptor.get -> Google.Protobuf.Reflection.MessageDescriptor
 ~static D2.Services.Protos.KeyCustodian.V2Alpha.GetKeyringOutput.Parser.get -> Google.Protobuf.MessageParser<D2.Services.Protos.KeyCustodian.V2Alpha.GetKeyringOutput>
 ~static D2.Services.Protos.KeyCustodian.V2Alpha.GetKeyringRequest.Descriptor.get -> Google.Protobuf.Reflection.MessageDescriptor
 ~static D2.Services.Protos.KeyCustodian.V2Alpha.GetKeyringRequest.Parser.get -> Google.Protobuf.MessageParser<D2.Services.Protos.KeyCustodian.V2Alpha.GetKeyringRequest>
 ~static D2.Services.Protos.KeyCustodian.V2Alpha.GetKeyringResponse.Descriptor.get -> Google.Protobuf.Reflection.MessageDescriptor
 ~static D2.Services.Protos.KeyCustodian.V2Alpha.GetKeyringResponse.Parser.get -> Google.Protobuf.MessageParser<D2.Services.Protos.KeyCustodian.V2Alpha.GetKeyringResponse>
+~static D2.Services.Protos.KeyCustodian.V2Alpha.GetOrLazyProvisionOwnSealPrivateKeyOutput.Descriptor.get -> Google.Protobuf.Reflection.MessageDescriptor
+~static D2.Services.Protos.KeyCustodian.V2Alpha.GetOrLazyProvisionOwnSealPrivateKeyOutput.Parser.get -> Google.Protobuf.MessageParser<D2.Services.Protos.KeyCustodian.V2Alpha.GetOrLazyProvisionOwnSealPrivateKeyOutput>
+~static D2.Services.Protos.KeyCustodian.V2Alpha.GetOrLazyProvisionOwnSealPrivateKeyRequest.Descriptor.get -> Google.Protobuf.Reflection.MessageDescriptor
+~static D2.Services.Protos.KeyCustodian.V2Alpha.GetOrLazyProvisionOwnSealPrivateKeyRequest.Parser.get -> Google.Protobuf.MessageParser<D2.Services.Protos.KeyCustodian.V2Alpha.GetOrLazyProvisionOwnSealPrivateKeyRequest>
+~static D2.Services.Protos.KeyCustodian.V2Alpha.GetOrLazyProvisionOwnSealPrivateKeyResponse.Descriptor.get -> Google.Protobuf.Reflection.MessageDescriptor
+~static D2.Services.Protos.KeyCustodian.V2Alpha.GetOrLazyProvisionOwnSealPrivateKeyResponse.Parser.get -> Google.Protobuf.MessageParser<D2.Services.Protos.KeyCustodian.V2Alpha.GetOrLazyProvisionOwnSealPrivateKeyResponse>
+~static D2.Services.Protos.KeyCustodian.V2Alpha.GetOrLazyProvisionSealPublicKeyOutput.Descriptor.get -> Google.Protobuf.Reflection.MessageDescriptor
+~static D2.Services.Protos.KeyCustodian.V2Alpha.GetOrLazyProvisionSealPublicKeyOutput.Parser.get -> Google.Protobuf.MessageParser<D2.Services.Protos.KeyCustodian.V2Alpha.GetOrLazyProvisionSealPublicKeyOutput>
+~static D2.Services.Protos.KeyCustodian.V2Alpha.GetOrLazyProvisionSealPublicKeyRequest.Descriptor.get -> Google.Protobuf.Reflection.MessageDescriptor
+~static D2.Services.Protos.KeyCustodian.V2Alpha.GetOrLazyProvisionSealPublicKeyRequest.Parser.get -> Google.Protobuf.MessageParser<D2.Services.Protos.KeyCustodian.V2Alpha.GetOrLazyProvisionSealPublicKeyRequest>
+~static D2.Services.Protos.KeyCustodian.V2Alpha.GetOrLazyProvisionSealPublicKeyResponse.Descriptor.get -> Google.Protobuf.Reflection.MessageDescriptor
+~static D2.Services.Protos.KeyCustodian.V2Alpha.GetOrLazyProvisionSealPublicKeyResponse.Parser.get -> Google.Protobuf.MessageParser<D2.Services.Protos.KeyCustodian.V2Alpha.GetOrLazyProvisionSealPublicKeyResponse>
 ~static D2.Services.Protos.KeyCustodian.V2Alpha.KeyCustodianKeyring.BindService(D2.Services.Protos.KeyCustodian.V2Alpha.KeyCustodianKeyring.KeyCustodianKeyringBase serviceImpl) -> Grpc.Core.ServerServiceDefinition
 ~static D2.Services.Protos.KeyCustodian.V2Alpha.KeyCustodianKeyring.BindService(Grpc.Core.ServiceBinderBase serviceBinder, D2.Services.Protos.KeyCustodian.V2Alpha.KeyCustodianKeyring.KeyCustodianKeyringBase serviceImpl) -> void
 ~static D2.Services.Protos.KeyCustodian.V2Alpha.KeyCustodianKeyring.Descriptor.get -> Google.Protobuf.Reflection.ServiceDescriptor
 ~static D2.Services.Protos.KeyCustodian.V2Alpha.KeyCustodianKeyringGetKeyringGReflection.Descriptor.get -> Google.Protobuf.Reflection.FileDescriptor
+~static D2.Services.Protos.KeyCustodian.V2Alpha.KeyCustodianOwnSealPrivateKey.BindService(D2.Services.Protos.KeyCustodian.V2Alpha.KeyCustodianOwnSealPrivateKey.KeyCustodianOwnSealPrivateKeyBase serviceImpl) -> Grpc.Core.ServerServiceDefinition
+~static D2.Services.Protos.KeyCustodian.V2Alpha.KeyCustodianOwnSealPrivateKey.BindService(Grpc.Core.ServiceBinderBase serviceBinder, D2.Services.Protos.KeyCustodian.V2Alpha.KeyCustodianOwnSealPrivateKey.KeyCustodianOwnSealPrivateKeyBase serviceImpl) -> void
+~static D2.Services.Protos.KeyCustodian.V2Alpha.KeyCustodianOwnSealPrivateKey.Descriptor.get -> Google.Protobuf.Reflection.ServiceDescriptor
+~static D2.Services.Protos.KeyCustodian.V2Alpha.KeyCustodianOwnSealPrivateKeyGetOrLazyProvisionOwnSealPrivateKeyGReflection.Descriptor.get -> Google.Protobuf.Reflection.FileDescriptor
+~static D2.Services.Protos.KeyCustodian.V2Alpha.KeyCustodianSealPublicKey.BindService(D2.Services.Protos.KeyCustodian.V2Alpha.KeyCustodianSealPublicKey.KeyCustodianSealPublicKeyBase serviceImpl) -> Grpc.Core.ServerServiceDefinition
+~static D2.Services.Protos.KeyCustodian.V2Alpha.KeyCustodianSealPublicKey.BindService(Grpc.Core.ServiceBinderBase serviceBinder, D2.Services.Protos.KeyCustodian.V2Alpha.KeyCustodianSealPublicKey.KeyCustodianSealPublicKeyBase serviceImpl) -> void
+~static D2.Services.Protos.KeyCustodian.V2Alpha.KeyCustodianSealPublicKey.Descriptor.get -> Google.Protobuf.Reflection.ServiceDescriptor
+~static D2.Services.Protos.KeyCustodian.V2Alpha.KeyCustodianSealPublicKeyGetOrLazyProvisionSealPublicKeyGReflection.Descriptor.get -> Google.Protobuf.Reflection.FileDescriptor
 ~static D2.Services.Protos.KeyCustodian.V2Alpha.KeyringEntry.Descriptor.get -> Google.Protobuf.Reflection.MessageDescriptor
 ~static D2.Services.Protos.KeyCustodian.V2Alpha.KeyringEntry.Parser.get -> Google.Protobuf.MessageParser<D2.Services.Protos.KeyCustodian.V2Alpha.KeyringEntry>
+~static D2.Services.Protos.KeyCustodian.V2Alpha.SealPrivateEntry.Descriptor.get -> Google.Protobuf.Reflection.MessageDescriptor
+~static D2.Services.Protos.KeyCustodian.V2Alpha.SealPrivateEntry.Parser.get -> Google.Protobuf.MessageParser<D2.Services.Protos.KeyCustodian.V2Alpha.SealPrivateEntry>
+~static D2.Services.Protos.KeyCustodian.V2Alpha.SealPublicEntry.Descriptor.get -> Google.Protobuf.Reflection.MessageDescriptor
+~static D2.Services.Protos.KeyCustodian.V2Alpha.SealPublicEntry.Parser.get -> Google.Protobuf.MessageParser<D2.Services.Protos.KeyCustodian.V2Alpha.SealPublicEntry>
 ~virtual D2.Services.Protos.KeyCustodian.V2Alpha.KeyCustodianKeyring.KeyCustodianKeyringBase.GetKeyring(D2.Services.Protos.KeyCustodian.V2Alpha.GetKeyringRequest request, Grpc.Core.ServerCallContext context) -> System.Threading.Tasks.Task<D2.Services.Protos.KeyCustodian.V2Alpha.GetKeyringResponse>
 ~virtual D2.Services.Protos.KeyCustodian.V2Alpha.KeyCustodianKeyring.KeyCustodianKeyringClient.GetKeyring(D2.Services.Protos.KeyCustodian.V2Alpha.GetKeyringRequest request, Grpc.Core.CallOptions options) -> D2.Services.Protos.KeyCustodian.V2Alpha.GetKeyringResponse
 ~virtual D2.Services.Protos.KeyCustodian.V2Alpha.KeyCustodianKeyring.KeyCustodianKeyringClient.GetKeyring(D2.Services.Protos.KeyCustodian.V2Alpha.GetKeyringRequest request, Grpc.Core.Metadata headers = null, System.DateTime? deadline = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> D2.Services.Protos.KeyCustodian.V2Alpha.GetKeyringResponse
 ~virtual D2.Services.Protos.KeyCustodian.V2Alpha.KeyCustodianKeyring.KeyCustodianKeyringClient.GetKeyringAsync(D2.Services.Protos.KeyCustodian.V2Alpha.GetKeyringRequest request, Grpc.Core.CallOptions options) -> Grpc.Core.AsyncUnaryCall<D2.Services.Protos.KeyCustodian.V2Alpha.GetKeyringResponse>
 ~virtual D2.Services.Protos.KeyCustodian.V2Alpha.KeyCustodianKeyring.KeyCustodianKeyringClient.GetKeyringAsync(D2.Services.Protos.KeyCustodian.V2Alpha.GetKeyringRequest request, Grpc.Core.Metadata headers = null, System.DateTime? deadline = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> Grpc.Core.AsyncUnaryCall<D2.Services.Protos.KeyCustodian.V2Alpha.GetKeyringResponse>
+~virtual D2.Services.Protos.KeyCustodian.V2Alpha.KeyCustodianOwnSealPrivateKey.KeyCustodianOwnSealPrivateKeyBase.GetOrLazyProvisionOwnSealPrivateKey(D2.Services.Protos.KeyCustodian.V2Alpha.GetOrLazyProvisionOwnSealPrivateKeyRequest request, Grpc.Core.ServerCallContext context) -> System.Threading.Tasks.Task<D2.Services.Protos.KeyCustodian.V2Alpha.GetOrLazyProvisionOwnSealPrivateKeyResponse>
+~virtual D2.Services.Protos.KeyCustodian.V2Alpha.KeyCustodianOwnSealPrivateKey.KeyCustodianOwnSealPrivateKeyClient.GetOrLazyProvisionOwnSealPrivateKey(D2.Services.Protos.KeyCustodian.V2Alpha.GetOrLazyProvisionOwnSealPrivateKeyRequest request, Grpc.Core.CallOptions options) -> D2.Services.Protos.KeyCustodian.V2Alpha.GetOrLazyProvisionOwnSealPrivateKeyResponse
+~virtual D2.Services.Protos.KeyCustodian.V2Alpha.KeyCustodianOwnSealPrivateKey.KeyCustodianOwnSealPrivateKeyClient.GetOrLazyProvisionOwnSealPrivateKey(D2.Services.Protos.KeyCustodian.V2Alpha.GetOrLazyProvisionOwnSealPrivateKeyRequest request, Grpc.Core.Metadata headers = null, System.DateTime? deadline = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> D2.Services.Protos.KeyCustodian.V2Alpha.GetOrLazyProvisionOwnSealPrivateKeyResponse
+~virtual D2.Services.Protos.KeyCustodian.V2Alpha.KeyCustodianOwnSealPrivateKey.KeyCustodianOwnSealPrivateKeyClient.GetOrLazyProvisionOwnSealPrivateKeyAsync(D2.Services.Protos.KeyCustodian.V2Alpha.GetOrLazyProvisionOwnSealPrivateKeyRequest request, Grpc.Core.CallOptions options) -> Grpc.Core.AsyncUnaryCall<D2.Services.Protos.KeyCustodian.V2Alpha.GetOrLazyProvisionOwnSealPrivateKeyResponse>
+~virtual D2.Services.Protos.KeyCustodian.V2Alpha.KeyCustodianOwnSealPrivateKey.KeyCustodianOwnSealPrivateKeyClient.GetOrLazyProvisionOwnSealPrivateKeyAsync(D2.Services.Protos.KeyCustodian.V2Alpha.GetOrLazyProvisionOwnSealPrivateKeyRequest request, Grpc.Core.Metadata headers = null, System.DateTime? deadline = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> Grpc.Core.AsyncUnaryCall<D2.Services.Protos.KeyCustodian.V2Alpha.GetOrLazyProvisionOwnSealPrivateKeyResponse>
+~virtual D2.Services.Protos.KeyCustodian.V2Alpha.KeyCustodianSealPublicKey.KeyCustodianSealPublicKeyBase.GetOrLazyProvisionSealPublicKey(D2.Services.Protos.KeyCustodian.V2Alpha.GetOrLazyProvisionSealPublicKeyRequest request, Grpc.Core.ServerCallContext context) -> System.Threading.Tasks.Task<D2.Services.Protos.KeyCustodian.V2Alpha.GetOrLazyProvisionSealPublicKeyResponse>
+~virtual D2.Services.Protos.KeyCustodian.V2Alpha.KeyCustodianSealPublicKey.KeyCustodianSealPublicKeyClient.GetOrLazyProvisionSealPublicKey(D2.Services.Protos.KeyCustodian.V2Alpha.GetOrLazyProvisionSealPublicKeyRequest request, Grpc.Core.CallOptions options) -> D2.Services.Protos.KeyCustodian.V2Alpha.GetOrLazyProvisionSealPublicKeyResponse
+~virtual D2.Services.Protos.KeyCustodian.V2Alpha.KeyCustodianSealPublicKey.KeyCustodianSealPublicKeyClient.GetOrLazyProvisionSealPublicKey(D2.Services.Protos.KeyCustodian.V2Alpha.GetOrLazyProvisionSealPublicKeyRequest request, Grpc.Core.Metadata headers = null, System.DateTime? deadline = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> D2.Services.Protos.KeyCustodian.V2Alpha.GetOrLazyProvisionSealPublicKeyResponse
+~virtual D2.Services.Protos.KeyCustodian.V2Alpha.KeyCustodianSealPublicKey.KeyCustodianSealPublicKeyClient.GetOrLazyProvisionSealPublicKeyAsync(D2.Services.Protos.KeyCustodian.V2Alpha.GetOrLazyProvisionSealPublicKeyRequest request, Grpc.Core.CallOptions options) -> Grpc.Core.AsyncUnaryCall<D2.Services.Protos.KeyCustodian.V2Alpha.GetOrLazyProvisionSealPublicKeyResponse>
+~virtual D2.Services.Protos.KeyCustodian.V2Alpha.KeyCustodianSealPublicKey.KeyCustodianSealPublicKeyClient.GetOrLazyProvisionSealPublicKeyAsync(D2.Services.Protos.KeyCustodian.V2Alpha.GetOrLazyProvisionSealPublicKeyRequest request, Grpc.Core.Metadata headers = null, System.DateTime? deadline = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> Grpc.Core.AsyncUnaryCall<D2.Services.Protos.KeyCustodian.V2Alpha.GetOrLazyProvisionSealPublicKeyResponse>

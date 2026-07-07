@@ -72,12 +72,15 @@ public sealed class GenerateKeyTests
     [Fact]
     public async Task Generate_AesPayload_CreatesPendingRowWithNoPublicMaterial()
     {
-        // AES-256-GCM is symmetric — no public key component should be persisted.
+        // AES-256-GCM is symmetric — no public key component should be persisted. audit is
+        // now a SEALED domain (removed from the payload catalog), so exercise the preserved
+        // symmetric machinery on a registered fixture payload domain.
+        using var fixtureSeam = FixturePayloadDomains.Register();
         await using var db = KeyCustodianTestDbContext.CreateEmpty();
         var handler = Build(db, new TestClock(KcAppTestKit.SR_BaseInstant));
 
         var result = await handler.HandleAsync(
-            new GenerateKeyInput("audit", KeyType.AesPayload));
+            new GenerateKeyInput(FixturePayloadDomains.PAYLOAD_A, KeyType.AesPayload));
 
         result.Success.Should().BeTrue();
         result.IsCreated.Should().BeTrue(because: "a new AES key returns HTTP 201");
@@ -149,12 +152,14 @@ public sealed class GenerateKeyTests
     public async Task Generate_CaseVariantDomain_WrongType_StillRejectedByBinding()
     {
         // Normalization happens BEFORE the binding check: a case/whitespace variant of
-        // a catalog domain still resolves its binding and rejects the wrong type.
+        // a catalog domain still resolves its binding and rejects the wrong type. Uses a
+        // registered fixture payload domain (audit is sealed and left the symmetric catalog).
+        using var fixtureSeam = FixturePayloadDomains.Register();
         await using var db = KeyCustodianTestDbContext.CreateEmpty();
         var handler = Build(db, new TestClock(KcAppTestKit.SR_BaseInstant));
 
         var result = await handler.HandleAsync(
-            new GenerateKeyInput(" AUDIT ", KeyType.RsaSigning));
+            new GenerateKeyInput(" PAYLOAD-FIXTURE-A ", KeyType.RsaSigning));
 
         result.ErrorCode.Should().Be(
             KeyCustodianErrorCodes.KEYCUSTODIAN_KEY_TYPE_DOMAIN_MISMATCH);
@@ -299,5 +304,6 @@ public sealed class GenerateKeyTests
             db,
             KcAppTestKit.BuildOptionsAccessor(),
             crypto,
+            KcAppTestKit.BuildRootSigningCapability(db, crypto, clock),
             clock);
 }

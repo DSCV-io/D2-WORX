@@ -7,16 +7,47 @@
 import { Connection } from 'rabbitmq-client';
 import { D2Result } from '@d2/result';
 import { DlqFailureCause } from '@d2/messaging-abstractions';
+import type { EncryptionDomain } from '@d2/encryption-abstractions';
+import type { EncryptionDomainModes } from '@d2/encryption-abstractions';
 import type { ILogger } from '@d2/logging';
+import type { IPayloadCrypto } from '@d2/encryption';
+import type { IPayloadOpener } from '@d2/encryption';
+import type { IPayloadSealer } from '@d2/encryption';
 import { IPropagatedContext } from '@d2/request-context-abstractions';
+import type { MqMessageCatalogKey } from '@d2/messaging-abstractions';
+import { MqMessageDescriptor } from '@d2/messaging-abstractions';
+import type { MqMessagesCatalog } from '@d2/messaging-abstractions';
 
 // @public
 export function applyPropagatedContext(target: MutablePropagatedContext, source: IPropagatedContext): void;
 
 // @public
+export function assertOpenerMatchesDomain(domain: string, opener: BodyOpener): void;
+
+// @public
 export interface BodyOpener {
-    open(body: Buffer): unknown;
+    open(body: Buffer): unknown | Promise<unknown>;
 }
+
+// @public
+export type CatalogEncryption<K extends MqMessageCatalogKey> = (typeof MqMessagesCatalog)[K]["encryption"];
+
+// @public
+export function composeBody(descriptor: MqMessageDescriptor, json: Uint8Array, composers: Readonly<Record<string, Composer | undefined>>, modes?: Readonly<Record<string, "sealed" | "symmetric" | undefined>>): Promise<ComposedBody>;
+
+// @public
+export interface ComposedBody {
+    // (undocumented)
+    readonly body: Uint8Array;
+    // (undocumented)
+    readonly kid?: string;
+}
+
+// @public
+export type Composer = IPayloadSealer | IPayloadCrypto;
+
+// @public
+export type ComposerFor<D extends EncryptedDomain> = (typeof EncryptionDomainModes)[D] extends "sealed" ? IPayloadSealer : IPayloadCrypto;
 
 export { Connection }
 
@@ -43,6 +74,32 @@ export interface ConsumedMessage {
 export function createConnection(options: RabbitMqConnectionOptions): Connection;
 
 // @public
+export function createPublisher<const TWired extends Partial<DomainCryptoMap>>(connection: Connection, options: CreatePublisherOptions<TWired>): D2Publisher<TWired>;
+
+// @public
+export interface CreatePublisherOptions<TWired extends Partial<DomainCryptoMap>> {
+    readonly confirmTimeoutMs?: number;
+    readonly crypto: TWired;
+    readonly descriptors?: Readonly<Record<string, MqMessageDescriptor>>;
+    readonly logger: ILogger;
+}
+
+// @public
+export class CryptoBodyOpener implements BodyOpener {
+    get domain(): string;
+    // (undocumented)
+    open(body: Buffer): Promise<unknown>;
+    static sealed(domain: string, opener: IPayloadOpener): CryptoBodyOpener;
+    static symmetric(domain: string, crypto: IPayloadCrypto): CryptoBodyOpener;
+}
+
+// @public
+export interface D2Publisher<TWired> {
+    close(): Promise<void>;
+    publish<K extends PublishableKey<TWired>>(key: K, message: object): Promise<D2Result>;
+}
+
+// @public
 export const DlqNaming: {
     readonly dlxFor: (queueName: string) => string;
     readonly dlqFor: (queueName: string) => string;
@@ -50,6 +107,14 @@ export const DlqNaming: {
     readonly retryTierQueueFor: (queueName: string, tierIndex: number) => string;
     readonly retryReturnExchangeFor: (queueName: string) => string;
 };
+
+// @public
+export type DomainCryptoMap = {
+    [D in EncryptedDomain]: ComposerFor<D>;
+};
+
+// @public
+export type EncryptedDomain = Exclude<EncryptionDomain, "plaintext">;
 
 // @public
 export function establishConsumeContext(rawContextHeader: string | undefined): ConsumeContext;
@@ -94,6 +159,38 @@ export class PlaintextBodyOpener implements BodyOpener {
 }
 
 // @public
+export type PublishableKey<TWired> = PublishableKeyOf<typeof MqMessagesCatalog, TWired>;
+
+// @public
+export type PublishableKeyOf<TCatalog, TWired> = {
+    [K in keyof TCatalog]: TCatalog[K] extends {
+        readonly encryption: infer E;
+    } ? E extends keyof TWired | "plaintext" ? K : never : never;
+}[keyof TCatalog];
+
+// @public
+export interface PublishEnvelope {
+    // (undocumented)
+    readonly contentType: string;
+    // (undocumented)
+    readonly durable: boolean;
+    // (undocumented)
+    readonly exchange: string;
+    // (undocumented)
+    readonly headers: Readonly<Record<string, unknown>>;
+    // (undocumented)
+    readonly messageId: string;
+    // (undocumented)
+    readonly routingKey: string;
+}
+
+// @public
+export type PublishSender = (envelope: PublishEnvelope, body: Buffer) => Promise<void>;
+
+// @public
+export function publishVia(sender: PublishSender, registry: Readonly<Record<string, MqMessageDescriptor>>, composers: Readonly<Record<string, Composer | undefined>>, logger: ILogger, key: string, message: object, confirmTimeoutMs?: number): Promise<D2Result>;
+
+// @public
 export enum QueuePattern {
     CompetingConsumer = "CompetingConsumer",
     DurableShared = "DurableShared",
@@ -108,6 +205,9 @@ export interface RabbitMqConnectionOptions {
     readonly retryHighMs?: number;
     readonly retryLowMs?: number;
 }
+
+// @public
+export function readEncryptionKid(frame: Uint8Array): string;
 
 // @public
 export function redactAmqpUri(uri: string): string;

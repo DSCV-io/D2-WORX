@@ -87,7 +87,9 @@ Both sealer and opener derive through the single internal `SealedKeyDerivation` 
 
 ### Sealed startup self-check
 
-An internal hosted self-check (the sealed sibling of `AddD2EncryptionStartupCheck`) verifies every registered sealed recipient at boot: a (sealer, opener) pair round-trips a sentinel (a mismatched keypair crashes the host); a producer-only host seal-checks its public material; an opener-only registration is logged (its private material was already validated at keyring construction). The registration surface is deliberately `internal` until the sealed registration-by-service sources land — it can then grow additively without a public-API break. Zero registrations is a logged no-op.
+A hosted self-check (the sealed sibling of `AddD2EncryptionStartupCheck`) verifies every registered sealed recipient at boot: a (sealer, opener) pair round-trips a sentinel (a mismatched keypair crashes the host); a producer-only host seal-checks its public material; an opener-only registration is logged (its private material was already validated at keyring construction). Zero registrations is a logged no-op. The registration surface is now **public** — `AddD2SealedEncryptionRecipient(recipientServiceId)` (records a recipient for the self-check) is the building-block seam a sealing SOURCE composes (the KeyCustodian-backed `AddD2SealedEncryptionViaKeyCustodian` in the KC client package), not the surface consumers remember.
+
+A separate deny-by-default **sealed source-provenance guard** (`AddD2SealedEncryptionSourceCheck` → `SealedEncryptionSourceStartupCheck`, the sealed sibling of `AddD2EncryptionSourceCheck`) rejects a static / unmarked sealed recipient outside a Development host — the KeyCustodian-backed source marks each registration `EncryptionKeyringSource.KeyCustodian` (via `MarkD2EncryptionSource`) so it passes. A host that hand-wires a keyed sealer/opener directly, bypassing the library extension, is caught here.
 
 ## Threat model
 

@@ -18,6 +18,8 @@ internal static class EncryptionDomainsSpecLoader
     private const string _CONST_NAME_KEY = "constName";
     private const string _VALUE_KEY = "value";
     private const string _DOC_KEY = "doc";
+    private const string _MODE_KEY = "mode";
+    private const string _CONSUMER_SERVICE_KEY = "consumerService";
 
     /// <summary>Parses raw JSON spec content into an <see cref="EncryptionDomainsSpec"/>.</summary>
     /// <param name="path">Spec file path.</param>
@@ -118,6 +120,27 @@ internal static class EncryptionDomainsSpecLoader
 
         var doc = docEl.GetString()!;
 
-        return (new EncryptionDomainEntry(constName, value, doc), null);
+        if (element.TryGetProperty(_MODE_KEY, out var modeEl) &&
+            modeEl.ValueKind != JsonValueKind.String)
+        {
+            return (null, EmitDiagnostics.MalformedSpec(
+                fileName,
+                $"domains[{index}] '{constName}' 'mode' must be a string when present"));
+        }
+
+        var mode = modeEl.ValueKind == JsonValueKind.String ? modeEl.GetString() : null;
+
+        if (element.TryGetProperty(_CONSUMER_SERVICE_KEY, out var consumerEl) &&
+            consumerEl.ValueKind != JsonValueKind.String)
+        {
+            return (null, EmitDiagnostics.MalformedSpec(
+                fileName,
+                $"domains[{index}] '{constName}' 'consumerService' must be a string when present"));
+        }
+
+        var consumerService =
+            consumerEl.ValueKind == JsonValueKind.String ? consumerEl.GetString() : null;
+
+        return (new EncryptionDomainEntry(constName, value, doc, mode, consumerService), null);
     }
 }

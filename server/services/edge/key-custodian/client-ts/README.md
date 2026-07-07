@@ -170,3 +170,28 @@ pnpm --filter @d2/key-custodian-client test
 pnpm --filter @d2/key-custodian-client test:coverage
 pnpm --filter @d2/key-custodian-client emit-csr-fixtures   # regenerate CSR fixtures
 ```
+
+---
+
+## Sealed + symmetric encryption runtime
+
+Beyond the certificate client, this package carries the KC-backed payload
+encryption runtime over the emitted `getKeyring` / `getOrLazyProvision*Seal*`
+wire surface (dialed over the mTLS channel by the host) — the TS twin of
+the .NET KC client sealer/opener/crypto sources.
+
+- `SealingClient` / `GrpcSealingClient` + `KeyringClient` / `GrpcKeyringClient` —
+  least-privilege ports mapping the emitted DTOs to validated `@d2/encryption`
+  keyrings.
+- `KeyringBackedPayloadSealer` (lazy public-key fetch), `KeyringBackedPayloadOpener`
+  (fail-loud boot fetch), and `KeyringBackedPayloadCrypto` (symmetric) — each with
+  rotation hot-swap (a plain reference swap — the single-threaded event loop makes
+  it atomic, so no `Volatile`/`Interlocked` twin is needed), bounded refresh +
+  serve-current, and grace-window zeroize of displaced private keyrings.
+- `createSealedCryptoViaKeyCustodian({ ownServiceId, sealingClient, ... })` — the
+  ONE spec-driven call (the TS twin of `AddD2SealedEncryptionViaKeyCustodian`):
+  builds a sealer for every distinct generated `ConsumerServiceByDomain` entry and
+  this service's opener ONLY when it is named a consumer (least-privilege). The
+  returned instances are passed explicitly into
+  `@d2/messaging-rabbitmq`'s `createPublisher({ crypto })` / `CryptoBodyOpener`
+  composition (composition instead of ambient DI). Key bytes are never logged.

@@ -88,6 +88,14 @@ public sealed class GetKeyringHandler(
         if (domain!.KeyType != KeyType.AesPayload)
             return KeyCustodianFailures<O?>.KeyTypeDomainMismatch();
 
+        // 3b) Additive sealed-mode reject (defense-in-depth beneath nonexistence): a sealed
+        //     domain re-admitted to the catalog (e.g. via a future regression) would be
+        //     AesPayload-bound, so the KeyType fork above does NOT catch it — a sealed domain
+        //     has no symmetric keyring by construction. Refuse it with the same sharp-400. Kept
+        //     WITH the type fork (AFTER authority) so the no-domain-oracle ordering is preserved.
+        if (EncryptionDomainModes.ModeFor(domain.Value) == EncryptionDomainMode.Sealed)
+            return KeyCustodianFailures<O?>.KeyTypeDomainMismatch();
+
         // 4) Load Active + Retiring payload keys for the domain. `.Payload()` is
         //    redundant-with-the-fork by construction but keeps the query self-defending —
         //    a corrupt wrong-type row can never be served.

@@ -21,10 +21,12 @@ namespace D2.Edge.KeyCustodian.App.Application.CertificateAuthority;
 /// aggregate. Persistence + audit stay with the calling handler.
 /// </para>
 /// <para>
-/// For the issuing intermediate the factory loads the active root from the store,
-/// unwraps it (online in dev — the root's at-rest custody is the only prod/dev
-/// difference), and signs the intermediate with it. For the root the factory
-/// self-signs (no issuer needed).
+/// The intermediate arm delegates the load-active-root + unwrap + sign to the
+/// dedicated <see cref="ICaRootSigningCapability"/> — the ONLY holder of the stored
+/// root-key plaintext (rules §9.44). The root arm self-signs a brand-new key (no
+/// issuer, no stored-root unwrap) and stays inline here. So NO inline root-domain
+/// unwrap remains in this factory: minting an intermediate is only possible through
+/// the capability.
 /// </para>
 /// </remarks>
 public static class CaSuccessorFactory
@@ -33,10 +35,18 @@ public static class CaSuccessorFactory
     /// Builds a pending CA key for the given CA domain.
     /// </summary>
     /// <param name="db">The KeyCustodian database context.</param>
-    /// <param name="rootCrypto">The keyed root crypto used to wrap (and unwrap the root).</param>
+    /// <param name="rootCrypto">The keyed root crypto (at-rest KEK) used to wrap the new key.</param>
+    /// <param name="rootSigning">
+    /// The dedicated root-signing capability — the sole holder of the stored root-key
+    /// unwrap used to sign the intermediate (rules §9.44).
+    /// </param>
     /// <param name="options">The options carrying the CA validity tunables.</param>
     /// <param name="clock">The current-time source.</param>
     /// <param name="domain">The CA domain to build a key for (root or intermediate).</param>
+    /// <param name="operation">
+    /// The closed-set chokepoint operation label passed through to the capability for
+    /// an intermediate mint (<c>generate-successor</c> / <c>compromise-replacement</c>).
+    /// </param>
     /// <param name="ct">The cancellation token.</param>
     /// <returns>
     /// <c>Ok(<see cref="PendingKey"/>)</c> carrying the new CA cert + root-wrapped
@@ -48,19 +58,27 @@ public static class CaSuccessorFactory
     public static async Task<D2Result<PendingKey>> BuildAsync(
         IKeyCustodianDbContext db,
         IPayloadCrypto rootCrypto,
+        ICaRootSigningCapability rootSigning,
         KeyCustodianOptions options,
         IClock clock,
         KeyDomain domain,
+        string operation,
         CancellationToken ct)
     {
+        // Mint the successor kid up front so the root-signing capability can bind it
+        // into the §9.44 chokepoint log. The value is a fresh random id, so minting it
+        // before (rather than after) the wrap is behavior-neutral.
+        var kid = Kid.FromTrusted(KidMinting.Mint());
+
         var genResult = domain.Value switch
         {
             KeyDomain.MTLS_CA_ROOT => CaCertificateGeneration.GenerateRootCa(
                 CaCertificateGeneration.ROOT_CA_SUBJECT,
                 Duration.FromTimeSpan(options.RootCaValidity),
                 clock),
-            KeyDomain.MTLS_CA_INTERMEDIATE => await GenerateIntermediateAsync(
-                db, rootCrypto, options, clock, ct).ConfigureAwait(false),
+            KeyDomain.MTLS_CA_INTERMEDIATE => await rootSigning
+                .SignSuccessorIntermediateAsync(kid, operation, ct)
+                .ConfigureAwait(false),
             _ => KeyCustodianFailures<GeneratedCaMaterial>.PreconditionViolated(),
         };
 
@@ -84,7 +102,6 @@ public static class CaSuccessorFactory
         var encryptedMaterial = KeyMaterialEncrypted.FromTrusted(wrapped);
         var caCertMaterial = CaCertificateMaterial.FromTrusted(generated.CertificateDer);
 
-        var kid = Kid.FromTrusted(KidMinting.Mint());
         return PendingKey.Create(
             kid,
             domain,
@@ -93,52 +110,5 @@ public static class CaSuccessorFactory
             publicMaterial: null,
             caCertificateMaterial: caCertMaterial,
             clock.GetCurrentInstant());
-    }
-
-    private static async Task<D2Result<GeneratedCaMaterial>> GenerateIntermediateAsync(
-        IKeyCustodianDbContext db,
-        IPayloadCrypto rootCrypto,
-        KeyCustodianOptions options,
-        IClock clock,
-        CancellationToken ct)
-    {
-        // Load the active root — the dependency that signs the intermediate. None
-        // active → 503 (the root is a dependency that is not ready, retryable). In
-        // dev the root private key is online (seeded as a managed key); in prod its
-        // at-rest custody differs but this code path is unchanged.
-        var rootRecord = await db.Keys
-            .ForDomain(KeyDomain.MTLS_CA_ROOT)
-            .Active()
-            .FirstOrDefaultAsync(ct)
-            .ConfigureAwait(false);
-
-        if (rootRecord is null)
-            return KeyCustodianFailures<GeneratedCaMaterial>.NoActiveIssuingCa();
-
-        if (rootRecord.ToDomain() is not ActiveKey root
-            || root.KeyType != KeyType.X509CaCertificate
-            || root.CaCertificateMaterial is null)
-            return KeyCustodianFailures<GeneratedCaMaterial>.NoActiveIssuingCa();
-
-        var rootKeyPkcs8 = rootCrypto.Decrypt(root.KeyMaterialEncrypted.Bytes.Span);
-
-        try
-        {
-            using var rootKey = ECDsa.Create();
-            rootKey.ImportPkcs8PrivateKey(rootKeyPkcs8, out _);
-            using var rootCert = X509CertificateLoader.LoadCertificate(
-                root.CaCertificateMaterial.Bytes.Span);
-
-            return CaCertificateGeneration.GenerateIntermediateCa(
-                CaCertificateGeneration.INTERMEDIATE_CA_SUBJECT,
-                rootCert,
-                rootKey,
-                Duration.FromTimeSpan(options.IntermediateCaValidity),
-                clock);
-        }
-        finally
-        {
-            CryptographicOperations.ZeroMemory(rootKeyPkcs8);
-        }
     }
 }

@@ -116,6 +116,30 @@ Copyright (c) DCSV. All rights reserved.
               AdditionalImportDirs="$(D2ContractsRoot)protos" />
   </ItemGroup>
 
+  <!--
+    Promoted KeyCustodian sealing gRPC surface (getOrLazyProvisionSealPublicKey +
+    getOrLazyProvisionOwnSealPrivateKey). Same single-message-compilation mechanism
+    as the keyring proto above: GrpcServices="Both" compiles the client stub + server
+    base + wire messages EXACTLY ONCE in this product assembly, so the KC-backed
+    sealer/opener consumer runtime (client/Sealing/) can dial the seal services over
+    the cross-process mTLS channel. The Edge test project drops its own two seal
+    <Protobuf> items and references these types (incl. the server base its generated
+    KeyCustodianSealPublicKeyService / KeyCustodianOwnSealPrivateKeyService extend)
+    through this project — compiling them there too would duplicate the messages
+    (CS0433). D2ResultProto resolves at protoc time via the D2.Shared.Result.Grpc
+    reference + the AdditionalImportDirs proto_path (never a second Protobuf include).
+  -->
+  <ItemGroup>
+    <Protobuf Include="$(D2RepoRoot)server\services\edge\tests\Unit\KeyCustodian\TypeSpecGrpc\Protos\key_custodian_seal_public_key_get_or_lazy_provision_seal_public_key.g.proto"
+              GrpcServices="Both"
+              ProtoRoot="$(D2RepoRoot)server\services\edge\tests\"
+              AdditionalImportDirs="$(D2ContractsRoot)protos" />
+    <Protobuf Include="$(D2RepoRoot)server\services\edge\tests\Unit\KeyCustodian\TypeSpecGrpc\Protos\key_custodian_own_seal_private_key_get_or_lazy_provision_own_seal_private_key.g.proto"
+              GrpcServices="Both"
+              ProtoRoot="$(D2RepoRoot)server\services\edge\tests\"
+              AdditionalImportDirs="$(D2ContractsRoot)protos" />
+  </ItemGroup>
+
   <ItemGroup>
     <InternalsVisibleTo Include="D2.Edge.Tests" />
     <!--

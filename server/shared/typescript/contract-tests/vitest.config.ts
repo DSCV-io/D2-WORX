@@ -22,6 +22,12 @@ export default defineConfig({
       "@d2/encryption-abstractions": fileURLToPath(
         new URL("../encryption-abstractions/dist/index.js", import.meta.url),
       ),
+      // `@d2/encryption` runtime crypto twin — same deterministic-dist
+      // rationale as the abstractions alias. The crypto-KAT parity suites
+      // REQUIRE a fresh `pnpm --filter @d2/encryption build` first.
+      "@d2/encryption": fileURLToPath(
+        new URL("../encryption/dist/index.js", import.meta.url),
+      ),
       // `@d2/geo-abstractions` is wired into the contract-tests workspace
       // package.json + tsconfig references, but the pnpm-managed
       // node_modules symlink can lag the package.json edit until the next

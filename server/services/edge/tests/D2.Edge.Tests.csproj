@@ -327,28 +327,16 @@ Copyright (c) DCSV. All rights reserved.
               AdditionalImportDirs="$(D2ContractsRoot)protos" />
     <!--
       Real KeyCustodian sealing gRPC protos — getOrLazyProvisionSealPublicKey +
-      getOrLazyProvisionOwnSealPrivateKey. Emitted from key-custodian.tsp into the
-      TypeSpecGrpc/Protos/ location, package d2.keycustodian.v2alpha. Each yields the
-      request/response/output messages + a SealPublic/SealPrivate entry message and a
-      one-method gRPC service (KeyCustodianSealPublicKey / KeyCustodianOwnSealPrivateKey).
-      The generated seal services delegate to IKeyCustodianApi; hosted via
-      MapGrpcService<T>() + dialed via the generated stub in GrpcKeyringServiceTests /
-      the seal service tests. Unlike keyring (promoted to the Client product assembly),
-      the seal wire surface has no consumer client this cycle, so it compiles here beside
-      its transport mappers/services — matching sign/certificate-authority/ca-certificate.
-      Compiled in Both mode; getOrLazyProvisionOwnSealPrivateKey is param-less so its request message is
-      empty. The D2ResultProto type still comes solely from the D2.Shared.Result.Grpc
-      ProjectReference above (both protos' import "common/v1/d2_result.proto" resolves via
-      the same AdditionalImportDirs proto_path; no second d2_result.proto Protobuf include).
+      getOrLazyProvisionOwnSealPrivateKey — PROMOTED (like keyring): their <Protobuf>
+      compilation now lives in D2.Edge.KeyCustodian.Client (GrpcServices="Both"), which
+      this test project references, so the KC-backed sealer/opener consumer runtime can
+      dial them cross-process. The generated seal services in this tree
+      (KeyCustodianSealPublicKeyService / KeyCustodianOwnSealPrivateKeyService) extend the
+      server base compiled in the Client package; the seal client stubs + wire messages
+      (in D2.Services.Protos.KeyCustodian.V2Alpha) compile EXACTLY ONCE there. Re-adding a
+      seal <Protobuf> item here would double-generate the messages (CS0433). See the
+      keyring precedent above.
     -->
-    <Protobuf Include="$(MSBuildThisFileDirectory)Unit/KeyCustodian/TypeSpecGrpc/Protos/key_custodian_seal_public_key_get_or_lazy_provision_seal_public_key.g.proto"
-              GrpcServices="Both"
-              ProtoRoot="$(MSBuildThisFileDirectory)"
-              AdditionalImportDirs="$(D2ContractsRoot)protos" />
-    <Protobuf Include="$(MSBuildThisFileDirectory)Unit/KeyCustodian/TypeSpecGrpc/Protos/key_custodian_own_seal_private_key_get_or_lazy_provision_own_seal_private_key.g.proto"
-              GrpcServices="Both"
-              ProtoRoot="$(MSBuildThisFileDirectory)"
-              AdditionalImportDirs="$(D2ContractsRoot)protos" />
     <!--
       Second TypeSpec gRPC fixture proto — the enum-string-field bridge fixture
       (enum-shaped.tsp signWithKindFixture op). An enum DTO field maps to a proto `string`

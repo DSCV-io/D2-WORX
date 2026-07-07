@@ -44,6 +44,14 @@ Keep a Changelog, and this package adheres to Semantic Versioning.
   `GetCaCertificateOutput(rootCertificateDer, intermediateCertificateDer)`. Served
   on both planes (the in-process leaf + the new `KeyCustodianCaCertificate` gRPC
   service).
+- The sealed-encryption consumer runtime in `client/Sealing/`: the single
+  spec-driven `AddD2SealedEncryptionViaKeyCustodian(ownServiceId)` registration,
+  the `KeyringBackedPayloadSealer` / `KeyringBackedPayloadOpener` rotation-hot-swap
+  runtime (in-process-memory-only key material) over the newly promoted seal gRPC
+  client stubs (`KeyCustodianSealPublicKey` + `KeyCustodianOwnSealPrivateKey`), the
+  internal `ISealingClient` / `GrpcSealingClient` fetch seam, and the
+  `SealingMetrics` meter + `SealingLog`. The `SealDomainName` helper binds a
+  consumer ServiceId to its sealed-key domain.
 
 ### Renamed
 

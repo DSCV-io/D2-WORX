@@ -18,15 +18,15 @@
  */
 export const EncryptionDomains = {
   /**
-   * Audit events. All services publish; D2.Audit consumes. Carries actor + actee identities, action descriptors, IPs, and fingerprints — fully PII-bearing on every event.
+   * Audit events. All services publish; D2.Audit consumes. Carries actor + actee identities, action descriptors, IPs, and fingerprints — fully PII-bearing on every event. SEALED: every service seals to the audit service's public key; only D2.Audit opens.
    */
   AUDIT: "audit",
   /**
-   * Notification requests (the input shape D2.Notifications consumes). Carries recipient identity + subject / body markdown, often with names, addresses, financial figures, and verification codes.
+   * Notification requests (the input shape D2.Notifications consumes). Carries recipient identity + subject / body markdown, often with names, addresses, financial figures, and verification codes. SEALED: every service seals to the notifications service's public key; only D2.Notifications opens.
    */
   NOTIFICATIONS: "notifications",
   /**
-   * Courier delivery records (the materialized email / SMS payloads D2.Notifications hands to D2.Courier). Carries fully-rendered message bodies and recipient addresses.
+   * Courier delivery records (the materialized email / SMS payloads D2.Notifications hands to D2.Courier). Carries fully-rendered message bodies and recipient addresses. SEALED: every service seals to the courier service's public key; only D2.Courier opens.
    */
   COURIER: "courier",
   /**
@@ -44,3 +44,29 @@ export const ALL_ENCRYPTION_DOMAINS: readonly string[] = [
   "courier",
   "plaintext",
 ];
+
+/**
+ * Per-domain payload encryption mode, keyed by wire value. `symmetric` =
+ * shared-keyring AES-256-GCM (v1 frame); `sealed` = per-consumer-service
+ * ECDH (v2 frame). Literal-typed for the publisher type-witness. Mirrors
+ * .NET EncryptionDomainModes.
+ */
+export const EncryptionDomainModes = {
+  "audit": "sealed",
+  "notifications": "sealed",
+  "courier": "sealed",
+  "plaintext": "symmetric",
+} as const;
+
+export type EncryptionDomainMode = "symmetric" | "sealed";
+
+/**
+ * Consumer ServiceId per SEALED domain (the single decryptor). Only
+ * sealed domains appear. Mirrors .NET
+ * EncryptionDomainModes.ConsumerServiceByDomain.
+ */
+export const ConsumerServiceByDomain = {
+  "audit": "audit",
+  "notifications": "notifications",
+  "courier": "courier",
+} as const;

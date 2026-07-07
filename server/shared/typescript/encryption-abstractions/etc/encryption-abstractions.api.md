@@ -13,8 +13,26 @@ export const ALL_ENCRYPTION_FRAME_FIELDS: readonly string[];
 // @public (undocumented)
 export const ALL_SEALED_FRAME_FIELDS: readonly string[];
 
+// @public
+export const ConsumerServiceByDomain: {
+    readonly audit: "audit";
+    readonly notifications: "notifications";
+    readonly courier: "courier";
+};
+
 // @public (undocumented)
 export type EncryptionDomain = (typeof EncryptionDomains)[keyof typeof EncryptionDomains];
+
+// @public (undocumented)
+export type EncryptionDomainMode = "symmetric" | "sealed";
+
+// @public
+export const EncryptionDomainModes: {
+    readonly audit: "sealed";
+    readonly notifications: "sealed";
+    readonly courier: "sealed";
+    readonly plaintext: "symmetric";
+};
 
 // @public
 export const EncryptionDomains: {

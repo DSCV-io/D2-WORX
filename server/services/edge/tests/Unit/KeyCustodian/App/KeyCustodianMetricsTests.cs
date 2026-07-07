@@ -45,6 +45,8 @@ public sealed class KeyCustodianMetricsTests
             Options.Create(r_options),
             new RecordingAnnouncer(),
             r_crypto,
+            KcAppTestKit.BuildRootSigningCapability(
+                db, r_crypto, new TestClock(KcAppTestKit.SR_BaseInstant)),
             new TestClock(KcAppTestKit.SR_BaseInstant));
 
         // Access DefaultOptions via the protected property through reflection.
@@ -114,6 +116,8 @@ public sealed class KeyCustodianMetricsTests
             db,
             KcAppTestKit.BuildOptionsAccessor(),
             r_crypto,
+            KcAppTestKit.BuildRootSigningCapability(
+                db, r_crypto, new TestClock(KcAppTestKit.SR_BaseInstant)),
             new TestClock(KcAppTestKit.SR_BaseInstant));
 
         var result = await handler.HandleAsync(
@@ -152,6 +156,8 @@ public sealed class KeyCustodianMetricsTests
             Options.Create(r_options),
             new RecordingAnnouncer(),
             r_crypto,
+            KcAppTestKit.BuildRootSigningCapability(
+                db, r_crypto, new TestClock(created + Duration.FromHours(1))),
             new TestClock(created + Duration.FromHours(1)))
             .HandleAsync(new CompromiseKeyInput { Kid = kid, Reason = "audit-test" });
 
@@ -184,6 +190,8 @@ public sealed class KeyCustodianMetricsTests
             .Should().Be("d2.keycustodian.cross_process_signing_rejections");
         KeyCustodianMetrics.SR_AuthorityRejectionsTotal.Name
             .Should().Be("d2.keycustodian.authority_rejections");
+        KeyCustodianMetrics.SR_CaRootKeyUsesTotal.Name
+            .Should().Be("d2.keycustodian.ca_root_key_uses");
     }
 
     [Fact]
@@ -363,6 +371,8 @@ public sealed class KeyCustodianMetricsTests
                 Options.Create(r_options),
                 failing,
                 r_crypto,
+                KcAppTestKit.BuildRootSigningCapability(
+                    db, r_crypto, new TestClock(created + Duration.FromHours(1))),
                 new TestClock(created + Duration.FromHours(1)))
                 .HandleAsync(new CompromiseKeyInput { Kid = kid, Reason = "test-compromise" });
         }
@@ -653,6 +663,7 @@ public sealed class KeyCustodianMetricsTests
             db,
             KcAppTestKit.BuildPolicyProvider(r_options),
             r_crypto,
+            KcAppTestKit.BuildRootSigningCapability(db, r_crypto, clock, r_options),
             clock);
 
     private RotateKeyHandler BuildRotateKey(
@@ -666,5 +677,6 @@ public sealed class KeyCustodianMetricsTests
             KcAppTestKit.BuildPolicyProvider(r_options),
             announcer,
             r_crypto,
+            KcAppTestKit.BuildRootSigningCapability(db, r_crypto, clock, r_options),
             clock);
 }

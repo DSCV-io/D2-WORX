@@ -7,6 +7,7 @@
 namespace D2.Edge.Tests.Integration.KeyCustodian;
 
 using System.Security.Cryptography;
+using D2.Edge.Tests.Unit.KeyCustodian;
 using Microsoft.EntityFrameworkCore;
 using Xunit;
 
@@ -20,7 +21,16 @@ using Xunit;
 [Trait("Category", "Integration")]
 [Collection(KeyCustodianPostgresCollectionDefinition.NAME)]
 public sealed class KeyCustodianPersistenceIntegrationTests(KeyCustodianPostgresFixture fixture)
+    : IDisposable
 {
+    // Registers the fixture AES-payload domain (ref-counted, per-test-instance) so any
+    // MakeRecord default-domain row resolves as a symmetric payload domain if mapped.
+    private readonly IDisposable r_fixtureSeam =
+        KeyDomain.RegisterFixturePayloadDomainForTesting(FixturePayloadDomains.PAYLOAD_A);
+
+    /// <summary>Unregisters the fixture payload domain (ref-counted, per-test-instance).</summary>
+    public void Dispose() => r_fixtureSeam.Dispose();
+
     [Fact]
     public async Task Migration_AppliesAndIsIdempotent()
     {
@@ -217,7 +227,11 @@ public sealed class KeyCustodianPersistenceIntegrationTests(KeyCustodianPostgres
     private static Instant Now() => Instant.FromUtc(2026, 1, 1, 0, 0);
 
     private static KeyRecord MakeRecord(
-        string kid, KeyStatus status, byte[] material, Instant created, string domain = "audit") =>
+        string kid,
+        KeyStatus status,
+        byte[] material,
+        Instant created,
+        string domain = FixturePayloadDomains.PAYLOAD_A) =>
         new()
         {
             Kid = kid,

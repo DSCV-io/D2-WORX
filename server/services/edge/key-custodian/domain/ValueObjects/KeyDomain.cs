@@ -6,6 +6,7 @@
 
 namespace D2.Edge.KeyCustodian.Domain.ValueObjects;
 
+using System.Collections.Concurrent;
 using D2.Shared.WorkloadIdentity;
 
 /// <summary>
@@ -17,13 +18,19 @@ using D2.Shared.WorkloadIdentity;
 /// <c>"jwks-signing"</c> — not personally identifying. Do NOT apply
 /// <c>[RedactData]</c> to this type.
 ///
-/// <b>Catalog.</b> <see cref="All"/> is the closed catalog — the union of
-/// <see cref="EncryptionDomains.AllDomains"/> (minus <c>"plaintext"</c>, which
-/// is a no-encrypt sentinel, not a real keyring) and the five KeyCustodian-only
-/// domains (<c>jwks-signing</c>, <c>cookie</c>, <c>client-secret</c>,
-/// <c>mtls-ca-root</c>, <c>mtls-ca-intermediate</c>).
-/// Adding a new domain requires updating the catalog here AND provisioning the
-/// corresponding keyring.
+/// <b>Catalog.</b> <see cref="All"/> is the closed catalog — the union of the
+/// SYMMETRIC-mode <see cref="EncryptionDomains.AllDomains"/> entries (minus
+/// <c>"plaintext"</c>, a no-encrypt sentinel, AND minus every SEALED-mode domain —
+/// a sealed domain has no symmetric keyring by construction) and the five
+/// KeyCustodian-only domains (<c>jwks-signing</c>, <c>cookie</c>,
+/// <c>client-secret</c>, <c>mtls-ca-root</c>, <c>mtls-ca-intermediate</c>).
+/// Adding a new SYMMETRIC domain to the encryption-domains spec re-enters it here
+/// automatically (zero KC code); a <c>sealed</c>-mode domain
+/// (<c>audit</c> / <c>notifications</c> / <c>courier</c>) is one-way by
+/// construction and is NOT a member — its per-service sealing keys live under the
+/// <c>seal:&lt;serviceId&gt;</c> family, never the symmetric payload catalog. The
+/// AES-payload slice of <see cref="All"/> is therefore EMPTY until a future
+/// symmetric-mode domain is declared.
 ///
 /// <b>Domain→key-type binding.</b> Every catalog entry carries its bound
 /// <see cref="Enums.KeyType"/> as a first-class domain fact: <c>jwks-signing</c>
@@ -84,6 +91,15 @@ public sealed record KeyDomain
     /// see the type remarks. The literal is wire/spec-anchored (§5.25 exemption).
     /// </summary>
     public const string SEAL_PREFIX = "seal:";
+
+    // Test-only fixture payload-domain registry (see RegisterFixturePayloadDomainForTesting).
+    // Default-empty; consulted by TryResolveCatalogEntry so a registered value resolves to an
+    // AesPayload domain. REFERENCE-COUNTED (value = active registration count) so two parallel
+    // tests registering the same value are safe: a value is present while ANY scope holds it,
+    // and removed only when the LAST scope disposes — a plain remove-by-value would let one
+    // test's dispose yank a value a concurrent test still needs (a flaky-test hazard).
+    private static readonly ConcurrentDictionary<string, int> sr_fixturePayloadDomains =
+        new(StringComparer.Ordinal);
 
     /// <summary>Gets the normalized domain string (lowercase, trimmed).</summary>
     public required string Value { get; init; }
@@ -246,6 +262,32 @@ public sealed record KeyDomain
     }
 
     /// <summary>
+    /// Test-only seam: registers <paramref name="value"/> as a SYMMETRIC AES-payload domain so
+    /// the preserved domain-generic symmetric machinery (getKeyring op + authority + validator
+    /// + the whole consumer runtime) stays genuinely exercised even though NO production
+    /// symmetric payload domain remains after audit/notifications/courier flipped to sealed.
+    /// The single seam <see cref="TryResolveCatalogEntry"/> consults (the seam its doc comment
+    /// anticipates). Default-empty — production behavior is byte-for-byte identical when unused.
+    /// </summary>
+    /// <remarks>
+    /// Registration is thread-safe and SCOPED: dispose the returned handle to remove the
+    /// registration (required so a test that registers a REAL sealed value like <c>"audit"</c>
+    /// — to simulate the guarded-against re-admission regression — stays hermetic against a
+    /// concurrently-running rejection pin; such tests MUST also be collection-isolated). Values
+    /// carry a §7.23 fixture marker in the value itself (e.g. <c>payload-fixture-a</c>).
+    /// </remarks>
+    /// <param name="value">The fixture domain value (normalized to lowercase).</param>
+    /// <returns>A handle whose disposal unregisters the fixture domain (idempotent).</returns>
+    internal static IDisposable RegisterFixturePayloadDomainForTesting(string value)
+    {
+        value.ThrowIfFalsey();
+        var normalized = value.ToLowerInvariant();
+        sr_fixturePayloadDomains.AddOrUpdate(normalized, 1, static (_, count) => count + 1);
+
+        return new FixturePayloadDomainRegistration(normalized);
+    }
+
+    /// <summary>
     /// Resolves the canonical catalog entry for an already-normalized (lowercase)
     /// domain value, or <see langword="null"/> when the value is not in the catalog.
     /// The single resolution seam shared by <see cref="Create"/> and
@@ -268,15 +310,31 @@ public sealed record KeyDomain
             return sealResult.Success ? sealResult.Data : null;
         }
 
-        return All.FirstOrDefault(d => string.Equals(d.Value, normalized, StringComparison.Ordinal));
+        var catalogEntry = All.FirstOrDefault(
+            d => string.Equals(d.Value, normalized, StringComparison.Ordinal));
+
+        if (catalogEntry is not null)
+            return catalogEntry;
+
+        // Test-only fixture payload domains (default-empty in production): a registered value
+        // resolves to a SYMMETRIC AesPayload domain, keeping the preserved symmetric machinery
+        // exercisable now that no production AesPayload domain remains. See
+        // RegisterFixturePayloadDomainForTesting.
+        return sr_fixturePayloadDomains.ContainsKey(normalized)
+            ? new KeyDomain { Value = normalized, KeyType = KeyType.AesPayload }
+            : null;
     }
 
     private static IReadOnlyList<KeyDomain> BuildCatalog()
     {
-        // Every payload-encryption domain (the EncryptionDomains catalog minus the
-        // "plaintext" no-encrypt sentinel) is bound to AES-256-GCM payload keys.
+        // Every SYMMETRIC-mode payload-encryption domain (the EncryptionDomains catalog minus
+        // the "plaintext" no-encrypt sentinel AND minus every SEALED-mode domain) is bound to
+        // AES-256-GCM payload keys. A sealed-mode domain has no symmetric keyring by
+        // construction, so it is excluded — the AES-payload slice is empty until a future
+        // symmetric-mode domain is declared in the spec.
         var encDomains = EncryptionDomains.AllDomains
             .Where(d => !string.Equals(d, EncryptionDomains.PLAINTEXT, StringComparison.Ordinal))
+            .Where(d => EncryptionDomainModes.ModeFor(d) != EncryptionDomainMode.Sealed)
             .Select(d => new KeyDomain { Value = d, KeyType = KeyType.AesPayload });
 
         return
@@ -288,5 +346,34 @@ public sealed record KeyDomain
             MtlsCaRoot,
             MtlsCaIntermediate,
         ];
+    }
+
+    private sealed class FixturePayloadDomainRegistration(string value) : IDisposable
+    {
+        private int _disposed;
+
+        public void Dispose()
+        {
+            if (Interlocked.Exchange(ref _disposed, 1) != 0)
+                return;
+
+            // Decrement the ref count; remove only when the LAST scope releases it. The CAS
+            // loop keeps concurrent register/dispose of the same value race-safe.
+            while (sr_fixturePayloadDomains.TryGetValue(value, out var count))
+            {
+                if (count <= 1)
+                {
+                    if (((ICollection<KeyValuePair<string, int>>)sr_fixturePayloadDomains)
+                        .Remove(new KeyValuePair<string, int>(value, count)))
+                    {
+                        return;
+                    }
+                }
+                else if (sr_fixturePayloadDomains.TryUpdate(value, count - 1, count))
+                {
+                    return;
+                }
+            }
+        }
     }
 }

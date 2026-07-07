@@ -55,3 +55,37 @@ export type {
   GetCaCertificateInput,
   GetCaCertificateOutput,
 } from "./ca-certificate/get-ca-certificate-dto.g.js";
+
+// Sealed encryption runtime — the KC-backed sealer/opener sources + the single
+// spec-driven wiring call (the TS twin of AddD2SealedEncryptionViaKeyCustodian).
+export {
+  type SealingClient,
+  GrpcSealingClient,
+} from "./sealing/sealing-client.js";
+export {
+  KeyringBackedPayloadOpener,
+  type KeyringBackedOpenerOptions,
+} from "./sealing/keyring-backed-payload-opener.js";
+export {
+  KeyringBackedPayloadSealer,
+  type KeyringBackedSealerOptions,
+} from "./sealing/keyring-backed-payload-sealer.js";
+export {
+  createSealedCryptoViaKeyCustodian,
+  type SealedCryptoWiring,
+  type CreateSealedCryptoOptions,
+  type RotationSubscription,
+} from "./sealing/create-sealed-crypto.js";
+export type {
+  GetKeyringInput,
+  GetKeyringOutput,
+  KeyringEntry,
+} from "./keyring/get-keyring-dto.g.js";
+export {
+  type KeyringClient,
+  GrpcKeyringClient,
+} from "./keyring/keyring-client.js";
+export {
+  KeyringBackedPayloadCrypto,
+  type KeyringBackedCryptoOptions,
+} from "./keyring/keyring-backed-payload-crypto.js";

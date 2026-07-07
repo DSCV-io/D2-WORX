@@ -10,6 +10,7 @@ using System.Collections.Concurrent;
 using System.Diagnostics.Metrics;
 using System.Security.Cryptography;
 using D2.Edge.KeyCustodian.App.Application;
+using D2.Edge.KeyCustodian.App.Application.CertificateAuthority;
 using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.ActivateKey;
 using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.CompromiseKey;
 using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.GenerateKey;
@@ -46,11 +47,20 @@ using Xunit;
 [Trait("Category", "Integration")]
 [Collection(KeyCustodianPostgresCollectionDefinition.NAME)]
 public sealed class KeyCustodianKeyringDistributionIntegrationTests(
-    KeyCustodianPostgresFixture fixture)
+    KeyCustodianPostgresFixture fixture) : IDisposable
 {
-    private const string _DOMAIN = "audit";
+    // audit is now SEALED (removed from the KC symmetric payload catalog);
+    // exercise the preserved symmetric machinery on a registered fixture payload domain (the
+    // field-initializer registration precedes any per-test host boot; Dispose unregisters).
+    private const string _DOMAIN = "payload-fixture-a";
     private const string _CALLER = "edge";
     private const string _EMPTY_KEYRING = "d2.keycustodian.empty_keyring_served";
+
+    private readonly IDisposable r_fixtureSeam =
+        KeyDomain.RegisterFixturePayloadDomainForTesting(_DOMAIN);
+
+    /// <summary>Unregisters the fixture payload domain (ref-counted, per-test-instance).</summary>
+    public void Dispose() => r_fixtureSeam.Dispose();
 
     [Fact]
     public async Task KeyringDistribution_EndToEnd_RoundTripOverlapExclusionAndUnavailable()
@@ -330,6 +340,11 @@ public sealed class KeyCustodianKeyringDistributionIntegrationTests(
         services.AddSingleton(Microsoft.Extensions.Options.Options.Create(BuildOptions()));
 
         services.AddD2KeyCustodianApp();
+
+        // The dedicated §9.44 root-signing capability — the composition-root opt-in the
+        // System-worker host makes; the four lifecycle-mutation handlers resolved here
+        // (generate / activate / rotate / compromise) take it.
+        services.AddD2CaRootSigningCapability();
 
         return services.BuildServiceProvider();
     }

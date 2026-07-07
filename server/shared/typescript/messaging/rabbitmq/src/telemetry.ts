@@ -44,7 +44,40 @@ export const ackFailuresCounter: Counter = meter.createCounter(
   },
 );
 
+/**
+ * Successful publisher-confirmed publishes. Mirrors the .NET
+ * `d2.messaging.rabbitmq.publishes` counter — one increment per message the
+ * broker confirmed.
+ */
+export const publishesCounter: Counter = meter.createCounter(
+  "d2.messaging.rabbitmq.publishes",
+  {
+    unit: "{publish}",
+    description: "Publisher-confirmed message publishes.",
+  },
+);
+
+/**
+ * Publisher-side failures — a compose (encrypt/seal) failure, an unknown
+ * message constant, or a broker send/confirm failure. Mirrors the .NET
+ * `d2.messaging.rabbitmq.publish_failures` counter.
+ */
+export const publishFailuresCounter: Counter = meter.createCounter(
+  "d2.messaging.rabbitmq.publish_failures",
+  {
+    unit: "{publish}",
+    description:
+      "Publisher-side failures (compose failure, unknown constant, or " +
+      "broker send/confirm failure).",
+  },
+);
+
 /** Returns the shared Consumer-kind tracer for the messaging runtime. */
 export function consumerTracer(): Tracer {
+  return trace.getTracer(MESSAGING_SOURCE_NAME);
+}
+
+/** Returns the shared Producer-kind tracer for the messaging runtime. */
+export function producerTracer(): Tracer {
   return trace.getTracer(MESSAGING_SOURCE_NAME);
 }

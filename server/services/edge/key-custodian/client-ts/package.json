@@ -22,6 +22,8 @@
     "emit-csr-fixtures": "tsx scripts/emit-csr-fixtures.fixture.ts"
   },
   "dependencies": {
+    "@d2/encryption": "workspace:*",
+    "@d2/encryption-abstractions": "workspace:*",
     "@d2/grpc-client": "workspace:*",
     "@d2/logging": "workspace:*",
     "@d2/resilience": "workspace:*",

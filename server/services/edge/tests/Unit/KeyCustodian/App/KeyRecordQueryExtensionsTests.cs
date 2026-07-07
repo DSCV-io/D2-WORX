@@ -61,15 +61,15 @@ public sealed class KeyRecordQueryExtensionsTests
         // domain can never be served.
         KeyRecord[] rows =
         [
-            Row("a-audit", "audit", KeyType.AesPayload, KeyStatus.Active),
-            Row("r-audit", "audit", KeyType.AesPayload, KeyStatus.Retiring),
+            Row("a-payload", FixturePayloadDomains.PAYLOAD_A, KeyType.AesPayload, KeyStatus.Active),
+            Row("r-payload", FixturePayloadDomains.PAYLOAD_A, KeyType.AesPayload, KeyStatus.Retiring),
             Row("a-jwks", "jwks-signing", KeyType.RsaSigning, KeyStatus.Active),
             Row("a-cookie", "cookie", KeyType.Secret, KeyStatus.Active),
             Row("a-ca", "mtls-ca-root", KeyType.X509CaCertificate, KeyStatus.Active),
         ];
 
         rows.AsQueryable().Payload().Select(k => k.Kid)
-            .Should().BeEquivalentTo(["a-audit", "r-audit"]);
+            .Should().BeEquivalentTo(["a-payload", "r-payload"]);
     }
 
     [Fact]
@@ -77,13 +77,13 @@ public sealed class KeyRecordQueryExtensionsTests
     {
         KeyRecord[] rows =
         [
-            Row("a-audit", "audit", KeyType.AesPayload, KeyStatus.Active),
-            Row("r-audit", "audit", KeyType.AesPayload, KeyStatus.Retiring),
-            Row("a-notif", "notifications", KeyType.AesPayload, KeyStatus.Active),
+            Row("a-payload", FixturePayloadDomains.PAYLOAD_A, KeyType.AesPayload, KeyStatus.Active),
+            Row("r-payload", FixturePayloadDomains.PAYLOAD_A, KeyType.AesPayload, KeyStatus.Retiring),
+            Row("a-payload-b", FixturePayloadDomains.PAYLOAD_B, KeyType.AesPayload, KeyStatus.Active),
         ];
 
-        rows.AsQueryable().ForDomain("audit").Payload().Active().Select(k => k.Kid)
-            .Should().BeEquivalentTo(["a-audit"]);
+        rows.AsQueryable().ForDomain(FixturePayloadDomains.PAYLOAD_A).Payload().Active().Select(k => k.Kid)
+            .Should().BeEquivalentTo(["a-payload"]);
     }
 
     [Fact]

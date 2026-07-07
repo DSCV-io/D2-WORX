@@ -254,58 +254,90 @@ public sealed class WorkloadLeafRefreshHostedServiceTests
             => _cacheSetSignal.WaitAsync(TimeSpan.FromSeconds(30));
 
         /// <summary>
-        /// Nudges the fake clock forward in <paramref name="nudge"/> increments,
-        /// yielding between each nudge, until the issuer has been invoked at least
-        /// <paramref name="targetCount"/> times. The issuer-invocation channel
-        /// (<see cref="FakeWorkloadCertificateIssuer.WaitForInvocationCountAsync"/>)
-        /// terminates the wait the instant the target is reached — no iteration
-        /// budget, no false-negative on a slow scheduler.
+        /// Advances the fake clock in <paramref name="nudge"/> increments until the
+        /// issuer has been invoked at least <paramref name="targetCount"/> times, then
+        /// returns. Non-starvable: termination is driven ONLY by the issuer-invocation
+        /// signal (<see cref="FakeWorkloadCertificateIssuer.WaitForInvocationCountAsync"/>)
+        /// or, for a genuinely-stuck SUT, by a COUNT-based nudge budget — never by a
+        /// wall-clock deadline. A starved thread pool merely costs more nudges; it can
+        /// never produce a false timeout on a healthy SUT.
         /// </summary>
         /// <remarks>
-        /// Nudging is still necessary here because the background loop registers a
-        /// <c>FakeTimeProvider</c> delay; each <c>Clock.Advance</c> fires that delay
-        /// so the loop wakes. Without the nudge the loop never sees elapsed time and
-        /// never invokes the issuer. The issuer signal replaces the old condition-poll
-        /// — it eliminates the race between "did the loop run yet?" and the iteration
-        /// budget expiring.
+        /// The nudger runs on a pool thread (<c>Task.Run</c>) while
+        /// this method parks on the invocation signal, so the background service's
+        /// <c>Task.Delay</c> continuation always gets a scheduler slot to wake, re-check
+        /// reissue-due, and invoke the issuer — the advance MUST run concurrently with a
+        /// parked awaiter for the loop to make progress under the test scheduler. This is
+        /// the same drive mechanism the old helper used, MINUS the 30 s wall-clock
+        /// cancellation source that could trip under full-suite thread-pool starvation
+        /// and spuriously fail a passing test. The nudge budget replaces that deadline:
+        /// a healthy reissue fires within a handful of nudges, so the budget is
+        /// unreachable for a passing test under ANY load; it trips ONLY when the SUT is
+        /// genuinely stuck (never reissues) — a true defect — so the test fails fast with
+        /// a clear message instead of hanging.
         /// </remarks>
+        /// <param name="targetCount">The cumulative issuer-invocation count to reach.</param>
+        /// <param name="nudge">
+        /// The clock increment per nudge. Must exceed the loop's poll interval so a
+        /// single advance fires the registered poll delay.
+        /// </param>
+        /// <param name="maxNudges">Count-based safety budget for a stuck SUT (see remarks).</param>
         public async Task AdvanceUntilIssuerCountAsync(
             int targetCount,
             TimeSpan nudge,
-            TimeSpan? safetyTimeout = null)
+            int maxNudges = 100_000)
         {
-            using var cts = new CancellationTokenSource(safetyTimeout ?? TimeSpan.FromSeconds(30));
+            // Fast-path: already there (e.g. the caller advanced before invoking).
+            if (Issuer.IssuanceCount >= targetCount)
+                return;
 
-            // Run the signal-wait and the clock-nudger concurrently. The nudger keeps
-            // advancing the fake clock (waking the loop's registered delay) until the
-            // issuer-invocation signal fires and cancels it.
-            var signalTask = Issuer.WaitForInvocationCountAsync(targetCount, ct: cts.Token);
+            using var budgetCts = new CancellationTokenSource();
 
-            var nudgeToken = cts.Token;
+            // Park on the issuer signal with NO wall-clock deadline — only budgetCts
+            // (nudge-count exhaustion) or the target being reached ends the wait.
+            var signalTask = Issuer.WaitForInvocationCountAsync(
+                targetCount, timeout: Timeout.InfiniteTimeSpan, ct: budgetCts.Token);
 
+            // Concurrent nudger on a real pool thread: advances the fake clock so the
+            // background loop's registered delay fires and it re-checks reissue-due.
+            // Bounded by a COUNT (never wall-clock); exhausting it cancels the parked
+            // signal wait so a stuck SUT surfaces as a fast, explicit failure.
+            // ReSharper disable AccessToDisposedClosure -- the finally below awaits nudgerTask
+            // to completion BEFORE the using-scoped budgetCts is disposed at method exit, so the
+            // closure never touches a disposed CTS; R# cannot prove that ordering statically.
             var nudgerTask = Task.Run(
                 async () =>
                 {
-                    while (!nudgeToken.IsCancellationRequested)
+                    for (var nudged = 0; nudged < maxNudges && !budgetCts.IsCancellationRequested; nudged++)
                     {
-                        await Task.Yield();
                         Clock.Advance(nudge);
+                        await Task.Yield();
                     }
-                },
-                nudgeToken);
 
-            await signalTask;
+                    await budgetCts.CancelAsync();
+                });
 
-            // Signal received — cancel the nudger and let it finish.
-            await cts.CancelAsync();
+            // ReSharper restore AccessToDisposedClosure
 
             try
             {
-                await nudgerTask;
+                await signalTask;
             }
-            catch (OperationCanceledException)
+            catch (OperationCanceledException) when (budgetCts.IsCancellationRequested)
             {
-                // Expected — the nudger loop was cancelled after the signal fired.
+                // The budget canceled the wait. If the target was in fact reached in the
+                // same instant, that is a benign cancel/reach race — treat it as success.
+                if (Issuer.IssuanceCount >= targetCount)
+                    return;
+
+                throw new InvalidOperationException(
+                    $"Issuer invocation count {Issuer.IssuanceCount} did not reach {targetCount} "
+                    + $"after {maxNudges} clock nudges — the background reissue loop appears stuck.");
+            }
+            finally
+            {
+                await budgetCts.CancelAsync();
+                await nudgerTask;
             }
         }
 

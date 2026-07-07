@@ -131,28 +131,20 @@ public sealed class WidgetCreatedAuditingHandler
 ## End-to-end architecture
 
 ```
-┌─────────────────────────┐         ┌─────────────────────────┐
-│  Producer service       │         │  Consumer service       │
-│                         │         │                         │
-│ [MqPub(MqMessages.X)]   │         │ class MyHandler         │
-│ class FooEvent { ... }  │         │   : BaseHandler<...>    │
-│                         │         │ [MqSub(...)]            │
-│         │ IMessageBus   │         │      ▲                  │
-│         ▼               │         │      │ dispatch         │
-│  RabbitMqMessageBus     │         │  SubscriberChannel      │
-│         │               │         │      │ BasicConsume     │
-└─────────┼───────────────┘         └──────┼──────────────────┘
-          │ publish via channel pool       │ dedicated channel
-          ▼                                │
-   ┌──────────────────────────────────────────────┐
-   │  RabbitMQ broker                             │
-   │   exchange: descriptor.Exchange              │
-   │     │                                        │
-   │     ▼                                        │
-   │   queue: descriptor.QueueName                │
-   │     ├── DLX → DLQ                            │
-   │     └── (optional) tier exchanges + queues   │
-   └──────────────────────────────────────────────┘
+Producer service
+  [MqPub(MqMessages.X)] class FooEvent
+    → IMessageBus (RabbitMqMessageBus) → publish via channel pool → RabbitMQ broker
+
+RabbitMQ broker
+  exchange: descriptor.Exchange
+    → queue: descriptor.QueueName
+        → DLX → DLQ
+        → (optional) tier exchanges + queues
+
+Consumer service
+  RabbitMQ broker
+    → dedicated channel (BasicConsume) → SubscriberChannel → dispatch
+    → [MqSub(...)] class MyHandler : BaseHandler<...>
 ```
 
 **Spec → codegen → registry → runtime.**
@@ -238,6 +230,34 @@ There is no envelope wrapper. The wire body is one of:
 field. Plaintext on a domain that should be encrypted — or vice versa — is a
 spec edit, not a code edit; the resolver picks up the new descriptor on the
 next build.
+
+### Sealed (asymmetric) mode
+
+A domain declares its encryption **mode** in `contracts/encryption-domains`
+(`mode: symmetric | sealed`, default `symmetric`). `audit` / `notifications` /
+`courier` are **sealed**: every service seals a payload to the consumer
+service's public key (version-2 ECDH-ES frame), and only that one consumer
+opens it. The mode + consumer are single-source domain facts read from the
+generated catalog via `MqMessageDescriptor.IsSealed` + `.ConsumerService` — no
+second generated surface.
+
+`EncryptedBodyComposer` gains a sealed branch: on publish it resolves the keyed
+`IPayloadSealer` by **consumer service** and produces a v2 frame; on consume it
+resolves the keyed `IPayloadOpener` by the same key. A producer host that never
+registered a sealer, or a consumer host with no opener, lacks the keyed
+registration → `GetRequiredKeyedService` throws → publish fails loud / consume
+DLQs (never plaintext, never a silent drop). Two sealed domains that share a
+consumer share one sealer/opener.
+
+`SealedConsumerStartupCheck` (registered unconditionally by
+`AddD2MessagingRabbitMq`, never by the sealing call) crashes host startup — before
+any consumer channel opens — when a subscriber consumes a sealed domain but no
+matching `IPayloadOpener` is registered, so a forgotten
+`AddD2SealedEncryptionViaKeyCustodian` fails loud rather than DLQ'ing every
+delivery. The KeyCustodian-backed sealer/opener runtime lives in
+`D2.Edge.KeyCustodian.Client` (`Sealing/`); the shared lib composes whatever
+keyed sealer/opener the host registered (shared → shared dependency only). The
+TypeScript twin (`@d2/messaging-rabbitmq`) enforces the same fusion structurally.
 
 ### Why JSON not binary protobuf
 

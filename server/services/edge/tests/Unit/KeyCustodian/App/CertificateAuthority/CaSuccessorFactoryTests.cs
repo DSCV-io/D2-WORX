@@ -8,6 +8,7 @@ namespace D2.Edge.Tests.Unit.KeyCustodian.App.CertificateAuthority;
 
 using System.Security.Cryptography.X509Certificates;
 using D2.Edge.KeyCustodian.App.Application.CertificateAuthority;
+using D2.Edge.KeyCustodian.App.Application.Observability;
 
 /// <summary>
 /// Tests for <see cref="CaSuccessorFactory"/> — the shared CA-key builder used by
@@ -30,7 +31,14 @@ public sealed class CaSuccessorFactoryTests
         var clock = new TestClock(created + Duration.FromHours(1));
 
         var result = await CaSuccessorFactory.BuildAsync(
-            db, r_crypto, r_options, clock, KeyDomain.MtlsCaIntermediate, CancellationToken.None);
+            db,
+            r_crypto,
+            KcAppTestKit.BuildRootSigningCapability(db, r_crypto, clock, r_options),
+            r_options,
+            clock,
+            KeyDomain.MtlsCaIntermediate,
+            KeyCustodianMetrics.CaRootKeyUses.Operation.GENERATE_SUCCESSOR,
+            CancellationToken.None);
 
         result.Success.Should().BeTrue();
         result.Data!.KeyType.Should().Be(KeyType.X509CaCertificate);
@@ -49,7 +57,14 @@ public sealed class CaSuccessorFactoryTests
         var clock = new TestClock(KcAppTestKit.SR_BaseInstant);
 
         var result = await CaSuccessorFactory.BuildAsync(
-            db, r_crypto, r_options, clock, KeyDomain.MtlsCaIntermediate, CancellationToken.None);
+            db,
+            r_crypto,
+            KcAppTestKit.BuildRootSigningCapability(db, r_crypto, clock, r_options),
+            r_options,
+            clock,
+            KeyDomain.MtlsCaIntermediate,
+            KeyCustodianMetrics.CaRootKeyUses.Operation.GENERATE_SUCCESSOR,
+            CancellationToken.None);
 
         result.Success.Should().BeFalse();
         result.StatusCode.Should().Be(HttpStatusCode.ServiceUnavailable);
@@ -65,7 +80,14 @@ public sealed class CaSuccessorFactoryTests
         var clock = new TestClock(created + Duration.FromHours(1));
 
         var result = await CaSuccessorFactory.BuildAsync(
-            db, r_crypto, r_options, clock, KeyDomain.MtlsCaIntermediate, CancellationToken.None);
+            db,
+            r_crypto,
+            KcAppTestKit.BuildRootSigningCapability(db, r_crypto, clock, r_options),
+            r_options,
+            clock,
+            KeyDomain.MtlsCaIntermediate,
+            KeyCustodianMetrics.CaRootKeyUses.Operation.GENERATE_SUCCESSOR,
+            CancellationToken.None);
 
         result.Success.Should().BeFalse(because: "only an ACTIVE root may sign an intermediate");
         result.ErrorCode.Should().Be(KeyCustodianErrorCodes.KEYCUSTODIAN_NO_ACTIVE_ISSUING_CA);
@@ -78,7 +100,14 @@ public sealed class CaSuccessorFactoryTests
         var clock = new TestClock(KcAppTestKit.SR_BaseInstant);
 
         var result = await CaSuccessorFactory.BuildAsync(
-            db, r_crypto, r_options, clock, KeyDomain.MtlsCaRoot, CancellationToken.None);
+            db,
+            r_crypto,
+            KcAppTestKit.BuildRootSigningCapability(db, r_crypto, clock, r_options),
+            r_options,
+            clock,
+            KeyDomain.MtlsCaRoot,
+            KeyCustodianMetrics.CaRootKeyUses.Operation.GENERATE_SUCCESSOR,
+            CancellationToken.None);
 
         result.Success.Should().BeTrue(because: "a root successor is self-signed; no issuer needed");
         result.Data!.KeyDomain.Value.Should().Be(KeyDomain.MTLS_CA_ROOT);
@@ -97,7 +126,14 @@ public sealed class CaSuccessorFactoryTests
         var clock = new TestClock(created + Duration.FromHours(1));
 
         var result = await CaSuccessorFactory.BuildAsync(
-            db, r_crypto, r_options, clock, KeyDomain.MtlsCaIntermediate, CancellationToken.None);
+            db,
+            r_crypto,
+            KcAppTestKit.BuildRootSigningCapability(db, r_crypto, clock, r_options),
+            r_options,
+            clock,
+            KeyDomain.MtlsCaIntermediate,
+            KeyCustodianMetrics.CaRootKeyUses.Operation.GENERATE_SUCCESSOR,
+            CancellationToken.None);
 
         // The wrapped material must unwrap back to a usable ECDSA key — proving it
         // was root-wrapped (not stored plaintext) and the wrap round-trips.
@@ -121,7 +157,14 @@ public sealed class CaSuccessorFactoryTests
         var clock = new TestClock(KcAppTestKit.SR_BaseInstant);
 
         var result = await CaSuccessorFactory.BuildAsync(
-            db, r_crypto, r_options, clock, KeyDomain.JwksSigning, CancellationToken.None);
+            db,
+            r_crypto,
+            KcAppTestKit.BuildRootSigningCapability(db, r_crypto, clock, r_options),
+            r_options,
+            clock,
+            KeyDomain.JwksSigning,
+            KeyCustodianMetrics.CaRootKeyUses.Operation.GENERATE_SUCCESSOR,
+            CancellationToken.None);
 
         result.Success.Should().BeFalse(because: "the factory only builds CA keys");
         result.ErrorCode.Should().Be(KeyCustodianErrorCodes.KEYCUSTODIAN_PRECONDITION_VIOLATED);

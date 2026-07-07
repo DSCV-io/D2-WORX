@@ -47,6 +47,12 @@ importers:
 
   server/services/edge/key-custodian/client-ts:
     dependencies:
+      '@d2/encryption':
+        specifier: workspace:*
+        version: link:../../../../shared/typescript/encryption
+      '@d2/encryption-abstractions':
+        specifier: workspace:*
+        version: link:../../../../shared/typescript/encryption-abstractions
       '@d2/grpc-client':
         specifier: workspace:*
         version: link:../../../../shared/typescript/grpc-client
@@ -133,6 +139,9 @@ importers:
       '@d2/auth-context-abstractions':
         specifier: workspace:*
         version: link:../auth/context-abstractions
+      '@d2/encryption':
+        specifier: workspace:*
+        version: link:../encryption
       '@d2/encryption-abstractions':
         specifier: workspace:*
         version: link:../encryption-abstractions
@@ -194,6 +203,25 @@ importers:
       '@vitest/coverage-v8':
         specifier: 4.0.18
         version: 4.0.18(vitest@4.0.18(@opentelemetry/api@1.9.0)(@types/node@25.7.0)(tsx@4.20.6)(yaml@2.9.0))
+      typescript:
+        specifier: 5.9.3
+        version: 5.9.3
+      vitest:
+        specifier: 4.0.18
+        version: 4.0.18(@opentelemetry/api@1.9.0)(@types/node@25.7.0)(tsx@4.20.6)(yaml@2.9.0)
+
+  server/shared/typescript/encryption:
+    dependencies:
+      '@d2/encryption-abstractions':
+        specifier: workspace:*
+        version: link:../encryption-abstractions
+    devDependencies:
+      '@vitest/coverage-v8':
+        specifier: 4.0.18
+        version: 4.0.18(vitest@4.0.18(@opentelemetry/api@1.9.0)(@types/node@25.7.0)(tsx@4.20.6)(yaml@2.9.0))
+      tsx:
+        specifier: 4.20.6
+        version: 4.20.6
       typescript:
         specifier: 5.9.3
         version: 5.9.3
@@ -520,6 +548,9 @@ importers:
 
   server/shared/typescript/messaging/rabbitmq:
     dependencies:
+      '@d2/encryption':
+        specifier: workspace:*
+        version: link:../../encryption
       '@d2/encryption-abstractions':
         specifier: workspace:*
         version: link:../../encryption-abstractions

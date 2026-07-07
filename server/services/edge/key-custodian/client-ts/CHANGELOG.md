@@ -21,5 +21,13 @@ Keep a Changelog, and this package adheres to Semantic Versioning.
   KeyCustodian gRPC wire client, leaf-to-local-key mismatch defense, CA-chain
   fetch + trust assembly, refresh-ahead + serve-stale, and mutual-TLS channel
   credential presentation.
+- The TS crypto consumer twins over the mTLS gRPC channel. Symmetric keyring
+  runtime: `GrpcKeyringClient` (+ the `KeyringClient` seam) over the `getKeyring`
+  wire client — `GetKeyringInput` / `GetKeyringOutput` / `KeyringEntry` DTOs —
+  feeding `KeyringBackedPayloadCrypto` (rotation hot-swap). Sealed runtime:
+  `GrpcSealingClient` (+ the `SealingClient` seam), `KeyringBackedPayloadSealer` /
+  `KeyringBackedPayloadOpener`, and the one-call `createSealedCryptoViaKeyCustodian`
+  factory (+ `SealedCryptoWiring`, `CreateSealedCryptoOptions`,
+  `RotationSubscription`) — the TS twin of `AddD2SealedEncryptionViaKeyCustodian`.
 
 ### Fixed

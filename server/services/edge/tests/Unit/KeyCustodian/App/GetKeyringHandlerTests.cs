@@ -28,15 +28,24 @@ using Microsoft.Extensions.Options;
 /// encrypt/decrypt round-trip lives in the Testcontainers integration gate; here the unwrap
 /// is proven by the 32-byte AES key length.
 /// </summary>
-public sealed class GetKeyringHandlerTests
+public sealed class GetKeyringHandlerTests : IDisposable
 {
-    private const string _AUDIT = "audit";
-    private const string _NOTIFICATIONS = "notifications";
+    private const string _PAYLOAD = FixturePayloadDomains.PAYLOAD_A;
+    private const string _PAYLOAD_B = FixturePayloadDomains.PAYLOAD_B;
     private const string _AUTHORITY_REJECTIONS = "d2.keycustodian.authority_rejections";
     private const string _EMPTY_KEYRING = "d2.keycustodian.empty_keyring_served";
 
+    // Registers the fixture AES-payload domains for the lifetime of each test instance so the
+    // preserved domain-generic keyring machinery is exercisable now that no production
+    // payload domain remains.
+    private readonly IDisposable r_fixtureSeam =
+        FixturePayloadDomains.Register(FixturePayloadDomains.PAYLOAD_A, FixturePayloadDomains.PAYLOAD_B);
+
     private readonly KeyCustodianOptions r_options = KcAppTestKit.BuildOptions();
     private readonly IPayloadCrypto r_crypto = KcAppTestKit.BuildTestRootCrypto();
+
+    /// <summary>Unregisters the fixture payload domains (ref-counted, per-test-instance).</summary>
+    public void Dispose() => r_fixtureSeam.Dispose();
 
     // -----------------------------------------------------------------------
     // 1. Input validation
@@ -52,7 +61,7 @@ public sealed class GetKeyringHandlerTests
         await using var db = KeyCustodianTestDbContext.CreateEmpty();
 
         var result = await Build(
-                db, RequestOrigin.CrossProcessHop, "audit", Policy(("audit", [_AUDIT])))
+                db, RequestOrigin.CrossProcessHop, "audit", Policy(("audit", [_PAYLOAD])))
             .HandleAsync(new GetKeyringInput(domain!));
 
         result.Success.Should().BeFalse();
@@ -64,11 +73,11 @@ public sealed class GetKeyringHandlerTests
     public async Task GetKeyring_CaseVariantDomain_NormalizesAndSucceeds()
     {
         await using var db = KeyCustodianTestDbContext.CreateEmpty();
-        var activeKid = await SeedPayloadKey(db, _AUDIT, KeyStatus.Active);
+        var activeKid = await SeedPayloadKey(db, _PAYLOAD, KeyStatus.Active);
 
         var result = await Build(
-                db, RequestOrigin.CrossProcessHop, "audit", Policy(("audit", [_AUDIT])))
-            .HandleAsync(new GetKeyringInput("AUDIT"));
+                db, RequestOrigin.CrossProcessHop, "audit", Policy(("audit", [_PAYLOAD])))
+            .HandleAsync(new GetKeyringInput("PAYLOAD-FIXTURE-A"));
 
         result.Success.Should().BeTrue("a case-variant domain normalizes to the catalog value");
         result.Data!.ActiveKid.Should().Be(activeKid);
@@ -82,11 +91,11 @@ public sealed class GetKeyringHandlerTests
     public async Task GetKeyring_ActiveOnly_ReturnsSingleEntry_UnwrappedTo32Bytes()
     {
         await using var db = KeyCustodianTestDbContext.CreateEmpty();
-        var activeKid = await SeedPayloadKey(db, _AUDIT, KeyStatus.Active);
+        var activeKid = await SeedPayloadKey(db, _PAYLOAD, KeyStatus.Active);
 
         var result = await Build(
-                db, RequestOrigin.CrossProcessHop, "audit", Policy(("audit", [_AUDIT])))
-            .HandleAsync(new GetKeyringInput(_AUDIT));
+                db, RequestOrigin.CrossProcessHop, "audit", Policy(("audit", [_PAYLOAD])))
+            .HandleAsync(new GetKeyringInput(_PAYLOAD));
 
         result.Success.Should().BeTrue();
         result.Data!.ActiveKid.Should().Be(activeKid);
@@ -97,24 +106,24 @@ public sealed class GetKeyringHandlerTests
         result.Data.Entries[0].KeyBytes.Should().HaveCount(32);
 
         // AAD is the frozen "d2/<domain>" convention.
-        result.Data.AadContext.Should().Equal("d2/audit"u8.ToArray());
+        result.Data.AadContext.Should().Equal("d2/payload-fixture-a"u8.ToArray());
     }
 
     [Fact]
     public async Task GetKeyring_ActivePlusRetiring_OrdersActiveFirstThenRetiringNewestActivatedFirst()
     {
         await using var db = KeyCustodianTestDbContext.CreateEmpty();
-        var active = await SeedPayloadKey(db, _AUDIT, KeyStatus.Active, activatedAt: Instant(30));
+        var active = await SeedPayloadKey(db, _PAYLOAD, KeyStatus.Active, activatedAt: Instant(30));
 
         // Two retiring rows with distinct ActivatedAt — newest-activated-first ordering.
         var retiringNewer = await SeedPayloadKey(
-            db, _AUDIT, KeyStatus.Retiring, activatedAt: Instant(20), retiringAt: Instant(35));
+            db, _PAYLOAD, KeyStatus.Retiring, activatedAt: Instant(20), retiringAt: Instant(35));
         var retiringOlder = await SeedPayloadKey(
-            db, _AUDIT, KeyStatus.Retiring, activatedAt: Instant(10), retiringAt: Instant(35));
+            db, _PAYLOAD, KeyStatus.Retiring, activatedAt: Instant(10), retiringAt: Instant(35));
 
         var result = await Build(
-                db, RequestOrigin.CrossProcessHop, "audit", Policy(("audit", [_AUDIT])))
-            .HandleAsync(new GetKeyringInput(_AUDIT));
+                db, RequestOrigin.CrossProcessHop, "audit", Policy(("audit", [_PAYLOAD])))
+            .HandleAsync(new GetKeyringInput(_PAYLOAD));
 
         result.Success.Should().BeTrue();
         result.Data!.ActiveKid.Should().Be(active);
@@ -140,8 +149,8 @@ public sealed class GetKeyringHandlerTests
             listener.Start();
 
             var result = await Build(
-                    db, RequestOrigin.CrossProcessHop, "audit", Policy(("audit", [_AUDIT])), logger)
-                .HandleAsync(new GetKeyringInput(_AUDIT));
+                    db, RequestOrigin.CrossProcessHop, "audit", Policy(("audit", [_PAYLOAD])), logger)
+                .HandleAsync(new GetKeyringInput(_PAYLOAD));
 
             result.Success.Should().BeFalse();
 
@@ -155,7 +164,7 @@ public sealed class GetKeyringHandlerTests
             1L, "the no-active-key path increments SR_EmptyKeyringServed");
 
         logger.Entries.Should().Contain(
-            e => e.EventId.Id == 9513 && e.Message.Contains(_AUDIT, StringComparison.Ordinal),
+            e => e.EventId.Id == 9513 && e.Message.Contains(_PAYLOAD, StringComparison.Ordinal),
             "the 9513 warning names the domain");
 
         // The 9513 log carries the domain ONLY — no kid, no key material.
@@ -170,11 +179,11 @@ public sealed class GetKeyringHandlerTests
     public async Task GetKeyring_NoActiveButOtherRows_Returns503(KeyStatus status)
     {
         await using var db = KeyCustodianTestDbContext.CreateEmpty();
-        await SeedPayloadKey(db, _AUDIT, status, retiringAt: Instant(10));
+        await SeedPayloadKey(db, _PAYLOAD, status, retiringAt: Instant(10));
 
         var result = await Build(
-                db, RequestOrigin.CrossProcessHop, "audit", Policy(("audit", [_AUDIT])))
-            .HandleAsync(new GetKeyringInput(_AUDIT));
+                db, RequestOrigin.CrossProcessHop, "audit", Policy(("audit", [_PAYLOAD])))
+            .HandleAsync(new GetKeyringInput(_PAYLOAD));
 
         result.ErrorCode.Should().Be(
             KeyCustodianErrorCodes.KEYCUSTODIAN_KEYRING_KEY_UNAVAILABLE,
@@ -193,13 +202,13 @@ public sealed class GetKeyringHandlerTests
     {
         await using var db = KeyCustodianTestDbContext.CreateEmpty();
         var activeKid = await SeedPayloadKey(
-            db, _AUDIT, KeyStatus.Active, activatedAt: Instant(30));
+            db, _PAYLOAD, KeyStatus.Active, activatedAt: Instant(30));
         var excludedKid = await SeedPayloadKey(
-            db, _AUDIT, excluded, activatedAt: Instant(10), retiringAt: Instant(15));
+            db, _PAYLOAD, excluded, activatedAt: Instant(10), retiringAt: Instant(15));
 
         var result = await Build(
-                db, RequestOrigin.CrossProcessHop, "audit", Policy(("audit", [_AUDIT])))
-            .HandleAsync(new GetKeyringInput(_AUDIT));
+                db, RequestOrigin.CrossProcessHop, "audit", Policy(("audit", [_PAYLOAD])))
+            .HandleAsync(new GetKeyringInput(_PAYLOAD));
 
         result.Success.Should().BeTrue();
         result.Data!.Entries.Select(e => e.Kid).Should().Equal(activeKid);
@@ -215,7 +224,7 @@ public sealed class GetKeyringHandlerTests
     public async Task GetKeyring_UnestablishedOrigin_Denied_FiresOriginUnestablishedTelemetry()
     {
         await using var db = KeyCustodianTestDbContext.CreateEmpty();
-        await SeedPayloadKey(db, _AUDIT, KeyStatus.Active);
+        await SeedPayloadKey(db, _PAYLOAD, KeyStatus.Active);
         var tags = new List<(string Capability, string Reason)>();
 
         using (var listener = BuildAuthorityListener(tags))
@@ -223,8 +232,8 @@ public sealed class GetKeyringHandlerTests
             listener.Start();
 
             var result = await Build(
-                    db, RequestOrigin.Unestablished, "audit", Policy(("audit", [_AUDIT])))
-                .HandleAsync(new GetKeyringInput(_AUDIT));
+                    db, RequestOrigin.Unestablished, "audit", Policy(("audit", [_PAYLOAD])))
+                .HandleAsync(new GetKeyringInput(_PAYLOAD));
 
             result.ErrorCode.Should().Be(
                 KeyCustodianErrorCodes.KEYCUSTODIAN_REQUEST_ORIGIN_UNESTABLISHED);
@@ -243,7 +252,7 @@ public sealed class GetKeyringHandlerTests
         RequestOrigin origin)
     {
         await using var db = KeyCustodianTestDbContext.CreateEmpty();
-        await SeedPayloadKey(db, _AUDIT, KeyStatus.Active);
+        await SeedPayloadKey(db, _PAYLOAD, KeyStatus.Active);
         var logger = new CapturingLogger<GetKeyringHandler>();
         var tags = new List<(string Capability, string Reason)>();
 
@@ -252,8 +261,8 @@ public sealed class GetKeyringHandlerTests
             listener.Start();
 
             var result = await Build(
-                    db, origin, "audit", Policy(("audit", [_AUDIT])), logger)
-                .HandleAsync(new GetKeyringInput(_AUDIT));
+                    db, origin, "audit", Policy(("audit", [_PAYLOAD])), logger)
+                .HandleAsync(new GetKeyringInput(_PAYLOAD));
 
             // Uniform 403 wire code — telemetry distinguishes the plane deny.
             result.ErrorCode.Should().Be(
@@ -269,14 +278,14 @@ public sealed class GetKeyringHandlerTests
                 && e.Message.Contains(
                     KeyCustodianMetrics.AuthorityRejections.Capability.KEYRING,
                     StringComparison.Ordinal)
-                && e.Message.Contains(_AUDIT, StringComparison.Ordinal));
+                && e.Message.Contains(_PAYLOAD, StringComparison.Ordinal));
     }
 
     [Fact]
     public async Task GetKeyring_ServedPlaneNoCaller_Denied_FiresIdentityAbsentTelemetry()
     {
         await using var db = KeyCustodianTestDbContext.CreateEmpty();
-        await SeedPayloadKey(db, _AUDIT, KeyStatus.Active);
+        await SeedPayloadKey(db, _PAYLOAD, KeyStatus.Active);
         var tags = new List<(string Capability, string Reason)>();
 
         using (var listener = BuildAuthorityListener(tags))
@@ -284,7 +293,7 @@ public sealed class GetKeyringHandlerTests
             listener.Start();
 
             var result = await Build(db, RequestOrigin.CrossProcessHop, null, Policy())
-                .HandleAsync(new GetKeyringInput(_AUDIT));
+                .HandleAsync(new GetKeyringInput(_PAYLOAD));
 
             result.StatusCode.Should().Be(HttpStatusCode.Forbidden);
         }
@@ -298,7 +307,7 @@ public sealed class GetKeyringHandlerTests
     public async Task GetKeyring_CallerNotInPolicy_Denied_FiresNotInAllowedSetTelemetry()
     {
         await using var db = KeyCustodianTestDbContext.CreateEmpty();
-        await SeedPayloadKey(db, _AUDIT, KeyStatus.Active);
+        await SeedPayloadKey(db, _PAYLOAD, KeyStatus.Active);
         var tags = new List<(string Capability, string Reason)>();
 
         using (var listener = BuildAuthorityListener(tags))
@@ -306,8 +315,8 @@ public sealed class GetKeyringHandlerTests
             listener.Start();
 
             var result = await Build(
-                    db, RequestOrigin.CrossProcessHop, "audit", Policy(("audit", [_NOTIFICATIONS])))
-                .HandleAsync(new GetKeyringInput(_AUDIT));
+                    db, RequestOrigin.CrossProcessHop, "audit", Policy(("audit", [_PAYLOAD_B])))
+                .HandleAsync(new GetKeyringInput(_PAYLOAD));
 
             result.ErrorCode.Should().Be(
                 KeyCustodianErrorCodes.KEYCUSTODIAN_KEYRING_DOMAIN_NOT_AUTHORIZED);
@@ -322,10 +331,10 @@ public sealed class GetKeyringHandlerTests
     public async Task GetKeyring_UnknownCaller_EmptyPolicy_Denied()
     {
         await using var db = KeyCustodianTestDbContext.CreateEmpty();
-        await SeedPayloadKey(db, _AUDIT, KeyStatus.Active);
+        await SeedPayloadKey(db, _PAYLOAD, KeyStatus.Active);
 
         var result = await Build(db, RequestOrigin.CrossProcessHop, "ghost", Policy())
-            .HandleAsync(new GetKeyringInput(_AUDIT));
+            .HandleAsync(new GetKeyringInput(_PAYLOAD));
 
         result.ErrorCode.Should().Be(
             KeyCustodianErrorCodes.KEYCUSTODIAN_KEYRING_DOMAIN_NOT_AUTHORIZED);
@@ -349,15 +358,15 @@ public sealed class GetKeyringHandlerTests
     // so lifecycle ops work on seal domains) — the keyring surface must deny it exactly
     // like every other non-payload domain: the 403 policy arm in production (no caller
     // can hold a validator-refused EcdhSealing grant), never a keyring serve.
-    [InlineData(KeyDomain.SEAL_PREFIX + _AUDIT)]
+    [InlineData(KeyDomain.SEAL_PREFIX + "audit")]
     public async Task GetKeyring_NonPayloadDomain_ValidCaller_Returns403NotAuthorized_NoOracle(
         string nonPayload)
     {
         await using var db = KeyCustodianTestDbContext.CreateEmpty();
 
-        // The caller holds a real payload grant (audit) but NOT the non-payload domain.
+        // The caller holds a real payload grant (the fixture domain) but NOT the non-payload domain.
         var result = await Build(
-                db, RequestOrigin.CrossProcessHop, "audit", Policy(("audit", [_AUDIT])))
+                db, RequestOrigin.CrossProcessHop, "audit", Policy(("audit", [_PAYLOAD])))
             .HandleAsync(new GetKeyringInput(nonPayload));
 
         // Same 403 code as an unauthorized PAYLOAD domain — no domain-type oracle. The
@@ -384,7 +393,7 @@ public sealed class GetKeyringHandlerTests
     // The seal family binds EcdhSealing, so even a validator-bypassed seal grant hits
     // the belt-and-braces AesPayload type fork — a seal private key can NEVER be served
     // through the keyring surface.
-    [InlineData(KeyDomain.SEAL_PREFIX + _AUDIT)]
+    [InlineData(KeyDomain.SEAL_PREFIX + "audit")]
     public async Task GetKeyring_ValidatorBypassedNonPayloadGrant_Returns400TypeMismatch(
         string nonPayload)
     {
@@ -410,15 +419,15 @@ public sealed class GetKeyringHandlerTests
     public async Task GetKeyring_WithoutRequiredScope_ReturnsForbidden_BeforeAuthorityOrBinding()
     {
         await using var db = KeyCustodianTestDbContext.CreateEmpty();
-        await SeedPayloadKey(db, _AUDIT, KeyStatus.Active);
+        await SeedPayloadKey(db, _PAYLOAD, KeyStatus.Active);
 
         var result = await Build(
                 db,
                 RequestOrigin.CrossProcessHop,
                 "audit",
-                Policy(("audit", [_AUDIT])),
+                Policy(("audit", [_PAYLOAD])),
                 scopes: new HashSet<string>(StringComparer.Ordinal))
-            .HandleAsync(new GetKeyringInput(_AUDIT));
+            .HandleAsync(new GetKeyringInput(_PAYLOAD));
 
         result.StatusCode.Should().Be(
             HttpStatusCode.Forbidden,
@@ -429,15 +438,15 @@ public sealed class GetKeyringHandlerTests
     public async Task GetKeyring_WithRequiredScope_PassesScopeGate_Succeeds()
     {
         await using var db = KeyCustodianTestDbContext.CreateEmpty();
-        await SeedPayloadKey(db, _AUDIT, KeyStatus.Active);
+        await SeedPayloadKey(db, _PAYLOAD, KeyStatus.Active);
 
         var result = await Build(
                 db,
                 RequestOrigin.CrossProcessHop,
                 "audit",
-                Policy(("audit", [_AUDIT])),
+                Policy(("audit", [_PAYLOAD])),
                 scopes: new HashSet<string>(StringComparer.Ordinal) { Scopes.Internal.Kc.Keyring })
-            .HandleAsync(new GetKeyringInput(_AUDIT));
+            .HandleAsync(new GetKeyringInput(_PAYLOAD));
 
         result.Success.Should().BeTrue(
             "the request carrying the required scope reaches the handler");

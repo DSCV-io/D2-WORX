@@ -14,9 +14,17 @@ Roslyn incremental source generator that emits the `EncryptionDomains` static cl
 
 ## What this emits
 
-When the consuming assembly is `D2.Shared.Encryption`, the generator emits `EncryptionDomains.g.cs` containing one `public const string` per spec entry plus an `AllDomains` membership list.
+When the consuming assembly is `D2.Shared.Encryption`, the generator emits `EncryptionDomains.g.cs` containing:
+
+- one `public const string` per spec entry plus an `AllDomains` membership list;
+- `public enum EncryptionDomainMode { Symmetric, Sealed }` — the per-domain encryption mode;
+- `public static class EncryptionDomainModes` with `ModeFor(string domain)` (unknown domain → `Symmetric`, the documented default), `TryGetConsumerService(string domain, out string)`, and `IReadOnlyDictionary<string, string> ConsumerServiceByDomain` (sealed domains only).
 
 The closed catalog includes the `PLAINTEXT` sentinel so the `MqMessages.SourceGen` cross-validation of `mq-messages.spec.json:encryption` field values has one unambiguous source of truth.
+
+### Per-domain mode + consumer service
+
+Each domain optionally declares `mode` (`symmetric` — the default when absent — or `sealed`) and, for a sealed domain, a required `consumerService` (the single decrypting recipient's ServiceId, `[a-z0-9-]{1,64}`). Symmetric domains share a keyring (v1 frame); sealed domains route to one recipient service's public seal key (v2 frame), and only that service opens. The emitter fails the build if `mode` is unknown, a sealed domain omits `consumerService`, a non-sealed domain declares one, or the `consumerService` grammar is violated.
 
 ## Why spec-drive this
 
@@ -35,3 +43,7 @@ The SAME spec drives `@d2/encryption-abstractions` via `tools/ts-codegen/src/enc
 | `D2ED003` | Duplicate wire value                 | Error    |
 | `D2ED004` | constName has invalid shape          | Error    |
 | `D2ED005` | Empty wire value                     | Error    |
+| `D2ED006` | Invalid mode (not symmetric/sealed)  | Error    |
+| `D2ED007` | Sealed domain missing consumerService | Error   |
+| `D2ED008` | consumerService on a non-sealed domain | Error  |
+| `D2ED009` | consumerService violates `[a-z0-9-]{1,64}` | Error |

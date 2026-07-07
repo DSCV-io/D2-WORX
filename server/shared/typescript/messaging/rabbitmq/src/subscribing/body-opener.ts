@@ -16,12 +16,14 @@ import { MessageBodyDecodeError } from "./message-body-decode-error.js";
  */
 export interface BodyOpener {
   /**
-   * Decodes the raw body bytes into the handler's message value.
+   * Decodes the raw body bytes into the handler's message value. May be async —
+   * a decrypting opener (WebCrypto) is inherently async; the delivery pipeline
+   * awaits the result. The default plaintext opener stays synchronous.
    *
    * @param body Raw AMQP body bytes (opaque `application/octet-stream`).
    * @throws MessageBodyDecodeError on an undecodable body.
    */
-  open(body: Buffer): unknown;
+  open(body: Buffer): unknown | Promise<unknown>;
 }
 
 /**

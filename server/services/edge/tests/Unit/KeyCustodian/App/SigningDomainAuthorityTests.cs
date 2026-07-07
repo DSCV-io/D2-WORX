@@ -17,8 +17,20 @@ using Microsoft.Extensions.Options;
 /// in-process-only domain, an empty-string key, or a non-catalog domain; an empty
 /// policy is legitimately fine (deny-all).
 /// </summary>
-public sealed class SigningDomainAuthorityTests
+public sealed class SigningDomainAuthorityTests : IDisposable
 {
+    private const string _PAYLOAD = FixturePayloadDomains.PAYLOAD_A;
+    private const string _PAYLOAD_B = FixturePayloadDomains.PAYLOAD_B;
+
+    // Registers the fixture AES-payload domains for the lifetime of each test instance so the
+    // domain-generic signing authority policy (a catalog domain that is neither jwks-signing
+    // nor a CA anchor) is exercisable now that no production payload domain remains.
+    private readonly IDisposable r_fixtureSeam =
+        FixturePayloadDomains.Register(FixturePayloadDomains.PAYLOAD_A, FixturePayloadDomains.PAYLOAD_B);
+
+    /// <summary>Unregisters the fixture payload domains (ref-counted, per-test-instance).</summary>
+    public void Dispose() => r_fixtureSeam.Dispose();
+
     // -----------------------------------------------------------------------
     // Provider — lookup + default-deny
     // -----------------------------------------------------------------------
@@ -27,12 +39,12 @@ public sealed class SigningDomainAuthorityTests
     public void AllowedSigningDomainsFor_KnownWorkload_ReturnsConfiguredSet()
     {
         var options = new SigningDomainAuthorityOptions();
-        options.AllowedSigningDomainsByWorkload["files"] = ["audit", "notifications"];
+        options.AllowedSigningDomainsByWorkload["files"] = [_PAYLOAD, _PAYLOAD_B];
         var provider = new OptionsSigningDomainAuthorityPolicy(Options.Create(options));
 
         var allowed = provider.AllowedSigningDomainsFor("files");
 
-        allowed.Should().BeEquivalentTo(["audit", "notifications"]);
+        allowed.Should().BeEquivalentTo([_PAYLOAD, _PAYLOAD_B]);
     }
 
     [Fact]
@@ -55,7 +67,7 @@ public sealed class SigningDomainAuthorityTests
     public void AllowedSigningDomainsFor_UnknownWorkload_ReturnsEmptySet_DefaultDeny()
     {
         var options = new SigningDomainAuthorityOptions();
-        options.AllowedSigningDomainsByWorkload["files"] = ["audit"];
+        options.AllowedSigningDomainsByWorkload["files"] = [_PAYLOAD];
         var provider = new OptionsSigningDomainAuthorityPolicy(Options.Create(options));
 
         provider.AllowedSigningDomainsFor("ghost").Should().BeEmpty(
@@ -86,23 +98,23 @@ public sealed class SigningDomainAuthorityTests
     }
 
     [Theory]
-    [InlineData("Audit")]
-    [InlineData(" audit ")]
-    [InlineData("AUDIT")]
+    [InlineData("Payload-Fixture-A")]
+    [InlineData(" payload-fixture-a ")]
+    [InlineData("PAYLOAD-FIXTURE-A")]
     public void AllowedSigningDomainsFor_NonCanonicalGrant_NormalizedToCatalogValue(string grant)
     {
         // The enforce-set is built from KeyDomain.Create-normalized values (the same
         // normalization the boot validator applies), so a legitimately-configured but
-        // non-canonical grant ("Audit", " audit ", "AUDIT") resolves to the lowercase
-        // catalog value the rule compares against — instead of booting clean then silently
-        // never matching. Fails-without-fix: the raw-string Ordinal set never contained
-        // "audit" for a "Audit" grant.
+        // non-canonical grant ("Payload-Fixture-A", " payload-fixture-a ", "PAYLOAD-FIXTURE-A")
+        // resolves to the lowercase catalog value the rule compares against — instead of
+        // booting clean then silently never matching. Fails-without-fix: the raw-string
+        // Ordinal set never contained the canonical value for a non-canonical grant.
         var options = new SigningDomainAuthorityOptions();
         options.AllowedSigningDomainsByWorkload["files"] = [grant];
         var provider = new OptionsSigningDomainAuthorityPolicy(Options.Create(options));
 
         provider.AllowedSigningDomainsFor("files").Should().Contain(
-            "audit", $"the grant '{grant}' normalizes to the canonical catalog value");
+            _PAYLOAD, $"the grant '{grant}' normalizes to the canonical catalog value");
     }
 
     [Fact]
@@ -112,26 +124,27 @@ public sealed class SigningDomainAuthorityTests
         // validator rejects it), but the enforce-side skips it defensively rather than
         // leaking a non-catalog value into the set — a valid sibling grant still resolves.
         var options = new SigningDomainAuthorityOptions();
-        options.AllowedSigningDomainsByWorkload["files"] = ["audit", "not-a-real-domain"];
+        options.AllowedSigningDomainsByWorkload["files"] = [_PAYLOAD, "not-a-real-domain"];
         var provider = new OptionsSigningDomainAuthorityPolicy(Options.Create(options));
 
-        provider.AllowedSigningDomainsFor("files").Should().BeEquivalentTo(["audit"]);
+        provider.AllowedSigningDomainsFor("files").Should().BeEquivalentTo([_PAYLOAD]);
     }
 
     [Fact]
     public void Provider_NonCanonicalGrant_RoundTripsThroughRule_Allows()
     {
-        // End-to-end through the authority rule: a "Audit" grant authorizes a sign of the
-        // canonical "audit" domain. Without the enforce-side normalization the rule would
-        // deny with SIGNING_DOMAIN_NOT_AUTHORIZED (the raw "Audit" never matched "audit").
+        // End-to-end through the authority rule: a "Payload-Fixture-A" grant authorizes a
+        // sign of the canonical payload-fixture-a domain. Without the enforce-side
+        // normalization the rule would deny with SIGNING_DOMAIN_NOT_AUTHORIZED (the raw
+        // "Payload-Fixture-A" never matched payload-fixture-a).
         var options = new SigningDomainAuthorityOptions();
-        options.AllowedSigningDomainsByWorkload["files"] = ["Audit"];
+        options.AllowedSigningDomainsByWorkload["files"] = ["Payload-Fixture-A"];
         var provider = new OptionsSigningDomainAuthorityPolicy(Options.Create(options));
 
         var allow = WorkloadCapabilityAuthority.AuthorizeSigning(
             immediateCaller: "files",
             origin: RequestOrigin.CrossProcessHop,
-            target: KeyDomain.Create("audit").Data!,
+            target: KeyDomain.Create(_PAYLOAD).Data!,
             allowedSigningDomainsForCaller: provider.AllowedSigningDomainsFor("files"));
 
         allow.Success.Should().BeTrue(
@@ -142,18 +155,18 @@ public sealed class SigningDomainAuthorityTests
     public void Provider_RoundTripsThroughRule_AllowAndDeny()
     {
         var options = new SigningDomainAuthorityOptions();
-        options.AllowedSigningDomainsByWorkload["files"] = ["audit"];
+        options.AllowedSigningDomainsByWorkload["files"] = [_PAYLOAD];
         var provider = new OptionsSigningDomainAuthorityPolicy(Options.Create(options));
 
         var allow = WorkloadCapabilityAuthority.AuthorizeSigning(
             immediateCaller: "files",
             origin: RequestOrigin.CrossProcessHop,
-            target: KeyDomain.Create("audit").Data!,
+            target: KeyDomain.Create(_PAYLOAD).Data!,
             allowedSigningDomainsForCaller: provider.AllowedSigningDomainsFor("files"));
         var deny = WorkloadCapabilityAuthority.AuthorizeSigning(
             immediateCaller: "files",
             origin: RequestOrigin.CrossProcessHop,
-            target: KeyDomain.Create("notifications").Data!,
+            target: KeyDomain.Create(_PAYLOAD_B).Data!,
             allowedSigningDomainsForCaller: provider.AllowedSigningDomainsFor("files"));
 
         allow.Success.Should().BeTrue();
@@ -175,7 +188,7 @@ public sealed class SigningDomainAuthorityTests
     public void Validate_ValidPolicy_IsValid()
     {
         var options = new SigningDomainAuthorityOptions();
-        options.AllowedSigningDomainsByWorkload["files"] = ["audit", "notifications"];
+        options.AllowedSigningDomainsByWorkload["files"] = [_PAYLOAD, _PAYLOAD_B];
 
         options.Validate().Should().BeNull();
     }
@@ -270,7 +283,7 @@ public sealed class SigningDomainAuthorityTests
     public void Validate_EmptyStringKey_FailsLoud()
     {
         var options = new SigningDomainAuthorityOptions();
-        options.AllowedSigningDomainsByWorkload[" "] = ["audit"];
+        options.AllowedSigningDomainsByWorkload[" "] = [_PAYLOAD];
 
         options.Validate().Should().NotBeNull("an empty / whitespace workload key is rejected");
     }
@@ -279,7 +292,7 @@ public sealed class SigningDomainAuthorityTests
     public void Validate_WildcardKey_FailsLoud()
     {
         var options = new SigningDomainAuthorityOptions();
-        options.AllowedSigningDomainsByWorkload["*"] = ["audit"];
+        options.AllowedSigningDomainsByWorkload["*"] = [_PAYLOAD];
 
         options.Validate().Should().NotBeNull(
             "a '*' wildcard key is outside the [a-z0-9-] SPIFFE grammar and is rejected");
@@ -298,26 +311,27 @@ public sealed class SigningDomainAuthorityTests
     public void AllowedSigningDomainsFor_DuplicateDomainValue_DeduplicatedToOne()
     {
         // Pin the CURRENT behavior: a duplicate domain value in the config list
-        // ("audit", "audit") is accepted by Validate() (no duplicate-check there)
+        // ("payload-fixture-a", "payload-fixture-a") is accepted by Validate() (no
+        // duplicate-check there)
         // and deduplicated to one entry by the HashSet construction in the provider.
         // This test pins the semantics so any future change (e.g. adding a duplicate
         // guard to Validate) is an explicit, visible decision.
         var options = new SigningDomainAuthorityOptions();
-        options.AllowedSigningDomainsByWorkload["files"] = ["audit", "audit"];
+        options.AllowedSigningDomainsByWorkload["files"] = [_PAYLOAD, _PAYLOAD];
 
         // Validate() does NOT reject duplicates (it checks catalog membership +
         // in-process-only guard per entry; a repeated valid value passes both).
         options.Validate().Should().BeNull(
             "a duplicate domain value is not a validation error — it is redundant but safe");
 
-        // The provider deduplicates via HashSet: "audit" appears once in the result.
+        // The provider deduplicates via HashSet: payload-fixture-a appears once in the result.
         var provider = new OptionsSigningDomainAuthorityPolicy(Options.Create(options));
         var domains = provider.AllowedSigningDomainsFor("files");
 
         domains.Should().BeEquivalentTo(
-            new[] { "audit" },
+            new[] { _PAYLOAD },
             "a duplicate domain entry is silently deduplicated to one by the HashSet "
-            + "construction; the caller sees a single 'audit' entry");
+            + "construction; the caller sees a single 'payload-fixture-a' entry");
     }
 
     // -----------------------------------------------------------------------

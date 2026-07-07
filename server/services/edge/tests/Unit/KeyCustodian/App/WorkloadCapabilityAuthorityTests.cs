@@ -18,14 +18,23 @@ namespace D2.Edge.Tests.Unit.KeyCustodian.App;
 /// seal-encrypt arm, the structural self-only seal-decrypt arm, and fail-closed deny
 /// when no authenticated identity is present.
 /// </summary>
-public sealed class WorkloadCapabilityAuthorityTests
+public sealed class WorkloadCapabilityAuthorityTests : IDisposable
 {
     private const string _EDGE = "edge";
     private const string _FILES = "files";
-    private const string _AUDIT = "audit";
+    private const string _PAYLOAD = FixturePayloadDomains.PAYLOAD_A;
+    private const string _PAYLOAD_B = FixturePayloadDomains.PAYLOAD_B;
 
     private static readonly IReadOnlySet<string> sr_empty =
         new HashSet<string>(StringComparer.Ordinal);
+
+    // Registers the fixture AES-payload domains for the lifetime of each test instance so the
+    // domain-generic authority rule can be exercised now that no production payload domain remains.
+    private readonly IDisposable r_fixtureSeam =
+        FixturePayloadDomains.Register(FixturePayloadDomains.PAYLOAD_A, FixturePayloadDomains.PAYLOAD_B);
+
+    /// <summary>Unregisters the fixture payload domains (ref-counted, per-test-instance).</summary>
+    public void Dispose() => r_fixtureSeam.Dispose();
 
     // -----------------------------------------------------------------------
     // AuthorizeSigning — allow path (cross-process, in-policy)
@@ -34,12 +43,12 @@ public sealed class WorkloadCapabilityAuthorityTests
     [Fact]
     public void AuthorizeSigning_CrossProcessHop_DomainInAllowedSet_Allowed()
     {
-        var allowed = SetOf("audit");
+        var allowed = SetOf(_PAYLOAD);
 
         var result = WorkloadCapabilityAuthority.AuthorizeSigning(
             immediateCaller: _FILES,
             origin: RequestOrigin.CrossProcessHop,
-            target: KeyDomain.Create("audit").Data!,
+            target: KeyDomain.Create(_PAYLOAD).Data!,
             allowedSigningDomainsForCaller: allowed);
 
         result.Success.Should().BeTrue(
@@ -53,7 +62,7 @@ public sealed class WorkloadCapabilityAuthorityTests
     // -----------------------------------------------------------------------
 
     [Theory]
-    [InlineData("audit")]
+    [InlineData(_PAYLOAD)]
     [InlineData("cookie")]
     [InlineData(KeyDomain.JWKS_SIGNING)]
     public void AuthorizeSigning_UnestablishedOrigin_Denied_RequestOriginUnestablished(
@@ -89,7 +98,7 @@ public sealed class WorkloadCapabilityAuthorityTests
         // Even a (hypothetically misconfigured) policy that grants jwks-signing cannot
         // make the general surface allow it — the minter-only deny is structural and
         // independent of policy.
-        var misconfiguredPolicy = SetOf(KeyDomain.JWKS_SIGNING, "audit");
+        var misconfiguredPolicy = SetOf(KeyDomain.JWKS_SIGNING, _PAYLOAD);
 
         var result = WorkloadCapabilityAuthority.AuthorizeSigning(
             immediateCaller: _EDGE,
@@ -164,7 +173,7 @@ public sealed class WorkloadCapabilityAuthorityTests
         // Even a (hypothetically misconfigured) policy that grants the CA domain cannot
         // make the general surface allow it — the authority layer itself denies, so the
         // control no longer rests on the incidental key-type filter downstream.
-        var misconfiguredPolicy = SetOf(caDomain, "audit");
+        var misconfiguredPolicy = SetOf(caDomain, _PAYLOAD);
 
         var result = WorkloadCapabilityAuthority.AuthorizeSigning(
             immediateCaller: _EDGE,
@@ -208,8 +217,8 @@ public sealed class WorkloadCapabilityAuthorityTests
         var result = WorkloadCapabilityAuthority.AuthorizeSigning(
             immediateCaller: _FILES,
             origin: origin,
-            target: KeyDomain.Create("audit").Data!,
-            allowedSigningDomainsForCaller: SetOf("audit"));
+            target: KeyDomain.Create(_PAYLOAD).Data!,
+            allowedSigningDomainsForCaller: SetOf(_PAYLOAD));
 
         result.Success.Should().BeFalse();
         result.ErrorCode.Should().Be(
@@ -225,8 +234,8 @@ public sealed class WorkloadCapabilityAuthorityTests
         var result = WorkloadCapabilityAuthority.AuthorizeSigning(
             immediateCaller: "edge",
             origin: RequestOrigin.System,
-            target: KeyDomain.Create("audit").Data!,
-            allowedSigningDomainsForCaller: SetOf("audit"));
+            target: KeyDomain.Create(_PAYLOAD).Data!,
+            allowedSigningDomainsForCaller: SetOf(_PAYLOAD));
 
         result.Success.Should().BeFalse();
         result.ErrorCode.Should().Be(
@@ -248,8 +257,8 @@ public sealed class WorkloadCapabilityAuthorityTests
         var result = WorkloadCapabilityAuthority.AuthorizeSigning(
             immediateCaller: callerId,
             origin: RequestOrigin.CrossProcessHop,
-            target: KeyDomain.Create("audit").Data!,
-            allowedSigningDomainsForCaller: SetOf("audit"));
+            target: KeyDomain.Create(_PAYLOAD).Data!,
+            allowedSigningDomainsForCaller: SetOf(_PAYLOAD));
 
         result.Success.Should().BeFalse();
         result.StatusCode.Should().Be(HttpStatusCode.Forbidden);
@@ -265,8 +274,8 @@ public sealed class WorkloadCapabilityAuthorityTests
         var result = WorkloadCapabilityAuthority.AuthorizeSigning(
             immediateCaller: _FILES,
             origin: RequestOrigin.CrossProcessHop,
-            target: KeyDomain.Create("audit").Data!,
-            allowedSigningDomainsForCaller: SetOf("notifications"));
+            target: KeyDomain.Create(_PAYLOAD).Data!,
+            allowedSigningDomainsForCaller: SetOf(_PAYLOAD_B));
 
         result.Success.Should().BeFalse();
         result.ErrorCode.Should().Be(
@@ -281,7 +290,7 @@ public sealed class WorkloadCapabilityAuthorityTests
         var result = WorkloadCapabilityAuthority.AuthorizeSigning(
             immediateCaller: "ghost",
             origin: RequestOrigin.CrossProcessHop,
-            target: KeyDomain.Create("audit").Data!,
+            target: KeyDomain.Create(_PAYLOAD).Data!,
             allowedSigningDomainsForCaller: sr_empty);
 
         result.ErrorCode.Should().Be(
@@ -518,10 +527,10 @@ public sealed class WorkloadCapabilityAuthorityTests
     public void AuthorizeKeyringFetch_ServedPlane_DomainInAllowedSet_Allowed(RequestOrigin origin)
     {
         var result = WorkloadCapabilityAuthority.AuthorizeKeyringFetch(
-            immediateCaller: _AUDIT,
+            immediateCaller: _PAYLOAD,
             origin: origin,
-            target: KeyDomain.Create(_AUDIT).Data!,
-            allowedKeyringDomainsForCaller: SetOf(_AUDIT));
+            target: KeyDomain.Create(_PAYLOAD).Data!,
+            allowedKeyringDomainsForCaller: SetOf(_PAYLOAD));
 
         result.Success.Should().BeTrue(
             "the keyring surface serves both the cross-process hop and the in-process module "
@@ -533,13 +542,13 @@ public sealed class WorkloadCapabilityAuthorityTests
     // -----------------------------------------------------------------------
 
     [Theory]
-    [InlineData(_AUDIT)]
+    [InlineData(_PAYLOAD)]
     [InlineData(KeyDomain.JWKS_SIGNING)]
     public void AuthorizeKeyringFetch_UnestablishedOrigin_Denied_RequestOriginUnestablished(
         string domainValue)
     {
         var result = WorkloadCapabilityAuthority.AuthorizeKeyringFetch(
-            immediateCaller: _AUDIT,
+            immediateCaller: _PAYLOAD,
             origin: RequestOrigin.Unestablished,
             target: KeyDomain.Create(domainValue).Data!,
             allowedKeyringDomainsForCaller: SetOf(domainValue));
@@ -563,10 +572,10 @@ public sealed class WorkloadCapabilityAuthorityTests
         // Even a caller WITH the domain in its policy set is denied on an unserved plane —
         // the plane deny (arm 2) runs before the policy check.
         var result = WorkloadCapabilityAuthority.AuthorizeKeyringFetch(
-            immediateCaller: _AUDIT,
+            immediateCaller: _PAYLOAD,
             origin: origin,
-            target: KeyDomain.Create(_AUDIT).Data!,
-            allowedKeyringDomainsForCaller: SetOf(_AUDIT));
+            target: KeyDomain.Create(_PAYLOAD).Data!,
+            allowedKeyringDomainsForCaller: SetOf(_PAYLOAD));
 
         result.Success.Should().BeFalse();
         result.ErrorCode.Should().Be(
@@ -587,8 +596,8 @@ public sealed class WorkloadCapabilityAuthorityTests
         var result = WorkloadCapabilityAuthority.AuthorizeKeyringFetch(
             immediateCaller: callerId,
             origin: RequestOrigin.CrossProcessHop,
-            target: KeyDomain.Create(_AUDIT).Data!,
-            allowedKeyringDomainsForCaller: SetOf(_AUDIT));
+            target: KeyDomain.Create(_PAYLOAD).Data!,
+            allowedKeyringDomainsForCaller: SetOf(_PAYLOAD));
 
         result.Success.Should().BeFalse();
         result.StatusCode.Should().Be(HttpStatusCode.Forbidden);
@@ -602,10 +611,10 @@ public sealed class WorkloadCapabilityAuthorityTests
     public void AuthorizeKeyringFetch_DomainNotInAllowedSet_Denied_KeyringDomainNotAuthorized()
     {
         var result = WorkloadCapabilityAuthority.AuthorizeKeyringFetch(
-            immediateCaller: _AUDIT,
+            immediateCaller: _PAYLOAD,
             origin: RequestOrigin.CrossProcessHop,
-            target: KeyDomain.Create(_AUDIT).Data!,
-            allowedKeyringDomainsForCaller: SetOf("notifications"));
+            target: KeyDomain.Create(_PAYLOAD).Data!,
+            allowedKeyringDomainsForCaller: SetOf(_PAYLOAD_B));
 
         result.ErrorCode.Should().Be(
             "KEYCUSTODIAN_KEYRING_DOMAIN_NOT_AUTHORIZED",
@@ -618,7 +627,7 @@ public sealed class WorkloadCapabilityAuthorityTests
         var result = WorkloadCapabilityAuthority.AuthorizeKeyringFetch(
             immediateCaller: "ghost",
             origin: RequestOrigin.CrossProcessHop,
-            target: KeyDomain.Create(_AUDIT).Data!,
+            target: KeyDomain.Create(_PAYLOAD).Data!,
             allowedKeyringDomainsForCaller: sr_empty);
 
         result.ErrorCode.Should().Be(
@@ -637,10 +646,10 @@ public sealed class WorkloadCapabilityAuthorityTests
         // an unauthorized payload domain — no domain-fact oracle. This pins that the rule
         // does not special-case a non-payload domain to a different code.
         var result = WorkloadCapabilityAuthority.AuthorizeKeyringFetch(
-            immediateCaller: _AUDIT,
+            immediateCaller: _PAYLOAD,
             origin: RequestOrigin.CrossProcessHop,
             target: KeyDomain.Create(nonPayload).Data!,
-            allowedKeyringDomainsForCaller: SetOf(_AUDIT));
+            allowedKeyringDomainsForCaller: SetOf(_PAYLOAD));
 
         result.ErrorCode.Should().Be(
             "KEYCUSTODIAN_KEYRING_DOMAIN_NOT_AUTHORIZED",
@@ -655,7 +664,7 @@ public sealed class WorkloadCapabilityAuthorityTests
     public void AuthorizeKeyringFetch_NullTarget_Throws()
     {
         var act = () => WorkloadCapabilityAuthority.AuthorizeKeyringFetch(
-            _AUDIT, RequestOrigin.CrossProcessHop, target: null!, allowedKeyringDomainsForCaller: sr_empty);
+            _PAYLOAD, RequestOrigin.CrossProcessHop, target: null!, allowedKeyringDomainsForCaller: sr_empty);
 
         act.Should().Throw<ArgumentNullException>();
     }
@@ -664,7 +673,7 @@ public sealed class WorkloadCapabilityAuthorityTests
     public void AuthorizeKeyringFetch_NullPolicySet_Throws()
     {
         var act = () => WorkloadCapabilityAuthority.AuthorizeKeyringFetch(
-            _AUDIT, RequestOrigin.CrossProcessHop, target: KeyDomain.Create(_AUDIT).Data!, allowedKeyringDomainsForCaller: null!);
+            _PAYLOAD, RequestOrigin.CrossProcessHop, target: KeyDomain.Create(_PAYLOAD).Data!, allowedKeyringDomainsForCaller: null!);
 
         act.Should().Throw<ArgumentNullException>();
     }

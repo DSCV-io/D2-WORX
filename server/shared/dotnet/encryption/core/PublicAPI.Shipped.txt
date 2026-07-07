@@ -1,4 +1,8 @@
 #nullable enable
+D2.Shared.Encryption.EncryptionDomainMode
+D2.Shared.Encryption.EncryptionDomainMode.Sealed = 1 -> D2.Shared.Encryption.EncryptionDomainMode
+D2.Shared.Encryption.EncryptionDomainMode.Symmetric = 0 -> D2.Shared.Encryption.EncryptionDomainMode
+D2.Shared.Encryption.EncryptionDomainModes
 D2.Shared.Encryption.EncryptionDomains
 D2.Shared.Encryption.EncryptionException
 D2.Shared.Encryption.EncryptionException.EncryptionException(string! message) -> void
@@ -74,6 +78,11 @@ D2.Shared.Encryption.RecipientPublicKeyring
 D2.Shared.Encryption.RecipientPublicKeyring.ActiveKid.get -> string!
 D2.Shared.Encryption.RecipientPublicKeyring.RecipientPublicKeyring(string! recipientServiceId, string! activeKid, System.Collections.Generic.IReadOnlyDictionary<string!, byte[]!>! publicKeysByKid) -> void
 D2.Shared.Encryption.RecipientPublicKeyring.RecipientServiceId.get -> string!
+D2.Shared.Encryption.SealedEncryptionServiceCollectionExtensions
+D2.Shared.Encryption.SealedEncryptionServiceCollectionExtensions.extension(Microsoft.Extensions.DependencyInjection.IServiceCollection!)
+D2.Shared.Encryption.SealedEncryptionServiceCollectionExtensions.extension(Microsoft.Extensions.DependencyInjection.IServiceCollection!).AddD2SealedEncryptionRecipient(string! recipientServiceId) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
+D2.Shared.Encryption.SealedEncryptionServiceCollectionExtensions.extension(Microsoft.Extensions.DependencyInjection.IServiceCollection!).AddD2SealedEncryptionSourceCheck() -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
+D2.Shared.Encryption.SealedEncryptionServiceCollectionExtensions.extension(Microsoft.Extensions.DependencyInjection.IServiceCollection!).AddD2SealedEncryptionStartupCheck() -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
 D2.Shared.Encryption.SealedFrameLayout
 const D2.Shared.Encryption.EncryptionDomains.AUDIT = "audit" -> string!
 const D2.Shared.Encryption.EncryptionDomains.COURIER = "courier" -> string!
@@ -126,8 +135,14 @@ override D2.Shared.Encryption.PayloadOpener.ToString() -> string!
 override D2.Shared.Encryption.PayloadSealer.ToString() -> string!
 override D2.Shared.Encryption.RecipientPrivateKeyring.ToString() -> string!
 override D2.Shared.Encryption.RecipientPublicKeyring.ToString() -> string!
+static D2.Shared.Encryption.EncryptionDomainModes.ConsumerServiceByDomain.get -> System.Collections.Generic.IReadOnlyDictionary<string!, string!>!
+static D2.Shared.Encryption.EncryptionDomainModes.ModeFor(string! domain) -> D2.Shared.Encryption.EncryptionDomainMode
+static D2.Shared.Encryption.EncryptionDomainModes.TryGetConsumerService(string! domain, out string! consumerService) -> bool
 static D2.Shared.Encryption.EncryptionDomains.AllDomains.get -> System.Collections.Generic.IReadOnlyList<string!>!
 static D2.Shared.Encryption.EncryptionServiceCollectionExtensions.AddD2EncryptionFor(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services, string! serviceKey, System.Func<System.IServiceProvider!, D2.Shared.Encryption.PayloadCryptoKeyring!>! keyringFactory) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
 static D2.Shared.Encryption.EncryptionServiceCollectionExtensions.AddD2EncryptionStartupCheck(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
 static D2.Shared.Encryption.EncryptionSourceServiceCollectionExtensions.AddD2EncryptionSourceCheck(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
 static D2.Shared.Encryption.EncryptionSourceServiceCollectionExtensions.MarkD2EncryptionSource(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services, string! serviceKey, D2.Shared.Encryption.EncryptionKeyringSource source) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
+static D2.Shared.Encryption.SealedEncryptionServiceCollectionExtensions.AddD2SealedEncryptionRecipient(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services, string! recipientServiceId) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
+static D2.Shared.Encryption.SealedEncryptionServiceCollectionExtensions.AddD2SealedEncryptionSourceCheck(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
+static D2.Shared.Encryption.SealedEncryptionServiceCollectionExtensions.AddD2SealedEncryptionStartupCheck(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!

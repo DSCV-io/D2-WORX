@@ -274,6 +274,54 @@ export function emitMqMessages(spec: MqMessagesSpec): EmitResult {
   sb.decreaseIndent();
   sb.appendLine("};");
   sb.appendLine();
+
+  // MqMessagesCatalog — the SAME per-message descriptor data as the registry,
+  // but `as const` so every field (critically `encryption`) keeps its LITERAL
+  // type. This is the TS publisher's compile-time type-witness input: the
+  // publisher maps each message constant's literal `encryption` to a
+  // mode-branded composer slot, so publishing to an unwired encrypted domain is
+  // a COMPILE error. There is no .NET twin — .NET gets the same enforcement from
+  // the descriptor's computed `IsSealed` + spec-driven composer + DI.
+  sb.appendLine("/**");
+  sb.appendLine(
+    " * Literal-typed (`as const`) per-message catalog — the compile-time",
+  );
+  sb.appendLine(
+    " * type-witness input for the @d2/messaging-rabbitmq publisher. Same data",
+  );
+  sb.appendLine(
+    " * as MqMessagesRegistry, but each `encryption` keeps its literal type.",
+  );
+  sb.appendLine(" */");
+  sb.appendLine("export const MqMessagesCatalog = {");
+  sb.increaseIndent();
+  for (const e of v.messages) {
+    sb.appendLine(`${e.constant}: {`);
+    sb.increaseIndent();
+    sb.appendLine(`constant: "${escapeStringLiteral(e.constant)}",`);
+    sb.appendLine(`messageType: "${escapeStringLiteral(e.messageType)}",`);
+    sb.appendLine(`exchange: "${escapeStringLiteral(e.exchange)}",`);
+    sb.appendLine(`exchangeType: "${escapeStringLiteral(e.exchangeType)}",`);
+    sb.appendLine(`encryption: "${escapeStringLiteral(e.encryption)}",`);
+    if (e.defaultRoutingKey !== undefined) {
+      sb.appendLine(
+        `defaultRoutingKey: "${escapeStringLiteral(e.defaultRoutingKey)}",`,
+      );
+    }
+    sb.decreaseIndent();
+    sb.appendLine("},");
+  }
+  sb.decreaseIndent();
+  sb.appendLine("} as const;");
+  sb.appendLine();
+  sb.appendLine(
+    "/** Union of every message constant present in the catalog. */",
+  );
+  sb.appendLine(
+    "export type MqMessageCatalogKey = keyof typeof MqMessagesCatalog;",
+  );
+  sb.appendLine();
+
   sb.appendLine("export const ALL_MQ_MESSAGE_CONSTANTS: readonly string[] = [");
   sb.increaseIndent();
   for (const e of v.messages)

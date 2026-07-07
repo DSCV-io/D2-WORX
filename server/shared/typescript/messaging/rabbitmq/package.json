@@ -22,6 +22,7 @@
     "type-check:test": "tsc -p tsconfig.test.json"
   },
   "dependencies": {
+    "@d2/encryption": "workspace:*",
     "@d2/encryption-abstractions": "workspace:*",
     "@d2/headers-amqp": "workspace:*",
     "@d2/logging": "workspace:*",

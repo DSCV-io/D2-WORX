@@ -70,6 +70,25 @@ export const MqMessagesRegistry: Readonly<Record<string, MqMessageDescriptor>> =
   },
 };
 
+/**
+ * Literal-typed (`as const`) per-message catalog — the compile-time
+ * type-witness input for the @d2/messaging-rabbitmq publisher. Same data
+ * as MqMessagesRegistry, but each `encryption` keeps its literal type.
+ */
+export const MqMessagesCatalog = {
+  AuthKeyRotated: {
+    constant: "AuthKeyRotated",
+    messageType: "D2.Shared.Auth.Events.KeyRotatedEvent",
+    exchange: "d2.security.key-rotated",
+    exchangeType: "fanout",
+    encryption: "plaintext",
+    defaultRoutingKey: "",
+  },
+} as const;
+
+/** Union of every message constant present in the catalog. */
+export type MqMessageCatalogKey = keyof typeof MqMessagesCatalog;
+
 export const ALL_MQ_MESSAGE_CONSTANTS: readonly string[] = [
   "AuthKeyRotated",
 ];

@@ -14,7 +14,14 @@ export default defineConfig({
     coverage: {
       provider: "v8",
       include: ["src/**/*.ts"],
-      exclude: ["src/**/*.g.ts", "src/index.ts"],
+      // `domain-crypto-map.ts` is types-only (the compile-time publish witness);
+      // it is proven by tests/publisher-type-witness.compile.ts under the
+      // type-check gate, not by runtime coverage.
+      exclude: [
+        "src/**/*.g.ts",
+        "src/index.ts",
+        "src/publishing/domain-crypto-map.ts",
+      ],
       thresholds: {
         lines: 100,
         branches: 100,

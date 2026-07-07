@@ -53,7 +53,8 @@ export interface EmitResult {
  * - `D2PRB001-006`: problem-details spec.
  * - `D2GT001-005`: grpc-trailers spec.
  * - `D2OMT001-005`: otel-messaging-tags spec.
- * - `D2ED001-005`: encryption-domains spec.
+ * - `D2ED001-009`: encryption-domains spec (D2ED006-009 = mode /
+ *   consumerService validation).
  * - `D2DLQ001-006`: dlq-failure-metadata spec.
  * - `D2EF001-005`: encryption-frame spec (symmetric, version 1).
  * - `D2EF006-012`: encryption-frame-sealed spec (sealed, version 2).
@@ -198,6 +199,10 @@ export const DiagnosticIds = {
   ED_DUPLICATE_VALUE: "D2ED003",
   ED_INVALID_CONST_NAME: "D2ED004",
   ED_EMPTY_VALUE: "D2ED005",
+  ED_INVALID_MODE: "D2ED006",
+  ED_MISSING_CONSUMER_SERVICE: "D2ED007",
+  ED_UNEXPECTED_CONSUMER_SERVICE: "D2ED008",
+  ED_INVALID_CONSUMER_SERVICE: "D2ED009",
 
   // DLQ failure metadata (fields + causes sub-catalogs). Mirror the .NET
   // D2.Shared.Messaging.DlqMetadata.SourceGen DiagnosticIds values

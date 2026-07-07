@@ -6,6 +6,9 @@ export {
   EncryptionDomains,
   type EncryptionDomain,
   ALL_ENCRYPTION_DOMAINS,
+  EncryptionDomainModes,
+  type EncryptionDomainMode,
+  ConsumerServiceByDomain,
 } from "./encryption-domains.g.js";
 export {
   EncryptionFrame,

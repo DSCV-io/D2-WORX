@@ -42,6 +42,9 @@ export const DlqFailureMetadataFields: {
 export type MqMessage = (typeof MqMessages)[keyof typeof MqMessages];
 
 // @public
+export type MqMessageCatalogKey = keyof typeof MqMessagesCatalog;
+
+// @public
 export interface MqMessageDescriptor {
     readonly constant: string;
     readonly defaultRoutingKey?: string;
@@ -55,6 +58,18 @@ export interface MqMessageDescriptor {
 // @public
 export const MqMessages: {
     readonly AuthKeyRotated: "AuthKeyRotated";
+};
+
+// @public
+export const MqMessagesCatalog: {
+    readonly AuthKeyRotated: {
+        readonly constant: "AuthKeyRotated";
+        readonly messageType: "D2.Shared.Auth.Events.KeyRotatedEvent";
+        readonly exchange: "d2.security.key-rotated";
+        readonly exchangeType: "fanout";
+        readonly encryption: "plaintext";
+        readonly defaultRoutingKey: "";
+    };
 };
 
 // @public

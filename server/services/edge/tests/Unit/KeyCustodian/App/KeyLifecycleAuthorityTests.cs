@@ -96,6 +96,8 @@ public sealed class KeyLifecycleAuthorityTests
             db,
             KcAppTestKit.BuildOptionsAccessor(),
             r_crypto,
+            KcAppTestKit.BuildRootSigningCapability(
+                db, r_crypto, new TestClock(KcAppTestKit.SR_BaseInstant)),
             new TestClock(KcAppTestKit.SR_BaseInstant));
 
         var tags = NewTagCapture();
@@ -134,6 +136,7 @@ public sealed class KeyLifecycleAuthorityTests
             db,
             KcAppTestKit.BuildPolicyProvider(r_options),
             r_crypto,
+            KcAppTestKit.BuildRootSigningCapability(db, r_crypto, new TestClock(created)),
             new TestClock(created + Duration.FromHours(2)));
 
         var tags = NewTagCapture();
@@ -183,6 +186,7 @@ public sealed class KeyLifecycleAuthorityTests
             KcAppTestKit.BuildPolicyProvider(r_options),
             announcer,
             r_crypto,
+            KcAppTestKit.BuildRootSigningCapability(db, r_crypto, new TestClock(created)),
             new TestClock(created + Duration.FromDays(30)));
 
         var tags = NewTagCapture();
@@ -275,6 +279,7 @@ public sealed class KeyLifecycleAuthorityTests
             Options.Create(r_options),
             announcer,
             r_crypto,
+            KcAppTestKit.BuildRootSigningCapability(db, r_crypto, new TestClock(created)),
             new TestClock(created));
 
         var tags = NewTagCapture();
@@ -311,12 +316,14 @@ public sealed class KeyLifecycleAuthorityTests
         var optionsAccessor = KcAppTestKit.BuildOptionsAccessor();
         var logger = new CapturingLogger<RunDueRotationsHandler>();
 
+        var rootSigning = KcAppTestKit.BuildRootSigningCapability(db, r_crypto, clock);
         var generate = new GenerateKeyHandler(
             KcAppTestKit.SystemContext<GenerateKeyHandler>(),
             KcAppTestKit.NullClassifier(),
             db,
             optionsAccessor,
             r_crypto,
+            rootSigning,
             clock);
         var activate = new ActivateKeyHandler(
             KcAppTestKit.SystemContext<ActivateKeyHandler>(),
@@ -324,6 +331,7 @@ public sealed class KeyLifecycleAuthorityTests
             db,
             policy,
             r_crypto,
+            rootSigning,
             clock);
         var rotate = new RotateKeyHandler(
             KcAppTestKit.SystemContext<RotateKeyHandler>(),
@@ -332,6 +340,7 @@ public sealed class KeyLifecycleAuthorityTests
             policy,
             new RecordingAnnouncer(),
             r_crypto,
+            rootSigning,
             clock);
         var retire = new RetireKeyHandler(
             KcAppTestKit.SystemContext<RetireKeyHandler>(),

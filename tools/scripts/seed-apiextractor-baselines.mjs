@@ -50,7 +50,7 @@ const API_EXTRACTOR_BIN = join(
 );
 
 // ---------------------------------------------------------------------------
-// The 31 consumable packages: [pkgDir, shortName] pairs.
+// The 32 consumable packages: [pkgDir, shortName] pairs.
 // Derived from the package names (@d2/<shortName>) so that api.md report
 // filenames are stable regardless of the directory structure.
 // Excludes: typespec-decorators, typespec-emitters, contract-tests.
@@ -67,6 +67,11 @@ const CONSUMABLES = [
     dir: join(TS_SHARED, "auth", "context-abstractions"),
     shortName: "auth-context-abstractions",
     pkgName: "@d2/auth-context-abstractions",
+  },
+  {
+    dir: join(TS_SHARED, "encryption"),
+    shortName: "encryption",
+    pkgName: "@d2/encryption",
   },
   {
     dir: join(TS_SHARED, "encryption-abstractions"),

@@ -23,6 +23,8 @@ export interface EncryptionDomainEntry {
   readonly constName: string;
   readonly value: string;
   readonly doc: string;
+  readonly mode?: string;
+  readonly consumerService?: string;
 }
 
 /** Top-level shape of `encryption-domains.spec.json`. */
@@ -37,10 +39,24 @@ export interface ValidatedEncryptionDomains {
 }
 
 const CONST_NAME_RE = /^[A-Z][A-Z0-9_]*$/;
+const CONSUMER_SERVICE_RE = /^[a-z0-9-]{1,64}$/;
+const MODE_SYMMETRIC = "symmetric";
+const MODE_SEALED = "sealed";
+
+/** True when `mode` is the sealed literal. */
+function isSealed(entry: EncryptionDomainEntry): boolean {
+  return entry.mode === MODE_SEALED;
+}
+
+/** True for a null / undefined / whitespace-only string (Falsey twin). */
+function isFalsey(value: string | undefined): boolean {
+  return value === undefined || value.trim().length === 0;
+}
 
 /**
  * Validate the spec — surface invalid-constName, duplicate constName,
- * duplicate wire value, empty value.
+ * duplicate wire value, empty value, and the mode / consumerService
+ * consistency rules (D2ED006-009), mirroring the .NET emitter byte-for-byte.
  */
 export function validateEncryptionDomainsSpec(
   spec: EncryptionDomainsSpec,
@@ -88,12 +104,71 @@ export function validateEncryptionDomainsSpec(
       );
       continue;
     }
+    if (!validateModeAndConsumer(entry, diagnostics)) continue;
     seenConstNames.add(entry.constName);
     seenValues.add(entry.value);
     valid.push(entry);
   }
 
   return { domains: valid, diagnostics };
+}
+
+/**
+ * Validate an entry's optional `mode` / `consumerService` pair. Pushes the
+ * relevant fail-loud diagnostic and returns `false` when inconsistent.
+ */
+function validateModeAndConsumer(
+  entry: EncryptionDomainEntry,
+  diagnostics: EmitDiagnostic[],
+): boolean {
+  const mode = entry.mode;
+  if (mode !== undefined && mode !== MODE_SYMMETRIC && mode !== MODE_SEALED) {
+    diagnostics.push(
+      diagError(
+        DiagnosticIds.ED_INVALID_MODE,
+        `domain '${entry.constName}' has invalid mode '${mode}' — ` +
+          `must be '${MODE_SYMMETRIC}' or '${MODE_SEALED}'`,
+      ),
+    );
+    return false;
+  }
+
+  const consumer = entry.consumerService;
+  if (isSealed(entry)) {
+    if (isFalsey(consumer)) {
+      diagnostics.push(
+        diagError(
+          DiagnosticIds.ED_MISSING_CONSUMER_SERVICE,
+          `domain '${entry.constName}' is sealed but declares no consumerService`,
+        ),
+      );
+      return false;
+    }
+    if (!CONSUMER_SERVICE_RE.test(consumer!)) {
+      diagnostics.push(
+        diagError(
+          DiagnosticIds.ED_INVALID_CONSUMER_SERVICE,
+          `domain '${entry.constName}' consumerService '${consumer}' must ` +
+            `match ${CONSUMER_SERVICE_RE.source}`,
+        ),
+      );
+      return false;
+    }
+    return true;
+  }
+
+  if (!isFalsey(consumer)) {
+    diagnostics.push(
+      diagError(
+        DiagnosticIds.ED_UNEXPECTED_CONSUMER_SERVICE,
+        `domain '${entry.constName}' declares consumerService '${consumer}' ` +
+          `but is not sealed`,
+      ),
+    );
+    return false;
+  }
+
+  return true;
 }
 
 /** Emit the encryption-domains `.g.ts` source. */
@@ -149,6 +224,56 @@ export function emitEncryptionDomains(spec: EncryptionDomainsSpec): EmitResult {
     sb.appendLine(`"${escapeStringLiteral(e.value)}",`);
   sb.decreaseIndent();
   sb.appendLine("];");
+  sb.appendLine();
+
+  // Per-domain encryption mode (literal-typed so the messaging publisher's
+  // DomainCryptoMap type-witness can brand each domain slot). Mirrors .NET
+  // EncryptionDomainModes.ModeFor over the catalog.
+  sb.appendLine("/**");
+  sb.appendLine(
+    " * Per-domain payload encryption mode, keyed by wire value. `symmetric` =",
+  );
+  sb.appendLine(
+    " * shared-keyring AES-256-GCM (v1 frame); `sealed` = per-consumer-service",
+  );
+  sb.appendLine(
+    " * ECDH (v2 frame). Literal-typed for the publisher type-witness. Mirrors",
+  );
+  sb.appendLine(" * .NET EncryptionDomainModes.");
+  sb.appendLine(" */");
+  sb.appendLine("export const EncryptionDomainModes = {");
+  sb.increaseIndent();
+  for (const e of v.domains) {
+    const mode = isSealed(e) ? MODE_SEALED : MODE_SYMMETRIC;
+    sb.appendLine(`"${escapeStringLiteral(e.value)}": "${mode}",`);
+  }
+  sb.decreaseIndent();
+  sb.appendLine("} as const;");
+  sb.appendLine();
+  sb.appendLine(
+    `export type EncryptionDomainMode = "${MODE_SYMMETRIC}" | "${MODE_SEALED}";`,
+  );
+  sb.appendLine();
+
+  // Consumer ServiceId per SEALED domain (the single decryptor). Only sealed
+  // domains appear. Mirrors .NET EncryptionDomainModes.ConsumerServiceByDomain.
+  sb.appendLine("/**");
+  sb.appendLine(
+    " * Consumer ServiceId per SEALED domain (the single decryptor). Only",
+  );
+  sb.appendLine(" * sealed domains appear. Mirrors .NET");
+  sb.appendLine(" * EncryptionDomainModes.ConsumerServiceByDomain.");
+  sb.appendLine(" */");
+  sb.appendLine("export const ConsumerServiceByDomain = {");
+  sb.increaseIndent();
+  for (const e of v.domains) {
+    if (!isSealed(e)) continue;
+    sb.appendLine(
+      `"${escapeStringLiteral(e.value)}": "${escapeStringLiteral(e.consumerService!)}",`,
+    );
+  }
+  sb.decreaseIndent();
+  sb.appendLine("} as const;");
   sb.appendLine();
 
   return { source: sb.toString(), diagnostics: v.diagnostics };

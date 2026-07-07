@@ -34,9 +34,6 @@ public sealed class DomainKeyTypeBindingTests
             [KeyDomain.CLIENT_SECRET] = KeyType.Secret,
             [KeyDomain.MTLS_CA_ROOT] = KeyType.X509CaCertificate,
             [KeyDomain.MTLS_CA_INTERMEDIATE] = KeyType.X509CaCertificate,
-            ["audit"] = KeyType.AesPayload,
-            ["notifications"] = KeyType.AesPayload,
-            ["courier"] = KeyType.AesPayload,
         };
 
         var actual = KeyDomain.All.ToDictionary(
@@ -49,12 +46,14 @@ public sealed class DomainKeyTypeBindingTests
     }
 
     [Theory]
-    [InlineData("audit", KeyType.AesPayload)]
+    [InlineData(FixturePayloadDomains.PAYLOAD_A, KeyType.AesPayload)]
     [InlineData(KeyDomain.JWKS_SIGNING, KeyType.RsaSigning)]
     [InlineData(KeyDomain.COOKIE, KeyType.Secret)]
     [InlineData(KeyDomain.MTLS_CA_ROOT, KeyType.X509CaCertificate)]
     public void Create_ResolvedEntry_CarriesTheBoundKeyType(string domain, KeyType expected)
     {
+        using var fixtureSeam = FixturePayloadDomains.Register();
+
         KeyDomain.Create(domain).Data!.KeyType.Should().Be(expected);
     }
 
@@ -99,7 +98,7 @@ public sealed class DomainKeyTypeBindingTests
     [Theory]
     [InlineData("not-a-real-domain")]
     [InlineData("plaintext")]
-    [InlineData(" audit ")]
+    [InlineData(" cookie ")]
     public void FromTrusted_NonCatalogStoredValue_Throws_DataCorruption(string stored)
     {
         // A stored domain value with no catalog entry has no key-type binding — data
@@ -112,7 +111,7 @@ public sealed class DomainKeyTypeBindingTests
     }
 
     [Theory]
-    [InlineData("audit", "audit", KeyType.AesPayload)]
+    [InlineData(FixturePayloadDomains.PAYLOAD_A, FixturePayloadDomains.PAYLOAD_A, KeyType.AesPayload)]
     [InlineData("JWKS-SIGNING", KeyDomain.JWKS_SIGNING, KeyType.RsaSigning)]
     [InlineData("Mtls-Ca-Root", KeyDomain.MTLS_CA_ROOT, KeyType.X509CaCertificate)]
     public void FromTrusted_CatalogValue_ResolvesCanonicalEntryWithBinding(
@@ -121,6 +120,8 @@ public sealed class DomainKeyTypeBindingTests
         // Case-insensitive resolution: a legacy non-lowercase stored value still
         // resolves to its canonical catalog entry (binding attached), never to a
         // bindingless verbatim wrapper.
+        using var fixtureSeam = FixturePayloadDomains.Register();
+
         var domain = KeyDomain.FromTrusted(stored);
 
         domain.Value.Should().Be(expectedValue);

@@ -24,9 +24,6 @@ public sealed class KeyDomainTests
     }
 
     [Theory]
-    [InlineData("audit")]
-    [InlineData("notifications")]
-    [InlineData("courier")]
     [InlineData(KeyDomain.JWKS_SIGNING)]
     [InlineData(KeyDomain.COOKIE)]
     [InlineData(KeyDomain.CLIENT_SECRET)]
@@ -37,23 +34,11 @@ public sealed class KeyDomainTests
         KeyDomain.All.Should().Contain(d => d.Value == domain);
     }
 
-    [Fact]
-    public void All_ContainsExactly8Entries()
-    {
-        // audit, notifications, courier (3 non-plaintext from EncryptionDomains)
-        // + jwks-signing, cookie, client-secret, mtls-ca-root, mtls-ca-intermediate
-        // (5 KC-only) = 8
-        KeyDomain.All.Count.Should().Be(8);
-    }
-
     // -----------------------------------------------------------------------
     // Create — valid catalog members
     // -----------------------------------------------------------------------
 
     [Theory]
-    [InlineData("audit")]
-    [InlineData("notifications")]
-    [InlineData("courier")]
     [InlineData("jwks-signing")]
     [InlineData("cookie")]
     [InlineData("client-secret")]
@@ -129,19 +114,23 @@ public sealed class KeyDomainTests
     // -----------------------------------------------------------------------
 
     [Fact]
-    public void Create_UpperCaseAudit_NormalizesToLowercase()
+    public void Create_UpperCaseFixtureDomain_NormalizesToLowercaseAndTrims()
     {
-        var result = KeyDomain.Create(" AUDIT ");
+        using var fixtureSeam = FixturePayloadDomains.Register();
+
+        var result = KeyDomain.Create(" PAYLOAD-FIXTURE-A ");
         result.Success.Should().BeTrue();
-        result.Data!.Value.Should().Be("audit");
+        result.Data!.Value.Should().Be(FixturePayloadDomains.PAYLOAD_A);
     }
 
     [Fact]
-    public void Create_MixedCaseNotifications_NormalizesToLowercase()
+    public void Create_MixedCaseFixtureDomain_NormalizesToLowercase()
     {
-        var result = KeyDomain.Create("Notifications");
+        using var fixtureSeam = FixturePayloadDomains.Register();
+
+        var result = KeyDomain.Create("Payload-Fixture-A");
         result.Success.Should().BeTrue();
-        result.Data!.Value.Should().Be("notifications");
+        result.Data!.Value.Should().Be(FixturePayloadDomains.PAYLOAD_A);
     }
 
     // -----------------------------------------------------------------------
@@ -151,8 +140,10 @@ public sealed class KeyDomainTests
     [Fact]
     public void FromTrusted_CatalogValue_ResolvesCanonicalEntry()
     {
-        var domain = KeyDomain.FromTrusted("audit");
-        domain.Value.Should().Be("audit");
+        using var fixtureSeam = FixturePayloadDomains.Register();
+
+        var domain = KeyDomain.FromTrusted(FixturePayloadDomains.PAYLOAD_A);
+        domain.Value.Should().Be(FixturePayloadDomains.PAYLOAD_A);
     }
 
     [Fact]

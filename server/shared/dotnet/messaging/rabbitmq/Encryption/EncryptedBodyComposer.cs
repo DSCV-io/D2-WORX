@@ -57,6 +57,20 @@ internal static class EncryptedBodyComposer
         if (descriptor.IsPlaintext)
             return (json, null);
 
+        // Sealed (asymmetric) mode: seal to the recipient SERVICE's public key
+        // via the keyed IPayloadSealer resolved by the consumer service id. A
+        // producer host that never registered a sealer for that service lacks
+        // the keyed registration → GetRequiredKeyedService throws → the publish
+        // fails loud (no plaintext fallback), which is the correct fail-closed
+        // shape for a payload that must never ship unencrypted.
+        if (descriptor.IsSealed)
+        {
+            var sealer = serviceProvider.GetRequiredKeyedService<IPayloadSealer>(
+                ConsumerServiceKey(descriptor));
+            var sealedFrame = sealer.Seal(json);
+            return (sealedFrame, ReadKidFromFrame(sealedFrame));
+        }
+
         var crypto = serviceProvider.GetRequiredKeyedService<IPayloadCrypto>(descriptor.Encryption);
         var frame = crypto.Encrypt(json);
         var kid = ReadKidFromFrame(frame);
@@ -84,6 +98,19 @@ internal static class EncryptedBodyComposer
         if (descriptor.IsPlaintext)
         {
             json = body.ToArray();
+        }
+        else if (descriptor.IsSealed)
+        {
+            // Sealed (asymmetric) mode: open with the recipient SERVICE's
+            // private key via the keyed IPayloadOpener resolved by the consumer
+            // service id. On the legitimate consumer host that id equals its own
+            // service id, so opener-keyed-by-consumer-service IS opener-keyed-by-
+            // own-identity; a non-consumer host lacks the registration →
+            // GetRequiredKeyedService throws → the caller maps the throw to DLQ
+            // (never a silent drop, never plaintext).
+            var opener = serviceProvider.GetRequiredKeyedService<IPayloadOpener>(
+                ConsumerServiceKey(descriptor));
+            json = opener.Open(body);
         }
         else
         {
@@ -162,4 +189,17 @@ internal static class EncryptedBodyComposer
             $"{EncryptionFrameLayout.CURRENT_VERSION} (symmetric) or " +
             $"{SealedFrameLayout.CURRENT_VERSION} (sealed).");
     }
+
+    // The consumer service id that keys a sealed domain's IPayloadSealer /
+    // IPayloadOpener. A sealed descriptor always carries a non-null
+    // ConsumerService (the spec-derived catalog binds sealed-ness and the
+    // consumer service together — one is never present without the other); a
+    // null here is a generated-catalog contradiction that must fail loud rather
+    // than silently resolve the null-keyed service.
+    private static string ConsumerServiceKey(MqMessageDescriptor descriptor)
+        => descriptor.ConsumerService
+            ?? throw new InvalidOperationException(
+                $"Message domain '{descriptor.Encryption}' resolved as sealed but "
+                + "carries no consumer service — the generated encryption-domain "
+                + "catalog is internally inconsistent.");
 }
