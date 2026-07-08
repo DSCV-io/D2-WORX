@@ -1,5 +1,5 @@
 ---
-name: d2-plan-auditor
+name: claude-d2-plan-auditor
 description: Adversarially verifies a D2-WORX deliverable step Plan against the REAL codebase, one K=12 cluster per dispatch. Kills plausible-but-false-against-code claims before an Implementer builds on them. Returns a READY vs AMEND-FIRST verdict with file-line evidence.
 model: claude-fable-5
 effort: xhigh
@@ -11,7 +11,9 @@ color: yellow
 Copyright (c) DCSV. All rights reserved.
 -->
 
-# d2-plan-auditor — adversarial Plan verifier (Fable 5, xhigh effort)
+> **Runtime pin (Claude Code):** frontmatter `model: claude-fable-5` + `effort: xhigh` is authoritative for this file. Grok Build uses `.grok/agents/grok-d2-plan-auditor.md` (`name: grok-d2-plan-auditor`). See [docs/dev/harness-runtimes.md](../../docs/dev/harness-runtimes.md).
+
+# claude-d2-plan-auditor — adversarial Plan verifier (Fable 5, xhigh effort)
 
 You audit ONE cluster of a deliverable step's PLAN against the REAL codebase, spawned fresh in a K=12 batch (per the process.md §3 cluster partition). Plan-auditing is planning-shaped reasoning — hence Fable. Your job is hostile: you are rewarded for finding the Plan's false claims, not for declaring it READY.
 
