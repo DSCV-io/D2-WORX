@@ -9,6 +9,29 @@ Copyright (c) DCSV. All rights reserved.
 > ⚠️ **DO NOT START SERVICES MANUALLY** — Never run `dotnet run`, `pnpm dev`, `pnpm preview`, or any long-running server directly. Services are managed by Docker Compose.
 > E2E tests that self-manage their infrastructure (Testcontainers, child processes with cleanup) ARE allowed — they start and stop their own services.
 
+## Contents
+
+- [Docker Compose (service lifecycle)](#docker-compose-service-lifecycle)
+- [Build](#build)
+- [Rider/ReSharper Inspections (.NET)](#riderresharper-inspections-net)
+- [Test](#test)
+  - [NodeLeafClient cross-runtime mTLS harness prereq](#nodeleafclient-cross-runtime-mtls-harness-prereq)
+  - [Real-socket mutual-TLS harness proof (Linux/OpenSSL)](#real-socket-mutual-tls-harness-proof-linuxopenssl)
+- [Lint/Style](#lintstyle)
+- [Contract breaking-change gate](#contract-breaking-change-gate)
+  - [Force valve](#force-valve)
+  - [Deprecate-not-delete workflow](#deprecate-not-delete-workflow)
+- [Versioning](#versioning)
+  - [Product version](#product-version-the-deployable-d2-version)
+  - [Per-package version](#per-package-version-consumable-libs-d2shared--d2)
+- [Cutting a library release](#cutting-a-library-release)
+  - [Dry-run first (always)](#dry-run-first-always)
+  - [Cut a real release](#cut-a-real-release)
+  - [Tag](#tag)
+  - [List the consumable inventory locally](#list-the-consumable-inventory-locally)
+- [Per-package pack](#per-package-pack)
+- [Important](#important)
+
 ## Docker Compose (service lifecycle)
 
 ```bash
@@ -37,7 +60,7 @@ jb inspectcode server/D2.slnx --severity=WARNING --format=Text --no-build --outp
 jb inspectcode server/D2.slnx --project="Edge.App" --severity=WARNING --format=Text --no-build --output=inspectcode.log && cat inspectcode.log
 ```
 
-These catch warnings that `dotnet build` does NOT surface: `[MustDisposeResource]` misuse, captured variable/closure issues, object initialization suggestions, and other JetBrains-specific inspections. Must be zero warnings.
+These catch warnings that `dotnet build` does NOT surface: `[MustDisposeResource]` misuse, captured variable/closure issues, object initialization suggestions, and other JetBrains-specific inspections. Must be zero warnings. **Shared zero-warning parse** (do not re-inline): `tools/scripts/count-inspectcode-findings.sh` counts indented finding-lines in Text format (inspectcode exits 0 even when findings exist). Both the CI `inspectcode` job in `.github/workflows/test.yml` and the local gate at `.claude/skills/gate-suite/scripts/gates.sh` call that script; identity pin: `node --test tools/scripts/tests/count-inspectcode-findings.test.mjs`.
 
 ## Test
 
@@ -55,12 +78,20 @@ cd server/web && pnpm exec playwright test                                  # Pl
 
 # KeyCustodian Node client twin + RabbitMQ consumer runtime
 pnpm --filter @d2/key-custodian-client test                                 # client-ts unit + CSR/handshake suite
-pnpm --filter @d2/messaging-rabbitmq test                                    # consumer runtime suite (Testcontainer RabbitMQ)
+pnpm --filter @d2/messaging-rabbitmq test                                    # consumer runtime unit suite (excludes integration/)
+pnpm --filter @d2/messaging-rabbitmq test:integration                        # Testcontainers RabbitMQ integration suite
+pnpm --filter geo-data-pipeline test                                         # geo pipeline unit + parity suite
+node --test tools/scripts/tests/*.test.mjs                                   # repo script guards (explicit files; Node 24)
+
+# tools/ts-codegen (local mirror of the ts-shared-unit-tests CI steps)
+pnpm --filter ts-codegen typecheck                                           # tsc over src + tests
+pnpm --filter ts-codegen test                                                # vitest unit suite
+# CI: both steps run in the `TS Shared Unit Tests` job of `.github/workflows/test.yml`
 ```
 
 ### NodeLeafClient cross-runtime mTLS harness prereq
 
-The `.NET` `D2.Edge.Tests` `Integration/KeyCustodian/NodeLeafClient/` suite drives the REAL `@d2/key-custodian-client` over a live Node↔Kestrel loopback handshake. Its cert-presenting cases run ONLY when the client dist is built (`pnpm --filter @d2/key-custodian-client build`) and `node` is on `PATH`; otherwise they SKIP-WITH-REASON (they never silently pass). Build the client dist before `dotnet test server/D2.slnx` so those cases EXECUTE rather than skip. Unlike the Schannel-limited `MutualTlsSignerHarnessTests` below, this harness passes on Windows (Node/OpenSSL presents the private-CA leaf).
+The `.NET` `D2.Edge.Tests` `Integration/KeyCustodian/NodeLeafClient/` suite drives the REAL `@d2/key-custodian-client` over a live Node↔Kestrel loopback handshake. Its cert-presenting cases EXECUTE only when **all three** hold: (1) `node` is on `PATH`, (2) the client dist is built (`pnpm --filter @d2/key-custodian-client build`), and (3) a live loopback mutual-TLS handshake is feasible on the host (the harness spike). If any gate fails, those cases SKIP-WITH-REASON (they never silently pass). Build the client dist before `dotnet test server/D2.slnx` so (1)+(2) are satisfied; (3) is host/platform-dependent. The CI `Edge Integration Tests` lane installs workspace deps, builds the client dist, and asserts none of the node / dist / live-handshake-infeasibility skip-reason strings appear in the test log — so those cases EXECUTE in CI when the runner can complete the handshake. Unlike the Schannel-limited `MutualTlsSignerHarnessTests` below, this harness passes on Windows when node+dist are present (Node/OpenSSL presents the private-CA leaf).
 
 ### Real-socket mutual-TLS harness proof (Linux/OpenSSL)
 

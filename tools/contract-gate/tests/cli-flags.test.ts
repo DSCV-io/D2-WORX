@@ -76,6 +76,71 @@ describe("contract-gate CLI — --help", () => {
 });
 
 // ---------------------------------------------------------------------------
+// Unknown flags fail-loud
+// ---------------------------------------------------------------------------
+
+describe("contract-gate CLI — unrecognized flags", () => {
+  it("exits with code 2 on an unknown long flag", () => {
+    const result = runCli(["--against", "nova", "--not-a-real-flag"]);
+    expect(result.status).toBe(2);
+  });
+
+  it("writes a [contract-gate] error naming the unknown flag", () => {
+    const result = runCli(["--against", "nova", "--not-a-real-flag"]);
+    expect(result.stderr).toMatch(/\[contract-gate\] error: unrecognized flag/);
+    expect(result.stderr).toContain("--not-a-real-flag");
+  });
+
+  it("exits with code 2 on an unknown short flag", () => {
+    const result = runCli(["--against", "nova", "-x"]);
+    expect(result.status).toBe(2);
+    expect(result.stderr).toContain("-x");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Value-taking flags — missing value (not "unrecognized flag")
+// ---------------------------------------------------------------------------
+
+describe("contract-gate CLI — value-taking flags require a value", () => {
+  it("lone --against exits 2 with a missing-value message (not unrecognized)", () => {
+    const result = runCli(["--against"]);
+    expect(result.status).toBe(2);
+    expect(result.stderr).toContain(
+      "[contract-gate] error: --against requires a <ref> argument",
+    );
+    expect(result.stderr).not.toMatch(/unrecognized flag/);
+  });
+
+  it("--against followed by another flag exits 2 with a missing-value message", () => {
+    const result = runCli(["--against", "--skip-proto"]);
+    expect(result.status).toBe(2);
+    expect(result.stderr).toContain(
+      "[contract-gate] error: --against requires a <ref> argument",
+    );
+    expect(result.stderr).not.toMatch(/unrecognized flag/);
+  });
+
+  it("lone --repo-root exits 2 with a missing-value message (not unrecognized)", () => {
+    const result = runCli(["--repo-root"]);
+    expect(result.status).toBe(2);
+    expect(result.stderr).toContain(
+      "[contract-gate] error: --repo-root requires a <path> argument",
+    );
+    expect(result.stderr).not.toMatch(/unrecognized flag/);
+  });
+
+  it("--repo-root followed by another flag exits 2 with a missing-value message", () => {
+    const result = runCli(["--repo-root", "--against", "nova"]);
+    expect(result.status).toBe(2);
+    expect(result.stderr).toContain(
+      "[contract-gate] error: --repo-root requires a <path> argument",
+    );
+    expect(result.stderr).not.toMatch(/unrecognized flag/);
+  });
+});
+
+// ---------------------------------------------------------------------------
 // --proto-only + --json-only mutual exclusion
 // ---------------------------------------------------------------------------
 
@@ -212,6 +277,18 @@ describe("contract-gate CLI — --skip-proto suppresses the proto arm", () => {
     ]);
 
     expect(result.stdout).toContain("Spec/i18n/OpenAPI arm");
+  });
+
+  it("prints the discovery scope announcement on stdout when the JSON arm runs", () => {
+    const result = runCli([
+      "--against",
+      "nova",
+      "--skip-proto",
+      "--repo-root",
+      REPO_ROOT,
+    ]);
+
+    expect(result.stdout).toContain("Discovery scope:");
   });
 });
 

@@ -37,11 +37,11 @@ Spawn names are **runtime-prefixed** (full table → [docs/dev/harness-runtimes.
 
 | Role | Claude Code spawn | Grok Build spawn | Model tier |
 | --- | --- | --- | --- |
-| Mechanical auditor | `claude-d2-auditor` | `grok-d2-auditor` | Sonnet / Composer |
+| Mechanical auditor | `claude-d2-auditor` | `grok-d2-auditor` | Sonnet / Grok 4.5 |
 | Deep auditor (C2/C3/E2 + ruling-critical) | `claude-d2-auditor-deep` | `grok-d2-auditor-deep` | Opus / Grok 4.5 |
 | Aggregator | `claude-d2-aggregator` | `grok-d2-aggregator` | Opus / Grok 4.5 |
 | Fixer | `claude-d2-fixer` | `grok-d2-fixer` | Opus / Grok 4.5 |
-| Fixer-mechanical | `claude-d2-fixer-mechanical` | `grok-d2-fixer-mechanical` | Sonnet / Composer |
+| Fixer-mechanical | `claude-d2-fixer-mechanical` | `grok-d2-fixer-mechanical` | Sonnet / Grok 4.5 |
 | Planner / Plan-Auditor / Plan-amender / Investigator / Implementer | `claude-d2-<role>` | `grok-d2-<role>` | see harness-runtimes |
 
 - Mechanical clusters (A1, A2, B1, B2, B3, C1, D1, E1, E3) → mechanical auditor row.
@@ -56,7 +56,8 @@ Route each user/review flag to the cluster owning its §-number: PII/log-leak �
 - **Role + scope**: cluster code + its §-range; file scope = the step's touched paths (or `git diff --name-only` recipe) / whole deliverable at final-review.
 - **Reading list**: this cluster's category files + the completeness checklist + the round shared-context file. Reads ONLY what the brief names (no conversation memory).
 - **Working-tree note**: read the on-disk WORKING TREE, not `git show HEAD:` — latest Implementer/Fixer output is uncommitted (§24.19).
-- **Evidence-paste mandate (§24.13.1)**: paste the LITERAL grep command + output into the partial; PASS rows need file:line, N/A rows a scope-specific reason, FINDING rows severity + file:line + description + fix; Status prepends ✅/❌/⚪/🟡.
+- **Code discovery (when MCP available)**: prefer `codebase-memory-mcp` (`project: D2-WORX`) — `search_graph` / `search_code` (files|compact) — over Grep/Glob to **locate** symbols and files in scope. Graph is **not** SoT ([docs/dev/codebase-memory.md](../../../docs/dev/codebase-memory.md)). Cap `trace_path` depth; do not dump high-fan-in callers into the partial.
+- **Evidence-paste mandate (§24.13.1)**: still paste the LITERAL grep/shell command + output into the partial when the predicate Evidence line / checklist requires it — graph QNs are not a substitute. PASS rows need file:line, N/A rows a scope-specific reason, FINDING rows severity + file:line + description + fix; Status prepends ✅/❌/⚪/🟡.
 - **Anti-laziness preamble (verbatim)**: WALK EVERY NUMBERED SUBSECTION, no skipping; regex is a TOOL not source of truth (§24.13.2); sister-sweep at full predicate applicability (§24.13.3).
 - **Partial path**: `audit-rN/rN-partial-<CLUSTER>-<cluster-name>.md`.
 - **Constraints**: READ-ONLY (no Edit/NotebookEdit; no nested sub-agent spawn); no commits; never touch another Auditor's partial. Open the return with the model-attestation block. ≤N-line return.

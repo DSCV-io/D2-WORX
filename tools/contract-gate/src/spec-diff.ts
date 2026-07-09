@@ -20,6 +20,8 @@
 // Telemetry nested catalogs (meters → instruments → tags → values) are handled
 // by the NestedCatalogIdentity descriptor and recursive diffing.
 
+import { falsey } from "@d2/utilities";
+
 import type {
   CatalogIdentity,
   FlatCatalogIdentity,
@@ -68,7 +70,7 @@ function indexById(
 
     const id = item[idField];
 
-    if (typeof id !== "string" || id.length === 0) {
+    if (typeof id !== "string" || falsey(id)) {
       throw new Error(
         `[spec-diff] ${context}: catalog entry missing string identity field '${idField}': ${JSON.stringify(item)}`,
       );
@@ -228,6 +230,12 @@ export function diffFlatCatalog(
 /**
  * Diff a nested catalog (e.g. the telemetry catalog: meters → instruments →
  * tags → values). Recursively applies the keyed-set diff at each nesting level.
+ *
+ * @param before - Parsed baseline catalog document.
+ * @param after  - Parsed proposed catalog document.
+ * @param identity - The nested identity descriptor for this catalog.
+ * @param filePath - Source file path for finding messages.
+ * @returns Array of breaking findings (empty = no breaks).
  */
 export function diffNestedCatalog(
   before: unknown,

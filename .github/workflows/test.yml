@@ -6,14 +6,15 @@ name: PR
 
 # PR CI — parallel lanes.
 #
-# Active jobs ramp up as services come online.
-# Each job below is commented out until its target service or workspace
-# exists; uncomment once the cited path is populated.
-# Total wall time target: <5 minutes (all active jobs run in parallel).
+# Active jobs run in parallel as services and workspace packages come online.
+# Jobs whose target path is not yet populated remain commented with a brief
+# blocker note; active jobs are the current gate surface.
+# Total wall time target: <5 minutes for the standard lanes (all jobs run in
+# parallel); the inspectcode lane is the slow exception (~15-25 min).
 #
-# All active jobs must pass before merge. Which checks actually block a merge
-# is configured in branch protection (Settings -> Branches -> required status
-# checks), NOT the job name — names carry no special meaning to GitHub.
+# All active jobs must pass before merge. Required branch-protection checks
+# select by job DISPLAY name, so renaming a job silently detaches it from
+# Settings → Branches required status checks — treat display names as stable.
 
 on:
   pull_request:
@@ -57,6 +58,7 @@ jobs:
   proto-breaking:
     name: Proto breaking-change gate
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     if: github.event_name == 'pull_request'
     steps:
       - uses: actions/checkout@v4
@@ -69,9 +71,9 @@ jobs:
           node-version: "24"
       - uses: pnpm/action-setup@v4
       - name: pnpm install (contract-gate + its workspace deps)
-        run: pnpm install --filter "contract-gate..." --filter "@d2/typespec-emitters..."
+        run: pnpm install --fail-if-no-match --filter "contract-gate..." --filter "@d2/typespec-emitters..."
       - name: build contract-gate
-        run: pnpm --filter contract-gate build
+        run: pnpm --fail-if-no-match --filter contract-gate build
       - name: Proto breaking-change gate (buf breaking at FILE level vs nova)
         run: node tools/contract-gate/dist/cli.js --against nova --proto-only
 
@@ -84,6 +86,7 @@ jobs:
   contract-breaking:
     name: Contract breaking-change gate (spec / i18n / OpenAPI)
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     if: github.event_name == 'pull_request'
     steps:
       - uses: actions/checkout@v4
@@ -96,21 +99,23 @@ jobs:
           node-version: "24"
       - uses: pnpm/action-setup@v4
       - name: pnpm install (contract-gate + its workspace deps)
-        run: pnpm install --filter "contract-gate..." --filter "@d2/typespec-emitters..."
+        run: pnpm install --fail-if-no-match --filter "contract-gate..." --filter "@d2/typespec-emitters..."
       - name: build contract-gate
-        run: pnpm --filter contract-gate build
+        run: pnpm --fail-if-no-match --filter contract-gate build
       - name: Spec / i18n / OpenAPI breaking-change gate (JSON-diff vs nova)
         run: node tools/contract-gate/dist/cli.js --against nova --skip-proto
 
   # ---------------------------------------------------------------------------
   # Contract-gate unit tests — always on.
   # Runs the owned-code test suite for `tools/contract-gate` (footer parser,
-  # spec-diff, i18n-diff, openapi-diff, proto-exemption, catalog-identity, and
-  # the proto-arm integration test). §26.15/§26.16 owned-tooling validation.
+  # discovery, safe-args, cli-flags, baseline, catalog-identity, spec-diff,
+  # i18n-diff, openapi-diff, proto-exemption, proto-arm integration, and the
+  # run-spec-gate end-to-end harness). §26.15/§26.16 owned-tooling validation.
   # ---------------------------------------------------------------------------
   contract-gate-unit:
     name: Contract gate unit tests
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -118,11 +123,11 @@ jobs:
           node-version: "24"
       - uses: pnpm/action-setup@v4
       - name: pnpm install (contract-gate + its workspace deps)
-        run: pnpm install --filter "contract-gate..." --filter "@d2/typespec-emitters..." --filter "ts-codegen..."
+        run: pnpm install --fail-if-no-match --filter "contract-gate..." --filter "@d2/typespec-emitters..." --filter "ts-codegen..."
       - name: build contract-gate dependencies
-        run: pnpm --filter "@d2/typespec-emitters..." build
+        run: pnpm --fail-if-no-match --filter "@d2/typespec-emitters..." build
       - name: Contract gate unit + integration tests
-        run: pnpm --filter contract-gate test
+        run: pnpm --fail-if-no-match --filter contract-gate test
 
   # ---------------------------------------------------------------------------
   # Release-runner unit tests — always on.
@@ -140,13 +145,13 @@ jobs:
           node-version: "24"
       - uses: pnpm/action-setup@v4
       - name: pnpm install (release-runner + its workspace deps)
-        run: pnpm install --filter "release-runner..." --filter "ts-codegen..."
+        run: pnpm install --fail-if-no-match --filter "release-runner..." --filter "ts-codegen..."
       - name: build release-runner dependencies
-        run: pnpm --filter "release-runner^..." build
+        run: pnpm --fail-if-no-match --filter "release-runner^..." build
       - name: Release runner typecheck (src + tests)
-        run: pnpm --filter release-runner typecheck
+        run: pnpm --fail-if-no-match --filter release-runner typecheck
       - name: Release runner unit tests
-        run: pnpm --filter release-runner test
+        run: pnpm --fail-if-no-match --filter release-runner test
 
   # ---------------------------------------------------------------------------
   # Commit-lint unit tests — always on.
@@ -164,11 +169,52 @@ jobs:
           node-version: "24"
       - uses: pnpm/action-setup@v4
       - name: pnpm install (commit-lint)
-        run: pnpm install --filter "commit-lint"
+        run: pnpm install --fail-if-no-match --filter "commit-lint"
       - name: Commit lint typecheck
-        run: pnpm --filter commit-lint typecheck
+        run: pnpm --fail-if-no-match --filter commit-lint typecheck
       - name: Commit lint unit tests
-        run: pnpm --filter commit-lint test
+        run: pnpm --fail-if-no-match --filter commit-lint test
+
+  # ---------------------------------------------------------------------------
+  # Repo script tests — always on.
+  # Runs the node built-in test runner over tools/scripts/tests/*.test.mjs
+  # (commit/destructive-git guard hook matrix + PublicAPI / api-extractor empty-
+  # surface guards). Node built-ins only — no pnpm install. The hook script under
+  # test is committed (.claude/hooks/git-guard.sh). §26.15/§26.16 owned-tooling.
+  # Explicit-file glob is required: directory form does not discover *.test.mjs
+  # on Node 24.
+  # ---------------------------------------------------------------------------
+  repo-script-tests:
+    name: Repo script tests (node --test)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: tools/scripts guard suites (node built-in test runner)
+        run: node --test tools/scripts/tests/*.test.mjs
+
+  # ---------------------------------------------------------------------------
+  # Geo data pipeline tests — always on.
+  # Runs the tools/geo-data-pipeline vitest suite (unit + parity). Self-contained
+  # package (no workspace deps); vitest transforms TS sources directly. Parity
+  # tests read committed contracts/geo/* specs present via checkout.
+  # §26.15/§26.16 owned-tooling validation.
+  # ---------------------------------------------------------------------------
+  geo-data-pipeline-tests:
+    name: Geo Data Pipeline Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - uses: pnpm/action-setup@v4
+      - name: pnpm install (geo-data-pipeline only)
+        run: pnpm install --fail-if-no-match --filter geo-data-pipeline
+      - name: geo-data-pipeline tests
+        run: pnpm --fail-if-no-match --filter geo-data-pipeline test
 
   # ---------------------------------------------------------------------------
   # Versioning integration lane — required/blocking.
@@ -201,28 +247,60 @@ jobs:
       # the shared-TS subtree pulls @d2/* build deps; ts-codegen for prebuilds.
       - name: pnpm install (release-runner + shared-TS subtree + ts-codegen)
         run: >
-          pnpm install
+          pnpm install --fail-if-no-match
           --filter "release-runner..."
           --filter "./server/shared/typescript/**..."
           --filter "ts-codegen..."
       # The gated TS `.api.md` currency gate runs api-extractor against dist/.
       - name: build the shared-TS dists
-        run: pnpm --filter "./server/shared/typescript/**" -r build
+        run: pnpm --fail-if-no-match --filter "./server/shared/typescript/**" -r build
       # Build release-runner's workspace dependency closure (contract-gate,
       # ts-codegen, etc.) so import { ... } from "contract-gate" resolves at
       # test/runtime. Mirrors the release-runner-unit lane's build step.
       - name: build release-runner dependencies
-        run: pnpm --filter "release-runner^..." build
+        run: pnpm --fail-if-no-match --filter "release-runner^..." build
       - name: Versioning TS api.md currency + drift check
-        run: pnpm --filter release-runner test
+        run: pnpm --fail-if-no-match --filter release-runner test
       - name: Baseline drift check (API reports + source-based fingerprint)
-        run: pnpm --filter release-runner exec tsx src/drift-check-cli.ts
+        run: pnpm --fail-if-no-match --filter release-runner exec tsx src/drift-check-cli.ts
 
-  # lint-and-format — blocked: web half needs `server/web/` SvelteKit workspace
-  # (not yet resolvable — missing @d2/auth-bff-client workspace package); a
-  # dotnet-only inspectcode lane can follow in a later pass.
+  # ---------------------------------------------------------------------------
+  # JetBrains inspectcode — zero-warning gate (standalone; needs solution build).
+  # Parse twin of .claude/skills/gate-suite/scripts/gates.sh inspectcode count
+  # (gates.sh:36-44) and docs/COMMANDS.md inspectcode block — keep behavior-
+  # identical. inspectcode exits 0 even when findings exist; the log parse IS
+  # the gate. Debug build matches the local canon used with --no-build.
+  # ---------------------------------------------------------------------------
+  inspectcode:
+    name: JetBrains inspectcode (zero warnings)
+    runs-on: ubuntu-latest
+    needs: [build]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+      - name: restore dotnet tools (jb)
+        run: dotnet tool restore
+      - name: dotnet build (Debug — the config inspectcode analyzes with --no-build)
+        run: dotnet build server/D2.slnx
+      - name: jb inspectcode (zero warnings)
+        # Shared parse: tools/scripts/count-inspectcode-findings.sh
+        # (gates.sh + docs/COMMANDS.md; identity pin:
+        # tools/scripts/tests/count-inspectcode-findings.test.mjs).
+        run: |
+          dotnet jb inspectcode server/D2.slnx --severity=WARNING --format=Text --no-build --output=inspectcode.log
+          [ -f inspectcode.log ] || { echo "inspectcode.log missing"; exit 1; }
+          count=$(bash tools/scripts/count-inspectcode-findings.sh inspectcode.log)
+          echo "inspectcode finding-lines=$count"
+          if [ "$count" != "0" ]; then cat inspectcode.log; exit 1; fi
+
+  # lint-and-format (web half) — blocked: server/web/ SvelteKit workspace is not
+  # yet resolvable (missing @d2/auth-bff-client workspace package; tracked B18).
+  # The JetBrains inspectcode zero-warning assertion runs as the standalone
+  # `inspectcode` job above.
   # lint-and-format:
-  #   name: Lint + format
+  #   name: Lint + format (web)
   #   runs-on: ubuntu-latest
   #   steps:
   #     - uses: actions/checkout@v4
@@ -230,11 +308,6 @@ jobs:
   #       with:
   #         node-version: "24"
   #     - uses: pnpm/action-setup@v4
-  #       with:
-  #         version: 10
-  #     - uses: actions/setup-dotnet@v4
-  #       with:
-  #         dotnet-version: "10.0.x"
   #     - name: pnpm install (server/web)
   #       run: pnpm install --frozen-lockfile
   #       working-directory: server/web
@@ -243,15 +316,9 @@ jobs:
   #         pnpm exec eslint .
   #         pnpm exec prettier --check .
   #       working-directory: server/web
-  #     - name: dotnet build (StyleCop + analyzers)
-  #       run: dotnet build server/D2.slnx --configuration Release
-  #     - name: jb inspectcode
-  #       run: |
-  #         dotnet tool restore
-  #         dotnet jb inspectcode server/D2.slnx --severity=WARNING --no-build
 
   # ==========================================================================
-  # Activates per service — uncomment each block as the cited path ships.
+  # Per-service lanes — active for shipped paths; remaining blocks wait on web.
   # ==========================================================================
 
   build:
@@ -297,6 +364,15 @@ jobs:
           dotnet-version: "10.0.x"
       - run: dotnet test server/services/edge/tests --configuration Release -- --filter-namespace "D2.Edge.Tests.Unit*"
 
+  # ---------------------------------------------------------------------------
+  # Edge integration tests — includes NodeLeafClient cross-runtime harness.
+  # Node on PATH + a built @d2/key-custodian-client dist are necessary so the
+  # Node↔Kestrel cases EXECUTE rather than skip-with-reason; a feasible
+  # loopback mTLS handshake on the runner is also required (live-handshake
+  # feasibility). The standing skip-reason assertion fails the lane if node,
+  # client-dist, OR live-handshake-infeasibility skip messages appear in the
+  # test output (execute-not-skip for all three gates).
+  # ---------------------------------------------------------------------------
   edge-integration-tests:
     name: Edge Integration Tests
     runs-on: ubuntu-latest
@@ -306,7 +382,28 @@ jobs:
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: "10.0.x"
-      - run: dotnet test server/services/edge/tests --configuration Release -- --filter-namespace "D2.Edge.Tests.Integration*"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - uses: pnpm/action-setup@v4
+      - name: pnpm install (key-custodian client + workspace deps + ts-codegen)
+        run: pnpm install --fail-if-no-match --filter "@d2/key-custodian-client..." --filter "ts-codegen..."
+      - name: build @d2/key-custodian-client dist (+ dep dists)
+        run: pnpm --fail-if-no-match --filter "@d2/key-custodian-client..." -r build
+      - name: Edge integration tests
+        run: |
+          set -o pipefail
+          dotnet test server/services/edge/tests --configuration Release -- --filter-namespace "D2.Edge.Tests.Integration*" 2>&1 | tee edge-integration.log
+      - name: assert NodeLeafClient prereqs did not force skips
+        # Fails if node/dist OR live-handshake-infeasibility skip reasons appear —
+        # all three gates named in the job comment must hold for execute-not-skip.
+        run: |
+          skip_pat='node was not found on PATH|@d2/key-custodian-client dist is not built|did not complete the spike handshake|loopback mutual-TLS handshake could not be established|live-handshake spike could not run'
+          if grep -qE "$skip_pat" edge-integration.log; then
+            echo "NodeLeafClient cases still skipped (node, client dist, or live-handshake infeasibility)"
+            grep -E "$skip_pat" edge-integration.log || true
+            exit 1
+          fi
 
   ts-shared-unit-tests:
     name: TS Shared Unit Tests
@@ -324,29 +421,71 @@ jobs:
       # those prebuilds would fail. `server/web` (B18 — missing @d2/auth-bff-client)
       # is NOT in the closure, so the frozen-lockfile install remains clean.
       - name: pnpm install (shared-TS subtree + ts-codegen)
-        run: pnpm install --filter "./server/shared/typescript/**..." --filter "ts-codegen..."
+        run: pnpm install --fail-if-no-match --filter "./server/shared/typescript/**..." --filter "ts-codegen..."
       - name: build (shared-TS packages that need a dist/ before tests run)
-        run: pnpm --filter "./server/shared/typescript/**" -r build
+        run: pnpm --fail-if-no-match --filter "./server/shared/typescript/**" -r build
       - name: ts-codegen typecheck (src + tests)
-        run: pnpm --filter ts-codegen typecheck
+        run: pnpm --fail-if-no-match --filter ts-codegen typecheck
+      - name: ts-codegen unit tests
+        run: pnpm --fail-if-no-match --filter ts-codegen test
       - name: TS shared unit tests
-        run: pnpm --filter "./server/shared/typescript/**" -r test
+        run: pnpm --fail-if-no-match --filter "./server/shared/typescript/**" -r test
 
-  # ts-shared-integration-tests — activate when TS shared packages gain
-  # Testcontainers-backed integration tests; none exist today.
-  # ts-shared-integration-tests:
-  #   name: TS Shared Integration Tests
-  #   runs-on: ubuntu-latest
-  #   needs: [build]
-  #   steps:
-  #     - uses: actions/checkout@v4
-  #     - uses: actions/setup-node@v4
-  #       with:
-  #         node-version: "24"
-  #     - uses: pnpm/action-setup@v4
-  #     - run: pnpm install --filter "./server/shared/typescript/**..." --filter "ts-codegen..."
-  #     - run: pnpm --filter "./server/shared/typescript/**" -r build
-  #     - run: pnpm --filter "./server/shared/typescript/**" -r test:integration
+  # ---------------------------------------------------------------------------
+  # TS services unit tests — service-owned client packages under server/services.
+  # The pnpm workspace includes server/services/**; path filters auto-adopt a
+  # future service client-ts package. ts-codegen is in the install because
+  # shared-lib prebuild scripts invoke it. The build uses the dependency-
+  # closure filter (...) so @d2/* dep dists exist before vitest resolves them.
+  # ---------------------------------------------------------------------------
+  ts-services-unit-tests:
+    name: TS Services Unit Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - uses: pnpm/action-setup@v4
+      - name: pnpm install (services-TS subtree + ts-codegen)
+        run: pnpm install --fail-if-no-match --filter "./server/services/**..." --filter "ts-codegen..."
+      - name: build (workspace dependency dists the client packages import)
+        run: pnpm --fail-if-no-match --filter "./server/services/**..." -r build
+      - name: TS services unit tests
+        run: pnpm --fail-if-no-match --filter "./server/services/**" -r test
+
+  # ---------------------------------------------------------------------------
+  # TS integration tests (Testcontainers) — packages defining test:integration.
+  # pnpm -r runs only in packages that define the script (today: messaging-
+  # rabbitmq); wide path filters auto-adopt future suites in either subtree.
+  # Docker is available on ubuntu-latest (same host as the .NET Testcontainers
+  # lanes). Image-pull flake / anonymous Docker Hub rate-limit: suite carries
+  # generous timeouts; residual flake accepted via re-run.
+  # ---------------------------------------------------------------------------
+  ts-integration-tests:
+    name: TS Integration Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - uses: pnpm/action-setup@v4
+      - name: pnpm install (shared-TS + services-TS subtrees + ts-codegen)
+        run: pnpm install --fail-if-no-match --filter "./server/shared/typescript/**..." --filter "./server/services/**..." --filter "ts-codegen..."
+      - name: build (dists for the packages under test + their deps)
+        run: pnpm --fail-if-no-match --filter "./server/shared/typescript/**" --filter "./server/services/**..." -r build
+      - name: TS integration tests (Testcontainers)
+        run: |
+          set -o pipefail
+          pnpm --fail-if-no-match --filter "./server/shared/typescript/**" --filter "./server/services/**" -r test:integration 2>&1 | tee ts-integration.log
+      - name: assert integration suites executed
+        # Residual silent-green if filters match packages but none define test:integration.
+        run: |
+          if ! grep -qE 'messaging-rabbitmq|tests/integration/' ts-integration.log; then
+            echo "TS integration lane produced no rabbitmq integration suite evidence"
+            exit 1
+          fi
 
   # unit-tests-web — activates when `server/web/` SvelteKit workspace resolves
   # unit-tests-web:
@@ -413,26 +552,17 @@ jobs:
         with:
           dotnet-version: "10.0.x"
       - run: dotnet test server/shared/dotnet/tests/D2.Shared.Tests.csproj --configuration Release -- --filter-trait "Category=ContractFixtures"
-      - name: assert no fixture drift
-        run: git diff --exit-code server/shared/typescript/contract-tests/fixtures/
-
-  # contract-tests-parity — blocked: pnpm workspace install needs the missing
-  # @d2/auth-bff-client workspace package (B18) before --frozen-lockfile succeeds,
-  # and the repo needs a root `test:contracts` script.
-  # contract-tests-parity:
-  #   name: Contract parity tests (TS reads fixtures + asserts)
-  #   runs-on: ubuntu-latest
-  #   needs: [contract-fixtures-emit]
-  #   steps:
-  #     - uses: actions/checkout@v4
-  #     - uses: actions/setup-node@v4
-  #       with:
-  #         node-version: "24"
-  #     - uses: pnpm/action-setup@v4
-  #       with:
-  #         version: 10
-  #     - run: pnpm install --frozen-lockfile
-  #     - run: pnpm test:contracts
+      - name: assert no fixture drift (tracked changes AND untracked new files)
+        run: |
+          fixtures_dir=server/shared/typescript/contract-tests/fixtures
+          [ -d "$fixtures_dir" ] || { echo "fixtures dir missing: $fixtures_dir"; exit 1; }
+          status=$(git status --porcelain -- "$fixtures_dir/")
+          if [ -n "$status" ]; then
+            echo "fixture drift detected:"
+            echo "$status"
+            git diff -- "$fixtures_dir/"
+            exit 1
+          fi
 
   # ==========================================================================
   # TypeSpec byte-gate — active now (no service dependencies)
@@ -448,11 +578,11 @@ jobs:
           node-version: "24"
       - uses: pnpm/action-setup@v4
       - name: pnpm install (emitter subtree + ts-codegen build tool)
-        run: pnpm install --filter "@d2/typespec-emitters..." --filter "ts-codegen..."
+        run: pnpm install --fail-if-no-match --filter "@d2/typespec-emitters..." --filter "ts-codegen..."
       - name: build (emitter + decorators dist/)
-        run: pnpm --filter "@d2/typespec-emitters..." build
+        run: pnpm --fail-if-no-match --filter "@d2/typespec-emitters..." build
       - name: TypeSpec emitter tests (byte-parity gate)
-        run: pnpm --filter "@d2/typespec-emitters" test
+        run: pnpm --fail-if-no-match --filter "@d2/typespec-emitters" test
 
   # ==========================================================================
   # Pack smoke — active now (no service dependencies).
@@ -493,13 +623,13 @@ jobs:
 
       # ----- TS pack ---------------------------------------------------------
       - name: pnpm install (@d2/result subtree + ts-codegen)
-        run: pnpm install --filter "@d2/result..." --filter "ts-codegen..."
+        run: pnpm install --fail-if-no-match --filter "@d2/result..." --filter "ts-codegen..."
       - name: build @d2/result workspace dependencies
-        run: pnpm --filter "@d2/result^..." build
+        run: pnpm --fail-if-no-match --filter "@d2/result^..." build
       - name: build @d2/result
-        run: pnpm --filter @d2/result build
+        run: pnpm --fail-if-no-match --filter @d2/result build
       - name: pnpm pack @d2/result
-        run: pnpm --filter @d2/result pack --pack-destination /tmp/pack-smoke
+        run: pnpm --fail-if-no-match --filter @d2/result pack --pack-destination /tmp/pack-smoke
       - name: assert .tgz produced and contains dist/ not src/
         run: |
           tgz=$(ls /tmp/pack-smoke/d2-result-*.tgz)

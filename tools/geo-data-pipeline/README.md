@@ -22,7 +22,7 @@ Three-tier output layout at `contracts/geo/`:
 
 - **Tier 1 — `src-data/*.spec.json`** — pipeline-raw output (faithful capture of each upstream source with diagnostics + per-entry `_provenance`)
 - **Tier 2 — `*.spec.json` (root)** — codegen-ready entity-shaped specs (6 pipeline-derived + 1 hand-rolled peer: `geopolitical-entities.spec.json`)
-- **Tier 3** — generated C# + TS code in the downstream geo libs (`D2.Shared.Geo.Default` / `@d2/geo-default`); produced from Tier 2; lives OUTSIDE this directory. Canonical: the geo libs shipped as deliverable 0009-geo-libs — see [`docs/dev/deliverables/0009-geo-libs.md`](../../docs/dev/deliverables/0009-geo-libs.md) and the archived design at [`docs/archive/PHASE_1_GEO_LIBS.md`](../../docs/archive/PHASE_1_GEO_LIBS.md).
+- **Tier 3** — generated C# + TS code in the downstream geo libs (`D2.Shared.Geo.Default` / `@d2/geo-default`); produced from Tier 2; lives OUTSIDE this directory. Canonical: geo libs as shipped — see [`docs/dev/deliverables/0009-geo-libs.md`](../../docs/dev/deliverables/0009-geo-libs.md) and [`contracts/geo/README.md`](../../contracts/geo/README.md).
 
 See [`../../contracts/geo/README.md`](../../contracts/geo/README.md) for the tier details.
 
@@ -42,7 +42,7 @@ All upstream fetches go through `util/cache.ts` (HTTP GET with provenance sideca
 
 ### Subdivision source-priority architecture
 
-The subdivisions transformer (`src/transformers/subdivisions.ts`) uses Wikidata.en (P300 SPARQL label) as the PRIMARY source for English displayName / officialName, falling back to debian/iso-codes' `name` field on the ~140 codes Wikidata lacks `.en` for. CLDR is NO LONGER used for English subdivision displayName (stale for many post-2020 ISO 3166-2 reassignments — e.g., the 2020-11-24 Iran reassignment). Debian remains the authority for WHICH codes exist; CLDR-only codes (`D2GEO011` zombies) are filtered automatically.
+The subdivisions transformer (`src/transformers/subdivisions.ts`) uses Wikidata.en (P300 SPARQL label) as the PRIMARY source for English displayName / officialName, falling back to debian/iso-codes' `name` field on the ~140 codes Wikidata lacks `.en` for. CLDR is not a source for English subdivision displayName (stale for many post-2020 ISO 3166-2 reassignments — e.g., the 2020-11-24 Iran reassignment). Debian remains the authority for WHICH codes exist; CLDR-only codes (`D2GEO011` zombies) are filtered automatically.
 
 Norwegian endonyms use a special cascade `nb → nn → no → da → sv` because Wikidata stores Norwegian under multiple Bokmål/Nynorsk variants and lacks a unified `no` locale for many Norwegian subdivisions.
 
@@ -74,8 +74,8 @@ Add overlay entries (`subdivisions.overlays.spec.json`) ONLY when Wikidata.en is
 | Bump catalog version            | `pnpm geo:bump-version <semver>`           | Cut a new `catalogVersion` value for the next refresh                                                                         |
 | Per-catalog refresh             | `pnpm write:countries` (etc.)              | Iterate on a single catalog without running the full pipeline                                                                 |
 | Tier 2 only                     | `pnpm tier-2:build`                        | Regenerate Tier 2 from existing Tier 1 (skip upstream pulls)                                                                  |
-| Parity tests                    | `pnpm test`                                | Verify cross-catalog FK integrity + denormalization + encoding round-trip                                                     |
-| TypeScript build                | `pnpm run build`                           | Verify TS compiles before commit (CI mirror)                                                                                  |
+| Parity tests                    | `pnpm test`                                | Verify cross-catalog FK integrity + denormalization + encoding round-trip (CI mirror)                                         |
+| TypeScript build                | `pnpm run build`                           | Verify TS compiles before commit                                                                                              |
 
 ## Cache
 
@@ -127,6 +127,13 @@ CLDR doesn't ship `currencies.json` / `numbers.json` / `ca-gregorian.json` for e
 | `@types/node`, `@types/papaparse` | MIT        | TS type declarations                              |
 
 Standalone tool — no `@d2/*` workspace dependencies. Build and tests run in isolation.
+
+## Validation ledger
+
+See [VALIDATION.md](./VALIDATION.md) for the §26.15/§26.16 owned-code validation table —
+each pipeline module class names what it is validated against (synthetic fixtures, real
+committed `contracts/geo/*` specs, or operator refresh) plus any replace-trigger for future
+doubles or live-network e2e promotion.
 
 ## License attribution
 

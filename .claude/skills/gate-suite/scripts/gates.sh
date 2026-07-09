@@ -35,13 +35,17 @@ echo "gates:   build warnings=$WARN errors=$ERR (log: $LOGDIR/build.log)"
 echo "gates: [inspect] jb inspectcode server/D2.slnx --severity=WARNING --no-build"
 jb inspectcode server/D2.slnx --severity=WARNING --format=Text --no-build \
    --output="$LOGDIR/inspect.log" > "$LOGDIR/inspect.stdout" 2>&1 || rc=1
-# Non-header lines = actual findings (the Text format prefixes headers with no leading space).
-# grep -c always prints exactly one count line; head -1 guards against any doubling
-# and the pipe masks grep's no-match exit-1 so it never trips `set -o pipefail` upstream.
-ICOUNT=$(grep -cE '^\s+' "$LOGDIR/inspect.log" 2>/dev/null | head -1)
-[ -n "$ICOUNT" ] || ICOUNT=0
+# Single source of truth: tools/scripts/count-inspectcode-findings.sh
+# (CI test.yml inspectcode job + docs/COMMANDS.md cite the same script;
+# identity pin: tools/scripts/tests/count-inspectcode-findings.test.mjs).
+ICOUNT=$(bash "$ROOT/tools/scripts/count-inspectcode-findings.sh" "$LOGDIR/inspect.log")
 echo "gates:   inspectcode finding-lines=$ICOUNT (log: $LOGDIR/inspect.log)"
-[ "$ICOUNT" != 0 ] && rc=1
+if [ "$ICOUNT" != 0 ]; then
+  # Dump findings on non-zero so the failure is diagnosable (shared script --fail
+  # would exit 1; we keep gates.sh rc aggregation and dump explicitly).
+  cat "$LOGDIR/inspect.log"
+  rc=1
+fi
 
 run_tests() {
   local proj="$1" name="$2" log="$LOGDIR/test-$2.log"

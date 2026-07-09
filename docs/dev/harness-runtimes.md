@@ -48,6 +48,7 @@ Examples: `claude-d2-implementer` vs `grok-d2-implementer`. Role vocabulary in p
 | Agent **model / effort pins** | Dual table below | Claude files vs Grok files |
 | Hooks / deny | `.claude/settings.json` (Grok loads via Claude compat) | Grok-native hooks under `.grok/hooks/` only if needed |
 | MCP | Optional | Claude vs Grok config surfaces |
+| **Codebase-memory MCP** | Usage law: [codebase-memory.md](codebase-memory.md) (graph = discovery accelerator, **not** SoT; Grep still for §24.13.1 Evidence paste) | Server install / MCP JSON path per host |
 | Memory | Optional | Per-product memory stores |
 
 **Damage rule:** never change Claude agent model pins to Grok IDs (or vice versa). never collapse spawn names back to unprefixed `d2-*` while both trees exist.
@@ -60,13 +61,15 @@ Examples: `claude-d2-implementer` vs `grok-d2-implementer`. Role vocabulary in p
 | --- | --- | --- | --- |
 | **Planning / judgment premium** | Orchestrator, Planner, Plan-Auditor, Plan-amender | `claude-fable-5` (Planner `effort: max`; Plan-Auditor `xhigh`; others `high`) | `grok-4.5` · `effort: high` (4.5 ceiling is **high** — no xhigh/max on this model) |
 | **Deep workhorse** | Aggregator, Auditor-deep (C2/C3/E2), Implementer, Fixer | `claude-opus-4-8` · `effort: high` | `grok-4.5` · `effort: high` |
-| **Volume / tight-contract** | Mechanical Auditor, Fixer-mechanical, Investigator | `claude-sonnet-4-6` · high / medium | `grok-composer-2.5-fast` · high / medium |
+| **Volume / tight-contract** | Mechanical Auditor, Fixer-mechanical, Investigator | `claude-sonnet-4-6` · high / medium | **`grok-4.5` · `medium`** (ex-Composer seats; high is overkill for volume) |
 
-**Why Grok collapses Fable+Opus into `grok-4.5`:** strongest available seat; Composer is the volume seat only.
+**Why Grok collapses all three tiers onto `grok-4.5`:** (1) strongest available seat for planning/deep; (2) **cost ban on `grok-composer-2.5-fast`** (user ruling 2026-07-09) — higher $/token than `grok-4.5` on this billing surface and burned ~5% of a weekly budget on a single K=12 deliverable audit wave; (3) live `grok models` lists only `grok-4.5` + `grok-composer-2.5-fast` (no non-fast Composer ID to pin). Role *fences* (mechanical vs deep auditor, Fixer-mechanical STOP) stay; product model does not differ.
+
+**Do not dispatch `grok-composer-2.5-fast`** for any D2-WORX role until the user re-approves a volume seat after pricing changes.
 
 **Sweeping carve-out (Implementer / Fixer):** criteria unchanged. On Claude: Opus → Fable. On Grok: still cite + self-attest even when model stays `grok-4.5`.
 
-**Verify live IDs:** `grok models` → `grok-4.5`, `grok-composer-2.5-fast`.
+**Verify live IDs:** `grok models` → default `grok-4.5`; treat `grok-composer-2.5-fast` as **available-but-banned** for this project.
 
 ---
 
@@ -84,7 +87,7 @@ Examples: `claude-d2-implementer` vs `grok-d2-implementer`. Role vocabulary in p
 1. **Pin file:** `.grok/agents/grok-d2-<role>.md`
 2. **Spawn:** `spawn_subagent` with `subagent_type: grok-d2-<role>` (e.g. `grok-d2-implementer`). **No separate model arg** — frontmatter is the pin. Never `model: inherit` on these roles.
 3. **Override:** §13.14 only (no silent `[subagents.models]` overrides for D2 roles).
-4. **Attestation:** `Model: grok-4.5` or `Model: grok-composer-2.5-fast`.
+4. **Attestation:** `Model: grok-4.5` (all D2 roles; never attest composer-2.5-fast for this project).
 5. **After pin/name changes:** restart the Grok session, then `grok inspect` + smoke spawn.
 
 ### Future Codex (Z)
@@ -101,12 +104,12 @@ Examples: `claude-d2-implementer` vs `grok-d2-implementer`. Role vocabulary in p
 | Plan-Auditor | `claude-d2-plan-auditor` | `claude-fable-5` · xhigh | `grok-d2-plan-auditor` | `grok-4.5` · high |
 | Plan-amender | `claude-d2-plan-amender` | `claude-fable-5` · high | `grok-d2-plan-amender` | `grok-4.5` · high |
 | Aggregator | `claude-d2-aggregator` | `claude-opus-4-8` · high | `grok-d2-aggregator` | `grok-4.5` · high |
-| Auditor (mechanical) | `claude-d2-auditor` | `claude-sonnet-4-6` · high | `grok-d2-auditor` | `grok-composer-2.5-fast` · high |
+| Auditor (mechanical) | `claude-d2-auditor` | `claude-sonnet-4-6` · high | `grok-d2-auditor` | `grok-4.5` · medium |
 | Auditor-deep | `claude-d2-auditor-deep` | `claude-opus-4-8` · high | `grok-d2-auditor-deep` | `grok-4.5` · high |
 | Implementer | `claude-d2-implementer` | `claude-opus-4-8` · high | `grok-d2-implementer` | `grok-4.5` · high |
 | Fixer | `claude-d2-fixer` | `claude-opus-4-8` · high | `grok-d2-fixer` | `grok-4.5` · high |
-| Fixer-mechanical | `claude-d2-fixer-mechanical` | `claude-sonnet-4-6` · medium | `grok-d2-fixer-mechanical` | `grok-composer-2.5-fast` · medium |
-| Investigator | `claude-d2-investigator` | `claude-sonnet-4-6` · high | `grok-d2-investigator` | `grok-composer-2.5-fast` · high |
+| Fixer-mechanical | `claude-d2-fixer-mechanical` | `claude-sonnet-4-6` · medium | `grok-d2-fixer-mechanical` | `grok-4.5` · medium |
+| Investigator | `claude-d2-investigator` | `claude-sonnet-4-6` · high | `grok-d2-investigator` | `grok-4.5` · medium |
 | Orchestrator (main) | (session) | Fable 5 | (session) | `grok-4.5` · high |
 
 ---
@@ -115,9 +118,10 @@ Examples: `claude-d2-implementer` vs `grok-d2-implementer`. Role vocabulary in p
 
 1. Restart Grok CLI (spawn registry + system prompt).
 2. `grok inspect` — agents show `grok-d2-*` from `.grok/agents/`; no bare `d2-*` left.
-3. Smoke: `grok-d2-investigator` → expect `grok-composer-2.5-fast`; `grok-d2-planner` → expect `grok-4.5`.
+3. Smoke: `grok-d2-investigator` / `grok-d2-auditor` / `grok-d2-fixer-mechanical` → expect **`grok-4.5` · medium** (not composer-2.5-fast; not high); `grok-d2-planner` / deep seats → expect `grok-4.5` · high.
 4. Claude Code (when used): spawn `claude-d2-*` only.
 5. Never commit without **per-occurrence** user permission for THIS commit. Take every commit through the sanctioned `cycle-commit` path (plants the one-shot `.claude/.commit-authorized` marker + EXIT-trap-removes it — the `git-guard` hook blocks any direct `git commit`); never a raw `git commit` without the marker. Do not add `Co-Authored-By` trailers.
+6. If **codebase-memory-mcp** is connected: ensure project `D2-WORX` is indexed (`index_status` / `index_repository`) before heavy discovery work. Usage law → [codebase-memory.md](codebase-memory.md).
 
 ---
 

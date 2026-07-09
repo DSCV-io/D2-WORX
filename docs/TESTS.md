@@ -248,17 +248,15 @@ The real-socket path itself is then proven in the deploy-target container — th
 
 ---
 
-## Required CI Gate
+## Tracked CI gate — key-rotation integration (NOT IMPLEMENTED)
 
-`integration-key-rotation` is non-skippable. Coverage:
+`integration-key-rotation` is a **tracked deliverable (NOT IMPLEMENTED)** — no workflow job for it is present in `.github/workflows/test.yml` (active or commented). The KeyCustodian state machine and key lifecycle are shipped (see [KeyCustodian README](../server/services/edge/key-custodian/README.md)); the compromise-response runbook (executable CLI invocations, detection criteria, recovery procedures) and the non-skippable CI gate that pins them remain open design work. Intended coverage for that gate:
 
 - Graceful rotation under load (publishers + consumers; no message loss; in-flight old-kid messages still decrypt during grace)
 - Grace expiry (retired kids removed from production keyring; stale messages → DLQ with explicit error)
 - Emergency rotation (compromise marking is terminal; cannot be promoted back)
 - Race conditions (rotation while N replicas publishing concurrently)
 - Archive decryption (ops CLI fetches retired/compromised kids on demand)
-
-The workflow job at `.github/workflows/test.yml` is commented out — the KeyCustodian state machine and key lifecycle are shipped (see [KeyCustodian README](../server/services/edge/key-custodian/README.md)), but the compromise-response runbook (executable CLI invocations, detection criteria, recovery procedures) is a tracked future deliverable.
 
 ---
 
@@ -269,4 +267,4 @@ By dropping the cross-service tier we lose:
 - **Cross-service contract drift detection in CI** — caught by code review + the proto versioning policy + production observability
 - **Full-flow happy-path verification** — caught by manual testing (you click through critical flows after meaningful changes)
 
-For pre-alpha (no users), this is acceptable. The criteria for adding a pre-merge cross-service gate are tracked as a future deliverable decision.
+For pre-alpha (no users), this is acceptable. The criteria for adding a pre-merge cross-service gate remain a tracked open deliverable decision.

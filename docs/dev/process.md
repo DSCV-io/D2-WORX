@@ -279,16 +279,18 @@ Each role is spawned with fresh context + a tightly-scoped prompt (**no reuse ac
 
 | Role | Spawn / file (Claude · Grok) | Spawned when | Tool access | Returns |
 | --- | --- | --- | --- | --- |
-| **Planner** | `claude-d2-planner` · `grok-d2-planner` | Start of each step | Read, Grep, Glob, Write (journal Plan section; no Edit / NotebookEdit) | Step Plan section + summary |
-| **Plan-Auditor** (parallel ×K=12) | `claude-d2-plan-auditor` · `grok-d2-plan-auditor` | After Planner (new types / patterns / >50-file scope per §24.16) | Read, Grep, Glob, Bash (read-only), Write (own partial; no Edit / NotebookEdit / no sub-agent spawn) | Partial big-table chunk auditing the Plan section for its cluster |
-| **Plan-amender** | `claude-d2-plan-amender` · `grok-d2-plan-amender` | When Plan-Audit Aggregator surfaces findings | Read, Grep, Glob, Edit (journal Plan section + Plan-Audit fix log only) | Plan-section edits + appended Plan-Audit fix-log entries |
-| **Implementer** | `claude-d2-implementer` · `grok-d2-implementer` | After Planner (carve-out steps) OR after Plan-Audit CLEAN | All | Files touched + tests added + build / inspectcode status |
-| **Auditor** (parallel ×K=12) | `claude-d2-auditor` · `grok-d2-auditor` | After Implementer | Read, Grep, Glob, Bash (read-only), Write (own partial; no Edit / NotebookEdit / no sub-agent spawn) | Partial big-table chunk for its cluster ([partition](#auditor-cluster-partition-canonical-k12)) |
+| **Planner** | `claude-d2-planner` · `grok-d2-planner` | Start of each step | Read, Grep, Glob, codebase-memory (discovery), Write (journal Plan section; no Edit / NotebookEdit) | Step Plan section + summary |
+| **Plan-Auditor** (parallel ×K=12) | `claude-d2-plan-auditor` · `grok-d2-plan-auditor` | After Planner (new types / patterns / >50-file scope per §24.16) | Read, Grep, Glob, codebase-memory (discovery), Bash (read-only), Write (own partial; no Edit / NotebookEdit / no sub-agent spawn) | Partial big-table chunk auditing the Plan section for its cluster |
+| **Plan-amender** | `claude-d2-plan-amender` · `grok-d2-plan-amender` | When Plan-Audit Aggregator surfaces findings | Read, Grep, Glob, codebase-memory (discovery), Edit (journal Plan section + Plan-Audit fix log only) | Plan-section edits + appended Plan-Audit fix-log entries |
+| **Implementer** | `claude-d2-implementer` · `grok-d2-implementer` | After Planner (carve-out steps) OR after Plan-Audit CLEAN | All (graph-first discovery; §24.13.1 Evidence greps still literal) | Files touched + tests added + build / inspectcode status |
+| **Auditor** (parallel ×K=12) | `claude-d2-auditor` · `grok-d2-auditor` | After Implementer | Read, Grep, Glob, codebase-memory (discovery), Bash (read-only), Write (own partial; no Edit / NotebookEdit / no sub-agent spawn) | Partial big-table chunk for its cluster ([partition](#auditor-cluster-partition-canonical-k12)) |
 | **Auditor-deep** (parallel ×K) | `claude-d2-auditor-deep` · `grok-d2-auditor-deep` | After Implementer, for C2 / C3 / E2 + ruling-critical clusters | Same as Auditor | Partial big-table chunk for its judgment-heavy cluster |
 | **Aggregator** (one per audit round) | `claude-d2-aggregator` · `grok-d2-aggregator` | After all 12 Auditors (or 12 Plan-Auditors) return | Read, Edit (journal + audit artifacts only; no sub-agent spawn) | Merged canonical big table + consolidated findings-log entry + cross-cluster verification |
-| **Fixer** | `claude-d2-fixer` · `grok-d2-fixer` | When findings exist | All | Files changed + own fix-log file |
+| **Fixer** | `claude-d2-fixer` · `grok-d2-fixer` | When findings exist | All (graph-first discovery; sister-sweep Greps still literal per §24.13.3–.4) | Files changed + own fix-log file |
 | **Fixer-mechanical** | `claude-d2-fixer-mechanical` · `grok-d2-fixer-mechanical` | When findings are enumerated mechanical scope (rewrites / re-points / renames / spelling / line-wraps) | All | Files changed + own fix-log file; STOPs and hands back on judgment work |
 | **Final-reviewer** (parallel ×K) | (auditor / auditor-deep defs) | Before SHIP | Same as Auditor | Cluster-scoped partial big tables at deliverable scope; Aggregator merges |
+
+**Code discovery (token discipline):** when `codebase-memory-mcp` is available and project `D2-WORX` is indexed, sub-agents **prefer** graph tools (`search_graph`, `search_code` files/compact) over Grep/Glob for locating symbols and files. The graph is **not** source of truth — disk Read + literal Evidence Greps win for predicate rows ([codebase-memory.md](codebase-memory.md)).
 
 **Key design decisions:**
 
@@ -307,7 +309,7 @@ Each role is spawned with fresh context + a tightly-scoped prompt (**no reuse ac
 
 **The git-tracked pin files for the active runtime are the CANONICAL source** for each role's model, effort, tool-access, and mission prompt; this section describes how those roles OPERATE and WHY each sits on its **capability tier**. The table below uses Claude/Anthropic product names (historical + Claude-default wording) and **Claude spawn/file names**; Grok equivalents are in [harness-runtimes.md](harness-runtimes.md). All other references (rules.md, CLAUDE.md) cross-link here for *behavior*; on any model / effort / tool / spawn-name specific, the **active runtime's** pinned definition wins. Predicate-of-record (walked every audit round): [rules.md §24.0i](rules/24-audit-evidence-discipline-meta-how-to-audit.md#24-audit-evidence-discipline-meta--how-to-audit).
 
-Three tiers: **Fable** = planning-shaped reasoning; **Opus** = deep-reasoning workhorse (synthesis + heavy bounded authorship); **Sonnet** = light workhorse (predicate-walking + grep + mechanical). Retier + pinned IDs per user direction 2026-07-07 — Sonnet workhorse for auditors / investigators / mechanical fixes; Fable reserved for planning-shaped reasoning, `max` effort only for the Planner (Claude). On Grok, planning + deep workhorse both pin `grok-4.5` · `high` (that model's effort ceiling); volume seats pin `grok-composer-2.5-fast`.
+Three tiers: **Fable** = planning-shaped reasoning; **Opus** = deep-reasoning workhorse (synthesis + heavy bounded authorship); **Sonnet** = light workhorse (predicate-walking + grep + mechanical). Claude pins: Fable / Opus / Sonnet per table. **Grok (user ruling 2026-07-09):** **all** roles pin `grok-4.5` — planning/deep · **`high`**; volume seats (mechanical Auditor / Investigator / Fixer-mechanical) · **`medium`** (high overkill for ex-Composer work). **`grok-composer-2.5-fast` is cost-banned**. Role fences still apply.
 
 | Role | Claude definition (spawn / file) | Model · effort | Why this model |
 | --- | --- | --- | --- |
@@ -335,7 +337,7 @@ Grok spawn names replace the `claude-` prefix with `grok-` (e.g. `grok-d2-implem
 3. **Cross-runtime refactor** — coordinated .NET + TS changes (naming sweep across both, cross-language rename, parity-test alignment).
 4. **Cascading pipeline change** — changes a code-gen pipeline (or its input) and regenerates downstream consumer assemblies.
 
-The carve-out applies ONLY to Implementer / Fixer (Opus → Fable). Escalating any other role ABOVE its pinned tier — an Auditor / Investigator / Fixer-mechanical to Opus or Fable, an Aggregator or a Plan role to a different model — requires explicit per-occurrence user approval per [rules.md §13.14](rules/13-permission-action-discipline.md#13-permission--action-discipline). The codified mechanical-auditor (Sonnet/Composer) → auditor-deep (Opus/Grok 4.5) split for the C2 / C3 / E2 + ruling-critical clusters is a role CHOICE, not an escalation, and needs no approval.
+The carve-out applies ONLY to Implementer / Fixer (Opus → Fable). Escalating any other role ABOVE its pinned tier — an Auditor / Investigator / Fixer-mechanical to Opus or Fable (Claude), an Aggregator or a Plan role to a different model — requires explicit per-occurrence user approval per [rules.md §13.14](rules/13-permission-action-discipline.md#13-permission--action-discipline). The codified mechanical-auditor → auditor-deep split for C2 / C3 / E2 + ruling-critical is a role CHOICE (Claude: Sonnet → Opus; Grok: same product model `grok-4.5`, different mission pin), not an escalation, and needs no approval.
 
 **Pinned-definition overrides** — the active runtime's agent definitions (Claude: `.claude/agents/claude-d2-*.md`; Grok: `.grok/agents/grok-d2-*.md`) pin each role's model + effort + tool-access + spawn `name:`. Overriding any pinned value on a specific dispatch (a different `model`, a different `effort`, relaxing a `disallowedTools` fence, or using the wrong runtime's spawn name) requires the same §13.14-style per-occurrence user acknowledgment naming the pinned value bypassed — the codified Sweeping carve-out above is the ONE exception.
 
@@ -481,7 +483,7 @@ Every sub-agent dispatch brief follows one skeleton; roles differ only in the de
 
 - **Role + scope** — the role + the file/predicate scope (per-step touched files / whole deliverable / one cluster's §-range / one Plan section).
 - **Reading list** — the exact artifacts to read (shared-context file, journal Plan section, cluster category files, rules.md index). A sub-agent reads ONLY what the brief names — it has NO conversation memory.
-- **Spawn name + model + self-attestation** — dispatch the **active-runtime** pin only ([harness-runtimes.md](harness-runtimes.md)): IF Claude Code → `subagent_type: claude-d2-<role>` and pass `model` matching the pin (`claude-fable-5` / `claude-opus-4-8` / `claude-sonnet-4-6` or shorthand per host); IF Grok Build → `subagent_type: grok-d2-<role>` and **do not** pass a separate model arg (frontmatter is the pin: `grok-4.5` / `grok-composer-2.5-fast`). Every return summary MUST open with the model-attestation block (below).
+- **Spawn name + model + self-attestation** — dispatch the **active-runtime** pin only ([harness-runtimes.md](harness-runtimes.md)): IF Claude Code → `subagent_type: claude-d2-<role>` and pass `model` matching the pin (`claude-fable-5` / `claude-opus-4-8` / `claude-sonnet-4-6` or shorthand per host); IF Grok Build → `subagent_type: grok-d2-<role>` and **do not** pass a separate model arg (frontmatter is the pin: **`grok-4.5` only** — never `grok-composer-2.5-fast`). Every return summary MUST open with the model-attestation block (below).
 - **Return format** — the structured summary shape for the role (files + tests + build state; or a partial big-table chunk; or the merged table + findings).
 - **Journal-artifact requirement** — which of the three artifacts (big table / findings log / fix log) the role writes, if any: Auditors write disposable partials; the Aggregator writes the canonical big table + findings-log subsection; the Fixer writes fix-log entries; the orchestrator writes nothing domain-level.
 - **Constraints** — READ-ONLY tools for Auditors / Aggregator; no nested sub-agent spawning; no commits; no touching another Auditor's partial.
@@ -489,7 +491,7 @@ Every sub-agent dispatch brief follows one skeleton; roles differ only in the de
 **Model-attestation block (opens every return summary):**
 
 ```
-Model: <runtime product model id — Claude e.g. claude-fable-5 / claude-opus-4-8 / claude-sonnet-4-6; Grok e.g. grok-4.5 / grok-composer-2.5-fast>
+Model: <runtime product model id — Claude e.g. claude-fable-5 / claude-opus-4-8 / claude-sonnet-4-6; Grok: grok-4.5 only>
 Tier-override reason (if the pinned tier was overridden — e.g. an Implementer / Fixer escalated to planning tier / Fable): <criterion # + justification, verbatim from dispatch brief>
 ```
 

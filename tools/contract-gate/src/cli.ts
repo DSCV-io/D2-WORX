@@ -37,6 +37,7 @@ import { commitMessagesInRange } from "./git.js";
 import { parseBreakingFooters } from "./footer-parser.js";
 import { runProtoArm } from "./proto-arm.js";
 import { runSpecGate } from "./run-spec-gate.js";
+import { formatScopeAnnouncement } from "./discovery.js";
 import type { BreakingFinding } from "./breaking-finding.js";
 
 // ---------------------------------------------------------------------------
@@ -44,7 +45,7 @@ import type { BreakingFinding } from "./breaking-finding.js";
 // ---------------------------------------------------------------------------
 
 interface CliArgs {
-  readonly baseRef: string | undefined;
+  readonly baseRef?: string;
   readonly repoRoot: string;
   readonly protoOnly: boolean;
   readonly jsonOnly: boolean;
@@ -65,10 +66,30 @@ function parseArgs(argv: string[]): CliArgs {
   for (let i = 0; i < argv.length; i++) {
     const arg = argv[i] ?? "";
 
-    if (arg === "--against" && argv[i + 1] !== undefined) {
-      baseRef = argv[++i]!;
-    } else if (arg === "--repo-root" && argv[i + 1] !== undefined) {
-      repoRoot = argv[++i]!;
+    if (arg === "--against") {
+      // Value-taking flag: fail with missing-value (not "unrecognized") when
+      // the next token is absent or itself a flag.
+      const next = argv[i + 1];
+
+      if (next === undefined || next.startsWith("-")) {
+        throw new Error(
+          "[contract-gate] error: --against requires a <ref> argument",
+        );
+      }
+
+      baseRef = next;
+      i++;
+    } else if (arg === "--repo-root") {
+      const next = argv[i + 1];
+
+      if (next === undefined || next.startsWith("-")) {
+        throw new Error(
+          "[contract-gate] error: --repo-root requires a <path> argument",
+        );
+      }
+
+      repoRoot = next;
+      i++;
     } else if (arg === "--proto-only") {
       protoOnly = true;
     } else if (arg === "--json-only") {
@@ -79,6 +100,13 @@ function parseArgs(argv: string[]): CliArgs {
       skipJson = true;
     } else if (arg === "--help" || arg === "-h") {
       help = true;
+    } else if (arg.startsWith("-")) {
+      // Fail-loud on unrecognized flags (incl. short forms). Positional
+      // args without a leading dash are still ignored (none are defined).
+      throw new Error(
+        `[contract-gate] error: unrecognized flag '${arg}'. ` +
+          `Pass --help for the supported flag list.`,
+      );
     }
   }
 
@@ -140,7 +168,14 @@ function printFindings(
 // ---------------------------------------------------------------------------
 
 async function main(): Promise<void> {
-  const args = parseArgs(process.argv.slice(2));
+  let args: CliArgs;
+
+  try {
+    args = parseArgs(process.argv.slice(2));
+  } catch (err) {
+    process.stderr.write(`${String(err)}\n`);
+    process.exit(2);
+  }
 
   // ── 0a. --help ──
   if (args.help) {
@@ -198,7 +233,7 @@ async function main(): Promise<void> {
 
   if (baseRef === undefined) {
     process.stderr.write(
-      "error: no baseline ref supplied. Pass --against <ref> or set D2_GATE_BASELINE.\n",
+      "[contract-gate] error: no baseline ref supplied. Pass --against <ref> or set D2_GATE_BASELINE.\n",
     );
     process.exit(2);
   }
@@ -227,7 +262,7 @@ async function main(): Promise<void> {
     "Force valve: CLOSED (no breaking footer detected in commit range)";
 
   try {
-    const messages = commitMessagesInRange(baseRef, "HEAD");
+    const messages = commitMessagesInRange(baseRef, "HEAD", repoRoot);
     const valve = parseBreakingFooters(messages);
     valveOpen = valve.forced;
 
@@ -302,6 +337,8 @@ async function main(): Promise<void> {
       baseRef,
       valveOpen,
     });
+
+    process.stdout.write(`${formatScopeAnnouncement(specResult.scope)}\n`);
 
     if (specResult.findings.length === 0) {
       process.stdout.write(

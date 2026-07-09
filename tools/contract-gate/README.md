@@ -6,6 +6,9 @@ Copyright (c) DCSV. All rights reserved.
 
 Always-on PR-blocking breaking-change gate for D²-WORX contracts.
 
+**Who this is for:** contributors running the gate locally before opening a PR,
+and PR authors interpreting CI contract-breaking job output.
+
 ## What it does
 
 Three diff arms inspect every pull request against the integration baseline branch:
@@ -15,13 +18,19 @@ Three diff arms inspect every pull request against the integration baseline bran
    `vNbeta`) break freely (exempt). The shared `d2.common.v1` protos are always enforced.
 
 2. **Spec/i18n arm** (custom JSON-diff) — guards `contracts/**/*.spec.json` catalogs and
-   `contracts/messages/*.json` i18n locale files. A removed catalog entry or a removed
-   translation key is a breaking change. Geo Tier-2 `$generated` specs are exempt.
+   `contracts/messages/*.json` i18n locale files. A removed catalog entry, a removed
+   translation key, or whole-file deletion of a published catalog/locale is a breaking
+   change. Discovery unions working-tree files with baseline-tracked paths and never
+   treats test trees or package/build directories as contract surface (canonical skip-set
+   name list lives in `src/discovery.ts`). Geo Tier-2 `$generated` specs are exempt.
 
-3. **OpenAPI arm** (hand-rolled JSON-diff) — guards committed `*.openapi.g.json` documents.
-   Detects: removed path, removed operation, response-required field removed, request-required
-   field added, type narrowed, enum value dropped, component schema removed. Currently dormant
-   (no stable REST surface) but proven non-vacuous on the fixture docs.
+3. **OpenAPI arm** (hand-rolled JSON-diff) — guards committed `*.openapi.g.json` documents
+   outside test trees and package/build directories (same discovery contract as the
+   spec arm — see `src/discovery.ts`). Detects: removed path, removed operation,
+   response-required field removed, request-required field added, type narrowed, enum
+   value dropped, component schema removed, and whole-file deletion of a published doc.
+   Discovery unions baseline-tracked paths with the working tree so deletion is BREAKING.
+   Currently dormant (no stable REST surface) but proven non-vacuous on fixture docs.
 
 ## Force valve
 
@@ -64,7 +73,7 @@ node tools/contract-gate/dist/cli.js --against <baseline> --proto-only
 pnpm --filter @d2/typespec-emitters exec buf breaking contracts/protos \
   --against '.git#branch=<baseline>,subdir=contracts/protos'
 
-# Package tests (unit + proto integration):
+# Package tests (unit + integration):
 pnpm --filter contract-gate test
 
 # Rebuild the gate after editing src/:
@@ -76,6 +85,7 @@ pnpm --filter contract-gate build
 | Flag | Description |
 |---|---|
 | `--against <ref>` | Integration baseline branch or commit ref. Required unless `D2_GATE_BASELINE` is set. |
+| `--repo-root <path>` | Repo root directory (default: process cwd). |
 | `--skip-proto` | Skip the proto arm; run only the JSON (spec/i18n/OpenAPI) arms. Mutually exclusive with `--skip-json` and `--proto-only`. |
 | `--proto-only` | Run only the proto arm; skip the JSON arms. Mutually exclusive with `--json-only` and `--skip-proto`. |
 | `--json-only` | Skip the proto arm; run only the JSON arms. Mutually exclusive with `--proto-only` and `--skip-json`. |
@@ -84,11 +94,30 @@ pnpm --filter contract-gate build
 
 Pairs that leave no arm running are rejected (exit 2): `--proto-only`/`--json-only`, `--skip-proto`/`--skip-json`, `--json-only`/`--skip-json`, `--proto-only`/`--skip-proto`.
 
+Unrecognized `--*` / `-` flags fail loud (exit 2) with a `[contract-gate] error:` message.
+
+## Dependencies and failure modes
+
+- **Git is required.** The gate shells out to `git show`, `git ls-tree`, and
+  `git log` (plus `buf breaking` for the proto arm). If git is missing from
+  `PATH`, or a baseline/blob/tree command exits non-zero for a reason other
+  than "path not in tree", the process fails with exit code **2** (internal
+  error) and a stderr diagnostic.
+- **Baseline ref must resolve.** Pass `--against <ref>` or set
+  `D2_GATE_BASELINE`. A missing baseline is exit 2 with
+  `[contract-gate] error: …`.
+- **CI job timeouts.** Prefer a CI job timeout (e.g. 10–15 min) so a hung git
+  or buf process cannot block the pipeline indefinitely; the gate itself has
+  no per-command soft timeout.
+
 ## Catalog identity registry
 
 Each `*.spec.json` catalog must be registered in `src/catalog-identity.ts` with its
-array-property name and identity field. An unregistered catalog causes the gate to
-FAIL-LOUD — it cannot silently bypass the gate. Add an entry or mark it as exempt.
+array-property name and identity field. Files under excluded directories (test trees and
+package/build directories — see `src/discovery.ts`) are outside the contract surface and
+are never checked; the gate announces that exclusion scope on every JSON-arm run. Each
+DISCOVERED catalog fails loud if unregistered — an unregistered discovered catalog
+cannot silently bypass the gate. Add an entry or mark it as exempt.
 
 Geo Tier-2 `$generated` specs (`$generated: true` at the top) are pre-registered as
 exempt — they are regenerable pipeline outputs governed by their own drift-guard.

@@ -58,7 +58,8 @@ Merge commits (`Merge …`), revert commits (`Revert "…"`), and rebase autosqu
 
 D²-WORX enforces an always-on, PR-blocking breaking-change gate over its wire contracts:
 proto files, spec catalogs (`contracts/**/*.spec.json`), i18n keys (`contracts/messages/*.json`),
-and committed OpenAPI documents.
+and committed OpenAPI documents. Test trees (`tests/` directories) and package/build directories
+are never contract surface.
 
 ### Force valve
 
