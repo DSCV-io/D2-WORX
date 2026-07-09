@@ -4,7 +4,7 @@ Copyright (c) DCSV. All rights reserved.
 
 # PHASE_3.md — Build Edge (v2 Phase 3)
 
-**Status**: 🔄 In progress — KeyCustodian (K1 node) shipped on `n/keycustodian`; A1 (Edge host shell) is next.
+**Status**: 🔄 In progress — KeyCustodian (K1) shipped; **T1** (TS caching twin / 0028) PLAN locked on `n/ts-caching`; A1 (Edge host shell) remains next on the auth host spine (parallel with T1).
 
 **Purpose**: tracking doc for v2 Phase 3 — Edge service build. Contains the locked deliverable DAG, dependency graph, cross-cutting decisions, and per-deliverable status.
 
@@ -73,7 +73,7 @@ Phase 3 is too large for one deliverable. It is carved into a dependency-ordered
 |---|---|---|---|---|
 | **K1** | **KeyCustodian** | Key state machine (`pending → active → retiring → retired → compromised`), RSA gen/storage (root-key-wrapped), `encryption_key` + audit schema, rotation cadences, compromise runbook. Peer module within Edge (no standalone service). Builds on `D2.Shared.Encryption`, EF/PG, `IClock`. | M–L | ✅ Shipped (`n/keycustodian`) |
 | **C0** | **Unified operation-contract IDL** | TypeSpec front-end + the `@d2/typespec-emitters` fleet (C#/TS DTOs · proto · OpenAPI · route+policy · in-process leaf · parity) + the `@d2*` decorator vocabulary + the proven dual REST+gRPC binding convention. One source per operation → every representation across the external-REST/SSE, internal-gRPC, and in-process planes. Platform-wide; surfaces first at Edge. See [ADR-0021](../adrs/0021-unified-operation-contract-idl.md). | L | ✅ Shipped (`n/typespec-emitters`, deliverable 0019) |
-| **T1** | **TS tiered cache + Redis invalidation-backplane twin** | The TypeScript twin of the .NET caching stack — tiered L1 + distributed cache + the Redis pub/sub invalidation backplane with the "everyone acts" rule — so N Swarm replicas of the BFF (a mesh-member workload) keep L1 state coherent: an invalidation published by one instance drops the entry on all (session-revoked fanout, JWKS drops, cached-data invalidation). Why now: the multi-instance BFF WILL cache between instances — the user-declared trigger (2026-07-03) that the TS-parity posture previously classified N/A-until. Prior art: v1's working TS Redis cache lib + the .NET `D2.Shared.Caching.*` stack as the behavioral model. Deliberately NOT in 0026 (zero KeyCustodian coupling — general cache infrastructure); runs right after 0026 as a quick divergence before/alongside the early Edge-host work. | S | ☐ Committed (next after 0026) |
+| **T1** | **TS tiered cache + Redis invalidation-backplane twin** | **Full** TypeScript twin of the .NET caching stack (ADR-0008 surface: Basic + Atomic + Broadcast + Set + tiered + backplane) — layout mirror under `server/shared/typescript/caching/{abstractions,local-default,distributed-redis,tiered}/` (`@d2/caching-*`). Shared invalidation channel `d2:cache:invalidations` with .NET; universal "everyone acts". Full cross-runtime parity bar. Why now: multi-instance BFF (mesh member) WILL cache between replicas (user trigger 2026-07-03); prior V2 "cache packages out of scope" framing is **superseded**. Prior art: v1 TS Redis/memory cache + .NET `D2.Shared.Caching.*`. Zero KeyCustodian coupling. Deliverable **0028**, branch `n/ts-caching`. | S–M | 🔄 PLAN locked (`n/ts-caching`, WIP `docs/wip/0028-ts-caching/`) |
 
 > **Foundational ordering (per [ADR-0021](../adrs/0021-unified-operation-contract-idl.md)).** The contract IDL (**C0**) is a foundational deliverable that lands **before** every endpoint-bearing deliverable — A2 (token issuance), A3 (sessions), the rest of the auth surface, the E-track, and KeyCustodian's deferred transport all *define endpoints*, so the IDL must precede them to avoid hand-writing endpoints that would later be migrated. Nothing endpoint-bearing exists yet (KeyCustodian shipped transport-deferred), so C0 can land before the first real endpoint with zero migration debt. The TypeSpec engine choice was validated by a supervised spike (the dual REST+gRPC single-source binding proven on real running code).
 
@@ -155,7 +155,7 @@ Genuinely open items only — resolved or well-understood items removed.
 
 The critical-path spine `(K1 ∥ A1) → A2 → A3` from the dependency graph is correct. The interleaved order below bakes in the mTLS cross-process slice at the natural point and makes explicit that A1–E2 are ALL in-host / browser-facing — none blocked on mTLS or the first-leaf bootstrap.
 
-0. **T1** — TS tiered cache + Redis invalidation-backplane twin — right after 0026, before/alongside A1 (the quick divergence committed in the Foundation table above; no Edge-host dependency).
+0. **T1** — TS full caching twin (0028 / `n/ts-caching`) — right after 0026, before/alongside A1 (no Edge-host dependency; BFF host wiring can trail package ship).
 1. **A1** — Edge host shell + compose the real KC (`getJwks` live) + stand up the deferred-work wireup ledger (§Deferred-work checklist below).
 2. **A2** — auth module issuance: token minting (locked 16-claim payload) + KC signing keys in-process + JWKS publish + OAuth client registry + `auth_db` + EF migrations (auth module owns its DB, like KC owns `keycustodian_db`).
 3. **E1** — WhoIs + fingerprint (module backing enrichment middleware; `IWhoIsProvider` port lands early; anon-mint at A3 depends on E1's `d2_whois_id`).
