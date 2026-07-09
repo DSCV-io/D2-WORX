@@ -38,8 +38,9 @@ jb inspectcode server/D2.slnx --settings=server/D2.sln.DotSettings \
    --output="$LOGDIR/inspect.log" > "$LOGDIR/inspect.stdout" 2>&1 || rc=1
 
 # Single source of truth: tools/scripts/count-inspectcode-findings.sh
-# (CI test.yml inspectcode job + docs/COMMANDS.md cite the same script;
+# (local zero-warning gate; docs/COMMANDS.md cites the same script;
 # identity pin: tools/scripts/tests/count-inspectcode-findings.test.mjs).
+# Not a PR CI job — inspectcode stays local-only by design.
 ICOUNT=$(bash "$ROOT/tools/scripts/count-inspectcode-findings.sh" "$LOGDIR/inspect.log")
 echo "gates:   inspectcode finding-lines=$ICOUNT (log: $LOGDIR/inspect.log)"
 if [ "$ICOUNT" != 0 ]; then

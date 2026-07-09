@@ -62,7 +62,7 @@ jb inspectcode server/D2.slnx --settings=server/D2.sln.DotSettings --severity=WA
 jb inspectcode server/D2.slnx --settings=server/D2.sln.DotSettings --project="Edge.App" --severity=WARNING --format=Text --no-build --output=inspectcode.log && cat inspectcode.log
 ```
 
-These catch warnings that `dotnet build` does NOT surface: `[MustDisposeResource]` misuse, captured variable/closure issues, object initialization suggestions, and other JetBrains-specific inspections. Must be zero warnings. **Shared zero-warning parse** (do not re-inline): `tools/scripts/count-inspectcode-findings.sh` counts indented finding-lines in Text format (inspectcode exits 0 even when findings exist). Both the CI `inspectcode` job in `.github/workflows/test.yml` and the local gate at `.claude/skills/gate-suite/scripts/gates.sh` call that script; identity pin: `node --test tools/scripts/tests/count-inspectcode-findings.test.mjs`.
+These catch warnings that `dotnet build` does NOT surface: `[MustDisposeResource]` misuse, captured variable/closure issues, object initialization suggestions, and other JetBrains-specific inspections. **Required locally** (zero warnings) via `gates.sh` / Implementer handoff — **not** a PR CI job (slow, low merge-signal). **Shared zero-warning parse** (do not re-inline): `tools/scripts/count-inspectcode-findings.sh` counts indented finding-lines in Text format (inspectcode exits 0 even when findings exist). The local gate at `.claude/skills/gate-suite/scripts/gates.sh` calls that script; identity pin: `node --test tools/scripts/tests/count-inspectcode-findings.test.mjs`.
 
 ## Test
 

@@ -10,7 +10,8 @@ name: PR
 # Jobs whose target path is not yet populated remain commented with a brief
 # blocker note; active jobs are the current gate surface.
 # Total wall time target: <5 minutes for the standard lanes (all jobs run in
-# parallel); the inspectcode lane is the slow exception (~15-25 min).
+# parallel). JetBrains inspectcode is a LOCAL zero-warning gate only (gates.sh /
+# COMMANDS.md) — not a CI job (slow, low merge-signal).
 #
 # All active jobs must pass before merge. Required branch-protection checks
 # select by job DISPLAY name, so renaming a job silently detaches it from
@@ -264,46 +265,8 @@ jobs:
       - name: Baseline drift check (API reports + source-based fingerprint)
         run: pnpm --fail-if-no-match --filter release-runner exec tsx src/drift-check-cli.ts
 
-  # ---------------------------------------------------------------------------
-  # JetBrains inspectcode — zero-warning gate (standalone; needs solution build).
-  # Parse twin of .claude/skills/gate-suite/scripts/gates.sh inspectcode count
-  # (gates.sh:36-44) and docs/COMMANDS.md inspectcode block — keep behavior-
-  # identical. inspectcode exits 0 even when findings exist; the log parse IS
-  # the gate. Debug build matches the local canon used with --no-build.
-  # ---------------------------------------------------------------------------
-  inspectcode:
-    name: JetBrains inspectcode (zero warnings)
-    runs-on: ubuntu-latest
-    needs: [build]
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: "10.0.x"
-      - name: restore dotnet tools (jb)
-        run: dotnet tool restore
-      - name: dotnet build (Debug — the config inspectcode analyzes with --no-build)
-        run: dotnet build server/D2.slnx
-      - name: jb inspectcode (zero warnings)
-        # Shared parse: tools/scripts/count-inspectcode-findings.sh
-        # (gates.sh + docs/COMMANDS.md; identity pin:
-        # tools/scripts/tests/count-inspectcode-findings.test.mjs).
-        run: |
-          # Explicit --settings: inspectcode against .slnx does not reliably auto-load
-          # D2.sln.DotSettings (team layer). Without it CI falls back to defaults and
-          # floods RedundantNameQualifier on intentional full-qual handler using-aliases.
-          dotnet jb inspectcode server/D2.slnx \
-            --settings=server/D2.sln.DotSettings \
-            --severity=WARNING --format=Text --no-build --output=inspectcode.log
-          [ -f inspectcode.log ] || { echo "inspectcode.log missing"; exit 1; }
-          count=$(bash tools/scripts/count-inspectcode-findings.sh inspectcode.log)
-          echo "inspectcode finding-lines=$count"
-          if [ "$count" != "0" ]; then cat inspectcode.log; exit 1; fi
-
   # lint-and-format (web half) — blocked: server/web/ SvelteKit workspace is not
   # yet resolvable (missing @d2/auth-bff-client workspace package; tracked B18).
-  # The JetBrains inspectcode zero-warning assertion runs as the standalone
-  # `inspectcode` job above.
   # lint-and-format:
   #   name: Lint + format (web)
   #   runs-on: ubuntu-latest

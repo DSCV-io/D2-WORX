@@ -2,8 +2,8 @@
 //
 // Identity + behavior pin for the shared inspectcode Text-format finding-line
 // counter (tools/scripts/count-inspectcode-findings.sh). §26.24: the local
-// gate, CI inspectcode job, and COMMANDS.md must not re-inline divergent
-// parse logic — they call / cite this script. Runnable with:
+// gate (gates.sh) and COMMANDS.md must not re-inline divergent parse logic —
+// they call / cite this script. PR CI does not run inspectcode. Runnable with:
 //   node --test tools/scripts/tests/count-inspectcode-findings.test.mjs
 //
 // On Windows the system `bash` is often the WSL launcher (broken without a
@@ -281,27 +281,22 @@ test("gates.sh invokes the shared script (no inline inspect parse)", () => {
   );
 });
 
-test("test.yml inspectcode job invokes the shared script (no inline parse)", () => {
+test("test.yml does not run inspectcode as a CI job", () => {
   const yml = readFileSync(
     join(REPO_ROOT, ".github/workflows/test.yml"),
     "utf-8",
   );
 
-  assert.match(
+  // Local-only by design — no CI job / no shared-script wiring in test.yml.
+  assert.doesNotMatch(
+    yml,
+    /^\s*inspectcode:\s*$/m,
+    "test.yml must not define an inspectcode job (local gates.sh only)",
+  );
+  assert.doesNotMatch(
     yml,
     /count-inspectcode-findings\.sh/,
-    "test.yml must call tools/scripts/count-inspectcode-findings.sh",
-  );
-
-  // The inspectcode job block must not re-inline the count grep.
-  const inspectJobMatch = yml.match(
-    /inspectcode:\n[\s\S]*?(?=\n  [a-zA-Z0-9_-]+:|\n  # =|$)/,
-  );
-  assert.ok(inspectJobMatch, "expected inspectcode job block in test.yml");
-  assert.doesNotMatch(
-    inspectJobMatch[0],
-    /grep -cE ['"]\^\\s\+['"]/,
-    "inspectcode job must not re-inline the finding-line grep",
+    "test.yml must not invoke count-inspectcode-findings.sh",
   );
 });
 

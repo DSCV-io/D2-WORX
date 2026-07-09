@@ -11,9 +11,9 @@
 # callers MUST use this count (not process exit) as the zero-warning assertion.
 #
 # Consumers (must stay twins via this script — do not re-inline the parse):
-#   - .claude/skills/gate-suite/scripts/gates.sh
-#   - .github/workflows/test.yml (inspectcode job)
+#   - .claude/skills/gate-suite/scripts/gates.sh (local zero-warning gate)
 #   - docs/COMMANDS.md (documents this script as the shared parse)
+# PR CI does not run inspectcode (slow / low merge-signal).
 #
 # Identity pin: tools/scripts/tests/count-inspectcode-findings.test.mjs
 # Usage:
