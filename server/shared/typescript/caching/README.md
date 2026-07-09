@@ -6,18 +6,16 @@ Copyright (c) DCSV. All rights reserved.
 
 > Parent: [`server/shared/typescript/`](../README.md)
 
-**Status**: deliverable **0028** / PHASE_3 **T1** — PLAN locked on branch `n/ts-caching`. Packages below are **not built yet**; this index records the committed layout and parity bar.
-
-Behavioral model: [ADR-0008](../../../docs/adrs/0008-caching-marker-interfaces.md) · .NET canonical: [`server/shared/dotnet/caching/`](../../dotnet/caching/README.md) · Tracking: `docs/wip/0028-ts-caching/` (gitignored).
+Behavioral model: [ADR-0008](../../../docs/adrs/0008-caching-marker-interfaces.md) · .NET canonical: [`server/shared/dotnet/caching/`](../../dotnet/caching/README.md).
 
 ## Packages (layout mirror)
 
-| Folder | Package | .NET mirror |
-| ------ | ------- | ----------- |
-| [`abstractions/`](abstractions/) | `@d2/caching-abstractions` | `D2.Shared.Caching.Abstractions` |
-| [`local-default/`](local-default/) | `@d2/caching-local-default` | `D2.Shared.Caching.Local.Default` |
-| [`distributed-redis/`](distributed-redis/) | `@d2/caching-distributed-redis` | `D2.Shared.Caching.Distributed.Redis` |
-| [`tiered/`](tiered/) | `@d2/caching-tiered` | `D2.Shared.Caching.Tiered` |
+| Folder | Package | Status | Purpose | .NET mirror |
+| ------ | ------- | ------ | ------- | ----------- |
+| [`abstractions/README.md`](abstractions/README.md) | `@d2/caching-abstractions` | **Built** | Marker + building-block cache ports (`ILocalCache` / `IDistributedCache` / `ITieredCache` + Basic/Atomic/Broadcast/Set + backplane + serializer + `InputFailures` / options). | `D2.Shared.Caching.Abstractions` |
+| [`local-default/README.md`](local-default/README.md) | `@d2/caching-local-default` | **NOT IMPLEMENTED** | In-process L1 + atomics (no broadcast). | `D2.Shared.Caching.Local.Default` |
+| [`distributed-redis/README.md`](distributed-redis/README.md) | `@d2/caching-distributed-redis` | **NOT IMPLEMENTED** | Redis distributed cache + invalidation backplane (Basic/Atomic/Broadcast/Set; default channel `d2:cache:invalidations`). | `D2.Shared.Caching.Distributed.Redis` |
+| [`tiered/README.md`](tiered/README.md) | `@d2/caching-tiered` | **NOT IMPLEMENTED** | L1+L2 composition — L2-first writes, `*AndBroadcast*`, everyone-acts L1 drop. | `D2.Shared.Caching.Tiered` |
 
 ## Locked cross-runtime rules
 

@@ -17,7 +17,7 @@ Packages that share enough concern-area cohesion to warrant a cluster-index READ
 - [`auth/`](auth/README.md) — codegen-emitted scope / error-code / claim catalogs and the domain-safe auth-context interface
 - [`geo/`](geo/README.md) — spec-driven geographic reference data and lookup contracts
 - [`headers/`](headers/README.md) — per-transport wire-protocol header constant catalogs plus the SvelteKit BFF-side glue package
-- [`caching/`](caching/README.md) — **T1 / deliverable 0028 (in progress on `n/ts-caching`)** full twin of `D2.Shared.Caching.*` — abstractions · local-default · distributed-redis · tiered; shared backplane channel `d2:cache:invalidations`
+- [`caching/`](caching/README.md) — twin of `D2.Shared.Caching.*` — abstractions **Built**; local-default / distributed-redis / tiered **NOT IMPLEMENTED**; shared backplane channel `d2:cache:invalidations`
 
 ## Packages
 
@@ -57,10 +57,10 @@ Packages that share enough concern-area cohesion to warrant a cluster-index READ
 | [`typespec-decorators/`](typespec-decorators/README.md)                   | **Built** | TypeSpec decorator library defining the `@d2*` vocabulary — `@d2ServedBy`, `@d2GrpcMethod`, `@d2InProcess`, `@d2Redact`, `@d2RequireAnyScope`, `@d2RequireAllScopes`, `@d2Harmless`, `@d2RateLimitTier`, `@d2Audience`, `@d2Idempotent`, `@d2ServerPush`, `@d2Command`, `@d2Query`, `@d2Internal`, `@d2Resilience`. Each decorator writes to a stable `Symbol.for("D2.<dec>")` `stateMap` key so every emitter can read it across the package boundary. Ships a dedicated `tsp-index.js` (defines `$decorators`) separate from `package.json` `main` to avoid the TypeSpec double-load `ambiguous-symbol` error. | NEW — TypeSpec IDL only (no .NET runtime mirror; see ADR-0021)       |
 | [`typespec-emitters/`](typespec-emitters/README.md)                       | **Built** | TypeSpec emitter suite that reads the `@d2*` decorator state and emits the full operation-contract artifact fleet per `tsp compile`: C# + TS DTOs, `.proto` messages + gRPC service impls, REST route registrations with scope/tier/CSRF policy, in-process façade pair (`I<Module>Api` + `<Module>Api`), OpenAPI 3.0 documents with `x-d2-*` extensions, SSE dispatch seam + dispatcher pairs, gRPC client (C# + TS), `@d2Resilience` predicate twins, idempotency-gate wrappers, and handler-interface stubs. Seven emitters; 43 test files / 952 TS tests, 100% `src/**` coverage. Runtime dep: `@d2/typespec-decorators` + `@typespec/http`. | NEW — TypeSpec IDL only (no .NET runtime mirror; see ADR-0021)       |
 | [`contract-tests/`](contract-tests/README.md)                             | **Built** | Cross-language parity test workspace — Vitest reads fixtures emitted by `D2.Shared.Tests` and asserts TS-side spec-emitted decoders / catalogs agree.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     | NEW — no .NET counterpart (consumes fixtures emitted from `Integration/ContractFixtures/`)                                       |
-| [`caching/abstractions/`](caching/abstractions/README.md)                 | **Planned (0028)** | Full twin of `D2.Shared.Caching.Abstractions` — `ICacheBasic` / `ICacheAtomic` / `ICacheBroadcast` / `ICacheSet` + markers `ILocalCache` / `IDistributedCache` / `ITieredCache` + `ICacheInvalidationBackplane` + serializer seam; every op returns `D2Result`. | `D2.Shared.Caching.Abstractions` |
-| [`caching/local-default/`](caching/local-default/README.md)               | **Planned (0028)** | Full twin of `DefaultLocalCache` — in-process L1 + atomics (no broadcast). | `D2.Shared.Caching.Local.Default` |
-| [`caching/distributed-redis/`](caching/distributed-redis/README.md)       | **Planned (0028)** | Full twin of `RedisDistributedCache` + `RedisCacheInvalidationBackplane` — Basic/Atomic/Broadcast/Set; default invalidation channel `d2:cache:invalidations` (shared with .NET). | `D2.Shared.Caching.Distributed.Redis` |
-| [`caching/tiered/`](caching/tiered/README.md)                             | **Planned (0028)** | Full twin of `DefaultTieredCache` — L1+L2, L2-first writes, `*AndBroadcast*`, everyone-acts L1 drop. | `D2.Shared.Caching.Tiered` |
+| [`caching/abstractions/`](caching/abstractions/README.md)                 | **Built** | Marker + building-block cache ports — `ICacheBasic` / `ICacheAtomic` / `ICacheBroadcast` / `ICacheSet` + markers `ILocalCache` / `IDistributedCache` / `ITieredCache` + `ICacheInvalidationBackplane` + serializer seam + `InputFailures` / `LOCAL_CACHE_DEFAULTS`; every op returns `D2Result`. | `D2.Shared.Caching.Abstractions` |
+| [`caching/local-default/`](caching/local-default/README.md)               | **NOT IMPLEMENTED** | In-process L1 + atomics (no broadcast). | `D2.Shared.Caching.Local.Default` |
+| [`caching/distributed-redis/`](caching/distributed-redis/README.md)       | **NOT IMPLEMENTED** | Redis distributed cache + invalidation backplane — Basic/Atomic/Broadcast/Set; default invalidation channel `d2:cache:invalidations` (shared with .NET). | `D2.Shared.Caching.Distributed.Redis` |
+| [`caching/tiered/`](caching/tiered/README.md)                             | **NOT IMPLEMENTED** | L1+L2 composition — L2-first writes, `*AndBroadcast*`, everyone-acts L1 drop. | `D2.Shared.Caching.Tiered` |
 
 ## Dependency graph
 
@@ -227,6 +227,14 @@ graph LR
     MessagingRabbitMq --> ReqCtxAbs
     MessagingRabbitMq --> HeadersAmqp
 
+    subgraph CACHING["Caching (marker + building-block ports)"]
+        direction TB
+        CachingAbs[caching-abstractions]
+
+        CachingAbs --> Result
+        CachingAbs --> I18nKeys
+    end
+
     subgraph TYPESPEC["TypeSpec IDL (operation-contract codegen)"]
         direction TB
         TypespecDecorators[typespec-decorators]
@@ -235,7 +243,7 @@ graph LR
         TypespecEmitters --> TypespecDecorators
     end
 
-    class Result,Utilities,Resilience,I18n,Logging,Telemetry,ServiceDefaults,Protos,Time,ErrorCategory,I18nAbs,I18nKeys,ErrorCodesRegistry,ProblemDetailsAbs,AuthCtxAbs,ReqCtxAbs,AuthAbs,HeadersCommon,HeadersHttp,HeadersAmqp,HeadersGrpc,EncryptionAbs,MessagingAbs,Encryption,MessagingRabbitMq,Headers,GrpcClient,ContractTests,GeoAbs,GeoDefault,ValidationAbs,ValidationDefault,TypespecDecorators,TypespecEmitters built
+    class Result,Utilities,Resilience,I18n,Logging,Telemetry,ServiceDefaults,Protos,Time,ErrorCategory,I18nAbs,I18nKeys,ErrorCodesRegistry,ProblemDetailsAbs,AuthCtxAbs,ReqCtxAbs,AuthAbs,HeadersCommon,HeadersHttp,HeadersAmqp,HeadersGrpc,EncryptionAbs,MessagingAbs,Encryption,MessagingRabbitMq,Headers,GrpcClient,ContractTests,GeoAbs,GeoDefault,ValidationAbs,ValidationDefault,CachingAbs,TypespecDecorators,TypespecEmitters built
 ```
 
 **Reading the chart**
