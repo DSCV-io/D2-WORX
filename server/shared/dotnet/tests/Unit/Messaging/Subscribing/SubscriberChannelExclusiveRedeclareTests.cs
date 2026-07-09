@@ -26,19 +26,23 @@ using Xunit;
 /// after channel assignment.
 /// </summary>
 /// <remarks>
+/// <para>
 /// Fail-without-fix (re-declare): remove the
 /// <c>FanoutExclusiveAutoDelete</c> branch in <see cref="SubscriberChannel.StartAsync"/>
 /// and the primary exclusive <c>QueueDeclare</c> call disappears before
 /// <c>BasicConsume</c> — this test asserts that ordering + exclusive flags.
 /// Fail-without-fix (orphan dispose): remove the catch dispose and
 /// <see cref="RecordingChannel.DisposeAsyncCallCount"/> stays 0 after a QoS throw.
+/// </para>
+/// <para>
+/// Deliberately does NOT call <see cref="MessageWireResolver.ClearCache"/>.
+/// Fixture types here are unique and only need <c>RegisterForTesting</c>
+/// overwrite. A global clear races parallel Integration tests that seed
+/// via <c>IntegrationMessageFixtures</c> (see KeyRotatedEventTests note).
+/// </para>
 /// </remarks>
-public sealed class SubscriberChannelExclusiveRedeclareTests : IDisposable
+public sealed class SubscriberChannelExclusiveRedeclareTests
 {
-    public SubscriberChannelExclusiveRedeclareTests() => MessageWireResolver.ClearCache();
-
-    public void Dispose() => MessageWireResolver.ClearCache();
-
     [Fact]
     public async Task StartAsync_FanoutExclusive_RedeclaresExclusiveQueue_BeforeBasicConsume()
     {

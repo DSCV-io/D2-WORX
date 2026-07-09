@@ -12,6 +12,7 @@ using D2.Shared.Handler;
 using D2.Shared.Messaging;
 using D2.Shared.Messaging.RabbitMq;
 using D2.Shared.Result;
+using D2.Shared.Utilities.Extensions;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Xunit;
@@ -98,11 +99,25 @@ public sealed class PublishConsumeRoundTripTests
             publish.Failed.Should().BeFalse();
         }
 
+        // Filter by this test's marker so late/straggler deliveries (if any
+        // future suite reuses the handler type) cannot inflate Count while
+        // the expected payload is still missing — and so a timeout reports
+        // marker + collector state rather than a bare poll budget.
         await WaitFor(
-            () => TestCollector.Count<PlaintextCapturingHandler>() > 0);
+            () => TestCollector
+                .Captured<PlaintextCapturingHandler, IntegrationPlaintextEvent>()
+                .Any(m => m.Marker == marker),
+            detail: () =>
+                $"PlaintextMessage marker={marker}; "
+                + $"collectorCount={TestCollector.Count<PlaintextCapturingHandler>()}; "
+                + $"markers=[{string.Join(",", TestCollector
+                    .Captured<PlaintextCapturingHandler, IntegrationPlaintextEvent>()
+                    .Select(m => m.Marker ?? "<null>"))}]");
 
         var captured = TestCollector
-            .Captured<PlaintextCapturingHandler, IntegrationPlaintextEvent>();
+            .Captured<PlaintextCapturingHandler, IntegrationPlaintextEvent>()
+            .Where(m => m.Marker == marker)
+            .ToArray();
         captured.Should().ContainSingle();
         captured[0].Marker.Should().Be(marker);
     }
@@ -361,7 +376,9 @@ public sealed class PublishConsumeRoundTripTests
 
     // Attempt-budgeted stuck-guard — see _POLL_ATTEMPT_BUDGET; no wall-clock deadline.
     private static async Task WaitFor(
-        Func<bool> predicate, TimeSpan? pollInterval = null)
+        Func<bool> predicate,
+        TimeSpan? pollInterval = null,
+        Func<string>? detail = null)
     {
         pollInterval ??= TimeSpan.FromMilliseconds(50);
         for (var attempt = 0; attempt < _POLL_ATTEMPT_BUDGET; attempt++)
@@ -370,8 +387,10 @@ public sealed class PublishConsumeRoundTripTests
             await Task.Delay(pollInterval.Value);
         }
 
+        var extra = detail?.Invoke();
         throw new TimeoutException(
-            $"Predicate did not become true within {_POLL_ATTEMPT_BUDGET} poll attempts.");
+            $"Predicate did not become true within {_POLL_ATTEMPT_BUDGET} poll attempts."
+            + (extra.Falsey() ? string.Empty : " " + extra));
     }
 
     private async Task<IHost> StartHostAsync(Action<IServiceCollection> configure)

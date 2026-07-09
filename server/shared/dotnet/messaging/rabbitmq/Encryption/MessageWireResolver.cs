@@ -34,6 +34,13 @@ internal static class MessageWireResolver
 {
     private static readonly ConcurrentDictionary<Type, MqMessageDescriptor> sr_cache = new();
 
+    /// <summary>
+    /// Types seeded via <see cref="RegisterForTesting"/>. Survives the default
+    /// <see cref="ClearCache"/> path so parallel unit tests cannot wipe
+    /// integration fixture descriptors mid-delivery (poll-budget flakes).
+    /// </summary>
+    private static readonly ConcurrentDictionary<Type, MqMessageDescriptor> sr_testPins = new();
+
     /// <summary>Resolves the <see cref="MqMessageDescriptor"/> for
     /// <paramref name="messageType"/> via the production
     /// <c>MqMessagesRegistry.ByConstant</c>. Throws if the type is missing
@@ -62,8 +69,30 @@ internal static class MessageWireResolver
         return sr_cache.GetOrAdd(messageType, t => ResolveCore(t, registry));
     }
 
-    /// <summary>Test-only cache reset. Production never calls this.</summary>
-    internal static void ClearCache() => sr_cache.Clear();
+    /// <summary>
+    /// Test-only cache reset. Production never calls this.
+    /// </summary>
+    /// <param name="includeTestPins">
+    /// When <c>false</c> (default), production-resolved cache entries are
+    /// dropped but <see cref="RegisterForTesting"/> pins are restored — so a
+    /// unit test clear cannot strand an in-flight Integration host whose
+    /// fixture types have no <c>[MqPub]</c>. When <c>true</c>, pins are wiped
+    /// too (only for tests that deliberately assert unregistered fixtures).
+    /// </param>
+    internal static void ClearCache(bool includeTestPins = false)
+    {
+        if (includeTestPins)
+        {
+            sr_testPins.Clear();
+            sr_cache.Clear();
+            return;
+        }
+
+        sr_cache.Clear();
+
+        foreach (var kvp in sr_testPins)
+            sr_cache[kvp.Key] = kvp.Value;
+    }
 
     /// <summary>Test-only — pre-seeds the cache so an integration test
     /// fixture type whose CLR FQN is NOT in the production
@@ -78,6 +107,7 @@ internal static class MessageWireResolver
     {
         ArgumentNullException.ThrowIfNull(messageType);
         ArgumentNullException.ThrowIfNull(descriptor);
+        sr_testPins[messageType] = descriptor;
         sr_cache[messageType] = descriptor;
     }
 
