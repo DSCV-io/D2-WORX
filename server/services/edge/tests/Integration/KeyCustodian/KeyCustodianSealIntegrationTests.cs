@@ -121,32 +121,48 @@ public sealed class KeyCustodianSealIntegrationTests(KeyCustodianPostgresFixture
 
         await using var producer = BuildProvider(clock, rootCrypto, _PRODUCER, sealEncrypt: true);
 
-        // Fire N concurrent first-requests for the SAME new service, each on its own scope
-        // (fresh scoped DbContext) so the one-Active EXCLUDE absorbs the race. Handlers are
-        // resolved up front (each Handler<T> creates its own scope) so no Task.Run closure
-        // captures the await-using provider.
-        var handlers = Enumerable.Range(0, concurrency)
-            .Select(_ => Handler<IGetOrLazyProvisionSealPublicKeyHandler>(producer))
+        // Fire N concurrent first-requests for the SAME new service, each on its own
+        // scope (fresh scoped DbContext) so the one-Active EXCLUDE absorbs the race.
+        // Scopes are held until WhenAll completes — do NOT resolve via a discarded
+        // CreateScope() (Handler helper) or the scoped DbContext can be finalized
+        // mid-SaveChanges under GC pressure (CI flake signature: UNIQUE_VIOLATION
+        // leaking past converge because the loser's context dies mid-flight).
+        var scopes = Enumerable.Range(0, concurrency)
+            .Select(_ => producer.CreateScope())
             .ToArray();
 
-        var tasks = handlers.Select(handler => Task.Run(async () =>
-            await handler.HandleAsync(
-                new GetOrLazyProvisionSealPublicKeyInput(serviceId), CancellationToken.None)));
+        try
+        {
+            var handlers = scopes
+                .Select(s => s.ServiceProvider
+                    .GetRequiredService<IGetOrLazyProvisionSealPublicKeyHandler>())
+                .ToArray();
 
-        var results = await Task.WhenAll(tasks);
+            var tasks = handlers.Select(handler => Task.Run(async () =>
+                await handler.HandleAsync(
+                    new GetOrLazyProvisionSealPublicKeyInput(serviceId),
+                    CancellationToken.None)));
 
-        var failures = results
-            .Where(r => !r.Success)
-            .Select(r => $"{r.StatusCode}/{r.ErrorCode}")
-            .ToArray();
+            var results = await Task.WhenAll(tasks);
 
-        results.Should().OnlyContain(
-            r => r.Success,
-            "every concurrent first-request converges on the winner (no 409); failures: [{0}]",
-            string.Join(", ", failures));
+            var failures = results
+                .Where(r => !r.Success)
+                .Select(r => $"{r.StatusCode}/{r.ErrorCode}")
+                .ToArray();
 
-        results.Select(r => r.Data!.ActiveKid).Distinct().Should().ContainSingle(
-            "the race collapses to ONE active key every caller serves");
+            results.Should().OnlyContain(
+                r => r.Success,
+                "every concurrent first-request converges on the winner (no 409); failures: [{0}]",
+                string.Join(", ", failures));
+
+            results.Select(r => r.Data!.ActiveKid).Distinct().Should().ContainSingle(
+                "the race collapses to ONE active key every caller serves");
+        }
+        finally
+        {
+            foreach (var scope in scopes)
+                scope.Dispose();
+        }
 
         await using var ctx = fixture.NewContext();
 

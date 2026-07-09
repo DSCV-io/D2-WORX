@@ -140,15 +140,22 @@ internal static class SealKeyProvisioning
 
             return D2Result<SealKeyServingSet>.Ok(new SealKeyServingSet(provisioned, []));
         }
-        catch (DbUpdateException ex)
-            when (classifier.Classify(ex) == DbFailureKind.UniqueViolation)
+        catch (Exception ex) when (IsUniqueConflict(classifier, ex))
         {
             // Convergence: a racing first-request winner already inserted an Active (23P01
             // one-Active EXCLUDE) or a Pending (23505 one-Pending unique) for this domain.
-            // The loser does NOT surface the 409 — it re-reads and serves the winner's key.
+            // Catch ANY exception the classifier maps to UniqueViolation — not only
+            // DbUpdateException — so a differently-wrapped PG exclusion (or a future
+            // EF/Npgsql wrap shape) cannot leak as D2Result.UniqueViolation (409) via
+            // BaseRepoHandler. The loser re-reads and serves the winner's key.
             return await ConvergeAfterConflictAsync(db, logger, domain, ct).ConfigureAwait(false);
         }
     }
+
+    // Shared with the catch filter — keep in lockstep with BaseRepoHandler's
+    // UniqueViolation dispatch (PostgresDbExceptionClassifier maps 23505 + 23P01).
+    private static bool IsUniqueConflict(IDbExceptionClassifier classifier, Exception ex) =>
+        classifier.Classify(ex) == DbFailureKind.UniqueViolation;
 
     // Bounded convergence after a uniqueness / EXCLUDE collision. EF's change tracker is
     // poisoned by the failed SaveChanges (tracked inserts that never committed), so we
