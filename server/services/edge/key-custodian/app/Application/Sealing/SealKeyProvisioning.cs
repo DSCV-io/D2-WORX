@@ -6,6 +6,7 @@
 
 namespace D2.Edge.KeyCustodian.App.Application.Sealing;
 
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
 /// <summary>
@@ -42,6 +43,14 @@ using Microsoft.Extensions.Logging;
 /// </remarks>
 internal static class SealKeyProvisioning
 {
+    // Bounded visibility poll after a lost provisioning race. Attempt-budget (not wall-clock):
+    // each miss awaits a short delay so under load the wait grows with the slowdown; a
+    // permanently-stuck domain still terminates at the budget and returns retryable 503.
+    // Budget sized for CI-stable visibility under concurrent commit latency (not a wall clock).
+    private const int _CONVERGE_ATTEMPT_BUDGET = 64;
+
+    private static readonly TimeSpan sr_convergeDelay = TimeSpan.FromMilliseconds(10);
+
     /// <summary>
     /// Loads the seal domain's Active + Retiring keys, provisioning one lazily when the domain
     /// has no live key, and converging on a concurrent winner if a provisioning race is lost.
@@ -131,34 +140,59 @@ internal static class SealKeyProvisioning
 
             return D2Result<SealKeyServingSet>.Ok(new SealKeyServingSet(provisioned, []));
         }
-        catch (DbUpdateException ex)
-            when (classifier.Classify(ex) == DbFailureKind.UniqueViolation)
+        catch (Exception ex) when (IsUniqueConflict(classifier, ex))
         {
             // Convergence: a racing first-request winner already inserted an Active (23P01
             // one-Active EXCLUDE) or a Pending (23505 one-Pending unique) for this domain.
-            // The loser does NOT surface the 409 — it re-reads and serves the winner's key.
+            // Catch ANY exception the classifier maps to UniqueViolation — not only
+            // DbUpdateException — so a differently-wrapped PG exclusion (or a future
+            // EF/Npgsql wrap shape) cannot leak as D2Result.UniqueViolation (409) via
+            // BaseRepoHandler. The loser re-reads and serves the winner's key.
             return await ConvergeAfterConflictAsync(db, logger, domain, ct).ConfigureAwait(false);
         }
     }
 
-    // Bounded convergence: ONE re-read (never a spin-wait). Serve the winner's Active key when
-    // visible; otherwise the winner's activation is not yet visible (or an orphaned Pending
-    // blocks provisioning) → retryable 503.
+    // Shared with the catch filter — keep in lockstep with BaseRepoHandler's
+    // UniqueViolation dispatch (PostgresDbExceptionClassifier maps 23505 + 23P01).
+    private static bool IsUniqueConflict(IDbExceptionClassifier classifier, Exception ex) =>
+        classifier.Classify(ex) == DbFailureKind.UniqueViolation;
+
+    // Bounded convergence after a uniqueness / EXCLUDE collision. EF's change tracker is
+    // poisoned by the failed SaveChanges (tracked inserts that never committed), so we
+    // Clear() before re-reading. One re-read is not enough under concurrent commit latency —
+    // poll with an attempt budget until the winner's Active row is visible, then 503.
     private static async Task<D2Result<SealKeyServingSet>> ConvergeAfterConflictAsync(
         IKeyCustodianDbContext db, ILogger logger, KeyDomain domain, CancellationToken ct)
     {
-        var reread = await LoadServingKeysAsync(db, domain, ct).ConfigureAwait(false);
+        ClearTrackedState(db);
 
-        if (!reread.Success)
-            return D2Result<SealKeyServingSet>.BubbleFail(reread);
+        for (var attempt = 0; attempt < _CONVERGE_ATTEMPT_BUDGET; attempt++)
+        {
+            if (attempt > 0)
+            {
+                await Task.Delay(sr_convergeDelay, ct).ConfigureAwait(false);
+                ClearTrackedState(db);
+            }
 
-        var loaded = reread.Data!;
+            var reread = await LoadServingKeysAsync(db, domain, ct).ConfigureAwait(false);
 
-        if (loaded.Active is { } winner)
-            return D2Result<SealKeyServingSet>.Ok(new SealKeyServingSet(winner, loaded.Retiring));
+            if (!reread.Success)
+                return D2Result<SealKeyServingSet>.BubbleFail(reread);
+
+            var loaded = reread.Data!;
+
+            if (loaded.Active is { } winner)
+                return D2Result<SealKeyServingSet>.Ok(new SealKeyServingSet(winner, loaded.Retiring));
+        }
 
         return Unavailable(logger, domain);
     }
+
+    // After DbUpdateException the context still tracks the rejected inserts; subsequent
+    // queries (even AsNoTracking) can misbehave until the tracker is cleared. Port-only —
+    // never cast past IKeyCustodianDbContext to EF's concrete ChangeTracker.
+    private static void ClearTrackedState(IKeyCustodianDbContext db) =>
+        db.ClearChangeTracker();
 
     // Loads the domain's Active + Retiring EcdhSealing keys, partitioned + sorted for serving.
     // A wrong-type row surviving the `.Sealing()` filter is trusted-store corruption → a

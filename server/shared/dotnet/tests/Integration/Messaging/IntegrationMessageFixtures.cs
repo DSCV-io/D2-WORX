@@ -28,17 +28,32 @@ internal static class IntegrationMessageFixtures
     /// </summary>
     public const string SYMMETRIC_FIXTURE_DOMAIN = "payload-fixture-symmetric";
 
-    private static readonly Lazy<bool> sr_registration = new(
-        Register, isThreadSafe: true);
-
-    /// <summary>Idempotent — first call seeds the resolver cache for
+    /// <summary>
+    /// Idempotent re-seed of the resolver cache for
     /// <see cref="IntegrationAuditEvent"/> (encrypted, audit domain),
     /// <see cref="IntegrationPlaintextEvent"/> (plaintext topic), and
-    /// <see cref="BroadcastFixtureEvent"/> (plaintext fanout). Subsequent
-    /// calls are no-ops.</summary>
-    public static void EnsureRegistered() => _ = sr_registration.Value;
-
-    private static bool Register()
+    /// <see cref="BroadcastFixtureEvent"/> (plaintext fanout).
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Always overwrites — do NOT Lazy-once. Unit tests that call
+    /// <see cref="MessageWireResolver.ClearCache"/> (e.g. sealed-startup /
+    /// exclusive-redeclare pins) run in parallel with this Integration
+    /// collection under a full <c>dotnet test</c>. A one-shot seed leaves
+    /// fixture types unresolvable after a mid-suite clear: publish/consume
+    /// then fails decode (or never routes) and the poll budget expires as a
+    /// false "handler never saw payload" flake — most visible on the
+    /// plaintext round-trip because it is the only CompetingConsumer path
+    /// that is not also exercised by denser encrypted suites immediately
+    /// after re-host.
+    /// </para>
+    /// <para>
+    /// <see cref="MessageWireResolver.RegisterForTesting"/> is a dictionary
+    /// set; re-registering the same three types every host start is cheap and
+    /// closes the race.
+    /// </para>
+    /// </remarks>
+    public static void EnsureRegistered()
     {
         MessageWireResolver.RegisterForTesting(
             typeof(IntegrationAuditEvent),
@@ -71,6 +86,5 @@ internal static class IntegrationMessageFixtures
                 EncryptionReason:
                     "Integration fixture exercising the plaintext fanout broadcast path.",
                 DefaultRoutingKey: string.Empty));
-        return true;
     }
 }

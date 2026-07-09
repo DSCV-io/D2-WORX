@@ -21,12 +21,14 @@ using Xunit;
 /// only via <see cref="MessageWireResolver.RegisterForTesting"/> fixture message types on real
 /// sealed domain values.
 /// </summary>
-public sealed class SealedConsumerStartupCheckTests : IDisposable
+/// <remarks>
+/// Deliberately does NOT call <see cref="MessageWireResolver.ClearCache"/>.
+/// Fixture types are unique; <c>RegisterForTesting</c> overwrite is enough.
+/// Global clear races parallel Integration tests that seed via
+/// <c>IntegrationMessageFixtures</c> (see KeyRotatedEventTests note).
+/// </remarks>
+public sealed class SealedConsumerStartupCheckTests
 {
-    public SealedConsumerStartupCheckTests() => MessageWireResolver.ClearCache();
-
-    public void Dispose() => MessageWireResolver.ClearCache();
-
     [Fact]
     public async Task StartAsync_SealedSubscriberWithoutOpener_CrashesBoot()
     {

@@ -82,13 +82,14 @@ internal sealed class DefaultTopologyDeclarer : ITopologyDeclarer
         TopologyLog.DeclarationCompleted(r_logger, stopwatch.Elapsed.TotalMilliseconds);
     }
 
-    private static string ResolveExchange(Type messageType) =>
-        MessageWireResolver.Resolve(messageType).Exchange;
-
-    private static string ResolveExchangeType(Type messageType) =>
-        MessageWireResolver.Resolve(messageType).ExchangeType;
-
-    private static (bool Durable, bool Exclusive, bool AutoDelete) QueueFlagsFor(
+    /// <summary>
+    /// Queue durability / exclusivity / auto-delete flags per <see cref="QueuePattern"/>.
+    /// Shared with consumer-channel re-declare for
+    /// <see cref="QueuePattern.FanoutExclusiveAutoDelete"/> so flags cannot drift.
+    /// </summary>
+    /// <param name="pattern">The subscription queue pattern.</param>
+    /// <returns>The declare flags for the primary queue.</returns>
+    internal static (bool Durable, bool Exclusive, bool AutoDelete) QueueFlagsFor(
         QueuePattern pattern) => pattern switch
     {
         QueuePattern.CompetingConsumer => (Durable: true, Exclusive: false, AutoDelete: false),
@@ -97,6 +98,12 @@ internal sealed class DefaultTopologyDeclarer : ITopologyDeclarer
             (Durable: false, Exclusive: true, AutoDelete: true),
         _ => throw new ArgumentOutOfRangeException(nameof(pattern), pattern, null),
     };
+
+    private static string ResolveExchange(Type messageType) =>
+        MessageWireResolver.Resolve(messageType).Exchange;
+
+    private static string ResolveExchangeType(Type messageType) =>
+        MessageWireResolver.Resolve(messageType).ExchangeType;
 
     private async ValueTask DeclareForSubscriberAsync(
         IChannel channel,

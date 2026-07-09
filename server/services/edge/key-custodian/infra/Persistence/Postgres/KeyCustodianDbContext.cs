@@ -42,6 +42,9 @@ public sealed class KeyCustodianDbContext : DbContext, IKeyCustodianDbContext
     public DbSet<LeafIssuanceAuditRecord> LeafIssuanceAudit => Set<LeafIssuanceAuditRecord>();
 
     /// <inheritdoc/>
+    public void ClearChangeTracker() => ChangeTracker.Clear();
+
+    /// <inheritdoc/>
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         ArgumentNullException.ThrowIfNull(modelBuilder);

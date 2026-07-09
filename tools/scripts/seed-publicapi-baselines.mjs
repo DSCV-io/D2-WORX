@@ -27,29 +27,21 @@
 // drift check (which recomputes via the runner) compares like-for-like.
 //
 // Mechanism:
-//   1. Ensure both .txt files exist with the `#nullable enable` header, with
-//      Shipped.txt reset to header-only so the build reports the FULL current
-//      surface as RS0016 (every public symbol is "missing from the baseline").
+//   1. Snapshot on-disk baselines (or HEAD if disk already wiped). Then reset
+//      Shipped/Unshipped to header-only so the build reports the FULL current
+//      surface as RS0016. On ANY failure after the wipe, RESTORE the snapshot
+//      before rethrow/exit — never leave header-only Shipped on disk.
 //   2. Build the package and parse the analyzer's RS0016 diagnostics — each
 //      carries `Symbol '<canonical API line>' is not part of the declared
 //      public API`. The exact API line is extracted from every RS0016 message.
-//      This captures the COMPLETE enforced surface — hand-authored AND
-//      source-generated public symbols (the `dotnet format` code-fix skips
-//      generated files, so the build-diagnostic parse is the faithful source).
-//      (This is the ONLY build the seed runs, and only to seed the .txt — the
-//      fingerprint itself never builds.)
-//   3. Write the extracted lines (sorted, deduplicated, ordinal) into
-//      Shipped.txt; leave Unshipped.txt header-only. The result exactly matches
-//      the current public API, so a subsequent build reports zero RS0016
-//      (missing-from-baseline) / RS0017 (in-baseline-not-in-source).
-//   4. FINGERPRINT: compose the source-based hash over the ordered tuple
-//      ( committed source dump + Shipped.txt + Unshipped.txt + resolved deps +
-//      toolchain pin ) and write the hex digest to .release-fingerprint. The
-//      source dump globs every committed *.cs (incl. Generated/**/*.g.cs) + the
-//      *.csproj; the deps carry the package version + every consumable
-//      ProjectReference dep's pinned version (so a dependency bump moves the
-//      dependent's fingerprint — propagation falls out of the fingerprint); the
-//      toolchain pin hashes the declared SDK / TargetFramework / LangVersion.
+//   3. Fail-loud if HEAD had a non-empty surface and extraction is empty
+//      (analyzer-didn't-run signature). Then write extracted lines into
+//      Shipped.txt; Unshipped stays header-only.
+//   4. FINGERPRINT: source-based hash over committed source + PublicAPI.* +
+//      deps + toolchain pin → .release-fingerprint.
+//
+// Commit gate: tools/scripts/check-publicapi-shipped.mjs (husky pre-commit +
+// cycle-commit precheck) refuses header-only Shipped when HEAD still has lines.
 //
 // Run from the repo root: `node tools/scripts/seed-publicapi-baselines.mjs`.
 // Optional `--package <PackageId>` limits the run to a single consumable.
@@ -64,7 +56,12 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { assertExtractionNotWrongfullyEmpty } from "./lib/publicapi-empty-guard.mjs";
+import {
+  NULLABLE_HEADER as GUARD_NULLABLE_HEADER,
+  assertExtractionNotWrongfullyEmpty,
+  assertShippedContentNotWrongfullyEmpty,
+  countPublicApiLines,
+} from "./lib/publicapi-empty-guard.mjs";
 import { composeSourceFingerprintFromParts } from "./lib/source-fingerprint-compose.mjs";
 
 const REPO_ROOT = path.resolve(
@@ -73,7 +70,8 @@ const REPO_ROOT = path.resolve(
   "..",
 );
 
-const NULLABLE_HEADER = "#nullable enable";
+// Keep in lockstep with publicapi-empty-guard.mjs (single source for the header string).
+const NULLABLE_HEADER = GUARD_NULLABLE_HEADER;
 
 // ---------------------------------------------------------------------------
 // CLI args.
@@ -577,79 +575,175 @@ function composeFingerprint(csprojPath, packageId, shippedTxt, unshippedTxt) {
 // Per-consumable seed.
 // ---------------------------------------------------------------------------
 
+/**
+ * Snapshot bytes to restore if extraction fails AFTER the intentional header-only
+ * wipe.
+ *
+ * Policy (restore must never re-apply corruption):
+ * - Prefer the on-disk Shipped bytes when they already have API lines.
+ * - If on-disk is already header-only/missing but HEAD has lines, snapshot HEAD
+ *   (prior failed seed left disk empty — restore must recover HEAD, not empty).
+ * - If both are empty (new package / intentional empty already committed),
+ *   snapshot header-only or null; restore is a no-op to empty.
+ * Unshipped + fingerprint: snapshot exact disk bytes (or null if absent).
+ */
+function snapshotBaselineFiles(shippedPath, unshippedPath, fingerprintPath) {
+  const headShippedLines = readCommittedApiLines(shippedPath);
+  const diskShippedText = fs.existsSync(shippedPath)
+    ? fs.readFileSync(shippedPath, "utf8")
+    : "";
+  const diskApiCount = countPublicApiLines(diskShippedText);
+
+  let shippedSnap;
+
+  if (diskApiCount > 0) {
+    // Exact disk bytes (preserve EOL / trailing newline as committed on disk).
+    shippedSnap = Buffer.from(diskShippedText, "utf8");
+  } else if (headShippedLines.length > 0) {
+    // Disk wiped or missing; HEAD is the last good surface.
+    shippedSnap = Buffer.from(
+      [NULLABLE_HEADER, ...headShippedLines].join("\n") + "\n",
+      "utf8",
+    );
+  } else {
+    // Genuinely no surface at HEAD and none on disk (new / already-empty package).
+    shippedSnap = fs.existsSync(shippedPath)
+      ? Buffer.from(diskShippedText, "utf8")
+      : null;
+  }
+
+  return {
+    headShippedLines,
+    shipped: shippedSnap,
+    unshipped: fs.existsSync(unshippedPath)
+      ? fs.readFileSync(unshippedPath)
+      : null,
+    fingerprint: fs.existsSync(fingerprintPath)
+      ? fs.readFileSync(fingerprintPath)
+      : null,
+  };
+}
+
+function restoreBaselineFiles(
+  shippedPath,
+  unshippedPath,
+  fingerprintPath,
+  snap,
+) {
+  // Only write paths we snapshotted. Never invent a "successful empty" on restore
+  // when we had nothing — that would re-create the wipe bug for brand-new packages
+  // that never had a file (ensureHeaderFile already handled existence pre-pass).
+  if (snap.shipped !== null) {
+    fs.writeFileSync(shippedPath, snap.shipped);
+  }
+
+  if (snap.unshipped !== null) {
+    fs.writeFileSync(unshippedPath, snap.unshipped);
+  }
+
+  if (snap.fingerprint !== null) {
+    fs.writeFileSync(fingerprintPath, snap.fingerprint);
+  }
+}
+
 function seedConsumable(csprojPath) {
   const packageId = path.basename(csprojPath, ".csproj");
   const dir = path.dirname(csprojPath);
   const shippedPath = path.join(dir, "PublicAPI.Shipped.txt");
   const unshippedPath = path.join(dir, "PublicAPI.Unshipped.txt");
   const fingerprintPath = path.join(dir, ".release-fingerprint");
+  const allowEmpty = allowEmptyPackages.has(packageId);
+
+  // Snapshot BEFORE the intentional wipe so a failed build / empty-guard throw
+  // can restore. Without this, process.exit(1) left header-only Shipped.txt on
+  // disk (the wipe that emptied AspNetCore / Auth.Abstractions mid-run).
+  const diskSnap = snapshotBaselineFiles(
+    shippedPath,
+    unshippedPath,
+    fingerprintPath,
+  );
 
   // The prior surface is read from HEAD (committed), NOT the working tree: the
-  // pre-pass resets the on-disk file to header-only and a prior corrupt run may
-  // already have emptied it, so only HEAD holds the last genuinely-seeded surface
-  // the empty-guard must compare against.
+  // pre-pass may only ensure existence; a prior corrupt run may already have
+  // emptied the on-disk file, so HEAD is the empty-guard's committed truth.
   const before = {
-    shipped: readCommittedApiLines(shippedPath),
+    shipped: diskSnap.headShippedLines,
     fingerprint: fs.existsSync(fingerprintPath)
       ? fs.readFileSync(fingerprintPath, "utf8").trim()
       : undefined,
   };
 
-  // 1. Reset both .txt files to header-only. A header-only Shipped.txt makes
-  //    the build report the FULL current surface as RS0016 (every public symbol
-  //    is "missing from the baseline"); a header-only Unshipped.txt means no
-  //    RS0017 (removed) noise.
-  writeApiFile(shippedPath, []);
-  writeApiFile(unshippedPath, []);
+  try {
+    // 1. Reset both .txt files to header-only. A header-only Shipped.txt makes
+    //    the build report the FULL current surface as RS0016 (every public symbol
+    //    is "missing from the baseline"); a header-only Unshipped.txt means no
+    //    RS0017 (removed) noise.
+    writeApiFile(shippedPath, []);
+    writeApiFile(unshippedPath, []);
 
-  // 2. Build + parse RS0016 to extract the complete enforced public surface
-  //    (hand-authored AND source-generated symbols).
-  const surface = normalizeApiLines(
-    extractSurfaceViaBuild(csprojPath, packageId),
-  );
+    // 2. Build + parse RS0016 to extract the complete enforced public surface
+    //    (hand-authored AND source-generated symbols).
+    const surface = normalizeApiLines(
+      extractSurfaceViaBuild(csprojPath, packageId),
+    );
 
-  // 2a. FAIL-LOUD GUARD: a package that had a non-empty committed surface but
-  //     extracted to zero is the analyzer-didn't-run signature (a successful
-  //     build does not silently drop a whole public API). Refuse to persist the
-  //     wipe unless the package is explicitly allow-listed for a genuine removal.
-  assertExtractionNotWrongfullyEmpty({
-    packageId,
-    priorSurfaceCount: before.shipped.length,
-    extractedSurfaceCount: surface.length,
-    allowEmpty: allowEmptyPackages.has(packageId),
-  });
+    // 2a. FAIL-LOUD GUARD: a package that had a non-empty committed surface but
+    //     extracted to zero is the analyzer-didn't-run signature (a successful
+    //     build does not silently drop a whole public API). Refuse to persist the
+    //     wipe unless the package is explicitly allow-listed for a genuine removal.
+    assertExtractionNotWrongfullyEmpty({
+      packageId,
+      priorSurfaceCount: before.shipped.length,
+      extractedSurfaceCount: surface.length,
+      allowEmpty,
+    });
 
-  // 3. Write the surface into Shipped.txt; Unshipped.txt stays header-only.
-  writeApiFile(shippedPath, surface);
-  writeApiFile(unshippedPath, []);
+    // 3. Write the surface into Shipped.txt; Unshipped.txt stays header-only.
+    writeApiFile(shippedPath, surface);
+    writeApiFile(unshippedPath, []);
 
-  // 4. Compose the source-based fingerprint over the committed source dump +
-  //    the EXACT written PublicAPI.* file content + the resolved deps + the
-  //    toolchain pin. The release-runner's provider reads these same files
-  //    verbatim, so reading the exact bytes back keeps the seeded hash equal to
-  //    the runtime recompute (no build).
-  const shippedTxt = fs.readFileSync(shippedPath, "utf8");
-  const unshippedTxt = fs.readFileSync(unshippedPath, "utf8");
-  const fingerprint = composeFingerprint(
-    csprojPath,
-    packageId,
-    shippedTxt,
-    unshippedTxt,
-  );
-  const fpEol = detectEol(fingerprintPath);
-  fs.writeFileSync(fingerprintPath, fingerprint + fpEol, "utf8");
+    // 3a. Defense in depth: refuse to leave a wrongfully empty on-disk Shipped
+    //     even if a future edit skips 2a.
+    assertShippedContentNotWrongfullyEmpty({
+      packageId,
+      shippedContent: fs.readFileSync(shippedPath, "utf8"),
+      headSurfaceCount: before.shipped.length,
+      allowEmpty,
+    });
 
-  const apiChanged =
-    before.shipped.length !== surface.length ||
-    before.shipped.some((l, i) => l !== surface[i]);
-  const fpChanged = before.fingerprint !== fingerprint;
+    // 4. Compose the source-based fingerprint over the committed source dump +
+    //    the EXACT written PublicAPI.* file content + the resolved deps + the
+    //    toolchain pin. The release-runner's provider reads these same files
+    //    verbatim, so reading the exact bytes back keeps the seeded hash equal to
+    //    the runtime recompute (no build).
+    const shippedTxt = fs.readFileSync(shippedPath, "utf8");
+    const unshippedTxt = fs.readFileSync(unshippedPath, "utf8");
+    const fingerprint = composeFingerprint(
+      csprojPath,
+      packageId,
+      shippedTxt,
+      unshippedTxt,
+    );
+    const fpEol = detectEol(fingerprintPath);
+    fs.writeFileSync(fingerprintPath, fingerprint + fpEol, "utf8");
 
-  return {
-    packageId,
-    apiLineCount: surface.length,
-    apiChanged,
-    fpChanged,
-  };
+    const apiChanged =
+      before.shipped.length !== surface.length ||
+      before.shipped.some((l, i) => l !== surface[i]);
+    const fpChanged = before.fingerprint !== fingerprint;
+
+    return {
+      packageId,
+      apiLineCount: surface.length,
+      apiChanged,
+      fpChanged,
+    };
+  } catch (err) {
+    // ALWAYS restore before rethrow — process.exit(1) at the top level must not
+    // leave header-only PublicAPI.Shipped.txt on disk.
+    restoreBaselineFiles(shippedPath, unshippedPath, fingerprintPath, diskSnap);
+    throw err;
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -693,6 +787,11 @@ for (const csprojPath of consumables) {
   } catch (err) {
     process.stderr.write("FAILED\n");
     console.error(err instanceof Error ? err.message : String(err));
+    console.error(
+      "\n  seed-publicapi-baselines: aborted. Any in-progress PublicAPI.Shipped.txt " +
+        "wipe for the failed package was RESTORED from the pre-seed snapshot/HEAD.\n" +
+        "  Do NOT commit header-only Shipped files. Re-run after fixing the build error.\n",
+    );
     process.exit(1);
   }
 }

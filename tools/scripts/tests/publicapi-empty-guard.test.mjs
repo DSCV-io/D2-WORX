@@ -1,20 +1,21 @@
 // Copyright (c) DCSV. All rights reserved.
 //
-// Regression test for the PublicAPI-seeder fail-loud guard. Runnable with the
-// built-in node test runner (zero config, portable):
-//   node --test tools/scripts/tests/
-//
-// The guard is the high-signal defect fix: a prior-non-empty package extracting
-// to an empty surface is the "analyzer did not re-run" signature that silently
-// wiped 30 baselines under a green gate. The guard MUST throw in that case and
-// MUST NOT throw for a genuinely-new package or an explicit opt-in removal.
+//   node --test tools/scripts/tests/publicapi-empty-guard.test.mjs
 
 import assert from "node:assert/strict";
 import { test } from "node:test";
 
-import { assertExtractionNotWrongfullyEmpty } from "../lib/publicapi-empty-guard.mjs";
+import {
+  assertExtractionNotWrongfullyEmpty,
+  assertShippedContentNotWrongfullyEmpty,
+  countPublicApiLines,
+  formatPublicApiFile,
+  NULLABLE_HEADER,
+} from "../lib/publicapi-empty-guard.mjs";
 
-test("THROWS when a prior non-empty surface extracts to empty", () => {
+// --- extraction guard (seeder success path) ---
+
+test("extraction: THROWS when HEAD non-empty extracts to 0 without allow", () => {
   assert.throws(
     () =>
       assertExtractionNotWrongfullyEmpty({
@@ -27,7 +28,7 @@ test("THROWS when a prior non-empty surface extracts to empty", () => {
   );
 });
 
-test("does NOT throw when --allow-empty opts the package in", () => {
+test("extraction: allow-empty permits intentional N→0 surface", () => {
   assert.doesNotThrow(() =>
     assertExtractionNotWrongfullyEmpty({
       packageId: "D2.Shared.Time",
@@ -38,7 +39,7 @@ test("does NOT throw when --allow-empty opts the package in", () => {
   );
 });
 
-test("does NOT throw for a genuinely-new package (no committed surface)", () => {
+test("extraction: new package (HEAD 0) may extract empty without allow", () => {
   assert.doesNotThrow(() =>
     assertExtractionNotWrongfullyEmpty({
       packageId: "D2.Shared.BrandNew",
@@ -49,13 +50,79 @@ test("does NOT throw for a genuinely-new package (no committed surface)", () => 
   );
 });
 
-test("does NOT throw for a normal non-empty extraction", () => {
+test("extraction: normal non-empty extract OK", () => {
   assert.doesNotThrow(() =>
     assertExtractionNotWrongfullyEmpty({
       packageId: "D2.Shared.Time",
       priorSurfaceCount: 42,
-      extractedSurfaceCount: 42,
+      extractedSurfaceCount: 40,
       allowEmpty: false,
     }),
   );
+});
+
+// --- on-disk / commit gate ---
+
+test("disk: THROWS empty vs non-empty HEAD without allow (failure wipe)", () => {
+  assert.throws(
+    () =>
+      assertShippedContentNotWrongfullyEmpty({
+        packageId: "D2.Shared.AspNetCore",
+        shippedContent: `${NULLABLE_HEADER}\n`,
+        headSurfaceCount: 147,
+        allowEmpty: false,
+      }),
+    /PublicAPI\.Shipped\.txt for D2\.Shared\.AspNetCore is EMPTY/,
+  );
+});
+
+test("disk: missing file treated as empty", () => {
+  assert.throws(
+    () =>
+      assertShippedContentNotWrongfullyEmpty({
+        packageId: "D2.Shared.AspNetCore",
+        shippedContent: "",
+        headSurfaceCount: 10,
+        allowEmpty: false,
+      }),
+    /EMPTY/,
+  );
+});
+
+test("disk: brand-new / HEAD-empty package may be header-only", () => {
+  assert.doesNotThrow(() =>
+    assertShippedContentNotWrongfullyEmpty({
+      packageId: "D2.Shared.BrandNew",
+      shippedContent: `${NULLABLE_HEADER}\n`,
+      headSurfaceCount: 0,
+      allowEmpty: false,
+    }),
+  );
+});
+
+test("disk: intentional first empty commit needs allowEmpty", () => {
+  assert.doesNotThrow(() =>
+    assertShippedContentNotWrongfullyEmpty({
+      packageId: "D2.Shared.AspNetCore",
+      shippedContent: formatPublicApiFile([]),
+      headSurfaceCount: 147,
+      allowEmpty: true,
+    }),
+  );
+});
+
+test("disk: partial reduction (still has lines) never trips empty guard", () => {
+  assert.doesNotThrow(() =>
+    assertShippedContentNotWrongfullyEmpty({
+      packageId: "D2.Shared.Time",
+      shippedContent: formatPublicApiFile(["P:OnlyOneLeft"]),
+      headSurfaceCount: 99,
+      allowEmpty: false,
+    }),
+  );
+});
+
+test("countPublicApiLines ignores header and blanks only", () => {
+  assert.equal(countPublicApiLines(`${NULLABLE_HEADER}\n`), 0);
+  assert.equal(countPublicApiLines(formatPublicApiFile(["P:Foo", "P:Bar"])), 2);
 });

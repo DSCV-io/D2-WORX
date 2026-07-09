@@ -10,6 +10,7 @@ using System.Diagnostics;
 using D2.Shared.Context.Abstractions;
 using D2.Shared.Headers.Amqp;
 using D2.Shared.Messaging.RabbitMq.Connection;
+using D2.Shared.Messaging.RabbitMq.Encryption;
 using D2.Shared.Messaging.RabbitMq.Telemetry;
 using D2.Shared.Messaging.RabbitMq.Topology;
 using D2.Shared.Result;
@@ -123,24 +124,61 @@ internal sealed class SubscriberChannel : IAsyncDisposable
 
         _channel = await r_connection.CreateChannelAsync(options: null, ct);
 
-        await _channel.BasicQosAsync(
-            prefetchSize: 0,
-            prefetchCount: prefetch,
-            global: false,
-            cancellationToken: ct);
+        try
+        {
+            await _channel.BasicQosAsync(
+                prefetchSize: 0,
+                prefetchCount: prefetch,
+                global: false,
+                cancellationToken: ct);
 
-        _consumer = new AsyncEventingBasicConsumer(_channel);
-        _consumer.ReceivedAsync += OnReceivedAsync;
+            // FanoutExclusiveAutoDelete: ensure queue+bind on the long-lived consumer channel
+            // before BasicConsume. Topology declare uses a short-lived channel; under load a
+            // NOT_FOUND window can still appear between declare and consume. Args must match
+            // DefaultTopologyDeclarer (via QueueFlagsFor + DLX args). Exclusive queues are
+            // deleted when their declaring connection closes — not merely when a declare
+            // channel is disposed — so this re-declare is about consume-channel readiness
+            // and arg parity, not "channel dispose deleted the queue."
+            if (descriptor.Pattern == QueuePattern.FanoutExclusiveAutoDelete)
+                await EnsureExclusiveQueueOnConsumerChannelAsync(_channel, queueName, ct);
 
-        _consumerTag = await _channel.BasicConsumeAsync(
-            queue: queueName,
-            autoAck: false,
-            consumerTag: string.Empty,
-            noLocal: false,
-            exclusive: false,
-            arguments: null,
-            consumer: _consumer,
-            cancellationToken: ct);
+            _consumer = new AsyncEventingBasicConsumer(_channel);
+            _consumer.ReceivedAsync += OnReceivedAsync;
+
+            _consumerTag = await _channel.BasicConsumeAsync(
+                queue: queueName,
+                autoAck: false,
+                consumerTag: string.Empty,
+                noLocal: false,
+                exclusive: false,
+                arguments: null,
+                consumer: _consumer,
+                cancellationToken: ct);
+        }
+        catch
+        {
+            // Hosted service only tracks successfully started channels. If QoS /
+            // exclusive re-declare / BasicConsume throws after assignment, dispose the
+            // orphan channel so we do not leak a broker channel with no owner.
+            var orphan = _channel;
+            _channel = null;
+            _consumer = null;
+            _consumerTag = null;
+
+            if (orphan is not null)
+            {
+                try
+                {
+                    await orphan.DisposeAsync();
+                }
+                catch
+                {
+                    // Best-effort — we are already failing StartAsync.
+                }
+            }
+
+            throw;
+        }
 
         SubscriberLog.ConsumerStarted(
             r_logger,
@@ -743,5 +781,77 @@ internal sealed class SubscriberChannel : IAsyncDisposable
 
             await Task.Delay(50);
         }
+    }
+
+    /// <summary>
+    /// Idempotent exclusive-queue declare+bind on the consumer channel. Declare order and
+    /// flags match <see cref="DefaultTopologyDeclarer"/> for
+    /// <see cref="QueuePattern.FanoutExclusiveAutoDelete"/> (DLX before main queue; flags via
+    /// <see cref="DefaultTopologyDeclarer.QueueFlagsFor"/>).
+    /// </summary>
+    private async ValueTask EnsureExclusiveQueueOnConsumerChannelAsync(
+        IChannel channel, string queueName, CancellationToken ct)
+    {
+        var descriptor = r_registration.Descriptor;
+        var wire = MessageWireResolver.Resolve(r_registration.MessageType);
+        var dlxName = DlqNaming.DlxFor(queueName);
+        var dlqName = DlqNaming.DlqFor(queueName);
+
+        await channel.ExchangeDeclareAsync(
+            exchange: wire.Exchange,
+            type: wire.ExchangeType,
+            durable: true,
+            autoDelete: false,
+            arguments: null,
+            cancellationToken: ct);
+
+        // DLX before main queue so x-dead-letter-exchange arg always references a declared
+        // exchange (same order as DefaultTopologyDeclarer).
+        await channel.ExchangeDeclareAsync(
+            exchange: dlxName,
+            type: ExchangeType.Fanout,
+            durable: true,
+            autoDelete: false,
+            arguments: null,
+            cancellationToken: ct);
+
+        await channel.QueueDeclareAsync(
+            queue: dlqName,
+            durable: true,
+            exclusive: false,
+            autoDelete: false,
+            arguments: null,
+            cancellationToken: ct);
+
+        await channel.QueueBindAsync(
+            queue: dlqName,
+            exchange: dlxName,
+            routingKey: string.Empty,
+            arguments: null,
+            cancellationToken: ct);
+
+        var queueArgs = new Dictionary<string, object?>(StringComparer.Ordinal)
+        {
+            ["x-dead-letter-exchange"] = dlxName,
+            ["x-dead-letter-routing-key"] = string.Empty,
+        };
+
+        var (durable, exclusive, autoDelete) =
+            DefaultTopologyDeclarer.QueueFlagsFor(QueuePattern.FanoutExclusiveAutoDelete);
+
+        await channel.QueueDeclareAsync(
+            queue: queueName,
+            durable: durable,
+            exclusive: exclusive,
+            autoDelete: autoDelete,
+            arguments: queueArgs,
+            cancellationToken: ct);
+
+        await channel.QueueBindAsync(
+            queue: queueName,
+            exchange: wire.Exchange,
+            routingKey: descriptor.RoutingKeyBinding,
+            arguments: null,
+            cancellationToken: ct);
     }
 }
