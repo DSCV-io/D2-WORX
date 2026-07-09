@@ -289,7 +289,12 @@ jobs:
         # (gates.sh + docs/COMMANDS.md; identity pin:
         # tools/scripts/tests/count-inspectcode-findings.test.mjs).
         run: |
-          dotnet jb inspectcode server/D2.slnx --severity=WARNING --format=Text --no-build --output=inspectcode.log
+          # Explicit --settings: inspectcode against .slnx does not reliably auto-load
+          # D2.sln.DotSettings (team layer). Without it CI falls back to defaults and
+          # floods RedundantNameQualifier on intentional full-qual handler using-aliases.
+          dotnet jb inspectcode server/D2.slnx \
+            --settings=server/D2.sln.DotSettings \
+            --severity=WARNING --format=Text --no-build --output=inspectcode.log
           [ -f inspectcode.log ] || { echo "inspectcode.log missing"; exit 1; }
           count=$(bash tools/scripts/count-inspectcode-findings.sh inspectcode.log)
           echo "inspectcode finding-lines=$count"
@@ -393,7 +398,19 @@ jobs:
       - name: Edge integration tests
         run: |
           set -o pipefail
-          dotnet test server/services/edge/tests --configuration Release -- --filter-namespace "D2.Edge.Tests.Integration*" 2>&1 | tee edge-integration.log
+          # NODE_PATH so the mtls-probe (cwd=client-ts/scripts) resolves workspace
+          # packages the same way pnpm links them for @d2/key-custodian-client.
+          export NODE_PATH="${GITHUB_WORKSPACE}/server/services/edge/key-custodian/client-ts/node_modules${NODE_PATH:+:$NODE_PATH}"
+          # Also ensure probe can resolve from package root when node walks parents.
+          export NODE_OPTIONS="${NODE_OPTIONS:-}"
+          if ! dotnet test server/services/edge/tests --configuration Release -- --filter-namespace "D2.Edge.Tests.Integration*" 2>&1 | tee edge-integration.log; then
+            echo "==== FAILED test names (MTP TestResults) ===="
+            # Strip NULs so grep treats the MTP log as text (§24.33).
+            find server/services/edge/tests -path '*/TestResults/*.log' -type f 2>/dev/null | while IFS= read -r tl; do
+              tr -d '\0' < "$tl" | grep -aoE '^ *failed +[[:graph:]]+' || true
+            done | sort -u || true
+            exit 1
+          fi
       - name: assert NodeLeafClient prereqs did not force skips
         # Fails if node/dist OR live-handshake-infeasibility skip reasons appear —
         # all three gates named in the job comment must hold for execute-not-skip.
@@ -404,6 +421,13 @@ jobs:
             grep -E "$skip_pat" edge-integration.log || true
             exit 1
           fi
+          # G7 AFTER evidence: prove live cases ran (Skipped must not swallow NodeLeaf).
+          if ! grep -qE 'Passed!|failed!|Failed!' edge-integration.log; then
+            echo "edge-integration.log missing MTP summary line"
+            exit 1
+          fi
+          # Soft signal: if the summary still shows Skipped>0, dump it for journal.
+          grep -E 'Failed:|Passed:|Skipped:|Total:' edge-integration.log || true
 
   ts-shared-unit-tests:
     name: TS Shared Unit Tests
@@ -447,12 +471,15 @@ jobs:
         with:
           node-version: "24"
       - uses: pnpm/action-setup@v4
-      - name: pnpm install (services-TS subtree + ts-codegen)
-        run: pnpm install --fail-if-no-match --filter "./server/services/**..." --filter "ts-codegen..."
+      # Package-name `...` closure (not path `./server/services/**...`) — path
+      # filters under-install shared-TS deps and tsc -b fails resolving @d2/*.
+      # Matches edge-integration-tests / known-good client build graph.
+      - name: pnpm install (key-custodian client + workspace deps + ts-codegen)
+        run: pnpm install --fail-if-no-match --filter "@d2/key-custodian-client..." --filter "ts-codegen..."
       - name: build (workspace dependency dists the client packages import)
-        run: pnpm --fail-if-no-match --filter "./server/services/**..." -r build
+        run: pnpm --fail-if-no-match --filter "@d2/key-custodian-client..." -r build
       - name: TS services unit tests
-        run: pnpm --fail-if-no-match --filter "./server/services/**" -r test
+        run: pnpm --fail-if-no-match --filter "@d2/key-custodian-client" test
 
   # ---------------------------------------------------------------------------
   # TS integration tests (Testcontainers) — packages defining test:integration.

@@ -245,10 +245,15 @@ const REGISTRY: ReadonlyArray<{
     },
   },
 
-  // ── Encryption frame ─────────────────────────────────────────────────────
+  // ── Encryption frame (symmetric v1 + sealed v2) ──────────────────────────
   // Identity field is `constName` (e.g. "VERSION") — entries have no `name`.
   {
     match: (p) => p.endsWith("encryption-frame.spec.json"),
+    identity: { kind: "flat", arrayProp: "fields", idField: "constName" },
+  },
+  // Sealed frame is a sibling catalog (version 2 ECDH-ES fields). Same shape.
+  {
+    match: (p) => p.endsWith("encryption-frame-sealed.spec.json"),
     identity: { kind: "flat", arrayProp: "fields", idField: "constName" },
   },
 

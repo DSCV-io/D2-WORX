@@ -53,11 +53,13 @@ pnpm --filter @d2/messaging-rabbitmq build                                 # Rab
 ## Rider/ReSharper Inspections (.NET)
 
 ```bash
-# Full solution (WARNING+ severity, text output, no build — run after dotnet build)
-jb inspectcode server/D2.slnx --severity=WARNING --format=Text --no-build --output=inspectcode.log && cat inspectcode.log
+# Full solution (WARNING+ severity, text output, no build — run after dotnet build).
+# Always pass --settings so team DotSettings apply when inspecting .slnx (auto-load
+# of D2.sln.DotSettings is unreliable for slnx on clean CI checkouts).
+jb inspectcode server/D2.slnx --settings=server/D2.sln.DotSettings --severity=WARNING --format=Text --no-build --output=inspectcode.log && cat inspectcode.log
 
 # Single project (faster — use during focused work)
-jb inspectcode server/D2.slnx --project="Edge.App" --severity=WARNING --format=Text --no-build --output=inspectcode.log && cat inspectcode.log
+jb inspectcode server/D2.slnx --settings=server/D2.sln.DotSettings --project="Edge.App" --severity=WARNING --format=Text --no-build --output=inspectcode.log && cat inspectcode.log
 ```
 
 These catch warnings that `dotnet build` does NOT surface: `[MustDisposeResource]` misuse, captured variable/closure issues, object initialization suggestions, and other JetBrains-specific inspections. Must be zero warnings. **Shared zero-warning parse** (do not re-inline): `tools/scripts/count-inspectcode-findings.sh` counts indented finding-lines in Text format (inspectcode exits 0 even when findings exist). Both the CI `inspectcode` job in `.github/workflows/test.yml` and the local gate at `.claude/skills/gate-suite/scripts/gates.sh` call that script; identity pin: `node --test tools/scripts/tests/count-inspectcode-findings.test.mjs`.

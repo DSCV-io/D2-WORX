@@ -36,6 +36,9 @@ function runCli(args: string[]): {
     ["--import", "tsx/esm", CLI_PATH, ...args],
     {
       encoding: "utf-8",
+      // Full monorepo gate stdout can exceed Node's default 1 MiB maxBuffer
+      // when many findings print; truncated capture loses "Discovery scope:".
+      maxBuffer: 20 * 1024 * 1024,
       env: { ...process.env, NODE_NO_WARNINGS: "1" },
     },
   );

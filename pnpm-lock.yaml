@@ -71,6 +71,9 @@ importers:
       '@grpc/grpc-js':
         specifier: 1.14.3
         version: 1.14.3
+      '@grpc/proto-loader':
+        specifier: 0.8.1
+        version: 0.8.1
       '@peculiar/x509':
         specifier: 2.0.0
         version: 2.0.0
@@ -81,9 +84,6 @@ importers:
         specifier: 0.3.2
         version: 0.3.2
     devDependencies:
-      '@grpc/proto-loader':
-        specifier: 0.8.1
-        version: 0.8.1
       '@vitest/coverage-v8':
         specifier: 4.0.18
         version: 4.0.18(vitest@4.0.18(@opentelemetry/api@1.9.0)(@types/node@25.7.0)(tsx@4.20.6)(yaml@2.9.0))
@@ -5898,6 +5898,14 @@ snapshots:
     optionalDependencies:
       vite: 7.3.3(@types/node@24.10.0)(tsx@4.20.6)(yaml@2.9.0)
 
+  '@vitest/mocker@4.0.18(vite@7.3.3(@types/node@25.7.0)(tsx@4.20.6)(yaml@2.9.0))':
+    dependencies:
+      '@vitest/spy': 4.0.18
+      estree-walker: 3.0.3
+      magic-string: 0.30.21
+    optionalDependencies:
+      vite: 7.3.3(@types/node@25.7.0)(tsx@4.20.6)(yaml@2.9.0)
+
   '@vitest/pretty-format@4.0.18':
     dependencies:
       tinyrainbow: 3.1.0
@@ -7399,7 +7407,7 @@ snapshots:
   vitest@4.0.18(@opentelemetry/api@1.9.0)(@types/node@25.7.0)(tsx@4.20.6)(yaml@2.9.0):
     dependencies:
       '@vitest/expect': 4.0.18
-      '@vitest/mocker': 4.0.18(vite@7.3.3(@types/node@24.10.0)(tsx@4.20.6)(yaml@2.9.0))
+      '@vitest/mocker': 4.0.18(vite@7.3.3(@types/node@25.7.0)(tsx@4.20.6)(yaml@2.9.0))
       '@vitest/pretty-format': 4.0.18
       '@vitest/runner': 4.0.18
       '@vitest/snapshot': 4.0.18

@@ -404,10 +404,15 @@ public sealed class NodeLeafClientKeyringHarnessTests(KeyCustodianPostgresFixtur
             "d2-node-keyring-probe-" + Guid.NewGuid().ToString("N") + ".json");
         var scriptPath = ProbeScript();
 
+        // Working directory MUST be the package root (client-ts/), not scripts/.
+        // Under a pnpm filter install on CI, workspace packages resolve via
+        // client-ts/node_modules; a scripts/ cwd walks past the package and
+        // fails to resolve @d2/* / @grpc/proto-loader → one live case fails.
+        var packageRoot = ClientTsDir();
         var psi = new ProcessStartInfo
         {
             FileName = nodeExe,
-            WorkingDirectory = Path.GetDirectoryName(scriptPath)!,
+            WorkingDirectory = packageRoot,
             RedirectStandardOutput = true,
             RedirectStandardError = true,
             UseShellExecute = false,

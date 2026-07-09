@@ -166,6 +166,17 @@ describe("getCatalogIdentity — registered catalogs resolve correctly", () => {
     }
   });
 
+  it("encryption-frame-sealed.spec.json resolves to fields/constName (sibling of frame)", () => {
+    const id = getCatalogIdentity(
+      "contracts/encryption-frame-sealed/encryption-frame-sealed.spec.json",
+    );
+    expect(id.kind).toBe("flat");
+    if (id.kind === "flat") {
+      expect(id.arrayProp).toBe("fields");
+      expect(id.idField).toBe("constName");
+    }
+  });
+
   it("d2result-envelope.spec.json resolves to fields/constName (NOT name)", () => {
     const id = getCatalogIdentity(
       "contracts/d2result-envelope/d2result-envelope.spec.json",

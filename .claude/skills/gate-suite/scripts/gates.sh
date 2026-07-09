@@ -32,9 +32,11 @@ ERR=$(grep -cE ': error ' "$LOGDIR/build.log" || true)
 echo "gates:   build warnings=$WARN errors=$ERR (log: $LOGDIR/build.log)"
 { [ "$WARN" != 0 ] || [ "$ERR" != 0 ]; } && rc=1
 
-echo "gates: [inspect] jb inspectcode server/D2.slnx --severity=WARNING --no-build"
-jb inspectcode server/D2.slnx --severity=WARNING --format=Text --no-build \
+echo "gates: [inspect] jb inspectcode server/D2.slnx --settings=server/D2.sln.DotSettings --severity=WARNING --no-build"
+jb inspectcode server/D2.slnx --settings=server/D2.sln.DotSettings \
+   --severity=WARNING --format=Text --no-build \
    --output="$LOGDIR/inspect.log" > "$LOGDIR/inspect.stdout" 2>&1 || rc=1
+
 # Single source of truth: tools/scripts/count-inspectcode-findings.sh
 # (CI test.yml inspectcode job + docs/COMMANDS.md cite the same script;
 # identity pin: tools/scripts/tests/count-inspectcode-findings.test.mjs).
