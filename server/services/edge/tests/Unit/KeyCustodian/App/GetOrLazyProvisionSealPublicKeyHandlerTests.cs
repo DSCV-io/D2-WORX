@@ -314,7 +314,7 @@ public sealed class GetOrLazyProvisionSealPublicKeyHandlerTests
 
         // Both a Generated and an Activated audit row were written in the same transaction.
         db.Audit.Select(a => a.Action).Should().Contain(
-            new[] { KeyAuditAction.Generated, KeyAuditAction.Activated });
+            [KeyAuditAction.Generated, KeyAuditAction.Activated]);
 
         provisioned.Should().Contain(1L, "the provisioning path increments the seal counter");
 

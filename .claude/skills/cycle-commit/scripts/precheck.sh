@@ -25,6 +25,11 @@ echo "precheck: baseline currency check x2"
 pnpm --filter release-runner check-baselines || rc=1
 pnpm --filter release-runner check-baselines || rc=1
 
+# Hard empty-Shipped gate (failed seed mid-wipe). Independent of fingerprint
+# currency so a header-only PublicAPI.Shipped.txt cannot be "quietly" current.
+echo "precheck: PublicAPI.Shipped empty-vs-HEAD check"
+node tools/scripts/check-publicapi-shipped.mjs || rc=1
+
 echo "precheck: prettier NOTE — the pre-commit hook chunks staged .ts/.js/.json/.svelte/.css/.yaml"
 echo "  through prettier --check; .md is .prettierignore'd (never prettier --write). Fix CODE only."
 

@@ -8,7 +8,8 @@ namespace D2.Edge.KeyCustodian.App.Infrastructure.Persistence;
 
 /// <summary>
 /// The persistence seam the App layer's command and query handlers depend on.
-/// Exposes the two flat record sets plus <see cref="SaveChangesAsync"/>; the
+/// Exposes the three flat record sets, <see cref="SaveChangesAsync"/>, and
+/// <see cref="ClearChangeTracker"/> (post-failed-save re-read hygiene); the
 /// concrete <c>DbContext</c> (with the relational model, value-converters for
 /// <c>Instant</c>, the <c>xmin</c> concurrency token, and the migration) lives
 /// in the Infra layer.
@@ -38,4 +39,11 @@ public interface IKeyCustodianDbContext
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>The number of state entries written to the store.</returns>
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Clears the EF change tracker of all tracked entities. Required after a failed
+    /// <see cref="SaveChangesAsync"/> (e.g. uniqueness / EXCLUDE collision) so subsequent
+    /// re-reads are not poisoned by rejected inserts that never committed.
+    /// </summary>
+    void ClearChangeTracker();
 }

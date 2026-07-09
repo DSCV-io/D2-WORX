@@ -369,10 +369,13 @@ jobs:
           if ! dotnet test server/services/edge/tests --configuration Release -- --filter-namespace "D2.Edge.Tests.Integration*" 2>&1 | tee edge-integration.log; then
             echo "==== FAILED test names (MTP TestResults) ===="
             # Strip NULs so grep treats the MTP log as text (§24.33).
+            # Prefer method/display-name lines; fall back to assert/exception stacks.
             find server/services/edge/tests -path '*/TestResults/*.log' -type f 2>/dev/null | while IFS= read -r tl; do
               echo "--- $tl ---"
-              tr -d '\0' < "$tl" | grep -aiE 'failed |error |exception|assert|should' | head -80 || true
+              tr -d '\0' < "$tl" | grep -aiE 'SealProvisioning|Rotation_|HotSwap|keyring-refresher|OnlyContain|NOT_FOUND|ErrorCode|failed |error |exception|assert|should' | head -120 || true
             done || true
+            # Console summary often has the only readable FQN when MTP binary log is sparse.
+            grep -aiE 'failed|error |SealProvisioning|Rotation_|HotSwap' edge-integration.log | head -40 || true
             exit 1
           fi
       - name: assert NodeLeafClient prereqs did not force skips

@@ -17,7 +17,7 @@ using Microsoft.EntityFrameworkCore;
 /// absent; Infra + Testcontainers own those. The InMemory provider stores CLR
 /// objects directly, so <c>Instant</c> persists without a converter here.
 /// </summary>
-public sealed class KeyCustodianTestDbContext : DbContext, IKeyCustodianDbContext
+public class KeyCustodianTestDbContext : DbContext, IKeyCustodianDbContext
 {
     /// <summary>
     /// Initializes a new instance of the <see cref="KeyCustodianTestDbContext"/> class.
@@ -42,15 +42,27 @@ public sealed class KeyCustodianTestDbContext : DbContext, IKeyCustodianDbContex
     /// test is isolated.
     /// </summary>
     /// <returns>A new, empty <see cref="KeyCustodianTestDbContext"/>.</returns>
-    public static KeyCustodianTestDbContext CreateEmpty()
+    public static KeyCustodianTestDbContext CreateEmpty() =>
+        CreateNamed(Guid.NewGuid().ToString("N"));
+
+    /// <summary>
+    /// Builds a context backed by a named InMemory database so sibling contexts can
+    /// share store state (race / converge fixtures).
+    /// </summary>
+    /// <param name="databaseName">Shared InMemory database name.</param>
+    /// <returns>A new <see cref="KeyCustodianTestDbContext"/> over the named store.</returns>
+    public static KeyCustodianTestDbContext CreateNamed(string databaseName)
     {
         var options = new DbContextOptionsBuilder<KeyCustodianTestDbContext>()
-            .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString("N"))
+            .UseInMemoryDatabase(databaseName: databaseName)
             .EnableServiceProviderCaching(false)
             .Options;
 
         return new KeyCustodianTestDbContext(options);
     }
+
+    /// <inheritdoc/>
+    public virtual void ClearChangeTracker() => ChangeTracker.Clear();
 
     /// <inheritdoc/>
     protected override void OnModelCreating(ModelBuilder modelBuilder)

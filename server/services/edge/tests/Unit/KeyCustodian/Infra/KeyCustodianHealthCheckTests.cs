@@ -153,6 +153,9 @@ public sealed class KeyCustodianHealthCheckTests
 
         public Task<int> SaveChangesAsync(CancellationToken cancellationToken = default) =>
             throw new InvalidOperationException("database unreachable");
+
+        public void ClearChangeTracker() =>
+            throw new InvalidOperationException("database unreachable");
     }
 
     private sealed class AlwaysHealthy : IHealthCheck

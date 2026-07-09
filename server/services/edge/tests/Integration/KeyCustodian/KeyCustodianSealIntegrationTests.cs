@@ -71,6 +71,7 @@ public sealed class KeyCustodianSealIntegrationTests(KeyCustodianPostgresFixture
 
             var publicKeysByKid = pub.Data.Entries.ToDictionary(
                 e => e.Kid, e => e.PublicSpki, StringComparer.Ordinal);
+
             var pubKeyring = new RecipientPublicKeyring(serviceId, activeKid, publicKeysByKid);
 
             framed = new PayloadSealer(pubKeyring).Seal(plaintext);
@@ -87,12 +88,15 @@ public sealed class KeyCustodianSealIntegrationTests(KeyCustodianPostgresFixture
                 .HandleAsync(new GetOrLazyProvisionOwnSealPrivateKeyInput(), CancellationToken.None);
 
             priv.Success.Should().BeTrue();
+
             priv.Data!.ActiveKid.Should().Be(
                 activeKid, "the private fetch reuses the already-provisioned active key");
+
             priv.Data.Entries.Should().ContainSingle();
 
             var privateKeysByKid = priv.Data.Entries.ToDictionary(
                 e => e.Kid, e => e.PrivatePkcs8, StringComparer.Ordinal);
+
             using var privKeyring = new RecipientPrivateKeyring(serviceId, privateKeysByKid);
 
             var recovered = new PayloadOpener(privKeyring).Open(framed);
@@ -131,12 +135,21 @@ public sealed class KeyCustodianSealIntegrationTests(KeyCustodianPostgresFixture
 
         var results = await Task.WhenAll(tasks);
 
+        var failures = results
+            .Where(r => !r.Success)
+            .Select(r => $"{r.StatusCode}/{r.ErrorCode}")
+            .ToArray();
+
         results.Should().OnlyContain(
-            r => r.Success, "every concurrent first-request converges on the winner (no 409)");
+            r => r.Success,
+            "every concurrent first-request converges on the winner (no 409); failures: [{0}]",
+            string.Join(", ", failures));
+
         results.Select(r => r.Data!.ActiveKid).Distinct().Should().ContainSingle(
             "the race collapses to ONE active key every caller serves");
 
         await using var ctx = fixture.NewContext();
+
         var active = await ctx.Keys.AsNoTracking()
             .Where(k => k.KeyDomain == domain && k.Status == KeyStatus.Active)
             .ToListAsync();
@@ -150,7 +163,7 @@ public sealed class KeyCustodianSealIntegrationTests(KeyCustodianPostgresFixture
     {
         await fixture.EnsureMigratedAsync();
 
-        var targets = new[] { NewServiceId(), NewServiceId(), NewServiceId() };
+        string[] targets = [NewServiceId(), NewServiceId(), NewServiceId()];
         await CleanSealDomainsAsync(
             targets.Select(t => "seal:" + t).Append("seal:" + _PRODUCER).ToArray());
 
@@ -236,10 +249,12 @@ public sealed class KeyCustodianSealIntegrationTests(KeyCustodianPostgresFixture
     private static IPayloadCrypto BuildRootCrypto()
     {
         var key = RandomNumberGenerator.GetBytes(PayloadCryptoKeyring.KEY_SIZE_BYTES);
+
         var keyring = new PayloadCryptoKeyring(
             "root",
             new Dictionary<string, byte[]> { ["root"] = key },
             "keycustodian-root"u8.ToArray());
+
         return new PayloadCrypto(keyring);
     }
 
@@ -303,6 +318,7 @@ public sealed class KeyCustodianSealIntegrationTests(KeyCustodianPostgresFixture
                 fixture.ConnectionString,
                 commandTimeoutSeconds: 30,
                 migrationsAssemblyName: typeof(KeyCustodianDbContext).Assembly.GetName().Name!));
+
         services.AddScoped<IKeyCustodianDbContext>(
             sp => sp.GetRequiredService<KeyCustodianDbContext>());
 
