@@ -5,6 +5,7 @@
 import { describe, expect, it } from "vitest";
 import { AuthErrorCodes } from "@d2/auth-abstractions";
 import type { IRequestContext } from "@d2/request-context-abstractions";
+import { RequestOrigin } from "@d2/request-context-abstractions";
 import { requireAuth } from "../../src/guards/require-auth.js";
 import type {
   GuardRequestEvent,
@@ -99,7 +100,10 @@ function authenticatedCtx(
     asn: undefined,
     asnName: undefined,
     asnType: undefined,
+    immediateCaller: undefined,
     ...overrides,
+    origin: overrides.origin ?? RequestOrigin.Unestablished,
+    callPath: overrides.callPath ?? [],
   };
 }
 

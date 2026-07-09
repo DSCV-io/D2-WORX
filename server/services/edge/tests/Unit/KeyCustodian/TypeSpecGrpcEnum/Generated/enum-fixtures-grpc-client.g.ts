@@ -19,9 +19,9 @@ import { type D2Result, ok, validationFailed } from "@d2/result";
 
 // Emitted DTO types + (predicate ops) the result-predicate twin. Paths resolve
 // in the BFF SSR consumer; @ts-nocheck erases them here.
-import type { SignWithKindInput, SignWithKindOutput } from "./sign-with-kind-dto.js";
+import type { SignWithKindFixtureInput, SignWithKindFixtureOutput } from "./sign-with-kind-fixture-dto.js";
 
-import { KeyKind } from "./sign-with-kind-dto.js";
+import { FixtureKeyKind } from "./sign-with-kind-fixture-dto.js";
 
 /** Per-call options for a generated gRPC client method. */
 export interface GrpcCallOptions {
@@ -39,27 +39,27 @@ export interface GrpcCallOptions {
 
 /** Generated SSR gRPC client interface for the EnumFixtures module. */
 export interface EnumFixturesGrpcClient {
-  signWithKind(input: SignWithKindInput, opts?: GrpcCallOptions): Promise<D2Result<SignWithKindOutput>>;
+  signWithKindFixture(input: SignWithKindFixtureInput, opts?: GrpcCallOptions): Promise<D2Result<SignWithKindFixtureOutput>>;
 }
 
 /** Build the EnumFixtures gRPC client over a ts-proto grpc-js service stub. */
 export function createEnumFixturesGrpcClient(stub: unknown): EnumFixturesGrpcClient {
   return {
-    async signWithKind(input, opts) {
-      const request = toSignWithKindRequest(input);
+    async signWithKindFixture(input, opts) {
+      const request = toSignWithKindFixtureRequest(input);
       const pipeline = opts?.pipeline;
-      const run = async (): Promise<D2Result<SignWithKindOutput>> => {
-        const response = await unaryCall(stub.signWithKind.bind(stub), request, { deadlineMs: opts?.deadlineMs });
+      const run = async (): Promise<D2Result<SignWithKindFixtureOutput>> => {
+        const response = await unaryCall(stub.signWithKindFixture.bind(stub), request, { deadlineMs: opts?.deadlineMs });
         const dataResult = response.data === undefined
           ? undefined
-          : toSignWithKindOutput(response.data);
+          : toSignWithKindFixtureOutput(response.data);
         if (dataResult !== undefined && dataResult.failed)
-          return dataResult.withTraceId(opts?.traceId) as D2Result<SignWithKindOutput>;
+          return dataResult.withTraceId(opts?.traceId) as D2Result<SignWithKindFixtureOutput>;
         const result = d2ResultFromProto(response.result, dataResult?.data).withTraceId(opts?.traceId);
         return result;
       };
       try {
-        return await (pipeline !== undefined ? pipeline.execute("EnumFixturesSigner/SignWithKind", run, opts?.signal) : run());
+        return await (pipeline !== undefined ? pipeline.execute("EnumFixturesSigner/SignWithKindFixture", run, opts?.signal) : run());
       } catch (e) {
         // Terminal transport fault → map via the seam (never leaks err.details / err.message).
         return handleGrpcCall(() => Promise.reject(e), () => undefined as never, () => undefined, opts?.traceId);
@@ -68,18 +68,18 @@ export function createEnumFixturesGrpcClient(stub: unknown): EnumFixturesGrpcCli
   };
 }
 
-/** Map the SignWithKindResponse data → D2Result<SignWithKindOutput>; an unknown enum wire value fails loud. */
-function toSignWithKindOutput(data: unknown): D2Result<SignWithKindOutput> {
-  if (!Object.values(KeyKind).includes(data.keyKind))
-    return validationFailed<SignWithKindOutput>();
-  return ok<SignWithKindOutput>({
+/** Map the SignWithKindFixtureResponse data → D2Result<SignWithKindFixtureOutput>; an unknown enum wire value fails loud. */
+function toSignWithKindFixtureOutput(data: unknown): D2Result<SignWithKindFixtureOutput> {
+  if (!Object.values(FixtureKeyKind).includes(data.keyKind))
+    return validationFailed<SignWithKindFixtureOutput>();
+  return ok<SignWithKindFixtureOutput>({
     signature: data.signature,
     keyKind: data.keyKind,
-  } as SignWithKindOutput);
+  } as SignWithKindFixtureOutput);
 }
 
-/** Map SignWithKindInput → the SignWithKindRequest proto message (field-name-identical). */
-function toSignWithKindRequest(input: SignWithKindInput): unknown {
+/** Map SignWithKindFixtureInput → the SignWithKindFixtureRequest proto message (field-name-identical). */
+function toSignWithKindFixtureRequest(input: SignWithKindFixtureInput): unknown {
   return {
     kid: input.kid,
     keyKind: input.keyKind,

@@ -24,13 +24,13 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using DtoOrderLine = D2.Edge.Tests.TypeSpecGrpcPredicate.Generated.PlaceOrderLine;
-using DtoOrderV2Customer = D2.Edge.Tests.TypeSpecGrpcPredicate.Generated.PlaceOrderV2Customer;
-using DtoOrderV2Input = D2.Edge.Tests.TypeSpecGrpcPredicate.Generated.PlaceOrderV2Input;
-using DtoOrderV2Output = D2.Edge.Tests.TypeSpecGrpcPredicate.Generated.PlaceOrderV2Output;
-using ProtoOrderLine = D2.Services.Protos.PredicateFixturesV2.V1.PlaceOrderLine;
-using ProtoOrderV2Customer = D2.Services.Protos.PredicateFixturesV2.V1.PlaceOrderV2Customer;
-using ProtoOrderV2Output = D2.Services.Protos.PredicateFixturesV2.V1.PlaceOrderV2Output;
+using DtoOrderFixtureLine = D2.Edge.Tests.TypeSpecGrpcPredicate.Generated.PlaceOrderFixtureLine;
+using DtoOrderV2Customer = D2.Edge.Tests.TypeSpecGrpcPredicate.Generated.PlaceOrderV2FixtureCustomer;
+using DtoOrderV2Input = D2.Edge.Tests.TypeSpecGrpcPredicate.Generated.PlaceOrderV2FixtureInput;
+using DtoOrderV2Output = D2.Edge.Tests.TypeSpecGrpcPredicate.Generated.PlaceOrderV2FixtureOutput;
+using ProtoOrderFixtureLine = D2.Services.Protos.PredicateFixturesV2.V1.PlaceOrderFixtureLine;
+using ProtoOrderV2Customer = D2.Services.Protos.PredicateFixturesV2.V1.PlaceOrderV2FixtureCustomer;
+using ProtoOrderV2Output = D2.Services.Protos.PredicateFixturesV2.V1.PlaceOrderV2FixtureOutput;
 
 /// <summary>
 /// In-memory harness tests for the generated <see cref="PredicateFixturesV2GrpcClient"/> — the
@@ -66,14 +66,14 @@ public sealed class PlaceOrderV2RoundTripTests
         var shim = new EchoOrderV2ShimBase(
             () => D2Result<DtoOrderV2Output?>.Ok(new DtoOrderV2Output(
                 "order-1",
-                [new DtoOrderLine("SHIPPED"), new DtoOrderLine("DELIVERED")],
+                [new DtoOrderFixtureLine("SHIPPED"), new DtoOrderFixtureLine("DELIVERED")],
                 new DtoOrderV2Customer("GOLD"))));
 
         using var host = await BuildHost(shim);
         using var pipeline = BuildPassThroughPipeline();
         var client = BuildClient(host, pipeline);
 
-        var result = await client.PlaceOrderV2Async(new DtoOrderV2Input("cust-1"));
+        var result = await client.PlaceOrderV2FixtureAsync(new DtoOrderV2Input("cust-1"));
 
         result.Success.Should().BeTrue();
         result.Data!.OrderCode.Should().Be("order-1");
@@ -98,14 +98,14 @@ public sealed class PlaceOrderV2RoundTripTests
         var shim = new EchoOrderV2ShimBase(
             () => D2Result<DtoOrderV2Output?>.Ok(new DtoOrderV2Output(
                 "order-2",
-                [new DtoOrderLine("PENDING")],
+                [new DtoOrderFixtureLine("PENDING")],
                 Customer: null)));
 
         using var host = await BuildHost(shim);
         using var pipeline = BuildPassThroughPipeline();
         var client = BuildClient(host, pipeline);
 
-        var result = await client.PlaceOrderV2Async(new DtoOrderV2Input("cust-1"));
+        var result = await client.PlaceOrderV2FixtureAsync(new DtoOrderV2Input("cust-1"));
 
         result.Success.Should().BeTrue();
 
@@ -131,7 +131,7 @@ public sealed class PlaceOrderV2RoundTripTests
         using var pipeline = BuildPassThroughPipeline();
         var client = BuildClient(host, pipeline);
 
-        var result = await client.PlaceOrderV2Async(new DtoOrderV2Input("cust-1"));
+        var result = await client.PlaceOrderV2FixtureAsync(new DtoOrderV2Input("cust-1"));
 
         result.Success.Should().BeTrue();
         result.Data!.Lines.Should().NotBeNull();
@@ -148,15 +148,15 @@ public sealed class PlaceOrderV2RoundTripTests
     {
         var shim = new EchoOrderV2ShimBase(
             () => D2Result<DtoOrderV2Output?>.Ok(new DtoOrderV2Output(
-                "order-4", [new DtoOrderLine("OK")], new DtoOrderV2Customer("GOLD"))));
+                "order-4", [new DtoOrderFixtureLine("OK")], new DtoOrderV2Customer("GOLD"))));
 
         using var host = await BuildHost(shim);
         using var pipeline = BuildPassThroughPipeline();
         var client = BuildClient(host, pipeline);
 
-        await client.PlaceOrderV2Async(new DtoOrderV2Input("cust-echo-42"));
+        await client.PlaceOrderV2FixtureAsync(new DtoOrderV2Input("cust-echo-42"));
 
-        // The request mapper (input.ToPlaceOrderV2Request()) sent the customerId over the wire.
+        // The request mapper (input.ToPlaceOrderV2FixtureRequest()) sent the customerId over the wire.
         shim.LastCustomerId.Should().Be("cust-echo-42");
     }
 
@@ -172,14 +172,14 @@ public sealed class PlaceOrderV2RoundTripTests
         var shim = new EchoOrderV2ShimBase(
             () => D2Result<DtoOrderV2Output?>.Ok(new DtoOrderV2Output(
                 "order-trial",
-                [new DtoOrderLine("SHIPPED")],
+                [new DtoOrderFixtureLine("SHIPPED")],
                 new DtoOrderV2Customer("TRIAL"))));
 
         using var host = await BuildHost(shim);
         using var retryPipeline = BuildRetryPipeline(maxAttempts: 3);
         var client = BuildClient(host, retryPipeline);
 
-        var result = await client.PlaceOrderV2Async(new DtoOrderV2Input("cust-1"));
+        var result = await client.PlaceOrderV2FixtureAsync(new DtoOrderV2Input("cust-1"));
 
         shim.CallCount.Should().BeGreaterThan(
             1,
@@ -198,14 +198,14 @@ public sealed class PlaceOrderV2RoundTripTests
         var shim = new EchoOrderV2ShimBase(
             () => D2Result<DtoOrderV2Output?>.Ok(new DtoOrderV2Output(
                 "order-pending",
-                [new DtoOrderLine("PENDING")],
+                [new DtoOrderFixtureLine("PENDING")],
                 new DtoOrderV2Customer("GOLD"))));
 
         using var host = await BuildHost(shim);
         using var retryPipeline = BuildRetryPipeline(maxAttempts: 3);
         var client = BuildClient(host, retryPipeline);
 
-        var result = await client.PlaceOrderV2Async(new DtoOrderV2Input("cust-1"));
+        var result = await client.PlaceOrderV2FixtureAsync(new DtoOrderV2Input("cust-1"));
 
         shim.CallCount.Should().BeGreaterThan(
             1,
@@ -223,7 +223,7 @@ public sealed class PlaceOrderV2RoundTripTests
     {
         using var host = await BuildHost(new EchoOrderV2ShimBase(
             () => D2Result<DtoOrderV2Output?>.Ok(new DtoOrderV2Output(
-                "o", [new DtoOrderLine("OK")], new DtoOrderV2Customer("GOLD")))));
+                "o", [new DtoOrderFixtureLine("OK")], new DtoOrderV2Customer("GOLD")))));
 
         var httpClient = host.GetTestClient();
 
@@ -249,7 +249,7 @@ public sealed class PlaceOrderV2RoundTripTests
         client.Should().BeOfType<PredicateFixturesV2GrpcClient>();
 
         var pipeline = sp.GetRequiredKeyedService<ResilientPipeline<string, DtoOrderV2Output?>>(
-            PlaceOrderV2ClientKeys.PIPELINE);
+            PlaceOrderV2FixtureClientKeys.PIPELINE);
         pipeline.Should().NotBeNull();
     }
 
@@ -267,7 +267,7 @@ public sealed class PlaceOrderV2RoundTripTests
         using var retryPipeline = BuildRetryPipeline(maxAttempts: 5);
         var client = BuildClient(host, retryPipeline);
 
-        var result = await client.PlaceOrderV2Async(new DtoOrderV2Input("cust-1"));
+        var result = await client.PlaceOrderV2FixtureAsync(new DtoOrderV2Input("cust-1"));
 
         shim.CallCount.Should().Be(1, "failWhen (VALIDATION_FAILED) matched → no retry");
         result.Success.Should().BeFalse();
@@ -363,16 +363,16 @@ public sealed class PlaceOrderV2RoundTripTests
     // namespace would collide their per-nested-model sub-mappers). The server-side
     // buildDtoToProto recursion is proven separately by the emitter's direct-unit + byte
     // tests; this harness proves the CLIENT proto → DTO recursion end-to-end.
-    private static PlaceOrderV2Response BuildResponse(D2Result<DtoOrderV2Output?> businessResult)
+    private static PlaceOrderV2FixtureResponse BuildResponse(D2Result<DtoOrderV2Output?> businessResult)
     {
-        var response = new PlaceOrderV2Response { Result = businessResult.ToProto() };
+        var response = new PlaceOrderV2FixtureResponse { Result = businessResult.ToProto() };
         if (businessResult.Success && businessResult.Data is not null)
         {
             var data = businessResult.Data;
             var proto = new ProtoOrderV2Output { OrderCode = data.OrderCode };
 
             foreach (var line in data.Lines)
-                proto.Lines.Add(new ProtoOrderLine { Status = line.Status });
+                proto.Lines.Add(new ProtoOrderFixtureLine { Status = line.Status });
 
             if (data.Customer is not null)
                 proto.Customer = new ProtoOrderV2Customer { Tier = data.Customer.Tier };
@@ -398,8 +398,8 @@ public sealed class PlaceOrderV2RoundTripTests
 
         public string? LastCustomerId => Volatile.Read(ref _lastCustomerId);
 
-        public override Task<PlaceOrderV2Response> PlaceOrderV2(
-            PlaceOrderV2Request request, ServerCallContext context)
+        public override Task<PlaceOrderV2FixtureResponse> PlaceOrderV2Fixture(
+            PlaceOrderV2FixtureRequest request, ServerCallContext context)
         {
             Interlocked.Increment(ref _callCount);
             Volatile.Write(ref _lastCustomerId, request.CustomerId);

@@ -4,10 +4,12 @@
 
 import { runAuthContextEmit } from "./auth-context-emit.js";
 import { runAuthScopesEmit } from "./auth-scopes-emit.js";
+import { runProtocolAudiencesEmit } from "./protocol-audiences-emit.js";
 import { runD2ResultEnvelopeEmit } from "./d2result-envelope-emit.js";
 import { runDlqFailureMetadataEmit } from "./dlq-failure-metadata-emit.js";
 import { runEncryptionDomainsEmit } from "./encryption-domains-emit.js";
 import { runEncryptionFrameEmit } from "./encryption-frame-emit.js";
+import { runSealedFrameEmit } from "./encryption-frame-sealed-emit.js";
 import { runErrorCategoryEmit } from "./error-category-emit.js";
 import {
   runAuthErrorCodesEmit,
@@ -22,6 +24,7 @@ import { runGrpcTrailersEmit } from "./grpc-trailers-emit.js";
 import { runHeadersEmit } from "./headers-emit.js";
 import { runJwtClaimsEmit } from "./jwt-claims-emit.js";
 import { formatDiagnostic } from "./lib/diagnostics.js";
+import { runMqMessagesEmit } from "./mq-messages-emit.js";
 import { runOtelMessagingTagsEmit } from "./otel-messaging-tags-emit.js";
 import { runProblemDetailsEmit } from "./problem-details-emit.js";
 import { runRequestContextEmit } from "./request-context-emit.js";
@@ -40,6 +43,12 @@ function main(): void {
     // request-context extends auth-context — emit auth-context first.
     ...runRequestContextEmit(force),
     ...runAuthScopesEmit(force),
+    // Protocol audiences — emits the ProtocolAudiences const-object (d2.internal,
+    // d2-edge bare-token aud values) into @d2/auth-abstractions from
+    // contracts/auth-protocol-audiences/protocol-audiences.spec.json. The
+    // @d2Audience validator (typespec-decorators) reads the same spec directly.
+    // Independent catalog — order within this block does not matter.
+    ...runProtocolAudiencesEmit(force),
     // Error category — emits the closed ErrorCategory string-union into
     // @d2/error-category from contracts/error-category/error-category.spec.json.
     // @d2/error-codes-registry imports ErrorCategory from this leaf; a future
@@ -99,10 +108,20 @@ function main(): void {
     // @d2/messaging-abstractions. Consumed by DLQ ops tooling and any TS
     // RabbitMQ subscriber that reads DLQ entries.
     ...runDlqFailureMetadataEmit(force),
+    // MQ messages descriptor mirror — emits into @d2/messaging-abstractions
+    // from contracts/mq-messages/mq-messages.spec.json. Mirrors .NET
+    // MqMessages + MqMessagesRegistry so the TS RabbitMQ consumer resolves
+    // exchange / exchangeType / encryption per message type identically.
+    ...runMqMessagesEmit(force),
     // Encryption frame binary layout — emits into @d2/encryption-abstractions
     // as field-offset constants + byte-length constants. Consumed by ops
     // tooling and any TS reader of the on-wire encryption frame.
     ...runEncryptionFrameEmit(force),
+    // SEALED encryption frame binary layout (version 2, the asymmetric
+    // ECDH-ES hybrid) — emits into @d2/encryption-abstractions from the
+    // sibling contracts/encryption-frame-sealed/ spec. A separate spec +
+    // emitter so the version-1 artifacts stay byte-identical.
+    ...runSealedFrameEmit(force),
     // Geo catalogs — emits TS record shapes + branded code types + Zod
     // schemas + closed-set validation tables into @d2/geo-abstractions from
     // the seven contracts/geo/*.spec.json Tier-2 files. Catalog DATA

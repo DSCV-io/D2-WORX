@@ -55,6 +55,34 @@ public sealed class ContextGeneratorTests
     }
     """;
 
+    private const string _REQUEST_SPEC_WITH_ESTABLISHMENT = """
+    {
+      "name": "IRequestContext",
+      "namespace": "D2.Shared.Context.Abstractions",
+      "extends": "D2.Shared.AuthContext.Abstractions.IAuthContext",
+      "sections": [
+        {
+          "name": "Tracing",
+          "properties": [ { "name": "TraceId", "type": "string?" } ]
+        },
+        {
+          "name": "Establishment",
+          "properties": [
+            { "name": "Origin", "type": "RequestOrigin" },
+            { "name": "ImmediateCaller", "type": "string?" },
+            {
+              "name": "CallPath",
+              "type": "IReadOnlyList<CallPathEntry>",
+              "propagate": true,
+              "maxLength": 16,
+              "entryIdMaxLength": 128
+            }
+          ]
+        }
+      ]
+    }
+    """;
+
     [Fact]
     public void Generator_AuthContextAbstractionsAssembly_EmitsIAuthContextOnly()
     {
@@ -104,6 +132,52 @@ public sealed class ContextGeneratorTests
         fileNames.Should().Contain("PropagatedContext.g.cs");
         fileNames.Should().Contain("PropagatedContextExtensions.g.cs");
         fileNames.Should().Contain("PropagatedContextSerializer.g.cs");
+    }
+
+    [Fact]
+    public void Generator_EstablishmentSpec_EmitsThreeFieldsOnInterfaceAndMutable()
+    {
+        var driver = RunGenerator(
+            assemblyName: "D2.Shared.Context.Abstractions",
+            authSpec: _AUTH_SPEC,
+            requestSpec: _REQUEST_SPEC_WITH_ESTABLISHMENT);
+
+        var trees = driver.GetRunResult().GeneratedTrees.ToArray();
+
+        var iRequest = trees
+            .Single(t => Path.GetFileName(t.FilePath) == "IRequestContext.g.cs").ToString();
+        iRequest.Should().Contain("RequestOrigin Origin { get; }");
+        iRequest.Should().Contain("string? ImmediateCaller { get; }");
+        iRequest.Should().Contain("IReadOnlyList<CallPathEntry> CallPath { get; }");
+
+        var mutable = trees
+            .Single(t => Path.GetFileName(t.FilePath) == "MutableRequestContext.g.cs").ToString();
+
+        // Origin defaults to the fail-closed Unestablished; CallPath to an empty
+        // list; ImmediateCaller to null.
+        mutable.Should().Contain(
+            "public RequestOrigin Origin { get; set; } = RequestOrigin.Unestablished;");
+        mutable.Should().Contain("public IReadOnlyList<CallPathEntry> CallPath { get; set; } = [];");
+        mutable.Should().Contain("public string? ImmediateCaller { get; set; } = null;");
+    }
+
+    [Fact]
+    public void Generator_EstablishmentSpec_PropagatedContextHasCallPathButNotOriginOrCaller()
+    {
+        // Anti-spoofing invariant #1 at the generator level: only propagate:true
+        // fields enter PropagatedContext. Origin + ImmediateCaller (non-propagated,
+        // authority-grade) must NOT appear; CallPath (telemetry) must.
+        var driver = RunGenerator(
+            assemblyName: "D2.Shared.Context.Abstractions",
+            authSpec: _AUTH_SPEC,
+            requestSpec: _REQUEST_SPEC_WITH_ESTABLISHMENT);
+
+        var record = driver.GetRunResult().GeneratedTrees
+            .Single(t => Path.GetFileName(t.FilePath) == "PropagatedContext.g.cs").ToString();
+
+        record.Should().Contain("public IReadOnlyList<CallPathEntry>? CallPath { get; init; }");
+        record.Should().NotContain("Origin");
+        record.Should().NotContain("ImmediateCaller");
     }
 
     [Fact]

@@ -89,6 +89,10 @@ const TS_REQUEST_CONTEXT_PROPERTIES: readonly string[] = [
   "asn",
   "asnName",
   "asnType",
+  // Own — Establishment
+  "origin",
+  "immediateCaller",
+  "callPath",
 ];
 
 const TS_REQUEST_CONTEXT_OWN_PROPERTIES: readonly string[] = [
@@ -124,6 +128,9 @@ const TS_REQUEST_CONTEXT_OWN_PROPERTIES: readonly string[] = [
   "asn",
   "asnName",
   "asnType",
+  "origin",
+  "immediateCaller",
+  "callPath",
 ];
 
 describe("request-context parity (.NET IRequestContext ↔ TS IRequestContext shape)", () => {

@@ -13,14 +13,30 @@ staged=$(git diff --cached --name-only --diff-filter=ACMR \
 
 [ -z "$staged" ] && exit 0
 
+# -n 40 chunks the file list across multiple prettier invocations so large
+# commits stay under the Windows command-line length limit (xargs exits
+# non-zero if ANY chunk fails, so the gate still trips on a dirty file).
 # shellcheck disable=SC2086
-if ! printf '%s\n' "$staged" | xargs pnpm exec prettier --check; then
+if ! printf '%s\n' "$staged" | xargs -n 40 pnpm exec prettier --check; then
   echo ""
   echo "  ✖  Commit rejected: staged files are not Prettier-clean."
   echo ""
   echo "     Run:  pnpm format          (formats the whole repo)"
   echo "       or:  pnpm exec prettier --write <files>"
   echo "     then re-stage and commit again."
+  echo ""
+  exit 1
+fi
+
+# Block any commit where a consumable package's source changed without
+# re-seeding its .release-fingerprint baseline.
+# Remediation on failure: run the seed scripts (printed in the error message),
+# re-stage the updated baseline files, and commit again.
+
+if ! pnpm --filter release-runner exec tsx src/fingerprint-currency-cli.ts; then
+  echo ""
+  echo "  ✖  Commit rejected: one or more baseline fingerprints are stale."
+  echo "     See the table above for affected packages and remediation steps."
   echo ""
   exit 1
 fi

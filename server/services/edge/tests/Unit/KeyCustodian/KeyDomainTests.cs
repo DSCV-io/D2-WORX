@@ -24,9 +24,6 @@ public sealed class KeyDomainTests
     }
 
     [Theory]
-    [InlineData("audit")]
-    [InlineData("notifications")]
-    [InlineData("courier")]
     [InlineData(KeyDomain.JWKS_SIGNING)]
     [InlineData(KeyDomain.COOKIE)]
     [InlineData(KeyDomain.CLIENT_SECRET)]
@@ -37,23 +34,11 @@ public sealed class KeyDomainTests
         KeyDomain.All.Should().Contain(d => d.Value == domain);
     }
 
-    [Fact]
-    public void All_ContainsExactly8Entries()
-    {
-        // audit, notifications, courier (3 non-plaintext from EncryptionDomains)
-        // + jwks-signing, cookie, client-secret, mtls-ca-root, mtls-ca-intermediate
-        // (5 KC-only) = 8
-        KeyDomain.All.Count.Should().Be(8);
-    }
-
     // -----------------------------------------------------------------------
     // Create — valid catalog members
     // -----------------------------------------------------------------------
 
     [Theory]
-    [InlineData("audit")]
-    [InlineData("notifications")]
-    [InlineData("courier")]
     [InlineData("jwks-signing")]
     [InlineData("cookie")]
     [InlineData("client-secret")]
@@ -129,19 +114,23 @@ public sealed class KeyDomainTests
     // -----------------------------------------------------------------------
 
     [Fact]
-    public void Create_UpperCaseAudit_NormalizesToLowercase()
+    public void Create_UpperCaseFixtureDomain_NormalizesToLowercaseAndTrims()
     {
-        var result = KeyDomain.Create(" AUDIT ");
+        using var fixtureSeam = FixturePayloadDomains.Register();
+
+        var result = KeyDomain.Create(" PAYLOAD-FIXTURE-A ");
         result.Success.Should().BeTrue();
-        result.Data!.Value.Should().Be("audit");
+        result.Data!.Value.Should().Be(FixturePayloadDomains.PAYLOAD_A);
     }
 
     [Fact]
-    public void Create_MixedCaseNotifications_NormalizesToLowercase()
+    public void Create_MixedCaseFixtureDomain_NormalizesToLowercase()
     {
-        var result = KeyDomain.Create("Notifications");
+        using var fixtureSeam = FixturePayloadDomains.Register();
+
+        var result = KeyDomain.Create("Payload-Fixture-A");
         result.Success.Should().BeTrue();
-        result.Data!.Value.Should().Be("notifications");
+        result.Data!.Value.Should().Be(FixturePayloadDomains.PAYLOAD_A);
     }
 
     // -----------------------------------------------------------------------
@@ -149,10 +138,12 @@ public sealed class KeyDomainTests
     // -----------------------------------------------------------------------
 
     [Fact]
-    public void FromTrusted_ValidValue_WrapsVerbatim()
+    public void FromTrusted_CatalogValue_ResolvesCanonicalEntry()
     {
-        var domain = KeyDomain.FromTrusted("audit");
-        domain.Value.Should().Be("audit");
+        using var fixtureSeam = FixturePayloadDomains.Register();
+
+        var domain = KeyDomain.FromTrusted(FixturePayloadDomains.PAYLOAD_A);
+        domain.Value.Should().Be(FixturePayloadDomains.PAYLOAD_A);
     }
 
     [Fact]
@@ -210,5 +201,125 @@ public sealed class KeyDomainTests
     public void MtlsCaIntermediate_HasCorrectValue()
     {
         KeyDomain.MtlsCaIntermediate.Value.Should().Be(KeyDomain.MTLS_CA_INTERMEDIATE);
+    }
+
+    // -----------------------------------------------------------------------
+    // Seal family — pattern-based (NOT a member of the closed All catalog)
+    // -----------------------------------------------------------------------
+
+    [Fact]
+    public void All_ContainsNoSealDomain()
+    {
+        // The seal:<serviceId> family is unbounded (one domain per service, provisioned
+        // lazily) — it is resolved by pattern, never a member of the closed catalog.
+        KeyDomain.All.Should().NotContain(
+            d => d.Value.StartsWith(KeyDomain.SEAL_PREFIX, StringComparison.Ordinal));
+    }
+
+    [Theory]
+    [InlineData("audit", "seal:audit")]
+    [InlineData("files", "seal:files")]
+    [InlineData("a", "seal:a")]
+    [InlineData("a-b-c", "seal:a-b-c")]
+    public void ForSeal_ValidServiceId_ReturnsSealDomainBoundToEcdhSealing(
+        string serviceId, string expected)
+    {
+        var result = KeyDomain.ForSeal(serviceId);
+
+        result.Success.Should().BeTrue();
+        result.Data!.Value.Should().Be(expected);
+        result.Data!.KeyType.Should().Be(KeyType.EcdhSealing);
+    }
+
+    [Fact]
+    public void ForSeal_UppercaseServiceId_NormalizesToLowercase()
+    {
+        var result = KeyDomain.ForSeal("AUDIT");
+
+        result.Success.Should().BeTrue();
+        result.Data!.Value.Should().Be("seal:audit");
+    }
+
+    [Fact]
+    public void ForSeal_ServiceIdExactly64Chars_ReturnsOk()
+    {
+        var serviceId = new string('a', 64);
+        var result = KeyDomain.ForSeal(serviceId);
+
+        result.Success.Should().BeTrue();
+        result.Data!.Value.Should().Be("seal:" + serviceId);
+    }
+
+    [Fact]
+    public void ForSeal_ServiceIdOver64Chars_ReturnsUnknownKeyDomain()
+    {
+        var result = KeyDomain.ForSeal(new string('a', 65));
+
+        result.Success.Should().BeFalse();
+        result.ErrorCode.Should().Be(KeyCustodianErrorCodes.KEYCUSTODIAN_UNKNOWN_KEY_DOMAIN);
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("   ")]
+    [InlineData("bad service")]
+    [InlineData("under_score")]
+    [InlineData("dot.dot")]
+    [InlineData("café")]
+    [InlineData("UPPER_SNAKE")]
+    public void ForSeal_InvalidServiceId_ReturnsUnknownKeyDomain(string? serviceId)
+    {
+        var result = KeyDomain.ForSeal(serviceId);
+
+        result.Success.Should().BeFalse();
+        result.ErrorCode.Should().Be(KeyCustodianErrorCodes.KEYCUSTODIAN_UNKNOWN_KEY_DOMAIN);
+        result.Category.Should().Be(ErrorCategory.ValidationFailure);
+    }
+
+    [Fact]
+    public void Create_SealDomain_ResolvesEcdhSealingBinding()
+    {
+        var result = KeyDomain.Create("seal:audit");
+
+        result.Success.Should().BeTrue();
+        result.Data!.Value.Should().Be("seal:audit");
+        result.Data!.KeyType.Should().Be(KeyType.EcdhSealing);
+    }
+
+    [Fact]
+    public void Create_SealDomainUppercase_NormalizesToLowercase()
+    {
+        var result = KeyDomain.Create("SEAL:AUDIT");
+
+        result.Success.Should().BeTrue();
+        result.Data!.Value.Should().Be("seal:audit");
+    }
+
+    [Fact]
+    public void Create_SealDomainMalformedSuffix_ReturnsUnknownKeyDomain()
+    {
+        var result = KeyDomain.Create("seal:bad service");
+
+        result.Success.Should().BeFalse();
+        result.ErrorCode.Should().Be(KeyCustodianErrorCodes.KEYCUSTODIAN_UNKNOWN_KEY_DOMAIN);
+    }
+
+    [Fact]
+    public void FromTrusted_SealDomain_RehydratesEcdhSealing()
+    {
+        var domain = KeyDomain.FromTrusted("seal:audit");
+
+        domain.Value.Should().Be("seal:audit");
+        domain.KeyType.Should().Be(KeyType.EcdhSealing);
+    }
+
+    [Fact]
+    public void FromTrusted_SealDomainMalformedSuffix_ThrowsArgumentException()
+    {
+        // A stored seal domain with an invalid suffix is a corrupt row — fail loud.
+        var act = () => KeyDomain.FromTrusted("seal:bad service");
+
+        act.Should().Throw<ArgumentException>();
     }
 }

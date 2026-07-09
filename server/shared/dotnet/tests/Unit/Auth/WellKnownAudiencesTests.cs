@@ -6,7 +6,10 @@
 
 namespace D2.Shared.Tests.Unit.Auth;
 
+using System;
+using System.IO;
 using System.Reflection;
+using System.Text.Json;
 using AwesomeAssertions;
 using D2.Shared.Auth.Abstractions;
 using Xunit;
@@ -122,5 +125,120 @@ public sealed class WellKnownAudiencesTests
         value.Should().NotBeNullOrWhiteSpace();
         value.Should().NotContain(":");
         value.Should().NotContainAny(" ", "\t", "\n", "\r");
+    }
+
+    // ----------------------------------------------------------------------
+    // The Edge self-audience constant — now spec-driven alongside d2.internal,
+    // replacing the magic-string literal the @d2Audience validator used to carry.
+    // ----------------------------------------------------------------------
+
+    [Fact]
+    public void D2EdgeSelfAudience_PinsTheWireValue()
+    {
+        WellKnownAudiences.D2_EDGE_SELF_AUDIENCE.Should().Be("d2-edge");
+    }
+
+    [Fact]
+    public void D2EdgeSelfAudience_IsAPublicCompileTimeConstant()
+    {
+        var field = typeof(WellKnownAudiences).GetField(
+            nameof(WellKnownAudiences.D2_EDGE_SELF_AUDIENCE),
+            BindingFlags.Public | BindingFlags.Static);
+
+        field.Should().NotBeNull();
+        field.IsLiteral.Should().BeTrue("a const is a compile-time literal");
+        field.FieldType.Should().Be<string>();
+    }
+
+    // ----------------------------------------------------------------------
+    // Single-source parity: the generated C# constants are byte-identical to the
+    // protocol-audiences spec (the source of truth) AND to the ts-codegen-emitted
+    // TypeScript ProtocolAudiences const. A drift on either runtime is impossible
+    // because both derive from the same spec — these tests pin that contract.
+    // ----------------------------------------------------------------------
+
+    [Fact]
+    public void GeneratedConstants_MatchTheProtocolAudiencesSpecValues()
+    {
+        var spec = ReadProtocolAudiencesSpec();
+
+        // Each spec entry's name → a C# const of that name carrying the spec value.
+        foreach (var (name, value) in spec)
+        {
+            var field = typeof(WellKnownAudiences).GetField(
+                name,
+                BindingFlags.Public | BindingFlags.Static);
+
+            field.Should().NotBeNull(
+                $"every protocol-audience spec entry '{name}' must emit a WellKnownAudiences constant");
+            ((string?)field.GetRawConstantValue()).Should().Be(
+                value,
+                $"WellKnownAudiences.{name} must carry the spec value byte-for-byte");
+        }
+    }
+
+    [Fact]
+    public void GeneratedConstants_ByteMatchTheTypeScriptProtocolAudiences()
+    {
+        // The TS const-object is emitted from the same spec into
+        // @d2/auth-abstractions. Assert each C# const value appears in the TS file
+        // under the same SCREAMING_SNAKE name — cross-runtime byte identity.
+        var spec = ReadProtocolAudiencesSpec();
+        var tsPath = Path.Combine(
+            RepoRoot(),
+            "server",
+            "shared",
+            "typescript",
+            "auth",
+            "abstractions",
+            "src",
+            "protocol-audiences.g.ts");
+
+        File.Exists(tsPath).Should().BeTrue(
+            "the ts-codegen ProtocolAudiences artifact must be committed at " + tsPath);
+        var tsSource = File.ReadAllText(tsPath);
+
+        foreach (var (name, value) in spec)
+            tsSource.Should().Contain(
+                $"{name}: \"{value}\"",
+                $"the TS ProtocolAudiences must carry {name} = {value} byte-identically to C#");
+    }
+
+    private static (string Name, string Value)[] ReadProtocolAudiencesSpec()
+    {
+        var specPath = Path.Combine(
+            RepoRoot(),
+            "contracts",
+            "auth-protocol-audiences",
+            "protocol-audiences.spec.json");
+
+        using var doc = JsonDocument.Parse(File.ReadAllText(specPath));
+        var entries = doc.RootElement.GetProperty("protocolAudiences");
+        var result = new (string, string)[entries.GetArrayLength()];
+        var i = 0;
+        foreach (var entry in entries.EnumerateArray())
+        {
+            result[i] = (
+                entry.GetProperty("name").GetString()!,
+                entry.GetProperty("value").GetString()!);
+            i++;
+        }
+
+        return result;
+    }
+
+    private static string RepoRoot()
+    {
+        // Walk up from the test assembly location to the repo root (the dir holding
+        // the contracts/ folder). Mirrors the spec-registry anchor convention.
+        var dir = new DirectoryInfo(AppContext.BaseDirectory);
+        while (dir is not null &&
+            !Directory.Exists(Path.Combine(dir.FullName, "contracts")))
+        {
+            dir = dir.Parent;
+        }
+
+        dir.Should().NotBeNull("the repo root (with a contracts/ dir) must be locatable");
+        return dir.FullName;
     }
 }

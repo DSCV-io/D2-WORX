@@ -20,6 +20,7 @@
     "codegen:encryption-domains": "tsx src/encryption-domains-emit.ts",
     "codegen:dlq-failure-metadata": "tsx src/dlq-failure-metadata-emit.ts",
     "codegen:encryption-frame": "tsx src/encryption-frame-emit.ts",
+    "codegen:encryption-frame-sealed": "tsx src/encryption-frame-sealed-emit.ts",
     "codegen:geo-abstractions": "tsx src/geo-emitter/cli.ts",
     "codegen:field-constraints": "tsx src/field-constraints-emit.ts",
     "type-check:test": "tsc -p tsconfig.test.json",

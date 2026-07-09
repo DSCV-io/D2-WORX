@@ -6,20 +6,28 @@
 
 namespace D2.Edge.KeyCustodian.App.Application;
 
+using D2.Edge.KeyCustodian.App.Application.Facade;
 using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.ActivateKey;
 using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.CompromiseKey;
 using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.GenerateKey;
+using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.GetOrLazyProvisionOwnSealPrivateKey;
+using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.GetOrLazyProvisionSealPublicKey;
+using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.IssueLeaf;
 using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.IssueWorkloadCertificate;
 using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.RetireKey;
 using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.RotateKey;
 using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.RunDueRotations;
 using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.SeedCertificateAuthority;
+using D2.Edge.KeyCustodian.App.Application.Handlers.Queries.GetCaCertificate;
 using D2.Edge.KeyCustodian.App.Application.Handlers.Queries.GetJwks;
+using D2.Edge.KeyCustodian.App.Application.Handlers.Queries.GetKeyring;
+using D2.Edge.KeyCustodian.App.Application.Handlers.Queries.GetOidcConfiguration;
 using D2.Edge.KeyCustodian.App.Application.Handlers.Queries.GetRotationPlan;
+using D2.Edge.KeyCustodian.App.Application.Handlers.Queries.Sign;
 
 /// <summary>
-/// DI registration for the KeyCustodian App layer: the 10 lifecycle handlers and
-/// the options-backed rotation-policy provider.
+/// DI registration for the KeyCustodian App layer: the 17 operation handlers and
+/// the options-backed rotation-policy + authority providers.
 /// </summary>
 /// <remarks>
 /// This extension registers ONLY what the App layer owns. The seams the handlers
@@ -27,7 +35,12 @@ using D2.Edge.KeyCustodian.App.Application.Handlers.Queries.GetRotationPlan;
 /// <c>IKeyCustodianDbContext</c>, the keyed root <c>IPayloadCrypto</c>, the
 /// <c>IRootKeyProvider</c>, and the <c>IKeyRotationAnnouncer</c> implementation —
 /// are registered by the Infra layer. The options binding +
-/// startup validation also live in Infra.
+/// startup validation also live in Infra. The issuance leaf-signing capability
+/// (<c>ICaLeafSigningCapability</c>) is deliberately NOT registered here — it is
+/// granted solely by its own dedicated extension
+/// (<c>AddD2CaLeafSigningCapability()</c>) from the composition root that serves
+/// the issuance surface, so a provider built from this registration alone cannot
+/// sign a workload leaf via the issuance path.
 /// </remarks>
 public static class KeyCustodianAppServiceCollectionExtensions
 {
@@ -54,19 +67,33 @@ public static class KeyCustodianAppServiceCollectionExtensions
             services.AddTransient<IRunDueRotationsHandler, RunDueRotationsHandler>();
             services.AddTransient<
                 IIssueWorkloadCertificateHandler, IssueWorkloadCertificateHandler>();
+            services.AddTransient<IIssueLeafHandler, IssueLeafHandler>();
             services.AddTransient<
                 ISeedCertificateAuthorityHandler, SeedCertificateAuthorityHandler>();
+            services.AddTransient<IGetOrLazyProvisionSealPublicKeyHandler, GetOrLazyProvisionSealPublicKeyHandler>();
+            services.AddTransient<
+                IGetOrLazyProvisionOwnSealPrivateKeyHandler, GetOrLazyProvisionOwnSealPrivateKeyHandler>();
 
             // Query handlers.
             services.AddTransient<IGetJwksHandler, GetJwksHandler>();
+            services.AddTransient<
+                IGetOidcConfigurationHandler, GetOidcConfigurationHandler>();
             services.AddTransient<IGetRotationPlanHandler, GetRotationPlanHandler>();
+            services.AddTransient<ISignHandler, SignHandler>();
+            services.AddTransient<IGetKeyringHandler, GetKeyringHandler>();
+            services.AddTransient<IGetCaCertificateHandler, GetCaCertificateHandler>();
 
-            // Policy provider.
+            // Policy providers.
             services.AddSingleton<IRotationPolicyProvider, OptionsRotationPolicyProvider>();
+            services.AddSingleton<
+                ISigningDomainAuthorityPolicy, OptionsSigningDomainAuthorityPolicy>();
+            services.AddSingleton<
+                IKeyringDomainAuthorityPolicy, OptionsKeyringDomainAuthorityPolicy>();
 
             // Generated façade layer — registers IKeyCustodianApi → KeyCustodianApi (Transient).
-            // The generated extension is overwritten on rebuild; this call site is the stable hand-written anchor.
-            services.AddD2KeyCustodianClients();
+            // The generated extension is overwritten on rebuild; this call site is the
+            // stable hand-written anchor.
+            services.AddD2KeyCustodianClient();
 
             return services;
         }

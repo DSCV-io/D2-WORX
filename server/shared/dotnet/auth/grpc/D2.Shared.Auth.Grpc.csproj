@@ -93,6 +93,27 @@ Copyright (c) DCSV. All rights reserved.
     <ProjectReference Include="..\..\i18n\abstractions\D2.Shared.I18n.Abstractions.csproj" />
     <ProjectReference Include="..\..\utilities\D2.Shared.Utilities.csproj" />
     <!--
+      time — IClock / SystemClock, used to timestamp the call-path entry the
+      cross-process establishment interceptor appends on each inbound hop.
+    -->
+    <ProjectReference Include="..\..\time\D2.Shared.Time.csproj" />
+    <!--
+      headers\grpc — GrpcHeaders.PROPAGATED_CONTEXT ("x-d2-context"), the wire
+      constant the establishment interceptor reads on inbound calls. Same
+      generated constant the outbound PropagatedContextClientInterceptor writes.
+    -->
+    <ProjectReference Include="..\..\headers\grpc\D2.Shared.Headers.Grpc.csproj" />
+    <!--
+      aspnetcore — the capability-general mTLS peer-identity accessor
+      (PeerWorkloadIdentityAccessor.GetD2PeerWorkloadIdentity() on HttpContext, which
+      derives the validated peer workload id from Connection.ClientCertificate). The
+      gRPC-transport overload here resolves ServerCallContext.GetHttpContext() and
+      delegates to that HttpContext accessor, so the peer identity is derived in ONE
+      place across both transports (a gRPC lib referencing the foundation aspnetcore
+      lib is the correct dependency direction).
+    -->
+    <ProjectReference Include="..\..\aspnetcore\D2.Shared.AspNetCore.csproj" />
+    <!--
       InProcessKeys SourceGen — emits D2GrpcUserStateKeys.g.cs from the shared
       keys.spec.json. The single spec also drives D2HttpContextItems in
       auth-abstractions; cross-binding parity is structurally guaranteed.

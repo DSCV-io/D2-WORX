@@ -20,8 +20,8 @@ import { ResilientPipeline, ResilientPipelineBuilder } from "@d2/resilience";
 
 // Emitted DTO types + (predicate ops) the result-predicate twin. Paths resolve
 // in the BFF SSR consumer; @ts-nocheck erases them here.
-import type { PlaceOrderInput, PlaceOrderOutput } from "./place-order-dto.js";
-import { placeOrderRetryWhen, placeOrderFailWhen } from "./place-order-resilience-predicates.js";
+import type { PlaceOrderFixtureInput, PlaceOrderFixtureOutput } from "./place-order-fixture-dto.js";
+import { placeOrderFixtureRetryWhen, placeOrderFixtureFailWhen } from "./place-order-fixture-resilience-predicates.js";
 
 /** Per-call options for a generated gRPC client method. */
 export interface GrpcCallOptions {
@@ -50,8 +50,8 @@ class D2GeneratedBusinessRetrySignal extends Error {
   }
 }
 
-// PlaceOrder retry pipeline — gRPC transport transients OR the business retry sentinel.
-const placeOrderDefaultPipeline: ResilientPipeline = new ResilientPipelineBuilder()
+// PlaceOrderFixture retry pipeline — gRPC transport transients OR the business retry sentinel.
+const placeOrderFixtureDefaultPipeline: ResilientPipeline = new ResilientPipelineBuilder()
   .useRetries({
     maxAttempts: 3,
     isTransient: (e) => e instanceof D2GeneratedBusinessRetrySignal || isTransientGrpcError(e),
@@ -60,28 +60,28 @@ const placeOrderDefaultPipeline: ResilientPipeline = new ResilientPipelineBuilde
 
 /** Generated SSR gRPC client interface for the PredicateFixtures module. */
 export interface PredicateFixturesGrpcClient {
-  placeOrder(input: PlaceOrderInput, opts?: GrpcCallOptions): Promise<D2Result<PlaceOrderOutput>>;
+  placeOrderFixture(input: PlaceOrderFixtureInput, opts?: GrpcCallOptions): Promise<D2Result<PlaceOrderFixtureOutput>>;
 }
 
 /** Build the PredicateFixtures gRPC client over a ts-proto grpc-js service stub. */
 export function createPredicateFixturesGrpcClient(stub: unknown): PredicateFixturesGrpcClient {
   return {
-    async placeOrder(input, opts) {
-      const request = toPlaceOrderRequest(input);
-      const pipeline = opts?.pipeline ?? placeOrderDefaultPipeline;
-      const run = async (): Promise<D2Result<PlaceOrderOutput>> => {
-        const response = await unaryCall(stub.placeOrder.bind(stub), request, { deadlineMs: opts?.deadlineMs });
-        const result = d2ResultFromProto(response.result, response.data === undefined ? undefined : toPlaceOrderOutput(response.data)).withTraceId(opts?.traceId);
-        if (placeOrderRetryWhen(result) && !placeOrderFailWhen(result))
+    async placeOrderFixture(input, opts) {
+      const request = toPlaceOrderFixtureRequest(input);
+      const pipeline = opts?.pipeline ?? placeOrderFixtureDefaultPipeline;
+      const run = async (): Promise<D2Result<PlaceOrderFixtureOutput>> => {
+        const response = await unaryCall(stub.placeOrderFixture.bind(stub), request, { deadlineMs: opts?.deadlineMs });
+        const result = d2ResultFromProto(response.result, response.data === undefined ? undefined : toPlaceOrderFixtureOutput(response.data)).withTraceId(opts?.traceId);
+        if (placeOrderFixtureRetryWhen(result) && !placeOrderFixtureFailWhen(result))
           throw new D2GeneratedBusinessRetrySignal(result);
         return result;
       };
       try {
-        return await pipeline.execute("PredicateFixturesOrders/PlaceOrder", run, opts?.signal);
+        return await pipeline.execute("PredicateFixturesOrders/PlaceOrderFixture", run, opts?.signal);
       } catch (e) {
         // Budget exhausted on a business-retry condition → restore the captured result verbatim.
         if (e instanceof D2GeneratedBusinessRetrySignal)
-          return e.result as D2Result<PlaceOrderOutput>;
+          return e.result as D2Result<PlaceOrderFixtureOutput>;
         // Terminal transport fault → map via the seam (never leaks err.details / err.message).
         return handleGrpcCall(() => Promise.reject(e), () => undefined as never, () => undefined, opts?.traceId);
       }
@@ -89,17 +89,17 @@ export function createPredicateFixturesGrpcClient(stub: unknown): PredicateFixtu
   };
 }
 
-/** Map the PlaceOrderResponse data → PlaceOrderOutput (field-name-identical). */
-function toPlaceOrderOutput(data: unknown): PlaceOrderOutput {
+/** Map the PlaceOrderFixtureResponse data → PlaceOrderFixtureOutput (field-name-identical). */
+function toPlaceOrderFixtureOutput(data: unknown): PlaceOrderFixtureOutput {
   return {
     orderCode: data.orderCode,
     itemStatuses: data.itemStatuses,
     partial: data.partial,
-  } as PlaceOrderOutput;
+  } as PlaceOrderFixtureOutput;
 }
 
-/** Map PlaceOrderInput → the PlaceOrderRequest proto message (field-name-identical). */
-function toPlaceOrderRequest(input: PlaceOrderInput): unknown {
+/** Map PlaceOrderFixtureInput → the PlaceOrderFixtureRequest proto message (field-name-identical). */
+function toPlaceOrderFixtureRequest(input: PlaceOrderFixtureInput): unknown {
   return {
     customerId: input.customerId,
   };

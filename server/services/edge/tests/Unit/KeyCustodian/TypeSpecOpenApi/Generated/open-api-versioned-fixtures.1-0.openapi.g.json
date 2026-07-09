@@ -8,7 +8,7 @@
   "paths": {
     "/v1/openapi/report": {
       "get": {
-        "operationId": "report",
+        "operationId": "openApiReportFixture",
         "description": "Fetch a report — present from v1; carries a tier so x-d2-tier is exercised per version.",
         "parameters": [],
         "responses": {
@@ -17,7 +17,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/OpenApiReportOutput"
+                  "$ref": "#/components/schemas/OpenApiReportFixtureOutput"
                 }
               }
             }
@@ -31,7 +31,7 @@
                 "type": "object",
                 "properties": {
                   "input": {
-                    "$ref": "#/components/schemas/OpenApiReportInput"
+                    "$ref": "#/components/schemas/OpenApiReportFixtureInput"
                   }
                 },
                 "required": [
@@ -53,7 +53,7 @@
   },
   "components": {
     "schemas": {
-      "OpenApiReportOutput": {
+      "OpenApiReportFixtureOutput": {
         "type": "object",
         "required": [
           "body"
@@ -64,9 +64,9 @@
             "description": "The rendered report body."
           }
         },
-        "description": "Output of a report fetch: the report body."
+        "description": "Output of a report fixture fetch: the report body."
       },
-      "OpenApiReportInput": {
+      "OpenApiReportFixtureInput": {
         "type": "object",
         "required": [
           "reportId"
@@ -77,9 +77,9 @@
             "description": "The report identifier."
           }
         },
-        "description": "Input for a report fetch: the report identifier."
+        "description": "Input for a report fixture fetch: the report identifier."
       },
-      "OpenApiExportOutput": {
+      "OpenApiExportFixtureOutput": {
         "type": "object",
         "required": [
           "location"
@@ -90,9 +90,9 @@
             "description": "The location of the exported report artifact."
           }
         },
-        "description": "Output of a report export: the export location."
+        "description": "Output of a report fixture export: the export location."
       },
-      "OpenApiVersions": {
+      "OpenApiFixtureVersions": {
         "type": "string",
         "enum": [
           "1.0",

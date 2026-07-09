@@ -41,9 +41,12 @@ using WorkloadIdentity = D2.Edge.KeyCustodian.Domain.ValueObjects.WorkloadIdenti
 /// </remarks>
 internal sealed class RealCertAuthority : IDisposable
 {
-    // Anchor 5 minutes in the past: the production Window rule derives (now, now +
-    // validity) with NO backdate, so anchoring the clock slightly in the past keeps
-    // every not-before safely before the handshake instant (no clock-skew flake).
+    // Anchor the fixture clock 5 minutes in the past so every window sits safely
+    // before the handshake instant (no clock-skew flake). Root, intermediate, and the
+    // production-rule leaves are minted through KeyCustodian's shared production Window
+    // (fed this anchor via TestClock), so they carry Window's own additional clock-skew
+    // backdate on top of it. Only the hand-rolled server cert (which anchors on this
+    // instant directly) and the foreign-SAN leaf bypass that Window.
     private readonly Instant r_now =
         NodaTime.SystemClock.Instance.GetCurrentInstant() - Duration.FromMinutes(5);
 
@@ -186,22 +189,29 @@ internal sealed class RealCertAuthority : IDisposable
         IssueLeafForWindow(serviceId, r_now - Duration.FromDays(10), Duration.FromDays(1));
 
     /// <summary>
-    /// Issues a valid leaf for <paramref name="serviceId"/> as raw
-    /// <see cref="WorkloadLeafMaterial"/> (DER + PKCS#8 + issuer DER + not-after) — the
-    /// neutral shape the shipped <c>IWorkloadCertificateIssuer</c> hands back, so the
-    /// shipped client builds a live leaf from it. The window is derived from real wall
-    /// time so the leaf is non-expired during the test run.
+    /// Signs a caller-supplied PKCS#10 CSR into a valid leaf for
+    /// <paramref name="serviceId"/> as raw <see cref="WorkloadLeafMaterial"/> (leaf DER +
+    /// issuer DER + not-after — all public) — the neutral CSR-flow shape the shipped
+    /// <c>IWorkloadCertificateIssuer</c> hands back. Verification (proof-of-possession +
+    /// the P-256 curve policy) and signing both run through the PRODUCTION rules
+    /// (<see cref="CsrVerification"/> + <see cref="WorkloadCertificateIssuance"/>); the
+    /// CSR's subject is ignored — the SAN comes from <paramref name="serviceId"/>. The
+    /// window is derived from real wall time so the leaf is non-expired during the run.
     /// </summary>
-    /// <param name="serviceId">The workload service id.</param>
-    /// <returns>The raw leaf material.</returns>
-    public WorkloadLeafMaterial IssueLeafMaterial(string serviceId)
+    /// <param name="csrDer">The workload's DER-encoded PKCS#10 CSR.</param>
+    /// <param name="serviceId">The workload service id placed in the SAN (the issuer's peer view).</param>
+    /// <returns>The raw leaf material (no private key exists on this path).</returns>
+    public WorkloadLeafMaterial IssueLeafMaterial(byte[] csrDer, string serviceId)
     {
         // Window anchored at r_now (now-5m) so the leaf is live for the test and the
         // shipped cache (which filters on NotAfter > now) treats it as presentable.
         var clock = new TestClock(r_now);
 
+        var publicKey = CsrVerification.Verify(csrDer).Data!;
+
         var issued = WorkloadCertificateIssuance.IssueLeaf(
             WorkloadIdentity.FromTrusted(serviceId),
+            publicKey,
             IntermediateCertificate,
             r_intermediateKey,
             Duration.FromHours(24),
@@ -209,7 +219,6 @@ internal sealed class RealCertAuthority : IDisposable
 
         return new WorkloadLeafMaterial(
             CertificateDer: issued.CertificateDer,
-            PrivateKeyPkcs8: issued.PrivateKeyPkcs8,
             IssuerCertificateDer: issued.IssuerCertificateDer,
             NotAfter: issued.NotAfter);
     }
@@ -312,8 +321,11 @@ internal sealed class RealCertAuthority : IDisposable
 
     /// <summary>
     /// Issues a leaf for the given window-start instant + validity via the production
-    /// rule, assembles a live private-key-bearing certificate from the returned DER +
-    /// PKCS#8, and makes it Schannel-compatible.
+    /// CSR-flow rules: a fixture-side keypair is generated (the workload role), its CSR
+    /// is verified by <see cref="CsrVerification"/>, the leaf is signed by
+    /// <see cref="WorkloadCertificateIssuance"/> over the verified public key, and the
+    /// returned certificate is paired with the fixture-side key + made
+    /// Schannel-compatible. No private key ever crosses the production rules.
     /// </summary>
     /// <param name="serviceId">The workload service id.</param>
     /// <param name="windowStart">The clock instant the rule derives the not-before from.</param>
@@ -324,19 +336,21 @@ internal sealed class RealCertAuthority : IDisposable
     {
         var clock = new TestClock(windowStart);
 
+        using var leafKey = ECDsa.Create(ECCurve.NamedCurves.nistP256);
+        var csrDer = new CertificateRequest(
+            $"CN={serviceId}", leafKey, HashAlgorithmName.SHA256).CreateSigningRequest();
+        var publicKey = CsrVerification.Verify(csrDer).Data!;
+
         var issued = WorkloadCertificateIssuance.IssueLeaf(
             WorkloadIdentity.FromTrusted(serviceId),
+            publicKey,
             IntermediateCertificate,
             r_intermediateKey,
             validity ?? Duration.FromHours(24),
             clock).Data!;
 
-        using var ecdsa = ECDsa.Create();
-        ecdsa.ImportPkcs8PrivateKey(issued.PrivateKeyPkcs8, out _);
-        issued.Zero();
-
         using var certOnly = X509CertificateLoader.LoadCertificate(issued.CertificateDer);
-        using var withKey = certOnly.CopyWithPrivateKey(ecdsa);
+        using var withKey = certOnly.CopyWithPrivateKey(leafKey);
 
         return MakeSchannelCompatible(withKey);
     }

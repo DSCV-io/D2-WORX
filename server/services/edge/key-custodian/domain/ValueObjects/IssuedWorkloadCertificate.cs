@@ -12,20 +12,20 @@ namespace D2.Edge.KeyCustodian.Domain.ValueObjects;
 /// persistence on the leaf path is the lightweight issuance audit entry.
 /// </summary>
 /// <remarks>
-/// <b>Private key custody transfers to the caller.</b> Unlike a managed key
-/// (whose private material KeyCustodian custodies root-wrapped at rest), a leaf's
-/// private key is held by the <em>workload</em>. <see cref="PrivateKeyPkcs8"/>
-/// holds the raw PKCS#8 ECDSA private key; once the caller has installed the leaf
-/// it MUST zero these bytes via <see cref="Zero"/>. KeyCustodian never stores them.
+/// <b>All-public material — no private key exists here.</b> The workload
+/// generates its own leaf keypair and submits a PKCS#10 certificate-signing
+/// request; KeyCustodian signs the CSR's verified public key and returns only
+/// certificates. The leaf private key never enters KeyCustodian, so this type
+/// carries no secret member, needs no redaction, and has nothing to zero.
 ///
 /// <b>Certificate + chain are public.</b> <see cref="CertificateDer"/> (the leaf)
 /// and <see cref="IssuerCertificateDer"/> (the signing intermediate) are presented
-/// on the wire in the TLS handshake — not secret. The workload pins the root from
-/// its own CA-provider trust anchor.
+/// on the wire in the TLS handshake — not secret. The workload pins the root
+/// trust anchor via the CA-certificate fetch surface, never from issuance.
 ///
-/// <b>No <c>ToString</c> leak.</b> A <c>byte[]</c> field would otherwise dump in
-/// any interpolation / log; <see cref="ToString"/> emits a redaction sentinel for
-/// the private key and byte counts for the public material.
+/// <b><c>ToString</c> override.</b> A <c>byte[]</c> field would otherwise dump
+/// verbosely in any interpolation / log; <see cref="ToString"/> emits byte counts
+/// for the certificate material.
 /// </remarks>
 public sealed class IssuedWorkloadCertificate
 {
@@ -34,10 +34,6 @@ public sealed class IssuedWorkloadCertificate
     /// </summary>
     /// <param name="workload">The workload identity carried in the leaf's SAN.</param>
     /// <param name="certificateDer">DER-encoded leaf certificate bytes. Must be non-empty.</param>
-    /// <param name="privateKeyPkcs8">
-    /// Raw PKCS#8 ECDSA leaf private key bytes. Must be non-empty. The caller zeroes
-    /// these after install.
-    /// </param>
     /// <param name="issuerCertificateDer">
     /// DER-encoded issuing-intermediate certificate so the workload can present the
     /// full chain. Must be non-empty.
@@ -45,41 +41,25 @@ public sealed class IssuedWorkloadCertificate
     /// <param name="notBefore">The leaf's not-before instant.</param>
     /// <param name="notAfter">The leaf's not-after instant (drives refresh-ahead).</param>
     /// <exception cref="ArgumentException">
-    /// Any of <paramref name="certificateDer"/>, <paramref name="privateKeyPkcs8"/>, or
+    /// Either of <paramref name="certificateDer"/> or
     /// <paramref name="issuerCertificateDer"/> is empty.
     /// </exception>
     public IssuedWorkloadCertificate(
         WorkloadIdentity workload,
         byte[] certificateDer,
-        byte[] privateKeyPkcs8,
         byte[] issuerCertificateDer,
         Instant notBefore,
         Instant notAfter)
     {
-        // §5.1a carve-out: reference-type null-guards — no present-but-falsey concept.
+        // §5.1a: BCL null-guard for the non-collection ref arg; the two byte[] args
+        // DO carry a present-but-falsey (empty) concept, so ThrowIfFalsey covers
+        // null + empty in one call (BCL-split exceptions), mirroring CsrVerification.
         ArgumentNullException.ThrowIfNull(workload);
-        ArgumentNullException.ThrowIfNull(certificateDer);
-        ArgumentNullException.ThrowIfNull(privateKeyPkcs8);
-        ArgumentNullException.ThrowIfNull(issuerCertificateDer);
-
-        if (certificateDer.Length == 0)
-            throw new ArgumentException("Leaf certificate must not be empty.", nameof(certificateDer));
-
-        if (privateKeyPkcs8.Length == 0)
-        {
-            throw new ArgumentException(
-                "Leaf private key must not be empty.", nameof(privateKeyPkcs8));
-        }
-
-        if (issuerCertificateDer.Length == 0)
-        {
-            throw new ArgumentException(
-                "Issuer certificate must not be empty.", nameof(issuerCertificateDer));
-        }
+        certificateDer.ThrowIfFalsey();
+        issuerCertificateDer.ThrowIfFalsey();
 
         Workload = workload;
         CertificateDer = certificateDer;
-        PrivateKeyPkcs8 = privateKeyPkcs8;
         IssuerCertificateDer = issuerCertificateDer;
         NotBefore = notBefore;
         NotAfter = notAfter;
@@ -90,12 +70,6 @@ public sealed class IssuedWorkloadCertificate
 
     /// <summary>Gets the DER-encoded leaf certificate bytes. Public — presented on the wire.</summary>
     public byte[] CertificateDer { get; }
-
-    /// <summary>
-    /// Gets the raw PKCS#8 leaf private key bytes. Secret — the caller zeroes after
-    /// install; KeyCustodian never persists them. Never log.
-    /// </summary>
-    public byte[] PrivateKeyPkcs8 { get; }
 
     /// <summary>
     /// Gets the DER-encoded issuing-intermediate certificate so the workload can
@@ -122,23 +96,15 @@ public sealed class IssuedWorkloadCertificate
     /// </remarks>
     public Instant NotAfter { get; }
 
-    /// <summary>
-    /// Zeroes the <see cref="PrivateKeyPkcs8"/> buffer. The caller calls this after
-    /// installing the leaf.
-    /// </summary>
-    public void Zero() => CryptographicOperations.ZeroMemory(PrivateKeyPkcs8);
-
     /// <inheritdoc/>
     public override string ToString()
     {
         var certLen = CertificateDer.Length;
-        var privateLen = PrivateKeyPkcs8.Length;
         var issuerLen = IssuerCertificateDer.Length;
         return string.Create(
             CultureInfo.InvariantCulture,
             $"IssuedWorkloadCertificate {{ Workload = {Workload.ServiceId}, "
             + $"CertificateDer = [{certLen} bytes], "
-            + $"PrivateKeyPkcs8 = [REDACTED, {privateLen} bytes], "
             + $"IssuerCertificateDer = [{issuerLen} bytes], "
             + $"NotBefore = {NotBefore}, NotAfter = {NotAfter} }}");
     }

@@ -28,6 +28,7 @@ This ledger names every emitter module in `src/`, what each is validated against
 | `encryption-frame-emit.ts` | _(no dedicated test yet — tracked below)_ | — | Replace double when encryption-frame consumer is wired |
 | `encryption-domains-emit.ts` | _(no dedicated test yet — tracked below)_ | — | Replace double when encryption-domains consumer is wired |
 | `tk-keys-emit.ts` | `tk-keys-emit.test.ts` | Synthetic fixtures | N/A — no doubles |
+| `mq-messages-emit.ts` | `mq-messages-emit.test.ts`; `mq-messages.parity.test.ts` (`@d2/contract-tests`) | Synthetic `MqMessagesSpec` fixtures + the `D2MQ001–006` validation diagnostics (unit — `mq-messages-emit.test.ts`, mirroring the `.NET` `D2.Shared.Messaging.SourceGen.MqGenerator` predicate surface); real `contracts/mq-messages/mq-messages.spec.json` via the two-sided `.NET`↔TS parity test (`.NET` `MqMessagesFixtureEmitter` → `fixtures/mq-messages/registry.json` ↔ TS `MqMessagesRegistry`: membership + per-descriptor field-by-field + whole-registry canonical byte-equality); no test doubles | N/A — no doubles |
 | `orchestrator.ts` | _(integration — driven indirectly by byte-parity tests)_ | Real spec files via the byte-parity golden suite | N/A |
 
 ### Geo sub-emitters (`src/geo-emitter/`)

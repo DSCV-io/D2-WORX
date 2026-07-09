@@ -27,7 +27,8 @@ function field(
   csType: string,
   tsType: string,
   optional = false,
-  redact = false,
+  redactReason?: string,
+  jsonName?: string,
 ): FieldInfo {
   return {
     name,
@@ -36,7 +37,8 @@ function field(
     tsName: name,
     tsType,
     optional,
-    redact,
+    redactReason,
+    jsonName,
     repeated: false,
   };
 }
@@ -50,7 +52,7 @@ function enumField(name: string, enumRef: NestedEnum): FieldInfo {
     tsType: enumRef.name,
     protoType: "string",
     optional: false,
-    redact: false,
+    redactReason: undefined,
     repeated: false,
     enumRef,
   };
@@ -141,7 +143,7 @@ describe("emitCsharpDtos_RedactedField_PropertyTarget", () => {
   it("emits [property: RedactData] on redacted param and adds using directives", () => {
     const inputFields = [
       field("kid", "string", "string"),
-      field("payload", "byte[]", "Uint8Array", false, true), // redacted
+      field("payload", "byte[]", "Uint8Array", false, "SecretInformation"), // redacted
     ];
     const [inputFile] = emitCsharpDtos(
       "sign",
@@ -155,7 +157,7 @@ describe("emitCsharpDtos_RedactedField_PropertyTarget", () => {
     // The [property:] attribute target is mandatory — a bare param attribute
     // would NOT be seen by the property-reflecting RedactDataDestructuringPolicy.
     expect(inputFile!.content).toContain(
-      "[property: RedactData(Reason = RedactReason.PersonalInformation)] byte[] Payload",
+      "[property: RedactData(Reason = RedactReason.SecretInformation)] byte[] Payload",
     );
     expect(inputFile!.content).toContain(
       "using D2.Shared.Utilities.Attributes;",
@@ -184,6 +186,255 @@ describe("emitCsharpDtos_RedactedField_PropertyTarget", () => {
       "using D2.Shared.Utilities.Enums;",
     );
     expect(inputFile!.content).not.toContain("RedactData");
+  });
+});
+
+describe("emitCsharpDtos_RedactedField_ReasonThreadedFailLoud", () => {
+  it("emits the exact threaded RedactReason, never a hard-coded default", () => {
+    const inputFields = [
+      field("token", "string", "string", false, "FinancialInformation"),
+    ];
+    const [inputFile] = emitCsharpDtos(
+      "store",
+      TEST_NAMESPACE,
+      TEST_SPEC,
+      inputFields,
+      [],
+      [],
+    );
+
+    expect(inputFile!.content).toContain(
+      "[property: RedactData(Reason = RedactReason.FinancialInformation)] string Token",
+    );
+    // The reason is threaded from @d2Redact — never defaulted to PersonalInformation.
+    expect(inputFile!.content).not.toContain("PersonalInformation");
+  });
+
+  it("fails loud when a redacted field carries an unrecognized RedactReason", () => {
+    const inputFields = [
+      field("payload", "byte[]", "Uint8Array", false, "NotARealReason"),
+    ];
+
+    expect(() =>
+      emitCsharpDtos("sign", TEST_NAMESPACE, TEST_SPEC, inputFields, [], []),
+    ).toThrow(/RedactReason/);
+  });
+});
+
+describe("emitCsharpDtos_NestedRedactedField_PropertyTarget", () => {
+  it("redacted field on a NESTED record → [property: RedactData] on the nested param", () => {
+    // The exact GetKeyringOutput/KeyringEntry shape: the output's only redacted
+    // field lives on the nested KeyringEntry record (keyBytes).
+    const keyringEntry = nested("KeyringEntry", [
+      field("kid", "string", "string"),
+      field("keyBytes", "byte[]", "Uint8Array", false, "SecretInformation"),
+    ]);
+    const outputFields = [
+      field("activeKid", "string", "string"),
+      field(
+        "entries",
+        "IReadOnlyList<KeyringEntry>",
+        "readonly KeyringEntry[]",
+      ),
+    ];
+    const [, outputFile] = emitCsharpDtos(
+      "getKeyring",
+      TEST_NAMESPACE,
+      TEST_SPEC,
+      [],
+      outputFields,
+      [keyringEntry],
+    );
+
+    // The attribute lands on the NESTED record param.
+    expect(outputFile!.content).toContain(
+      "[property: RedactData(Reason = RedactReason.SecretInformation)] byte[] KeyBytes",
+    );
+    // The nested non-secret field (kid) stays unadorned.
+    expect(outputFile!.content).toContain("string Kid");
+  });
+
+  it("output whose ONLY redaction is nested → both redact usings present exactly once (CS0246 regression pin)", () => {
+    // Fails-without-fix: before the needsRedactUsings nested scan, this emitted the
+    // [RedactData] attribute on the nested param with NO using directives → CS0246.
+    const keyringEntry = nested("KeyringEntry", [
+      field("kid", "string", "string"),
+      field("keyBytes", "byte[]", "Uint8Array", false, "SecretInformation"),
+    ]);
+    const outputFields = [
+      field("activeKid", "string", "string"),
+      field(
+        "entries",
+        "IReadOnlyList<KeyringEntry>",
+        "readonly KeyringEntry[]",
+      ),
+    ];
+    const [, outputFile] = emitCsharpDtos(
+      "getKeyring",
+      TEST_NAMESPACE,
+      TEST_SPEC,
+      [],
+      outputFields,
+      [keyringEntry],
+    );
+
+    const attrUsings = (
+      outputFile!.content.match(/using D2\.Shared\.Utilities\.Attributes;/g) ??
+      []
+    ).length;
+    const enumUsings = (
+      outputFile!.content.match(/using D2\.Shared\.Utilities\.Enums;/g) ?? []
+    ).length;
+    expect(attrUsings).toBe(1);
+    expect(enumUsings).toBe(1);
+  });
+
+  it("unknown RedactReason on a NESTED field → fails loud (closed-set check through the nested path)", () => {
+    const keyringEntry = nested("KeyringEntry", [
+      field("keyBytes", "byte[]", "Uint8Array", false, "NotARealReason"),
+    ]);
+    const outputFields = [
+      field(
+        "entries",
+        "IReadOnlyList<KeyringEntry>",
+        "readonly KeyringEntry[]",
+      ),
+    ];
+
+    expect(() =>
+      emitCsharpDtos(
+        "getKeyring",
+        TEST_NAMESPACE,
+        TEST_SPEC,
+        [],
+        outputFields,
+        [keyringEntry],
+      ),
+    ).toThrow(/RedactReason/);
+  });
+});
+
+describe("emitCsharpDtos_JsonPropertyName_WireOverride", () => {
+  it("jsonName set (differs from default) → [property: JsonPropertyName] + System.Text.Json using", () => {
+    // The OIDC discovery doc's snake_case field: a property JwksUri whose JSON
+    // wire form must be jwks_uri.
+    const outputFields = [
+      field("jwksUri", "string", "string", false, undefined, "jwks_uri"),
+    ];
+    const [, outputFile] = emitCsharpDtos(
+      "getOidcConfiguration",
+      TEST_NAMESPACE,
+      TEST_SPEC,
+      [],
+      outputFields,
+      [],
+    );
+
+    expect(outputFile!.content).toContain(
+      '[property: JsonPropertyName("jwks_uri")] string JwksUri',
+    );
+    expect(outputFile!.content).toContain(
+      "using System.Text.Json.Serialization;",
+    );
+  });
+
+  it("no jsonName + no enums → attribute absent AND the System.Text.Json using absent (byte-stability guard)", () => {
+    const outputFields = [field("issuer", "string", "string")];
+    const [, outputFile] = emitCsharpDtos(
+      "getOidcConfiguration",
+      TEST_NAMESPACE,
+      TEST_SPEC,
+      [],
+      outputFields,
+      [],
+    );
+
+    expect(outputFile!.content).not.toContain("JsonPropertyName");
+    expect(outputFile!.content).not.toContain(
+      "using System.Text.Json.Serialization;",
+    );
+  });
+
+  it("jsonName + redact on the same field → BOTH attributes, JsonPropertyName first", () => {
+    const outputFields = [
+      field(
+        "secretWire",
+        "string",
+        "string",
+        false,
+        "SecretInformation",
+        "secret_wire",
+      ),
+    ];
+    const [, outputFile] = emitCsharpDtos(
+      "combo",
+      TEST_NAMESPACE,
+      TEST_SPEC,
+      [],
+      outputFields,
+      [],
+    );
+
+    expect(outputFile!.content).toContain(
+      '[property: JsonPropertyName("secret_wire")] [property: RedactData(Reason = RedactReason.SecretInformation)] string SecretWire',
+    );
+    // Both namespaces are present.
+    expect(outputFile!.content).toContain(
+      "using System.Text.Json.Serialization;",
+    );
+    expect(outputFile!.content).toContain(
+      "using D2.Shared.Utilities.Attributes;",
+    );
+  });
+
+  it("jsonName on an array field → [property: JsonPropertyName] precedes the IReadOnlyList type", () => {
+    const outputFields: FieldInfo[] = [
+      {
+        name: "idTokenSigningAlgValuesSupported",
+        csName: "IdTokenSigningAlgValuesSupported",
+        csType: "IReadOnlyList<string>",
+        tsName: "idTokenSigningAlgValuesSupported",
+        tsType: "readonly string[]",
+        protoType: "string",
+        optional: false,
+        redactReason: undefined,
+        jsonName: "id_token_signing_alg_values_supported",
+        repeated: true,
+      },
+    ];
+    const [, outputFile] = emitCsharpDtos(
+      "getOidcConfiguration",
+      TEST_NAMESPACE,
+      TEST_SPEC,
+      [],
+      outputFields,
+      [],
+    );
+
+    expect(outputFile!.content).toContain(
+      '[property: JsonPropertyName("id_token_signing_alg_values_supported")] IReadOnlyList<string> IdTokenSigningAlgValuesSupported',
+    );
+  });
+
+  it("jsonName on a nested-model field → the System.Text.Json using is added for the owning record", () => {
+    const nestedWithJsonName = nested("Inner", [
+      field("wireField", "string", "string", false, undefined, "wire_field"),
+    ]);
+    const [, outputFile] = emitCsharpDtos(
+      "withNested",
+      TEST_NAMESPACE,
+      TEST_SPEC,
+      [],
+      [field("inner", "Inner", "Inner")],
+      [nestedWithJsonName],
+    );
+
+    expect(outputFile!.content).toContain(
+      "using System.Text.Json.Serialization;",
+    );
+    expect(outputFile!.content).toContain(
+      '[property: JsonPropertyName("wire_field")] string WireField',
+    );
   });
 });
 

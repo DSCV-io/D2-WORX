@@ -7,6 +7,7 @@
 namespace D2.Edge.Tests.Integration.KeyCustodian;
 
 using System.Security.Cryptography;
+using D2.Edge.Tests.Unit.KeyCustodian;
 using Microsoft.EntityFrameworkCore;
 using Xunit;
 
@@ -20,7 +21,16 @@ using Xunit;
 [Trait("Category", "Integration")]
 [Collection(KeyCustodianPostgresCollectionDefinition.NAME)]
 public sealed class KeyCustodianPersistenceIntegrationTests(KeyCustodianPostgresFixture fixture)
+    : IDisposable
 {
+    // Registers the fixture AES-payload domain (ref-counted, per-test-instance) so any
+    // MakeRecord default-domain row resolves as a symmetric payload domain if mapped.
+    private readonly IDisposable r_fixtureSeam =
+        KeyDomain.RegisterFixturePayloadDomainForTesting(FixturePayloadDomains.PAYLOAD_A);
+
+    /// <summary>Unregisters the fixture payload domain (ref-counted, per-test-instance).</summary>
+    public void Dispose() => r_fixtureSeam.Dispose();
+
     [Fact]
     public async Task Migration_AppliesAndIsIdempotent()
     {
@@ -54,12 +64,17 @@ public sealed class KeyCustodianPersistenceIntegrationTests(KeyCustodianPostgres
     {
         await fixture.EnsureMigratedAsync();
         var kid = NewKid();
+
+        // Per-test-unique domain: the shared container is not reset between tests,
+        // and the one-Active / one-Pending-per-domain invariants are enforced across
+        // the whole table — a fixed domain would collide with sibling tests' rows.
+        var domain = NewDomain();
         var material = RandomNumberGenerator.GetBytes(48);
         var created = Instant.FromUtc(2026, 1, 1, 0, 0);
 
         await using (var write = fixture.NewContext())
         {
-            write.Keys.Add(MakeRecord(kid, status, material, created));
+            write.Keys.Add(MakeRecord(kid, status, material, created, domain));
             await write.SaveChangesAsync();
         }
 
@@ -83,7 +98,7 @@ public sealed class KeyCustodianPersistenceIntegrationTests(KeyCustodianPostgres
     public async Task QueryExtensions_TranslateServerSide()
     {
         await fixture.EnsureMigratedAsync();
-        var domain = "jwks-signing";
+        var domain = NewDomain();
         var activeKid = NewKid();
 
         await using (var write = fixture.NewContext())
@@ -107,10 +122,11 @@ public sealed class KeyCustodianPersistenceIntegrationTests(KeyCustodianPostgres
     {
         await fixture.EnsureMigratedAsync();
         var kid = NewKid();
+        var domain = NewDomain();
 
         await using (var seed = fixture.NewContext())
         {
-            seed.Keys.Add(MakeRecord(kid, KeyStatus.Pending, Rand(), Now()));
+            seed.Keys.Add(MakeRecord(kid, KeyStatus.Pending, Rand(), Now(), domain));
             await seed.SaveChangesAsync();
         }
 
@@ -139,10 +155,11 @@ public sealed class KeyCustodianPersistenceIntegrationTests(KeyCustodianPostgres
     {
         await fixture.EnsureMigratedAsync();
         var kid = NewKid();
+        var domain = NewDomain();
 
         await using (var seed = fixture.NewContext())
         {
-            seed.Keys.Add(MakeRecord(kid, KeyStatus.Active, Rand(), Now()));
+            seed.Keys.Add(MakeRecord(kid, KeyStatus.Active, Rand(), Now(), domain));
             seed.Audit.Add(new KeyAuditRecord
             {
                 Kid = kid,
@@ -183,7 +200,7 @@ public sealed class KeyCustodianPersistenceIntegrationTests(KeyCustodianPostgres
             write.Keys.Add(new KeyRecord
             {
                 Kid = kid,
-                KeyDomain = "public-key-material-rt",
+                KeyDomain = NewDomain(),
                 KeyType = KeyType.RsaSigning,
                 KeyMaterialEncrypted = encryptedMaterial,
                 PublicKeyMaterial = publicMaterial,
@@ -203,12 +220,18 @@ public sealed class KeyCustodianPersistenceIntegrationTests(KeyCustodianPostgres
 
     private static string NewKid() => "kid-" + Guid.NewGuid().ToString("N");
 
+    private static string NewDomain() => "dom-" + Guid.NewGuid().ToString("N");
+
     private static byte[] Rand() => RandomNumberGenerator.GetBytes(48);
 
     private static Instant Now() => Instant.FromUtc(2026, 1, 1, 0, 0);
 
     private static KeyRecord MakeRecord(
-        string kid, KeyStatus status, byte[] material, Instant created, string domain = "audit") =>
+        string kid,
+        KeyStatus status,
+        byte[] material,
+        Instant created,
+        string domain = FixturePayloadDomains.PAYLOAD_A) =>
         new()
         {
             Kid = kid,

@@ -28,13 +28,13 @@ import type { PredicateNode } from "@d2/typespec-decorators";
 // ---------------------------------------------------------------------------
 
 const SOURCE = "contracts/typespec/fixtures/sign-shaped.tsp";
-const CLIENTS_NS = "D2.Edge.KeyCustodian.Clients";
-const PROTO_NS = "D2.Services.Protos.KeyCustodian.V2Alpha";
+const CLIENTS_NS = "D2.Edge.KeyCustodian.Client";
+const PROTO_NS = "D2.Services.Protos.Sample.V1";
 
 function makeSignOp(overrides: Partial<GrpcClientOp> = {}): GrpcClientOp {
   return {
     opName: "sign",
-    grpcService: "KeyCustodianSigner",
+    grpcService: "SampleSigner",
     grpcMethod: "Sign",
     protoCsharpNs: PROTO_NS,
     dtoCsharpNs: CLIENTS_NS,
@@ -50,7 +50,7 @@ function makeSignOp(overrides: Partial<GrpcClientOp> = {}): GrpcClientOp {
         protoType: "string",
         repeated: false,
         optional: false,
-        redact: false,
+        redactReason: undefined,
       },
       {
         name: "payload",
@@ -61,7 +61,7 @@ function makeSignOp(overrides: Partial<GrpcClientOp> = {}): GrpcClientOp {
         protoType: "bytes",
         repeated: false,
         optional: false,
-        redact: true,
+        redactReason: "SecretInformation",
       },
     ],
     responseModelName: "SignOutput",
@@ -75,7 +75,7 @@ function makeSignOp(overrides: Partial<GrpcClientOp> = {}): GrpcClientOp {
         protoType: "string",
         repeated: false,
         optional: false,
-        redact: false,
+        redactReason: undefined,
       },
     ],
     ...overrides,
@@ -94,13 +94,13 @@ describe("emitGrpcClient_Guards", () => {
   });
 
   it("throws on empty clientsNs", () => {
-    expect(() => emitGrpcClient("KeyCustodian", [makeSignOp()], "")).toThrow(
+    expect(() => emitGrpcClient("Sample", [makeSignOp()], "")).toThrow(
       "clientsNs must not be empty",
     );
   });
 
   it("returns empty array for empty ops list", () => {
-    const files = emitGrpcClient("KeyCustodian", [], CLIENTS_NS);
+    const files = emitGrpcClient("Sample", [], CLIENTS_NS);
     expect(files).toHaveLength(0);
   });
 });
@@ -111,36 +111,28 @@ describe("emitGrpcClient_Guards", () => {
 
 describe("emitGrpcClient_FileNamesAndCount", () => {
   it("returns exactly 4 files for a single-op module", () => {
-    const files = emitGrpcClient("KeyCustodian", [makeSignOp()], CLIENTS_NS);
+    const files = emitGrpcClient("Sample", [makeSignOp()], CLIENTS_NS);
     expect(files).toHaveLength(4);
   });
 
   it("file[0] is the interface file", () => {
-    const [iface] = emitGrpcClient("KeyCustodian", [makeSignOp()], CLIENTS_NS);
-    expect(iface!.fileName).toBe("IKeyCustodianGrpcClient.g.cs");
+    const [iface] = emitGrpcClient("Sample", [makeSignOp()], CLIENTS_NS);
+    expect(iface!.fileName).toBe("ISampleGrpcClient.g.cs");
   });
 
   it("file[1] is the impl file", () => {
-    const [, impl] = emitGrpcClient("KeyCustodian", [makeSignOp()], CLIENTS_NS);
-    expect(impl!.fileName).toBe("KeyCustodianGrpcClient.g.cs");
+    const [, impl] = emitGrpcClient("Sample", [makeSignOp()], CLIENTS_NS);
+    expect(impl!.fileName).toBe("SampleGrpcClient.g.cs");
   });
 
   it("file[2] is the mapper file (single-op: <PascalOp>ClientMappers.g.cs)", () => {
-    const [, , mapper] = emitGrpcClient(
-      "KeyCustodian",
-      [makeSignOp()],
-      CLIENTS_NS,
-    );
+    const [, , mapper] = emitGrpcClient("Sample", [makeSignOp()], CLIENTS_NS);
     expect(mapper!.fileName).toBe("SignClientMappers.g.cs");
   });
 
   it("file[3] is the DI-extension file", () => {
-    const [, , , di] = emitGrpcClient(
-      "KeyCustodian",
-      [makeSignOp()],
-      CLIENTS_NS,
-    );
-    expect(di!.fileName).toBe("KeyCustodianGrpcClientsGenerated.g.cs");
+    const [, , , di] = emitGrpcClient("Sample", [makeSignOp()], CLIENTS_NS);
+    expect(di!.fileName).toBe("SampleGrpcClientsGenerated.g.cs");
   });
 });
 
@@ -150,7 +142,7 @@ describe("emitGrpcClient_FileNamesAndCount", () => {
 
 describe("emitGrpcClient_InterfaceFile", () => {
   function getInterface() {
-    const [iface] = emitGrpcClient("KeyCustodian", [makeSignOp()], CLIENTS_NS);
+    const [iface] = emitGrpcClient("Sample", [makeSignOp()], CLIENTS_NS);
     return iface!.content;
   }
 
@@ -199,7 +191,7 @@ describe("emitGrpcClient_InterfaceFile", () => {
 
   it("interface is public (not internal)", () => {
     const content = getInterface();
-    expect(content).toMatch(/public interface IKeyCustodianGrpcClient/);
+    expect(content).toMatch(/public interface ISampleGrpcClient/);
   });
 });
 
@@ -209,7 +201,7 @@ describe("emitGrpcClient_InterfaceFile", () => {
 
 describe("emitGrpcClient_ImplFile", () => {
   function getImpl() {
-    const [, impl] = emitGrpcClient("KeyCustodian", [makeSignOp()], CLIENTS_NS);
+    const [, impl] = emitGrpcClient("Sample", [makeSignOp()], CLIENTS_NS);
     return impl!.content;
   }
 
@@ -250,13 +242,13 @@ describe("emitGrpcClient_ImplFile", () => {
 
   it("impl is sealed public class", () => {
     const content = getImpl();
-    expect(content).toMatch(/public sealed class KeyCustodianGrpcClient\(/);
+    expect(content).toMatch(/public sealed class SampleGrpcClient\(/);
   });
 
-  it("primary ctor has keyCustodianSignerStub (no r_ prefix)", () => {
+  it("primary ctor has sampleSignerStub (no r_ prefix)", () => {
     const content = getImpl();
     expect(content).toContain(
-      "global::D2.Services.Protos.KeyCustodian.V2Alpha.KeyCustodianSigner.KeyCustodianSignerClient keyCustodianSignerStub",
+      "global::D2.Services.Protos.Sample.V1.SampleSigner.SampleSignerClient sampleSignerStub",
     );
   });
 
@@ -328,14 +320,14 @@ describe("emitGrpcClient_ImplFile", () => {
     // the throw). The op must run the bare throwing stub call instead.
     expect(content).not.toContain(".HandleAsync(");
     expect(content).toContain(
-      "await keyCustodianSignerStub.SignAsync(request, cancellationToken: innerCt);",
+      "await sampleSignerStub.SignAsync(request, cancellationToken: innerCt);",
     );
   });
 
   it("uses global:: prefix on the stub type", () => {
     const content = getImpl();
     expect(content).toContain(
-      "global::D2.Services.Protos.KeyCustodian.V2Alpha.KeyCustodianSigner.KeyCustodianSignerClient",
+      "global::D2.Services.Protos.Sample.V1.SampleSigner.SampleSignerClient",
     );
   });
 });
@@ -346,11 +338,7 @@ describe("emitGrpcClient_ImplFile", () => {
 
 describe("emitGrpcClient_MapperFile", () => {
   function getMapper() {
-    const [, , mapper] = emitGrpcClient(
-      "KeyCustodian",
-      [makeSignOp()],
-      CLIENTS_NS,
-    );
+    const [, , mapper] = emitGrpcClient("Sample", [makeSignOp()], CLIENTS_NS);
     return mapper!.content;
   }
 
@@ -384,22 +372,20 @@ describe("emitGrpcClient_MapperFile", () => {
     const content = getMapper();
     // The SignOutput->DTO mapper: signature field is a string, direct copy
     expect(content).toContain(
-      "return new global::D2.Edge.KeyCustodian.Clients.SignOutput(data.Signature);",
+      "return new global::D2.Edge.KeyCustodian.Client.SignOutput(data.Signature);",
     );
   });
 
   it("uses global:: aliases throughout mapper bodies", () => {
     const content = getMapper();
     expect(content).toContain(
-      "global::D2.Services.Protos.KeyCustodian.V2Alpha.SignRequest",
+      "global::D2.Services.Protos.Sample.V1.SignRequest",
     );
-    expect(content).toContain("global::D2.Edge.KeyCustodian.Clients.SignInput");
+    expect(content).toContain("global::D2.Edge.KeyCustodian.Client.SignInput");
     expect(content).toContain(
-      "global::D2.Services.Protos.KeyCustodian.V2Alpha.SignOutput",
+      "global::D2.Services.Protos.Sample.V1.SignOutput",
     );
-    expect(content).toContain(
-      "global::D2.Edge.KeyCustodian.Clients.SignOutput",
-    );
+    expect(content).toContain("global::D2.Edge.KeyCustodian.Client.SignOutput");
   });
 
   it("mapper class is internal static", () => {
@@ -410,10 +396,10 @@ describe("emitGrpcClient_MapperFile", () => {
   it("extension blocks use C#14 extension(T x) form", () => {
     const content = getMapper();
     expect(content).toContain(
-      "extension(global::D2.Edge.KeyCustodian.Clients.SignInput input)",
+      "extension(global::D2.Edge.KeyCustodian.Client.SignInput input)",
     );
     expect(content).toContain(
-      "extension(global::D2.Services.Protos.KeyCustodian.V2Alpha.SignOutput data)",
+      "extension(global::D2.Services.Protos.Sample.V1.SignOutput data)",
     );
   });
 });
@@ -436,21 +422,17 @@ describe("emitGrpcClient_MapperBytesField", () => {
           protoType: "bytes",
           repeated: false,
           optional: false,
-          redact: false,
+          redactReason: undefined,
         },
       ],
       responseModelName: "BlobOutput",
     });
-    const [, , mapper] = emitGrpcClient("KeyCustodian", [op], CLIENTS_NS);
+    const [, , mapper] = emitGrpcClient("Sample", [op], CLIENTS_NS);
     expect(mapper!.content).toContain("data.Data.ToByteArray()");
   });
 
   it("request non-bytes field passes through directly (no CopyFrom)", () => {
-    const [, , mapper] = emitGrpcClient(
-      "KeyCustodian",
-      [makeSignOp()],
-      CLIENTS_NS,
-    );
+    const [, , mapper] = emitGrpcClient("Sample", [makeSignOp()], CLIENTS_NS);
     // Kid is a string — should be a direct assignment, not CopyFrom
     expect(mapper!.content).toContain("Kid = input.Kid,");
   });
@@ -462,9 +444,9 @@ describe("emitGrpcClient_MapperBytesField", () => {
       responseModelName: "EmptyOutput",
       responseFields: [],
     });
-    const [, , mapper] = emitGrpcClient("KeyCustodian", [op], CLIENTS_NS);
+    const [, , mapper] = emitGrpcClient("Sample", [op], CLIENTS_NS);
     expect(mapper!.content).toContain(
-      "return new global::D2.Edge.KeyCustodian.Clients.EmptyOutput();",
+      "return new global::D2.Edge.KeyCustodian.Client.EmptyOutput();",
     );
   });
 
@@ -475,9 +457,9 @@ describe("emitGrpcClient_MapperBytesField", () => {
       requestModelName: "EmptyInput",
       requestFields: [],
     });
-    const [, , mapper] = emitGrpcClient("KeyCustodian", [op], CLIENTS_NS);
+    const [, , mapper] = emitGrpcClient("Sample", [op], CLIENTS_NS);
     expect(mapper!.content).toContain(
-      "return new global::D2.Services.Protos.KeyCustodian.V2Alpha.SignRequest();",
+      "return new global::D2.Services.Protos.Sample.V1.SignRequest();",
     );
   });
 });
@@ -488,11 +470,7 @@ describe("emitGrpcClient_MapperBytesField", () => {
 
 describe("emitGrpcClient_DiExtensionFile", () => {
   function getDi() {
-    const [, , , di] = emitGrpcClient(
-      "KeyCustodian",
-      [makeSignOp()],
-      CLIENTS_NS,
-    );
+    const [, , , di] = emitGrpcClient("Sample", [makeSignOp()], CLIENTS_NS);
     return di!.content;
   }
 
@@ -528,16 +506,14 @@ describe("emitGrpcClient_DiExtensionFile", () => {
 
   it("options record has required Uri Address", () => {
     const content = getDi();
-    expect(content).toContain(
-      "public sealed record KeyCustodianGrpcClientOptions",
-    );
+    expect(content).toContain("public sealed record SampleGrpcClientOptions");
     expect(content).toContain("public required Uri Address { get; init; }");
   });
 
   it("AddGrpcClient uses global:: alias to avoid namespace shadowing", () => {
     const content = getDi();
     expect(content).toContain(
-      "services.AddGrpcClient<global::D2.Services.Protos.KeyCustodian.V2Alpha.KeyCustodianSigner.KeyCustodianSignerClient>",
+      "services.AddGrpcClient<global::D2.Services.Protos.Sample.V1.SampleSigner.SampleSignerClient>",
     );
   });
 
@@ -551,7 +527,7 @@ describe("emitGrpcClient_DiExtensionFile", () => {
   it("AddTransient binds interface to impl", () => {
     const content = getDi();
     expect(content).toContain(
-      "services.AddTransient<IKeyCustodianGrpcClient, KeyCustodianGrpcClient>();",
+      "services.AddTransient<ISampleGrpcClient, SampleGrpcClient>();",
     );
   });
 
@@ -671,7 +647,7 @@ describe("emitGrpcClient_MultiOp", () => {
   function makeFetchOp(): GrpcClientOp {
     return {
       opName: "fetch",
-      grpcService: "KeyCustodianFetcher",
+      grpcService: "SampleFetcher",
       grpcMethod: "Fetch",
       protoCsharpNs: PROTO_NS,
       dtoCsharpNs: CLIENTS_NS,
@@ -689,7 +665,7 @@ describe("emitGrpcClient_MultiOp", () => {
           protoType: "string",
           repeated: false,
           optional: false,
-          redact: false,
+          redactReason: undefined,
         },
       ],
     };
@@ -697,7 +673,7 @@ describe("emitGrpcClient_MultiOp", () => {
 
   it("returns exactly 4 files even for 2 ops", () => {
     const files = emitGrpcClient(
-      "KeyCustodian",
+      "Sample",
       [makeSignOp(), makeFetchOp()],
       CLIENTS_NS,
     );
@@ -706,7 +682,7 @@ describe("emitGrpcClient_MultiOp", () => {
 
   it("interface declares both ops", () => {
     const [iface] = emitGrpcClient(
-      "KeyCustodian",
+      "Sample",
       [makeSignOp(), makeFetchOp()],
       CLIENTS_NS,
     );
@@ -716,7 +692,7 @@ describe("emitGrpcClient_MultiOp", () => {
 
   it("mapper file name for multi-op is concatenated ops", () => {
     const [, , mapper] = emitGrpcClient(
-      "KeyCustodian",
+      "Sample",
       [makeSignOp(), makeFetchOp()],
       CLIENTS_NS,
     );
@@ -725,7 +701,7 @@ describe("emitGrpcClient_MultiOp", () => {
 
   it("impl injects two separate pipeline fields for two ops", () => {
     const [, impl] = emitGrpcClient(
-      "KeyCustodian",
+      "Sample",
       [makeSignOp(), makeFetchOp()],
       CLIENTS_NS,
     );
@@ -735,7 +711,7 @@ describe("emitGrpcClient_MultiOp", () => {
 
   it("DI ext registers two resilience pipelines", () => {
     const [, , , di] = emitGrpcClient(
-      "KeyCustodian",
+      "Sample",
       [makeSignOp(), makeFetchOp()],
       CLIENTS_NS,
     );
@@ -749,7 +725,7 @@ describe("emitGrpcClient_MultiOp", () => {
     // its OWN .AddD2ForwardedJwt().AddD2WorkloadCertificate(). Count the chained
     // STATEMENTS (leading-`.` lines), not the per-method docstring mention.
     const [, , , di] = emitGrpcClient(
-      "KeyCustodian",
+      "Sample",
       [makeSignOp(), makeFetchOp()],
       CLIENTS_NS,
     );
@@ -772,7 +748,7 @@ describe("emitGrpcClient_MultiOp", () => {
   function makeVerifyOpSameService(): GrpcClientOp {
     return {
       opName: "verify",
-      grpcService: "KeyCustodianSigner", // SAME service as sign
+      grpcService: "SampleSigner", // SAME service as sign
       grpcMethod: "Verify",
       protoCsharpNs: PROTO_NS,
       dtoCsharpNs: CLIENTS_NS,
@@ -790,7 +766,7 @@ describe("emitGrpcClient_MultiOp", () => {
           protoType: "string",
           repeated: false,
           optional: false,
-          redact: false,
+          redactReason: undefined,
         },
       ],
     };
@@ -798,14 +774,13 @@ describe("emitGrpcClient_MultiOp", () => {
 
   it("two ops on the SAME service share ONE stub field but get per-op pipelines", () => {
     const [, impl] = emitGrpcClient(
-      "KeyCustodian",
+      "Sample",
       [makeSignOp(), makeVerifyOpSameService()],
       CLIENTS_NS,
     );
     // Exactly ONE stub-field declaration for the shared service (dedup), not two.
     const stubFieldDecls = (
-      impl!.content.match(/KeyCustodianSignerClient keyCustodianSignerStub/g) ??
-      []
+      impl!.content.match(/SampleSignerClient sampleSignerStub/g) ?? []
     ).length;
     expect(stubFieldDecls).toBe(1);
     // Both ops keep their own pipeline fields.
@@ -815,7 +790,7 @@ describe("emitGrpcClient_MultiOp", () => {
 
   it("two ops on the SAME service register ONE AddGrpcClient channel + two clients", () => {
     const [, , , di] = emitGrpcClient(
-      "KeyCustodian",
+      "Sample",
       [makeSignOp(), makeVerifyOpSameService()],
       CLIENTS_NS,
     );
@@ -828,7 +803,7 @@ describe("emitGrpcClient_MultiOp", () => {
 
   it("two ops on the SAME service emit one mapper class per op in one file", () => {
     const [, , mapper] = emitGrpcClient(
-      "KeyCustodian",
+      "Sample",
       [makeSignOp(), makeVerifyOpSameService()],
       CLIENTS_NS,
     );
@@ -850,7 +825,7 @@ describe("emitGrpcClient_DtoNamespaceNotSelf", () => {
     const op = makeSignOp({
       dtoCsharpNs: "D2.Edge.SomeOtherModule.Clients",
     });
-    const [iface] = emitGrpcClient("KeyCustodian", [op], CLIENTS_NS);
+    const [iface] = emitGrpcClient("Sample", [op], CLIENTS_NS);
     expect(iface!.content).toContain(
       "using SignInput = global::D2.Edge.SomeOtherModule.Clients.SignInput;",
     );
@@ -863,24 +838,22 @@ describe("emitGrpcClient_DtoNamespaceNotSelf", () => {
     const op = makeSignOp({
       dtoCsharpNs: "D2.Edge.SomeOtherModule.Clients",
     });
-    const [, impl] = emitGrpcClient("KeyCustodian", [op], CLIENTS_NS);
+    const [, impl] = emitGrpcClient("Sample", [op], CLIENTS_NS);
     expect(impl!.content).toContain(
       "using SignOutput = global::D2.Edge.SomeOtherModule.Clients.SignOutput;",
     );
     // The proto SERVICE namespace is NOT bare-imported (the stub is referenced via global::),
     // so the bare SignOutput in the pipeline generic args resolves to the DTO alias only.
-    expect(impl!.content).not.toContain(
-      "using D2.Services.Protos.KeyCustodian.V2Alpha;",
-    );
+    expect(impl!.content).not.toContain("using D2.Services.Protos.Sample.V1;");
   });
 
   it("interface emits no DTO alias usings when dtoCsharpNs == clientsNs (DTOs namespace-local)", () => {
-    const [iface] = emitGrpcClient("KeyCustodian", [makeSignOp()], CLIENTS_NS);
+    const [iface] = emitGrpcClient("Sample", [makeSignOp()], CLIENTS_NS);
     expect(iface!.content).not.toContain("global::");
   });
 
   it("impl file does NOT add clientsNs using when dtoCsharpNs == clientsNs", () => {
-    const [, impl] = emitGrpcClient("KeyCustodian", [makeSignOp()], CLIENTS_NS);
+    const [, impl] = emitGrpcClient("Sample", [makeSignOp()], CLIENTS_NS);
     expect(impl!.content).not.toContain(`using ${CLIENTS_NS};`);
   });
 
@@ -888,7 +861,7 @@ describe("emitGrpcClient_DtoNamespaceNotSelf", () => {
     const op = makeSignOp({
       dtoCsharpNs: "D2.Edge.SomeOtherModule.Clients",
     });
-    const [, , mapper] = emitGrpcClient("KeyCustodian", [op], CLIENTS_NS);
+    const [, , mapper] = emitGrpcClient("Sample", [op], CLIENTS_NS);
     expect(mapper!.content).toContain("using D2.Edge.SomeOtherModule.Clients;");
   });
 });
@@ -926,7 +899,7 @@ describe("emitGrpcClient_EnumRequestField_AliasAndToWire", () => {
           protoType: "string",
           repeated: false,
           optional: false,
-          redact: false,
+          redactReason: undefined,
         },
         {
           name: "keyKind",
@@ -937,7 +910,7 @@ describe("emitGrpcClient_EnumRequestField_AliasAndToWire", () => {
           protoType: "string",
           repeated: false,
           optional: false,
-          redact: false,
+          redactReason: undefined,
           enumRef: KEY_KIND,
         },
       ],
@@ -952,7 +925,7 @@ describe("emitGrpcClient_EnumRequestField_AliasAndToWire", () => {
           protoType: "string",
           repeated: false,
           optional: false,
-          redact: false,
+          redactReason: undefined,
         },
       ],
     };
@@ -997,7 +970,7 @@ describe("emitGrpcClient_EnumRequestField_AliasAndToWire", () => {
           protoType: "string",
           repeated: false,
           optional: false,
-          redact: false,
+          redactReason: undefined,
           enumRef: ROLE,
         },
       ],
@@ -1032,7 +1005,7 @@ describe("emitGrpcClient_EnumRequestField_AliasAndToWire", () => {
           protoType: "string",
           repeated: false,
           optional: false,
-          redact: false,
+          redactReason: undefined,
           enumRef: op.requestFields[1]!.enumRef,
         },
       ],
@@ -1081,7 +1054,7 @@ describe("emitGrpcClient_EnumResponseField_ParseAndSurface", () => {
           protoType: "string",
           repeated: false,
           optional: false,
-          redact: false,
+          redactReason: undefined,
         },
       ],
       responseModelName: "SignWithKindOutput",
@@ -1095,7 +1068,7 @@ describe("emitGrpcClient_EnumResponseField_ParseAndSurface", () => {
           protoType: "string",
           repeated: false,
           optional: false,
-          redact: false,
+          redactReason: undefined,
         },
         {
           name: "keyKind",
@@ -1106,7 +1079,7 @@ describe("emitGrpcClient_EnumResponseField_ParseAndSurface", () => {
           protoType: "string",
           repeated: false,
           optional: false,
-          redact: false,
+          redactReason: undefined,
           enumRef: KEY_KIND,
         },
       ],
@@ -1161,12 +1134,12 @@ describe("emitGrpcClient_EnumResponseField_ParseAndSurface", () => {
   it("an enum-FREE response keeps the bare <Output> mapper (no D2Result, no capture)", () => {
     // The sign op (string-only response) must NOT gain the D2Result response path.
     const [, impl, mapper] = emitGrpcClient(
-      "KeyCustodian",
+      "Sample",
       [makeSignOp()],
       CLIENTS_NS,
     );
     expect(mapper!.content).toContain(
-      "internal global::D2.Edge.KeyCustodian.Clients.SignOutput ToSignOutput()",
+      "internal global::D2.Edge.KeyCustodian.Client.SignOutput ToSignOutput()",
     );
     expect(mapper!.content).not.toContain("D2Result<");
     expect(impl!.content).not.toContain("responseParseFailure");
@@ -1193,7 +1166,7 @@ describe("emitGrpcClient_PredicateArm", () => {
       retryWhenAst: predAst("result.success == false"),
       failWhenAst: predAst('result.errorCode == "X"'),
     });
-    const [, impl] = emitGrpcClient("KeyCustodian", [op], CLIENTS_NS);
+    const [, impl] = emitGrpcClient("Sample", [op], CLIENTS_NS);
     const c = impl!.content;
     expect(c).toContain("var businessResult = response.Result is not null");
     expect(c).toContain(
@@ -1214,7 +1187,7 @@ describe("emitGrpcClient_PredicateArm", () => {
 
   it("retryWhen-only op → the throw guard is just SR_RetryWhen (no failWhen term)", () => {
     const op = makeSignOp({ retryWhenAst: predAst("result.success == false") });
-    const [, impl] = emitGrpcClient("KeyCustodian", [op], CLIENTS_NS);
+    const [, impl] = emitGrpcClient("Sample", [op], CLIENTS_NS);
     expect(impl!.content).toContain(
       "if (SignResiliencePredicates.SR_RetryWhen(businessResult))",
     );
@@ -1225,7 +1198,7 @@ describe("emitGrpcClient_PredicateArm", () => {
 
   it("retryWhen-bearing op → DI-ext IsTransient gains the sentinel arm", () => {
     const op = makeSignOp({ retryWhenAst: predAst("result.success == false") });
-    const files = emitGrpcClient("KeyCustodian", [op], CLIENTS_NS);
+    const files = emitGrpcClient("Sample", [op], CLIENTS_NS);
     const di = files[3]!;
     expect(di.content).toContain("IsTransient = ex =>");
     expect(di.content).toContain("ex is D2GeneratedBusinessRetrySignal");
@@ -1236,7 +1209,7 @@ describe("emitGrpcClient_PredicateArm", () => {
 
   it("failWhen-ONLY op → NO sentinel/throw arm in the impl (failWhen alone never retries)", () => {
     const op = makeSignOp({ failWhenAst: predAst("result.success == false") });
-    const [, impl] = emitGrpcClient("KeyCustodian", [op], CLIENTS_NS);
+    const [, impl] = emitGrpcClient("Sample", [op], CLIENTS_NS);
     expect(impl!.content).not.toContain("D2GeneratedBusinessRetrySignal");
     expect(impl!.content).not.toContain("capturedData");
     expect(impl!.content).not.toContain("var businessResult");
@@ -1244,7 +1217,7 @@ describe("emitGrpcClient_PredicateArm", () => {
 
   it("failWhen-ONLY op → DI-ext IsTransient stays the byte-identical single-line form", () => {
     const op = makeSignOp({ failWhenAst: predAst("result.success == false") });
-    const files = emitGrpcClient("KeyCustodian", [op], CLIENTS_NS);
+    const files = emitGrpcClient("Sample", [op], CLIENTS_NS);
     expect(files[3]!.content).toContain(
       "IsTransient = ex => ex is RpcException r && ProtoExtensions.IsTransientGrpcException(r),",
     );
@@ -1252,7 +1225,7 @@ describe("emitGrpcClient_PredicateArm", () => {
   });
 
   it("NO-predicate op → impl + DI-ext are byte-identical to the pre-predicate output (back-compat pin)", () => {
-    const plain = emitGrpcClient("KeyCustodian", [makeSignOp()], CLIENTS_NS);
+    const plain = emitGrpcClient("Sample", [makeSignOp()], CLIENTS_NS);
     expect(plain[1]!.content).not.toContain("D2GeneratedBusinessRetrySignal");
     expect(plain[1]!.content).not.toContain("capturedData");
     expect(plain[1]!.content).not.toContain("businessResult");
@@ -1269,7 +1242,7 @@ describe("emitGrpcClient_PredicateArm", () => {
 
   it("retryWhen-bearing op → impl emits OTel AddEvent on the retry-signal throw path", () => {
     const op = makeSignOp({ retryWhenAst: predAst("result.success == false") });
-    const [, impl] = emitGrpcClient("KeyCustodian", [op], CLIENTS_NS);
+    const [, impl] = emitGrpcClient("Sample", [op], CLIENTS_NS);
     const c = impl!.content;
     // OTel instrumentation must appear immediately before the sentinel throw.
     expect(c).toContain(
@@ -1283,12 +1256,12 @@ describe("emitGrpcClient_PredicateArm", () => {
 
   it("retryWhen-bearing op → impl uses System.Diagnostics (required for Activity)", () => {
     const op = makeSignOp({ retryWhenAst: predAst("result.success == false") });
-    const [, impl] = emitGrpcClient("KeyCustodian", [op], CLIENTS_NS);
+    const [, impl] = emitGrpcClient("Sample", [op], CLIENTS_NS);
     expect(impl!.content).toContain("using System.Diagnostics;");
   });
 
   it("NO-predicate op → impl omits System.Diagnostics (no unused import)", () => {
-    const plain = emitGrpcClient("KeyCustodian", [makeSignOp()], CLIENTS_NS);
+    const plain = emitGrpcClient("Sample", [makeSignOp()], CLIENTS_NS);
     expect(plain[1]!.content).not.toContain("using System.Diagnostics;");
   });
 });
@@ -1310,7 +1283,7 @@ describe("emitGrpcClient_NestedModel_SubMapperRecursion", () => {
         protoType: "string",
         repeated: false,
         optional: false,
-        redact: false,
+        redactReason: undefined,
       },
     ],
   };
@@ -1326,7 +1299,7 @@ describe("emitGrpcClient_NestedModel_SubMapperRecursion", () => {
         protoType: "string",
         repeated: false,
         optional: false,
-        redact: false,
+        redactReason: undefined,
       },
     ],
   };
@@ -1350,7 +1323,7 @@ describe("emitGrpcClient_NestedModel_SubMapperRecursion", () => {
           protoType: "string",
           repeated: false,
           optional: false,
-          redact: false,
+          redactReason: undefined,
         },
       ],
       responseModelName: "PlaceOrderV2Output",
@@ -1364,7 +1337,7 @@ describe("emitGrpcClient_NestedModel_SubMapperRecursion", () => {
           protoType: "string",
           repeated: false,
           optional: false,
-          redact: false,
+          redactReason: undefined,
         },
         {
           name: "lines",
@@ -1375,7 +1348,7 @@ describe("emitGrpcClient_NestedModel_SubMapperRecursion", () => {
           protoType: undefined,
           repeated: true,
           optional: false,
-          redact: false,
+          redactReason: undefined,
           nested: LINE,
         },
         {
@@ -1387,7 +1360,7 @@ describe("emitGrpcClient_NestedModel_SubMapperRecursion", () => {
           protoType: undefined,
           repeated: false,
           optional: true,
-          redact: false,
+          redactReason: undefined,
           nested: CUSTOMER,
         },
       ],
@@ -1433,7 +1406,7 @@ describe("emitGrpcClient_NestedModel_SubMapperRecursion", () => {
           protoType: undefined,
           repeated: false,
           optional: true,
-          redact: false,
+          redactReason: undefined,
           nested: CUSTOMER,
         },
       ],
@@ -1461,7 +1434,7 @@ describe("emitGrpcClient_NestedModel_SubMapperRecursion", () => {
           protoType: undefined,
           repeated: true,
           optional: false,
-          redact: false,
+          redactReason: undefined,
           nested: LINE,
         },
       ],
@@ -1493,7 +1466,7 @@ describe("emitGrpcClient_NestedModel_SubMapperRecursion", () => {
           protoType: "string",
           repeated: false,
           optional: false,
-          redact: false,
+          redactReason: undefined,
           enumRef: KEY_KIND,
         },
       ],

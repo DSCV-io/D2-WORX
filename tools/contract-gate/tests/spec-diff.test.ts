@@ -367,6 +367,28 @@ describe("diffFlatCatalog — adversarial inputs", () => {
     ).toThrow();
   });
 
+  it("throws when a catalog identity is an empty string", () => {
+    const before = {
+      errorCodes: [{ code: "", httpStatus: 400 }],
+    };
+    const after = makeErrorCodes("CODE_A");
+
+    expect(() =>
+      diffFlatCatalog(before, after, ERROR_CODE_IDENTITY, "test.spec.json"),
+    ).toThrow(/missing string identity field/);
+  });
+
+  it("throws when a catalog identity is whitespace-only", () => {
+    const before = {
+      errorCodes: [{ code: "   ", httpStatus: 400 }],
+    };
+    const after = makeErrorCodes("CODE_A");
+
+    expect(() =>
+      diffFlatCatalog(before, after, ERROR_CODE_IDENTITY, "test.spec.json"),
+    ).toThrow(/missing string identity field/);
+  });
+
   it("throws on duplicate identity in the before catalog", () => {
     const before = {
       errorCodes: [

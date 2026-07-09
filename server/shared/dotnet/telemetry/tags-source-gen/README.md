@@ -6,6 +6,8 @@ Copyright (c) DCSV. All rights reserved.
 
 > Parent: [`server/shared/dotnet/`](../../README.md)
 
+**Input contract:** [`contracts/telemetry/`](../../../../../contracts/telemetry/README.md)
+
 Roslyn incremental source generator that emits per-meter `*TelemetryTags.g.cs` typed-constants classes by reading `contracts/telemetry/telemetry.spec.json` via `<AdditionalFiles>`. Per-meter single-target dispatch — emits ONLY when the consuming assembly matches the meter's `consumingAssembly` field.
 
 The spec file is the single source of truth for the platform's OTel meter / instrument / tag enumeration. Every closed-enum tag value emitted by a runtime counter call site is anchored to a generated constant — drift between the spec and runtime tag-write sites is impossible. The same spec is consumable by other platforms (TS, Go) without language-specific format changes.

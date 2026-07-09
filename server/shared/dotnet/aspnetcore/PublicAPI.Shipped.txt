@@ -82,6 +82,9 @@ D2.Shared.AspNetCore.Mtls.D2MutualTlsOptions.TrustAnchorsProvider.set -> void
 D2.Shared.AspNetCore.Mtls.MutualTlsHostExtensions
 D2.Shared.AspNetCore.Mtls.MutualTlsHostExtensions.extension(Microsoft.Extensions.DependencyInjection.IServiceCollection!)
 D2.Shared.AspNetCore.Mtls.MutualTlsHostExtensions.extension(Microsoft.Extensions.DependencyInjection.IServiceCollection!).AddD2MutualTls(System.Action<D2.Shared.AspNetCore.Mtls.D2MutualTlsOptions!>! configure) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
+D2.Shared.AspNetCore.Mtls.PeerWorkloadIdentityAccessor
+D2.Shared.AspNetCore.Mtls.PeerWorkloadIdentityAccessor.extension(Microsoft.AspNetCore.Http.HttpContext!)
+D2.Shared.AspNetCore.Mtls.PeerWorkloadIdentityAccessor.extension(Microsoft.AspNetCore.Http.HttpContext!).GetD2PeerWorkloadIdentity() -> string?
 D2.Shared.AspNetCore.ProblemDetailsServiceCollectionExtensions
 D2.Shared.AspNetCore.ProblemDetailsServiceCollectionExtensions.extension(Microsoft.Extensions.DependencyInjection.IServiceCollection!)
 D2.Shared.AspNetCore.ProblemDetailsServiceCollectionExtensions.extension(Microsoft.Extensions.DependencyInjection.IServiceCollection!).AddD2ProblemDetails(System.Action<D2.Shared.AspNetCore.D2ProblemDetailsOptions!>? configure = null) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
@@ -138,6 +141,7 @@ static D2.Shared.AspNetCore.HttpContextD2ResultExtensions.SetD2Result(this Micro
 static D2.Shared.AspNetCore.InfrastructureBypassApplicationBuilderExtensions.UseD2InfrastructureBypass(this Microsoft.AspNetCore.Builder.IApplicationBuilder! app, System.Action<D2.Shared.AspNetCore.D2InfrastructureBypassOptions!>? configure = null) -> Microsoft.AspNetCore.Builder.IApplicationBuilder!
 static D2.Shared.AspNetCore.InfrastructurePathMatcher.IsInfrastructurePath(Microsoft.AspNetCore.Http.PathString path, System.Collections.Generic.IReadOnlyList<string!>? infrastructurePaths) -> bool
 static D2.Shared.AspNetCore.Mtls.MutualTlsHostExtensions.AddD2MutualTls(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services, System.Action<D2.Shared.AspNetCore.Mtls.D2MutualTlsOptions!>! configure) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
+static D2.Shared.AspNetCore.Mtls.PeerWorkloadIdentityAccessor.GetD2PeerWorkloadIdentity(this Microsoft.AspNetCore.Http.HttpContext! httpContext) -> string?
 static D2.Shared.AspNetCore.ProblemDetailsServiceCollectionExtensions.AddD2ProblemDetails(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services, System.Action<D2.Shared.AspNetCore.D2ProblemDetailsOptions!>? configure = null) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
 static D2.Shared.AspNetCore.RunD2ServiceWebApplicationExtensions.RunD2ServiceAsync(this Microsoft.AspNetCore.Builder.WebApplication! app, string? serviceName = null) -> System.Threading.Tasks.Task!
 static D2.Shared.AspNetCore.SecurityHeadersApplicationBuilderExtensions.UseD2SecurityHeaders(this Microsoft.AspNetCore.Builder.IApplicationBuilder! app, System.Action<D2.Shared.AspNetCore.D2SecurityHeadersOptions!>? configure = null) -> Microsoft.AspNetCore.Builder.IApplicationBuilder!

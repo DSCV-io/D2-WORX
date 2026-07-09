@@ -192,6 +192,9 @@ docs/wip/
 # Local tool settings (machine-specific)
 .claude/*
 !.claude/settings.json
+!.claude/agents
+!.claude/hooks
+!.claude/skills
 
 # Coverage
 /Coverage

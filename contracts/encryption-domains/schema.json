@@ -18,6 +18,32 @@
       "type": "object",
       "required": ["constName", "value", "doc"],
       "additionalProperties": false,
+      "allOf": [
+        {
+          "$comment": "A sealed domain MUST name its single decrypting consumer service.",
+          "if": {
+            "properties": { "mode": { "const": "sealed" } },
+            "required": ["mode"]
+          },
+          "then": { "required": ["consumerService"] }
+        },
+        {
+          "$comment": "consumerService is meaningful ONLY for sealed domains; its presence without mode:sealed is a spec error.",
+          "if": { "required": ["consumerService"] },
+          "then": {
+            "properties": { "mode": { "const": "sealed" } },
+            "required": ["mode"]
+          }
+        },
+        {
+          "$comment": "The plaintext sentinel is never encrypted, so it carries no mode.",
+          "if": {
+            "properties": { "value": { "const": "plaintext" } },
+            "required": ["value"]
+          },
+          "then": { "not": { "required": ["mode"] } }
+        }
+      ],
       "properties": {
         "constName": {
           "type": "string",
@@ -28,6 +54,17 @@
           "type": "string",
           "minLength": 1,
           "description": "Wire-format domain identifier value. Must be unique across the spec."
+        },
+        "mode": {
+          "type": "string",
+          "enum": ["symmetric", "sealed"],
+          "default": "symmetric",
+          "description": "Encryption mode for the domain. 'symmetric' (default when absent — strict back-compat) = shared-keyring AES-256-GCM (version-1 frame), every grant-holder both encrypts and decrypts. 'sealed' = per-consumer-service ephemeral-static ECDH (version-2 frame), producers seal to the recipient service's public key and only that service opens. Forbidden on the 'plaintext' sentinel."
+        },
+        "consumerService": {
+          "type": "string",
+          "pattern": "^[a-z0-9-]{1,64}$",
+          "description": "The single decrypting recipient's ServiceId (SpiffeWorkloadIdentity.ServiceId), lowercase [a-z0-9-]. REQUIRED iff mode == 'sealed'; FORBIDDEN otherwise. The routing anchor: the messaging composer resolves domain → consumerService → that service's public seal key, and the seal-open authority check reads it to know whose private key may be fetched. Two sealed domains consumed by the same service share one keypair (per-service reuse)."
         },
         "doc": {
           "type": "string",

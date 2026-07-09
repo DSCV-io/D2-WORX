@@ -24,9 +24,9 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using DtoPlaceOrderInput = D2.Edge.Tests.TypeSpecGrpcPredicate.Generated.PlaceOrderInput;
-using DtoPlaceOrderOutput = D2.Edge.Tests.TypeSpecGrpcPredicate.Generated.PlaceOrderOutput;
-using ProtoPlaceOrderOutput = D2.Services.Protos.PredicateFixtures.V1.PlaceOrderOutput;
+using DtoPlaceOrderFixtureInput = D2.Edge.Tests.TypeSpecGrpcPredicate.Generated.PlaceOrderFixtureInput;
+using DtoPlaceOrderFixtureOutput = D2.Edge.Tests.TypeSpecGrpcPredicate.Generated.PlaceOrderFixtureOutput;
+using ProtoPlaceOrderFixtureOutput = D2.Services.Protos.PredicateFixtures.V1.PlaceOrderFixtureOutput;
 
 /// <summary>
 /// In-memory harness tests for the generated <see cref="PredicateFixturesGrpcClient"/> — the
@@ -71,15 +71,15 @@ public sealed class PredicateRetryTests
     public async Task PlaceOrderAsync_RetryWhenMatches_RetriesThenRestoresBusinessResultVerbatim()
     {
         var signer = new BusinessResultSignerBase(
-            () => D2Result<DtoPlaceOrderOutput?>.Ok(
-                new DtoPlaceOrderOutput("order-partial", ["SHIPPED"], Partial: true)),
+            () => D2Result<DtoPlaceOrderFixtureOutput?>.Ok(
+                new DtoPlaceOrderFixtureOutput("order-partial", ["SHIPPED"], Partial: true)),
             itemStatuses: ["SHIPPED"]);
 
         using var host = await BuildHost(signer);
         using var retryPipeline = BuildRetryPipeline(maxAttempts: 3);
         var client = BuildClientWithPipeline(host, retryPipeline);
 
-        var result = await client.PlaceOrderAsync(new DtoPlaceOrderInput("cust-1"));
+        var result = await client.PlaceOrderFixtureAsync(new DtoPlaceOrderFixtureInput("cust-1"));
 
         signer.CallCount.Should().BeGreaterThan(
             1,
@@ -107,7 +107,7 @@ public sealed class PredicateRetryTests
         using var retryPipeline = BuildRetryPipeline(maxAttempts: 3);
         var client = BuildClientWithPipeline(host, retryPipeline);
 
-        var result = await client.PlaceOrderAsync(new DtoPlaceOrderInput("cust-1"));
+        var result = await client.PlaceOrderFixtureAsync(new DtoPlaceOrderFixtureInput("cust-1"));
 
         result.Success.Should().BeTrue("the second attempt did not match retryWhen → recovery");
         result.Data!.OrderCode.Should().Be("order-ok");
@@ -124,14 +124,14 @@ public sealed class PredicateRetryTests
     {
         // ValidationFailed with errorCode VALIDATION_FAILED → failWhen TRUE → NOT retried.
         var signer = new BusinessResultSignerBase(
-            () => D2Result<DtoPlaceOrderOutput?>.ValidationFailed(errorCode: "VALIDATION_FAILED"),
+            () => D2Result<DtoPlaceOrderFixtureOutput?>.ValidationFailed(errorCode: "VALIDATION_FAILED"),
             itemStatuses: ["SHIPPED"]);
 
         using var host = await BuildHost(signer);
         using var retryPipeline = BuildRetryPipeline(maxAttempts: 5);
         var client = BuildClientWithPipeline(host, retryPipeline);
 
-        var result = await client.PlaceOrderAsync(new DtoPlaceOrderInput("cust-1"));
+        var result = await client.PlaceOrderFixtureAsync(new DtoPlaceOrderFixtureInput("cust-1"));
 
         signer.CallCount.Should().Be(1, "failWhen matched → no retry");
         result.Success.Should().BeFalse();
@@ -149,14 +149,14 @@ public sealed class PredicateRetryTests
         // ServiceUnavailable (category infrastructure_unavailable → retryWhen TRUE) WITH
         // errorCode VALIDATION_FAILED (→ failWhen TRUE). failWhen WINS → no retry.
         var signer = new BusinessResultSignerBase(
-            () => D2Result<DtoPlaceOrderOutput?>.ServiceUnavailable(errorCode: "VALIDATION_FAILED"),
+            () => D2Result<DtoPlaceOrderFixtureOutput?>.ServiceUnavailable(errorCode: "VALIDATION_FAILED"),
             itemStatuses: ["SHIPPED"]);
 
         using var host = await BuildHost(signer);
         using var retryPipeline = BuildRetryPipeline(maxAttempts: 5);
         var client = BuildClientWithPipeline(host, retryPipeline);
 
-        var result = await client.PlaceOrderAsync(new DtoPlaceOrderInput("cust-1"));
+        var result = await client.PlaceOrderFixtureAsync(new DtoPlaceOrderFixtureInput("cust-1"));
 
         signer.CallCount.Should().Be(1, "failWhen wins over retryWhen → no retry");
         result.Success.Should().BeFalse();
@@ -174,14 +174,14 @@ public sealed class PredicateRetryTests
     {
         // A success with ZERO itemStatuses → failWhen (itemStatuses.count == 0) TRUE → no retry.
         var signer = new BusinessResultSignerBase(
-            () => D2Result<DtoPlaceOrderOutput?>.Ok(new DtoPlaceOrderOutput("order-empty", [], false)),
+            () => D2Result<DtoPlaceOrderFixtureOutput?>.Ok(new DtoPlaceOrderFixtureOutput("order-empty", [], false)),
             itemStatuses: []);
 
         using var host = await BuildHost(signer);
         using var retryPipeline = BuildRetryPipeline(maxAttempts: 5);
         var client = BuildClientWithPipeline(host, retryPipeline);
 
-        var result = await client.PlaceOrderAsync(new DtoPlaceOrderInput("cust-1"));
+        var result = await client.PlaceOrderFixtureAsync(new DtoPlaceOrderFixtureInput("cust-1"));
 
         signer.CallCount.Should().Be(1, "failWhen (count==0) matched → no retry");
         result.Success.Should().BeTrue();
@@ -196,14 +196,14 @@ public sealed class PredicateRetryTests
     public async Task PlaceOrderAsync_NeitherPredicateMatches_ReturnedVerbatim_NotRetried()
     {
         var signer = new BusinessResultSignerBase(
-            () => D2Result<DtoPlaceOrderOutput?>.Ok(new DtoPlaceOrderOutput("order-ok", ["SHIPPED"], false)),
+            () => D2Result<DtoPlaceOrderFixtureOutput?>.Ok(new DtoPlaceOrderFixtureOutput("order-ok", ["SHIPPED"], false)),
             itemStatuses: ["SHIPPED"]);
 
         using var host = await BuildHost(signer);
         using var retryPipeline = BuildRetryPipeline(maxAttempts: 5);
         var client = BuildClientWithPipeline(host, retryPipeline);
 
-        var result = await client.PlaceOrderAsync(new DtoPlaceOrderInput("cust-1"));
+        var result = await client.PlaceOrderFixtureAsync(new DtoPlaceOrderFixtureInput("cust-1"));
 
         signer.CallCount.Should().Be(1, "neither predicate matched → the default path, no retry");
         result.Success.Should().BeTrue();
@@ -221,14 +221,14 @@ public sealed class PredicateRetryTests
         // A SUCCESS whose itemStatuses contains "PENDING" → retryWhen (contains) TRUE; failWhen
         // FALSE (non-empty, no VALIDATION_FAILED). Exhausts the budget on the business result.
         var signer = new BusinessResultSignerBase(
-            () => D2Result<DtoPlaceOrderOutput?>.Ok(new DtoPlaceOrderOutput("order-pending", ["PENDING"], false)),
+            () => D2Result<DtoPlaceOrderFixtureOutput?>.Ok(new DtoPlaceOrderFixtureOutput("order-pending", ["PENDING"], false)),
             itemStatuses: ["PENDING"]);
 
         using var host = await BuildHost(signer);
         using var retryPipeline = BuildRetryPipeline(maxAttempts: 3);
         var client = BuildClientWithPipeline(host, retryPipeline);
 
-        var result = await client.PlaceOrderAsync(new DtoPlaceOrderInput("cust-1"));
+        var result = await client.PlaceOrderFixtureAsync(new DtoPlaceOrderFixtureInput("cust-1"));
 
         signer.CallCount.Should().BeGreaterThan(
             1,
@@ -247,7 +247,7 @@ public sealed class PredicateRetryTests
     public async Task AddD2PredicateFixturesGrpcClients_ResolvesClientAndKeyedPipeline()
     {
         using var host = await BuildHost(new BusinessResultSignerBase(
-            () => D2Result<DtoPlaceOrderOutput?>.Ok(new DtoPlaceOrderOutput("o", ["SHIPPED"], false)),
+            () => D2Result<DtoPlaceOrderFixtureOutput?>.Ok(new DtoPlaceOrderFixtureOutput("o", ["SHIPPED"], false)),
             itemStatuses: ["SHIPPED"]));
 
         var httpClient = host.GetTestClient();
@@ -274,8 +274,8 @@ public sealed class PredicateRetryTests
         var client = sp.GetRequiredService<IPredicateFixturesGrpcClient>();
         client.Should().BeOfType<PredicateFixturesGrpcClient>();
 
-        var pipeline = sp.GetRequiredKeyedService<ResilientPipeline<string, DtoPlaceOrderOutput?>>(
-            PlaceOrderClientKeys.PIPELINE);
+        var pipeline = sp.GetRequiredKeyedService<ResilientPipeline<string, DtoPlaceOrderFixtureOutput?>>(
+            PlaceOrderFixtureClientKeys.PIPELINE);
         pipeline.Should().NotBeNull();
     }
 
@@ -313,7 +313,7 @@ public sealed class PredicateRetryTests
 
     private static PredicateFixturesGrpcClient BuildClientWithPipeline(
         IHost host,
-        ResilientPipeline<string, DtoPlaceOrderOutput?> pipeline)
+        ResilientPipeline<string, DtoPlaceOrderFixtureOutput?> pipeline)
     {
         var httpClient = host.GetTestClient();
         var channel = GrpcChannel.ForAddress(
@@ -330,12 +330,12 @@ public sealed class PredicateRetryTests
     /// gRPC transient predicate — with a near-zero backoff so the retry cases do not wall-clock the
     /// suite.
     /// </summary>
-    private static ResilientPipeline<string, DtoPlaceOrderOutput?> BuildRetryPipeline(int maxAttempts)
+    private static ResilientPipeline<string, DtoPlaceOrderFixtureOutput?> BuildRetryPipeline(int maxAttempts)
     {
-        var builder = new ResilientPipelineBuilder<string, DtoPlaceOrderOutput?>(
+        var builder = new ResilientPipelineBuilder<string, DtoPlaceOrderFixtureOutput?>(
             new ServiceCollection().BuildServiceProvider());
 
-        builder.UseRetries(new RetryOptions<DtoPlaceOrderOutput?>
+        builder.UseRetries(new RetryOptions<DtoPlaceOrderFixtureOutput?>
         {
             MaxAttempts = maxAttempts,
             BaseDelayMs = 1,
@@ -348,14 +348,14 @@ public sealed class PredicateRetryTests
         return builder.Build();
     }
 
-    private static PlaceOrderResponse BuildResponse(
-        D2Result<DtoPlaceOrderOutput?> businessResult,
+    private static PlaceOrderFixtureResponse BuildResponse(
+        D2Result<DtoPlaceOrderFixtureOutput?> businessResult,
         string[] itemStatuses)
     {
-        var response = new PlaceOrderResponse { Result = businessResult.ToProto() };
+        var response = new PlaceOrderFixtureResponse { Result = businessResult.ToProto() };
         if (businessResult.Success)
         {
-            var data = new ProtoPlaceOrderOutput
+            var data = new ProtoPlaceOrderFixtureOutput
             {
                 OrderCode = businessResult.Data?.OrderCode ?? "order",
                 Partial = businessResult.Data?.Partial ?? false,
@@ -374,7 +374,7 @@ public sealed class PredicateRetryTests
 
     /// <summary>Returns the SAME business result + itemStatuses on every call.</summary>
     private sealed class BusinessResultSignerBase(
-        Func<D2Result<DtoPlaceOrderOutput?>> resultFactory,
+        Func<D2Result<DtoPlaceOrderFixtureOutput?>> resultFactory,
         string[] itemStatuses)
         : PredicateFixturesOrders.PredicateFixturesOrdersBase
     {
@@ -382,8 +382,8 @@ public sealed class PredicateRetryTests
 
         public int CallCount => Volatile.Read(ref _callCount);
 
-        public override Task<PlaceOrderResponse> PlaceOrder(
-            PlaceOrderRequest request, ServerCallContext context)
+        public override Task<PlaceOrderFixtureResponse> PlaceOrderFixture(
+            PlaceOrderFixtureRequest request, ServerCallContext context)
         {
             Interlocked.Increment(ref _callCount);
             return Task.FromResult(BuildResponse(resultFactory(), itemStatuses));
@@ -401,19 +401,19 @@ public sealed class PredicateRetryTests
 
         public int CallCount => Volatile.Read(ref _callCount);
 
-        public override Task<PlaceOrderResponse> PlaceOrder(
-            PlaceOrderRequest request, ServerCallContext context)
+        public override Task<PlaceOrderFixtureResponse> PlaceOrderFixture(
+            PlaceOrderFixtureRequest request, ServerCallContext context)
         {
             var attempt = Interlocked.Increment(ref _callCount);
             if (attempt == 1)
             {
-                var partial = D2Result<DtoPlaceOrderOutput?>.Ok(
-                    new DtoPlaceOrderOutput("order-partial", successItemStatuses, Partial: true));
+                var partial = D2Result<DtoPlaceOrderFixtureOutput?>.Ok(
+                    new DtoPlaceOrderFixtureOutput("order-partial", successItemStatuses, Partial: true));
                 return Task.FromResult(BuildResponse(partial, successItemStatuses));
             }
 
-            var success = D2Result<DtoPlaceOrderOutput?>.Ok(
-                new DtoPlaceOrderOutput("order-ok", successItemStatuses, Partial: false));
+            var success = D2Result<DtoPlaceOrderFixtureOutput?>.Ok(
+                new DtoPlaceOrderFixtureOutput("order-ok", successItemStatuses, Partial: false));
             return Task.FromResult(BuildResponse(success, successItemStatuses));
         }
     }

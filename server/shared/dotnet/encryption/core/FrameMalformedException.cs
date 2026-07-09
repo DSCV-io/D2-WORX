@@ -27,4 +27,18 @@ public sealed class FrameMalformedException : EncryptionException
         : base(message)
     {
     }
+
+    /// <summary>
+    /// Initializes a new <see cref="FrameMalformedException"/> with an
+    /// underlying cause (e.g. a cryptographic import failure on a
+    /// frame-borne key).
+    /// </summary>
+    /// <param name="message">
+    /// Description of the structural error. Must not include any frame bytes.
+    /// </param>
+    /// <param name="inner">Underlying cause.</param>
+    public FrameMalformedException(string message, Exception inner)
+        : base(message, inner)
+    {
+    }
 }

@@ -12,7 +12,7 @@ using Serilog;
 using Serilog.Events;
 using Xunit;
 
-using GenSignInput = D2.Edge.Tests.TypeSpecDto.Generated.SignInput;
+using GenSignFixtureInput = D2.Edge.Tests.TypeSpecDto.Generated.SignFixtureInput;
 
 /// <summary>
 /// Validates that the TypeSpec-emitted <c>sign</c> fixture DTO wires
@@ -23,8 +23,8 @@ using GenSignInput = D2.Edge.Tests.TypeSpecDto.Generated.SignInput;
 /// Generated fixtures live in Unit/KeyCustodian/TypeSpecDto/Generated/*.g.cs,
 /// in namespace D2.Edge.Tests.TypeSpecDto.Generated.
 /// GetJwks DTO structural-equivalence tests live in
-/// Unit/KeyCustodian/Clients/GetJwksTransportDtoTests.cs (those types now
-/// reside in D2.Edge.KeyCustodian.Clients, not in this fixture namespace).
+/// Unit/KeyCustodian/Client/Jwks/GetJwksTransportDtoTests.cs (those types now
+/// reside in D2.Edge.KeyCustodian.Client, not in this fixture namespace).
 /// </summary>
 public sealed class TypeSpecDtoValidationTests
 {
@@ -33,7 +33,7 @@ public sealed class TypeSpecDtoValidationTests
     // -------------------------------------------------------------------------
 
     [Fact]
-    public void GeneratedSignInput_PayloadProperty_IsRedactedByRealPolicy()
+    public void GeneratedSignFixtureInput_PayloadProperty_IsRedactedByRealPolicy()
     {
         // Build a local Serilog logger with the real RedactDataDestructuringPolicy.
         // IVT is granted in D2.Shared.Logging.csproj so this assembly can
@@ -48,21 +48,21 @@ public sealed class TypeSpecDtoValidationTests
         // Instantiate the generated record with a known secret payload.
         // The [property: RedactData] attribute on Payload must be seen by the
         // policy when it reflects over PUBLIC INSTANCE PROPERTIES (not ctor params).
-        var input = new GenSignInput("test-kid-001", System.Text.Encoding.UTF8.GetBytes("SECRET_PAYLOAD"));
+        var input = new GenSignFixtureInput("test-kid-001", System.Text.Encoding.UTF8.GetBytes("SECRET_PAYLOAD"));
 
         logger.Information("sign input: {@Input}", input);
 
         var rendered = sink.RenderAll();
 
         // The Payload property must be redacted.
-        rendered.Should().Contain("[REDACTED: PersonalInformation]");
+        rendered.Should().Contain("[REDACTED: SecretInformation]");
 
         // The raw secret must NOT appear.
         rendered.Should().NotContain("SECRET_PAYLOAD");
     }
 
     [Fact]
-    public void GeneratedSignInput_NonRedactedField_IsNotMasked()
+    public void GeneratedSignFixtureInput_NonRedactedField_IsNotMasked()
     {
         // Non-vacuous control: the kid field (not @d2Redact) must NOT be masked.
         var sink = new TypeSpecDtoInMemorySink();
@@ -73,7 +73,7 @@ public sealed class TypeSpecDtoValidationTests
             .CreateLogger();
 
         const string knownKid = "test-kid-visibility-check";
-        var input = new GenSignInput(knownKid, [0x01, 0x02]);
+        var input = new GenSignFixtureInput(knownKid, [0x01, 0x02]);
 
         logger.Information("sign input: {@Input}", input);
 
@@ -83,6 +83,6 @@ public sealed class TypeSpecDtoValidationTests
         rendered.Should().Contain(knownKid);
 
         // The policy must be selective — at least one field unmasked.
-        rendered.Should().Contain("[REDACTED: PersonalInformation]");
+        rendered.Should().Contain("[REDACTED: SecretInformation]");
     }
 }

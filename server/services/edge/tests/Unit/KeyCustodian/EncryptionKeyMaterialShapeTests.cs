@@ -18,7 +18,7 @@ namespace D2.Edge.Tests.Unit.KeyCustodian;
 public sealed class EncryptionKeyMaterialShapeTests
 {
     private static readonly Kid sr_kid = Kid.FromTrusted("shape-test");
-    private static readonly KeyDomain sr_domain = KeyDomain.FromTrusted("audit");
+    private static readonly KeyDomain sr_domain = KeyDomain.Cookie;
     private static readonly KeyMaterialEncrypted sr_mat =
         KeyMaterialEncrypted.FromTrusted(new byte[] { 1, 2, 3 });
 
@@ -105,6 +105,41 @@ public sealed class EncryptionKeyMaterialShapeTests
     {
         var result = PendingKey.Create(
             sr_kid, sr_domain, KeyType.X509CaCertificate, sr_mat, sr_pub, null, sr_created);
+
+        AssertPreconditionViolated(result);
+    }
+
+    // -----------------------------------------------------------------------
+    // EcdhSealing key — public material required (bare SPKI), no CA cert
+    // -----------------------------------------------------------------------
+
+    [Fact]
+    public void Create_EcdhSealingWithPublicMaterial_Succeeds()
+    {
+        var result = PendingKey.Create(
+            sr_kid, sr_domain, KeyType.EcdhSealing, sr_mat, sr_pub, null, sr_created);
+
+        result.Success.Should().BeTrue();
+        result.Data!.KeyType.Should().Be(KeyType.EcdhSealing);
+        result.Data!.PublicKeyMaterial.Should().Be(sr_pub);
+        result.Data!.CaCertificateMaterial.Should().BeNull();
+    }
+
+    [Fact]
+    public void Create_EcdhSealingWithoutPublicMaterial_FailsPreconditionViolated()
+    {
+        var result = PendingKey.Create(
+            sr_kid, sr_domain, KeyType.EcdhSealing, sr_mat, null, null, sr_created);
+
+        AssertPreconditionViolated(result);
+    }
+
+    [Fact]
+    public void Create_EcdhSealingWithCaCertificate_FailsPreconditionViolated()
+    {
+        // A sealing key carrying CA certificate material (wrong slot) is an invalid shape.
+        var result = PendingKey.Create(
+            sr_kid, sr_domain, KeyType.EcdhSealing, sr_mat, sr_pub, sr_caCert, sr_created);
 
         AssertPreconditionViolated(result);
     }

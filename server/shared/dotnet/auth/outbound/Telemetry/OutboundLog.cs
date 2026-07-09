@@ -107,4 +107,11 @@ internal static partial class OutboundLog
     public static partial void WorkloadLeafStartupAcquireSucceeded(
         this ILogger logger,
         DateTimeOffset notAfter);
+
+    [LoggerMessage(
+        EventId = 3006,
+        Level = LogLevel.Warning,
+        Message = "Workload leaf reissue rejected: the returned certificate's public key "
+                + "does not match the local keypair; keeping the cached leaf.")]
+    public static partial void WorkloadLeafIssuerKeyMismatch(this ILogger logger);
 }

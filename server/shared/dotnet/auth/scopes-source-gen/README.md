@@ -6,6 +6,8 @@ Copyright (c) DCSV. All rights reserved.
 
 > Parent: [`server/shared/dotnet/`](../../README.md)
 
+**Input contract:** [`contracts/auth-scopes/`](../../../../../contracts/auth-scopes/README.md)
+
 Roslyn incremental source generator that emits the `Scopes` static partial class into `D2.Shared.Auth.Abstractions` by reading `contracts/auth-scopes/scopes.spec.json` via `<AdditionalFiles>`. Single-target — emits ONLY when the consuming assembly is `D2.Shared.Auth.Abstractions`.
 
 The spec file is the single source of truth for the platform's scope catalog. Every scope a handler can require, every scope Edge mints into a token, and every grant-matrix entry lives in one JSON file — no hand-written parallel constants, no per-feature drift.
@@ -25,7 +27,7 @@ The spec file is the single source of truth for the platform's scope catalog. Ev
 | `D2SCP005` | Warning  | Anonymous scope marked `impersonationBlocked` (meaningless — anon scopes are pre-auth)                                                                         |
 | `D2SCP006` | Error    | `grantedTo` entry has empty role array — invalid config (omit the entry instead)                                                                               |
 | `D2SCP007` | Error    | Two scopes collide at the same tree position (one is a strict dot-prefix of the other)                                                                         |
-| `D2SCP008` | Error    | Non-anonymous scope omits `grantedTo` (unreachable scope)                                                                                                      |
+| `D2SCP008` | Error    | Non-anonymous, non-`internal.*` scope omits `grantedTo` (unreachable scope)                                                                                    |
 | `D2SCP009` | Error    | No `scopes.spec.json` found in `AdditionalFiles`                                                                                                               |
 
 ---
@@ -66,7 +68,7 @@ The spec file is the single source of truth for the platform's scope catalog. Ev
 - **`description`**: free-form. Renders as XML `<summary>` on the emitted constant.
 - **`actionSensitivity`**: one of `Routine` / `Sensitive` / `Critical`. Drives audit verbosity, OTP step-up, impersonation defaults.
 - **`impersonationBlocked`**: `true` → Edge strips this scope from impersonated tokens at mint time (defense in depth — `RequiredScopes` check still rejects naturally). Meaningless on anon scopes (`D2SCP005`).
-- **`grantedTo`**: per-(`OrgType`, `Role`) grant matrix. Keys: `OrgType` name (PascalCase) or `"*"`. Values: array of `Role` names (PascalCase) or `["*"]`. **Empty role arrays are forbidden** (`D2SCP006`) — for "no grant," omit the entry. Required for non-anon scopes (`D2SCP008`); omitted on anon (universal pre-auth grant by namespace convention).
+- **`grantedTo`**: per-(`OrgType`, `Role`) grant matrix. Keys: `OrgType` name (PascalCase) or `"*"`. Values: array of `Role` names (PascalCase) or `["*"]`. **Empty role arrays are forbidden** (`D2SCP006`) — for "no grant," omit the entry. Required for non-anon scopes (`D2SCP008`); omitted on `anon.*` (universal pre-auth grant by namespace convention) and on `internal.*` (internal service-to-service / in-process workload scopes granted by the internal transaction-token mint at the Edge boundary, never by the org-role matrix — no user org-role can ever hold them, which is the intended reachability).
 
 ### Wildcard expansion
 
@@ -124,4 +126,4 @@ All lookup helpers are O(1) — backed by `HashSet<string>` / `Dictionary<,>`. `
 - [`contracts/auth-scopes/schema.json`](../../../../../contracts/auth-scopes/schema.json) — JSON Schema for the spec
 - [`contracts/auth-scopes/scopes.spec.json`](../../../../../contracts/auth-scopes/scopes.spec.json) — the source-of-truth scope catalog
 - [`D2.Shared.I18n.SourceGen`](../../i18n/source-gen/README.md) — sibling SrcGen this one mirrors (same incremental-generator + diagnostic-split pattern)
-- Companion `RateLimitTier` enum (lives in the Edge rate-limit middleware — orthogonal axis, not yet shipped). Will be cross-referenced from the Edge lib README when Edge rate-limiting ships.
+- `ActionSensitivity` (this generator's per-scope classification driving audit verbosity, OTP step-up, and impersonation defaults) is orthogonal to `RateLimitTier`, the rate-limit middleware's per-endpoint throttling classification — a different subsystem entirely, neither value derived from the other.

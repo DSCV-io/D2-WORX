@@ -224,10 +224,10 @@ describe("$onEmit_routeEmitDirect_SupportedVerbFacade", () => {
 
     // Wire verb + state maps.
     mockVerbMap.set(op, "post");
-    mockHttpOpResult = [{ path: "/internal/v1/kc/sign" }, []];
+    mockHttpOpResult = [{ path: "/internal/v1/sample/sign" }, []];
 
     const anyScopes = new Map<object, unknown>([[op, ["self.write"]]]);
-    const servedBy = new Map<object, unknown>([[op, "KeyCustodian"]]);
+    const servedBy = new Map<object, unknown>([[op, "Sample"]]);
     const inProcess = new Map<object, unknown>([[op, true]]);
 
     directUnitOps.push(op);
@@ -247,11 +247,11 @@ describe("$onEmit_routeEmitDirect_SupportedVerbFacade", () => {
     );
     expect(routeFile).toBeDefined();
     expect(routeFile!.content).toContain("MapPost");
-    expect(routeFile!.content).toContain('"/internal/v1/kc/sign"');
+    expect(routeFile!.content).toContain('"/internal/v1/sample/sign"');
     expect(routeFile!.content).toContain("RequireAnyScope");
     expect(routeFile!.content).toContain('"self.write"');
     // Fixture façade delegation.
-    expect(routeFile!.content).toContain("IKeyCustodianSignerFacade");
+    expect(routeFile!.content).toContain("ISampleSignerFacade");
     expect(routeFile!.content).toContain("SignAsync");
   });
 });
@@ -390,7 +390,7 @@ describe("$onEmit_routeEmitDirect_RequireAllScopes", () => {
     const allScopes = new Map<object, unknown>([
       [op, ["self.read", "self.write"]],
     ]);
-    const servedBy = new Map<object, unknown>([[op, "KeyCustodian"]]);
+    const servedBy = new Map<object, unknown>([[op, "Sample"]]);
     const inProcess = new Map<object, unknown>([[op, true]]);
 
     directUnitOps.push(op);
@@ -576,7 +576,7 @@ describe("$onEmit_routeEmitDirect_HandlerDelegation", () => {
 // ---------------------------------------------------------------------------
 
 describe("$onEmit_routeEmitDirect_RealModuleFacade", () => {
-  it("@d2InProcess + csAppNamespaceBase set → IKeyCustodianApi (real-module path)", async () => {
+  it("@d2InProcess + csAppNamespaceBase set → ISampleApi (real-module path)", async () => {
     const str = makeStringScalar();
     const inputModel = makeModel("RealInput", { id: str });
     const outputModel = makeModel("RealOutput", { data: str });
@@ -586,7 +586,7 @@ describe("$onEmit_routeEmitDirect_RealModuleFacade", () => {
     mockHttpOpResult = [{ path: "/real/op" }, []];
 
     const anyScopes = new Map<object, unknown>([[op, ["self.write"]]]);
-    const servedBy = new Map<object, unknown>([[op, "KeyCustodian"]]);
+    const servedBy = new Map<object, unknown>([[op, "Sample"]]);
     const inProcess = new Map<object, unknown>([[op, true]]);
     const commandMap = new Map<object, unknown>([[op, true]]);
 
@@ -604,7 +604,7 @@ describe("$onEmit_routeEmitDirect_RealModuleFacade", () => {
     const ctx = makeBaseContext(program, {
       "csharp-namespace": "D2.Test.Route",
       "csharp-app-namespace-base": "D2.Test.App.Handlers",
-      "csharp-clients-namespace": "D2.KeyCustodian.Clients",
+      "csharp-clients-namespace": "D2.Sample.Clients",
       "grpc-service-namespace": "D2.Test.Grpc",
       "proto-package": "d2.test.v1",
       "proto-csharp-namespace": "D2.Test.Protos.V1",
@@ -616,7 +616,7 @@ describe("$onEmit_routeEmitDirect_RealModuleFacade", () => {
     );
     expect(routeFile).toBeDefined();
     // In real-module mode, the façade type is I<ServedBy>Api.
-    expect(routeFile!.content).toContain("IKeyCustodianApi");
+    expect(routeFile!.content).toContain("ISampleApi");
     expect(routeFile!.content).not.toContain("SignerFacade");
   });
 });
@@ -932,7 +932,7 @@ describe("$onEmit_grpcDirect_RealModuleFacadeBranch_EmitterLines253To259", () =>
     // mockVerbMap has no entry for this op → getOperationVerb returns undefined.
 
     const commandMap = new Map<object, unknown>([[op, true]]);
-    const servedBy = new Map<object, unknown>([[op, "KeyCustodian"]]);
+    const servedBy = new Map<object, unknown>([[op, "Sample"]]);
     const inProcess = new Map<object, unknown>([[op, true]]);
     // grpcPayload must be defined so the gRPC block fires.
     const grpcMethod = new Map<object, unknown>([
@@ -957,7 +957,7 @@ describe("$onEmit_grpcDirect_RealModuleFacadeBranch_EmitterLines253To259", () =>
     const ctx = makeBaseContext(program, {
       "csharp-namespace": "D2.Test.Ns",
       "csharp-app-namespace-base": "D2.Test.App.Handlers",
-      "csharp-clients-namespace": "D2.KeyCustodian.Clients",
+      "csharp-clients-namespace": "D2.Sample.Clients",
       "proto-package": "d2.test.v1",
       "proto-csharp-namespace": "D2.Test.Protos.V1",
       "grpc-service-namespace": "D2.Test.Grpc",
@@ -969,10 +969,10 @@ describe("$onEmit_grpcDirect_RealModuleFacadeBranch_EmitterLines253To259", () =>
       e.path.includes("SvcService.g.cs"),
     );
     expect(grpcFile).toBeDefined();
-    // Real-module branch: typeName = I${grpcServedBy}Api = IKeyCustodianApi.
-    expect(grpcFile!.content).toContain("IKeyCustodianApi");
-    // targetNamespace = csClientsNamespace = "D2.KeyCustodian.Clients".
-    expect(grpcFile!.content).toContain("D2.KeyCustodian.Clients");
+    // Real-module branch: typeName = I${grpcServedBy}Api = ISampleApi.
+    expect(grpcFile!.content).toContain("ISampleApi");
+    // targetNamespace = csClientsNamespace = "D2.Sample.Clients".
+    expect(grpcFile!.content).toContain("D2.Sample.Clients");
     // Method name = GrpcSignAsync (PascalOp from op.name = "grpcSign").
     expect(grpcFile!.content).toContain("GrpcSignAsync");
     // Must NOT use the fixture naming.
@@ -995,7 +995,7 @@ describe("$onEmit_grpcDirect_FixtureFacadeBranch_EmitterLines253To259", () => {
     const outputModel = makeModel("FixGrpcOutput", { sig: str });
     const op = makeWrappedOp("fixGrpc", inputModel, outputModel);
 
-    const servedBy = new Map<object, unknown>([[op, "KeyCustodian"]]);
+    const servedBy = new Map<object, unknown>([[op, "Sample"]]);
     const inProcess = new Map<object, unknown>([[op, true]]);
     const grpcMethod = new Map<object, unknown>([
       [op, { service: "FixSvc", method: "FixDo", streaming: "unary" }],
@@ -1017,7 +1017,7 @@ describe("$onEmit_grpcDirect_FixtureFacadeBranch_EmitterLines253To259", () => {
 
     // Fixture mode: NO csAppNamespaceBase and NO csClientsNamespace configured.
     // This exercises the FALSE branch of the ternaries on lines 253-258:
-    //   facadeTypeName = I${grpcServedBy}SignerFacade = IKeyCustodianSignerFacade
+    //   facadeTypeName = I${grpcServedBy}SignerFacade = ISampleSignerFacade
     //   facadeNs       = `${grpcServiceNs}.Facade`
     const ctx = makeBaseContext(program, {
       "csharp-namespace": "D2.Test.Ns",
@@ -1032,12 +1032,12 @@ describe("$onEmit_grpcDirect_FixtureFacadeBranch_EmitterLines253To259", () => {
       e.path.includes("FixSvcService.g.cs"),
     );
     expect(grpcFile).toBeDefined();
-    // Fixture mode: I<ServedBy>SignerFacade = IKeyCustodianSignerFacade.
-    expect(grpcFile!.content).toContain("IKeyCustodianSignerFacade");
+    // Fixture mode: I<ServedBy>SignerFacade = ISampleSignerFacade.
+    expect(grpcFile!.content).toContain("ISampleSignerFacade");
     // targetNamespace = "D2.Test.Grpc.Facade".
     expect(grpcFile!.content).toContain("D2.Test.Grpc.Facade");
     // Must NOT use the real-module naming.
-    expect(grpcFile!.content).not.toContain("IKeyCustodianApi");
+    expect(grpcFile!.content).not.toContain("ISampleApi");
   });
 });
 
@@ -1106,10 +1106,10 @@ describe("$onEmit_routeEmitDirect_IdempotentWithRoute_SeamAndGate", () => {
     const op = makeWrappedOp("idempSign", inputModel, outputModel);
 
     mockVerbMap.set(op, "post");
-    mockHttpOpResult = [{ path: "/internal/v1/kc/sign" }, []];
+    mockHttpOpResult = [{ path: "/internal/v1/sample/sign" }, []];
 
     const anyScopes = new Map<object, unknown>([[op, ["self.write"]]]);
-    const servedBy = new Map<object, unknown>([[op, "KeyCustodian"]]);
+    const servedBy = new Map<object, unknown>([[op, "Sample"]]);
     const inProcess = new Map<object, unknown>([[op, true]]);
     const idempotentMap = new Map<object, unknown>([
       [op, { keySource: "header", ttlSeconds: 86400, fields: [] }],
@@ -1155,10 +1155,10 @@ describe("$onEmit_routeEmitDirect_IdempotentWithRoute_SeamAndGate", () => {
     const op = makeWrappedOp("idempDerived", inputModel, outputModel);
 
     mockVerbMap.set(op, "post");
-    mockHttpOpResult = [{ path: "/internal/v1/kc/sign-derived" }, []];
+    mockHttpOpResult = [{ path: "/internal/v1/sample/sign-derived" }, []];
 
     const anyScopes = new Map<object, unknown>([[op, ["self.write"]]]);
-    const servedBy = new Map<object, unknown>([[op, "KeyCustodian"]]);
+    const servedBy = new Map<object, unknown>([[op, "Sample"]]);
     const inProcess = new Map<object, unknown>([[op, true]]);
     const idempotentMap = new Map<object, unknown>([
       [op, { keySource: "derived", ttlSeconds: 3600, fields: ["kid"] }],

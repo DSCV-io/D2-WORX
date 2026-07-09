@@ -29,7 +29,7 @@ public sealed class RunDueRotationsTests
     // -------------------------------------------------------------------------
 
     [Fact]
-    public async Task Run_EmptyStore_BootstrapsAllDomainsWithKeyTypes()
+    public async Task Run_EmptyStore_BootstrapsAllMappedDomains_CaDomainsSkipped()
     {
         await using var db = KeyCustodianTestDbContext.CreateEmpty();
         var clock = new TestClock(KcAppTestKit.SR_BaseInstant);
@@ -37,11 +37,19 @@ public sealed class RunDueRotationsTests
 
         var result = await Build(db, clock).HandleAsync(input);
 
+        var nonCaDomains = KeyDomain.All
+            .Where(d => d.KeyType != KeyType.X509CaCertificate)
+            .Select(d => d.Value)
+            .ToList();
+
         result.Success.Should().BeTrue();
-        result.Data!.Bootstrapped.Should().BeEquivalentTo(KeyDomain.All.Select(d => d.Value));
+        result.Data!.Bootstrapped.Should().BeEquivalentTo(nonCaDomains);
         result.Data!.Errors.Should().Be(0);
-        result.Data!.Skipped.Should().BeEmpty();
-        db.Keys.Count().Should().Be(KeyDomain.All.Count);
+        result.Data!.Skipped.Should().BeEquivalentTo(
+            new[] { KeyDomain.MTLS_CA_ROOT, KeyDomain.MTLS_CA_INTERMEDIATE },
+            because: "the CA domains are absent from the bootstrap map by design — the "
+            + "CA seeder owns them; they are skipped, never bootstrapped");
+        db.Keys.Count().Should().Be(nonCaDomains.Count);
     }
 
     [Fact]
@@ -512,10 +520,10 @@ public sealed class RunDueRotationsTests
     // -------------------------------------------------------------------------
 
     /// <summary>
-    /// Returns a <see cref="RunDueRotationsInput"/> with key types for all known domains:
-    /// <c>jwks-signing</c> → <see cref="KeyType.RsaSigning"/>;
-    /// all encryption domains → <see cref="KeyType.AesPayload"/>;
-    /// <c>cookie</c> / <c>client-secret</c> → <see cref="KeyType.Secret"/>.
+    /// Returns a <see cref="RunDueRotationsInput"/> mirroring the production bootstrap
+    /// map: every catalog domain's canonical bound <see cref="KeyDomain.KeyType"/>,
+    /// EXCLUDING the CA domains (seeded by the CA seeder, never auto-bootstrapped —
+    /// they surface in <c>Skipped</c> when the plan classifies them for bootstrap).
     /// </summary>
     private static RunDueRotationsInput InputWithAllKeyTypes()
     {
@@ -523,13 +531,10 @@ public sealed class RunDueRotationsTests
 
         foreach (var domain in KeyDomain.All)
         {
-            var keyType = domain.Value switch
-            {
-                KeyDomain.JWKS_SIGNING => KeyType.RsaSigning,
-                KeyDomain.COOKIE or KeyDomain.CLIENT_SECRET => KeyType.Secret,
-                _ => KeyType.AesPayload,
-            };
-            keyTypes[domain.Value] = keyType;
+            if (domain.KeyType == KeyType.X509CaCertificate)
+                continue;
+
+            keyTypes[domain.Value] = domain.KeyType;
         }
 
         return new RunDueRotationsInput(keyTypes);
@@ -549,20 +554,33 @@ public sealed class RunDueRotationsTests
         var resolvedPolicy = policyProvider ?? KcAppTestKit.BuildPolicyProvider(r_options);
         var optionsAccessor = KcAppTestKit.BuildOptionsAccessor();
 
-        var generateCtx = KcAppTestKit.Context<GenerateKeyHandler>();
-        var activateCtx = KcAppTestKit.Context<ActivateKeyHandler>();
-        var rotateCtx = KcAppTestKit.Context<RotateKeyHandler>();
-        var retireCtx = KcAppTestKit.Context<RetireKeyHandler>();
+        // The orchestrator + its lifecycle sub-handlers all run on the System plane —
+        // mirroring the scheduler worker's EstablishSystemContext'd scope.
+        var generateCtx = KcAppTestKit.SystemContext<GenerateKeyHandler>();
+        var activateCtx = KcAppTestKit.SystemContext<ActivateKeyHandler>();
+        var rotateCtx = KcAppTestKit.SystemContext<RotateKeyHandler>();
+        var retireCtx = KcAppTestKit.SystemContext<RetireKeyHandler>();
         var planCtx = KcAppTestKit.Context<GetRotationPlanHandler>();
 
-        var runCtx = logger is null
-            ? KcAppTestKit.Context<RunDueRotationsHandler>()
-            : KcAppTestKit.ContextWithLogger(logger);
+        var runCtx = KcAppTestKit.SystemContext(logger);
 
+        var rootSigning = KcAppTestKit.BuildRootSigningCapability(db, r_crypto, clock);
         var generate = new GenerateKeyHandler(
-            generateCtx, KcAppTestKit.NullClassifier(), db, optionsAccessor, r_crypto, clock);
+            generateCtx,
+            KcAppTestKit.NullClassifier(),
+            db,
+            optionsAccessor,
+            r_crypto,
+            rootSigning,
+            clock);
         var activate = new ActivateKeyHandler(
-            activateCtx, KcAppTestKit.NullClassifier(), db, resolvedPolicy, r_crypto, clock);
+            activateCtx,
+            KcAppTestKit.NullClassifier(),
+            db,
+            resolvedPolicy,
+            r_crypto,
+            rootSigning,
+            clock);
         var rotate = new RotateKeyHandler(
             rotateCtx,
             KcAppTestKit.NullClassifier(),
@@ -570,6 +588,7 @@ public sealed class RunDueRotationsTests
             resolvedPolicy,
             announcer,
             r_crypto,
+            rootSigning,
             clock);
         var retire = new RetireKeyHandler(
             retireCtx, KcAppTestKit.NullClassifier(), db, resolvedPolicy, clock);

@@ -17,9 +17,9 @@ using D2.Shared.Resilience.Pipeline;
 /// </summary>
 public interface IPredicateFixturesDeepGrpcClient
 {
-    /// <summary>Dispatches the <c>DeepNest</c> operation over gRPC.</summary>
-    ValueTask<D2Result<DeepNestOutput?>> DeepNestAsync(
-        DeepNestInput input,
-        ResilientPipeline<string, DeepNestOutput?>? pipelineOverride = null,
+    /// <summary>Dispatches the <c>DeepNestFixture</c> operation over gRPC.</summary>
+    ValueTask<D2Result<DeepNestFixtureOutput?>> DeepNestFixtureAsync(
+        DeepNestFixtureInput input,
+        ResilientPipeline<string, DeepNestFixtureOutput?>? pipelineOverride = null,
         CancellationToken ct = default);
 }

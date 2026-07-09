@@ -12,10 +12,10 @@ import { describe, it, expect } from "vitest";
 import { emitWireVersionConstant } from "../src/lib/wire-version-emitter.js";
 import { parseChannel } from "../src/lib/wire-channel.js";
 
-const PROTO_CSHARP_NS = "D2.Services.Protos.KeyCustodian.V2Alpha";
+const PROTO_CSHARP_NS = "D2.Services.Protos.Sample.V2Alpha";
 const SOURCE_SPEC = "contracts/typespec/key-custodian/key-custodian.tsp";
 
-const ALPHA_CHANNEL = parseChannel("d2.keycustodian.v2alpha")!;
+const ALPHA_CHANNEL = parseChannel("d2.sample.v2alpha")!;
 const STABLE_CHANNEL = parseChannel("d2.auth.v2")!;
 
 // ---------------------------------------------------------------------------

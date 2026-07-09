@@ -15,8 +15,9 @@ import type { Role } from "../enums/role.g.js";
 
 /**
  * One link in the RFC 8693 actor chain. Mirrors .NET ActorEntry record.
- * Per rules.md §6.15 (TS `undefined`-over-`null`): optional fields use
- * the `?:` shorthand; absent links arrive as `undefined`, never `null`.
+ * Optional fields use the `?:` shorthand; absent links arrive as
+ * `undefined`, never `null` (TypeScript uses `undefined` as the only
+ * absent sentinel).
  */
 export interface ActorEntry {
   readonly kind: ActorKind;

@@ -44,6 +44,7 @@ public static class AuthOutboundServiceCollectionExtensions
             ArgumentNullException.ThrowIfNull(services);
 
             var optionsBuilder = services.AddOptions<AuthOutboundOptions>();
+
             if (configure is not null)
                 optionsBuilder.Configure(configure);
 
@@ -120,7 +121,10 @@ public static class AuthOutboundServiceCollectionExtensions
         /// host-supplied <see cref="IWorkloadCertificateIssuer"/> port — register it
         /// (an in-process adapter calling KeyCustodian's issuance handler in dev; a
         /// local issuance in the end-to-end harness) BEFORE building the host. The
-        /// shared lib never references a service's domain.
+        /// shared lib never references a service's domain. The flow is CSR-based:
+        /// the leaf client generates a fresh keypair per reissue and submits a
+        /// PKCS#10 certificate-signing request; the issuer returns only
+        /// certificates — the leaf private key never crosses the port.
         /// </para>
         /// <para>
         /// Per-channel attachment is opt-in via

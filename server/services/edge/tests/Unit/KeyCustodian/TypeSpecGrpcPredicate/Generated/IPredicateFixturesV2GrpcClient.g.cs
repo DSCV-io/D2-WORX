@@ -17,9 +17,9 @@ using D2.Shared.Resilience.Pipeline;
 /// </summary>
 public interface IPredicateFixturesV2GrpcClient
 {
-    /// <summary>Dispatches the <c>PlaceOrderV2</c> operation over gRPC.</summary>
-    ValueTask<D2Result<PlaceOrderV2Output?>> PlaceOrderV2Async(
-        PlaceOrderV2Input input,
-        ResilientPipeline<string, PlaceOrderV2Output?>? pipelineOverride = null,
+    /// <summary>Dispatches the <c>PlaceOrderV2Fixture</c> operation over gRPC.</summary>
+    ValueTask<D2Result<PlaceOrderV2FixtureOutput?>> PlaceOrderV2FixtureAsync(
+        PlaceOrderV2FixtureInput input,
+        ResilientPipeline<string, PlaceOrderV2FixtureOutput?>? pipelineOverride = null,
         CancellationToken ct = default);
 }

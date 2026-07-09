@@ -53,6 +53,12 @@ export default defineConfig({
         //   api-extractor) are IO and exercised by the gated integration lane.
         //   Excluded from the unit-coverage threshold.
         "src/ts-api-adapter.ts",
+        // src/fingerprint-currency-cli.ts — CLI entry point for the pre-commit
+        //   baseline-currency gate; process.exit + real-IO wiring (loadAllPackages
+        //   + makeRealCurrencyFileReader). The testable core (checkFingerprintCurrency,
+        //   formatCurrencyReport) lives in fingerprint-currency.ts and is fully
+        //   unit-covered. Excluded from the coverage threshold.
+        "src/fingerprint-currency-cli.ts",
       ],
       thresholds: {
         lines: 100,

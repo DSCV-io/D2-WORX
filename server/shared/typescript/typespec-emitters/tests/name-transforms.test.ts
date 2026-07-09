@@ -9,9 +9,11 @@
 //     embedded digit, leading cap, all-caps. Pins both regex branches.
 //   - toPascal: snake→Pascal, lowerCamel→Pascal, empty, single char,
 //     leading underscore, all-caps. Pins both branches.
+//   - toKebab: lowerCamel→kebab, PascalCase (concern-folder) →kebab, already-kebab,
+//     single char, empty, embedded digit, all-lowercase. Pins both regex branches.
 
 import { describe, it, expect } from "vitest";
-import { toSnake, toPascal } from "../src/lib/name-transforms.js";
+import { toSnake, toPascal, toKebab } from "../src/lib/name-transforms.js";
 
 describe("toSnake", () => {
   it("converts lowerCamelCase to lower_snake_case", () => {
@@ -101,5 +103,43 @@ describe("toPascal", () => {
     // toPascal(toSnake("myFieldName")) === "MyFieldName"
     const original = "myFieldName";
     expect(toPascal(toSnake(original))).toBe("MyFieldName");
+  });
+});
+
+describe("toKebab", () => {
+  it("converts lowerCamelCase op name to kebab (getKeyring → get-keyring)", () => {
+    expect(toKebab("getKeyring")).toBe("get-keyring");
+  });
+
+  it("converts a PascalCase concern to kebab (CaCertificate → ca-certificate)", () => {
+    expect(toKebab("CaCertificate")).toBe("ca-certificate");
+  });
+
+  it("lowercases a single-word PascalCase concern (Signing → signing)", () => {
+    expect(toKebab("Signing")).toBe("signing");
+  });
+
+  it("is idempotent on already-kebab strings", () => {
+    expect(toKebab("get-ca-certificate")).toBe("get-ca-certificate");
+  });
+
+  it("handles a single lowercase character", () => {
+    expect(toKebab("x")).toBe("x");
+  });
+
+  it("handles a single uppercase character", () => {
+    expect(toKebab("X")).toBe("x");
+  });
+
+  it("handles empty string", () => {
+    expect(toKebab("")).toBe("");
+  });
+
+  it("handles embedded digit before uppercase (id2Code → id2-code)", () => {
+    expect(toKebab("id2Code")).toBe("id2-code");
+  });
+
+  it("does not insert extra hyphens for all-lowercase", () => {
+    expect(toKebab("sealing")).toBe("sealing");
   });
 });

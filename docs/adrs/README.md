@@ -92,6 +92,7 @@ across the catalog — never re-used, never re-ordered.
 | [0022](0022-service-auth-mint-once-forward.md) | Service-to-service auth — mint once at the Edge, forward the token unchanged | Accepted | 2026-06-17 | `0021-auth-pivot` |
 | [0023](0023-mtls-workload-identity.md) | mTLS workload identity — KeyCustodian-issued certificates, additive to JWT | Accepted | 2026-06-17 | `0021-auth-pivot` |
 | [0024](0024-contract-api-versioning-strategy.md) | Contract & API versioning strategy — additive-by-default behind one always-on strict breaking gate with a per-break force valve, two version handles (wire generation in the name, release in the semver), removal on telemetry not date | Accepted | 2026-06-22 | Edge contract-versioning groundwork |
+| [0025](0025-request-context-establishment.md) | Request-context establishment — `Origin` / `ImmediateCaller` recomputed locally + never propagated, `CallPath` propagated telemetry-only, and a possession-gated minter capability closing the cluster-signing-root confused-deputy | Accepted | 2026-06-30 | `0026-kc-crypto-surface` |
 
 > This index grows as new ADRs are recorded. Backfilled ADRs (0002–0014) carry `D2 shared libraries (backfilled)` in their Deliverable field.
 

@@ -27,6 +27,13 @@ internal static class ScopesEmitter
     private const string _SCOPES_CLASS_NAME = "Scopes";
     private const string _ANON_PREFIX = "anon.";
 
+    // Internal workload scopes (internal.*) are granted by the internal
+    // transaction-token mint at the Edge boundary — NOT by the per-(OrgType, Role)
+    // grant matrix — so they legitimately omit grantedTo. They are NOT anonymous
+    // (no pre-auth universal grant): no user org-role can ever be granted them, which
+    // is exactly the intended reachability for a service-to-service / in-process scope.
+    private const string _INTERNAL_PREFIX = "internal.";
+
     // Mirror of D2.Shared.Auth.Abstractions.ActionSensitivity members.
     // ActionSensitivity is small and stable; it's safe to keep static.
     // OrgType + Role members come from the compilation symbol at codegen time
@@ -88,14 +95,19 @@ internal static class ScopesEmitter
             }
 
             var isAnon = scope.Name.StartsWith(_ANON_PREFIX, StringComparison.Ordinal);
+            var isInternal = scope.Name.StartsWith(_INTERNAL_PREFIX, StringComparison.Ordinal);
 
             // D2SCP005 (warning only — keep the scope): anon scope marked
             // impersonationBlocked is meaningless noise.
             if (isAnon && scope.ImpersonationBlocked)
                 diagnostics.Add(EmitDiagnostics.AnonImpersonationBlockedNoise(scope.Name));
 
-            // D2SCP008: non-anon scope must have grantedTo (otherwise unreachable).
-            if (!isAnon && scope.GrantedTo is null)
+            // D2SCP008: a scope that no caller can ever be granted is unreachable. A
+            // non-anon scope normally needs grantedTo. Internal workload scopes
+            // (internal.*) are the exception: they are granted by the internal
+            // transaction-token mint, NOT the org-role grant matrix, so they
+            // legitimately omit grantedTo (no user org-role can hold them).
+            if (!isAnon && !isInternal && scope.GrantedTo is null)
             {
                 diagnostics.Add(EmitDiagnostics.MissingGrantedTo(scope.Name));
                 continue;

@@ -36,8 +36,12 @@ public sealed class KeyRecordConfiguration : IEntityTypeConfiguration<KeyRecord>
     /// <summary>Max length of a <c>kid</c> value (the minted identifier).</summary>
     private const int _KID_MAX_LENGTH = 64;
 
-    /// <summary>Max length of a key-domain wire value.</summary>
-    private const int _KEY_DOMAIN_MAX_LENGTH = 64;
+    /// <summary>
+    /// Max length of a key-domain wire value. The longest legal domain is a seal-family
+    /// value: the <c>seal:</c> prefix (5 chars) + a maximum-length workload service id
+    /// (64 chars) = 69. Catalog literals are all far shorter.
+    /// </summary>
+    private const int _KEY_DOMAIN_MAX_LENGTH = 69;
 
     /// <summary>Max length of an operator-supplied compromise reason.</summary>
     private const int _COMPROMISE_REASON_MAX_LENGTH = 512;
@@ -109,5 +113,31 @@ public sealed class KeyRecordConfiguration : IEntityTypeConfiguration<KeyRecord>
         // lifecycle query.
         builder.HasIndex(k => new { k.KeyDomain, k.Status })
             .HasDatabaseName("ix_key_record_key_domain_status");
+
+        // Invariant: at most ONE Pending key per domain — the structural backstop
+        // for the generate/rotate race window, so the guarantee no longer rests on
+        // the rotation advisory lock alone. A partial UNIQUE index filtered to the
+        // persisted 'Pending' status literal (the enum is stored by string name via
+        // HasConversion<string>() — the literal MUST track KeyStatus.Pending's
+        // persisted name, pinned by KeyCustodianPersistedEnumStabilityTests).
+        //
+        // Modeling it here (rather than in raw SQL) is deliberate: EF's command-
+        // batch preparer uses the unique-index value dependency to emit the
+        // releasing UPDATE before the acquiring INSERT within a single
+        // SaveChangesAsync, so the CompromiseKey "retire the old Pending + insert a
+        // fresh Pending" swap succeeds. A duplicate raises SQLSTATE 23505
+        // (unique_violation), classified to a typed 409 by the shared repo pipeline.
+        //
+        // The companion "one Active per domain" invariant is enforced by a partial,
+        // DEFERRABLE EXCLUSION constraint added in raw SQL by the
+        // OnePendingIndexAndActiveExclusion migration — EF's fluent API cannot model
+        // EXCLUDE, and the RotateKey Active->Retiring + Pending->Active swap needs
+        // the check deferred to COMMIT (a non-deferrable partial index would reject
+        // the transient two-Active state mid-transaction). That constraint is
+        // intentionally invisible to the EF model (and to the model snapshot).
+        builder.HasIndex(k => k.KeyDomain)
+            .HasDatabaseName("ux_key_record_one_pending_per_domain")
+            .IsUnique()
+            .HasFilter("status = 'Pending'");
     }
 }

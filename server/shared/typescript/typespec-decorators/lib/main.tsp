@@ -35,6 +35,15 @@ extern dec d2Audience(target: Operation, audience: valueof string);
 extern dec d2ServedBy(target: Operation, owner: valueof string);
 
 /**
+ * Co-location concern for a client-exposed operation. The `concern` segment
+ * names the folder + namespace segment the op's transport DTOs live in
+ * (`<csharp-clients-namespace>.<concern>`), co-located with the hand-written
+ * runtime that serves them. The C# DTO emitter fails loud (D2TSP013) when a
+ * client-exposed op omits it.
+ */
+extern dec d2Concern(target: Operation, concern: valueof string);
+
+/**
  * Dual-binding marker: binds this operation to a gRPC service+method.
  * `streaming` selects the proto rpc form (unary | serverStream | clientStream |
  * bidiStream); omit to default to `unary`.
@@ -46,8 +55,18 @@ extern dec d2GrpcMethod(
   streaming?: valueof string
 );
 
-/** Marks a model property as PII to be redacted in structured logs. */
-extern dec d2Redact(target: ModelProperty);
+/**
+ * Marks a model property as sensitive — redacted from structured logs. The
+ * REQUIRED `reason` names the data class and must be one of the
+ * `D2.Shared.Utilities.Enums.RedactReason` member names: `Unspecified`,
+ * `PersonalInformation`, `FinancialInformation`, `SecretInformation`,
+ * `VerboseContent`, `Other`. The C# DTO emitter maps it to
+ * `[property: RedactData(Reason = RedactReason.<reason>)]`. The reason is
+ * mandatory and fail-closed: a bare `@d2Redact` does not compile (missing
+ * argument) and an unknown reason string is a compile error, so secret-adjacent
+ * material is never silently misclassified as personal information.
+ */
+extern dec d2Redact(target: ModelProperty, reason: valueof string);
 
 /** Binds an operation to a server-initiated push; `pushTarget` selects the channel class. */
 extern dec d2ServerPush(target: Operation, pushTarget: valueof string);

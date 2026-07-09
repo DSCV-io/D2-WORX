@@ -6,6 +6,10 @@
 
 namespace D2.Edge.KeyCustodian.App.Application.Handlers.Queries.GetRotationPlan;
 
+using H = D2.Edge.KeyCustodian.App.Application.Handlers.Queries.GetRotationPlan.IGetRotationPlanHandler;
+using I = GetRotationPlanInput;
+using O = GetRotationPlanOutput;
+
 /// <summary>
 /// Computes the read-only plan of lifecycle actions due across all key domains.
 /// </summary>
@@ -20,12 +24,12 @@ public sealed class GetRotationPlanHandler(
     IKeyCustodianDbContext db,
     IRotationPolicyProvider policyProvider,
     IClock clock)
-    : BaseHandler<GetRotationPlanHandler, GetRotationPlanInput, GetRotationPlanOutput>(ctx),
-      IGetRotationPlanHandler
+    : BaseHandler<GetRotationPlanHandler, I, O>(ctx),
+      H
 {
     /// <inheritdoc/>
-    protected override async ValueTask<D2Result<GetRotationPlanOutput?>> ExecuteAsync(
-        GetRotationPlanInput input, CancellationToken ct)
+    protected override async ValueTask<D2Result<O?>> ExecuteAsync(
+        I input, CancellationToken ct)
     {
         var liveKeys = await db.Keys
             .AsNoTracking()
@@ -49,11 +53,12 @@ public sealed class GetRotationPlanHandler(
             var keys = byDomain[domain.Value].ToList();
 
             var policyResult = policyProvider.ForDomain(domain);
-            if (policyResult.BubbleOnFailure<RotationPolicy, GetRotationPlanOutput>(
+
+            if (policyResult.BubbleOnFailure<RotationPolicy, O>(
                 out var bubbled, out var policy))
                 return bubbled;
 
-            if (keys.Count == 0)
+            if (keys.Falsey())
             {
                 bootstrap.Add(domain.Value);
                 continue;
@@ -86,8 +91,8 @@ public sealed class GetRotationPlanHandler(
             }
         }
 
-        return D2Result<GetRotationPlanOutput?>.Ok(
-            new GetRotationPlanOutput(
+        return D2Result<O?>.Ok(
+            new O(
                 bootstrap, dueToActivate, dueToRotate, dueToGenerateSuccessor, dueToRetire));
     }
 

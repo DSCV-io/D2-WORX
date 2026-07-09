@@ -8,7 +8,10 @@ namespace D2.Shared.EncryptionFrame.SourceGen;
 
 /// <summary>
 /// One encryption-frame field entry parsed from
-/// <c>contracts/encryption-frame/encryption-frame.spec.json</c>.
+/// <c>contracts/encryption-frame/encryption-frame.spec.json</c> or its
+/// sealed sibling
+/// <c>contracts/encryption-frame-sealed/encryption-frame-sealed.spec.json</c>
+/// — the per-field shape is identical across both catalogs.
 /// </summary>
 /// <param name="ConstName">UPPER_SNAKE_CASE C# / TS constant identifier.</param>
 /// <param name="Offset">Byte offset from frame start (-1 = variable).</param>

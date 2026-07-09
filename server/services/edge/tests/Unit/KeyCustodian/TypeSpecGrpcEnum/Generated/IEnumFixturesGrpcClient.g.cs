@@ -9,8 +9,8 @@
 
 namespace D2.Edge.Tests.TypeSpecGrpcEnum.Clients;
 
-using SignWithKindInput = global::D2.Edge.Tests.TypeSpecGrpcEnum.Generated.SignWithKindInput;
-using SignWithKindOutput = global::D2.Edge.Tests.TypeSpecGrpcEnum.Generated.SignWithKindOutput;
+using SignWithKindFixtureInput = global::D2.Edge.Tests.TypeSpecGrpcEnum.Generated.SignWithKindFixtureInput;
+using SignWithKindFixtureOutput = global::D2.Edge.Tests.TypeSpecGrpcEnum.Generated.SignWithKindFixtureOutput;
 using D2.Shared.Resilience.Pipeline;
 
 /// <summary>
@@ -19,9 +19,9 @@ using D2.Shared.Resilience.Pipeline;
 /// </summary>
 public interface IEnumFixturesGrpcClient
 {
-    /// <summary>Dispatches the <c>SignWithKind</c> operation over gRPC.</summary>
-    ValueTask<D2Result<SignWithKindOutput?>> SignWithKindAsync(
-        SignWithKindInput input,
-        ResilientPipeline<string, SignWithKindOutput?>? pipelineOverride = null,
+    /// <summary>Dispatches the <c>SignWithKindFixture</c> operation over gRPC.</summary>
+    ValueTask<D2Result<SignWithKindFixtureOutput?>> SignWithKindFixtureAsync(
+        SignWithKindFixtureInput input,
+        ResilientPipeline<string, SignWithKindFixtureOutput?>? pipelineOverride = null,
         CancellationToken ct = default);
 }

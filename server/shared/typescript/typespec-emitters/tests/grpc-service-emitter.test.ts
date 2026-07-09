@@ -22,7 +22,7 @@ import type { GrpcDelegationTarget } from "../src/lib/grpc-service-emitter.js";
 // Helpers
 // ---------------------------------------------------------------------------
 
-const PROTO_NS = "D2.Services.Protos.KeyCustodian.V2Alpha";
+const PROTO_NS = "D2.Services.Protos.Sample.V1";
 const IMPL_NS = "D2.Edge.Tests.TypeSpecGrpc.Generated";
 const DTO_NS = "D2.Edge.Tests.TypeSpecDto.Generated";
 const SOURCE = "contracts/typespec/fixtures/sign-shaped.tsp";
@@ -37,7 +37,7 @@ function makeStringField(name: string): FieldInfo {
     protoType: "string",
     repeated: false,
     optional: false,
-    redact: false,
+    redactReason: undefined,
   };
 }
 
@@ -51,14 +51,14 @@ function makeBytesField(name: string): FieldInfo {
     protoType: "bytes",
     repeated: false,
     optional: false,
-    redact: true,
+    redactReason: "SecretInformation",
   };
 }
 
 function emitSign() {
   return emitGrpcService(
     "sign",
-    "KeyCustodianSigner",
+    "SampleSigner",
     "Sign",
     PROTO_NS,
     IMPL_NS,
@@ -81,7 +81,7 @@ describe("emitGrpcService_BaseClass_GlobalQualified", () => {
   it("service class extends global::<protoNs>.<Service>.<Service>Base", () => {
     const [svc] = emitSign();
     expect(svc.content).toContain(
-      ": global::D2.Services.Protos.KeyCustodian.V2Alpha.KeyCustodianSigner.KeyCustodianSignerBase",
+      ": global::D2.Services.Protos.Sample.V1.SampleSigner.SampleSignerBase",
     );
   });
 });
@@ -94,7 +94,7 @@ describe("emitGrpcService_CtorAndMethodSignature", () => {
   it("ctor takes ISignHandler; method overrides Sign with proto request + ServerCallContext", () => {
     const [svc] = emitSign();
     expect(svc.content).toContain(
-      "public sealed class KeyCustodianSignerService(ISignHandler handler)",
+      "public sealed class SampleSignerService(ISignHandler handler)",
     );
     expect(svc.content).toContain(
       "public override async Task<SignResponse> Sign(SignRequest request, ServerCallContext context)",
@@ -126,10 +126,10 @@ describe("emitGrpcService_TypeAliases_Disambiguate", () => {
     // Proto message names (SignRequest/SignResponse) are distinct from DTO names
     // (SignInput/SignOutput), so no Proto*/Dto* prefixes are needed in the SERVICE file.
     expect(svc.content).toContain(
-      "using SignRequest = global::D2.Services.Protos.KeyCustodian.V2Alpha.SignRequest;",
+      "using SignRequest = global::D2.Services.Protos.Sample.V1.SignRequest;",
     );
     expect(svc.content).toContain(
-      "using SignResponse = global::D2.Services.Protos.KeyCustodian.V2Alpha.SignResponse;",
+      "using SignResponse = global::D2.Services.Protos.Sample.V1.SignResponse;",
     );
     expect(svc.content).toContain(
       "using SignInput = global::D2.Edge.Tests.TypeSpecDto.Generated.SignInput;",
@@ -148,7 +148,7 @@ describe("emitGrpcService_TypeAliases_Disambiguate", () => {
   it("mapper file emits standard using-aliases PLUS a ProtoSignOutput disambiguation alias", () => {
     const [, mapper] = emitSign();
     expect(mapper.content).toContain(
-      "using SignRequest = global::D2.Services.Protos.KeyCustodian.V2Alpha.SignRequest;",
+      "using SignRequest = global::D2.Services.Protos.Sample.V1.SignRequest;",
     );
     expect(mapper.content).toContain(
       "using SignOutput = global::D2.Edge.Tests.TypeSpecDto.Generated.SignOutput;",
@@ -156,7 +156,7 @@ describe("emitGrpcService_TypeAliases_Disambiguate", () => {
     // The proto data message name (<Op>Output) collides with the DTO name (<Op>Output).
     // The mapper emits a ProtoSignOutput alias to disambiguate.
     expect(mapper.content).toContain(
-      "using ProtoSignOutput = global::D2.Services.Protos.KeyCustodian.V2Alpha.SignOutput;",
+      "using ProtoSignOutput = global::D2.Services.Protos.Sample.V1.SignOutput;",
     );
     // No DtoSignOutput prefix (the DTO alias keeps the bare SignOutput name).
     expect(mapper.content).not.toContain("using DtoSignOutput");
@@ -320,7 +320,7 @@ describe("emitGrpcService_NoPhaseAuditIdentifiers", () => {
 describe("emitGrpcService_FileNames", () => {
   it("service file named <Service>Service.g.cs", () => {
     const [svc] = emitSign();
-    expect(svc.fileName).toBe("KeyCustodianSignerService.g.cs");
+    expect(svc.fileName).toBe("SampleSignerService.g.cs");
   });
 
   it("mapper file named <PascalOp>TransportMappers.g.cs", () => {
@@ -366,7 +366,7 @@ describe("emitGrpcService_EmptyRequest_ParameterlessConstructor", () => {
 describe("emitGrpcService_FacadeDelegation_RePointedService", () => {
   const FACADE_TARGET: GrpcDelegationTarget = {
     kind: "facade",
-    typeName: "IKeyCustodianSignerFacade",
+    typeName: "ISampleSignerFacade",
     methodName: "SignAsync",
     targetNamespace: "D2.Edge.Tests.TypeSpecRoute.Generated.Facade",
   };
@@ -374,7 +374,7 @@ describe("emitGrpcService_FacadeDelegation_RePointedService", () => {
   function emitSignWithFacade() {
     return emitGrpcService(
       "sign",
-      "KeyCustodianSigner",
+      "SampleSigner",
       "Sign",
       PROTO_NS,
       IMPL_NS,
@@ -393,7 +393,7 @@ describe("emitGrpcService_FacadeDelegation_RePointedService", () => {
   it("ctor injects the façade type (not ISignHandler)", () => {
     const [svc] = emitSignWithFacade();
     expect(svc.content).toContain(
-      "public sealed class KeyCustodianSignerService(IKeyCustodianSignerFacade facade)",
+      "public sealed class SampleSignerService(ISampleSignerFacade facade)",
     );
     expect(svc.content).not.toContain("ISignHandler handler");
   });
@@ -416,7 +416,7 @@ describe("emitGrpcService_FacadeDelegation_RePointedService", () => {
   it("XML doc references the façade type", () => {
     const [svc] = emitSignWithFacade();
     expect(svc.content).toContain(
-      'delegating to <see cref="IKeyCustodianSignerFacade"/>',
+      'delegating to <see cref="ISampleSignerFacade"/>',
     );
   });
 
@@ -452,7 +452,7 @@ describe("emitGrpcService_HandlerDelegation_Default", () => {
     // the same handler-delegation output as passing an explicit handler target.
     const [svcDefault] = emitGrpcService(
       "sign",
-      "KeyCustodianSigner",
+      "SampleSigner",
       "Sign",
       PROTO_NS,
       IMPL_NS,
@@ -481,7 +481,7 @@ describe("emitGrpcService_HandlerDelegation_Default", () => {
     };
     const [svcExplicit] = emitGrpcService(
       "sign",
-      "KeyCustodianSigner",
+      "SampleSigner",
       "Sign",
       PROTO_NS,
       IMPL_NS,
@@ -497,7 +497,7 @@ describe("emitGrpcService_HandlerDelegation_Default", () => {
     );
     const [svcDefault] = emitGrpcService(
       "sign",
-      "KeyCustodianSigner",
+      "SampleSigner",
       "Sign",
       PROTO_NS,
       IMPL_NS,
@@ -611,7 +611,7 @@ describe("emitGrpcService_EnumRequestField_ParseBridgeAndAlias", () => {
         protoType: "string",
         repeated: false,
         optional: false,
-        redact: false,
+        redactReason: undefined,
       },
       {
         name: "keyKind",
@@ -622,7 +622,7 @@ describe("emitGrpcService_EnumRequestField_ParseBridgeAndAlias", () => {
         protoType: "string",
         repeated: false,
         optional: false,
-        redact: false,
+        redactReason: undefined,
         enumRef: KEY_KIND,
       },
     ];
@@ -697,7 +697,7 @@ describe("emitGrpcService_EnumRequestField_ParseBridgeAndAlias", () => {
           protoType: "string",
           repeated: false,
           optional: false,
-          redact: false,
+          redactReason: undefined,
           enumRef: KEY_KIND,
         },
       ],
@@ -731,7 +731,7 @@ describe("emitGrpcService_NestedModel_SubMapperRecursion", () => {
       protoType: undefined,
       repeated: true,
       optional: false,
-      redact: false,
+      redactReason: undefined,
       nested,
     };
   }
@@ -750,7 +750,7 @@ describe("emitGrpcService_NestedModel_SubMapperRecursion", () => {
       protoType: undefined,
       repeated: false,
       optional,
-      redact: false,
+      redactReason: undefined,
       nested,
     };
   }
@@ -927,6 +927,51 @@ describe("emitGrpcService_NestedModel_SubMapperRecursion", () => {
     );
     expect(mapper.content).toContain(
       "return new Blob(source.Data.ToByteArray());",
+    );
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Temporal output field — DateTimeOffset DTO → proto ISO-8601 string
+// ---------------------------------------------------------------------------
+
+describe("emitGrpcService_TemporalOutputField_MapsViaRoundTripFormat", () => {
+  function makeTemporalField(name: string): FieldInfo {
+    return {
+      name,
+      csName: name.charAt(0).toUpperCase() + name.slice(1),
+      csType: "DateTimeOffset",
+      tsName: name,
+      tsType: "string",
+      protoType: "string",
+      repeated: false,
+      optional: false,
+      redactReason: undefined,
+    };
+  }
+
+  it('a DateTimeOffset output field maps outbound via ToString("O") (ISO-8601 round-trip)', () => {
+    const [, mapper] = emitGrpcService(
+      "issue",
+      "SampleIssuer",
+      "Issue",
+      PROTO_NS,
+      IMPL_NS,
+      DTO_NS,
+      SOURCE,
+      "IssueRequest",
+      "IssueResponse",
+      "IssueInput",
+      [makeBytesField("csrDer")],
+      "IssueOutput",
+      [makeBytesField("certificateDer"), makeTemporalField("notAfter")],
+    );
+    expect(mapper.content).toContain(
+      'NotAfter = output.NotAfter.ToString("O"),',
+    );
+    // The non-temporal sibling keeps its own arm (no cross-contamination).
+    expect(mapper.content).toContain(
+      "CertificateDer = ByteString.CopyFrom(output.CertificateDer),",
     );
   });
 });

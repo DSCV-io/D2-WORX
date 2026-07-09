@@ -86,6 +86,17 @@ export {
   type DriftCheckResult,
 } from "./drift-check.js";
 export {
+  checkFingerprintCurrency,
+  formatCurrencyReport,
+  isUnshippedHeaderOnly,
+  makeRealCurrencyFileReader,
+  type CurrencyFileReader,
+  type FingerprintCurrencyOptions,
+  type FingerprintCurrencyResult,
+  type PackageCurrencyResult,
+  type StaleReason,
+} from "./fingerprint-currency.js";
+export {
   buildDependentIndex,
   propagateBumps,
   topoSort,

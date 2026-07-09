@@ -48,7 +48,7 @@ export type HttpVerb = "get" | "post" | "put" | "delete" | "patch";
 export interface DelegationTarget {
   /** "facade" when the op has @d2InProcess; "handler" otherwise. */
   readonly kind: "facade" | "handler";
-  /** C# interface type name (e.g. "IKeyCustodianSignerFacade" or "ISignHandler"). */
+  /** C# interface type name (e.g. "ISampleSignerFacade" or "ISignHandler"). */
   readonly typeName: string;
   /** Method name to call on the target (e.g. "SignAsync" or "HandleAsync"). */
   readonly methodName: string;

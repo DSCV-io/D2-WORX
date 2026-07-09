@@ -6,11 +6,13 @@ Copyright (c) DCSV. All rights reserved.
 
 > Parent: [`server/shared/dotnet/`](../../README.md)
 
+**Input contract:** [`contracts/jwt-claims/`](../../../../../contracts/jwt-claims/README.md)
+
 Roslyn incremental source generator that emits the `JwtClaimTypes` static-class catalog into `D2.Shared.Auth.Abstractions` by reading `contracts/jwt-claims/jwt-claims.spec.json` via `<AdditionalFiles>`. Single-target — emits ONLY when the consuming assembly is `D2.Shared.Auth.Abstractions`.
 
 The spec file is the single source of truth for every JWT claim D2 reads or writes — standard OAuth/OIDC vocabulary (`sub`, `aud`, ...), D2-specific top-level claims (`d2_session_id`, `d2_org_id`, ...), and nested inside-act claims (`d2_kind` under the act object per RFC 8693 §2.1). A separate parity test (`JwtClaimsVsIAuthContextConsistencyTests`) asserts every `claim:` annotation in `IAuthContext.spec.json` references a valid entry here.
 
-**Convention**: spec-driven Roslyn IIncrementalGenerator pattern. See [`docs/SRC_GEN.md`](../../../../docs/SRC_GEN.md) for the framework-wide convention (file layout, diagnostic ID convention, generator anatomy, `<AdditionalFiles>` wiring).
+**Convention**: spec-driven Roslyn IIncrementalGenerator pattern. See [`docs/SRC_GEN.md`](../../../../../docs/SRC_GEN.md) for the framework-wide convention (file layout, diagnostic ID convention, generator anatomy, `<AdditionalFiles>` wiring).
 
 ---
 
@@ -66,8 +68,8 @@ The spec file is the single source of truth for every JWT claim D2 reads or writ
 
 ## Reference
 
-- [`docs/SRC_GEN.md`](../../../../docs/SRC_GEN.md) — canonical how-to-author guide for D² Roslyn source generators
-- [`contracts/jwt-claims/schema.json`](../../../../contracts/jwt-claims/schema.json) — JSON Schema for the spec
-- [`contracts/jwt-claims/jwt-claims.spec.json`](../../../../contracts/jwt-claims/jwt-claims.spec.json) — the source-of-truth catalog
+- [`docs/SRC_GEN.md`](../../../../../docs/SRC_GEN.md) — canonical how-to-author guide for D² Roslyn source generators
+- [`contracts/jwt-claims/schema.json`](../../../../../contracts/jwt-claims/schema.json) — JSON Schema for the spec
+- [`contracts/jwt-claims/jwt-claims.spec.json`](../../../../../contracts/jwt-claims/jwt-claims.spec.json) — the source-of-truth catalog
 - [`D2.Shared.Headers.SourceGen`](../../headers/source-gen/README.md) — sibling SrcGen for cross-transport wire headers
 - [`D2.Shared.InProcessKeys.SourceGen`](../../encryption/in-process-keys-source-gen/README.md) — sibling SrcGen for cross-binding in-process slot keys

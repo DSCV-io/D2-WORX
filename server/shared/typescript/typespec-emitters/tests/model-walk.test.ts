@@ -33,7 +33,8 @@ function makeProp(
 ): { prop: ModelProperty; redactMap: Map<object, unknown> } {
   const prop = { type, optional } as unknown as ModelProperty;
   const redactMap = new Map<object, unknown>();
-  if (redact) redactMap.set(prop, true);
+  // @d2Redact stores its RedactReason member-name string on the property.
+  if (redact) redactMap.set(prop, "SecretInformation");
   return { prop, redactMap };
 }
 
@@ -73,7 +74,7 @@ describe("walkModel_ScalarField_ResolvesCorrectly", () => {
     expect(fields[0]!.tsType).toBe("string");
     expect(fields[0]!.csName).toBe("Name");
     expect(fields[0]!.optional).toBe(false);
-    expect(fields[0]!.redact).toBe(false);
+    expect(fields[0]!.redactReason).toBeUndefined();
   });
 
   it("boolean scalar → bool / boolean", () => {
@@ -101,6 +102,19 @@ describe("walkModel_ScalarField_ResolvesCorrectly", () => {
 
     expect(fields[0]!.csType).toBe("int");
     expect(fields[0]!.tsType).toBe("number");
+  });
+
+  it("empty property name → empty csName + no JSON-name override", () => {
+    // Adversarial: a zero-length property name. resolveJsonName computes its
+    // default JSON name as `csName.length > 0 ? camelCase : csName` — the empty
+    // csName takes the `: csName` arm, yielding an empty default and no override.
+    const { prop, redactMap } = makeProp(makeScalar("string"));
+    const model = makeModel([["", prop]]);
+    const { fields } = walkModel(makeProgram(redactMap), model, () => {});
+
+    expect(fields).toHaveLength(1);
+    expect(fields[0]!.csName).toBe("");
+    expect(fields[0]!.jsonName).toBeUndefined();
   });
 });
 
@@ -234,14 +248,217 @@ describe("walkModel_NestedModel_RecursionAndDedup", () => {
   });
 });
 
-describe("walkModel_RedactField_RedactFlagTrue", () => {
-  it("@d2Redact property → redact: true", () => {
+describe("walkModel_RedactField_RedactReasonThreaded", () => {
+  it("@d2Redact property → redactReason carries the RedactReason member", () => {
     const { prop, redactMap } = makeProp(makeScalar("bytes"), false, true);
     const model = makeModel([["payload", prop]]);
     const { fields } = walkModel(makeProgram(redactMap), model, () => {});
 
-    expect(fields[0]!.redact).toBe(true);
+    expect(fields[0]!.redactReason).toBe("SecretInformation");
     expect(fields[0]!.name).toBe("payload");
+  });
+});
+
+describe("walkModel_NestedRedact_ReasonThreaded", () => {
+  it("@d2Redact on a non-array nested-model property → reason threaded, no diagnostic", () => {
+    // Inner (nested) model whose property carries a @d2Redact reason string.
+    const innerProp = {
+      type: makeScalar("bytes"),
+      optional: false,
+    } as unknown as ModelProperty;
+    const inner: Model = {
+      kind: "Model",
+      name: "KeyringEntry",
+      properties: new Map([["keyBytes", innerProp]]),
+    } as unknown as Model;
+
+    // Outer property references the nested model.
+    const outerProp = {
+      type: inner,
+      optional: false,
+    } as unknown as ModelProperty;
+    const model = makeModel([["entry", outerProp]]);
+
+    // Register @d2Redact on the NESTED property (string RedactReason member).
+    const redactMap = new Map<object, unknown>();
+    redactMap.set(innerProp, "SecretInformation");
+
+    const errors: Array<{ code: string; message: string }> = [];
+    const { nestedModels } = walkModel(
+      makeProgram(redactMap),
+      model,
+      (code, message) => {
+        errors.push({ code, message });
+      },
+    );
+
+    // No diagnostic — nested redaction is fully supported; the reason threads.
+    expect(errors).toHaveLength(0);
+    expect(nestedModels).toHaveLength(1);
+    expect(nestedModels[0]!.fields).toHaveLength(1);
+    expect(nestedModels[0]!.fields[0]!.redactReason).toBe("SecretInformation");
+  });
+
+  it("@d2Redact on an ARRAY-element nested model (entries: KeyringEntry[]) → reason threaded", () => {
+    // The exact GetKeyringOutput shape: entries is an array of KeyringEntry, whose
+    // keyBytes field carries @d2Redact.
+    const keyBytesProp = {
+      type: makeScalar("bytes"),
+      optional: false,
+    } as unknown as ModelProperty;
+    const keyringEntry: Model = {
+      kind: "Model",
+      name: "KeyringEntry",
+      properties: new Map([
+        [
+          "kid",
+          {
+            type: makeScalar("string"),
+            optional: false,
+          } as unknown as ModelProperty,
+        ],
+        ["keyBytes", keyBytesProp],
+      ]),
+    } as unknown as Model;
+
+    const arrayModel: Model = {
+      kind: "Model",
+      name: "Array",
+      indexer: { value: keyringEntry },
+      properties: new Map(),
+    } as unknown as Model;
+
+    const entriesProp = {
+      type: arrayModel,
+      optional: false,
+    } as unknown as ModelProperty;
+    const model = makeModel([["entries", entriesProp]]);
+
+    const redactMap = new Map<object, unknown>();
+    redactMap.set(keyBytesProp, "SecretInformation");
+
+    const errors: Array<{ code: string; message: string }> = [];
+    const { fields, nestedModels } = walkModel(
+      makeProgram(redactMap),
+      model,
+      (code, message) => errors.push({ code, message }),
+    );
+
+    expect(errors).toHaveLength(0);
+    expect(fields[0]!.csType).toBe("IReadOnlyList<KeyringEntry>");
+    expect(fields[0]!.repeated).toBe(true);
+    // KeyringEntry.keyBytes threaded the reason; kid stays unredacted.
+    const entry = nestedModels[0]!;
+    expect(entry.name).toBe("KeyringEntry");
+    const keyBytes = entry.fields.find((f) => f.name === "keyBytes");
+    const kid = entry.fields.find((f) => f.name === "kid");
+    expect(keyBytes!.redactReason).toBe("SecretInformation");
+    expect(kid!.redactReason).toBeUndefined();
+  });
+
+  it("depth-2 nesting (@d2Redact on a doubly-nested field) → reason threaded (depth-agnostic)", () => {
+    const deepProp = {
+      type: makeScalar("bytes"),
+      optional: false,
+    } as unknown as ModelProperty;
+    const deep: Model = {
+      kind: "Model",
+      name: "DeepSecretFixture",
+      properties: new Map([["material", deepProp]]),
+    } as unknown as Model;
+    const midProp = {
+      type: deep,
+      optional: false,
+    } as unknown as ModelProperty;
+    const mid: Model = {
+      kind: "Model",
+      name: "MidFixture",
+      properties: new Map([["deep", midProp]]),
+    } as unknown as Model;
+    const outerProp = {
+      type: mid,
+      optional: false,
+    } as unknown as ModelProperty;
+    const model = makeModel([["mid", outerProp]]);
+
+    const redactMap = new Map<object, unknown>();
+    redactMap.set(deepProp, "SecretInformation");
+
+    const codes: string[] = [];
+    const { nestedModels } = walkModel(makeProgram(redactMap), model, (c) =>
+      codes.push(c),
+    );
+
+    expect(codes).toHaveLength(0);
+    const deepModel = nestedModels.find((m) => m.name === "DeepSecretFixture");
+    expect(deepModel!.fields[0]!.redactReason).toBe("SecretInformation");
+  });
+
+  it("mixed top-level + nested @d2Redact in one walk → both threaded", () => {
+    const topProp = {
+      type: makeScalar("bytes"),
+      optional: false,
+    } as unknown as ModelProperty;
+    const nestedRedactProp = {
+      type: makeScalar("bytes"),
+      optional: false,
+    } as unknown as ModelProperty;
+    const inner: Model = {
+      kind: "Model",
+      name: "InnerFixture",
+      properties: new Map([["secret", nestedRedactProp]]),
+    } as unknown as Model;
+    const innerProp = {
+      type: inner,
+      optional: false,
+    } as unknown as ModelProperty;
+    const model = makeModel([
+      ["topSecret", topProp],
+      ["inner", innerProp],
+    ]);
+
+    const redactMap = new Map<object, unknown>();
+    redactMap.set(topProp, "SecretInformation");
+    redactMap.set(nestedRedactProp, "SecretInformation");
+
+    const codes: string[] = [];
+    const { fields, nestedModels } = walkModel(
+      makeProgram(redactMap),
+      model,
+      (c) => codes.push(c),
+    );
+
+    expect(codes).toHaveLength(0);
+    const topField = fields.find((f) => f.name === "topSecret");
+    expect(topField!.redactReason).toBe("SecretInformation");
+    expect(nestedModels[0]!.fields[0]!.redactReason).toBe("SecretInformation");
+  });
+
+  it("nested-model property WITHOUT @d2Redact → resolves normally, no over-redaction", () => {
+    const innerProp = {
+      type: makeScalar("string"),
+      optional: false,
+    } as unknown as ModelProperty;
+    const inner: Model = {
+      kind: "Model",
+      name: "NestedPayload",
+      properties: new Map([["label", innerProp]]),
+    } as unknown as Model;
+    const outerProp = {
+      type: inner,
+      optional: false,
+    } as unknown as ModelProperty;
+    const model = makeModel([["payload", outerProp]]);
+
+    const codes: string[] = [];
+    const { nestedModels } = walkModel(makeProgram(new Map()), model, (c) =>
+      codes.push(c),
+    );
+
+    // No diagnostic — a plain nested field is fully supported and stays unredacted.
+    expect(codes).toHaveLength(0);
+    expect(nestedModels[0]!.fields).toHaveLength(1);
+    expect(nestedModels[0]!.fields[0]!.redactReason).toBeUndefined();
   });
 });
 

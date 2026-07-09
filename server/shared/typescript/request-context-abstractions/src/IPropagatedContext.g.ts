@@ -8,6 +8,8 @@
 
 /* eslint-disable */
 
+import type { CallPathEntry } from "@d2/auth-context-abstractions";
+
 /**
  * Cross-hop propagated subset of IRequestContext. Identity fields
  * (UserId / OrgId / Scopes / ActorChain) are NOT included — they
@@ -28,4 +30,5 @@ export interface IPropagatedContext {
   readonly orgPlanTier?: string;
   readonly featureFlagsCsv?: string;
   readonly whoIsHashId?: string;
+  readonly callPath?: readonly CallPathEntry[];
 }

@@ -53,9 +53,11 @@ export interface EmitResult {
  * - `D2PRB001-006`: problem-details spec.
  * - `D2GT001-005`: grpc-trailers spec.
  * - `D2OMT001-005`: otel-messaging-tags spec.
- * - `D2ED001-005`: encryption-domains spec.
+ * - `D2ED001-009`: encryption-domains spec (D2ED006-009 = mode /
+ *   consumerService validation).
  * - `D2DLQ001-006`: dlq-failure-metadata spec.
- * - `D2EF001-005`: encryption-frame spec.
+ * - `D2EF001-005`: encryption-frame spec (symmetric, version 1).
+ * - `D2EF006-012`: encryption-frame-sealed spec (sealed, version 2).
  * - `D2DRE001-005`: d2result-envelope spec.
  * - `D2FC001-009`: field-constraints spec (field-length bounds + taxonomy enums).
  */
@@ -73,6 +75,16 @@ export const DiagnosticIds = {
   SCP_INVALID_NAME: "D2SCP002",
   SCP_INVALID_SENSITIVITY: "D2SCP003",
   SCP_MALFORMED_SPEC: "D2SCP009",
+
+  // Auth protocol audiences. Mirror the .NET
+  // D2.Shared.Auth.ProtocolAudiences.SourceGen DiagnosticIds values byte-for-byte
+  // — same spec source on both sides means the same predicate-violation surface,
+  // so identical IDs are correct.
+  PAUD_DUPLICATE_NAME: "D2PAUD001",
+  PAUD_INVALID_NAME: "D2PAUD002",
+  PAUD_DUPLICATE_VALUE: "D2PAUD003",
+  PAUD_EMPTY_VALUE: "D2PAUD004",
+  PAUD_MALFORMED_SPEC: "D2PAUD009",
 
   // Auth error codes.
   AEC_DUPLICATE_CODE: "D2AEC001",
@@ -166,6 +178,19 @@ export const DiagnosticIds = {
   OMT_INVALID_CONST_NAME: "D2OMT004",
   OMT_EMPTY_VALUE: "D2OMT005",
 
+  // MQ messages descriptor catalog (contracts/mq-messages/). Mirror the .NET
+  // D2.Shared.Messaging.SourceGen.MqGenerator DiagnosticIds values — same spec
+  // source on both sides means the same predicate-violation surface, so
+  // identical IDs are correct. D2MQ003 (duplicate constant) + D2MQ004
+  // (missing/unknown encryption default-deny) are named in the spec schema;
+  // the remainder allocate consistently in the D2MQ family.
+  MQ_MALFORMED_SPEC: "D2MQ001",
+  MQ_INVALID_CONST_NAME: "D2MQ002",
+  MQ_DUPLICATE_CONSTANT: "D2MQ003",
+  MQ_MISSING_ENCRYPTION: "D2MQ004",
+  MQ_DUPLICATE_MESSAGE_TYPE: "D2MQ005",
+  MQ_EMPTY_VALUE: "D2MQ006",
+
   // Encryption domains. Mirror the .NET
   // D2.Shared.EncryptionDomains.SourceGen DiagnosticIds values
   // byte-for-byte — same spec source on both sides.
@@ -174,6 +199,10 @@ export const DiagnosticIds = {
   ED_DUPLICATE_VALUE: "D2ED003",
   ED_INVALID_CONST_NAME: "D2ED004",
   ED_EMPTY_VALUE: "D2ED005",
+  ED_INVALID_MODE: "D2ED006",
+  ED_MISSING_CONSUMER_SERVICE: "D2ED007",
+  ED_UNEXPECTED_CONSUMER_SERVICE: "D2ED008",
+  ED_INVALID_CONSUMER_SERVICE: "D2ED009",
 
   // DLQ failure metadata (fields + causes sub-catalogs). Mirror the .NET
   // D2.Shared.Messaging.DlqMetadata.SourceGen DiagnosticIds values
@@ -193,6 +222,23 @@ export const DiagnosticIds = {
   EF_OVERLAPPING_FIELDS: "D2EF003",
   EF_INVALID_LENGTH: "D2EF004",
   EF_INVALID_VERSION: "D2EF005",
+
+  // SEALED encryption frame binary layout (the version-2 sibling spec,
+  // contracts/encryption-frame-sealed/). Mirror the .NET
+  // D2.Shared.EncryptionFrame.SourceGen sealed-arm DiagnosticIds values
+  // byte-for-byte — same spec source on both sides. D2EF010 rejects a
+  // sealed spec version < 2 (version 1 is the symmetric frame's
+  // discriminator); D2EF011 rejects a field kind outside the closed set the
+  // sealed codec reads; D2EF012 enforces the variable_binary_u16be
+  // structural rule (the field must sit immediately behind a byte_fixed
+  // length prefix of the declared width).
+  EFS_MALFORMED_SPEC: "D2EF006",
+  EFS_DUPLICATE_FIELD_NAME: "D2EF007",
+  EFS_OVERLAPPING_FIELDS: "D2EF008",
+  EFS_INVALID_LENGTH: "D2EF009",
+  EFS_INVALID_VERSION: "D2EF010",
+  EFS_UNKNOWN_FIELD_KIND: "D2EF011",
+  EFS_BINARY_LENGTH_PREFIX_MISSING: "D2EF012",
 
   // D2Result envelope (Shape B field names). Mirror the .NET
   // D2.Shared.Result.Envelope.SourceGen DiagnosticIds values

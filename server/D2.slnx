@@ -35,6 +35,9 @@ Copyright (c) DCSV. All rights reserved.
   <Folder Name="/shared/dotnet/auth/audiences-source-gen/">
     <Project Path="shared/dotnet/auth/audiences-source-gen/D2.Shared.Auth.Audiences.SourceGen.csproj" />
   </Folder>
+  <Folder Name="/shared/dotnet/auth/protocol-audiences-source-gen/">
+    <Project Path="shared/dotnet/auth/protocol-audiences-source-gen/D2.Shared.Auth.ProtocolAudiences.SourceGen.csproj" />
+  </Folder>
   <Folder Name="/shared/dotnet/auth/error-codes-source-gen/">
     <Project Path="shared/dotnet/auth/error-codes-source-gen/D2.Shared.Auth.ErrorCodes.SourceGen.csproj" />
   </Folder>
@@ -259,8 +262,8 @@ Copyright (c) DCSV. All rights reserved.
   <Folder Name="/services/edge/key-custodian/infra/">
     <Project Path="services/edge/key-custodian/infra/D2.Edge.KeyCustodian.Infra.csproj" />
   </Folder>
-  <Folder Name="/services/edge/key-custodian/clients/">
-    <Project Path="services/edge/key-custodian/clients/D2.Edge.KeyCustodian.Clients.csproj" />
+  <Folder Name="/services/edge/key-custodian/client/">
+    <Project Path="services/edge/key-custodian/client/D2.Edge.KeyCustodian.Client.csproj" />
   </Folder>
   <Folder Name="/services/edge/tests/">
     <Project Path="services/edge/tests/D2.Edge.Tests.csproj" />

@@ -29,14 +29,17 @@ Copyright (c) DCSV. All rights reserved.
     handler/abstractions, the runtime D2.Shared.Auth, and Edge's issuer-side
     code all reference.
 
-    Two sibling Roslyn analyzers contribute generated code to this assembly:
+    Sibling Roslyn analyzers contribute generated code to this assembly:
 
       - D2.Shared.Auth.Scopes.SourceGen (../scopes-source-gen/) →
         Scopes.g.cs, driven by contracts/auth-scopes/scopes.spec.json
       - D2.Shared.Auth.Audiences.SourceGen (../audiences-source-gen/) →
         Audiences.g.cs, driven by contracts/auth-audiences/audiences.spec.json
+      - D2.Shared.Auth.ProtocolAudiences.SourceGen (../protocol-audiences-source-gen/) →
+        WellKnownAudiences.g.cs (the bare-token protocol audiences d2.internal /
+        d2-edge), driven by contracts/auth-protocol-audiences/protocol-audiences.spec.json
 
-    Both reference below with OutputItemType="Analyzer" (no runtime dll dep).
+    All reference below with OutputItemType="Analyzer" (no runtime dll dep).
   -->
 
   <ItemGroup>
@@ -44,6 +47,9 @@ Copyright (c) DCSV. All rights reserved.
                       OutputItemType="Analyzer"
                       ReferenceOutputAssembly="false" />
     <ProjectReference Include="..\audiences-source-gen\D2.Shared.Auth.Audiences.SourceGen.csproj"
+                      OutputItemType="Analyzer"
+                      ReferenceOutputAssembly="false" />
+    <ProjectReference Include="..\protocol-audiences-source-gen\D2.Shared.Auth.ProtocolAudiences.SourceGen.csproj"
                       OutputItemType="Analyzer"
                       ReferenceOutputAssembly="false" />
     <ProjectReference Include="..\jwt-claims-source-gen\D2.Shared.Auth.JwtClaims.SourceGen.csproj"
@@ -93,6 +99,7 @@ Copyright (c) DCSV. All rights reserved.
     -->
     <AdditionalFiles Include="$(D2ContractsRoot)auth-scopes\scopes.spec.json" />
     <AdditionalFiles Include="$(D2ContractsRoot)auth-audiences\audiences.spec.json" />
+    <AdditionalFiles Include="$(D2ContractsRoot)auth-protocol-audiences\protocol-audiences.spec.json" />
     <AdditionalFiles Include="$(D2ContractsRoot)jwt-claims\jwt-claims.spec.json" />
     <AdditionalFiles Include="$(D2ContractsRoot)in-process-keys\keys.spec.json" />
   </ItemGroup>

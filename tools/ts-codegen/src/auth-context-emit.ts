@@ -27,8 +27,8 @@ import { StringBuilder } from "./lib/string-builder.js";
  * (omitted/explicit-null both mean "no parent interface"), so the parser
  * must accept `null` from the wire. Domain consumers see the resolved
  * import target via `resolveExtendsFqn` and never touch the raw value.
- * Per rules.md §6.15 wire-boundary carve-out — the spec literal forces
- * `| null` here; downstream code normalizes at the parse boundary.
+ * This is a wire-boundary carve-out — the spec literal forces `| null`
+ * here; downstream code normalizes to `undefined` at the parse boundary.
  */
 export interface ContextSpec {
   readonly name: string;
@@ -54,6 +54,13 @@ export interface PropertySpec {
   readonly doc?: string;
   readonly propagate?: boolean;
   readonly maxLength?: number;
+  /**
+   * Per-entry id length cap for a propagated list-of-records field (e.g.
+   * CallPath). Single source of the cap — the TS PropagatedContextSerializer
+   * derives it from this spec value, mirroring the .NET emitter (neither
+   * hard-codes the number). Only meaningful on a propagated list-of-records field.
+   */
+  readonly entryIdMaxLength?: number;
   readonly redact?: boolean;
 }
 
@@ -79,7 +86,9 @@ const TYPE_MAP: Readonly<Record<string, string>> = {
   "Role?": "Role | undefined",
   "ActorKind?": "ActorKind | undefined",
   "ImpersonationKind?": "ImpersonationKind | undefined",
+  RequestOrigin: "RequestOrigin",
   "IReadOnlyList<ActorEntry>": "readonly ActorEntry[]",
+  "IReadOnlyList<CallPathEntry>": "readonly CallPathEntry[]",
   "IReadOnlyList<string>": "readonly string[]",
   "IReadOnlySet<string>": "ReadonlySet<string>",
 };
@@ -224,6 +233,8 @@ function collectUsedTypes(spec: ContextSpec): Set<string> {
       if (t.includes("ImpersonationKind")) used.add("ImpersonationKind");
       if (t.includes("ActorKind")) used.add("ActorKind");
       if (t.includes("ActorEntry")) used.add("ActorEntry");
+      if (t.includes("RequestOrigin")) used.add("RequestOrigin");
+      if (t.includes("CallPathEntry")) used.add("CallPathEntry");
     }
   }
   return used;
@@ -256,6 +267,14 @@ function emitEnumImports(
   if (used.has("ActorEntry"))
     sb.appendLine(
       'import type { ActorEntry } from "./types/actor-entry.g.js";',
+    );
+  if (used.has("RequestOrigin"))
+    sb.appendLine(
+      'import type { RequestOrigin } from "./enums/request-origin.g.js";',
+    );
+  if (used.has("CallPathEntry"))
+    sb.appendLine(
+      'import type { CallPathEntry } from "./types/call-path-entry.g.js";',
     );
   if (used.size > 0) {
     const list = [...used].sort().join(", ");
@@ -330,7 +349,12 @@ function camelCase(pascal: string): string {
   return pascal[0]!.toLowerCase() + pascal.slice(1);
 }
 
-const ENUMS = {
+/**
+ * Closed enum vocabularies emitted as `<name>.g.ts` const-objects. Exported so the
+ * byte-parity golden test can regenerate each file in-memory and compare it to the
+ * committed output (these members are hardcoded here, not spec-driven).
+ */
+export const ENUMS = {
   "org-type": [
     ["Admin", "Administrative organization."],
     ["Support", "Support organization."],
@@ -355,9 +379,31 @@ const ENUMS = {
       "User impersonation (Consent or Force per ImpersonationKind).",
     ],
   ],
+  "request-origin": [
+    [
+      "Unestablished",
+      "No boundary positively established the origin (the fail-closed default).",
+    ],
+    ["EdgeInbound", "The Edge HTTP inbound boundary — start of the call-path."],
+    [
+      "CrossProcessHop",
+      "A cross-process gRPC hop authenticated by the mutual-TLS client cert.",
+    ],
+    ["InProcessModule", "An in-process module call (the in-host leaf)."],
+    ["System", "An in-host system worker (a background service)."],
+  ],
+  "call-path-kind": [
+    ["Edge", "The Edge HTTP inbound boundary (the originating hop)."],
+    [
+      "WorkloadHop",
+      "A cross-process workload hop reached over authenticated mutual TLS.",
+    ],
+    ["ModuleHop", "An in-process module hop (the in-host leaf)."],
+    ["System", "An in-host system worker (a background service)."],
+  ],
 } as const;
 
-function emitEnumFile(
+export function emitEnumFile(
   name: string,
   members: readonly (readonly string[])[],
 ): string {
@@ -384,7 +430,7 @@ function emitEnumFile(
   return sb.toString();
 }
 
-function emitActorEntryFile(): string {
+export function emitActorEntryFile(): string {
   const sb = new StringBuilder();
   sb.appendLine(buildHeader(`contracts/auth-context/IAuthContext.spec.json`));
   sb.appendLine("/* eslint-disable */");
@@ -401,11 +447,12 @@ function emitActorEntryFile(): string {
     " * One link in the RFC 8693 actor chain. Mirrors .NET ActorEntry record.",
   );
   sb.appendLine(
-    " * Per rules.md §6.15 (TS `undefined`-over-`null`): optional fields use",
+    " * Optional fields use the `?:` shorthand; absent links arrive as",
   );
   sb.appendLine(
-    " * the `?:` shorthand; absent links arrive as `undefined`, never `null`.",
+    " * `undefined`, never `null` (TypeScript uses `undefined` as the only",
   );
+  sb.appendLine(" * absent sentinel).");
   sb.appendLine(" */");
   sb.appendLine("export interface ActorEntry {");
   sb.increaseIndent();
@@ -425,6 +472,38 @@ function emitActorEntryFile(): string {
   return sb.toString();
 }
 
+export function emitCallPathEntryFile(): string {
+  const sb = new StringBuilder();
+  sb.appendLine(buildHeader(`contracts/auth-context/IAuthContext.spec.json`));
+  sb.appendLine("/* eslint-disable */");
+  sb.appendLine();
+  sb.appendLine(
+    'import type { CallPathKind } from "../enums/call-path-kind.g.js";',
+  );
+  sb.appendLine();
+  sb.appendLine("/**");
+  sb.appendLine(
+    " * One hop in the propagated call-path. Mirrors .NET CallPathEntry record.",
+  );
+  sb.appendLine(
+    " * Operational telemetry only — authority never reads the call-path. The",
+  );
+  sb.appendLine(
+    " * timestamp is the wire DateTimeOffset ISO string (matching .NET's `O`",
+  );
+  sb.appendLine(" * round-trip format).");
+  sb.appendLine(" */");
+  sb.appendLine("export interface CallPathEntry {");
+  sb.increaseIndent();
+  sb.appendLine("readonly id: string;");
+  sb.appendLine("readonly kind: CallPathKind;");
+  sb.appendLine("readonly timestamp: string;");
+  sb.decreaseIndent();
+  sb.appendLine("}");
+  sb.appendLine();
+  return sb.toString();
+}
+
 const SPEC_PATH = contractsPath("auth-context", "IAuthContext.spec.json");
 const TARGET_DIR = tsPackagePath("auth", "context-abstractions", "src");
 const INTERFACE_TARGET = `${TARGET_DIR}/IAuthContext.g.ts`;
@@ -433,14 +512,19 @@ const ENUM_TARGETS: Record<string, string> = {
   role: `${TARGET_DIR}/enums/role.g.ts`,
   "impersonation-kind": `${TARGET_DIR}/enums/impersonation-kind.g.ts`,
   "actor-kind": `${TARGET_DIR}/enums/actor-kind.g.ts`,
+  "request-origin": `${TARGET_DIR}/enums/request-origin.g.ts`,
+  "call-path-kind": `${TARGET_DIR}/enums/call-path-kind.g.ts`,
 };
 const ACTOR_ENTRY_TARGET = `${TARGET_DIR}/types/actor-entry.g.ts`;
+const CALL_PATH_ENTRY_TARGET = `${TARGET_DIR}/types/call-path-entry.g.ts`;
 
 const ENUM_TYPE_NAMES: Record<string, string> = {
   "org-type": "OrgType",
   role: "Role",
   "impersonation-kind": "ImpersonationKind",
   "actor-kind": "ActorKind",
+  "request-origin": "RequestOrigin",
+  "call-path-kind": "CallPathKind",
 };
 
 /**
@@ -453,6 +537,7 @@ export function runAuthContextEmit(force = false): readonly EmitDiagnostic[] {
   const allOutputs = [
     INTERFACE_TARGET,
     ACTOR_ENTRY_TARGET,
+    CALL_PATH_ENTRY_TARGET,
     ...Object.values(ENUM_TARGETS),
   ];
   if (!force) {
@@ -473,6 +558,7 @@ export function runAuthContextEmit(force = false): readonly EmitDiagnostic[] {
 
   writeGeneratedFile(INTERFACE_TARGET, result.source);
   writeGeneratedFile(ACTOR_ENTRY_TARGET, emitActorEntryFile());
+  writeGeneratedFile(CALL_PATH_ENTRY_TARGET, emitCallPathEntryFile());
   for (const [key, members] of Object.entries(ENUMS)) {
     writeGeneratedFile(
       ENUM_TARGETS[key]!,

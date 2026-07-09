@@ -73,8 +73,9 @@ export function parseChannel(protoPackage: string): WireChannel | undefined {
   // Parse vN(alpha|beta)? from the channel segment.
   // Bucket-2 regex: bounded input, no super-linear backtracking.
   const channelMatch = /^v(\d+)(alpha|beta)?$/.exec(channelSegment);
-  /* v8 ignore next 1 — unreachable: WIRE_CHANNEL_GRAMMAR already validated the segment */
+  /* v8 ignore start — unreachable: WIRE_CHANNEL_GRAMMAR already validated the segment */
   if (channelMatch === null) return undefined;
+  /* v8 ignore stop */
 
   const generation = parseInt(channelMatch[1]!, 10);
   const stabilityRaw = channelMatch[2];
@@ -147,7 +148,9 @@ export function validateChannelAgreement(
 
   // Extract the trailing dotted segment of proto-csharp-namespace.
   const nsSegments = protoCsharpNs.split(".");
+  /* v8 ignore start — unreachable: split(".") always yields ≥1 element, so the ?? "" fallback never fires */
   const trailingSegment = nsSegments[nsSegments.length - 1] ?? "";
+  /* v8 ignore stop */
 
   if (trailingSegment !== pascalChannel) {
     onError(

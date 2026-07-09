@@ -56,6 +56,14 @@ Copyright (c) DCSV. All rights reserved.
   <ItemGroup>
     <AdditionalFiles Include="$(D2ContractsRoot)encryption-domains\encryption-domains.spec.json" />
     <AdditionalFiles Include="$(D2ContractsRoot)encryption-frame\encryption-frame.spec.json" />
+    <!--
+      Sealed sibling spec — drives SealedFrameLayout.g.cs (the version-2
+      SEALED frame) via SealedFrameGenerator in the same frame-source-gen
+      analyzer project. Deliberately a SEPARATE spec file from
+      encryption-frame.spec.json so the version-1 catalog + its generated
+      artifacts stay byte-identical while the sealed layout evolves.
+    -->
+    <AdditionalFiles Include="$(D2ContractsRoot)encryption-frame-sealed\encryption-frame-sealed.spec.json" />
   </ItemGroup>
 
   <ItemGroup>

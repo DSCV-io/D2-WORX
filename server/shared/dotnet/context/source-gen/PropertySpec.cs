@@ -57,6 +57,15 @@ namespace D2.Shared.Context.SourceGen;
 /// Only meaningful when <see cref="Propagate"/> is true on a string-typed
 /// field.
 /// </param>
+/// <param name="EntryIdMaxLength">
+/// Per-entry id length cap for a propagated list-of-records field (e.g.
+/// <c>CallPath</c>). Bounds a single forged entry id so it cannot bloat log
+/// scope keys / audit columns even when the entry count is within
+/// <see cref="MaxLength"/>. Single source of the cap: the codegen-emitted
+/// <c>PropagatedContextSerializer</c> (both .NET and TypeScript) derives it
+/// from this value — neither hard-codes the number. Only meaningful on a
+/// propagated list-of-records field.
+/// </param>
 /// <param name="Redact">
 /// When true, the property is PII-bearing and must be redacted from logs
 /// and telemetry. The emitter places <c>[RedactData]</c> on the generated
@@ -78,4 +87,5 @@ internal sealed record PropertySpec(
     string? Doc,
     bool Propagate,
     int? MaxLength,
+    int? EntryIdMaxLength,
     bool Redact);

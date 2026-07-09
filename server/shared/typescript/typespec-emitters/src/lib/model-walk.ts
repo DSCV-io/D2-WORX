@@ -11,12 +11,17 @@
 // feeds both).
 //
 // Loud failures:
-//   D2TSP001  unmapped-scalar           — scalar has no registry entry
-//   D2TSP002  unsupported-property-type — anonymous-model / model-variant /
-//                                         otherwise-unrecognized prop kind
-//   D2TSP007  unsupported-union-shape   — a union whose variants are NOT a
-//                                         closed set of string literals
-//                                         (mixed-primitive / numeric / model)
+//   D2TSP001  unmapped-scalar             — scalar has no registry entry
+//   D2TSP002  unsupported-property-type   — anonymous-model / model-variant /
+//                                           otherwise-unrecognized prop kind
+//   D2TSP007  unsupported-union-shape     — a union whose variants are NOT a
+//                                           closed set of string literals
+//                                           (mixed-primitive / numeric / model)
+//
+// @d2Redact is supported on top-level AND nested-model properties at any depth
+// (incl. array elements): the reason is threaded into the resolved field
+// identically to a top-level op-context property. D2TSP001/002/007 still fire
+// identically in nested positions.
 
 import type {
   Enum,
@@ -27,6 +32,7 @@ import type {
   Type,
   Union,
 } from "@typespec/compiler";
+import { resolveEncodedName } from "@typespec/compiler";
 import { D2_FIELD_KEY, D2_REDACT_KEY } from "@d2/typespec-decorators";
 import { resolveScalar } from "./scalar-registry.js";
 import { toPascal } from "./name-transforms.js";
@@ -120,8 +126,29 @@ export interface FieldInfo {
   readonly repeated: boolean;
   /** True when the ModelProperty is marked optional (`?:`). */
   readonly optional: boolean;
-  /** True when the ModelProperty carries @d2Redact state. */
-  readonly redact: boolean;
+  /**
+   * The redaction reason from @d2Redact — a `D2.Shared.Utilities.Enums.RedactReason`
+   * member name (e.g. "SecretInformation"). Present ONLY when the property carries
+   * @d2Redact; undefined otherwise (so `redactReason !== undefined` is the redacted
+   * predicate). The C# DTO emitter emits
+   * `[property: RedactData(Reason = RedactReason.<redactReason>)]`; the reason is
+   * threaded from the decorator (never defaulted) so a secret-adjacent field is
+   * never silently classified as PersonalInformation.
+   */
+  readonly redactReason?: string;
+  /**
+   * The JSON wire-name override from @encodedName("application/json", "..."),
+   * present ONLY when that override DIFFERS from the default camelCase
+   * serialization of csName. The C# DTO emitter emits
+   * [property: JsonPropertyName("<jsonName>")] for it so the JSON wire form is
+   * the canonical override (e.g. "jwks_uri" for a property csName "JwksUri").
+   * Undefined when the property carries no @encodedName, or when the override
+   * equals the default System.Text.Json wire name (no attribute needed —
+   * keeps existing generated output byte-identical). Read via the stock TypeSpec
+   * resolveEncodedName(program, prop, "application/json") API, NOT a @d2* state
+   * map.
+   */
+  readonly jsonName?: string;
   /**
    * Author-pinned proto3 field number from @d2Field(n). Populated when the
    * property carries an @d2Field annotation; undefined for unpinned properties
@@ -198,6 +225,7 @@ export function walkModel(
 
   for (const [propName, prop] of model.properties) {
     const fieldInfo = resolveProperty(
+      program,
       model.name,
       propName,
       prop,
@@ -222,6 +250,7 @@ export function walkModel(
 // ---------------------------------------------------------------------------
 
 function resolveProperty(
+  program: Program,
   modelName: string,
   propName: string,
   prop: ModelProperty,
@@ -232,12 +261,25 @@ function resolveProperty(
   onError: (code: WalkErrorCode, message: string) => void,
 ): FieldInfo | undefined {
   const optional = prop.optional;
-  const redact = redactMap.get(prop) === true;
+  // @d2Redact stores its RedactReason member-name string on the property; a
+  // legacy bare `true` (or any non-string) is treated as "not redacted" so the
+  // emitter never emits a reason it cannot map. The decorator layer guarantees a
+  // valid string reason, so this only degrades defensively.
+  const rawRedact = redactMap.get(prop);
+  const redactReason = typeof rawRedact === "string" ? rawRedact : undefined;
   const fieldNumber =
     typeof fieldMap.get(prop) === "number"
       ? (fieldMap.get(prop) as number)
       : undefined;
   const csName = toPascal(propName);
+
+  // The @encodedName("application/json", "...") override, kept ONLY when it
+  // differs from System.Text.Json's default camelCase wire name for csName.
+  // A property with no @encodedName (every current op) or whose override equals
+  // the default wire name yields jsonName === undefined → the C# DTO emitter
+  // emits NO [JsonPropertyName] attribute → existing generated output is
+  // byte-identical (the differs-from-default guard).
+  const jsonName = resolveJsonName(program, prop, csName);
 
   const t = prop.type;
 
@@ -262,7 +304,8 @@ function resolveProperty(
       protoType: mapping.proto,
       repeated: false,
       optional,
-      redact,
+      redactReason,
+      jsonName,
       fieldNumber,
     };
   }
@@ -271,12 +314,14 @@ function resolveProperty(
   // TypeSpec `T[]` is represented as a Model named "Array" with a template arg.
   if (t.kind === "Model" && t.name === "Array") {
     return resolveArrayProperty(
+      program,
       modelName,
       propName,
       t,
       csName,
       optional,
-      redact,
+      redactReason,
+      jsonName,
       fieldNumber,
       nestedByName,
       enumsByName,
@@ -299,7 +344,8 @@ function resolveProperty(
       protoType: "string",
       repeated: false,
       optional,
-      redact,
+      redactReason,
+      jsonName,
       fieldNumber,
       enumRef: collected,
     };
@@ -326,7 +372,8 @@ function resolveProperty(
       repeated: false,
       // S-6: a `<literals> | null` union normalizes to optional.
       optional: resolved.optional,
-      redact,
+      redactReason,
+      jsonName,
       fieldNumber,
       enumRef: resolved.enum,
     };
@@ -335,6 +382,7 @@ function resolveProperty(
   // ---- Nested model (non-array) --------------------------------------------
   if (t.kind === "Model") {
     const nested = collectNested(
+      program,
       t,
       nestedByName,
       enumsByName,
@@ -351,7 +399,8 @@ function resolveProperty(
       protoType: undefined,
       repeated: false,
       optional,
-      redact,
+      redactReason,
+      jsonName,
       fieldNumber,
       nested,
     };
@@ -366,17 +415,47 @@ function resolveProperty(
 }
 
 /**
+ * Resolve the JSON wire-name override for a property, returning it ONLY when it
+ * differs from the default System.Text.Json camelCase serialization of csName.
+ *
+ * `resolveEncodedName` returns the `@encodedName("application/json", "…")` value
+ * when present, otherwise the property's own TypeSpec name — it NEVER returns
+ * undefined. System.Text.Json (default policy) serializes a PascalCase property
+ * `JwksUri` as `jwksUri` (first char lowered), so the default wire name is
+ * `csName[0].toLowerCase() + csName.slice(1)`. The override is kept only when it
+ * diverges from that default — a property with no `@encodedName` (its resolved
+ * name is its lowerCamel TypeSpec name, which equals the default wire name), or
+ * one whose override happens to equal the camelCase default, yields `undefined`
+ * so NO [JsonPropertyName] attribute is emitted and existing generated output
+ * stays byte-identical (the byte-gate-safety property).
+ */
+function resolveJsonName(
+  program: Program,
+  prop: ModelProperty,
+  csName: string,
+): string | undefined {
+  const encoded = resolveEncodedName(program, prop, "application/json");
+
+  const defaultJsonName =
+    csName.length > 0 ? csName[0]!.toLowerCase() + csName.slice(1) : csName;
+
+  return encoded !== defaultJsonName ? encoded : undefined;
+}
+
+/**
  * Resolve an `Array` (TypeSpec `T[]`) property. The element may be a scalar, a
  * nested model, or a supported enum/string-literal union. Anything else is a
  * loud failure (D2TSP002 / D2TSP007).
  */
 function resolveArrayProperty(
+  program: Program,
   modelName: string,
   propName: string,
   arrayType: Model,
   csName: string,
   optional: boolean,
-  redact: boolean,
+  redactReason: string | undefined,
+  jsonName: string | undefined,
   fieldNumber: number | undefined,
   nestedByName: Map<string, NestedModel>,
   enumsByName: Map<string, NestedEnum>,
@@ -405,7 +484,8 @@ function resolveArrayProperty(
       protoType: mapping.proto,
       repeated: true,
       optional,
-      redact,
+      redactReason,
+      jsonName,
       fieldNumber,
     };
   }
@@ -429,7 +509,8 @@ function resolveArrayProperty(
       protoType: "string",
       repeated: true,
       optional,
-      redact,
+      redactReason,
+      jsonName,
       fieldNumber,
       enumRef: collected,
     };
@@ -458,7 +539,8 @@ function resolveArrayProperty(
       protoType: "string",
       repeated: true,
       optional,
-      redact,
+      redactReason,
+      jsonName,
       fieldNumber,
       enumRef: resolved.enum,
     };
@@ -467,6 +549,7 @@ function resolveArrayProperty(
   if (elementType?.kind === "Model" && elementType.name !== "Array") {
     // Collection of nested models — recurse to collect the nested model.
     const nested = collectNested(
+      program,
       elementType,
       nestedByName,
       enumsByName,
@@ -484,7 +567,8 @@ function resolveArrayProperty(
       protoType: undefined,
       repeated: true,
       optional,
-      redact,
+      redactReason,
+      jsonName,
       fieldNumber,
       nested,
     };
@@ -715,25 +799,34 @@ function sanitizeIdentifier(literal: string): string {
 
 /**
  * Collect a nested model into the dedup map. Returns the NestedModel (which
- * may have been seen before — same object from the map). Nested models carry NO
- * op-level @d2Redact state (they are transport containers, not direct op-context
- * objects), so each is walked against an EMPTY redact map → every nested field's
- * `redact` is false.
+ * may have been seen before — same object from the map). Nested-model properties
+ * thread their @d2Redact reason into the resolved field IDENTICALLY to top-level
+ * op-context properties: the same real redact map `walkModel` reads is threaded
+ * into `resolveProperty`, so a `@d2Redact("SecretInformation")` on a nested field
+ * yields `FieldInfo.redactReason === "SecretInformation"` and the C# DTO emitter
+ * renders `[property: RedactData(Reason = RedactReason.<reason>)]` on the nested
+ * record parameter (the runtime's RedactDataDestructuringPolicy already recurses
+ * into nested types + collection elements, so the mask applies per element).
  *
  * Depth-N: a nested model's own fields are resolved by the SAME `resolveProperty`
  * logic the top-level op model uses — so a nested model that itself references a
  * deeper nested model (or an array of one), an enum, a union, a scalar, or a
- * scalar/model array all resolve identically and recurse to arbitrary depth. The
- * dedup map is registered BEFORE the field walk (with a placeholder), so a cyclic
- * or self-referential model terminates: the recursive `collectNested` for the same
- * name finds the in-progress entry and returns it instead of recursing forever.
+ * scalar/model array all resolve identically and recurse to arbitrary depth. A
+ * deeper model re-enters `collectNested`, which re-derives this same map, so the
+ * redact reason threads at any depth. The dedup map is registered BEFORE the field
+ * walk (with a placeholder), so a cyclic or self-referential model terminates: the
+ * recursive `collectNested` for the same name finds the in-progress entry and
+ * returns it instead of recursing forever.
  *
- * Strict fail-loud: an unmapped nested scalar / unsupported nested type fires the
- * SAME loud diagnostic (D2TSP001 / D2TSP002 / D2TSP007) as a top-level field — it
- * is NEVER silently omitted. The field is dropped only AFTER the loud diagnostic,
- * exactly like a top-level field.
+ * Strict fail-loud: an unmapped nested scalar / unsupported nested type / ambiguous
+ * nested union fires the SAME loud diagnostic (D2TSP001 / D2TSP002 / D2TSP007) as a
+ * top-level field — it is NEVER silently omitted. The field is dropped only AFTER
+ * the loud diagnostic, exactly like a top-level field. An unknown/misclassified
+ * redact reason is caught at the decorator layer (required, validated argument) and
+ * again by the emitter's closed-set `resolveRedactReason` throw — never here.
  */
 function collectNested(
+  program: Program,
   model: Model,
   nestedByName: Map<string, NestedModel>,
   enumsByName: Map<string, NestedEnum>,
@@ -753,21 +846,23 @@ function collectNested(
   };
   nestedByName.set(model.name, nested);
 
-  // Nested models carry no redact state — walk against an empty redact map so every
-  // resolved field's `redact` is false. Resolution is otherwise identical to a
-  // top-level field (scalars, optionals, arrays, deeper nested models, enums/unions),
-  // which is what makes nested support depth-agnostic + uniformly loud.
+  // The redact map (the same one walkModel reads) — nested-model properties thread
+  // their @d2Redact reason identically to top-level op-context properties, at any
+  // depth (deeper models re-enter collectNested, which re-derives this map).
   // The fieldMap (for @d2Field pins) is shared from the outer walkModel so nested
   // model properties can carry their own field-number pins.
-  const emptyRedactMap = new Map<object, unknown>();
+  const redactMap = program.stateMap(D2_REDACT_KEY);
+  /* v8 ignore start — unreachable: both collectNested call sites pass a defined fieldMap, so the ?? fallback never fires */
   const resolvedFieldMap = fieldMap ?? new Map<object, unknown>();
+  /* v8 ignore stop */
 
   for (const [propName, prop] of model.properties) {
     const fieldInfo = resolveProperty(
+      program,
       model.name,
       propName,
       prop,
-      emptyRedactMap,
+      redactMap,
       resolvedFieldMap,
       nestedByName,
       enumsByName,

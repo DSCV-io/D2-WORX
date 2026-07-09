@@ -6,15 +6,26 @@
 
 namespace D2.Edge.KeyCustodian.App.Application.Handlers.Commands.GenerateKey;
 
+using D2.Edge.KeyCustodian.App.Application.CertificateAuthority;
+
+using H = D2.Edge.KeyCustodian.App.Application.Handlers.Commands.GenerateKey.IGenerateKeyHandler;
+using I = GenerateKeyInput;
+using O = D2.Edge.KeyCustodian.Domain.Rules.KeySummary;
+
 /// <summary>
 /// Generates a new pending key for a domain.
 /// </summary>
 /// <remarks>
-/// Validates the domain at the top, rejects a second live pending key, generates
-/// material via the pure <see cref="KeyGeneration"/> rule (or, for a CA domain, the
-/// shared <see cref="CaSuccessorFactory"/>), root-wraps it (zeroing the plaintext
-/// immediately after), mints a kid, builds the <see cref="PendingKey"/> aggregate,
-/// and persists the new row + a <c>Generated</c> audit entry in one
+/// Authority precedes work: the System-plane-only
+/// <see cref="KeyLifecycleAuthority.AuthorizeLifecycleMutation"/> gate runs FIRST
+/// (fail-closed; deny emits the lifecycle authority-rejection telemetry). Then
+/// validates the domain, enforces the canonical domain→key-type binding
+/// (mismatch → <c>KEYCUSTODIAN_KEY_TYPE_DOMAIN_MISMATCH</c>), rejects a second live
+/// pending key, generates material via the pure <see cref="KeyGeneration"/> rule
+/// (or, for a CA domain, the shared <see cref="CaSuccessorFactory"/>), root-wraps
+/// it (zeroing the plaintext immediately after), mints a kid, builds the
+/// <see cref="PendingKey"/> aggregate, and persists the new row + a
+/// <c>Generated</c> audit entry in one
 /// <see cref="IKeyCustodianDbContext.SaveChangesAsync"/>. Routing CA generation
 /// through this handler keeps <c>RunDueRotations</c> type-agnostic — it dispatches
 /// <c>GenerateKey(domain, inheritedType)</c> and the handler forks by type.
@@ -25,9 +36,10 @@ public sealed class GenerateKeyHandler(
     IKeyCustodianDbContext db,
     IOptions<KeyCustodianOptions> options,
     [FromKeyedServices(KeyCustodianRootKey.ROOT_SERVICE_KEY)] IPayloadCrypto rootCrypto,
+    ICaRootSigningCapability rootSigning,
     IClock clock)
-    : BaseRepoHandler<GenerateKeyHandler, GenerateKeyInput, KeySummary>(ctx, classifier),
-      IGenerateKeyHandler
+    : BaseRepoHandler<GenerateKeyHandler, I, O>(ctx, classifier),
+      H
 {
     /// <inheritdoc/>
     /// <remarks>
@@ -41,24 +53,39 @@ public sealed class GenerateKeyHandler(
     };
 
     /// <inheritdoc/>
-    protected override async ValueTask<D2Result<KeySummary?>> ExecuteAsync(
-        GenerateKeyInput input, CancellationToken ct)
+    protected override async ValueTask<D2Result<O?>> ExecuteAsync(
+        I input, CancellationToken ct)
     {
+        // Authority precedes work: lifecycle mutations are System-plane-only, fail-closed.
+        var authorityResult =
+            KeyLifecycleAuthority.AuthorizeLifecycleMutation(Context.Request.Origin);
+
+        if (authorityResult.Failed)
+        {
+            return LifecycleAuthorityTelemetry.Deny<O>(
+                Context.Logger, authorityResult, Context.Request.ImmediateCaller, "generate-key");
+        }
+
         var domainResult = KeyDomain.Create(input.Domain);
 
-        if (domainResult.BubbleOnFailure<KeyDomain, KeySummary>(out var bubbled, out var domain))
+        if (domainResult.BubbleOnFailure<KeyDomain, O>(out var bubbled, out var domain))
             return bubbled;
+
+        // Enforce the canonical domain→key-type binding BEFORE any store access — a
+        // mismatched (domain, type) pair is a permanent client error, never persisted.
+        if (input.KeyType != domain!.KeyType)
+            return KeyCustodianFailures<O?>.KeyTypeDomainMismatch();
 
         // Reject a second live pending key for the domain — exactly one pending
         // key may exist at a time.
         var hasPending = await db.Keys
-            .ForDomain(domain!.Value)
+            .ForDomain(domain.Value)
             .Pending()
             .AnyAsync(ct)
             .ConfigureAwait(false);
 
         if (hasPending)
-            return KeyCustodianFailures<KeySummary?>.PendingKeyAlreadyExists();
+            return KeyCustodianFailures<O?>.PendingKeyAlreadyExists();
 
         // CA-certificate keys take the dedicated generation path (subject + issuer
         // are not expressible through the symmetric/RSA KeyGeneration rule). The
@@ -66,11 +93,19 @@ public sealed class GenerateKeyHandler(
         // root, root-wraps the new private key, and builds the pending aggregate.
         var pendingResult = input.KeyType == KeyType.X509CaCertificate
             ? await CaSuccessorFactory
-                .BuildAsync(db, rootCrypto, options.Value, clock, domain, ct)
+                .BuildAsync(
+                    db,
+                    rootCrypto,
+                    rootSigning,
+                    options.Value,
+                    clock,
+                    domain,
+                    KeyCustodianMetrics.CaRootKeyUses.Operation.GENERATE_SUCCESSOR,
+                    ct)
                 .ConfigureAwait(false)
             : GenerateNonCaPending(input.KeyType, domain);
 
-        if (pendingResult.BubbleOnFailure<PendingKey, KeySummary>(
+        if (pendingResult.BubbleOnFailure<PendingKey, O>(
             out var pendingBubble, out var pendingNullable))
             return pendingBubble;
 
@@ -86,7 +121,7 @@ public sealed class GenerateKeyHandler(
 
         KeyCustodianMetrics.SR_KeyGenerationsTotal.Add(1);
 
-        return D2Result<KeySummary?>.Created(KeySummary.From(pending));
+        return D2Result<O?>.Created(O.From(pending));
     }
 
     private D2Result<PendingKey> GenerateNonCaPending(KeyType keyType, KeyDomain domain)

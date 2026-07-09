@@ -119,7 +119,7 @@ describe("openApiByteParity_CommittedFixturesIdentical", () => {
   it("deliberate-drift detection: a mutated version document does NOT match regenerated output", () => {
     const drifted = readFixture(
       join(OPENAPI_GEN, "open-api-versioned-fixtures.2-0.openapi.g.json"),
-    ).replace("exportReport", "exportReportDRIFTED");
+    ).replace("openApiExportReportFixture", "exportReportDRIFTED");
     expect(
       regenerated("open-api-versioned-fixtures.2-0.openapi.g.json"),
     ).not.toBe(drifted);

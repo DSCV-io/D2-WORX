@@ -19,6 +19,11 @@ namespace D2.Edge.KeyCustodian.Domain.Enums;
 /// keys: they carry an encrypted private key in <c>KeyMaterialEncrypted</c> and
 /// the CA certificate (not a bare public key) in <c>CaCertificateMaterial</c> —
 /// the latter is presented on the wire during the TLS handshake.
+/// <c>EcdhSealing</c> keys are asymmetric ECDH P-256 sealing keypairs: they carry
+/// an encrypted private key in <c>KeyMaterialEncrypted</c> and the unencrypted SPKI
+/// public key in <c>PublicKeyMaterial</c> — the latter is fetched by any workload
+/// that wants to seal a payload TO the owning service; the private half opens frames
+/// sealed to it.
 /// </remarks>
 public enum KeyType
 {
@@ -45,4 +50,14 @@ public enum KeyType
     /// leaf certificates are issued on demand and never persisted as managed keys.
     /// </summary>
     X509CaCertificate,
+
+    /// <summary>
+    /// Asymmetric ECDH P-256 sealing keypair — the private key is encrypted in
+    /// <c>KeyMaterialEncrypted</c> and the SPKI public key is stored plaintext in
+    /// <c>PublicKeyMaterial</c> (fetched to seal a payload TO the owning service).
+    /// Provisioned per service under the <c>seal:&lt;serviceId&gt;</c> key domain
+    /// family; the public key encrypts, the private key opens (the sealed
+    /// asymmetric payload-encryption mode).
+    /// </summary>
+    EcdhSealing,
 }

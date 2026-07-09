@@ -43,6 +43,25 @@ internal static class IntegrationRedactionFixtures
         public IReadOnlyList<TypeLevelPii> Items { get; init; } = [];
     }
 
+    /// <summary>
+    /// The exact emitted <c>KeyringEntry</c> shape — a positional record whose
+    /// <c>KeyBytes</c> parameter carries a property-level <c>[RedactData]</c> (secret) and
+    /// whose <c>Kid</c> stays visible. Pins that the runtime masks a nested-record
+    /// property-level redacted <c>byte[]</c> (the nested-model emitter path this deliverable
+    /// added).
+    /// </summary>
+    internal sealed record KeyringEntryFixture(
+        string Kid,
+        [property: RedactData(Reason = RedactReason.SecretInformation)] byte[] KeyBytes);
+
+    /// <summary>Outer with a collection of <see cref="KeyringEntryFixture"/> (the emitted keyring shape).</summary>
+    internal sealed record OuterWithKeyringEntriesFixture
+    {
+        public string ActiveKid { get; init; } = string.Empty;
+
+        public IReadOnlyList<KeyringEntryFixture> Entries { get; init; } = [];
+    }
+
     /// <summary>Plain non-redacted record — passthrough fixture.</summary>
     internal sealed record PassthroughRecord(string Value, int Number);
 

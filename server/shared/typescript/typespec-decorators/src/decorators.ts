@@ -11,6 +11,7 @@ import type {
 import {
   D2_AUDIENCE_KEY,
   D2_COMMAND_KEY,
+  D2_CONCERN_KEY,
   D2_CSRF_KEY,
   D2_FIELD_KEY,
   D2_GRPC_METHOD_KEY,
@@ -32,12 +33,14 @@ import {
 } from "./state-keys.js";
 import {
   validateAudience,
+  validateConcern,
   validateCsrfPosture,
   validateFieldNumber,
   validateGrpcStreaming,
   validateIdempotent,
   validatePushTarget,
   validateRateLimitTier,
+  validateRedactReason,
   validateResilience,
   validateResultPredicate,
   validateReservedName,
@@ -92,8 +95,9 @@ export function $d2RateLimitTier(
 
 /**
  * Stores the expected JWT audience claim string on the operation.
- * Validated against contracts/auth-audiences/audiences.spec.json; "d2-edge"
- * is always valid as the Edge self-audience.
+ * Validated against the spec-driven set in
+ * contracts/auth-protocol-audiences/protocol-audiences.spec.json via
+ * loadProtocolAudienceValues() — only declared protocol audiences pass.
  * Emitters read back: program.stateMap(D2_AUDIENCE_KEY).get(op) → string.
  */
 export function $d2Audience(
@@ -120,6 +124,23 @@ export function $d2ServedBy(
 }
 
 /**
+ * Stores the co-location concern segment on the operation. The concern names
+ * the folder + namespace segment a client-exposed op's transport DTOs live in
+ * (`<csharp-clients-namespace>.<Concern>`), co-located with the hand-written
+ * runtime that serves them. Shape-check only — the segment must be a legal
+ * single C# identifier. Emitters read back:
+ * program.stateMap(D2_CONCERN_KEY).get(op) → string.
+ */
+export function $d2Concern(
+  context: DecoratorContext,
+  target: Operation,
+  concern: string,
+): void {
+  validateConcern(context, target, concern);
+  context.program.stateMap(D2_CONCERN_KEY).set(target, concern);
+}
+
+/**
  * Stores the gRPC service+method+streaming-mode tuple on the operation.
  * `streaming` selects the proto `rpc` form; valid values are
  * `unary | serverStream | clientStream | bidiStream`. Defaults to `"unary"`
@@ -141,16 +162,23 @@ export function $d2GrpcMethod(
 }
 
 /**
- * Marks a model property as PII to be redacted in structured logs.
- * Stores `true` on the property; emitters check for presence.
+ * Marks a model property as sensitive — redacted from structured logs. The
+ * required `reason` names the data class; it is validated against the
+ * `D2.Shared.Utilities.Enums.RedactReason` member set (fail-loud on an unknown
+ * value) and stored verbatim on the property. Emitters read back the reason
+ * string and map it to `RedactReason.<reason>`. Storing the reason (not a bare
+ * `true`) is what lets the emitter fail closed rather than default a
+ * secret-adjacent field to `PersonalInformation`.
  * The target type `ModelProperty` is enforced by the `extern dec` declaration
- * in lib/main.tsp — no additional runtime check is needed here.
+ * in lib/main.tsp — no additional runtime target check is needed here.
  */
 export function $d2Redact(
   context: DecoratorContext,
   target: ModelProperty,
+  reason: string,
 ): void {
-  context.program.stateMap(D2_REDACT_KEY).set(target, true);
+  validateRedactReason(context, target, reason);
+  context.program.stateMap(D2_REDACT_KEY).set(target, reason);
 }
 
 /**

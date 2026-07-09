@@ -47,6 +47,7 @@ internal static class KcInfraTestKit
         new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?>
             {
+                ["KEYCUSTODIAN_APP:IssuerBaseUrl"] = "https://edge.internal",
                 ["KEYCUSTODIAN_APP:Default:Cadence"] = "30.00:00:00",
                 ["KEYCUSTODIAN_APP:Default:Grace"] = "7.00:00:00",
                 ["KEYCUSTODIAN_APP:Default:SmokeSoak"] = "01:00:00",

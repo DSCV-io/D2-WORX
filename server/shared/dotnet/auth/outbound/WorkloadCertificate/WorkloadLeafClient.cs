@@ -19,21 +19,40 @@ using Microsoft.Extensions.Logging;
 using NodaTime;
 
 /// <summary>
-/// Refresh-ahead implementation of <see cref="IWorkloadLeafSource"/>. Reissues this
-/// workload's leaf through the host-supplied <see cref="IWorkloadCertificateIssuer"/>,
-/// builds a live private-key-bearing leaf + its issuing intermediate into a
-/// presentable chain context, caches it in-memory until it nears expiry, and reissues
-/// via the background <see cref="WorkloadLeafRefreshHostedService"/>. Concurrent callers
-/// (on-demand + the refresh service) dedup to a single reissue via <c>Singleflight</c>;
-/// a <c>CircuitBreaker</c> fast-fails after repeated issuer-unreachable failures; a
-/// still-valid cached leaf is served stale while a reissue is attempted.
+/// Refresh-ahead implementation of <see cref="IWorkloadLeafSource"/>. Generates a
+/// FRESH ECDSA P-256 keypair per reissue, builds a PKCS#10 certificate-signing
+/// request, obtains a signed leaf through the host-supplied
+/// <see cref="IWorkloadCertificateIssuer"/>, pairs the returned certificate with
+/// the LOCAL private key, builds the leaf + issuing intermediate into a presentable
+/// chain context, caches it in-memory until it nears expiry, and reissues via the
+/// background <see cref="WorkloadLeafRefreshHostedService"/>. Concurrent callers
+/// (on-demand + the refresh service) dedup to a single reissue via
+/// <c>Singleflight</c>; a <c>CircuitBreaker</c> fast-fails after repeated
+/// issuer-unreachable failures; a still-valid cached leaf is served stale while a
+/// reissue is attempted.
 /// </summary>
 /// <remarks>
+/// <para>
+/// <b>The private key never crosses the issuer seam.</b> The keypair is generated
+/// inside this client (fresh per reissue — per-rotation key freshness), the CSR
+/// carries only public material, and the issuer returns only certificates. The
+/// CSR subject is a fixed placeholder: the issuer structurally ignores it (the
+/// leaf's subject-alternative-name is the issuer's authenticated view of this
+/// workload), so the client deliberately carries NO identity configuration.
+/// </para>
+/// <para>
+/// <b>Mismatch defense.</b> A returned leaf whose public key does not match the
+/// local keypair can never be presented (there is no private key for it), so it
+/// is rejected before any cache write — the still-valid cached leaf keeps serving
+/// and the reissue counts as a transient failure.
+/// </para>
+/// <para>
 /// The refresh-ahead loop keeps <see cref="WorkloadLeafCache"/> holding a current
 /// chain. The gRPC presentation path (<c>AddD2WorkloadCertificate</c>) reads that
 /// chain context at CHANNEL BUILD, not per-connection — so a consumer holding a
 /// long-lived channel adopts a rotated leaf only by rebuilding the channel.
 /// Rebuilding a long-lived channel on rotation is the consumer's responsibility.
+/// </para>
 /// </remarks>
 [MustDisposeResource(false)]
 internal sealed class WorkloadLeafClient : IWorkloadLeafSource, IDisposable
@@ -42,6 +61,11 @@ internal sealed class WorkloadLeafClient : IWorkloadLeafSource, IDisposable
     // operation per process, so the key is a constant. Multiple concurrent callers
     // (on-demand + the refresh hosted service) all dedup to one reissue.
     private const string _SINGLEFLIGHT_KEY = "workload-leaf";
+
+    // Fixed CSR subject placeholder. The issuer structurally ignores the CSR's
+    // subject (the SAN authority is its authenticated peer view), so the client
+    // cannot and need not name itself — no identity knob exists by design.
+    private const string _CSR_SUBJECT = "CN=d2-workload";
 
     private readonly IWorkloadCertificateIssuer r_issuer;
     private readonly WorkloadLeafCache r_cache;
@@ -109,7 +133,8 @@ internal sealed class WorkloadLeafClient : IWorkloadLeafSource, IDisposable
         {
             var reissueResult = await r_singleflight.ExecuteAsync(
                 _SINGLEFLIGHT_KEY,
-                innerCt => r_circuitBreaker.ExecuteAsync(ReissueAsync, ct: innerCt),
+                innerCt => r_circuitBreaker.ExecuteAsync(
+                    breakerCt => ReissueAsync(force: false, breakerCt), ct: innerCt),
                 ct);
 
             if (!reissueResult.Success)
@@ -133,7 +158,11 @@ internal sealed class WorkloadLeafClient : IWorkloadLeafSource, IDisposable
     /// <summary>
     /// Forces a reissue of the cached leaf. Called by
     /// <see cref="WorkloadLeafRefreshHostedService"/> on the proactive schedule.
-    /// Goes through the same singleflight as on-demand callers.
+    /// Goes through the same singleflight as on-demand callers, but — unlike the
+    /// opportunistic on-demand path — mints a FRESH leaf even when a still-valid
+    /// leaf is cached: this is the refresh-ahead entry point, and it fires precisely
+    /// while the current leaf is valid but inside the lead-time window, so it MUST
+    /// reissue rather than short-circuit on the still-valid cache.
     /// </summary>
     /// <param name="ct">Cancellation token.</param>
     /// <returns>A <see cref="D2Result"/> describing the reissue outcome.</returns>
@@ -145,7 +174,8 @@ internal sealed class WorkloadLeafClient : IWorkloadLeafSource, IDisposable
         {
             var reissueResult = await r_singleflight.ExecuteAsync(
                 _SINGLEFLIGHT_KEY,
-                innerCt => r_circuitBreaker.ExecuteAsync(ReissueAsync, ct: innerCt),
+                innerCt => r_circuitBreaker.ExecuteAsync(
+                    breakerCt => ReissueAsync(force: true, breakerCt), ct: innerCt),
                 ct);
 
             return reissueResult.Success
@@ -165,9 +195,10 @@ internal sealed class WorkloadLeafClient : IWorkloadLeafSource, IDisposable
     }
 
     /// <summary>
-    /// Builds a live, private-key-bearing leaf <see cref="X509Certificate2"/> from raw
-    /// issuance material and zeroes the PKCS#8 buffer once the cert owns the key.
-    /// Mirrors the issuance handler's ephemeral-key import path.
+    /// Builds a live, private-key-bearing leaf <see cref="X509Certificate2"/> by
+    /// pairing the issuer-returned certificate with the LOCALLY-generated keypair.
+    /// The key was never received and never transmitted — there is no received
+    /// secret buffer to import or zero.
     /// </summary>
     /// <remarks>
     /// <para>
@@ -186,28 +217,23 @@ internal sealed class WorkloadLeafClient : IWorkloadLeafSource, IDisposable
     /// key lands in a Schannel-usable perishable key container that is deleted when
     /// the returned <see cref="X509Certificate2"/> is disposed — the cache disposes
     /// the superseded / current leaf, so no key container leaks across a refresh.
+    /// The PKCS#12 buffer (which carries the private key) is zeroed.
     /// </para>
     /// </remarks>
-    /// <param name="material">The raw issuance material.</param>
+    /// <param name="material">The issuer-returned certificate material (all public).</param>
+    /// <param name="localKey">The locally-generated keypair the leaf certifies.</param>
     /// <returns>The live leaf certificate.</returns>
-    private static X509Certificate2 BuildLiveLeaf(WorkloadLeafMaterial material)
+    private static X509Certificate2 BuildLiveLeaf(WorkloadLeafMaterial material, ECDsa localKey)
     {
-        using var ecdsa = ECDsa.Create();
-        ecdsa.ImportPkcs8PrivateKey(material.PrivateKeyPkcs8, out _);
-
-        // The leaf private key is SECRET — zero the PKCS#8 buffer once the live
-        // certificate's key handle owns the material.
-        CryptographicOperations.ZeroMemory(material.PrivateKeyPkcs8);
-
         using var certOnly = X509CertificateLoader.LoadCertificate(material.CertificateDer);
 
         if (!OperatingSystem.IsWindows())
-            return certOnly.CopyWithPrivateKey(ecdsa);
+            return certOnly.CopyWithPrivateKey(localKey);
 
         // Windows-only: re-home the ephemeral key into a Schannel-usable perishable
         // key container via a PKCS#12 round-trip. The intermediate ephemeral cert is
         // disposed and the PKCS#12 buffer (which carries the private key) is zeroed.
-        using var ephemeralLeaf = certOnly.CopyWithPrivateKey(ecdsa);
+        using var ephemeralLeaf = certOnly.CopyWithPrivateKey(localKey);
         var pfx = ephemeralLeaf.Export(X509ContentType.Pkcs12);
 
         try
@@ -226,19 +252,21 @@ internal sealed class WorkloadLeafClient : IWorkloadLeafSource, IDisposable
     }
 
     /// <summary>
-    /// Builds the cached snapshot from raw issuance material: the live leaf
-    /// (<see cref="BuildLiveLeaf"/>), the public issuing intermediate, and — where the
-    /// platform supports it — the pre-built <see cref="SslStreamCertificateContext"/>
-    /// carrying the full <c>leaf → intermediate</c> chain. Presenting the chain (not
-    /// the bare leaf) is what lets a strict peer's root-anchored chain rebuild complete
-    /// without a machine-store-resident intermediate or a network (AIA) fetch.
+    /// Builds the cached snapshot: the live leaf (<see cref="BuildLiveLeaf"/> —
+    /// paired with the local keypair), the public issuing intermediate, and — where
+    /// the platform supports it — the pre-built
+    /// <see cref="SslStreamCertificateContext"/> carrying the full
+    /// <c>leaf → intermediate</c> chain. Presenting the chain (not the bare leaf)
+    /// is what lets a strict peer's root-anchored chain rebuild complete without a
+    /// machine-store-resident intermediate or a network (AIA) fetch.
     /// </summary>
     /// <remarks>
     /// <para>
     /// The intermediate is public (no private key), so it carries no key-container
-    /// concern; the leaf carries the secret key. The context holds references to both
-    /// certs — they MUST stay alive while the context is presentable, so the snapshot
-    /// owns them and the cache disposes both only on swap/dispose.
+    /// concern; the leaf carries the locally-generated secret key. The context holds
+    /// references to both certs — they MUST stay alive while the context is
+    /// presentable, so the snapshot owns them and the cache disposes both only on
+    /// swap/dispose.
     /// </para>
     /// <para>
     /// <c>offline: true</c> keeps the chain build store-only — the client never reaches
@@ -254,17 +282,36 @@ internal sealed class WorkloadLeafClient : IWorkloadLeafSource, IDisposable
     /// action), after which this same build succeeds and the chain is presented.
     /// </para>
     /// </remarks>
-    /// <param name="material">The raw issuance material (its PKCS#8 buffer is zeroed inside <see cref="BuildLiveLeaf"/>).</param>
+    /// <param name="material">The issuer-returned certificate material (all public).</param>
+    /// <param name="localKey">The locally-generated keypair the leaf certifies.</param>
     /// <returns>The snapshot to publish into the cache.</returns>
-    private static WorkloadLeafSnapshot BuildSnapshot(WorkloadLeafMaterial material)
+    private static WorkloadLeafSnapshot BuildSnapshot(
+        WorkloadLeafMaterial material, ECDsa localKey)
     {
-        var leaf = BuildLiveLeaf(material);
+        var leaf = BuildLiveLeaf(material, localKey);
 
-        var intermediate = X509CertificateLoader.LoadCertificate(material.IssuerCertificateDer);
+        X509Certificate2? intermediate = null;
 
-        var chainContext = TryBuildChainContext(leaf, intermediate);
+        try
+        {
+            intermediate = X509CertificateLoader.LoadCertificate(material.IssuerCertificateDer);
 
-        return new WorkloadLeafSnapshot(leaf, intermediate, chainContext, material.NotAfter);
+            var chainContext = TryBuildChainContext(leaf, intermediate);
+
+            return new WorkloadLeafSnapshot(leaf, intermediate, chainContext, material.NotAfter);
+        }
+        catch
+        {
+            // A malformed intermediate DER (LoadCertificate) — or a non-Windows chain-build
+            // failure — throws AFTER the live leaf exists; the leaf carries the secret key,
+            // so an un-guarded throw here leaks its Schannel key-container handle. Dispose
+            // both owned handles on the error path, then rethrow so ReissueAsync's serve-
+            // stale catch treats it as transient (the cached leaf keeps serving).
+            leaf.Dispose();
+            intermediate?.Dispose();
+
+            throw;
+        }
     }
 
     /// <summary>
@@ -298,24 +345,82 @@ internal sealed class WorkloadLeafClient : IWorkloadLeafSource, IDisposable
         }
     }
 
-    private async ValueTask<ReissueResult> ReissueAsync(CancellationToken ct)
+    /// <summary>
+    /// Returns whether the returned leaf certifies the LOCAL keypair — its
+    /// SubjectPublicKeyInfo must equal the local key's, byte for byte.
+    /// </summary>
+    /// <param name="certificateDer">The issuer-returned leaf certificate DER.</param>
+    /// <param name="localKey">The locally-generated keypair.</param>
+    /// <returns><see langword="true"/> when the leaf's public key matches the local key.</returns>
+    private static bool LeafMatchesLocalKey(byte[] certificateDer, ECDsa localKey)
     {
-        // Cache re-check: a sibling caller may have populated the cache between the
-        // GetCurrentLeafAsync TryGet and the Singleflight entry. Without this
-        // re-check we'd issue a redundant reissue right after a peer just refreshed.
-        var preReissueCache = r_cache.TryGet(Instant.FromDateTimeOffset(r_clock.GetUtcNow()));
+        using var leaf = X509CertificateLoader.LoadCertificate(certificateDer);
+        var leafSpki = leaf.PublicKey.ExportSubjectPublicKeyInfo();
+        var localSpki = localKey.ExportSubjectPublicKeyInfo();
 
-        if (preReissueCache is not null)
-            return ReissueResult.Successful();
+        return leafSpki.AsSpan().SequenceEqual(localSpki);
+    }
+
+    private async ValueTask<ReissueResult> ReissueAsync(bool force, CancellationToken ct)
+    {
+        // Opportunistic-path cache re-check (force == false ONLY). A sibling on-demand
+        // caller may have populated the cache between the GetCurrentLeafAsync TryGet and
+        // this Singleflight body; suppressing a redundant mint there is correct — an
+        // on-demand caller only needs SOME non-expired leaf, and one now exists.
+        //
+        // The refresh-ahead FORCE path deliberately SKIPS this suppression. It fires
+        // precisely when the cached leaf is still valid but inside the lead-time window,
+        // so a "still-valid cached leaf" is exactly the state in which it MUST proceed to
+        // mint a fresh leaf ahead of expiry; short-circuiting here would defeat
+        // refresh-ahead entirely (the leaf would only ever reissue at/after expiry,
+        // stalling on-demand callers on a synchronous mint on the hot path).
+        //
+        // Concurrency: both paths share one Singleflight key, so a force + on-demand race
+        // dedups to a single mint (no double-mint; the cache's Interlocked swap makes the
+        // publish torn-read-free). A valid-cache on-demand caller never enters this body
+        // (it returns the cached leaf at the outer GetCurrentLeafAsync TryGet), so a force
+        // follower can never be silently suppressed by a non-force Singleflight leader.
+        if (!force)
+        {
+            var preReissueCache = r_cache.TryGet(Instant.FromDateTimeOffset(r_clock.GetUtcNow()));
+
+            if (preReissueCache is not null)
+                return ReissueResult.Successful();
+        }
 
         try
         {
-            var issuance = await r_issuer.IssueAsync(ct);
+            // 1) Fresh keypair per reissue — the workload owns its key lifecycle;
+            //    rotation freshness holds because a new key is minted every cycle.
+            using var localKey = ECDsa.Create(ECCurve.NamedCurves.nistP256);
+
+            // 2) Build the PKCS#10 CSR (public key + placeholder subject +
+            //    self-signature — public material by construction).
+            var csrRequest = new CertificateRequest(
+                _CSR_SUBJECT, localKey, HashAlgorithmName.SHA256);
+
+            var csrDer = csrRequest.CreateSigningRequest();
+
+            // 3) Obtain the signed leaf. Only the CSR crosses the seam.
+            var issuance = await r_issuer.IssueAsync(csrDer, ct);
 
             if (!issuance.Success || issuance.Data is null)
                 return ReissueResult.TransientFailure();
 
-            r_cache.Set(BuildSnapshot(issuance.Data));
+            // 4) Mismatch defense: a leaf certifying a DIFFERENT key than the local
+            //    one can never be presented (no private key exists for it) — reject
+            //    BEFORE any cache write; the still-valid cached leaf keeps serving.
+            if (!LeafMatchesLocalKey(issuance.Data.CertificateDer, localKey))
+            {
+                r_logger.WorkloadLeafIssuerKeyMismatch();
+                OutboundTelemetry.SR_LeafReissueFailures.Add(1);
+                return ReissueResult.TransientFailure();
+            }
+
+            // 5) Pair the returned certificate with the local key and publish. The
+            //    local handle is disposed by the using once the live cert owns the
+            //    key (CopyWithPrivateKey duplicates it into the certificate).
+            r_cache.Set(BuildSnapshot(issuance.Data, localKey));
 
             return ReissueResult.Successful();
         }
@@ -325,13 +430,14 @@ internal sealed class WorkloadLeafClient : IWorkloadLeafSource, IDisposable
         }
         catch (Exception ex)
         {
-            // Serve-stale contract: ANY exception building the snapshot — the live
-            // certificate (CryptographicException, ArgumentException,
-            // InvalidOperationException from CopyWithPrivateKey algorithm mismatch),
-            // decoding the intermediate DER, or constructing the chain context
-            // (NotSupportedException if the leaf lacks a private key) — is treated as
-            // transient: the cached leaf keeps being served while the next reissue
-            // cycle may succeed. OperationCanceledException propagates above.
+            // Serve-stale contract: ANY exception generating the keypair, building
+            // the CSR, or building the snapshot — the live certificate
+            // (CryptographicException, ArgumentException, InvalidOperationException
+            // from CopyWithPrivateKey algorithm mismatch), decoding the intermediate
+            // DER, or constructing the chain context (NotSupportedException if the
+            // leaf lacks a private key) — is treated as transient: the cached leaf
+            // keeps being served while the next reissue cycle may succeed.
+            // OperationCanceledException propagates above.
             // Sanitize: never log ex itself (a cert-parse exception could echo
             // subject / SAN content). Type FullName + first frame are safe.
             // The cached leaf's not-after is captured as a structured log field
@@ -339,6 +445,7 @@ internal sealed class WorkloadLeafClient : IWorkloadLeafSource, IDisposable
             // It cannot be a metric tag (timestamps are high-cardinality, not enumerable
             // dimensions); the log record is the correct OTel home for this value.
             var staleCached = r_cache.PeekRaw();
+
             var cachedLeafNotAfter = staleCached is not null
                 ? staleCached.NotAfter.ToDateTimeOffset().ToString("O")
                 : "none";

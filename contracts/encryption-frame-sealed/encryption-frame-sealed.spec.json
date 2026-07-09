@@ -1,0 +1,64 @@
+{
+  "$schema": "./schema.json",
+  "version": 2,
+  "fields": [
+    {
+      "constName": "VERSION",
+      "offset": 0,
+      "length": 1,
+      "kind": "byte_fixed",
+      "doc": "Sealed frame format version. Single byte. Currently 2 (version 1 is the symmetric frame from contracts/encryption-frame/). Decoder MUST throw FrameVersionMismatchException on any other value. Bumping the version is a wire-breaking change that requires every consumer to handle both versions during the rollout window."
+    },
+    {
+      "constName": "RECIPIENT_KID_LENGTH",
+      "offset": 1,
+      "length": 1,
+      "kind": "byte_fixed",
+      "doc": "Byte count of the UTF-8 encoded recipient kid that follows. Single byte (max 255). Decoder validates against CONSTRAINT_MIN_KID_LENGTH / CONSTRAINT_MAX_KID_LENGTH — the same kid grammar as the symmetric frame."
+    },
+    {
+      "constName": "RECIPIENT_KID",
+      "offset": 2,
+      "length": -1,
+      "kind": "variable_utf8",
+      "doc": "UTF-8 bytes of the recipient key id — which recipient sealing keypair (active or retiring kid of the consumer service) opens this frame. Length is variable, declared by RECIPIENT_KID_LENGTH. The opener resolves the kid against its own private recipient keyring. The kid does NOT encode the recipient service id; service binding lives in the AEAD associated data and key derivation."
+    },
+    {
+      "constName": "EPH_PUB_LENGTH",
+      "offset": -1,
+      "length": 2,
+      "kind": "byte_fixed",
+      "doc": "Byte count of the ephemeral public key that follows, as a 2-byte BIG-ENDIAN unsigned integer. A P-256 SubjectPublicKeyInfo is ~91 bytes — beyond a single-byte prefix. Decoder validates against CONSTRAINT_MAX_EPH_PUB_LENGTH before allocating. Offset is variable — comes immediately after RECIPIENT_KID."
+    },
+    {
+      "constName": "EPH_PUB",
+      "offset": -1,
+      "length": -1,
+      "kind": "variable_binary_u16be",
+      "doc": "The per-message ephemeral P-256 public key as SubjectPublicKeyInfo DER bytes. Raw binary (not UTF-8); length declared by the preceding EPH_PUB_LENGTH big-endian prefix. Wire-public by design — publishing the ephemeral public half is how ECDH-ES works; only the recipient's static private key can combine with it to derive the content-encryption key."
+    },
+    {
+      "constName": "NONCE",
+      "offset": -1,
+      "length": 12,
+      "kind": "byte_fixed",
+      "doc": "AES-GCM nonce. Fixed 12 bytes (GCM-spec). Offset is variable — comes immediately after EPH_PUB. Generated fresh per seal; the content-encryption key is itself fresh per message, so nonce reuse across messages is structurally impossible."
+    },
+    {
+      "constName": "CIPHERTEXT_WITH_TAG",
+      "offset": -1,
+      "length": -1,
+      "kind": "variable_remainder",
+      "doc": "Ciphertext followed by the AES-GCM authentication tag. Length is variable (frame_size - VERSION - RECIPIENT_KID_LENGTH - RECIPIENT_KID - EPH_PUB_LENGTH - EPH_PUB - NONCE). The trailing CONSTRAINT_TAG_LENGTH bytes are the authentication tag; the decoder slices them off before decrypting the rest."
+    }
+  ],
+  "constraints": {
+    "minKidLength": 1,
+    "maxKidLength": 64,
+    "ephPubLengthPrefixSize": 2,
+    "maxEphPubLength": 256,
+    "nonceLength": 12,
+    "tagLength": 16,
+    "minFrameSize": 34
+  }
+}

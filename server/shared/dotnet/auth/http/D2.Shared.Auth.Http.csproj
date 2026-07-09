@@ -91,6 +91,11 @@ Copyright (c) DCSV. All rights reserved.
       source emits both sides).
     -->
     <ProjectReference Include="..\..\problem-details\abstractions\D2.Shared.ProblemDetails.Abstractions.csproj" />
+    <!--
+      time — IClock injection seam used by the Edge-inbound establishment middleware to
+      timestamp the Edge call-path entry it starts the path with.
+    -->
+    <ProjectReference Include="..\..\time\D2.Shared.Time.csproj" />
   </ItemGroup>
 
   <ItemGroup>

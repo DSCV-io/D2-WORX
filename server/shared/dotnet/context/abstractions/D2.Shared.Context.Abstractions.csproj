@@ -48,9 +48,35 @@ Copyright (c) DCSV. All rights reserved.
   -->
 
   <ItemGroup>
+    <!--
+      Microsoft.Extensions.DependencyInjection.Abstractions — the System worker
+      establishment bootstrap (SystemRequestContextBootstrap) resolves the scope's
+      MutableRequestContext via GetRequiredService<T>(). Zero-runtime-cost abstractions
+      package; this is a plain Sdk lib (no AspNetCore framework reference) so the
+      explicit PackageReference does not trigger NU1510.
+    -->
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
+    <!--
+      Microsoft.Extensions.Logging.Abstractions — carries the ILogger<T> type + the
+      [LoggerMessage] source generator, consumed by SystemRequestContextBootstrapLog for
+      the System establishment boundary's Debug-level trace (SystemRequestContextBootstrap
+      resolves ILogger<T> from the scope's IServiceProvider it already receives — no new
+      DI surface). Same NU1510 reasoning as the DependencyInjection.Abstractions reference
+      above.
+    -->
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\..\auth\context-abstractions\D2.Shared.AuthContext.Abstractions.csproj" />
     <ProjectReference Include="..\..\auth\abstractions\D2.Shared.Auth.Abstractions.csproj" />
     <ProjectReference Include="..\..\utilities\D2.Shared.Utilities.csproj" />
+    <!--
+      time — IClock injection seam used by the InProcessModule + System establishment
+      boundaries to timestamp the call-path entry they append (Instant → DateTimeOffset
+      wire form). Foundation lib (NodaTime + Result/I18n/Utilities); no cycle.
+    -->
+    <ProjectReference Include="..\..\time\D2.Shared.Time.csproj" />
     <ProjectReference Include="..\source-gen\D2.Shared.Context.SourceGen.csproj"
                       OutputItemType="Analyzer"
                       ReferenceOutputAssembly="false" />

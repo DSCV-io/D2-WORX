@@ -50,11 +50,17 @@ exchange, and default routing key.
     `ActivityContext.TryParse` and starts a `Consumer`-kind span whose parent
     is the publish span — cross-hop trace assembly works in any OTel backend.
 - **Operational subset** — `RequestId` / `RequestPath` / fingerprints /
-  `WhoIsHashId` ride in the `x-d2-context` AMQP header (base64url-of-JSON
-  encoded `PropagatedContext`; same shape on every transport).
+  `WhoIsHashId` / the accumulated service **call-path** (`CallPath`) ride
+  in the `x-d2-context` header (base64url-of-JSON encoded
+  `PropagatedContext`; same shape on every transport — AMQP is not
+  special-cased). The call-path also rides every synchronous gRPC hop
+  via a dedicated outbound client interceptor + inbound establishment
+  interceptor (`D2.Shared.Auth.Outbound` / `D2.Shared.Auth.Grpc`) — see
+  [ADR-0025](../../../../../docs/adrs/0025-request-context-establishment.md).
   `PropagatedContextSerializer.TryDecode` enforces both a wire-level cap
   (`MAX_HEADER_LENGTH = 2 KiB`) AND per-field length caps (RequestPath ≤
-  2048, RequestId ≤ 256, fingerprints ≤ 512, WhoIsHashId ≤ 128). A forged
+  2048, RequestId ≤ 256, fingerprints ≤ 512, WhoIsHashId ≤ 128; `CallPath`
+  entry count ≤ its spec `maxLength`). A forged
   header that fits under the wire cap but contains an oversized single
   field is dropped wholesale — propagation is opportunistic, never
   required, so a partial / sanitized context is wrong; a null context is
@@ -125,28 +131,20 @@ public sealed class WidgetCreatedAuditingHandler
 ## End-to-end architecture
 
 ```
-┌─────────────────────────┐         ┌─────────────────────────┐
-│  Producer service       │         │  Consumer service       │
-│                         │         │                         │
-│ [MqPub(MqMessages.X)]   │         │ class MyHandler         │
-│ class FooEvent { ... }  │         │   : BaseHandler<...>    │
-│                         │         │ [MqSub(...)]            │
-│         │ IMessageBus   │         │      ▲                  │
-│         ▼               │         │      │ dispatch         │
-│  RabbitMqMessageBus     │         │  SubscriberChannel      │
-│         │               │         │      │ BasicConsume     │
-└─────────┼───────────────┘         └──────┼──────────────────┘
-          │ publish via channel pool       │ dedicated channel
-          ▼                                │
-   ┌──────────────────────────────────────────────┐
-   │  RabbitMQ broker                             │
-   │   exchange: descriptor.Exchange              │
-   │     │                                        │
-   │     ▼                                        │
-   │   queue: descriptor.QueueName                │
-   │     ├── DLX → DLQ                            │
-   │     └── (optional) tier exchanges + queues   │
-   └──────────────────────────────────────────────┘
+Producer service
+  [MqPub(MqMessages.X)] class FooEvent
+    → IMessageBus (RabbitMqMessageBus) → publish via channel pool → RabbitMQ broker
+
+RabbitMQ broker
+  exchange: descriptor.Exchange
+    → queue: descriptor.QueueName
+        → DLX → DLQ
+        → (optional) tier exchanges + queues
+
+Consumer service
+  RabbitMQ broker
+    → dedicated channel (BasicConsume) → SubscriberChannel → dispatch
+    → [MqSub(...)] class MyHandler : BaseHandler<...>
 ```
 
 **Spec → codegen → registry → runtime.**
@@ -233,6 +231,34 @@ field. Plaintext on a domain that should be encrypted — or vice versa — is a
 spec edit, not a code edit; the resolver picks up the new descriptor on the
 next build.
 
+### Sealed (asymmetric) mode
+
+A domain declares its encryption **mode** in `contracts/encryption-domains`
+(`mode: symmetric | sealed`, default `symmetric`). `audit` / `notifications` /
+`courier` are **sealed**: every service seals a payload to the consumer
+service's public key (version-2 ECDH-ES frame), and only that one consumer
+opens it. The mode + consumer are single-source domain facts read from the
+generated catalog via `MqMessageDescriptor.IsSealed` + `.ConsumerService` — no
+second generated surface.
+
+`EncryptedBodyComposer` gains a sealed branch: on publish it resolves the keyed
+`IPayloadSealer` by **consumer service** and produces a v2 frame; on consume it
+resolves the keyed `IPayloadOpener` by the same key. A producer host that never
+registered a sealer, or a consumer host with no opener, lacks the keyed
+registration → `GetRequiredKeyedService` throws → publish fails loud / consume
+DLQs (never plaintext, never a silent drop). Two sealed domains that share a
+consumer share one sealer/opener.
+
+`SealedConsumerStartupCheck` (registered unconditionally by
+`AddD2MessagingRabbitMq`, never by the sealing call) crashes host startup — before
+any consumer channel opens — when a subscriber consumes a sealed domain but no
+matching `IPayloadOpener` is registered, so a forgotten
+`AddD2SealedEncryptionViaKeyCustodian` fails loud rather than DLQ'ing every
+delivery. The KeyCustodian-backed sealer/opener runtime lives in
+`D2.Edge.KeyCustodian.Client` (`Sealing/`); the shared lib composes whatever
+keyed sealer/opener the host registered (shared → shared dependency only). The
+TypeScript twin (`@d2/messaging-rabbitmq`) enforces the same fusion structurally.
+
 ### Why JSON not binary protobuf
 
 - Cross-language consumer-friendliness: any language with a JSON parser can
@@ -260,7 +286,7 @@ other sensitive context.
 | `tracestate`          | producer → consumer | Optional W3C vendor-specific trace state, forwarded as-is.                                                                                                                                                                                     |
 | `x-d2-encryption-kid` | producer → consumer | Encryption key id. Set only on encrypted messages.                                                                                                                                                                                             |
 | `x-d2-context`        | producer → consumer | Base64url-of-JSON encoded `PropagatedContext` — request id, request path, fingerprints, WhoIs hash. NOT identity (UserId / OrgId / Scopes — those rebuild from the JWT at every hop).                                                          |
-| `x-d2-failure-reason` | DLQ-only            | JSON-encoded `DlqFailureMetadata` (cause, errorCode, attemptCount, traceId). Attached by the consumer when republishing to the queue's DLX — see the DLQ section below.                                                                        |
+| `x-d2-failure-reason` | DLQ-only            | JSON-encoded `DlqFailureMetadata` — all six fields: `cause`, `errorCode`, `detail`, `attemptCount`, `traceId`, `nackedBy`. Attached by the consumer when republishing to the queue's DLX — see the DLQ section below.                          |
 
 > The runtime header **direction + purpose** semantic catalog lives in this
 > doc (it's the operational reference). The **wire-value constants**
@@ -737,6 +763,26 @@ cycles via `MaxAttempts`.
   stay transport-free.
 
 ---
+
+## TypeScript twin — producer and consumer
+
+A service-agnostic Node runtime for both directions lives at
+[`server/shared/typescript/messaging/rabbitmq/`](../../../typescript/messaging/rabbitmq/README.md)
+(`@d2/messaging-rabbitmq`). On the **consume** side it declares the same topology
+(primary + `{q}.dlx` + `{q}.dlq` + retry tiers), consumes with manual acks,
+republishes failures with the same `DlqFailureMetadata`, deduplicates via the same
+5-point idempotency contract, and establishes the same per-delivery context
+(traceparent-parented consume span + `x-d2-context` → per-message operational
+context; identity and `RequestOrigin` never taken from the wire). On the
+**publish** side it ships the same structural publish/encrypt fusion this lib
+enforces: `createPublisher({ crypto })` binds a compile-time type witness so a
+message can only be published to a `plaintext` domain or one whose composer was
+wired in, a runtime default-deny (`composeBody`) second-locks the dynamic paths,
+and there is no raw-bytes publish overload — the composer for a domain is the only
+path to the socket for that domain. Its Testcontainer suite replays golden
+messages emitted by `D2.Shared.Tests`
+`Integration/ContractFixtures/MqGoldenMessageFixtureEmitter` and round-trips its
+own published frames back through the consumer pipeline.
 
 ## References
 

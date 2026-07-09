@@ -11,6 +11,7 @@ using System.Linq;
 using System.Text;
 using System.Text.Json;
 using AwesomeAssertions;
+using D2.Shared.Auth.Abstractions;
 using D2.Shared.Context.Abstractions;
 using Xunit;
 
@@ -675,6 +676,144 @@ public sealed class PropagatedContextSerializerTests
     }
 
     // -------------------------------------------------------------------------
+    // CallPath — the first propagated list-of-records field (OQ-1).
+    // Multi-entry round-trip, enum-as-string wire form, depth bound (max entry
+    // count), per-entry-id cap, full-depth-under-header-cap, null omission.
+    // -------------------------------------------------------------------------
+
+    [Fact]
+    public void Propagation_RoundtripsCallPath_MultiEntry()
+    {
+        var ts = new DateTimeOffset(2026, 5, 27, 10, 0, 0, TimeSpan.Zero);
+        var path = new[]
+        {
+            new CallPathEntry("edge", CallPathKind.Edge, ts),
+            new CallPathEntry("key-custodian", CallPathKind.WorkloadHop, ts.AddSeconds(1)),
+            new CallPathEntry("audit", CallPathKind.ModuleHop, ts.AddSeconds(2)),
+        };
+        var ctx = new PropagatedContext { CallPath = path };
+
+        var decoded = PropagatedContextSerializer.TryDecode(
+            PropagatedContextSerializer.Encode(ctx));
+
+        decoded.Should().NotBeNull();
+        decoded.CallPath.Should().NotBeNull();
+        decoded.CallPath.Should().BeEquivalentTo(path, o => o.WithStrictOrdering());
+    }
+
+    [Fact]
+    public void Encode_CallPath_RendersKindAsHumanReadableString()
+    {
+        // CallPathKind serializes via JsonStringEnumConverter — the wire carries
+        // "WorkloadHop", not the ordinal 1, so logs stay grep-able.
+        var ctx = new PropagatedContext
+        {
+            CallPath = [new CallPathEntry("a", CallPathKind.WorkloadHop, DateTimeOffset.UnixEpoch)],
+        };
+        var json = DecodeWireJson(PropagatedContextSerializer.Encode(ctx));
+
+        json.Should().Contain("\"kind\":\"WorkloadHop\"");
+        json.Should().NotContain("\"kind\":1");
+    }
+
+    [Fact]
+    public void HasAnyField_CallPathPopulated_ReturnsTrue()
+    {
+        new PropagatedContext
+        {
+            CallPath = [new CallPathEntry("edge", CallPathKind.Edge, DateTimeOffset.UnixEpoch)],
+        }.HasAnyField.Should().BeTrue();
+    }
+
+    [Fact]
+    public void HasAnyField_CallPathNullOrEmpty_ReturnsFalse()
+    {
+        new PropagatedContext { CallPath = null }.HasAnyField.Should().BeFalse();
+        new PropagatedContext { CallPath = [] }.HasAnyField.Should().BeFalse();
+    }
+
+    [Fact]
+    public void Encode_CallPath_NullOmittedFromWire()
+    {
+        var ctx = new PropagatedContext { RequestId = "r", CallPath = null };
+        var json = DecodeWireJson(PropagatedContextSerializer.Encode(ctx));
+
+        json.Should().Contain("\"requestId\":\"r\"");
+        json.Should().NotContain("callPath");
+    }
+
+    [Fact]
+    public void Decode_CallPathAtDepthBound_Survives()
+    {
+        // 16 entries == the depth bound; the > bound check passes (not dropped).
+        var ctx = new PropagatedContext { CallPath = BuildCallPath(16) };
+
+        var decoded = PropagatedContextSerializer.TryDecode(
+            PropagatedContextSerializer.Encode(ctx));
+
+        decoded.Should().NotBeNull();
+        decoded.CallPath.Should().HaveCount(16);
+    }
+
+    [Fact]
+    public void Decode_CallPathExceedingDepthBound_DropsContext()
+    {
+        // 17 entries (> 16) fits under MAX_HEADER_LENGTH but trips the depth
+        // bound in FieldsWithinBounds → whole context dropped (returns null).
+        var ctx = new PropagatedContext { CallPath = BuildCallPath(17) };
+        var encoded = PropagatedContextSerializer.Encode(ctx);
+
+        encoded.Length.Should().BeLessThan(
+            PropagatedContextSerializer.MAX_HEADER_LENGTH,
+            "the 17-entry path must isolate the depth bound, not the header cap");
+        PropagatedContextSerializer.TryDecode(encoded).Should().BeNull(
+            "a call-path deeper than the depth bound must be dropped");
+    }
+
+    [Fact]
+    public void Decode_CallPathEntryIdAtCap_Survives()
+    {
+        // A 128-char entry id == the per-entry id cap; the > cap check passes.
+        var ctx = new PropagatedContext
+        {
+            CallPath = [new CallPathEntry(new string('a', 128), CallPathKind.Edge, DateTimeOffset.UnixEpoch)],
+        };
+
+        var decoded = PropagatedContextSerializer.TryDecode(
+            PropagatedContextSerializer.Encode(ctx));
+
+        decoded.Should().NotBeNull();
+        decoded.CallPath.Should().ContainSingle();
+    }
+
+    [Fact]
+    public void Decode_CallPathEntryIdExceedingCap_DropsContext()
+    {
+        // A 129-char entry id exceeds the per-entry id cap (128); the whole
+        // context is dropped even though the entry count (1) is legal.
+        var ctx = new PropagatedContext
+        {
+            CallPath = [new CallPathEntry(new string('a', 129), CallPathKind.Edge, DateTimeOffset.UnixEpoch)],
+        };
+
+        PropagatedContextSerializer.TryDecode(
+            PropagatedContextSerializer.Encode(ctx)).Should().BeNull(
+            "a forged over-cap entry id must drop the context");
+    }
+
+    [Fact]
+    public void Encode_FullDepthCallPath_StaysUnderHeaderCap()
+    {
+        // A legitimate full-depth path encodes well under MAX_HEADER_LENGTH so a
+        // real (in-bound) call-path is never dropped by the wire-level cap.
+        var ctx = new PropagatedContext { CallPath = BuildCallPath(16) };
+        var encoded = PropagatedContextSerializer.Encode(ctx);
+
+        encoded.Length.Should().BeLessThan(PropagatedContextSerializer.MAX_HEADER_LENGTH);
+        PropagatedContextSerializer.TryDecode(encoded).Should().NotBeNull();
+    }
+
+    // -------------------------------------------------------------------------
     // Structural catalog guard (§1.21): wire keys ⊆ PropagatedContext field catalog
     // Verifies the serializer never emits a key not in the spec-driven field set.
     // -------------------------------------------------------------------------
@@ -704,6 +843,7 @@ public sealed class PropagatedContextSerializerTests
             "orgPlanTier",
             "featureFlagsCsv",
             "whoIsHashId",
+            "callPath",
         };
 
         // Serialize a fully-populated context to capture every key that
@@ -724,6 +864,7 @@ public sealed class PropagatedContextSerializerTests
             OrgPlanTier = "Free",
             FeatureFlagsCsv = "flag-a",
             WhoIsHashId = "hash-1",
+            CallPath = [new CallPathEntry("edge", CallPathKind.Edge, DateTimeOffset.UnixEpoch)],
         };
         var encoded = PropagatedContextSerializer.Encode(fullCtx);
         var padded = encoded.Replace('-', '+').Replace('_', '/');
@@ -739,5 +880,31 @@ public sealed class PropagatedContextSerializerTests
         leaked.Should().BeEmpty(
             "serializer must not emit wire keys outside the spec-driven field catalog; leaked: "
             + string.Join(", ", leaked));
+    }
+
+    // -------------------------------------------------------------------------
+    // Helpers (private members after public test methods per SA1202).
+    // -------------------------------------------------------------------------
+
+    /// <summary>Builds a call-path of <paramref name="count"/> distinct entries
+    /// (oldest-first), each with a short id well within the per-entry cap.</summary>
+    private static IReadOnlyList<CallPathEntry> BuildCallPath(int count)
+    {
+        var baseTs = new DateTimeOffset(2026, 5, 27, 10, 0, 0, TimeSpan.Zero);
+        var path = new CallPathEntry[count];
+        for (var i = 0; i < count; i++)
+            path[i] = new CallPathEntry($"svc-{i}", CallPathKind.WorkloadHop, baseTs.AddSeconds(i));
+
+        return path;
+    }
+
+    /// <summary>Decodes a base64url-encoded header back to its raw JSON.</summary>
+    private static string DecodeWireJson(string encoded)
+    {
+        var padded = encoded.Replace('-', '+').Replace('_', '/');
+        var pad = padded.Length % 4;
+        if (pad > 0) padded = padded.PadRight(padded.Length + (4 - pad), '=');
+
+        return Encoding.UTF8.GetString(Convert.FromBase64String(padded));
     }
 }

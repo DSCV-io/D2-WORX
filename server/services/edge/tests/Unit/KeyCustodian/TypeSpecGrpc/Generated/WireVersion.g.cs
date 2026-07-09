@@ -8,7 +8,7 @@
 
 #nullable enable
 
-namespace D2.Services.Protos.KeyCustodian.V2Alpha;
+namespace D2.Services.Protos.SignFixtures.V2Alpha;
 
 /// <summary>
 /// Wire-generation constants for this proto package.

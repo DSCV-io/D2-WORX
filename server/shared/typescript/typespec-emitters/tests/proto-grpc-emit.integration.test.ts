@@ -77,14 +77,14 @@ describe("protoGrpcEmitIntegration_Sign_EmitsProtoAndService", () => {
       using D2;
       namespace D2.Fixtures;
 
-      model SignInput { @d2Field(1) kid: string; @d2Field(2) @d2Redact payload: bytes; }
-      model SignOutput { @d2Field(1) signature: string; }
+      model SignFixtureInput { @d2Field(1) kid: string; @d2Field(2) @d2Redact("SecretInformation") payload: bytes; }
+      model SignFixtureOutput { @d2Field(1) signature: string; }
 
       @d2Command
-      @d2ServedBy("KeyCustodian")
+      @d2ServedBy("SignFixture")
       @d2InProcess
-      @d2GrpcMethod("KeyCustodianSigner", "Sign")
-      op sign(input: SignInput): SignOutput;
+      @d2GrpcMethod("SignFixtureSigner", "SignFixture")
+      op signFixture(input: SignFixtureInput): SignFixtureOutput;
       `,
     );
 
@@ -114,52 +114,227 @@ describe("protoGrpcEmitIntegration_Sign_EmitsProtoAndService", () => {
     expect(protoContent).toContain(
       'option csharp_namespace = "D2.Test.Protos.V1";',
     );
-    expect(protoContent).toContain("service KeyCustodianSigner {");
+    expect(protoContent).toContain("service SignFixtureSigner {");
     expect(protoContent).toContain(
-      "rpc Sign(SignRequest) returns (SignResponse);",
+      "rpc SignFixture(SignFixtureRequest) returns (SignFixtureResponse);",
     );
-    expect(protoContent).toContain("message SignRequest {");
-    expect(protoContent).toContain("message SignResponse {");
+    expect(protoContent).toContain("message SignFixtureRequest {");
+    expect(protoContent).toContain("message SignFixtureResponse {");
     expect(protoContent).toContain("string kid = 1;");
     expect(protoContent).toContain("bytes payload = 2;");
 
     // The live $onEmit proto path must name the DATA message after the DTO output
     // model (<Op>Output), NOT the <Method>Response envelope wrapper. Passing the
     // wrapper name as emitProto's responseModelName produced TWO `message
-    // SignResponse` blocks (envelope + data) — a duplicate proto message that
-    // protoc rejects. Pin: the data message is `message SignOutput`, and
-    // `message SignResponse` appears EXACTLY ONCE (the wrapper, no collision).
-    expect(protoContent).toContain("message SignOutput {");
+    // SignFixtureResponse` blocks (envelope + data) — a duplicate proto message that
+    // protoc rejects. Pin: the data message is `message SignFixtureOutput`, and
+    // `message SignFixtureResponse` appears EXACTLY ONCE (the wrapper, no collision).
+    expect(protoContent).toContain("message SignFixtureOutput {");
     const responseMsgDecls = (
-      protoContent!.match(/message SignResponse \{/g) ?? []
+      protoContent!.match(/message SignFixtureResponse \{/g) ?? []
     ).length;
     expect(responseMsgDecls).toBe(1);
 
     // gRPC service class emitted.
     // The sign op has @d2InProcess → the service delegates through the fixture façade,
-    // not ISignHandler directly. The façade type name in fixture mode (no csAppNamespaceBase)
-    // is I<ServedBy>SignerFacade = IKeyCustodianSignerFacade.
+    // not ISignFixtureHandler directly. The façade type name in fixture mode (no csAppNamespaceBase)
+    // is I<ServedBy>SignerFacade = ISignFixtureSignerFacade.
     const serviceContent = getEmittedFile(
       host,
-      "KeyCustodianSignerService.g.cs",
+      "SignFixtureSignerService.g.cs",
     );
     expect(serviceContent).toBeDefined();
     expect(serviceContent).toContain("namespace D2.Test.Grpc;");
     expect(serviceContent).toContain(
-      "global::D2.Test.Protos.V1.KeyCustodianSigner.KeyCustodianSignerBase",
+      "global::D2.Test.Protos.V1.SignFixtureSigner.SignFixtureSignerBase",
     );
-    expect(serviceContent).toContain("IKeyCustodianSignerFacade facade");
-    expect(serviceContent).toContain("facade.SignAsync");
-    expect(serviceContent).not.toContain("ISignHandler handler");
+    expect(serviceContent).toContain("ISignFixtureSignerFacade facade");
+    expect(serviceContent).toContain("facade.SignFixtureAsync");
+    expect(serviceContent).not.toContain("ISignFixtureHandler handler");
     expect(serviceContent).not.toContain("handler.HandleAsync");
 
     // Transport mapper emitted.
-    const mapperContent = getEmittedFile(host, "SignTransportMappers.g.cs");
+    const mapperContent = getEmittedFile(
+      host,
+      "SignFixtureTransportMappers.g.cs",
+    );
     expect(mapperContent).toBeDefined();
     expect(mapperContent).toContain("namespace D2.Test.Grpc;");
-    expect(mapperContent).toContain("extension(SignRequest request)");
-    expect(mapperContent).toContain("extension(SignOutput output)");
+    expect(mapperContent).toContain("extension(SignFixtureRequest request)");
+    expect(mapperContent).toContain("extension(SignFixtureOutput output)");
     expect(mapperContent).toContain("request.Payload.ToByteArray()");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Test 1b: param-less gRPC op → synthesized <Op>Input drives the mapper/service
+// ---------------------------------------------------------------------------
+//
+// Regression: a param-less op (e.g. the real getOrLazyProvisionOwnSealPrivateKey) has a
+// non-undefined but EMPTY parameters Model whose `.name` is "". The old
+// `inputModel?.name ?? fallback` (nullish) did NOT trigger on the empty string,
+// so dtoRequestName became "", emitting a malformed `using  = ...;` alias and
+// `internal  To()` in the transport mapper (CS1001/CS1002/CS1022 — the build
+// break at integration). The fix guards on `.length > 0` and falls back to the
+// synthesized `${toPascalFromCamel(opName)}Input`, byte-identical to the C# DTO
+// emitter's synthesized empty input record — so the alias resolves to the real
+// DTO type. This pins that a param-less gRPC op emits a valid, non-empty request
+// DTO name everywhere.
+
+describe("protoGrpcEmitIntegration_ParamlessOp_SynthesizedInputDrivesMapper", () => {
+  let host: Awaited<ReturnType<typeof createTestHost>>;
+
+  beforeAll(async () => {
+    host = await createTestHost({
+      libraries: [D2DecoratorTestLibrary, D2EmitterTestLibrary],
+    });
+  });
+
+  it("param-less @d2GrpcMethod op → mapper + service reference synthesized <Op>Input, not an empty alias", async () => {
+    host.addTypeSpecFile(
+      "main.tsp",
+      `
+      import "@d2/typespec-decorators";
+      using D2;
+      namespace D2.Fixtures;
+
+      model FixtureNoInputOutput { @d2Field(1) value: string; }
+
+      @d2Command
+      @d2ServedBy("FixtureNoInput")
+      @d2InProcess
+      @d2GrpcMethod("FixtureNoInputSigner", "GetFixtureNoInput")
+      op getFixtureNoInput(): FixtureNoInputOutput;
+      `,
+    );
+
+    await host.compile("main.tsp", {
+      emit: ["@d2/typespec-emitters"],
+      options: {
+        "@d2/typespec-emitters": {
+          "csharp-namespace": "D2.Test",
+          "proto-package": "d2.test.v1",
+          "proto-csharp-namespace": "D2.Test.Protos.V1",
+          "grpc-service-namespace": "D2.Test.Grpc",
+        },
+      },
+      outputDir: "testing:/out",
+    });
+
+    const errors = host.program.diagnostics.filter(
+      (d) => d.severity === "error",
+    );
+    expect(errors).toHaveLength(0);
+
+    // .proto emitted with an EMPTY request message (no params) — the request
+    // wrapper still exists so the RPC signature is well-formed.
+    const protoContent = getEmittedFile(host, ".g.proto");
+    expect(protoContent).toBeDefined();
+    expect(protoContent).toContain("message GetFixtureNoInputRequest {");
+
+    // Transport mapper: the synthesized GetFixtureNoInputInput drives the
+    // request→DTO mapper (never an empty `using  = ` / `internal  To()`).
+    const mapperContent = getEmittedFile(
+      host,
+      "GetFixtureNoInputTransportMappers.g.cs",
+    );
+    expect(mapperContent).toBeDefined();
+    expect(mapperContent).toContain(
+      "internal GetFixtureNoInputInput ToGetFixtureNoInputInput()",
+    );
+    expect(mapperContent).toContain("return new GetFixtureNoInputInput();");
+    // The load-bearing negative: the malformed empty-name alias must be absent.
+    expect(mapperContent).not.toContain("using  =");
+    expect(mapperContent).not.toContain("internal  To()");
+
+    // gRPC service: the request→DTO conversion names the synthesized DTO type.
+    const serviceContent = getEmittedFile(
+      host,
+      "FixtureNoInputSignerService.g.cs",
+    );
+    expect(serviceContent).toBeDefined();
+    expect(serviceContent).toContain(
+      "GetFixtureNoInputInput input = request.ToGetFixtureNoInputInput();",
+    );
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Test 1c: a gRPC op whose input AND output both reference the SAME nested model
+// src-exercises the $onEmit nested-descriptor assembly loop in
+// emitProtoAndGrpcService (dedup-by-name across the merged input+output walks +
+// the emitted nested `message`). The nested-model-grpc-byte-parity suite proves
+// the emitProto layer directly and does NOT drive this $onEmit assembly, so this
+// is the src-instrumented driver for that loop.
+// ---------------------------------------------------------------------------
+
+describe("protoGrpcEmitIntegration_NestedModel_AssemblesNestedDescriptors", () => {
+  let host: Awaited<ReturnType<typeof createTestHost>>;
+
+  beforeAll(async () => {
+    host = await createTestHost({
+      libraries: [D2DecoratorTestLibrary, D2EmitterTestLibrary],
+    });
+  });
+
+  it("input + output sharing a nested model → one deduped nested message emitted", async () => {
+    host.addTypeSpecFile(
+      "main.tsp",
+      `
+      import "@d2/typespec-decorators";
+      using D2;
+      namespace D2.Fixtures;
+
+      model NestedLineFixture { @d2Field(1) sku: string; @d2Field(2) qty: int32; }
+      model PlaceNestedFixtureInput { @d2Field(1) requestedLines: NestedLineFixture[]; }
+      model PlaceNestedFixtureOutput { @d2Field(1) confirmedLines: NestedLineFixture[]; }
+
+      @d2Command
+      @d2ServedBy("NestedFixtures")
+      @d2GrpcMethod("NestedFixturesSvc", "PlaceNested")
+      op placeNested(input: PlaceNestedFixtureInput): PlaceNestedFixtureOutput;
+      `,
+    );
+
+    await host.compile("main.tsp", {
+      emit: ["@d2/typespec-emitters"],
+      options: {
+        "@d2/typespec-emitters": {
+          "csharp-namespace": "D2.Test",
+          "proto-package": "d2.test.v1",
+          "proto-csharp-namespace": "D2.Test.Protos.V1",
+          "grpc-service-namespace": "D2.Test.Grpc",
+        },
+      },
+      outputDir: "testing:/out",
+    });
+
+    const errors = host.program.diagnostics.filter(
+      (d) => d.severity === "error",
+    );
+    expect(errors).toHaveLength(0);
+
+    const protoContent = getEmittedFile(host, ".g.proto");
+    expect(protoContent).toBeDefined();
+
+    // The shared nested model is emitted EXACTLY ONCE — deduped across the input +
+    // output walks by the $onEmit assembly loop (both the push arm and the
+    // seen-name `continue` arm run) — carrying both nested-scalar fields.
+    const nestedMsgDecls = (
+      protoContent!.match(/message NestedLineFixture \{/g) ?? []
+    ).length;
+    expect(nestedMsgDecls).toBe(1);
+    expect(protoContent).toContain("string sku = 1;");
+    expect(protoContent).toContain("int32 qty = 2;");
+
+    // Both the request and response messages carry the repeated nested field
+    // (proto field names are snake_cased from the TypeSpec property names).
+    expect(protoContent).toContain(
+      "repeated NestedLineFixture requested_lines",
+    );
+    expect(protoContent).toContain(
+      "repeated NestedLineFixture confirmed_lines",
+    );
   });
 });
 
@@ -252,14 +427,15 @@ describe("protoGrpcEmitIntegration_RealModule_InProcessGrpc_UsesApiFacade", () =
       using D2;
       namespace D2.KeyCustodian;
 
-      model SignInput { @d2Field(1) kid: string; }
-      model SignOutput { @d2Field(1) signature: string; }
+      model SignFixtureInput { @d2Field(1) kid: string; }
+      model SignFixtureOutput { @d2Field(1) signature: string; }
 
       @d2Command
       @d2ServedBy("KeyCustodian")
+      @d2Concern("SignFixture")
       @d2InProcess
-      @d2GrpcMethod("KeyCustodianSigner", "Sign")
-      op sign(input: SignInput): SignOutput;
+      @d2GrpcMethod("SignFixtureSigner", "SignFixture")
+      op signFixture(input: SignFixtureInput): SignFixtureOutput;
       `,
     );
 
@@ -268,11 +444,11 @@ describe("protoGrpcEmitIntegration_RealModule_InProcessGrpc_UsesApiFacade", () =
       options: {
         "@d2/typespec-emitters": {
           "csharp-namespace": "D2.Fixture.Ns",
-          "csharp-clients-namespace": "D2.Edge.KeyCustodian.Clients",
+          "csharp-clients-namespace": "D2.Edge.KeyCustodian.Client",
           "csharp-app-namespace-base":
             "D2.Edge.KeyCustodian.App.Application.Handlers",
-          "proto-package": "d2.keycustodian.v2alpha",
-          "proto-csharp-namespace": "D2.Services.Protos.KeyCustodian.V2Alpha",
+          "proto-package": "d2.signfixtures.v2alpha",
+          "proto-csharp-namespace": "D2.Services.Protos.SignFixtures.V2Alpha",
           "grpc-service-namespace": "D2.Edge.KeyCustodian.Api.Generated",
         },
       },
@@ -288,17 +464,17 @@ describe("protoGrpcEmitIntegration_RealModule_InProcessGrpc_UsesApiFacade", () =
     // (the production façade in the Clients namespace), NOT I<ServedBy>SignerFacade.
     const serviceContent = getEmittedFile(
       host,
-      "KeyCustodianSignerService.g.cs",
+      "SignFixtureSignerService.g.cs",
     );
     expect(serviceContent).toBeDefined();
     // Real-module façade type name.
     expect(serviceContent).toContain("IKeyCustodianApi");
     // Must use the Clients namespace as the using target.
-    expect(serviceContent).toContain("D2.Edge.KeyCustodian.Clients");
-    // Delegates via SignAsync (the façade method name).
-    expect(serviceContent).toContain("SignAsync");
-    // Must NOT fall through to ISignHandler.
-    expect(serviceContent).not.toContain("ISignHandler");
+    expect(serviceContent).toContain("D2.Edge.KeyCustodian.Client");
+    // Delegates via SignFixtureAsync (the façade method name).
+    expect(serviceContent).toContain("SignFixtureAsync");
+    // Must NOT fall through to ISignFixtureHandler.
+    expect(serviceContent).not.toContain("ISignFixtureHandler");
     expect(serviceContent).not.toContain("HandleAsync");
   });
 });
@@ -333,12 +509,14 @@ describe("protoGrpcEmitIntegration_RealModule_ParameterlessAndVoidGrpcOps", () =
       // No input model — exercises the inputModel-undefined fallback in the client collection.
       @d2Query
       @d2ServedBy("KeyCustodian")
+      @d2Concern("Ping")
       @d2GrpcMethod("KeyCustodianPinger", "Ping")
       op ping(): PingOutput;
 
       // No output model (void) — exercises the outputModel-undefined fallback.
       @d2Command
       @d2ServedBy("KeyCustodian")
+      @d2Concern("Fire")
       @d2GrpcMethod("KeyCustodianFirer", "Fire")
       op fire(input: FireInput): void;
       `,
@@ -348,11 +526,11 @@ describe("protoGrpcEmitIntegration_RealModule_ParameterlessAndVoidGrpcOps", () =
       emit: ["@d2/typespec-emitters"],
       options: {
         "@d2/typespec-emitters": {
-          "csharp-clients-namespace": "D2.Edge.KeyCustodian.Clients",
+          "csharp-clients-namespace": "D2.Edge.KeyCustodian.Client",
           "csharp-app-namespace-base":
             "D2.Edge.KeyCustodian.App.Application.Handlers",
-          "proto-package": "d2.keycustodian.v2alpha",
-          "proto-csharp-namespace": "D2.Services.Protos.KeyCustodian.V2Alpha",
+          "proto-package": "d2.signfixtures.v2alpha",
+          "proto-csharp-namespace": "D2.Services.Protos.SignFixtures.V2Alpha",
           "grpc-service-namespace": "D2.Edge.KeyCustodian.Api.Generated",
         },
       },
@@ -365,6 +543,8 @@ describe("protoGrpcEmitIntegration_RealModule_ParameterlessAndVoidGrpcOps", () =
     expect(errors).toHaveLength(0);
 
     // The per-module gRPC client interface is emitted and declares both ops.
+    // Real-module served-by "KeyCustodian" → IKeyCustodianGrpcClient (this is the
+    // real KC module surface, distinct from the sign fixture's ISignFixtureGrpcClient).
     const ifaceContent = getEmittedFile(host, "IKeyCustodianGrpcClient.g.cs");
     expect(ifaceContent).toBeDefined();
     expect(ifaceContent).toContain("PingAsync(");
@@ -457,12 +637,13 @@ describe("protoGrpcEmitIntegration_Resilience_PredicateAndSentinelEmitted", () =
       using D2;
       namespace D2.Fixtures;
 
-      model PlaceOrderInput { @d2Field(1) customerId: string; }
-      model PlaceOrderOutput { @d2Field(1) orderCode: string; @d2Field(2) itemStatuses: string[]; @d2Field(3) partial: boolean; }
+      model PlaceOrderFixtureInput { @d2Field(1) customerId: string; }
+      model PlaceOrderFixtureOutput { @d2Field(1) orderCode: string; @d2Field(2) itemStatuses: string[]; @d2Field(3) partial: boolean; }
 
       @d2Command
       @d2ServedBy("PredicateFixtures")
-      @d2GrpcMethod("PredicateFixturesOrders", "PlaceOrder")
+      @d2Concern("PredicateFixture")
+      @d2GrpcMethod("PredicateFixturesOrders", "PlaceOrderFixture")
       @d2Resilience(
         "retry(3)",
         #{
@@ -470,7 +651,7 @@ describe("protoGrpcEmitIntegration_Resilience_PredicateAndSentinelEmitted", () =
           failWhen: "result.data.itemStatuses.count == 0 || result.errorCode == \\"VALIDATION_FAILED\\"",
         }
       )
-      op placeOrder(input: PlaceOrderInput): PlaceOrderOutput;
+      op placeOrderFixture(input: PlaceOrderFixtureInput): PlaceOrderFixtureOutput;
 
       // A second real-module gRPC op in a DIFFERENT module with NO @d2Resilience —
       // exercises the no-predicate skip (no predicate files, no sentinel for that module).
@@ -479,6 +660,7 @@ describe("protoGrpcEmitIntegration_Resilience_PredicateAndSentinelEmitted", () =
 
       @d2Command
       @d2ServedBy("PlainFixtures")
+      @d2Concern("PlainFixture")
       @d2GrpcMethod("PlainFixturesPinger", "Ping")
       op ping(input: PingInput): PingOutput;
       `,
@@ -505,7 +687,10 @@ describe("protoGrpcEmitIntegration_Resilience_PredicateAndSentinelEmitted", () =
     expect(errors).toHaveLength(0);
 
     // Predicate C# file emitted with the SR_ fields.
-    const predCs = getEmittedFile(host, "PlaceOrderResiliencePredicates.g.cs");
+    const predCs = getEmittedFile(
+      host,
+      "PlaceOrderFixtureResiliencePredicates.g.cs",
+    );
     expect(predCs).toBeDefined();
     expect(predCs).toContain("SR_RetryWhen");
     expect(predCs).toContain("SR_FailWhen");
@@ -513,10 +698,10 @@ describe("protoGrpcEmitIntegration_Resilience_PredicateAndSentinelEmitted", () =
     // Predicate TS parity twin emitted.
     const predTs = getEmittedFile(
       host,
-      "place-order-resilience-predicates.g.ts",
+      "place-order-fixture-resilience-predicates.g.ts",
     );
     expect(predTs).toBeDefined();
-    expect(predTs).toContain("export const placeOrderRetryWhen");
+    expect(predTs).toContain("export const placeOrderFixtureRetryWhen");
 
     // Emitter-owned sentinel emitted once for the module.
     const sentinel = getEmittedFile(
@@ -1083,6 +1268,7 @@ describe("protoGrpcEmitIntegration_VersionedAdoption_ByteNeutralForExistingFixtu
         @d2Query
         @d2InProcess
         @d2ServedBy("KeyCustodian")
+        @d2Concern("Jwks")
         op getJwks(): GetJwksOutput;
       }
       `,
@@ -1093,11 +1279,11 @@ describe("protoGrpcEmitIntegration_VersionedAdoption_ByteNeutralForExistingFixtu
       options: {
         "@d2/typespec-emitters": {
           "csharp-namespace": "D2.Test",
-          "csharp-clients-namespace": "D2.Edge.KeyCustodian.Clients",
+          "csharp-clients-namespace": "D2.Edge.KeyCustodian.Client",
           "csharp-app-namespace-base":
             "D2.Edge.KeyCustodian.App.Application.Handlers",
-          "proto-package": "d2.keycustodian.v2alpha",
-          "proto-csharp-namespace": "D2.Services.Protos.KeyCustodian.V2Alpha",
+          "proto-package": "d2.signfixtures.v2alpha",
+          "proto-csharp-namespace": "D2.Services.Protos.SignFixtures.V2Alpha",
           "grpc-service-namespace": "D2.Test.Grpc",
         },
       },

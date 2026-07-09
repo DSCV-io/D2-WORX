@@ -28,9 +28,9 @@ This ADR is the structural complement to [ADR-0017](0017-ef-as-ddd-persistence.m
 
 A service is a fixed set of layered projects with a fixed internal shape, governed by one dependency-direction law. The rules below are the standard.
 
-### The full service shape — five projects + clients + the source-gen shell
+### The full service shape — five projects + the client package + the source-gen shell
 
-The canonical full service is **five runtime projects** plus one or more consumer-facing client packages plus, when it owns spec-driven error codes, one `netstandard2.0` source-gen shell. This is the default shape for every standalone deployable service.
+The canonical full service is **five runtime projects** plus a consumer-facing client package plus, when it owns spec-driven error codes, one `netstandard2.0` source-gen shell. This is the default shape for every standalone deployable service.
 
 | Project | csproj pattern | SDK | Role | Required for a standalone service? |
 | ------- | -------------- | --- | ---- | ---------------------------------- |
@@ -39,7 +39,7 @@ The canonical full service is **five runtime projects** plus one or more consume
 | `infra/` | `D2.<Area>.<Service>.Infra` | `Microsoft.NET.Sdk` | Adapters implementing the app's ports (the only vendor-SDK-touching layer) | Yes |
 | `api/` | `D2.<Area>.<Service>.Api` | `Microsoft.NET.Sdk.Web` | Composition root — `Program.cs` + host wiring + transport adapters (gRPC/REST/SSE) + transport mappers | Yes (omitted only for a module-within-host) |
 | `tests/` | `D2.<Area>.<Service>.Tests` | `Microsoft.NET.Sdk` | One test project per service — `Unit/` + `Integration/` mirroring source | Yes (a module-within-host's tests live in the host's test project under a module subtree) |
-| `clients/dotnet/` | `D2.<Area>.<Service>.Client` | `Microsoft.NET.Sdk` | Consumer-facing client library — tiered cache, consumers, publish interfaces | When other services consume this one |
+| `client/` | `D2.<Area>.<Service>.Client` | `Microsoft.NET.Sdk` | Consumer-facing client package (SINGULAR — one package, matching its `.Client` assembly name) — transport DTOs, typed clients, consumer runtimes | When other services consume this one |
 | `error-codes-source-gen/` | `D2.<Area>.<Service>.ErrorCodes.SourceGen` | `netstandard2.0` (Roslyn) | Generator shell emitting the domain's error-code constants + failure factories | When the service owns a per-domain error-code spec |
 
 `<Area>` is the deployment grouping (`Edge`, or the service's own name for a standalone service). The composition root is the `api/` project. **WHY an explicit `api/` layer (not "the host is out of scope"):** a standalone service's `Program.cs`, its transport adapters, and its wire-shape mappers ship and deploy with it, are tested by its integration suite, and are the seam every cross-service caller hits — declaring them out-of-scope leaves every service to re-derive the same wiring, which is exactly the drift this ADR exists to stop.
@@ -78,6 +78,8 @@ app/
 │   ├── Handlers/
 │   │   ├── Commands/<Operation>/       # one folder per command operation
 │   │   └── Queries/<Operation>/        # one folder per query operation
+│   ├── <Concern>/                      # op-noun concern folder — support types serving one-or-more handlers or the consumer side
+│   ├── Facade/                         # generated module façade impl + DI registration (<app-ns>.Facade)
 │   ├── Observability/                  # <Service>Log + <Service>Metrics
 │   └── <Service>AppServiceCollectionExtensions.cs   # AddD2<Service>App()
 └── Infrastructure/
@@ -108,6 +110,24 @@ Application/Handlers/Commands/RotateKey/
 | Infra composition extension | `<Service>ServiceCollectionExtensions` → `AddD2<Service>()` (lives at `infra/Configuration/`; does binding + `ValidateOnStart`) |
 
 **WHY co-locate:** the interface and its implementation are read together nearly always; two unrelated operations' interfaces are read together nearly never — co-locate what is read together. A split `Interfaces/` ⇄ `Implementations/` mirror puts an interface and its impl several folders apart for no navigational gain.
+
+### App-layer op-noun concern folders + the `Facade/` folder
+
+Beyond `Handlers/` and `Observability/`, the app layer groups its **support types** — the helpers, capabilities, and consumer-side sources a handler leans on — into **op-noun concern folders that are siblings of `Handlers/`**, namespaces matching folders (`<app-ns>.<Concern>`). The `Application/` root keeps ONLY the composition-root extension (`<Service>AppServiceCollectionExtensions.cs`); everything else lives under `Handlers/`, `Observability/`, a concern folder, or `Facade/`. KeyCustodian's realization:
+
+```
+app/Application/
+├── Handlers/{Commands,Queries}/<Op>/   # the per-op handler folders (above)
+├── Facade/                             # <Module>Api.g.cs + the generated DI registration (<app-ns>.Facade)
+├── Signing/                            # KeyDomainSigner, JwtSigningCapability + its DI extension
+├── Issuance/                           # the isolated CA-leaf-signing capability (interface + impl + record + DI extension)
+├── CertificateAuthority/               # CaSuccessorFactory (serves several lifecycle handlers)
+├── Keyring/                            # the in-process keyring source + its DI extension (the consumer side)
+├── Observability/                      # <Service>Log + <Service>Metrics
+└── <Service>AppServiceCollectionExtensions.cs
+```
+
+**WHY support files do NOT nest inside `Handlers/<Op>/`:** the per-op handler folder has a fixed four-file shape (`I<Op>Handler` / `<Op>Handler` / `<Op>Input` / `<Op>Output`) — dropping a shared helper into it dilutes that shape, and many support types serve *several* handlers (`CaSuccessorFactory` serves generate + compromise + due-rotations) or the *consumer side* (the in-process keyring source), so no single op folder is their natural home. An op-noun concern folder gives each its own home, keeps the folder=namespace convention, and puts a concern's app-side code where a reader looks for it. The generated façade (impl + DI registration) gets its own `Facade/` folder for the same reason — it is module-wide, not op-scoped. The concern-noun set is open-but-deliberate (adding one edits this ADR + PATTERNS.md), exactly like the `Infrastructure/` capability-concern set.
 
 ### Command vs Query — the binary side-effect rule
 
@@ -170,9 +190,11 @@ Global usings follow a two-tier frequency-driven policy. **Tier-1, service-proje
 
 A service-shaped module embedded in a host (KeyCustodian and the auth module both live inside Edge) takes the standard `domain/` + `app/` + `infra/` unchanged but **omits `api/` and its own `tests/`**: the host's `api/` is the composition root (the module exposes `AddD2<Module>()` as its seam), the host's api does the module's transport mapping, and the module's tests live in the host's test project under a `<Module>/` subtree. The carve-out is explicit and named so it never silently becomes the default — the five-project shape is the default. A module is promoted to a full standalone service the moment it needs an independent deployable, an independent database lifecycle, or independent scaling; at that point it gains its own `api/` + `tests/` and `domain/`/`app/`/`infra/` carry over unchanged.
 
-### Clients
+### Client
 
-A client library is a standalone consumer-facing package that references **contracts + shared libs only** — never the service's `domain/`/`app/`/`infra/` internals. **WHY:** a consumer depends on the client to call the service across a process boundary; if the client pulled in the service's internals, every consumer would transitively compile those internals (and their vendor SDKs), defeating the point of a thin RPC client. The client's detailed internal layout is left to a focused future amendment; the contracts-and-shared-libs-only boundary is the hard constraint that holds today.
+A client package is a standalone consumer-facing package (folder `client/`, singular — matching its `.Client` assembly name; precedent: KeyCustodian's `client/` → `D2.Edge.KeyCustodian.Client`) that references **contracts + shared libs only** — never the service's `domain/`/`app/`/`infra/` internals. **WHY:** a consumer depends on the client to call the service across a process boundary; if the client pulled in the service's internals, every consumer would transitively compile those internals (and their vendor SDKs), defeating the point of a thin RPC client. Service-client RUNTIME code (typed clients, consumer-side wrappers such as the KeyCustodian keyring hot-swap capability) lives in the service's client package — never under `server/shared/` (shared holds only service-agnostic abstractions; a shared→services reference would invert the dependency law). A consumer runtime that must compose the service's own in-process leaf lives in the service's `app/` instead (the client package cannot reference App).
+
+The client's internal layout mirrors the app-layer concern convention: **the package root holds package metadata only** (csproj / README / CHANGELOG / `PublicAPI.*.txt` / `.release-fingerprint`); a `Facade/` folder holds the generated module façade interface (`I<Module>Api.g.cs`, namespace `<clients-ns>.Facade`); and **each op-aligned concern folder** holds that concern's generated wire `.g.cs` DTOs **plus** the hand-written runtime that serves them (namespace `<clients-ns>.<Concern>`). KeyCustodian: `Jwks/`, `OidcConfiguration/`, `Signing/` (Sign DTOs + `IJwtSigningCapability`), `Keyring/` (GetKeyring DTOs + the rotation-aware consumer runtime + the proto redaction partial `KeyringEntry.Redaction.cs`), `Issuance/`, `CaCertificate/`. The concern-to-folder assignment is spec-driven — the TypeSpec `@d2Concern("<Segment>")` decorator (see [`docs/SRC_GEN.md`](../SRC_GEN.md)) drives both the emitted DTO namespace and the committed-home folder, so folder and namespace never diverge.
 
 ## Consequences
 

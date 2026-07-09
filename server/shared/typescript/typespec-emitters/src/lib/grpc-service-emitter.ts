@@ -55,7 +55,7 @@ import {
 export interface GrpcDelegationTarget {
   /** "facade" when the op has @d2InProcess; "handler" otherwise. */
   readonly kind: "facade" | "handler";
-  /** C# interface type name (e.g. "IKeyCustodianSignerFacade" or "ISignHandler"). */
+  /** C# interface type name (e.g. "ISampleSignerFacade" or "ISignHandler"). */
   readonly typeName: string;
   /** Method name to call (e.g. "SignAsync" for façade; "HandleAsync" for handler). */
   readonly methodName: string;
@@ -79,7 +79,7 @@ export interface GrpcDelegationTarget {
  * Pure function — no I/O; returns EmittedFile[] so tests can assert content directly.
  *
  * @param opName              - lowerCamelCase op name (e.g. "sign").
- * @param grpcService         - gRPC service name (e.g. "KeyCustodianSigner").
+ * @param grpcService         - gRPC service name (e.g. "SampleSigner").
  * @param grpcMethod          - gRPC method name (e.g. "Sign").
  * @param protoCsharpNs       - C# namespace for the Grpc.Tools-generated proto types
  *                              (e.g. "D2.Services.Protos.KeyCustodian.V2Alpha").
@@ -584,6 +584,9 @@ function buildProtoToDto(f: FieldInfo): string {
  * sub-mapper (an array-of-model uses the `Field = { … }` collection-init form
  * because a proto3 `repeated` field has no setter); byte[] → ByteString.CopyFrom;
  * enum → output.PascalName.ToWire() (DTO enum → proto member-name wire string);
+ * DateTimeOffset → output.PascalName.ToString("O") (the instant-bearing temporal
+ * scalars ride the proto wire as ISO-8601 round-trip strings per the scalar
+ * registry — the "O" specifier is culture-invariant by definition);
  * all others → output.PascalName.
  */
 function buildDtoToProtoAssign(f: FieldInfo): OutboundAssign {
@@ -602,6 +605,8 @@ function buildDtoToProtoAssign(f: FieldInfo): OutboundAssign {
     return { kind: "assign", expr: `ByteString.CopyFrom(output.${propName})` };
   if (f.enumRef !== undefined)
     return { kind: "assign", expr: `output.${propName}.ToWire()` };
+  if (f.csType === "DateTimeOffset")
+    return { kind: "assign", expr: `output.${propName}.ToString("O")` };
 
   return { kind: "assign", expr: `output.${propName}` };
 }

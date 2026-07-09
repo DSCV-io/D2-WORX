@@ -32,7 +32,7 @@ using Microsoft.Extensions.Time.Testing;
 
 /// <summary>
 /// TestServer tests for the idempotency gate woven by the TypeSpec emitter into
-/// the generated <c>SignRouteRegistration</c> and <c>SignDerivedRouteRegistration</c>.
+/// the generated <c>SignFixtureRouteRegistration</c> and <c>SignFixtureDerivedRouteRegistration</c>.
 ///
 /// Each test exercises one observable behavior of the gate:
 ///   duplicate key - stored result replayed (no second façade call);
@@ -61,8 +61,8 @@ public sealed class RouteIdempotencyGateTests
         // First call stores the result; second call replays it from the store.
         const string expectedSig = "replayed-sig-abc";
         using var jwt = new TestJwtBuilder();
-        var fake = new FakeKeyCustodianSignerFacade(
-            signResult: D2Result<SignOutput?>.Ok(new SignOutput(expectedSig)));
+        var fake = new FakeSignFixtureSignerFacade(
+            signResult: D2Result<SignFixtureOutput?>.Ok(new SignFixtureOutput(expectedSig)));
         var store = new FakeIdempotencyStore();
         using var host = await BuildSignHostAsync(jwt, fake, store);
         var client = BuildAuthenticatedClient(host, jwt);
@@ -72,8 +72,8 @@ public sealed class RouteIdempotencyGateTests
         // First request — populates the store.
         var first = await PostWithHeaderAsync(
             client,
-            "/internal/v1/kc/sign",
-            new SignInput("kid-001", []),
+            "/internal/v1/fixtures/sign-fixture",
+            new SignFixtureInput("kid-001", []),
             _IDEMPOTENCY_KEY_HEADER,
             idempotencyKey);
         first.StatusCode.Should().Be(HttpStatusCode.OK);
@@ -83,8 +83,8 @@ public sealed class RouteIdempotencyGateTests
         // Second request — same key; must replay without calling the façade.
         var second = await PostWithHeaderAsync(
             client,
-            "/internal/v1/kc/sign",
-            new SignInput("kid-001", []),
+            "/internal/v1/fixtures/sign-fixture",
+            new SignFixtureInput("kid-001", []),
             _IDEMPOTENCY_KEY_HEADER,
             idempotencyKey);
         second.StatusCode.Should().Be(HttpStatusCode.OK);
@@ -102,16 +102,16 @@ public sealed class RouteIdempotencyGateTests
     public async Task SignRoute_MissingIdempotencyKeyHeader_Returns400ValidationFailed()
     {
         using var jwt = new TestJwtBuilder();
-        var fake = new FakeKeyCustodianSignerFacade(
-            signResult: D2Result<SignOutput?>.Ok(new SignOutput("sig")));
+        var fake = new FakeSignFixtureSignerFacade(
+            signResult: D2Result<SignFixtureOutput?>.Ok(new SignFixtureOutput("sig")));
         var store = new FakeIdempotencyStore();
         using var host = await BuildSignHostAsync(jwt, fake, store);
         var client = BuildAuthenticatedClient(host, jwt);
 
         // No Idempotency-Key header — gate rejects with 400.
         var response = await client.PostAsJsonAsync(
-            "/internal/v1/kc/sign",
-            new SignInput("kid-001", []));
+            "/internal/v1/fixtures/sign-fixture",
+            new SignFixtureInput("kid-001", []));
 
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
         response.Content.Headers.ContentType?.MediaType.Should().Be("application/problem+json");
@@ -127,16 +127,16 @@ public sealed class RouteIdempotencyGateTests
     public async Task SignRoute_WhitespaceIdempotencyKey_Returns400ValidationFailed()
     {
         using var jwt = new TestJwtBuilder();
-        var fake = new FakeKeyCustodianSignerFacade(
-            signResult: D2Result<SignOutput?>.Ok(new SignOutput("sig")));
+        var fake = new FakeSignFixtureSignerFacade(
+            signResult: D2Result<SignFixtureOutput?>.Ok(new SignFixtureOutput("sig")));
         var store = new FakeIdempotencyStore();
         using var host = await BuildSignHostAsync(jwt, fake, store);
         var client = BuildAuthenticatedClient(host, jwt);
 
         var response = await PostWithHeaderAsync(
             client,
-            "/internal/v1/kc/sign",
-            new SignInput("kid-001", []),
+            "/internal/v1/fixtures/sign-fixture",
+            new SignFixtureInput("kid-001", []),
             _IDEMPOTENCY_KEY_HEADER,
             "   ");
 
@@ -150,8 +150,8 @@ public sealed class RouteIdempotencyGateTests
     public async Task SignRoute_StoreReadOutage_FailsOpen_DelegateStillInvoked()
     {
         using var jwt = new TestJwtBuilder();
-        var fake = new FakeKeyCustodianSignerFacade(
-            signResult: D2Result<SignOutput?>.Ok(new SignOutput("sig-on-outage")));
+        var fake = new FakeSignFixtureSignerFacade(
+            signResult: D2Result<SignFixtureOutput?>.Ok(new SignFixtureOutput("sig-on-outage")));
         var store = new FakeIdempotencyStore();
         store.SetFaulted();
         using var host = await BuildSignHostAsync(jwt, fake, store);
@@ -159,8 +159,8 @@ public sealed class RouteIdempotencyGateTests
 
         var response = await PostWithHeaderAsync(
             client,
-            "/internal/v1/kc/sign",
-            new SignInput("kid-001", []),
+            "/internal/v1/fixtures/sign-fixture",
+            new SignFixtureInput("kid-001", []),
             _IDEMPOTENCY_KEY_HEADER,
             "idem-outage");
 
@@ -175,8 +175,8 @@ public sealed class RouteIdempotencyGateTests
     public async Task SignRoute_StoredFailure_ReplaysFailureOnSecondCall()
     {
         using var jwt = new TestJwtBuilder();
-        var fake = new FakeKeyCustodianSignerFacade(
-            signResult: D2Result<SignOutput?>.ServiceUnavailable());
+        var fake = new FakeSignFixtureSignerFacade(
+            signResult: D2Result<SignFixtureOutput?>.ServiceUnavailable());
         var store = new FakeIdempotencyStore();
         using var host = await BuildSignHostAsync(jwt, fake, store);
         var client = BuildAuthenticatedClient(host, jwt);
@@ -186,8 +186,8 @@ public sealed class RouteIdempotencyGateTests
         // First request — façade returns failure; gate stores the failure result.
         var first = await PostWithHeaderAsync(
             client,
-            "/internal/v1/kc/sign",
-            new SignInput("kid-001", []),
+            "/internal/v1/fixtures/sign-fixture",
+            new SignFixtureInput("kid-001", []),
             _IDEMPOTENCY_KEY_HEADER,
             idempotencyKey);
         first.StatusCode.Should().Be(HttpStatusCode.ServiceUnavailable);
@@ -196,8 +196,8 @@ public sealed class RouteIdempotencyGateTests
         // Second request — same key; failure is replayed without another façade call.
         var second = await PostWithHeaderAsync(
             client,
-            "/internal/v1/kc/sign",
-            new SignInput("kid-001", []),
+            "/internal/v1/fixtures/sign-fixture",
+            new SignFixtureInput("kid-001", []),
             _IDEMPOTENCY_KEY_HEADER,
             idempotencyKey);
         second.StatusCode.Should().Be(HttpStatusCode.ServiceUnavailable);
@@ -213,8 +213,8 @@ public sealed class RouteIdempotencyGateTests
         // StoreAsync returns ServiceUnavailable. Best-effort write — the gate must
         // NOT surface the write failure to the caller; the delegate result is returned.
         using var jwt = new TestJwtBuilder();
-        var fake = new FakeKeyCustodianSignerFacade(
-            signResult: D2Result<SignOutput?>.Ok(new SignOutput("sig-write-fault")));
+        var fake = new FakeSignFixtureSignerFacade(
+            signResult: D2Result<SignFixtureOutput?>.Ok(new SignFixtureOutput("sig-write-fault")));
         var store = new FakeIdempotencyStore();
         store.SetWriteFaulted();
         using var host = await BuildSignHostAsync(jwt, fake, store);
@@ -222,8 +222,8 @@ public sealed class RouteIdempotencyGateTests
 
         var response = await PostWithHeaderAsync(
             client,
-            "/internal/v1/kc/sign",
-            new SignInput("kid-001", []),
+            "/internal/v1/fixtures/sign-fixture",
+            new SignFixtureInput("kid-001", []),
             _IDEMPOTENCY_KEY_HEADER,
             "idem-write-fault");
 
@@ -241,17 +241,17 @@ public sealed class RouteIdempotencyGateTests
         const string expectedSig = "derived-replay-sig";
         const string kid = "key-derived-001";
         using var jwt = new TestJwtBuilder();
-        var fake = new FakeKeyCustodianSignerFacade(
-            signResult: D2Result<SignOutput?>.Ok(new SignOutput("sign-default")),
-            signDerivedResult: D2Result<SignOutput?>.Ok(new SignOutput(expectedSig)));
+        var fake = new FakeSignFixtureSignerFacade(
+            signResult: D2Result<SignFixtureOutput?>.Ok(new SignFixtureOutput("sign-default")),
+            signDerivedResult: D2Result<SignFixtureOutput?>.Ok(new SignFixtureOutput(expectedSig)));
         var store = new FakeIdempotencyStore();
         using var host = await BuildSignDerivedHostAsync(jwt, fake, store);
         var client = BuildAuthenticatedClient(host, jwt);
 
         // First call — stores the result; key is derived from kid.
         var first = await client.PostAsJsonAsync(
-            "/internal/v1/kc/sign-derived",
-            new SignInput(kid, []));
+            "/internal/v1/fixtures/sign-fixture-derived",
+            new SignFixtureInput(kid, []));
         first.StatusCode.Should().Be(HttpStatusCode.OK);
         fake.SignDerivedCallCount.Should().Be(1);
         store.StoreCallCount.Should().Be(1);
@@ -262,8 +262,8 @@ public sealed class RouteIdempotencyGateTests
 
         // Second call — same kid → same derived key → replay.
         var second = await client.PostAsJsonAsync(
-            "/internal/v1/kc/sign-derived",
-            new SignInput(kid, []));
+            "/internal/v1/fixtures/sign-fixture-derived",
+            new SignFixtureInput(kid, []));
         second.StatusCode.Should().Be(HttpStatusCode.OK);
         var body = await second.Content.ReadAsStringAsync();
         body.Should().Contain(expectedSig);
@@ -276,20 +276,20 @@ public sealed class RouteIdempotencyGateTests
     public async Task SignDerivedRoute_DifferentKid_NoCacheHit_FacadeCalledAgain()
     {
         using var jwt = new TestJwtBuilder();
-        var fake = new FakeKeyCustodianSignerFacade(
-            signResult: D2Result<SignOutput?>.Ok(new SignOutput("default")),
-            signDerivedResult: D2Result<SignOutput?>.Ok(new SignOutput("sig")));
+        var fake = new FakeSignFixtureSignerFacade(
+            signResult: D2Result<SignFixtureOutput?>.Ok(new SignFixtureOutput("default")),
+            signDerivedResult: D2Result<SignFixtureOutput?>.Ok(new SignFixtureOutput("sig")));
         var store = new FakeIdempotencyStore();
         using var host = await BuildSignDerivedHostAsync(jwt, fake, store);
         var client = BuildAuthenticatedClient(host, jwt);
 
         // Two calls with different kids → two different derived keys → two façade calls.
         await client.PostAsJsonAsync(
-            "/internal/v1/kc/sign-derived",
-            new SignInput("kid-A", []));
+            "/internal/v1/fixtures/sign-fixture-derived",
+            new SignFixtureInput("kid-A", []));
         await client.PostAsJsonAsync(
-            "/internal/v1/kc/sign-derived",
-            new SignInput("kid-B", []));
+            "/internal/v1/fixtures/sign-fixture-derived",
+            new SignFixtureInput("kid-B", []));
 
         fake.SignDerivedCallCount.Should().Be(2);
         store.StoredKeys.Should().HaveCount(2);
@@ -306,8 +306,8 @@ public sealed class RouteIdempotencyGateTests
         // DateTimeOffset.UtcNow dependency.
         using var jwt = new TestJwtBuilder();
         var fakeClock = new FakeTimeProvider(new DateTimeOffset(2026, 1, 1, 0, 0, 0, TimeSpan.Zero));
-        var fake = new FakeKeyCustodianSignerFacade(
-            signResult: D2Result<SignOutput?>.Ok(new SignOutput("sig-ttl")));
+        var fake = new FakeSignFixtureSignerFacade(
+            signResult: D2Result<SignFixtureOutput?>.Ok(new SignFixtureOutput("sig-ttl")));
         var store = new FakeIdempotencyStore(fakeClock);
         using var host = await BuildSignHostAsync(jwt, fake, store);
         var client = BuildAuthenticatedClient(host, jwt);
@@ -317,8 +317,8 @@ public sealed class RouteIdempotencyGateTests
         // First request — cache miss; façade invoked; result stored with 86400s TTL.
         var first = await PostWithHeaderAsync(
             client,
-            "/internal/v1/kc/sign",
-            new SignInput("kid-ttl", []),
+            "/internal/v1/fixtures/sign-fixture",
+            new SignFixtureInput("kid-ttl", []),
             _IDEMPOTENCY_KEY_HEADER,
             idempotencyKey);
         first.StatusCode.Should().Be(HttpStatusCode.OK);
@@ -328,8 +328,8 @@ public sealed class RouteIdempotencyGateTests
         // Replay before TTL elapses — same result, façade not called again.
         var replay = await PostWithHeaderAsync(
             client,
-            "/internal/v1/kc/sign",
-            new SignInput("kid-ttl", []),
+            "/internal/v1/fixtures/sign-fixture",
+            new SignFixtureInput("kid-ttl", []),
             _IDEMPOTENCY_KEY_HEADER,
             idempotencyKey);
         replay.StatusCode.Should().Be(HttpStatusCode.OK);
@@ -341,8 +341,8 @@ public sealed class RouteIdempotencyGateTests
         // Request after expiry — expired entry is a miss; façade called again.
         var afterExpiry = await PostWithHeaderAsync(
             client,
-            "/internal/v1/kc/sign",
-            new SignInput("kid-ttl", []),
+            "/internal/v1/fixtures/sign-fixture",
+            new SignFixtureInput("kid-ttl", []),
             _IDEMPOTENCY_KEY_HEADER,
             idempotencyKey);
         afterExpiry.StatusCode.Should().Be(HttpStatusCode.OK);
@@ -353,7 +353,7 @@ public sealed class RouteIdempotencyGateTests
 
     private static async Task<IHost> BuildSignHostAsync(
         TestJwtBuilder jwtBuilder,
-        FakeKeyCustodianSignerFacade fake,
+        FakeSignFixtureSignerFacade fake,
         FakeIdempotencyStore store)
     {
         var hostBuilder = new HostBuilder()
@@ -381,7 +381,7 @@ public sealed class RouteIdempotencyGateTests
                         services.AddSingleton<D2.Shared.Auth.Abstractions.Sessions.ISessionLivenessTracker>(
                             new FakeSessionLivenessTracker());
 
-                        services.AddSingleton<IKeyCustodianSignerFacade>(fake);
+                        services.AddSingleton<ISignFixtureSignerFacade>(fake);
                         services.AddSingleton<D2GeneratedIdempotencyStore>(store);
                     })
                     .Configure(app =>
@@ -390,7 +390,7 @@ public sealed class RouteIdempotencyGateTests
                         app.UseD2Auth();
                         app.UseEndpoints(endpoints =>
                         {
-                            endpoints.MapSignRoute();
+                            endpoints.MapSignFixtureRoute();
                         });
                     });
             });
@@ -400,7 +400,7 @@ public sealed class RouteIdempotencyGateTests
 
     private static async Task<IHost> BuildSignDerivedHostAsync(
         TestJwtBuilder jwtBuilder,
-        FakeKeyCustodianSignerFacade fake,
+        FakeSignFixtureSignerFacade fake,
         FakeIdempotencyStore store)
     {
         var hostBuilder = new HostBuilder()
@@ -428,7 +428,7 @@ public sealed class RouteIdempotencyGateTests
                         services.AddSingleton<D2.Shared.Auth.Abstractions.Sessions.ISessionLivenessTracker>(
                             new FakeSessionLivenessTracker());
 
-                        services.AddSingleton<IKeyCustodianSignerFacade>(fake);
+                        services.AddSingleton<ISignFixtureSignerFacade>(fake);
                         services.AddSingleton<D2GeneratedIdempotencyStore>(store);
                     })
                     .Configure(app =>
@@ -437,7 +437,7 @@ public sealed class RouteIdempotencyGateTests
                         app.UseD2Auth();
                         app.UseEndpoints(endpoints =>
                         {
-                            endpoints.MapSignDerivedRoute();
+                            endpoints.MapSignFixtureDerivedRoute();
                         });
                     });
             });

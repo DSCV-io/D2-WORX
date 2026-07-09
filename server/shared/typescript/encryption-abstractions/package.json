@@ -15,7 +15,7 @@
     "dist"
   ],
   "scripts": {
-    "prebuild": "pnpm --filter ts-codegen exec tsx src/encryption-domains-emit.ts && pnpm --filter ts-codegen exec tsx src/encryption-frame-emit.ts",
+    "prebuild": "pnpm --filter ts-codegen exec tsx src/encryption-domains-emit.ts && pnpm --filter ts-codegen exec tsx src/encryption-frame-emit.ts && pnpm --filter ts-codegen exec tsx src/encryption-frame-sealed-emit.ts",
     "build": "tsc -b",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",

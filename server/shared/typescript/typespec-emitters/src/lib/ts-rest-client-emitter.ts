@@ -234,12 +234,13 @@ function collectDtoTypeImports(ops: readonly TsRestClientOp[]): string[] {
  * `<kebab-op>-dto.g.ts`; strip the Input/Output suffix and kebab the remainder.
  */
 function dtoFileForType(typeName: string): string {
+  /* v8 ignore start — defensive: a request/response DTO type always ends in Input or Output, so this guard never fires */
+  if (!typeName.endsWith("Output") && !typeName.endsWith("Input"))
+    return `${kebab(lowerFirst(typeName))}-dto`;
+  /* v8 ignore stop */
   const base = typeName.endsWith("Output")
     ? typeName.slice(0, -"Output".length)
-    : typeName.endsWith("Input")
-      ? typeName.slice(0, -"Input".length)
-      : /* v8 ignore next — defensive: a request/response DTO type always carries the Input/Output suffix */
-        typeName;
+    : typeName.slice(0, -"Input".length);
   return `${kebab(lowerFirst(base))}-dto`;
 }
 

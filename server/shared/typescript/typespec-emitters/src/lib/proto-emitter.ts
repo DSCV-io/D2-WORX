@@ -92,10 +92,10 @@ export interface NestedMessageDescriptor {
  * An unpinned field triggers D2TSP009 (loud failure, returns undefined).
  *
  * @param opName            - lowerCamelCase op name (for banner context only).
- * @param grpcService       - gRPC service name from @d2GrpcMethod (e.g. "KeyCustodianSigner").
+ * @param grpcService       - gRPC service name from @d2GrpcMethod (e.g. "SampleSigner").
  * @param grpcMethod        - gRPC method name from @d2GrpcMethod (e.g. "Sign").
  * @param streaming         - Streaming mode from @d2GrpcMethod.
- * @param protoPackage      - Proto3 package string (e.g. "d2.keycustodian.v2alpha").
+ * @param protoPackage      - Proto3 package string (e.g. "d2.sample.v1").
  * @param protoCsharpNs     - C# namespace option (e.g. "D2.Services.Protos.KeyCustodian.V2Alpha").
  * @param sourceSpec        - Relative spec path for the banner.
  * @param requestModelName  - Proto message name for the request (e.g. "SignRequest").

@@ -4,10 +4,14 @@
 
 ```ts
 
+import type { CallPathEntry } from '@d2/auth-context-abstractions';
 import type { IAuthContext } from '@d2/auth-context-abstractions';
+import type { RequestOrigin } from '@d2/auth-context-abstractions';
 
 // @public
 export interface IPropagatedContext {
+    // (undocumented)
+    readonly callPath?: readonly CallPathEntry[];
     // (undocumented)
     readonly currencyIso4217Code?: string;
     // (undocumented)
@@ -44,6 +48,7 @@ export interface IRequestContext extends IAuthContext {
     readonly asn?: number;
     readonly asnName?: string;
     readonly asnType?: string;
+    readonly callPath: readonly CallPathEntry[];
     readonly city?: string;
     readonly clientIp?: string;
     readonly countryIso31661Alpha2Code?: string;
@@ -54,6 +59,7 @@ export interface IRequestContext extends IAuthContext {
     readonly geohash?: string;
     readonly httpMethod?: string;
     readonly idempotencyKey?: string;
+    readonly immediateCaller?: string;
     readonly isHosting?: boolean;
     readonly isProxy?: boolean;
     readonly isTor?: boolean;
@@ -62,6 +68,7 @@ export interface IRequestContext extends IAuthContext {
     readonly localeIetfBcp47Tag?: string;
     readonly longitude?: number;
     readonly orgPlanTier?: string;
+    readonly origin: RequestOrigin;
     readonly postalCode?: string;
     readonly requestId?: string;
     readonly requestPath?: string;

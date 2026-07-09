@@ -149,5 +149,17 @@ namespace D2.Shared.Auth.Telemetry
                 __LivenessRevokedCallback(logger, null);
             }
         }
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.Extensions.Logging.Generators", "10.0.14.21808")]
+        private static readonly global::System.Action<global::Microsoft.Extensions.Logging.ILogger, global::System.Exception?> __ScopeMetadataEmptyAnomalyCallback =
+            global::Microsoft.Extensions.Logging.LoggerMessage.Define(global::Microsoft.Extensions.Logging.LogLevel.Warning, new global::Microsoft.Extensions.Logging.EventId(4004, nameof(ScopeMetadataEmptyAnomaly)), "Endpoint/method scope metadata is present and non-harmless but declares an EMPTY scope set (configuration anomaly — the public factories reject empty sets); failing closed with 401 ScopeInsufficient.", new global::Microsoft.Extensions.Logging.LogDefineOptions() { SkipEnabledCheck = true }); 
+
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.Extensions.Logging.Generators", "10.0.14.21808")]
+        public static partial void ScopeMetadataEmptyAnomaly(this global::Microsoft.Extensions.Logging.ILogger logger)
+        {
+            if (logger.IsEnabled(global::Microsoft.Extensions.Logging.LogLevel.Warning))
+            {
+                __ScopeMetadataEmptyAnomalyCallback(logger, null);
+            }
+        }
     }
 }

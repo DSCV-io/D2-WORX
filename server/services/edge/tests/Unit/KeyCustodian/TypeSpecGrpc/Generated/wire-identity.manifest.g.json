@@ -1,6 +1,6 @@
 {
-  "protoPackage": "d2.keycustodian.v2alpha",
-  "protoCsharpNamespace": "D2.Services.Protos.KeyCustodian.V2Alpha",
+  "protoPackage": "d2.signfixtures.v2alpha",
+  "protoCsharpNamespace": "D2.Services.Protos.SignFixtures.V2Alpha",
   "generation": 2,
   "stability": "alpha",
   "channel": "v2alpha",

@@ -94,8 +94,8 @@ namespace D2.Edge.KeyCustodian.Infra.Persistence.Postgres.Migrations
 
                     b.Property<string>("KeyDomain")
                         .IsRequired()
-                        .HasMaxLength(64)
-                        .HasColumnType("character varying(64)")
+                        .HasMaxLength(69)
+                        .HasColumnType("character varying(69)")
                         .HasColumnName("key_domain");
 
                     b.Property<byte[]>("KeyMaterialEncrypted")
@@ -132,6 +132,11 @@ namespace D2.Edge.KeyCustodian.Infra.Persistence.Postgres.Migrations
                         .HasColumnName("xmin");
 
                     b.HasKey("Kid");
+
+                    b.HasIndex("KeyDomain")
+                        .IsUnique()
+                        .HasDatabaseName("ux_key_record_one_pending_per_domain")
+                        .HasFilter("status = 'Pending'");
 
                     b.HasIndex("KeyDomain", "Status")
                         .HasDatabaseName("ix_key_record_key_domain_status");

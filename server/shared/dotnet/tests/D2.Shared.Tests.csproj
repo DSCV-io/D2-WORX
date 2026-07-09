@@ -127,6 +127,7 @@ Copyright (c) DCSV. All rights reserved.
     <ProjectReference Include="..\i18n\source-gen\D2.Shared.I18n.SourceGen.csproj" />
     <ProjectReference Include="..\auth\scopes-source-gen\D2.Shared.Auth.Scopes.SourceGen.csproj" />
     <ProjectReference Include="..\auth\audiences-source-gen\D2.Shared.Auth.Audiences.SourceGen.csproj" />
+    <ProjectReference Include="..\auth\protocol-audiences-source-gen\D2.Shared.Auth.ProtocolAudiences.SourceGen.csproj" />
     <ProjectReference Include="..\auth\error-codes-source-gen\D2.Shared.Auth.ErrorCodes.SourceGen.csproj" />
     <!--
       The unified error-codes engine (namespace D2.Shared.ErrorCodes.SourceGen)

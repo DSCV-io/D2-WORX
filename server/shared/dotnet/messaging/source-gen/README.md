@@ -6,6 +6,8 @@ Copyright (c) DCSV. All rights reserved.
 
 > Parent: [`server/shared/dotnet/`](../../README.md)
 
+**Input contracts:** [`contracts/mq-messages/`](../../../../../contracts/mq-messages/README.md) + [`contracts/mq-subscriptions/`](../../../../../contracts/mq-subscriptions/README.md)
+
 Roslyn incremental source generator that emits the messaging registry types (`MqMessages` + `MqMessagesRegistry` + `MqSubscriptions` + `MqSubscriptionsRegistry`) into [`D2.Shared.Messaging.Abstractions`](../abstractions/README.md) by reading two spec files from `contracts/`:
 
 - `mq-messages.spec.json` — every message type the platform publishes (constant name, runtime descriptor, encryption requirements)

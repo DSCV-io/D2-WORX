@@ -105,7 +105,7 @@ pnpm test:contracts        # from repo root
 pnpm --filter @d2/contract-tests test
 ```
 
-The composite gate is the `pnpm test:contracts` script at the repo root; CI activates it once the .NET `build` job activates (commented-out CI job blocks live in `.github/workflows/test.yml`).
+Fixtures are emitted and drift-checked by the active Contract fixture emission lane in `.github/workflows/test.yml`; TS parity assertions run inside the shared-subtree unit lane via this package. The composite local gate remains `pnpm test:contracts` at the repo root (emit + assert).
 
 ## Edge cases
 

@@ -40,8 +40,8 @@ const D2EmitterTestLibrary = createTestLibrary({
 });
 
 // Match on the FULL basename (path + "/" + fileName) so a shorter file name is
-// never a suffix of a longer one — e.g. "OrderShippedDispatcher.g.cs" is a
-// suffix of "IOrderShippedDispatcher.g.cs", so a bare endsWith would collide.
+// never a suffix of a longer one — e.g. "OrderShippedFixtureDispatcher.g.cs" is a
+// suffix of "IOrderShippedFixtureDispatcher.g.cs", so a bare endsWith would collide.
 function getEmittedFile(
   host: Awaited<ReturnType<typeof createTestHost>>,
   fileName: string,
@@ -73,19 +73,19 @@ describe("sseDispatchEmitIntegration_TwoPushOps_EmitsFullDispatchLayer", () => {
       using D2;
       namespace D2.Fixtures;
 
-      model OrderLine { sku: string; quantity: int32; }
-      model OrderShippedOutput { orderId: string; shippedAt: utcDateTime; lines: OrderLine[]; }
-      model SessionExpiringOutput { sessionId: string; expiresAt: utcDateTime; }
+      model OrderFixtureLine { sku: string; quantity: int32; }
+      model OrderShippedFixtureOutput { orderId: string; shippedAt: utcDateTime; lines: OrderFixtureLine[]; }
+      model SessionExpiringFixtureOutput { sessionId: string; expiresAt: utcDateTime; }
 
       @d2Command
       @d2ServedBy("PushFixtures")
       @d2ServerPush("user")
-      op orderShipped(): OrderShippedOutput;
+      op orderShippedFixture(): OrderShippedFixtureOutput;
 
       @d2Command
       @d2ServedBy("PushFixtures")
       @d2ServerPush("session")
-      op sessionExpiring(): SessionExpiringOutput;
+      op sessionExpiringFixture(): SessionExpiringFixtureOutput;
       `,
     );
 
@@ -105,23 +105,31 @@ describe("sseDispatchEmitIntegration_TwoPushOps_EmitsFullDispatchLayer", () => {
     expect(errors).toHaveLength(0);
 
     // User-channel dispatcher pair.
-    const userIface = getEmittedFile(host, "IOrderShippedDispatcher.g.cs");
+    const userIface = getEmittedFile(
+      host,
+      "IOrderShippedFixtureDispatcher.g.cs",
+    );
     expect(userIface).toBeDefined();
-    expect(userIface).toContain("public interface IOrderShippedDispatcher");
-    const userImpl = getEmittedFile(host, "OrderShippedDispatcher.g.cs");
+    expect(userIface).toContain(
+      "public interface IOrderShippedFixtureDispatcher",
+    );
+    const userImpl = getEmittedFile(host, "OrderShippedFixtureDispatcher.g.cs");
     expect(userImpl).toBeDefined();
     expect(userImpl).toContain(
       "new D2GeneratedSseChannelTarget(D2GeneratedSseChannelClass.User, targetId),",
     );
-    expect(userImpl).toContain('"orderShipped", payload, ct);');
+    expect(userImpl).toContain('"orderShippedFixture", payload, ct);');
 
     // Session-channel dispatcher pair — the Session arm is baked, non-vacuous.
-    const sessionImpl = getEmittedFile(host, "SessionExpiringDispatcher.g.cs");
+    const sessionImpl = getEmittedFile(
+      host,
+      "SessionExpiringFixtureDispatcher.g.cs",
+    );
     expect(sessionImpl).toBeDefined();
     expect(sessionImpl).toContain(
       "new D2GeneratedSseChannelTarget(D2GeneratedSseChannelClass.Session, targetId),",
     );
-    expect(sessionImpl).toContain('"sessionExpiring", payload, ct);');
+    expect(sessionImpl).toContain('"sessionExpiringFixture", payload, ct);');
 
     // Per-module DI-ext — one AddTransient per op.
     const diExt = getEmittedFile(
@@ -133,10 +141,10 @@ describe("sseDispatchEmitIntegration_TwoPushOps_EmitsFullDispatchLayer", () => {
       "public IServiceCollection AddD2PushFixturesSseDispatchers()",
     );
     expect(diExt).toContain(
-      "services.AddTransient<IOrderShippedDispatcher, OrderShippedDispatcher>();",
+      "services.AddTransient<IOrderShippedFixtureDispatcher, OrderShippedFixtureDispatcher>();",
     );
     expect(diExt).toContain(
-      "services.AddTransient<ISessionExpiringDispatcher, SessionExpiringDispatcher>();",
+      "services.AddTransient<ISessionExpiringFixtureDispatcher, SessionExpiringFixtureDispatcher>();",
     );
 
     // The emit-sink seam — emitted ONCE for the namespace (family: enum + struct + interface).
@@ -149,11 +157,11 @@ describe("sseDispatchEmitIntegration_TwoPushOps_EmitsFullDispatchLayer", () => {
     expect(seam).toContain("ValueTask<D2Result> EmitAsync<TPayload>(");
 
     // The payload DTO carries the temporal field + nested model (walkModel integration).
-    const payloadDto = getEmittedFile(host, "OrderShippedOutput.g.cs");
+    const payloadDto = getEmittedFile(host, "OrderShippedFixtureOutput.g.cs");
     expect(payloadDto).toBeDefined();
     expect(payloadDto).toContain("DateTimeOffset ShippedAt");
-    expect(payloadDto).toContain("IReadOnlyList<OrderLine> Lines");
-    expect(payloadDto).toContain("public sealed record OrderLine(");
+    expect(payloadDto).toContain("IReadOnlyList<OrderFixtureLine> Lines");
+    expect(payloadDto).toContain("public sealed record OrderFixtureLine(");
 
     // Suppression proof: a pure-push op is a caller, not a request server —
     // it gets ONLY the dispatcher surface, NO I<Op>Handler. The handler is gated

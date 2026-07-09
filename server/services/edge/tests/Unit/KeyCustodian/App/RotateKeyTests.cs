@@ -224,7 +224,7 @@ public sealed class RotateKeyTests
         db.Audit.Should().BeEmpty(because: "no state transition occurred");
     }
 
-    // Regression test for B3-F2: a CA-intermediate successor whose soak has not yet
+    // Regression test: a CA-intermediate successor whose soak has not yet
     // elapsed must return SoakNotElapsed and leave the incumbent unchanged —
     // mirroring the RSA Rotate_SuccessorNotYetSoaked_ReturnsSoakNotElapsed test.
     [Fact]
@@ -327,15 +327,120 @@ public sealed class RotateKeyTests
             KeyStatus.Pending, because: "successor must not change on smoke failure");
     }
 
+    // -----------------------------------------------------------------------
+    // Root-domain smoke routes through the dedicated §9.44 root-signing capability
+    // -----------------------------------------------------------------------
+
+    [Fact]
+    public async Task Rotate_Root_RoutesSuccessorSmokeThroughCapability_Rotates()
+    {
+        await using var db = KeyCustodianTestDbContext.CreateEmpty();
+        var created = KcAppTestKit.SR_BaseInstant;
+
+        // Active root incumbent + a soaked pending root successor.
+        var (activeKid, _) = await KcAppTestKit.SeedCaRootAsync(db, r_crypto, created);
+        var (pendingKid, _) = await KcAppTestKit.SeedCaRootAsync(
+            db, r_crypto, created, KeyStatus.Pending);
+
+        var clock = new TestClock(created + Duration.FromHours(2));
+        var result = await Build(db, clock, new RecordingAnnouncer())
+            .HandleAsync(new RotateKeyInput(KeyDomain.MTLS_CA_ROOT));
+
+        result.Success.Should().BeTrue(
+            because: "a valid successor root smoke-passes via the capability verify op");
+        result.Data!.RetiringKid.Should().Be(activeKid);
+        result.Data!.ActivatedKid.Should().Be(pendingKid);
+        db.Keys.Single(k => k.Kid == activeKid).Status.Should().Be(KeyStatus.Retiring);
+        db.Keys.Single(k => k.Kid == pendingKid).Status.Should().Be(KeyStatus.Active);
+    }
+
+    [Fact]
+    public async Task Rotate_Root_CorruptSuccessorMaterial_SmokeFailsViaCapability_NoChange()
+    {
+        // The corrupt-material adversarial on the rotate path: the successor root's
+        // wrapped material unwraps but is invalid, so the capability verify op fails
+        // loud (KEYCUSTODIAN_SMOKE_TEST_FAILED) and the incumbent keeps serving.
+        await using var db = KeyCustodianTestDbContext.CreateEmpty();
+        var created = KcAppTestKit.SR_BaseInstant;
+
+        var (activeKid, _) = await KcAppTestKit.SeedCaRootAsync(db, r_crypto, created);
+
+        var pendingKid = await KcAppTestKit.SeedKeyWithCorruptMaterialAsync(
+            db,
+            r_crypto,
+            KeyDomain.MTLS_CA_ROOT,
+            KeyType.X509CaCertificate,
+            KeyStatus.Pending,
+            created,
+            corruptPlaintext: RandomNumberGenerator.GetBytes(64));
+
+        var corruptRow = db.Keys.Single(k => k.Kid == pendingKid);
+        corruptRow.CaCertificate = RandomNumberGenerator.GetBytes(32);
+        await db.SaveChangesAsync();
+
+        var clock = new TestClock(created + Duration.FromHours(2));
+        var result = await Build(db, clock, new RecordingAnnouncer())
+            .HandleAsync(new RotateKeyInput(KeyDomain.MTLS_CA_ROOT));
+
+        result.Success.Should().BeFalse();
+        result.ErrorCode.Should().Be("KEYCUSTODIAN_SMOKE_TEST_FAILED");
+        db.Keys.Single(k => k.Kid == activeKid).Status.Should().Be(
+            KeyStatus.Active, because: "incumbent must not change on smoke failure");
+        db.Keys.Single(k => k.Kid == pendingKid).Status.Should().Be(
+            KeyStatus.Pending, because: "successor must not change on smoke failure");
+        db.Audit.Should().BeEmpty(because: "no state transition occurred");
+    }
+
+    [Fact]
+    public async Task Rotate_SealDomain_AnnouncesTheSealPrefixedDomainValue()
+    {
+        // The wire pin the sealed consumer runtime rides: the KeyRotatedEvent.Domain for a
+        // seal key IS the "seal:<serviceId>" value — exactly what KeyringBackedPayloadOpener
+        // ("seal:<ownServiceId>") and KeyringBackedPayloadSealer ("seal:<recipientServiceId>")
+        // subscribe on the rotation channel, so a real rotation reaches their refresh callbacks.
+        await using var db = KeyCustodianTestDbContext.CreateEmpty();
+        var created = KcAppTestKit.SR_BaseInstant;
+        const string seal_domain = "seal:audit";
+
+        await KcAppTestKit.SeedKeyAsync(
+            db,
+            r_crypto,
+            r_options,
+            seal_domain,
+            KeyType.EcdhSealing,
+            KeyStatus.Active,
+            created,
+            activatedAt: created);
+        var pendingKid = await KcAppTestKit.SeedKeyAsync(
+            db,
+            r_crypto,
+            r_options,
+            seal_domain,
+            KeyType.EcdhSealing,
+            KeyStatus.Pending,
+            created);
+
+        var announcer = new RecordingAnnouncer();
+        var result = await Build(db, new TestClock(created + Duration.FromHours(2)), announcer)
+            .HandleAsync(new RotateKeyInput(seal_domain));
+
+        result.Success.Should().BeTrue();
+        var call = announcer.Calls.Should().ContainSingle().Which;
+        call.Domain.Should().Be(seal_domain, "the seal rotation event carries the seal:<id> value");
+        call.Kid.Should().Be(pendingKid);
+        call.NewStatus.Should().Be(KeyStatus.Active);
+    }
+
     private RotateKeyHandler Build(
         KeyCustodianTestDbContext db, TestClock clock, RecordingAnnouncer announcer) =>
         new(
-            KcAppTestKit.Context<RotateKeyHandler>(),
+            KcAppTestKit.SystemContext<RotateKeyHandler>(),
             KcAppTestKit.NullClassifier(),
             db,
             KcAppTestKit.BuildPolicyProvider(r_options),
             announcer,
             r_crypto,
+            KcAppTestKit.BuildRootSigningCapability(db, r_crypto, clock, r_options),
             clock);
 
     private async Task<(string Active, string Pending)> SeedActiveAndSoakedPending(

@@ -78,7 +78,7 @@ public sealed class FileCaProviderTests : IDisposable
             because: "single-use contract: each call returns a fresh LoadedCaMaterial");
     }
 
-    // Regression test for B2-F3: after zeroing the first result, a second call must
+    // Regression test: after zeroing the first result, a second call must
     // still return valid (non-zeroed) material — proving the cache was not poisoned.
     [Fact]
     public void GetSeedCaMaterial_AfterZero_SecondCallReturnsUnzeroedMaterial()
@@ -103,7 +103,7 @@ public sealed class FileCaProviderTests : IDisposable
     [InlineData(CaCertificateFiles.INTERMEDIATE_KEY_FILE_NAME)]
     public void GetSeedCaMaterial_MissingFile_ReturnsTypedFailure(string missingFile)
     {
-        // B1-F1/B2-F1 regression: provider returns D2Result failure, never throws.
+        // Regression: provider returns D2Result failure, never throws.
         WriteValidChain();
         System.IO.File.Delete(Path.Combine(r_dir, missingFile));
 
@@ -117,7 +117,7 @@ public sealed class FileCaProviderTests : IDisposable
     [Fact]
     public void GetSeedCaMaterial_MalformedCertPem_ReturnsTypedFailure()
     {
-        // B1-F1/B2-F1 regression: malformed PEM returns a typed failure, not a throw.
+        // Regression: malformed PEM returns a typed failure, not a throw.
         WriteValidChain();
         System.IO.File.WriteAllText(
             Path.Combine(r_dir, CaCertificateFiles.ROOT_CERT_FILE_NAME), "not a pem");
@@ -131,7 +131,7 @@ public sealed class FileCaProviderTests : IDisposable
     [Fact]
     public void GetSeedCaMaterial_MalformedKeyPem_ReturnsTypedFailure()
     {
-        // B1-F1/B2-F1 regression: malformed key PEM returns a typed failure, not a throw.
+        // Regression: malformed key PEM returns a typed failure, not a throw.
         WriteValidChain();
         System.IO.File.WriteAllText(
             Path.Combine(r_dir, CaCertificateFiles.ROOT_KEY_FILE_NAME),
@@ -192,7 +192,7 @@ public sealed class FileCaProviderTests : IDisposable
     [Fact]
     public void GetSeedCaMaterial_OversizedFile_ReturnsTypedFailure()
     {
-        // B2-F5 regression: a file exceeding the 4 KB cap must return a typed failure.
+        // Regression: a file exceeding the 4 KB cap must return a typed failure.
         WriteValidChain();
         System.IO.File.WriteAllText(
             Path.Combine(r_dir, CaCertificateFiles.ROOT_CERT_FILE_NAME),

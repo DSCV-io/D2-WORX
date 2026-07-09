@@ -6,7 +6,9 @@
 
 namespace D2.Shared.Tests.Unit.Auth.Inbound.Http.Middleware;
 
+using System.Collections.Generic;
 using System.IO;
+using System.Reflection;
 using System.Text.Json;
 using AwesomeAssertions;
 using D2.Shared.Auth;
@@ -342,7 +344,7 @@ public sealed class JwtAuthMiddlewareTests
     [Fact]
     public async Task InvokeAsync_LivenessRevoked_LeavesHolderUnset()
     {
-        // Regression (M-1): capture is AFTER liveness — a revoked-session token
+        // Regression: capture is AFTER liveness — a revoked-session token
         // must NOT enter the holder. Without the fix (capture-before-liveness),
         // the holder would be populated THEN the liveness check fires → the
         // revoked token would transiently sit in the holder during the error
@@ -368,7 +370,7 @@ public sealed class JwtAuthMiddlewareTests
     [Fact]
     public async Task InvokeAsync_LivenessUnavailable_LeavesHolderUnset()
     {
-        // Regression (M-1): a liveness-unavailable path returns 503 — the token
+        // Regression: a liveness-unavailable path returns 503 — the token
         // must not be captured before that return path executes.
         using var builder = new TestJwtBuilder();
         var token = builder.MintToken(_ISSUER, _AUDIENCE);
@@ -390,7 +392,7 @@ public sealed class JwtAuthMiddlewareTests
     [Fact]
     public async Task InvokeAsync_LivenessValidationFailed_LeavesHolderUnset()
     {
-        // Regression (M-1): defensive fail-closed — even an unexpected
+        // Regression: defensive fail-closed — even an unexpected
         // ValidationFailed liveness result must not leave the token in the holder.
         using var builder = new TestJwtBuilder();
         var token = builder.MintToken(_ISSUER, _AUDIENCE);
@@ -648,6 +650,107 @@ public sealed class JwtAuthMiddlewareTests
         nextCalled().Should().BeTrue();
     }
 
+    // ── Scope-gate holder capture ordering + empty-metadata anomaly ───────
+
+    [Fact]
+    public async Task InvokeAsync_ScopeInsufficient_LeavesHolderUnset()
+    {
+        // Capture is the LAST pre-continuation op — placed AFTER the scope gate (mirrors
+        // the gRPC interceptor). A caller who fails scope enforcement must NEVER have their
+        // bearer captured for forwarding. Fails-without-fix: with capture BEFORE the scope
+        // gate, the holder is populated then the 401 fires → the token transiently sits in
+        // the holder during the error-response phase.
+        using var builder = new TestJwtBuilder();
+        var token = builder.MintToken(_ISSUER, _AUDIENCE);
+        var holder = new MutableForwardedJwtAccessor();
+        var (mw, nextCalled) = MakeMiddleware(builder);
+        var ctx = MakeContext(
+            authorization: $"{_BEARER_PREFIX}{token}",
+            metadata: EndpointScopeMetadata.ForScopes(new[] { "files.read" }, ScopeMatch.Any));
+        ctx.RequestServices = BuildServicesWithHolder(holder);
+
+        await mw.InvokeAsync(ctx);
+
+        nextCalled().Should().BeFalse();
+        ctx.Response.StatusCode.Should().Be(401);
+        holder.Current.Should().BeNull(
+            "a scope-insufficient token must never enter the forwarded-JWT holder");
+    }
+
+    [Fact]
+    public async Task InvokeAsync_SuccessPathWithSatisfiedScope_CapturesAfterScopeGate()
+    {
+        // The reordered capture still fires on the happy path: a caller who CLEARS the
+        // scope gate has their bearer captured exactly once (regression on the move).
+        using var builder = new TestJwtBuilder();
+        var token = builder.MintToken(
+            issuer: _ISSUER,
+            audience: _AUDIENCE,
+            extraClaims: new Dictionary<string, object> { ["scope"] = "files.read" });
+        var holder = new MutableForwardedJwtAccessor();
+        var (mw, nextCalled) = MakeMiddleware(builder);
+        var ctx = MakeContext(
+            authorization: $"{_BEARER_PREFIX}{token}",
+            metadata: EndpointScopeMetadata.ForScopes(new[] { "files.read" }, ScopeMatch.Any));
+        ctx.RequestServices = BuildServicesWithHolder(holder);
+
+        await mw.InvokeAsync(ctx);
+
+        nextCalled().Should().BeTrue();
+        holder.Current.Should().NotBeNull();
+        holder.Current!.Value.RevealForForwarding().Should().Be(token);
+    }
+
+    [Fact]
+    public async Task InvokeAsync_PresentNonHarmlessButEmptyScopeMetadata_FailsClosed401()
+    {
+        // The public factories reject empty scope sets, so a present, non-harmless metadata
+        // with an EMPTY scope set can only arise from a serializer / record-clone /
+        // reflection path. The enforcement guard must fail CLOSED (deny) rather than
+        // silently admit any authenticated caller.
+        using var builder = new TestJwtBuilder();
+        var token = builder.MintToken(_ISSUER, _AUDIENCE);
+        var (mw, nextCalled) = MakeMiddleware(builder);
+        var ctx = MakeContext(
+            authorization: $"{_BEARER_PREFIX}{token}", metadata: BuildAnomalousEmptyMetadata());
+
+        await mw.InvokeAsync(ctx);
+
+        nextCalled().Should().BeFalse();
+        ctx.Response.StatusCode.Should().Be(401);
+        var problem = await ReadProblemAsync(ctx);
+        problem.GetProperty("d2_error_code").GetString()
+            .Should().Be(AuthErrorCodes.AUTH_SCOPE_INSUFFICIENT);
+    }
+
+    [Fact]
+    public async Task InvokeAsync_AnomalousEmptyMetadata_LeavesHolderUnset()
+    {
+        // The anomaly denies BEFORE the capture point, so the holder stays unset.
+        using var builder = new TestJwtBuilder();
+        var token = builder.MintToken(_ISSUER, _AUDIENCE);
+        var holder = new MutableForwardedJwtAccessor();
+        var (mw, _) = MakeMiddleware(builder);
+        var ctx = MakeContext(
+            authorization: $"{_BEARER_PREFIX}{token}", metadata: BuildAnomalousEmptyMetadata());
+        ctx.RequestServices = BuildServicesWithHolder(holder);
+
+        await mw.InvokeAsync(ctx);
+
+        ctx.Response.StatusCode.Should().Be(401);
+        holder.Current.Should().BeNull();
+    }
+
+    [Fact]
+    public void EndpointScopeMetadata_ForScopes_EmptySet_Throws()
+    {
+        // Re-pin: the public factory rejects empty scope sets — the enforcement guard's
+        // empty-set anomaly path is only reachable via reflection / a serializer.
+        var act = () => EndpointScopeMetadata.ForScopes([], ScopeMatch.Any);
+
+        act.Should().Throw<ArgumentException>();
+    }
+
     // ── Middleware construction + miscellaneous ───────────────────────────
 
     [Fact]
@@ -836,6 +939,24 @@ public sealed class JwtAuthMiddlewareTests
         var services = new ServiceCollection();
         services.AddSingleton(holder);
         return services.BuildServiceProvider();
+    }
+
+    private static EndpointScopeMetadata BuildAnomalousEmptyMetadata()
+    {
+        // The public factory (ForScopes) throws on an empty set and HarmlessEndpoint is a
+        // singleton, so a present, non-harmless, EMPTY-scope metadata is unconstructible via
+        // the public surface — only the private ctor (reached here by reflection) can
+        // produce one, standing in for a future serializer / record-clone path.
+        var ctor = typeof(EndpointScopeMetadata).GetConstructor(
+            BindingFlags.Instance | BindingFlags.NonPublic,
+            binder: null,
+            [typeof(IReadOnlySet<string>), typeof(ScopeMatch), typeof(bool)],
+            modifiers: null)
+            ?? throw new InvalidOperationException(
+                "the private (scopes, match, isHarmless) ctor must exist");
+
+        return (EndpointScopeMetadata)ctor.Invoke(
+            [new HashSet<string>(StringComparer.Ordinal), ScopeMatch.Any, false]);
     }
 
     private static DefaultHttpContext MakeContext(

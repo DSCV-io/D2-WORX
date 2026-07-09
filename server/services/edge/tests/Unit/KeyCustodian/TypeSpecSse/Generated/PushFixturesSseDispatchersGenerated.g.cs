@@ -24,8 +24,8 @@ public static class PushFixturesSseDispatchersGeneratedServiceCollectionExtensio
         /// </summary>
         public IServiceCollection AddD2PushFixturesSseDispatchers()
         {
-            services.AddTransient<IOrderShippedDispatcher, OrderShippedDispatcher>();
-            services.AddTransient<ISessionExpiringDispatcher, SessionExpiringDispatcher>();
+            services.AddTransient<IOrderShippedFixtureDispatcher, OrderShippedFixtureDispatcher>();
+            services.AddTransient<ISessionExpiringFixtureDispatcher, SessionExpiringFixtureDispatcher>();
             return services;
         }
     }

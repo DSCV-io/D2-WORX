@@ -6,6 +6,10 @@
 
 namespace D2.Edge.KeyCustodian.App.Application.Handlers.Commands.SeedCertificateAuthority;
 
+using H = D2.Edge.KeyCustodian.App.Application.Handlers.Commands.SeedCertificateAuthority.ISeedCertificateAuthorityHandler;
+using I = SeedCertificateAuthorityInput;
+using O = SeedCertificateAuthorityOutput;
+
 /// <summary>
 /// Seeds the certificate-authority hierarchy on startup from the
 /// <see cref="ICaProvider"/>: persists the root + issuing intermediate as active
@@ -43,9 +47,9 @@ public sealed class SeedCertificateAuthorityHandler(
     IClock clock)
     : BaseRepoHandler<
         SeedCertificateAuthorityHandler,
-        SeedCertificateAuthorityInput,
-        SeedCertificateAuthorityOutput>(ctx, classifier),
-      ISeedCertificateAuthorityHandler
+        I,
+        O>(ctx, classifier),
+      H
 {
     /// <inheritdoc/>
     /// <remarks>
@@ -60,9 +64,23 @@ public sealed class SeedCertificateAuthorityHandler(
     };
 
     /// <inheritdoc/>
-    protected override async ValueTask<D2Result<SeedCertificateAuthorityOutput?>> ExecuteAsync(
-        SeedCertificateAuthorityInput input, CancellationToken ct)
+    protected override async ValueTask<D2Result<O?>> ExecuteAsync(
+        I input, CancellationToken ct)
     {
+        // 0) Authority precedes work: lifecycle mutations are System-plane-only,
+        //    fail-closed (the CA seeder establishes the System context on its scope).
+        var authorityResult =
+            KeyLifecycleAuthority.AuthorizeLifecycleMutation(Context.Request.Origin);
+
+        if (authorityResult.Failed)
+        {
+            return LifecycleAuthorityTelemetry.Deny<O>(
+                Context.Logger,
+                authorityResult,
+                Context.Request.ImmediateCaller,
+                "seed-certificate-authority");
+        }
+
         // 1) Per-tier idempotency gate — check each tier INDEPENDENTLY so a partial
         //    seed (crash after root was persisted but before intermediate) re-runs
         //    only the missing tier on the next boot, not both. If both are already
@@ -82,13 +100,15 @@ public sealed class SeedCertificateAuthorityHandler(
         if (rootActive && intermediateActive)
         {
             KeyCustodianLog.CaSeedSkippedAlreadyActive(Context.Logger);
-            return D2Result<SeedCertificateAuthorityOutput?>.Ok(
-                new SeedCertificateAuthorityOutput(Seeded: false, RootKid: null, IntermediateKid: null));
+
+            return D2Result<O?>.Ok(
+                new O(Seeded: false, RootKid: null, IntermediateKid: null));
         }
 
         // 2) Load + chain-validate the dev CA hierarchy (typed failure on any load error).
         var loadResult = caProvider.GetSeedCaMaterial();
-        if (loadResult.BubbleOnFailure<LoadedCaMaterial, SeedCertificateAuthorityOutput>(
+
+        if (loadResult.BubbleOnFailure<LoadedCaMaterial, O>(
             out var loadBubble, out var loaded))
             return loadBubble;
 
@@ -107,9 +127,11 @@ public sealed class SeedCertificateAuthorityHandler(
                     KeyDomain.MtlsCaRoot,
                     loadedCa.RootPrivateKeyPkcs8,
                     loadedCa.RootCertificateDer);
-                if (rootSeedResult.BubbleOnFailure<ActiveKey, SeedCertificateAuthorityOutput>(
+
+                if (rootSeedResult.BubbleOnFailure<ActiveKey, O>(
                     out var rootBubble, out var rootNullable))
                     return rootBubble;
+
                 rootActiveKey = rootNullable!;
             }
 
@@ -119,14 +141,17 @@ public sealed class SeedCertificateAuthorityHandler(
                     KeyDomain.MtlsCaIntermediate,
                     loadedCa.IntermediatePrivateKeyPkcs8,
                     loadedCa.IntermediateCertificateDer);
-                if (intermediateSeedResult.BubbleOnFailure<ActiveKey, SeedCertificateAuthorityOutput>(
+
+                if (intermediateSeedResult.BubbleOnFailure<ActiveKey, O>(
                     out var intermediateBubble, out var intermediateNullable))
                     return intermediateBubble;
+
                 intermediateActiveKey = intermediateNullable!;
             }
 
             // 4) Persist only the newly seeded tiers + their audit entries in one save.
             var seededCount = 0;
+
             if (rootActiveKey is not null)
             {
                 db.Keys.Add(rootActiveKey.ToNewRecord());
@@ -144,13 +169,14 @@ public sealed class SeedCertificateAuthorityHandler(
             await db.SaveChangesAsync(ct).ConfigureAwait(false);
 
             KeyCustodianMetrics.SR_KeyGenerationsTotal.Add(seededCount);
+
             KeyCustodianLog.CaSeeded(
                 Context.Logger,
                 rootActiveKey?.Kid.Value ?? "(already active)",
                 intermediateActiveKey?.Kid.Value ?? "(already active)");
 
-            return D2Result<SeedCertificateAuthorityOutput?>.Ok(
-                new SeedCertificateAuthorityOutput(
+            return D2Result<O?>.Ok(
+                new O(
                     Seeded: true,
                     RootKid: rootActiveKey?.Kid.Value,
                     IntermediateKid: intermediateActiveKey?.Kid.Value));
@@ -171,6 +197,7 @@ public sealed class SeedCertificateAuthorityHandler(
         KeyDomain domain, byte[] privateKeyPkcs8, byte[] certificateDer)
     {
         var policyResult = policyProvider.ForDomain(domain);
+
         if (!policyResult.Success)
             return D2Result<ActiveKey>.BubbleFail(policyResult);
 
@@ -180,6 +207,7 @@ public sealed class SeedCertificateAuthorityHandler(
         // managed key will hold). A failure rejects the seed loudly.
         var smokeResult = SmokeTesting.Verify(
             KeyType.X509CaCertificate, privateKeyPkcs8, publicSpki: null);
+
         if (!smokeResult.Success)
             return D2Result<ActiveKey>.BubbleFail(smokeResult);
 
@@ -187,6 +215,7 @@ public sealed class SeedCertificateAuthorityHandler(
         // plaintext PKCS#8 immediately after wrapping, even if Encrypt throws, so the
         // sensitive bytes are never left un-zeroed if the outer try-scope exception occurs.
         byte[] wrapped;
+
         try
         {
             wrapped = rootCrypto.Encrypt(privateKeyPkcs8);
@@ -213,10 +242,12 @@ public sealed class SeedCertificateAuthorityHandler(
             publicMaterial: null,
             caCertificateMaterial: caCertMaterial,
             createdAt);
+
         if (!pendingResult.Success)
             return D2Result<ActiveKey>.BubbleFail(pendingResult);
 
         var proofResult = SmokeProof.ForPassedSmokeTest(KeyType.X509CaCertificate, clock);
+
         if (!proofResult.Success)
             return D2Result<ActiveKey>.BubbleFail(proofResult);
 
@@ -228,6 +259,7 @@ public sealed class SeedCertificateAuthorityHandler(
         db.Audit.Add(
             EncryptionKeyAudit.Record(kid, KeyAuditAction.Generated, KeyStatus.Pending, clock)
             .ToRecord());
+
         db.Audit.Add(
             EncryptionKeyAudit.Record(kid, KeyAuditAction.Activated, KeyStatus.Active, clock)
             .ToRecord());

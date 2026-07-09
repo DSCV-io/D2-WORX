@@ -8,6 +8,8 @@ Copyright (c) DCSV. All rights reserved.
 >
 > **Audience**: D² framework engineers maintaining the shared field-constraints catalog (field-length bounds + closed-list taxonomy enums) consumed by the domain value objects, the FE/BFF Zod schemas, and arbitrary backend modules.
 
+**Input contract:** [`contracts/validation/`](../../../../../contracts/validation/README.md)
+
 Roslyn incremental source generator that emits `FieldConstraints.g.cs` (field-length / digit-count `const int` bounds) and `Taxonomy.g.cs` (the `NamePrefix` / `NameSuffix` / `BiologicalSex` closed-list enums) into `D2.Shared.Validation.Abstractions` by reading `contracts/validation/field-constraints.spec.json` via `<AdditionalFiles>`. Single-target — emits ONLY when the consuming assembly is `D2.Shared.Validation.Abstractions`.
 
 The spec file is the single source of truth for the platform's shared field bounds + name/sex taxonomy. The bounds gate every value-object `Create(...)` call (contacts + Location); the enums are the closed wire vocabularies for name prefixes/suffixes and biological sex. Same spec drives the TS-side `@d2/validation-abstractions` catalog via `tools/ts-codegen/src/field-constraints-emit.ts` — cross-language wire-format drift is structurally impossible.

@@ -5,8 +5,8 @@ Copyright (c) DCSV. All rights reserved.
 # ADR-0007: Request/auth context — spec-driven `IRequestContext`/`IAuthContext`, rebuild-from-JWT each hop, `x-d2-context` propagation
 
 - **Status**: Accepted
-- **Date**: 2026-05-30 (mTLS-framing reframe: 2026-06-18)
-- **Deliverable**: D2 shared libraries (backfilled)
+- **Date**: 2026-05-30 (mTLS-framing reframe: 2026-06-18; establishment-fields amendment: 2026-06-30)
+- **Deliverable**: D2 shared libraries (backfilled); establishment fields: 0026-kc-crypto-surface
 
 ## Context
 
@@ -41,6 +41,14 @@ Every sync hop (HTTP, gRPC) carries a bearer JWT. The receiving service's auth m
 ### 3. The domain-safe `IAuthContext` slice
 
 `IAuthContext` (namespace `D2.Shared.AuthContext.Abstractions`) is a read-only identity/org/impersonation/scopes interface with no dependency on ASP.NET Core or `HttpContext`. Domain assemblies reference only `D2.Shared.AuthContext.Abstractions` + `D2.Shared.Auth.Abstractions` (vocabulary: `ActorEntry`, `OrgType`, `Role`, `ImpersonationKind`). `IRequestContext` extends `IAuthContext` with transport fields; only transport middleware and integration code reference `D2.Shared.Context.Abstractions`. Hand-written `IAuthContextExtensions` (`HasScope`, `IsStaff`, `IsForcedImpersonation`, …) provide the domain predicate surface — stable domain logic, not spec-variable, so not generated. `ActorChainParser` strict mode deliberately throws on any malformed `act` claim (auth middleware catches it → 401) rather than returning a degraded result: a signed token with a malformed actor chain is a broken upstream mint condition.
+
+### 4. Establishment fields — `Origin` / `ImmediateCaller` / `CallPath` (added by [ADR-0025](0025-request-context-establishment.md))
+
+`IRequestContext` gains a fourth spec section, `Establishment`, folding in three fields every trust boundary populates fresh on its own request context: `Origin` (`RequestOrigin`, non-nullable — which kind of boundary produced this hop's context: the Edge external ingress, a cross-process mTLS-authenticated hop, an in-process module call, or an in-host system worker), `ImmediateCaller` (`string?` — who called this hop, sourced from the validated mTLS client certificate on a cross-process hop or the calling module's own id in-process), and `CallPath` (`IReadOnlyList<CallPathEntry>`, `propagate: true`, depth-bounded — the accumulated sequence of hops the request has traversed).
+
+`Origin` and `ImmediateCaller` are deliberately **not** `propagate: true` — the generator's `propagate`-gated filter (the same mechanism that already keeps full identity out of `PropagatedContext`, above) structurally excludes both from ever reaching the wire; every boundary recomputes them locally instead of trusting an inbound value. `CallPath` is the opposite shape: it is the first `propagate: true` list-of-records field the spec has emitted (every field propagated before it was a scalar), and it is operational telemetry only — no authority decision anywhere reads it. This is the same rebuild-fresh-per-hop discipline this ADR already applies to identity, extended to a second, narrower class of fact (which kind of boundary, not which user) that a capability authority needs and that must be at least as unforgeable as identity itself.
+
+Full design, the five establishment boundaries (one per transport plus outbound propagation), and the authority model this enables are in [ADR-0025](0025-request-context-establishment.md).
 
 ## Consequences
 
@@ -78,3 +86,4 @@ Every sync hop (HTTP, gRPC) carries a bearer JWT. The receiving service's auth m
 - [ADR-0002](0002-spec-driven-codegen.md) — the codegen pattern this applies. [ADR-0006](0006-abstractions-implementation-split.md) — the domain-safe abstractions slice.
 - [ADR-0022](0022-service-auth-mint-once-forward.md) — the service-to-service auth model that builds on this decision's rebuild-from-JWT-each-hop choice: one token minted at the Edge boundary and forwarded unchanged, re-validated at every hop.
 - [ADR-0023](0023-mtls-workload-identity.md) — mTLS as an additive workload-identity and channel layer, adopted on top of (never in place of) the per-hop token re-validation this decision establishes; the transport-trust shortcut weighed and rejected above declines only the misuse of mTLS to skip that validation.
+- [ADR-0025](0025-request-context-establishment.md) — the `Establishment` fields (`Origin` / `ImmediateCaller` / `CallPath`) added to `IRequestContext` in §Decision-4 above: the local, non-propagated `Origin`/`ImmediateCaller` facts a capability authority can trust, and the propagated, telemetry-only `CallPath`.

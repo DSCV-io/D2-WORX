@@ -8,6 +8,7 @@ import { join, resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { diffOpenApi } from "../src/openapi-diff.js";
+import { repoRoot } from "./repo-root.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const BEFORE_DIR = resolve(__dirname, "fixtures", "openapi", "before");
@@ -459,12 +460,10 @@ describe("diffOpenApi — adversarial inputs", () => {
 // ---------------------------------------------------------------------------
 
 describe("diffOpenApi — non-vacuity against real committed fixture", () => {
-  const REAL_FIXTURE_PATH = resolve(
-    __dirname,
-    "..",
-    "..",
-    "..",
-    "server/services/edge/tests/Unit/KeyCustodian/TypeSpecOpenApi/Generated/open-api-versioned-fixtures.2-0.openapi.g.json",
+  const REAL_FIXTURE_PATH = join(
+    repoRoot,
+    "server/services/edge/tests/Unit/KeyCustodian/TypeSpecOpenApi",
+    "Generated/open-api-versioned-fixtures.2-0.openapi.g.json",
   );
 
   it("real committed OpenAPI fixture loads and produces no findings against itself (identity diff)", () => {

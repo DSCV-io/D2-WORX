@@ -63,8 +63,11 @@ public sealed class CaCertificateGenerationTests
             "Root", Duration.FromDays(10), new TestClock(sr_now));
 
         using var cert = X509CertificateLoader.LoadCertificate(result.Data!.CertificateDer);
+
+        // notBefore is front-backdated by the fixed clock-skew allowance (5 min); the
+        // forward validity (notAfter = now + 10 days) is unchanged by the backdate.
         cert.NotBefore.ToUniversalTime().Should().BeCloseTo(
-            sr_now.ToDateTimeUtc(), TimeSpan.FromSeconds(2));
+            sr_now.ToDateTimeUtc().AddMinutes(-5), TimeSpan.FromSeconds(2));
         cert.NotAfter.ToUniversalTime().Should().BeCloseTo(
             sr_now.ToDateTimeUtc().AddDays(10), TimeSpan.FromSeconds(2));
     }

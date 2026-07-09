@@ -34,12 +34,16 @@ import { validateGitRef } from "./safe-args.js";
  *
  * @param baseRef - The exclusive lower bound ref, e.g. a branch name or commit SHA.
  * @param headRef - The inclusive upper bound ref, e.g. `"HEAD"` or a commit SHA.
+ * @param cwd - Optional repo root directory (where `.git/` lives). When
+ *   provided, `git log` runs with that `cwd` so the force valve honors
+ *   `--repo-root` instead of ambient `process.cwd()`.
  * @returns Array of raw commit-message strings, one per commit.
  * @throws {Error} When `git log` exits non-zero.
  */
 export function commitMessagesInRange(
   baseRef: string,
   headRef: string,
+  cwd?: string,
 ): string[] {
   validateGitRef(baseRef);
   validateGitRef(headRef);
@@ -47,7 +51,11 @@ export function commitMessagesInRange(
   const result = spawnSync(
     "git",
     ["log", "--format=%B%x00", `${baseRef}..${headRef}`],
-    { encoding: "utf-8", maxBuffer: 10 * 1024 * 1024 },
+    {
+      encoding: "utf-8",
+      maxBuffer: 10 * 1024 * 1024,
+      ...(cwd !== undefined ? { cwd } : {}),
+    },
   );
 
   if (result.status !== 0) {

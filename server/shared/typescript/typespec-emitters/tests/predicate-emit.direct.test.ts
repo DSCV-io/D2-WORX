@@ -145,13 +145,13 @@ function find(suffix: string): string | undefined {
 
 describe("$onEmit_predicateEmitDirect_PredicateBearingOp", () => {
   it("emits the C#/TS predicates + the sentinel and threads the AST onto the client", async () => {
-    const input = model("PlaceOrderInput", { customerId: str() });
-    const output = model("PlaceOrderOutput", {
+    const input = model("PlaceOrderFixtureInput", { customerId: str() });
+    const output = model("PlaceOrderFixtureOutput", {
       orderCode: str(),
       itemStatuses: arrayOf(str()),
       partial: bool(),
     });
-    const op = wrappedOp("placeOrder", input, output);
+    const op = wrappedOp("placeOrderFixture", input, output);
 
     const prog = program((key) => {
       if (key === D2_SERVED_BY_KEY)
@@ -162,7 +162,7 @@ describe("$onEmit_predicateEmitDirect_PredicateBearingOp", () => {
             op,
             {
               service: "PredicateFixturesOrders",
-              method: "PlaceOrder",
+              method: "PlaceOrderFixture",
               streaming: "unary",
             },
           ],
@@ -189,10 +189,10 @@ describe("$onEmit_predicateEmitDirect_PredicateBearingOp", () => {
     directUnitOps.push(op);
     await $onEmit(context(prog, REAL_MODULE_OPTS));
 
-    const predCs = find("PlaceOrderResiliencePredicates.g.cs");
+    const predCs = find("PlaceOrderFixtureResiliencePredicates.g.cs");
     expect(predCs).toBeDefined();
     expect(predCs).toContain(
-      "internal static readonly Func<D2Result<PlaceOrderOutput?>, bool> SR_RetryWhen",
+      "internal static readonly Func<D2Result<PlaceOrderFixtureOutput?>, bool> SR_RetryWhen",
     );
     expect(predCs).toContain(
       'r.Category?.ToWire() == "infrastructure_unavailable"',
@@ -201,9 +201,9 @@ describe("$onEmit_predicateEmitDirect_PredicateBearingOp", () => {
       '(r.Data?.ItemStatuses?.Contains("PENDING") ?? false)',
     );
 
-    const predTs = find("place-order-resilience-predicates.g.ts");
+    const predTs = find("place-order-fixture-resilience-predicates.g.ts");
     expect(predTs).toBeDefined();
-    expect(predTs).toContain("export const placeOrderRetryWhen");
+    expect(predTs).toContain("export const placeOrderFixtureRetryWhen");
 
     const sentinel = find("D2GeneratedBusinessRetrySignal.g.cs");
     expect(sentinel).toBeDefined();
@@ -213,7 +213,7 @@ describe("$onEmit_predicateEmitDirect_PredicateBearingOp", () => {
 
     // The AST threaded onto the client → the impl gains the sentinel throw arm.
     const impl =
-      find("/PlaceOrderResiliencePredicatesGrpcClient.g.cs") ??
+      find("/PlaceOrderFixtureResiliencePredicatesGrpcClient.g.cs") ??
       directUnitEmitted.find(
         (e) =>
           e.path.endsWith("PredicateFixturesGrpcClient.g.cs") &&

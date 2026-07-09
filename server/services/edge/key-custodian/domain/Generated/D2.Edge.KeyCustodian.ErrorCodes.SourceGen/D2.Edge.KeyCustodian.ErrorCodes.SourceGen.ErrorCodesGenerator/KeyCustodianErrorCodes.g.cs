@@ -66,8 +66,53 @@ public static class KeyCustodianErrorCodes
     /// <summary>A certificate-generation precondition was violated (empty subject name, non-positive validity) or a cryptographic build operation failed. This is a programmer/precondition error surfaced as a flagged 500 result (carrying telemetry) rather than a thrown exception, the same way a failed smoke test is.</summary>
     public const string KEYCUSTODIAN_INVALID_CERTIFICATE_REQUEST = "KEYCUSTODIAN_INVALID_CERTIFICATE_REQUEST";
 
-    /// <summary>No active issuing intermediate certificate authority is available to sign a workload leaf certificate. A retryable not-ready-yet condition: the CA either has not been seeded yet or is between rotations. Surfaced as a 503 service-unavailable result so callers retry rather than treat it as a client-side conflict.</summary>
+    /// <summary>No active issuing certificate-authority tier is available: either no active intermediate to sign a workload leaf certificate, or no active root/intermediate to return from the CA-certificate fetch. A retryable not-ready-yet condition: the CA either has not been seeded yet or is between rotations. Surfaced as a 503 service-unavailable result so callers retry rather than treat it as a client-side conflict.</summary>
     public const string KEYCUSTODIAN_NO_ACTIVE_ISSUING_CA = "KEYCUSTODIAN_NO_ACTIVE_ISSUING_CA";
+
+    /// <summary>The requested key domain is never signable on the general signing surface, for any origin: the certificate-authority domains (mtls-ca-root / mtls-ca-intermediate — trust anchors whose private keys sign only certificates through the dedicated issuance path, never arbitrary caller-supplied bytes) and the cluster-signing root (jwks-signing, which surfaces as the more specific MINTER_CAPABILITY_REQUIRED). Enforced structurally (independent of policy) and backed by a boot-time config-validation invariant that refuses to grant a never-signable domain to any workload.</summary>
+    public const string KEYCUSTODIAN_CROSS_PROCESS_DOMAIN_REJECTED = "KEYCUSTODIAN_CROSS_PROCESS_DOMAIN_REJECTED";
+
+    /// <summary>The calling workload is not authorized to sign with the requested key domain (the domain is not in the workload's allowed-signing-domains policy set). Distinct from the in-process-only rejection: this is a policy-scope denial, not an in-process-only-domain denial.</summary>
+    public const string KEYCUSTODIAN_SIGNING_DOMAIN_NOT_AUTHORIZED = "KEYCUSTODIAN_SIGNING_DOMAIN_NOT_AUTHORIZED";
+
+    /// <summary>The request origin was not positively established by any trust boundary (the fail-closed RequestOrigin.Unestablished default), so the signing authority denies. The origin is recomputed locally by the receiving boundary from its own unforgeable transport facts and is never propagated; a capability authority that has not had its origin established denies rather than assume a plane.</summary>
+    public const string KEYCUSTODIAN_REQUEST_ORIGIN_UNESTABLISHED = "KEYCUSTODIAN_REQUEST_ORIGIN_UNESTABLISHED";
+
+    /// <summary>The requested key domain is the cluster-signing root (jwks-signing) and is structurally unreachable on the general signing surface for every established origin. It is signable only through the dedicated JWT minter capability, which is registered solely in the auth-module composition (possession plus the in-process-module plane is the authority). This kills the confused-deputy: a request that became in-process downstream cannot reach the root, and there is no caller id to spoof.</summary>
+    public const string KEYCUSTODIAN_MINTER_CAPABILITY_REQUIRED = "KEYCUSTODIAN_MINTER_CAPABILITY_REQUIRED";
+
+    /// <summary>No active signing key is available for the requested key domain. Retryable not-ready-yet condition (the domain has not been seeded or is mid-rotation with no active key).</summary>
+    public const string KEYCUSTODIAN_SIGNING_KEY_UNAVAILABLE = "KEYCUSTODIAN_SIGNING_KEY_UNAVAILABLE";
+
+    /// <summary>The signing input was empty. There is nothing to sign — a zero-length payload is a client error, rejected before any key load or crypto.</summary>
+    public const string KEYCUSTODIAN_EMPTY_SIGNING_INPUT = "KEYCUSTODIAN_EMPTY_SIGNING_INPUT";
+
+    /// <summary>The requested key type disagrees with the canonical key type bound to the key domain (every catalog domain declares exactly one key type: jwks-signing is RSA-signing, cookie/client-secret are opaque secrets, the CA domains are X.509 CA certificates, and the payload-encryption domains are AES). A mismatched pair is a permanent client error rejected before any store or crypto work — including a sign request against a domain whose bound type can never hold a signing key, and a keyring fetch against a domain whose bound type is not AES payload (both a 400, never the retryable 503). On the keyring surface this fork is defense-in-depth only: in production a non-payload domain is denied earlier by the keyring authority arm (403), because the boot validator refuses to grant any non-payload domain, so no caller can ever hold such a grant.</summary>
+    public const string KEYCUSTODIAN_KEY_TYPE_DOMAIN_MISMATCH = "KEYCUSTODIAN_KEY_TYPE_DOMAIN_MISMATCH";
+
+    /// <summary>The signing input exceeds the maximum permitted size (16 KiB). A legitimate signing input (e.g. a JWT header.payload base64url) is comfortably under this bound; a larger payload is a client error rejected in the shared signing core before any key load or crypto, so both the general sign surface and the in-process minter inherit the cap.</summary>
+    public const string KEYCUSTODIAN_SIGNING_INPUT_TOO_LARGE = "KEYCUSTODIAN_SIGNING_INPUT_TOO_LARGE";
+
+    /// <summary>No active payload-encryption key is available for the requested key domain. Retryable not-ready-yet condition (the domain's keyring has not been provisioned or is mid-rotation with no active key). Surfaced as a 503 service-unavailable result so callers retry rather than treat it as a client-side conflict.</summary>
+    public const string KEYCUSTODIAN_KEYRING_KEY_UNAVAILABLE = "KEYCUSTODIAN_KEYRING_KEY_UNAVAILABLE";
+
+    /// <summary>The calling workload is not authorized to fetch the requested key domain's payload keyring (the domain is not in the workload's allowed-keyring-domains policy set, or the request arrived on a plane the keyring surface does not serve). A keyring is a full encrypt+decrypt capability for its domain — holding the internal.kc.keyring scope alone never releases it. Uniform across both the plane-deny and the policy-miss so a caller cannot probe which domains exist.</summary>
+    public const string KEYCUSTODIAN_KEYRING_DOMAIN_NOT_AUTHORIZED = "KEYCUSTODIAN_KEYRING_DOMAIN_NOT_AUTHORIZED";
+
+    /// <summary>The calling workload is not authorized for the requested seal capability (fetch a target service's public sealing key, or fetch its own private sealing key). Shared by both seal arms: seal-encrypt denies an unauthorized plane; seal-decrypt denies any plane other than a cross-process hop (no unforgeable in-process identity exists, so in-process decrypt is refused outright). The reason telemetry tag distinguishes the deny arm; the wire code stays uniform so a caller cannot probe which planes or services exist.</summary>
+    public const string KEYCUSTODIAN_SEAL_NOT_AUTHORIZED = "KEYCUSTODIAN_SEAL_NOT_AUTHORIZED";
+
+    /// <summary>No active sealing key is available for the requested service. Retryable not-ready-yet condition: a concurrent first-request lost the provisioning race and the winner's key is not yet visible (only a pending key was observed), or the domain is mid-rotation with no active key. Surfaced as a 503 service-unavailable result so callers retry rather than treat it as a client-side conflict.</summary>
+    public const string KEYCUSTODIAN_SEAL_KEY_UNAVAILABLE = "KEYCUSTODIAN_SEAL_KEY_UNAVAILABLE";
+
+    /// <summary>The calling context is not authorized to be issued a workload leaf certificate. Workload-certificate issuance is a cross-process-only plane: a non-cross-process origin (the in-process plane whose immediate caller is caller-supplied, or an edge-inbound / system origin) can never authorize minting a workload identity. Uniform 403 across the plane deny — the telemetry reason split (origin-unestablished / unauthorized-plane / identity-absent) carries the granularity so the wire code leaks no probing signal. Self-issue is structural: the leaf subject-alternative-name is always the authenticated mTLS peer identity, never a caller-supplied subject.</summary>
+    public const string KEYCUSTODIAN_ISSUANCE_NOT_AUTHORIZED = "KEYCUSTODIAN_ISSUANCE_NOT_AUTHORIZED";
+
+    /// <summary>The supplied PKCS#10 certificate-signing request is invalid: it exceeds the maximum permitted DER size, is malformed / unparseable, failed proof-of-possession (the self-signature does not validate against the embedded public key), or carries a public key that is not ECDSA P-256 by curve OID (RSA or a wrong-curve elliptic-curve key). Coarse on purpose so the surface does not leak which check failed, mirroring INVALID_WORKLOAD_IDENTITY. Rejected before any certificate-authority load or signing.</summary>
+    public const string KEYCUSTODIAN_INVALID_CSR = "KEYCUSTODIAN_INVALID_CSR";
+
+    /// <summary>The calling context is not authorized to fetch the certificate-authority chain. The trust anchor is distributed over already-trusted internal channels only — the cross-process hop and the in-process module planes; an edge-inbound origin (the public plane) and an unestablished origin are denied. The material returned is public trust anchor / chain material, so the authority is broad within the served planes (no per-workload policy map); the plane gate keeps the internal anchor off the public plane.</summary>
+    public const string KEYCUSTODIAN_CA_CERTIFICATE_NOT_AUTHORIZED = "KEYCUSTODIAN_CA_CERTIFICATE_NOT_AUTHORIZED";
 
     /// <summary>
     /// All declared <c>KEYCUSTODIAN_*</c> codes in spec order. Useful for
@@ -92,6 +137,21 @@ public static class KeyCustodianErrorCodes
         "KEYCUSTODIAN_INVALID_WORKLOAD_IDENTITY",
         "KEYCUSTODIAN_INVALID_CERTIFICATE_REQUEST",
         "KEYCUSTODIAN_NO_ACTIVE_ISSUING_CA",
+        "KEYCUSTODIAN_CROSS_PROCESS_DOMAIN_REJECTED",
+        "KEYCUSTODIAN_SIGNING_DOMAIN_NOT_AUTHORIZED",
+        "KEYCUSTODIAN_REQUEST_ORIGIN_UNESTABLISHED",
+        "KEYCUSTODIAN_MINTER_CAPABILITY_REQUIRED",
+        "KEYCUSTODIAN_SIGNING_KEY_UNAVAILABLE",
+        "KEYCUSTODIAN_EMPTY_SIGNING_INPUT",
+        "KEYCUSTODIAN_KEY_TYPE_DOMAIN_MISMATCH",
+        "KEYCUSTODIAN_SIGNING_INPUT_TOO_LARGE",
+        "KEYCUSTODIAN_KEYRING_KEY_UNAVAILABLE",
+        "KEYCUSTODIAN_KEYRING_DOMAIN_NOT_AUTHORIZED",
+        "KEYCUSTODIAN_SEAL_NOT_AUTHORIZED",
+        "KEYCUSTODIAN_SEAL_KEY_UNAVAILABLE",
+        "KEYCUSTODIAN_ISSUANCE_NOT_AUTHORIZED",
+        "KEYCUSTODIAN_INVALID_CSR",
+        "KEYCUSTODIAN_CA_CERTIFICATE_NOT_AUTHORIZED",
     };
 
     /// <summary>
@@ -119,6 +179,21 @@ public static class KeyCustodianErrorCodes
         "KEYCUSTODIAN_INVALID_WORKLOAD_IDENTITY" => 400,
         "KEYCUSTODIAN_INVALID_CERTIFICATE_REQUEST" => 500,
         "KEYCUSTODIAN_NO_ACTIVE_ISSUING_CA" => 503,
+        "KEYCUSTODIAN_CROSS_PROCESS_DOMAIN_REJECTED" => 403,
+        "KEYCUSTODIAN_SIGNING_DOMAIN_NOT_AUTHORIZED" => 403,
+        "KEYCUSTODIAN_REQUEST_ORIGIN_UNESTABLISHED" => 403,
+        "KEYCUSTODIAN_MINTER_CAPABILITY_REQUIRED" => 403,
+        "KEYCUSTODIAN_SIGNING_KEY_UNAVAILABLE" => 503,
+        "KEYCUSTODIAN_EMPTY_SIGNING_INPUT" => 400,
+        "KEYCUSTODIAN_KEY_TYPE_DOMAIN_MISMATCH" => 400,
+        "KEYCUSTODIAN_SIGNING_INPUT_TOO_LARGE" => 400,
+        "KEYCUSTODIAN_KEYRING_KEY_UNAVAILABLE" => 503,
+        "KEYCUSTODIAN_KEYRING_DOMAIN_NOT_AUTHORIZED" => 403,
+        "KEYCUSTODIAN_SEAL_NOT_AUTHORIZED" => 403,
+        "KEYCUSTODIAN_SEAL_KEY_UNAVAILABLE" => 503,
+        "KEYCUSTODIAN_ISSUANCE_NOT_AUTHORIZED" => 403,
+        "KEYCUSTODIAN_INVALID_CSR" => 400,
+        "KEYCUSTODIAN_CA_CERTIFICATE_NOT_AUTHORIZED" => 403,
         _ => 500,
     };
 }

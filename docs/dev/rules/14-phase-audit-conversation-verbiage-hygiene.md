@@ -1,0 +1,42 @@
+<!--
+Copyright (c) DCSV. All rights reserved.
+-->
+
+## 14. Phase / Audit / Conversation Verbiage Hygiene
+<a name="top"></a>
+_[← rules index](../rules.md) · §14 of the D2-WORX rules catalog._
+
+**Predicate index:** §14.1–§14.5 · 5 predicates.
+
+KEEP docs (see §11 for the full surface enumeration: READMEs, cross-cutting framework docs, all source code comments, spec / contract JSON `$note` fields, test method names, generated-code source-of-truth surfaces, reference data file headers) describe CURRENT reality. Phase / round / amendment / dev-journey tracking lives EXCLUSIVELY in the allowlisted dev-tracking docs (`docs/v2/`, `docs/dev/deliverables/`, `docs/wip/`, `docs/archive/`, `MEMORY.md`, `CHANGELOG.md`). This category's predicates enforce the boundary.
+
+### Predicates — §14 phase / audit verbiage hygiene
+
+- **14.1** Is there NO phase / wave / sweep / audit verbiage in source or KEEP docs? Forbidden tokens: `Phase N`, `Phase-N` (hyphenated form, e.g. `Phase-0-lib`), `Wave N`, `Wave-N`, `Sweep N`, `Sweep-N`, `Audit pass`, `audit decision`, `audit row`, `Round N`, `Round-N`, `R N findings` / `RN findings` (audit-round identifiers, e.g. `Round 1`, `Round-2`, `R1 findings`), `Step N`, `Step-N`, `Step NA` / `Step-NA` (digit + uppercase letter suffix, e.g. `Step 1B`, `Step-1B`), `Step N.N`, `Step-N.N`, `Plan Amendment`, `Plan-Amendment`, `Amendment A` / `Amendment B` / `Amendment N` (Plan-amendment labels, with letter or digit suffix), `Plan-Amendment-X`, `gap closure`, `pre-fix`, `post-fix`, `temporary for`, `previously lacked`, `Plan's Risk #N`, `Plan Risk #N`, `Risk #N` (Plan-row references — describe the constraint itself instead).
+  - **Allowlisted paths**: `docs/v2/`, `docs/dev/deliverables/`, `docs/archive/`, `MEMORY.md`, `CHANGELOG.md`. **Rationale**: these docs' job IS phase / wave / sweep / audit / round / amendment tracking — that verbiage is their legitimate content (`docs/archive/` holds historical phase-tracking snapshots verbatim). §11.28 carries the symmetric clarification for "future X lib" / "will live in" framings (also legitimate in the same allowlist + `docs/wip/`).
+  - **Meta-doc empirical-citation allowlist**: the 4 named meta-docs — `docs/dev/rules.md`, `docs/dev/process.md`, `CLAUDE.md`, `.github/copilot-instructions.md` — MAY use `deliverable 00XX-name` / `Step NN` / `Round N` / `R-final-N` tokens WHEN they are the empirical-evidence citation motivating a predicate (stripping it would amputate the "why"). Per-lib / per-service / framework KEEP-doc surfaces (PATTERNS.md / SRC_GEN.md) do NOT get this carve-out — citations there are §14.1 findings. The allowlist is BOUNDED; new docs joining it require explicit user approval.
+  - **Algorithm / control-flow step comments carve-out**: numbered step labels describing a FUNCTION'S OWN sequential algorithm (e.g. `// Step 1: derive intent from the diff`, `// Step 0c: no-op guards`) are code documentation, not provenance, and are ALLOWED. The forbidden class references a DELIVERABLE, AUDIT cycle, PHASE, or CONVERSATION (`// Step 4 of 0024`, `// audit round 2 fix`, `// Phase-3 gate`). When a grep fires on a `Step N` token in a function body, read the comment first: if it narrates that function's own algorithm, it is N/A under this carve-out.
+  - Evidence: `grep -rEn 'Phase[ -][0-9]\|Wave[ -][0-9]\|Sweep[ -][0-9]\|Round[ -][0-9]\|R[0-9]+ findings\|Step[ -][0-9]+[A-Z]?\b\|Plan[ -]?Amendment\|Amendment[ -][A-Z0-9]\b\|audit pass\|audit decision\|audit row\|gap closure\|pre-fix\|post-fix\|previously lacked\|Plan'\''s Risk #[0-9]\|Plan Risk #[0-9]\|Risk #[0-9]' <scope minus allowlist>` → expect zero. `[ -]` catches spaced + hyphenated forms; `[0-9]+[A-Z]?` on Step catches digit and digit+uppercase-letter suffixes without matching lowercase `step into`. Per-hit manual read applies the algorithm/control-flow carve-out before filing a finding.
+
+- **14.2** Is `TODO` / `FIXME` / `HACK` absent from committed code? (Use a tracked issue instead.)
+  - Evidence: `grep -rEn 'TODO\|FIXME\|HACK' <scope>` → expect zero.
+
+- **14.3** Are conversation-scoped IDs (`F2_`, `R2`, `Audit3_`, `PhaseX_`) absent from code, tests, and docs?
+  - Evidence: scan + 14.1 overlaps.
+  - **Meta-doc empirical-citation allowlist** (mirrors §14.1): the 4 named meta-docs — `docs/dev/rules.md`, `docs/dev/process.md`, `CLAUDE.md`, `.github/copilot-instructions.md` — MAY use `R-final-N`, `Round N`, or similar finding-ID tokens WHEN they are the empirical-evidence citation behind a predicate (e.g. `R-final-V` cited as the failure-mode that motivated §24.0h). Per-lib / per-service / cross-cutting framework KEEP docs do NOT get this carve-out.
+  - **Guard / scanner test file allowlist**: a test file whose purpose is to SCAN source for ID patterns necessarily embeds example tokens from the pattern-class it scans — otherwise the scanner test could not prove it detects violations. Such files are exempt from the §14.3 scan they implement. Currently allowlisted: `server/shared/typescript/typespec-emitters/tests/emitter-source-labels.test.ts` (scans emitter output for leaked source-label IDs; its own detection examples, e.g. `SC1`, `SC<N>`, document the pattern under test). Any future guard or lint test that scans for §14.1 / §14.3 / §26.17 ID-pattern violations falls under this same carve-out when the file's stated purpose is detection and the tokens appear only in pattern-documentation strings, not in production assertion paths. Audit rows for allowlisted files carry `⚪ N/A — guard-file-documents-its-own-patterns`.
+
+- **14.4** Comments-minimal discipline (no WHAT-explaining comments, no conversation-scoped IDs). See §7.16 for the canonical predicate — the §7.16 Forbidden / Allowed lists are authoritative. This row is the §14 cross-pointer; walk §7.16 for evidence.
+
+- **14.5** For any step that moves files or relocates folders, does the audit sweep the MOVED source for pre-existing conversation- / audit-scoped IDs that rode along from a prior deliverable — `Step-N`, hypothesis IDs (`H-N`), finding IDs (`F-N`), round IDs (`R-N`), `Amendment N` — wherever they appear in `//` / `/* */` comments, xmldoc `///` summaries / remarks, test-method names, or test `ActivitySource` / span / trace names? The move "touches" the file, so branch hygiene (per the §5.21 / §14.3 own-what-you-touch discipline) owns the cleanup even though the author of the IDs was a prior deliverable.
+  - **Scope**: every move / relocation step's moved-file set (`git status --short` `R` / `RM` rows). The sweep covers comments, xmldoc, test-method names, and test ActivitySource / span / trace string names — NOT just code identifiers. Pure-content steps with no moves are N/A (cite the step-scope reason).
+  - **Required**: grep the moved files for conversation- / audit-scoped ID forms in comment / name contexts and strip any survivors per §14.3 (reasoning stays; provenance moves to git / PR). The move step OWNS these even though it didn't author them.
+  - **Forbidden**: leaving a `// H3: ...` comment, an `Amendment 2` xmldoc note, an `R5_` test-method prefix, or a `new ActivitySource("Step3.Foo")` span name in a moved file because "it was already there." A move that touches the file inherits ownership of its cleanliness.
+  - **Evidence**: per move step → grep the moved files for `\bH[0-9]\b`, `\bR[0-9]\b`, `\bF[0-9]\b`, `Step[- ]?[0-9]`, `Amendment [0-9]` in comment / name / span-name contexts → expect zero (excluding legitimate format specifiers like `:F6` / `:R` numeric-format strings, domain literals, and markdown HTML headings). Any survivor in a moved file = FINDING-MEDIUM (rode-along conversation-scoped ID; §14.3 violation surfaced by the move).
+  - **Why**: these IDs were invisible at author time (walked under a different scope, or predating the predicate), but a relocation brings the file into the current deliverable's audit scope and surfaces them as §14.3 violations. The 0010 shared-folder reorg validated this — moved source carried `Step-N` / `Amendment N` framing that the reorg's audit owned stripping. Sweeping at relocation time avoids shipping rode-along IDs forward indefinitely.
+  - **How**: run the §14.1 / §14.3 canonical greps against the moved-file set specifically (not just the deliverable diff), filter known false-positives (`:F6` numeric formats, domain literals, HTML heading IDs), and strip survivors in the same step. Cross-ref §14.1, §14.3, §24.7 (per-step scope includes moved files).
+
+<sup>[↑ jump to top](#top)</sup>
+
+---
+

@@ -38,6 +38,9 @@ public sealed class PostgresDbExceptionClassifierTests
 
     [Theory]
     [InlineData("23505", DbFailureKind.UniqueViolation)]
+
+    // exclusion_violation — deferrable EXCLUDE breach → same 409 conflict as unique_violation
+    [InlineData("23P01", DbFailureKind.UniqueViolation)]
     [InlineData("23503", DbFailureKind.ForeignKeyViolation)]
     [InlineData("23502", DbFailureKind.NotNullViolation)]
     [InlineData("23514", DbFailureKind.CheckViolation)]

@@ -6,6 +6,8 @@ Copyright (c) DCSV. All rights reserved.
 
 > Parent: [`server/shared/dotnet/`](../../README.md)
 
+**Input contracts:** [`contracts/tk-message/`](../../../../../contracts/tk-message/README.md) + [`contracts/input-error/`](../../../../../contracts/input-error/README.md)
+
 Roslyn `IIncrementalGenerator` (netstandard2.0) that emits per-wire-shape JSON property-name catalog static classes by reading `contracts/<wire-shape>/<wire-shape>.spec.json` files via `<AdditionalFiles>`. **Multi-target dispatch** — one analyzer, one shared scaffolding, multiple consuming catalog assemblies. Mirrors the per-transport dispatch pattern proven by `D2.Shared.Headers.SourceGen`.
 
 This source-gen enforces the spec-driven wire-identifier contract — every cross-language wire-format identifier is spec-declared + parity-tested — on the `TKMessage` (`{key, params?}`) and `InputError` (`{field, errors}`) wire shapes. Both ship across the .NET ↔ TS boundary inside the `D2Result` envelope; spec-driving the property names means the .NET serializer and the TS parser share one source of truth for the JSON keys, so cross-language drift on the property names is structurally impossible.

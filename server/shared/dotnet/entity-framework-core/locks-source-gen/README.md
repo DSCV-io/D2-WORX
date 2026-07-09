@@ -6,12 +6,14 @@ Copyright (c) DCSV. All rights reserved.
 
 > Parent: [`server/shared/dotnet/entity-framework-core/`](../README.md)
 
+**Input contract:** [`contracts/advisory-locks/`](../../../../../contracts/advisory-locks/README.md)
+
 Roslyn incremental source generator that emits the `AdvisoryLocks` static class —
 the spec-driven registry of PostgreSQL session advisory lock keys — from
 `contracts/advisory-locks/advisory-locks.spec.json`.
 
 **Convention**: spec-driven Roslyn `IIncrementalGenerator` pattern. See
-[`docs/SRC_GEN.md`](../../../../docs/SRC_GEN.md) for the framework-wide convention.
+[`docs/SRC_GEN.md`](../../../../../docs/SRC_GEN.md) for the framework-wide convention.
 
 ## What this emits
 

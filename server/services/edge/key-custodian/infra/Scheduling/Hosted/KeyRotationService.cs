@@ -9,7 +9,10 @@ namespace D2.Edge.KeyCustodian.Infra.Scheduling.Hosted;
 using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.RunDueRotations;
 using D2.Edge.KeyCustodian.Infra.Configuration;
 using D2.Edge.KeyCustodian.Infra.Observability;
+using D2.Shared.Auth.Abstractions;
+using D2.Shared.Context.Abstractions;
 using D2.Shared.EntityFrameworkCore.Postgres;
+using D2.Shared.Time;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -45,17 +48,22 @@ using Microsoft.Extensions.Options;
 public sealed class KeyRotationService(
     IServiceScopeFactory scopeFactory,
     IOptions<KeyCustodianInfraOptions> options,
+    IOptions<D2WorkloadIdentityOptions> workloadIdentity,
+    IClock clock,
     ILogger<KeyRotationService> logger)
     : BackgroundService
 {
     private readonly KeyCustodianInfraOptions r_options = options.Value;
+    private readonly string r_hostServiceId = workloadIdentity.Value.ServiceId;
+    private readonly IClock r_clock = clock;
 
     /// <summary>
-    /// Builds the compiled domain → <see cref="KeyType"/> map used to bootstrap
-    /// domains that have no live keys yet. Derived from the closed
-    /// <see cref="KeyDomain.All"/> catalog: the signing domain gets an RSA key,
-    /// the payload-encryption domains get AES keys, and the opaque-secret domains
-    /// get symmetric secrets. CA domains are excluded — they are seeded by the
+    /// Builds the domain → <see cref="KeyType"/> map used to bootstrap domains that
+    /// have no live keys yet. Derived ENTIRELY from the closed
+    /// <see cref="KeyDomain.All"/> catalog's per-domain key-type binding
+    /// (<see cref="KeyDomain.KeyType"/>) — there is no second domain→type map to
+    /// drift, and no catch-all arm that could silently bootstrap a new domain with
+    /// the wrong algorithm. CA domains are excluded — they are seeded by the
     /// <c>CaSeedingService</c> on startup, not auto-bootstrapped here. A domain
     /// absent from this map is skipped by <c>RunDueRotations</c> without error.
     /// </summary>
@@ -69,45 +77,64 @@ public sealed class KeyRotationService(
             // CA-certificate domains are seeded by the CaSeedingService on startup,
             // not by the standard auto-bootstrap generator. Excluding them here
             // ensures they are never silently bootstrapped as AES keys.
-            if (IsCaDomain(domain.Value))
+            if (IsCaDomain(domain))
                 continue;
 
-            map[domain.Value] = KeyTypeForDomain(domain.Value);
+            map[domain.Value] = domain.KeyType;
         }
 
         return map;
     }
 
     /// <summary>
-    /// Returns <see langword="true"/> when <paramref name="domainValue"/> identifies
-    /// a CA-certificate key domain (<c>mtls-ca-root</c> or
-    /// <c>mtls-ca-intermediate</c>). CA domains are excluded from the auto-bootstrap
-    /// map because their keys are seeded by the <c>CaSeedingService</c> on startup,
-    /// not by the standard key-generation generator.
+    /// Returns <see langword="true"/> when <paramref name="domain"/> is a
+    /// CA-certificate key domain — derived from the domain's bound
+    /// <see cref="KeyDomain.KeyType"/> (never a name list, so a future CA-class
+    /// domain is excluded automatically). CA domains are excluded from the
+    /// auto-bootstrap map because their keys are seeded by the
+    /// <c>CaSeedingService</c> on startup, not by the standard key-generation
+    /// generator.
     /// </summary>
-    /// <param name="domainValue">The domain wire value to test.</param>
+    /// <param name="domain">The catalog domain to test.</param>
     /// <returns><see langword="true"/> if the domain is a CA domain.</returns>
-    internal static bool IsCaDomain(string domainValue) =>
-        domainValue is KeyDomain.MTLS_CA_ROOT or KeyDomain.MTLS_CA_INTERMEDIATE;
+    internal static bool IsCaDomain(KeyDomain domain) =>
+        domain.KeyType == KeyType.X509CaCertificate;
 
     /// <summary>
-    /// Maps a domain wire value to the <see cref="KeyType"/> used to bootstrap
-    /// that domain when no live keys exist yet. The signing domain gets an RSA key;
-    /// the opaque-secret domains get a symmetric secret; all other (encryption)
-    /// domains get an AES payload key.
+    /// Resolves a fresh DI scope, establishes the worker's
+    /// <see cref="RequestOrigin.System"/> request context on it, then runs
+    /// <see cref="IRunDueRotationsHandler"/> and logs the outcome. Internal so a unit
+    /// test can drive it directly — the real advisory-lock acquire in
+    /// <see cref="RunTickAsync"/> requires a live PostgreSQL connection.
     /// </summary>
-    /// <param name="domainValue">The domain wire value (e.g. <c>"jwks-signing"</c>).</param>
-    /// <returns>The <see cref="KeyType"/> for initial key generation in that domain.</returns>
-    internal static KeyType KeyTypeForDomain(string domainValue) => domainValue switch
+    /// <param name="ct">Cancellation token.</param>
+    internal async Task ExecuteRotationAsync(CancellationToken ct)
     {
-        KeyDomain.JWKS_SIGNING => KeyType.RsaSigning,
-        KeyDomain.COOKIE => KeyType.Secret,
-        KeyDomain.CLIENT_SECRET => KeyType.Secret,
+        await using var scope = scopeFactory.CreateAsyncScope();
+        scope.ServiceProvider.EstablishSystemContext(r_hostServiceId, r_clock);
+        var handler = scope.ServiceProvider.GetRequiredService<IRunDueRotationsHandler>();
 
-        // The encryption-domain catalog (audit / notifications / courier / …) are
-        // symmetric payload-encryption keyrings.
-        _ => KeyType.AesPayload,
-    };
+        var input = new RunDueRotationsInput(BuildBootstrapKeyTypes());
+        var result = await handler.HandleAsync(input, ct).ConfigureAwait(false);
+
+        if (!result.Success)
+        {
+            KeyCustodianInfraLog.RotationRunFailed(logger, result.ErrorCode);
+            return;
+        }
+
+        var output = result.Data!;
+
+        KeyCustodianInfraLog.RotationRunCompleted(
+            logger,
+            output.Bootstrapped.Count,
+            output.Activated.Count,
+            output.Rotated.Count,
+            output.SuccessorsGenerated.Count,
+            output.Retired.Count,
+            output.Skipped.Count,
+            output.Errors);
+    }
 
     /// <inheritdoc/>
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -172,32 +199,5 @@ public sealed class KeyRotationService(
                 SanitizedExceptionRender.TypeName(ex),
                 SanitizedExceptionRender.FirstFrame(ex));
         }
-    }
-
-    private async Task ExecuteRotationAsync(CancellationToken ct)
-    {
-        await using var scope = scopeFactory.CreateAsyncScope();
-        var handler = scope.ServiceProvider.GetRequiredService<IRunDueRotationsHandler>();
-
-        var input = new RunDueRotationsInput(BuildBootstrapKeyTypes());
-        var result = await handler.HandleAsync(input, ct).ConfigureAwait(false);
-
-        if (!result.Success)
-        {
-            KeyCustodianInfraLog.RotationRunFailed(logger, result.ErrorCode);
-            return;
-        }
-
-        var output = result.Data!;
-
-        KeyCustodianInfraLog.RotationRunCompleted(
-            logger,
-            output.Bootstrapped.Count,
-            output.Activated.Count,
-            output.Rotated.Count,
-            output.SuccessorsGenerated.Count,
-            output.Retired.Count,
-            output.Skipped.Count,
-            output.Errors);
     }
 }

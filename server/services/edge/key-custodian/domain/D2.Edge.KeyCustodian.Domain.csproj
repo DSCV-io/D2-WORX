@@ -67,6 +67,15 @@ Copyright (c) DCSV. All rights reserved.
       one grammar, two consumers (the other is the shared mTLS peer validator).
     -->
     <ProjectReference Include="..\..\..\..\shared\dotnet\workload-identity\D2.Shared.WorkloadIdentity.csproj" />
+    <!--
+      D2.Shared.Auth.Abstractions — the domain-safe authority vocabulary
+      (RequestOrigin: what KIND of trust boundary produced this hop's context,
+      recomputed locally + never propagated). The pure WorkloadCapabilityAuthority
+      signing rule keys its fail-closed decision on RequestOrigin. Pure enums /
+      records only — no EF / DI / Options, so it stays within the domain dependency
+      law (shared primitives only).
+    -->
+    <ProjectReference Include="..\..\..\..\shared\dotnet\auth\abstractions\D2.Shared.Auth.Abstractions.csproj" />
   </ItemGroup>
 
   <ItemGroup>

@@ -7,11 +7,18 @@
 namespace D2.Edge.KeyCustodian.App.Application.Handlers.Commands.IssueWorkloadCertificate;
 
 /// <summary>
-/// Input to <c>IssueWorkloadCertificate</c>: which workload to issue a leaf
-/// certificate for.
+/// Input to <c>IssueWorkloadCertificate</c>: the workload's PKCS#10
+/// certificate-signing request.
 /// </summary>
-/// <param name="WorkloadServiceId">
-/// The raw workload service identifier (validated in-handler via
-/// <c>WorkloadIdentity.Create</c>).
+/// <remarks>
+/// There is deliberately NO subject field — the leaf's subject-alternative-name is
+/// always derived from the authenticated mTLS peer identity on the established
+/// request context, never from the input (structural self-issue). A CSR is PUBLIC
+/// material by construction (public key + request metadata + a self-signature) —
+/// it never carries the private key, so nothing here is redacted.
+/// </remarks>
+/// <param name="CsrDer">
+/// The DER-encoded PKCS#10 certificate-signing request (validated in-handler via
+/// the CSR verification rule: size cap, parse, proof-of-possession, P-256 curve).
 /// </param>
-public sealed record IssueWorkloadCertificateInput(string? WorkloadServiceId);
+public sealed record IssueWorkloadCertificateInput(byte[]? CsrDer);

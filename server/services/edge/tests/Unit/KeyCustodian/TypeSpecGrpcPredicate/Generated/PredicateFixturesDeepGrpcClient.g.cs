@@ -24,35 +24,35 @@ using Microsoft.Extensions.DependencyInjection;
 /// </summary>
 public sealed class PredicateFixturesDeepGrpcClient(
     global::D2.Services.Protos.PredicateFixturesDeep.V1.PredicateFixturesGizmosDeep.PredicateFixturesGizmosDeepClient predicateFixturesGizmosDeepStub,
-    [FromKeyedServices(DeepNestClientKeys.PIPELINE)] ResilientPipeline<string, DeepNestOutput?> deepNestPipeline
+    [FromKeyedServices(DeepNestFixtureClientKeys.PIPELINE)] ResilientPipeline<string, DeepNestFixtureOutput?> deepNestFixturePipeline
 ) : IPredicateFixturesDeepGrpcClient
 {
-    private readonly ResilientPipeline<string, DeepNestOutput?> r_deepNestPipeline = deepNestPipeline;
+    private readonly ResilientPipeline<string, DeepNestFixtureOutput?> r_deepNestFixturePipeline = deepNestFixturePipeline;
 
     /// <inheritdoc/>
-    public ValueTask<D2Result<DeepNestOutput?>> DeepNestAsync(
-        DeepNestInput input,
-        ResilientPipeline<string, DeepNestOutput?>? pipelineOverride = null,
+    public ValueTask<D2Result<DeepNestFixtureOutput?>> DeepNestFixtureAsync(
+        DeepNestFixtureInput input,
+        ResilientPipeline<string, DeepNestFixtureOutput?>? pipelineOverride = null,
         CancellationToken ct = default)
-        => DeepNestCoreAsync(input, pipelineOverride ?? r_deepNestPipeline, ct);
+        => DeepNestFixtureCoreAsync(input, pipelineOverride ?? r_deepNestFixturePipeline, ct);
 
-    private async ValueTask<D2Result<DeepNestOutput?>> DeepNestCoreAsync(
-        DeepNestInput input,
-        ResilientPipeline<string, DeepNestOutput?> pipeline,
+    private async ValueTask<D2Result<DeepNestFixtureOutput?>> DeepNestFixtureCoreAsync(
+        DeepNestFixtureInput input,
+        ResilientPipeline<string, DeepNestFixtureOutput?> pipeline,
         CancellationToken ct)
     {
-        var request = input.ToDeepNestRequest();
+        var request = input.ToDeepNestFixtureRequest();
         D2ResultProto? envelope = null;                  // captured out of the closure
         RpcException? transportFault = null;             // captured out of the closure
         var pipelineResult = await pipeline.ExecuteAsync(
-            DeepNestClientKeys.PIPELINE_KEY,
+            DeepNestFixtureClientKeys.PIPELINE_KEY,
             async innerCt =>
             {
                 try
                 {
-                    var response = await predicateFixturesGizmosDeepStub.DeepNestAsync(request, cancellationToken: innerCt);
+                    var response = await predicateFixturesGizmosDeepStub.DeepNestFixtureAsync(request, cancellationToken: innerCt);
                     envelope = response.Result;          // business result (gRPC status OK)
-                    return response.Data is null ? default : response.Data.ToDeepNestOutput();
+                    return response.Data is null ? default : response.Data.ToDeepNestFixtureOutput();
                 }
                 catch (RpcException ex)
                 {
@@ -65,11 +65,11 @@ public sealed class PredicateFixturesDeepGrpcClient(
         // path (mis-mapping to UnhandledException); remap the captured RpcException to the
         // gRPC-aware code (Cancelled -> Canceled, else -> ServiceUnavailable).
         if (!pipelineResult.Success && transportFault is not null)
-            return transportFault.ToTransportFaultResult<DeepNestOutput?>();
+            return transportFault.ToTransportFaultResult<DeepNestFixtureOutput?>();
         // Business result: reconstruct the full D2Result from the captured envelope. Other
         // pipeline failures (CircuitOpen, RateLimit, caller-cancel) pass through verbatim.
         return pipelineResult.Success && envelope is not null
-            ? envelope.ToD2Result<DeepNestOutput?>(pipelineResult.Data)
+            ? envelope.ToD2Result<DeepNestFixtureOutput?>(pipelineResult.Data)
             : pipelineResult;
     }
 }

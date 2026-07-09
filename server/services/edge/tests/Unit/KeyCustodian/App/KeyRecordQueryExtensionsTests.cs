@@ -54,6 +54,39 @@ public sealed class KeyRecordQueryExtensionsTests
     }
 
     [Fact]
+    public void Payload_ReturnsOnlyAesPayload()
+    {
+        // A mixed-type set: only the AesPayload rows survive .Payload(). This is the
+        // keyring surface's self-defending filter — a corrupt wrong-type row in a payload
+        // domain can never be served.
+        KeyRecord[] rows =
+        [
+            Row("a-payload", FixturePayloadDomains.PAYLOAD_A, KeyType.AesPayload, KeyStatus.Active),
+            Row("r-payload", FixturePayloadDomains.PAYLOAD_A, KeyType.AesPayload, KeyStatus.Retiring),
+            Row("a-jwks", "jwks-signing", KeyType.RsaSigning, KeyStatus.Active),
+            Row("a-cookie", "cookie", KeyType.Secret, KeyStatus.Active),
+            Row("a-ca", "mtls-ca-root", KeyType.X509CaCertificate, KeyStatus.Active),
+        ];
+
+        rows.AsQueryable().Payload().Select(k => k.Kid)
+            .Should().BeEquivalentTo(["a-payload", "r-payload"]);
+    }
+
+    [Fact]
+    public void Composed_PayloadForDomainActive_IntersectsAllFilters()
+    {
+        KeyRecord[] rows =
+        [
+            Row("a-payload", FixturePayloadDomains.PAYLOAD_A, KeyType.AesPayload, KeyStatus.Active),
+            Row("r-payload", FixturePayloadDomains.PAYLOAD_A, KeyType.AesPayload, KeyStatus.Retiring),
+            Row("a-payload-b", FixturePayloadDomains.PAYLOAD_B, KeyType.AesPayload, KeyStatus.Active),
+        ];
+
+        rows.AsQueryable().ForDomain(FixturePayloadDomains.PAYLOAD_A).Payload().Active().Select(k => k.Kid)
+            .Should().BeEquivalentTo(["a-payload"]);
+    }
+
+    [Fact]
     public void Composed_LiveForDomainSigning_IntersectsAllFilters()
     {
         Seed().Live().ForDomain("jwks-signing").Signing().Select(k => k.Kid)

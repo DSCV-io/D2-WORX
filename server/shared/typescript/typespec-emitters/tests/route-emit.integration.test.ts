@@ -93,19 +93,19 @@ describe("routeEmitIntegration_Sign_EmitsRouteRegistration", () => {
       using Http;
       namespace D2.Fixtures;
 
-      model SignInput { @d2Field(1) kid: string; @d2Field(2) @d2Redact payload: bytes; }
-      model SignOutput { @d2Field(1) signature: string; }
+      model SignFixtureInput { @d2Field(1) kid: string; @d2Field(2) @d2Redact("SecretInformation") payload: bytes; }
+      model SignFixtureOutput { @d2Field(1) signature: string; }
 
       @d2Command
-      @d2ServedBy("KeyCustodian")
+      @d2ServedBy("SignFixture")
       @d2InProcess
-      @d2GrpcMethod("KeyCustodianSigner", "Sign")
-      @route("/internal/v1/kc/sign")
+      @d2GrpcMethod("SignFixtureSigner", "SignFixture")
+      @route("/internal/v1/fixtures/sign-fixture")
       @post
       @d2RequireAnyScope("self.write")
       @d2RateLimitTier("Standard")
       @d2Csrf("exempt")
-      op sign(input: SignInput): SignOutput;
+      op signFixture(input: SignFixtureInput): SignFixtureOutput;
       `,
     );
 
@@ -121,15 +121,18 @@ describe("routeEmitIntegration_Sign_EmitsRouteRegistration", () => {
     expect(errors).toHaveLength(0);
 
     // Route registration emitted.
-    const routeContent = getEmittedFile(host, "SignRouteRegistration.g.cs");
+    const routeContent = getEmittedFile(
+      host,
+      "SignFixtureRouteRegistration.g.cs",
+    );
     expect(routeContent).toBeDefined();
     expect(routeContent).toContain("MapPost");
-    expect(routeContent).toContain('"/internal/v1/kc/sign"');
+    expect(routeContent).toContain('"/internal/v1/fixtures/sign-fixture"');
     expect(routeContent).toContain("RequireAnyScope");
     expect(routeContent).toContain('"self.write"');
     // Façade delegation: the sign fixture uses @d2InProcess → façade type in ctor.
     expect(routeContent).toContain("Facade");
-    expect(routeContent).toContain("SignAsync");
+    expect(routeContent).toContain("SignFixtureAsync");
     // Markers present.
     expect(routeContent).toContain("D2GeneratedRateLimitTier");
     expect(routeContent).toContain("D2GeneratedCsrfPosture");
@@ -394,7 +397,7 @@ describe("routeEmitIntegration_AllScopes_RequireAllScopesEmitted", () => {
       @d2Command
       @d2ServedBy("KeyCustodian")
       @d2InProcess
-      @route("/internal/v1/kc/all-scopes")
+      @route("/internal/v1/fixtures/all-scopes")
       @get
       @d2RequireAllScopes("self.read", "self.write")
       op allScopes(input: AllScopesInput): AllScopesOutput;
@@ -510,19 +513,19 @@ describe("routeEmitIntegration_GrpcRePoint_BothSurfacesDelegateThroughFacade", (
       using Http;
       namespace D2.Fixtures;
 
-      model SignInput { @d2Field(1) kid: string; @d2Field(2) @d2Redact payload: bytes; }
-      model SignOutput { @d2Field(1) signature: string; }
+      model SignFixtureInput { @d2Field(1) kid: string; @d2Field(2) @d2Redact("SecretInformation") payload: bytes; }
+      model SignFixtureOutput { @d2Field(1) signature: string; }
 
       @d2Command
-      @d2ServedBy("KeyCustodian")
+      @d2ServedBy("SignFixture")
       @d2InProcess
-      @d2GrpcMethod("KeyCustodianSigner", "Sign")
-      @route("/internal/v1/kc/sign")
+      @d2GrpcMethod("SignFixtureSigner", "SignFixture")
+      @route("/internal/v1/fixtures/sign-fixture")
       @post
       @d2RequireAnyScope("self.write")
       @d2RateLimitTier("Standard")
       @d2Csrf("exempt")
-      op sign(input: SignInput): SignOutput;
+      op signFixture(input: SignFixtureInput): SignFixtureOutput;
       `,
     );
 
@@ -538,19 +541,22 @@ describe("routeEmitIntegration_GrpcRePoint_BothSurfacesDelegateThroughFacade", (
     expect(errors).toHaveLength(0);
 
     // Route delegates through the façade.
-    const routeContent = getEmittedFile(host, "SignRouteRegistration.g.cs");
+    const routeContent = getEmittedFile(
+      host,
+      "SignFixtureRouteRegistration.g.cs",
+    );
     expect(routeContent).toBeDefined();
     expect(routeContent).toContain("Facade");
-    expect(routeContent).toContain("SignAsync");
+    expect(routeContent).toContain("SignFixtureAsync");
     expect(routeContent).not.toContain("HandleAsync");
 
     // gRPC service also delegates through the façade (the re-point).
-    const grpcContent = getEmittedFile(host, "KeyCustodianSignerService.g.cs");
+    const grpcContent = getEmittedFile(host, "SignFixtureSignerService.g.cs");
     expect(grpcContent).toBeDefined();
     expect(grpcContent).toContain("SignerFacade");
-    expect(grpcContent).toContain("SignAsync");
+    expect(grpcContent).toContain("SignFixtureAsync");
     expect(grpcContent).not.toContain("HandleAsync");
-    expect(grpcContent).not.toContain("ISignHandler");
+    expect(grpcContent).not.toContain("ISignFixtureHandler");
   });
 });
 
@@ -631,17 +637,17 @@ describe("routeEmitIntegration_Idempotent_Header_GatedRouteEmitted", () => {
       using Http;
       namespace D2.Fixtures;
 
-      model SignInput { kid: string; }
-      model SignOutput { signature: string; }
+      model SignFixtureInput { kid: string; }
+      model SignFixtureOutput { signature: string; }
 
       @d2Command
-      @d2ServedBy("KeyCustodian")
+      @d2ServedBy("SignFixture")
       @d2InProcess
-      @route("/internal/v1/kc/sign")
+      @route("/internal/v1/fixtures/sign-fixture")
       @post
       @d2RequireAnyScope("self.write")
       @d2Idempotent("header", 86400)
-      op sign(input: SignInput): SignOutput;
+      op signFixture(input: SignFixtureInput): SignFixtureOutput;
       `,
     );
 
@@ -657,7 +663,10 @@ describe("routeEmitIntegration_Idempotent_Header_GatedRouteEmitted", () => {
     expect(errors).toHaveLength(0);
 
     // Route registration contains the store parameter and gate calls.
-    const routeContent = getEmittedFile(host, "SignRouteRegistration.g.cs");
+    const routeContent = getEmittedFile(
+      host,
+      "SignFixtureRouteRegistration.g.cs",
+    );
     expect(routeContent).toBeDefined();
     expect(routeContent).toContain("D2GeneratedIdempotencyStore store");
     expect(routeContent).toContain("Idempotency-Key");

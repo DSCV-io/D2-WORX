@@ -32,37 +32,37 @@ export const protobufPackage = "d2.predicatefixtures.v1";
  * -----------------------------------------------------------------------
  */
 
-export interface PlaceOrderRequest {
+export interface PlaceOrderFixtureRequest {
   customerId: string;
 }
 
-export interface PlaceOrderResponse {
+export interface PlaceOrderFixtureResponse {
   result?: D2ResultProto | undefined;
-  data?: PlaceOrderOutput | undefined;
+  data?: PlaceOrderFixtureOutput | undefined;
 }
 
-export interface PlaceOrderOutput {
+export interface PlaceOrderFixtureOutput {
   orderCode: string;
   itemStatuses: string[];
   partial: boolean;
 }
 
-function createBasePlaceOrderRequest(): PlaceOrderRequest {
+function createBasePlaceOrderFixtureRequest(): PlaceOrderFixtureRequest {
   return { customerId: "" };
 }
 
-export const PlaceOrderRequest: MessageFns<PlaceOrderRequest> = {
-  encode(message: PlaceOrderRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+export const PlaceOrderFixtureRequest: MessageFns<PlaceOrderFixtureRequest> = {
+  encode(message: PlaceOrderFixtureRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
     if (message.customerId !== "") {
       writer.uint32(10).string(message.customerId);
     }
     return writer;
   },
 
-  decode(input: BinaryReader | Uint8Array, length?: number): PlaceOrderRequest {
+  decode(input: BinaryReader | Uint8Array, length?: number): PlaceOrderFixtureRequest {
     const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
     const end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBasePlaceOrderRequest();
+    const message = createBasePlaceOrderFixtureRequest();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
@@ -83,7 +83,7 @@ export const PlaceOrderRequest: MessageFns<PlaceOrderRequest> = {
     return message;
   },
 
-  fromJSON(object: any): PlaceOrderRequest {
+  fromJSON(object: any): PlaceOrderFixtureRequest {
     return {
       customerId: isSet(object.customerId)
         ? globalThis.String(object.customerId)
@@ -93,7 +93,7 @@ export const PlaceOrderRequest: MessageFns<PlaceOrderRequest> = {
     };
   },
 
-  toJSON(message: PlaceOrderRequest): unknown {
+  toJSON(message: PlaceOrderFixtureRequest): unknown {
     const obj: any = {};
     if (message.customerId !== "") {
       obj.customerId = message.customerId;
@@ -101,35 +101,35 @@ export const PlaceOrderRequest: MessageFns<PlaceOrderRequest> = {
     return obj;
   },
 
-  create(base?: DeepPartial<PlaceOrderRequest>): PlaceOrderRequest {
-    return PlaceOrderRequest.fromPartial(base ?? {});
+  create(base?: DeepPartial<PlaceOrderFixtureRequest>): PlaceOrderFixtureRequest {
+    return PlaceOrderFixtureRequest.fromPartial(base ?? {});
   },
-  fromPartial(object: DeepPartial<PlaceOrderRequest>): PlaceOrderRequest {
-    const message = createBasePlaceOrderRequest();
+  fromPartial(object: DeepPartial<PlaceOrderFixtureRequest>): PlaceOrderFixtureRequest {
+    const message = createBasePlaceOrderFixtureRequest();
     message.customerId = object.customerId ?? "";
     return message;
   },
 };
 
-function createBasePlaceOrderResponse(): PlaceOrderResponse {
+function createBasePlaceOrderFixtureResponse(): PlaceOrderFixtureResponse {
   return { result: undefined, data: undefined };
 }
 
-export const PlaceOrderResponse: MessageFns<PlaceOrderResponse> = {
-  encode(message: PlaceOrderResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+export const PlaceOrderFixtureResponse: MessageFns<PlaceOrderFixtureResponse> = {
+  encode(message: PlaceOrderFixtureResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
     if (message.result !== undefined) {
       D2ResultProto.encode(message.result, writer.uint32(10).fork()).join();
     }
     if (message.data !== undefined) {
-      PlaceOrderOutput.encode(message.data, writer.uint32(18).fork()).join();
+      PlaceOrderFixtureOutput.encode(message.data, writer.uint32(18).fork()).join();
     }
     return writer;
   },
 
-  decode(input: BinaryReader | Uint8Array, length?: number): PlaceOrderResponse {
+  decode(input: BinaryReader | Uint8Array, length?: number): PlaceOrderFixtureResponse {
     const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
     const end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBasePlaceOrderResponse();
+    const message = createBasePlaceOrderFixtureResponse();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
@@ -146,7 +146,7 @@ export const PlaceOrderResponse: MessageFns<PlaceOrderResponse> = {
             break;
           }
 
-          message.data = PlaceOrderOutput.decode(reader, reader.uint32());
+          message.data = PlaceOrderFixtureOutput.decode(reader, reader.uint32());
           continue;
         }
       }
@@ -158,45 +158,45 @@ export const PlaceOrderResponse: MessageFns<PlaceOrderResponse> = {
     return message;
   },
 
-  fromJSON(object: any): PlaceOrderResponse {
+  fromJSON(object: any): PlaceOrderFixtureResponse {
     return {
       result: isSet(object.result) ? D2ResultProto.fromJSON(object.result) : undefined,
-      data: isSet(object.data) ? PlaceOrderOutput.fromJSON(object.data) : undefined,
+      data: isSet(object.data) ? PlaceOrderFixtureOutput.fromJSON(object.data) : undefined,
     };
   },
 
-  toJSON(message: PlaceOrderResponse): unknown {
+  toJSON(message: PlaceOrderFixtureResponse): unknown {
     const obj: any = {};
     if (message.result !== undefined) {
       obj.result = D2ResultProto.toJSON(message.result);
     }
     if (message.data !== undefined) {
-      obj.data = PlaceOrderOutput.toJSON(message.data);
+      obj.data = PlaceOrderFixtureOutput.toJSON(message.data);
     }
     return obj;
   },
 
-  create(base?: DeepPartial<PlaceOrderResponse>): PlaceOrderResponse {
-    return PlaceOrderResponse.fromPartial(base ?? {});
+  create(base?: DeepPartial<PlaceOrderFixtureResponse>): PlaceOrderFixtureResponse {
+    return PlaceOrderFixtureResponse.fromPartial(base ?? {});
   },
-  fromPartial(object: DeepPartial<PlaceOrderResponse>): PlaceOrderResponse {
-    const message = createBasePlaceOrderResponse();
+  fromPartial(object: DeepPartial<PlaceOrderFixtureResponse>): PlaceOrderFixtureResponse {
+    const message = createBasePlaceOrderFixtureResponse();
     message.result = (object.result !== undefined && object.result !== null)
       ? D2ResultProto.fromPartial(object.result)
       : undefined;
     message.data = (object.data !== undefined && object.data !== null)
-      ? PlaceOrderOutput.fromPartial(object.data)
+      ? PlaceOrderFixtureOutput.fromPartial(object.data)
       : undefined;
     return message;
   },
 };
 
-function createBasePlaceOrderOutput(): PlaceOrderOutput {
+function createBasePlaceOrderFixtureOutput(): PlaceOrderFixtureOutput {
   return { orderCode: "", itemStatuses: [], partial: false };
 }
 
-export const PlaceOrderOutput: MessageFns<PlaceOrderOutput> = {
-  encode(message: PlaceOrderOutput, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+export const PlaceOrderFixtureOutput: MessageFns<PlaceOrderFixtureOutput> = {
+  encode(message: PlaceOrderFixtureOutput, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
     if (message.orderCode !== "") {
       writer.uint32(10).string(message.orderCode);
     }
@@ -209,10 +209,10 @@ export const PlaceOrderOutput: MessageFns<PlaceOrderOutput> = {
     return writer;
   },
 
-  decode(input: BinaryReader | Uint8Array, length?: number): PlaceOrderOutput {
+  decode(input: BinaryReader | Uint8Array, length?: number): PlaceOrderFixtureOutput {
     const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
     const end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBasePlaceOrderOutput();
+    const message = createBasePlaceOrderFixtureOutput();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
@@ -249,7 +249,7 @@ export const PlaceOrderOutput: MessageFns<PlaceOrderOutput> = {
     return message;
   },
 
-  fromJSON(object: any): PlaceOrderOutput {
+  fromJSON(object: any): PlaceOrderFixtureOutput {
     return {
       orderCode: isSet(object.orderCode)
         ? globalThis.String(object.orderCode)
@@ -265,7 +265,7 @@ export const PlaceOrderOutput: MessageFns<PlaceOrderOutput> = {
     };
   },
 
-  toJSON(message: PlaceOrderOutput): unknown {
+  toJSON(message: PlaceOrderFixtureOutput): unknown {
     const obj: any = {};
     if (message.orderCode !== "") {
       obj.orderCode = message.orderCode;
@@ -279,11 +279,11 @@ export const PlaceOrderOutput: MessageFns<PlaceOrderOutput> = {
     return obj;
   },
 
-  create(base?: DeepPartial<PlaceOrderOutput>): PlaceOrderOutput {
-    return PlaceOrderOutput.fromPartial(base ?? {});
+  create(base?: DeepPartial<PlaceOrderFixtureOutput>): PlaceOrderFixtureOutput {
+    return PlaceOrderFixtureOutput.fromPartial(base ?? {});
   },
-  fromPartial(object: DeepPartial<PlaceOrderOutput>): PlaceOrderOutput {
-    const message = createBasePlaceOrderOutput();
+  fromPartial(object: DeepPartial<PlaceOrderFixtureOutput>): PlaceOrderFixtureOutput {
+    const message = createBasePlaceOrderFixtureOutput();
     message.orderCode = object.orderCode ?? "";
     message.itemStatuses = object.itemStatuses?.map((e) => e) || [];
     message.partial = object.partial ?? false;
@@ -293,36 +293,38 @@ export const PlaceOrderOutput: MessageFns<PlaceOrderOutput> = {
 
 export type PredicateFixturesOrdersService = typeof PredicateFixturesOrdersService;
 export const PredicateFixturesOrdersService = {
-  placeOrder: {
-    path: "/d2.predicatefixtures.v1.PredicateFixturesOrders/PlaceOrder",
+  placeOrderFixture: {
+    path: "/d2.predicatefixtures.v1.PredicateFixturesOrders/PlaceOrderFixture",
     requestStream: false,
     responseStream: false,
-    requestSerialize: (value: PlaceOrderRequest): Buffer => Buffer.from(PlaceOrderRequest.encode(value).finish()),
-    requestDeserialize: (value: Buffer): PlaceOrderRequest => PlaceOrderRequest.decode(value),
-    responseSerialize: (value: PlaceOrderResponse): Buffer => Buffer.from(PlaceOrderResponse.encode(value).finish()),
-    responseDeserialize: (value: Buffer): PlaceOrderResponse => PlaceOrderResponse.decode(value),
+    requestSerialize: (value: PlaceOrderFixtureRequest): Buffer =>
+      Buffer.from(PlaceOrderFixtureRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer): PlaceOrderFixtureRequest => PlaceOrderFixtureRequest.decode(value),
+    responseSerialize: (value: PlaceOrderFixtureResponse): Buffer =>
+      Buffer.from(PlaceOrderFixtureResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer): PlaceOrderFixtureResponse => PlaceOrderFixtureResponse.decode(value),
   },
 } as const;
 
 export interface PredicateFixturesOrdersServer extends UntypedServiceImplementation {
-  placeOrder: handleUnaryCall<PlaceOrderRequest, PlaceOrderResponse>;
+  placeOrderFixture: handleUnaryCall<PlaceOrderFixtureRequest, PlaceOrderFixtureResponse>;
 }
 
 export interface PredicateFixturesOrdersClient extends Client {
-  placeOrder(
-    request: PlaceOrderRequest,
-    callback: (error: ServiceError | null, response: PlaceOrderResponse) => void,
+  placeOrderFixture(
+    request: PlaceOrderFixtureRequest,
+    callback: (error: ServiceError | null, response: PlaceOrderFixtureResponse) => void,
   ): ClientUnaryCall;
-  placeOrder(
-    request: PlaceOrderRequest,
+  placeOrderFixture(
+    request: PlaceOrderFixtureRequest,
     metadata: Metadata,
-    callback: (error: ServiceError | null, response: PlaceOrderResponse) => void,
+    callback: (error: ServiceError | null, response: PlaceOrderFixtureResponse) => void,
   ): ClientUnaryCall;
-  placeOrder(
-    request: PlaceOrderRequest,
+  placeOrderFixture(
+    request: PlaceOrderFixtureRequest,
     metadata: Metadata,
     options: Partial<CallOptions>,
-    callback: (error: ServiceError | null, response: PlaceOrderResponse) => void,
+    callback: (error: ServiceError | null, response: PlaceOrderFixtureResponse) => void,
   ): ClientUnaryCall;
 }
 

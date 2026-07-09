@@ -7,31 +7,31 @@
 namespace D2.Edge.Tests.Unit.KeyCustodian.TypeSpecGrpc;
 
 using D2.Services.Protos.Common.V1;
-using D2.Services.Protos.KeyCustodian.V2Alpha;
+using D2.Services.Protos.SignFixtures.V2Alpha;
 using D2.Shared.Result;
 using D2.Shared.Result.Grpc;
 using Google.Protobuf;
-using DtoSignOutput = D2.Edge.Tests.TypeSpecDto.Generated.SignOutput;
+using DtoSignFixtureOutput = D2.Edge.Tests.TypeSpecDto.Generated.SignFixtureOutput;
 
 /// <summary>
 /// Validates that the committed proto fixture compiles correctly and the
 /// Grpc.Tools-generated types satisfy the expected structural contract:
-/// the envelope shape (<see cref="SignResponse"/> carries
-/// <see cref="D2ResultProto"/> + <see cref="SignOutput"/> data), bytes
+/// the envelope shape (<see cref="SignFixtureResponse"/> carries
+/// <see cref="D2ResultProto"/> + <see cref="SignFixtureOutput"/> data), bytes
 /// round-trip fidelity, and the fidelity proof that a
 /// <c>D2Result.ValidationFailed</c> survives the envelope mapper intact.
 /// </summary>
 public sealed class ProtoRoundTripTests
 {
     [Fact]
-    public void SignRequest_HasKidAndPayloadFields_RoundTrips()
+    public void SignFixtureRequest_HasKidAndPayloadFields_RoundTrips()
     {
         // Grpc.Tools generates a C# class for each proto message.
-        // Verify that SignRequest carries the kid (string) and payload (ByteString) fields.
+        // Verify that SignFixtureRequest carries the kid (string) and payload (ByteString) fields.
         var kid = "test-kid-2026";
         var payload = new byte[] { 1, 2, 3, 4 };
 
-        var proto = new SignRequest
+        var proto = new SignFixtureRequest
         {
             Kid = kid,
             Payload = ByteString.CopyFrom(payload),
@@ -42,16 +42,16 @@ public sealed class ProtoRoundTripTests
     }
 
     [Fact]
-    public void SignResponse_HasResultAndDataFields()
+    public void SignFixtureResponse_HasResultAndDataFields()
     {
-        // Verify that SignResponse carries the D2ResultProto envelope (field 1)
-        // and the SignOutput data message (field 2) — the new envelope shape.
+        // Verify that SignFixtureResponse carries the D2ResultProto envelope (field 1)
+        // and the SignFixtureOutput data message (field 2) — the new envelope shape.
         const string sig = "base64sig==";
 
-        var response = new SignResponse
+        var response = new SignFixtureResponse
         {
             Result = new D2ResultProto { Success = true, StatusCode = 200 },
-            Data = new SignOutput { Signature = sig },
+            Data = new SignFixtureOutput { Signature = sig },
         };
 
         response.Result.Success.Should().BeTrue();
@@ -60,9 +60,9 @@ public sealed class ProtoRoundTripTests
     }
 
     [Fact]
-    public void SignRequest_EmptyPayload_RoundTrips()
+    public void SignFixtureRequest_EmptyPayload_RoundTrips()
     {
-        var proto = new SignRequest
+        var proto = new SignFixtureRequest
         {
             Kid = "k",
             Payload = ByteString.Empty,
@@ -73,26 +73,26 @@ public sealed class ProtoRoundTripTests
     }
 
     [Fact]
-    public void SignRequest_DefaultKid_IsEmptyString()
+    public void SignFixtureRequest_DefaultKid_IsEmptyString()
     {
         // proto3 scalars default to zero-value: string = "".
-        var proto = new SignRequest();
+        var proto = new SignFixtureRequest();
 
         proto.Kid.Should().Be(string.Empty);
     }
 
     [Fact]
-    public void SignRequest_Serialize_Deserialize_IsIdentity()
+    public void SignFixtureRequest_Serialize_Deserialize_IsIdentity()
     {
         // Proto serialization round-trip: confirm Grpc.Tools types support it.
-        var original = new SignRequest
+        var original = new SignFixtureRequest
         {
             Kid = "round-trip-kid",
             Payload = ByteString.CopyFrom(0xDE, 0xAD, 0xBE, 0xEF),
         };
 
         var bytes = original.ToByteArray();
-        var restored = SignRequest.Parser.ParseFrom(bytes);
+        var restored = SignFixtureRequest.Parser.ParseFrom(bytes);
 
         restored.Kid.Should().Be(original.Kid);
         restored.Payload.Should().Equal(original.Payload);
@@ -109,16 +109,16 @@ public sealed class ProtoRoundTripTests
     public void ValidationFailed_D2Result_ToProtoAndBack_PreservesAllFields()
     {
         // Arrange: a ValidationFailed D2Result (no data on failure).
-        var original = D2Result<DtoSignOutput?>.ValidationFailed();
+        var original = D2Result<DtoSignFixtureOutput?>.ValidationFailed();
 
-        // Act: D2Result → D2ResultProto → embed in SignResponse → serialize → parse.
+        // Act: D2Result → D2ResultProto → embed in SignFixtureResponse → serialize → parse.
         var resultProto = original.ToProto();
-        var response = new SignResponse { Result = resultProto };
+        var response = new SignFixtureResponse { Result = resultProto };
         var bytes = response.ToByteArray();
-        var parsed = SignResponse.Parser.ParseFrom(bytes);
+        var parsed = SignFixtureResponse.Parser.ParseFrom(bytes);
 
-        // Re-materialize: D2ResultProto → D2Result<DtoSignOutput?> (no data on failure).
-        var reconstructed = parsed.Result.ToD2Result<DtoSignOutput?>(data: null);
+        // Re-materialize: D2ResultProto → D2Result<DtoSignFixtureOutput?> (no data on failure).
+        var reconstructed = parsed.Result.ToD2Result<DtoSignFixtureOutput?>(data: null);
 
         // Assert: all fields round-tripped faithfully.
         reconstructed.Success.Should().BeFalse();
@@ -135,22 +135,22 @@ public sealed class ProtoRoundTripTests
     [Fact]
     public void Ok_D2Result_ToProtoAndBack_PreservesSuccessAndData()
     {
-        // Arrange: Ok D2Result with a DtoSignOutput payload.
+        // Arrange: Ok D2Result with a DtoSignFixtureOutput payload.
         const string sig = "round-trip-sig==";
-        var original = D2Result<DtoSignOutput?>.Ok(new DtoSignOutput(sig));
+        var original = D2Result<DtoSignFixtureOutput?>.Ok(new DtoSignFixtureOutput(sig));
 
         // Act: the D2Result → D2ResultProto round-trip for the envelope portion.
         var resultProto = original.ToProto();
-        var response = new SignResponse
+        var response = new SignFixtureResponse
         {
             Result = resultProto,
-            Data = new SignOutput { Signature = sig }, // as the mapper would populate
+            Data = new SignFixtureOutput { Signature = sig }, // as the mapper would populate
         };
         var bytes = response.ToByteArray();
-        var parsed = SignResponse.Parser.ParseFrom(bytes);
+        var parsed = SignFixtureResponse.Parser.ParseFrom(bytes);
 
         // Re-materialize envelope.
-        var dtoData = new DtoSignOutput(parsed.Data.Signature);
+        var dtoData = new DtoSignFixtureOutput(parsed.Data.Signature);
         var reconstructed = parsed.Result.ToD2Result(dtoData);
 
         // Assert: success + status + payload preserved.

@@ -9,28 +9,28 @@
 
 namespace D2.Edge.Tests.TypeSpecGrpcEnum.Generated;
 
-using SignWithKindRequest = global::D2.Services.Protos.EnumFixtures.V1.SignWithKindRequest;
-using SignWithKindResponse = global::D2.Services.Protos.EnumFixtures.V1.SignWithKindResponse;
+using SignWithKindFixtureRequest = global::D2.Services.Protos.EnumFixtures.V1.SignWithKindFixtureRequest;
+using SignWithKindFixtureResponse = global::D2.Services.Protos.EnumFixtures.V1.SignWithKindFixtureResponse;
 using D2.Shared.Result;
 using D2.Shared.Result.Grpc;
 using Grpc.Core;
 
-/// <summary>Generated gRPC service for the <c>SignWithKind</c> operation, delegating to <see cref="ISignWithKindHandler"/>.</summary>
-public sealed class EnumFixturesSignerService(ISignWithKindHandler handler)
+/// <summary>Generated gRPC service for the <c>SignWithKindFixture</c> operation, delegating to <see cref="ISignWithKindFixtureHandler"/>.</summary>
+public sealed class EnumFixturesSignerService(ISignWithKindFixtureHandler handler)
     : global::D2.Services.Protos.EnumFixtures.V1.EnumFixturesSigner.EnumFixturesSignerBase
 {
     /// <inheritdoc/>
-    public override async Task<SignWithKindResponse> SignWithKind(SignWithKindRequest request, ServerCallContext context)
+    public override async Task<SignWithKindFixtureResponse> SignWithKindFixture(SignWithKindFixtureRequest request, ServerCallContext context)
     {
-        var inputResult = request.ToSignWithKindInput();
+        var inputResult = request.ToSignWithKindFixtureInput();
         if (!inputResult.Success)
         {
-            var failure = D2Result<SignWithKindOutput?>.ValidationFailed(
+            var failure = D2Result<SignWithKindFixtureOutput?>.ValidationFailed(
                 inputResult.Messages, inputResult.InputErrors, inputResult.ErrorCode, inputResult.Category, inputResult.TraceId);
             return failure.ToProtoResponse();
         }
 
-        SignWithKindInput input = inputResult.Data!;
+        SignWithKindFixtureInput input = inputResult.Data!;
         var result = await handler.HandleAsync(input, context.CancellationToken).ConfigureAwait(false);
         return result.ToProtoResponse();
     }

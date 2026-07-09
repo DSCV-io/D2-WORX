@@ -7,13 +7,13 @@
 namespace D2.Edge.Tests.Unit.KeyCustodian.TypeSpecRoute.Fixtures;
 
 using D2.Shared.Auth.Abstractions.Sessions;
-using D2.Shared.Auth.Errors;
 using D2.Shared.Result;
 
 /// <summary>
-/// In-memory <see cref="ISessionLivenessTracker"/> stand-in. Tests configure
-/// canned outcomes per-call: alive (default), revoked, service-unavailable,
-/// validation-failed.
+/// In-memory <see cref="ISessionLivenessTracker"/> stand-in. The default outcome
+/// is alive (<c>Ok(true)</c>); tests configure <see cref="OutcomeForSession"/> to
+/// return canned results per session id, or set <see cref="ThrowOnInvocation"/> to
+/// simulate a tracker fault.
 /// Local copy — originals in <c>D2.Shared.Tests</c> are <c>internal sealed</c>
 /// and cannot be referenced from a different assembly.
 /// </summary>
@@ -26,15 +26,6 @@ internal sealed class FakeSessionLivenessTracker : ISessionLivenessTracker
     public int InvocationCount { get; private set; }
 
     public Guid? LastInvokedSessionId { get; private set; }
-
-    public static D2Result<bool> Alive() => D2Result<bool>.Ok(true);
-
-    public static D2Result<bool> Revoked() => D2Result<bool>.Ok();
-
-    public static D2Result<bool> Unavailable()
-        => AuthFailures.SessionLivenessUnavailable<bool>();
-
-    public static D2Result<bool> ValidationFailed() => D2Result<bool>.ValidationFailed();
 
     public ValueTask<D2Result<bool>> IsAliveAsync(
         Guid sessionId, CancellationToken ct = default)

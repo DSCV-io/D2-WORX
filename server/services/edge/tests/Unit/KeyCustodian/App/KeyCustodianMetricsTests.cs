@@ -9,7 +9,7 @@ namespace D2.Edge.Tests.Unit.KeyCustodian.App;
 using System.Diagnostics.Metrics;
 using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.ActivateKey;
 using D2.Edge.KeyCustodian.App.Application.Observability;
-using D2.Edge.KeyCustodian.Clients;
+using D2.Edge.KeyCustodian.Client.Jwks;
 using D2.Shared.Handler.Abstractions;
 
 /// <summary>
@@ -39,12 +39,14 @@ public sealed class KeyCustodianMetricsTests
         // Build an instance (dependency values don't matter for reading DefaultOptions).
         using var db = KeyCustodianTestDbContext.CreateEmpty();
         var handler = new CompromiseKeyHandler(
-            KcAppTestKit.Context<CompromiseKeyHandler>(),
+            KcAppTestKit.SystemContext<CompromiseKeyHandler>(),
             KcAppTestKit.NullClassifier(),
             db,
             Options.Create(r_options),
             new RecordingAnnouncer(),
             r_crypto,
+            KcAppTestKit.BuildRootSigningCapability(
+                db, r_crypto, new TestClock(KcAppTestKit.SR_BaseInstant)),
             new TestClock(KcAppTestKit.SR_BaseInstant));
 
         // Access DefaultOptions via the protected property through reflection.
@@ -109,11 +111,13 @@ public sealed class KeyCustodianMetricsTests
         // Verify the counter is wired — smoke test: a successful generate returns Created.
         await using var db = KeyCustodianTestDbContext.CreateEmpty();
         var handler = new GenerateKeyHandler(
-            KcAppTestKit.Context<GenerateKeyHandler>(),
+            KcAppTestKit.SystemContext<GenerateKeyHandler>(),
             KcAppTestKit.NullClassifier(),
             db,
             KcAppTestKit.BuildOptionsAccessor(),
             r_crypto,
+            KcAppTestKit.BuildRootSigningCapability(
+                db, r_crypto, new TestClock(KcAppTestKit.SR_BaseInstant)),
             new TestClock(KcAppTestKit.SR_BaseInstant));
 
         var result = await handler.HandleAsync(
@@ -146,12 +150,14 @@ public sealed class KeyCustodianMetricsTests
             activatedAt: created);
 
         var result = await new CompromiseKeyHandler(
-            KcAppTestKit.Context<CompromiseKeyHandler>(),
+            KcAppTestKit.SystemContext<CompromiseKeyHandler>(),
             KcAppTestKit.NullClassifier(),
             db,
             Options.Create(r_options),
             new RecordingAnnouncer(),
             r_crypto,
+            KcAppTestKit.BuildRootSigningCapability(
+                db, r_crypto, new TestClock(created + Duration.FromHours(1))),
             new TestClock(created + Duration.FromHours(1)))
             .HandleAsync(new CompromiseKeyInput { Kid = kid, Reason = "audit-test" });
 
@@ -180,6 +186,12 @@ public sealed class KeyCustodianMetricsTests
             .Should().Be("d2.keycustodian.leaf_certificates_issued");
         KeyCustodianMetrics.SR_NoActiveIssuingCaTotal.Name
             .Should().Be("d2.keycustodian.no_active_issuing_ca");
+        KeyCustodianMetrics.SR_CrossProcessSigningRejections.Name
+            .Should().Be("d2.keycustodian.cross_process_signing_rejections");
+        KeyCustodianMetrics.SR_AuthorityRejectionsTotal.Name
+            .Should().Be("d2.keycustodian.authority_rejections");
+        KeyCustodianMetrics.SR_CaRootKeyUsesTotal.Name
+            .Should().Be("d2.keycustodian.ca_root_key_uses");
     }
 
     [Fact]
@@ -353,12 +365,14 @@ public sealed class KeyCustodianMetricsTests
         try
         {
             result = await new CompromiseKeyHandler(
-                KcAppTestKit.Context<CompromiseKeyHandler>(),
+                KcAppTestKit.SystemContext<CompromiseKeyHandler>(),
                 KcAppTestKit.NullClassifier(),
                 db,
                 Options.Create(r_options),
                 failing,
                 r_crypto,
+                KcAppTestKit.BuildRootSigningCapability(
+                    db, r_crypto, new TestClock(created + Duration.FromHours(1))),
                 new TestClock(created + Duration.FromHours(1)))
                 .HandleAsync(new CompromiseKeyInput { Kid = kid, Reason = "test-compromise" });
         }
@@ -644,11 +658,12 @@ public sealed class KeyCustodianMetricsTests
 
     private ActivateKeyHandler BuildActivateKey(KeyCustodianTestDbContext db, TestClock clock) =>
         new(
-            KcAppTestKit.Context<ActivateKeyHandler>(),
+            KcAppTestKit.SystemContext<ActivateKeyHandler>(),
             KcAppTestKit.NullClassifier(),
             db,
             KcAppTestKit.BuildPolicyProvider(r_options),
             r_crypto,
+            KcAppTestKit.BuildRootSigningCapability(db, r_crypto, clock, r_options),
             clock);
 
     private RotateKeyHandler BuildRotateKey(
@@ -656,11 +671,12 @@ public sealed class KeyCustodianMetricsTests
         TestClock clock,
         RecordingAnnouncer announcer) =>
         new(
-            KcAppTestKit.Context<RotateKeyHandler>(),
+            KcAppTestKit.SystemContext<RotateKeyHandler>(),
             KcAppTestKit.NullClassifier(),
             db,
             KcAppTestKit.BuildPolicyProvider(r_options),
             announcer,
             r_crypto,
+            KcAppTestKit.BuildRootSigningCapability(db, r_crypto, clock, r_options),
             clock);
 }

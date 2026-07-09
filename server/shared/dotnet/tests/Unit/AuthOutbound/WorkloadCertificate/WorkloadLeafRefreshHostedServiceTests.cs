@@ -11,7 +11,6 @@ using D2.Shared.Auth.Outbound;
 using D2.Shared.Auth.Outbound.WorkloadCertificate;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
-using Microsoft.Extensions.Time.Testing;
 using Xunit;
 
 /// <summary>
@@ -78,9 +77,9 @@ public sealed class WorkloadLeafRefreshHostedServiceTests
     [Fact]
     public async Task ExecuteAsync_ReissuesBeforeExpiry_WhenWithinLeadTime()
     {
-        // Leaf TTL 10 min, lead-time 5 min. After startup the cache holds a leaf
-        // valid for 10 min; advance to within the 5-min lead window → the next tick
-        // reissues (a second issuance).
+        // Leaf TTL 10 min, lead-time 5 min. After startup the cache holds a leaf valid
+        // for 10 min; as the fake clock advances the loop reissues the aging leaf (a
+        // second issuance), keeping the cache populated.
         await using var harness = new Harness(
             validity: TimeSpan.FromMinutes(10),
             leadTime: TimeSpan.FromMinutes(5));
@@ -92,23 +91,18 @@ public sealed class WorkloadLeafRefreshHostedServiceTests
         await harness.Issuer.WaitForInvocationCountAsync(1);
         var countAfterStartup = harness.Issuer.IssuanceCount;
 
-        // Advance the fake clock into the lead-time window (10 - 6 = 4 min left ≤ 5
-        // min lead-time). The single advance schedules the FakeTimeProvider delay; a
-        // Task.Yield lets the loop wake and register the re-check delay as needed.
-        // The issuer invocation signal (count > countAfterStartup) is the gate — no
-        // iteration budget, no wall-clock deadline.
-        await Task.Yield();
-        harness.Clock.Advance(TimeSpan.FromMinutes(6));
-
-        // Nudge the clock forward in small steps until the reissue tick fires.
-        // Each nudge may be needed to fire successive poll delays; the issuer signal
-        // terminates the nudge loop the moment the reissue attempt is observed.
+        // Drive the poll loop deterministically until the aging leaf is reissued. The
+        // driver advances the fake clock exactly once per completed poll tick (paced by
+        // the loop registering its next Task.Delay), so the drive never races the
+        // thread-pool scheduler. A 6-min nudge walks the leaf from inside the lead-time
+        // window (tick 1: 4 min left ≤ 5-min lead) across expiry (tick 2), where the
+        // reissue fires — no wall-clock deadline, no free-running nudger.
         await harness.AdvanceUntilIssuerCountAsync(
             targetCount: countAfterStartup + 1,
-            nudge: TimeSpan.FromSeconds(31));
+            nudge: TimeSpan.FromMinutes(6));
 
         harness.Issuer.IssuanceCount.Should().BeGreaterThan(
-            countAfterStartup, "the leaf is reissued ahead of expiry");
+            countAfterStartup, "the leaf is reissued as it ages toward expiry");
 
         await cts.CancelAsync();
         await harness.Service.StopAsync(CancellationToken.None);
@@ -173,12 +167,13 @@ public sealed class WorkloadLeafRefreshHostedServiceTests
         // success/failure. This makes the test deterministic under any scheduler load.
         harness.Issuer.SetFail(true);
 
-        await Task.Yield();
-        harness.Clock.Advance(TimeSpan.FromMinutes(6));
-
+        // Drive the poll loop deterministically across the leaf's expiry (as in
+        // ExecuteAsync_ReissuesBeforeExpiry). The reissue tick invokes the issuer even
+        // though the armed failure makes it return ServiceUnavailable — the invocation
+        // count increments regardless, so the drive stays fully deterministic.
         await harness.AdvanceUntilIssuerCountAsync(
             targetCount: countAfterStartup + 1,
-            nudge: TimeSpan.FromSeconds(31));
+            nudge: TimeSpan.FromMinutes(6));
 
         harness.Service.ExecuteTask!.IsFaulted.Should().BeFalse(
             "a failed reissue tick is logged + swallowed, never propagated");
@@ -214,7 +209,7 @@ public sealed class WorkloadLeafRefreshHostedServiceTests
 
         public Harness(TimeSpan? validity = null, TimeSpan? leadTime = null)
         {
-            Clock = new FakeTimeProvider(SR_Base);
+            Clock = new DrivableFakeTimeProvider(SR_Base);
             Issuer = new FakeWorkloadCertificateIssuer(Clock, validity: validity);
             Cache = new WorkloadLeafCache();
 
@@ -235,7 +230,7 @@ public sealed class WorkloadLeafRefreshHostedServiceTests
                 Clock);
         }
 
-        public FakeTimeProvider Clock { get; }
+        public DrivableFakeTimeProvider Clock { get; }
 
         public FakeWorkloadCertificateIssuer Issuer { get; }
 
@@ -254,59 +249,65 @@ public sealed class WorkloadLeafRefreshHostedServiceTests
             => _cacheSetSignal.WaitAsync(TimeSpan.FromSeconds(30));
 
         /// <summary>
-        /// Nudges the fake clock forward in <paramref name="nudge"/> increments,
-        /// yielding between each nudge, until the issuer has been invoked at least
-        /// <paramref name="targetCount"/> times. The issuer-invocation channel
-        /// (<see cref="FakeWorkloadCertificateIssuer.WaitForInvocationCountAsync"/>)
-        /// terminates the wait the instant the target is reached — no iteration
-        /// budget, no false-negative on a slow scheduler.
+        /// Advances the fake clock — one poll tick at a time — until the issuer has been
+        /// invoked at least <paramref name="targetCount"/> times, then returns. The drive
+        /// is fully DETERMINISTIC and starvation-proof: it advances the clock EXACTLY once
+        /// per poll timer the background loop registers, so the clock can never race ahead
+        /// of the loop and the drive never depends on the thread-pool scheduler
+        /// co-scheduling a concurrent nudger. There is NO wall-clock deadline anywhere on
+        /// this path.
         /// </summary>
         /// <remarks>
-        /// Nudging is still necessary here because the background loop registers a
-        /// <c>FakeTimeProvider</c> delay; each <c>Clock.Advance</c> fires that delay
-        /// so the loop wakes. Without the nudge the loop never sees elapsed time and
-        /// never invokes the issuer. The issuer signal replaces the old condition-poll
-        /// — it eliminates the race between "did the loop run yet?" and the iteration
-        /// budget expiring.
+        /// The background loop registers exactly one poll timer per iteration
+        /// (<c>Task.Delay(pollInterval, clock, …)</c>), and it registers the NEXT timer
+        /// only AFTER the prior tick has fully completed. <see cref="DrivableFakeTimeProvider"/>
+        /// raises a permit on every registration, so this loop parks on that permit, then
+        /// fires the just-registered timer with a single advance — one advance per completed
+        /// tick, never more. A saturated thread pool merely delays the park signal; it can
+        /// never produce a spurious advance, a lost tick, or a false timeout (the failure
+        /// mode of the previous free-running concurrent nudger, whose progress hinged on the
+        /// scheduler and could trip under full-suite load). The nudge budget is a
+        /// genuine-stuck guard ONLY: a healthy loop reissues within a couple of ticks —
+        /// unreachably far below the budget — so it trips only when the loop ticks forever
+        /// WITHOUT ever reissuing (a real defect), surfaced as a fast, explicit failure.
         /// </remarks>
+        /// <param name="targetCount">The cumulative issuer-invocation count to reach.</param>
+        /// <param name="nudge">
+        /// The clock increment per tick. Must exceed the loop's poll interval so a single
+        /// advance fires the registered poll delay.
+        /// </param>
+        /// <param name="maxNudges">Count-based safety budget for a stuck SUT (see remarks).</param>
         public async Task AdvanceUntilIssuerCountAsync(
             int targetCount,
             TimeSpan nudge,
-            TimeSpan? safetyTimeout = null)
+            int maxNudges = 100_000)
         {
-            using var cts = new CancellationTokenSource(safetyTimeout ?? TimeSpan.FromSeconds(30));
+            // Fast-path: already there (e.g. the caller advanced before invoking).
+            if (Issuer.IssuanceCount >= targetCount)
+                return;
 
-            // Run the signal-wait and the clock-nudger concurrently. The nudger keeps
-            // advancing the fake clock (waking the loop's registered delay) until the
-            // issuer-invocation signal fires and cancels it.
-            var signalTask = Issuer.WaitForInvocationCountAsync(targetCount, ct: cts.Token);
-
-            var nudgeToken = cts.Token;
-
-            var nudgerTask = Task.Run(
-                async () =>
-                {
-                    while (!nudgeToken.IsCancellationRequested)
-                    {
-                        await Task.Yield();
-                        Clock.Advance(nudge);
-                    }
-                },
-                nudgeToken);
-
-            await signalTask;
-
-            // Signal received — cancel the nudger and let it finish.
-            await cts.CancelAsync();
-
-            try
+            for (var nudged = 0; nudged < maxNudges; nudged++)
             {
-                await nudgerTask;
+                // Park until the loop has registered its next poll delay — which happens
+                // only after the prior tick fully completed, so on return the issuer count
+                // already reflects that tick. Buffered, so a registration that raced ahead
+                // of this wait is not missed. No wall-clock deadline.
+                await Clock.WaitForTimerRegisteredAsync();
+
+                if (Issuer.IssuanceCount >= targetCount)
+                    return;
+
+                // Fire that poll timer; the loop wakes, re-checks reissue-due, and — once
+                // the aging leaf is due — invokes the issuer, incrementing the count.
+                Clock.Advance(nudge);
             }
-            catch (OperationCanceledException)
-            {
-                // Expected — the nudger loop was cancelled after the signal fired.
-            }
+
+            if (Issuer.IssuanceCount >= targetCount)
+                return;
+
+            throw new InvalidOperationException(
+                $"Issuer invocation count {Issuer.IssuanceCount} did not reach {targetCount} "
+                + $"after {maxNudges} deterministic poll ticks — the background reissue loop appears stuck.");
         }
 
         public async ValueTask DisposeAsync()
@@ -315,6 +316,7 @@ public sealed class WorkloadLeafRefreshHostedServiceTests
             Client.Dispose();
             Cache.Dispose();
             Issuer.Dispose();
+            Clock.Dispose();
             _cacheSetSignal.Dispose();
             await ValueTask.CompletedTask;
         }

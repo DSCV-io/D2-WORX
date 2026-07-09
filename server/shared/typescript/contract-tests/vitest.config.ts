@@ -9,6 +9,25 @@ import { defineConfig } from "vitest/config";
 export default defineConfig({
   resolve: {
     alias: {
+      // `@d2/encryption-abstractions` — deterministic path to the
+      // package's dist/index.js, consistent with the geo/validation
+      // aliases below: a Vite `resolve.alias` ALWAYS wins over the
+      // pnpm-managed node_modules symlink, so the encryption parity
+      // suites load exactly the workspace copy that was just built.
+      //
+      // NOTE: same caveat as the other aliases — the encryption parity
+      // suites REQUIRE a fresh `pnpm --filter @d2/encryption-abstractions
+      // build` first; a stale dist/ would be served silently and could
+      // mask a regression.
+      "@d2/encryption-abstractions": fileURLToPath(
+        new URL("../encryption-abstractions/dist/index.js", import.meta.url),
+      ),
+      // `@d2/encryption` runtime crypto twin — same deterministic-dist
+      // rationale as the abstractions alias. The crypto-KAT parity suites
+      // REQUIRE a fresh `pnpm --filter @d2/encryption build` first.
+      "@d2/encryption": fileURLToPath(
+        new URL("../encryption/dist/index.js", import.meta.url),
+      ),
       // `@d2/geo-abstractions` is wired into the contract-tests workspace
       // package.json + tsconfig references, but the pnpm-managed
       // node_modules symlink can lag the package.json edit until the next

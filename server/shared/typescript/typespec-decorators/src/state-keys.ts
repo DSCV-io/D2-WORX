@@ -24,10 +24,23 @@ export const D2_AUDIENCE_KEY = Symbol.for("D2.d2Audience");
 /** State key for @d2ServedBy — stores the owning module/service string. */
 export const D2_SERVED_BY_KEY = Symbol.for("D2.d2ServedBy");
 
+/**
+ * State key for @d2Concern — stores the co-location concern segment string on
+ * the operation. The C# DTO emitter appends it to the clients namespace
+ * (`<csharp-clients-namespace>.<Concern>`) so a client-exposed op's transport
+ * DTOs land in a concern-named folder beside the hand-written runtime that
+ * serves them. Emitters read back: program.stateMap(D2_CONCERN_KEY).get(op) →
+ * string.
+ */
+export const D2_CONCERN_KEY = Symbol.for("D2.d2Concern");
+
 /** State key for @d2GrpcMethod — stores the {@link GrpcMethodPayload}. */
 export const D2_GRPC_METHOD_KEY = Symbol.for("D2.d2GrpcMethod");
 
-/** State key for @d2Redact — stores `true` on the marked model property. */
+/**
+ * State key for @d2Redact — stores the RedactReason member-name string on the
+ * marked model property.
+ */
 export const D2_REDACT_KEY = Symbol.for("D2.d2Redact");
 
 /** State key for @d2ServerPush — stores the push channel class string. */
@@ -72,7 +85,10 @@ export const D2_COMMAND_KEY = Symbol.for("D2.d2Command");
 /** State key for @d2Query — stores `true` on the marked operation (read-only CQRS op). */
 export const D2_QUERY_KEY = Symbol.for("D2.d2Query");
 
-/** State key for @d2Internal — stores `true` on the marked operation (no cross-boundary surface). */
+/**
+ * State key for @d2Internal — stores `true` on the marked operation (no
+ * cross-boundary surface).
+ */
 export const D2_INTERNAL_KEY = Symbol.for("D2.d2Internal");
 
 /**

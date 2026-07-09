@@ -11,7 +11,7 @@
 //   S1 recompute determinism            S6 CRLF/LF normalization
 //   S2 source change moves it           S7 git-ref apiDiff (see nuget/ts tests)
 //   S3 API-report change moves it       S8 source-dump glob correctness
-//   S4 dep-version change moves it       S9 seed↔provider byte-identity (provider test)
+//   S4 dep-version change moves it       S9 provider source-dump determinism (provider test)
 //   S5 toolchain-pin change moves it
 //
 // S4/S7/S9 are exercised in real-diff-provider.test.ts (they need the provider

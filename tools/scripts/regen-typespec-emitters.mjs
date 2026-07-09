@@ -90,7 +90,7 @@ const TEMP_MAIN_TSP = join(CONTRACTS_DIR, "main.tsp");
 // test-host output are listed. This constraint exists because the main
 // tsp compile run processes all fixtures together with the real tspconfig.yaml
 // (csharp-app-namespace-base set), which routes ALL @d2InProcess / @d2GrpcMethod
-// fixture ops into the Clients namespace. In contrast, the byte-gate test suites
+// fixture ops into the Client namespace. In contrast, the byte-gate test suites
 // call emitter functions directly with explicit fixture namespaces
 // (D2.Edge.Tests.TypeSpecDto.Generated, etc.), producing different C# content
 // for the same logical fixtures.
@@ -113,89 +113,281 @@ const TEMP_MAIN_TSP = join(CONTRACTS_DIR, "main.tsp");
 
 /** @type {ReadonlyArray<{ from: string; to: string }>} */
 const COPY_MANIFEST = [
-  // ---- GetJwks DTOs (Clients namespace — matches tsp compile routing) ----
+  // ---- GetJwks DTOs (Client namespace, Jwks concern — @d2Concern("Jwks")) ----
   {
     from: "GetJwksInput.g.cs",
-    to: "server/services/edge/key-custodian/clients/GetJwksInput.g.cs",
+    to: "server/services/edge/key-custodian/client/Jwks/GetJwksInput.g.cs",
   },
   {
     from: "GetJwksOutput.g.cs",
-    to: "server/services/edge/key-custodian/clients/GetJwksOutput.g.cs",
+    to: "server/services/edge/key-custodian/client/Jwks/GetJwksOutput.g.cs",
   },
-  // NOTE: IKeyCustodianApi.g.cs is EXCLUDED — tsp compile includes sign + signDerived
-  // methods (fixture ops also have @d2InProcess); the committed version is getJwks-only.
-  // Update it via the facade-emitter.test.ts test-host.
 
-  // ---- GetJwks DI extension (app/Application/) ----
+  // ---- OIDC discovery DTOs (Client namespace, OidcConfiguration concern) ----
   {
-    from: "KeyCustodianClientsGenerated.g.cs",
-    to: "server/services/edge/key-custodian/app/Application/KeyCustodianClientsGenerated.g.cs",
+    from: "GetOidcConfigurationInput.g.cs",
+    to: "server/services/edge/key-custodian/client/OidcConfiguration/GetOidcConfigurationInput.g.cs",
   },
-  // NOTE: KeyCustodianApi.g.cs is EXCLUDED — tsp compile includes sign + signDerived
-  // using lines. The committed version is getJwks-only.
+  {
+    from: "GetOidcConfigurationOutput.g.cs",
+    to: "server/services/edge/key-custodian/client/OidcConfiguration/GetOidcConfigurationOutput.g.cs",
+  },
 
-  // ---- GetJwks handler interface (per-op CQRS folder) ----
+  // ---- Sign DTOs (Client namespace, Signing concern) ----
+  {
+    from: "SignInput.g.cs",
+    to: "server/services/edge/key-custodian/client/Signing/SignInput.g.cs",
+  },
+  {
+    from: "SignOutput.g.cs",
+    to: "server/services/edge/key-custodian/client/Signing/SignOutput.g.cs",
+  },
+
+  // ---- GetKeyring DTOs (Client namespace, Keyring concern; GetKeyringOutput.g.cs
+  //      also carries the nested KeyringEntry record with keyBytes redacted
+  //      SecretInformation) ----
+  {
+    from: "GetKeyringInput.g.cs",
+    to: "server/services/edge/key-custodian/client/Keyring/GetKeyringInput.g.cs",
+  },
+  {
+    from: "GetKeyringOutput.g.cs",
+    to: "server/services/edge/key-custodian/client/Keyring/GetKeyringOutput.g.cs",
+  },
+
+  // ---- IssueLeaf DTOs (Client namespace, Issuance concern; all-public issuance
+  //      material, no redaction — CSR in, cert out) ----
+  {
+    from: "IssueLeafInput.g.cs",
+    to: "server/services/edge/key-custodian/client/Issuance/IssueLeafInput.g.cs",
+  },
+  {
+    from: "IssueLeafOutput.g.cs",
+    to: "server/services/edge/key-custodian/client/Issuance/IssueLeafOutput.g.cs",
+  },
+
+  // ---- GetCaCertificate DTOs (Client namespace, CaCertificate concern; empty
+  //      input, public root+intermediate chain output) ----
+  {
+    from: "GetCaCertificateInput.g.cs",
+    to: "server/services/edge/key-custodian/client/CaCertificate/GetCaCertificateInput.g.cs",
+  },
+  {
+    from: "GetCaCertificateOutput.g.cs",
+    to: "server/services/edge/key-custodian/client/CaCertificate/GetCaCertificateOutput.g.cs",
+  },
+
+  // ---- Sealing DTOs (Client namespace, Sealing concern; getOrLazyProvisionSealPublicKey =
+  //      public SPKI entries (no redaction), getOrLazyProvisionOwnSealPrivateKey = private PKCS#8
+  //      entries with privatePkcs8 redacted SecretInformation; getOrLazyProvisionOwnSealPrivateKey
+  //      is parameterless so its Input DTO is the synthesized empty record) ----
+  {
+    from: "GetOrLazyProvisionSealPublicKeyInput.g.cs",
+    to: "server/services/edge/key-custodian/client/Sealing/GetOrLazyProvisionSealPublicKeyInput.g.cs",
+  },
+  {
+    from: "GetOrLazyProvisionSealPublicKeyOutput.g.cs",
+    to: "server/services/edge/key-custodian/client/Sealing/GetOrLazyProvisionSealPublicKeyOutput.g.cs",
+  },
+  {
+    from: "GetOrLazyProvisionOwnSealPrivateKeyInput.g.cs",
+    to: "server/services/edge/key-custodian/client/Sealing/GetOrLazyProvisionOwnSealPrivateKeyInput.g.cs",
+  },
+  {
+    from: "GetOrLazyProvisionOwnSealPrivateKeyOutput.g.cs",
+    to: "server/services/edge/key-custodian/client/Sealing/GetOrLazyProvisionOwnSealPrivateKeyOutput.g.cs",
+  },
+
+  // ---- Module façade interface + impl (real KC ops only). The façade lives in
+  //      a Facade/ folder → namespace <clients-ns>.Facade (interface) /
+  //      <app-ns>.Facade (impl). The facade-emitter.test.ts byte-gate pins them
+  //      independently. ----
+  {
+    from: "IKeyCustodianApi.g.cs",
+    to: "server/services/edge/key-custodian/client/Facade/IKeyCustodianApi.g.cs",
+  },
+  {
+    from: "KeyCustodianApi.g.cs",
+    to: "server/services/edge/key-custodian/app/Application/Facade/KeyCustodianApi.g.cs",
+  },
+
+  // ---- Façade DI extension (app/Application/Facade/). The file + method names
+  //      derive from the clients-namespace leaf ("Client"), so the identifier is
+  //      the non-plural KeyCustodianClientGenerated.g.cs / AddD2KeyCustodianClient(). ----
+  {
+    from: "KeyCustodianClientGenerated.g.cs",
+    to: "server/services/edge/key-custodian/app/Application/Facade/KeyCustodianClientGenerated.g.cs",
+  },
+
+  // ---- KeyCustodian gRPC service impls + transport mappers. The global tsp
+  //      compile emits these into grpc-service-namespace
+  //      (D2.Edge.Tests.TypeSpecGrpc.Generated) — matching the committed home —
+  //      delegating to the facade IKeyCustodianApi (<clients-ns>.Facade) and
+  //      mapping the concern-qualified DTOs. Scattered here (closing the prior
+  //      pipeline-coverage gap); the fixture gRPC services stay excluded
+  //      (their committed namespaces differ from the global compile). ----
+  {
+    from: "KeyCustodianSignerService.g.cs",
+    to: "server/services/edge/tests/Unit/KeyCustodian/TypeSpecGrpc/Generated/KeyCustodianSignerService.g.cs",
+  },
+  {
+    from: "KeyCustodianKeyringService.g.cs",
+    to: "server/services/edge/tests/Unit/KeyCustodian/TypeSpecGrpc/Generated/KeyCustodianKeyringService.g.cs",
+  },
+  {
+    from: "KeyCustodianCertificateAuthorityService.g.cs",
+    to: "server/services/edge/tests/Unit/KeyCustodian/TypeSpecGrpc/Generated/KeyCustodianCertificateAuthorityService.g.cs",
+  },
+  {
+    from: "KeyCustodianCaCertificateService.g.cs",
+    to: "server/services/edge/tests/Unit/KeyCustodian/TypeSpecGrpc/Generated/KeyCustodianCaCertificateService.g.cs",
+  },
+  {
+    from: "SignTransportMappers.g.cs",
+    to: "server/services/edge/tests/Unit/KeyCustodian/TypeSpecGrpc/Generated/SignTransportMappers.g.cs",
+  },
+  {
+    from: "GetKeyringTransportMappers.g.cs",
+    to: "server/services/edge/tests/Unit/KeyCustodian/TypeSpecGrpc/Generated/GetKeyringTransportMappers.g.cs",
+  },
+  {
+    from: "IssueLeafTransportMappers.g.cs",
+    to: "server/services/edge/tests/Unit/KeyCustodian/TypeSpecGrpc/Generated/IssueLeafTransportMappers.g.cs",
+  },
+  {
+    from: "GetCaCertificateTransportMappers.g.cs",
+    to: "server/services/edge/tests/Unit/KeyCustodian/TypeSpecGrpc/Generated/GetCaCertificateTransportMappers.g.cs",
+  },
+  {
+    from: "KeyCustodianSealPublicKeyService.g.cs",
+    to: "server/services/edge/tests/Unit/KeyCustodian/TypeSpecGrpc/Generated/KeyCustodianSealPublicKeyService.g.cs",
+  },
+  {
+    from: "KeyCustodianOwnSealPrivateKeyService.g.cs",
+    to: "server/services/edge/tests/Unit/KeyCustodian/TypeSpecGrpc/Generated/KeyCustodianOwnSealPrivateKeyService.g.cs",
+  },
+  {
+    from: "GetOrLazyProvisionSealPublicKeyTransportMappers.g.cs",
+    to: "server/services/edge/tests/Unit/KeyCustodian/TypeSpecGrpc/Generated/GetOrLazyProvisionSealPublicKeyTransportMappers.g.cs",
+  },
+  {
+    from: "GetOrLazyProvisionOwnSealPrivateKeyTransportMappers.g.cs",
+    to: "server/services/edge/tests/Unit/KeyCustodian/TypeSpecGrpc/Generated/GetOrLazyProvisionOwnSealPrivateKeyTransportMappers.g.cs",
+  },
+
+  // ---- Handler interfaces (per-op CQRS folder) ----
   {
     from: "IGetJwksHandler.g.cs",
     to: "server/services/edge/key-custodian/app/Application/Handlers/Queries/GetJwks/IGetJwksHandler.g.cs",
   },
+  {
+    from: "IGetOidcConfigurationHandler.g.cs",
+    to: "server/services/edge/key-custodian/app/Application/Handlers/Queries/GetOidcConfiguration/IGetOidcConfigurationHandler.g.cs",
+  },
+  {
+    from: "ISignHandler.g.cs",
+    to: "server/services/edge/key-custodian/app/Application/Handlers/Queries/Sign/ISignHandler.g.cs",
+  },
+  {
+    from: "IGetKeyringHandler.g.cs",
+    to: "server/services/edge/key-custodian/app/Application/Handlers/Queries/GetKeyring/IGetKeyringHandler.g.cs",
+  },
+  {
+    from: "IIssueLeafHandler.g.cs",
+    to: "server/services/edge/key-custodian/app/Application/Handlers/Commands/IssueLeaf/IIssueLeafHandler.g.cs",
+  },
+  {
+    from: "IGetCaCertificateHandler.g.cs",
+    to: "server/services/edge/key-custodian/app/Application/Handlers/Queries/GetCaCertificate/IGetCaCertificateHandler.g.cs",
+  },
+  {
+    from: "IGetOrLazyProvisionSealPublicKeyHandler.g.cs",
+    to: "server/services/edge/key-custodian/app/Application/Handlers/Commands/GetOrLazyProvisionSealPublicKey/IGetOrLazyProvisionSealPublicKeyHandler.g.cs",
+  },
+  {
+    from: "IGetOrLazyProvisionOwnSealPrivateKeyHandler.g.cs",
+    to: "server/services/edge/key-custodian/app/Application/Handlers/Commands/GetOrLazyProvisionOwnSealPrivateKey/IGetOrLazyProvisionOwnSealPrivateKeyHandler.g.cs",
+  },
+
+  // ---- Well-known route registrations (real-KC namespace
+  //      D2.Edge.KeyCustodian.App.Application.Routes — matches tsp compile;
+  //      delegate to IKeyCustodianApi, both @d2Harmless GET).
+  //
+  //      Committed into the KC TEST project (which references AspNetCore +
+  //      D2.Shared.Auth.Http) rather than the transport-agnostic app project:
+  //      a route registration references IEndpointRouteBuilder / Map* /
+  //      MarkAsD2HarmlessEndpoint, which the app layer (ADR-0020 — App is
+  //      transport-agnostic, no AspNetCore) cannot reference. The production
+  //      HOST wiring (the Edge composition root calling MapGetJwksRoute /
+  //      MapGetOidcConfigurationRoute) is deferred until the Edge host exists; these files
+  //      are compiled + TestServer-proven in the test assembly now. ----
+  {
+    from: "GetJwksRouteRegistration.g.cs",
+    to: "server/services/edge/tests/Unit/KeyCustodian/WellKnown/Generated/GetJwksRouteRegistration.g.cs",
+  },
+  {
+    from: "GetOidcConfigurationRouteRegistration.g.cs",
+    to: "server/services/edge/tests/Unit/KeyCustodian/WellKnown/Generated/GetOidcConfigurationRouteRegistration.g.cs",
+  },
 
   // ---- TypeScript DTOs — no namespace sensitivity, all match ----
   {
-    from: "enums-dto.g.ts",
-    to: "server/services/edge/tests/Unit/KeyCustodian/TypeSpecDto/Generated/enums-dto.g.ts",
+    from: "enum-fixture-dto.g.ts",
+    to: "server/services/edge/tests/Unit/KeyCustodian/TypeSpecDto/Generated/enum-fixture-dto.g.ts",
   },
   {
-    from: "key-custodian-grpc-client.g.ts",
-    to: "server/services/edge/tests/Unit/KeyCustodian/TypeSpecDto/Generated/key-custodian-grpc-client.g.ts",
+    from: "sign-fixture-grpc-client.g.ts",
+    to: "server/services/edge/tests/Unit/KeyCustodian/TypeSpecDto/Generated/sign-fixture-grpc-client.g.ts",
   },
   {
-    from: "key-custodian-rest-client.g.ts",
-    to: "server/services/edge/tests/Unit/KeyCustodian/TypeSpecDto/Generated/key-custodian-rest-client.g.ts",
+    from: "sign-fixture-rest-client.g.ts",
+    to: "server/services/edge/tests/Unit/KeyCustodian/TypeSpecDto/Generated/sign-fixture-rest-client.g.ts",
   },
   {
-    from: "temporal-dto.g.ts",
-    to: "server/services/edge/tests/Unit/KeyCustodian/TypeSpecDto/Generated/temporal-dto.g.ts",
+    from: "temporal-fixture-dto.g.ts",
+    to: "server/services/edge/tests/Unit/KeyCustodian/TypeSpecDto/Generated/temporal-fixture-dto.g.ts",
   },
 
-  // ---- Sign .proto fixture (namespace matches: keycustodian package) ----
-  {
-    from: "key_custodian_signer_sign.g.proto",
-    to: "server/services/edge/tests/Unit/KeyCustodian/TypeSpecGrpc/Protos/key_custodian_signer_sign.g.proto",
-  },
+  // NOTE: the sign-shaped fixture proto is EXCLUDED — after the wire-identity
+  // rename the fixture carries the synthetic per-fixture package d2.signfixtures.v2alpha,
+  // which the GLOBAL tspconfig compile (proto-package d2.keycustodian.v2alpha, the
+  // REAL KC ops) no longer matches. Like the enum / predicate fixture protos it is
+  // now governed exclusively by the byte-gate test suites (proto-grpc-byte-parity.test.ts)
+  // — never scattered from $onEmit output.
 
-  // ---- Enum gRPC TypeScript client (no namespace sensitivity) ----
+  // ---- Enum gRPC TypeScript client (no namespace sensitivity; served-by EnumFixtures
+  //      is unchanged so the file name is stable) ----
   {
     from: "enum-fixtures-grpc-client.g.ts",
     to: "server/services/edge/tests/Unit/KeyCustodian/TypeSpecGrpcEnum/Generated/enum-fixtures-grpc-client.g.ts",
   },
-  // NOTE: sign-with-kind-dto.g.ts is EXCLUDED — the committed banner uses
-  // "<typespec op: signWithKind>" (the fallback form); tsp compile now emits
+  // NOTE: sign-with-kind-fixture-dto.g.ts is EXCLUDED — the committed banner uses
+  // "<typespec op: signWithKindFixture>" (the per-op fallback form); tsp compile now emits
   // "contracts/typespec/fixtures/enum-shaped.tsp". Update by rerunning
-  // byte-parity.test.ts with the updated SIGN_WITH_KIND_DTO_SRC constant.
-  // NOTE: enum_fixtures_signer_sign_with_kind.g.proto is EXCLUDED — tsp compile
+  // byte-parity.test.ts with the updated SWK DTO source constant.
+  // NOTE: enum_fixtures_signer_sign_with_kind_fixture.g.proto is EXCLUDED — tsp compile
   // uses package d2.keycustodian.v2alpha; committed fixture uses d2.enumfixtures.v1.
 
   // ---- Resilience predicate TypeScript files (no namespace sensitivity) ----
   {
-    from: "place-order-dto.g.ts",
-    to: "server/services/edge/tests/Unit/KeyCustodian/TypeSpecGrpcPredicate/Generated/place-order-dto.g.ts",
+    from: "place-order-fixture-dto.g.ts",
+    to: "server/services/edge/tests/Unit/KeyCustodian/TypeSpecGrpcPredicate/Generated/place-order-fixture-dto.g.ts",
   },
   {
-    from: "place-order-resilience-predicates.g.ts",
-    to: "server/services/edge/tests/Unit/KeyCustodian/TypeSpecGrpcPredicate/Generated/place-order-resilience-predicates.g.ts",
+    from: "place-order-fixture-resilience-predicates.g.ts",
+    to: "server/services/edge/tests/Unit/KeyCustodian/TypeSpecGrpcPredicate/Generated/place-order-fixture-resilience-predicates.g.ts",
   },
   {
-    from: "place-order-v2-dto.g.ts",
-    to: "server/services/edge/tests/Unit/KeyCustodian/TypeSpecGrpcPredicate/Generated/place-order-v2-dto.g.ts",
+    from: "place-order-v2-fixture-dto.g.ts",
+    to: "server/services/edge/tests/Unit/KeyCustodian/TypeSpecGrpcPredicate/Generated/place-order-v2-fixture-dto.g.ts",
   },
   {
-    from: "place-order-v2-resilience-predicates.g.ts",
-    to: "server/services/edge/tests/Unit/KeyCustodian/TypeSpecGrpcPredicate/Generated/place-order-v2-resilience-predicates.g.ts",
+    from: "place-order-v2-fixture-resilience-predicates.g.ts",
+    to: "server/services/edge/tests/Unit/KeyCustodian/TypeSpecGrpcPredicate/Generated/place-order-v2-fixture-resilience-predicates.g.ts",
   },
   {
-    from: "deep-nest-dto.g.ts",
-    to: "server/services/edge/tests/Unit/KeyCustodian/TypeSpecGrpcPredicate/Generated/deep-nest-dto.g.ts",
+    from: "deep-nest-fixture-dto.g.ts",
+    to: "server/services/edge/tests/Unit/KeyCustodian/TypeSpecGrpcPredicate/Generated/deep-nest-fixture-dto.g.ts",
   },
   // NOTE: predicate-fixtures-grpc-client.g.ts is EXCLUDED — tsp compile produces
   // a combined module (PlaceOrder + PlaceOrderV2 + DeepNest); the committed

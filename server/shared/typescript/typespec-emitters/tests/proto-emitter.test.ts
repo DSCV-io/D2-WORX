@@ -22,7 +22,11 @@ import { WIRE_CHANNEL_GRAMMAR } from "../src/lib/wire-channel.js";
 // ---------------------------------------------------------------------------
 
 type OnError = (
-  code: "unmapped-scalar" | "invalid-streaming-mode" | "unpinned-proto-field",
+  code:
+    | "unmapped-scalar"
+    | "invalid-streaming-mode"
+    | "unpinned-proto-field"
+    | "duplicate-field-number",
   message: string,
 ) => void;
 
@@ -36,7 +40,7 @@ function makeStringField(name: string, fieldNumber?: number): FieldInfo {
     protoType: "string",
     repeated: false,
     optional: false,
-    redact: false,
+    redactReason: undefined,
     fieldNumber,
   };
 }
@@ -51,7 +55,7 @@ function makeBytesField(name: string, fieldNumber?: number): FieldInfo {
     protoType: "bytes",
     repeated: false,
     optional: false,
-    redact: false,
+    redactReason: undefined,
     fieldNumber,
   };
 }
@@ -66,7 +70,7 @@ function makeDecimalField(name: string, fieldNumber?: number): FieldInfo {
     protoType: "string",
     repeated: false,
     optional: false,
-    redact: false,
+    redactReason: undefined,
     fieldNumber,
   };
 }
@@ -86,7 +90,7 @@ function makeCollectionField(
     protoType: elemProtoType,
     repeated: true,
     optional: false,
-    redact: false,
+    redactReason: undefined,
     fieldNumber,
   };
 }
@@ -105,7 +109,7 @@ function makeNestedField(
     protoType: undefined,
     repeated: false,
     optional: false,
-    redact: false,
+    redactReason: undefined,
     nested,
     fieldNumber,
   };
@@ -116,8 +120,8 @@ function nestedDescriptor(model: NestedModel): NestedMessageDescriptor {
 }
 
 const SIGN_SOURCE = "contracts/typespec/fixtures/sign-shaped.tsp";
-const SIGN_PKG = "d2.keycustodian.v2alpha";
-const SIGN_CS_NS = "D2.Services.Protos.KeyCustodian.V2Alpha";
+const SIGN_PKG = "d2.sample.v1";
+const SIGN_CS_NS = "D2.Services.Protos.Sample.V1";
 
 function buildSignInputFields(): readonly FieldInfo[] {
   return [makeStringField("kid", 1), makeBytesField("payload", 2)];
@@ -132,7 +136,7 @@ function emitSignProto(streaming = "unary", onErr?: OnError) {
   const onError: OnError = onErr ?? ((_, m) => errors.push(m));
   const result = emitProto(
     "sign",
-    "KeyCustodianSigner",
+    "SampleSigner",
     "Sign",
     streaming,
     SIGN_PKG,
@@ -158,7 +162,7 @@ describe("emitProto_SignShape_EmitsServiceRpcMessages", () => {
   it("emits proto service declaration", () => {
     const { result } = emitSignProto();
     expect(result).toBeDefined();
-    expect(result!.content).toContain("service KeyCustodianSigner {");
+    expect(result!.content).toContain("service SampleSigner {");
     expect(result!.content).toContain(
       "rpc Sign(SignRequest) returns (SignResponse);",
     );
@@ -297,7 +301,7 @@ describe("emitProto_FieldNaming_SnakeCaseFields_PascalCaseMessages", () => {
         protoType: "string",
         repeated: false,
         optional: false,
-        redact: false,
+        redactReason: undefined,
         fieldNumber: 1,
       },
     ];
@@ -408,7 +412,7 @@ describe("emitProto_UnpinnedField_LoudFailure", () => {
       protoType: "string",
       repeated: false,
       optional: false,
-      redact: false,
+      redactReason: undefined,
       // fieldNumber intentionally absent — simulates missing @d2Field
     };
     const onError = vi.fn();
@@ -446,7 +450,7 @@ describe("emitProto_UnpinnedField_LoudFailure", () => {
       protoType: "string",
       repeated: false,
       optional: false,
-      redact: false,
+      redactReason: undefined,
       // fieldNumber intentionally absent
     };
     const onError = vi.fn();
@@ -684,7 +688,7 @@ describe("emitProto_UnmappedScalar_LoudFailure", () => {
       protoType: undefined, // no proto column (would fail)
       repeated: false,
       optional: false,
-      redact: false,
+      redactReason: undefined,
       fieldNumber: 1, // pinned — passes the pin check; fails at scalar resolution
     };
     const onError = vi.fn();
@@ -727,7 +731,7 @@ describe("emitProto_UnmappedArrayElementScalar_LoudFailure", () => {
       protoType: undefined,
       repeated: true,
       optional: false,
-      redact: false,
+      redactReason: undefined,
       fieldNumber: 1,
     };
     const onError = vi.fn();
@@ -767,9 +771,9 @@ describe("emitProto_Banner_SyntaxPackageNamespace", () => {
     );
     expect(result!.content).toContain("Manual edits will be lost on rebuild.");
     expect(result!.content).toContain('syntax = "proto3";');
-    expect(result!.content).toContain("package d2.keycustodian.v2alpha;");
+    expect(result!.content).toContain("package d2.sample.v1;");
     expect(result!.content).toContain(
-      'option csharp_namespace = "D2.Services.Protos.KeyCustodian.V2Alpha";',
+      'option csharp_namespace = "D2.Services.Protos.Sample.V1";',
     );
   });
 });
@@ -820,7 +824,7 @@ describe("emitProto_DateTimeOffset_MapsToProtoString", () => {
       protoType: "string",
       repeated: false,
       optional: false,
-      redact: false,
+      redactReason: undefined,
       fieldNumber: 1,
     };
     const errors: string[] = [];
@@ -856,7 +860,7 @@ describe("emitProto_DateTimeOffset_MapsToProtoString", () => {
       protoType: "string",
       repeated: false,
       optional: true,
-      redact: false,
+      redactReason: undefined,
       fieldNumber: 1,
     };
     const errors: string[] = [];
@@ -956,9 +960,9 @@ describe("emitProto_UnknownStreamingMode_LoudFailure", () => {
 // ---------------------------------------------------------------------------
 
 describe("emitProto_FileName_DerivedFromServiceMethod", () => {
-  it("service KeyCustodianSigner + method Sign → key_custodian_signer_sign.g.proto", () => {
+  it("service SampleSigner + method Sign → sample_signer_sign.g.proto", () => {
     const { result } = emitSignProto();
-    expect(result!.fileName).toBe("key_custodian_signer_sign.g.proto");
+    expect(result!.fileName).toBe("sample_signer_sign.g.proto");
   });
 });
 
@@ -977,7 +981,7 @@ describe("emitProto_UnmappedResponseField_EarlyReturn", () => {
       protoType: undefined,
       repeated: false,
       optional: false,
-      redact: false,
+      redactReason: undefined,
       fieldNumber: 1,
     };
     const onError = vi.fn();
@@ -1019,7 +1023,7 @@ describe("emitProto_NestedModel_UnmappedField_EarlyReturn", () => {
       protoType: undefined,
       repeated: false,
       optional: false,
-      redact: false,
+      redactReason: undefined,
       fieldNumber: 1,
     };
     const nestedModel: NestedModel = {
@@ -1070,7 +1074,7 @@ describe("emitProto_ModelTypedCollection_RepeatedWithModelName", () => {
       protoType: undefined, // model type — no scalar proto type
       repeated: true,
       optional: false,
-      redact: false,
+      redactReason: undefined,
       nested: nestedModel,
       fieldNumber: 1,
     };
@@ -1127,7 +1131,7 @@ describe("emitProto_EnumField_EmitsStringField", () => {
       protoType: "string",
       repeated,
       optional: false,
-      redact: false,
+      redactReason: undefined,
       enumRef: KEY_KIND,
       fieldNumber,
     };
@@ -1195,7 +1199,7 @@ describe("emitProto_EnumField_EmitsStringField", () => {
       // protoType deliberately omitted — the resolver must fall back to "string".
       repeated: false,
       optional: false,
-      redact: false,
+      redactReason: undefined,
       enumRef: KEY_KIND,
       fieldNumber: 1,
     };
@@ -1242,7 +1246,7 @@ describe("emitProto_NestedModel_WireShape", () => {
       protoType: undefined,
       repeated: false,
       optional: true,
-      redact: false,
+      redactReason: undefined,
       nested: customer,
       fieldNumber: 1,
     };
@@ -1285,7 +1289,7 @@ describe("emitProto_NestedModel_WireShape", () => {
       protoType: undefined,
       repeated: true,
       optional: false,
-      redact: false,
+      redactReason: undefined,
       nested: line,
       fieldNumber: 1,
     };
@@ -1333,7 +1337,7 @@ describe("emitProto_NestedModel_WireShape", () => {
           protoType: undefined,
           repeated: true,
           optional: false,
-          redact: false,
+          redactReason: undefined,
           nested: part,
           fieldNumber: 2,
         },
@@ -1348,7 +1352,7 @@ describe("emitProto_NestedModel_WireShape", () => {
       protoType: undefined,
       repeated: false,
       optional: true,
-      redact: false,
+      redactReason: undefined,
       nested: widget,
       fieldNumber: 2,
     };
@@ -1536,6 +1540,34 @@ describe("emitProto_Reserved_NumbersAndNames", () => {
     expect(count).toBe(1);
   });
 
+  it("reserved names are deduplicated before emission", () => {
+    const errors: string[] = [];
+    const result = emitProto(
+      "op",
+      "Svc",
+      "Do",
+      "unary",
+      SIGN_PKG,
+      SIGN_CS_NS,
+      SIGN_SOURCE,
+      "Req",
+      [makeStringField("kid", 1)],
+      // A repeated name — exercises the seen-set skip arm of buildReservedNameLines.
+      { numbers: [], names: ["dropped_field", "dropped_field"] },
+      "Resp",
+      [],
+      undefined,
+      [],
+      (_, m) => errors.push(m),
+    );
+    expect(errors).toHaveLength(0);
+    expect(result!.content).toContain('reserved "dropped_field";');
+    // Only one occurrence — the duplicate was skipped by the dedup guard.
+    const count = (result!.content.match(/reserved "dropped_field";/g) ?? [])
+      .length;
+    expect(count).toBe(1);
+  });
+
   it("response reserved payload is emitted in the data message block", () => {
     const errors: string[] = [];
     const result = emitProto(
@@ -1603,11 +1635,12 @@ describe("emitProto_Reserved_NumbersAndNames", () => {
 });
 
 // ---------------------------------------------------------------------------
-// Structural guard: proto package is well-formed and not the retired v1 value.
+// Structural guard: proto package is well-formed.
 // Two-part guard: (1) WIRE_CHANNEL_GRAMMAR regex asserts the package SHAPE
 // (d2.<svc>.v<N>(alpha|beta)?) — it does NOT structurally exclude v1 because
 // v1 is syntactically valid; (2) the identity assertion `expect(SIGN_PKG).
-// not.toBe("d2.keycustodian.v1")` is the real guard against the retired value.
+// not.toBe("d2.sample.v1alpha")` is the real guard against accidental alpha
+// drift (SIGN_PKG is the pinned v1 stable value for the sample fixture).
 // ---------------------------------------------------------------------------
 
 describe("emitProto_ProtoPackage_ChannelGrammar", () => {
@@ -1615,11 +1648,10 @@ describe("emitProto_ProtoPackage_ChannelGrammar", () => {
     expect(WIRE_CHANNEL_GRAMMAR.test(SIGN_PKG)).toBe(true);
   });
 
-  it("SIGN_PKG has been renumbered away from the retired bare v1 value", () => {
-    // Non-vacuous: the old d2.keycustodian.v1 passes the format but not the
-    // intent (the channel grammar accepts it because v1 is syntactically valid).
-    // The real guard is that SIGN_PKG is NOT the old bare v1 value.
-    expect(SIGN_PKG).not.toBe("d2.keycustodian.v1");
+  it("SIGN_PKG is the stable v1 value (not an alpha/beta prerelease)", () => {
+    // Non-vacuous: the channel grammar accepts v1alpha too (syntactically valid).
+    // The real guard is that SIGN_PKG is the pinned stable value.
+    expect(SIGN_PKG).not.toBe("d2.sample.v1alpha");
   });
 
   it("emitted proto content carries the channel-grammar package", () => {
@@ -1633,23 +1665,23 @@ describe("emitProto_ProtoPackage_ChannelGrammar", () => {
     expect(WIRE_CHANNEL_GRAMMAR.test(pkg)).toBe(true);
   });
 
-  it("stable-sounding v2 package (no alpha/beta) matches channel grammar", () => {
-    // Confirms the grammar accepts v2, v3, etc. (graduation from v2alpha).
-    expect(WIRE_CHANNEL_GRAMMAR.test("d2.keycustodian.v2")).toBe(true);
+  it("stable v2 package (no alpha/beta) matches channel grammar", () => {
+    // Confirms the grammar accepts v2, v3, etc.
+    expect(WIRE_CHANNEL_GRAMMAR.test("d2.sample.v2")).toBe(true);
   });
 
   it("v2beta package matches channel grammar", () => {
-    expect(WIRE_CHANNEL_GRAMMAR.test("d2.keycustodian.v2beta")).toBe(true);
+    expect(WIRE_CHANNEL_GRAMMAR.test("d2.sample.v2beta")).toBe(true);
   });
 
   it("malformed packages do NOT match (e.g. uppercase, missing v, extra dots)", () => {
-    expect(WIRE_CHANNEL_GRAMMAR.test("D2.keycustodian.v2alpha")).toBe(false);
-    expect(WIRE_CHANNEL_GRAMMAR.test("d2.keycustodian.2alpha")).toBe(false);
-    expect(WIRE_CHANNEL_GRAMMAR.test("d2.keycustodian.v2.alpha")).toBe(false);
-    expect(WIRE_CHANNEL_GRAMMAR.test("d2.KeyCustodian.v2alpha")).toBe(false);
+    expect(WIRE_CHANNEL_GRAMMAR.test("D2.sample.v2alpha")).toBe(false);
+    expect(WIRE_CHANNEL_GRAMMAR.test("d2.sample.2alpha")).toBe(false);
+    expect(WIRE_CHANNEL_GRAMMAR.test("d2.sample.v2.alpha")).toBe(false);
+    expect(WIRE_CHANNEL_GRAMMAR.test("d2.Sample.v2alpha")).toBe(false);
     // malformed channel suffixes: gamma is not a valid stability channel (only alpha/beta)
-    expect(WIRE_CHANNEL_GRAMMAR.test("d2.keycustodian.v2gamma")).toBe(false);
+    expect(WIRE_CHANNEL_GRAMMAR.test("d2.sample.v2gamma")).toBe(false);
     // "valpha" is not a valid version segment — must be v<N>(alpha|beta)?
-    expect(WIRE_CHANNEL_GRAMMAR.test("d2.keycustodian.valpha")).toBe(false);
+    expect(WIRE_CHANNEL_GRAMMAR.test("d2.sample.valpha")).toBe(false);
   });
 });

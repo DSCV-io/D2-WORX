@@ -13,6 +13,24 @@ namespace D2.Edge.Tests.Unit.KeyCustodian.App;
 /// </summary>
 public sealed class GenerateKeyTests
 {
+    public static TheoryData<string, KeyType> WrongTypeForDomainCases()
+    {
+        // Fully adversarial: every catalog domain × every key type EXCEPT its
+        // canonical binding (a new domain or key type automatically joins the matrix).
+        var data = new TheoryData<string, KeyType>();
+
+        foreach (var domain in KeyDomain.All)
+        {
+            foreach (var keyType in Enum.GetValues<KeyType>())
+            {
+                if (keyType != domain.KeyType)
+                    data.Add(domain.Value, keyType);
+            }
+        }
+
+        return data;
+    }
+
     [Fact]
     public async Task Generate_Secret_Cookie_CreatesPendingRowAndAudit()
     {
@@ -54,12 +72,15 @@ public sealed class GenerateKeyTests
     [Fact]
     public async Task Generate_AesPayload_CreatesPendingRowWithNoPublicMaterial()
     {
-        // AES-256-GCM is symmetric — no public key component should be persisted.
+        // AES-256-GCM is symmetric — no public key component should be persisted. audit is
+        // now a SEALED domain (removed from the payload catalog), so exercise the preserved
+        // symmetric machinery on a registered fixture payload domain.
+        using var fixtureSeam = FixturePayloadDomains.Register();
         await using var db = KeyCustodianTestDbContext.CreateEmpty();
         var handler = Build(db, new TestClock(KcAppTestKit.SR_BaseInstant));
 
         var result = await handler.HandleAsync(
-            new GenerateKeyInput("audit", KeyType.AesPayload));
+            new GenerateKeyInput(FixturePayloadDomains.PAYLOAD_A, KeyType.AesPayload));
 
         result.Success.Should().BeTrue();
         result.IsCreated.Should().BeTrue(because: "a new AES key returns HTTP 201");
@@ -100,6 +121,76 @@ public sealed class GenerateKeyTests
         result.Success.Should().BeFalse();
         result.ErrorCode.Should().Be("KEYCUSTODIAN_UNKNOWN_KEY_DOMAIN");
         db.Keys.Should().BeEmpty();
+        db.Audit.Should().BeEmpty();
+    }
+
+    // -----------------------------------------------------------------------
+    // Domain→key-type binding — every wrong (domain, type) pair is a sharp 400
+    // -----------------------------------------------------------------------
+
+    [Theory]
+    [MemberData(nameof(WrongTypeForDomainCases))]
+    public async Task Generate_WrongTypeForDomain_Returns400Mismatch_PersistsNothing(
+        string domain, KeyType wrongType)
+    {
+        await using var db = KeyCustodianTestDbContext.CreateEmpty();
+        var handler = Build(db, new TestClock(KcAppTestKit.SR_BaseInstant));
+
+        var result = await handler.HandleAsync(new GenerateKeyInput(domain, wrongType));
+
+        result.Success.Should().BeFalse();
+        result.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        result.ErrorCode.Should().Be(
+            KeyCustodianErrorCodes.KEYCUSTODIAN_KEY_TYPE_DOMAIN_MISMATCH,
+            "a (domain, type) pair that disagrees with the canonical binding is a "
+            + "permanent client error");
+        db.Keys.Should().BeEmpty(because: "a mismatched pair never reaches the store");
+        db.Audit.Should().BeEmpty(because: "a mismatched pair writes no audit entry");
+    }
+
+    [Fact]
+    public async Task Generate_CaseVariantDomain_WrongType_StillRejectedByBinding()
+    {
+        // Normalization happens BEFORE the binding check: a case/whitespace variant of
+        // a catalog domain still resolves its binding and rejects the wrong type. Uses a
+        // registered fixture payload domain (audit is sealed and left the symmetric catalog).
+        using var fixtureSeam = FixturePayloadDomains.Register();
+        await using var db = KeyCustodianTestDbContext.CreateEmpty();
+        var handler = Build(db, new TestClock(KcAppTestKit.SR_BaseInstant));
+
+        var result = await handler.HandleAsync(
+            new GenerateKeyInput(" PAYLOAD-FIXTURE-A ", KeyType.RsaSigning));
+
+        result.ErrorCode.Should().Be(
+            KeyCustodianErrorCodes.KEYCUSTODIAN_KEY_TYPE_DOMAIN_MISMATCH);
+        db.Keys.Should().BeEmpty();
+    }
+
+    // -----------------------------------------------------------------------
+    // Seal domain binding — seal:<service> binds EcdhSealing; any other type is a 400.
+    // (The WrongTypeForDomainCases matrix only covers the closed All catalog; the seal
+    // family is pattern-based and NOT in that catalog, so it is exercised explicitly.)
+    // -----------------------------------------------------------------------
+
+    [Theory]
+    [InlineData(KeyType.AesPayload)]
+    [InlineData(KeyType.RsaSigning)]
+    [InlineData(KeyType.Secret)]
+    [InlineData(KeyType.X509CaCertificate)]
+    public async Task Generate_SealDomain_WrongType_Returns400Mismatch_PersistsNothing(
+        KeyType wrongType)
+    {
+        await using var db = KeyCustodianTestDbContext.CreateEmpty();
+        var handler = Build(db, new TestClock(KcAppTestKit.SR_BaseInstant));
+
+        var result = await handler.HandleAsync(new GenerateKeyInput("seal:audit", wrongType));
+
+        result.Success.Should().BeFalse();
+        result.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        result.ErrorCode.Should().Be(
+            KeyCustodianErrorCodes.KEYCUSTODIAN_KEY_TYPE_DOMAIN_MISMATCH,
+            "a seal:<service> domain binds EcdhSealing — any other type is a sharp 400");
+        db.Keys.Should().BeEmpty(because: "a mismatched pair never reaches the store");
         db.Audit.Should().BeEmpty();
     }
 
@@ -208,10 +299,11 @@ public sealed class GenerateKeyTests
     private static GenerateKeyHandler BuildWithCrypto(
         KeyCustodianTestDbContext db, TestClock clock, IPayloadCrypto crypto) =>
         new(
-            KcAppTestKit.Context<GenerateKeyHandler>(),
+            KcAppTestKit.SystemContext<GenerateKeyHandler>(),
             KcAppTestKit.NullClassifier(),
             db,
             KcAppTestKit.BuildOptionsAccessor(),
             crypto,
+            KcAppTestKit.BuildRootSigningCapability(db, crypto, clock),
             clock);
 }

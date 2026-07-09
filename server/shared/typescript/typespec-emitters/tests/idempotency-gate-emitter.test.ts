@@ -34,17 +34,17 @@ function makeBaseRouteInput(
   overrides: Partial<RoutePolicyEmitInput> = {},
 ): RoutePolicyEmitInput {
   return {
-    opName: "sign",
+    opName: "signFixture",
     verb: "post",
-    routePath: "/internal/v1/kc/sign",
+    routePath: "/internal/v1/fixtures/sign-fixture",
     delegationTarget: {
       kind: "facade",
-      typeName: "IKeyCustodianSignerFacade",
-      methodName: "SignAsync",
+      typeName: "ISignFixtureSignerFacade",
+      methodName: "SignFixtureAsync",
     },
     delegationTargetNamespace: "D2.Edge.Tests.TypeSpecRoute.Generated.Facade",
-    inputTypeName: "SignInput",
-    outputTypeName: "SignOutput",
+    inputTypeName: "SignFixtureInput",
+    outputTypeName: "SignFixtureOutput",
     dtoNamespace: "D2.Edge.Tests.TypeSpecDto.Generated",
     scopePolicy: { kind: "any", scopes: ["self.write"] },
     rateTier: "Standard",
@@ -62,9 +62,9 @@ function makeHeaderGateInput(
     keySource: "header",
     ttlSeconds: 86400,
     fields: [],
-    inputTypeName: "SignInput",
-    outputTypeName: "SignOutput",
-    pascalOpName: "Sign",
+    inputTypeName: "SignFixtureInput",
+    outputTypeName: "SignFixtureOutput",
+    pascalOpName: "SignFixture",
     ...overrides,
   };
 }
@@ -76,8 +76,8 @@ function makeDerivedGateInput(
     keySource: "derived",
     ttlSeconds: 3600,
     fields: ["Kid"],
-    inputTypeName: "SignInput",
-    outputTypeName: "SignOutput",
+    inputTypeName: "SignFixtureInput",
+    outputTypeName: "SignFixtureOutput",
     pascalOpName: "SignDerived",
     ...overrides,
   };
@@ -407,7 +407,7 @@ describe("emitRoutePolicy — header idempotency gate woven in", () => {
       }),
     );
     const headerIdx = file.content.indexOf('"Idempotency-Key"');
-    const delegateIdx = file.content.indexOf("facade.SignAsync");
+    const delegateIdx = file.content.indexOf("facade.SignFixtureAsync");
     expect(headerIdx).toBeGreaterThan(-1);
     expect(delegateIdx).toBeGreaterThan(-1);
     expect(headerIdx).toBeLessThan(delegateIdx);
@@ -420,7 +420,7 @@ describe("emitRoutePolicy — header idempotency gate woven in", () => {
       }),
     );
     const tryGetIdx = file.content.indexOf("store.TryGetAsync");
-    const delegateIdx = file.content.indexOf("facade.SignAsync");
+    const delegateIdx = file.content.indexOf("facade.SignFixtureAsync");
     expect(tryGetIdx).toBeGreaterThan(-1);
     expect(tryGetIdx).toBeLessThan(delegateIdx);
   });
@@ -432,7 +432,7 @@ describe("emitRoutePolicy — header idempotency gate woven in", () => {
       }),
     );
     const storeIdx = file.content.indexOf("store.StoreAsync");
-    const delegateIdx = file.content.indexOf("facade.SignAsync");
+    const delegateIdx = file.content.indexOf("facade.SignFixtureAsync");
     expect(storeIdx).toBeGreaterThan(-1);
     expect(storeIdx).toBeGreaterThan(delegateIdx);
   });
@@ -522,7 +522,7 @@ describe("emitRoutePolicy — derived idempotency gate woven in", () => {
       }),
     );
     const sha256Idx = file.content.indexOf("SHA256.HashData");
-    const delegateIdx = file.content.indexOf("facade.SignAsync");
+    const delegateIdx = file.content.indexOf("facade.SignFixtureAsync");
     expect(sha256Idx).toBeGreaterThan(-1);
     expect(sha256Idx).toBeLessThan(delegateIdx);
   });
@@ -585,7 +585,7 @@ describe("emitRoutePolicy — absent idempotency (regression guard)", () => {
 
   it("no idempotency → delegate body still contains the delegation call unchanged", () => {
     const file = emitRoutePolicy(makeBaseRouteInput());
-    expect(file.content).toContain("facade.SignAsync(input, ct)");
+    expect(file.content).toContain("facade.SignFixtureAsync(input, ct)");
   });
 
   it("no idempotency → Falsey guard NOT emitted", () => {
@@ -603,11 +603,11 @@ describe("emitRoutePolicy — absent idempotency (regression guard)", () => {
 });
 
 // ---------------------------------------------------------------------------
-// Byte-parity: SignRouteRegistration.g.cs with header idempotency gate
+// Byte-parity: SignFixtureRouteRegistration.g.cs with header idempotency gate
 // ---------------------------------------------------------------------------
 
 /**
- * Expected content of SignRouteRegistration.g.cs AFTER adding @d2Idempotent("header", 86400).
+ * Expected content of SignFixtureRouteRegistration.g.cs AFTER adding @d2Idempotent("header", 86400).
  * The gate adds:
  *   - D2GeneratedIdempotencyStore store in the delegate signature
  *   - using D2.Shared.Utilities.Extensions (sorted)
@@ -643,26 +643,26 @@ const SIGN_ROUTE_REGISTRATION_GATED_FIXTURE = [
   "/// <summary>Faithful seam marker: CSRF posture declaration for this route.</summary>",
   "public sealed record D2GeneratedCsrfPosture(string Posture);",
   "",
-  "/// <summary>Generated REST route registration for the <c>Sign</c> operation.</summary>",
-  "public static class SignRouteRegistration",
+  "/// <summary>Generated REST route registration for the <c>SignFixture</c> operation.</summary>",
+  "public static class SignFixtureRouteRegistration",
   "{",
   "    extension(IEndpointRouteBuilder endpoints)",
   "    {",
-  '        /// <summary>Maps <c>POST /internal/v1/kc/sign</c>, delegating to <see cref="IKeyCustodianSignerFacade"/>.</summary>',
+  '        /// <summary>Maps <c>POST /internal/v1/fixtures/sign-fixture</c>, delegating to <see cref="ISignFixtureSignerFacade"/>.</summary>',
   "        /// <remarks>Audience is enforced service-wide via <c>AuthOptions.Audience</c> — no per-route audience fluent (§9.2).</remarks>",
-  "        public IEndpointConventionBuilder MapSignRoute()",
+  "        public IEndpointConventionBuilder MapSignFixtureRoute()",
   "        {",
   "            var builder = endpoints.MapPost(",
-  '                "/internal/v1/kc/sign",',
-  "                static async (SignInput input, IKeyCustodianSignerFacade facade, D2GeneratedIdempotencyStore store, HttpContext http, CancellationToken ct) =>",
+  '                "/internal/v1/fixtures/sign-fixture",',
+  "                static async (SignFixtureInput input, ISignFixtureSignerFacade facade, D2GeneratedIdempotencyStore store, HttpContext http, CancellationToken ct) =>",
   "                {",
   '                    var idempotencyKey = http.Request.Headers["Idempotency-Key"].ToString();',
   "                    if (idempotencyKey.Falsey())",
   "                        return Results.Json(",
-  "                            D2Result<SignOutput?>.ValidationFailed().ToProblemDetails(http),",
+  "                            D2Result<SignFixtureOutput?>.ValidationFailed().ToProblemDetails(http),",
   "                            statusCode: 400,",
   '                            contentType: "application/problem+json");',
-  "                    var cachedResult = await store.TryGetAsync<D2Result<SignOutput?>>(idempotencyKey, ct).ConfigureAwait(false);",
+  "                    var cachedResult = await store.TryGetAsync<D2Result<SignFixtureOutput?>>(idempotencyKey, ct).ConfigureAwait(false);",
   "                    if (cachedResult.Success && cachedResult.Data is not null)",
   "                    {",
   "                        var replayed = cachedResult.Data;",
@@ -673,8 +673,8 @@ const SIGN_ROUTE_REGISTRATION_GATED_FIXTURE = [
   '                        return Results.Json(rpd, statusCode: rpd.Status ?? 500, contentType: "application/problem+json");',
   "                    }",
   "",
-  "                    var result = await facade.SignAsync(input, ct).ConfigureAwait(false);",
-  "                    await store.StoreAsync<D2Result<SignOutput?>>(idempotencyKey, result, TimeSpan.FromSeconds(86400), ct).ConfigureAwait(false);",
+  "                    var result = await facade.SignFixtureAsync(input, ct).ConfigureAwait(false);",
+  "                    await store.StoreAsync<D2Result<SignFixtureOutput?>>(idempotencyKey, result, TimeSpan.FromSeconds(86400), ct).ConfigureAwait(false);",
   "",
   "                    var status = (int)result.StatusCode;",
   "                    if (status < 400)",
@@ -693,20 +693,20 @@ const SIGN_ROUTE_REGISTRATION_GATED_FIXTURE = [
   "",
 ].join("\n");
 
-describe("byteParity_SignRouteRegistration_Gated_CommittedFixtureIdentical", () => {
-  it("regenerated SignRouteRegistration.g.cs (gated) is byte-identical to the committed fixture", () => {
+describe("byteParity_SignFixtureRouteRegistration_Gated_CommittedFixtureIdentical", () => {
+  it("regenerated SignFixtureRouteRegistration.g.cs (gated) is byte-identical to the committed fixture", () => {
     const file = emitRoutePolicy({
-      opName: "sign",
+      opName: "signFixture",
       verb: "post",
-      routePath: "/internal/v1/kc/sign",
+      routePath: "/internal/v1/fixtures/sign-fixture",
       delegationTarget: {
         kind: "facade",
-        typeName: "IKeyCustodianSignerFacade",
-        methodName: "SignAsync",
+        typeName: "ISignFixtureSignerFacade",
+        methodName: "SignFixtureAsync",
       },
       delegationTargetNamespace: "D2.Edge.Tests.TypeSpecRoute.Generated.Facade",
-      inputTypeName: "SignInput",
-      outputTypeName: "SignOutput",
+      inputTypeName: "SignFixtureInput",
+      outputTypeName: "SignFixtureOutput",
       dtoNamespace: "D2.Edge.Tests.TypeSpecDto.Generated",
       scopePolicy: { kind: "any", scopes: ["self.write"] },
       rateTier: "Standard",
@@ -724,17 +724,17 @@ describe("byteParity_SignRouteRegistration_Gated_CommittedFixtureIdentical", () 
       "TryGetAsyncDRIFTED",
     );
     const file = emitRoutePolicy({
-      opName: "sign",
+      opName: "signFixture",
       verb: "post",
-      routePath: "/internal/v1/kc/sign",
+      routePath: "/internal/v1/fixtures/sign-fixture",
       delegationTarget: {
         kind: "facade",
-        typeName: "IKeyCustodianSignerFacade",
-        methodName: "SignAsync",
+        typeName: "ISignFixtureSignerFacade",
+        methodName: "SignFixtureAsync",
       },
       delegationTargetNamespace: "D2.Edge.Tests.TypeSpecRoute.Generated.Facade",
-      inputTypeName: "SignInput",
-      outputTypeName: "SignOutput",
+      inputTypeName: "SignFixtureInput",
+      outputTypeName: "SignFixtureOutput",
       dtoNamespace: "D2.Edge.Tests.TypeSpecDto.Generated",
       scopePolicy: { kind: "any", scopes: ["self.write"] },
       rateTier: "Standard",
@@ -748,7 +748,7 @@ describe("byteParity_SignRouteRegistration_Gated_CommittedFixtureIdentical", () 
 });
 
 // ---------------------------------------------------------------------------
-// Byte-parity: SignDerivedRouteRegistration.g.cs with derived idempotency gate
+// Byte-parity: SignFixtureDerivedRouteRegistration.g.cs with derived idempotency gate
 // ---------------------------------------------------------------------------
 
 const SIGN_DERIVED_ROUTE_REGISTRATION_FIXTURE = [
@@ -773,22 +773,22 @@ const SIGN_DERIVED_ROUTE_REGISTRATION_FIXTURE = [
   "using Microsoft.AspNetCore.Http;",
   "using Microsoft.AspNetCore.Routing;",
   "",
-  "/// <summary>Generated REST route registration for the <c>SignDerived</c> operation.</summary>",
-  "public static class SignDerivedRouteRegistration",
+  "/// <summary>Generated REST route registration for the <c>SignFixtureDerived</c> operation.</summary>",
+  "public static class SignFixtureDerivedRouteRegistration",
   "{",
   "    extension(IEndpointRouteBuilder endpoints)",
   "    {",
-  '        /// <summary>Maps <c>POST /internal/v1/kc/sign-derived</c>, delegating to <see cref="IKeyCustodianSignerFacade"/>.</summary>',
+  '        /// <summary>Maps <c>POST /internal/v1/fixtures/sign-fixture-derived</c>, delegating to <see cref="ISignFixtureSignerFacade"/>.</summary>',
   "        /// <remarks>Audience is enforced service-wide via <c>AuthOptions.Audience</c> — no per-route audience fluent (§9.2).</remarks>",
-  "        public IEndpointConventionBuilder MapSignDerivedRoute()",
+  "        public IEndpointConventionBuilder MapSignFixtureDerivedRoute()",
   "        {",
   "            var builder = endpoints.MapPost(",
-  '                "/internal/v1/kc/sign-derived",',
-  "                static async (SignInput input, IKeyCustodianSignerFacade facade, D2GeneratedIdempotencyStore store, HttpContext http, CancellationToken ct) =>",
+  '                "/internal/v1/fixtures/sign-fixture-derived",',
+  "                static async (SignFixtureInput input, ISignFixtureSignerFacade facade, D2GeneratedIdempotencyStore store, HttpContext http, CancellationToken ct) =>",
   "                {",
   "                    var idempotencyKeyRaw = System.Text.Encoding.UTF8.GetBytes(input.Kid);",
   "                    var idempotencyKey = Convert.ToHexStringLower(System.Security.Cryptography.SHA256.HashData(idempotencyKeyRaw));",
-  "                    var cachedResult = await store.TryGetAsync<D2Result<SignOutput?>>(idempotencyKey, ct).ConfigureAwait(false);",
+  "                    var cachedResult = await store.TryGetAsync<D2Result<SignFixtureOutput?>>(idempotencyKey, ct).ConfigureAwait(false);",
   "                    if (cachedResult.Success && cachedResult.Data is not null)",
   "                    {",
   "                        var replayed = cachedResult.Data;",
@@ -799,8 +799,8 @@ const SIGN_DERIVED_ROUTE_REGISTRATION_FIXTURE = [
   '                        return Results.Json(rpd, statusCode: rpd.Status ?? 500, contentType: "application/problem+json");',
   "                    }",
   "",
-  "                    var result = await facade.SignDerivedAsync(input, ct).ConfigureAwait(false);",
-  "                    await store.StoreAsync<D2Result<SignOutput?>>(idempotencyKey, result, TimeSpan.FromSeconds(3600), ct).ConfigureAwait(false);",
+  "                    var result = await facade.SignFixtureDerivedAsync(input, ct).ConfigureAwait(false);",
+  "                    await store.StoreAsync<D2Result<SignFixtureOutput?>>(idempotencyKey, result, TimeSpan.FromSeconds(3600), ct).ConfigureAwait(false);",
   "",
   "                    var status = (int)result.StatusCode;",
   "                    if (status < 400)",
@@ -817,20 +817,20 @@ const SIGN_DERIVED_ROUTE_REGISTRATION_FIXTURE = [
   "",
 ].join("\n");
 
-describe("byteParity_SignDerivedRouteRegistration_CommittedFixtureIdentical", () => {
-  it("regenerated SignDerivedRouteRegistration.g.cs is byte-identical to the committed fixture", () => {
+describe("byteParity_SignFixtureDerivedRouteRegistration_CommittedFixtureIdentical", () => {
+  it("regenerated SignFixtureDerivedRouteRegistration.g.cs is byte-identical to the committed fixture", () => {
     const file = emitRoutePolicy({
-      opName: "signDerived",
+      opName: "signFixtureDerived",
       verb: "post",
-      routePath: "/internal/v1/kc/sign-derived",
+      routePath: "/internal/v1/fixtures/sign-fixture-derived",
       delegationTarget: {
         kind: "facade",
-        typeName: "IKeyCustodianSignerFacade",
-        methodName: "SignDerivedAsync",
+        typeName: "ISignFixtureSignerFacade",
+        methodName: "SignFixtureDerivedAsync",
       },
       delegationTargetNamespace: "D2.Edge.Tests.TypeSpecRoute.Generated.Facade",
-      inputTypeName: "SignInput",
-      outputTypeName: "SignOutput",
+      inputTypeName: "SignFixtureInput",
+      outputTypeName: "SignFixtureOutput",
       dtoNamespace: "D2.Edge.Tests.TypeSpecDto.Generated",
       scopePolicy: { kind: "any", scopes: ["self.write"] },
       idempotency: { keySource: "derived", ttlSeconds: 3600, fields: ["Kid"] },
@@ -846,17 +846,17 @@ describe("byteParity_SignDerivedRouteRegistration_CommittedFixtureIdentical", ()
       "SHA256.HashDataDRIFTED",
     );
     const file = emitRoutePolicy({
-      opName: "signDerived",
+      opName: "signFixtureDerived",
       verb: "post",
-      routePath: "/internal/v1/kc/sign-derived",
+      routePath: "/internal/v1/fixtures/sign-fixture-derived",
       delegationTarget: {
         kind: "facade",
-        typeName: "IKeyCustodianSignerFacade",
-        methodName: "SignDerivedAsync",
+        typeName: "ISignFixtureSignerFacade",
+        methodName: "SignFixtureDerivedAsync",
       },
       delegationTargetNamespace: "D2.Edge.Tests.TypeSpecRoute.Generated.Facade",
-      inputTypeName: "SignInput",
-      outputTypeName: "SignOutput",
+      inputTypeName: "SignFixtureInput",
+      outputTypeName: "SignFixtureOutput",
       dtoNamespace: "D2.Edge.Tests.TypeSpecDto.Generated",
       scopePolicy: { kind: "any", scopes: ["self.write"] },
       idempotency: { keySource: "derived", ttlSeconds: 3600, fields: ["Kid"] },

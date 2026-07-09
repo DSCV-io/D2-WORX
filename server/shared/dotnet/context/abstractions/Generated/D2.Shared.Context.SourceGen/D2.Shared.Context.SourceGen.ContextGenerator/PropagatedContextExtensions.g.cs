@@ -40,6 +40,7 @@ public static class PropagatedContextExtensions
             OrgPlanTier = context.OrgPlanTier,
             FeatureFlagsCsv = context.FeatureFlagsCsv,
             WhoIsHashId = context.WhoIsHashId,
+            CallPath = context.CallPath is { Count: > 0 } ? context.CallPath : null,
         };
     }
 
@@ -96,5 +97,8 @@ public static class PropagatedContextExtensions
 
         if (propagated.WhoIsHashId is not null)
             context.WhoIsHashId = propagated.WhoIsHashId;
+
+        if (propagated.CallPath is { Count: > 0 })
+            context.CallPath = propagated.CallPath;
     }
 }

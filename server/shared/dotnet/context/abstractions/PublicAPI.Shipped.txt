@@ -1,10 +1,12 @@
 #nullable enable
 D2.Shared.Context.Abstractions.ActorChainParser
+D2.Shared.Context.Abstractions.CallPathOps
 D2.Shared.Context.Abstractions.IRequestContext
 D2.Shared.Context.Abstractions.IRequestContext.AdminLocationHashId.get -> string?
 D2.Shared.Context.Abstractions.IRequestContext.Asn.get -> int?
 D2.Shared.Context.Abstractions.IRequestContext.AsnName.get -> string?
 D2.Shared.Context.Abstractions.IRequestContext.AsnType.get -> string?
+D2.Shared.Context.Abstractions.IRequestContext.CallPath.get -> System.Collections.Generic.IReadOnlyList<D2.Shared.Auth.Abstractions.CallPathEntry!>!
 D2.Shared.Context.Abstractions.IRequestContext.City.get -> string?
 D2.Shared.Context.Abstractions.IRequestContext.ClientIp.get -> string?
 D2.Shared.Context.Abstractions.IRequestContext.CountryIso31661Alpha2Code.get -> string?
@@ -15,6 +17,7 @@ D2.Shared.Context.Abstractions.IRequestContext.FeatureFlagsCsv.get -> string?
 D2.Shared.Context.Abstractions.IRequestContext.Geohash.get -> string?
 D2.Shared.Context.Abstractions.IRequestContext.HttpMethod.get -> string?
 D2.Shared.Context.Abstractions.IRequestContext.IdempotencyKey.get -> string?
+D2.Shared.Context.Abstractions.IRequestContext.ImmediateCaller.get -> string?
 D2.Shared.Context.Abstractions.IRequestContext.IsHosting.get -> bool?
 D2.Shared.Context.Abstractions.IRequestContext.IsProxy.get -> bool?
 D2.Shared.Context.Abstractions.IRequestContext.IsTor.get -> bool?
@@ -23,6 +26,7 @@ D2.Shared.Context.Abstractions.IRequestContext.Latitude.get -> double?
 D2.Shared.Context.Abstractions.IRequestContext.LocaleIetfBcp47Tag.get -> string?
 D2.Shared.Context.Abstractions.IRequestContext.Longitude.get -> double?
 D2.Shared.Context.Abstractions.IRequestContext.OrgPlanTier.get -> string?
+D2.Shared.Context.Abstractions.IRequestContext.Origin.get -> D2.Shared.Auth.Abstractions.RequestOrigin
 D2.Shared.Context.Abstractions.IRequestContext.PostalCode.get -> string?
 D2.Shared.Context.Abstractions.IRequestContext.RequestId.get -> string?
 D2.Shared.Context.Abstractions.IRequestContext.RequestPath.get -> string?
@@ -33,6 +37,9 @@ D2.Shared.Context.Abstractions.IRequestContext.SubdivisionIso31662Code.get -> st
 D2.Shared.Context.Abstractions.IRequestContext.TimezoneIanaName.get -> string?
 D2.Shared.Context.Abstractions.IRequestContext.TraceId.get -> string?
 D2.Shared.Context.Abstractions.IRequestContext.WhoIsHashId.get -> string?
+D2.Shared.Context.Abstractions.InProcessModuleBoundary
+D2.Shared.Context.Abstractions.InProcessModuleBoundary.extension(D2.Shared.Context.Abstractions.IRequestContext!)
+D2.Shared.Context.Abstractions.InProcessModuleBoundary.extension(D2.Shared.Context.Abstractions.IRequestContext!).EstablishInProcessModule(string! callingModuleId, string! targetModuleId, D2.Shared.Time.IClock! clock) -> void
 D2.Shared.Context.Abstractions.MalformedActorChainException
 D2.Shared.Context.Abstractions.MalformedActorChainException.MalformedActorChainException(string! message) -> void
 D2.Shared.Context.Abstractions.MalformedActorChainException.MalformedActorChainException(string! message, System.Exception! innerException) -> void
@@ -51,6 +58,8 @@ D2.Shared.Context.Abstractions.MutableRequestContext.Audience.get -> System.Coll
 D2.Shared.Context.Abstractions.MutableRequestContext.Audience.set -> void
 D2.Shared.Context.Abstractions.MutableRequestContext.AuthMethod.get -> string?
 D2.Shared.Context.Abstractions.MutableRequestContext.AuthMethod.set -> void
+D2.Shared.Context.Abstractions.MutableRequestContext.CallPath.get -> System.Collections.Generic.IReadOnlyList<D2.Shared.Auth.Abstractions.CallPathEntry!>!
+D2.Shared.Context.Abstractions.MutableRequestContext.CallPath.set -> void
 D2.Shared.Context.Abstractions.MutableRequestContext.City.get -> string?
 D2.Shared.Context.Abstractions.MutableRequestContext.City.set -> void
 D2.Shared.Context.Abstractions.MutableRequestContext.ClientIp.get -> string?
@@ -71,6 +80,8 @@ D2.Shared.Context.Abstractions.MutableRequestContext.HttpMethod.get -> string?
 D2.Shared.Context.Abstractions.MutableRequestContext.HttpMethod.set -> void
 D2.Shared.Context.Abstractions.MutableRequestContext.IdempotencyKey.get -> string?
 D2.Shared.Context.Abstractions.MutableRequestContext.IdempotencyKey.set -> void
+D2.Shared.Context.Abstractions.MutableRequestContext.ImmediateCaller.get -> string?
+D2.Shared.Context.Abstractions.MutableRequestContext.ImmediateCaller.set -> void
 D2.Shared.Context.Abstractions.MutableRequestContext.ImmediateCallerClientId.get -> string?
 D2.Shared.Context.Abstractions.MutableRequestContext.ImpersonatedBy.get -> System.Guid?
 D2.Shared.Context.Abstractions.MutableRequestContext.ImpersonationKind.get -> D2.Shared.Auth.Abstractions.ImpersonationKind?
@@ -110,6 +121,8 @@ D2.Shared.Context.Abstractions.MutableRequestContext.OrgRole.get -> D2.Shared.Au
 D2.Shared.Context.Abstractions.MutableRequestContext.OrgRole.set -> void
 D2.Shared.Context.Abstractions.MutableRequestContext.OrgType.get -> D2.Shared.Auth.Abstractions.OrgType?
 D2.Shared.Context.Abstractions.MutableRequestContext.OrgType.set -> void
+D2.Shared.Context.Abstractions.MutableRequestContext.Origin.get -> D2.Shared.Auth.Abstractions.RequestOrigin
+D2.Shared.Context.Abstractions.MutableRequestContext.Origin.set -> void
 D2.Shared.Context.Abstractions.MutableRequestContext.OriginatingClientId.get -> string?
 D2.Shared.Context.Abstractions.MutableRequestContext.PostalCode.get -> string?
 D2.Shared.Context.Abstractions.MutableRequestContext.PostalCode.set -> void
@@ -149,6 +162,8 @@ D2.Shared.Context.Abstractions.MutableRequestContext.WhoIsHashId.get -> string?
 D2.Shared.Context.Abstractions.MutableRequestContext.WhoIsHashId.set -> void
 D2.Shared.Context.Abstractions.PropagatedContext
 D2.Shared.Context.Abstractions.PropagatedContext.<Clone>$() -> D2.Shared.Context.Abstractions.PropagatedContext!
+D2.Shared.Context.Abstractions.PropagatedContext.CallPath.get -> System.Collections.Generic.IReadOnlyList<D2.Shared.Auth.Abstractions.CallPathEntry!>?
+D2.Shared.Context.Abstractions.PropagatedContext.CallPath.init -> void
 D2.Shared.Context.Abstractions.PropagatedContext.CurrencyIso4217Code.get -> string?
 D2.Shared.Context.Abstractions.PropagatedContext.CurrencyIso4217Code.init -> void
 D2.Shared.Context.Abstractions.PropagatedContext.CurrentFingerprint.get -> string?
@@ -183,13 +198,19 @@ D2.Shared.Context.Abstractions.PropagatedContext.WhoIsHashId.init -> void
 D2.Shared.Context.Abstractions.PropagatedContextExtensions
 D2.Shared.Context.Abstractions.PropagatedContextSerializer
 D2.Shared.Context.Abstractions.ScopeClaimParser
+D2.Shared.Context.Abstractions.SystemRequestContextBootstrap
+D2.Shared.Context.Abstractions.SystemRequestContextBootstrap.extension(System.IServiceProvider!)
+D2.Shared.Context.Abstractions.SystemRequestContextBootstrap.extension(System.IServiceProvider!).EstablishSystemContext(string! hostServiceId, D2.Shared.Time.IClock! clock) -> void
 const D2.Shared.Context.Abstractions.ActorChainParser.MaxActDepth = 20 -> int
+const D2.Shared.Context.Abstractions.CallPathOps.MAX_CALL_PATH_DEPTH = 16 -> int
 const D2.Shared.Context.Abstractions.PropagatedContextSerializer.MAX_HEADER_LENGTH = 2048 -> int
 override D2.Shared.Context.Abstractions.PropagatedContext.Equals(object? obj) -> bool
 override D2.Shared.Context.Abstractions.PropagatedContext.GetHashCode() -> int
 override D2.Shared.Context.Abstractions.PropagatedContext.ToString() -> string!
 static D2.Shared.Context.Abstractions.ActorChainParser.ParseFromJson(System.Text.Json.JsonElement actElement) -> System.Collections.Generic.IReadOnlyList<D2.Shared.Auth.Abstractions.ActorEntry!>!
 static D2.Shared.Context.Abstractions.ActorChainParser.ParseFromJsonString(string? json) -> System.Collections.Generic.IReadOnlyList<D2.Shared.Auth.Abstractions.ActorEntry!>!
+static D2.Shared.Context.Abstractions.CallPathOps.Append(System.Collections.Generic.IReadOnlyList<D2.Shared.Auth.Abstractions.CallPathEntry!>? existing, string! id, D2.Shared.Auth.Abstractions.CallPathKind kind, System.DateTimeOffset timestamp) -> System.Collections.Generic.IReadOnlyList<D2.Shared.Auth.Abstractions.CallPathEntry!>!
+static D2.Shared.Context.Abstractions.InProcessModuleBoundary.EstablishInProcessModule(this D2.Shared.Context.Abstractions.IRequestContext! context, string! callingModuleId, string! targetModuleId, D2.Shared.Time.IClock! clock) -> void
 static D2.Shared.Context.Abstractions.MutableRequestContext.FromClaims(System.Security.Claims.ClaimsPrincipal! principal) -> D2.Shared.Context.Abstractions.MutableRequestContext!
 static D2.Shared.Context.Abstractions.MutableRequestContext.FromJwtPayloadNoValidation(System.Text.Json.JsonElement payload) -> D2.Shared.Context.Abstractions.MutableRequestContext!
 static D2.Shared.Context.Abstractions.PropagatedContext.operator !=(D2.Shared.Context.Abstractions.PropagatedContext? left, D2.Shared.Context.Abstractions.PropagatedContext? right) -> bool
@@ -200,3 +221,4 @@ static D2.Shared.Context.Abstractions.PropagatedContextSerializer.Encode(D2.Shar
 static D2.Shared.Context.Abstractions.PropagatedContextSerializer.TryDecode(string? encoded) -> D2.Shared.Context.Abstractions.PropagatedContext?
 static D2.Shared.Context.Abstractions.ScopeClaimParser.Parse(System.Text.Json.JsonElement element) -> System.Collections.Generic.IReadOnlySet<string!>!
 static D2.Shared.Context.Abstractions.ScopeClaimParser.ParseString(string? value) -> System.Collections.Generic.IReadOnlySet<string!>!
+static D2.Shared.Context.Abstractions.SystemRequestContextBootstrap.EstablishSystemContext(this System.IServiceProvider! scopedServices, string! hostServiceId, D2.Shared.Time.IClock! clock) -> void

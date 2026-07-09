@@ -26,6 +26,13 @@ D2.Shared.Auth.Outbound.Grpc.GrpcClientBuilderExtensions
 D2.Shared.Auth.Outbound.Grpc.GrpcClientBuilderExtensions.extension(Microsoft.Extensions.DependencyInjection.IHttpClientBuilder!)
 D2.Shared.Auth.Outbound.Grpc.GrpcClientBuilderExtensions.extension(Microsoft.Extensions.DependencyInjection.IHttpClientBuilder!).AddD2ForwardedJwt() -> Microsoft.Extensions.DependencyInjection.IHttpClientBuilder!
 D2.Shared.Auth.Outbound.Grpc.GrpcClientBuilderExtensions.extension(Microsoft.Extensions.DependencyInjection.IHttpClientBuilder!).AddD2WorkloadCertificate() -> Microsoft.Extensions.DependencyInjection.IHttpClientBuilder!
+D2.Shared.Auth.Outbound.Grpc.PropagatedContextClientInterceptor
+D2.Shared.Auth.Outbound.Grpc.PropagatedContextClientInterceptor.PropagatedContextClientInterceptor(D2.Shared.Auth.Abstractions.IAmbientRequestScopeAccessor! ambientRequestScopeAccessor) -> void
+D2.Shared.Auth.Outbound.Grpc.PropagatedContextOutboundExtensions
+D2.Shared.Auth.Outbound.Grpc.PropagatedContextOutboundExtensions.extension(Microsoft.Extensions.DependencyInjection.IHttpClientBuilder!)
+D2.Shared.Auth.Outbound.Grpc.PropagatedContextOutboundExtensions.extension(Microsoft.Extensions.DependencyInjection.IHttpClientBuilder!).AddD2PropagatedContext() -> Microsoft.Extensions.DependencyInjection.IHttpClientBuilder!
+D2.Shared.Auth.Outbound.Grpc.PropagatedContextOutboundExtensions.extension(Microsoft.Extensions.DependencyInjection.IServiceCollection!)
+D2.Shared.Auth.Outbound.Grpc.PropagatedContextOutboundExtensions.extension(Microsoft.Extensions.DependencyInjection.IServiceCollection!).AddD2PropagatedContextOutbound() -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
 D2.Shared.Auth.Outbound.Telemetry.OutboundTelemetry
 D2.Shared.Auth.Outbound.Telemetry.OutboundTelemetryTags
 D2.Shared.Auth.Outbound.Telemetry.OutboundTelemetryTags.TokenExchangeRequests
@@ -33,22 +40,20 @@ D2.Shared.Auth.Outbound.Telemetry.OutboundTelemetryTags.TokenExchangeRequests.Ou
 D2.Shared.Auth.Outbound.TokenExchange.ITokenExchangeClient
 D2.Shared.Auth.Outbound.TokenExchange.ITokenExchangeClient.ExchangeAsync(string! subjectToken, string! targetAudience, System.Collections.Generic.IReadOnlySet<string!>? narrowedScopes = null, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<D2.Shared.Result.D2Result<string!>!>
 D2.Shared.Auth.Outbound.WorkloadCertificate.IWorkloadCertificateIssuer
-D2.Shared.Auth.Outbound.WorkloadCertificate.IWorkloadCertificateIssuer.IssueAsync(System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<D2.Shared.Result.D2Result<D2.Shared.Auth.Outbound.WorkloadCertificate.WorkloadLeafMaterial!>!>
+D2.Shared.Auth.Outbound.WorkloadCertificate.IWorkloadCertificateIssuer.IssueAsync(byte[]! csrDer, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<D2.Shared.Result.D2Result<D2.Shared.Auth.Outbound.WorkloadCertificate.WorkloadLeafMaterial!>!>
 D2.Shared.Auth.Outbound.WorkloadCertificate.IWorkloadLeafSource
 D2.Shared.Auth.Outbound.WorkloadCertificate.IWorkloadLeafSource.GetCurrentLeafAsync(System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<D2.Shared.Result.D2Result<System.Security.Cryptography.X509Certificates.X509Certificate2!>!>
 D2.Shared.Auth.Outbound.WorkloadCertificate.WorkloadLeafMaterial
 D2.Shared.Auth.Outbound.WorkloadCertificate.WorkloadLeafMaterial.<Clone>$() -> D2.Shared.Auth.Outbound.WorkloadCertificate.WorkloadLeafMaterial!
 D2.Shared.Auth.Outbound.WorkloadCertificate.WorkloadLeafMaterial.CertificateDer.get -> byte[]!
 D2.Shared.Auth.Outbound.WorkloadCertificate.WorkloadLeafMaterial.CertificateDer.init -> void
-D2.Shared.Auth.Outbound.WorkloadCertificate.WorkloadLeafMaterial.Deconstruct(out byte[]! CertificateDer, out byte[]! PrivateKeyPkcs8, out byte[]! IssuerCertificateDer, out NodaTime.Instant NotAfter) -> void
+D2.Shared.Auth.Outbound.WorkloadCertificate.WorkloadLeafMaterial.Deconstruct(out byte[]! CertificateDer, out byte[]! IssuerCertificateDer, out NodaTime.Instant NotAfter) -> void
 D2.Shared.Auth.Outbound.WorkloadCertificate.WorkloadLeafMaterial.Equals(D2.Shared.Auth.Outbound.WorkloadCertificate.WorkloadLeafMaterial? other) -> bool
 D2.Shared.Auth.Outbound.WorkloadCertificate.WorkloadLeafMaterial.IssuerCertificateDer.get -> byte[]!
 D2.Shared.Auth.Outbound.WorkloadCertificate.WorkloadLeafMaterial.IssuerCertificateDer.init -> void
 D2.Shared.Auth.Outbound.WorkloadCertificate.WorkloadLeafMaterial.NotAfter.get -> NodaTime.Instant
 D2.Shared.Auth.Outbound.WorkloadCertificate.WorkloadLeafMaterial.NotAfter.init -> void
-D2.Shared.Auth.Outbound.WorkloadCertificate.WorkloadLeafMaterial.PrivateKeyPkcs8.get -> byte[]!
-D2.Shared.Auth.Outbound.WorkloadCertificate.WorkloadLeafMaterial.PrivateKeyPkcs8.init -> void
-D2.Shared.Auth.Outbound.WorkloadCertificate.WorkloadLeafMaterial.WorkloadLeafMaterial(byte[]! CertificateDer, byte[]! PrivateKeyPkcs8, byte[]! IssuerCertificateDer, NodaTime.Instant NotAfter) -> void
+D2.Shared.Auth.Outbound.WorkloadCertificate.WorkloadLeafMaterial.WorkloadLeafMaterial(byte[]! CertificateDer, byte[]! IssuerCertificateDer, NodaTime.Instant NotAfter) -> void
 const D2.Shared.Auth.Outbound.AuthOutboundHttpClientNames.OIDC_DISCOVERY = "d2-auth-oidc-discovery" -> string!
 const D2.Shared.Auth.Outbound.AuthOutboundHttpClientNames.TOKEN_EXCHANGE = "d2-auth-token-exchange" -> string!
 const D2.Shared.Auth.Outbound.Telemetry.OutboundTelemetry.ACTIVITY_SOURCE_NAME = "D2.Shared.Auth.Outbound" -> string!
@@ -60,6 +65,11 @@ const D2.Shared.Auth.Outbound.Telemetry.OutboundTelemetryTags.TokenExchangeReque
 const D2.Shared.Auth.Outbound.Telemetry.OutboundTelemetryTags.TokenExchangeRequests.Outcome.FETCH_SUCCESS = "fetch_success" -> string!
 const D2.Shared.Auth.Outbound.Telemetry.OutboundTelemetryTags.TokenExchangeRequests.Outcome.HTTP_FAILURE = "http_failure" -> string!
 const D2.Shared.Auth.Outbound.Telemetry.OutboundTelemetryTags.TokenExchangeRequests.TAG_OUTCOME = "outcome" -> string!
+override D2.Shared.Auth.Outbound.Grpc.PropagatedContextClientInterceptor.AsyncClientStreamingCall<TRequest, TResponse>(Grpc.Core.Interceptors.ClientInterceptorContext<TRequest!, TResponse!> context, Grpc.Core.Interceptors.Interceptor.AsyncClientStreamingCallContinuation<TRequest!, TResponse!>! continuation) -> Grpc.Core.AsyncClientStreamingCall<TRequest!, TResponse!>!
+override D2.Shared.Auth.Outbound.Grpc.PropagatedContextClientInterceptor.AsyncDuplexStreamingCall<TRequest, TResponse>(Grpc.Core.Interceptors.ClientInterceptorContext<TRequest!, TResponse!> context, Grpc.Core.Interceptors.Interceptor.AsyncDuplexStreamingCallContinuation<TRequest!, TResponse!>! continuation) -> Grpc.Core.AsyncDuplexStreamingCall<TRequest!, TResponse!>!
+override D2.Shared.Auth.Outbound.Grpc.PropagatedContextClientInterceptor.AsyncServerStreamingCall<TRequest, TResponse>(TRequest! request, Grpc.Core.Interceptors.ClientInterceptorContext<TRequest!, TResponse!> context, Grpc.Core.Interceptors.Interceptor.AsyncServerStreamingCallContinuation<TRequest!, TResponse!>! continuation) -> Grpc.Core.AsyncServerStreamingCall<TResponse!>!
+override D2.Shared.Auth.Outbound.Grpc.PropagatedContextClientInterceptor.AsyncUnaryCall<TRequest, TResponse>(TRequest! request, Grpc.Core.Interceptors.ClientInterceptorContext<TRequest!, TResponse!> context, Grpc.Core.Interceptors.Interceptor.AsyncUnaryCallContinuation<TRequest!, TResponse!>! continuation) -> Grpc.Core.AsyncUnaryCall<TResponse!>!
+override D2.Shared.Auth.Outbound.Grpc.PropagatedContextClientInterceptor.BlockingUnaryCall<TRequest, TResponse>(TRequest! request, Grpc.Core.Interceptors.ClientInterceptorContext<TRequest!, TResponse!> context, Grpc.Core.Interceptors.Interceptor.BlockingUnaryCallContinuation<TRequest!, TResponse!>! continuation) -> TResponse!
 override D2.Shared.Auth.Outbound.WorkloadCertificate.WorkloadLeafMaterial.Equals(object? obj) -> bool
 override D2.Shared.Auth.Outbound.WorkloadCertificate.WorkloadLeafMaterial.GetHashCode() -> int
 override D2.Shared.Auth.Outbound.WorkloadCertificate.WorkloadLeafMaterial.ToString() -> string!
@@ -69,6 +79,8 @@ static D2.Shared.Auth.Outbound.AuthOutboundServiceCollectionExtensions.AddD2Work
 static D2.Shared.Auth.Outbound.Grpc.ForwardedJwtCallCredentials.FromAmbientRequestScope(D2.Shared.Auth.Abstractions.IAmbientRequestScopeAccessor! ambientRequestScopeAccessor) -> Grpc.Core.CallCredentials!
 static D2.Shared.Auth.Outbound.Grpc.GrpcClientBuilderExtensions.AddD2ForwardedJwt(this Microsoft.Extensions.DependencyInjection.IHttpClientBuilder! builder) -> Microsoft.Extensions.DependencyInjection.IHttpClientBuilder!
 static D2.Shared.Auth.Outbound.Grpc.GrpcClientBuilderExtensions.AddD2WorkloadCertificate(this Microsoft.Extensions.DependencyInjection.IHttpClientBuilder! builder) -> Microsoft.Extensions.DependencyInjection.IHttpClientBuilder!
+static D2.Shared.Auth.Outbound.Grpc.PropagatedContextOutboundExtensions.AddD2PropagatedContext(this Microsoft.Extensions.DependencyInjection.IHttpClientBuilder! builder) -> Microsoft.Extensions.DependencyInjection.IHttpClientBuilder!
+static D2.Shared.Auth.Outbound.Grpc.PropagatedContextOutboundExtensions.AddD2PropagatedContextOutbound(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
 static D2.Shared.Auth.Outbound.WorkloadCertificate.WorkloadLeafMaterial.operator !=(D2.Shared.Auth.Outbound.WorkloadCertificate.WorkloadLeafMaterial? left, D2.Shared.Auth.Outbound.WorkloadCertificate.WorkloadLeafMaterial? right) -> bool
 static D2.Shared.Auth.Outbound.WorkloadCertificate.WorkloadLeafMaterial.operator ==(D2.Shared.Auth.Outbound.WorkloadCertificate.WorkloadLeafMaterial? left, D2.Shared.Auth.Outbound.WorkloadCertificate.WorkloadLeafMaterial? right) -> bool
 static readonly D2.Shared.Auth.Outbound.Telemetry.OutboundTelemetry.SR_Activity -> System.Diagnostics.ActivitySource!

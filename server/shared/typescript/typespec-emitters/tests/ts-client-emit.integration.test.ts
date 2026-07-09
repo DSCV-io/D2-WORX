@@ -55,7 +55,7 @@ function getEmittedFile(
 // gRPC client reuses that collection. The REST client collects unconditionally.
 const REAL_MODULE_OPTIONS = {
   "csharp-namespace": "D2.Test",
-  "csharp-clients-namespace": "D2.Edge.KeyCustodian.Clients",
+  "csharp-clients-namespace": "D2.Edge.KeyCustodian.Client",
   "csharp-app-namespace-base": "D2.Edge.KeyCustodian.App.Application.Handlers",
 };
 
@@ -82,18 +82,19 @@ describe("tsClientEmitIntegration_GrpcClient_DispatchedForGrpcOp", () => {
       using Http;
       namespace D2.Fixtures;
 
-      model SignInput { @d2Field(1) kid: string; @d2Field(2) @d2Redact payload: bytes; }
-      model SignOutput { @d2Field(1) signature: string; }
+      model SignFixtureInput { @d2Field(1) kid: string; @d2Field(2) @d2Redact("SecretInformation") payload: bytes; }
+      model SignFixtureOutput { @d2Field(1) signature: string; }
 
       @d2Command
-      @d2ServedBy("KeyCustodian")
+      @d2ServedBy("SignFixture")
+      @d2Concern("SignFixture")
       @d2InProcess
-      @d2GrpcMethod("KeyCustodianSigner", "Sign")
-      @route("/internal/v1/kc/sign")
+      @d2GrpcMethod("SignFixtureSigner", "SignFixture")
+      @route("/internal/v1/fixtures/sign-fixture")
       @post
       @d2RequireAnyScope("self.write")
       @d2Idempotent("header", 86400)
-      op sign(input: SignInput): SignOutput;
+      op signFixture(input: SignFixtureInput): SignFixtureOutput;
       `,
     );
 
@@ -109,18 +110,20 @@ describe("tsClientEmitIntegration_GrpcClient_DispatchedForGrpcOp", () => {
     expect(errors).toHaveLength(0);
 
     // TS gRPC client (server surface) — @d2GrpcMethod.
-    const grpc = getEmittedFile(host, "key-custodian-grpc-client.g.ts");
+    const grpc = getEmittedFile(host, "sign-fixture-grpc-client.g.ts");
     expect(grpc).toBeDefined();
-    expect(grpc).toContain("export interface KeyCustodianGrpcClient {");
-    expect(grpc).toContain("sign(input: SignInput");
-    expect(grpc).toContain("createKeyCustodianGrpcClient");
+    expect(grpc).toContain("export interface SignFixtureGrpcClient {");
+    expect(grpc).toContain("signFixture(input: SignFixtureInput");
+    expect(grpc).toContain("createSignFixtureGrpcClient");
     expect(grpc).toContain('from "@d2/grpc-client"');
 
     // TS REST client (browser surface) — @route.
-    const rest = getEmittedFile(host, "key-custodian-rest-client.g.ts");
+    const rest = getEmittedFile(host, "sign-fixture-rest-client.g.ts");
     expect(rest).toBeDefined();
-    expect(rest).toContain("export interface KeyCustodianRestClient {");
-    expect(rest).toContain('apiCall<SignOutput>("/internal/v1/kc/sign"');
+    expect(rest).toContain("export interface SignFixtureRestClient {");
+    expect(rest).toContain(
+      'apiCall<SignFixtureOutput>("/internal/v1/fixtures/sign-fixture"',
+    );
     expect(rest).toContain("idempotencyKey: opts?.idempotencyKey,");
   });
 });
@@ -142,12 +145,13 @@ describe("tsClientEmitIntegration_PredicateRetryArm_FoldedIn", () => {
       using D2;
       namespace D2.Fixtures;
 
-      model PlaceOrderInput { @d2Field(1) customerId: string; }
-      model PlaceOrderOutput { @d2Field(1) orderCode: string; @d2Field(2) itemStatuses: string[]; @d2Field(3) partial: boolean; }
+      model PlaceOrderFixtureInput { @d2Field(1) customerId: string; }
+      model PlaceOrderFixtureOutput { @d2Field(1) orderCode: string; @d2Field(2) itemStatuses: string[]; @d2Field(3) partial: boolean; }
 
       @d2Command
       @d2ServedBy("PredicateFixtures")
-      @d2GrpcMethod("PredicateFixturesOrders", "PlaceOrder")
+      @d2Concern("PredicateFixture")
+      @d2GrpcMethod("PredicateFixturesOrders", "PlaceOrderFixture")
       @d2Resilience(
         "retry(3)",
         #{
@@ -155,7 +159,7 @@ describe("tsClientEmitIntegration_PredicateRetryArm_FoldedIn", () => {
           failWhen: "result.data.itemStatuses.count == 0 || result.errorCode == \\"VALIDATION_FAILED\\"",
         }
       )
-      op placeOrder(input: PlaceOrderInput): PlaceOrderOutput;
+      op placeOrderFixture(input: PlaceOrderFixtureInput): PlaceOrderFixtureOutput;
       `,
     );
 
@@ -179,18 +183,21 @@ describe("tsClientEmitIntegration_PredicateRetryArm_FoldedIn", () => {
     expect(grpc).toBeDefined();
     // The predicate retry-arm is folded in: imports the predicate twin + builds a pipeline.
     expect(grpc).toContain(
-      'import { placeOrderRetryWhen, placeOrderFailWhen } from "./place-order-resilience-predicates.js";',
+      'import { placeOrderFixtureRetryWhen, placeOrderFixtureFailWhen } from "./place-order-fixture-resilience-predicates.js";',
     );
     expect(grpc).toContain("new ResilientPipelineBuilder()");
     expect(grpc).toContain(
-      "placeOrderRetryWhen(result) && !placeOrderFailWhen(result)",
+      "placeOrderFixtureRetryWhen(result) && !placeOrderFixtureFailWhen(result)",
     );
     expect(grpc).toContain("maxAttempts: 3,");
 
     // The TS predicate twin itself is also emitted (the retry-arm consumes it).
-    const twin = getEmittedFile(host, "place-order-resilience-predicates.g.ts");
+    const twin = getEmittedFile(
+      host,
+      "place-order-fixture-resilience-predicates.g.ts",
+    );
     expect(twin).toBeDefined();
-    expect(twin).toContain("export const placeOrderRetryWhen");
+    expect(twin).toContain("export const placeOrderFixtureRetryWhen");
 
     // placeOrder is @d2GrpcMethod-only (no @route) → NO REST client for the module.
     const rest = getEmittedFile(host, "predicate-fixtures-rest-client.g.ts");
@@ -213,6 +220,7 @@ describe("tsClientEmitIntegration_PredicateRetryArm_FoldedIn", () => {
 
       @d2Command
       @d2ServedBy("BareFixtures")
+      @d2Concern("BareFixture")
       @d2GrpcMethod("BareFixturesOrders", "BarePlace")
       @d2Resilience(
         "retry()",

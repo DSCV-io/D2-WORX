@@ -6,6 +6,8 @@ Copyright (c) DCSV. All rights reserved.
 
 > Parent: [`server/shared/dotnet/`](../../README.md)
 
+**Input contract:** [`contracts/auth-error-codes/`](../../../../../contracts/auth-error-codes/README.md)
+
 A thin `[Generator]` shell over the shared unified error-codes engine ([`source-gen-shared/error-codes-emit`](../../source-gen-shared/error-codes-emit/README.md)). It emits the `AuthErrorCodes` const-string catalog + the `AuthFailures` semantic-factory class + the typed `AuthFailures<T>` twin into `D2.Shared.Auth` by reading `contracts/auth-error-codes/auth-error-codes.spec.json` via `<AdditionalFiles>`. Single-target — emits ONLY when the consuming assembly is `D2.Shared.Auth`. The shell owns only the auth catalog's identity (assembly name + the `ErrorCodesGenerator` type FQN, both load-bearing for the on-disk generated path) + its `CatalogConfig`; all generation logic lives in the shared engine.
 
 The spec file is the single source of truth for the platform's auth-error taxonomy. Every `d2_error_code` constant a transport binding surfaces, every `D2Result` factory the validator picks, and the cross-spec telemetry tag-value enumeration on `d2.auth.problem.emitted` (resolved by `D2.Shared.Telemetry.Tags.SourceGen` via `valuesFromSpec`) all derive from one JSON file — no hand-written parallel constants, no per-feature drift.

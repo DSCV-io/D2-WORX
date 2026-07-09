@@ -86,6 +86,30 @@ public sealed class EncryptionDomainsGeneratorTests
     }
 
     [Fact]
+    public void Generator_SealedDomainMissingConsumer_SurfacesConsumerDiagnostic()
+    {
+        // Proves the generator's ResolveDescriptor switch maps the new
+        // mode/consumer diagnostic IDs to real Roslyn descriptors (a missing
+        // switch arm would throw at generation time instead).
+        const string sealedNoConsumer = """
+        {
+          "domains": [
+            { "constName": "AUDIT", "value": "audit", "mode": "sealed", "doc": "d" }
+          ]
+        }
+        """;
+
+        var driver = RunGenerator(
+            assemblyName: "D2.Shared.Encryption",
+            specJson: sealedNoConsumer);
+
+        var result = driver.GetRunResult();
+
+        result.Diagnostics.Should()
+            .Contain(d => d.Id == DiagnosticIds.MissingConsumerService);
+    }
+
+    [Fact]
     public void Generator_RunTwice_SameInputs_ProducesIdenticalOutput()
     {
         var first = RunGenerator(

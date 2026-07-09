@@ -6,6 +6,7 @@
 
 namespace D2.Edge.Tests.Unit.KeyCustodian.Infra;
 
+using D2.Edge.KeyCustodian.App.Application.CertificateAuthority;
 using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.ActivateKey;
 using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.CompromiseKey;
 using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.GenerateKey;
@@ -25,6 +26,7 @@ using D2.Edge.KeyCustodian.Infra.Observability;
 using D2.Edge.KeyCustodian.Infra.Persistence.Postgres;
 using D2.Edge.KeyCustodian.Infra.Scheduling.Hosted;
 using D2.Edge.KeyCustodian.Infra.Vault.File;
+using D2.Shared.Auth.Abstractions;
 using D2.Shared.Context.Abstractions;
 using D2.Shared.EntityFrameworkCore.Postgres;
 using D2.Shared.Handler;
@@ -152,6 +154,28 @@ public sealed class KeyCustodianServiceCollectionExtensionsTests : IDisposable
     }
 
     [Fact]
+    public void AddD2KeyCustodian_UnsetWorkloadIdentity_FailsOptionsValidation()
+    {
+        // Regression for the silent gap: the CA-seeding + key-rotation System workers inject
+        // IOptions<D2WorkloadIdentityOptions>, so AddD2KeyCustodian must fail LOUD when the
+        // host left ServiceId unset — not silently seed + rotate under an empty self-id.
+        // Built WITHOUT NewServices() so no host ServiceId is configured.
+        var services = new ServiceCollection();
+        services.AddLogging();
+        services.AddD2Handler();
+        services.AddSingleton<IRequestContext>(_ => new MutableRequestContext());
+        services.AddSingleton<IMessageBus, NoopMessageBus>();
+        services.AddD2KeyCustodian(
+            KcInfraTestKit.BuildConfiguration(r_rootKeyDir), KcInfraTestKit.FAKE_CONNECTION_STRING);
+
+        using var sp = services.BuildServiceProvider();
+
+        sp.Invoking(s => s.GetRequiredService<IOptions<D2WorkloadIdentityOptions>>().Value)
+            .Should().Throw<OptionsValidationException>(
+                because: "an unset host ServiceId must fail the KeyCustodian start gate");
+    }
+
+    [Fact]
     public void AddD2KeyCustodian_BindsInfraOptions_AndStampsConnectionString()
     {
         using var sp = BuildProvider();
@@ -204,6 +228,31 @@ public sealed class KeyCustodianServiceCollectionExtensionsTests : IDisposable
             "the KC readiness check must carry the ready tag");
     }
 
+    [Fact]
+    public void AddD2KeyCustodian_RegistersScopedRequestContext_ForSystemWorkerScopes()
+    {
+        // A worker scope created via IServiceScopeFactory.CreateAsyncScope() (the
+        // KeyRotationService/CaSeedingService System workers) has no HttpContext, so
+        // the module registers its own plain scoped IRequestContext resolver rather
+        // than relying on a host's throwing-by-default one. Built WITHOUT pre-
+        // registering IRequestContext (unlike NewServices()) so this resolution
+        // proves AddD2KeyCustodian's OWN registration, not a test-setup stand-in.
+        var services = new ServiceCollection();
+        services.AddLogging();
+        services.AddSingleton<IMessageBus, NoopMessageBus>();
+        services.AddD2Handler();
+        services.AddD2KeyCustodian(
+            KcInfraTestKit.BuildConfiguration(r_rootKeyDir), KcInfraTestKit.FAKE_CONNECTION_STRING);
+
+        using var sp = services.BuildServiceProvider();
+        using var scope = sp.CreateScope();
+
+        var mutable = scope.ServiceProvider.GetRequiredService<MutableRequestContext>();
+        var ctx = scope.ServiceProvider.GetRequiredService<IRequestContext>();
+
+        ctx.Should().BeSameAs(mutable);
+    }
+
     private static ServiceCollection NewServices()
     {
         var services = new ServiceCollection();
@@ -216,6 +265,12 @@ public sealed class KeyCustodianServiceCollectionExtensionsTests : IDisposable
         services.AddD2Handler();
         services.AddSingleton<IRequestContext>(_ => new MutableRequestContext());
 
+        // The host binds its own workload identity (ServiceId); AddD2KeyCustodian only
+        // VALIDATES presence (fail-loud). Supply a valid id so the System-worker hosted
+        // services construct + resolve under the presence gate. The unset-ServiceId reject
+        // path is pinned by AddD2KeyCustodian_UnsetWorkloadIdentity_FailsOptionsValidation.
+        services.Configure<D2WorkloadIdentityOptions>(o => o.ServiceId = "key-custodian");
+
         services.AddSingleton<IMessageBus, NoopMessageBus>();
         return services;
     }
@@ -225,6 +280,13 @@ public sealed class KeyCustodianServiceCollectionExtensionsTests : IDisposable
         var services = NewServices();
         services.AddD2KeyCustodian(
             KcInfraTestKit.BuildConfiguration(r_rootKeyDir), KcInfraTestKit.FAKE_CONNECTION_STRING);
+
+        // The dedicated §9.44 root-signing capability — the composition-root opt-in the
+        // System-worker host makes; the general Infra registration deliberately omits it,
+        // so the four lifecycle-mutation handlers only resolve once it is added (the
+        // isolation property is pinned in the App DI suite).
+        services.AddD2CaRootSigningCapability();
+
         return services.BuildServiceProvider();
     }
 

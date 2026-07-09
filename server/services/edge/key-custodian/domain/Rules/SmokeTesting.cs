@@ -25,6 +25,13 @@ namespace D2.Edge.KeyCustodian.Domain.Rules;
 ///     nonce, and verify with the public key derived from that same private key —
 ///     proves the CA's signing key is usable. The certificate-to-key binding is
 ///     verified structurally at generation, not re-checked here.</item>
+///   <item><c>EcdhSealing</c>: build a single-entry recipient public + private
+///     keyring from the SPKI + PKCS#8 material and run a full self-seal→self-open
+///     round-trip through the sealed-encryption core (<c>PayloadSealer</c> /
+///     <c>PayloadOpener</c>), asserting the recovered plaintext equals the probe —
+///     proves the ECDH keypair encrypts and decrypts. A mismatched or corrupt
+///     keypair surfaces as a keyring-construction or authentication-tag failure
+///     caught by the <see cref="Verify"/> envelope → <c>SmokeTestFailed</c>.</item>
 /// </list>
 /// </remarks>
 public static class SmokeTesting
@@ -32,6 +39,13 @@ public static class SmokeTesting
     private const int _PROBE_BYTES = 32;
     private const int _GCM_NONCE_BYTES = 12;
     private const int _GCM_TAG_BYTES = 16;
+
+    // Fixed probe identity for the EcdhSealing self-seal→self-open smoke round-trip.
+    // The recipient id satisfies the workload service-id grammar; the kid satisfies the
+    // sealed-frame kid bounds. Neither leaves the smoke test — the round-trip is entirely
+    // in-memory over the freshly-generated keypair.
+    private const string _SEAL_PROBE_RECIPIENT = "seal-smoke-probe";
+    private const string _SEAL_PROBE_KID = "seal-smoke-probe-kid";
 
     /// <summary>
     /// Runs the smoke test for the given material.
@@ -62,6 +76,7 @@ public static class SmokeTesting
                 KeyType.AesPayload => VerifyAes(plaintextMaterial.Span),
                 KeyType.Secret => VerifySecret(plaintextMaterial.Span),
                 KeyType.X509CaCertificate => VerifyCa(plaintextMaterial.Span),
+                KeyType.EcdhSealing => VerifyEcdhSealing(plaintextMaterial, publicSpki),
                 _ => KeyCustodianFailures.SmokeTestFailed(),
             };
         }
@@ -126,6 +141,59 @@ public static class SmokeTesting
         var verified = ecdsa.VerifyData(nonce.ToArray(), signature, HashAlgorithmName.SHA256);
 
         return verified ? D2Result.Ok() : KeyCustodianFailures.SmokeTestFailed();
+    }
+
+    private static D2Result VerifyEcdhSealing(
+        ReadOnlyMemory<byte> pkcs8Private,
+        ReadOnlyMemory<byte>? publicSpki)
+    {
+        if (publicSpki is not { } spki)
+            return KeyCustodianFailures.SmokeTestFailed();
+
+        // Single-entry recipient keyrings over the freshly-generated keypair: the SPKI
+        // seals, the PKCS#8 opens. The keyring constructors fail loud on non-P-256 /
+        // mismatched material (caught by the Verify envelope), and a keypair whose halves
+        // do not agree surfaces as an authentication-tag mismatch on Open.
+        var publicKeysByKid = new Dictionary<string, byte[]>(StringComparer.Ordinal)
+        {
+            [_SEAL_PROBE_KID] = spki.ToArray(),
+        };
+
+        // The keyring takes its OWN defensive copy of this array, so the probe copy here is
+        // an intermediate that must be zeroed once construction is done (zero-in-finally).
+        var privateKeyProbe = pkcs8Private.ToArray();
+        var privateKeysByKid = new Dictionary<string, byte[]>(StringComparer.Ordinal)
+        {
+            [_SEAL_PROBE_KID] = privateKeyProbe,
+        };
+
+        try
+        {
+            var publicKeyring = new RecipientPublicKeyring(
+                _SEAL_PROBE_RECIPIENT, _SEAL_PROBE_KID, publicKeysByKid);
+
+            using var privateKeyring = new RecipientPrivateKeyring(
+                _SEAL_PROBE_RECIPIENT, privateKeysByKid);
+
+            var sealer = new PayloadSealer(publicKeyring);
+            var opener = new PayloadOpener(privateKeyring);
+
+            Span<byte> probe = stackalloc byte[_PROBE_BYTES];
+            RandomNumberGenerator.Fill(probe);
+
+            var framed = sealer.Seal(probe);
+            var recovered = opener.Open(framed);
+
+            return CryptographicOperations.FixedTimeEquals(probe, recovered)
+                ? D2Result.Ok()
+                : KeyCustodianFailures.SmokeTestFailed();
+        }
+        finally
+        {
+            // Zero the plaintext PKCS#8 probe copy on every exit path (incl. a fail-loud
+            // keyring construction throw) — the raw private key must not linger in memory.
+            CryptographicOperations.ZeroMemory(privateKeyProbe);
+        }
     }
 
     private static D2Result VerifyAes(ReadOnlySpan<byte> key)

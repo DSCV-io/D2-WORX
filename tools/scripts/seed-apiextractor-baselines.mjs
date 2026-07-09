@@ -2,7 +2,8 @@
 //
 // Idempotent seeding tool: installs api-extractor.json configs and generates
 // committed baselines (etc/<pkg>.api.md + etc/.release-fingerprint) for all
-// 29 @d2/* consumable packages under server/shared/typescript/.
+// 31 @d2/* consumable packages: 30 under server/shared/typescript/ plus the
+// KeyCustodian client twin under server/services/edge/key-custodian/client-ts/.
 //
 // The fingerprint is SOURCE-BASED + PORTABLE — a SHA-256 over committed text
 // only ( committed src dump + the .api.md report + resolved deps + the declared
@@ -20,17 +21,25 @@
 // is unchanged (fingerprint and api.md are deterministic outputs).
 //
 // Prerequisites:
-//   - All 29 packages must have a built dist/ — api-extractor consumes
+//   - All 31 packages must have a built dist/ — api-extractor consumes
 //     dist/index.d.ts to generate the .api.md report (the fingerprint itself
 //     does NOT read dist/). Run `pnpm -r build` first.
 //   - @microsoft/api-extractor must be installed in tools/release-runner
 //     (it is — declared as a devDependency there).
 
-import { createHash } from "node:crypto";
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import {
+  existsSync,
+  mkdirSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs";
 import { dirname, join } from "node:path";
 import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
+
+import { assertApiReportNotDegenerate } from "./lib/apiextractor-empty-guard.mjs";
+import { composeSourceFingerprintFromParts } from "./lib/source-fingerprint-compose.mjs";
 
 // ---------------------------------------------------------------------------
 // Repo layout
@@ -49,7 +58,35 @@ const API_EXTRACTOR_BIN = join(
 );
 
 // ---------------------------------------------------------------------------
-// The 29 consumable packages: [pkgDir, shortName] pairs.
+// Empty-surface escape hatch (mirrors the .NET seeder's --allow-empty).
+// ---------------------------------------------------------------------------
+
+// A degenerate .api.md with NO `export ` line is the fail-loud default: it is
+// the "api-extractor saw an empty/missing dist/index.d.ts" signature, not a
+// real zero-export library. A package that LEGITIMATELY exposes zero exports
+// opts in via a repeatable `--allow-empty <pkgName>` flag or a single-package
+// SEED_ALLOW_EMPTY=<pkgName> env var. For multiple packages use repeated CLI
+// flags; the env var accepts exactly one package name (comma-split lists are
+// not supported — §23.1). As of this writing NO @d2/* consumable legitimately
+// has zero exports, so the hatch defaults to refuse — it exists for symmetry
+// with the .NET seeder so both ecosystems fail loud on the same corruption class.
+const CLI_ARGS = process.argv.slice(2);
+const ALLOW_EMPTY_PACKAGES = new Set();
+
+for (let i = 0; i < CLI_ARGS.length; i++) {
+  if (CLI_ARGS[i] === "--allow-empty" && CLI_ARGS[i + 1]) {
+    ALLOW_EMPTY_PACKAGES.add(CLI_ARGS[i + 1]);
+  }
+}
+
+const envAllowEmpty = (process.env.SEED_ALLOW_EMPTY ?? "").trim();
+
+if (envAllowEmpty.length > 0) {
+  ALLOW_EMPTY_PACKAGES.add(envAllowEmpty);
+}
+
+// ---------------------------------------------------------------------------
+// The 32 consumable packages: [pkgDir, shortName] pairs.
 // Derived from the package names (@d2/<shortName>) so that api.md report
 // filenames are stable regardless of the directory structure.
 // Excludes: typespec-decorators, typespec-emitters, contract-tests.
@@ -66,6 +103,11 @@ const CONSUMABLES = [
     dir: join(TS_SHARED, "auth", "context-abstractions"),
     shortName: "auth-context-abstractions",
     pkgName: "@d2/auth-context-abstractions",
+  },
+  {
+    dir: join(TS_SHARED, "encryption"),
+    shortName: "encryption",
+    pkgName: "@d2/encryption",
   },
   {
     dir: join(TS_SHARED, "encryption-abstractions"),
@@ -148,6 +190,11 @@ const CONSUMABLES = [
     pkgName: "@d2/messaging-abstractions",
   },
   {
+    dir: join(TS_SHARED, "messaging", "rabbitmq"),
+    shortName: "messaging-rabbitmq",
+    pkgName: "@d2/messaging-rabbitmq",
+  },
+  {
     dir: join(TS_SHARED, "problem-details-abstractions"),
     shortName: "problem-details-abstractions",
     pkgName: "@d2/problem-details-abstractions",
@@ -201,6 +248,21 @@ const CONSUMABLES = [
     dir: join(TS_SHARED, "validation", "default"),
     shortName: "validation",
     pkgName: "@d2/validation",
+  },
+  // Consumable outside server/shared/typescript/: the KeyCustodian workload-leaf
+  // client twin lives beside its service. Same baseline mechanism (git-tracked src
+  // dump + api.md report), addressed by an explicit repo-relative dir.
+  {
+    dir: join(
+      REPO_ROOT,
+      "server",
+      "services",
+      "edge",
+      "key-custodian",
+      "client-ts",
+    ),
+    shortName: "key-custodian-client",
+    pkgName: "@d2/key-custodian-client",
   },
 ];
 
@@ -295,21 +357,48 @@ function runApiExtractor(pkgDir, shortName) {
     return null;
   }
 
-  const result = spawnSync(
-    API_EXTRACTOR_BIN,
-    ["run", "--local", "--config", configPath],
-    {
-      cwd: pkgDir,
-      encoding: "utf-8",
-      stdio: ["ignore", "pipe", "pipe"],
-    },
-  );
-
   const reportPath = join(pkgDir, "etc", `${shortName}.api.md`);
 
+  // Delete any STALE report from a prior seed BEFORE running. api-extractor
+  // `run --local` regenerates the report on every successful invocation, so on
+  // the success (or warnings-but-wrote) path a fresh report reappears; on a
+  // genuine failure the extractor writes nothing and the existsSync checks
+  // below correctly return null. Without this delete, a NON-ZERO extractor exit
+  // that left the prior report on disk would return that stale content as if
+  // freshly generated (silent stale-not-fresh) — the fingerprint would then be
+  // composed over an out-of-date report. Destroying the prior artifact first
+  // makes "report present after the run" unambiguously mean "produced by THIS
+  // run" (the same guarantee the .NET seeder's forceFullRecompile buys by
+  // deleting bin/obj so the analyzer MUST re-run).
+  rmSync(reportPath, { force: true });
+
+  // shell:true is REQUIRED for cross-platform launch. On Windows the
+  // node_modules/.bin/api-extractor entry is a POSIX shell shim that Node's
+  // spawnSync cannot exec directly (the runnable form is the sibling
+  // api-extractor.CMD, and modern Node refuses to spawn a .cmd without a shell);
+  // routing through the shell lets cmd.exe resolve the .CMD via PATHEXT. On POSIX
+  // the shim is a node-shebang script the shell runs directly. Without this the
+  // spawn silently ENOENTs (status !== 0, no report written) and only packages
+  // whose etc/<pkg>.api.md already exists appear to "succeed" — a NEW package's
+  // report never gets generated, and a changed-surface package's report is never
+  // refreshed. The whole invocation is passed as ONE quoted command string (not a
+  // command + args array) so shell:true does not trip DEP0190 and the quoting
+  // tolerates spaces in either path.
+  const command = `"${API_EXTRACTOR_BIN}" run --local --config "${configPath}"`;
+  const result = spawnSync(command, {
+    cwd: pkgDir,
+    encoding: "utf-8",
+    stdio: ["ignore", "pipe", "pipe"],
+    shell: true,
+  });
+
   if (result.status !== 0) {
-    // api-extractor exits non-zero even on warnings in some cases.
-    // Only treat as failure if the report file was NOT written.
+    // api-extractor exits non-zero even on warnings in some cases. The report
+    // is trustworthy ONLY if THIS run just (re)wrote it — the stale prior copy
+    // was deleted above, so its presence here means the extractor produced it
+    // despite the non-zero exit (a warnings-only run). If it is ABSENT the
+    // extractor genuinely failed: return null so the caller fails loud, never
+    // stale content.
     if (!existsSync(reportPath)) {
       console.error(`  [ERROR] api-extractor failed for ${shortName}`);
       console.error(result.stderr ?? "");
@@ -317,7 +406,7 @@ function runApiExtractor(pkgDir, shortName) {
       return null;
     }
 
-    // Warnings present but report was written — treat as success.
+    // Warnings present but report was freshly written — treat as success.
     if (result.stderr?.includes("Warning:")) {
       console.warn(`  [WARN] api-extractor warnings for ${shortName}:`);
       console.warn(result.stderr);
@@ -334,9 +423,11 @@ function runApiExtractor(pkgDir, shortName) {
 }
 
 // ---------------------------------------------------------------------------
-// Step 3 — Compute the source-based fingerprint (mirrors source-fingerprint.ts
-// + real-diff-provider.ts BYTE-FOR-BYTE; the seed↔provider identity is pinned by
-// a runner test).
+// Step 3 — Compute the source-based fingerprint. The final SHA-256 composition
+// is delegated to the shared composeSourceFingerprintFromParts primitive (a
+// byte-for-byte re-implementation of the release-runner provider's
+// composeSourceFingerprint); the seed↔provider byte-identity of that primitive
+// is pinned by tools/release-runner/tests/seed-provider-fingerprint-identity.test.ts.
 // ---------------------------------------------------------------------------
 
 /** LF-normalize so a CRLF/LF checkout difference cannot perturb the hash. */
@@ -465,22 +556,22 @@ function buildNpmDepsJson(pkgJson, resolvedVersions) {
  * Compose the source-based fingerprint over the ordered tuple
  *   ( committed source dump + the .api.md report + resolved deps + toolchain ).
  *
- * Byte-identical to the release-runner's composeSourceFingerprint so the drift
- * check (which recomputes via the runner) compares like-for-like. No build.
+ * Delegates the final SHA-256 composition to the shared primitive so it is
+ * byte-identical to the release-runner's composeSourceFingerprint (the drift
+ * check recomputes via the runner and compares like-for-like). No build. The
+ * primitive LF-normalizes the apiMd report, so the raw report text is passed.
  *
  * @param {string} pkgDir
  * @param {string} apiMd
  * @param {string} depsJson
  */
 function composeSourceFingerprint(pkgDir, apiMd, depsJson) {
-  const hash = createHash("sha256");
-
-  hash.update(`SOURCE:\n${buildSourceDump(pkgDir)}\n`);
-  hash.update(`APIREPORT:\n${normalizeLf(apiMd)}\n`);
-  hash.update(`DEPS:\n${depsJson}\n`);
-  hash.update(`TOOLCHAIN:\n${TOOLCHAIN_PIN}\n`);
-
-  return hash.digest("hex");
+  return composeSourceFingerprintFromParts({
+    sourceDump: buildSourceDump(pkgDir),
+    apiReport: apiMd,
+    depsJson,
+    toolchainJson: TOOLCHAIN_PIN,
+  });
 }
 
 // ---------------------------------------------------------------------------
@@ -556,16 +647,38 @@ for (const { dir, shortName, pkgName } of CONSUMABLES) {
 
   // Check if any public members were found.
   const hasPublicMembers = apiMdContent.includes("export ");
+  const allowEmpty = ALLOW_EMPTY_PACKAGES.has(pkgName);
+
+  // FAIL-LOUD GUARD: a degenerate .api.md with NO `export ` line means
+  // api-extractor analyzed an empty/missing dist/index.d.ts. Composing a
+  // fingerprint over that degenerate content (and committing it) would let the
+  // currency check pass against the degenerate baseline — invisible corruption,
+  // the same class as the .NET silent empty-wipe. The guard throws in that case
+  // (unless the package is explicitly allow-listed); on a throw we skip the
+  // fingerprint write and count an error so the run FAILS LOUD (exit 1).
+  try {
+    assertApiReportNotDegenerate({ pkgName, hasPublicMembers, allowEmpty });
+  } catch (err) {
+    console.error(
+      `  [ERROR] ${err instanceof Error ? err.message : String(err)}`,
+    );
+    specialHandling.push({
+      pkgName,
+      issue: "No public exports in .api.md (degenerate surface) — refused",
+    });
+    errors++;
+    continue;
+  }
 
   if (!hasPublicMembers) {
     specialHandling.push({
       pkgName,
-      issue: "No public exports detected in .api.md (empty surface)",
+      issue: "No public exports in .api.md — permitted via --allow-empty",
     });
   }
 
   console.log(
-    `  + Generated ${shortName}.api.md (${hasPublicMembers ? "has public API" : "empty surface"})`,
+    `  + Generated ${shortName}.api.md (${hasPublicMembers ? "has public API" : "empty surface (allow-empty)"})`,
   );
   apiMdWritten++;
 

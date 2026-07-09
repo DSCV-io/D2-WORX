@@ -6,8 +6,6 @@
 
 namespace D2.Edge.KeyCustodian.Domain.Rules;
 
-using System.Security.Cryptography.X509Certificates;
-
 /// <summary>
 /// Pure rule that generates the internal certificate-authority hierarchy: a
 /// self-signed ECDSA P-256 root and an intermediate signed by that root.
@@ -47,6 +45,12 @@ public static class CaCertificateGeneration
 
     private static readonly ECCurve sr_curve = ECCurve.NamedCurves.nistP256;
     private static readonly HashAlgorithmName sr_hash = HashAlgorithmName.SHA256;
+
+    // Front-backdate notBefore by this allowance so a relying peer with a lagging
+    // clock does not reject a just-issued certificate (standard mTLS-PKI practice —
+    // cert-manager / step-ca / Vault all backdate ~5 min). Front-only: notAfter stays
+    // now + validity, so forward validity is never shortened.
+    private static readonly Duration sr_clockSkewBackdate = Duration.FromMinutes(5);
 
     /// <summary>
     /// Generates a self-signed root certificate authority.
@@ -206,6 +210,14 @@ public static class CaCertificateGeneration
     /// Computes the <c>(notBefore, notAfter)</c> certificate validity window from
     /// the current instant + a duration. Shared by the CA + leaf-issuance rules.
     /// </summary>
+    /// <remarks>
+    /// <b>Clock-skew backdating.</b> <c>notBefore</c> is set to
+    /// <c>now - <see cref="sr_clockSkewBackdate"/></c> (a small fixed allowance) so a
+    /// relying peer with a slightly-lagging clock does not reject a just-issued
+    /// certificate. The backdate is FRONT-ONLY: <c>notAfter</c> stays
+    /// <c>now + validity</c>, so the caller-requested forward validity is never
+    /// shortened — the cushion is added ahead of, not subtracted from, the window.
+    /// </remarks>
     /// <param name="clock">The current-time source.</param>
     /// <param name="validity">The validity duration (strictly positive).</param>
     /// <returns>The not-before / not-after instants as <see cref="DateTimeOffset"/>.</returns>
@@ -213,7 +225,9 @@ public static class CaCertificateGeneration
         IClock clock, Duration validity)
     {
         var now = clock.GetCurrentInstant();
-        return (now.ToDateTimeOffset(), (now + validity).ToDateTimeOffset());
+        var notBefore = now - sr_clockSkewBackdate;
+        var notAfter = now + validity;
+        return (notBefore.ToDateTimeOffset(), notAfter.ToDateTimeOffset());
     }
 
     /// <summary>

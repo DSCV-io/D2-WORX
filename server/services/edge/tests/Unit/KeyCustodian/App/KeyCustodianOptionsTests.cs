@@ -245,6 +245,92 @@ public sealed class KeyCustodianOptionsTests
         found!.Cadence.Should().Be(expected.Cadence);
     }
 
+    // -----------------------------------------------------------------------
+    // IssuerBaseUrl rejection — two layers:
+    //   1. The ValidateDataAnnotations startup path (Validator.TryValidateObject):
+    //      [Required] (AllowEmptyStrings=false, so its rule is Trim().Length != 0)
+    //      rejects null, empty, AND whitespace; [MinLength(1)] also rejects empty.
+    //   2. IValidatableObject.Validate()'s explicit Falsey() defense-in-depth guard,
+    //      which TryValidateObject short-circuits past once layer 1 fails, so it is
+    //      pinned by calling Validate() directly.
+    // -----------------------------------------------------------------------
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("   ")]
+    [InlineData("\t")]
+    [InlineData(" \t ")]
+    public void TryValidateObject_BlankIssuerBaseUrl_FailsValidation(string? issuerBaseUrl)
+    {
+        // Pins the startup-path contract: ValidateOnStart uses ValidateDataAnnotations,
+        // which runs Validator.TryValidateObject. [Required]'s Trim() rule rejects null,
+        // empty, and whitespace alike. Relaxing [Required] to AllowEmptyStrings = true (or
+        // dropping it) would let a blank issuer boot — this assertion would then fail.
+        var options = new KeyCustodianOptions
+        {
+            IssuerBaseUrl = issuerBaseUrl!,
+            Default = ValidDefaultPolicy(),
+        };
+
+        var results = new List<ValidationResult>();
+
+        var valid = Validator.TryValidateObject(
+            options, new ValidationContext(options), results, validateAllProperties: true);
+
+        valid.Should().BeFalse(
+            because: "a null, empty, or whitespace IssuerBaseUrl must fail validation");
+        results.Should().Contain(
+            r => r.MemberNames.Contains(nameof(KeyCustodianOptions.IssuerBaseUrl)),
+            because: "the validation error must be attributed to IssuerBaseUrl");
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("   ")]
+    [InlineData("\t")]
+    public void Validate_BlankIssuerBaseUrl_YieldsIssuerBaseUrlResult(string? issuerBaseUrl)
+    {
+        // Pins the Falsey() defense-in-depth guard itself. TryValidateObject short-circuits
+        // Validate() once [Required] rejects the value at property level, so a direct call
+        // is the only way to reach the guard. Deleting the Falsey() block makes Validate()
+        // yield no IssuerBaseUrl result and this assertion fails — a genuine
+        // fails-without-the-guard regression pin.
+        var options = new KeyCustodianOptions
+        {
+            IssuerBaseUrl = issuerBaseUrl!,
+            Default = ValidDefaultPolicy(),
+        };
+
+        var results = options.Validate(new ValidationContext(options)).ToList();
+
+        results.Should().Contain(
+            r => r.MemberNames.Contains(nameof(KeyCustodianOptions.IssuerBaseUrl)),
+            because: "the Falsey() guard must flag a blank IssuerBaseUrl on a direct Validate call");
+    }
+
+    [Fact]
+    public void TryValidateObject_ValidIssuerBaseUrl_Passes()
+    {
+        // Positive case — a well-formed issuer with a valid default policy must pass, so the
+        // blank-issuer guards above cannot regress into rejecting legitimate configuration.
+        var options = new KeyCustodianOptions
+        {
+            IssuerBaseUrl = "https://edge.internal",
+            Default = ValidDefaultPolicy(),
+        };
+
+        var results = new List<ValidationResult>();
+
+        var valid = Validator.TryValidateObject(
+            options, new ValidationContext(options), results, validateAllProperties: true);
+
+        valid.Should().BeTrue(
+            because: "a well-formed IssuerBaseUrl with a valid default policy is valid");
+        results.Should().BeEmpty();
+    }
+
     [Fact]
     public void Policies_OrdinalIgnoreCase_UppercaseKeyAndLowercaseLookupAreSameSlot()
     {
@@ -271,4 +357,14 @@ public sealed class KeyCustodianOptionsTests
             TimeSpan.FromDays(14),
             because: "the lowercase write should overwrite the uppercase entry");
     }
+
+    // A valid default rotation policy so the Default-policy recursion in
+    // KeyCustodianOptions.Validate() produces no noise results — leaving IssuerBaseUrl
+    // as the only field under test in the blank-issuer cases.
+    private static RotationPolicyOptions ValidDefaultPolicy() => new()
+    {
+        Cadence = TimeSpan.FromDays(30),
+        Grace = TimeSpan.FromDays(2),
+        SmokeSoak = TimeSpan.FromDays(1),
+    };
 }

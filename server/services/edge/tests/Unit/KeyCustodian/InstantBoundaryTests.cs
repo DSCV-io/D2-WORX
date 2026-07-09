@@ -24,7 +24,7 @@ public sealed class InstantBoundaryTests
         KeyMaterialEncrypted.FromTrusted(new byte[] { 1, 2, 3, 4 });
 
     private static readonly Kid sr_kid = Kid.FromTrusted("boundary-test");
-    private static readonly KeyDomain sr_domain = KeyDomain.FromTrusted("audit");
+    private static readonly KeyDomain sr_domain = KeyDomain.Cookie;
 
     // The policy uses 1-hour soak + 2-hour grace. These are small relative to
     // Instant range, so boundary tests are framed around keys created very

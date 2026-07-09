@@ -12,6 +12,8 @@ using D2.Edge.KeyCustodian.Infra.Observability;
 using D2.Edge.KeyCustodian.Infra.Persistence.Postgres;
 using D2.Edge.KeyCustodian.Infra.Scheduling.Hosted;
 using D2.Edge.KeyCustodian.Infra.Vault.File;
+using D2.Shared.Auth.Abstractions;
+using D2.Shared.Context.Abstractions;
 using D2.Shared.EntityFrameworkCore.Postgres;
 using D2.Shared.Handler.Repo.Postgres;
 using Microsoft.Extensions.Configuration;
@@ -38,6 +40,15 @@ public static class KeyCustodianServiceCollectionExtensions
         /// the startup migrator and the rotation scheduler (in that order), the
         /// readiness health checks, and the chained App layer.
         /// </summary>
+        /// <remarks>
+        /// <b>Host prerequisite:</b> the host MUST bind
+        /// <see cref="D2WorkloadIdentityOptions"/> (its own workload
+        /// <c>ServiceId</c>) — the module's establishment-boundary registration owns
+        /// the bind. This method does not re-bind it; it registers a fail-loud
+        /// presence gate (an unset <c>ServiceId</c> fails <c>ValidateOnStart</c>)
+        /// because the CA-seeding and key-rotation System workers establish their
+        /// <c>RequestOrigin.System</c> request context from that self-id.
+        /// </remarks>
         /// <param name="configuration">The configuration root to bind options from.</param>
         /// <param name="connectionString">
         /// The <c>keycustodian_db</c> connection string (from
@@ -62,6 +73,57 @@ public static class KeyCustodianServiceCollectionExtensions
                 .Bind(configuration.GetSection(KeyCustodianInfraOptions.SECTION))
                 .Configure(o => o.ConnectionString = connectionString)
                 .ValidateDataAnnotations()
+                .ValidateOnStart();
+
+            // Signing-domain authority policy — bound + fail-loud validated. The
+            // validator REFUSES to boot a dangerous configuration (it rejects VALUES,
+            // not just shape): no workload may be granted an in-process-only domain
+            // (jwks-signing), no key may be empty, no value may name a non-catalog
+            // domain. An EMPTY policy is legitimately fine (deny-all). This converts
+            // the jwks-signing-Edge-only control from operator-discipline
+            // to "the host won't start misconfigured" (defense-in-depth alongside the
+            // structural authority-rule deny).
+            services.AddOptions<SigningDomainAuthorityOptions>()
+                .Bind(configuration.GetSection(SigningDomainAuthorityOptions.SECTION))
+                .Validate(
+                    static o => o.Validate() is null,
+                    "KEYCUSTODIAN_SIGNING_AUTHORITY is misconfigured. See the host log "
+                    + "for the specific invariant violated (in-process-only-domain grant, "
+                    + "empty workload key, or non-catalog signing domain).")
+                .ValidateOnStart();
+
+            // Keyring-domain authority policy — bound + fail-loud validated. The validator
+            // REFUSES to boot a dangerous configuration (it rejects VALUES, not just shape):
+            // no workload may be granted a non-payload domain (a keyring is a full
+            // encrypt+decrypt capability; the non-payload crown-jewel domains are never
+            // keyring-grantable), no key may be empty / non-grammar, no value may name a
+            // non-catalog domain. An EMPTY policy is legitimately fine (deny-all). This is
+            // the boot-gate production guard behind the handler's defense-in-depth key-type
+            // fork (structural authority deny alongside).
+            services.AddOptions<KeyringDomainAuthorityOptions>()
+                .Bind(configuration.GetSection(KeyringDomainAuthorityOptions.SECTION))
+                .Validate(
+                    static o => o.Validate() is null,
+                    "KEYCUSTODIAN_KEYRING_AUTHORITY is misconfigured. See the host log "
+                    + "for the specific invariant violated (non-payload-domain grant, "
+                    + "empty workload key, or non-catalog key domain).")
+                .ValidateOnStart();
+
+            // Host workload identity — presence + validity gate (fail-loud). The host OWNS
+            // the bind (its establishment-boundary registration binds
+            // D2WorkloadIdentityOptions.ServiceId); this module does NOT re-bind it — it
+            // only VALIDATES presence, because the System workers below (CaSeedingService /
+            // KeyRotationService) establish their System request context from that self-id.
+            // An unset ServiceId is a host misconfiguration: rather than silently seeding +
+            // rotating under an empty self-id (fail-late, message-stripped), the host refuses
+            // to start. The validator composes with the host's own bind/validation.
+            services.AddOptions<D2WorkloadIdentityOptions>()
+                .Validate(
+                    static o => !o.ServiceId.Falsey(),
+                    "D2WorkloadIdentityOptions.ServiceId is unset. The KeyCustodian System "
+                    + "workers (CA seeding + key rotation) establish their System request "
+                    + "context from the host's workload id; the host must bind it before "
+                    + "AddD2KeyCustodian (its establishment-boundary registration does).")
                 .ValidateOnStart();
 
             // --- Persistence: plain scoped DbContext, shared Npgsql defaults -----
@@ -101,10 +163,30 @@ public static class KeyCustodianServiceCollectionExtensions
                 KeyCustodianRootKey.ROOT_SERVICE_KEY,
                 sp => sp.GetRequiredService<IRootKeyProvider>().GetRootKeyring());
 
+            // The KC root key is the operator-provisioned root of trust from which all
+            // custodian material derives — definitionally the custodian's own material,
+            // not the static-key footgun the deny-by-default source guard exists to catch.
+            // Marking it KeyCustodian lets the guard pass in a non-Development host.
+            services.MarkD2EncryptionSource(
+                KeyCustodianRootKey.ROOT_SERVICE_KEY, EncryptionKeyringSource.KeyCustodian);
+
             services.AddD2EncryptionStartupCheck();
 
             // --- Messaging: RabbitMQ rotation announcer --------------------------
             services.AddSingleton<IKeyRotationAnnouncer, RabbitMqKeyRotationAnnouncer>();
+
+            // --- Request context: scoped resolver for System-worker scopes -------
+            // IRequestContext is normally a HOST responsibility (Edge's
+            // AddD2AuthGrpc()/AddD2AuthHttp() register a throwing-by-default scoped
+            // resolver keyed off the inbound HttpContext). A System-worker scope
+            // created via IServiceScopeFactory.CreateAsyncScope() (CaSeedingService /
+            // KeyRotationService) has no HttpContext, so that throwing resolver is the
+            // WRONG one here — the module registers its own plain scoped resolver
+            // (TryAdd: a host-registered resolver, if present, wins) so the workers can
+            // establish + resolve a System request context on their own scope.
+            services.TryAddScoped<MutableRequestContext>();
+            services.TryAddScoped<IRequestContext>(
+                sp => sp.GetRequiredService<MutableRequestContext>());
 
             // --- Hosted services: migrator → seeder → rotation (order matters) ---
             // Same-host StartAsync ordering is registration order, pinned by a

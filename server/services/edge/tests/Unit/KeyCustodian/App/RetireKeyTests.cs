@@ -130,7 +130,7 @@ public sealed class RetireKeyTests
 
     private RetireKeyHandler Build(KeyCustodianTestDbContext db, TestClock clock) =>
         new(
-            KcAppTestKit.Context<RetireKeyHandler>(),
+            KcAppTestKit.SystemContext<RetireKeyHandler>(),
             KcAppTestKit.NullClassifier(),
             db,
             KcAppTestKit.BuildPolicyProvider(r_options),

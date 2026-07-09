@@ -138,6 +138,10 @@ dotnet_diagnostic.CA1873.severity = none
 dotnet_diagnostic.CA1068.severity = none
 
 # ReSharper: Partial type with single part (intentional — scaffolding for future extension per convention)
+# Intentional full-qualified targets in file-scoped `using H = …IHandler` aliases
+# (§5.29). Without this, clean CI checkouts flood "Qualifier is redundant" at WARNING.
+resharper_redundant_name_qualifier_highlighting = none
+
 resharper_partial_type_with_single_part_highlighting = none
 
 # ReSharper: Positional property never accessed (consumed via serialization, proto mapping, destructuring)

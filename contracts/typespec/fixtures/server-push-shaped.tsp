@@ -26,8 +26,8 @@
 // The dispatcher's targetId is a runtime arg (the explicit recipient id), NOT a
 // contract field. The event-type is the op name verbatim.
 //
-// NOT a real KC operation — a fixture mirroring server-push shapes for the
-// purpose of exercising the dispatch emitter.
+// A fixture mirroring server-push shapes for the purpose of exercising the
+// dispatch emitter. Every fixture-only leaf symbol carries a `Fixture` marker.
 
 import "@d2/typespec-decorators";
 
@@ -36,38 +36,38 @@ using D2;
 namespace D2.Fixtures;
 
 /** A nested model carried in a push payload (proves walkModel nested integration). */
-model OrderLine {
+model OrderFixtureLine {
   sku: string;
   quantity: int32;
 }
 
 /** Output payload for the user-channel push: nested model + temporal field. */
-model OrderShippedOutput {
+model OrderShippedFixtureOutput {
   orderId: string;
 
   /** Temporal field — proves the utcDateTime mapping flows through the dispatch payload. */
   shippedAt: utcDateTime;
 
   /** Nested array-of-model field — proves walkModel nested integration end-to-end. */
-  lines: OrderLine[];
+  lines: OrderFixtureLine[];
 }
 
 /** Output payload for the session-channel push: a temporal field on the session channel too. */
-model SessionExpiringOutput {
+model SessionExpiringFixtureOutput {
   sessionId: string;
 
   /** Temporal field on the session-channel payload (proves utcDateTime mapping on the session channel too). */
   expiresAt: utcDateTime;
 }
 
-/** user-channel pure-push — output payload is the event; event-type = "orderShipped". */
+/** user-channel pure-push — output payload is the event; event-type = "orderShippedFixture". */
 @d2Command
 @d2ServedBy("PushFixtures")
 @d2ServerPush("user")
-op orderShipped(): OrderShippedOutput;
+op orderShippedFixture(): OrderShippedFixtureOutput;
 
 /** session-channel pure-push — exercises the Session channel class. */
 @d2Command
 @d2ServedBy("PushFixtures")
 @d2ServerPush("session")
-op sessionExpiring(): SessionExpiringOutput;
+op sessionExpiringFixture(): SessionExpiringFixtureOutput;

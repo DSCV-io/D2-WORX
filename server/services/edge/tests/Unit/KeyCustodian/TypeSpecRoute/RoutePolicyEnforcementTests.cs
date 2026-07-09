@@ -31,7 +31,7 @@ using Microsoft.Extensions.Hosting;
 
 /// <summary>
 /// TestServer auth-matrix enforcement tests for the TypeSpec-emitted
-/// <c>SignRouteRegistration</c> and <c>AllScopesRouteRegistration</c>.
+/// <c>SignFixtureRouteRegistration</c> and <c>AllScopesRouteRegistration</c>.
 ///
 /// Drives real HTTP requests through <c>JwtAuthMiddleware</c> + the emitted route
 /// fluents (<c>RequireAnyScope</c> / <c>RequireAllScopes</c>) with real RS256-signed
@@ -54,7 +54,7 @@ public sealed class RoutePolicyEnforcementTests
     public async Task SignRoute_BearerWithRequiredScope_Returns200()
     {
         using var jwt = new TestJwtBuilder();
-        using var host = await BuildHostAsync(jwt, D2Result<SignOutput?>.Ok(new SignOutput("sig==")));
+        using var host = await BuildHostAsync(jwt, D2Result<SignFixtureOutput?>.Ok(new SignFixtureOutput("sig==")));
         var client = host.GetTestServer().CreateClient();
         var token = jwt.MintToken(
             _ISSUER,
@@ -65,7 +65,7 @@ public sealed class RoutePolicyEnforcementTests
         client.DefaultRequestHeaders.TryAddWithoutValidation("Idempotency-Key", "policy-test-1");
 
         var response = await client.PostAsJsonAsync(
-            "/internal/v1/kc/sign",
+            "/internal/v1/fixtures/sign-fixture",
             new { kid = "k1", payload = string.Empty });
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
@@ -75,7 +75,7 @@ public sealed class RoutePolicyEnforcementTests
     public async Task SignRoute_BearerWithWrongScope_Returns401ScopeInsufficient()
     {
         using var jwt = new TestJwtBuilder();
-        using var host = await BuildHostAsync(jwt, D2Result<SignOutput?>.Ok(new SignOutput("sig==")));
+        using var host = await BuildHostAsync(jwt, D2Result<SignFixtureOutput?>.Ok(new SignFixtureOutput("sig==")));
         var client = host.GetTestServer().CreateClient();
         var token = jwt.MintToken(
             _ISSUER,
@@ -85,7 +85,7 @@ public sealed class RoutePolicyEnforcementTests
             new AuthenticationHeaderValue("Bearer", token);
 
         var response = await client.PostAsJsonAsync(
-            "/internal/v1/kc/sign",
+            "/internal/v1/fixtures/sign-fixture",
             new { kid = "k1", payload = string.Empty });
 
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
@@ -97,11 +97,11 @@ public sealed class RoutePolicyEnforcementTests
     public async Task SignRoute_NoBearer_Returns401BearerMissing()
     {
         using var jwt = new TestJwtBuilder();
-        using var host = await BuildHostAsync(jwt, D2Result<SignOutput?>.Ok(new SignOutput("sig==")));
+        using var host = await BuildHostAsync(jwt, D2Result<SignFixtureOutput?>.Ok(new SignFixtureOutput("sig==")));
         var client = host.GetTestServer().CreateClient();
 
         var response = await client.PostAsync(
-            "/internal/v1/kc/sign",
+            "/internal/v1/fixtures/sign-fixture",
             JsonContent.Create(new { kid = "k1", payload = string.Empty }));
 
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
@@ -113,7 +113,7 @@ public sealed class RoutePolicyEnforcementTests
     public async Task SignRoute_BearerWithNoScopes_Returns401ScopeInsufficient()
     {
         using var jwt = new TestJwtBuilder();
-        using var host = await BuildHostAsync(jwt, D2Result<SignOutput?>.Ok(new SignOutput("sig==")));
+        using var host = await BuildHostAsync(jwt, D2Result<SignFixtureOutput?>.Ok(new SignFixtureOutput("sig==")));
         var client = host.GetTestServer().CreateClient();
 
         // No "scope" claim in token.
@@ -122,7 +122,7 @@ public sealed class RoutePolicyEnforcementTests
             new AuthenticationHeaderValue("Bearer", token);
 
         var response = await client.PostAsJsonAsync(
-            "/internal/v1/kc/sign",
+            "/internal/v1/fixtures/sign-fixture",
             new { kid = "k1", payload = string.Empty });
 
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
@@ -136,7 +136,7 @@ public sealed class RoutePolicyEnforcementTests
     public async Task AllScopesRoute_BearerWithBothScopes_Returns200()
     {
         using var jwt = new TestJwtBuilder();
-        using var host = await BuildHostAsync(jwt, D2Result<SignOutput?>.Ok(new SignOutput("sig==")));
+        using var host = await BuildHostAsync(jwt, D2Result<SignFixtureOutput?>.Ok(new SignFixtureOutput("sig==")));
         var client = host.GetTestServer().CreateClient();
         var token = jwt.MintToken(
             _ISSUER,
@@ -148,7 +148,7 @@ public sealed class RoutePolicyEnforcementTests
         // GET route — input is bound from query string via [AsParameters].
         // Payload is byte[] and not needed for scope-enforcement proof; kid=k1 satisfies model binding.
         var response = await client.GetAsync(
-            "/internal/v1/kc/all-scopes?kid=k1");
+            "/internal/v1/fixtures/all-scopes?kid=k1");
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
     }
@@ -157,7 +157,7 @@ public sealed class RoutePolicyEnforcementTests
     public async Task AllScopesRoute_BearerMissingOneScope_Returns401ScopeInsufficient()
     {
         using var jwt = new TestJwtBuilder();
-        using var host = await BuildHostAsync(jwt, D2Result<SignOutput?>.Ok(new SignOutput("sig==")));
+        using var host = await BuildHostAsync(jwt, D2Result<SignFixtureOutput?>.Ok(new SignFixtureOutput("sig==")));
         var client = host.GetTestServer().CreateClient();
 
         // Only self.read — self.write missing.
@@ -169,7 +169,7 @@ public sealed class RoutePolicyEnforcementTests
             new AuthenticationHeaderValue("Bearer", token);
 
         var response = await client.GetAsync(
-            "/internal/v1/kc/all-scopes?kid=k1");
+            "/internal/v1/fixtures/all-scopes?kid=k1");
 
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
         var code = await ReadErrorCodeAsync(response);
@@ -180,11 +180,11 @@ public sealed class RoutePolicyEnforcementTests
     public async Task AllScopesRoute_NoBearer_Returns401BearerMissing()
     {
         using var jwt = new TestJwtBuilder();
-        using var host = await BuildHostAsync(jwt, D2Result<SignOutput?>.Ok(new SignOutput("sig==")));
+        using var host = await BuildHostAsync(jwt, D2Result<SignFixtureOutput?>.Ok(new SignFixtureOutput("sig==")));
         var client = host.GetTestServer().CreateClient();
 
         var response = await client.GetAsync(
-            "/internal/v1/kc/all-scopes?kid=k1");
+            "/internal/v1/fixtures/all-scopes?kid=k1");
 
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
         var code = await ReadErrorCodeAsync(response);
@@ -197,7 +197,7 @@ public sealed class RoutePolicyEnforcementTests
     public async Task SignRoute_FacadeReturnsFailure_ReturnsProblemJson()
     {
         using var jwt = new TestJwtBuilder();
-        using var host = await BuildHostAsync(jwt, D2Result<SignOutput?>.ServiceUnavailable());
+        using var host = await BuildHostAsync(jwt, D2Result<SignFixtureOutput?>.ServiceUnavailable());
         var client = host.GetTestServer().CreateClient();
         var token = jwt.MintToken(
             _ISSUER,
@@ -208,7 +208,7 @@ public sealed class RoutePolicyEnforcementTests
         client.DefaultRequestHeaders.TryAddWithoutValidation("Idempotency-Key", "policy-test-2");
 
         var response = await client.PostAsJsonAsync(
-            "/internal/v1/kc/sign",
+            "/internal/v1/fixtures/sign-fixture",
             new { kid = "k1", payload = string.Empty });
 
         // MAP-ii: failure → Results.Json(pd, ...) — not 200
@@ -220,9 +220,9 @@ public sealed class RoutePolicyEnforcementTests
 
     private static async Task<IHost> BuildHostAsync(
         TestJwtBuilder jwtBuilder,
-        D2Result<SignOutput?> facadeResult)
+        D2Result<SignFixtureOutput?> facadeResult)
     {
-        var fake = new FakeKeyCustodianSignerFacade(facadeResult);
+        var fake = new FakeSignFixtureSignerFacade(facadeResult);
 
         var hostBuilder = new HostBuilder()
             .ConfigureWebHost(webHost =>
@@ -255,7 +255,7 @@ public sealed class RoutePolicyEnforcementTests
                             new FakeSessionLivenessTracker());
 
                         // Register the façade fake for DI resolution in the route lambdas.
-                        services.AddSingleton<IKeyCustodianSignerFacade>(fake);
+                        services.AddSingleton<ISignFixtureSignerFacade>(fake);
 
                         // The Sign route gate requires D2GeneratedIdempotencyStore in DI;
                         // policy-enforcement tests supply a no-op store — idempotency semantics
@@ -273,7 +273,7 @@ public sealed class RoutePolicyEnforcementTests
                         app.UseEndpoints(endpoints =>
                         {
                             // TypeSpec-emitted route registrations via extension methods.
-                            endpoints.MapSignRoute();
+                            endpoints.MapSignFixtureRoute();
                             endpoints.MapAllScopesRoute();
                         });
                     });

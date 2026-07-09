@@ -117,6 +117,54 @@ public static partial class Scopes
     }
 
     /// <summary>
+    /// Scopes nested under <c>internal</c>.
+    /// </summary>
+    public static class Internal
+    {
+        /// <summary>
+        /// Scopes nested under <c>kc</c>.
+        /// </summary>
+        public static class Kc
+        {
+            /// <summary>
+            /// Fetch the certificate-authority chain (root + issuing intermediate) from KeyCustodian (internal service-to-service / in-process). Public trust-anchor material distributed over already-trusted internal channels only.
+            /// </summary>
+            public const string Cacert = "internal.kc.cacert";
+
+            /// <summary>
+            /// Request a workload leaf certificate from KeyCustodian by submitting a certificate-signing request (internal service-to-service, cross-process only). The scope gates whether a caller may reach the issuance surface at all; the leaf subject-alternative-name is always the authenticated mTLS peer identity, never caller-supplied.
+            /// </summary>
+            public const string Issue = "internal.kc.issue";
+
+            /// <summary>
+            /// Fetch a payload-encryption keyring from KeyCustodian (internal service-to-service / in-process). The scope gates whether a caller may reach the keyring surface at all; a per-workload domain policy decides which domains it may fetch.
+            /// </summary>
+            public const string Keyring = "internal.kc.keyring";
+
+            /// <summary>
+            /// Sign a payload with a KeyCustodian-managed signing key (internal service-to-service / in-process minter).
+            /// </summary>
+            public const string Sign = "internal.kc.sign";
+
+            /// <summary>
+            /// Scopes nested under <c>seal</c>.
+            /// </summary>
+            public static class Seal
+            {
+                /// <summary>
+                /// Fetch a target service's PUBLIC sealing key from KeyCustodian to seal a payload TO it (internal service-to-service / in-process). Public key material is harmless to over-share; the scope gates whether a caller may reach the seal-public-key surface at all.
+                /// </summary>
+                public const string Encrypt = "internal.kc.seal.encrypt";
+
+                /// <summary>
+                /// Fetch the caller's OWN PRIVATE sealing key from KeyCustodian to open payloads sealed to it (internal service-to-service, cross-process only). The op carries no target — the key is selected purely from the authenticated mTLS peer identity, so a caller can only ever obtain its own private key.
+                /// </summary>
+                public const string Open = "internal.kc.seal.open";
+            }
+        }
+    }
+
+    /// <summary>
     /// Scopes nested under <c>self</c>.
     /// </summary>
     public static class Self
@@ -210,6 +258,12 @@ public static partial class Scopes
         "auth.user.impersonate.consent",
         "auth.user.impersonate.force",
         "billing.payment.charge",
+        "internal.kc.cacert",
+        "internal.kc.issue",
+        "internal.kc.keyring",
+        "internal.kc.seal.encrypt",
+        "internal.kc.seal.open",
+        "internal.kc.sign",
         "self.read",
         "self.write",
     };
@@ -228,6 +282,11 @@ public static partial class Scopes
         "auth.user.impersonate.consent",
         "auth.user.impersonate.force",
         "billing.payment.charge",
+        "internal.kc.issue",
+        "internal.kc.keyring",
+        "internal.kc.seal.encrypt",
+        "internal.kc.seal.open",
+        "internal.kc.sign",
     };
 
     private static readonly Dictionary<string, ActionSensitivity> sr_actionSensitivity =
@@ -239,6 +298,12 @@ public static partial class Scopes
         ["auth.user.impersonate.consent"] = ActionSensitivity.Sensitive,
         ["auth.user.impersonate.force"] = ActionSensitivity.Critical,
         ["billing.payment.charge"] = ActionSensitivity.Critical,
+        ["internal.kc.cacert"] = ActionSensitivity.Sensitive,
+        ["internal.kc.issue"] = ActionSensitivity.Critical,
+        ["internal.kc.keyring"] = ActionSensitivity.Critical,
+        ["internal.kc.seal.encrypt"] = ActionSensitivity.Sensitive,
+        ["internal.kc.seal.open"] = ActionSensitivity.Critical,
+        ["internal.kc.sign"] = ActionSensitivity.Critical,
         ["self.read"] = ActionSensitivity.Routine,
         ["self.write"] = ActionSensitivity.Routine,
     };

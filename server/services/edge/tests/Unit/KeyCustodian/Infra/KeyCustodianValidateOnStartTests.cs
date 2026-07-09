@@ -8,6 +8,7 @@ namespace D2.Edge.Tests.Unit.KeyCustodian.Infra;
 
 using D2.Edge.KeyCustodian.App.Infrastructure.Configuration;
 using D2.Edge.KeyCustodian.Infra.Configuration;
+using D2.Shared.Auth.Abstractions;
 using D2.Shared.Messaging;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -88,6 +89,60 @@ public sealed class KeyCustodianValidateOnStartTests : IDisposable
             .Should().Throw<OptionsValidationException>();
     }
 
+    [Fact]
+    public void EmptyAppIssuerBaseUrl_FailsValidationOnResolve()
+    {
+        // IssuerBaseUrl is [Required] + [MinLength(1)] — an empty value (the binder
+        // default) must fail the startup gate so the OIDC discovery handler never
+        // serves an empty `issuer` at request time (fail-loud).
+        using var sp = BuildProvider(
+            ConfigurationWithOverride("KEYCUSTODIAN_APP:IssuerBaseUrl", string.Empty));
+
+        sp.Invoking(s => s.GetRequiredService<IOptions<KeyCustodianOptions>>().Value)
+            .Should().Throw<OptionsValidationException>(
+                because: "an empty IssuerBaseUrl must fail the startup validation gate");
+    }
+
+    [Theory]
+    [InlineData("   ")]
+    [InlineData("\t")]
+    [InlineData(" \t ")]
+    public void WhitespaceAppIssuerBaseUrl_FailsValidationOnResolve(string whitespace)
+    {
+        // [Required] rejects null; [MinLength(1)] rejects empty — but neither rejects
+        // whitespace-only values. Without the IValidatableObject Falsey() check a
+        // "   " IssuerBaseUrl boots and serves issuer:"   " + jwks_uri:"   /.well-known/...".
+        // The Validate() predicate catches it and the startup gate surfaces it.
+        using var sp = BuildProvider(
+            ConfigurationWithOverride("KEYCUSTODIAN_APP:IssuerBaseUrl", whitespace));
+
+        sp.Invoking(s => s.GetRequiredService<IOptions<KeyCustodianOptions>>().Value)
+            .Should().Throw<OptionsValidationException>(
+                because: "a whitespace-only IssuerBaseUrl must fail the startup validation gate");
+    }
+
+    [Fact]
+    public void MissingAppIssuerBaseUrl_FailsValidationOnResolve()
+    {
+        // With NO IssuerBaseUrl key present the binder leaves it at string.Empty,
+        // which violates [Required]. Must fail at the startup gate.
+        var settings = new Dictionary<string, string?>
+        {
+            ["KEYCUSTODIAN_APP:Default:Cadence"] = "30.00:00:00",
+            ["KEYCUSTODIAN_APP:Default:Grace"] = "7.00:00:00",
+            ["KEYCUSTODIAN_APP:Default:SmokeSoak"] = "01:00:00",
+            ["KEYCUSTODIAN_INFRA:RootKeyPath"] = r_rootKeyDir,
+            ["KEYCUSTODIAN_INFRA:RotationCheckInterval"] = "00:05:00",
+            ["KEYCUSTODIAN_INFRA:DbCommandTimeoutSeconds"] = "30",
+        };
+        var config = new ConfigurationBuilder().AddInMemoryCollection(settings).Build();
+        using var sp = BuildProvider(config);
+
+        sp.Invoking(s => s.GetRequiredService<IOptions<KeyCustodianOptions>>().Value)
+            .Should().Throw<OptionsValidationException>(
+                because: "an absent IssuerBaseUrl must fail the startup validation gate");
+    }
+
     // -----------------------------------------------------------------------
     // Nested policy validation — IValidatableObject recursion regression
     // (§23.7 start-validation gap: ValidateDataAnnotations() does NOT recurse
@@ -131,6 +186,7 @@ public sealed class KeyCustodianValidateOnStartTests : IDisposable
         // first ForDomain() call.
         var settings = new Dictionary<string, string?>
         {
+            ["KEYCUSTODIAN_APP:IssuerBaseUrl"] = "https://edge.internal",
             ["KEYCUSTODIAN_APP:Default:Cadence"] = "02:00:00",
             ["KEYCUSTODIAN_APP:Default:Grace"] = "02:00:00",
             ["KEYCUSTODIAN_APP:Default:SmokeSoak"] = "02:00:00",
@@ -154,6 +210,7 @@ public sealed class KeyCustodianValidateOnStartTests : IDisposable
         // when ForDomain(JwksSigning) is first called.
         var settings = new Dictionary<string, string?>
         {
+            ["KEYCUSTODIAN_APP:IssuerBaseUrl"] = "https://edge.internal",
             ["KEYCUSTODIAN_APP:Default:Cadence"] = "30.00:00:00",
             ["KEYCUSTODIAN_APP:Default:Grace"] = "07.00:00:00",
             ["KEYCUSTODIAN_APP:Default:SmokeSoak"] = "01:00:00",
@@ -179,6 +236,7 @@ public sealed class KeyCustodianValidateOnStartTests : IDisposable
         // start gate — regression guard so the fix does not over-reject valid config.
         var settings = new Dictionary<string, string?>
         {
+            ["KEYCUSTODIAN_APP:IssuerBaseUrl"] = "https://edge.internal",
             ["KEYCUSTODIAN_APP:Default:Cadence"] = "30.00:00:00",
             ["KEYCUSTODIAN_APP:Default:Grace"] = "07.00:00:00",
             ["KEYCUSTODIAN_APP:Default:SmokeSoak"] = "01:00:00",
@@ -220,6 +278,38 @@ public sealed class KeyCustodianValidateOnStartTests : IDisposable
                     + "TimeSpan.Zero and must fail the startup validation gate");
     }
 
+    [Fact]
+    public void MissingWorkloadIdentityServiceId_FailsValidationOnResolve()
+    {
+        // The CA-seeding + key-rotation System workers establish their System request
+        // context from the host's workload ServiceId. AddD2KeyCustodian does NOT bind it
+        // (the host owns the bind) but DOES gate presence — an unset ServiceId must fail the
+        // start gate rather than silently seed + rotate under an empty self-id (fail-late).
+        using var sp = BuildProvider(KcInfraTestKit.BuildConfiguration(r_rootKeyDir));
+
+        sp.Invoking(s => s.GetRequiredService<IOptions<D2WorkloadIdentityOptions>>().Value)
+            .Should().Throw<OptionsValidationException>(
+                because: "an unset host ServiceId must fail the KeyCustodian start gate");
+    }
+
+    [Fact]
+    public void ConfiguredWorkloadIdentityServiceId_ResolvesWithoutThrowing()
+    {
+        // With the host's bind supplying a non-empty ServiceId, the presence gate passes —
+        // regression guard so the fix does not over-reject a properly-configured host.
+        var services = new ServiceCollection();
+        services.AddLogging();
+        services.AddSingleton<IMessageBus, NoopMessageBus>();
+        services.AddD2KeyCustodian(
+            KcInfraTestKit.BuildConfiguration(r_rootKeyDir), KcInfraTestKit.FAKE_CONNECTION_STRING);
+        services.Configure<D2WorkloadIdentityOptions>(o => o.ServiceId = "key-custodian");
+
+        using var sp = services.BuildServiceProvider();
+
+        sp.Invoking(s => s.GetRequiredService<IOptions<D2WorkloadIdentityOptions>>().Value)
+            .Should().NotThrow("a bound non-empty ServiceId satisfies the KC start gate");
+    }
+
     private static ServiceProvider BuildProvider(IConfiguration configuration)
     {
         var services = new ServiceCollection();
@@ -233,6 +323,7 @@ public sealed class KeyCustodianValidateOnStartTests : IDisposable
     {
         var settings = new Dictionary<string, string?>
         {
+            ["KEYCUSTODIAN_APP:IssuerBaseUrl"] = "https://edge.internal",
             ["KEYCUSTODIAN_APP:Default:Cadence"] = "30.00:00:00",
             ["KEYCUSTODIAN_APP:Default:Grace"] = "7.00:00:00",
             ["KEYCUSTODIAN_APP:Default:SmokeSoak"] = "01:00:00",

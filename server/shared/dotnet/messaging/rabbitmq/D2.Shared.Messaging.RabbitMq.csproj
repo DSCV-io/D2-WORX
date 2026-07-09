@@ -85,6 +85,13 @@ Copyright (c) DCSV. All rights reserved.
 
   <ItemGroup>
     <InternalsVisibleTo Include="D2.Shared.Tests" />
+    <!--
+      The Edge test tree hosts the sealed-messaging headline integration proof, whose
+      fixture message types register their descriptors through the internal
+      MessageWireResolver.RegisterForTesting seam (the production registry carries only
+      real spec messages).
+    -->
+    <InternalsVisibleTo Include="D2.Edge.Tests" />
   </ItemGroup>
 
   <!-- Publish metadata (per-package semver + NuGet identity). -->

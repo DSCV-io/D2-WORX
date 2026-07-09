@@ -32,27 +32,27 @@ export const protobufPackage = "d2.enumfixtures.v1";
  * -----------------------------------------------------------------------
  */
 
-export interface SignWithKindRequest {
+export interface SignWithKindFixtureRequest {
   kid: string;
   keyKind: string;
 }
 
-export interface SignWithKindResponse {
+export interface SignWithKindFixtureResponse {
   result?: D2ResultProto | undefined;
-  data?: SignWithKindOutput | undefined;
+  data?: SignWithKindFixtureOutput | undefined;
 }
 
-export interface SignWithKindOutput {
+export interface SignWithKindFixtureOutput {
   signature: string;
   keyKind: string;
 }
 
-function createBaseSignWithKindRequest(): SignWithKindRequest {
+function createBaseSignWithKindFixtureRequest(): SignWithKindFixtureRequest {
   return { kid: "", keyKind: "" };
 }
 
-export const SignWithKindRequest: MessageFns<SignWithKindRequest> = {
-  encode(message: SignWithKindRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+export const SignWithKindFixtureRequest: MessageFns<SignWithKindFixtureRequest> = {
+  encode(message: SignWithKindFixtureRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
     if (message.kid !== "") {
       writer.uint32(10).string(message.kid);
     }
@@ -62,10 +62,10 @@ export const SignWithKindRequest: MessageFns<SignWithKindRequest> = {
     return writer;
   },
 
-  decode(input: BinaryReader | Uint8Array, length?: number): SignWithKindRequest {
+  decode(input: BinaryReader | Uint8Array, length?: number): SignWithKindFixtureRequest {
     const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
     const end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseSignWithKindRequest();
+    const message = createBaseSignWithKindFixtureRequest();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
@@ -94,7 +94,7 @@ export const SignWithKindRequest: MessageFns<SignWithKindRequest> = {
     return message;
   },
 
-  fromJSON(object: any): SignWithKindRequest {
+  fromJSON(object: any): SignWithKindFixtureRequest {
     return {
       kid: isSet(object.kid) ? globalThis.String(object.kid) : "",
       keyKind: isSet(object.keyKind)
@@ -105,7 +105,7 @@ export const SignWithKindRequest: MessageFns<SignWithKindRequest> = {
     };
   },
 
-  toJSON(message: SignWithKindRequest): unknown {
+  toJSON(message: SignWithKindFixtureRequest): unknown {
     const obj: any = {};
     if (message.kid !== "") {
       obj.kid = message.kid;
@@ -116,36 +116,36 @@ export const SignWithKindRequest: MessageFns<SignWithKindRequest> = {
     return obj;
   },
 
-  create(base?: DeepPartial<SignWithKindRequest>): SignWithKindRequest {
-    return SignWithKindRequest.fromPartial(base ?? {});
+  create(base?: DeepPartial<SignWithKindFixtureRequest>): SignWithKindFixtureRequest {
+    return SignWithKindFixtureRequest.fromPartial(base ?? {});
   },
-  fromPartial(object: DeepPartial<SignWithKindRequest>): SignWithKindRequest {
-    const message = createBaseSignWithKindRequest();
+  fromPartial(object: DeepPartial<SignWithKindFixtureRequest>): SignWithKindFixtureRequest {
+    const message = createBaseSignWithKindFixtureRequest();
     message.kid = object.kid ?? "";
     message.keyKind = object.keyKind ?? "";
     return message;
   },
 };
 
-function createBaseSignWithKindResponse(): SignWithKindResponse {
+function createBaseSignWithKindFixtureResponse(): SignWithKindFixtureResponse {
   return { result: undefined, data: undefined };
 }
 
-export const SignWithKindResponse: MessageFns<SignWithKindResponse> = {
-  encode(message: SignWithKindResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+export const SignWithKindFixtureResponse: MessageFns<SignWithKindFixtureResponse> = {
+  encode(message: SignWithKindFixtureResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
     if (message.result !== undefined) {
       D2ResultProto.encode(message.result, writer.uint32(10).fork()).join();
     }
     if (message.data !== undefined) {
-      SignWithKindOutput.encode(message.data, writer.uint32(18).fork()).join();
+      SignWithKindFixtureOutput.encode(message.data, writer.uint32(18).fork()).join();
     }
     return writer;
   },
 
-  decode(input: BinaryReader | Uint8Array, length?: number): SignWithKindResponse {
+  decode(input: BinaryReader | Uint8Array, length?: number): SignWithKindFixtureResponse {
     const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
     const end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseSignWithKindResponse();
+    const message = createBaseSignWithKindFixtureResponse();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
@@ -162,7 +162,7 @@ export const SignWithKindResponse: MessageFns<SignWithKindResponse> = {
             break;
           }
 
-          message.data = SignWithKindOutput.decode(reader, reader.uint32());
+          message.data = SignWithKindFixtureOutput.decode(reader, reader.uint32());
           continue;
         }
       }
@@ -174,45 +174,45 @@ export const SignWithKindResponse: MessageFns<SignWithKindResponse> = {
     return message;
   },
 
-  fromJSON(object: any): SignWithKindResponse {
+  fromJSON(object: any): SignWithKindFixtureResponse {
     return {
       result: isSet(object.result) ? D2ResultProto.fromJSON(object.result) : undefined,
-      data: isSet(object.data) ? SignWithKindOutput.fromJSON(object.data) : undefined,
+      data: isSet(object.data) ? SignWithKindFixtureOutput.fromJSON(object.data) : undefined,
     };
   },
 
-  toJSON(message: SignWithKindResponse): unknown {
+  toJSON(message: SignWithKindFixtureResponse): unknown {
     const obj: any = {};
     if (message.result !== undefined) {
       obj.result = D2ResultProto.toJSON(message.result);
     }
     if (message.data !== undefined) {
-      obj.data = SignWithKindOutput.toJSON(message.data);
+      obj.data = SignWithKindFixtureOutput.toJSON(message.data);
     }
     return obj;
   },
 
-  create(base?: DeepPartial<SignWithKindResponse>): SignWithKindResponse {
-    return SignWithKindResponse.fromPartial(base ?? {});
+  create(base?: DeepPartial<SignWithKindFixtureResponse>): SignWithKindFixtureResponse {
+    return SignWithKindFixtureResponse.fromPartial(base ?? {});
   },
-  fromPartial(object: DeepPartial<SignWithKindResponse>): SignWithKindResponse {
-    const message = createBaseSignWithKindResponse();
+  fromPartial(object: DeepPartial<SignWithKindFixtureResponse>): SignWithKindFixtureResponse {
+    const message = createBaseSignWithKindFixtureResponse();
     message.result = (object.result !== undefined && object.result !== null)
       ? D2ResultProto.fromPartial(object.result)
       : undefined;
     message.data = (object.data !== undefined && object.data !== null)
-      ? SignWithKindOutput.fromPartial(object.data)
+      ? SignWithKindFixtureOutput.fromPartial(object.data)
       : undefined;
     return message;
   },
 };
 
-function createBaseSignWithKindOutput(): SignWithKindOutput {
+function createBaseSignWithKindFixtureOutput(): SignWithKindFixtureOutput {
   return { signature: "", keyKind: "" };
 }
 
-export const SignWithKindOutput: MessageFns<SignWithKindOutput> = {
-  encode(message: SignWithKindOutput, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+export const SignWithKindFixtureOutput: MessageFns<SignWithKindFixtureOutput> = {
+  encode(message: SignWithKindFixtureOutput, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
     if (message.signature !== "") {
       writer.uint32(10).string(message.signature);
     }
@@ -222,10 +222,10 @@ export const SignWithKindOutput: MessageFns<SignWithKindOutput> = {
     return writer;
   },
 
-  decode(input: BinaryReader | Uint8Array, length?: number): SignWithKindOutput {
+  decode(input: BinaryReader | Uint8Array, length?: number): SignWithKindFixtureOutput {
     const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
     const end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseSignWithKindOutput();
+    const message = createBaseSignWithKindFixtureOutput();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
@@ -254,7 +254,7 @@ export const SignWithKindOutput: MessageFns<SignWithKindOutput> = {
     return message;
   },
 
-  fromJSON(object: any): SignWithKindOutput {
+  fromJSON(object: any): SignWithKindFixtureOutput {
     return {
       signature: isSet(object.signature) ? globalThis.String(object.signature) : "",
       keyKind: isSet(object.keyKind)
@@ -265,7 +265,7 @@ export const SignWithKindOutput: MessageFns<SignWithKindOutput> = {
     };
   },
 
-  toJSON(message: SignWithKindOutput): unknown {
+  toJSON(message: SignWithKindFixtureOutput): unknown {
     const obj: any = {};
     if (message.signature !== "") {
       obj.signature = message.signature;
@@ -276,11 +276,11 @@ export const SignWithKindOutput: MessageFns<SignWithKindOutput> = {
     return obj;
   },
 
-  create(base?: DeepPartial<SignWithKindOutput>): SignWithKindOutput {
-    return SignWithKindOutput.fromPartial(base ?? {});
+  create(base?: DeepPartial<SignWithKindFixtureOutput>): SignWithKindFixtureOutput {
+    return SignWithKindFixtureOutput.fromPartial(base ?? {});
   },
-  fromPartial(object: DeepPartial<SignWithKindOutput>): SignWithKindOutput {
-    const message = createBaseSignWithKindOutput();
+  fromPartial(object: DeepPartial<SignWithKindFixtureOutput>): SignWithKindFixtureOutput {
+    const message = createBaseSignWithKindFixtureOutput();
     message.signature = object.signature ?? "";
     message.keyKind = object.keyKind ?? "";
     return message;
@@ -289,37 +289,38 @@ export const SignWithKindOutput: MessageFns<SignWithKindOutput> = {
 
 export type EnumFixturesSignerService = typeof EnumFixturesSignerService;
 export const EnumFixturesSignerService = {
-  signWithKind: {
-    path: "/d2.enumfixtures.v1.EnumFixturesSigner/SignWithKind",
+  signWithKindFixture: {
+    path: "/d2.enumfixtures.v1.EnumFixturesSigner/SignWithKindFixture",
     requestStream: false,
     responseStream: false,
-    requestSerialize: (value: SignWithKindRequest): Buffer => Buffer.from(SignWithKindRequest.encode(value).finish()),
-    requestDeserialize: (value: Buffer): SignWithKindRequest => SignWithKindRequest.decode(value),
-    responseSerialize: (value: SignWithKindResponse): Buffer =>
-      Buffer.from(SignWithKindResponse.encode(value).finish()),
-    responseDeserialize: (value: Buffer): SignWithKindResponse => SignWithKindResponse.decode(value),
+    requestSerialize: (value: SignWithKindFixtureRequest): Buffer =>
+      Buffer.from(SignWithKindFixtureRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer): SignWithKindFixtureRequest => SignWithKindFixtureRequest.decode(value),
+    responseSerialize: (value: SignWithKindFixtureResponse): Buffer =>
+      Buffer.from(SignWithKindFixtureResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer): SignWithKindFixtureResponse => SignWithKindFixtureResponse.decode(value),
   },
 } as const;
 
 export interface EnumFixturesSignerServer extends UntypedServiceImplementation {
-  signWithKind: handleUnaryCall<SignWithKindRequest, SignWithKindResponse>;
+  signWithKindFixture: handleUnaryCall<SignWithKindFixtureRequest, SignWithKindFixtureResponse>;
 }
 
 export interface EnumFixturesSignerClient extends Client {
-  signWithKind(
-    request: SignWithKindRequest,
-    callback: (error: ServiceError | null, response: SignWithKindResponse) => void,
+  signWithKindFixture(
+    request: SignWithKindFixtureRequest,
+    callback: (error: ServiceError | null, response: SignWithKindFixtureResponse) => void,
   ): ClientUnaryCall;
-  signWithKind(
-    request: SignWithKindRequest,
+  signWithKindFixture(
+    request: SignWithKindFixtureRequest,
     metadata: Metadata,
-    callback: (error: ServiceError | null, response: SignWithKindResponse) => void,
+    callback: (error: ServiceError | null, response: SignWithKindFixtureResponse) => void,
   ): ClientUnaryCall;
-  signWithKind(
-    request: SignWithKindRequest,
+  signWithKindFixture(
+    request: SignWithKindFixtureRequest,
     metadata: Metadata,
     options: Partial<CallOptions>,
-    callback: (error: ServiceError | null, response: SignWithKindResponse) => void,
+    callback: (error: ServiceError | null, response: SignWithKindFixtureResponse) => void,
   ): ClientUnaryCall;
 }
 

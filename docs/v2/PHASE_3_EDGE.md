@@ -114,8 +114,17 @@ shared Redis lock surface.
 > (server require+validate in `D2.Shared.AspNetCore`, client leaf-present + refresh-ahead
 > in `D2.Shared.Auth.Outbound`, the `D2.Shared.WorkloadIdentity` SPIFFE grammar), proven
 > end-to-end on a local harness. **Four cross-process pieces remain for the Edge build:**
-> (1) expose `IssueWorkloadCertificate` over the gRPC contract — today `IKeyCustodianApi`
-> exposes only `GetJwks`, and issuance is an in-process command; (2) the workload
+> (1) ~~expose `IssueWorkloadCertificate` over the gRPC contract~~ — **BUILT + proven in
+> isolation (0026)**: the `IssueWorkloadCertificate` gRPC method (on its own
+> `KeyCustodianCertificateAuthority` service) and the `GetCaCertificate` trust-anchor
+> fetch (its own `KeyCustodianCaCertificate` service) are generated, committed, and
+> TestServer-proven, and the REAL fail-closed issuance rule landed in the handler WITH the
+> transport: CSR-based structural self-issue (no subject on the D2 wire — the leaf SAN is
+> always the authenticated mTLS peer; proof-of-possession + P-256 curve enforced; the
+> per-handler `internal.kc.issue` scope; leaf signing isolated behind
+> `ICaLeafSigningCapability`). The remaining Edge-build work on this piece is the LIVE
+> host wiring — `MapGrpcService` + the host-supplied issuer adapter dialing the built
+> endpoint (items 3–4); (2) the workload
 > **first-leaf bootstrap identity** — chicken-and-egg (a workload needs a leaf to mTLS-call
 > KeyCustodian for a leaf), provisioned by the deployment orchestrator; (3) wire the mTLS
 > server + the leaf-refresh client into the running Edge host (the shipped client uses an
@@ -124,6 +133,24 @@ shared Redis lock surface.
 > construction; callers holding long-lived channels must rebuild on rotation to adopt a
 > freshly-rotated leaf (currently the consumer's responsibility, undocumented in host wiring).
 > See [ADR-0023](../adrs/0023-mtls-workload-identity.md) "Negative / new work".
+>
+> **Host-boot gates surfaced by the KeyCustodian foundation hardening** (tracked in
+> [PHASE_3.md](PHASE_3.md) §G, not duplicated): when the Edge host wires mTLS it must
+> **hard-require it at boot** — fail loud when cross-process services are mapped but mTLS is
+> disabled (a fail-closed deny that would otherwise be silently dead) — and wire the KC signer's
+> transport scope + the `d2.internal` audience validators with resolvability + negative tests;
+> and it must add a host-level **assembly-scan DI-isolation test** proving no type outside the
+> auth-mint composition can resolve the JWT-signing minter capability (proven at module scope
+> today, not yet at host scope).
+
+> **Deferred sign-scope grant to wire here.** Nothing currently mints `internal.kc.sign`
+> into a caller's token — the production grant is host-blocked (no Edge boundary minter
+> exists yet). The KeyCustodian general `sign` handler already enforces the scope in-process
+> via a `BaseHandler` `ScopeRequirement` gate (`Scopes.Internal.Kc.Sign`, read from
+> `IRequestContext.Scopes`), which is **fail-closed** — every general-surface `sign` call is
+> denied `Forbidden` at the scope pre-check until the Edge boundary minter grants
+> `internal.kc.sign` to authorized sign callers. That mint-and-grant is the genuine build
+> dependency (no Edge minter host exists yet); the in-process gate ships fail-closed now.
 
 ---
 
@@ -173,7 +200,9 @@ Every new Edge service (Phase 3+) verifies the following at registration time:
 - **Connection strings** — externalized via `.env.local` / `.env.secrets`, never
   hardcoded.
 - **DB constraints** — unique violations (PG `23505`) caught and mapped via
-  `BaseRepoHandler` + `IDbExceptionClassifier` → returns 409, not 500.
+  `BaseRepoHandler` + `IDbExceptionClassifier` → returns 409, not 500. Exclusion violations
+  (PG `23P01`, raised by deferrable EXCLUDE constraints — e.g. KeyCustodian's
+  one-active-key-per-domain invariant) classify the same way → 409.
 - **Migrations** — never hand-written. Always `dotnet ef migrations add <Name>`.
   Multi-replica safety via PG advisory lock at the startup migrator.
 - **Cross-service mutations** — uses the SAGA pattern (§6) for foreground

@@ -151,6 +151,29 @@ internal static partial class KeyCustodianLog
     public static partial void NoActiveIssuingCa(ILogger logger, string workloadServiceId);
 
     /// <summary>
+    /// Logs that replacement-key generation failed AFTER the compromise durably
+    /// committed. The compromised key is already dead; the missing replacement is
+    /// non-fatal (the scheduler or an operator provisions one on the next cycle), so
+    /// the handler still returns success with a null replacement kid.
+    /// </summary>
+    /// <param name="logger">The logger.</param>
+    /// <param name="domain">The key domain whose replacement generation failed.</param>
+    /// <param name="reason">
+    /// The failure reason — the build result's error code, or the classified
+    /// second-save failure kind. Never an exception message (§3.1).
+    /// </param>
+    // long log template — cannot wrap
+    [LoggerMessage(
+        EventId = 9508,
+        Level = LogLevel.Warning,
+        Message =
+            "Replacement pending key generation failed for domain {domain} after the compromise "
+            + "committed (reason {reason}); the compromised key is already dead — a replacement "
+            + "is generated on the next cycle.")]
+    public static partial void ReplacementGenerationFailed(
+        ILogger logger, string domain, string? reason);
+
+    /// <summary>
     /// Logs that the certificate-authority hierarchy was seeded on startup: the
     /// root + intermediate were loaded from the CA provider and persisted as active
     /// managed keys. No certificate or key material is logged.
@@ -180,4 +203,160 @@ internal static partial class KeyCustodianLog
             "Certificate-authority hierarchy already seeded (active root + intermediate "
             + "present); seeding is a no-op.")]
     public static partial void CaSeedSkippedAlreadyActive(ILogger logger);
+
+    /// <summary>
+    /// Logs that the capability authority rejected a request: the named workload is
+    /// not authorized for the requested capability on the requested target. The
+    /// workload id, capability, and target are all loggable non-PII labels; no key
+    /// material is logged and there is no exception parameter (§3.1).
+    /// </summary>
+    /// <param name="logger">The logger.</param>
+    /// <param name="workloadServiceId">The workload that was denied (a non-PII service label).</param>
+    /// <param name="capability">The requested capability (sign / lifecycle / keyring / issuance / ca-cert / seal-encrypt / seal-decrypt).</param>
+    /// <param name="target">
+    /// The requested target (e.g. the key domain), or the closed-set
+    /// <c>AuthorityRejections.Target.NONE</c> marker for a targetless capability
+    /// (issuance / ca-cert).
+    /// </param>
+    [LoggerMessage(
+        EventId = 9512,
+        Level = LogLevel.Warning,
+        Message =
+            "Authority rejected: workload {workloadServiceId} not authorized for capability "
+            + "{capability} on target {target}.")]
+    public static partial void AuthorityRejected(
+        ILogger logger, string workloadServiceId, string capability, string target);
+
+    /// <summary>
+    /// Logs that a GetKeyring request found no active payload key for the requested
+    /// domain and returned 503. The domain is loggable (a non-PII label); no kid and no
+    /// key material is logged, and there is no exception parameter (§3.1).
+    /// </summary>
+    /// <param name="logger">The logger.</param>
+    /// <param name="domain">The payload key domain whose keyring has no active key.</param>
+    // long log template — cannot wrap
+    [LoggerMessage(
+        EventId = 9513,
+        Level = LogLevel.Warning,
+        Message =
+            "Keyring fetch for domain {domain} found no active payload key and returned 503; "
+            + "payload encryption for the domain is blocked until a key is active.")]
+    public static partial void KeyringKeyUnavailable(ILogger logger, string domain);
+
+    /// <summary>
+    /// Logs that a CA-certificate fetch found no active root or issuing-intermediate
+    /// tier and returned 503. The caller id is loggable (a non-PII service label); no
+    /// certificate or key material is logged, and there is no exception parameter
+    /// (§3.1).
+    /// </summary>
+    /// <param name="logger">The logger.</param>
+    /// <param name="callerId">The caller that requested the chain (a non-PII service label).</param>
+    // long log template — cannot wrap
+    [LoggerMessage(
+        EventId = 9514,
+        Level = LogLevel.Warning,
+        Message =
+            "CA-certificate fetch for caller {callerId} found no active root/intermediate "
+            + "tier and returned 503; the chain cannot be distributed until the CA is seeded "
+            + "or rotated in.")]
+    public static partial void CaCertificateUnavailable(ILogger logger, string callerId);
+
+    /// <summary>
+    /// Logs that a workload leaf certificate was issued (the log-side forensic
+    /// complement to the durable issuance audit row). The workload id and kid are
+    /// loggable non-PII labels; no certificate or key material is logged.
+    /// </summary>
+    /// <param name="logger">The logger.</param>
+    /// <param name="workloadServiceId">The workload the leaf was issued to (its SAN identity).</param>
+    /// <param name="kid">The issuing-intermediate kid that signed the leaf.</param>
+    /// <param name="notAfter">The leaf's not-after instant (ISO-8601).</param>
+    // long log template — cannot wrap
+    [LoggerMessage(
+        EventId = 9515,
+        Level = LogLevel.Information,
+        Message =
+            "Workload leaf certificate issued to {workloadServiceId} by intermediate {kid}; "
+            + "valid until {notAfter}.")]
+    public static partial void LeafCertificateIssued(
+        ILogger logger, string workloadServiceId, string kid, string notAfter);
+
+    /// <summary>
+    /// Logs that a per-service sealing keypair was provisioned lazily on first use: the
+    /// forensic log-side complement to the durable provisioning audit row. The service id
+    /// and the caller identity that triggered provisioning are loggable non-PII service
+    /// labels; no key material is logged and there is no exception parameter (§3.1). A
+    /// keypair spontaneously materializing under a caller's identity is security-relevant.
+    /// </summary>
+    /// <param name="logger">The logger.</param>
+    /// <param name="serviceId">The service the sealing keypair was provisioned for.</param>
+    /// <param name="kid">The activated seal key's kid.</param>
+    /// <param name="triggeredBy">The authenticated caller that triggered provisioning.</param>
+    // long log template — cannot wrap
+    [LoggerMessage(
+        EventId = 9516,
+        Level = LogLevel.Information,
+        Message =
+            "Sealing keypair provisioned for service {serviceId} (kid {kid}) on first use, "
+            + "triggered by caller {triggeredBy}.")]
+    public static partial void SealKeypairProvisioned(
+        ILogger logger, string serviceId, string kid, string triggeredBy);
+
+    /// <summary>
+    /// Logs that a seal-key fetch found no active sealing key for the requested service
+    /// and returned 503 (a lost provisioning race whose winner is not yet visible, or a
+    /// mid-rotation no-active-key window). The service id is loggable (a non-PII label); no
+    /// kid and no key material is logged, and there is no exception parameter (§3.1).
+    /// </summary>
+    /// <param name="logger">The logger.</param>
+    /// <param name="serviceId">The service whose sealing keyring has no active key.</param>
+    // long log template — cannot wrap
+    [LoggerMessage(
+        EventId = 9517,
+        Level = LogLevel.Warning,
+        Message =
+            "Seal-key fetch for service {serviceId} found no active sealing key and returned 503; "
+            + "a concurrent first-request winner is not yet visible or the domain is mid-rotation.")]
+    public static partial void SealKeyUnavailable(ILogger logger, string serviceId);
+
+    /// <summary>
+    /// Logs that the stored CA-root SIGNING key was materialized to sign a successor
+    /// intermediate — the §9.44 chokepoint log for the trust-conferring path. The
+    /// operation label + both kids are loggable non-PII labels; NO key material is
+    /// logged and there is no exception parameter (§3.1).
+    /// </summary>
+    /// <param name="logger">The logger.</param>
+    /// <param name="operation">
+    /// The closed-set chokepoint operation (<c>generate-successor</c> /
+    /// <c>compromise-replacement</c>).
+    /// </param>
+    /// <param name="rootKid">The active root kid whose signing key was used.</param>
+    /// <param name="successorKid">The successor intermediate kid that was minted.</param>
+    // long log template — cannot wrap
+    [LoggerMessage(
+        EventId = 9518,
+        Level = LogLevel.Information,
+        Message =
+            "CA-root signing key used ({operation}): root {rootKid} signed successor "
+            + "intermediate {successorKid}.")]
+    public static partial void CaRootKeySigningUsed(
+        ILogger logger, string operation, string rootKid, string successorKid);
+
+    /// <summary>
+    /// Logs that the stored CA-root key was materialized to smoke-test a pending /
+    /// successor root during its activation or rotation — the §9.44 chokepoint log for
+    /// the non-minting health-check path. The operation label + kid are loggable non-PII
+    /// labels; NO key material is logged and there is no exception parameter (§3.1).
+    /// </summary>
+    /// <param name="logger">The logger.</param>
+    /// <param name="operation">
+    /// The closed-set chokepoint operation (<c>activate-smoke-test</c> /
+    /// <c>rotate-smoke-test</c>).
+    /// </param>
+    /// <param name="kid">The pending / successor root kid whose material was smoke-tested.</param>
+    [LoggerMessage(
+        EventId = 9519,
+        Level = LogLevel.Information,
+        Message = "CA-root key used ({operation}): smoke-tested root material {kid}.")]
+    public static partial void CaRootKeySmokeTested(
+        ILogger logger, string operation, string kid);
 }

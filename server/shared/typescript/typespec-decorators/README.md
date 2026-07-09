@@ -18,8 +18,9 @@ Edge routing config, and structured-log redaction markers.
 | `@d2RateLimitTier`    | `op`            | `tier: string`                                               | `D2_RATE_LIMIT_TIER_KEY`                                                               |
 | `@d2Audience`         | `op`            | `audience: string`                                           | `D2_AUDIENCE_KEY`                                                                      |
 | `@d2ServedBy`         | `op`            | `owner: string`                                              | `D2_SERVED_BY_KEY`                                                                     |
+| `@d2Concern`          | `op`            | `concern: string`                                            | `D2_CONCERN_KEY`                                                                       |
 | `@d2GrpcMethod`       | `op`            | `service: string, method: string, streaming?: string`        | `D2_GRPC_METHOD_KEY`                                                                   |
-| `@d2Redact`           | `ModelProperty` | _(none)_                                                     | `D2_REDACT_KEY`                                                                        |
+| `@d2Redact`           | `ModelProperty` | `reason: string` (a `RedactReason` member name)             | `D2_REDACT_KEY`                                                                        |
 | `@d2ServerPush`       | `op`            | `pushTarget: string`                                         | `D2_SERVER_PUSH_KEY`                                                                   |
 | `@d2Idempotent`       | `op`            | `keySource: string, ttlSeconds: number, ...fields: string[]` | `D2_IDEMPOTENT_KEY`                                                                    |
 | `@d2Resilience`       | `op`            | `pipeline: string, predicates?: { retryWhen?, failWhen? }`   | `D2_RESILIENCE_KEY` (+ `D2_RESILIENCE_RETRY_WHEN_KEY` / `D2_RESILIENCE_FAIL_WHEN_KEY`) |
@@ -211,7 +212,7 @@ if (retryRaw !== undefined) {
 
 ## Validation
 
-All 16 decorators carry build-time validation. Every diagnostic is **severity "error"** —
+All 19 decorators carry build-time validation. Every diagnostic is **severity "error"** —
 invalid configurations fail the TypeSpec compile rather than emitting a warning.
 
 ### Eager value-set checks (run in each `$fn` body)
@@ -229,6 +230,7 @@ invalid configurations fail the TypeSpec compile rather than emitting a warning.
 | `unknown-scope`                      | `@d2RequireAnyScope`, `@d2RequireAllScopes` | scope not in `contracts/auth-scopes/scopes.spec.json`                              |
 | `unknown-audience`                   | `@d2Audience`                               | audience not in `contracts/auth-audiences/audiences.spec.json` (and not `d2-edge`) |
 | `empty-served-by`                    | `@d2ServedBy`                               | owner is empty or whitespace-only                                                  |
+| `invalid-concern`                    | `@d2Concern`                                | segment is not a legal C# identifier (`^[A-Za-z][A-Za-z0-9]*$`)                    |
 
 ### `$onValidate` cross-decorator checks (run after all decorators apply)
 
@@ -338,11 +340,11 @@ guard asserts the parser's `ResultPredicateDiagnosticCode` union ⇔ the `$lib` 
   TypeSpec consumers. Imports `dist/tsp-index.js` to register the JS implementations.
 - **`dist/index.js`** (via `main`) — emitter-facing barrel: re-exports state-key symbols
   (`D2_REQUIRE_ANY_SCOPE_KEY`, `D2_REQUIRE_ALL_SCOPES_KEY`, `D2_RATE_LIMIT_TIER_KEY`,
-  `D2_AUDIENCE_KEY`, `D2_SERVED_BY_KEY`, `D2_GRPC_METHOD_KEY`, `D2_REDACT_KEY`,
+  `D2_AUDIENCE_KEY`, `D2_SERVED_BY_KEY`, `D2_CONCERN_KEY`, `D2_GRPC_METHOD_KEY`, `D2_REDACT_KEY`,
   `D2_SERVER_PUSH_KEY`, `D2_IDEMPOTENT_KEY`, `D2_RESILIENCE_KEY`,
   `D2_RESILIENCE_RETRY_WHEN_KEY`, `D2_RESILIENCE_FAIL_WHEN_KEY`, `D2_CSRF_KEY`,
-  `D2_HARMLESS_KEY`, `D2_IN_PROCESS_KEY`, `D2_COMMAND_KEY`, `D2_QUERY_KEY`, `D2_INTERNAL_KEY`),
-  payload types (`GrpcMethodPayload`, `IdempotentPayload`), the resilience pipeline parser (`parse`,
+  `D2_HARMLESS_KEY`, `D2_IN_PROCESS_KEY`, `D2_COMMAND_KEY`, `D2_QUERY_KEY`, `D2_INTERNAL_KEY`, `D2_FIELD_KEY`, `D2_RESERVED_KEY`),
+  payload types (`GrpcMethodPayload`, `IdempotentPayload`, `ReservedPayload`), the resilience pipeline parser (`parse`,
   `ResiliencePolicyNode`, `ResilienceParseResult`, `ResilienceParseError`,
   `ResilienceDiagnosticCode`), the result-predicate parser + AST + validation surface
   (`parseResultPredicate`, the `PredicateNode` AST family, `ResultPredicateDiagnosticCode`,
@@ -355,6 +357,15 @@ guard asserts the parser's `ResultPredicateDiagnosticCode` union ⇔ the `$lib` 
 
 These notes cover contracts between the AST/state-map layer and the emitter fleet.
 Emitter authors must read this section before generating code from any `@d2*` decorator.
+
+### Stock TypeSpec decorators consumed by the emitters
+
+The C# DTO emitter (`src/lib/csharp-dto-emitter.ts` in `@d2/typespec-emitters`) consumes
+the stock TypeSpec `@encodedName("application/json", "<wire>")` decorator — not a `@d2*`
+decorator — via `resolveEncodedName` from `@typespec/compiler`, and emits
+`[property: JsonPropertyName("<wire>")]` on the generated record param. See the
+[C# DTO emitter section](../typespec-emitters/README.md#c-dto-emitter-srclibcsharp-dto-emitterts)
+in the emitters README for the differs-from-default guard and conditional `using` rules.
 
 ### Sparse tunables — absent key means "use library default"
 
@@ -393,8 +404,9 @@ is an emitter-fleet responsibility, not encoded in the AST. The emitter must der
 | `@d2RateLimitTier`    | `program.stateMap(D2_RATE_LIMIT_TIER_KEY).get(op) as string`                                                                                                                                              | Validated value in `Standard \| Elevated \| Restricted`                                              |
 | `@d2Audience`         | `program.stateMap(D2_AUDIENCE_KEY).get(op) as string`                                                                                                                                                     | Validated against spec at compile time                                                               |
 | `@d2ServedBy`         | `program.stateMap(D2_SERVED_BY_KEY).get(op) as string`                                                                                                                                                    | Capability name; transport (leaf vs gRPC) is deployment-resolved                                     |
+| `@d2Concern`          | `program.stateMap(D2_CONCERN_KEY).get(op) as string`                                                                                                                                                      | Concern segment; routes the op's transport DTOs to `<clients-ns>.<Concern>` — see [SRC_GEN.md concern routing](../../../../docs/SRC_GEN.md#concern-based-client-namespace-routing-d2concern) |
 | `@d2GrpcMethod`       | `program.stateMap(D2_GRPC_METHOD_KEY).get(op) as GrpcMethodPayload`                                                                                                                                       | `{ service, method, streaming }`                                                                     |
-| `@d2Redact`           | `program.stateMap(D2_REDACT_KEY).has(prop)`                                                                                                                                                               | Presence check on `ModelProperty`                                                                    |
+| `@d2Redact`           | `program.stateMap(D2_REDACT_KEY).get(prop) as string`                                                                                                                                                    | The `RedactReason` member name on the `ModelProperty` (validated at compile time)                    |
 | `@d2ServerPush`       | `program.stateMap(D2_SERVER_PUSH_KEY).get(op) as string`                                                                                                                                                  | `user \| session`; event-type is derived from the op name by the emitter                             |
 | `@d2Idempotent`       | `program.stateMap(D2_IDEMPOTENT_KEY).get(op) as IdempotentPayload`                                                                                                                                        | `{ keySource, ttlSeconds, fields }`                                                                  |
 | `@d2Resilience`       | call `parse(program.stateMap(D2_RESILIENCE_KEY).get(op))` for the pipeline; `parseResultPredicate(program.stateMap(D2_RESILIENCE_RETRY_WHEN_KEY).get(op))` / `…FAIL_WHEN_KEY` for the optional predicates | Re-parse each stored raw string via the exported `parse()` / `parseResultPredicate()` to get the AST |

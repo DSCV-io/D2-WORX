@@ -24,9 +24,9 @@ using NodaTime;
 using Xunit;
 
 /// <summary>
-/// Regression tests for the disposal-flag memory-fence fix (A2-3-F1/F3/F4),
-/// the reissue-failure metric counter and its accompanying log field (E1-M-1),
-/// and the cache-hit debug log + startup-success info log (E1-M-2).
+/// Regression tests for the disposal-flag memory-fence fix,
+/// the reissue-failure metric counter and its accompanying log field,
+/// and the cache-hit debug log + startup-success info log.
 /// Each test records what breaks without the fix and passes with it.
 /// </summary>
 [Collection("OutboundTelemetrySerial")]
@@ -36,7 +36,7 @@ public sealed class WorkloadLeafRegressionTests
     private static readonly Instant SR_Base = Instant.FromUtc(2026, 1, 1, 0, 0, 0);
 
     // ------------------------------------------------------------------
-    // A2-3-F4 — Disposal-flag Volatile fence: WorkloadLeafClient
+    // Disposal-flag Volatile fence: WorkloadLeafClient
     // ------------------------------------------------------------------
 
     [Fact]
@@ -81,7 +81,7 @@ public sealed class WorkloadLeafRegressionTests
     }
 
     // ------------------------------------------------------------------
-    // A2-3-F4 — Disposal-flag Volatile fence: WorkloadLeafCache
+    // Disposal-flag Volatile fence: WorkloadLeafCache
     // ------------------------------------------------------------------
 
     [Fact]
@@ -117,7 +117,7 @@ public sealed class WorkloadLeafRegressionTests
     }
 
     // ------------------------------------------------------------------
-    // E1-M-1 — Reissue-failure metric counter + CachedLeafNotAfter log field
+    // Reissue-failure metric counter + CachedLeafNotAfter log field
     // ------------------------------------------------------------------
 
     [Fact]
@@ -158,7 +158,7 @@ public sealed class WorkloadLeafRegressionTests
         var entry = logger.Entries.FirstOrDefault(e => e.EventId.Id == 3001);
 
         entry.Should().NotBeNull("WorkloadLeafReissueFailed (EventId=3001) must be emitted on exception-path reissue");
-        entry!.Message.Should().Contain(
+        entry.Message.Should().Contain(
             "CachedLeafNotAfter=none",
             "CachedLeafNotAfter is 'none' when no cached leaf exists at failure time");
     }
@@ -192,7 +192,7 @@ public sealed class WorkloadLeafRegressionTests
         var entry = logger.Entries.FirstOrDefault(e => e.EventId.Id == 3001);
 
         entry.Should().NotBeNull("WorkloadLeafReissueFailed (EventId=3001) must be emitted");
-        entry!.Message.Should().NotContain(
+        entry.Message.Should().NotContain(
             "CachedLeafNotAfter=none",
             "a stale cached leaf provides a real ISO-8601 timestamp, not 'none'");
 
@@ -204,7 +204,7 @@ public sealed class WorkloadLeafRegressionTests
     }
 
     // ------------------------------------------------------------------
-    // E1-M-2 — Cache-hit debug log
+    // Cache-hit debug log
     // ------------------------------------------------------------------
 
     [Fact]
@@ -234,7 +234,7 @@ public sealed class WorkloadLeafRegressionTests
     }
 
     // ------------------------------------------------------------------
-    // E1-M-2 — Startup-success info log
+    // Startup-success info log
     // ------------------------------------------------------------------
 
     [Fact]
@@ -306,7 +306,8 @@ public sealed class WorkloadLeafRegressionTests
     /// </summary>
     private sealed class ThrowingWorkloadCertificateIssuer : IWorkloadCertificateIssuer, IDisposable
     {
-        public ValueTask<D2Result<WorkloadLeafMaterial>> IssueAsync(CancellationToken ct = default) =>
+        public ValueTask<D2Result<WorkloadLeafMaterial>> IssueAsync(
+            byte[] csrDer, CancellationToken ct = default) =>
             throw new InvalidOperationException("Injected issuer exception for exception-path test coverage.");
 
         public void Dispose()

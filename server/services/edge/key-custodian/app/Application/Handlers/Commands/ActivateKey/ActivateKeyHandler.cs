@@ -6,11 +6,20 @@
 
 namespace D2.Edge.KeyCustodian.App.Application.Handlers.Commands.ActivateKey;
 
+using D2.Edge.KeyCustodian.App.Application.CertificateAuthority;
+
+using H = D2.Edge.KeyCustodian.App.Application.Handlers.Commands.ActivateKey.IActivateKeyHandler;
+using I = ActivateKeyInput;
+using O = D2.Edge.KeyCustodian.Domain.Rules.KeySummary;
+
 /// <summary>
 /// Smoke-tests and activates a pending key.
 /// </summary>
 /// <remarks>
-/// Validates the kid at the top, loads the tracked pending record (not found →
+/// Authority precedes work: the System-plane-only
+/// <see cref="KeyLifecycleAuthority.AuthorizeLifecycleMutation"/> gate runs FIRST
+/// (fail-closed; deny emits the lifecycle authority-rejection telemetry). Then
+/// validates the kid, loads the tracked pending record (not found →
 /// 404; not pending → 409), unwraps + smoke-tests the material (failure →
 /// <c>KEYCUSTODIAN_SMOKE_TEST_FAILED</c>, with the unwrapped bytes zeroed on
 /// every path), builds the <see cref="SmokeProof"/>, resolves the domain policy,
@@ -24,9 +33,10 @@ public sealed class ActivateKeyHandler(
     IKeyCustodianDbContext db,
     IRotationPolicyProvider policyProvider,
     [FromKeyedServices(KeyCustodianRootKey.ROOT_SERVICE_KEY)] IPayloadCrypto rootCrypto,
+    ICaRootSigningCapability rootSigning,
     IClock clock)
-    : BaseRepoHandler<ActivateKeyHandler, ActivateKeyInput, KeySummary>(ctx, classifier),
-      IActivateKeyHandler
+    : BaseRepoHandler<ActivateKeyHandler, I, O>(ctx, classifier),
+      H
 {
     /// <inheritdoc/>
     /// <remarks>
@@ -40,66 +50,100 @@ public sealed class ActivateKeyHandler(
     };
 
     /// <inheritdoc/>
-    protected override async ValueTask<D2Result<KeySummary?>> ExecuteAsync(
-        ActivateKeyInput input, CancellationToken ct)
+    protected override async ValueTask<D2Result<O?>> ExecuteAsync(
+        I input, CancellationToken ct)
     {
+        // Authority precedes work: lifecycle mutations are System-plane-only, fail-closed.
+        var authorityResult =
+            KeyLifecycleAuthority.AuthorizeLifecycleMutation(Context.Request.Origin);
+
+        if (authorityResult.Failed)
+        {
+            return LifecycleAuthorityTelemetry.Deny<O>(
+                Context.Logger, authorityResult, Context.Request.ImmediateCaller, "activate-key");
+        }
+
         var kidResult = Kid.Create(input.Kid);
-        if (kidResult.BubbleOnFailure<Kid, KeySummary>(out var bubbled, out var kid))
+
+        if (kidResult.BubbleOnFailure<Kid, O>(out var bubbled, out var kid))
             return bubbled;
 
         var record = await db.Keys
             .FirstOrDefaultAsync(k => k.Kid == kid!.Value, ct)
             .ConfigureAwait(false);
+
         if (record is null)
-            return KeyCustodianFailures<KeySummary?>.KeyNotFound();
+            return KeyCustodianFailures<O?>.KeyNotFound();
 
         if (record.Status != KeyStatus.Pending)
-            return KeyCustodianFailures<KeySummary?>.KeyStateConflict();
+            return KeyCustodianFailures<O?>.KeyStateConflict();
 
         var pending = (PendingKey)record.ToDomain();
 
-        // Unwrap, smoke-test, and zero the unwrapped bytes on every path.
-        var unwrapped = rootCrypto.Decrypt(pending.KeyMaterialEncrypted.Bytes.Span);
+        // Smoke-test the pending material. A pending mtls-ca-root routes its unwrap
+        // through the dedicated §9.44 root-signing capability (the sole holder of any
+        // stored-root-key plaintext); every other domain (including
+        // mtls-ca-intermediate) keeps the inline generic smoke — so the rootCrypto param
+        // stays for that arm. Both shapes zero the unwrapped bytes on every path and
+        // detect corruption identically.
         D2Result smokeResult;
-        try
+
+        if (pending.KeyDomain.Value == KeyDomain.MTLS_CA_ROOT)
         {
-            smokeResult = SmokeTesting.Verify(
-                pending.KeyType, unwrapped, pending.PublicKeyMaterial?.Bytes);
+            smokeResult = await rootSigning
+                .SmokeTestRootKeyMaterialAsync(
+                    pending, KeyCustodianMetrics.CaRootKeyUses.Operation.ACTIVATE_SMOKE_TEST, ct)
+                .ConfigureAwait(false);
         }
-        finally
+        else
         {
-            CryptographicOperations.ZeroMemory(unwrapped);
+            var unwrapped = rootCrypto.Decrypt(pending.KeyMaterialEncrypted.Bytes.Span);
+
+            try
+            {
+                smokeResult = SmokeTesting.Verify(
+                    pending.KeyType, unwrapped, pending.PublicKeyMaterial?.Bytes);
+            }
+            finally
+            {
+                CryptographicOperations.ZeroMemory(unwrapped);
+            }
         }
 
         if (!smokeResult.Success)
         {
             KeyCustodianLog.SmokeTestFailed(
                 Context.Logger, kid!.Value, pending.KeyType.ToString());
+
             KeyCustodianMetrics.SR_SmokeTestFailuresTotal.Add(1);
-            return D2Result<KeySummary?>.BubbleFail(smokeResult);
+            return D2Result<O?>.BubbleFail(smokeResult);
         }
 
         var proofResult = SmokeProof.ForPassedSmokeTest(pending.KeyType, clock);
-        if (proofResult.BubbleOnFailure<SmokeProof, KeySummary>(out var proofBubble, out var proof))
+
+        if (proofResult.BubbleOnFailure<SmokeProof, O>(out var proofBubble, out var proof))
             return proofBubble;
 
         var policyResult = policyProvider.ForDomain(pending.KeyDomain);
-        if (policyResult.BubbleOnFailure<RotationPolicy, KeySummary>(
+
+        if (policyResult.BubbleOnFailure<RotationPolicy, O>(
             out var policyBubble, out var policy))
             return policyBubble;
 
         var activateResult = pending.Activate(proof, policy, clock);
-        if (activateResult.BubbleOnFailure<ActiveKey, KeySummary>(
+
+        if (activateResult.BubbleOnFailure<ActiveKey, O>(
             out var activateBubble, out var active))
             return activateBubble;
 
         active!.ProjectOnto(record);
+
         db.Audit.Add(
             EncryptionKeyAudit.Record(kid!, KeyAuditAction.Activated, KeyStatus.Active, clock)
             .ToRecord());
 
         await db.SaveChangesAsync(ct).ConfigureAwait(false);
 
-        return D2Result<KeySummary?>.Ok(KeySummary.From(active!));
+        return D2Result<O?>.Ok(O.From(active!));
     }
 }

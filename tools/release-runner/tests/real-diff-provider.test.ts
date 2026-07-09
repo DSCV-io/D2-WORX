@@ -13,7 +13,9 @@
 //   - source-based fingerprint: changed source / report / deps / toolchain → moves
 //   - propagation (S4): a changed resolved dep version flips the fingerprint
 //   - baselineMissing (no committed fingerprint / report)
-//   - seed↔provider byte-identity (S9) against the real D2.Shared.Utilities tree
+//   - provider source-dump determinism (S9) against the real D2.Shared.Utilities tree
+//     (the seed↔provider byte-identity of the COMPOSITION is pinned separately in
+//     seed-provider-fingerprint-identity.test.ts)
 //   - the DEPS helpers (buildNugetManifestMeta / substituteResolvedDeps / buildNpmManifestMeta)
 //   - the default real readers (makeRealFileReader) + readPackageJsonFile
 
@@ -730,15 +732,23 @@ describe("readPackageJsonFile", () => {
 });
 
 // ---------------------------------------------------------------------------
-// S9 — seed↔provider byte-identity against the REAL D2.Shared.Utilities tree
+// S9 — provider source-dump determinism against the REAL D2.Shared.Utilities tree
+//
+// This proves the provider's source-dump GLOB + build are deterministic over a
+// real committed tree — NOT the seed↔provider byte-identity of the fingerprint
+// COMPOSITION (that is pinned by feeding synthetic inputs to both the seed
+// primitive and the provider's composeSourceFingerprint in
+// seed-provider-fingerprint-identity.test.ts). The end-to-end seed↔runtime
+// identity over real trees is additionally proven by the currency check
+// (fingerprint-currency-cli), which recomputes every baseline via the runner.
 // ---------------------------------------------------------------------------
 
-describe("seed↔provider source-fingerprint byte-identity (S9)", () => {
+describe("provider source-dump determinism (S9)", () => {
   it("the provider's nuget source dump over the real D2.Shared.Utilities tree is non-empty + deterministic", () => {
     // listSourceFiles walks the real committed tree; this proves the glob + dump
-    // run against a real package (the seed uses the identical algorithm, so a
-    // no-op recompute matches the committed baseline — the drift check pins the
-    // end-to-end identity, this pins the dump shape).
+    // are deterministic against a real package (the seed uses the identical dump
+    // algorithm). The COMPOSITION byte-identity is pinned separately; the drift
+    // check pins the end-to-end identity.
     const utilDir = resolve(repoRoot, "server/shared/dotnet/utilities");
     const files = listSourceFiles(utilDir, "nuget");
 

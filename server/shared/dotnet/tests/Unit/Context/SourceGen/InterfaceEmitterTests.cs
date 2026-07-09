@@ -363,6 +363,18 @@ public sealed class InterfaceEmitterTests
         string? doc = null,
         bool propagate = false,
         int? maxLength = null,
+        int? entryIdMaxLength = null,
         bool redact = false) =>
-        new(name, type, claim, trinaryAuth, derived, @default, doc, propagate, maxLength, redact);
+        new(
+            name,
+            type,
+            claim,
+            trinaryAuth,
+            derived,
+            @default,
+            doc,
+            propagate,
+            maxLength,
+            entryIdMaxLength,
+            redact);
 }

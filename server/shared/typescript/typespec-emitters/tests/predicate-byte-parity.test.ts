@@ -6,7 +6,7 @@
 // bearing gRPC client. Compiles the committed predicate fixture
 // (resilience-predicate-shaped.tsp, op placeOrder) through the TypeSpec
 // test-host to obtain the REAL output model, re-emits the predicate files
-// (PlaceOrderResiliencePredicates.g.cs / place-order-resilience-predicates.g.ts /
+// (PlaceOrderFixtureResiliencePredicates.g.cs / place-order-fixture-resilience-predicates.g.ts /
 // D2GeneratedBusinessRetrySignal.g.cs) + the predicate-bearing client impl + DI
 // extension, and asserts each is BYTE-IDENTICAL to the committed fixture on disk.
 //
@@ -122,12 +122,14 @@ beforeAll(async () => {
   const program: Program = host.program;
   const globalNs = program.getGlobalNamespaceType();
   const fixturesNs = globalNs.namespaces.get("D2")?.namespaces.get("Fixtures");
-  const found = fixturesNs?.models.get("PlaceOrderOutput");
-  if (found === undefined) throw new Error("PlaceOrderOutput not found");
+  const found = fixturesNs?.models.get("PlaceOrderFixtureOutput");
+  if (found === undefined) throw new Error("PlaceOrderFixtureOutput not found");
 
   model = found;
 
-  const op = fixturesNs?.operations.get("placeOrder") as Operation | undefined;
+  const op = fixturesNs?.operations.get("placeOrderFixture") as
+    | Operation
+    | undefined;
   if (op === undefined) throw new Error("placeOrder op not found");
 
   retryWhen = parsePred(
@@ -137,12 +139,13 @@ beforeAll(async () => {
     program.stateMap(D2_RESILIENCE_FAIL_WHEN_KEY).get(op) as string,
   );
 
-  const foundV2 = fixturesNs?.models.get("PlaceOrderV2Output");
-  if (foundV2 === undefined) throw new Error("PlaceOrderV2Output not found");
+  const foundV2 = fixturesNs?.models.get("PlaceOrderV2FixtureOutput");
+  if (foundV2 === undefined)
+    throw new Error("PlaceOrderV2FixtureOutput not found");
 
   modelV2 = foundV2;
 
-  const opV2 = fixturesNs?.operations.get("placeOrderV2") as
+  const opV2 = fixturesNs?.operations.get("placeOrderV2Fixture") as
     | Operation
     | undefined;
   if (opV2 === undefined) throw new Error("placeOrderV2 op not found");
@@ -164,8 +167,8 @@ function parsePred(raw: string): PredicateNode {
 
 function emitPredicateFiles(): { cs: string; ts: string } {
   const files = emitResultPredicates({
-    opName: "placeOrder",
-    responseModelName: "PlaceOrderOutput",
+    opName: "placeOrderFixture",
+    responseModelName: "PlaceOrderFixtureOutput",
     outputModel: model,
     clientsNs: CLIENTS_NS,
     dtoCsharpNs: CLIENTS_NS,
@@ -181,8 +184,8 @@ function emitPredicateFiles(): { cs: string; ts: string } {
 
 function emitPredicateFilesV2(): { cs: string; ts: string } {
   const files = emitResultPredicates({
-    opName: "placeOrderV2",
-    responseModelName: "PlaceOrderV2Output",
+    opName: "placeOrderV2Fixture",
+    responseModelName: "PlaceOrderV2FixtureOutput",
     outputModel: modelV2,
     clientsNs: CLIENTS_NS,
     dtoCsharpNs: CLIENTS_NS,
@@ -206,19 +209,19 @@ function makePlaceOrderClientOp(): GrpcClientOp {
     protoType: "string",
     repeated: false,
     optional: false,
-    redact: false,
+    redactReason: undefined,
     fieldNumber,
   });
   return {
-    opName: "placeOrder",
+    opName: "placeOrderFixture",
     grpcService: "PredicateFixturesOrders",
-    grpcMethod: "PlaceOrder",
+    grpcMethod: "PlaceOrderFixture",
     protoCsharpNs: PROTO_NS,
     dtoCsharpNs: CLIENTS_NS,
     sourceSpec: SPEC,
-    requestModelName: "PlaceOrderInput",
+    requestModelName: "PlaceOrderFixtureInput",
     requestFields: [strField("customerId", "CustomerId", 1)],
-    responseModelName: "PlaceOrderOutput",
+    responseModelName: "PlaceOrderFixtureOutput",
     responseFields: [
       strField("orderCode", "OrderCode", 1),
       {
@@ -230,7 +233,7 @@ function makePlaceOrderClientOp(): GrpcClientOp {
         protoType: "string",
         repeated: true,
         optional: false,
-        redact: false,
+        redactReason: undefined,
         fieldNumber: 2,
       },
       {
@@ -242,7 +245,7 @@ function makePlaceOrderClientOp(): GrpcClientOp {
         protoType: "bool",
         repeated: false,
         optional: false,
-        redact: false,
+        redactReason: undefined,
         fieldNumber: 3,
       },
     ],
@@ -252,40 +255,42 @@ function makePlaceOrderClientOp(): GrpcClientOp {
 }
 
 // ---------------------------------------------------------------------------
-// F1 — PlaceOrderResiliencePredicates.g.cs
+// F1 — PlaceOrderFixtureResiliencePredicates.g.cs
 // ---------------------------------------------------------------------------
 
-describe("byteParity_PlaceOrderResiliencePredicatesCs", () => {
+describe("byteParity_PlaceOrderFixtureResiliencePredicatesCs", () => {
   it("re-emitted predicate .g.cs is byte-identical to the committed fixture", () => {
     expect(emitPredicateFiles().cs).toBe(
-      readFixture("PlaceOrderResiliencePredicates.g.cs"),
-    );
-  });
-
-  it("deliberate-drift detection: a mutated fixture does NOT match", () => {
-    const drifted = readFixture("PlaceOrderResiliencePredicates.g.cs").replace(
-      "SR_RetryWhen",
-      "SR_RetryWhenDRIFTED",
-    );
-    expect(emitPredicateFiles().cs).not.toBe(drifted);
-  });
-});
-
-// ---------------------------------------------------------------------------
-// F2 — place-order-resilience-predicates.g.ts
-// ---------------------------------------------------------------------------
-
-describe("byteParity_PlaceOrderResiliencePredicatesTs", () => {
-  it("re-emitted predicate .g.ts is byte-identical to the committed fixture", () => {
-    expect(emitPredicateFiles().ts).toBe(
-      readFixture("place-order-resilience-predicates.g.ts"),
+      readFixture("PlaceOrderFixtureResiliencePredicates.g.cs"),
     );
   });
 
   it("deliberate-drift detection: a mutated fixture does NOT match", () => {
     const drifted = readFixture(
-      "place-order-resilience-predicates.g.ts",
-    ).replace("placeOrderRetryWhen", "placeOrderRetryWhenDRIFTED");
+      "PlaceOrderFixtureResiliencePredicates.g.cs",
+    ).replace("SR_RetryWhen", "SR_RetryWhenDRIFTED");
+    expect(emitPredicateFiles().cs).not.toBe(drifted);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// F2 — place-order-fixture-resilience-predicates.g.ts
+// ---------------------------------------------------------------------------
+
+describe("byteParity_PlaceOrderFixtureResiliencePredicatesTs", () => {
+  it("re-emitted predicate .g.ts is byte-identical to the committed fixture", () => {
+    expect(emitPredicateFiles().ts).toBe(
+      readFixture("place-order-fixture-resilience-predicates.g.ts"),
+    );
+  });
+
+  it("deliberate-drift detection: a mutated fixture does NOT match", () => {
+    const drifted = readFixture(
+      "place-order-fixture-resilience-predicates.g.ts",
+    ).replace(
+      "placeOrderFixtureRetryWhen",
+      "placeOrderFixtureRetryWhenDRIFTED",
+    );
     expect(emitPredicateFiles().ts).not.toBe(drifted);
   });
 });
@@ -300,10 +305,10 @@ describe("byteParity_PlaceOrderResiliencePredicatesTs", () => {
 // emitted STANDALONE (model + AST only) — no gRPC client for placeOrderV2 exists.
 // ---------------------------------------------------------------------------
 
-describe("byteParity_PlaceOrderV2ResiliencePredicatesCs_Nested", () => {
+describe("byteParity_PlaceOrderV2FixtureResiliencePredicatesCs_Nested", () => {
   it("re-emitted nested/array-of-model predicate .g.cs is byte-identical to the committed fixture", () => {
     expect(emitPredicateFilesV2().cs).toBe(
-      readFixture("PlaceOrderV2ResiliencePredicates.g.cs"),
+      readFixture("PlaceOrderV2FixtureResiliencePredicates.g.cs"),
     );
   });
 
@@ -317,16 +322,16 @@ describe("byteParity_PlaceOrderV2ResiliencePredicatesCs_Nested", () => {
 
   it("deliberate-drift detection: a mutated fixture does NOT match", () => {
     const drifted = readFixture(
-      "PlaceOrderV2ResiliencePredicates.g.cs",
+      "PlaceOrderV2FixtureResiliencePredicates.g.cs",
     ).replace("Customer?.Tier", "Customer?.TierDRIFTED");
     expect(emitPredicateFilesV2().cs).not.toBe(drifted);
   });
 });
 
-describe("byteParity_PlaceOrderV2ResiliencePredicatesTs_Nested", () => {
+describe("byteParity_PlaceOrderV2FixtureResiliencePredicatesTs_Nested", () => {
   it("re-emitted nested/array-of-model predicate .g.ts is byte-identical to the committed fixture", () => {
     expect(emitPredicateFilesV2().ts).toBe(
-      readFixture("place-order-v2-resilience-predicates.g.ts"),
+      readFixture("place-order-v2-fixture-resilience-predicates.g.ts"),
     );
   });
 
@@ -338,7 +343,7 @@ describe("byteParity_PlaceOrderV2ResiliencePredicatesTs_Nested", () => {
 
   it("deliberate-drift detection: a mutated fixture does NOT match", () => {
     const drifted = readFixture(
-      "place-order-v2-resilience-predicates.g.ts",
+      "place-order-v2-fixture-resilience-predicates.g.ts",
     ).replace("customer?.tier", "customer?.tierDRIFTED");
     expect(emitPredicateFilesV2().ts).not.toBe(drifted);
   });
@@ -417,48 +422,50 @@ const placeOrderRespFields = (): readonly FieldInfo[] =>
   makePlaceOrderClientOp().responseFields;
 
 describe("byteParity_PlaceOrderV1Dtos", () => {
-  it("re-emitted PlaceOrderInput.g.cs is byte-identical to the committed fixture", () => {
+  it("re-emitted PlaceOrderFixtureInput.g.cs is byte-identical to the committed fixture", () => {
     const [inputFile] = emitCsharpDtos(
-      "placeOrder",
+      "placeOrderFixture",
       CLIENTS_NS,
       SPEC,
       placeOrderReqFields(),
       placeOrderRespFields(),
       [],
     );
-    expect(inputFile!.content).toBe(readFixture("PlaceOrderInput.g.cs"));
+    expect(inputFile!.content).toBe(readFixture("PlaceOrderFixtureInput.g.cs"));
   });
 
-  it("re-emitted PlaceOrderOutput.g.cs is byte-identical to the committed fixture", () => {
+  it("re-emitted PlaceOrderFixtureOutput.g.cs is byte-identical to the committed fixture", () => {
     const [, outputFile] = emitCsharpDtos(
-      "placeOrder",
+      "placeOrderFixture",
       CLIENTS_NS,
       SPEC,
       placeOrderReqFields(),
       placeOrderRespFields(),
       [],
     );
-    expect(outputFile!.content).toBe(readFixture("PlaceOrderOutput.g.cs"));
+    expect(outputFile!.content).toBe(
+      readFixture("PlaceOrderFixtureOutput.g.cs"),
+    );
   });
 
-  it("re-emitted place-order-dto.g.ts is byte-identical to the committed fixture", () => {
+  it("re-emitted place-order-fixture-dto.g.ts is byte-identical to the committed fixture", () => {
     const tsFile = emitTsDtos(
-      "placeOrder",
+      "placeOrderFixture",
       SPEC,
       placeOrderReqFields(),
       placeOrderRespFields(),
       [],
     );
-    expect(tsFile.content).toBe(readFixture("place-order-dto.g.ts"));
+    expect(tsFile.content).toBe(readFixture("place-order-fixture-dto.g.ts"));
   });
 
-  it("deliberate-drift detection: a mutated PlaceOrderOutput fixture does NOT match", () => {
-    const drifted = readFixture("PlaceOrderOutput.g.cs").replace(
+  it("deliberate-drift detection: a mutated PlaceOrderFixtureOutput fixture does NOT match", () => {
+    const drifted = readFixture("PlaceOrderFixtureOutput.g.cs").replace(
       "string OrderCode",
       "string OrderCodeDRIFTED",
     );
     const [, outputFile] = emitCsharpDtos(
-      "placeOrder",
+      "placeOrderFixture",
       CLIENTS_NS,
       SPEC,
       placeOrderReqFields(),
@@ -472,17 +479,17 @@ describe("byteParity_PlaceOrderV1Dtos", () => {
 describe("byteParity_PlaceOrderV1Proto", () => {
   function emit(): string {
     return emitProto(
-      "placeOrder",
+      "placeOrderFixture",
       "PredicateFixturesOrders",
-      "PlaceOrder",
+      "PlaceOrderFixture",
       "unary",
       "d2.predicatefixtures.v1",
       PROTO_NS,
       SPEC,
-      "PlaceOrderRequest",
+      "PlaceOrderFixtureRequest",
       placeOrderReqFields(),
       undefined,
-      "PlaceOrderOutput",
+      "PlaceOrderFixtureOutput",
       placeOrderRespFields(),
       undefined,
       [],
@@ -494,14 +501,19 @@ describe("byteParity_PlaceOrderV1Proto", () => {
 
   it("re-emitted V1 proto is byte-identical to the committed fixture", () => {
     expect(emit()).toBe(
-      readFixture("../Protos/predicate_fixtures_orders_place_order.g.proto"),
+      readFixture(
+        "../Protos/predicate_fixtures_orders_place_order_fixture.g.proto",
+      ),
     );
   });
 
   it("deliberate-drift detection: a mutated proto message name does NOT match", () => {
     const drifted = readFixture(
-      "../Protos/predicate_fixtures_orders_place_order.g.proto",
-    ).replace("message PlaceOrderOutput", "message PlaceOrderOutputDRIFTED");
+      "../Protos/predicate_fixtures_orders_place_order_fixture.g.proto",
+    ).replace(
+      "message PlaceOrderFixtureOutput",
+      "message PlaceOrderFixtureOutputDRIFTED",
+    );
     expect(emit()).not.toBe(drifted);
   });
 });
@@ -518,18 +530,20 @@ describe("byteParity_PredicateFixturesV1ClientModule", () => {
     );
   });
 
-  it("re-emitted PlaceOrderClientMappers.g.cs is byte-identical", () => {
+  it("re-emitted PlaceOrderFixtureClientMappers.g.cs is byte-identical", () => {
     const [, , mappers] = emitGrpcClient(
       "PredicateFixtures",
       [makePlaceOrderClientOp()],
       CLIENTS_NS,
     );
-    expect(mappers!.content).toBe(readFixture("PlaceOrderClientMappers.g.cs"));
+    expect(mappers!.content).toBe(
+      readFixture("PlaceOrderFixtureClientMappers.g.cs"),
+    );
   });
 
-  it("re-emitted PlaceOrderClientKeys.g.cs is byte-identical", () => {
-    const keys = emitClientKeys("placeOrder", CLIENTS_NS, SPEC);
-    expect(keys.content).toBe(readFixture("PlaceOrderClientKeys.g.cs"));
+  it("re-emitted PlaceOrderFixtureClientKeys.g.cs is byte-identical", () => {
+    const keys = emitClientKeys("placeOrderFixture", CLIENTS_NS, SPEC);
+    expect(keys.content).toBe(readFixture("PlaceOrderFixtureClientKeys.g.cs"));
   });
 
   it("deliberate-drift detection: a mutated client-interface fixture does NOT match", () => {
@@ -558,29 +572,29 @@ describe("byteParity_PredicateFixturesV1ClientModule", () => {
 // ---------------------------------------------------------------------------
 
 describe("byteParity_PlaceOrderHandlerInterface", () => {
-  it("re-emitted IPlaceOrderHandler.g.cs is byte-identical to the committed fixture", () => {
+  it("re-emitted IPlaceOrderFixtureHandler.g.cs is byte-identical to the committed fixture", () => {
     const handler = emitHandlerInterface(
-      "placeOrder",
+      "placeOrderFixture",
       CLIENTS_NS,
-      "PlaceOrderInput",
-      "PlaceOrderOutput",
+      "PlaceOrderFixtureInput",
+      "PlaceOrderFixtureOutput",
       true,
       SPEC,
     );
 
-    expect(handler.content).toBe(readFixture("IPlaceOrderHandler.g.cs"));
+    expect(handler.content).toBe(readFixture("IPlaceOrderFixtureHandler.g.cs"));
   });
 
   it("deliberate-drift detection: a mutated fixture does NOT match", () => {
-    const drifted = readFixture("IPlaceOrderHandler.g.cs").replace(
-      "IPlaceOrderHandler",
-      "IPlaceOrderHandlerDRIFTED",
+    const drifted = readFixture("IPlaceOrderFixtureHandler.g.cs").replace(
+      "IPlaceOrderFixtureHandler",
+      "IPlaceOrderFixtureHandlerDRIFTED",
     );
     const handler = emitHandlerInterface(
-      "placeOrder",
+      "placeOrderFixture",
       CLIENTS_NS,
-      "PlaceOrderInput",
-      "PlaceOrderOutput",
+      "PlaceOrderFixtureInput",
+      "PlaceOrderFixtureOutput",
       true,
       SPEC,
     );
@@ -590,29 +604,31 @@ describe("byteParity_PlaceOrderHandlerInterface", () => {
 });
 
 describe("byteParity_PlaceOrderV2HandlerInterface", () => {
-  it("re-emitted IPlaceOrderV2Handler.g.cs is byte-identical to the committed fixture", () => {
+  it("re-emitted IPlaceOrderV2FixtureHandler.g.cs is byte-identical to the committed fixture", () => {
     const handler = emitHandlerInterface(
-      "placeOrderV2",
+      "placeOrderV2Fixture",
       CLIENTS_NS,
-      "PlaceOrderV2Input",
-      "PlaceOrderV2Output",
+      "PlaceOrderV2FixtureInput",
+      "PlaceOrderV2FixtureOutput",
       true,
       SPEC,
     );
 
-    expect(handler.content).toBe(readFixture("IPlaceOrderV2Handler.g.cs"));
+    expect(handler.content).toBe(
+      readFixture("IPlaceOrderV2FixtureHandler.g.cs"),
+    );
   });
 
   it("deliberate-drift detection: a mutated fixture does NOT match", () => {
-    const drifted = readFixture("IPlaceOrderV2Handler.g.cs").replace(
-      "IPlaceOrderV2Handler",
-      "IPlaceOrderV2HandlerDRIFTED",
+    const drifted = readFixture("IPlaceOrderV2FixtureHandler.g.cs").replace(
+      "IPlaceOrderV2FixtureHandler",
+      "IPlaceOrderV2FixtureHandlerDRIFTED",
     );
     const handler = emitHandlerInterface(
-      "placeOrderV2",
+      "placeOrderV2Fixture",
       CLIENTS_NS,
-      "PlaceOrderV2Input",
-      "PlaceOrderV2Output",
+      "PlaceOrderV2FixtureInput",
+      "PlaceOrderV2FixtureOutput",
       true,
       SPEC,
     );
@@ -622,29 +638,29 @@ describe("byteParity_PlaceOrderV2HandlerInterface", () => {
 });
 
 describe("byteParity_DeepNestHandlerInterface", () => {
-  it("re-emitted IDeepNestHandler.g.cs is byte-identical to the committed fixture", () => {
+  it("re-emitted IDeepNestFixtureHandler.g.cs is byte-identical to the committed fixture", () => {
     const handler = emitHandlerInterface(
-      "deepNest",
+      "deepNestFixture",
       CLIENTS_NS,
-      "DeepNestInput",
-      "DeepNestOutput",
+      "DeepNestFixtureInput",
+      "DeepNestFixtureOutput",
       true,
       SPEC,
     );
 
-    expect(handler.content).toBe(readFixture("IDeepNestHandler.g.cs"));
+    expect(handler.content).toBe(readFixture("IDeepNestFixtureHandler.g.cs"));
   });
 
   it("deliberate-drift detection: a mutated fixture does NOT match", () => {
-    const drifted = readFixture("IDeepNestHandler.g.cs").replace(
-      "IDeepNestHandler",
-      "IDeepNestHandlerDRIFTED",
+    const drifted = readFixture("IDeepNestFixtureHandler.g.cs").replace(
+      "IDeepNestFixtureHandler",
+      "IDeepNestFixtureHandlerDRIFTED",
     );
     const handler = emitHandlerInterface(
-      "deepNest",
+      "deepNestFixture",
       CLIENTS_NS,
-      "DeepNestInput",
-      "DeepNestOutput",
+      "DeepNestFixtureInput",
+      "DeepNestFixtureOutput",
       true,
       SPEC,
     );

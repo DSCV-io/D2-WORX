@@ -25,6 +25,7 @@ constants used across the TS codebase. Mirrors `D2.Shared.Utilities` (.NET).
 | `chunk(arr, size)`                                                                  | Splits into consecutive chunks of `size`; throws on `size < 1`.                                                           |
 | `clean(items, cleaner, opts?)`                                                      | Applies a per-element cleaner to any `Iterable<T>`; `opts` chooses null/empty handling — defaults match the .NET sibling. |
 | `parseEnvArray(prefix, env)`                                                        | Reads `PREFIX__0=a, PREFIX__1=b, ...` indexed env-var arrays; stops at first gap.                                         |
+| `uuidv7(now?)`                                                                      | Mints a time-ordered RFC 9562 UUIDv7 (48-bit ms-timestamp prefix + random bits); optional injectable clock for tests.     |
 | `WHITESPACE_RE` / `DISPLAY_NAME_INVALID_RE` / `EMAIL_RE` / `UUID_RE` / `EMPTY_UUID` | Pre-built regex + canonical empty-UUID constants.                                                                         |
 
 ## Dependencies

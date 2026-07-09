@@ -34,7 +34,7 @@ app.MapGet("/healthz", () => "ok").MarkAsD2HarmlessEndpoint();
 
 `AddD2AuthHttp()` registers `IHttpContextAccessor`, a scoped `IRequestContext` resolver that reads from `HttpContext.Items` (populated by the middleware), a scoped `IForwardedJwtAccessor` holder (the same registration `AddD2AuthGrpc()` makes), and a singleton `IAmbientRequestScopeAccessor` adapter (see below). `AddD2Auth(...)` MUST be called first — fail-fast `InvalidOperationException` otherwise.
 
-The middleware ALSO captures the validated raw bearer into the request-scoped `IForwardedJwtAccessor` (the [redacting forwarded-JWT holder](../abstractions/README.md#forwarded-jwt-credential--forwardedjwt--iforwardedjwtaccessor)) after validation success — so an outbound hop can replay it byte-for-byte ([ADR-0022 §Realization](../../../../../docs/adrs/0022-service-auth-mint-once-forward.md)). Capture is best-effort: a host that does not register the holder (does not forward) no-ops; only a validator-accepted token is ever captured (the harmless / bearer-missing / validation-failure paths leave the holder unset). The raw bearer is never logged.
+The middleware ALSO captures the validated raw bearer into the request-scoped `IForwardedJwtAccessor` (the [redacting forwarded-JWT holder](../abstractions/README.md#forwarded-jwt-credential--forwardedjwt--iforwardedjwtaccessor)) — so an outbound hop can replay it byte-for-byte ([ADR-0022 §Realization](../../../../../docs/adrs/0022-service-auth-mint-once-forward.md)). Capture is the LAST pre-continuation operation — placed AFTER every inbound gate (harmless short-circuit, bearer extraction, JWT validation, session liveness, AND per-endpoint scope enforcement), mirroring the gRPC `JwtAuthInterceptor`; only a token that cleared ALL gates ever enters the holder (the harmless / bearer-missing / validation-failure / liveness-revoked / scope-insufficient paths all leave it unset). Capture is best-effort: a host that does not register the holder (does not forward) no-ops. The raw bearer is never logged.
 
 ### Ambient-scope adapter — `HttpContextAmbientRequestScopeAccessor`
 
@@ -45,6 +45,23 @@ The read-back door for the forwarded-JWT holder. The outbound forwarding credent
 ### Composing with siblings (dual-transport host)
 
 > See [`../core/README.md` § Composing with siblings](../core/README.md#composing-with-siblings) for the canonical dual-transport composition pattern (fluent chain, identical `IRequestContext` resolver across both transports, HTTP-only / gRPC-only carve-outs).
+
+### Edge-inbound establishment — `RequestOriginEdgeInboundMiddleware` + `AddD2RequestOriginEdge()` / `UseD2RequestOriginEdge()`
+
+A second convention-based middleware, inserted AFTER `UseD2Auth()`, establishes the [`RequestOrigin.EdgeInbound`](../abstractions/README.md#requestorigin--callpath--local-establishment-facts-vs-propagated-telemetry) plane — the external trust boundary, the START of the call-path — on the same scoped `IRequestContext` the auth middleware populated ([ADR-0025](../../../../../docs/adrs/0025-request-context-establishment.md)):
+
+```csharp
+services
+    .AddD2Auth(opts => { /* ... */ })
+    .AddD2AuthHttp()
+    .AddD2RequestOriginEdge(opts => opts.ServiceId = "edge"); // this host's own workload id
+
+app.UseRouting();
+app.UseD2Auth();
+app.UseD2RequestOriginEdge();
+```
+
+`RequestOriginEdgeInboundMiddleware` sets `IRequestContext.Origin = RequestOrigin.EdgeInbound`, `ImmediateCaller = null` (the external client is not an internal workload), and STARTS a fresh call-path with a single `CallPathKind.Edge` entry carrying the host's own service id (`D2WorkloadIdentityOptions.ServiceId`). No-op-safe when no `MutableRequestContext` is on `HttpContext.Items` (e.g. a harmless endpoint the auth middleware already short-circuited). `AddD2RequestOriginEdge()` binds `D2WorkloadIdentityOptions` with a required-`ServiceId` startup validation and registers `IClock` as `SystemClock` when the host has not already bound one (`TryAdd`).
 
 ### Endpoint metadata — `EndpointScopeMetadata`
 
@@ -62,7 +79,7 @@ Attach via the fluent builder extensions:
 | `.RequireAllScopes("scope", "other-scope")`      | Endpoint requires the caller to hold every listed scope (all-of).                            |
 | `.MarkAsD2HarmlessEndpoint()`                    | Endpoint bypasses auth entirely (probes / OIDC discovery / harmless intra-cluster info only). |
 
-The deny-by-default state: an endpoint with NO `EndpointScopeMetadata` attached gets the FULL pipeline (validator + liveness; scope check passes against the empty required set). Endpoints that need to bypass auth entirely MUST opt in explicitly via `.MarkAsD2HarmlessEndpoint()` — the codebase deliberately does NOT recognize the BCL `[AllowAnonymous]` attribute (its semantic is tied to the BCL `AuthenticationMiddleware` chain we bypass).
+The deny-by-default state: an endpoint with NO `EndpointScopeMetadata` attached gets the FULL pipeline (validator + liveness; any authenticated caller passes — deny-by-default lives in the ABSENCE of metadata). Endpoints that need to bypass auth entirely MUST opt in explicitly via `.MarkAsD2HarmlessEndpoint()` — the codebase deliberately does NOT recognize the BCL `[AllowAnonymous]` attribute (its semantic is tied to the BCL `AuthenticationMiddleware` chain we bypass). A metadata that is PRESENT and non-harmless but carries an EMPTY scope set is treated as a configuration anomaly and fails CLOSED (401 `ScopeInsufficient` + a config-anomaly log) rather than silently admitting any authenticated caller: the public `ForScopes` factory rejects empty sets, so such a metadata can only arise from a serializer / record-clone / reflection path.
 
 #### Deny-by-default boot guard
 
@@ -134,6 +151,7 @@ Or better, constructor-inject `IRequestContext` directly — the scoped resolver
 | `D2.Shared.Result`                                                        | `D2Result` typed factories.                                                                                                              |
 | `D2.Shared.I18n.Abstractions`                                             | `TKMessage` shape.                                                                                                                       |
 | `D2.Shared.Utilities`                                                     | `Falsey()` / `Truthy()` extensions.                                                                                                      |
+| `D2.Shared.Time`                                                          | `IClock` / `SystemClock` — timestamps the Edge call-path entry `RequestOriginEdgeInboundMiddleware` starts the path with.                |
 | `Microsoft.AspNetCore.App` (framework ref via `Sdk.Web`)                  | `HttpContext`, `IEndpointConventionBuilder`, `Microsoft.AspNetCore.Mvc.ProblemDetails`, `IApplicationBuilder`.                           |
 | `Microsoft.Extensions.{DependencyInjection,Logging,Options}.Abstractions` | DI / logging / options.                                                                                                                  |
 | `JetBrains.Annotations`                                                   | Standard annotations.                                                                                                                    |
@@ -151,6 +169,11 @@ Or better, constructor-inject `IRequestContext` directly — the scoped resolver
 - `Middleware/HttpContextRequestContextExtensionsTests.cs` — typed accessor returns null pre-middleware, populated value post-middleware.
 - `Middleware/D2HttpContextItemsTests.cs` — slot-key constant value pinned.
 - `Errors/AuthFailuresScopeInsufficientTests.cs` (in the existing `AuthFailures` test folder) — `ScopeInsufficient()` status code + error code + TK key.
+
+`server/shared/dotnet/tests/Unit/Auth/Inbound/Http/Establishment/`:
+
+- `RequestOriginEdgeInboundMiddlewareTests.cs` — establishes `Origin = EdgeInbound`, `ImmediateCaller = null`, and a fresh single-`CallPathKind.Edge`-entry call-path; no-op when no `MutableRequestContext` is present.
+- `RequestOriginEdgeServiceCollectionExtensionsTests.cs` — `D2WorkloadIdentityOptions.ServiceId` required-startup-validation; `IClock` `TryAdd`.
 
 Cross-transport companions (in `tests/Unit/Auth/Inbound/`):
 

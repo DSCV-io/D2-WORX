@@ -21,6 +21,7 @@ import { $lib } from "./lib.js";
 import {
   loadScopeNames,
   loadAudienceNames,
+  loadProtocolAudienceValues,
   loadErrorCodeNames,
   loadErrorCategoryNames,
 } from "./spec-registry.js";
@@ -42,6 +43,20 @@ const GRPC_STREAMING_MODES = new Set([
 const PUSH_TARGETS = new Set(["user", "session"]);
 const CSRF_POSTURES = new Set(["required", "exempt"]);
 const IDEMPOTENT_KEY_SOURCES = new Set(["header", "derived"]);
+
+// Mirrors the member names of D2.Shared.Utilities.Enums.RedactReason. The C#
+// enum is the single source of truth for the data-class taxonomy; this set is
+// the TypeSpec-side gate so the emitter can map a validated reason to
+// RedactReason.<value> and never default a secret-adjacent field to
+// PersonalInformation.
+const REDACT_REASONS = new Set([
+  "Unspecified",
+  "PersonalInformation",
+  "FinancialInformation",
+  "SecretInformation",
+  "VerboseContent",
+  "Other",
+]);
 
 /** Validate the tier string for @d2RateLimitTier. */
 export function validateRateLimitTier(
@@ -81,6 +96,20 @@ export function validatePushTarget(
     $lib.reportDiagnostic(context.program, {
       code: "invalid-push-target",
       format: { value: pushTarget },
+      target,
+    });
+}
+
+/** Validate the reason string for @d2Redact against the RedactReason member set. */
+export function validateRedactReason(
+  context: DecoratorContext,
+  target: ModelProperty,
+  reason: string,
+): void {
+  if (!REDACT_REASONS.has(reason))
+    $lib.reportDiagnostic(context.program, {
+      code: "invalid-redact-reason",
+      format: { value: reason },
       target,
     });
 }
@@ -159,8 +188,13 @@ export function validateAudience(
   target: Operation,
   audience: string,
 ): void {
-  // "d2-edge" is the self-audience — always valid without a spec entry
-  if (audience === "d2-edge") return;
+  // Protocol audiences (d2.internal — the universal internal receive audience;
+  // d2-edge — the Edge self-audience) are single-source constants declared in
+  // contracts/auth-protocol-audiences/protocol-audiences.spec.json. They are NOT
+  // token-exchange targets, so they are absent from audiences.spec.json — the
+  // validator accepts them from the protocol-audiences spec instead of a
+  // hard-coded literal.
+  if (loadProtocolAudienceValues().has(audience)) return;
   const known = loadAudienceNames();
   if (!known.has(audience))
     $lib.reportDiagnostic(context.program, {
@@ -180,6 +214,29 @@ export function validateServedBy(
     $lib.reportDiagnostic(context.program, {
       code: "empty-served-by",
       format: {},
+      target,
+    });
+}
+
+/**
+ * Valid concern segment: a PascalCase C# identifier segment (a leading letter
+ * followed by letters/digits). The concern becomes a namespace segment
+ * (`<clients-ns>.<Concern>`) and a folder name, so it must be a legal single
+ * C# identifier — no dots, whitespace, or leading digit. Bounded-length
+ * identifier input, linear pattern (Bucket 2 per regex-redos-discipline).
+ */
+const _CONCERN_SEGMENT = /^[A-Za-z][A-Za-z0-9]*$/;
+
+/** Validate the concern segment for @d2Concern. */
+export function validateConcern(
+  context: DecoratorContext,
+  target: Operation,
+  concern: string,
+): void {
+  if (!_CONCERN_SEGMENT.test(concern))
+    $lib.reportDiagnostic(context.program, {
+      code: "invalid-concern",
+      format: { value: concern },
       target,
     });
 }

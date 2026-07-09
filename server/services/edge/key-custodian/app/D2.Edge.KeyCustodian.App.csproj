@@ -63,12 +63,22 @@ Copyright (c) DCSV. All rights reserved.
     -->
     <ProjectReference Include="..\..\..\..\shared\dotnet\i18n\keys\D2.Shared.I18n.Keys.csproj" />
     <!--
-      D2.Edge.KeyCustodian.Clients — the thin leaf project that holds transport
-      DTOs for exposed operations + the module façade interface. App references
-      Clients so I<Op>Handler + handler bodies can use Clients DTOs directly
-      (App ← Clients is the legal edge; Clients refs Result only).
+      D2.Edge.KeyCustodian.Client — the consumer-facing client package that holds
+      transport DTOs for exposed operations, the module façade interface, and the
+      keyring consumer runtime. App references Client so I<Op>Handler + handler
+      bodies can use the client DTOs directly, and so the module's in-process
+      keyring source can compose the client-package hot-swap machinery
+      (App ← Client is the legal edge; Client refs contracts + shared libs only).
     -->
-    <ProjectReference Include="..\clients\D2.Edge.KeyCustodian.Clients.csproj" />
+    <ProjectReference Include="..\client\D2.Edge.KeyCustodian.Client.csproj" />
+    <!--
+      D2.Shared.Context.Abstractions — the scoped IRequestContext the sign handler
+      reads (the established Origin / ImmediateCaller) and the JWT-minter capability
+      injects to assert its in-process plane. Read side only — App stays gRPC-free +
+      ASP.NET-Core-free. Brought transitively via D2.Shared.Handler but listed
+      explicitly ("declare what you use").
+    -->
+    <ProjectReference Include="..\..\..\..\shared\dotnet\context\abstractions\D2.Shared.Context.Abstractions.csproj" />
   </ItemGroup>
 
   <ItemGroup>

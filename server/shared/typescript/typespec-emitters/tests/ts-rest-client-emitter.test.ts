@@ -45,14 +45,14 @@ function field(name: string, csType: string, tsType: string): FieldInfo {
     protoType: "string",
     repeated: false,
     optional: false,
-    redact: false,
+    redactReason: undefined,
   };
 }
 
 function signRestOp(over: Partial<TsRestClientOp> = {}): TsRestClientOp {
   return {
     opName: "sign",
-    routePath: "/internal/v1/kc/sign",
+    routePath: "/internal/v1/sample/sign",
     verb: "POST",
     authIntent: "scoped",
     sourceSpec: SIGN_SRC,
@@ -67,7 +67,7 @@ function signRestOp(over: Partial<TsRestClientOp> = {}): TsRestClientOp {
 function signDerivedRestOp(): TsRestClientOp {
   return {
     opName: "signDerived",
-    routePath: "/internal/v1/kc/sign-derived",
+    routePath: "/internal/v1/sample/sign-derived",
     verb: "POST",
     authIntent: "scoped",
     sourceSpec: SIGN_SRC,
@@ -207,7 +207,7 @@ describe("emitTsRestClient_FileNameAndShape", () => {
       'import { apiCall } from "$lib/client/rest/gateway-client.js";',
     );
     expect(file!.content).toContain(
-      'return apiCall<SignOutput>("/internal/v1/kc/sign"',
+      'return apiCall<SignOutput>("/internal/v1/sample/sign"',
     );
     // No apiCallAnon IMPORT (the substrate doc-comment may still mention it).
     expect(file!.content).not.toContain("import { apiCallAnon }");
@@ -326,7 +326,7 @@ describe("tsRestClient_Behavioral_FaithfulDouble", () => {
     expect(calls).toHaveLength(1);
     expect(calls[0]).toMatchObject({
       fn: "apiCall",
-      path: "/internal/v1/kc/sign",
+      path: "/internal/v1/sample/sign",
       method: "POST",
       body: { kid: "k1" },
     });
@@ -417,7 +417,7 @@ describe("tsRestClient_Behavioral_FaithfulDouble", () => {
       },
     );
     const { client } = buildClient([signRestOp()], () =>
-      ok(dataWithExtra as { signature: string }),
+      ok(dataWithExtra as unknown as { signature: string }),
     );
     const result = await client.sign!({ kid: "k-tr5" });
 

@@ -3,6 +3,7 @@
 // -----------------------------------------------------------------------
 
 import type { IRequestContext } from "@d2/request-context-abstractions";
+import { RequestOrigin } from "@d2/request-context-abstractions";
 import type {
   GuardRequestEvent,
   GuardThrowers,
@@ -106,7 +107,10 @@ export function authenticatedCtx(
     asn: undefined,
     asnName: undefined,
     asnType: undefined,
+    immediateCaller: undefined,
     ...overrides,
+    origin: overrides.origin ?? RequestOrigin.Unestablished,
+    callPath: overrides.callPath ?? [],
   };
 }
 

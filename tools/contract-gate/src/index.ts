@@ -2,7 +2,7 @@
 // Copyright (c) DCSV. All rights reserved.
 // -----------------------------------------------------------------------
 
-// Public surface of @d2/contract-gate.
+// Public surface of contract-gate.
 // Re-exports the shared footer parser (consumed by both the breaking-change gate
 // and the release runner) and the git IO seam.
 

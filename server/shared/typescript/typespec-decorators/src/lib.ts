@@ -22,6 +22,14 @@ export const $lib = createTypeSpecLibrary({
       },
     },
 
+    /** @d2Redact reason is not one of the allowed RedactReason member names. */
+    "invalid-redact-reason": {
+      severity: "error",
+      messages: {
+        default: paramMessage`@d2Redact reason '${"value"}' is invalid — expected one of: Unspecified, PersonalInformation, FinancialInformation, SecretInformation, VerboseContent, Other`,
+      },
+    },
+
     /** @d2GrpcMethod streaming value is not one of the allowed mode strings. */
     "invalid-grpc-streaming": {
       severity: "error",
@@ -88,13 +96,12 @@ export const $lib = createTypeSpecLibrary({
       },
     },
 
-    /** The audience string supplied to @d2Audience is not declared in
-     *  contracts/auth-audiences/audiences.spec.json and is not the
-     *  self-audience "d2-edge". */
+    /** The audience string supplied to @d2Audience is not a declared protocol
+     *  audience in contracts/auth-protocol-audiences/protocol-audiences.spec.json. */
     "unknown-audience": {
       severity: "error",
       messages: {
-        default: paramMessage`audience '${"value"}' is not declared in audiences.spec.json (and is not the 'd2-edge' self-audience)`,
+        default: paramMessage`audience '${"value"}' is not a declared protocol audience in auth-protocol-audiences/protocol-audiences.spec.json`,
       },
     },
 
@@ -103,6 +110,15 @@ export const $lib = createTypeSpecLibrary({
       severity: "error",
       messages: {
         default: "@d2ServedBy owner must be a non-empty string",
+      },
+    },
+
+    /** @d2Concern segment is not a legal single C# identifier (it becomes a
+     *  namespace segment + folder name, so no dots/whitespace/leading digit). */
+    "invalid-concern": {
+      severity: "error",
+      messages: {
+        default: paramMessage`@d2Concern segment '${"value"}' is invalid — expected a PascalCase C# identifier segment (a leading letter followed by letters/digits, no dots or whitespace)`,
       },
     },
 

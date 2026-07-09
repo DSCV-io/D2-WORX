@@ -51,11 +51,11 @@ public static class PredicateFixturesDeepGrpcClientsGeneratedServiceCollectionEx
                 .AddD2ForwardedJwt()
                 .AddD2WorkloadCertificate();
 
-            // DeepNest resilience pipeline — retry on gRPC transport transients only.
+            // DeepNestFixture resilience pipeline — retry on gRPC transport transients only.
             // Replace with ResilientPipeline<…>.PassThrough in tests that do not need retry.
-            services.AddResilientPipeline<string, DeepNestOutput?>(
-                DeepNestClientKeys.PIPELINE,
-                b => b.UseRetries(new RetryOptions<DeepNestOutput?>
+            services.AddResilientPipeline<string, DeepNestFixtureOutput?>(
+                DeepNestFixtureClientKeys.PIPELINE,
+                b => b.UseRetries(new RetryOptions<DeepNestFixtureOutput?>
                 {
                     IsTransient = ex => ex is RpcException r && ProtoExtensions.IsTransientGrpcException(r),
                 }));

@@ -26,6 +26,7 @@ import {
   D2_RATE_LIMIT_TIER_KEY,
   D2_AUDIENCE_KEY,
   D2_SERVED_BY_KEY,
+  D2_CONCERN_KEY,
   D2_GRPC_METHOD_KEY,
   D2_REDACT_KEY,
   D2_SERVER_PUSH_KEY,
@@ -54,6 +55,7 @@ import type {
 import {
   loadScopeNames,
   loadAudienceNames,
+  loadProtocolAudienceValues,
   loadErrorCodeNames,
   loadErrorCategoryNames,
   _resetSpecRegistryCache,
@@ -67,6 +69,7 @@ import {
   validateScopes,
   validateAudience,
   validateServedBy,
+  validateConcern,
   validateResilience,
   validateResultPredicate,
   validateFieldNumber,
@@ -79,6 +82,7 @@ import {
   $d2RateLimitTier,
   $d2Audience,
   $d2ServedBy,
+  $d2Concern,
   $d2GrpcMethod,
   $d2Harmless,
   $d2Idempotent,
@@ -180,6 +184,14 @@ describe("directUnit_$d2ServedBy", () => {
   });
 });
 
+describe("directUnit_$d2Concern", () => {
+  it("stores the concern segment under D2_CONCERN_KEY", () => {
+    const { ctx, maps } = makeMockContext();
+    $d2Concern(ctx, mockTarget, "Keyring");
+    expect(maps.get(D2_CONCERN_KEY)!.get(mockTarget)).toBe("Keyring");
+  });
+});
+
 describe("directUnit_$d2GrpcMethod", () => {
   it("stores { service, method, streaming: 'unary' } when streaming omitted", () => {
     const { ctx, maps } = makeMockContext();
@@ -203,10 +215,28 @@ describe("directUnit_$d2GrpcMethod", () => {
 });
 
 describe("directUnit_$d2Redact", () => {
-  it("stores true under D2_REDACT_KEY on the model property", () => {
+  it("stores the RedactReason string under D2_REDACT_KEY on the model property", () => {
     const { ctx, maps } = makeMockContext();
-    $d2Redact(ctx, mockProperty);
-    expect(maps.get(D2_REDACT_KEY)!.get(mockProperty)).toBe(true);
+    $d2Redact(ctx, mockProperty, "SecretInformation");
+    expect(maps.get(D2_REDACT_KEY)!.get(mockProperty)).toBe(
+      "SecretInformation",
+    );
+  });
+
+  it("reports invalid-redact-reason for an unknown reason string", () => {
+    const diags: Array<{ code: string }> = [];
+    const { ctx } = makeMockContext();
+    (
+      ctx.program as unknown as {
+        reportDiagnostic: (d: { code: string }) => void;
+      }
+    ).reportDiagnostic = (d) => {
+      diags.push(d);
+    };
+    $d2Redact(ctx, mockProperty, "NotARealReason");
+    expect(diags.some((d) => d.code.endsWith("invalid-redact-reason"))).toBe(
+      true,
+    );
   });
 });
 
@@ -859,11 +889,12 @@ it("lib_HasExpectedPackageName", () => {
 // Unit tests: $decorators registry key-set pin (§1.18 per-VALUE pin)
 // ---------------------------------------------------------------------------
 
-it("decorators_RegistryMapsAllEighteenDecoratorsUnderD2Namespace", () => {
+it("decorators_RegistryMapsAllNineteenDecoratorsUnderD2Namespace", () => {
   const keys = Object.keys($decorators.D2).sort();
   expect(keys).toEqual([
     "d2Audience",
     "d2Command",
+    "d2Concern",
     "d2Csrf",
     "d2Field",
     "d2GrpcMethod",
@@ -987,14 +1018,37 @@ it("d2GrpcMethod_StoresExplicitStreamingMode", async () => {
   });
 });
 
-it("d2Redact_StoresTrueUnderRedactKeyOnModelProperty", async () => {
+it("d2Redact_StoresReasonUnderRedactKeyOnModelProperty", async () => {
   await runner.compile(`
+    model UserInput {
+      @d2Redact("PersonalInformation") email: string;
+    }
+  `);
+  const values = [...runner.program.stateMap(D2_REDACT_KEY).values()];
+  expect(values).toContain("PersonalInformation");
+});
+
+it("d2Redact_BareMarkerWithoutReasonIsCompilerRejected", async () => {
+  // The reason argument is REQUIRED — a bare @d2Redact is a missing-argument
+  // compile error, so a sensitive field can never be marked without naming its
+  // data class (fail-closed; no silent PersonalInformation default).
+  await runner.diagnose(`
     model UserInput {
       @d2Redact email: string;
     }
   `);
-  const values = [...runner.program.stateMap(D2_REDACT_KEY).values()];
-  expect(values).toContain(true);
+  expect(runner.program.hasError()).toBe(true);
+});
+
+it("d2Redact_UnknownReasonEmitsInvalidRedactReason", async () => {
+  await runner.diagnose(`
+    model UserInput {
+      @d2Redact("NotARealReason") email: string;
+    }
+  `);
+  expect(getDiagCodes(runner)).toContain(
+    "@d2/typespec-decorators/invalid-redact-reason",
+  );
 });
 
 it("d2ServerPush_StoresTargetStringUnderServerPushKey", async () => {
@@ -1143,7 +1197,7 @@ it("d2Internal_StoresTrueUnderInternalKeyOnOperation", async () => {
 it("allSixteenDecorators_CoApplyAndRoundTripIndependently", async () => {
   await httpRunner.compile(`
     model RequestBody {
-      @d2Redact sensitiveField: string;
+      @d2Redact("SecretInformation") sensitiveField: string;
     }
 
     @d2Command
@@ -1217,7 +1271,7 @@ it("allSixteenDecorators_CoApplyAndRoundTripIndependently", async () => {
   ).toBe(true);
 
   const redactValues = [...program.stateMap(D2_REDACT_KEY).values()];
-  expect(redactValues).toContain(true);
+  expect(redactValues).toContain("SecretInformation");
 
   const serverPushValues = [...program.stateMap(D2_SERVER_PUSH_KEY).values()];
   expect(serverPushValues).toContain("session");
@@ -1291,15 +1345,34 @@ describe("specRegistry_LoadsKnownAudience", () => {
     expect(names.has("Files")).toBe(true);
   });
 
-  it("loadAudienceNames() does NOT contain 'd2-edge' (it is the self-audience special-case)", () => {
+  it("loadAudienceNames() does NOT contain 'd2-edge' (it is a protocol audience, not a token-exchange target)", () => {
     const names = loadAudienceNames();
-    // d2-edge is not declared in audiences.spec.json; it is handled as a special case in the validator
+    // d2-edge is declared in protocol-audiences.spec.json (a bare-token protocol
+    // audience), NOT in audiences.spec.json (URL-shaped token-exchange targets).
     expect(names.has("d2-edge")).toBe(false);
   });
 
   it("loadAudienceNames() returns a non-empty set", () => {
     const names = loadAudienceNames();
     expect(names.size).toBeGreaterThan(0);
+  });
+});
+
+describe("specRegistry_LoadsProtocolAudiences", () => {
+  afterEach(() => _resetSpecRegistryCache());
+
+  it("loadProtocolAudienceValues() returns exactly { d2.internal, d2-edge }", () => {
+    const values = loadProtocolAudienceValues();
+    expect([...values].sort()).toEqual(["d2-edge", "d2.internal"]);
+  });
+
+  it("loadProtocolAudienceValues() contains the universal internal receive audience", () => {
+    expect(loadProtocolAudienceValues().has("d2.internal")).toBe(true);
+  });
+
+  it("loadProtocolAudienceValues() does NOT contain a token-exchange target like 'Files'", () => {
+    // The token-exchange targets live in audiences.spec.json, not here.
+    expect(loadProtocolAudienceValues().has("Files")).toBe(false);
   });
 });
 
@@ -1540,13 +1613,22 @@ describe("directUnit_validateScopes", () => {
 });
 
 describe("directUnit_validateAudience", () => {
-  it("no diagnostic for 'd2-edge' (self-audience special case)", () => {
+  it("no diagnostic for 'd2.internal' (the universal internal receive audience — the Steps-3+ compile gate)", () => {
+    // Before this, @d2Audience("d2.internal") hard-failed (it is intentionally
+    // NOT in audiences.spec.json); it now validates via the protocol-audiences
+    // single-source spec. Every internal KC op depends on this.
+    const { ctx, target, diags } = makeMockCtxWithDiags();
+    validateAudience(ctx, target, "d2.internal");
+    expect(diags).toHaveLength(0);
+  });
+
+  it("no diagnostic for 'd2-edge' (the Edge self-audience — now a protocol-audiences spec entry, no hard-coded literal)", () => {
     const { ctx, target, diags } = makeMockCtxWithDiags();
     validateAudience(ctx, target, "d2-edge");
     expect(diags).toHaveLength(0);
   });
 
-  it("no diagnostic for 'Files'", () => {
+  it("no diagnostic for 'Files' (a token-exchange target in audiences.spec.json)", () => {
     const { ctx, target, diags } = makeMockCtxWithDiags();
     validateAudience(ctx, target, "Files");
     expect(diags).toHaveLength(0);
@@ -1576,6 +1658,32 @@ describe("directUnit_validateServedBy", () => {
     const { ctx, target, diags } = makeMockCtxWithDiags();
     validateServedBy(ctx, target, "   ");
     expect(diags.some((d) => d.code.endsWith("empty-served-by"))).toBe(true);
+  });
+});
+
+describe("directUnit_validateConcern", () => {
+  it("no diagnostic for a valid PascalCase segment", () => {
+    const { ctx, target, diags } = makeMockCtxWithDiags();
+    validateConcern(ctx, target, "Keyring");
+    expect(diags).toHaveLength(0);
+  });
+
+  it("emits invalid-concern for a dotted segment", () => {
+    const { ctx, target, diags } = makeMockCtxWithDiags();
+    validateConcern(ctx, target, "Bad.Name");
+    expect(diags.some((d) => d.code.endsWith("invalid-concern"))).toBe(true);
+  });
+
+  it("emits invalid-concern for an empty segment", () => {
+    const { ctx, target, diags } = makeMockCtxWithDiags();
+    validateConcern(ctx, target, "");
+    expect(diags.some((d) => d.code.endsWith("invalid-concern"))).toBe(true);
+  });
+
+  it("emits invalid-concern for a leading-digit segment", () => {
+    const { ctx, target, diags } = makeMockCtxWithDiags();
+    validateConcern(ctx, target, "1Keyring");
+    expect(diags.some((d) => d.code.endsWith("invalid-concern"))).toBe(true);
   });
 });
 
@@ -3037,6 +3145,20 @@ describe("d2Audience_AcceptsD2EdgeSpecialCase", () => {
   });
 });
 
+describe("d2Audience_AcceptsD2InternalAudience", () => {
+  it("produces no unknown-audience diagnostic for 'd2.internal'", async () => {
+    await runner.diagnose(`
+      @d2Query
+      @d2Internal
+      @d2Audience("d2.internal")
+      op goodOp(): void;
+    `);
+    expect(getDiagCodes(runner)).not.toContain(
+      "@d2/typespec-decorators/unknown-audience",
+    );
+  });
+});
+
 // --- @d2ServedBy ---
 
 describe("d2ServedBy_RejectsEmptyOwner", () => {
@@ -3246,7 +3368,7 @@ describe("d2Resilience_AcceptsValidExpressions", () => {
 describe("redact_OnOperationIsCompilerRejected", () => {
   it("program has errors when @d2Redact is applied to an op (wrong target type)", async () => {
     await runner.diagnose(`
-      @d2Redact
+      @d2Redact("PersonalInformation")
       op badOp(): void;
     `);
     // The TypeSpec compiler enforces the extern dec target: ModelProperty constraint.

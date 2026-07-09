@@ -24,6 +24,7 @@ D2.Shared.I18n.TK.Geo
 D2.Shared.I18n.TK.Geo.Errors
 D2.Shared.I18n.TK.Geo.Validation
 D2.Shared.I18n.TK.Keycustodian
+D2.Shared.I18n.TK.Keycustodian.Authorization
 D2.Shared.I18n.TK.Keycustodian.Infrastructure
 D2.Shared.I18n.TK.Keycustodian.Internal
 D2.Shared.I18n.TK.Keycustodian.Lifecycle
@@ -317,14 +318,27 @@ static readonly D2.Shared.I18n.TK.Geo.Validation.LONGITUDE_RANGE -> D2.Shared.I1
 static readonly D2.Shared.I18n.TK.Geo.Validation.POSTAL_CODE_INVALID -> D2.Shared.I18n.TKMessage!
 static readonly D2.Shared.I18n.TK.Geo.Validation.POSTAL_CODE_TOO_LONG -> D2.Shared.I18n.TKMessage!
 static readonly D2.Shared.I18n.TK.Geo.Validation.STREET_LINE_TOO_LONG -> D2.Shared.I18n.TKMessage!
+static readonly D2.Shared.I18n.TK.Keycustodian.Authorization.CA_CERTIFICATE_NOT_AUTHORIZED -> D2.Shared.I18n.TKMessage!
+static readonly D2.Shared.I18n.TK.Keycustodian.Authorization.CROSS_PROCESS_DOMAIN_REJECTED -> D2.Shared.I18n.TKMessage!
+static readonly D2.Shared.I18n.TK.Keycustodian.Authorization.ISSUANCE_NOT_AUTHORIZED -> D2.Shared.I18n.TKMessage!
+static readonly D2.Shared.I18n.TK.Keycustodian.Authorization.KEYRING_DOMAIN_NOT_AUTHORIZED -> D2.Shared.I18n.TKMessage!
+static readonly D2.Shared.I18n.TK.Keycustodian.Authorization.MINTER_CAPABILITY_REQUIRED -> D2.Shared.I18n.TKMessage!
+static readonly D2.Shared.I18n.TK.Keycustodian.Authorization.REQUEST_ORIGIN_UNESTABLISHED -> D2.Shared.I18n.TKMessage!
+static readonly D2.Shared.I18n.TK.Keycustodian.Authorization.SEAL_NOT_AUTHORIZED -> D2.Shared.I18n.TKMessage!
+static readonly D2.Shared.I18n.TK.Keycustodian.Authorization.SIGNING_DOMAIN_NOT_AUTHORIZED -> D2.Shared.I18n.TKMessage!
+static readonly D2.Shared.I18n.TK.Keycustodian.Infrastructure.KEYRING_KEY_UNAVAILABLE -> D2.Shared.I18n.TKMessage!
 static readonly D2.Shared.I18n.TK.Keycustodian.Infrastructure.NO_ACTIVE_ISSUING_CA -> D2.Shared.I18n.TKMessage!
+static readonly D2.Shared.I18n.TK.Keycustodian.Infrastructure.SEAL_KEY_UNAVAILABLE -> D2.Shared.I18n.TKMessage!
+static readonly D2.Shared.I18n.TK.Keycustodian.Infrastructure.SIGNING_KEY_UNAVAILABLE -> D2.Shared.I18n.TKMessage!
 static readonly D2.Shared.I18n.TK.Keycustodian.Internal.INVALID_CERTIFICATE_REQUEST -> D2.Shared.I18n.TKMessage!
 static readonly D2.Shared.I18n.TK.Keycustodian.Internal.PRECONDITION_VIOLATED -> D2.Shared.I18n.TKMessage!
 static readonly D2.Shared.I18n.TK.Keycustodian.Internal.SMOKE_TEST_FAILED -> D2.Shared.I18n.TKMessage!
 static readonly D2.Shared.I18n.TK.Keycustodian.Lifecycle.KEY_NOT_FOUND -> D2.Shared.I18n.TKMessage!
 static readonly D2.Shared.I18n.TK.Keycustodian.Lifecycle.KEY_STATE_CONFLICT -> D2.Shared.I18n.TKMessage!
 static readonly D2.Shared.I18n.TK.Keycustodian.Lifecycle.PENDING_KEY_ALREADY_EXISTS -> D2.Shared.I18n.TKMessage!
+static readonly D2.Shared.I18n.TK.Keycustodian.Validation.EMPTY_SIGNING_INPUT -> D2.Shared.I18n.TKMessage!
 static readonly D2.Shared.I18n.TK.Keycustodian.Validation.GRACE_NOT_ELAPSED -> D2.Shared.I18n.TKMessage!
+static readonly D2.Shared.I18n.TK.Keycustodian.Validation.INVALID_CSR -> D2.Shared.I18n.TKMessage!
 static readonly D2.Shared.I18n.TK.Keycustodian.Validation.INVALID_ROTATION_POLICY -> D2.Shared.I18n.TKMessage!
 static readonly D2.Shared.I18n.TK.Keycustodian.Validation.INVALID_WORKLOAD_IDENTITY -> D2.Shared.I18n.TKMessage!
 static readonly D2.Shared.I18n.TK.Keycustodian.Validation.SMOKE_PROOF_TYPE_MISMATCH -> D2.Shared.I18n.TKMessage!

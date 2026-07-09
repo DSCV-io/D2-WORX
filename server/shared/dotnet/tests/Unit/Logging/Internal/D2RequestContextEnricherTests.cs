@@ -533,6 +533,13 @@ public sealed class D2RequestContextEnricherTests
 
         public string? AsnType { get; init; }
 
+        // Establishment
+        public RequestOrigin Origin { get; init; } = RequestOrigin.Unestablished;
+
+        public string? ImmediateCaller { get; init; }
+
+        public IReadOnlyList<CallPathEntry> CallPath { get; init; } = [];
+
         // IAuthContext — Token + Trust
         public bool? IsAuthenticated { get; init; }
 

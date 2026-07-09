@@ -101,7 +101,7 @@ Domain  ←  App  ←  Infra  ←  Api      (Tests reference what they test; Cli
 | `infra/` | `D2.<Area>.<Service>.Infra` | `Microsoft.NET.Sdk` | Adapters implementing the app's ports — the **only** vendor-SDK-touching layer. |
 | `api/` | `D2.<Area>.<Service>.Api` | `Microsoft.NET.Sdk.Web` | Composition root — `Program.cs` + host wiring + transport adapters (gRPC/REST/SSE) + transport mappers. The **only** project allowed to reference `infra/`. |
 | `tests/` | `D2.<Area>.<Service>.Tests` | `Microsoft.NET.Sdk` | One project per service — `Unit/` + `Integration/` mirroring source. |
-| `clients/dotnet/` | `D2.<Area>.<Service>.Client` | `Microsoft.NET.Sdk` | Consumer-facing — references **contracts + shared libs only**, never the service's internals. |
+| `client/` | `D2.<Area>.<Service>.Client` | `Microsoft.NET.Sdk` | Consumer-facing client package (SINGULAR, matching its `.Client` assembly name) — references **contracts + shared libs only**, never the service's internals. Service-client RUNTIME code lives here, never under `server/shared/`. |
 
 `<Area>` = `Edge` (or the service's own name when standalone). **WHY one direction:** vendor churn touches infra only; the domain stays testable with zero infrastructure; the api is the one place every concrete adapter + transport binding is named. The tie-breaker for an ambiguous placement: *"which layer still compiles if I delete the layer below the candidate?"*
 
@@ -122,6 +122,8 @@ app/
 │   ├── Handlers/
 │   │   ├── Commands/<Operation>/       # one folder per command operation
 │   │   └── Queries/<Operation>/        # one folder per query operation
+│   ├── <Concern>/                      # op-noun concern folder — support types (siblings of Handlers/)
+│   ├── Facade/                         # generated module façade impl + DI registration (<app-ns>.Facade)
 │   ├── Observability/                  # <Service>Log + <Service>Metrics
 │   └── <Service>AppServiceCollectionExtensions.cs   # AddD2<Service>App()
 └── Infrastructure/
@@ -142,6 +144,8 @@ Application/Handlers/Commands/RotateKey/
 ```
 
 Naming law: handler interface `I<Operation>Handler`, impl `<Operation>Handler` (file = type; the bare `<Operation>` type name is not used), input `<Operation>Input` (never `Request`/`Command`), output `<Operation>Output` (never document-style `Outcome`/`Plan`). An operation-private record is `<Operation><Role>` (suffixed) or a `private` nested type. One interface per file; consumers `using` the folder namespace directly — no `partial` aggregation, no grouping aliases. **WHY co-locate:** an interface and its impl are read together nearly always; two unrelated operations' interfaces are read together nearly never. A DTO bucket (`Models/`) is not used — a DTO either co-locates with its operation or, when a shape is shared by 2+ operations, is promoted to a domain VO.
+
+**App-layer op-noun concern folders + `Facade/`.** The app's *support types* — helpers, capabilities, and consumer-side sources a handler leans on — go in **op-noun concern folders that are siblings of `Handlers/`** (namespace = folder, `<app-ns>.<Concern>`), NOT nested inside `Handlers/<Op>/`. The `Application/` root keeps ONLY the composition-root extension. KeyCustodian: `Signing/` (`KeyDomainSigner`, `JwtSigningCapability` + DI extension), `Issuance/` (the isolated CA-leaf-signing capability), `CertificateAuthority/` (`CaSuccessorFactory`, serving several lifecycle handlers), `Keyring/` (the in-process keyring source + DI extension), and `Facade/` (the generated `<Module>Api.g.cs` façade impl + its DI registration). **WHY not nest in `Handlers/<Op>/`:** the per-op folder has a fixed four-file shape, and a support type usually serves *several* handlers or the *consumer side* — no single op folder is its home; a concern folder keeps the shape crisp and folder=namespace intact.
 
 ### Command vs Query — the binary side-effect rule
 
@@ -167,6 +171,8 @@ infra/Observability/                                  (infra-side log delegates 
 ```
 
 **WHY mandatory even for a sole impl:** the subfolder is the seam a second vendor lands on without a reshuffle — the day Resend gains an SES fallback, the new adapter drops into a sibling folder and nothing else moves. The generic `Providers/` wrapper is dead; concern + vendor replaces it. The concern-noun set is open-but-deliberate — adding a noun is a standard amendment (this doc + [ADR-0020](adrs/0020-service-project-structure.md)), not an ad-hoc per-service invention.
+
+**Client package layout — same concern convention.** The consumer-facing `client/` package mirrors the app-layer concern convention: the package root holds metadata only (csproj / README / CHANGELOG / `PublicAPI.*.txt` / `.release-fingerprint`); a `Facade/` folder holds the generated module façade interface (`I<Module>Api.g.cs`, namespace `<clients-ns>.Facade`); and each op-aligned concern folder holds that concern's generated wire `.g.cs` DTOs **plus** the hand-written runtime that serves them (namespace `<clients-ns>.<Concern>`). KeyCustodian: `Jwks/`, `OidcConfiguration/`, `Signing/` (Sign DTOs + `IJwtSigningCapability`), `Keyring/` (GetKeyring DTOs + the rotation-aware consumer runtime + the proto redaction partial `KeyringEntry.Redaction.cs`), `Issuance/`, `CaCertificate/`. The concern-to-folder assignment is spec-driven via the TypeSpec `@d2Concern("<Segment>")` decorator ([SRC_GEN.md](SRC_GEN.md)), which drives the emitted DTO namespace AND the committed-home folder in lockstep, so folder and namespace never diverge.
 
 ### Multi-provider — the keyed-resolver recipe
 
@@ -245,7 +251,7 @@ return D2Result<TokenDto>.ValidationFailed(inputErrors: errors);
 return AuthFailures<TokenDto>.InvalidGrant();
 ```
 
-Each factory stamps the spec-declared `(code, httpStatus, category, userMessageKey)` tuple, so the wire payload carries the code + its `category` + a `TKMessage` whose key resolves to localized text on the client. A new code is added by editing the spec + re-running the generator — never by hand-mapping a status + message into a raw `Fail(statusCode, message)` call (per [`docs/dev/rules.md §26.6`](dev/rules.md#26-codegen-discipline-spec--proto--schema-derived-types) + [§5.3](dev/rules.md#5-c-code-conventions)).
+Each factory stamps the spec-declared `(code, httpStatus, category, userMessageKey)` tuple, so the wire payload carries the code + its `category` + a `TKMessage` whose key resolves to localized text on the client. A new code is added by editing the spec + re-running the generator — never by hand-mapping a status + message into a raw `Fail(statusCode, message)` call (per [`docs/dev/rules.md §26.6`](dev/rules/26-codegen-discipline-spec-proto-schema-derived-types.md#26-codegen-discipline-spec--proto--schema-derived-types) + [§5.3](dev/rules/05-csharp-code-conventions.md#5-c-code-conventions)).
 
 **Merged-registry resolution boundary** — the codegen also emits a merged cross-service registry (`ErrorCodeRegistry` in .NET, `errorCodeRegistry` in TS) that aggregates EVERY `*-error-codes.spec.json` catalog into one `code → ErrorCodeInfo` lookup. This is what lets a consuming service branch on a wire code it didn't produce: given a code string from any producer, `TryResolve(code, out info)` returns the `httpStatus`, `category`, `userMessageKey`, and originating `domain` WITHOUT the consumer importing the producer's catalog. The registry is the resolution surface; the per-catalog factories are the production surface — produce with `D2Result.X()` / `<Domain>Failures.X()`, resolve a foreign code with the registry.
 
@@ -428,6 +434,12 @@ public sealed class GetEntityByIdHandler(ITieredCache cache, IEntityRepo repo) :
 
 Canonical: [`server/shared/dotnet/caching/abstractions/README.md`](../server/shared/dotnet/caching/abstractions/README.md). Default impls: [`caching/local-default/`](../server/shared/dotnet/caching/local-default/README.md), [`caching/distributed-redis/`](../server/shared/dotnet/caching/distributed-redis/README.md), [`caching/tiered/`](../server/shared/dotnet/caching/tiered/README.md).
 
+### Keyring-backed payload crypto — in-process-only, never a shared cache tier
+
+The KC client package `D2.Edge.KeyCustodian.Client` turns the KeyCustodian keyring surface into a keyed, hot-swappable `IPayloadCrypto` for a payload domain. The key material is held **in-process-memory-only** and refreshed by the `KeyRotatedEvent` rotation event (atomic hot-swap on receipt) — it is NEVER placed in Redis / `IDistributedCache` / `ITieredCache` / any shared cache tier, because the payload keyring is itself the key material that protects cache-bound data (caching it in the tier it protects would be circular). A failed refresh keeps serving the current keyring (bounded — no tight-loop, no dead-letter). Wire it with `AddD2EncryptionFromKeyCustodian(domain, callingModuleId)` (in-process leaf source, in the KC app) or `AddD2EncryptionForViaKeyring(domain)` (cross-process gRPC source, in the client package); consumers resolve `[FromKeyedServices(domain)] IPayloadCrypto` and call `Encrypt` / `Decrypt` — they never see a raw keyring.
+
+Canonical: [`server/services/edge/key-custodian/client/README.md`](../server/services/edge/key-custodian/client/README.md).
+
 ---
 
 ## Composition root
@@ -541,6 +553,58 @@ services.AddD2AuthOutbound(opts => { opts.Issuer = ...; opts.ClientId = ...; opt
 ```
 
 Canonical: [`server/shared/dotnet/auth/outbound/README.md`](../server/shared/dotnet/auth/outbound/README.md). Workload-identity background: [`server/shared/dotnet/workload-identity/README.md`](../server/shared/dotnet/workload-identity/README.md).
+
+---
+
+## Request-context establishment (`Origin` / `ImmediateCaller` / `CallPath`)
+
+Every trust boundary a request can pass through recomputes two local, non-propagated facts on `IRequestContext` — `Origin` (`RequestOrigin`: which kind of boundary produced this hop's context) and `ImmediateCaller` (`string?`: who called this hop) — and appends one entry to a propagated, telemetry-only `CallPath`. `Origin`/`ImmediateCaller` are never carried in from the wire; each boundary derives them fresh from its own transport evidence, so a capability authority can trust them the same way it trusts a validated JWT claim. `CallPath` is the opposite shape on purpose — it accumulates across hops and rides `x-d2-context`, so no authority rule ever takes it as a parameter.
+
+Five establishment boundaries populate these fields, one per way a request-scoped context can originate plus the outbound leg that carries the propagated subset forward:
+
+```csharp
+// Inbound HTTP (D2.Shared.Auth.Http) — sets Origin = EdgeInbound, starts the call-path.
+app.UseD2RequestOriginEdge();
+
+// Inbound gRPC (D2.Shared.Auth.Grpc) — sets Origin = CrossProcessHop, ImmediateCaller
+// from the validated mTLS client certificate, appends a WorkloadHop entry.
+services.AddD2RequestOriginGrpc();   // registers RequestOriginCrossProcessInterceptor
+
+// In-process module call (D2.Shared.Context.Abstractions) — the generated I<Module>Api
+// leaf calls this before dispatching; sets Origin = InProcessModule.
+requestContext.EstablishInProcessModule(callingModuleId, targetModuleId, clock);
+
+// System worker (D2.Shared.Context.Abstractions) — a background service's per-iteration
+// scope calls this before resolving a handler; sets Origin = System.
+scopedServices.EstablishSystemContext(hostServiceId, clock);
+
+// Outbound gRPC (D2.Shared.Auth.Outbound) — writes x-d2-context (operational subset +
+// accumulated call-path) on every outbound call; auto-chained by the generated client.
+builder.AddD2PropagatedContext();
+```
+
+**Fail-closed by construction.** A freshly-constructed context's `Origin` is `RequestOrigin.Unestablished` — the enum's zero member — so any authority rule consulting `Origin` denies unless a boundary has positively established it. There is no "assume a plane" fallback; a missing establishment call is a loud, rejected request, not a silent over-grant.
+
+Canonical: [ADR-0025](adrs/0025-request-context-establishment.md).
+
+### Minter capability — possession-gated authority over a cluster-root secret
+
+A capability over the single highest-value secret in a service (KeyCustodian's cluster JWT signing key, `jwks-signing`) is never a branch inside the general-purpose authority rule every request eventually reaches. It is a **separate interface**, registered by a **dedicated DI extension** called only from the one composition root allowed to hold it:
+
+```csharp
+public interface IJwtSigningCapability
+{
+    ValueTask<D2Result<SignOutput>> SignJwtAsync(SignInput input, CancellationToken ct = default);
+}
+
+// Called ONLY from the owning composition (the JWT minter / auth module) —
+// never from the general client registration (AddD2KeyCustodianClient()).
+services.AddD2JwtSigningCapability();
+```
+
+**Possession of the resolved interface is the authority.** A provider built without the dedicated registration cannot resolve `IJwtSigningCapability` at all — there is no runtime flag to flip and no caller identity to spoof, because the capability either was wired into this composition root or it was not, and that is a build-time, review-visible fact. The implementation adds a second, independent guard — an origin check (`Origin == InProcessModule`) — so even a reference that somehow escaped its owning composition cannot be used from the wrong plane. The general-purpose authority rule structurally excludes the guarded target for every caller and every origin, so the capability is the *only* path to it, not merely the *recommended* one.
+
+Canonical: [ADR-0025](adrs/0025-request-context-establishment.md) §"The authority model."
 
 ---
 

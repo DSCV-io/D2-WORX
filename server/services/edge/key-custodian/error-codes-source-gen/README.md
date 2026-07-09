@@ -6,6 +6,8 @@ Copyright (c) DCSV. All rights reserved.
 
 > Parent: [`server/services/edge/key-custodian/`](../README.md)
 
+**Input contract:** [`contracts/keycustodian-error-codes/`](../../../../../contracts/keycustodian-error-codes/README.md)
+
 For engineers adding or modifying KeyCustodian error codes, or extending the shared source-gen engine. A thin `[Generator]` shell over the shared unified error-codes engine ([`source-gen-shared/error-codes-emit`](../../../../shared/dotnet/source-gen-shared/error-codes-emit/README.md)). It emits the `KeyCustodianErrorCodes` const-string catalog + the `KeyCustodianFailures` semantic-factory class + the typed `KeyCustodianFailures<T>` twin into `D2.Edge.KeyCustodian.Domain` by reading `contracts/keycustodian-error-codes/keycustodian-error-codes.spec.json` via `<AdditionalFiles>`. Single-target — emits ONLY when the consuming assembly is `D2.Edge.KeyCustodian.Domain`. The shell owns only the keycustodian catalog's identity (assembly name + the `ErrorCodesGenerator` type FQN, both load-bearing for the on-disk generated path) + its `CatalogConfig`; all generation logic lives in the shared engine.
 
 The spec file is the single source of truth for the platform's keycustodian error taxonomy. Every `d2_error_code` constant surfaced on a `D2Result` failure, every `KeyCustodianFailures<T>.*` factory the domain calls, and the cross-spec merged registry (`ErrorCodeRegistry`) all derive from one JSON file — no hand-written parallel constants, no per-domain drift.

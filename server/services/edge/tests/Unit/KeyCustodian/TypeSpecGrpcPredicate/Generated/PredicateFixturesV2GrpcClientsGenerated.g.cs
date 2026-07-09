@@ -51,11 +51,11 @@ public static class PredicateFixturesV2GrpcClientsGeneratedServiceCollectionExte
                 .AddD2ForwardedJwt()
                 .AddD2WorkloadCertificate();
 
-            // PlaceOrderV2 resilience pipeline — retry on gRPC transport transients only.
+            // PlaceOrderV2Fixture resilience pipeline — retry on gRPC transport transients only.
             // Replace with ResilientPipeline<…>.PassThrough in tests that do not need retry.
-            services.AddResilientPipeline<string, PlaceOrderV2Output?>(
-                PlaceOrderV2ClientKeys.PIPELINE,
-                b => b.UseRetries(new RetryOptions<PlaceOrderV2Output?>
+            services.AddResilientPipeline<string, PlaceOrderV2FixtureOutput?>(
+                PlaceOrderV2FixtureClientKeys.PIPELINE,
+                b => b.UseRetries(new RetryOptions<PlaceOrderV2FixtureOutput?>
                 {
                     IsTransient = ex =>
                         ex is D2GeneratedBusinessRetrySignal

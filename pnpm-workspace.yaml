@@ -4,6 +4,7 @@
 
 packages:
   - "server/shared/typescript/**"
+  - "server/services/**"
   - "tools/ts-codegen"
   - "tools/geo-data-pipeline"
   - "tools/contract-gate"

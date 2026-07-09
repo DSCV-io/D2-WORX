@@ -70,6 +70,9 @@ export function tryParseTruthyUndefUuid(input: string | null | undefined): strin
 export const UUID_RE: RegExp;
 
 // @public
+export function uuidv7(now?: () => number): string;
+
+// @public
 export const WHITESPACE_RE: RegExp;
 
 // (No @packageDocumentation comment for this package)

@@ -103,7 +103,8 @@ public sealed class WorkloadCertificateRegistrationTests
 
     private sealed class NoopIssuer : IWorkloadCertificateIssuer
     {
-        public ValueTask<D2Result<WorkloadLeafMaterial>> IssueAsync(CancellationToken ct = default) =>
+        public ValueTask<D2Result<WorkloadLeafMaterial>> IssueAsync(
+            byte[] csrDer, CancellationToken ct = default) =>
             ValueTask.FromResult(D2Result<WorkloadLeafMaterial>.ServiceUnavailable());
     }
 }

@@ -10,7 +10,7 @@ using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 using D2.Edge.Tests.TypeSpecGrpc.Generated;
-using D2.Services.Protos.KeyCustodian.V2Alpha;
+using D2.Services.Protos.SignFixtures.V2Alpha;
 using D2.Shared.Auth.Abstractions;
 using D2.Shared.Auth.Outbound;
 using D2.Shared.Resilience.Pipeline;
@@ -24,14 +24,14 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using DtoSignInput = D2.Edge.Tests.TypeSpecDto.Generated.SignInput;
-using DtoSignOutput = D2.Edge.Tests.TypeSpecDto.Generated.SignOutput;
-using ProtoSignOutput = D2.Services.Protos.KeyCustodian.V2Alpha.SignOutput;
+using DtoSignFixtureInput = D2.Edge.Tests.TypeSpecDto.Generated.SignFixtureInput;
+using DtoSignFixtureOutput = D2.Edge.Tests.TypeSpecDto.Generated.SignFixtureOutput;
+using ProtoSignFixtureOutput = D2.Services.Protos.SignFixtures.V2Alpha.SignFixtureOutput;
 
 /// <summary>
-/// In-memory harness tests for the generated <see cref="KeyCustodianGrpcClient"/> — the
+/// In-memory harness tests for the generated <see cref="SignFixtureGrpcClient"/> — the
 /// per-module cross-process gRPC client with the captured-envelope body. Hosts concrete
-/// shims extending <see cref="KeyCustodianSigner.KeyCustodianSignerBase"/> via an in-process
+/// shims extending <see cref="SignFixtureSigner.SignFixtureSignerBase"/> via an in-process
 /// <see cref="TestServer"/> + <see cref="GrpcChannel"/> (no sockets) to exercise:
 /// <list type="bullet">
 ///   <item>business-result round-trip fidelity (envelope reconstruction);</item>
@@ -45,7 +45,7 @@ using ProtoSignOutput = D2.Services.Protos.KeyCustodian.V2Alpha.SignOutput;
 /// </list>
 /// BOUNDARY: these are IN-MEMORY only. Real two-process over-the-wire validation (real
 /// sockets, TLS, forwarded-token issuance) is a later step. The call-path cases construct
-/// <see cref="KeyCustodianGrpcClient"/> directly over a plaintext in-process channel, so the
+/// <see cref="SignFixtureGrpcClient"/> directly over a plaintext in-process channel, so the
 /// auto-wired outbound-auth chain is not exercised by them; the DI-resolution case wires the
 /// host config the generated extension auto-chains and asserts the registration resolves.
 /// </summary>
@@ -56,14 +56,14 @@ public sealed class GrpcClientTests
     // ---------------------------------------------------------------------------
 
     [Fact]
-    public async Task SignAsync_Success_ReconstructsBusinessD2ResultFromEnvelope()
+    public async Task SignFixtureAsync_Success_ReconstructsBusinessD2ResultFromEnvelope()
     {
         const string expected_sig = "sig-abc==";
         using var host = await BuildHost(new SuccessSignerBase(expected_sig));
         var client = BuildClient(host);
 
-        var result = await client.SignAsync(
-            new DtoSignInput("key-001", new byte[] { 1, 2, 3 }));
+        var result = await client.SignFixtureAsync(
+            new DtoSignFixtureInput("key-001", new byte[] { 1, 2, 3 }));
 
         result.Success.Should().BeTrue();
         result.StatusCode.Should().Be(HttpStatusCode.OK);
@@ -77,9 +77,9 @@ public sealed class GrpcClientTests
     // ---------------------------------------------------------------------------
 
     [Fact]
-    public async Task SignAsync_BusinessFailure_ValidationFailed_ReturnsRealCode_NotRetried()
+    public async Task SignFixtureAsync_BusinessFailure_ValidationFailed_ReturnsRealCode_NotRetried()
     {
-        var signer = new BusinessFailureSignerBase(D2Result<DtoSignOutput?>.ValidationFailed());
+        var signer = new BusinessFailureSignerBase(D2Result<DtoSignFixtureOutput?>.ValidationFailed());
         using var host = await BuildHost(signer);
 
         // Use a retry pipeline that WOULD retry transport faults, to prove a business
@@ -87,7 +87,7 @@ public sealed class GrpcClientTests
         using var retryPipeline = BuildGrpcRetryPipeline(maxAttempts: 5);
         var client = BuildClientWithPipeline(host, retryPipeline);
 
-        var result = await client.SignAsync(new DtoSignInput("k", new byte[] { 0xDE }));
+        var result = await client.SignFixtureAsync(new DtoSignFixtureInput("k", new byte[] { 0xDE }));
 
         result.Success.Should().BeFalse();
         result.StatusCode.Should().Be(HttpStatusCode.BadRequest);
@@ -102,13 +102,13 @@ public sealed class GrpcClientTests
     // ---------------------------------------------------------------------------
 
     [Fact]
-    public async Task SignAsync_BusinessFailure_NotFound_ReturnsRealCode()
+    public async Task SignFixtureAsync_BusinessFailure_NotFound_ReturnsRealCode()
     {
         using var host = await BuildHost(new BusinessFailureSignerBase(
-            D2Result<DtoSignOutput?>.NotFound()));
+            D2Result<DtoSignFixtureOutput?>.NotFound()));
         var client = BuildClient(host);
 
-        var result = await client.SignAsync(new DtoSignInput("k", new byte[] { 0x01 }));
+        var result = await client.SignFixtureAsync(new DtoSignFixtureInput("k", new byte[] { 0x01 }));
 
         result.Success.Should().BeFalse();
         result.StatusCode.Should().Be(HttpStatusCode.NotFound);
@@ -123,14 +123,14 @@ public sealed class GrpcClientTests
     // ---------------------------------------------------------------------------
 
     [Fact]
-    public async Task SignAsync_TransportFault_Unavailable_ReturnsServiceUnavailable()
+    public async Task SignFixtureAsync_TransportFault_Unavailable_ReturnsServiceUnavailable()
     {
         using var host = await BuildHost(new ThrowingSignerBase(StatusCode.Unavailable));
         var client = BuildClient(host);
 
-        var result = await client.SignAsync(
-            new DtoSignInput("k", new byte[] { 0x01 }),
-            pipelineOverride: ResilientPipeline<string, DtoSignOutput?>.PassThrough);
+        var result = await client.SignFixtureAsync(
+            new DtoSignFixtureInput("k", new byte[] { 0x01 }),
+            pipelineOverride: ResilientPipeline<string, DtoSignFixtureOutput?>.PassThrough);
 
         result.Success.Should().BeFalse();
         result.StatusCode.Should().Be(HttpStatusCode.ServiceUnavailable);
@@ -144,14 +144,14 @@ public sealed class GrpcClientTests
     // ---------------------------------------------------------------------------
 
     [Fact]
-    public async Task SignAsync_TransportFault_DeadlineExceeded_ReturnsServiceUnavailable()
+    public async Task SignFixtureAsync_TransportFault_DeadlineExceeded_ReturnsServiceUnavailable()
     {
         using var host = await BuildHost(new ThrowingSignerBase(StatusCode.DeadlineExceeded));
         var client = BuildClient(host);
 
-        var result = await client.SignAsync(
-            new DtoSignInput("k", new byte[] { 0x01 }),
-            pipelineOverride: ResilientPipeline<string, DtoSignOutput?>.PassThrough);
+        var result = await client.SignFixtureAsync(
+            new DtoSignFixtureInput("k", new byte[] { 0x01 }),
+            pipelineOverride: ResilientPipeline<string, DtoSignFixtureOutput?>.PassThrough);
 
         result.Success.Should().BeFalse();
         result.StatusCode.Should().Be(HttpStatusCode.ServiceUnavailable);
@@ -166,14 +166,14 @@ public sealed class GrpcClientTests
     // ---------------------------------------------------------------------------
 
     [Fact]
-    public async Task SignAsync_TransportFault_PermissionDenied_ReturnsServiceUnavailable()
+    public async Task SignFixtureAsync_TransportFault_PermissionDenied_ReturnsServiceUnavailable()
     {
         using var host = await BuildHost(new ThrowingSignerBase(StatusCode.PermissionDenied));
         var client = BuildClient(host);
 
-        var result = await client.SignAsync(
-            new DtoSignInput("k", new byte[] { 0x01 }),
-            pipelineOverride: ResilientPipeline<string, DtoSignOutput?>.PassThrough);
+        var result = await client.SignFixtureAsync(
+            new DtoSignFixtureInput("k", new byte[] { 0x01 }),
+            pipelineOverride: ResilientPipeline<string, DtoSignFixtureOutput?>.PassThrough);
 
         result.Success.Should().BeFalse();
         result.StatusCode.Should().Be(HttpStatusCode.ServiceUnavailable);
@@ -189,14 +189,14 @@ public sealed class GrpcClientTests
     // ---------------------------------------------------------------------------
 
     [Fact]
-    public async Task SignAsync_TransportTransient_RetriesThenServiceUnavailable()
+    public async Task SignFixtureAsync_TransportTransient_RetriesThenServiceUnavailable()
     {
         var signer = new ThrowingSignerBase(StatusCode.Unavailable);
         using var host = await BuildHost(signer);
         using var retryPipeline = BuildGrpcRetryPipeline(maxAttempts: 3);
         var client = BuildClientWithPipeline(host, retryPipeline);
 
-        var result = await client.SignAsync(new DtoSignInput("k", new byte[] { 0x01 }));
+        var result = await client.SignFixtureAsync(new DtoSignFixtureInput("k", new byte[] { 0x01 }));
 
         result.Success.Should().BeFalse();
         result.StatusCode.Should().Be(HttpStatusCode.ServiceUnavailable);
@@ -210,7 +210,7 @@ public sealed class GrpcClientTests
     // ---------------------------------------------------------------------------
 
     [Fact]
-    public async Task SignAsync_TransportTransient_RecoversAfterRetry()
+    public async Task SignFixtureAsync_TransportTransient_RecoversAfterRetry()
     {
         const string recovered_sig = "recovered==";
         var signer = new FlakyThenSuccessSignerBase(StatusCode.Unavailable, recovered_sig);
@@ -218,7 +218,7 @@ public sealed class GrpcClientTests
         using var retryPipeline = BuildGrpcRetryPipeline(maxAttempts: 3);
         var client = BuildClientWithPipeline(host, retryPipeline);
 
-        var result = await client.SignAsync(new DtoSignInput("k", new byte[] { 0x01 }));
+        var result = await client.SignFixtureAsync(new DtoSignFixtureInput("k", new byte[] { 0x01 }));
 
         result.Success.Should().BeTrue();
         result.Data!.Signature.Should().Be(recovered_sig);
@@ -232,14 +232,14 @@ public sealed class GrpcClientTests
     // ---------------------------------------------------------------------------
 
     [Fact]
-    public async Task SignAsync_TransportPermanent_InvalidArgument_NotRetried_ServiceUnavailable()
+    public async Task SignFixtureAsync_TransportPermanent_InvalidArgument_NotRetried_ServiceUnavailable()
     {
         var signer = new ThrowingSignerBase(StatusCode.InvalidArgument);
         using var host = await BuildHost(signer);
         using var retryPipeline = BuildGrpcRetryPipeline(maxAttempts: 5);
         var client = BuildClientWithPipeline(host, retryPipeline);
 
-        var result = await client.SignAsync(new DtoSignInput("k", new byte[] { 0x01 }));
+        var result = await client.SignFixtureAsync(new DtoSignFixtureInput("k", new byte[] { 0x01 }));
 
         result.Success.Should().BeFalse();
         result.StatusCode.Should().Be(HttpStatusCode.ServiceUnavailable);
@@ -253,16 +253,16 @@ public sealed class GrpcClientTests
     // ---------------------------------------------------------------------------
 
     [Fact]
-    public async Task SignAsync_WithPassThroughOverride_BypassesInjectedRetryPipeline()
+    public async Task SignFixtureAsync_WithPassThroughOverride_BypassesInjectedRetryPipeline()
     {
         var signer = new ThrowingSignerBase(StatusCode.Unavailable);
         using var host = await BuildHost(signer);
         using var retryPipeline = BuildGrpcRetryPipeline(maxAttempts: 100);
         var client = BuildClientWithPipeline(host, retryPipeline);
 
-        var result = await client.SignAsync(
-            new DtoSignInput("k", new byte[] { 0x01 }),
-            pipelineOverride: ResilientPipeline<string, DtoSignOutput?>.PassThrough);
+        var result = await client.SignFixtureAsync(
+            new DtoSignFixtureInput("k", new byte[] { 0x01 }),
+            pipelineOverride: ResilientPipeline<string, DtoSignFixtureOutput?>.PassThrough);
 
         result.Success.Should().BeFalse();
         result.StatusCode.Should().Be(HttpStatusCode.ServiceUnavailable);
@@ -274,12 +274,12 @@ public sealed class GrpcClientTests
     // ---------------------------------------------------------------------------
 
     [Fact]
-    public async Task SignAsync_NullData_ReturnsSuccessWithNullData()
+    public async Task SignFixtureAsync_NullData_ReturnsSuccessWithNullData()
     {
         using var host = await BuildHost(new NullDataSignerBase());
         var client = BuildClient(host);
 
-        var result = await client.SignAsync(new DtoSignInput("k", new byte[] { 0x01 }));
+        var result = await client.SignFixtureAsync(new DtoSignFixtureInput("k", new byte[] { 0x01 }));
 
         result.Success.Should().BeTrue();
         result.Data.Should().BeNull();
@@ -292,7 +292,7 @@ public sealed class GrpcClientTests
     // ---------------------------------------------------------------------------
 
     [Fact]
-    public async Task SignAsync_Canceled_ReturnsNonSuccess_NotUnhandled()
+    public async Task SignFixtureAsync_Canceled_ReturnsNonSuccess_NotUnhandled()
     {
         using var cts = new CancellationTokenSource();
         using var host = await BuildHost(
@@ -301,9 +301,9 @@ public sealed class GrpcClientTests
 
         await cts.CancelAsync();
 
-        var result = await client.SignAsync(
-            new DtoSignInput("k", new byte[] { 0x01 }),
-            pipelineOverride: ResilientPipeline<string, DtoSignOutput?>.PassThrough,
+        var result = await client.SignFixtureAsync(
+            new DtoSignFixtureInput("k", new byte[] { 0x01 }),
+            pipelineOverride: ResilientPipeline<string, DtoSignFixtureOutput?>.PassThrough,
             ct: cts.Token);
 
         result.Success.Should().BeFalse();
@@ -321,7 +321,7 @@ public sealed class GrpcClientTests
     // ---------------------------------------------------------------------------
 
     [Fact]
-    public async Task SignAsync_InputRoundTrip_KidAndPayloadSurviveProtoMapping()
+    public async Task SignFixtureAsync_InputRoundTrip_KidAndPayloadSurviveProtoMapping()
     {
         var echoSigner = new EchoSignerBase();
         using var host = await BuildHost(echoSigner);
@@ -330,7 +330,7 @@ public sealed class GrpcClientTests
         const string kid = "rsa-4096-primary";
         var payload = new byte[] { 10, 20, 30, 40, 50 };
 
-        await client.SignAsync(new DtoSignInput(kid, payload));
+        await client.SignFixtureAsync(new DtoSignFixtureInput(kid, payload));
 
         echoSigner.ReceivedKid.Should().Be(kid);
         echoSigner.ReceivedPayload.Should().Equal(payload);
@@ -344,14 +344,14 @@ public sealed class GrpcClientTests
     // ---------------------------------------------------------------------------
 
     [Fact]
-    public async Task SignAsync_NullEnvelope_DoesNotThrow_PassesPipelineResultVerbatim()
+    public async Task SignFixtureAsync_NullEnvelope_DoesNotThrow_PassesPipelineResultVerbatim()
     {
         using var host = await BuildHost(new NullEnvelopeSignerBase());
         var client = BuildClient(host);
 
-        var act = async () => await client.SignAsync(
-            new DtoSignInput("k", new byte[] { 0x01 }),
-            pipelineOverride: ResilientPipeline<string, DtoSignOutput?>.PassThrough);
+        var act = async () => await client.SignFixtureAsync(
+            new DtoSignFixtureInput("k", new byte[] { 0x01 }),
+            pipelineOverride: ResilientPipeline<string, DtoSignFixtureOutput?>.PassThrough);
 
         var result = await act.Should().NotThrowAsync();
         result.Subject.Success.Should().BeTrue("the pipeline Ok-wrapped the mapped data; envelope null → verbatim");
@@ -362,14 +362,14 @@ public sealed class GrpcClientTests
     // ---------------------------------------------------------------------------
 
     [Fact]
-    public async Task SignAsync_BusinessFailure_ConflictWithErrorCode_SurvivesRoundTrip()
+    public async Task SignFixtureAsync_BusinessFailure_ConflictWithErrorCode_SurvivesRoundTrip()
     {
         const string error_code = "KC_KEY_NOT_FOUND";
         using var host = await BuildHost(new BusinessFailureSignerBase(
-            D2Result<DtoSignOutput?>.Conflict(errorCode: error_code)));
+            D2Result<DtoSignFixtureOutput?>.Conflict(errorCode: error_code)));
         var client = BuildClient(host);
 
-        var result = await client.SignAsync(new DtoSignInput("k", new byte[] { 0x01 }));
+        var result = await client.SignFixtureAsync(new DtoSignFixtureInput("k", new byte[] { 0x01 }));
 
         result.Success.Should().BeFalse();
         result.StatusCode.Should().Be(HttpStatusCode.Conflict);
@@ -377,7 +377,7 @@ public sealed class GrpcClientTests
     }
 
     // ---------------------------------------------------------------------------
-    // Case 16: DI resolution — AddD2KeyCustodianGrpcClients resolves the client + every
+    // Case 16: DI resolution — AddD2SignFixtureGrpcClients resolves the client + every
     // registered seam (the keyed pipeline + the stub) without throwing. The generated DI
     // extension AUTO-CHAINS .AddD2ForwardedJwt().AddD2WorkloadCertificate() on the channel,
     // so resolving the typed stub eagerly runs both ConfigureChannel callbacks — they
@@ -390,7 +390,7 @@ public sealed class GrpcClientTests
     // ---------------------------------------------------------------------------
 
     [Fact]
-    public async Task AddD2KeyCustodianGrpcClients_ResolvesClientAndKeyedPipeline()
+    public async Task AddD2SignFixtureGrpcClients_ResolvesClientAndKeyedPipeline()
     {
         using var host = await BuildHost(new SuccessSignerBase("test-sig"));
         var httpClient = host.GetTestClient();
@@ -406,7 +406,7 @@ public sealed class GrpcClientTests
         services.AddD2WorkloadCertificateOutbound();
         services.AddSingleton<IAmbientRequestScopeAccessor>(new NoAmbientScopeAccessor());
 
-        services.AddD2KeyCustodianGrpcClients(new KeyCustodianGrpcClientOptions
+        services.AddD2SignFixtureGrpcClients(new SignFixtureGrpcClientOptions
         {
             Address = httpClient.BaseAddress!,
         });
@@ -420,18 +420,18 @@ public sealed class GrpcClientTests
         // attach + forward-unchanged behavior is covered by the ForwardedJwtCallCredentials
         // tests). Production stays secure via real mTLS/TLS; this downgrade is never shipped.
         services
-            .AddGrpcClient<KeyCustodianSigner.KeyCustodianSignerClient>()
+            .AddGrpcClient<SignFixtureSigner.SignFixtureSignerClient>()
             .ConfigureChannel(o => o.Credentials = ChannelCredentials.Insecure);
 
         await using var sp = services.BuildServiceProvider();
 
-        var client = sp.GetRequiredService<IKeyCustodianGrpcClient>();
+        var client = sp.GetRequiredService<ISignFixtureGrpcClient>();
         client.Should().NotBeNull();
-        client.Should().BeOfType<KeyCustodianGrpcClient>();
+        client.Should().BeOfType<SignFixtureGrpcClient>();
 
         // The keyed pipeline seam must resolve too — descriptor presence ≠ resolvability.
-        var pipeline = sp.GetRequiredKeyedService<ResilientPipeline<string, DtoSignOutput?>>(
-            SignClientKeys.PIPELINE);
+        var pipeline = sp.GetRequiredKeyedService<ResilientPipeline<string, DtoSignFixtureOutput?>>(
+            SignFixtureClientKeys.PIPELINE);
         pipeline.Should().NotBeNull();
     }
 
@@ -439,7 +439,7 @@ public sealed class GrpcClientTests
     // Helpers — host + channel + client + pipeline construction
     // ---------------------------------------------------------------------------
 
-    private static async Task<IHost> BuildHost(KeyCustodianSigner.KeyCustodianSignerBase signer)
+    private static async Task<IHost> BuildHost(SignFixtureSigner.SignFixtureSignerBase signer)
     {
         var host = new HostBuilder()
             .ConfigureWebHost(web =>
@@ -456,7 +456,7 @@ public sealed class GrpcClientTests
                     app.UseRouting();
                     app.UseEndpoints(endpoints =>
                     {
-                        endpoints.MapGrpcService<KeyCustodianSigner.KeyCustodianSignerBase>();
+                        endpoints.MapGrpcService<SignFixtureSigner.SignFixtureSignerBase>();
                     });
                 });
             })
@@ -466,19 +466,19 @@ public sealed class GrpcClientTests
         return host;
     }
 
-    private static KeyCustodianGrpcClient BuildClient(IHost host)
-        => BuildClientWithPipeline(host, ResilientPipeline<string, DtoSignOutput?>.PassThrough);
+    private static SignFixtureGrpcClient BuildClient(IHost host)
+        => BuildClientWithPipeline(host, ResilientPipeline<string, DtoSignFixtureOutput?>.PassThrough);
 
-    private static KeyCustodianGrpcClient BuildClientWithPipeline(
+    private static SignFixtureGrpcClient BuildClientWithPipeline(
         IHost host,
-        ResilientPipeline<string, DtoSignOutput?> pipeline)
+        ResilientPipeline<string, DtoSignFixtureOutput?> pipeline)
     {
         var httpClient = host.GetTestClient();
         var channel = GrpcChannel.ForAddress(
             httpClient.BaseAddress!,
             new GrpcChannelOptions { HttpClient = httpClient });
-        var stub = new KeyCustodianSigner.KeyCustodianSignerClient(channel);
-        return new KeyCustodianGrpcClient(stub, pipeline);
+        var stub = new SignFixtureSigner.SignFixtureSignerClient(channel);
+        return new SignFixtureGrpcClient(stub, pipeline);
     }
 
     /// <summary>
@@ -486,11 +486,11 @@ public sealed class GrpcClientTests
     /// generated DI extension emits (<c>IsTransientGrpcException</c>) but with a fast
     /// near-zero backoff so the retry cases do not wall-clock the suite.
     /// </summary>
-    private static ResilientPipeline<string, DtoSignOutput?> BuildGrpcRetryPipeline(int maxAttempts)
+    private static ResilientPipeline<string, DtoSignFixtureOutput?> BuildGrpcRetryPipeline(int maxAttempts)
     {
-        var builder = new ResilientPipelineBuilder<string, DtoSignOutput?>(
+        var builder = new ResilientPipelineBuilder<string, DtoSignFixtureOutput?>(
             new ServiceCollection().BuildServiceProvider());
-        builder.UseRetries(new RetryOptions<DtoSignOutput?>
+        builder.UseRetries(new RetryOptions<DtoSignFixtureOutput?>
         {
             MaxAttempts = maxAttempts,
             BaseDelayMs = 1,
@@ -504,43 +504,43 @@ public sealed class GrpcClientTests
     // Server shims
     // ---------------------------------------------------------------------------
 
-    /// <summary>Returns a successful SignResponse with a fixed signature.</summary>
+    /// <summary>Returns a successful SignFixtureResponse with a fixed signature.</summary>
     private sealed class SuccessSignerBase(string signature)
-        : KeyCustodianSigner.KeyCustodianSignerBase
+        : SignFixtureSigner.SignFixtureSignerBase
     {
-        public override Task<SignResponse> Sign(SignRequest request, ServerCallContext context)
+        public override Task<SignFixtureResponse> SignFixture(SignFixtureRequest request, ServerCallContext context)
         {
-            var result = D2Result<DtoSignOutput?>.Ok(new DtoSignOutput(signature));
-            var response = new SignResponse { Result = result.ToProto() };
-            response.Data = new ProtoSignOutput { Signature = signature };
+            var result = D2Result<DtoSignFixtureOutput?>.Ok(new DtoSignFixtureOutput(signature));
+            var response = new SignFixtureResponse { Result = result.ToProto() };
+            response.Data = new ProtoSignFixtureOutput { Signature = signature };
             return Task.FromResult(response);
         }
     }
 
-    /// <summary>Returns a SignResponse carrying a business failure envelope (gRPC status OK).</summary>
-    private sealed class BusinessFailureSignerBase(D2Result<DtoSignOutput?> businessResult)
-        : KeyCustodianSigner.KeyCustodianSignerBase
+    /// <summary>Returns a SignFixtureResponse carrying a business failure envelope (gRPC status OK).</summary>
+    private sealed class BusinessFailureSignerBase(D2Result<DtoSignFixtureOutput?> businessResult)
+        : SignFixtureSigner.SignFixtureSignerBase
     {
         private int _callCount;
 
         public int CallCount => Volatile.Read(ref _callCount);
 
-        public override Task<SignResponse> Sign(SignRequest request, ServerCallContext context)
+        public override Task<SignFixtureResponse> SignFixture(SignFixtureRequest request, ServerCallContext context)
         {
             Interlocked.Increment(ref _callCount);
-            return Task.FromResult(new SignResponse { Result = businessResult.ToProto() });
+            return Task.FromResult(new SignFixtureResponse { Result = businessResult.ToProto() });
         }
     }
 
     /// <summary>Throws an RpcException with the given status code on every call (transport fault).</summary>
     private sealed class ThrowingSignerBase(StatusCode statusCode)
-        : KeyCustodianSigner.KeyCustodianSignerBase
+        : SignFixtureSigner.SignFixtureSignerBase
     {
         private int _callCount;
 
         public int CallCount => Volatile.Read(ref _callCount);
 
-        public override Task<SignResponse> Sign(SignRequest request, ServerCallContext context)
+        public override Task<SignFixtureResponse> SignFixture(SignFixtureRequest request, ServerCallContext context)
         {
             Interlocked.Increment(ref _callCount);
             throw new RpcException(new Status(statusCode, "simulated transport fault"));
@@ -549,73 +549,73 @@ public sealed class GrpcClientTests
 
     /// <summary>Throws the given status once, then returns a successful response (recovery shim).</summary>
     private sealed class FlakyThenSuccessSignerBase(StatusCode statusCode, string signature)
-        : KeyCustodianSigner.KeyCustodianSignerBase
+        : SignFixtureSigner.SignFixtureSignerBase
     {
         private int _callCount;
 
         public int CallCount => Volatile.Read(ref _callCount);
 
-        public override Task<SignResponse> Sign(SignRequest request, ServerCallContext context)
+        public override Task<SignFixtureResponse> SignFixture(SignFixtureRequest request, ServerCallContext context)
         {
             var attempt = Interlocked.Increment(ref _callCount);
             if (attempt == 1)
                 throw new RpcException(new Status(statusCode, "transient transport fault"));
 
-            var result = D2Result<DtoSignOutput?>.Ok(new DtoSignOutput(signature));
-            var response = new SignResponse { Result = result.ToProto() };
-            response.Data = new ProtoSignOutput { Signature = signature };
+            var result = D2Result<DtoSignFixtureOutput?>.Ok(new DtoSignFixtureOutput(signature));
+            var response = new SignFixtureResponse { Result = result.ToProto() };
+            response.Data = new ProtoSignFixtureOutput { Signature = signature };
             return Task.FromResult(response);
         }
     }
 
-    /// <summary>Returns a SignResponse with only the Ok envelope set (data = null).</summary>
-    private sealed class NullDataSignerBase : KeyCustodianSigner.KeyCustodianSignerBase
+    /// <summary>Returns a SignFixtureResponse with only the Ok envelope set (data = null).</summary>
+    private sealed class NullDataSignerBase : SignFixtureSigner.SignFixtureSignerBase
     {
-        public override Task<SignResponse> Sign(SignRequest request, ServerCallContext context)
+        public override Task<SignFixtureResponse> SignFixture(SignFixtureRequest request, ServerCallContext context)
         {
-            var result = D2Result<DtoSignOutput?>.Ok();
-            return Task.FromResult(new SignResponse { Result = result.ToProto() });
+            var result = D2Result<DtoSignFixtureOutput?>.Ok();
+            return Task.FromResult(new SignFixtureResponse { Result = result.ToProto() });
         }
     }
 
-    /// <summary>Returns a SignResponse with NO Result field set (null D2ResultProto on a 200).</summary>
-    private sealed class NullEnvelopeSignerBase : KeyCustodianSigner.KeyCustodianSignerBase
+    /// <summary>Returns a SignFixtureResponse with NO Result field set (null D2ResultProto on a 200).</summary>
+    private sealed class NullEnvelopeSignerBase : SignFixtureSigner.SignFixtureSignerBase
     {
-        public override Task<SignResponse> Sign(SignRequest request, ServerCallContext context)
+        public override Task<SignFixtureResponse> SignFixture(SignFixtureRequest request, ServerCallContext context)
         {
             // response.Result is not set → the proto3 sub-message field is null. The generated
             // client captures envelope = response.Result → null, and must not NRE.
-            var response = new SignResponse();
-            response.Data = new ProtoSignOutput { Signature = "no-envelope" };
+            var response = new SignFixtureResponse();
+            response.Data = new ProtoSignFixtureOutput { Signature = "no-envelope" };
             return Task.FromResult(response);
         }
     }
 
     /// <summary>Delays for the cancellation test, then would return success.</summary>
     private sealed class DelayThenSuccessSignerBase(TimeSpan delay)
-        : KeyCustodianSigner.KeyCustodianSignerBase
+        : SignFixtureSigner.SignFixtureSignerBase
     {
-        public override async Task<SignResponse> Sign(SignRequest request, ServerCallContext context)
+        public override async Task<SignFixtureResponse> SignFixture(SignFixtureRequest request, ServerCallContext context)
         {
             await Task.Delay(delay, context.CancellationToken);
-            var result = D2Result<DtoSignOutput?>.Ok(new DtoSignOutput("late-sig"));
-            return new SignResponse { Result = result.ToProto() };
+            var result = D2Result<DtoSignFixtureOutput?>.Ok(new DtoSignFixtureOutput("late-sig"));
+            return new SignFixtureResponse { Result = result.ToProto() };
         }
     }
 
     /// <summary>Records the Kid + Payload received from the client-side transport mapper.</summary>
-    private sealed class EchoSignerBase : KeyCustodianSigner.KeyCustodianSignerBase
+    private sealed class EchoSignerBase : SignFixtureSigner.SignFixtureSignerBase
     {
         internal string ReceivedKid { get; private set; } = string.Empty;
 
         internal byte[] ReceivedPayload { get; private set; } = [];
 
-        public override Task<SignResponse> Sign(SignRequest request, ServerCallContext context)
+        public override Task<SignFixtureResponse> SignFixture(SignFixtureRequest request, ServerCallContext context)
         {
             ReceivedKid = request.Kid;
             ReceivedPayload = request.Payload.ToByteArray();
-            var result = D2Result<DtoSignOutput?>.Ok(new DtoSignOutput("echo-sig"));
-            return Task.FromResult(new SignResponse { Result = result.ToProto() });
+            var result = D2Result<DtoSignFixtureOutput?>.Ok(new DtoSignFixtureOutput("echo-sig"));
+            return Task.FromResult(new SignFixtureResponse { Result = result.ToProto() });
         }
     }
 

@@ -133,7 +133,7 @@ const DOTNET_DESCRIPTIONS = {
   "D2.Shared.WorkloadIdentity":
     "SPIFFE workload-identity value object and peer validator for D2-WORX mTLS — the subject-alternative-name a leaf certificate carries and the trust-domain grammar.",
   // The in-process KeyCustodian client (outside the shared tree).
-  "D2.Edge.KeyCustodian.Clients":
+  "D2.Edge.KeyCustodian.Client":
     "In-process KeyCustodian client surface for D2-WORX — the transport DTOs and the IKeyCustodianApi module facade.",
 };
 
@@ -245,8 +245,8 @@ const kcClient = path.join(
   "services",
   "edge",
   "key-custodian",
-  "clients",
-  "D2.Edge.KeyCustodian.Clients.csproj",
+  "client",
+  "D2.Edge.KeyCustodian.Client.csproj",
 );
 
 const tsConsumables = tsFiles
@@ -454,7 +454,7 @@ for (const csprojPath of dotnetConsumables) {
 
 // KeyCustodian client — inline shared metadata (outside the shared-props tree).
 {
-  const packageId = "D2.Edge.KeyCustodian.Clients";
+  const packageId = "D2.Edge.KeyCustodian.Client";
   const description = DOTNET_DESCRIPTIONS[packageId];
 
   if (

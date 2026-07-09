@@ -23,13 +23,13 @@ public static class AllScopesRouteRegistration
 {
     extension(IEndpointRouteBuilder endpoints)
     {
-        /// <summary>Maps <c>GET /internal/v1/kc/all-scopes</c>, delegating to <see cref="IKeyCustodianSignerFacade"/>.</summary>
+        /// <summary>Maps <c>GET /internal/v1/fixtures/all-scopes</c>, delegating to <see cref="ISignFixtureSignerFacade"/>.</summary>
         /// <remarks>Audience is enforced service-wide via <c>AuthOptions.Audience</c> — no per-route audience fluent (§9.2).</remarks>
         public IEndpointConventionBuilder MapAllScopesRoute()
         {
             var builder = endpoints.MapGet(
-                "/internal/v1/kc/all-scopes",
-                static async ([AsParameters] SignInput input, IKeyCustodianSignerFacade facade, HttpContext http, CancellationToken ct) =>
+                "/internal/v1/fixtures/all-scopes",
+                static async ([AsParameters] SignFixtureInput input, ISignFixtureSignerFacade facade, HttpContext http, CancellationToken ct) =>
                 {
                     var result = await facade.AllScopesAsync(input, ct).ConfigureAwait(false);
                     var status = (int)result.StatusCode;

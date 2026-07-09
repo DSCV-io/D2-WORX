@@ -23,13 +23,11 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using DtoOrderLine = D2.Edge.Tests.TypeSpecGrpcPredicate.Generated.PlaceOrderLine;
-using DtoOrderV2Customer = D2.Edge.Tests.TypeSpecGrpcPredicate.Generated.PlaceOrderV2Customer;
-using DtoOrderV2Input = D2.Edge.Tests.TypeSpecGrpcPredicate.Generated.PlaceOrderV2Input;
-using DtoOrderV2Output = D2.Edge.Tests.TypeSpecGrpcPredicate.Generated.PlaceOrderV2Output;
-using ProtoOrderLine = D2.Services.Protos.PredicateFixturesV2.V1.PlaceOrderLine;
-using ProtoOrderV2Customer = D2.Services.Protos.PredicateFixturesV2.V1.PlaceOrderV2Customer;
-using ProtoOrderV2Output = D2.Services.Protos.PredicateFixturesV2.V1.PlaceOrderV2Output;
+using DtoOrderV2Input = D2.Edge.Tests.TypeSpecGrpcPredicate.Generated.PlaceOrderV2FixtureInput;
+using DtoOrderV2Output = D2.Edge.Tests.TypeSpecGrpcPredicate.Generated.PlaceOrderV2FixtureOutput;
+using ProtoOrderFixtureLine = D2.Services.Protos.PredicateFixturesV2.V1.PlaceOrderFixtureLine;
+using ProtoOrderV2Customer = D2.Services.Protos.PredicateFixturesV2.V1.PlaceOrderV2FixtureCustomer;
+using ProtoOrderV2Output = D2.Services.Protos.PredicateFixturesV2.V1.PlaceOrderV2FixtureOutput;
 
 /// <summary>
 /// Pins the Tolerant Reader property of the generated <see cref="PredicateFixturesV2GrpcClient"/>
@@ -59,14 +57,14 @@ public sealed class PlaceOrderTolerantReaderTests
         const string expected_order_code = "ORD-1";
         const string expected_tier = "GOLD";
 
-        // Append an unknown varint field (field 4) to the raw serialized PlaceOrderV2Output
+        // Append an unknown varint field (field 4) to the raw serialized PlaceOrderV2FixtureOutput
         // bytes, then parse back into the proto type so Google.Protobuf preserves the
-        // unknown field in UnknownFields.  When the shim serializes the PlaceOrderV2Response
+        // unknown field in UnknownFields.  When the shim serializes the PlaceOrderV2FixtureResponse
         // over gRPC, the unknown bytes are re-emitted; the client-side parser skips them.
         var rawOutput = AppendUnknownVarintField(
             BuildOutputProto(
                 expected_order_code,
-                [new ProtoOrderLine { Status = "SHIPPED" }],
+                [new ProtoOrderFixtureLine { Status = "SHIPPED" }],
                 new ProtoOrderV2Customer { Tier = expected_tier }),
             unknownFieldNumber: 4,
             smallVarintValue: 99);
@@ -78,7 +76,7 @@ public sealed class PlaceOrderTolerantReaderTests
         using var pipeline = BuildPassThroughPipeline();
         var client = BuildClient(host, pipeline);
 
-        var result = await client.PlaceOrderV2Async(new DtoOrderV2Input("cust-1"));
+        var result = await client.PlaceOrderV2FixtureAsync(new DtoOrderV2Input("cust-1"));
 
         result.Success.Should().BeTrue();
         result.Data.Should().NotBeNull();
@@ -97,7 +95,7 @@ public sealed class PlaceOrderTolerantReaderTests
     [Fact]
     public async Task PlaceOrderV2_ForwardCompatAddedOptionalField_ReadByCurrentMapper_KnownFieldsSurvive()
     {
-        // Imagine a future spec revision adds optional field 4 to PlaceOrderV2Output.
+        // Imagine a future spec revision adds optional field 4 to PlaceOrderV2FixtureOutput.
         // The current generated mapper only knows fields 1-3; field 4 is silently
         // dropped at the proto parser level, and the DTO is populated with full fidelity.
         const string expected_order_code = "ORD-FC";
@@ -106,7 +104,7 @@ public sealed class PlaceOrderTolerantReaderTests
         var rawOutput = AppendUnknownVarintField(
             BuildOutputProto(
                 expected_order_code,
-                [new ProtoOrderLine { Status = "DELIVERED" }, new ProtoOrderLine { Status = "SHIPPED" }],
+                [new ProtoOrderFixtureLine { Status = "DELIVERED" }, new ProtoOrderFixtureLine { Status = "SHIPPED" }],
                 new ProtoOrderV2Customer { Tier = expected_tier }),
             unknownFieldNumber: 4,
             smallVarintValue: 42);
@@ -118,7 +116,7 @@ public sealed class PlaceOrderTolerantReaderTests
         using var pipeline = BuildPassThroughPipeline();
         var client = BuildClient(host, pipeline);
 
-        var result = await client.PlaceOrderV2Async(new DtoOrderV2Input("cust-fc"));
+        var result = await client.PlaceOrderV2FixtureAsync(new DtoOrderV2Input("cust-fc"));
 
         result.Success.Should().BeTrue();
         result.StatusCode.Should().Be(HttpStatusCode.OK);
@@ -137,7 +135,7 @@ public sealed class PlaceOrderTolerantReaderTests
 
     private static byte[] BuildOutputProto(
         string orderCode,
-        IEnumerable<ProtoOrderLine> lines,
+        IEnumerable<ProtoOrderFixtureLine> lines,
         ProtoOrderV2Customer? customer)
     {
         var proto = new ProtoOrderV2Output { OrderCode = orderCode };
@@ -175,10 +173,10 @@ public sealed class PlaceOrderTolerantReaderTests
         return result;
     }
 
-    private static PlaceOrderV2Response BuildSuccessResponse(ProtoOrderV2Output data)
+    private static PlaceOrderV2FixtureResponse BuildSuccessResponse(ProtoOrderV2Output data)
     {
-        var businessResult = D2Result<DtoOrderV2Output?>.Ok(null);
-        return new PlaceOrderV2Response { Result = businessResult.ToProto(), Data = data };
+        var businessResult = D2Result<DtoOrderV2Output?>.Ok();
+        return new PlaceOrderV2FixtureResponse { Result = businessResult.ToProto(), Data = data };
     }
 
     private static async Task<IHost> BuildHost(
@@ -242,19 +240,19 @@ public sealed class PlaceOrderTolerantReaderTests
 
     // ---------------------------------------------------------------------------
     // Server shim — returns the pre-built response (which carries the unknown field
-    // preserved in its PlaceOrderV2Output.UnknownFields, so the wire bytes the
+    // preserved in its PlaceOrderV2FixtureOutput.UnknownFields, so the wire bytes the
     // client receives include the unknown field tag + value).
     // ---------------------------------------------------------------------------
 
-    private sealed class TolerantReaderShim(Func<PlaceOrderV2Response> responseFactory)
+    private sealed class TolerantReaderShim(Func<PlaceOrderV2FixtureResponse> responseFactory)
         : PredicateFixturesOrdersV2.PredicateFixturesOrdersV2Base
     {
         private int _callCount;
 
         public int CallCount => Volatile.Read(ref _callCount);
 
-        public override Task<PlaceOrderV2Response> PlaceOrderV2(
-            PlaceOrderV2Request request, ServerCallContext context)
+        public override Task<PlaceOrderV2FixtureResponse> PlaceOrderV2Fixture(
+            PlaceOrderV2FixtureRequest request, ServerCallContext context)
         {
             Interlocked.Increment(ref _callCount);
             return Task.FromResult(responseFactory());

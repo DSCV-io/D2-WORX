@@ -406,11 +406,12 @@ public sealed class CompromiseKeyTests
     private CompromiseKeyHandler Build(
         KeyCustodianTestDbContext db, TestClock clock, RecordingAnnouncer announcer) =>
         new(
-            KcAppTestKit.Context<CompromiseKeyHandler>(),
+            KcAppTestKit.SystemContext<CompromiseKeyHandler>(),
             KcAppTestKit.NullClassifier(),
             db,
             Options.Create(r_options),
             announcer,
             r_crypto,
+            KcAppTestKit.BuildRootSigningCapability(db, r_crypto, clock, r_options),
             clock);
 }

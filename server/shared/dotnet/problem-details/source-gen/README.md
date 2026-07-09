@@ -6,6 +6,8 @@ Copyright (c) DCSV. All rights reserved.
 
 > Parent: [`server/shared/dotnet/`](../../README.md)
 
+**Input contract:** [`contracts/problem-details/`](../../../../../contracts/problem-details/README.md)
+
 Roslyn incremental source generator that emits the static class `D2.Shared.ProblemDetails.D2ProblemDetailsKeys` carrying the RFC 7807 ProblemDetails wire-format catalog — `TYPE_URI_PREFIX`, `CONTENT_TYPE`, `EXTENSION_*` extension-key constants, `TITLE_*` per-HTTP-status title constants, and the `TitleFor` switch — into [`D2.Shared.ProblemDetails.Abstractions`](../abstractions/README.md) by reading `contracts/problem-details/problem-details.spec.json` via `<AdditionalFiles>`. Single-target — emits ONLY when the consuming assembly is `D2.Shared.ProblemDetails.Abstractions`.
 
 The spec file is the single source of truth for the RFC 7807 wire shape emitted by every .NET ProblemDetails site:

@@ -14,6 +14,7 @@
     "@d2/auth-context-abstractions": "workspace:*",
     "@d2/error-category": "workspace:*",
     "@d2/error-codes-registry": "workspace:*",
+    "@d2/encryption": "workspace:*",
     "@d2/encryption-abstractions": "workspace:*",
     "@d2/geo-abstractions": "workspace:*",
     "@d2/geo-default": "workspace:*",

@@ -33,7 +33,7 @@ function scalar(name: string): FieldInfo {
     protoType: "string",
     repeated: false,
     optional: false,
-    redact: false,
+    redactReason: undefined,
   };
 }
 
@@ -51,7 +51,7 @@ function single(
     protoType: undefined,
     repeated: false,
     optional,
-    redact: false,
+    redactReason: undefined,
     nested,
   };
 }
@@ -66,7 +66,7 @@ function array(name: string, nested: NestedModel, optional = false): FieldInfo {
     protoType: undefined,
     repeated: true,
     optional,
-    redact: false,
+    redactReason: undefined,
     nested,
   };
 }
@@ -222,6 +222,22 @@ describe("emitNestedModelMapperHelpers_BothDirections", () => {
     const c = emit([{ name: "Empty", fields: [] }]);
     expect(c).toContain("return new Proto.Empty();");
     expect(c).toContain("return new Dto.Empty();");
+  });
+
+  it('a nested DateTimeOffset field maps outbound via ToString("O") (ISO-8601 round-trip)', () => {
+    const temporal: FieldInfo = {
+      name: "notAfter",
+      csName: "NotAfter",
+      csType: "DateTimeOffset",
+      tsName: "notAfter",
+      tsType: "string",
+      protoType: "string",
+      repeated: false,
+      optional: false,
+      redactReason: undefined,
+    };
+    const c = emit([{ name: "Window", fields: [temporal] }]);
+    expect(c).toContain('NotAfter = source.NotAfter.ToString("O"),');
   });
 
   it("emits nothing for an empty model list", () => {
