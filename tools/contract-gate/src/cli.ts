@@ -332,6 +332,10 @@ async function main(): Promise<void> {
   if (runJson) {
     printSection("Spec/i18n/OpenAPI arm (JSON-diff gate)");
 
+    // Scope announcement is written AFTER the gate returns (runSpecGate owns
+    // discovery). A prior version printed only after await; under parallel
+    // vitest CLI subprocesses on CI, capture sometimes lost the tail — the
+    // unit-tested formatter + live gate job still pin the line shape.
     const specResult = await runSpecGate({
       repoRoot,
       baseRef,

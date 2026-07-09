@@ -407,8 +407,9 @@ jobs:
             echo "==== FAILED test names (MTP TestResults) ===="
             # Strip NULs so grep treats the MTP log as text (§24.33).
             find server/services/edge/tests -path '*/TestResults/*.log' -type f 2>/dev/null | while IFS= read -r tl; do
-              tr -d '\0' < "$tl" | grep -aoE '^ *failed +[[:graph:]]+' || true
-            done | sort -u || true
+              echo "--- $tl ---"
+              tr -d '\0' < "$tl" | grep -aiE 'failed |error |exception|assert|should' | head -80 || true
+            done || true
             exit 1
           fi
       - name: assert NodeLeafClient prereqs did not force skips

@@ -417,6 +417,15 @@ public sealed class NodeLeafClientKeyringHarnessTests(KeyCustodianPostgresFixtur
             RedirectStandardError = true,
             UseShellExecute = false,
         };
+
+        // Ensure package-local node_modules win on filter-scoped CI installs.
+        var nm = Path.Combine(packageRoot, "node_modules");
+        var pathSep = OperatingSystem.IsWindows() ? ";" : ":";
+        var existingNodePath = Environment.GetEnvironmentVariable("NODE_PATH") ?? string.Empty;
+        psi.Environment["NODE_PATH"] = string.IsNullOrEmpty(existingNodePath)
+            ? nm
+            : nm + pathSep + existingNodePath;
+
         psi.ArgumentList.Add(scriptPath);
         psi.ArgumentList.Add(mode);
         psi.ArgumentList.Add(resultPath);
