@@ -432,7 +432,9 @@ public sealed class GetEntityByIdHandler(ITieredCache cache, IEntityRepo repo) :
 }
 ```
 
-Canonical: [`server/shared/dotnet/caching/abstractions/README.md`](../server/shared/dotnet/caching/abstractions/README.md). Default impls: [`caching/local-default/`](../server/shared/dotnet/caching/local-default/README.md), [`caching/distributed-redis/`](../server/shared/dotnet/caching/distributed-redis/README.md), [`caching/tiered/`](../server/shared/dotnet/caching/tiered/README.md).
+Canonical: [`server/shared/dotnet/caching/abstractions/README.md`](../server/shared/dotnet/caching/abstractions/README.md). Default impls: [`caching/local-default/`](../server/shared/dotnet/caching/local-default/README.md), [`caching/distributed-redis/`](../server/shared/dotnet/caching/distributed-redis/README.md), [`caching/tiered/`](../server/shared/dotnet/caching/tiered/README.md). TypeScript cluster: [`caching/README.md`](../server/shared/typescript/caching/README.md).
+
+**TypeScript twin:** full layout + behavioral mirror under [`server/shared/typescript/caching/`](../server/shared/typescript/caching/README.md) — `@d2/caching-abstractions` · `@d2/caching-local-default` · `@d2/caching-distributed-redis` · `@d2/caching-tiered`. Shared invalidation channel default `d2:cache:invalidations` (everyone acts). Cross-language parity: [PARITY.md](PARITY.md) caching stack row — package-local unit + Testcontainers ITs for algorithm behavior; dual-runtime **constants/semantics** suite `@d2/contract-tests` `caching-twin.parity.test.ts` + fixture `fixtures/caching-twin/constants.json` (dual-runtime constants catalog; not a full behavior interop harness).
 
 ### Keyring-backed payload crypto — in-process-only, never a shared cache tier
 

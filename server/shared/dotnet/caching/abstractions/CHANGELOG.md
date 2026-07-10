@@ -11,4 +11,7 @@ Keep a Changelog, and this package adheres to Semantic Versioning.
 
 ### Added
 
+- `InputFailures.Invalid` / `Invalid<T>` for present-but-invalid parameter
+  values (`VALIDATION_FAILED` field TK; not `NOT_NULL_VIOLATION`).
+
 ### Fixed

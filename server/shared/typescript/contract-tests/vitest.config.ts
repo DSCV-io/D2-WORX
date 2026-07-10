@@ -68,6 +68,21 @@ export default defineConfig({
       "@d2/validation": fileURLToPath(
         new URL("../validation/default/dist/index.js", import.meta.url),
       ),
+      // Caching twin packages — same deterministic-dist rationale as geo /
+      // encryption aliases. Caching-twin parity REQUIRES a fresh build of
+      // all four packages before the suite runs.
+      "@d2/caching-abstractions": fileURLToPath(
+        new URL("../caching/abstractions/dist/index.js", import.meta.url),
+      ),
+      "@d2/caching-local-default": fileURLToPath(
+        new URL("../caching/local-default/dist/index.js", import.meta.url),
+      ),
+      "@d2/caching-distributed-redis": fileURLToPath(
+        new URL("../caching/distributed-redis/dist/index.js", import.meta.url),
+      ),
+      "@d2/caching-tiered": fileURLToPath(
+        new URL("../caching/tiered/dist/index.js", import.meta.url),
+      ),
     },
   },
   test: {

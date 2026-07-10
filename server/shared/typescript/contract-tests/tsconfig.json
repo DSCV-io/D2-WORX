@@ -10,6 +10,10 @@
   "references": [
     { "path": "../auth/abstractions" },
     { "path": "../auth/context-abstractions" },
+    { "path": "../caching/abstractions" },
+    { "path": "../caching/distributed-redis" },
+    { "path": "../caching/local-default" },
+    { "path": "../caching/tiered" },
     { "path": "../error-category" },
     { "path": "../geo/abstractions" },
     { "path": "../headers/amqp" },

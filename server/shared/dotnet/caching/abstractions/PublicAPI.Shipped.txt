@@ -43,5 +43,7 @@ D2.Shared.Caching.LocalCacheOptions.KeyPrefix.set -> void
 D2.Shared.Caching.LocalCacheOptions.LocalCacheOptions() -> void
 D2.Shared.Caching.LocalCacheOptions.MaxEntries.get -> int
 D2.Shared.Caching.LocalCacheOptions.MaxEntries.set -> void
+static D2.Shared.Caching.InputFailures.Invalid(string! paramName) -> D2.Shared.Result.D2Result!
+static D2.Shared.Caching.InputFailures.Invalid<T>(string! paramName) -> D2.Shared.Result.D2Result<T>!
 static D2.Shared.Caching.InputFailures.Required(string! paramName) -> D2.Shared.Result.D2Result!
 static D2.Shared.Caching.InputFailures.Required<T>(string! paramName) -> D2.Shared.Result.D2Result<T>!

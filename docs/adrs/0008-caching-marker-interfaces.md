@@ -28,7 +28,7 @@ Fine-grained building blocks: `ICacheBasic` (get/set/exists/ttl/remove + bulk va
 - `IDistributedCache : ICacheBasic, ICacheAtomic, ICacheBroadcast, ICacheSet` — cluster; every read hits remote.
 - `ITieredCache : ICacheBasic, ICacheAtomic, ICacheBroadcast` — L1+L2.
 
-`IDistributedCache` and `ITieredCache` are method-for-method identical at the surface; the marker name is the only distinguishing signal at the dependency site (`IDistributedCache` → every read hits remote; `ITieredCache` → L1-first, populate-on-L2-hit). `ICacheSet` is exposed only on `IDistributedCache` — set primitives are cluster-scoped by nature, and tiered composition would silently hide that an op does not participate in L1.
+`IDistributedCache` and `ITieredCache` share the same Basic + Atomic + Broadcast surface; the marker name is the primary distinguishing signal at the dependency site (`IDistributedCache` → every read hits remote; `ITieredCache` → L1-first, populate-on-L2-hit). They are **not** method-for-method identical: `ICacheSet` is exposed only on `IDistributedCache` — set primitives are cluster-scoped by nature, and tiered composition would silently hide that an op does not participate in L1.
 
 ### 2. Every operation returns `D2Result<T>` / `D2Result`
 
@@ -54,7 +54,7 @@ TTL-only invalidation would require implausibly short TTLs (defeating L1) or acc
 
 **Negative / risks.**
 
-- **Structural identity of `IDistributedCache` and `ITieredCache`** is a persistent reader hazard — same method surface; the difference is the marker name + registered concrete. Registering the wrong concrete wires the wrong profile with no compile error. Mitigated by naming + docs, not by the type system.
+- **Near-identical Basic/Atomic/Broadcast surface of `IDistributedCache` and `ITieredCache`** is a persistent reader hazard — same write/read/broadcast method surface except `ICacheSet` only on distributed; the difference is the marker name + registered concrete (+ Set). Registering the wrong concrete wires the wrong profile with no compile error. Mitigated by naming + docs, not by the type system.
 - **At-most-once backplane delivery**: a missed invalidation leaves a stale L1 entry until TTL. For never-stale data, callers must use `IDistributedCache` (no L1).
 - **Publisher receives its own broadcast**: one extra L2 round-trip after a write-then-read-immediately — bounded and intentional, but it slightly reduces L1 hit rate for that pattern.
 - **`*AndBroadcast*` misconfiguration throws** rather than returning a result failure — chosen because a missing backplane is a registration error, but it makes that one failure surface inconsistent with the rest.
@@ -76,5 +76,7 @@ TTL-only invalidation would require implausibly short TTLs (defeating L1) or acc
 - `server/shared/dotnet/caching/local-default/DefaultLocalCache.cs` — `IMemoryCache` + `ConcurrentDictionary`; `Size=1`; direct dispatch.
 - `server/shared/dotnet/caching/distributed-redis/` — `RedisDistributedCache.cs`, `RedisLuaScripts.cs`, `RedisCacheInvalidationBackplane.cs`.
 - `server/shared/dotnet/caching/tiered/DefaultTieredCache.cs` — L2-first writes, populate-on-hit, backplane subscription.
-- `docs/PATTERNS.md` (Cache section); `docs/dev/rules.md` (backplane unsubscribe-on-dispose; broadcast-variant for cluster-wide L1 invalidation).
+- TypeScript twin cluster: `server/shared/typescript/caching/` — `@d2/caching-abstractions`, `@d2/caching-local-default`, `@d2/caching-distributed-redis`, `@d2/caching-tiered` (behavioral runtime twin of this ADR; package READMEs under each folder). Markers are **not** method-for-method identical across distributed vs tiered: `ICacheSet` is distributed-only (see Decision §1).
+- Dual-runtime constants/semantics parity: `server/shared/typescript/contract-tests/fixtures/caching-twin/constants.json` + `tests/caching-twin.parity.test.ts` (emitted by `CachingTwinFixtureEmitter`) — defaults / meters / Lua / channel / tiered EventId bindings; not a full algorithm interop harness.
+- `docs/PATTERNS.md` (Cache section); `docs/PARITY.md` (caching stack RUNTIME row); `docs/dev/rules.md` (backplane unsubscribe-on-dispose; broadcast-variant for cluster-wide L1 invalidation).
 - [ADR-0006](0006-abstractions-implementation-split.md) — the abstractions/impl split. [ADR-0003](0003-d2result-errors-as-values.md) — the errors-as-values surface. [ADR-0005](0005-handler-pipeline.md) — the `DefaultLocalCache` no-`BaseHandler` carve-out.

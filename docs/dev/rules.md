@@ -40,7 +40,7 @@ The complete, authoritative requirements for ANY code change in this repository.
 
 ## Table of contents
 
-**Glossary**: [Project-specific terms used throughout this catalog](#glossary--project-specific-terms-used-throughout-this-catalog) — define-once reference (KEEP doc, big table, sweep, round, sister-sweep, K=12 + Aggregator, smart-constructor, Plan-Audit, behavioral interface, meta-doc, …). Read it first if a term-of-art isn't self-evident.
+**Glossary**: [Project-specific terms used throughout this catalog](#glossary--project-specific-terms-used-throughout-this-catalog) — define-once reference (KEEP doc, big table, sweep, round, sister-sweep, K=7 + Aggregator, smart-constructor, Plan-Audit, behavioral interface, meta-doc, …). Read it first if a term-of-art isn't self-evident.
 
 This catalog is split into one file per category under [`rules/`](rules/). Read the category files that apply to the work in front of you; read all of them end-to-end at PLAN. Each § below links to its file with a one-line scope. The per-§ anchor stubs further down keep every historical `rules.md#<section>` deep link resolving — each points onward to the moved file.
 
@@ -97,16 +97,18 @@ Project-specific terms-of-art used across the predicates below. First-use in a p
 - **Fix log** — the journal's `## Fix log (append-only)`; chronological per-fix entries citing subsection + finding round + what changed + `file.ext:NN` + timestamp. Append-only. See §24.0b / §24.0g.
 - **Sister-sweep** — a Fixer's supplementary scan over the predicate's FULL applicability scope (NOT just the originating file's directory) to surface adjacent sister occurrences before handoff. See §24.13.3 / §24.13.3a-d.
 - **Tamper-evident** — Fixer protocol: literal-quote the output BEFORE + AFTER the fix + `git diff --stat` BEFORE + AFTER, all four pasted into the fix-log entry. For previously-false-closed or user-emphasized findings. See §24.14.
-- **K=12 + Aggregator** — the canonical audit-round dispatch: 12 parallel cluster Auditors (one §-range cluster each, per process.md §3) + 1 Aggregator (**deep workhorse** — Opus / `grok-4.5` per the [Sub-agent model policy per role](process.md#sub-agent-model-policy-per-role) table + [harness-runtimes.md](harness-runtimes.md); spawn `claude-d2-aggregator` / `grok-d2-aggregator`) merging the 12 partials into the big table. See §24.0h + §24.0i.
-- **K=1 carve-out** — single-Auditor dispatch instead of K=12 + Aggregator; requires explicit per-round user permission per §13.14 / §24.0h. Never self-invoked by the orchestrator.
-- **Cluster A1 / A2 / B1 / B2 / B3 / C1 / C2 / C3 / D1 / E1 / E2 / E3** — the 12-way partition of predicates for parallel Auditor dispatch; boundaries in process.md §3 "Auditor cluster partition (canonical K=12)". Used at §24.16 for per-cluster Plan-Audit verifications.
+- **K=7 + Aggregator** — the canonical audit-round dispatch: parallel seat Auditors on **concern bundles A–G** (K≤7) + 1 Aggregator (**deep workhorse** — Opus / `grok-4.5` / Sol per the [Sub-agent model policy per role](process.md#sub-agent-model-policy-per-role) table + [harness-runtimes.md](harness-runtimes.md); spawn **runtime-prefixed** `claude-d2-aggregator` / `grok-d2-aggregator` / `codex-d2-aggregator`) merging the K partials into the big table. **Default full partition is K=7** for Plan-Audit R1 (in-scope), justified full code-audit, and **FINAL-REVIEW of a whole deliverable**. Per-step first code-audit may use **Y ⊆ K=7**. After findings: **dirty-only** re-dispatch (subset of active partition + sister-blast) — not a K=1 carve-out. **K=12 atomic dispatch is retired.** See §24.0h + §24.0i + [process.md §3 K=7 partition](process.md#auditor-cluster-partition-dual-mode).
+- **K=12 + Aggregator** — **historical term only** (retired as a dispatch mode). Former 12 atomic seats A1…E3 + Aggregator; atom codes remain provenance IDs inside K=7 bundles. See K=7 entry above.
+- **K=1 carve-out** — single-Auditor dispatch instead of multi-seat K + Aggregator; requires explicit per-round user permission per §13.14 / §24.0h. Never self-invoked by the orchestrator. Dirty-only multi-seat re-dispatch is **not** K=1.
+- **Atom A1 / A2 / B1 / B2 / B3 / C1 / C2 / C3 / D1 / E1 / E2 / E3** — the 12-way atomic §-ownership IDs (**provenance / historical journals only** — not a dispatch mode); boundaries in process.md §3. **Bundles A–G** — the **only** dispatch seats (A=A1+A2, B=B1+B2+B3, C=C1+C2, D=C3, E=D1, F=E1+E3, G=E2).
+- **Cluster** — generic term for a dispatch seat (a bundle A–G). Used at §24.16 for per-seat Plan-Audit verifications.
 - **Smart-constructor** — domain-validation pattern `Domain.Create(input) → D2Result<Domain>` (returns a result rather than throwing); the handler calls `Create` at the top of `ExecuteAsync` and bubbles failure. See §9.4.
-- **Plan-Audit** — the K=12 + Aggregator audit of a step's PLAN section BEFORE the Implementer is dispatched — catches design errors at the cheapest moment. See §24.16.
+- **Plan-Audit** — the multi-seat (K=7 default) + Aggregator audit of a step's PLAN section BEFORE the Implementer is dispatched — catches design errors at the cheapest moment. Dirty-only re-audit after Plan-amender. See §24.16.
 - **Plan-amender** — Fixer-analogous role scoped to editing the journal's `## Plan` section in response to Plan-Audit findings. See §24.16.
 - **Meta-record** — small hand-coded type the source-gen pipeline uses to surface generated-catalog metadata to consumers (e.g., `SpecMetadata`, `EmitResult`); carved out from the §26.1 spec-mirror-DTO ban because its shape is NOT a spec mirror. See §26.1 "Allowed".
 - **Behavioral interface** — interface defining API surface (methods consumers call) rather than data shape (fields a spec declares); NOT a §26.1 spec-mirror violation even alongside spec-derived data. See §26.1 "Allowed".
 - **Source-gen destination assembly** — any csproj/package that ships to consumers (anything a consumer can `using`/`import`), distinct from a source-gen INTERNAL csproj (Roslyn analyzer, `IsRoslynComponent=true`) whose types never leak. The §26.1 ban applies to destination assemblies only; §26.2 carves out internals. See §26.1 / §26.2.
-- **Meta-doc** — a doc that DIRECTS the work (process, predicates, orchestration) vs a KEEP doc that DESCRIBES the code. Canonical set: `docs/dev/rules.md`, `docs/dev/process.md`, `CLAUDE.md`, `.github/copilot-instructions.md`. Cross-refs between meta-docs (and to `docs/v2/`) are exempt from the §11.9 KEEP-doc citation ban. See §11.9 META-DOC ALLOWLIST + §14.1 meta-doc empirical-citation allowlist + §24.15.
+- **Meta-doc** — a doc that DIRECTS the work (process, predicates, orchestration) vs a KEEP doc that DESCRIBES the code. Canonical set: `docs/dev/rules.md`, `docs/dev/process.md`, `AGENTS.md`, `.github/copilot-instructions.md`. Runtime adapter files such as `CLAUDE.md` are thin entrypoints that `@AGENTS.md`-import (or otherwise point at) the shared canonical instruction doc — they do not create a fifth law surface and must not carry a second full condensed body. Cross-refs between meta-docs (and to `docs/v2/`) are exempt from the §11.9 KEEP-doc citation ban. See §11.9 META-DOC ALLOWLIST + §14.1 meta-doc empirical-citation allowlist + §24.15.
 - **PASS-borderline** — big-table status for a row that passes the literal check but the Auditor flags for orchestrator review (e.g., a defensible-but-worth-surfacing carve-out); counts as PASS for convergence; emoji prefix `🟡`. See §24.10.
 
 <sup>[↑ jump to top](#top)</sup>
@@ -274,7 +276,7 @@ For each step `NN-<step-name>` in `docs/wip/<deliverable>/`:
 #### Deliverable-wide doc gates
 
 - [ ] **Root README** at `docs/wip/<deliverable>/README.md` updated with the final report (kinds-of-misses log, candidate rule additions, summary)?
-- [ ] **Cross-cutting docs** updated per CLAUDE.md §3.5 Doc Update Map (PATTERNS.md / TESTS.md / PARITY.md / SRC_GEN.md as relevant)?
+- [ ] **Cross-cutting docs** updated per AGENTS.md §3.5 Doc Update Map (PATTERNS.md / TESTS.md / PARITY.md / SRC_GEN.md as relevant)?
 - [ ] **Per-lib / per-service READMEs** updated for new public APIs?
 - [ ] **Parent `server/shared/dotnet/README.md`** updated for any new lib (status row + Mermaid graph + redundant-edges enumeration)?
 - [ ] **Tracking doc** `docs/v2/PHASE_*.md` updated (or successor) with the deliverable's status?

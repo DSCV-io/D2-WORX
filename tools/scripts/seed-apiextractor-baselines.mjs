@@ -1,11 +1,11 @@
-// Copyright (c) DCSV. All rights reserved.
+﻿// Copyright (c) DCSV. All rights reserved.
 //
 // Idempotent seeding tool: installs api-extractor.json configs and generates
 // committed baselines (etc/<pkg>.api.md + etc/.release-fingerprint) for all
-// 31 @d2/* consumable packages: 30 under server/shared/typescript/ plus the
+// 36 @d2/* consumable packages: 35 under server/shared/typescript/ plus the
 // KeyCustodian client twin under server/services/edge/key-custodian/client-ts/.
 //
-// The fingerprint is SOURCE-BASED + PORTABLE — a SHA-256 over committed text
+// The fingerprint is SOURCE-BASED + PORTABLE - a SHA-256 over committed text
 // only ( committed src dump + the .api.md report + resolved deps + the declared
 // toolchain pin ), byte-identical on every OS/machine with NO build to compute.
 // It matches the release-runner's composeSourceFingerprint byte-for-byte so the
@@ -21,11 +21,11 @@
 // is unchanged (fingerprint and api.md are deterministic outputs).
 //
 // Prerequisites:
-//   - All 31 packages must have a built dist/ — api-extractor consumes
+//   - All 36 packages must have a built dist/ - api-extractor consumes
 //     dist/index.d.ts to generate the .api.md report (the fingerprint itself
 //     does NOT read dist/). Run `pnpm -r build` first.
 //   - @microsoft/api-extractor must be installed in tools/release-runner
-//     (it is — declared as a devDependency there).
+//     (it is - declared as a devDependency there).
 
 import {
   existsSync,
@@ -67,8 +67,8 @@ const API_EXTRACTOR_BIN = join(
 // opts in via a repeatable `--allow-empty <pkgName>` flag or a single-package
 // SEED_ALLOW_EMPTY=<pkgName> env var. For multiple packages use repeated CLI
 // flags; the env var accepts exactly one package name (comma-split lists are
-// not supported — §23.1). As of this writing NO @d2/* consumable legitimately
-// has zero exports, so the hatch defaults to refuse — it exists for symmetry
+// not supported Ã¢â‚¬â€ Ã‚23.1). As of this writing NO @d2/* consumable legitimately
+// has zero exports, so the hatch defaults to refuse Ã¢â‚¬â€ it exists for symmetry
 // with the .NET seeder so both ecosystems fail loud on the same corruption class.
 const CLI_ARGS = process.argv.slice(2);
 const ALLOW_EMPTY_PACKAGES = new Set();
@@ -86,7 +86,7 @@ if (envAllowEmpty.length > 0) {
 }
 
 // ---------------------------------------------------------------------------
-// The 32 consumable packages: [pkgDir, shortName] pairs.
+// The 36 consumable packages: [pkgDir, shortName] pairs.
 // Derived from the package names (@d2/<shortName>) so that api.md report
 // filenames are stable regardless of the directory structure.
 // Excludes: typespec-decorators, typespec-emitters, contract-tests.
@@ -103,6 +103,26 @@ const CONSUMABLES = [
     dir: join(TS_SHARED, "auth", "context-abstractions"),
     shortName: "auth-context-abstractions",
     pkgName: "@d2/auth-context-abstractions",
+  },
+  {
+    dir: join(TS_SHARED, "caching", "abstractions"),
+    shortName: "caching-abstractions",
+    pkgName: "@d2/caching-abstractions",
+  },
+  {
+    dir: join(TS_SHARED, "caching", "distributed-redis"),
+    shortName: "caching-distributed-redis",
+    pkgName: "@d2/caching-distributed-redis",
+  },
+  {
+    dir: join(TS_SHARED, "caching", "local-default"),
+    shortName: "caching-local-default",
+    pkgName: "@d2/caching-local-default",
+  },
+  {
+    dir: join(TS_SHARED, "caching", "tiered"),
+    shortName: "caching-tiered",
+    pkgName: "@d2/caching-tiered",
   },
   {
     dir: join(TS_SHARED, "encryption"),
@@ -267,7 +287,7 @@ const CONSUMABLES = [
 ];
 
 // ---------------------------------------------------------------------------
-// Step 1 — Write api-extractor.json (idempotent: skip if content unchanged)
+// Step 1 Ã¢â‚¬â€ Write api-extractor.json (idempotent: skip if content unchanged)
 // ---------------------------------------------------------------------------
 
 /**
@@ -339,7 +359,7 @@ function writeIfChanged(filePath, content) {
 }
 
 // ---------------------------------------------------------------------------
-// Step 2 — Run api-extractor --local to generate the etc/<pkg>.api.md
+// Step 2 Ã¢â‚¬â€ Run api-extractor --local to generate the etc/<pkg>.api.md
 // ---------------------------------------------------------------------------
 
 /**
@@ -365,7 +385,7 @@ function runApiExtractor(pkgDir, shortName) {
   // genuine failure the extractor writes nothing and the existsSync checks
   // below correctly return null. Without this delete, a NON-ZERO extractor exit
   // that left the prior report on disk would return that stale content as if
-  // freshly generated (silent stale-not-fresh) — the fingerprint would then be
+  // freshly generated (silent stale-not-fresh) Ã¢â‚¬â€ the fingerprint would then be
   // composed over an out-of-date report. Destroying the prior artifact first
   // makes "report present after the run" unambiguously mean "produced by THIS
   // run" (the same guarantee the .NET seeder's forceFullRecompile buys by
@@ -379,7 +399,7 @@ function runApiExtractor(pkgDir, shortName) {
   // routing through the shell lets cmd.exe resolve the .CMD via PATHEXT. On POSIX
   // the shim is a node-shebang script the shell runs directly. Without this the
   // spawn silently ENOENTs (status !== 0, no report written) and only packages
-  // whose etc/<pkg>.api.md already exists appear to "succeed" — a NEW package's
+  // whose etc/<pkg>.api.md already exists appear to "succeed" Ã¢â‚¬â€ a NEW package's
   // report never gets generated, and a changed-surface package's report is never
   // refreshed. The whole invocation is passed as ONE quoted command string (not a
   // command + args array) so shell:true does not trip DEP0190 and the quoting
@@ -394,7 +414,7 @@ function runApiExtractor(pkgDir, shortName) {
 
   if (result.status !== 0) {
     // api-extractor exits non-zero even on warnings in some cases. The report
-    // is trustworthy ONLY if THIS run just (re)wrote it — the stale prior copy
+    // is trustworthy ONLY if THIS run just (re)wrote it Ã¢â‚¬â€ the stale prior copy
     // was deleted above, so its presence here means the extractor produced it
     // despite the non-zero exit (a warnings-only run). If it is ABSENT the
     // extractor genuinely failed: return null so the caller fails loud, never
@@ -406,7 +426,7 @@ function runApiExtractor(pkgDir, shortName) {
       return null;
     }
 
-    // Warnings present but report was freshly written — treat as success.
+    // Warnings present but report was freshly written Ã¢â‚¬â€ treat as success.
     if (result.stderr?.includes("Warning:")) {
       console.warn(`  [WARN] api-extractor warnings for ${shortName}:`);
       console.warn(result.stderr);
@@ -423,10 +443,10 @@ function runApiExtractor(pkgDir, shortName) {
 }
 
 // ---------------------------------------------------------------------------
-// Step 3 — Compute the source-based fingerprint. The final SHA-256 composition
+// Step 3 Ã¢â‚¬â€ Compute the source-based fingerprint. The final SHA-256 composition
 // is delegated to the shared composeSourceFingerprintFromParts primitive (a
 // byte-for-byte re-implementation of the release-runner provider's
-// composeSourceFingerprint); the seed↔provider byte-identity of that primitive
+// composeSourceFingerprint); the seedÃ¢â€ â€provider byte-identity of that primitive
 // is pinned by tools/release-runner/tests/seed-provider-fingerprint-identity.test.ts.
 // ---------------------------------------------------------------------------
 
@@ -575,7 +595,7 @@ function composeSourceFingerprint(pkgDir, apiMd, depsJson) {
 }
 
 // ---------------------------------------------------------------------------
-// Resolved-version map — each consumable @d2/* at its committed version.
+// Resolved-version map Ã¢â‚¬â€ each consumable @d2/* at its committed version.
 // At seed time resolvedVersions == the committed versions, matching how the
 // provider seeds its map on a no-op drift recompute (every dep at its current
 // version), so the seeded fingerprint equals the runtime recompute.
@@ -629,7 +649,9 @@ for (const { dir, shortName, pkgName } of CONSUMABLES) {
   const distIndexDts = join(dir, "dist", "index.d.ts");
 
   if (!existsSync(distIndexDts)) {
-    console.error(`  [ERROR] No dist/index.d.ts — build the package first.`);
+    console.error(
+      `  [ERROR] No dist/index.d.ts Ã¢â‚¬â€ build the package first.`,
+    );
     specialHandling.push({ pkgName, issue: "Missing dist/index.d.ts" });
     errors++;
     continue;
@@ -652,7 +674,7 @@ for (const { dir, shortName, pkgName } of CONSUMABLES) {
   // FAIL-LOUD GUARD: a degenerate .api.md with NO `export ` line means
   // api-extractor analyzed an empty/missing dist/index.d.ts. Composing a
   // fingerprint over that degenerate content (and committing it) would let the
-  // currency check pass against the degenerate baseline — invisible corruption,
+  // currency check pass against the degenerate baseline Ã¢â‚¬â€ invisible corruption,
   // the same class as the .NET silent empty-wipe. The guard throws in that case
   // (unless the package is explicitly allow-listed); on a throw we skip the
   // fingerprint write and count an error so the run FAILS LOUD (exit 1).
@@ -664,7 +686,8 @@ for (const { dir, shortName, pkgName } of CONSUMABLES) {
     );
     specialHandling.push({
       pkgName,
-      issue: "No public exports in .api.md (degenerate surface) — refused",
+      issue:
+        "No public exports in .api.md (degenerate surface) Ã¢â‚¬â€ refused",
     });
     errors++;
     continue;
@@ -673,7 +696,7 @@ for (const { dir, shortName, pkgName } of CONSUMABLES) {
   if (!hasPublicMembers) {
     specialHandling.push({
       pkgName,
-      issue: "No public exports in .api.md — permitted via --allow-empty",
+      issue: "No public exports in .api.md Ã¢â‚¬â€ permitted via --allow-empty",
     });
   }
 
@@ -697,12 +720,12 @@ for (const { dir, shortName, pkgName } of CONSUMABLES) {
 
   if (fpChanged) {
     console.log(
-      `  + Wrote .release-fingerprint (${fingerprint.slice(0, 16)}…)`,
+      `  + Wrote .release-fingerprint (${fingerprint.slice(0, 16)}Ã¢â‚¬Â¦)`,
     );
     fpWritten++;
   } else {
     console.log(
-      `  = .release-fingerprint unchanged (${fingerprint.slice(0, 16)}…)`,
+      `  = .release-fingerprint unchanged (${fingerprint.slice(0, 16)}Ã¢â‚¬Â¦)`,
     );
   }
 }
