@@ -10,6 +10,10 @@ import {
   DefaultTieredCache,
 } from "../src/index.js";
 import {
+  TieredCacheOp,
+  TIERED_ERROR_CODE_UNKNOWN,
+} from "../src/tiered-cache-log.js";
+import {
   createBackplaneTestDouble,
   createCapturingTestLogger,
   createDistributedCacheTestDouble,
@@ -339,7 +343,7 @@ describe("DefaultTieredCache - set / setMany / remove / removeMany", () => {
     expect(logger.warnings).toHaveLength(1);
     expect(logger.warnings[0]?.message).toBe(L1_WRITE_MSG);
     expect(logger.warnings[0]?.bindings).toEqual({
-      operation: "set",
+      operation: TieredCacheOp.SET,
       keyOrCount: "k",
       errorCode: "L1_DOWN",
     });
@@ -380,7 +384,7 @@ describe("DefaultTieredCache - set / setMany / remove / removeMany", () => {
     const r = await cache.setMany(entries);
     expect(r.success).toBe(true);
     expect(logger.warnings[0]?.bindings).toEqual({
-      operation: "setMany",
+      operation: TieredCacheOp.SET_MANY,
       keyOrCount: "2 entries",
       errorCode: "L1_DOWN",
     });
@@ -409,7 +413,7 @@ describe("DefaultTieredCache - set / setMany / remove / removeMany", () => {
     const r = await cache.remove("k");
     expect(r.success).toBe(true);
     expect(logger.warnings[0]?.bindings).toEqual({
-      operation: "remove",
+      operation: TieredCacheOp.REMOVE,
       keyOrCount: "k",
       errorCode: "L1_DOWN",
     });
@@ -430,7 +434,7 @@ describe("DefaultTieredCache - set / setMany / remove / removeMany", () => {
     const r = await cache.removeMany(["a", "b", "c"]);
     expect(r.success).toBe(true);
     expect(logger.warnings[0]?.bindings).toEqual({
-      operation: "removeMany",
+      operation: TieredCacheOp.REMOVE_MANY,
       keyOrCount: "3 keys",
       errorCode: "L1_DOWN",
     });
@@ -678,13 +682,27 @@ describe("DefaultTieredCache - broadcast", () => {
     const backplane = createBackplaneTestDouble();
     const { cache } = build({ backplane });
     const ac = new AbortController();
-    // Capture signal via a second handler that records it.
+    // Production passes the caller's signal into publishInvalidation — pin
+    // that arg, not the subscription signal handlers receive on deliver.
+    expect(
+      (await cache.setAndBroadcast("k", "v", undefined, ac.signal)).success,
+    ).toBe(true);
+    expect(backplane.published[0]).toBe("k");
+    expect(backplane.publishedSignals[0]).toBe(ac.signal);
+  });
+
+  it("subscription_handlerReceivesSubscriptionSignal_notPublishSignal", async () => {
+    const backplane = createBackplaneTestDouble();
+    build({ backplane });
+    const ac = new AbortController();
     let seen: AbortSignal | undefined;
     backplane.subscribe((_k, s) => {
       seen = s;
     });
-    await cache.setAndBroadcast("k", "v", undefined, ac.signal);
-    expect(seen).toBe(ac.signal);
+    await backplane.publishInvalidation("k", ac.signal);
+    expect(seen).toBeDefined();
+    expect(seen).not.toBe(ac.signal);
+    expect(seen!.aborted).toBe(false);
   });
 });
 
@@ -769,7 +787,12 @@ describe("DefaultTieredCache - pinned constants", () => {
     await cache.removeMany(["a"]);
     const ops = logger.warnings.map((w) => w.bindings?.operation);
     expect(ops.sort()).toEqual(
-      ["remove", "removeMany", "set", "setMany"].sort(),
+      [
+        TieredCacheOp.REMOVE,
+        TieredCacheOp.REMOVE_MANY,
+        TieredCacheOp.SET,
+        TieredCacheOp.SET_MANY,
+      ].sort(),
     );
   });
 
@@ -791,7 +814,7 @@ describe("DefaultTieredCache - pinned constants", () => {
     expect(logger.warnings).toHaveLength(4);
 
     for (const w of logger.warnings) {
-      expect(w.bindings?.errorCode).toBe("unknown");
+      expect(w.bindings?.errorCode).toBe(TIERED_ERROR_CODE_UNKNOWN);
     }
   });
 
@@ -804,6 +827,8 @@ describe("DefaultTieredCache - pinned constants", () => {
     });
     build({ l1, backplane, logger });
     await backplane.publishInvalidation("k");
-    expect(logger.warnings[0]?.bindings?.errorCode).toBe("unknown");
+    expect(logger.warnings[0]?.bindings?.errorCode).toBe(
+      TIERED_ERROR_CODE_UNKNOWN,
+    );
   });
 });

@@ -1,3 +1,7 @@
+<!--
+Copyright (c) DCSV. All rights reserved.
+-->
+
 # Changelog — @d2/caching-abstractions
 
 All notable changes to this package are documented here. The format follows

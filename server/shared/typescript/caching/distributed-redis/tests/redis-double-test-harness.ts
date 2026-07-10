@@ -29,17 +29,20 @@ export function createNoOpTestLogger(): NoOpTestLogger {
   return new NoOpTestLogger();
 }
 
-interface StoreEntry {
+/** In-memory store row for {@link RedisTestDouble}. */
+interface TestStoreEntry {
   value: string;
   expiresAt?: number;
   kind: "string" | "set";
   members?: Set<string>;
 }
 
-type MessageHandler = (channel: string, message: string) => void;
+/** Pub/sub message callback shape for the test bus. */
+type TestMessageHandler = (channel: string, message: string) => void;
 
-interface PubSubBus {
-  handlers: Set<MessageHandler>;
+/** Shared in-memory pub/sub bus for command + subscriber doubles. */
+interface TestPubSubBus {
+  handlers: Set<TestMessageHandler>;
 }
 
 /**
@@ -48,7 +51,7 @@ interface PubSubBus {
  * branch is exercised against real Redis.
  */
 export class RedisTestDouble {
-  readonly store = new Map<string, StoreEntry>();
+  readonly store = new Map<string, TestStoreEntry>();
   readonly published: Array<{ channel: string; message: string }> = [];
   readonly quitCalls: string[] = [];
   readonly children: RedisTestDouble[] = [];
@@ -63,14 +66,14 @@ export class RedisTestDouble {
   throwOnUnsubscribe?: Error;
   throwOnQuit?: Error;
   private readonly clock: () => number;
-  private readonly bus: PubSubBus;
+  private readonly bus: TestPubSubBus;
   private readonly channels = new Set<string>();
   private readonly label: string;
 
   constructor(
     clock: () => number = Date.now,
     label = "command",
-    bus?: PubSubBus,
+    bus?: TestPubSubBus,
   ) {
     this.clock = clock;
     this.label = label;
@@ -132,7 +135,7 @@ export class RedisTestDouble {
       return null;
     }
 
-    const entry: StoreEntry = {
+    const entry: TestStoreEntry = {
       value: String(value),
       kind: "string",
     };
@@ -217,7 +220,7 @@ export class RedisTestDouble {
     return this.channels.size;
   }
 
-  on(event: string, handler: MessageHandler): this {
+  on(event: string, handler: TestMessageHandler): this {
     if (event === "message") {
       this.bus.handlers.add(handler);
     }
@@ -225,7 +228,7 @@ export class RedisTestDouble {
     return this;
   }
 
-  off(event: string, handler: MessageHandler): this {
+  off(event: string, handler: TestMessageHandler): this {
     if (event === "message") {
       this.bus.handlers.delete(handler);
     }
@@ -385,7 +388,7 @@ export class RedisTestDouble {
     return added;
   }
 
-  private live(key: string): StoreEntry | undefined {
+  private live(key: string): TestStoreEntry | undefined {
     const entry = this.store.get(key);
 
     if (entry === undefined) {
@@ -401,7 +404,7 @@ export class RedisTestDouble {
     return entry;
   }
 
-  private liveString(key: string): StoreEntry | undefined {
+  private liveString(key: string): TestStoreEntry | undefined {
     const entry = this.live(key);
 
     if (entry === undefined) {
@@ -436,6 +439,10 @@ export class RedisTestPipeline {
     return this;
   }
 
+  /**
+   * Mirrors ioredis Pipeline.exec: resolves with per-command
+   * `[err, result]` tuples and does **not** reject when a command fails.
+   */
   async exec(): Promise<Array<[Error | null, unknown]>> {
     const results: Array<[Error | null, unknown]> = [];
 
@@ -444,7 +451,6 @@ export class RedisTestPipeline {
         results.push([null, await op()]);
       } catch (err) {
         results.push([err as Error, null]);
-        throw err;
       }
     }
 

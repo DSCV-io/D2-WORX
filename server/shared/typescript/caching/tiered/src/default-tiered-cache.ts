@@ -21,6 +21,8 @@ import {
 import {
   logL1InvalidationFailed,
   logL1WriteFailedAfterL2Success,
+  TieredCacheOp,
+  TIERED_ERROR_CODE_UNKNOWN,
 } from "./tiered-cache-log.js";
 
 /**
@@ -110,7 +112,7 @@ export class DefaultTieredCache implements ITieredCache, AsyncDisposable {
           logL1InvalidationFailed(
             capturedLogger,
             key,
-            result.errorCode ?? "unknown",
+            result.errorCode ?? TIERED_ERROR_CODE_UNKNOWN,
           );
         }
       });
@@ -250,9 +252,9 @@ export class DefaultTieredCache implements ITieredCache, AsyncDisposable {
     if (!l1.success) {
       logL1WriteFailedAfterL2Success(
         this.logger,
-        "set",
+        TieredCacheOp.SET,
         key,
-        l1.errorCode ?? "unknown",
+        l1.errorCode ?? TIERED_ERROR_CODE_UNKNOWN,
       );
     }
 
@@ -278,9 +280,9 @@ export class DefaultTieredCache implements ITieredCache, AsyncDisposable {
     if (!l1.success) {
       logL1WriteFailedAfterL2Success(
         this.logger,
-        "setMany",
+        TieredCacheOp.SET_MANY,
         `${entries.size} entries`,
-        l1.errorCode ?? "unknown",
+        l1.errorCode ?? TIERED_ERROR_CODE_UNKNOWN,
       );
     }
 
@@ -302,9 +304,9 @@ export class DefaultTieredCache implements ITieredCache, AsyncDisposable {
     if (!l1.success) {
       logL1WriteFailedAfterL2Success(
         this.logger,
-        "remove",
+        TieredCacheOp.REMOVE,
         key,
-        l1.errorCode ?? "unknown",
+        l1.errorCode ?? TIERED_ERROR_CODE_UNKNOWN,
       );
     }
 
@@ -329,9 +331,9 @@ export class DefaultTieredCache implements ITieredCache, AsyncDisposable {
     if (!l1.success) {
       logL1WriteFailedAfterL2Success(
         this.logger,
-        "removeMany",
+        TieredCacheOp.REMOVE_MANY,
         `${keys.length} keys`,
-        l1.errorCode ?? "unknown",
+        l1.errorCode ?? TIERED_ERROR_CODE_UNKNOWN,
       );
     }
 

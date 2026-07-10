@@ -39,6 +39,32 @@ export const BACKPLANE_NOT_REGISTERED_MESSAGE =
   "ICacheInvalidationBackplane is not registered. Use set / remove " +
   "(no broadcast), or pass a backplane to RedisDistributedCache.";
 
+/**
+ * Closed-set operation names for redis cache warn bindings (§21.11).
+ * Single SoT for every `su` / `suVoid` / `logRedisOp` emit site.
+ */
+export const RedisCacheOp = {
+  GET: "get",
+  GET_MANY: "getMany",
+  EXISTS: "exists",
+  GET_TTL: "getTtl",
+  SET: "set",
+  SET_MANY: "setMany",
+  REMOVE: "remove",
+  REMOVE_MANY: "removeMany",
+  SET_NX: "setNx",
+  INCREMENT: "increment",
+  ACQUIRE_LOCK: "acquireLock",
+  RELEASE_LOCK: "releaseLock",
+  SET_ADD: "setAdd",
+  SET_CARDINALITY: "setCardinality",
+  SET_REMOVE: "setRemove",
+  SET_CONTAINS: "setContains",
+} as const;
+
+/** Closed-set type for {@link RedisCacheOp} values. */
+export type RedisCacheOpName = (typeof RedisCacheOp)[keyof typeof RedisCacheOp];
+
 const TEXT_ENCODER = new TextEncoder();
 const TEXT_DECODER = new TextDecoder();
 
@@ -132,7 +158,7 @@ export class RedisDistributedCache implements IDistributedCache {
 
       return bubbleFail(deserialized);
     } catch (err) {
-      return this.su<T>(err, "get", key);
+      return this.su<T>(err, RedisCacheOp.GET, key);
     }
   }
 
@@ -184,7 +210,7 @@ export class RedisDistributedCache implements IDistributedCache {
       return someFound({ data: hits });
     } catch (err) {
       this.counters.errors.add(1);
-      this.logRedisOp("getMany", err, `${keys.length} keys`);
+      this.logRedisOp(RedisCacheOp.GET_MANY, err, `${keys.length} keys`);
 
       return serviceUnavailable();
     }
@@ -205,7 +231,7 @@ export class RedisDistributedCache implements IDistributedCache {
 
       return ok(n > 0);
     } catch (err) {
-      return this.su<boolean>(err, "exists", key);
+      return this.su<boolean>(err, RedisCacheOp.EXISTS, key);
     }
   }
 
@@ -239,7 +265,7 @@ export class RedisDistributedCache implements IDistributedCache {
 
       return ok(ttl);
     } catch (err) {
-      return this.su<number | undefined>(err, "getTtl", key);
+      return this.su<number | undefined>(err, RedisCacheOp.GET_TTL, key);
     }
   }
 
@@ -276,7 +302,7 @@ export class RedisDistributedCache implements IDistributedCache {
 
       return ok();
     } catch (err) {
-      return this.suVoid(err, "set", key);
+      return this.suVoid(err, RedisCacheOp.SET, key);
     }
   }
 
@@ -321,12 +347,36 @@ export class RedisDistributedCache implements IDistributedCache {
         }
       }
 
-      await pipeline.exec();
+      // ioredis Pipeline.exec resolves with [err, result][] (does not throw
+      // on per-command failure). Surface any command error as SU — match
+      // .NET Task.WhenAll failure on batch StringSet tasks.
+      const results = await pipeline.exec();
+
+      if (results == null || results.length === 0) {
+        return this.suVoid(
+          new Error("Redis pipeline.exec returned no results"),
+          RedisCacheOp.SET_MANY,
+          `${entries.size} entries`,
+        );
+      }
+
+      for (const tuple of results) {
+        const err = tuple?.[0];
+
+        if (err != null) {
+          return this.suVoid(
+            err,
+            RedisCacheOp.SET_MANY,
+            `${entries.size} entries`,
+          );
+        }
+      }
+
       this.counters.sets.add(entries.size);
 
       return ok();
     } catch (err) {
-      return this.suVoid(err, "setMany", `${entries.size} entries`);
+      return this.suVoid(err, RedisCacheOp.SET_MANY, `${entries.size} entries`);
     }
   }
 
@@ -346,7 +396,7 @@ export class RedisDistributedCache implements IDistributedCache {
 
       return ok();
     } catch (err) {
-      return this.suVoid(err, "remove", key);
+      return this.suVoid(err, RedisCacheOp.REMOVE, key);
     }
   }
 
@@ -370,7 +420,7 @@ export class RedisDistributedCache implements IDistributedCache {
 
       return ok();
     } catch (err) {
-      return this.suVoid(err, "removeMany", `${keys.length} keys`);
+      return this.suVoid(err, RedisCacheOp.REMOVE_MANY, `${keys.length} keys`);
     }
   }
 
@@ -414,7 +464,7 @@ export class RedisDistributedCache implements IDistributedCache {
 
       return ok(written);
     } catch (err) {
-      return this.su<boolean>(err, "setNx", key);
+      return this.su<boolean>(err, RedisCacheOp.SET_NX, key);
     }
   }
 
@@ -461,7 +511,7 @@ export class RedisDistributedCache implements IDistributedCache {
         return conflict();
       }
 
-      return this.su<number>(err, "increment", key);
+      return this.su<number>(err, RedisCacheOp.INCREMENT, key);
     }
   }
 
@@ -499,7 +549,7 @@ export class RedisDistributedCache implements IDistributedCache {
 
       return ok(result === "OK");
     } catch (err) {
-      return this.su<boolean>(err, "acquireLock", key);
+      return this.su<boolean>(err, RedisCacheOp.ACQUIRE_LOCK, key);
     }
   }
 
@@ -531,7 +581,7 @@ export class RedisDistributedCache implements IDistributedCache {
 
       return ok();
     } catch (err) {
-      return this.suVoid(err, "releaseLock", key);
+      return this.suVoid(err, RedisCacheOp.RELEASE_LOCK, key);
     }
   }
 
@@ -652,7 +702,7 @@ export class RedisDistributedCache implements IDistributedCache {
 
       return ok(Number(result) === 1);
     } catch (err) {
-      return this.su<boolean>(err, "setAdd", key);
+      return this.su<boolean>(err, RedisCacheOp.SET_ADD, key);
     }
   }
 
@@ -674,7 +724,7 @@ export class RedisDistributedCache implements IDistributedCache {
 
       return ok(count);
     } catch (err) {
-      return this.su<number>(err, "setCardinality", key);
+      return this.su<number>(err, RedisCacheOp.SET_CARDINALITY, key);
     }
   }
 
@@ -701,7 +751,7 @@ export class RedisDistributedCache implements IDistributedCache {
 
       return ok(n > 0);
     } catch (err) {
-      return this.su<boolean>(err, "setRemove", key);
+      return this.su<boolean>(err, RedisCacheOp.SET_REMOVE, key);
     }
   }
 
@@ -728,7 +778,7 @@ export class RedisDistributedCache implements IDistributedCache {
 
       return ok(n === 1);
     } catch (err) {
-      return this.su<boolean>(err, "setContains", key);
+      return this.su<boolean>(err, RedisCacheOp.SET_CONTAINS, key);
     }
   }
 
@@ -798,21 +848,33 @@ export class RedisDistributedCache implements IDistributedCache {
     return result === "OK";
   }
 
-  private su<T>(err: unknown, op: string, keyOrCount: string): D2Result<T> {
+  private su<T>(
+    err: unknown,
+    op: RedisCacheOpName,
+    keyOrCount: string,
+  ): D2Result<T> {
     this.counters.errors.add(1);
     this.logRedisOp(op, err, keyOrCount);
 
     return serviceUnavailable();
   }
 
-  private suVoid(err: unknown, op: string, keyOrCount: string): D2Result {
+  private suVoid(
+    err: unknown,
+    op: RedisCacheOpName,
+    keyOrCount: string,
+  ): D2Result {
     this.counters.errors.add(1);
     this.logRedisOp(op, err, keyOrCount);
 
     return serviceUnavailable();
   }
 
-  private logRedisOp(op: string, err: unknown, keyOrCount: string): void {
+  private logRedisOp(
+    op: RedisCacheOpName,
+    err: unknown,
+    keyOrCount: string,
+  ): void {
     const exceptionType = sanitizedErrorRender(err).name;
     this.logger.warn("Redis cache operation failed", {
       operation: op,

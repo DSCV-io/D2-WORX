@@ -711,8 +711,18 @@ type TestInvalidationHandler = (
  */
 export class BackplaneTestDouble implements ICacheInvalidationBackplane {
   readonly handlers = new Set<TestInvalidationHandler>();
+  /**
+   * Per-subscription AbortController — mirrors production backplane where
+   * handlers receive the **subscription** signal, not the publish signal.
+   */
+  private readonly handlerControllers = new Map<
+    TestInvalidationHandler,
+    AbortController
+  >();
   readonly published: string[] = [];
   readonly publishedMany: string[][] = [];
+  /** Signals forwarded into `publishInvalidation*` (publish contract pin). */
+  readonly publishedSignals: Array<AbortSignal | undefined> = [];
   subscribeCount = 0;
   disposed = false;
   forceFailPublish = false;
@@ -720,6 +730,8 @@ export class BackplaneTestDouble implements ICacheInvalidationBackplane {
   subscribe(handler: TestInvalidationHandler): AsyncDisposable {
     this.subscribeCount++;
     this.handlers.add(handler);
+    const ac = new AbortController();
+    this.handlerControllers.set(handler, ac);
     let unsubscribed = false;
 
     return {
@@ -729,7 +741,9 @@ export class BackplaneTestDouble implements ICacheInvalidationBackplane {
         }
 
         unsubscribed = true;
+        ac.abort();
         this.handlers.delete(handler);
+        this.handlerControllers.delete(handler);
       },
     };
   }
@@ -743,7 +757,8 @@ export class BackplaneTestDouble implements ICacheInvalidationBackplane {
     }
 
     this.published.push(key);
-    await this.deliver(key, signal);
+    this.publishedSignals.push(signal);
+    await this.deliver(key);
 
     return ok();
   }
@@ -757,10 +772,11 @@ export class BackplaneTestDouble implements ICacheInvalidationBackplane {
     }
 
     this.publishedMany.push([...keys]);
+    this.publishedSignals.push(signal);
 
     for (const key of keys) {
       this.published.push(key);
-      await this.deliver(key, signal);
+      await this.deliver(key);
     }
 
     return ok();
@@ -768,6 +784,12 @@ export class BackplaneTestDouble implements ICacheInvalidationBackplane {
 
   async dispose(): Promise<void> {
     this.disposed = true;
+
+    for (const ac of this.handlerControllers.values()) {
+      ac.abort();
+    }
+
+    this.handlerControllers.clear();
     this.handlers.clear();
   }
 
@@ -775,10 +797,15 @@ export class BackplaneTestDouble implements ICacheInvalidationBackplane {
     await this.dispose();
   }
 
-  private async deliver(key: string, signal?: AbortSignal): Promise<void> {
+  /**
+   * Delivers to handlers with each handler's **subscription** AbortSignal
+   * (real Redis backplane contract), never the publish call's signal.
+   */
+  private async deliver(key: string): Promise<void> {
     for (const handler of [...this.handlers]) {
       try {
-        await handler(key, signal);
+        const subSignal = this.handlerControllers.get(handler)?.signal;
+        await handler(key, subSignal);
       } catch {
         // Handler isolation - continue other handlers.
       }

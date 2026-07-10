@@ -352,6 +352,25 @@ describe("RedisDistributedCache unit", () => {
     expect(r.errorCode).toBe(ErrorCodes.COULD_NOT_BE_SERIALIZED);
   });
 
+  it("setMany_pipelineCommandError_returnsServiceUnavailable_doesNotIncrementSets", async () => {
+    // ioredis Pipeline.exec resolves with [err, result] tuples (does not
+    // throw). Force a per-command error via the double and assert SU + no
+    // sets counter bump — fails if production always ok() after exec.
+    harness = createMetricTestHarness();
+    const redis = createRedisTestDouble();
+    redis.throwOnNext = new Error("pipeline set fail");
+    const r = await makeCache(redis).setMany(
+      new Map([
+        ["a", 1],
+        ["b", 2],
+      ]),
+    );
+    expect(r.success).toBe(false);
+    expect(r.errorCode).toBe(ErrorCodes.SERVICE_UNAVAILABLE);
+    expect(r.statusCode).toBe(HttpStatusCode.ServiceUnavailable);
+    expect(await harness.counterValue("d2.cache.redis.sets")).toBe(0);
+  });
+
   it("remove_falseyKey_returnsValidationFailed", async () => {
     expect(
       (await makeCache(createRedisTestDouble()).remove("")).inputErrors?.[0]

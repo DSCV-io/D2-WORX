@@ -16,6 +16,26 @@ const L1_WRITE_FAILED_AFTER_L2_SUCCESS_MESSAGE =
   "Tiered cache L1 write failed after L2 success.";
 
 /**
+ * Sentinel errorCode when a failed L1 result has no code (§21.11 closed-set).
+ */
+export const TIERED_ERROR_CODE_UNKNOWN = "unknown";
+
+/**
+ * Closed-set write-path operation names for tiered L1-fail warn bindings
+ * (§21.11). Single SoT for every emit site and pin test.
+ */
+export const TieredCacheOp = {
+  SET: "set",
+  SET_MANY: "setMany",
+  REMOVE: "remove",
+  REMOVE_MANY: "removeMany",
+} as const;
+
+/** Closed-set type for {@link TieredCacheOp} values. */
+export type TieredCacheOpName =
+  (typeof TieredCacheOp)[keyof typeof TieredCacheOp];
+
+/**
  * Logs Warning when the backplane invalidation handler's L1 remove fails.
  */
 export function logL1InvalidationFailed(
@@ -29,12 +49,12 @@ export function logL1InvalidationFailed(
 /**
  * Logs Warning when an L1 write/remove fails after L2 already succeeded.
  *
- * @param operation - One of `set` / `setMany` / `remove` / `removeMany`.
+ * @param operation - One of {@link TieredCacheOp} values.
  * @param keyOrCount - Single key, or `"N entries"` / `"N keys"` bulk form.
  */
 export function logL1WriteFailedAfterL2Success(
   logger: ILogger,
-  operation: string,
+  operation: TieredCacheOpName,
   keyOrCount: string,
   errorCode: string,
 ): void {

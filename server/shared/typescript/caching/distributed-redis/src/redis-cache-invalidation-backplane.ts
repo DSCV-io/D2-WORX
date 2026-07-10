@@ -9,6 +9,17 @@ import {
 import type { ILogger } from "@d2/logging";
 import { sanitizedErrorRender } from "@d2/logging";
 import { canceled, ok, serviceUnavailable, type D2Result } from "@d2/result";
+
+/**
+ * Closed-set backplane operation names for warn bindings (§21.11).
+ */
+export const BackplaneOp = {
+  PUBLISH: "Backplane.Publish",
+  PUBLISH_MANY: "Backplane.PublishMany",
+} as const;
+
+/** Closed-set type for {@link BackplaneOp} values. */
+export type BackplaneOpName = (typeof BackplaneOp)[keyof typeof BackplaneOp];
 import { falsey } from "@d2/utilities";
 import type Redis from "ioredis";
 import { randomUUID } from "node:crypto";
@@ -134,7 +145,7 @@ export class RedisCacheInvalidationBackplane implements ICacheInvalidationBackpl
 
       return ok();
     } catch (err) {
-      this.logRedisOp("Backplane.Publish", err, key);
+      this.logRedisOp(BackplaneOp.PUBLISH, err, key);
 
       return serviceUnavailable();
     }
@@ -162,7 +173,7 @@ export class RedisCacheInvalidationBackplane implements ICacheInvalidationBackpl
 
       return ok();
     } catch (err) {
-      this.logRedisOp("Backplane.PublishMany", err, `${keys.length} keys`);
+      this.logRedisOp(BackplaneOp.PUBLISH_MANY, err, `${keys.length} keys`);
 
       return serviceUnavailable();
     }
@@ -244,7 +255,11 @@ export class RedisCacheInvalidationBackplane implements ICacheInvalidationBackpl
     }
   }
 
-  private logRedisOp(op: string, err: unknown, keyOrCount: string): void {
+  private logRedisOp(
+    op: BackplaneOpName,
+    err: unknown,
+    keyOrCount: string,
+  ): void {
     const exceptionType = sanitizedErrorRender(err).name;
     this.logger.warn("Redis cache operation failed", {
       operation: op,
