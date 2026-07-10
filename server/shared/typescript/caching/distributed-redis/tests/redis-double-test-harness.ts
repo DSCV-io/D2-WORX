@@ -381,6 +381,7 @@ export class RedisTestDouble {
 
   private evalIncrement(key: string, amount: string, ttlMs: string): number {
     let entry = this.live(key);
+    const delta = Number(amount);
 
     if (entry !== undefined && entry.kind !== "string") {
       throw wrongType();
@@ -391,7 +392,13 @@ export class RedisTestDouble {
         throw notInteger();
       }
 
-      const next = Number(entry.value) + Number(amount);
+      const next = Number(entry.value) + delta;
+
+      // Twin of Lua: reverse in-script if outside JS max safe integer.
+      if (!Number.isSafeInteger(next)) {
+        throw safeIntegerOverflow();
+      }
+
       entry.value = String(next);
 
       // PTTL < 0 only when no expiresAt (mirror Redis -1 no-TTL).
@@ -402,7 +409,12 @@ export class RedisTestDouble {
       return next;
     }
 
-    const next = Number(amount);
+    const next = delta;
+
+    if (!Number.isSafeInteger(next)) {
+      throw safeIntegerOverflow();
+    }
+
     entry = { value: String(next), kind: "string" };
 
     if (ttlMs !== "0") {
@@ -533,6 +545,13 @@ function wrongType(): Error {
 
 function notInteger(): Error {
   const err = new Error("ERR value is not an integer or out of range");
+  err.name = "ReplyError";
+
+  return err;
+}
+
+function safeIntegerOverflow(): Error {
+  const err = new Error("ERR safe_integer_overflow");
   err.name = "ReplyError";
 
   return err;

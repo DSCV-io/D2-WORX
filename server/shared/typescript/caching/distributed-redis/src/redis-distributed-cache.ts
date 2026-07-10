@@ -498,26 +498,8 @@ export class RedisDistributedCache implements IDistributedCache {
     const prefixed = this.prefixed(key);
 
     try {
-      // Pre-INCRBY best-effort GET: refuse without mutating when the known
-      // integer current + n is already outside JS safe-integer range.
-      // Does not change Lua (byte-equal .NET twin). Residual concurrent race:
-      // writers between GET and INCRBY (or between INCRBY and reverse DECRBY)
-      // can still leave a non-pre-increment value — not fully eliminable
-      // without a Lua bounds script that would break dual-runtime twin pins.
-      try {
-        const existing = await this.redis.get(prefixed);
-
-        if (existing !== null && /^-?\d+$/.test(existing)) {
-          const current = Number(existing);
-
-          if (!Number.isSafeInteger(current + n)) {
-            return InputFailures.invalid<number>("amount");
-          }
-        }
-      } catch {
-        // Best-effort pre-check only; fall through to INCRBY.
-      }
-
+      // Bounds + reverse are atomic in INCREMENT_WITH_OPTIONAL_TTL (twin of
+      // .NET RedisLuaScripts) — no client-side GET/DECRBY race window.
       const result = await this.redis.eval(
         INCREMENT_WITH_OPTIONAL_TTL,
         1,
@@ -528,21 +510,12 @@ export class RedisDistributedCache implements IDistributedCache {
 
       const next = Number(result);
 
-      // Second line: Redis INCRBY can still exceed JS safe-integer range
-      // (pre-check skipped/raced). Number(result) would lose precision.
-      // Reverse the applied INCRBY best-effort, then refuse.
-      if (!Number.isSafeInteger(next)) {
-        try {
-          await this.redis.decrby(prefixed, n);
-        } catch {
-          // Best-effort reverse; still return validation failed.
-        }
-
+      return ok(next);
+    } catch (err) {
+      if (isSafeIntegerOverflow(err)) {
         return InputFailures.invalid<number>("amount");
       }
 
-      return ok(next);
-    } catch (err) {
       if (isTypeConflict(err)) {
         return conflict();
       }
@@ -944,6 +917,15 @@ function isTypeConflict(err: unknown): boolean {
   const msg = err.message;
 
   return msg.includes("WRONGTYPE") || msg.includes("not an integer");
+}
+
+/** Dual-runtime Lua reverse + error for out-of-JS-safe-integer INCRBY. */
+function isSafeIntegerOverflow(err: unknown): boolean {
+  if (!(err instanceof Error)) {
+    return false;
+  }
+
+  return err.message.includes("safe_integer_overflow");
 }
 
 function validateOptionalExpirationMs(

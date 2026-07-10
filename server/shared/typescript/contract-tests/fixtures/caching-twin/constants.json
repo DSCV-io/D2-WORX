@@ -38,7 +38,7 @@
       "version": "1.0.0"
     },
     "luaScripts": {
-      "INCREMENT_WITH_OPTIONAL_TTL": "local result = redis.call(\u0027INCRBY\u0027, KEYS[1], ARGV[1])\nif ARGV[2] ~= \u00270\u0027 and redis.call(\u0027PTTL\u0027, KEYS[1]) \u003C 0 then\n    redis.call(\u0027PEXPIRE\u0027, KEYS[1], ARGV[2])\nend\nreturn result",
+      "INCREMENT_WITH_OPTIONAL_TTL": "local result = redis.call(\u0027INCRBY\u0027, KEYS[1], ARGV[1])\nif result \u003E 9007199254740991 or result \u003C -9007199254740991 then\n    redis.call(\u0027DECRBY\u0027, KEYS[1], ARGV[1])\n    return redis.error_reply(\u0027ERR safe_integer_overflow\u0027)\nend\nif ARGV[2] ~= \u00270\u0027 and redis.call(\u0027PTTL\u0027, KEYS[1]) \u003C 0 then\n    redis.call(\u0027PEXPIRE\u0027, KEYS[1], ARGV[2])\nend\nreturn result",
       "RELEASE_LOCK_IF_OWNER": "if redis.call(\u0027GET\u0027, KEYS[1]) == ARGV[1] then\n    return redis.call(\u0027DEL\u0027, KEYS[1])\nelse\n    return 0\nend",
       "SET_ADD_WITH_OPTIONAL_TTL": "local added = redis.call(\u0027SADD\u0027, KEYS[1], ARGV[1])\nif ARGV[2] ~= \u00270\u0027 and redis.call(\u0027PTTL\u0027, KEYS[1]) \u003C 0 then\n    redis.call(\u0027PEXPIRE\u0027, KEYS[1], ARGV[2])\nend\nreturn added"
     },

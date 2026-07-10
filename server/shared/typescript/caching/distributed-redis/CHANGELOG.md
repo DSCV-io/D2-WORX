@@ -21,10 +21,7 @@ Keep a Changelog, and this package adheres to Semantic Versioning.
 
 ### Fixed
 
-- `increment` returns validationFailed (`amount`) when `Number(result)` is
-  outside the JS safe-integer range (in addition to rejecting non-safe-integer
-  amounts up front).
-- `increment` best-effort pre-INCRBY `GET`: refuse without mutating when
-  `current + amount` is already outside JS safe-integer range; keep post-INCRBY
-  reverse DECRBY as second line. Lua scripts unchanged (byte-equal .NET twin).
-  Residual concurrent race between GET/INCRBY or INCRBY/reverse documented.
+- `increment` refuses out-of-range results via shared Lua
+  `INCREMENT_WITH_OPTIONAL_TTL` (atomic INCRBY + DECRBY reverse +
+  `ERR safe_integer_overflow`) twin of .NET — no client-side race window.
+  Non-safe-integer `amount` still rejected up front.

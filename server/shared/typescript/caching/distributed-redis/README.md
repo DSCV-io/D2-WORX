@@ -107,15 +107,11 @@ Per-call (validationFailed via `InputFailures` unless noted):
 - `increment` `amount` when present: must be a safe integer
   (`NaN` / ±`Infinity` / `0.5` / non-safe → field `amount`, invalid not
   NOT_NULL).
-- `increment` **pre-INCRBY** best-effort `GET`: when the existing value parses
-  as an integer and `current + amount` is outside the JS safe-integer range,
-  returns validationFailed field `amount` **without mutating** (Lua twin
-  scripts stay byte-equal to .NET — no script change).
-- `increment` **post-INCRBY** second line: `Number(result)` must be a safe
-  integer; otherwise best-effort `DECRBY` reverses the applied delta, then
-  validationFailed field `amount` (invalid). Residual concurrent races:
-  writers between GET and INCRBY, or between INCRBY and reverse, may leave a
-  non-pre-increment value (not fully eliminable without breaking Lua twin pins).
+- `increment` result bound: Lua `INCREMENT_WITH_OPTIONAL_TTL` (byte-equal twin
+  of .NET) refuses results outside ±9007199254740991 (`Number.MAX_SAFE_INTEGER`)
+  by reversing `DECRBY` **in the same script** and returning
+  `ERR safe_integer_overflow` → validationFailed field `amount`. No
+  client-side race window; behavior matches .NET.
 - `acquireLock` `expirationMs`: finite and `> 0` (required param; invalid value
   → invalid field error).
 
@@ -125,7 +121,7 @@ Default write TTL is 1 hour (`defaultExpirationMs`). Explicit `expirationMs` ove
 
 ## Atomics + Lua
 
-Three public twin-pin Lua script constants (not an executor API): INCRBY + optional PEXPIRE, compare-and-delete lock release, SADD + optional PEXPIRE. Bodies are byte-equivalent to .NET `RedisLuaScripts` and re-exported for dual-runtime ContractFixtures parity. Cluster-wide SET NX / INCR / setAdd atomicity is Redis-enforced.
+Three public twin-pin Lua script constants (not an executor API): INCRBY + safe-integer bound + optional PEXPIRE, compare-and-delete lock release, SADD + optional PEXPIRE. Bodies are byte-equivalent to .NET `RedisLuaScripts` and re-exported for dual-runtime ContractFixtures parity. Cluster-wide SET NX / INCR / setAdd atomicity is Redis-enforced.
 
 ## Backplane
 

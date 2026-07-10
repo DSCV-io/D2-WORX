@@ -18,11 +18,21 @@ internal static class RedisLuaScripts
     /// ARGV[2] = TTL in milliseconds (0 = no expiration). Sets the TTL only
     /// when the key has no existing TTL (PTTL &lt; 0 covers both "key new"
     /// and "key exists with no expiration") — existing TTLs survive
-    /// subsequent increments. Matches the SET_ADD_WITH_OPTIONAL_TTL gating
-    /// pattern below.
+    /// subsequent increments.
     /// </summary>
+    /// <remarks>
+    /// After INCRBY, if the result is outside IEEE-754 max safe integer
+    /// (±9007199254740991 — dual-runtime bound shared with TypeScript
+    /// <c>Number.MAX_SAFE_INTEGER</c>), reverses with DECRBY in the same
+    /// script and returns <c>ERR safe_integer_overflow</c> so the store is
+    /// never left with a value that Node cannot represent exactly.
+    /// </remarks>
     internal const string INCREMENT_WITH_OPTIONAL_TTL = """
         local result = redis.call('INCRBY', KEYS[1], ARGV[1])
+        if result > 9007199254740991 or result < -9007199254740991 then
+            redis.call('DECRBY', KEYS[1], ARGV[1])
+            return redis.error_reply('ERR safe_integer_overflow')
+        end
         if ARGV[2] ~= '0' and redis.call('PTTL', KEYS[1]) < 0 then
             redis.call('PEXPIRE', KEYS[1], ARGV[2])
         end

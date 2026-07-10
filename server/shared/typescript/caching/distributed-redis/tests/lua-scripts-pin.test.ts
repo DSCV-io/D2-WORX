@@ -13,6 +13,10 @@ import {
 const EXPECTED = {
   INCREMENT_WITH_OPTIONAL_TTL: [
     "local result = redis.call('INCRBY', KEYS[1], ARGV[1])",
+    "if result > 9007199254740991 or result < -9007199254740991 then",
+    "    redis.call('DECRBY', KEYS[1], ARGV[1])",
+    "    return redis.error_reply('ERR safe_integer_overflow')",
+    "end",
     "if ARGV[2] ~= '0' and redis.call('PTTL', KEYS[1]) < 0 then",
     "    redis.call('PEXPIRE', KEYS[1], ARGV[2])",
     "end",

@@ -352,6 +352,13 @@ public sealed class RedisDistributedCache : IDistributedCache
             return D2Result<long>.Ok((long)result);
         }
         catch (RedisServerException ex) when (
+            ex.Message.Contains("safe_integer_overflow", StringComparison.Ordinal))
+        {
+            // Lua reversed INCRBY atomically; dual-runtime bound matches JS
+            // Number.MAX_SAFE_INTEGER so .NET and TS refuse the same range.
+            return InputFailures.Invalid<long>(nameof(amount));
+        }
+        catch (RedisServerException ex) when (
             ex.Message.Contains("WRONGTYPE", StringComparison.Ordinal)
             || ex.Message.Contains("not an integer", StringComparison.Ordinal))
         {
