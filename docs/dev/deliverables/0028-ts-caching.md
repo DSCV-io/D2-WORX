@@ -2,12 +2,15 @@
 Copyright (c) DCSV. All rights reserved.
 Committed snapshot of the gitignored deliverable-0028 workspace root
 (docs/wip/0028-ts-caching/README.md), captured at SHIP 2026-07-10.
+Post-SHIP follow-ups (dispose fail-closed, TS numeric hardening, dual-runtime
+constants parity) landed on the same branch tip; this snapshot updated 2026-07-10
+to keep REVIEW dispositions honest.
 Per-step journals remain local-only under docs/wip/0028-ts-caching/ (gitignored).
 -->
 
 # 0028 — TS tiered cache + Redis invalidation-backplane twin (T1)
 
-**Status:** SHIPPED 2026-07-10 — product on branch `n/ts-caching` (tip includes `04edf08d`).  
+**Status:** SHIPPED 2026-07-10 — product on branch `n/ts-caching` (tip includes `aee86e90`).  
 **Branch:** `n/ts-caching` (from `nova` @ `933d2901`)  
 **Phase:** [PHASE_3.md](../../v2/PHASE_3.md) **T1** · Architecture: [V2.md §5.8](../../v2/V2.md) · Behavioral model: [ADR-0008](../../adrs/0008-caching-marker-interfaces.md)
 
@@ -15,17 +18,21 @@ Per-step journals remain local-only under docs/wip/0028-ts-caching/ (gitignored)
 
 Ship the **full behavioral TypeScript twin** of the .NET `D2.Shared.Caching.*` stack — abstractions (markers + building blocks + backplane), local default, Redis distributed + invalidation backplane, and tiered composition — so multi-instance Node workloads (BFF as mesh member, future Node services) keep L1 coherent via the shared Redis pub/sub channel `d2:cache:invalidations` with the universal **"everyone acts"** rule.
 
-Success = package layout mirrors `server/shared/dotnet/caching/`; every Basic / Atomic / Broadcast / Set surface that .NET exposes has a TS counterpart returning `@d2/result` shapes; unit + Testcontainers Redis integration prove package-local parity; V2/PHASE/PARITY/KEEP docs describe the twin as in-scope (stale “cache packages dropped” framing removed).
+Success = package layout mirrors `server/shared/dotnet/caching/`; every Basic / Atomic / Broadcast / Set surface that .NET exposes has a TS counterpart returning `@d2/result` shapes; unit + Testcontainers Redis integration prove package-local parity; dual-runtime **constants/semantics** parity pins defaults / meters / Lua / channel / tiered EventId bindings; V2/PHASE/PARITY/KEEP docs describe the twin as shipped (stale “cache packages dropped” framing removed).
 
 ## What shipped
 
 | Step | Commit / package | Notes |
 | --- | --- | --- |
 | 01-abstractions | `99724826` · `@d2/caching-abstractions` | Markers, building blocks, options, InputFailures, serializer seam |
-| 02-local-default | `b49f6b3d` · `@d2/caching-local-default` | In-process L1 + atomics; deliberate post-dispose + numeric hardening vs .NET |
+| 02-local-default | `b49f6b3d` · `@d2/caching-local-default` | In-process L1 + atomics; post-dispose + numeric hardening |
 | 03-distributed-redis | `0010d5aa` · `@d2/caching-distributed-redis` | Redis store + invalidation backplane; Lua pins; IT |
 | 04-tiered | `7b04bd70` · `@d2/caching-tiered` | L1+L2 composition; L2-first; everyone-acts L1 drop |
 | 05-docs-parity + FR fixes | `04edf08d` | PARITY/PATTERNS/PHASE_3/ADR honesty; `setMany` pipeline error path; log-op named constants; harness renames; fingerprints |
+| Snapshot + T1 status | `32b6903b` | Deliverable snapshot + PHASE_3 T1 SHIPPED |
+| TS numeric hardening | `ed872ded` | Non-finite / non-safe-integer guards on local + redis (REVIEW item 2) |
+| .NET dispose fail-closed | `3ef66497` | `DefaultLocalCache` `ThrowIfDisposed()` on **all** public ops including locks — closes PHASE_3 Deferred **D1** |
+| Dual-runtime constants parity | `aee86e90` | `CachingTwinFixtureEmitter` + `fixtures/caching-twin/constants.json` + `caching-twin.parity.test.ts` (KOM-01..08) |
 
 ### Layout
 
@@ -50,8 +57,7 @@ server/shared/typescript/caching/
 ### Out of scope (honest)
 
 - BFF host DI wiring (later composition deliverable).
-- .NET caching behavior changes (read-only twin reference).
-- Dual-runtime `ts === cs` assert suite (KOM-01..08 deferred).
+- Full dual-runtime **behavior** interop harness (cross-process algorithm equivalence suite) — package-local unit + Testcontainers cover algorithm; dual-runtime suite is **constants/semantics only** (KOM-01..08 closed).
 - Spec/codegen catalogs for cache keys.
 
 ## Cross-cutting decisions (locked)
@@ -63,7 +69,7 @@ server/shared/typescript/caching/
 | **D3** | Surface scope | **T1-FULL** Basic+Atomic+Broadcast+Set+tiered+backplane |
 | **D4** | Package layout | Mirror .NET under `typescript/caching/*` |
 | **D5** | Invalidation channel | Share `d2:cache:invalidations` |
-| **D6** | Parity bar | Full behavioral runtime twin; package-local ITs (not invent dual-runtime corpus) |
+| **D6** | Parity bar | Full behavioral runtime twin; package-local ITs + dual-runtime constants/semantics suite (not invent full algorithm interop corpus) |
 
 ## Process integrity
 
@@ -72,21 +78,24 @@ server/shared/typescript/caching/
 - Step 02: **user skip dirty R3** after CA-R2-E-1 (§13.14 trail in local journal + root README).
 - **FINAL-REVIEW:** full K=7 vs `nova` + working tree; Fixer rounds closed product findings (incl. `setMany` pipeline errors, AbortSignal double fidelity, §21.11 named log ops, §26.20 reseed); FR Plan-Audit of thin FR Plan CLEAN (R1 + dirty R2).
 - FR Latest fold: **zero FINDING** (R4).
+- Post-SHIP follow-ups on same branch: .NET dispose D1 fix, TS numeric hardening, dual-runtime constants parity + KEEP docs sweep.
 - No `rules.md` predicates proposed at SHIP (table empty).
 
 ## Kinds-of-misses (distilled)
 
 | ID | Class | Detail | Follow-up |
 | --- | --- | --- | --- |
-| KOM-01..08 | §26.12 dual-runtime constants | Hand-mirrored defaults / meters / Lua / channel / tiered log semantics with package-local pins only | Future dual-runtime suite: assert TS ↔ .NET constants / semantics (tiered: semantics only, not LoggerMessage byte-equality) |
+| KOM-01..08 | §26.12 dual-runtime constants | Hand-mirrored defaults / meters / Lua / channel / tiered log semantics with package-local pins only | **CLOSED** via `aee86e90` — `CachingTwinFixtureEmitter` + `@d2/contract-tests` `caching-twin.parity.test.ts` + `fixtures/caching-twin/constants.json` (constants/semantics; tiered: EventId/bindings only, not LoggerMessage byte-equality) |
 | FR product | §18 / §1.32 | `setMany` ignored ioredis per-command errors; hollow AbortSignal double | Fixed in `04edf08d` with regression units |
 | Process | §24 | Step journal Latest lag vs READY partials; FR Plan-Audit timing | Forensic journal merges + real FR Plan-Audit before SHIP |
 
-## For REVIEW (user decisions)
+## For REVIEW (user decisions) — disposition
 
-1. **.NET `DefaultLocalCache` post-dispose lock ops** — keep working after `Dispose()` contrary to .NET package README; tracked in PHASE_3 Deferred D1. TS twin enforces documented contract. 0028 forbids .NET fix.
-2. **TS twin deliberate deltas** — uniform post-dispose throw; non-finite/non-safe-integer numeric hardening (step 02).
-3. **KOM-01..08** — approve deferred dual-runtime suite as follow-up work (or schedule).
+| # | Original item | Disposition |
+| --- | --- | --- |
+| 1 | .NET `DefaultLocalCache` post-dispose lock ops kept working after `Dispose()` (PHASE_3 Deferred D1); 0028 forbade .NET fix at ship | **FIXED** on `n/ts-caching` (`3ef66497`) — `ThrowIfDisposed()` on all public ops including locks; PHASE_3 D1 ✅ fixed; TS + .NET both fail-closed |
+| 2 | TS twin deliberate deltas — uniform post-dispose throw; non-finite/non-safe-integer numeric hardening | **LANDED** — dispose alignment with .NET (`3ef66497`); numeric hardening (`ed872ded`). Residual deliberate deltas: exception **type** (`Error` vs `ObjectDisposedException`); JS `number` width / non-finite guards |
+| 3 | KOM-01..08 dual-runtime suite deferred | **LANDED** (`aee86e90`) — constants/semantics suite only; full behavior interop harness still out of scope (honest) |
 
 ## Proposed rule additions to rules.md
 
@@ -102,14 +111,15 @@ I attest that this deliverable's process integrity has been verified against the
 | Mid-step audits | Targeted Y ⊆ K=7 per deliverable audit strategy (user-locked); not full-catalog mid-step |
 | Step 02 final dirty re-walk | User-skipped R3 after CA-R2-E-1 (§13.14) — product residual closed on disk |
 | Final-review | Full K=7 vs `nova`+WT; Latest zero-FINDING (R4); FR Plan-Audit CLEAN |
-| Doc gates | PARITY, PATTERNS Cache dual pointer, parent TS README, package READMEs, PHASE_3 T1, ADR-0008 |
-| Build / inspectcode (.NET) | N/A for TS-only product path; TS unit suites green at last Implementer/Fixer runs; `check-baselines` 90/90 |
+| Doc gates | PARITY (incl. caching-twin constants suite), PATTERNS Cache dual pointer, parent TS + package READMEs, PHASE_3 T1 + D1 fixed, ADR-0008 |
+| Build / inspectcode (.NET) | N/A for original TS-only product path; post-SHIP .NET dispose fix + ContractFixtures emitter on tip; TS unit + parity suites green at last Implementer runs; `check-baselines` green at package ship |
 | Commits | Only after explicit user permission (cycle-commit marker path) |
 
-**The deliverable is ready for user REVIEW.**
+**The deliverable remains ready for user REVIEW** (post-SHIP follow-ups closed D1 + KOM suite + numeric hardening; docs sweep keeps KEEP honest).
 
 Spot-check anchors (committed product):
 
 - Packages: `server/shared/typescript/caching/**`
-- Docs: `docs/PARITY.md`, `docs/PATTERNS.md` (Cache), `docs/adrs/0008-caching-marker-interfaces.md`, `docs/v2/PHASE_3.md` T1
-- Tip commits: `99724826`, `b49f6b3d`, `0010d5aa`, `7b04bd70`, `04edf08d`
+- Docs: `docs/PARITY.md`, `docs/PATTERNS.md` (Cache), `docs/adrs/0008-caching-marker-interfaces.md`, `docs/v2/PHASE_3.md` T1 + D1
+- Dual-runtime: `server/shared/typescript/contract-tests/tests/caching-twin.parity.test.ts` + `fixtures/caching-twin/constants.json` + `CachingTwinFixtureEmitter.cs`
+- Tip commits: `99724826`, `b49f6b3d`, `0010d5aa`, `7b04bd70`, `04edf08d`, `32b6903b`, `ed872ded`, `3ef66497`, `aee86e90`

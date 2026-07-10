@@ -250,7 +250,7 @@ C1–C16, C18 are ✅ done. Open rows:
 
 | # | Item | Status | Blocked on |
 | - | ---- | ------ | ---------- |
-| D1 | .NET `DefaultLocalCache` lock ops keep working after `Dispose()`: `AcquireLockAsync`/`ReleaseLockAsync` (`server/shared/dotnet/caching/local-default/DefaultLocalCache.cs:365-414`) touch only the cleared `r_locks` dictionary and never throw `ObjectDisposedException`, contradicting the package README's documented post-dispose contract (`server/shared/dotnet/caching/local-default/README.md:97-100`). The TS twin `@d2/caching-local-default` enforces the documented contract uniformly. | 📐 specified-deferred | User decision at 0028 REVIEW (0028 forbids .NET changes) |
+| D1 | .NET `DefaultLocalCache` post-dispose lock ops (`AcquireLockAsync`/`ReleaseLockAsync`) previously kept working after `Dispose()` (cleared `r_locks` only; no `ObjectDisposedException`), contradicting the package README's documented fail-closed contract. | ✅ fixed on `n/ts-caching` (`3ef66497`) — `ThrowIfDisposed()` on every public op including locks; aligns with TS twin | — |
 
 ---
 

@@ -186,13 +186,10 @@ operation completes synchronously in process, so there is no cancellation window
 
 - Synchronous LRU vs async IMemoryCache compaction (see Capacity + eviction).
 - Single-record TTL (no transient no-TTL `getTtl` after capacity eviction).
-- Post-dispose uniformity — EVERY operation, including `acquireLock` /
-  `releaseLock`, throws after `dispose()`, where the .NET lock ops do not check
-  disposal and keep working (this implementation enforces the documented
-  contract uniformly). The thrown type is a plain `Error` with a pinned message
-  where .NET throws `ObjectDisposedException`, and the dispose check precedes
-  input validation where .NET returns a validation failure for invalid input on
-  a disposed instance.
+- Post-dispose exception type — every operation, including `acquireLock` /
+  `releaseLock`, throws after `dispose()` (matching .NET fail-closed dispose on
+  all public ops including locks). TS throws a plain `Error` with a pinned
+  message; .NET throws `ObjectDisposedException`.
 - Validation additionally rejects non-finite `expirationMs` / non-safe-integer
   `amount`, and refuses an `increment` whose computed next value is outside
   `Number.MAX_SAFE_INTEGER` (field `amount`; write skipped). The `number` type

@@ -25,3 +25,8 @@ Behavioral model: [ADR-0008](../../../../docs/adrs/0008-caching-marker-interface
 - **At-most-once** delivery; missed message → next read hits L2.
 - **Tiered writes** L2-first; atomics on L2 with L1 drop.
 - All ops return `@d2/result` shapes aligned with .NET `D2Result` mapping.
+
+## Parity proofs
+
+- **Package-local** unit suites + Redis Testcontainers ITs under each package — algorithm / behavioral pins.
+- **Dual-runtime constants/semantics** (not a full behavior interop harness): `@d2/contract-tests` `tests/caching-twin.parity.test.ts` + `fixtures/caching-twin/constants.json` (KOM-01..08 class; emitter `CachingTwinFixtureEmitter`). See [PARITY.md](../../../../docs/PARITY.md) caching stack row.
