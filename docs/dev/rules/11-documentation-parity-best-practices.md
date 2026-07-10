@@ -23,7 +23,7 @@ Doc drift is constant unless the doc edit ships in the SAME change as the code e
 - Test method names + describe-block titles (visible in runner output, CI dashboards, failure reports).
 - Generated-code source-of-truth surfaces: emitter source (`tools/ts-codegen/src/**/*.ts`, SourceGen `.cs`) whose prose propagates verbatim into committed `.g.ts` / `.g.cs`; csproj / props / targets XML comments.
 - Reference-data file headers: `$note` / `lastEditedAt` / `catalogVersion` in `contracts/geo/*.spec.json` + similar.
-- CLAUDE.md / agent-facing docs (with §11.9 exemptions — KEEP docs MUST NOT cite CLAUDE.md, but CLAUDE.md is itself a KEEP-equivalent surface for §11.x / §14.x purposes).
+- AGENTS.md / agent-facing docs (with §11.9 exemptions — KEEP docs MUST NOT cite AGENTS.md, but AGENTS.md is itself a KEEP-equivalent surface for §11.x / §14.x purposes).
 
 **NOT a KEEP doc** (allowlisted OUT of §11.x / §14.x — these are EXPLICITLY phase / dev-tracking artifacts):
 
@@ -33,7 +33,7 @@ Doc drift is constant unless the doc edit ships in the SAME change as the code e
 - **`docs/archive/`** — historical snapshots, preserved verbatim.
 - **`MEMORY.md`**, **`CHANGELOG.md`** — temporal / journey content by nature.
 
-**KEEP-doc framing rules** (the spirit §11.9, §11.19, §11.20, §11.28, §14.1, §14.3 enforce): describe what IS in present tense (never "will be" / "planned for" / "future X lib's job"); describe current state, not the journey (never "previously hand-written" / "we used to" / "migrated from" / "v1's old approach"); describe the convention directly (never cite CLAUDE.md sections, phase numbers, audit-round / decision / deliverable IDs from inside a KEEP doc); write for a future reader who knows nothing about the project's development state — every sentence should still be true in three years. The forward-looking / historical-narration content belongs in the allowlisted dev-tracking docs above; the SURFACE (README / comment / `$note` / xmldoc) doesn't change the rule.
+**KEEP-doc framing rules** (the spirit §11.9, §11.19, §11.20, §11.28, §14.1, §14.3 enforce): describe what IS in present tense (never "will be" / "planned for" / "future X lib's job"); describe current state, not the journey (never "previously hand-written" / "we used to" / "migrated from" / "v1's old approach"); describe the convention directly (never cite AGENTS.md sections, phase numbers, audit-round / decision / deliverable IDs from inside a KEEP doc); write for a future reader who knows nothing about the project's development state — every sentence should still be true in three years. The forward-looking / historical-narration content belongs in the allowlisted dev-tracking docs above; the SURFACE (README / comment / `$note` / xmldoc) doesn't change the rule.
 
 ### Predicates — §11 documentation parity
 
@@ -57,9 +57,9 @@ Doc drift is constant unless the doc edit ships in the SAME change as the code e
 - **11.4** Was [PATTERNS.md](../PATTERNS.md) updated for any new pattern introduced (handler / service-structure / DI registration / `D2Result` factory usage / RedactionSpec / mapper / repo pattern)?
   - Evidence: per pattern introduced → PATTERNS.md edit.
 
-- **11.5** Was the relevant doc per CLAUDE.md §3.5 Doc Update Map updated for cross-cutting changes? CLAUDE.md §3.5 is the canonical doc-mapping source — every entry in that map is in scope for this predicate.
-  - **Why**: the cross-cutting doc set evolves; enumerating it inline drifts the moment CLAUDE.md §3.5 changes, so this predicate points there rather than restating.
-  - Evidence: per change → matching CLAUDE.md §3.5 Doc Update Map row → doc edit landed in the same commit per §11.1.
+- **11.5** Was the relevant doc per AGENTS.md §3.5 Doc Update Map updated for cross-cutting changes? AGENTS.md §3.5 is the canonical doc-mapping source — every entry in that map is in scope for this predicate.
+  - **Why**: the cross-cutting doc set evolves; enumerating it inline drifts the moment AGENTS.md §3.5 changes, so this predicate points there rather than restating.
+  - Evidence: per change → matching AGENTS.md §3.5 Doc Update Map row → doc edit landed in the same commit per §11.1.
 
 - **11.6** Mermaid dep-graph parity for `<ProjectReference>` edits. See §11.29 for the canonical generalized predicate; this row is the §11 cross-pointer covering the specific .NET parent-overview README case. Walk §11.29 for evidence.
 
@@ -69,13 +69,14 @@ Doc drift is constant unless the doc edit ships in the SAME change as the code e
 - **11.8** When an architectural decision overrides a prior plan, is the current tracking doc (presently `docs/v2/V2.md`) updated AND a new ADR added per `docs/adrs/README.md`?
   - Evidence: per overriding decision → tracking-doc entry + ADR entry.
 
-- **11.9** Does any KEEP doc / README / source comment cite "CLAUDE.md §X" or reference `PHASE_*.md` / `V2.md` from outside `docs/v2/`?
-  - **Why**: KEEP docs describe current reality; CLAUDE.md is internal-to-Claude and `PHASE_*.md` / `V2.md` are forward-looking, so citing them as canonical from a KEEP doc muddles the present-tense / forward-looking distinction.
-  - Evidence: `grep -rEn 'CLAUDE\.md\|PHASE_[0-9_]*\.md\|V2\.md' <scope KEEP files>` → expect zero (modulo the carve-out below).
+- **11.9** Does any KEEP doc / README / source comment cite "AGENTS.md §X" or reference `PHASE_*.md` / `V2.md` from outside `docs/v2/`?
+  - **Why**: KEEP docs describe current code reality; AGENTS.md is agent/workflow direction and `PHASE_*.md` / `V2.md` are forward-looking, so citing them as code canon from a KEEP doc muddles the descriptive / directive distinction.
+  - Evidence: `grep -rEn 'AGENTS\.md\|PHASE_[0-9_]*\.md\|V2\.md' <scope KEEP files>` → expect zero (modulo the carve-out below).
   - **CARVE-OUT — forward-pointer when no shipped canonical exists yet**: when a pattern / library / subsystem has design content in `docs/v2/PHASE_*.md` but no shipped KEEP-doc canonical home exists yet (the lib isn't built, so its README doesn't exist), a KEEP doc MAY cite `docs/v2/PHASE_*.md` as the design home **PROVIDED** the citation carries the disambiguation framing naming all three of: not-yet-shipped status, current design path, future shipped home (e.g. `Canonical: not yet shipped; design at <path>. Will migrate to <shipped-home> when <thing> ships.`). Without the framing → §11.9 violation; with it → PASS (with a §11.1 re-audit trigger when the shipped canonical emerges).
   - **Why the carve-out exists**: sometimes the design IS the only thing that exists; forbidding all citations would force deleting the entry (loses reader value), inlining the full design (a drift class against `PHASE_*.md`), or scaffolding an empty stub (churn). The carve-out preserves directory-pointer value while keeping the citation honest about its forward-looking nature.
   - **How**: write the disambiguation framing inline at the citation site (not a footnote); when the shipped canonical later ships, update the citation in the same change per §11.1. Auditors under the carve-out: (a) check every `PHASE_*.md` citation outside `docs/v2/` for the framing (absence = violation, presence = PASS); (b) for each carve-out PASS, note whether the shipped canonical has since emerged (if yes → §11.1 migration update due).
-  - **META-DOC ALLOWLIST**: cross-references WITHIN the meta-doc set — `docs/dev/rules.md`, `docs/dev/process.md`, `CLAUDE.md`, `.github/copilot-instructions.md` — OR from those meta-docs OUT to `docs/v2/*` tracking docs are exempt from §11.9 (structural cross-refs in the framework-direction layer, not canonical-source claims; same precedent as the §14.1 / §14.3 meta-doc empirical-citation allowlist). KEEP docs (PATTERNS.md, per-lib / per-service READMEs, framework cross-cutting docs) do NOT get this allowlist — their citations remain §11.9 findings unless the forward-pointer carve-out applies. The 4-meta-doc set is BOUNDED; new members require explicit user approval.
+  - **META-DOC ALLOWLIST**: cross-references WITHIN the meta-doc set — `docs/dev/rules.md`, `docs/dev/process.md`, `AGENTS.md`, `.github/copilot-instructions.md` — OR from those meta-docs OUT to `docs/v2/*` tracking docs are exempt from §11.9 (structural cross-refs in the framework-direction layer, not canonical-source claims; same precedent as the §14.1 / §14.3 meta-doc empirical-citation allowlist). KEEP docs (PATTERNS.md, per-lib / per-service READMEs, framework cross-cutting docs) do NOT get this allowlist — their citations remain §11.9 findings unless the forward-pointer carve-out applies. The 4-meta-doc set is BOUNDED; runtime adapter files are not additional law surfaces.
+  - **STRUCTURAL-POINTER CARVE-OUT (not law surfaces):** `docs/dev/harness-runtimes.md` and `docs/dev/codebase-memory.md` MAY name/link the 4 meta-docs (and thin adapters such as `CLAUDE.md`) as navigation maps for harness pins / MCP usage. They do **not** prescribe predicates, do **not** expand the meta-doc law set, and must not restate Critical Reminders as a second condensed body.
 
 - **11.10** Docs describe what IS, not what isn't. See §11.37 for the canonical predicate (including the live-design-rationale carve-out). This row is the documentation-parity surface for the broader "describe what isn't" anti-pattern; walk §11.37 for evidence.
 
@@ -126,14 +127,14 @@ Doc drift is constant unless the doc edit ships in the SAME change as the code e
   - ❌ **Stale code examples** — every example must compile against current `main`.
   - ❌ **Unexplained acronyms** in user-facing docs (DLQ / TLC / 2LC OK in technical docs; clarify on first use in onboarding docs).
   - ❌ **Self-references** ("see this very document below" / "as mentioned above") when a section anchor or link would do.
-  - ❌ **CLAUDE.md / PHASE\_\*.md / V2.md citations from KEEP docs** (per §11.9).
+  - ❌ **AGENTS.md / PHASE\_\*.md / V2.md citations from KEEP docs** (per §11.9).
   - Evidence: scan for each pattern.
 
 - **11.20** "Describe what IS" reinforcement. See §11.37 for the canonical predicate (carve-out for live design-rationale framing belongs there). This row exists for back-compat with prior journals citing §11.20; walk §11.37 for evidence.
 
 - **11.21** Are docs brief? Long docs aren't more rigorous; they're harder to read and easier to drift.
   - **Heuristic**: per-lib README ≤ 300 lines, per-service README ≤ 500 lines, XML doc summary ≤ 5 lines (use `<remarks>` for longer). When more is needed, split into linked sub-docs.
-  - **TOC mandate for long docs**: any markdown doc over 300 lines MUST carry a table-of-contents block at the top (under the title + one-line purpose) with section jump-links (`[Section name](#section-anchor)`) for every `##` section AND every `###` subsection the reader is plausibly searching for. Without a TOC, a 600-line README forces scroll-scanning — effectively write-only. CLAUDE.md, rules.md, process.md, and the cross-cutting framework docs are the reference shape. Evidence: per touched doc > 300 lines → TOC present + every `##` heading enumerated + jump-links resolve (per §11.23 link integrity).
+  - **TOC mandate for long docs**: any markdown doc over 300 lines MUST carry a table-of-contents block at the top (under the title + one-line purpose) with section jump-links (`[Section name](#section-anchor)`) for every `##` section AND every `###` subsection the reader is plausibly searching for. Without a TOC, a 600-line README forces scroll-scanning — effectively write-only. AGENTS.md, rules.md, process.md, and the cross-cutting framework docs are the reference shape. Evidence: per touched doc > 300 lines → TOC present + every `##` heading enumerated + jump-links resolve (per §11.23 link integrity).
   - Evidence: line counts on touched docs.
 
 - **11.22** Do all code examples in docs compile / run against the current codebase?
@@ -200,7 +201,7 @@ Doc drift is constant unless the doc edit ships in the SAME change as the code e
   - **Evidence**: per substantive claim in a touched KEEP doc → citation to impl `file.cs:NN` + auditor MUST READ the cited code (§24.13.2) to confirm semantic match. Per "functionality described as shipped" section → codebase ACTUALLY exhibits it (file:line) OR the section opens with the stub block.
   - **Why**: generalizes §11.26 (universal claims grep-verifiable) + §11.27 (coverage % backed by gate) to the substantive-claim + state-honesty class. Empirical: a prior operational-guarantees doc described rate-limiting / idempotency / request-enrichment as shipped when none of those libraries existed — readers and future agents were misled into relying on guarantees that weren't there. Symbol existence ≠ semantic match.
 
-- **11.32** Where intentional duplication of content exists between KEEP docs (e.g. CLAUDE.md §5 "Critical Reminders" condensing rules.md §5 predicates), does each duplicated section carry an explicit duplication annotation + cross-pointer to the canonical full version?
+- **11.32** Where intentional duplication of content exists between KEEP docs (e.g. AGENTS.md §5 "Critical Reminders" condensing rules.md §5 predicates), does each duplicated section carry an explicit duplication annotation + cross-pointer to the canonical full version?
   - **Required annotation elements** (form-agnostic): every annotation satisfies four elements — (a) identify the canonical source (file + section), (b) link to it (proper markdown link), (c) state the duplication is by design ("Duplicate of" / "Duplicated from"), (d) name the lockstep-update requirement (cite §11.32 OR "update both in lockstep").
   - **Acceptable forms** (both satisfy the four elements):
     - **Terse footer (default)** — single-line italic adjacent to the content: `_Duplicate of [<short-label>](<full-path-with-anchor>) — keep in lockstep per §11.32._` For routine duplications where the section's framing already signals what it is.
@@ -208,15 +209,15 @@ Doc drift is constant unless the doc edit ships in the SAME change as the code e
   - **Forbidden**: bare duplication between KEEP docs WITHOUT the annotation — an accidental two-sources-of-truth situation failing §11.25. Un-annotated cross-doc matches MUST be deduplicated (one canonical home, every other reference a link).
   - **Bounded duplication only**: even annotated duplication is a condensed / summarized form of the canonical, NOT a full copy. If both copies are full-length, deduplicate.
   - **Evidence**: per content match found via cross-doc grep → either (a) annotation present + cross-pointer resolves + condensed-vs-full relationship honest, OR (b) deduplicate to one canonical home + link. Audit grep: pick 5+ headings / phrases appearing in multiple KEEP docs → verify each carries the §11.32 annotation OR is deduplicated.
-  - **Why**: bare duplication is where two docs say similar things, an author updates one and forgets the other, and they silently disagree thereafter. §11.25 forbids accidental duplication; §11.32 recognizes legitimate duplication (CLAUDE.md's condensed views) and keeps it from drifting via the annotation + lockstep mandate.
-  - **Canonical legitimate-duplication sites** (annotation form = identify canonical, link, name lockstep mandate): CLAUDE.md §5 "Critical Reminders" ← rules.md §1-§23; CLAUDE.md §6 "C# Naming" table ← rules.md §7.1; CLAUDE.md MANDATORY block 0 ← process.md §3; MANDATORY block 2 ← rules.md §24.0; MANDATORY block 3 ← the rules.md completeness checklist; PATTERNS.md directory entries ← per-lib READMEs; `.github/copilot-instructions.md` ← rules.md + CLAUDE.md.
+  - **Why**: bare duplication is where two docs say similar things, an author updates one and forgets the other, and they silently disagree thereafter. §11.25 forbids accidental duplication; §11.32 recognizes legitimate duplication (AGENTS.md's condensed views) and keeps it from drifting via the annotation + lockstep mandate.
+  - **Canonical legitimate-duplication sites** (annotation form = identify canonical, link, name lockstep mandate): AGENTS.md §5 "Critical Reminders" ← rules.md §1-§23; AGENTS.md §6 "C# Naming" table ← rules.md §7.1; AGENTS.md MANDATORY block 0 ← process.md §3; MANDATORY block 2 ← rules.md §24.0; MANDATORY block 3 ← the rules.md completeness checklist; PATTERNS.md directory entries ← per-lib READMEs; `.github/copilot-instructions.md` ← rules.md + AGENTS.md.
 
 - **11.33** Is every `.md` file in the repo (excluding the §11 KEEP-doc allowlist exclusions: `docs/wip/`, `docs/archive/`, `docs/dev/deliverables/`, `MEMORY.md`, `CHANGELOG.md`, `docs/v2/`) reachable from a root-level entry README via a chain of markdown links?
-  - **Reachability roots**: build the graph from `README.md`, `CLAUDE.md`, `CONTRIBUTING.md`. Walk every linked `.md` recursively (following only `[label](relative/path.md)` links). Assert every in-scope `.md` is visited ≥1.
+  - **Reachability roots**: build the graph from `README.md`, `AGENTS.md`, `CONTRIBUTING.md`. Walk every linked `.md` recursively (following only `[label](relative/path.md)` links). Assert every in-scope `.md` is visited ≥1.
   - **Forbidden**: orphan `.md` files with no inbound link from a higher-level README — effectively invisible (the reader must already know the file exists), defeating the purpose of a README.
   - **Allowed exceptions**: (a) READMEs intentionally external to the doc graph (rare, justified inline); (b) the allowlisted `docs/wip/` / `docs/archive/` / `docs/v2/` / `docs/dev/deliverables/` / `MEMORY.md` / `CHANGELOG.md` paths.
   - **Evidence**: per audit round, build the reachability graph from the three roots, walk all `[*](*.md)` links recursively, diff the visited set against the in-scope `.md` set (`find . -name '*.md' -not -path './docs/wip/*' -not -path './docs/archive/*' -not -path './docs/dev/deliverables/*' -not -path './docs/v2/*' -not -name MEMORY.md -not -name CHANGELOG.md`). The unvisited remainder = orphans = findings.
-  - **Why**: discoverability is foundational. New contributors and AI agents find docs by following links from `README.md` / `CLAUDE.md` outward. Orphan READMEs accumulate when authors create per-service / per-lib READMEs without updating the parent's link list — silent because no compile / lint check catches it.
+  - **Why**: discoverability is foundational. New contributors and AI agents find docs by following links from `README.md` / `AGENTS.md` outward. Orphan READMEs accumulate when authors create per-service / per-lib READMEs without updating the parent's link list — silent because no compile / lint check catches it.
   - **How**: authoring or substantially editing a `.md` file adds an inbound link from the parent overview README in the SAME change. Auditing runs the reachability walk + diff; any orphan is fixed in the same audit round (§24.0d).
 
 - **11.34** Does every KEEP doc's opening (Title + first 5 lines) make EXPLICIT both (a) WHO the doc is for + (b) WHAT problem it solves / question it answers?
@@ -311,14 +312,13 @@ Doc drift is constant unless the doc edit ships in the SAME change as the code e
   - **Why**: flourishes obscure meaning and read as filler — a reader who doesn't know the codebase can't decode "load-bearing" without already knowing what it protects; the literal statement is shorter and clearer.
   - **How**: prefer the literal statement. Before publishing, ask "does the adjective / metaphor add information, or just rhythm?" If rhythm only, cut it.
 
-- **11.45** Are agent-facing docs (CLAUDE.md, the rules catalog, process.md, the reference docs agents read per dispatch / audit round) written agent-first — human navigability SECONDARY, never bought with context bloat?
+- **11.45** Are agent-facing docs (AGENTS.md, the rules catalog, process.md, the reference docs agents read per dispatch / audit round) written agent-first — human navigability SECONDARY, never bought with context bloat?
   - **Required**: the densest faithful form wins — plain-text flows (indented lines + `→` arrows) over Mermaid / box-drawing art (both FORBIDDEN in agent-facing docs); one canonical home per passage with pointers elsewhere (§11.25 / §11.32), never a re-explanation.
   - **Forbidden**: any human-only nicety that costs agent tokens (decorative diagram, ASCII / line art, restatement-for-readability) on the agent read path — a defect, not a feature.
   - **CARVE-OUT**: tables where the table IS the law (naming tables §7.1, cluster / partition maps, the doc-update map) carry content, not decoration → keep. Rendered-for-humans docs OFF the agent read path (user-facing copy, marketing) are out of scope.
   - **Evidence**: per touched agent-facing doc → grep for Mermaid code fences + line-art glyphs (Unicode U+2500–U+257F) → expect zero; per human-only formatting element → justify it carries content (a law-bearing table) or cut it.
-  - **Why**: CLAUDE.md is injected into every dispatch + rule categories are read per audit round — every byte of human-only nicety is paid on every sub-agent, every round; rendered diagrams buy agents nothing and alignment-sensitive art wraps badly.
+  - **Why**: AGENTS.md is injected into every dispatch + rule categories are read per audit round — every byte of human-only nicety is paid on every sub-agent, every round; rendered diagrams buy agents nothing and alignment-sensitive art wraps badly.
 
 <sup>[↑ jump to top](#top)</sup>
 
 ---
-

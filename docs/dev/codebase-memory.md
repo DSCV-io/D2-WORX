@@ -14,7 +14,7 @@ Lockstep: [process.md §3](process.md#3-sub-agent-architecture) (tool access) ·
 ## Standing law
 
 1. **Graph ≠ truth.** Authority = **working tree on disk** + KEEP docs + journals + `rules.md`. Graph spans, rankings, and call edges can be stale, over-wide, or test-biased.
-2. **Prefer graph over Grep/Glob for discovery** when the MCP is connected and project **`D2-WORX`** is `ready` (`index_status` / `list_projects`). Goal: fewer tool hops + smaller tool-result payloads (upstream claims ~10×–120× fewer tokens vs file-by-file exploration — treat as motivation, not a meter).
+2. **Prefer graph over Grep/Glob for discovery** when the MCP is connected and the dispatch-provided **`MCP_PROJECT`** is `ready` (`index_status` / `list_projects`). Goal: fewer tool hops + smaller tool-result payloads (upstream claims ~10×–120× fewer tokens vs file-by-file exploration — treat as motivation, not a meter).
 3. **Grep is still mandatory when §24 / Evidence demands a literal command paste** (§24.13.1 checklist, sister-sweeps, Implementer pre-flight). Pattern: **graph narrows → Grep/shell proves → Read confirms spirit** (§24.13.2). Never replace a required Evidence grep with “search_graph said so.”
 4. **Never Grep/read `secrets/` or `.env.secrets`** (unchanged; graph must not be used to pull secret paths into context either).
 5. **No commit of team graph artifacts unless the user asks.** Local index lives under the MCP cache (`~/.cache/codebase-memory-mcp/` or host override). Do not add `.codebase-memory/graph.db.zst` by default.
@@ -23,11 +23,22 @@ Lockstep: [process.md §3](process.md#3-sub-agent-architecture) (tool access) ·
 
 ## Project / index
 
+The orchestrator resolves `MCP_PROJECT` once per session/dispatch before any project-scoped MCP call and injects it into every sub-agent brief. Roles consume the dispatch-provided value; if it is missing, they fail closed/report and use disk rather than guessing or resolving identity themselves:
+
+1. Resolve the current canonical Git root with `git rev-parse --show-toplevel`.
+2. Call `codebase-memory-mcp cli list_projects`.
+3. Normalize separators, trailing separators, and Windows path case for both the Git root and each returned `root_path` (or `git.canonical_root` when returned).
+4. Select the unique entry whose normalized root equals the normalized canonical Git root. Exactly one match → cache its returned `name` as `MCP_PROJECT` and pass it to every `project` argument.
+5. Zero matches → call `index_repository` with the absolute canonical Git root as `repo_path` and **omit** `name`, then resolve again.
+6. Multiple matches → fail closed and report the duplicates; never guess.
+
+**Never persist a path-derived project name or pass an explicit `name` override.**
+
 | Item | Value |
 | --- | --- |
-| `project` arg | **`D2-WORX`** (always pass it) |
-| First-time / empty | `index_repository({ repo_path: <abs repo root>, mode: "full", name: "D2-WORX" })` |
-| Health | `index_status({ project: "D2-WORX" })` → `status: ready` |
+| `project` arg | **`MCP_PROJECT`** (orchestrator injects it; roles pass it to every project-scoped MCP call) |
+| First-time / empty | `index_repository({ repo_path: <absolute canonical Git root>, mode: "full" })` — omit `name`, then resolve `MCP_PROJECT` again |
+| Health | `index_status({ project: MCP_PROJECT })` → `status: ready` |
 | After huge WT / branch hop | Re-index or rely on watcher if `auto_watch` is on; if results look wrong vs disk, re-index before trusting |
 | Modes | `full` = all files + similarity/semantic; `moderate` = filtered + semantic; `fast` = no semantic. Prefer **`full`** for this monorepo unless re-index cost forces otherwise |
 
@@ -83,7 +94,7 @@ Fall back to Grep/Glob/Read as before. Do **not** block a deliverable on indexin
 | Change | Touch |
 | --- | --- |
 | Usage law / tool defaults | this file |
-| Sub-agent tool-access wording | [process.md](process.md) + agent universal constraints (both runtimes) |
+| Sub-agent tool-access wording | [process.md](process.md) + agent universal constraints (all three runtimes) |
 | MCP / harness map | [harness-runtimes.md](harness-runtimes.md) |
 | Audit dispatch pack | `.claude/skills/audit-round/SKILL.md` |
-| Condensed pointer | [CLAUDE.md](../../CLAUDE.md) §3 table |
+| Condensed pointer | [AGENTS.md](../../AGENTS.md) §3 table (canonical); runtime adapters remain harness-specific |
