@@ -61,3 +61,4 @@ Three reasons:
 | [0025-doc-reconciliation.md](0025-doc-reconciliation.md) | Doc reconciliation — tiered doc model, dissolve POST_PIVOT into PHASE_3 deferred checklist + V2, prune stale framing | — |
 | [0026-kc-crypto-surface.md](0026-kc-crypto-surface.md) | KeyCustodian complete crypto + consumer surface (symmetric + sealed) on .NET and TypeScript | §1.33, §9.45–9.46, §13.1a, §24.31–24.36, §26.22–26.24 (+ §24.0h / §24.13.1 / §26.20 strengthenings) |
 | [0027-gate-scoping-ci-coverage.md](0027-gate-scoping-ci-coverage.md) | Contract-gate test-tree scoping + whole-file deletion fix + CI coverage closure (PR #51) | — (no new rules at SHIP) |
+| [0028-ts-caching.md](0028-ts-caching.md) | TS full caching twin (ADR-0008 / PHASE_3 T1) — `@d2/caching-*` packages + docs parity | — (no new rules at SHIP; KOM-01..08 dual-runtime suite deferred) |
