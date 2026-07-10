@@ -433,7 +433,7 @@ public sealed class DefaultLocalCacheBehaviorTests
         await cache.SetAsync("k", 1);
         cache.Dispose();
 
-        // After dispose, IMemoryCache throws ObjectDisposedException on access.
+        // After dispose, every public op throws ObjectDisposedException (fail-closed).
         var act = async () => await cache.GetAsync<int>("k");
         await act.Should().ThrowAsync<ObjectDisposedException>();
     }

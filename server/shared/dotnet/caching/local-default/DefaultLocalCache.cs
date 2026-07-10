@@ -93,6 +93,9 @@ public sealed class DefaultLocalCache : ILocalCache, IDisposable
     private readonly ConcurrentDictionary<string, DateTimeOffset> r_expirations
         = new(StringComparer.Ordinal);
 
+    /// <summary>True after <see cref="Dispose"/> completes; all public ops throw thereafter.</summary>
+    private bool _disposed;
+
     /// <summary>Initializes a new <see cref="DefaultLocalCache"/>.</summary>
     /// <param name="options">Cache options (max entries, default TTL, key prefix).</param>
     /// <param name="clock">
@@ -120,6 +123,8 @@ public sealed class DefaultLocalCache : ILocalCache, IDisposable
     /// <inheritdoc />
     public ValueTask<D2Result<T?>> GetAsync<T>(string key, CancellationToken ct = default)
     {
+        ThrowIfDisposed();
+
         if (key.Falsey())
             return new(InputFailures.Required<T?>(nameof(key)));
 
@@ -141,6 +146,8 @@ public sealed class DefaultLocalCache : ILocalCache, IDisposable
     public ValueTask<D2Result<IReadOnlyDictionary<string, T?>>> GetManyAsync<T>(
         IReadOnlyCollection<string> keys, CancellationToken ct = default)
     {
+        ThrowIfDisposed();
+
         if (keys.Falsey())
             return new(InputFailures.Required<IReadOnlyDictionary<string, T?>>(nameof(keys)));
 
@@ -180,6 +187,8 @@ public sealed class DefaultLocalCache : ILocalCache, IDisposable
     /// <inheritdoc />
     public ValueTask<D2Result<bool>> ExistsAsync(string key, CancellationToken ct = default)
     {
+        ThrowIfDisposed();
+
         if (key.Falsey())
             return new(InputFailures.Required<bool>(nameof(key)));
 
@@ -191,6 +200,8 @@ public sealed class DefaultLocalCache : ILocalCache, IDisposable
     /// <inheritdoc />
     public ValueTask<D2Result<TimeSpan?>> GetTtlAsync(string key, CancellationToken ct = default)
     {
+        ThrowIfDisposed();
+
         if (key.Falsey())
             return new(InputFailures.Required<TimeSpan?>(nameof(key)));
 
@@ -219,6 +230,8 @@ public sealed class DefaultLocalCache : ILocalCache, IDisposable
     public ValueTask<D2Result> SetAsync<T>(
         string key, T value, TimeSpan? expiration = null, CancellationToken ct = default)
     {
+        ThrowIfDisposed();
+
         if (key.Falsey())
             return new(InputFailures.Required(nameof(key)));
 
@@ -236,6 +249,8 @@ public sealed class DefaultLocalCache : ILocalCache, IDisposable
         TimeSpan? expiration = null,
         CancellationToken ct = default)
     {
+        ThrowIfDisposed();
+
         if (entries.Falsey())
             return new(InputFailures.Required(nameof(entries)));
 
@@ -254,6 +269,8 @@ public sealed class DefaultLocalCache : ILocalCache, IDisposable
     /// <inheritdoc />
     public ValueTask<D2Result> RemoveAsync(string key, CancellationToken ct = default)
     {
+        ThrowIfDisposed();
+
         if (key.Falsey())
             return new(InputFailures.Required(nameof(key)));
 
@@ -274,6 +291,8 @@ public sealed class DefaultLocalCache : ILocalCache, IDisposable
     public ValueTask<D2Result> RemoveManyAsync(
         IReadOnlyCollection<string> keys, CancellationToken ct = default)
     {
+        ThrowIfDisposed();
+
         if (keys.Falsey())
             return new(InputFailures.Required(nameof(keys)));
 
@@ -298,6 +317,8 @@ public sealed class DefaultLocalCache : ILocalCache, IDisposable
     public ValueTask<D2Result<bool>> SetNxAsync<T>(
         string key, T value, TimeSpan? expiration = null, CancellationToken ct = default)
     {
+        ThrowIfDisposed();
+
         if (key.Falsey())
             return new(InputFailures.Required<bool>(nameof(key)));
 
@@ -323,6 +344,8 @@ public sealed class DefaultLocalCache : ILocalCache, IDisposable
     public ValueTask<D2Result<long>> IncrementAsync(
         string key, long amount = 1, TimeSpan? expiration = null, CancellationToken ct = default)
     {
+        ThrowIfDisposed();
+
         if (key.Falsey())
             return new(InputFailures.Required<long>(nameof(key)));
 
@@ -365,6 +388,8 @@ public sealed class DefaultLocalCache : ILocalCache, IDisposable
     public ValueTask<D2Result<bool>> AcquireLockAsync(
         string key, string lockId, TimeSpan expiration, CancellationToken ct = default)
     {
+        ThrowIfDisposed();
+
         if (key.Falsey())
             return new(InputFailures.Required<bool>(nameof(key)));
 
@@ -391,6 +416,8 @@ public sealed class DefaultLocalCache : ILocalCache, IDisposable
     public ValueTask<D2Result> ReleaseLockAsync(
         string key, string lockId, CancellationToken ct = default)
     {
+        ThrowIfDisposed();
+
         if (key.Falsey())
             return new(InputFailures.Required(nameof(key)));
 
@@ -408,9 +435,13 @@ public sealed class DefaultLocalCache : ILocalCache, IDisposable
     /// <inheritdoc />
     public void Dispose()
     {
+        if (_disposed)
+            return;
+
         r_cache.Dispose();
         r_locks.Clear();
         r_expirations.Clear();
+        _disposed = true;
     }
 
     private static void EvictionCallback(
@@ -438,6 +469,8 @@ public sealed class DefaultLocalCache : ILocalCache, IDisposable
 
     private static bool IsNonPositive(TimeSpan? expiration)
         => expiration is { } e && e <= TimeSpan.Zero;
+
+    private void ThrowIfDisposed() => ObjectDisposedException.ThrowIf(_disposed, this);
 
     private string Prefixed(string key)
         => r_options.KeyPrefix.Falsey() ? key : r_options.KeyPrefix + key;

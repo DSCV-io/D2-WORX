@@ -426,6 +426,37 @@ public sealed class DefaultLocalCacheUnitTests
     }
 
     [Fact]
+    public async Task Dispose_AcquireLockAsync_ThrowsObjectDisposedException()
+    {
+        var cache = NewCache();
+        cache.Dispose();
+
+        var act = async () => await cache.AcquireLockAsync("k", "lock-1", TimeSpan.FromSeconds(1));
+        await act.Should().ThrowAsync<ObjectDisposedException>();
+    }
+
+    [Fact]
+    public async Task Dispose_ReleaseLockAsync_ThrowsObjectDisposedException()
+    {
+        var cache = NewCache();
+        cache.Dispose();
+
+        var act = async () => await cache.ReleaseLockAsync("k", "lock-1");
+        await act.Should().ThrowAsync<ObjectDisposedException>();
+    }
+
+    [Fact]
+    public async Task Dispose_SetAsync_ThrowsObjectDisposedException()
+    {
+        var cache = NewCache();
+        cache.Dispose();
+
+        // Non-lock path must also fail closed (not only IMemoryCache-backed Get).
+        var act = async () => await cache.SetAsync("k", 1);
+        await act.Should().ThrowAsync<ObjectDisposedException>();
+    }
+
+    [Fact]
     public void Ctor_NullOptionsThrows()
     {
         var act = () => new DefaultLocalCache(null!);
