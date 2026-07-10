@@ -505,7 +505,15 @@ export class RedisDistributedCache implements IDistributedCache {
         ttlMs,
       );
 
-      return ok(Number(result));
+      const next = Number(result);
+
+      // Redis INCRBY can exceed JS safe-integer range; Number(result) would
+      // lose precision. Refuse the unrepresentable result (field `amount`).
+      if (!Number.isSafeInteger(next)) {
+        return InputFailures.required<number>("amount");
+      }
+
+      return ok(next);
     } catch (err) {
       if (isTypeConflict(err)) {
         return conflict();

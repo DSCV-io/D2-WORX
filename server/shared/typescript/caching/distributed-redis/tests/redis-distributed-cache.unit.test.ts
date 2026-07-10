@@ -469,11 +469,57 @@ describe("RedisDistributedCache unit", () => {
     expect(r.statusCode).toBe(HttpStatusCode.Conflict);
   });
 
-  it("increment_badAmount_returnsValidationFailed", async () => {
-    const r = await makeCache(createRedisTestDouble()).increment(
-      "c",
-      Number.NaN,
+  it.each([
+    Number.NaN,
+    Number.POSITIVE_INFINITY,
+    Number.NEGATIVE_INFINITY,
+  ] as const)(
+    "increment_nonFiniteAmount_returnsValidationFailedFieldAmount (%s)",
+    async (amount) => {
+      const r = await makeCache(createRedisTestDouble()).increment("c", amount);
+
+      expect(r.success).toBe(false);
+      expect(r.errorCode).toBe(ErrorCodes.VALIDATION_FAILED);
+      expect(r.statusCode).toBe(HttpStatusCode.BadRequest);
+      expect(r.inputErrors?.[0]?.field).toBe("amount");
+    },
+  );
+
+  it("increment_nonIntegerAmount_returnsValidationFailedFieldAmount", async () => {
+    const r = await makeCache(createRedisTestDouble()).increment("c", 0.5);
+
+    expect(r.success).toBe(false);
+    expect(r.errorCode).toBe(ErrorCodes.VALIDATION_FAILED);
+    expect(r.statusCode).toBe(HttpStatusCode.BadRequest);
+    expect(r.inputErrors?.[0]?.field).toBe("amount");
+  });
+
+  it("increment_resultOverflowsSafeInteger_returnsValidationFailedFieldAmount", async () => {
+    const cache = makeCache(createRedisTestDouble());
+
+    expect((await cache.increment("c", Number.MAX_SAFE_INTEGER)).data).toBe(
+      Number.MAX_SAFE_INTEGER,
     );
+
+    const r = await cache.increment("c", 1);
+
+    expect(r.success).toBe(false);
+    expect(r.errorCode).toBe(ErrorCodes.VALIDATION_FAILED);
+    expect(r.statusCode).toBe(HttpStatusCode.BadRequest);
+    expect(r.inputErrors?.[0]?.field).toBe("amount");
+  });
+
+  it("increment_resultUnderflowsSafeInteger_returnsValidationFailedFieldAmount", async () => {
+    const cache = makeCache(createRedisTestDouble());
+
+    expect((await cache.increment("c", Number.MIN_SAFE_INTEGER)).data).toBe(
+      Number.MIN_SAFE_INTEGER,
+    );
+
+    const r = await cache.increment("c", -1);
+
+    expect(r.success).toBe(false);
+    expect(r.errorCode).toBe(ErrorCodes.VALIDATION_FAILED);
     expect(r.inputErrors?.[0]?.field).toBe("amount");
   });
 

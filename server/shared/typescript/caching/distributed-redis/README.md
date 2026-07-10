@@ -83,11 +83,34 @@ await backplane[Symbol.asyncDispose]();
 | Partial bulk hit | `someFound` (206) |
 | Redis / connection down | `serviceUnavailable` (including `releaseLock`) |
 | Increment WRONGTYPE / non-integer | `conflict` |
+| Increment amount not a safe integer / next not safe integer | validationFailed (`amount`) |
 | Serializer fail (get / set / setMany / setNx / broadcast wrappers) | whole-op `bubbleFail` |
 | `getMany` deserialize fail | **skips that entry** (no whole-op bubbleFail) |
 | Broadcast without backplane | **throws** registration `Error` |
 | `releaseLock` ownership miss | `ok` (idempotent) |
 | Aborted `AbortSignal` at entry | `canceled` |
+
+## Validation (JS number guards)
+
+Construction (`RangeError` / fixed connect throw — not `D2Result`):
+
+- `commandTimeoutMs` / `connectTimeoutMs` — finite `> 0`.
+- `connectRetries` — non-negative safe integer.
+- `connectionString` falsey on `connectRedis` — fixed message throw (never
+  interpolates input).
+
+Per-call (validationFailed via `InputFailures` unless noted):
+
+- Falsey `key` / keys / `lockId` / set member as applicable.
+- Optional `expirationMs` when present: finite and `> 0`.
+- `increment` `amount` when present: must be a safe integer
+  (`NaN` / ±`Infinity` / `0.5` / non-safe → field `amount`).
+- `increment` after Redis `INCRBY`: `Number(result)` must be a safe integer;
+  otherwise validationFailed field `amount` (JS cannot represent counters
+  outside ±`Number.MAX_SAFE_INTEGER` exactly). Redis may already have applied
+  the write when the counter leaves that range — keep counters in safe-integer
+  bounds.
+- `acquireLock` `expirationMs`: finite and `> 0` (required).
 
 ## TTL semantics
 
@@ -133,7 +156,10 @@ An aborted signal at method entry returns `canceled` without touching Redis. The
 - ioredis channel `subscribe` is Promise-based; .NET StackExchange registers channel Subscribe synchronously. TS keeps sync `new` and surfaces completion via `readonly ready: Promise<void>`.
 - Connection is injected (no MS.DI helper required beyond `connectRedis`).
 - Durations are millisecond numbers, not `TimeSpan`.
-- Counter / lock values are JS numbers within `Number.MAX_SAFE_INTEGER`.
+- Counter / lock values are JS numbers within `Number.MAX_SAFE_INTEGER`;
+  `increment` rejects non-safe-integer `amount` and non-safe-integer results
+  (validationFailed field `amount`). Redis integer range is wider; callers must
+  keep counters in the JS safe-integer band.
 - `AbortSignal` is entry-level only.
 - Broadcast registration and subscribe-after-dispose use plain `Error` (not BCL exception types).
 - Cache type has no dispose (host owns the command client), matching .NET not disposing the multiplexer from the cache.

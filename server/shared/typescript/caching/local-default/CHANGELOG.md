@@ -21,3 +21,6 @@ Keep a Changelog, and this package adheres to Semantic Versioning.
   `d2.cache.local.*` OTel counters (`LOCAL_CACHE_METER_NAME`).
 
 ### Fixed
+
+- `increment` returns validationFailed (`amount`) when the computed next
+  counter would leave the JS safe-integer range (store unchanged).

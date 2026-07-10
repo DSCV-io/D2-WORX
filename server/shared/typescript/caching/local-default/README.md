@@ -80,12 +80,33 @@ use `*Ms` number parameters).
 | `set` / `setMany` | `ok()` | falsey / bad `expirationMs` → VF |
 | `remove` / `removeMany` | `ok()` (idempotent) | falsey → VF |
 | `setNx` | wrote → `ok(true)`; exists → `ok(false)` with `data === false` | VF on bad input |
-| `increment` | `ok(newValue)` | non-counter existing → `conflict` (409); VF on bad input |
+| `increment` | `ok(newValue)` | non-counter existing → `conflict` (409); VF on bad input / overflow |
 | `acquireLock` | acquired → `ok(true)`; held → `ok(false)` | VF on falsey key/lockId or non-positive finite `expirationMs` |
 | `releaseLock` | always `ok()` (idempotent) | VF on falsey key/lockId |
 
 Validation failures name the TS parameter (`expirationMs`, `amount`, `key`,
 `keys`, `entries`, `lockId`) per the `InputFailures` call-site-name contract.
+
+## Validation (JS number guards)
+
+Construction (`RangeError`, not `D2Result`):
+
+- `maxEntries` — non-negative safe integer (`Number.isSafeInteger` and `>= 0`);
+  rejects `NaN`, ±`Infinity`, non-integers, and values outside safe-integer range.
+- `defaultExpirationMs` — finite number (`Number.isFinite`); `Number.MAX_VALUE`
+  is accepted; `<= 0` means “no default TTL” (not a construction error).
+
+Per-call (validationFailed via `InputFailures`):
+
+- Falsey `key` / element of `keys` / map key in `entries` / `lockId`.
+- Optional `expirationMs` when present: must be finite and `> 0`
+  (`NaN` / ±`Infinity` / `<= 0` → field `expirationMs`).
+- `increment` `amount` when present: must be a safe integer
+  (`NaN` / ±`Infinity` / non-integer / non-safe → field `amount`).
+- `increment` after computing `next = current + amount`: if
+  `!Number.isSafeInteger(next)` → field `amount` **before** write (store
+  unchanged). Existing non-safe-integer / non-number values → `conflict`.
+- `acquireLock` `expirationMs`: finite and `> 0` (required).
 
 ## TTL semantics
 
@@ -173,9 +194,11 @@ operation completes synchronously in process, so there is no cancellation window
   input validation where .NET returns a validation failure for invalid input on
   a disposed instance.
 - Validation additionally rejects non-finite `expirationMs` / non-safe-integer
-  `amount` (the `number` type admits values `TimeSpan` / `long` structurally
-  cannot).
-- Counter values are safe-integer JS numbers (port-documented bound).
+  `amount`, and refuses an `increment` whose computed next value is outside
+  `Number.MAX_SAFE_INTEGER` (field `amount`; write skipped). The `number` type
+  admits values `TimeSpan` / `long` structurally cannot.
+- Counter values are safe-integer JS numbers (port-documented bound); precision
+  beyond that range is not supported.
 - `get<T>` type parameters are caller-asserted and erased at runtime (the .NET
   generic cast throws on a wrong-type read; TS cannot).
 

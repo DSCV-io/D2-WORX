@@ -91,6 +91,18 @@ describe("DefaultLocalCache construction", () => {
     expect(() => newCache({ maxEntries: Number.NaN })).toThrow(/maxEntries/);
   });
 
+  it.each([
+    Number.POSITIVE_INFINITY,
+    Number.NEGATIVE_INFINITY,
+    Number.MAX_SAFE_INTEGER + 1,
+  ] as const)(
+    "ctor_maxEntriesNonSafeInteger_throwsRangeError_theory (%s)",
+    (value) => {
+      expect(() => newCache({ maxEntries: value })).toThrow(RangeError);
+      expect(() => newCache({ maxEntries: value })).toThrow(/maxEntries/);
+    },
+  );
+
   it.each([Number.NaN, Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY])(
     "ctor_defaultExpirationMsNonFinite_throwsRangeError_theory (%s)",
     (value) => {
@@ -102,6 +114,20 @@ describe("DefaultLocalCache construction", () => {
       );
     },
   );
+
+  it("ctor_defaultExpirationMsMaxValue_finiteAccepted", async () => {
+    const cache = newCache({
+      maxEntries: 1,
+      defaultExpirationMs: Number.MAX_VALUE,
+    });
+
+    await cache.set("k", 1);
+    const ttl = await cache.getTtl("k");
+
+    expect(ttl.success).toBe(true);
+    expect(ttl.data).toBe(Number.MAX_VALUE);
+    cache.dispose();
+  });
 
   it("ctor_maxEntriesZero_allowsCapacityZeroCache", async () => {
     const cache = newCache({ maxEntries: 0, defaultExpirationMs: 0 });

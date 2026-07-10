@@ -383,6 +383,13 @@ export class DefaultLocalCache implements ILocalCache, Disposable {
       }
 
       const next = entry.value + n;
+
+      // JS numbers lose integer precision outside ±MAX_SAFE_INTEGER.
+      // Refuse before write so the stored counter stays exact.
+      if (!Number.isSafeInteger(next)) {
+        return InputFailures.required<number>("amount");
+      }
+
       // Preserve expiresAt verbatim; ignore expirationMs on existing path.
       this.touch(prefixed, { value: next, expiresAt: entry.expiresAt });
 

@@ -1004,6 +1004,33 @@ describe("DefaultLocalCache unit matrix", () => {
     cache.dispose();
   });
 
+  it("increment_resultOverflowsSafeInteger_returnsValidationFailedFieldAmount", async () => {
+    const cache = newCache({ defaultExpirationMs: 0 });
+
+    await cache.set("k", Number.MAX_SAFE_INTEGER);
+    const result = await cache.increment("k", 1);
+
+    expectValidationFailed(result, "amount");
+    // Store must be unchanged (refuse before write).
+    const get = await cache.get<number>("k");
+
+    expect(get.data).toBe(Number.MAX_SAFE_INTEGER);
+    cache.dispose();
+  });
+
+  it("increment_resultUnderflowsSafeInteger_returnsValidationFailedFieldAmount", async () => {
+    const cache = newCache({ defaultExpirationMs: 0 });
+
+    await cache.set("k", Number.MIN_SAFE_INTEGER);
+    const result = await cache.increment("k", -1);
+
+    expectValidationFailed(result, "amount");
+    const get = await cache.get<number>("k");
+
+    expect(get.data).toBe(Number.MIN_SAFE_INTEGER);
+    cache.dispose();
+  });
+
   // -----------------------------------------------------------------------
   // LOCKS
   // -----------------------------------------------------------------------
