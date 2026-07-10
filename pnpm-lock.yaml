@@ -224,6 +224,40 @@ importers:
         specifier: 4.0.18
         version: 4.0.18(@opentelemetry/api@1.9.0)(@types/node@25.7.0)(tsx@4.20.6)(yaml@2.9.0)
 
+  server/shared/typescript/caching/tiered:
+    dependencies:
+      '@d2/caching-abstractions':
+        specifier: workspace:*
+        version: link:../abstractions
+      '@d2/logging':
+        specifier: workspace:*
+        version: link:../../logging
+      '@d2/result':
+        specifier: workspace:*
+        version: link:../../result
+    devDependencies:
+      '@d2/caching-distributed-redis':
+        specifier: workspace:*
+        version: link:../distributed-redis
+      '@d2/caching-local-default':
+        specifier: workspace:*
+        version: link:../local-default
+      '@testcontainers/redis':
+        specifier: 11.14.0
+        version: 11.14.0
+      '@vitest/coverage-v8':
+        specifier: 4.0.18
+        version: 4.0.18(vitest@4.0.18(@opentelemetry/api@1.9.0)(@types/node@25.7.0)(tsx@4.20.6)(yaml@2.9.0))
+      testcontainers:
+        specifier: 11.14.0
+        version: 11.14.0
+      typescript:
+        specifier: 5.9.3
+        version: 5.9.3
+      vitest:
+        specifier: 4.0.18
+        version: 4.0.18(@opentelemetry/api@1.9.0)(@types/node@25.7.0)(tsx@4.20.6)(yaml@2.9.0)
+
   server/shared/typescript/contract-tests:
     dependencies:
       '@d2/auth-abstractions':

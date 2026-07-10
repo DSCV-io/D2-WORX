@@ -2,7 +2,7 @@
 //
 // Idempotent seeding tool: installs api-extractor.json configs and generates
 // committed baselines (etc/<pkg>.api.md + etc/.release-fingerprint) for all
-// 35 @d2/* consumable packages: 34 under server/shared/typescript/ plus the
+// 36 @d2/* consumable packages: 35 under server/shared/typescript/ plus the
 // KeyCustodian client twin under server/services/edge/key-custodian/client-ts/.
 //
 // The fingerprint is SOURCE-BASED + PORTABLE - a SHA-256 over committed text
@@ -21,7 +21,7 @@
 // is unchanged (fingerprint and api.md are deterministic outputs).
 //
 // Prerequisites:
-//   - All 35 packages must have a built dist/ - api-extractor consumes
+//   - All 36 packages must have a built dist/ - api-extractor consumes
 //     dist/index.d.ts to generate the .api.md report (the fingerprint itself
 //     does NOT read dist/). Run `pnpm -r build` first.
 //   - @microsoft/api-extractor must be installed in tools/release-runner
@@ -86,7 +86,7 @@ if (envAllowEmpty.length > 0) {
 }
 
 // ---------------------------------------------------------------------------
-// The 35 consumable packages: [pkgDir, shortName] pairs.
+// The 36 consumable packages: [pkgDir, shortName] pairs.
 // Derived from the package names (@d2/<shortName>) so that api.md report
 // filenames are stable regardless of the directory structure.
 // Excludes: typespec-decorators, typespec-emitters, contract-tests.
@@ -118,6 +118,11 @@ const CONSUMABLES = [
     dir: join(TS_SHARED, "caching", "local-default"),
     shortName: "caching-local-default",
     pkgName: "@d2/caching-local-default",
+  },
+  {
+    dir: join(TS_SHARED, "caching", "tiered"),
+    shortName: "caching-tiered",
+    pkgName: "@d2/caching-tiered",
   },
   {
     dir: join(TS_SHARED, "encryption"),
