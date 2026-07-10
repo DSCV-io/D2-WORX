@@ -97,13 +97,18 @@ Project-specific terms-of-art used across the predicates below. First-use in a p
 - **Fix log** — the journal's `## Fix log (append-only)`; chronological per-fix entries citing subsection + finding round + what changed + `file.ext:NN` + timestamp. Append-only. See §24.0b / §24.0g.
 - **Sister-sweep** — a Fixer's supplementary scan over the predicate's FULL applicability scope (NOT just the originating file's directory) to surface adjacent sister occurrences before handoff. See §24.13.3 / §24.13.3a-d.
 - **Tamper-evident** — Fixer protocol: literal-quote the output BEFORE + AFTER the fix + `git diff --stat` BEFORE + AFTER, all four pasted into the fix-log entry. For previously-false-closed or user-emphasized findings. See §24.14.
-- **K=7 + Aggregator** — the canonical audit-round dispatch: parallel seat Auditors on **concern bundles A–G** (K≤7) + 1 Aggregator (**deep workhorse** — Opus / `grok-4.5` / Sol per the [Sub-agent model policy per role](process.md#sub-agent-model-policy-per-role) table + [harness-runtimes.md](harness-runtimes.md); spawn **runtime-prefixed** `claude-d2-aggregator` / `grok-d2-aggregator` / `codex-d2-aggregator`) merging the K partials into the big table. **Default full partition is K=7** for Plan-Audit R1 (in-scope), justified full code-audit, and **FINAL-REVIEW of a whole deliverable**. Per-step first code-audit may use **Y ⊆ K=7**. After findings: **dirty-only** re-dispatch (subset of active partition + sister-blast) — not a K=1 carve-out. **K=12 atomic dispatch is retired.** See §24.0h + §24.0i + [process.md §3 K=7 partition](process.md#auditor-cluster-partition-dual-mode).
+- **K=7 + Aggregator** — the canonical audit-round dispatch: parallel seat Auditors on **concern bundles A–G** (K≤7) + 1 Aggregator (**deep workhorse** — Opus / `grok-4.5` / Sol per the [Sub-agent model policy per role](process.md#sub-agent-model-policy-per-role) table + [harness-runtimes.md](harness-runtimes.md); spawn **runtime-prefixed** `claude-d2-aggregator` / `grok-d2-aggregator` / `codex-d2-aggregator`) merging the K partials into the **full-catalog** big table (non-Y seats N/A-coded). **Default full partition is K=7** for product Plan-Audit R1 (in-scope), justified full code-audit, and **FR_FULL** FINAL-REVIEW. Per-step first code-audit may use **Y ⊆ K=7**. Pure-meta/docs Plan-Audit defaults **Y** (E+G). FINAL-REVIEW open is **FR_FULL** / **FR_LITE** / **FR_COLLAPSED** — not always full K=7 with no exceptions. After findings: **dirty-only** re-dispatch (subset of active partition + sister-blast) — not a K=1 carve-out. **K=12 atomic dispatch is retired.** See §24.0h + §24.0i + [process.md §3 K=7 partition](process.md#auditor-cluster-partition-dual-mode) + [Audit wave policy](process.md#audit-wave-policy).
 - **K=12 + Aggregator** — **historical term only** (retired as a dispatch mode). Former 12 atomic seats A1…E3 + Aggregator; atom codes remain provenance IDs inside K=7 bundles. See K=7 entry above.
-- **K=1 carve-out** — single-Auditor dispatch instead of multi-seat K + Aggregator; requires explicit per-round user permission per §13.14 / §24.0h. Never self-invoked by the orchestrator. Dirty-only multi-seat re-dispatch is **not** K=1.
+- **K=1 carve-out** — single-Auditor dispatch instead of multi-seat K + Aggregator; requires explicit per-round user permission per §13.14 / §24.0h. Never self-invoked by the orchestrator. Dirty-only multi-seat re-dispatch is **not** K=1. **FR_LITE** and **FR_COLLAPSED** are multi-seat Y modes — not K=1.
+- **FR_FULL** — default product FINAL-REVIEW open: full K=7 at whole-deliverable scope + own `final-review/journal.md`. See process Audit wave policy.
+- **FR_LITE** — FINAL-REVIEW when all eligibility gates pass: deliverable-scope multi-seat Y + Aggregator + own FR journal. Multi-seat Y ≠ K=1.
+- **FR_COLLAPSED** — narrow pure-meta 1-step exception (README lock): no separate FR journal; step CLEAN multi-seat Y-audit is the deliverable gate. Completeness FR boxes cite step journal.
+- **Evidence ledger** — per-partial table of commands/reads once (`E#`); rows cite `E#`. Ledger alone ≠ PASS. See process Evidence requirements + §24.2 / §24.13.2.
+- **Fat step** — PLAN step-list granularity default (prefer fewer fatter steps; split only when mechanically beneficial). Canonical: [process.md PLAN — Break into steps](process.md#plan). Does **not** waive journals / multi-seat Y/K / tests / §24 for small code changes.
 - **Atom A1 / A2 / B1 / B2 / B3 / C1 / C2 / C3 / D1 / E1 / E2 / E3** — the 12-way atomic §-ownership IDs (**provenance / historical journals only** — not a dispatch mode); boundaries in process.md §3. **Bundles A–G** — the **only** dispatch seats (A=A1+A2, B=B1+B2+B3, C=C1+C2, D=C3, E=D1, F=E1+E3, G=E2).
 - **Cluster** — generic term for a dispatch seat (a bundle A–G). Used at §24.16 for per-seat Plan-Audit verifications.
 - **Smart-constructor** — domain-validation pattern `Domain.Create(input) → D2Result<Domain>` (returns a result rather than throwing); the handler calls `Create` at the top of `ExecuteAsync` and bubbles failure. See §9.4.
-- **Plan-Audit** — the multi-seat (K=7 default) + Aggregator audit of a step's PLAN section BEFORE the Implementer is dispatched — catches design errors at the cheapest moment. Dirty-only re-audit after Plan-amender. See §24.16.
+- **Plan-Audit** — three-way open before Implementer: **Skip** (narrow carve-outs only) \| pure-meta/docs **Y ⊆ K=7** + Aggregator (default E+G) \| product full **K=7** + Aggregator. Dirty-only re-audit after Plan-amender. Skip ≠ Y ≠ full K=7. See §24.16 + process Audit wave policy.
 - **Plan-amender** — Fixer-analogous role scoped to editing the journal's `## Plan` section in response to Plan-Audit findings. See §24.16.
 - **Meta-record** — small hand-coded type the source-gen pipeline uses to surface generated-catalog metadata to consumers (e.g., `SpecMetadata`, `EmitResult`); carved out from the §26.1 spec-mirror-DTO ban because its shape is NOT a spec mirror. See §26.1 "Allowed".
 - **Behavioral interface** — interface defining API surface (methods consumers call) rather than data shape (fields a spec declares); NOT a §26.1 spec-mirror violation even alongside spec-derived data. See §26.1 "Allowed".
@@ -253,25 +258,30 @@ For each step `NN-<step-name>` in `docs/wip/<deliverable>/`:
 - [ ] **Big table present** under `## Latest sweep results`, with one row per rules.md numbered subsection (~280 rows currently — the gate is one-row-per-subsection, not a fixed integer)?
 - [ ] **Anti-laziness preamble** verbatim above the big table?
 - [ ] **Big table has zero FINDING rows** (clean sweep)? If not, step is not done.
-- [ ] **Every PASS row** carries a `file.cs:NN` citation (no "verified ✓", no "looks good")?
-- [ ] **Every N/A row** carries a step-scope-specific reason (no bare "doesn't apply")?
+- [ ] **Every PASS row** carries a compact `file:line` citation (optional ≤8-word tag / `E#`; no "verified ✓", no "looks good", no essay PASS)?
+- [ ] **Every N/A row** carries a closed reason-code (`NO_CS`, `META`, …) or `OTHER: …` (no bare "doesn't apply")? `META` not used to skip §24 journal-discipline rows?
+- [ ] **Canonical big table** still has one row per catalog § under Y/dirty (non-dispatched seats N/A-coded, not omitted)?
 - [ ] **Findings log** under `## Sweep findings log (append-only)` with at least one `### Round N findings (timestamp)` subsection per sweep that ran?
 - [ ] **Fix log** under `## Fix log (append-only)` with chronological entries for every fix that landed?
 - [ ] **For every FINDING in any round's findings log**, is there a corresponding fix-log entry (or explicit user-approved deferral entry)? No silent carryover.
 - [ ] **Final round of sweep** in the findings log shows zero FINDINGs (closure proven by absence)?
 - [ ] **Self-audit rows §24.0 through §24.16** (incl. §24.0a-i + §24.13.1-4 + §24.13.3a-d) present in the latest big table, each PASS-cited against the journal file itself?
-- [ ] **Step's code change** has corresponding test coverage (per §1.x predicates)?
-- [ ] **Build clean**: `dotnet build server/D2.slnx` zero StyleCop / CS warnings against current state?
-- [ ] **JetBrains inspect clean**: `jb inspectcode server/D2.slnx --severity=WARNING` zero warnings?
-- [ ] **Test suite passes** at the most recent test run citation in the journal?
+- [ ] **Step's code change** has corresponding test coverage (per §1.x predicates)? **Pure-meta** steps may mark this **N/A** with `META`/`NO_CS` + path-set cite — never forge green product tests.
+- [ ] **Build clean**: `dotnet build server/D2.slnx` zero StyleCop / CS warnings against current state? **Pure-meta** / no C#: **N/A** with `META`/`NO_CS` + path-set — never forge green build.
+- [ ] **JetBrains inspect clean**: `jb inspectcode server/D2.slnx --severity=WARNING` zero warnings? Same pure-meta N/A rule.
+- [ ] **Test suite passes** at the most recent test run citation in the journal? Same pure-meta N/A rule.
 
 #### Final-review gate (the deliverable-wide sweep)
 
-- [ ] **Final-review journal exists** at `docs/wip/<deliverable>/final-review/journal.md`?
-- [ ] **Final-review SWEEPS the ENTIRE deliverable** (every step's output, every modified shared lib, every modified doc)?
-- [ ] **Final-review journal carries the same 3-artifact model** (big table + findings log + fix log)?
-- [ ] **Final-review big table is clean** (zero FINDINGs)?
-- [ ] **Final-review surfaces and records** any deliverable-wide consistency findings (e.g. PATTERNS.md / PARITY.md / TESTS.md drift, parent README update misses, Mermaid graph drift)?
+Mode-aware (see [process.md Audit wave policy](process.md#audit-wave-policy) + §24.0h / §24.8):
+
+- [ ] **FR_FULL:** Final-review journal exists at `docs/wip/<deliverable>/final-review/journal.md`?
+- [ ] **FR_LITE:** Final-review journal exists; mode + Y recorded before dispatch; multi-seat Y + Aggregator (not K=1)?
+- [ ] **FR_COLLAPSED:** no separate FR journal required; YES with citation `FR_COLLAPSED per deliverable README; step journal ## Latest sweep results covers whole deliverable path-set <list or git diff recipe>`?
+- [ ] **Sweep covers the ENTIRE deliverable** (every step's output / every modified KEEP surface)? Under FR_COLLAPSED: active seats walk whole path-set; non-active §§ N/A-coded in full-catalog big table.
+- [ ] **Journal of record carries the 3-artifact model** (big table + findings log + fix log) — FR journal under FR_FULL/FR_LITE, **step** journal under FR_COLLAPSED?
+- [ ] **Big table of record is clean** (zero FINDINGs)?
+- [ ] **Deliverable-wide consistency findings** recorded where applicable (e.g. PATTERNS.md / PARITY.md / TESTS.md drift, parent README update misses)?
 
 #### Deliverable-wide doc gates
 

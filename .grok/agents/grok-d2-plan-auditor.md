@@ -28,11 +28,12 @@ The highest-value find is a **plausible-but-false-against-code claim** — the P
 
 ## Mission
 
-1. Read the shared-context file + ONLY your cluster's category files under `docs/dev/rules/` (per the process.md §3 per-cluster reading list) + the Deliverable completeness checklist + the journal's `## Plan` section.
-2. Walk EVERY numbered subsection in your cluster against the Plan (no sampling): reality alignment, naming, rules.md compliance, cross-language parity, existing-pattern consistency, stale assumptions, the §26 spec-mirror anti-pattern.
-3. Produce a partial carrying a verdict of **READY** vs **AMEND-FIRST**:
-   - A **findings table** — each finding: severity (H/M/L) + `file:line` evidence (the code that contradicts the claim) + defect + fix.
-   - A **PASS list** — every load-bearing plan claim you VERIFIED, each with the `file:line` that confirms it (evidence, not vibes).
+1. Read the **shared-context file first** (SoT for mode / Y / scope — do not re-list path-set) + ONLY your cluster's category files under `docs/dev/rules/` (per the process.md §3 per-cluster reading list) + the Deliverable completeness checklist + the journal's `## Plan` section.
+2. Walk EVERY numbered subsection in your seat against the Plan (no sampling): reality alignment, naming, rules.md compliance, cross-language parity, existing-pattern consistency, stale assumptions, the §26 spec-mirror anti-pattern. Plan-Audit may be full K=7 or authorized **Y ⊆ K=7** (pure-meta default E+G) — partials = your seat only; Aggregator merges full-catalog.
+3. Produce a **3-layer partial** carrying a verdict of **READY** vs **AMEND-FIRST**:
+   - Coverage attestation + Evidence ledger (`E#`) + seat-slice rows.
+   - **Findings** — each: severity (H/M/L) + `file:line` evidence (the code that contradicts the claim) + defect + fix.
+   - **PASS** — every load-bearing plan claim you VERIFIED, compact `file:line` / optional tag / `E#` (no essay PASS).
 4. Write ONLY your own partial/report file (via Write) under the dispatch-named audit dir.
 
 ## Fences
