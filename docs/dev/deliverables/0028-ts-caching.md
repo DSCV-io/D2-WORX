@@ -10,7 +10,7 @@ Per-step journals remain local-only under docs/wip/0028-ts-caching/ (gitignored)
 
 # 0028 — TS tiered cache + Redis invalidation-backplane twin (T1)
 
-**Status:** SHIPPED 2026-07-10 — product on branch `n/ts-caching` (tip includes `aee86e90`).  
+**Status:** SHIPPED 2026-07-10 — product on branch `n/ts-caching` (committed tip `bec8508d`; post-ship hardening Fixer WT after `ed872ded`..`bec8508d` audited).  
 **Branch:** `n/ts-caching` (from `nova` @ `933d2901`)  
 **Phase:** [PHASE_3.md](../../v2/PHASE_3.md) **T1** · Architecture: [V2.md §5.8](../../v2/V2.md) · Behavioral model: [ADR-0008](../../adrs/0008-caching-marker-interfaces.md)
 
@@ -78,7 +78,8 @@ server/shared/typescript/caching/
 - Step 02: **user skip dirty R3** after CA-R2-E-1 (§13.14 trail in local journal + root README).
 - **FINAL-REVIEW:** full K=7 vs `nova` + working tree; Fixer rounds closed product findings (incl. `setMany` pipeline errors, AbortSignal double fidelity, §21.11 named log ops, §26.20 reseed); FR Plan-Audit of thin FR Plan CLEAN (R1 + dirty R2).
 - FR Latest fold: **zero FINDING** (R4).
-- Post-SHIP follow-ups on same branch: .NET dispose D1 fix, TS numeric hardening, dual-runtime constants parity + KEEP docs sweep.
+- Post-SHIP follow-ups on same branch: .NET dispose D1 fix, TS numeric hardening, dual-runtime constants parity + KEEP docs sweep (`ed872ded`..`bec8508d`).
+- Post-ship hardening **audited** (full K=7 R1) then Fixer remediations (overflow reverse, dispose flag-first, InputFailures.invalid, Public surface, instrument SoT, process journal). Not a false “FR-only CLEAN” claim for post-ship commits — post-ship had its own R1 + fix wave.
 - No `rules.md` predicates proposed at SHIP (table empty).
 
 ## Kinds-of-misses (distilled)
@@ -112,14 +113,15 @@ I attest that this deliverable's process integrity has been verified against the
 | Step 02 final dirty re-walk | User-skipped R3 after CA-R2-E-1 (§13.14) — product residual closed on disk |
 | Final-review | Full K=7 vs `nova`+WT; Latest zero-FINDING (R4); FR Plan-Audit CLEAN |
 | Doc gates | PARITY (incl. caching-twin constants suite), PATTERNS Cache dual pointer, parent TS + package READMEs, PHASE_3 T1 + D1 fixed, ADR-0008 |
-| Build / inspectcode (.NET) | N/A for original TS-only product path; post-SHIP .NET dispose fix + ContractFixtures emitter on tip; TS unit + parity suites green at last Implementer runs; `check-baselines` green at package ship |
+| Build / inspectcode (.NET) | N/A for original TS-only product path; post-SHIP .NET dispose + abstractions `InputFailures.Invalid` + ContractFixtures emitter on tip; TS unit + parity suites green at last Fixer gates; `check-baselines` re-run when consumables touch |
 | Commits | Only after explicit user permission (cycle-commit marker path) |
+| Post-ship hardening | Commits `ed872ded`..`bec8508d` audited (R1+R2 dirty); residual Fixer (pre-INCRBY GET + negative-validation + process G) — re-audit dirty A/G proves closure (not FR-only CLEAN) |
 
-**The deliverable remains ready for user REVIEW** (post-SHIP follow-ups closed D1 + KOM suite + numeric hardening; docs sweep keeps KEEP honest).
+**The deliverable remains ready for user REVIEW** after post-ship Fixer gates + dirty-seat re-audit prove zero FINDING (post-SHIP follow-ups closed D1 + dual-runtime constants suite + numeric hardening + post-ship R1+R2 residual A; docs sweep keeps KEEP honest).
 
 Spot-check anchors (committed product):
 
 - Packages: `server/shared/typescript/caching/**`
 - Docs: `docs/PARITY.md`, `docs/PATTERNS.md` (Cache), `docs/adrs/0008-caching-marker-interfaces.md`, `docs/v2/PHASE_3.md` T1 + D1
 - Dual-runtime: `server/shared/typescript/contract-tests/tests/caching-twin.parity.test.ts` + `fixtures/caching-twin/constants.json` + `CachingTwinFixtureEmitter.cs`
-- Tip commits: `99724826`, `b49f6b3d`, `0010d5aa`, `7b04bd70`, `04edf08d`, `32b6903b`, `ed872ded`, `3ef66497`, `aee86e90`
+- Tip commits: `99724826`, `b49f6b3d`, `0010d5aa`, `7b04bd70`, `04edf08d`, `32b6903b`, `ed872ded`, `3ef66497`, `aee86e90`, `bec8508d` (docs tip); residual post-ship Fixer WT uncommitted pending user commit

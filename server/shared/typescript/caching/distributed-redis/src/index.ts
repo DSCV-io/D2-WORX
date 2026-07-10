@@ -8,14 +8,19 @@ export {
 } from "./redis-distributed-cache.js";
 export { RedisCacheInvalidationBackplane } from "./redis-cache-invalidation-backplane.js";
 export { JsonCacheSerializer } from "./json-cache-serializer.js";
-export { REDIS_CACHE_METER_NAME } from "./redis-cache-telemetry.js";
+export {
+  REDIS_CACHE_INSTRUMENTS,
+  REDIS_CACHE_METER_NAME,
+  REDIS_CACHE_METER_VERSION,
+  type CacheInstrumentMeta,
+} from "./redis-cache-telemetry.js";
 export {
   REDIS_CACHE_DEFAULTS,
   createRedisCacheOptions,
   type RedisCacheOptions,
 } from "./redis-cache-options.js";
 export { connectRedis } from "./connect-redis.js";
-// Public twin-pin surface for dual-runtime ContractFixtures parity (KOM-06).
+// Public twin-pin surface for dual-runtime ContractFixtures parity.
 // Not an executor surface — constants only, byte-equivalent to .NET RedisLuaScripts.
 export {
   INCREMENT_WITH_OPTIONAL_TTL,

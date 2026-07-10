@@ -407,6 +407,7 @@ describe("package index re-exports", () => {
   it("packageIndex_reexports_allPublicSurfaces", () => {
     expect(barrel.InputFailures).toBeDefined();
     expect(typeof barrel.InputFailures.required).toBe("function");
+    expect(typeof barrel.InputFailures.invalid).toBe("function");
     expect(barrel.LOCAL_CACHE_DEFAULTS).toBeDefined();
     expect(typeof barrel.createLocalCacheOptions).toBe("function");
 

@@ -494,33 +494,65 @@ describe("RedisDistributedCache unit", () => {
     expect(r.inputErrors?.[0]?.field).toBe("amount");
   });
 
-  it("increment_resultOverflowsSafeInteger_returnsValidationFailedFieldAmount", async () => {
-    const cache = makeCache(createRedisTestDouble());
+  it("increment_resultOverflowsSafeInteger_preCheckRefusesWithoutMutating", async () => {
+    const redis = createRedisTestDouble();
+    const cache = makeCache(redis);
 
     expect((await cache.increment("c", Number.MAX_SAFE_INTEGER)).data).toBe(
       Number.MAX_SAFE_INTEGER,
     );
 
+    const evalsBefore = redis.evalCallCount;
+    const getsBefore = redis.getCallCount;
     const r = await cache.increment("c", 1);
 
     expect(r.success).toBe(false);
     expect(r.errorCode).toBe(ErrorCodes.VALIDATION_FAILED);
     expect(r.statusCode).toBe(HttpStatusCode.BadRequest);
     expect(r.inputErrors?.[0]?.field).toBe("amount");
+    // Pre-INCRBY GET saw current+n unsafe → no Lua, no reverse DECRBY.
+    expect(redis.getCallCount).toBeGreaterThan(getsBefore);
+    expect(redis.evalCallCount).toBe(evalsBefore);
+    expect(redis.decrbyCalls).toEqual([]);
+    expect(await redis.get("c")).toBe(String(Number.MAX_SAFE_INTEGER));
   });
 
-  it("increment_resultUnderflowsSafeInteger_returnsValidationFailedFieldAmount", async () => {
-    const cache = makeCache(createRedisTestDouble());
+  it("increment_resultUnderflowsSafeInteger_preCheckRefusesWithoutMutating", async () => {
+    const redis = createRedisTestDouble();
+    const cache = makeCache(redis);
 
     expect((await cache.increment("c", Number.MIN_SAFE_INTEGER)).data).toBe(
       Number.MIN_SAFE_INTEGER,
     );
 
+    const evalsBefore = redis.evalCallCount;
     const r = await cache.increment("c", -1);
 
     expect(r.success).toBe(false);
     expect(r.errorCode).toBe(ErrorCodes.VALIDATION_FAILED);
     expect(r.inputErrors?.[0]?.field).toBe("amount");
+    expect(redis.evalCallCount).toBe(evalsBefore);
+    expect(redis.decrbyCalls).toEqual([]);
+    expect(await redis.get("c")).toBe(String(Number.MIN_SAFE_INTEGER));
+  });
+
+  it("increment_preCheckGetFails_fallsThrough_reverseOnOverflow", async () => {
+    const redis = createRedisTestDouble();
+    const cache = makeCache(redis);
+
+    expect((await cache.increment("c", Number.MAX_SAFE_INTEGER)).data).toBe(
+      Number.MAX_SAFE_INTEGER,
+    );
+
+    // Force pre-check skip so post-INCRBY reverse remains the second line.
+    redis.throwOnNextGet = new Error("get-blip");
+    const r = await cache.increment("c", 1);
+
+    expect(r.success).toBe(false);
+    expect(r.errorCode).toBe(ErrorCodes.VALIDATION_FAILED);
+    expect(r.inputErrors?.[0]?.field).toBe("amount");
+    expect(redis.decrbyCalls).toEqual([{ key: "c", amount: 1 }]);
+    expect(await redis.get("c")).toBe(String(Number.MAX_SAFE_INTEGER));
   });
 
   it("acquireLock_missingOrInvalidExpirationMs_returnsValidationFailed", async () => {

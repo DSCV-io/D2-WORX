@@ -21,6 +21,12 @@ function requiredImpl<T = void>(paramName: string): D2Result<T> {
   });
 }
 
+function invalidImpl<T = void>(paramName: string): D2Result<T> {
+  return validationFailed<T>({
+    inputErrors: [inputError(paramName, [TK.common.errors.VALIDATION_FAILED])],
+  });
+}
+
 export const InputFailures = {
   /**
    * Builds a `D2Result` / `D2Result<T>` input failure for a missing
@@ -30,6 +36,19 @@ export const InputFailures = {
    *   the call-site argument name).
    */
   required: requiredImpl as {
+    (paramName: string): D2Result;
+    <T>(paramName: string): D2Result<T>;
+  },
+
+  /**
+   * Builds a `D2Result` / `D2Result<T>` input failure for a present but
+   * invalid parameter value (range, non-finite, non-safe-integer, etc.).
+   * Does **not** use `NOT_NULL_VIOLATION` — the value is present.
+   *
+   * @param paramName - Parameter name (use a string literal matching
+   *   the call-site argument name).
+   */
+  invalid: invalidImpl as {
     (paramName: string): D2Result;
     <T>(paramName: string): D2Result<T>;
   },

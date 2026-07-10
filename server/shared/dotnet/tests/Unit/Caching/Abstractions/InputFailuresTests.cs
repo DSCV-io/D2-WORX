@@ -78,4 +78,28 @@ public sealed class InputFailuresTests
         generic.InputErrors[0].Field.Should().Be(paramName);
         nonGeneric.InputErrors[0].Field.Should().Be(paramName);
     }
+
+    [Fact]
+    public void InvalidGeneric_ReturnsValidationFailedWithValidationFailedTk()
+    {
+        var result = InputFailures.Invalid<long>("amount");
+
+        result.Success.Should().BeFalse();
+        result.IsValidationFailed.Should().BeTrue();
+        result.InputErrors.Should().HaveCount(1);
+        result.InputErrors[0].Field.Should().Be("amount");
+        result.InputErrors[0].Errors.Should().Equal(TK.Common.Errors.VALIDATION_FAILED);
+    }
+
+    [Fact]
+    public void InvalidNonGeneric_ReturnsValidationFailedWithValidationFailedTk()
+    {
+        var result = InputFailures.Invalid("expiration");
+
+        result.Success.Should().BeFalse();
+        result.IsValidationFailed.Should().BeTrue();
+        result.InputErrors.Should().HaveCount(1);
+        result.InputErrors[0].Field.Should().Be("expiration");
+        result.InputErrors[0].Errors.Should().Equal(TK.Common.Errors.VALIDATION_FAILED);
+    }
 }

@@ -456,6 +456,28 @@ public sealed class DefaultLocalCacheUnitTests
         await act.Should().ThrowAsync<ObjectDisposedException>();
     }
 
+    [Theory]
+    [InlineData("GetAsync")]
+    [InlineData("GetManyAsync")]
+    [InlineData("ExistsAsync")]
+    [InlineData("GetTtlAsync")]
+    [InlineData("SetAsync")]
+    [InlineData("SetManyAsync")]
+    [InlineData("RemoveAsync")]
+    [InlineData("RemoveManyAsync")]
+    [InlineData("SetNxAsync")]
+    [InlineData("IncrementAsync")]
+    [InlineData("AcquireLockAsync")]
+    [InlineData("ReleaseLockAsync")]
+    public async Task Dispose_EveryPublicOp_ThrowsObjectDisposedException(string opName)
+    {
+        using var cache = NewCache();
+        cache.Dispose();
+
+        var act = async () => await InvokePublicOpAsync(cache, opName);
+        await act.Should().ThrowAsync<ObjectDisposedException>(because: opName);
+    }
+
     [Fact]
     public void Ctor_NullOptionsThrows()
     {
@@ -469,5 +491,50 @@ public sealed class DefaultLocalCacheUnitTests
         var opts = new LocalCacheOptions();
         configure?.Invoke(opts);
         return new DefaultLocalCache(Options.Create(opts), clock);
+    }
+
+    private static async Task InvokePublicOpAsync(DefaultLocalCache cache, string opName)
+    {
+        switch (opName)
+        {
+            case "GetAsync":
+                await cache.GetAsync<int>("k");
+                break;
+            case "GetManyAsync":
+                await cache.GetManyAsync<int>(["k"]);
+                break;
+            case "ExistsAsync":
+                await cache.ExistsAsync("k");
+                break;
+            case "GetTtlAsync":
+                await cache.GetTtlAsync("k");
+                break;
+            case "SetAsync":
+                await cache.SetAsync("k", 1);
+                break;
+            case "SetManyAsync":
+                await cache.SetManyAsync(new Dictionary<string, int> { ["k"] = 1 });
+                break;
+            case "RemoveAsync":
+                await cache.RemoveAsync("k");
+                break;
+            case "RemoveManyAsync":
+                await cache.RemoveManyAsync(["k"]);
+                break;
+            case "SetNxAsync":
+                await cache.SetNxAsync("k", 1);
+                break;
+            case "IncrementAsync":
+                await cache.IncrementAsync("k");
+                break;
+            case "AcquireLockAsync":
+                await cache.AcquireLockAsync("k", "lock-1", TimeSpan.FromSeconds(1));
+                break;
+            case "ReleaseLockAsync":
+                await cache.ReleaseLockAsync("k", "lock-1");
+                break;
+            default:
+                throw new ArgumentOutOfRangeException(nameof(opName), opName, null);
+        }
     }
 }

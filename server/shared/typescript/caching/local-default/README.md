@@ -61,7 +61,9 @@ Construct once at the composition root and share the instance
 
 - **`DefaultLocalCache`** — implements `ILocalCache` (`ICacheBasic` +
   `ICacheAtomic`) and `Disposable`.
-- **`LOCAL_CACHE_METER_NAME`** — OpenTelemetry meter name constant.
+- **`LOCAL_CACHE_METER_NAME`**, **`LOCAL_CACHE_METER_VERSION`**,
+  **`LOCAL_CACHE_INSTRUMENTS`** — OpenTelemetry meter identity + instrument
+  metadata SoT (used by counters and dual-runtime parity).
 
 **Basic:** `get`, `getMany`, `exists`, `getTtl`, `set`, `setMany`, `remove`,
 `removeMany` (each accepts optional trailing `signal?: AbortSignal`; durations

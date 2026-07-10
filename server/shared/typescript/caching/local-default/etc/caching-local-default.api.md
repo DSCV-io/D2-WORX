@@ -9,6 +9,16 @@ import { ILocalCache } from '@d2/caching-abstractions';
 import { LocalCacheOptions } from '@d2/caching-abstractions';
 
 // @public
+export interface CacheInstrumentMeta {
+    // (undocumented)
+    readonly description: string;
+    // (undocumented)
+    readonly name: string;
+    // (undocumented)
+    readonly unit: string;
+}
+
+// @public
 export class DefaultLocalCache implements ILocalCache, Disposable {
     [Symbol.dispose](): void;
     constructor(options?: Partial<LocalCacheOptions>, clock?: () => number);
@@ -40,7 +50,13 @@ export class DefaultLocalCache implements ILocalCache, Disposable {
 }
 
 // @public
+export const LOCAL_CACHE_INSTRUMENTS: readonly CacheInstrumentMeta[];
+
+// @public
 export const LOCAL_CACHE_METER_NAME = "D2.Shared.Caching.Local";
+
+// @public
+export const LOCAL_CACHE_METER_VERSION = "1.0.0";
 
 // (No @packageDocumentation comment for this package)
 

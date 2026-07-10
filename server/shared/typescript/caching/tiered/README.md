@@ -68,6 +68,7 @@ The tiered cache does not own or dispose `l1`, `l2`, or `backplane`. Disposing t
 - **`DefaultTieredCache`** — implements `ITieredCache` (`ICacheBasic` + `ICacheAtomic` + `ICacheBroadcast`) and `AsyncDisposable`.
 - **`DefaultTieredCacheDeps`** — constructor dependency bag.
 - **`BACKPLANE_NOT_REGISTERED_MESSAGE`** — pinned registration-error text thrown by `*AndBroadcast*` when no backplane was passed.
+- **`TieredCacheOp`**, **`TIERED_ERROR_CODE_UNKNOWN`**, **`TieredCacheOpName`** — public twin-pin closed-set op names + errorCode sentinel for dual-runtime ContractFixtures parity.
 
 **Basic:** `get`, `getMany`, `exists`, `getTtl`, `set`, `setMany`, `remove`, `removeMany`.
 

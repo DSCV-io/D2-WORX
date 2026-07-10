@@ -3,7 +3,8 @@
 // -----------------------------------------------------------------------
 
 // Byte-equivalent Lua bodies to .NET RedisLuaScripts.cs (INCREMENT /
-// RELEASE_LOCK / SET_ADD). Internal only - not a public executor surface.
+// RELEASE_LOCK / SET_ADD). Public twin-pin constants for ContractFixtures
+// parity (barrel re-export); not an executor API.
 
 /** Atomic INCRBY + optional PEXPIRE when PTTL < 0 and ARGV[2] != '0'. */
 export const INCREMENT_WITH_OPTIONAL_TTL = `

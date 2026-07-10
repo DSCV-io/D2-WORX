@@ -213,12 +213,14 @@ describe("DefaultLocalCache construction", () => {
     }
   });
 
-  it("packageIndex_exportsExactlyDefaultLocalCacheAndMeterName", () => {
+  it("packageIndex_exportsExactlyDefaultLocalCacheAndMeterSurface", () => {
     expect(barrel.DefaultLocalCache).toBe(DefaultLocalCache);
     expect(barrel.LOCAL_CACHE_METER_NAME).toBe(LOCAL_CACHE_METER_NAME);
     expect(Object.keys(barrel).sort()).toEqual([
       "DefaultLocalCache",
+      "LOCAL_CACHE_INSTRUMENTS",
       "LOCAL_CACHE_METER_NAME",
+      "LOCAL_CACHE_METER_VERSION",
     ]);
   });
 });

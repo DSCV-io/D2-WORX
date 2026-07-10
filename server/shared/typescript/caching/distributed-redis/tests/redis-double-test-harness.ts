@@ -55,7 +55,22 @@ export class RedisTestDouble {
   readonly published: Array<{ channel: string; message: string }> = [];
   readonly quitCalls: string[] = [];
   readonly children: RedisTestDouble[] = [];
+  /**
+   * Sticky redis-down fault: every command throws this until cleared.
+   * Sticky (not one-shot) so multi-command ops (e.g. increment GET+eval)
+   * keep failing after a best-effort pre-check swallows the first throw.
+   */
   throwOnNext?: Error;
+  /**
+   * When set, the next `get` throws this error once (then clears). Used to
+   * force the increment pre-check skip so the post-INCRBY reverse path runs.
+   * Does not set sticky `throwOnNext` — eval/decrby still run.
+   */
+  throwOnNextGet?: Error;
+  /** Count of `get` invocations (pre-INCRBY safe-int check coverage). */
+  getCallCount = 0;
+  /** Count of `eval` invocations (assert pre-check refuses without Lua). */
+  evalCallCount = 0;
   /**
    * When set on the command double, every `duplicate()` child awaits this
    * before completing `subscribe` (unit tests for pre-ready message drop).
@@ -94,6 +109,14 @@ export class RedisTestDouble {
   }
 
   async get(key: string): Promise<string | null> {
+    this.getCallCount++;
+
+    if (this.throwOnNextGet !== undefined) {
+      const err = this.throwOnNextGet;
+      this.throwOnNextGet = undefined;
+      throw err;
+    }
+
     this.maybeThrow();
     const entry = this.liveString(key);
 
@@ -160,6 +183,42 @@ export class RedisTestDouble {
     }
 
     return n;
+  }
+
+  /**
+   * DECRBY used by overflow reverse path after INCRBY leaves a non-safe
+   * integer. Tracks calls for unit assertions.
+   */
+  readonly decrbyCalls: Array<{ key: string; amount: number }> = [];
+
+  async decrby(key: string, amount: number | string): Promise<number> {
+    this.maybeThrow();
+    const delta = Number(amount);
+
+    this.decrbyCalls.push({ key, amount: delta });
+
+    let entry = this.live(key);
+
+    if (entry !== undefined && entry.kind !== "string") {
+      throw wrongType();
+    }
+
+    if (entry === undefined) {
+      const next = -delta;
+      entry = { value: String(next), kind: "string" };
+      this.store.set(key, entry);
+
+      return next;
+    }
+
+    if (!/^-?\d+$/.test(entry.value)) {
+      throw notInteger();
+    }
+
+    const next = Number(entry.value) - delta;
+    entry.value = String(next);
+
+    return next;
   }
 
   async exists(key: string): Promise<number> {
@@ -256,6 +315,7 @@ export class RedisTestDouble {
     ...args: Array<string | number>
   ): Promise<number> {
     this.maybeThrow();
+    this.evalCallCount++;
     void numKeys;
     const key = String(args[0]);
     const argv1 = String(args[1]);
@@ -420,9 +480,8 @@ export class RedisTestDouble {
 
   private maybeThrow(): void {
     if (this.throwOnNext !== undefined) {
-      const err = this.throwOnNext;
-      this.throwOnNext = undefined;
-      throw err;
+      // Sticky: do not clear — models connection-down for multi-command ops.
+      throw this.throwOnNext;
     }
   }
 }

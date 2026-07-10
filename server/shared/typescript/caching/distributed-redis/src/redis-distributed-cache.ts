@@ -490,27 +490,55 @@ export class RedisDistributedCache implements IDistributedCache {
     }
 
     if (amount !== undefined && !Number.isSafeInteger(amount)) {
-      return InputFailures.required<number>("amount");
+      return InputFailures.invalid<number>("amount");
     }
 
     const n = amount ?? 1;
     const ttlMs = expirationMs !== undefined ? String(expirationMs) : "0";
+    const prefixed = this.prefixed(key);
 
     try {
+      // Pre-INCRBY best-effort GET: refuse without mutating when the known
+      // integer current + n is already outside JS safe-integer range.
+      // Does not change Lua (byte-equal .NET twin). Residual concurrent race:
+      // writers between GET and INCRBY (or between INCRBY and reverse DECRBY)
+      // can still leave a non-pre-increment value — not fully eliminable
+      // without a Lua bounds script that would break dual-runtime twin pins.
+      try {
+        const existing = await this.redis.get(prefixed);
+
+        if (existing !== null && /^-?\d+$/.test(existing)) {
+          const current = Number(existing);
+
+          if (!Number.isSafeInteger(current + n)) {
+            return InputFailures.invalid<number>("amount");
+          }
+        }
+      } catch {
+        // Best-effort pre-check only; fall through to INCRBY.
+      }
+
       const result = await this.redis.eval(
         INCREMENT_WITH_OPTIONAL_TTL,
         1,
-        this.prefixed(key),
+        prefixed,
         String(n),
         ttlMs,
       );
 
       const next = Number(result);
 
-      // Redis INCRBY can exceed JS safe-integer range; Number(result) would
-      // lose precision. Refuse the unrepresentable result (field `amount`).
+      // Second line: Redis INCRBY can still exceed JS safe-integer range
+      // (pre-check skipped/raced). Number(result) would lose precision.
+      // Reverse the applied INCRBY best-effort, then refuse.
       if (!Number.isSafeInteger(next)) {
-        return InputFailures.required<number>("amount");
+        try {
+          await this.redis.decrby(prefixed, n);
+        } catch {
+          // Best-effort reverse; still return validation failed.
+        }
+
+        return InputFailures.invalid<number>("amount");
       }
 
       return ok(next);
@@ -543,7 +571,7 @@ export class RedisDistributedCache implements IDistributedCache {
     }
 
     if (!Number.isFinite(expirationMs) || expirationMs <= 0) {
-      return InputFailures.required<boolean>("expirationMs");
+      return InputFailures.invalid<boolean>("expirationMs");
     }
 
     try {
@@ -926,7 +954,7 @@ function validateOptionalExpirationMs(
   }
 
   if (!Number.isFinite(expirationMs) || expirationMs <= 0) {
-    return InputFailures.required("expirationMs");
+    return InputFailures.invalid("expirationMs");
   }
 
   return undefined;

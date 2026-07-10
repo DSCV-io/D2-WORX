@@ -19,6 +19,8 @@ function newCache(
 function expectValidationFailed(
   result: D2Result<unknown>,
   field: string,
+  errorTk: typeof TK.common.errors.NOT_NULL_VIOLATION = TK.common.errors
+    .NOT_NULL_VIOLATION,
 ): void {
   expect(result.success).toBe(false);
   expect(result.errorCode).toBe(ErrorCodes.VALIDATION_FAILED);
@@ -26,9 +28,11 @@ function expectValidationFailed(
   expect(result.statusCode).toBe(400);
   expect(result.inputErrors).toHaveLength(1);
   expect(result.inputErrors[0]?.field).toBe(field);
-  expect(result.inputErrors[0]?.errors).toEqual([
-    TK.common.errors.NOT_NULL_VIOLATION,
-  ]);
+  expect(result.inputErrors[0]?.errors).toEqual([errorTk]);
+}
+
+function expectInvalidField(result: D2Result<unknown>, field: string): void {
+  expectValidationFailed(result, field, TK.common.errors.VALIDATION_FAILED);
 }
 
 describe("DefaultLocalCache unit matrix", () => {
@@ -414,7 +418,7 @@ describe("DefaultLocalCache unit matrix", () => {
     const cache = newCache();
     const result = await cache.set("k", 1, 0);
 
-    expectValidationFailed(result, "expirationMs");
+    expectInvalidField(result, "expirationMs");
     cache.dispose();
   });
 
@@ -422,7 +426,7 @@ describe("DefaultLocalCache unit matrix", () => {
     const cache = newCache();
     const result = await cache.set("k", 1, -1);
 
-    expectValidationFailed(result, "expirationMs");
+    expectInvalidField(result, "expirationMs");
     cache.dispose();
   });
 
@@ -430,7 +434,7 @@ describe("DefaultLocalCache unit matrix", () => {
     const cache = newCache();
     const result = await cache.set("k", 1, Number.NaN);
 
-    expectValidationFailed(result, "expirationMs");
+    expectInvalidField(result, "expirationMs");
     cache.dispose();
   });
 
@@ -438,7 +442,7 @@ describe("DefaultLocalCache unit matrix", () => {
     const cache = newCache();
     const result = await cache.set("k", 1, Number.POSITIVE_INFINITY);
 
-    expectValidationFailed(result, "expirationMs");
+    expectInvalidField(result, "expirationMs");
     cache.dispose();
   });
 
@@ -599,7 +603,7 @@ describe("DefaultLocalCache unit matrix", () => {
     const cache = newCache();
     const result = await cache.setMany(new Map([["k", 1]]), 0);
 
-    expectValidationFailed(result, "expirationMs");
+    expectInvalidField(result, "expirationMs");
     cache.dispose();
   });
 
@@ -607,7 +611,7 @@ describe("DefaultLocalCache unit matrix", () => {
     const cache = newCache();
     const result = await cache.setMany(new Map([["", 1]]), 0);
 
-    expectValidationFailed(result, "expirationMs");
+    expectInvalidField(result, "expirationMs");
     cache.dispose();
   });
 
@@ -753,7 +757,7 @@ describe("DefaultLocalCache unit matrix", () => {
       const cache = newCache();
       const result = await cache.setNx("k", 1, ms);
 
-      expectValidationFailed(result, "expirationMs");
+      expectInvalidField(result, "expirationMs");
       cache.dispose();
     },
   );
@@ -820,7 +824,7 @@ describe("DefaultLocalCache unit matrix", () => {
     const cache = newCache();
     const result = await cache.increment("k", 1, 0);
 
-    expectValidationFailed(result, "expirationMs");
+    expectInvalidField(result, "expirationMs");
     cache.dispose();
   });
 
@@ -830,7 +834,7 @@ describe("DefaultLocalCache unit matrix", () => {
       const cache = newCache();
       const result = await cache.increment("k", amount);
 
-      expectValidationFailed(result, "amount");
+      expectInvalidField(result, "amount");
       cache.dispose();
     },
   );
@@ -839,7 +843,7 @@ describe("DefaultLocalCache unit matrix", () => {
     const cache = newCache();
     const result = await cache.increment("k", 0.5);
 
-    expectValidationFailed(result, "amount");
+    expectInvalidField(result, "amount");
     cache.dispose();
   });
 
@@ -1010,7 +1014,7 @@ describe("DefaultLocalCache unit matrix", () => {
     await cache.set("k", Number.MAX_SAFE_INTEGER);
     const result = await cache.increment("k", 1);
 
-    expectValidationFailed(result, "amount");
+    expectInvalidField(result, "amount");
     // Store must be unchanged (refuse before write).
     const get = await cache.get<number>("k");
 
@@ -1024,7 +1028,7 @@ describe("DefaultLocalCache unit matrix", () => {
     await cache.set("k", Number.MIN_SAFE_INTEGER);
     const result = await cache.increment("k", -1);
 
-    expectValidationFailed(result, "amount");
+    expectInvalidField(result, "amount");
     const get = await cache.get<number>("k");
 
     expect(get.data).toBe(Number.MIN_SAFE_INTEGER);
@@ -1057,7 +1061,7 @@ describe("DefaultLocalCache unit matrix", () => {
       const cache = newCache();
       const result = await cache.acquireLock("k", "id", ms);
 
-      expectValidationFailed(result, "expirationMs");
+      expectInvalidField(result, "expirationMs");
       cache.dispose();
     },
   );
@@ -1068,7 +1072,7 @@ describe("DefaultLocalCache unit matrix", () => {
       const cache = newCache();
       const result = await cache.acquireLock("k", "id", ms);
 
-      expectValidationFailed(result, "expirationMs");
+      expectInvalidField(result, "expirationMs");
       cache.dispose();
     },
   );

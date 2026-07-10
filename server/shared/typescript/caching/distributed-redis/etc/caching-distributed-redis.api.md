@@ -12,6 +12,16 @@ import type { ILogger } from '@d2/logging';
 import Redis from 'ioredis';
 
 // @public
+export interface CacheInstrumentMeta {
+    // (undocumented)
+    readonly description: string;
+    // (undocumented)
+    readonly name: string;
+    // (undocumented)
+    readonly unit: string;
+}
+
+// @public
 export function connectRedis(options: RedisCacheOptions): Redis;
 
 // @public
@@ -31,7 +41,13 @@ export class JsonCacheSerializer implements ICacheSerializer {
 export const REDIS_CACHE_DEFAULTS: Readonly<RedisCacheOptions>;
 
 // @public
+export const REDIS_CACHE_INSTRUMENTS: readonly CacheInstrumentMeta[];
+
+// @public
 export const REDIS_CACHE_METER_NAME = "D2.Shared.Caching.Distributed.Redis";
+
+// @public
+export const REDIS_CACHE_METER_VERSION = "1.0.0";
 
 // @public
 export class RedisCacheInvalidationBackplane implements ICacheInvalidationBackplane {

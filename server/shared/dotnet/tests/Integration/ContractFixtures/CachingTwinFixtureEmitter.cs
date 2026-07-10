@@ -14,7 +14,7 @@ using D2.Shared.Caching.Local.Default;
 using Xunit;
 
 /// <summary>
-/// Emits the dual-runtime caching-twin parity fixture (KOM-01..08).
+/// Emits the dual-runtime caching-twin parity fixture (constants/semantics catalog).
 /// One scenario (<c>constants</c>) pins local defaults, local meter + instruments,
 /// Redis defaults, Redis meter + instruments, Lua script bodies (normalized),
 /// and tiered semantic markers (registration message prefix, EventIds, log levels,
@@ -26,8 +26,11 @@ using Xunit;
 /// <para>
 /// Lua bodies are normalized with <see cref="NormalizeLua"/> (CRLF→LF + trim)
 /// so they match the TS <c>.trim()</c> script constants. Instrument tuples are
-/// hard-coded from <see cref="LocalCacheTelemetry"/> / <see cref="RedisCacheTelemetry"/>
-/// source (Counter&lt;T&gt; name/unit/description are not reflectable).
+/// hard-coded to match TS <c>LOCAL_CACHE_INSTRUMENTS</c> /
+/// <c>REDIS_CACHE_INSTRUMENTS</c> and .NET <see cref="LocalCacheTelemetry"/> /
+/// <see cref="RedisCacheTelemetry"/> Counter registrations (name/unit/description
+/// are not reflectable from Counter&lt;T&gt;). When changing either runtime meter,
+/// update this emitter + both telemetry files in lockstep.
 /// </para>
 /// <para>
 /// Tiered log message templates intentionally diverge across runtimes — the fixture

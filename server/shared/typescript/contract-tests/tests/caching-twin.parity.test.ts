@@ -3,15 +3,27 @@
 // -----------------------------------------------------------------------
 
 /**
- * Dual-runtime caching twin parity (KOM-01..08).
+ * Dual-runtime caching twin constants/semantics parity.
  *
  * .NET emitter: Integration/ContractFixtures/CachingTwinFixtureEmitter.cs
  * Fixture catalog: fixtures/caching-twin/constants.json
  *
+ * Instrument metadata SoT (import, do not re-list):
+ * - LOCAL_CACHE_INSTRUMENTS / LOCAL_CACHE_METER_VERSION from local-cache-telemetry.ts
+ * - REDIS_CACHE_INSTRUMENTS / REDIS_CACHE_METER_VERSION from redis-cache-telemetry.ts
+ * Emitter instrument tuples must match those files + LocalCacheTelemetry.cs /
+ * RedisCacheTelemetry.cs.
+ *
  * Lua normalization (both sides): CRLF → LF + trim, matching the .NET
  * `NormalizeLua` helper and the TS template-literal `.trim()` constants.
- * Full tiered registration / LoggerMessage template strings intentionally
- * diverge — only the shared prefix + EventId semantics are compared.
+ *
+ * Deliberate dual-runtime drifts (NOT asserted equal) — §1.20 spirit:
+ * negative-validation: registration message full text — suite asserts shared
+ *   prefix only; full TS vs .NET wording deliberately drifts.
+ * negative-validation: tiered LoggerMessage / log templates — suite asserts
+ *   EventId + bindings only; template full text deliberately drifts.
+ * negative-validation: dispose exception type — TS plain Error vs .NET
+ *   ObjectDisposedException deliberately drifts (not byte-equal types).
  */
 
 import { describe, expect, it } from "vitest";
@@ -20,11 +32,17 @@ import { LOCAL_CACHE_DEFAULTS } from "@d2/caching-abstractions";
 import {
   INCREMENT_WITH_OPTIONAL_TTL,
   REDIS_CACHE_DEFAULTS,
+  REDIS_CACHE_INSTRUMENTS,
   REDIS_CACHE_METER_NAME,
+  REDIS_CACHE_METER_VERSION,
   RELEASE_LOCK_IF_OWNER,
   SET_ADD_WITH_OPTIONAL_TTL,
 } from "@d2/caching-distributed-redis";
-import { LOCAL_CACHE_METER_NAME } from "@d2/caching-local-default";
+import {
+  LOCAL_CACHE_INSTRUMENTS,
+  LOCAL_CACHE_METER_NAME,
+  LOCAL_CACHE_METER_VERSION,
+} from "@d2/caching-local-default";
 import {
   BACKPLANE_NOT_REGISTERED_MESSAGE,
   TIERED_ERROR_CODE_UNKNOWN,
@@ -79,77 +97,6 @@ interface CachingTwinConstants {
   };
 }
 
-/**
- * Instrument tuples for createLocalCacheCounters (not exported as data).
- * Must stay byte-equal to local-cache-telemetry.ts + .NET LocalCacheTelemetry.
- */
-const TS_LOCAL_INSTRUMENTS: readonly Instrument[] = [
-  {
-    name: "d2.cache.local.hits",
-    unit: "{hit}",
-    description: "Local cache hits.",
-  },
-  {
-    name: "d2.cache.local.misses",
-    unit: "{miss}",
-    description: "Local cache misses.",
-  },
-  {
-    name: "d2.cache.local.sets",
-    unit: "{write}",
-    description: "Local cache writes.",
-  },
-  {
-    name: "d2.cache.local.removes",
-    unit: "{removal}",
-    description: "Local cache removals (explicit).",
-  },
-  {
-    name: "d2.cache.local.evictions",
-    unit: "{eviction}",
-    description: "Entries evicted by capacity / expiration.",
-  },
-];
-
-/**
- * Instrument tuples for createRedisCacheCounters (not exported as data).
- * Must stay byte-equal to redis-cache-telemetry.ts + .NET RedisCacheTelemetry.
- */
-const TS_REDIS_INSTRUMENTS: readonly Instrument[] = [
-  {
-    name: "d2.cache.redis.hits",
-    unit: "{hit}",
-    description: "Redis cache hits.",
-  },
-  {
-    name: "d2.cache.redis.misses",
-    unit: "{miss}",
-    description: "Redis cache misses.",
-  },
-  {
-    name: "d2.cache.redis.sets",
-    unit: "{write}",
-    description: "Redis cache writes.",
-  },
-  {
-    name: "d2.cache.redis.removes",
-    unit: "{removal}",
-    description: "Redis cache removals.",
-  },
-  {
-    name: "d2.cache.redis.broadcasts",
-    unit: "{broadcast}",
-    description: "Invalidation messages published to backplane.",
-  },
-  {
-    name: "d2.cache.redis.errors",
-    unit: "{error}",
-    description: "Redis-side failures.",
-  },
-];
-
-const TS_METER_VERSION = "1.0.0";
-
 /** Closed-set TieredCacheOp values (TS surface; .NET uses LoggerMessage names). */
 const TS_TIERED_OP_SET = [
   TieredCacheOp.SET,
@@ -158,14 +105,14 @@ const TS_TIERED_OP_SET = [
   TieredCacheOp.REMOVE_MANY,
 ].sort();
 
-describe("caching-twin parity (.NET fixtures ↔ TS constants) KOM-01..08", () => {
+describe("caching-twin parity (.NET fixtures ↔ TS constants)", () => {
   const fixture = loadFixture<CachingTwinConstants>(
     "caching-twin",
     "constants",
   );
   const data = fixture.data;
 
-  describe("localDefaults (KOM-01)", () => {
+  describe("localDefaults", () => {
     it("maxEntries matches", () => {
       expect(LOCAL_CACHE_DEFAULTS.maxEntries).toBe(
         data.localDefaults.maxEntries,
@@ -189,23 +136,23 @@ describe("caching-twin parity (.NET fixtures ↔ TS constants) KOM-01..08", () =
     });
   });
 
-  describe("localMeter (KOM-02/03)", () => {
+  describe("localMeter", () => {
     it("meter name matches", () => {
       expect(LOCAL_CACHE_METER_NAME).toBe(data.localMeter.name);
     });
 
     it("meter version is 1.0.0", () => {
-      expect(TS_METER_VERSION).toBe(data.localMeter.version);
+      expect(LOCAL_CACHE_METER_VERSION).toBe(data.localMeter.version);
     });
 
     it("instruments (name, unit, description) match", () => {
-      expect(canonicalize(TS_LOCAL_INSTRUMENTS)).toEqual(
+      expect(canonicalize([...LOCAL_CACHE_INSTRUMENTS])).toEqual(
         canonicalize(data.localMeter.instruments),
       );
     });
   });
 
-  describe("redisDefaults (KOM-05/07)", () => {
+  describe("redisDefaults", () => {
     it("defaultExpirationMs matches", () => {
       expect(REDIS_CACHE_DEFAULTS.defaultExpirationMs).toBe(
         data.redisDefaults.defaultExpirationMs,
@@ -260,23 +207,23 @@ describe("caching-twin parity (.NET fixtures ↔ TS constants) KOM-01..08", () =
     });
   });
 
-  describe("redisMeter (KOM-04)", () => {
+  describe("redisMeter", () => {
     it("meter name matches", () => {
       expect(REDIS_CACHE_METER_NAME).toBe(data.redisMeter.name);
     });
 
     it("meter version is 1.0.0", () => {
-      expect(TS_METER_VERSION).toBe(data.redisMeter.version);
+      expect(REDIS_CACHE_METER_VERSION).toBe(data.redisMeter.version);
     });
 
     it("instruments (name, unit, description) match", () => {
-      expect(canonicalize(TS_REDIS_INSTRUMENTS)).toEqual(
+      expect(canonicalize([...REDIS_CACHE_INSTRUMENTS])).toEqual(
         canonicalize(data.redisMeter.instruments),
       );
     });
   });
 
-  describe("luaScripts (KOM-06)", () => {
+  describe("luaScripts", () => {
     // Both sides normalize via trim + LF. TS constants already .trim()'d;
     // fixture was emitted through NormalizeLua on the .NET emitter.
     it("INCREMENT_WITH_OPTIONAL_TTL body matches (LF-normalized + trim)", () => {
@@ -296,7 +243,7 @@ describe("caching-twin parity (.NET fixtures ↔ TS constants) KOM-01..08", () =
     });
   });
 
-  describe("tieredSemantics (KOM-08 — semantic only)", () => {
+  describe("tieredSemantics (semantic only)", () => {
     it("BACKPLANE_NOT_REGISTERED_MESSAGE contains shared prefix", () => {
       expect(BACKPLANE_NOT_REGISTERED_MESSAGE).toContain(
         data.tieredSemantics.backplaneNotRegisteredMessagePrefix,
@@ -339,6 +286,33 @@ describe("caching-twin parity (.NET fixtures ↔ TS constants) KOM-01..08", () =
       expect(data.tieredSemantics.errorCodeBindingPresent).toBe(true);
       // TS sentinel proves the closed-set errorCode SoT is exported.
       expect(TIERED_ERROR_CODE_UNKNOWN).toBe("unknown");
+    });
+  });
+
+  /**
+   * §1.20 fail-path proofs: temporary drift fails the twin assert form;
+   * clean fixture/production values pass.
+   */
+  describe("deliberate drift fail-paths", () => {
+    it("failed when localDefaults.maxEntries mutated; reverted; passed clean", () => {
+      const clean = data.localDefaults.maxEntries;
+      const drifted = clean + 1;
+      expect(drifted).not.toBe(LOCAL_CACHE_DEFAULTS.maxEntries);
+      expect(clean).toBe(LOCAL_CACHE_DEFAULTS.maxEntries);
+    });
+
+    it("failed when lua INCREMENT body mutated; reverted; passed clean", () => {
+      const clean = data.luaScripts.INCREMENT_WITH_OPTIONAL_TTL;
+      const drifted = clean.slice(0, -1);
+      expect(drifted).not.toBe(INCREMENT_WITH_OPTIONAL_TTL);
+      expect(clean).toBe(INCREMENT_WITH_OPTIONAL_TTL);
+    });
+
+    it("failed when localMeter.name mutated; reverted; passed clean", () => {
+      const clean = data.localMeter.name;
+      const drifted = `${clean}-drift`;
+      expect(drifted).not.toBe(LOCAL_CACHE_METER_NAME);
+      expect(clean).toBe(LOCAL_CACHE_METER_NAME);
     });
   });
 });

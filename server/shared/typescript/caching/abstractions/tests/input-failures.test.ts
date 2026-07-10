@@ -92,3 +92,30 @@ describe("InputFailures.required", () => {
     expect(result.inputErrors[0]?.field).toBe(paramName);
   });
 });
+
+describe("InputFailures.invalid", () => {
+  it("invalid_wireShape_usesValidationFailedTkNotNotNull", () => {
+    const paramName = "amount";
+    const result = InputFailures.invalid<number>(paramName);
+
+    expect(result.success).toBe(false);
+    expect(result.errorCode).toBe(ErrorCodes.VALIDATION_FAILED);
+    expect(result.statusCode).toBe(HttpStatusCode.BadRequest);
+    expect(result.inputErrors).toHaveLength(1);
+    expect(result.inputErrors[0]?.field).toBe(paramName);
+    expect(result.inputErrors[0]?.errors).toEqual([
+      TK.common.errors.VALIDATION_FAILED,
+    ]);
+  });
+
+  it("invalid_nonGeneric_matchesGeneric_errorShape", () => {
+    const paramName = "expirationMs";
+    const generic = InputFailures.invalid<boolean>(paramName);
+    const nonGeneric = InputFailures.invalid(paramName);
+
+    expect(generic.success).toBe(nonGeneric.success);
+    expect(generic.errorCode).toBe(nonGeneric.errorCode);
+    expect(generic.statusCode).toBe(nonGeneric.statusCode);
+    expect(generic.inputErrors).toEqual(nonGeneric.inputErrors);
+  });
+});

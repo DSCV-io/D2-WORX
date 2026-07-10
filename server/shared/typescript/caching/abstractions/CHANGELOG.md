@@ -20,6 +20,7 @@ Keep a Changelog, and this package adheres to Semantic Versioning.
   interfaces (`ILocalCache`, `IDistributedCache`, `ITieredCache`), supporting
   seams (`ICacheInvalidationBackplane`, `ICacheSerializer`),
   `LocalCacheOptions` / `LOCAL_CACHE_DEFAULTS` / `createLocalCacheOptions`, and
-  `InputFailures.required`.
+  `InputFailures.required` / `InputFailures.invalid` (present-but-invalid values
+  use `VALIDATION_FAILED` field TK, not `NOT_NULL_VIOLATION`).
 
 ### Fixed

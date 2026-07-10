@@ -72,7 +72,8 @@ await backplane[Symbol.asyncDispose]();
 - `RedisDistributedCacheDeps` — constructor dependency bag type
 - `RedisCacheInvalidationBackplane` — `ready: Promise<void>`, sync port `subscribe(handler)`, publish, `AsyncDisposable`
 - `JsonCacheSerializer` — default `ICacheSerializer`
-- `REDIS_CACHE_METER_NAME`, `REDIS_CACHE_DEFAULTS`, `createRedisCacheOptions`, `RedisCacheOptions`
+- `REDIS_CACHE_METER_NAME`, `REDIS_CACHE_METER_VERSION`, `REDIS_CACHE_INSTRUMENTS`, `REDIS_CACHE_DEFAULTS`, `createRedisCacheOptions`, `RedisCacheOptions`
+- `INCREMENT_WITH_OPTIONAL_TTL`, `RELEASE_LOCK_IF_OWNER`, `SET_ADD_WITH_OPTIONAL_TTL` — public twin-pin Lua body constants (ContractFixtures parity; not an executor API)
 - `connectRedis` — builds a host-owned command client
 
 ## Result mapping
@@ -104,13 +105,19 @@ Per-call (validationFailed via `InputFailures` unless noted):
 - Falsey `key` / keys / `lockId` / set member as applicable.
 - Optional `expirationMs` when present: finite and `> 0`.
 - `increment` `amount` when present: must be a safe integer
-  (`NaN` / ±`Infinity` / `0.5` / non-safe → field `amount`).
-- `increment` after Redis `INCRBY`: `Number(result)` must be a safe integer;
-  otherwise validationFailed field `amount` (JS cannot represent counters
-  outside ±`Number.MAX_SAFE_INTEGER` exactly). Redis may already have applied
-  the write when the counter leaves that range — keep counters in safe-integer
-  bounds.
-- `acquireLock` `expirationMs`: finite and `> 0` (required).
+  (`NaN` / ±`Infinity` / `0.5` / non-safe → field `amount`, invalid not
+  NOT_NULL).
+- `increment` **pre-INCRBY** best-effort `GET`: when the existing value parses
+  as an integer and `current + amount` is outside the JS safe-integer range,
+  returns validationFailed field `amount` **without mutating** (Lua twin
+  scripts stay byte-equal to .NET — no script change).
+- `increment` **post-INCRBY** second line: `Number(result)` must be a safe
+  integer; otherwise best-effort `DECRBY` reverses the applied delta, then
+  validationFailed field `amount` (invalid). Residual concurrent races:
+  writers between GET and INCRBY, or between INCRBY and reverse, may leave a
+  non-pre-increment value (not fully eliminable without breaking Lua twin pins).
+- `acquireLock` `expirationMs`: finite and `> 0` (required param; invalid value
+  → invalid field error).
 
 ## TTL semantics
 
@@ -118,7 +125,7 @@ Default write TTL is 1 hour (`defaultExpirationMs`). Explicit `expirationMs` ove
 
 ## Atomics + Lua
 
-Three internal scripts (not a public executor): INCRBY + optional PEXPIRE, compare-and-delete lock release, SADD + optional PEXPIRE. Cluster-wide SET NX / INCR / setAdd atomicity is Redis-enforced.
+Three public twin-pin Lua script constants (not an executor API): INCRBY + optional PEXPIRE, compare-and-delete lock release, SADD + optional PEXPIRE. Bodies are byte-equivalent to .NET `RedisLuaScripts` and re-exported for dual-runtime ContractFixtures parity. Cluster-wide SET NX / INCR / setAdd atomicity is Redis-enforced.
 
 ## Backplane
 

@@ -7,6 +7,7 @@
 namespace D2.Shared.Caching.Local.Default;
 
 using System.Collections.Concurrent;
+using System.Threading;
 using D2.Shared.Caching;
 using D2.Shared.I18n;
 using D2.Shared.Result;
@@ -93,8 +94,11 @@ public sealed class DefaultLocalCache : ILocalCache, IDisposable
     private readonly ConcurrentDictionary<string, DateTimeOffset> r_expirations
         = new(StringComparer.Ordinal);
 
-    /// <summary>True after <see cref="Dispose"/> completes; all public ops throw thereafter.</summary>
-    private bool _disposed;
+    /// <summary>
+    /// 0 = live; 1 = disposed. Set before structure teardown so concurrent
+    /// ops fail closed rather than re-populating cleared maps.
+    /// </summary>
+    private int _disposed;
 
     /// <summary>Initializes a new <see cref="DefaultLocalCache"/>.</summary>
     /// <param name="options">Cache options (max entries, default TTL, key prefix).</param>
@@ -236,7 +240,7 @@ public sealed class DefaultLocalCache : ILocalCache, IDisposable
             return new(InputFailures.Required(nameof(key)));
 
         if (IsNonPositive(expiration))
-            return new(InputFailures.Required(nameof(expiration)));
+            return new(InputFailures.Invalid(nameof(expiration)));
 
         SetCore(Prefixed(key), value, expiration);
         LocalCacheTelemetry.SR_Sets.Add(1);
@@ -255,7 +259,7 @@ public sealed class DefaultLocalCache : ILocalCache, IDisposable
             return new(InputFailures.Required(nameof(entries)));
 
         if (IsNonPositive(expiration))
-            return new(InputFailures.Required(nameof(expiration)));
+            return new(InputFailures.Invalid(nameof(expiration)));
 
         foreach (var key in entries.Keys)
             if (key.Falsey()) return new(InputFailures.Required(nameof(entries)));
@@ -323,7 +327,7 @@ public sealed class DefaultLocalCache : ILocalCache, IDisposable
             return new(InputFailures.Required<bool>(nameof(key)));
 
         if (IsNonPositive(expiration))
-            return new(InputFailures.Required<bool>(nameof(expiration)));
+            return new(InputFailures.Invalid<bool>(nameof(expiration)));
 
         var prefixed = Prefixed(key);
 
@@ -350,7 +354,7 @@ public sealed class DefaultLocalCache : ILocalCache, IDisposable
             return new(InputFailures.Required<long>(nameof(key)));
 
         if (IsNonPositive(expiration))
-            return new(InputFailures.Required<long>(nameof(expiration)));
+            return new(InputFailures.Invalid<long>(nameof(expiration)));
 
         var prefixed = Prefixed(key);
 
@@ -397,7 +401,7 @@ public sealed class DefaultLocalCache : ILocalCache, IDisposable
             return new(InputFailures.Required<bool>(nameof(lockId)));
 
         if (expiration <= TimeSpan.Zero)
-            return new(InputFailures.Required<bool>(nameof(expiration)));
+            return new(InputFailures.Invalid<bool>(nameof(expiration)));
 
         var prefixed = Prefixed(key);
         var now = r_clock.GetUtcNow();
@@ -435,13 +439,14 @@ public sealed class DefaultLocalCache : ILocalCache, IDisposable
     /// <inheritdoc />
     public void Dispose()
     {
-        if (_disposed)
+        // Flag first: concurrent public ops must see disposed and throw rather
+        // than re-populate r_locks / r_expirations after Clear.
+        if (Interlocked.Exchange(ref _disposed, 1) != 0)
             return;
 
         r_cache.Dispose();
         r_locks.Clear();
         r_expirations.Clear();
-        _disposed = true;
     }
 
     private static void EvictionCallback(
@@ -470,7 +475,8 @@ public sealed class DefaultLocalCache : ILocalCache, IDisposable
     private static bool IsNonPositive(TimeSpan? expiration)
         => expiration is { } e && e <= TimeSpan.Zero;
 
-    private void ThrowIfDisposed() => ObjectDisposedException.ThrowIf(_disposed, this);
+    private void ThrowIfDisposed()
+        => ObjectDisposedException.ThrowIf(Volatile.Read(ref _disposed) != 0, this);
 
     private string Prefixed(string key)
         => r_options.KeyPrefix.Falsey() ? key : r_options.KeyPrefix + key;

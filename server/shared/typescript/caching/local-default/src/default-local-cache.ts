@@ -234,7 +234,7 @@ export class DefaultLocalCache implements ILocalCache, Disposable {
     }
 
     if (this.isBadMs(expirationMs)) {
-      return InputFailures.required("expirationMs");
+      return InputFailures.invalid("expirationMs");
     }
 
     this.setCore(this.prefixed(key), value, expirationMs);
@@ -257,7 +257,7 @@ export class DefaultLocalCache implements ILocalCache, Disposable {
     }
 
     if (this.isBadMs(expirationMs)) {
-      return InputFailures.required("expirationMs");
+      return InputFailures.invalid("expirationMs");
     }
 
     for (const key of entries.keys()) {
@@ -332,7 +332,7 @@ export class DefaultLocalCache implements ILocalCache, Disposable {
     }
 
     if (this.isBadMs(expirationMs)) {
-      return InputFailures.required<boolean>("expirationMs");
+      return InputFailures.invalid<boolean>("expirationMs");
     }
 
     const prefixed = this.prefixed(key);
@@ -363,11 +363,11 @@ export class DefaultLocalCache implements ILocalCache, Disposable {
     }
 
     if (this.isBadMs(expirationMs)) {
-      return InputFailures.required<number>("expirationMs");
+      return InputFailures.invalid<number>("expirationMs");
     }
 
     if (amount !== undefined && !Number.isSafeInteger(amount)) {
-      return InputFailures.required<number>("amount");
+      return InputFailures.invalid<number>("amount");
     }
 
     const n = amount ?? 1;
@@ -387,7 +387,7 @@ export class DefaultLocalCache implements ILocalCache, Disposable {
       // JS numbers lose integer precision outside ±MAX_SAFE_INTEGER.
       // Refuse before write so the stored counter stays exact.
       if (!Number.isSafeInteger(next)) {
-        return InputFailures.required<number>("amount");
+        return InputFailures.invalid<number>("amount");
       }
 
       // Preserve expiresAt verbatim; ignore expirationMs on existing path.
@@ -421,7 +421,7 @@ export class DefaultLocalCache implements ILocalCache, Disposable {
     }
 
     if (!Number.isFinite(expirationMs) || expirationMs <= 0) {
-      return InputFailures.required<boolean>("expirationMs");
+      return InputFailures.invalid<boolean>("expirationMs");
     }
 
     const prefixed = this.prefixed(key);

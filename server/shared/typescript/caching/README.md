@@ -29,4 +29,4 @@ Behavioral model: [ADR-0008](../../../../docs/adrs/0008-caching-marker-interface
 ## Parity proofs
 
 - **Package-local** unit suites + Redis Testcontainers ITs under each package — algorithm / behavioral pins.
-- **Dual-runtime constants/semantics** (not a full behavior interop harness): `@d2/contract-tests` `tests/caching-twin.parity.test.ts` + `fixtures/caching-twin/constants.json` (KOM-01..08 class; emitter `CachingTwinFixtureEmitter`). See [PARITY.md](../../../../docs/PARITY.md) caching stack row.
+- **Dual-runtime constants/semantics** (not a full behavior interop harness): `@d2/contract-tests` `tests/caching-twin.parity.test.ts` + `fixtures/caching-twin/constants.json` (dual-runtime constants catalog; emitter `CachingTwinFixtureEmitter`). See [PARITY.md](../../../../docs/PARITY.md) caching stack row.

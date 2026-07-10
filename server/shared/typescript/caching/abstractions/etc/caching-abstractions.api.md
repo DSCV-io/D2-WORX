@@ -73,6 +73,10 @@ export const InputFailures: {
         (paramName: string): D2Result;
         <T>(paramName: string): D2Result<T>;
     };
+    invalid: {
+        (paramName: string): D2Result;
+        <T>(paramName: string): D2Result<T>;
+    };
 };
 
 // @public
