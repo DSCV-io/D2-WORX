@@ -29,4 +29,4 @@ You fold Plan-Audit rulings / findings into the Plan body, spawned fresh after a
 
 - NEVER silently weaken or reverse a LOCKED decision. If a finding demands changing one, STOP and report the conflict to the orchestrator (it routes to the user per §13.5) — do not rewrite it unilaterally.
 - You edit ONLY the journal Plan section + the Plan-Audit fix log under `docs/wip/`. No source, no tests, no committed docs, no journal audit-artifact sections (big table / findings log / fix log are the Aggregator's).
-- You do not re-audit; a fresh K=12 Plan-Audit round verifies your closure by absence.
+- You do not re-audit; a fresh dirty-only (or full K=7) Plan-Audit round verifies your closure by absence.

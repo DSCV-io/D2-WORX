@@ -64,11 +64,11 @@ Examples: `claude-d2-implementer` vs `grok-d2-implementer` vs `codex-d2-implemen
 
 | Capability tier | Intent | Claude Code pin | Grok Build pin | Codex pin |
 | --- | --- | --- | --- | --- |
-| **Planning / judgment premium** | Orchestrator, Planner, Plan-Auditor, Plan-amender | `claude-fable-5` (Planner `max`; others `high`); **Plan-Auditor → `claude-opus-4-8` · `xhigh`** (cost ruling 2026-07-09 — Fable uneconomical at K=12 seat volume) | `grok-4.5` · `high` | `gpt-5.6-sol` (Planner `max`; Plan-Auditor `xhigh`; others `high`) |
-| **Deep workhorse** | Aggregator, Auditor-deep (C2/C3/E2), Implementer, Fixer | `claude-opus-4-8` · `high` | `grok-4.5` · `high` | `gpt-5.6-sol` · `high` |
+| **Planning / judgment premium** | Orchestrator, Planner, Plan-Auditor, Plan-amender | `claude-fable-5` (Planner `max`; others `high`); **Plan-Auditor → `claude-opus-4-8` · `xhigh`** (cost ruling 2026-07-09 — Fable uneconomical at multi-seat Plan-Audit volume; K=7 max seats) | `grok-4.5` · `high` | `gpt-5.6-sol` (Planner `max`; Plan-Auditor `xhigh`; others `high`) |
+| **Deep workhorse** | Aggregator, Auditor-deep (bundles C/D/G), Implementer, Fixer | `claude-opus-4-8` · `high` | `grok-4.5` · `high` | `gpt-5.6-sol` · `high` |
 | **Volume / tight-contract** | Mechanical Auditor, Fixer-mechanical, Investigator | `claude-sonnet-4-6` · high / medium | `grok-4.5` · `medium` | `gpt-5.6-terra` · Auditor `high`; Investigator/Fixer-mechanical `medium` |
 
-**Why Grok collapses all three tiers onto `grok-4.5`:** (1) strongest available seat for planning/deep; (2) **cost ban on `grok-composer-2.5-fast`** (user ruling 2026-07-09) — higher $/token than `grok-4.5` on this billing surface and burned ~5% of a weekly budget on a single K=12 deliverable audit wave; (3) live `grok models` lists only `grok-4.5` + `grok-composer-2.5-fast` (no non-fast Composer ID to pin). Role *fences* (mechanical vs deep auditor, Fixer-mechanical STOP) stay; product model does not differ.
+**Why Grok collapses all three tiers onto `grok-4.5`:** (1) strongest available seat for planning/deep; (2) **cost ban on `grok-composer-2.5-fast`** (user ruling 2026-07-09) — higher $/token than `grok-4.5` on this billing surface and burned ~5% of a weekly budget on a single large multi-seat deliverable audit wave (historical always-12; today's max is K=7); (3) live `grok models` lists only `grok-4.5` + `grok-composer-2.5-fast` (no non-fast Composer ID to pin). Role *fences* (mechanical vs deep auditor, Fixer-mechanical STOP) stay; product model does not differ.
 
 **Do not dispatch `grok-composer-2.5-fast`** for any D2-WORX role until the user re-approves a volume seat after pricing changes.
 
@@ -100,7 +100,7 @@ Examples: `claude-d2-implementer` vs `grok-d2-implementer` vs `codex-d2-implemen
 1. **Pin file:** `.codex/agents/codex-d2-<role>.toml` (documents **intended** model/effort per role; authoritative **only when the host applies the pin**).
 2. **Spawn:** prefer host support for real `agent_type: codex-d2-<role>` selection when available; do not use a Claude/Grok prefix.
 3. **Project config:** `.codex/config.toml` pins orchestrator defaults, aspirational agent thread caps, the `AGENTS.md` read ceiling, codebase-memory MCP, PreToolUse hooks, and MCP tool approval:
-   - `max_threads = 13` — **aspiration** for K=12 + orchestrator; host may cap concurrent slots far lower (observed ~4) — see known limits.
+   - `max_threads = 8` — **aspiration** for K+1 with K≤7 (full K=7 Auditors + orchestrator); host may cap concurrent slots far lower (observed ~4) — see known limits.
    - `default_tools_approval_mode = "writes"` — MCP tools that **write** still require approval; read-only MCP tools are not auto-approved for free-form mutation. This is an operator footgun surface: it does **not** replace repository policy hooks or user permission gates.
    - `project_doc_max_bytes` — ceiling for project instruction injection (keep large `AGENTS.md` loadable).
 4. **Override:** §13.14 or the Sweeping carve-out only.
@@ -108,7 +108,7 @@ Examples: `claude-d2-implementer` vs `grok-d2-implementer` vs `codex-d2-implemen
 6. **After pin/config changes:** restart Codex before relying on discovery; a running thread does not retroactively reload project config.
 7. **Hooks / deny map:** PreToolUse → `.codex/hooks/d2-policy-guard.mjs` (same `.claude/.commit-authorized` marker as Claude/Grok `git-guard`; blocks commit/destructive git without marker; blocks deny-ruled secret paths on matched tools). SessionStart compact → `post-compact-context.mjs`. Matcher covers Bash / apply_patch / Edit / Write / Read-class names used by the host; **residual:** pure MCP filesystem reads outside the matcher are behavioral-only (Claude settings deny still covers Claude/Grok Read).
 
-**Known host limits (eval 2026-07-09 — re-verify after product updates):** some Codex builds treat `spawn_agent(task_name=…)` as a **label only** (child inherits the parent model/effort; TOML pins are not applied). Concurrent agent slots may also be far below a configured `max_threads` aspiration (observed ~4, not 13). Until native per-role model selection is proven, **do not use Codex for formal §24.0i-pinned D2 audit/impl waves** — keep formal work on a host that honors pins (Claude Code or Grok Build), or build an explicit `codex exec` dispatcher that sets model/effort per role (separate harness deliverable). Codex inventory remains valid for config/hooks/smoke eval.
+**Known host limits (eval 2026-07-09 — re-verify after product updates):** some Codex builds treat `spawn_agent(task_name=…)` as a **label only** (child inherits the parent model/effort; TOML pins are not applied). Concurrent agent slots may also be far below a configured `max_threads` aspiration (observed ~4, not 8). Until native per-role model selection is proven, **do not use Codex for formal §24.0i-pinned D2 audit/impl waves** — keep formal work on a host that honors pins (Claude Code or Grok Build), or build an explicit `codex exec` dispatcher that sets model/effort per role (separate harness deliverable). Codex inventory remains valid for config/hooks/smoke eval.
 
 ---
 

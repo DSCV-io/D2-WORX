@@ -98,7 +98,7 @@ Phase 3 is too large for one deliverable. It is carved into a dependency-ordered
 | **E4** | **Real-time: SSE push + POST-up + backend push API** | SSE endpoint (down-channel) + POST-up, connection registry, Redis pub/sub fan-out, gRPC push API (`PushToChannel` / `RemoveFromChannel` equiv), `user:` / `org:` targeting, 10-conn/user cap, `session.revoked` push, cookie auth. | M–L | ☐ Pending |
 | **E5** | **Keyring distribution + scheduled-jobs receiver** | `D2.Edge.KeyCustodian.Client` (consumer-side: `IKeyringClient` / gRPC, rotation event channel, `KeyringBackedPayloadCrypto`), Edge `internal/keys/{domain}` gRPC, `IHostedService` cron receiver (key-rotation checks). | M | ☐ Pending |
 
-**Plus:** a Phase 3 final integration review (full K=12 audit cluster, both build gates, deliverable completeness checklist) once the tracks converge.
+**Plus:** a Phase 3 final integration review (full K=7 concern-bundle audit, both build gates, deliverable completeness checklist) once the tracks converge.
 
 ---
 
