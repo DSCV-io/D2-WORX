@@ -6,6 +6,8 @@ Copyright (c) DCSV. All rights reserved.
 
 **Shared law, split runtime.** Process, predicates, journals, and skill *behavior* are one system. Model pins, agent definition paths, and **spawn names** differ per AI harness. This doc maps Claude Code · Grok Build · Codex so they do not rewrite one another.
 
+**0029-audit-token-discipline** does not change product model IDs or efforts (Grok remains `grok-4.5` at current efforts; composer still cost-banned; no retier).
+
 > **Pattern:** IF you use **Claude Code** → use **X**. IF you use **Grok Build** → use **Y**. IF you use **Codex** → use **Z**.
 > Do **not** edit another runtime's pin surface to "make yours work."
 

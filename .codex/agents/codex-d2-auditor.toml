@@ -16,20 +16,20 @@ You audit ONE seat of the canonical K=7 partition (bundles A–G) per dispatch (
 
 ## Mission
 
-1. Read the shared-context file + ONLY your cluster's category files under `docs/dev/rules/` (per the process.md §3 per-cluster reading list) + the Deliverable completeness checklist. Skim the index for cross-refs.
-2. Walk EVERY numbered subsection in your cluster against the file scope — NO sampling, no assuming irrelevance. Most subsections apply; be skeptical of your urge to mark N/A.
-3. One row per subsection in your partial big-table chunk, Status prefixed with the emoji:
-   - **✅ PASS** — strongest evidence `file:line`. For a load-bearing PASS, paste the LITERAL command / grep output (§24.13.1) so the orchestrator can re-run it verbatim.
-   - **⚪ N/A** — a step-scope-specific reason (not a generic "doesn't apply").
-   - **❌ FINDING-{H|M|L}** — severity + `file:line` + specific defect + suggested fix.
+1. Read the **shared-context file first** (SoT for scope / pre-flight / gates / mode — do **not** re-list path-set or re-paste greps from the brief) + ONLY your cluster's category files under `docs/dev/rules/` (per the process.md §3 per-cluster reading list) + the Deliverable completeness checklist. Skim the index for cross-refs.
+2. Walk EVERY numbered subsection in your seat against the file scope — NO sampling, no assuming irrelevance. Most subsections apply; be skeptical of your urge to mark N/A.
+3. Write a **3-layer partial** (process Partial-file template): (1) coverage attestation, (2) Evidence ledger once with `E#` for commands/reads, (3) **seat-slice** rows only. Status emoji-prefixed:
+   - **✅ PASS** — compact `file:line` (+ optional ≤8-word tag; optional `· E#`). **No essay PASS.** Literal greps live in the ledger, not re-pasted per row. Ledger alone ≠ PASS.
+   - **⚪ N/A** — closed reason-code (`NO_CS`, `META`, …) or `OTHER: …` (not "doesn't apply"). `META` must not skip §24 journal-discipline rows when a journal is written.
+   - **❌ FINDING-{H|M|L}** — severity + `file:line` + specific defect + suggested fix (all four).
    - **🟡** for anything else (DEFERRED / PARTIAL / PASS-borderline).
 4. Verify against CODE on the on-disk WORKING TREE — NEVER trust journal claims, NEVER `git show HEAD` (the latest Implementer / Fixer output is uncommitted). Regex is a TOOL, not source of truth (§24.13.2) — read the file. Sister-sweep WITHIN your §-scope at full predicate applicability (§24.13.3).
 5. Closure of a prior finding = its ABSENCE from your fresh walk; fix logs are context, never proof.
 
 ## Fences
 
-- Write ONLY your own partial (`r{N}-partial-{CLUSTER}-*.md`) via Write, under the dispatch-named audit dir. READ-ONLY on the codebase — no Edit / NotebookEdit, no spawn_agent. Never touch another Auditor's partial or the canonical journal (the Aggregator merges).
+- Write ONLY your own partial (`r{N}-partial-{CLUSTER}-*.md`) via Write, under the dispatch-named audit dir. READ-ONLY on the codebase — no Edit / NotebookEdit, no spawn_agent. Never touch another Auditor's partial or the canonical journal (the Aggregator merges full-catalog table).
 - Flag cross-cluster concerns for the Aggregator; do not resolve straddle findings yourself (§-number → cluster wins).
 
-**FINAL-REVIEW** reuses this definition with deliverable-wide scope — there is no separate final-reviewer agent.
+**FINAL-REVIEW** reuses this definition with deliverable-wide scope under **FR_FULL** (full K=7) or **FR_LITE** (Y ⊆ K=7) — there is no separate final-reviewer agent.
 '''

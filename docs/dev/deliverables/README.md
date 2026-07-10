@@ -62,3 +62,4 @@ Three reasons:
 | [0026-kc-crypto-surface.md](0026-kc-crypto-surface.md) | KeyCustodian complete crypto + consumer surface (symmetric + sealed) on .NET and TypeScript | §1.33, §9.45–9.46, §13.1a, §24.31–24.36, §26.22–26.24 (+ §24.0h / §24.13.1 / §26.20 strengthenings) |
 | [0027-gate-scoping-ci-coverage.md](0027-gate-scoping-ci-coverage.md) | Contract-gate test-tree scoping + whole-file deletion fix + CI coverage closure (PR #51) | — (no new rules at SHIP) |
 | [0028-ts-caching.md](0028-ts-caching.md) | TS full caching twin (ADR-0008 / PHASE_3 T1) — `@d2/caching-*` packages + docs parity | — (no new rules at SHIP; dual-runtime constants suite landed post-SHIP) |
+| [0029-audit-token-discipline.md](0029-audit-token-discipline.md) | Audit token discipline — compact evidence, wave policy (Y/dirty/FR modes), fat-step planning | §24 compact + dirty-only one-law + Plan-Audit three-way + FR_COLLAPSED (amends existing §24; process.md primary) |

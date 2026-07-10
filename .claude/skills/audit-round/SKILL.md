@@ -1,6 +1,6 @@
 ---
 name: audit-round
-description: K=7 audit-round dispatch pack - concern bundles A-G (universal max), dirty-only re-dispatch, reading lists, agent routing, dispatch-brief and Aggregator skeletons. Use when dispatching an audit or final-review round. Keywords - audit, K=7, cluster, bundle, atom provenance, auditor, aggregator, sweep, dispatch, round, dirty-only.
+description: K=7 audit-round dispatch pack - concern bundles A-G (universal max), dirty-only re-dispatch, FR_FULL/FR_LITE/FR_COLLAPSED, compact evidence, shared-context SoT, reading lists, agent routing, slim briefs and Aggregator skeletons. Use when dispatching an audit or final-review round. Keywords - audit, K=7, FR_LITE, FR_COLLAPSED, cluster, bundle, atom provenance, auditor, aggregator, sweep, dispatch, round, dirty-only.
 ---
 
 <!--
@@ -9,23 +9,25 @@ Copyright (c) DCSV. All rights reserved.
 
 # audit-round — K=7 dispatch pack (universal max)
 
-MIRROR of `docs/dev/process.md §3` (Auditor cluster partition + Aggregator role) and `§4` (dispatch-brief template). **`process.md` is canonical — if this and it disagree, process.md wins; update both in lockstep (§11.32).**
+MIRROR of `docs/dev/process.md §3` (Auditor cluster partition + Aggregator role) and `§4` (dispatch-brief template + Audit wave policy + compact evidence). **`process.md` is canonical — if this and it disagree, process.md wins; update both in lockstep (§11.32).**
 
-> **Canonical one-liner:** Default full audit partition is **K=7 concern bundles (A–G)**. **K=12 atomic dispatch is retired.** Targeted Y and dirty-only re-dispatch apply on per-step rounds; **FINAL-REVIEW of a deliverable is full K=7 at deliverable scope.**
+> **Canonical one-liner:** Default full audit partition is **K=7 concern bundles (A–G)**. **K=12 atomic dispatch is retired.** Targeted Y and dirty-only re-dispatch apply on per-step rounds. **FINAL-REVIEW open** is mode-selected: **FR_FULL** (full K=7, product default) / **FR_LITE** (deliverable-scope Y when gates pass) / **FR_COLLAPSED** (pure-meta 1-step only). See process [Audit wave policy](../../../docs/dev/process.md#audit-wave-policy).
 
 ## Defaults
 
 | Mode | K | Seats | When |
 | --- | --- | --- | --- |
-| **Full partition** (Plan-Audit R1 in-scope, justified full code-audit, **FINAL-REVIEW**) | **K=7** | Bundles **A–G** | Complete catalog walk |
-| **Targeted first code-audit** | **Y ⊆ K=7** | Journal-justified subset of A–G | Per-step, step-relevant only |
+| **Full partition** (product Plan-Audit R1, justified full code-audit, **FR_FULL**) | **K=7** | Bundles **A–G** | Complete catalog walk |
+| **Targeted first code-audit / pure-meta Plan-Audit / FR_LITE** | **Y ⊆ K=7** | Journal-justified subset of A–G | Step- or deliverable-relevant only |
 | **Re-round after findings** | dirty subset | Only seats with ≥1 finding + sister-blast | Plan-Audit AND code-audit AND within FINAL-REVIEW after findings |
 
-One audit round = K parallel seat Auditors (READ-ONLY) + 1 Aggregator + (if findings) 1 Fixer. Every round is a BRAND-NEW batch — fresh context is the point. **K=1** needs explicit per-round user permission (§24.0h); never self-invoked. **Dirty-only is not K=1.** **K=12 atomic dispatch is retired.**
+One audit round = K parallel seat Auditors (READ-ONLY) + 1 Aggregator + (if findings) 1 Fixer. Every round is a BRAND-NEW batch — fresh context is the point. **K=1** needs explicit per-round user permission (§24.0h); never self-invoked. **Dirty-only is not K=1.** **FR_LITE / FR_COLLAPSED are multi-seat Y — not K=1.** **K=12 atomic dispatch is retired.**
 
 **Provenance:** atoms A1…E3 stay stable §-ownership IDs only — **not** a dispatch mode and **not** "FINAL K=12". Bundles are the only dispatch seats. Prefer one partial per **bundle**; finding IDs use seat/bundle code + §-number.
 
-**First code-audit** may dispatch **Y ⊆ K=7** (step-relevant bundles) with journal justification. Plan-Audit R1 for in-scope steps defaults full K=7 unless carve-out. **FINAL-REVIEW opens at full K=7** (whole deliverable scope — not dirty-only of the last step).
+**First code-audit** may dispatch **Y ⊆ K=7** (step-relevant bundles) with journal justification. Product Plan-Audit R1 defaults full K=7; pure-meta/docs Plan-Audit defaults **Y** (E+G). **FR_FULL** opens full K=7 at whole deliverable scope; **FR_LITE** opens multi-seat Y when all eligibility gates pass; **FR_COLLAPSED** has no separate FR journal (step Y-audit = gate). Record mode + Y **before** dispatch.
+
+**Compact evidence (required):** PASS = compact `file:line` (+ optional ≤8-word tag / `E#`); essay PASS illegal (§24.2). N/A = closed reason-code. FINDING = four fields. Seat partials = seat-slice; **canonical journal big table = full catalog always** (non-Y N/A-coded). Shared-context is SoT for scope/pre-flight/gates/mode — **slim briefs** (no path-set re-list / grep re-paste).
 
 ## K=7 concern bundles (universal full partition)
 
@@ -84,21 +86,22 @@ Spawn names are **runtime-prefixed** (full table → [docs/dev/harness-runtimes.
 ## Flag-routing conventions (review-flag classes → seat)
 Route each user/review flag by §-number → atom → bundle: PII/log-leak → C1→C; layer-violation / EF-DDD / handler-shape → C2→C; auth/secret/permission → C3→D; doc-drift / phase-verbiage / conversation-ID → D1→E; codegen / spec-mirror / baseline → E3→F; audit-evidence integrity → E2→G; test-gap / missing-regression → A1→A. Cross-cutting flags belong to the Aggregator, not a single seat.
 
-## Auditor dispatch-brief skeleton
-- **Role + scope**: seat code + its §-range; file scope = the step's touched paths (or `git diff --name-only` recipe) / whole deliverable at final-review.
-- **Reading list**: this seat's category files + the completeness checklist + the round shared-context file. Reads ONLY what the brief names (no conversation memory).
+## Auditor dispatch-brief skeleton (slim)
+- **Role + seat**: seat code + partial path + "read `r{N}-shared-context.md`" + seat-only extras. **Do not** re-list full path-set, re-paste greps, or restate locked decisions from shared-context.
+- **Reading list**: shared-context first (SoT for scope / pre-flight / gates / mode) + this seat's category files + completeness checklist. Reads ONLY what the brief names (no conversation memory).
 - **Working-tree note**: read the on-disk WORKING TREE, not `git show HEAD:` — latest Implementer/Fixer output is uncommitted (§24.19).
 - **Code discovery (when MCP available)**: prefer `codebase-memory-mcp` (use dispatch-provided `MCP_PROJECT` (orchestrator resolves by canonical Git root per `docs/dev/codebase-memory.md`); if missing, fail closed/report and use disk) — `search_graph` / `search_code` (files|compact) — over Grep/Glob to **locate** symbols and files in scope. Graph is **not** SoT ([docs/dev/codebase-memory.md](../../../docs/dev/codebase-memory.md)). Cap `trace_path` depth; do not dump high-fan-in callers into the partial.
-- **Evidence-paste mandate (§24.13.1)**: still paste the LITERAL grep/shell command + output into the partial when the predicate Evidence line / checklist requires it — graph QNs are not a substitute. PASS rows need file:line, N/A rows a scope-specific reason, FINDING rows severity + file:line + description + fix; Status prepends ✅/❌/⚪/🟡.
-- **Anti-laziness preamble (verbatim)**: WALK EVERY NUMBERED SUBSECTION, no skipping; regex is a TOOL not source of truth (§24.13.2); sister-sweep at full predicate applicability (§24.13.3).
-- **Partial path**: `audit-rN/rN-partial-<BUNDLE>-<name>.md` (e.g. `A-correctness`) for mid-step and FINAL-REVIEW.
+- **3-layer partial** (process Partial-file template): (1) coverage attestation, (2) Evidence ledger once with `E#`, (3) seat-slice rows citing `file:line` / `E#`. PASS = compact cite (no essays); N/A = closed code; FINDING = four fields; Status prepends ✅/❌/⚪/🟡. Literal Evidence greps go in the **ledger**, not re-pasted per row. Ledger alone ≠ PASS.
+- **Anti-laziness preamble (verbatim)**: WALK EVERY NUMBERED SUBSECTION in seat scope, no skipping; regex is a TOOL not source of truth (§24.13.2); sister-sweep at full predicate applicability (§24.13.3).
+- **Partial path**: `audit-rN/rN-partial-<BUNDLE>-<name>.md` (e.g. `A-correctness`) for mid-step and FR_FULL/FR_LITE.
 - **Constraints**: READ-ONLY (no Edit/NotebookEdit; no nested sub-agent spawn); no commits; never touch another Auditor's partial. Open the return with the model-attestation block. ≤N-line return.
 
 ## Aggregator dispatch skeleton
-- Read all **K** partials for the round (≤7 full partition, or dirty-seat count).
-- Merge the K big-table chunks into ONE sorted-by-§ table, REPLACING `## Latest sweep results` (anti-laziness preamble above it). Dirty-only: fold dirty partials over prior clean seats.
+- Read all **K** partials for the round (≤7 full partition, Y subset, or dirty-seat count). Union Evidence ledgers (`E#`; renumber/prefix on collision).
+- Merge into ONE **full-catalog** sorted-by-§ table (one row per rules.md §), REPLACING `## Latest sweep results` (anti-laziness preamble above it). Seat partials are seat-slice; **non-dispatched seats = Aggregator-synthesized `⚪ N/A` + closed codes** from Y map — **forbid** omitting non-Y §§. Dirty-only: fold dirty partials over prior clean seats.
 - Append one `### Round N findings (timestamp)` to the append-only findings log; fold Fixer logs into the append-only Fix log; **name dirty seats** for the next re-dispatch.
 - Cross-cluster verification + cross-cluster sister-sweep (no single Auditor can see these).
+- **Return short structured summary only** (counts by severity, dirty seats, CLEAN? Y/N, 1–3 cross-cluster notes) — do **not** re-paste the big table into orchestrator chat.
 - Cannot flip a per-seat verdict unilaterally (add cross-cluster findings yes; overrule no — escalate ties). Cannot mark CLEAN — closure is proven by ABSENCE from the NEXT round's big table.
 
 ## MANDATORY — fix work-packages enumerate EVERY finding ID
