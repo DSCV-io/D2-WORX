@@ -18,6 +18,9 @@ export function connectRedis(options: RedisCacheOptions): Redis;
 export function createRedisCacheOptions(partial?: Partial<RedisCacheOptions>): RedisCacheOptions;
 
 // @public
+export const INCREMENT_WITH_OPTIONAL_TTL: string;
+
+// @public
 export class JsonCacheSerializer implements ICacheSerializer {
     readonly contentType = "application/json";
     deserialize<T>(bytes: Uint8Array): D2Result<T>;
@@ -107,6 +110,12 @@ export interface RedisDistributedCacheDeps {
     // (undocumented)
     serializer: ICacheSerializer;
 }
+
+// @public
+export const RELEASE_LOCK_IF_OWNER: string;
+
+// @public
+export const SET_ADD_WITH_OPTIONAL_TTL: string;
 
 // (No @packageDocumentation comment for this package)
 

@@ -50,7 +50,12 @@ void _typeGates;
 describe("construction + barrel", () => {
   it("barrel_exportsExactPublicSet", () => {
     expect(Object.keys(barrel).sort()).toEqual(
-      ["BACKPLANE_NOT_REGISTERED_MESSAGE", "DefaultTieredCache"].sort(),
+      [
+        "BACKPLANE_NOT_REGISTERED_MESSAGE",
+        "DefaultTieredCache",
+        "TIERED_ERROR_CODE_UNKNOWN",
+        "TieredCacheOp",
+      ].sort(),
     );
     expect(barrel.BACKPLANE_NOT_REGISTERED_MESSAGE).toBe(
       BACKPLANE_NOT_REGISTERED_MESSAGE,

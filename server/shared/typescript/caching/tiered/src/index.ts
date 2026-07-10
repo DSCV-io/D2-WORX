@@ -7,3 +7,9 @@ export {
   DefaultTieredCache,
   type DefaultTieredCacheDeps,
 } from "./default-tiered-cache.js";
+// Public twin-pin surface for dual-runtime ContractFixtures parity (KOM-08).
+export {
+  TieredCacheOp,
+  TIERED_ERROR_CODE_UNKNOWN,
+  type TieredCacheOpName,
+} from "./tiered-cache-log.js";

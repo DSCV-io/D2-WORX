@@ -266,6 +266,18 @@ importers:
       '@d2/auth-context-abstractions':
         specifier: workspace:*
         version: link:../auth/context-abstractions
+      '@d2/caching-abstractions':
+        specifier: workspace:*
+        version: link:../caching/abstractions
+      '@d2/caching-distributed-redis':
+        specifier: workspace:*
+        version: link:../caching/distributed-redis
+      '@d2/caching-local-default':
+        specifier: workspace:*
+        version: link:../caching/local-default
+      '@d2/caching-tiered':
+        specifier: workspace:*
+        version: link:../caching/tiered
       '@d2/encryption':
         specifier: workspace:*
         version: link:../encryption
@@ -6071,14 +6083,6 @@ snapshots:
     optionalDependencies:
       vite: 7.3.3(@types/node@24.10.0)(tsx@4.20.6)(yaml@2.9.0)
 
-  '@vitest/mocker@4.0.18(vite@7.3.3(@types/node@25.7.0)(tsx@4.20.6)(yaml@2.9.0))':
-    dependencies:
-      '@vitest/spy': 4.0.18
-      estree-walker: 3.0.3
-      magic-string: 0.30.21
-    optionalDependencies:
-      vite: 7.3.3(@types/node@25.7.0)(tsx@4.20.6)(yaml@2.9.0)
-
   '@vitest/pretty-format@4.0.18':
     dependencies:
       tinyrainbow: 3.1.0
@@ -7610,7 +7614,7 @@ snapshots:
   vitest@4.0.18(@opentelemetry/api@1.9.0)(@types/node@25.7.0)(tsx@4.20.6)(yaml@2.9.0):
     dependencies:
       '@vitest/expect': 4.0.18
-      '@vitest/mocker': 4.0.18(vite@7.3.3(@types/node@25.7.0)(tsx@4.20.6)(yaml@2.9.0))
+      '@vitest/mocker': 4.0.18(vite@7.3.3(@types/node@24.10.0)(tsx@4.20.6)(yaml@2.9.0))
       '@vitest/pretty-format': 4.0.18
       '@vitest/runner': 4.0.18
       '@vitest/snapshot': 4.0.18

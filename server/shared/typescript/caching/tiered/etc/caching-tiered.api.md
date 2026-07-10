@@ -45,6 +45,20 @@ export interface DefaultTieredCacheDeps {
     logger: ILogger;
 }
 
+// @public
+export const TIERED_ERROR_CODE_UNKNOWN = "unknown";
+
+// @public
+export const TieredCacheOp: {
+    readonly SET: "set";
+    readonly SET_MANY: "setMany";
+    readonly REMOVE: "remove";
+    readonly REMOVE_MANY: "removeMany";
+};
+
+// @public
+export type TieredCacheOpName = (typeof TieredCacheOp)[keyof typeof TieredCacheOp];
+
 // (No @packageDocumentation comment for this package)
 
 ```
