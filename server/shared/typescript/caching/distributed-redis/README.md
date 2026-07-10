@@ -6,8 +6,155 @@ Copyright (c) DCSV. All rights reserved.
 
 > Parent: [`../README.md`](../README.md) · .NET mirror: `D2.Shared.Caching.Distributed.Redis`
 
-**Status**: planned — deliverable **0028** / PHASE_3 **T1** on branch `n/ts-caching`. Implementation not started; this stub holds the package path for layout parity with `server/shared/dotnet/caching/distributed-redis/`.
+Node/BFF authors who need a cluster-scoped `IDistributedCache` inject this Redis implementation — Basic + Atomic + Broadcast + Set over Redis, a pub/sub invalidation backplane on channel `d2:cache:invalidations`, JSON serialization, aggregate OTel counters, and `@d2/result` shapes on every operation.
 
-Default invalidation channel (shared with .NET): `d2:cache:invalidations`.
+## Usage
 
-See WIP: `docs/wip/0028-ts-caching/` (gitignored).
+```ts
+import {
+  connectRedis,
+  createRedisCacheOptions,
+  JsonCacheSerializer,
+  RedisCacheInvalidationBackplane,
+  RedisDistributedCache,
+} from "@d2/caching-distributed-redis";
+import type { ILogger } from "@d2/logging";
+
+const options = createRedisCacheOptions({
+  connectionString: process.env.REDIS_URL, // SECRET when credentials embedded — never log
+  keyPrefix: "app:",
+});
+const redis = connectRedis(options); // command client; host owns lifecycle
+const logger = /* host ILogger */ undefined as unknown as ILogger;
+const serializer = new JsonCacheSerializer();
+const backplane = new RedisCacheInvalidationBackplane(redis, options, logger);
+await backplane.ready; // channel SUBSCRIBE established (ioredis async setup; construction stays sync)
+const cache = new RedisDistributedCache({
+  redis,
+  options,
+  serializer,
+  logger,
+  backplane,
+});
+
+await cache.set("user:1", { displayName: "Ada" });
+const hit = await cache.get<{ displayName: string }>("user:1");
+await cache.setAndBroadcast("user:1", { displayName: "Ada Lovelace" });
+
+// port subscribe(handler) is sync → AsyncDisposable — do not await subscribe itself
+await using (backplane.subscribe(async (key) => {
+  // everyone-acts handler — key is as published (prefixed when from cache broadcast)
+})) {
+  // subscription active
+}
+// backplane dispose quits the owned subscriber only; host still owns `redis`
+await backplane[Symbol.asyncDispose]();
+```
+
+## Construction + options
+
+| Field | Default | Notes |
+| --- | --- | --- |
+| `connectionString` | (none) | Required for `connectRedis` only. SECRET when credentials embedded — never log. |
+| `defaultExpirationMs` | `3_600_000` | Applied when a write omits `expirationMs`. Values `<= 0` mean no default TTL. |
+| `keyPrefix` | `""` | Prepended to store keys and broadcast payloads. |
+| `invalidationChannel` | `d2:cache:invalidations` | Shared with .NET. |
+| `commandTimeoutMs` | `2000` | Must be finite `> 0`. |
+| `connectTimeoutMs` | `5000` | Must be finite `> 0`. |
+| `connectRetries` | `3` | Non-negative safe integer. |
+| `abortOnConnectFail` | `false` | When false, ops return `serviceUnavailable` until Redis is up. |
+
+**Dual-connection:** host injects a **command** ioredis client; the backplane owns `commandRedis.duplicate()` as the subscriber. Publish uses the command client; channel subscribe uses the subscriber. After construct, **`await backplane.ready`** before delivery-dependent work. Dispose quits the **owned subscriber only**. `connectRedis` throws with fixed message `RedisCacheOptions.ConnectionString is required.` when the string is falsey — never interpolates input. Broken config throws at construction; live ops return results.
+
+## Public surface
+
+- `RedisDistributedCache` — full `IDistributedCache` (Basic + Atomic + Broadcast + Set)
+- `RedisDistributedCacheDeps` — constructor dependency bag type
+- `RedisCacheInvalidationBackplane` — `ready: Promise<void>`, sync port `subscribe(handler)`, publish, `AsyncDisposable`
+- `JsonCacheSerializer` — default `ICacheSerializer`
+- `REDIS_CACHE_METER_NAME`, `REDIS_CACHE_DEFAULTS`, `createRedisCacheOptions`, `RedisCacheOptions`
+- `connectRedis` — builds a host-owned command client
+
+## Result mapping
+
+| Situation | Result |
+| --- | --- |
+| Miss | `notFound` |
+| Partial bulk hit | `someFound` (206) |
+| Redis / connection down | `serviceUnavailable` (including `releaseLock`) |
+| Increment WRONGTYPE / non-integer | `conflict` |
+| Serializer fail (get / set / setMany / setNx / broadcast wrappers) | whole-op `bubbleFail` |
+| `getMany` deserialize fail | **skips that entry** (no whole-op bubbleFail) |
+| Broadcast without backplane | **throws** registration `Error` |
+| `releaseLock` ownership miss | `ok` (idempotent) |
+| Aborted `AbortSignal` at entry | `canceled` |
+
+## TTL semantics
+
+Default write TTL is 1 hour (`defaultExpirationMs`). Explicit `expirationMs` overrides when provided (must be finite `> 0`). `increment` and `setAdd` apply TTL **on create only** via Lua `PTTL < 0` gating. `getTtl`: absent → `notFound`; present no expiry → `ok(undefined)`; present with TTL → `ok(ms)`.
+
+## Atomics + Lua
+
+Three internal scripts (not a public executor): INCRBY + optional PEXPIRE, compare-and-delete lock release, SADD + optional PEXPIRE. Cluster-wide SET NX / INCR / setAdd atomicity is Redis-enforced.
+
+## Backplane
+
+Everyone acts (publisher receives own messages). At-most-once delivery. Multi-subscriber independence. Handler isolation (one throw does not break others). Dispose unsubscribes and quits the owned subscriber; publish after dispose does **not** throw. Default channel `d2:cache:invalidations` is shared with .NET. Construction is sync; channel readiness is `ready`. Port `subscribe(handler)` is **sync** (register handlers — never await the call itself).
+
+## Key prefix
+
+Applies to store keys **and** to keys published on `*AndBroadcast*` (prefixed payload).
+
+## Telemetry
+
+| Counter | Unit | Description |
+| --- | --- | --- |
+| `d2.cache.redis.hits` | `{hit}` | Redis cache hits. |
+| `d2.cache.redis.misses` | `{miss}` | Redis cache misses. |
+| `d2.cache.redis.sets` | `{write}` | Redis cache writes. |
+| `d2.cache.redis.removes` | `{removal}` | Redis cache removals. |
+| `d2.cache.redis.broadcasts` | `{broadcast}` | Invalidation messages published to backplane. |
+| `d2.cache.redis.errors` | `{error}` | Redis-side failures. |
+
+Meter name `D2.Shared.Caching.Distributed.Redis` v`1.0.0` (`REDIS_CACHE_METER_NAME`). Construct the cache after host `setupTelemetry` so instruments bind to the real meter; without a MeterProvider counters are no-op-safe.
+
+## Logging
+
+`ILogger` is required. Redis-op failures log `{ operation, exceptionType, keyOrCount }`. Handler isolation logs `{ exceptionType, key }`. Never log exception messages or `connectionString`. Keep PII out of cache keys (see abstractions).
+
+## Cancellation
+
+An aborted signal at method entry returns `canceled` without touching Redis. There is no mid-flight cancellation guarantee on every ioredis command.
+
+## Divergences from .NET
+
+- Client library is ioredis (not StackExchange.Redis).
+- `IConnectionMultiplexer` is not one ioredis TCP client — dual-connection (command + owned subscriber via `duplicate()`).
+- ioredis channel `subscribe` is Promise-based; .NET StackExchange registers channel Subscribe synchronously. TS keeps sync `new` and surfaces completion via `readonly ready: Promise<void>`.
+- Connection is injected (no MS.DI helper required beyond `connectRedis`).
+- Durations are millisecond numbers, not `TimeSpan`.
+- Counter / lock values are JS numbers within `Number.MAX_SAFE_INTEGER`.
+- `AbortSignal` is entry-level only.
+- Broadcast registration and subscribe-after-dispose use plain `Error` (not BCL exception types).
+- Cache type has no dispose (host owns the command client), matching .NET not disposing the multiplexer from the cache.
+- Backplane dispose quits the owned subscriber (TS ownership of the duplicate).
+- JSON wire uses `JSON.stringify` / `JSON.parse` with camelCase + cycle ignore twin of STJ Web; residual deltas (prototype chain, `undefined` omission, `Date` encoding) may differ.
+
+## Dependencies
+
+| Package | Role |
+| --- | --- |
+| `@d2/caching-abstractions` | Ports (`IDistributedCache`, backplane, serializer) |
+| `@d2/result` | Result factories + `bubbleFail` + `fail` |
+| `@d2/utilities` | `falsey` / helpers |
+| `@d2/logging` | `ILogger` |
+| `@d2/i18n-keys` | `TK.common.errors.COULD_NOT_BE_*` for serializer messages |
+| `@opentelemetry/api` | Meter / counters |
+| `ioredis` | Redis command + subscriber clients |
+
+## References
+
+- [`../abstractions/README.md`](../abstractions/README.md)
+- [`../README.md`](../README.md)
+- [`docs/PATTERNS.md`](../../../../../docs/PATTERNS.md)
+- .NET twin: `server/shared/dotnet/caching/distributed-redis/`

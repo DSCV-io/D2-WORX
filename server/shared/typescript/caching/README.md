@@ -14,7 +14,7 @@ Behavioral model: [ADR-0008](../../../docs/adrs/0008-caching-marker-interfaces.m
 | ------ | ------- | ------ | ------- | ----------- |
 | [`abstractions/README.md`](abstractions/README.md) | `@d2/caching-abstractions` | **Built** | Marker + building-block cache ports (`ILocalCache` / `IDistributedCache` / `ITieredCache` + Basic/Atomic/Broadcast/Set + backplane + serializer + `InputFailures` / options). | `D2.Shared.Caching.Abstractions` |
 | [`local-default/README.md`](local-default/README.md) | `@d2/caching-local-default` | **Built** | In-process L1 + atomics (no broadcast). | `D2.Shared.Caching.Local.Default` |
-| [`distributed-redis/README.md`](distributed-redis/README.md) | `@d2/caching-distributed-redis` | **NOT IMPLEMENTED** | Redis distributed cache + invalidation backplane (Basic/Atomic/Broadcast/Set; default channel `d2:cache:invalidations`). | `D2.Shared.Caching.Distributed.Redis` |
+| [`distributed-redis/README.md`](distributed-redis/README.md) | `@d2/caching-distributed-redis` | **Built** | Redis distributed cache + invalidation backplane (Basic/Atomic/Broadcast/Set; default channel `d2:cache:invalidations`). | `D2.Shared.Caching.Distributed.Redis` |
 | [`tiered/README.md`](tiered/README.md) | `@d2/caching-tiered` | **NOT IMPLEMENTED** | L1+L2 composition — L2-first writes, `*AndBroadcast*`, everyone-acts L1 drop. | `D2.Shared.Caching.Tiered` |
 
 ## Locked cross-runtime rules

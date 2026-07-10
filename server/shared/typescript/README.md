@@ -17,7 +17,7 @@ Packages that share enough concern-area cohesion to warrant a cluster-index READ
 - [`auth/`](auth/README.md) — codegen-emitted scope / error-code / claim catalogs and the domain-safe auth-context interface
 - [`geo/`](geo/README.md) — spec-driven geographic reference data and lookup contracts
 - [`headers/`](headers/README.md) — per-transport wire-protocol header constant catalogs plus the SvelteKit BFF-side glue package
-- [`caching/`](caching/README.md) — twin of `D2.Shared.Caching.*` — abstractions + local-default **Built**; distributed-redis / tiered **NOT IMPLEMENTED**; shared backplane channel `d2:cache:invalidations`
+- [`caching/`](caching/README.md) — twin of `D2.Shared.Caching.*` — abstractions + local-default + distributed-redis **Built**; tiered **NOT IMPLEMENTED**; shared backplane channel `d2:cache:invalidations`
 
 ## Packages
 
@@ -59,7 +59,7 @@ Packages that share enough concern-area cohesion to warrant a cluster-index READ
 | [`contract-tests/`](contract-tests/README.md)                             | **Built** | Cross-language parity test workspace — Vitest reads fixtures emitted by `D2.Shared.Tests` and asserts TS-side spec-emitted decoders / catalogs agree.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     | NEW — no .NET counterpart (consumes fixtures emitted from `Integration/ContractFixtures/`)                                       |
 | [`caching/abstractions/`](caching/abstractions/README.md)                 | **Built** | Marker + building-block cache ports — `ICacheBasic` / `ICacheAtomic` / `ICacheBroadcast` / `ICacheSet` + markers `ILocalCache` / `IDistributedCache` / `ITieredCache` + `ICacheInvalidationBackplane` + serializer seam + `InputFailures` / `LOCAL_CACHE_DEFAULTS`; every op returns `D2Result`. | `D2.Shared.Caching.Abstractions` |
 | [`caching/local-default/`](caching/local-default/README.md)               | **Built** | In-process L1 + atomics (no broadcast). | `D2.Shared.Caching.Local.Default` |
-| [`caching/distributed-redis/`](caching/distributed-redis/README.md)       | **NOT IMPLEMENTED** | Redis distributed cache + invalidation backplane — Basic/Atomic/Broadcast/Set; default invalidation channel `d2:cache:invalidations` (shared with .NET). | `D2.Shared.Caching.Distributed.Redis` |
+| [`caching/distributed-redis/`](caching/distributed-redis/README.md)       | **Built** | Redis distributed cache + invalidation backplane — Basic/Atomic/Broadcast/Set; default invalidation channel `d2:cache:invalidations` (shared with .NET). | `D2.Shared.Caching.Distributed.Redis` |
 | [`caching/tiered/`](caching/tiered/README.md)                             | **NOT IMPLEMENTED** | L1+L2 composition — L2-first writes, `*AndBroadcast*`, everyone-acts L1 drop. | `D2.Shared.Caching.Tiered` |
 
 ## Dependency graph
@@ -231,12 +231,18 @@ graph LR
         direction TB
         CachingAbs[caching-abstractions]
         CachingLocalDefault[caching-local-default]
+        CachingDistributedRedis[caching-distributed-redis]
 
         CachingAbs --> Result
         CachingAbs --> I18nKeys
         CachingLocalDefault --> CachingAbs
         CachingLocalDefault --> Result
         CachingLocalDefault --> Utilities
+        CachingDistributedRedis --> CachingAbs
+        CachingDistributedRedis --> Result
+        CachingDistributedRedis --> Utilities
+        CachingDistributedRedis --> Logging
+        CachingDistributedRedis --> I18nKeys
     end
 
     subgraph TYPESPEC["TypeSpec IDL (operation-contract codegen)"]
@@ -247,7 +253,7 @@ graph LR
         TypespecEmitters --> TypespecDecorators
     end
 
-    class Result,Utilities,Resilience,I18n,Logging,Telemetry,ServiceDefaults,Protos,Time,ErrorCategory,I18nAbs,I18nKeys,ErrorCodesRegistry,ProblemDetailsAbs,AuthCtxAbs,ReqCtxAbs,AuthAbs,HeadersCommon,HeadersHttp,HeadersAmqp,HeadersGrpc,EncryptionAbs,MessagingAbs,Encryption,MessagingRabbitMq,Headers,GrpcClient,ContractTests,GeoAbs,GeoDefault,ValidationAbs,ValidationDefault,CachingAbs,CachingLocalDefault,TypespecDecorators,TypespecEmitters built
+    class Result,Utilities,Resilience,I18n,Logging,Telemetry,ServiceDefaults,Protos,Time,ErrorCategory,I18nAbs,I18nKeys,ErrorCodesRegistry,ProblemDetailsAbs,AuthCtxAbs,ReqCtxAbs,AuthAbs,HeadersCommon,HeadersHttp,HeadersAmqp,HeadersGrpc,EncryptionAbs,MessagingAbs,Encryption,MessagingRabbitMq,Headers,GrpcClient,ContractTests,GeoAbs,GeoDefault,ValidationAbs,ValidationDefault,CachingAbs,CachingLocalDefault,CachingDistributedRedis,TypespecDecorators,TypespecEmitters built
 ```
 
 **Reading the chart**
