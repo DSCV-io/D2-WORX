@@ -6,7 +6,7 @@ Copyright (c) DCSV. All rights reserved.
 
 > Parent: [`../README.md`](../README.md)
 
-**Who / what:** Host integrators and operators — Edge **composition root** (`Microsoft.NET.Sdk.Web`, assembly `D2.Edge.Api`): DI, HTTP pipeline, three-bind Kestrel, production well-known Map, and production KeyCustodian gRPC Map.
+**Who / what:** Host integrators and operators — Edge **composition root** (`Microsoft.NET.Sdk.Web`, assembly `D2.Edge.Api`): DI, HTTP pipeline, three-bind Kestrel, production well-known Map, production KeyCustodian gRPC Map, and standalone Audit HTTP→gRPC bridges.
 
 ## Surfaces
 
@@ -49,6 +49,17 @@ Six thin services under `Grpc/KeyCustodian/` (namespace `D2.Edge.Api.Grpc.KeyCus
 
 **Compile-once:** Edge.Api Grpc.Tools Both owns sign / issue / cacert protos; Client owns keyring + seal protos (physical files still under `api/Protos/KeyCustodian/`). Regen: `pnpm --filter @d2/typespec-emitters regen`.
 
+## Audit bridge (standalone multi-process)
+
+| Surface | Notes |
+| --- | --- |
+| DI | `AddD2AuditGrpcClients(new AuditGrpcClientOptions { Address = … })` — Address from `AUDIT_GRPC:Address` (default `https://d2-audit:8443`); fail-loud if missing or non-https |
+| Map | `MapAllAuditBridges()` → `MapPingAuditBridge()` (`GET /api/v1/audit/ping`) |
+| Generated home | `Bridges/Audit/*BridgeRegistration.g.cs` (namespace `D2.Edge.Api.Bridges.Audit`) |
+| Client package | ProjectReference `D2.Audit.Client` only — never Audit.Api |
+
+Outbound dual-factor (`AddD2WorkloadCertificateOutbound` + `AddD2ForwardedJwtOutbound` + CSR PoC issuer) is already on Edge; generated client auto-chains both factors.
+
 ## Outbound hosted refresh
 
 `AddD2WorkloadCertificateOutbound` registers `WorkloadLeafRefreshHostedService`, which calls `IWorkloadCertificateIssuer.IssueAsync` at **host start**. Host-start smoke requires a ready CA intermediate + working CSR issuer.
@@ -69,4 +80,9 @@ Six thin services under `Grpc/KeyCustodian/` (namespace `D2.Edge.Api.Grpc.KeyCus
 | JWKS empty store | `GET /.well-known/jwks.json` → **503** until active signing keys exist |
 | Leaf refresh fail at start | Hosted service logs — need active intermediate + trust-anchor path |
 | mTLS peer reject | SPIFFE SAN / AllowedWorkloads (`audit`) / trust-anchor file |
+| Audit bridge path | `GET /api/v1/audit/ping` on Edge → NIE/`ServiceUnavailable` when Audit is up (operator multiproc proof) |
 | Telemetry | Tempo (traces) / Loki (logs) / Prometheus `:8080/metrics` when OTel enabled |
+
+## Operator dual-process smoke
+
+See [Audit README — multiproc proof](../../audit/README.md#operator-dual-process-smoke-multiproc-proof).

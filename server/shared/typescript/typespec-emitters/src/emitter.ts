@@ -2,7 +2,8 @@
 // Copyright (c) DCSV. All rights reserved.
 // -----------------------------------------------------------------------
 
-import { isAbsolute, join, relative } from "node:path";
+import { existsSync } from "node:fs";
+import { basename, dirname, isAbsolute, join, relative } from "node:path";
 import { navigateProgram, NoTarget } from "@typespec/compiler";
 import type {
   EmitContext,
@@ -284,8 +285,9 @@ export async function $onEmit(context: EmitContext): Promise<void> {
   // package's generated/ folder), in addition to the standard emitter-output-dir.
   // Zero per-op special cases — routing is driven purely by (module → dir) config
   // × the op's own @d2ServedBy membership, exactly like the C# clients-namespace
-  // routing. The mapped dir is repo-root-relative (resolved against projectRoot's
-  // grandparent — the same repo-root derivation tryGetSpecPath uses). Absent /
+  // routing. The mapped dir is repo-root-relative (resolved via
+  // resolveRepoRootFromProjectRoot — same derivation tryGetSpecPath uses; works
+  // for nested packages under contracts/typespec/<module>). Absent /
   // malformed option ⇒ no production mirror (standard dist/generated only).
   const tsClientOutputDirs = resolveTsClientOutputDirs(
     rawOptions["ts-client-output-dirs"],
@@ -409,10 +411,11 @@ export async function $onEmit(context: EmitContext): Promise<void> {
 
       // Derive the source spec path hint for the banner.
       // tryGetSpecPath converts the absolute file.path from the TypeSpec AST to
-      // a repo-relative path (relative to the repo root, two levels above the
-      // tspconfig.yaml directory). Falls back to the operation name when the AST
-      // does not expose a file path (e.g. in-process test invocations that
-      // supply their own sourceSpec strings rather than going through $onEmit).
+      // a repo-relative path (relative to the monorepo root resolved from
+      // program.projectRoot via resolveRepoRootFromProjectRoot). Falls back to
+      // the operation name when the AST does not expose a file path (e.g.
+      // in-process test invocations that supply their own sourceSpec strings
+      // rather than going through $onEmit).
       // `program.projectRoot` may be absent on synthetic test programs.
       const specHint =
         tryGetSpecPath(op, (program as { projectRoot?: string }).projectRoot) ??
@@ -639,12 +642,21 @@ export async function $onEmit(context: EmitContext): Promise<void> {
             targetNamespace: facadeNs,
           };
         } else {
-          // Handler delegation.
+          // Handler delegation — targetNamespace is the App CQRS per-op folder
+          // when csharp-app-namespace-base is set (production standalone / edge
+          // non-@d2InProcess). Fixture mode (no base) co-locates with service ns
+          // so targetNamespace may equal serviceImplNs (no extra using needed).
+          const handlerNs = resolveHandlerNamespace(
+            category,
+            op.name,
+            grpcServiceNs,
+            csAppNamespaceBase,
+          );
           grpcDelegationTarget = {
             kind: "handler",
             typeName: `I${grpcPascalOp}Handler`,
             methodName: "HandleAsync",
-            targetNamespace: undefined,
+            targetNamespace: handlerNs,
           };
         }
 
@@ -1380,13 +1392,72 @@ function emitDtoPair(
 }
 
 /**
+ * Resolve the D2 monorepo root from a TypeSpec `program.projectRoot` (the
+ * directory that contains the active tspconfig.yaml).
+ *
+ * Nested packages (`contracts/typespec/key-custodian`, `…/audit`) and the
+ * historical root package (`contracts/typespec`) must resolve to the **same**
+ * repo root so repo-root-relative options (`ts-client-output-dirs`, banner
+ * source paths) land under `server/…`, never under `contracts/server/…`.
+ *
+ * 1. Walk ancestors until a directory contains both `server/D2.slnx` and
+ *    `contracts/typespec` (definitive on-disk markers).
+ * 2. Path-shape fallback: walk until basename is `typespec` with parent
+ *    `contracts`, then take that directory's grandparent (synthetic unit-test
+ *    paths that never touch the real disk).
+ * 3. Ultimate fallback: two levels up — historical layout where tspconfig
+ *    always lived at `contracts/typespec`.
+ */
+export function resolveRepoRootFromProjectRoot(projectRoot: string): string {
+  // On-disk marker walk (real `tsp compile` against the monorepo).
+  let dir = projectRoot;
+
+  for (let i = 0; i < 20; i++) {
+    if (
+      existsSync(join(dir, "server", "D2.slnx")) &&
+      existsSync(join(dir, "contracts", "typespec"))
+    ) {
+      return dir;
+    }
+
+    const parent = dirname(dir);
+
+    if (parent === dir) break;
+
+    dir = parent;
+  }
+
+  // Path-shape fallback (synthetic unit-test roots; missing on-disk markers).
+  dir = projectRoot;
+
+  for (let i = 0; i < 20; i++) {
+    if (
+      basename(dir) === "typespec" &&
+      basename(dirname(dir)) === "contracts"
+    ) {
+      return dirname(dirname(dir));
+    }
+
+    const parent = dirname(dir);
+
+    if (parent === dir) break;
+
+    dir = parent;
+  }
+
+  // Historical layout: tspconfig at contracts/typespec → grandparent is repo.
+  return join(projectRoot, "../..");
+}
+
+/**
  * Resolve the `ts-client-output-dirs` emitter option into a
  * `Map<moduleName, absoluteDir>`. The option is a JSON object mapping a
  * @d2ServedBy module name to a repo-root-relative output directory; each value
- * is resolved against the repo root (the grandparent of `projectRoot`, i.e. the
- * tspconfig.yaml directory — the same derivation `tryGetSpecPath` uses). A
- * non-object option, a non-string value, or an unresolvable projectRoot yields
- * an empty map (no production mirror — dist/generated emission is unaffected).
+ * is resolved against the monorepo root via `resolveRepoRootFromProjectRoot`
+ * (same derivation `tryGetSpecPath` uses — works for nested
+ * `contracts/typespec/<module>` packages). A non-object option, a non-string
+ * value, or an unresolvable projectRoot yields an empty map (no production
+ * mirror — dist/generated emission is unaffected).
  */
 export function resolveTsClientOutputDirs(
   raw: unknown,
@@ -1402,7 +1473,7 @@ export function resolveTsClientOutputDirs(
   )
     return result;
 
-  const repoRoot = join(projectRoot, "../..");
+  const repoRoot = resolveRepoRootFromProjectRoot(projectRoot);
 
   for (const [moduleName, dir] of Object.entries(
     raw as Record<string, unknown>,
@@ -2228,10 +2299,12 @@ function emitSsePushIfPresent(
  * machine-independent and matches the strings used by the in-process byte-gate
  * tests (which pass relative `sourceSpec` strings directly).
  *
- * `projectRoot` is `program.projectRoot` — the directory that contains
- * tspconfig.yaml (i.e. `contracts/typespec/`). The repo root is two levels
- * above that, so `relative(repoRoot, filePath)` produces e.g.
- * `contracts/typespec/fixtures/sign-shaped.tsp`.
+ * `projectRoot` is `program.projectRoot` — the directory that contains the
+ * active tspconfig.yaml (historical `contracts/typespec/` or a nested package
+ * such as `contracts/typespec/key-custodian/`). The monorepo root is derived
+ * via `resolveRepoRootFromProjectRoot`, so `relative(repoRoot, filePath)`
+ * produces e.g. `contracts/typespec/fixtures/sign-shaped.tsp` or
+ * `contracts/typespec/key-custodian/key-custodian.tsp` regardless of package depth.
  *
  * Returns undefined when the TypeSpec version does not expose the file path via
  * the parent chain (e.g. purely synthetic operations created in-process by
@@ -2284,10 +2357,11 @@ function tryGetSpecPath(
 
   // During tsp compile, rawPath is the absolute disk path. Convert to a
   // repo-relative forward-slash path. projectRoot is the tspconfig.yaml
-  // directory (contracts/typespec/), two levels above the repo root.
+  // directory (any depth under contracts/typespec/); resolve monorepo root
+  // via markers / path-shape, not a hard-coded `../..` depth.
   if (projectRoot === undefined) return rawPath;
 
-  const repoRoot = join(projectRoot, "../..");
+  const repoRoot = resolveRepoRootFromProjectRoot(projectRoot);
   return relative(repoRoot, rawPath).replaceAll("\\", "/");
 }
 

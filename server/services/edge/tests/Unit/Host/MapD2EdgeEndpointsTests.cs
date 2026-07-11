@@ -7,6 +7,8 @@
 namespace D2.Edge.Tests.Unit.Host;
 
 using System.Net;
+using D2.Audit.Client;
+using D2.Audit.Client.Ping;
 using D2.Edge.Api.Composition;
 using D2.Edge.Api.Grpc.KeyCustodian;
 using D2.Edge.Api.Routes.KeyCustodian;
@@ -24,6 +26,8 @@ using D2.Edge.KeyCustodian.Client.Facade;
 using D2.Edge.Tests.Unit.KeyCustodian.App;
 using D2.Shared.Context.Abstractions;
 using D2.Shared.Handler;
+using D2.Shared.Resilience.Pipeline;
+using D2.Shared.Result;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Routing;
@@ -224,6 +228,7 @@ public sealed class MapD2EdgeEndpointsTests
         source.Should().Contain("Scopes.Internal.Kc.Cacert");
         source.Should().Contain("Scopes.Internal.Kc.Seal.Encrypt");
         source.Should().Contain("Scopes.Internal.Kc.Seal.Open");
+        source.Should().Contain("MapAllAuditBridges()");
 
         source.Should().NotContain("Step 3");
         source.Should().NotContain("Step 2");
@@ -327,6 +332,12 @@ public sealed class MapD2EdgeEndpointsTests
                             GetOrLazyProvisionOwnSealPrivateKeyHandler>();
 
                         services.AddTransient<IKeyCustodianApi, KeyCustodianApi>();
+
+                        // MapAllAuditBridges requires IAuditGrpcClient DI (else ASP.NET
+                        // treats the client param as a body on GET and fails Map).
+                        // §1.32: stub returns typed ServiceUnavailable; replace-trigger
+                        // is live AddD2AuditGrpcClients on the Edge host.
+                        services.AddSingleton<IAuditGrpcClient, MapHostStubAuditGrpcClient>();
                     })
                     .Configure(app =>
                     {
@@ -334,11 +345,25 @@ public sealed class MapD2EdgeEndpointsTests
 
                         app.UseEndpoints(endpoints =>
                         {
-                            // Production Map (health/metrics + well-known + six KC gRPC).
+                            // Production Map (health/metrics + well-known + six KC gRPC + Audit bridges).
                             endpoints.MapD2EdgeEndpoints();
                         });
                     });
             })
             .StartAsync();
+    }
+
+    /// <summary>
+    /// Minimal §1.32 double for Map host composition — asserts the PingAudit
+    /// bridge can resolve <see cref="IAuditGrpcClient"/> without a live channel.
+    /// </summary>
+    private sealed class MapHostStubAuditGrpcClient : IAuditGrpcClient
+    {
+        public ValueTask<D2Result<PingAuditOutput?>> PingAuditAsync(
+            PingAuditInput input,
+            ResilientPipeline<string, PingAuditOutput?>? pipelineOverride = null,
+            CancellationToken ct = default) =>
+            ValueTask.FromResult(
+                D2Result<PingAuditOutput?>.ServiceUnavailable());
     }
 }

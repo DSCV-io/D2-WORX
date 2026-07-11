@@ -176,6 +176,7 @@ internal sealed class EdgeHostTestKit : IDisposable
             ["RABBITMQ_URL"] = RABBITMQ_URL,
             ["KEYCUSTODIAN_DATABASE_URL"] = KC_DATABASE_URL,
             [LoadPublicCaAnchors.TRUST_ANCHOR_PATH_KEY] = r_trustAnchorPath,
+            ["AUDIT_GRPC:Address"] = "https://d2-audit:8443",
         };
 
         if (overrides is not null)

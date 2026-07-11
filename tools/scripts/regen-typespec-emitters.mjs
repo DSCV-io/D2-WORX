@@ -5,8 +5,9 @@
 /**
  * regen-typespec-emitters.mjs
  *
- * Scatter script: compiles contracts/typespec/ and copies each emitted file
- * from dist/generated/ to its committed home.
+ * Scatter script: compiles each per-module TypeSpec package under
+ * contracts/typespec/ and copies each emitted file from dist/generated/ to its
+ * committed home.
  *
  * Usage (from the repo root):
  *   node tools/scripts/regen-typespec-emitters.mjs
@@ -18,14 +19,19 @@
  *   1. Creates temporary NTFS junctions so the TypeSpec compiler can resolve
  *      @d2/* and @typespec/* packages from contracts/typespec/ (which has no
  *      node_modules of its own). Junctions do not require admin on Windows.
- *   2. Writes a temporary main.tsp that imports the same .tsp files listed in
- *      tspconfig.yaml's imports array.
- *   3. Runs `tsp compile` via the emitter package's own node_modules copy.
- *   4. Cleans up junctions and temp files unconditionally (via try/finally).
- *   5. Copies each file from dist/generated/ to its committed home (allowlist —
- *      not copy-all; files without committed homes are intentionally skipped).
- *   6. Prints source → dest for every copy and a final summary.
- *   7. Fails loudly if any expected allowlist entry is missing from dist/generated/.
+ *   2. For EACH module package (KeyCustodian, Audit, …):
+ *        a. Writes a temporary main.tsp matching that package's imports
+ *        b. Runs `tsp compile --config <module>/tspconfig.yaml`
+ *           (emitter-output-dir → shared dist/generated; nested configs use
+ *           an extra ../ so the resolve target stays identical)
+ *        c. COPY_MANIFEST subset for that package only (fail-loud missing)
+ *      NEVER "compile all packages then one COPY" — shared dist/generated is
+ *      clobbered by each compile; COPY must run between packages.
+ *   3. Cleans up junctions and temp files unconditionally (via try/finally).
+ *   4. Prints source → dest for every copy and a final summary.
+ *
+ * Root contracts/typespec/tspconfig.yaml is RETIRED (pointer only) — do not
+ * use it as the primary compile entry.
  *
  * Idempotent: re-running after a clean compile overwrites the committed files
  * with identical content (a no-op from git's perspective).
@@ -71,48 +77,36 @@ const DIST_GENERATED = join(EMITTERS_DIR, "dist", "generated");
 // the same compiler version the tests and build use.
 const TSP_JS = join(EMITTERS_NM, "@typespec", "compiler", "cmd", "tsp.js");
 
-// tspconfig.yaml path (passed to tsp compile via --config).
-const TSPCONFIG = join(CONTRACTS_DIR, "tspconfig.yaml");
-
 // Temporary junction paths created before compile and removed after.
 const JUNCTION_CONTRACTS_NM = join(CONTRACTS_DIR, "node_modules");
 const JUNCTION_SELF_REF = join(EMITTERS_NM, "@d2", "typespec-emitters");
 
-// Temporary main.tsp path — required because `tsp compile <dir>` looks for
-// main.tsp. tspconfig.yaml uses `imports:` but a stub main.tsp is still
-// needed so the compiler accepts the directory form.
-const TEMP_MAIN_TSP = join(CONTRACTS_DIR, "main.tsp");
-
 // ---------------------------------------------------------------------------
-// Committed-home mapping: dist/generated/<filename> → repo-root-relative dest
-//
-// ONLY files where `tsp compile` output is byte-identical to the in-process
-// test-host output are listed. This constraint exists because the main
-// tsp compile run processes all fixtures together with the real tspconfig.yaml
-// (csharp-app-namespace-base set), which routes ALL @d2InProcess / @d2GrpcMethod
-// fixture ops into the Client namespace. In contrast, the byte-gate test suites
-// call emitter functions directly with explicit fixture namespaces
-// (D2.Edge.Tests.TypeSpecDto.Generated, etc.), producing different C# content
-// for the same logical fixtures.
-//
-// Excluded categories (validated via systematic content comparison):
-//   - All C# DTOs for fixture ops (sign, temporal, enum, placeOrder, deepNest, …)
-//   - gRPC service, transport-mapper, and client C# files for fixture ops
-//   - Route registration C# files (namespace mismatch; registered in app ns not fixture ns)
-//   - IKeyCustodianApi.g.cs / KeyCustodianApi.g.cs (include sign + signDerived methods
-//     from full compile; committed version is getJwks-only)
-//   - .proto files with non-keycustodian package names (fixture protos use per-fixture
-//     package names; tsp compile uses d2.keycustodian.v2alpha for all)
-//   - predicate-fixtures-grpc-client.g.ts (combined module differs from test-host output)
-//
-// Files in those categories are governed exclusively by the byte-gate test suites
-// (byte-parity.test.ts, proto-grpc-byte-parity.test.ts, etc.) — run `pnpm test`
-// to verify them. Update committed fixtures for those files by rerunning the
-// relevant test suites and committing the updated outputs when the emitter changes.
+// Per-module packages: each owns tspconfig + COPY subset.
+// Sequence lock: compileᵢ → COPYᵢ → compileᵢ₊₁ (never multi-compile then one COPY).
 // ---------------------------------------------------------------------------
 
-/** @type {ReadonlyArray<{ from: string; to: string }>} */
-const COPY_MANIFEST = [
+/**
+ * @typedef {{ from: string; to: string }} CopyRow
+ * @typedef {{
+ *   name: string;
+ *   configRel: string;
+ *   projectDirRel: string;
+ *   mainImports: readonly string[];
+ *   copy: readonly CopyRow[];
+ * }} PackageSpec
+ */
+
+// ---------------------------------------------------------------------------
+// KeyCustodian package COPY subset (KC live + co-compiled fixture TS rows).
+//
+// ONLY files where package compile output is byte-identical to the in-process
+// test-host output for production homes are listed. Fixture C# (wrong ns) stays
+// governed by byte-gate suites — see NOTES at end of this array historically.
+// ---------------------------------------------------------------------------
+
+/** @type {ReadonlyArray<CopyRow>} */
+const KEY_CUSTODIAN_COPY = [
   // ---- GetJwks DTOs (Client namespace, Jwks concern — @d2Concern("Jwks")) ----
   {
     from: "GetJwksInput.g.cs",
@@ -454,6 +448,101 @@ const COPY_MANIFEST = [
 ];
 
 // ---------------------------------------------------------------------------
+// Audit package COPY subset (standalone PingAudit + Edge bridge + client).
+// ---------------------------------------------------------------------------
+
+/** @type {ReadonlyArray<CopyRow>} */
+const AUDIT_COPY = [
+  // ---- PingAudit DTOs (Client.Ping concern) ----
+  {
+    from: "PingAuditInput.g.cs",
+    to: "server/services/audit/clients/dotnet/Ping/PingAuditInput.g.cs",
+  },
+  {
+    from: "PingAuditOutput.g.cs",
+    to: "server/services/audit/clients/dotnet/Ping/PingAuditOutput.g.cs",
+  },
+
+  // ---- Audit gRPC client surface (Client package) ----
+  {
+    from: "IAuditGrpcClient.g.cs",
+    to: "server/services/audit/clients/dotnet/IAuditGrpcClient.g.cs",
+  },
+  {
+    from: "AuditGrpcClient.g.cs",
+    to: "server/services/audit/clients/dotnet/AuditGrpcClient.g.cs",
+  },
+  {
+    from: "AuditGrpcClientsGenerated.g.cs",
+    to: "server/services/audit/clients/dotnet/AuditGrpcClientsGenerated.g.cs",
+  },
+  {
+    from: "PingAuditClientKeys.g.cs",
+    to: "server/services/audit/clients/dotnet/PingAuditClientKeys.g.cs",
+  },
+  {
+    from: "PingAuditClientMappers.g.cs",
+    to: "server/services/audit/clients/dotnet/PingAuditClientMappers.g.cs",
+  },
+
+  // ---- Handler interface (Audit.App per-op folder) ----
+  {
+    from: "IPingAuditHandler.g.cs",
+    to: "server/services/audit/app/Application/Handlers/Queries/PingAudit/IPingAuditHandler.g.cs",
+  },
+
+  // ---- Thin gRPC service + transport mappers (Audit.Api) ----
+  {
+    from: "AuditPingService.g.cs",
+    to: "server/services/audit/api/Grpc/AuditPingService.g.cs",
+  },
+  {
+    from: "PingAuditTransportMappers.g.cs",
+    to: "server/services/audit/api/Mappers/PingAuditTransportMappers.g.cs",
+  },
+
+  // ---- Proto (Audit.Api Protos; Client owns Grpc.Tools Both) ----
+  {
+    from: "audit_ping_ping_audit.g.proto",
+    to: "server/services/audit/api/Protos/audit_ping_ping_audit.g.proto",
+  },
+
+  // ---- Edge HTTP→gRPC bridge (Edge.Api.Bridges.Audit) ----
+  {
+    from: "PingAuditBridgeRegistration.g.cs",
+    to: "server/services/edge/api/Bridges/Audit/PingAuditBridgeRegistration.g.cs",
+  },
+  {
+    from: "AuditBridgeRegistrations.g.cs",
+    to: "server/services/edge/api/Bridges/Audit/AuditBridgeRegistrations.g.cs",
+  },
+];
+
+/** @type {ReadonlyArray<PackageSpec>} */
+const PACKAGES = [
+  {
+    name: "key-custodian",
+    configRel: join("key-custodian", "tspconfig.yaml"),
+    projectDirRel: "key-custodian",
+    mainImports: [
+      'import "./key-custodian.tsp";',
+      'import "../fixtures/sign-shaped.tsp";',
+      'import "../fixtures/temporal-shaped.tsp";',
+      'import "../fixtures/enum-shaped.tsp";',
+      'import "../fixtures/resilience-predicate-shaped.tsp";',
+    ],
+    copy: KEY_CUSTODIAN_COPY,
+  },
+  {
+    name: "audit",
+    configRel: join("audit", "tspconfig.yaml"),
+    projectDirRel: "audit",
+    mainImports: ['import "./audit.tsp";'],
+    copy: AUDIT_COPY,
+  },
+];
+
+// ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 
@@ -472,11 +561,128 @@ function removeSafe(p) {
   }
 }
 
+/**
+ * Copy one package's COPY_MANIFEST subset; fail-loud if any source is missing.
+ * @param {string} packageName
+ * @param {readonly CopyRow[]} rows
+ * @returns {number} files copied
+ */
+function copyPackageSubset(packageName, rows) {
+  let copied = 0;
+  const missing = [];
+
+  console.log(`\nCOPY subset [${packageName}] (${rows.length} rows)…`);
+
+  for (const { from, to } of rows) {
+    const src = join(DIST_GENERATED, from);
+    const dest = join(REPO_ROOT, to);
+
+    if (!existsSync(src)) {
+      missing.push(src);
+      continue;
+    }
+
+    mkdirSync(dirname(dest), { recursive: true });
+    copyFileSync(src, dest);
+    console.log(`  ${from}`);
+    console.log(`    → ${to}`);
+    copied++;
+  }
+
+  if (missing.length > 0) {
+    console.error(
+      `\nERROR: package [${packageName}] expected outputs missing from dist/generated/:`,
+    );
+
+    for (const m of missing) console.error(`  ${m}`);
+
+    console.error(
+      "\nThe compile succeeded but some expected outputs were not produced.",
+    );
+    console.error(
+      "Check whether the corresponding .tsp definitions were removed or renamed,",
+    );
+    console.error("or whether COPY_MANIFEST rows for this package are stale.");
+    process.exit(1);
+  }
+
+  return copied;
+}
+
+/**
+ * Compile one package and COPY its subset immediately (sequence lock).
+ * @param {PackageSpec} pkg
+ * @returns {number} files copied
+ */
+function compileAndCopyPackage(pkg) {
+  const projectDir = join(CONTRACTS_DIR, pkg.projectDirRel);
+  const configPath = join(CONTRACTS_DIR, pkg.configRel);
+  const tempMain = join(projectDir, "main.tsp");
+
+  if (!existsSync(configPath)) {
+    console.error(`ERROR: tspconfig not found for package [${pkg.name}]:`);
+    console.error(`  ${configPath}`);
+    process.exit(1);
+  }
+
+  if (!existsSync(projectDir)) {
+    console.error(`ERROR: project dir missing for package [${pkg.name}]:`);
+    console.error(`  ${projectDir}`);
+    process.exit(1);
+  }
+
+  console.log(`\n=== Package [${pkg.name}] — tsp compile ===`);
+  console.log(`  config: ${pkg.configRel}`);
+
+  let tempMainCreated = false;
+
+  try {
+    // `tsp compile <dir>` requires main.tsp; imports mirror tspconfig imports.
+    writeFileSync(tempMain, [...pkg.mainImports, ""].join("\n"), "utf8");
+    tempMainCreated = true;
+
+    const tspResult = spawnSync(
+      process.execPath,
+      [TSP_JS, "compile", projectDir, "--config", configPath],
+      {
+        cwd: projectDir,
+        encoding: "utf8",
+        stdio: "pipe",
+      },
+    );
+
+    if (tspResult.stdout) process.stdout.write(tspResult.stdout);
+    if (tspResult.stderr) process.stderr.write(tspResult.stderr);
+
+    if (tspResult.status !== 0) {
+      console.error(
+        `\nERROR: tsp compile failed for package [${pkg.name}] (exit ${tspResult.status}).`,
+      );
+      process.exit(tspResult.status ?? 1);
+    }
+
+    console.log(`Compilation succeeded for [${pkg.name}].`);
+  } finally {
+    if (tempMainCreated) {
+      try {
+        unlinkSync(tempMain);
+      } catch {
+        console.warn(`WARN: could not remove temp ${tempMain}`);
+      }
+    }
+  }
+
+  // COPY immediately so the next package's compile cannot clobber these sources.
+  return copyPackageSubset(pkg.name, pkg.copy);
+}
+
 // ---------------------------------------------------------------------------
 // Main
 // ---------------------------------------------------------------------------
 
-console.log("regen-typespec-emitters: compiling contracts/typespec/ …\n");
+console.log(
+  "regen-typespec-emitters: multi-package N× (compile + COPY subset) …\n",
+);
 
 // Validate prerequisites.
 if (!existsSync(TSP_JS)) {
@@ -485,15 +691,10 @@ if (!existsSync(TSP_JS)) {
   process.exit(1);
 }
 
-if (!existsSync(TSPCONFIG)) {
-  console.error(`ERROR: tspconfig.yaml not found at:\n  ${TSPCONFIG}`);
-  process.exit(1);
-}
-
-// Create temp artifacts — removed in the finally block.
+// Create temp junctions — removed in the finally block.
 let junctionContractsNmCreated = false;
 let junctionSelfRefCreated = false;
-let tempMainTspCreated = false;
+let totalCopied = 0;
 
 try {
   // ---- 1. Junction: contracts/typespec/node_modules → emitters/node_modules ----
@@ -519,59 +720,12 @@ try {
   symlinkSync(EMITTERS_DIR, JUNCTION_SELF_REF, "junction");
   junctionSelfRefCreated = true;
 
-  // ---- 3. Temporary main.tsp ----
-  //
-  // `tsp compile <dir>` requires a main.tsp in the target directory. The actual
-  // imports are declared in tspconfig.yaml; main.tsp is a stub so the directory
-  // form of the compile command is accepted.
-  writeFileSync(
-    TEMP_MAIN_TSP,
-    [
-      'import "./key-custodian/key-custodian.tsp";',
-      'import "./fixtures/sign-shaped.tsp";',
-      'import "./fixtures/temporal-shaped.tsp";',
-      'import "./fixtures/enum-shaped.tsp";',
-      'import "./fixtures/resilience-predicate-shaped.tsp";',
-      "",
-    ].join("\n"),
-    "utf8",
-  );
-  tempMainTspCreated = true;
-
-  // ---- 4. Run tsp compile ----
-  const tspResult = spawnSync(
-    process.execPath,
-    [TSP_JS, "compile", CONTRACTS_DIR, "--config", TSPCONFIG],
-    {
-      cwd: CONTRACTS_DIR,
-      encoding: "utf8",
-      stdio: "pipe",
-    },
-  );
-
-  if (tspResult.stdout) process.stdout.write(tspResult.stdout);
-  if (tspResult.stderr) process.stderr.write(tspResult.stderr);
-
-  if (tspResult.status !== 0) {
-    console.error(
-      `\nERROR: tsp compile failed with exit code ${tspResult.status}.`,
-    );
-    process.exit(tspResult.status ?? 1);
+  // ---- 3. Per-package: compile → COPY subset (never multi-compile then one COPY) ----
+  for (const pkg of PACKAGES) {
+    totalCopied += compileAndCopyPackage(pkg);
   }
-
-  console.log("Compilation succeeded.\n");
 } finally {
-  // ---- 5. Unconditional cleanup ----
-  if (tempMainTspCreated) {
-    try {
-      unlinkSync(TEMP_MAIN_TSP);
-    } catch {
-      // Non-fatal; the file lives in contracts/ which is gitignored-free, so
-      // leaving a stale main.tsp would be noticed immediately. Log and continue.
-      console.warn(`WARN: could not remove temp ${TEMP_MAIN_TSP}`);
-    }
-  }
-
+  // ---- 4. Unconditional cleanup ----
   if (junctionSelfRefCreated) {
     try {
       removeSafe(JUNCTION_SELF_REF);
@@ -589,46 +743,8 @@ try {
   }
 }
 
-// ---- 6. Copy allowlist entries to committed homes ----
-
-let copied = 0;
-const missing = [];
-
-for (const { from, to } of COPY_MANIFEST) {
-  const src = join(DIST_GENERATED, from);
-  const dest = join(REPO_ROOT, to);
-
-  if (!existsSync(src)) {
-    missing.push(src);
-    continue;
-  }
-
-  // Ensure destination directory exists (in case a new committed home was added
-  // to the manifest before the directory was created).
-  mkdirSync(dirname(dest), { recursive: true });
-
-  copyFileSync(src, dest);
-  console.log(`  ${from}`);
-  console.log(`    → ${to}`);
-  copied++;
-}
-
-if (missing.length > 0) {
-  console.error("\nERROR: expected output files missing from dist/generated/:");
-
-  for (const m of missing) console.error(`  ${m}`);
-
-  console.error(
-    "\nThe compile succeeded but some expected outputs were not produced.",
-  );
-  console.error(
-    "Check whether the corresponding .tsp definitions were removed or renamed.",
-  );
-  process.exit(1);
-}
-
 console.log(
-  `\n✓ Regenerated ${copied} committed fixture${copied === 1 ? "" : "s"}.`,
+  `\n✓ Regenerated ${totalCopied} committed file${totalCopied === 1 ? "" : "s"} across ${PACKAGES.length} package${PACKAGES.length === 1 ? "" : "s"}.`,
 );
 console.log(
   "  Run `pnpm --filter @d2/typespec-emitters test` to confirm byte-gate tests pass.",

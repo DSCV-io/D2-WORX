@@ -6,6 +6,7 @@
 
 namespace D2.Edge.Api.Composition;
 
+using D2.Audit.Client;
 using D2.Edge.Api.Kestrel;
 using D2.Edge.Api.Mtls;
 using D2.Edge.Api.Outbound;
@@ -39,8 +40,8 @@ public static class EdgeHostServiceCollectionExtensions
         /// <summary>
         /// Registers the full Edge host composition: service defaults (Auth + MutualTls),
         /// three-bind Kestrel roles, establishment (Edge HTTP + gRPC), Redis + tiered cache,
-        /// RabbitMQ, KeyCustodian (with CA leaf/root caps, without JWT minter), and outbound
-        /// dual-factor stack with the CSR PoC issuer.
+        /// RabbitMQ, KeyCustodian (with CA leaf/root caps, without JWT minter), outbound
+        /// dual-factor stack with the CSR PoC issuer, and the Audit standalone gRPC client.
         /// </summary>
         /// <param name="configuration">Host configuration root.</param>
         /// <returns>The same <paramref name="services"/> for fluent chaining.</returns>
@@ -158,6 +159,34 @@ public static class EdgeHostServiceCollectionExtensions
             services.AddSingleton<
                 IWorkloadCertificateIssuer,
                 PoCCsrSigningWorkloadCertificateIssuer>();
+
+            // Standalone Audit bridge client — channel must be https so workload
+            // client cert attaches. Generated DI auto-chains dual-factor outbound.
+            var auditAddressRaw = configuration["AUDIT_GRPC:Address"]
+                ?? configuration["AUDIT_GRPC__ADDRESS"];
+
+            if (auditAddressRaw.Falsey())
+            {
+                throw new InvalidOperationException(
+                    "AUDIT_GRPC:Address (or AUDIT_GRPC__ADDRESS) is required — "
+                    + "Compose default https://d2-audit:8443.");
+            }
+
+            var auditAddress = new Uri(auditAddressRaw!);
+
+            if (!string.Equals(
+                    auditAddress.Scheme,
+                    Uri.UriSchemeHttps,
+                    StringComparison.OrdinalIgnoreCase))
+            {
+                throw new InvalidOperationException(
+                    "AUDIT_GRPC:Address must be https:// (workload client cert "
+                    + "attaches only on TLS channels). Compose default: "
+                    + "https://d2-audit:8443.");
+            }
+
+            services.AddD2AuditGrpcClients(
+                new AuditGrpcClientOptions { Address = auditAddress });
 
             return services;
         }

@@ -12,6 +12,7 @@ export {
   $onEmit,
   resolveStringMapOption,
   resolveProcessKindByModule,
+  resolveRepoRootFromProjectRoot,
   resolveTsClientOutputDirs,
 } from "./emitter.js";
 export type {

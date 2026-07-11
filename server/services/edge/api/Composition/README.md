@@ -12,8 +12,8 @@ Copyright (c) DCSV. All rights reserved.
 
 | Extension | File | Role |
 | --- | --- | --- |
-| `AddD2EdgeHost` | `EdgeHostServiceCollectionExtensions.cs` | Full DI: defaults + MutualTls + three-bind + establishment + Redis + RMQ + KC + outbound CSR issuer |
-| `MapD2EdgeEndpoints` | `EdgeEndpointRouteBuilderExtensions.cs` | Health/metrics + well-known JWKS/OIDC + six KC gRPC Maps with `Scopes.Internal.Kc.*` |
+| `AddD2EdgeHost` | `EdgeHostServiceCollectionExtensions.cs` | Full DI: defaults + MutualTls + three-bind + establishment + Redis + RMQ + KC + outbound CSR issuer + **`AddD2AuditGrpcClients`** (`AUDIT_GRPC:Address`, https-only) |
+| `MapD2EdgeEndpoints` | `EdgeEndpointRouteBuilderExtensions.cs` | Health/metrics + well-known JWKS/OIDC + six KC gRPC Maps with `Scopes.Internal.Kc.*` + **`MapAllAuditBridges()`** (`MapPingAuditBridge` under `D2.Edge.Api.Bridges.Audit`) |
 
 ## DI locks (KEEP)
 
@@ -36,3 +36,4 @@ Copyright (c) DCSV. All rights reserved.
 | `KEYCUSTODIAN_DATABASE_URL` | PG URI → `ParsePostgresUri` |
 | `EDGE_MTLS:TrustAnchorPath` | Public CA root PEM/DER path |
 | `KEYCUSTODIAN_INFRA:RootKeyPath` | KC root-key directory |
+| `AUDIT_GRPC:Address` | Edge→Audit gRPC channel (`https://d2-audit:8443`); fail-loud if missing or non-https |

@@ -41,6 +41,9 @@ export const Scopes = {
     },
   },
   internal: {
+    audit: {
+      ping: "internal.audit.ping",
+    },
     kc: {
       cacert: "internal.kc.cacert",
       issue: "internal.kc.issue",
@@ -68,6 +71,7 @@ export const ALL_SCOPES: readonly string[] = [
   "auth.user.impersonate.consent",
   "auth.user.impersonate.force",
   "billing.payment.charge",
+  "internal.audit.ping",
   "internal.kc.cacert",
   "internal.kc.issue",
   "internal.kc.keyring",

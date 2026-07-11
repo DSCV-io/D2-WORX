@@ -148,6 +148,7 @@ export function emitBridgeRegistration(input: BridgeEmitInput): EmittedFile {
     input.registrationNamespace,
     input.grpcClientNamespace,
     input.dtoNamespace,
+    input.scopePolicy,
     gate?.extraUsings ?? [],
   );
   for (const u of usings) lines.push(`using ${u};`);
@@ -195,8 +196,10 @@ export function emitBridgeRegistration(input: BridgeEmitInput): EmittedFile {
     lines.push("");
   }
 
+  // Named ct: gRPC client signature is (input, pipelineOverride = null, ct = default)
+  // — positional (input, ct) would bind CancellationToken to pipelineOverride.
   lines.push(
-    `                    var result = await client.${pascalOp}Async(input, ct).ConfigureAwait(false);`,
+    `                    var result = await client.${pascalOp}Async(input, ct: ct).ConfigureAwait(false);`,
   );
 
   if (gate !== undefined) {
@@ -304,6 +307,7 @@ function buildBridgeUsings(
   registrationNamespace: string,
   grpcClientNamespace: string,
   dtoNamespace: string,
+  scopePolicy: ScopePolicy,
   extraUsings: readonly string[] = [],
 ): readonly string[] {
   const set = new Set<string>([
@@ -314,6 +318,10 @@ function buildBridgeUsings(
     "Microsoft.AspNetCore.Http",
     "Microsoft.AspNetCore.Routing",
   ]);
+
+  // Scope fluent uses Scopes.* constants (free-string ban on Edge.Api Map).
+  if (scopePolicy.kind === "any" || scopePolicy.kind === "all")
+    set.add("D2.Shared.Auth.Abstractions");
 
   if (grpcClientNamespace !== registrationNamespace)
     set.add(grpcClientNamespace);
@@ -328,20 +336,38 @@ function buildBridgeUsings(
   return [...set].sort();
 }
 
+/**
+ * Map a wire scope (`internal.audit.ping`) to the generated Scopes constant
+ * path (`Scopes.Internal.Audit.Ping`) — same PascalCase rule as the C#
+ * scopes source generator (first char upper, rest unchanged).
+ */
+export function wireScopeToScopesConstant(scope: string): string {
+  const parts = scope
+    .split(".")
+    .map((seg) =>
+      seg.length === 0 ? seg : seg[0]!.toUpperCase() + seg.slice(1),
+    );
+  return `Scopes.${parts.join(".")}`;
+}
+
 function buildAuthLines(policy: ScopePolicy): string[] {
   if (policy.kind === "any") {
-    const first = policy.scopes[0]!;
+    const first = wireScopeToScopesConstant(policy.scopes[0]!);
     const rest = policy.scopes.slice(1);
     const restArgs =
-      rest.length > 0 ? `, ${rest.map((s) => `"${s}"`).join(", ")}` : "";
-    return [`            builder.RequireAnyScope("${first}"${restArgs});`];
+      rest.length > 0
+        ? `, ${rest.map((s) => wireScopeToScopesConstant(s)).join(", ")}`
+        : "";
+    return [`            builder.RequireAnyScope(${first}${restArgs});`];
   }
   if (policy.kind === "all") {
-    const first = policy.scopes[0]!;
+    const first = wireScopeToScopesConstant(policy.scopes[0]!);
     const rest = policy.scopes.slice(1);
     const restArgs =
-      rest.length > 0 ? `, ${rest.map((s) => `"${s}"`).join(", ")}` : "";
-    return [`            builder.RequireAllScopes("${first}"${restArgs});`];
+      rest.length > 0
+        ? `, ${rest.map((s) => wireScopeToScopesConstant(s)).join(", ")}`
+        : "";
+    return [`            builder.RequireAllScopes(${first}${restArgs});`];
   }
   if (policy.kind === "harmless")
     return ["            builder.MarkAsD2HarmlessEndpoint();"];

@@ -1,0 +1,92 @@
+# -----------------------------------------------------------------------
+# Copyright (c) DCSV. All rights reserved.
+# -----------------------------------------------------------------------
+#
+# Dev override — true hot-reload for Edge + Audit.
+#
+# Usage (from repo root):
+#   docker compose -f infra/compose/compose.yml -f infra/compose/compose.dev.yml \
+#     --env-file .env.local --env-file .env.secrets up d2-edge d2-audit
+#
+# Hot-reload law:
+#   - build.target: dev
+#   - develop.watch action: sync for source trees
+#   - ignore: **/bin/**, **/obj/**
+#   - action: rebuild on **/*.csproj + Directory.*.props
+#   - never share host bin/obj with the container
+#
+# Acceptance: edit a C# file → container logs show watch rebuild → new behavior
+# without image rebuild; edit csproj → service rebuild path.
+
+services:
+  d2-edge:
+    build:
+      context: ../..
+      dockerfile: infra/docker/Dockerfile.edge
+      target: dev
+    develop:
+      watch:
+        - action: sync
+          path: ../../server/services/edge
+          target: /src/server/services/edge
+          ignore:
+            - "**/bin/**"
+            - "**/obj/**"
+        - action: sync
+          path: ../../server/shared/dotnet
+          target: /src/server/shared/dotnet
+          ignore:
+            - "**/bin/**"
+            - "**/obj/**"
+        - action: sync
+          path: ../../server/services/audit/clients
+          target: /src/server/services/audit/clients
+          ignore:
+            - "**/bin/**"
+            - "**/obj/**"
+        - action: sync
+          path: ../../contracts
+          target: /src/contracts
+        - action: rebuild
+          path: ../../server/services/edge
+          target: /src/server/services/edge
+          ignore:
+            - "**/*"
+            - "!**/*.csproj"
+        - action: rebuild
+          path: ../../server/Directory.Packages.props
+        - action: rebuild
+          path: ../../server/Directory.Build.props
+
+  d2-audit:
+    build:
+      context: ../..
+      dockerfile: infra/docker/Dockerfile.audit
+      target: dev
+    develop:
+      watch:
+        - action: sync
+          path: ../../server/services/audit
+          target: /src/server/services/audit
+          ignore:
+            - "**/bin/**"
+            - "**/obj/**"
+        - action: sync
+          path: ../../server/shared/dotnet
+          target: /src/server/shared/dotnet
+          ignore:
+            - "**/bin/**"
+            - "**/obj/**"
+        - action: sync
+          path: ../../contracts
+          target: /src/contracts
+        - action: rebuild
+          path: ../../server/services/audit
+          target: /src/server/services/audit
+          ignore:
+            - "**/*"
+            - "!**/*.csproj"
+        - action: rebuild
+          path: ../../server/Directory.Packages.props
+        - action: rebuild
+          path: ../../server/Directory.Build.props

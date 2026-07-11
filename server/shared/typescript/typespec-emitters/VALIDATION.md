@@ -286,6 +286,7 @@ The TestServer host in `D2.Edge.Tests` stands up the real `JwtAuthMiddleware` pi
 | Bridge emit fixture-shaped names match C# compile suite | pure pin `IBridgeFixtureGrpcClient` / `MapPingBridgeFixtureBridge` | `tests/bridge-emitter.test.ts` |
 | D2TSP014–019 catalog + severity error | `$lib.diagnostics` | `tests/lib.test.ts` (`lib_HostRoutingDiagnosticsPresent`) |
 | Well-known committed fixtures match regen under production routes ns (`edge/api/Routes/KeyCustodian/`) | byte-gate + deliberate-drift negatives | `tests/keycustodian-wellknown-emit.integration.test.ts` |
+| **Audit production homes (all 13 `AUDIT_COPY` destinations)** — Client DTOs/DI, handler iface, gRPC service/mappers/proto, `edge/api/Bridges/Audit/*` | regenerate↔committed byte-gate + deliberate-drift non-vacuity; bridge pins `RequireAnyScope(Scopes.Internal.Audit.Ping)` | `tests/audit-production-homes-byte-parity.integration.test.ts` |
 | Hand-written WellKnown TestServer consumers `using D2.Edge.Api.Routes.KeyCustodian` | compile + unit tests | `WellKnownRouteTests.cs` / `OidcDiscoveryEndToEndTests.cs` |
 | Bridge Map* compile/run vs real Auth.Http + Result + Fake gRPC client (§1.32) | TestServer scope + MAP-ii 200/503 + auth reject | `BridgeRegistrationValidationTests.cs` under `TypeSpecBridge/` |
 

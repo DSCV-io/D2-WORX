@@ -1,0 +1,52 @@
+<!--
+Copyright (c) DCSV. All rights reserved.
+-->
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>D2.Audit.Client</RootNamespace>
+  </PropertyGroup>
+
+  <!--
+    Audit consumer-facing client package.
+    Holds:
+      - transport DTOs for PingAudit (generated .g.cs, concern folder Ping/),
+      - IAuditGrpcClient + AuditGrpcClient + AddD2AuditGrpcClients (generated),
+      - Grpc.Tools Both ownership of the Audit Ping proto (compile-once).
+
+    Path residual: clients/dotnet/ (ADR singular client/ rename not applied).
+
+    Dependency law: references contracts + shared libs ONLY. No Domain/App/Infra/Api.
+  -->
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\..\shared\dotnet\result\core\D2.Shared.Result.csproj" />
+    <ProjectReference Include="..\..\..\..\shared\dotnet\utilities\D2.Shared.Utilities.csproj" />
+    <ProjectReference Include="..\..\..\..\shared\dotnet\result\grpc\D2.Shared.Result.Grpc.csproj" />
+    <ProjectReference Include="..\..\..\..\shared\dotnet\resilience\D2.Shared.Resilience.csproj" />
+    <ProjectReference Include="..\..\..\..\shared\dotnet\auth\outbound\D2.Shared.Auth.Outbound.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Google.Protobuf" />
+    <PackageReference Include="Grpc.Net.Client" />
+    <PackageReference Include="Grpc.Net.ClientFactory" />
+    <PackageReference Include="Grpc.Tools">
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
+    <PackageReference Include="Microsoft.Extensions.Http" />
+  </ItemGroup>
+
+  <!--
+    Compile-once Both: client stub + server base + wire messages live here.
+    Physical .g.proto is under Audit.Api/Protos/; this package is the sole
+    Grpc.Tools owner. Edge.Api ProjectReferences this package only (never
+    dual Protobuf; never ProjectReference Audit.Api for consumer types).
+  -->
+  <ItemGroup>
+    <Protobuf Include="$(D2RepoRoot)server\services\audit\api\Protos\audit_ping_ping_audit.g.proto"
+              GrpcServices="Both"
+              ProtoRoot="$(D2RepoRoot)server\services\audit\api\"
+              AdditionalImportDirs="$(D2ContractsRoot)protos" />
+  </ItemGroup>
+</Project>

@@ -6,6 +6,7 @@
 
 namespace D2.Edge.Api.Composition;
 
+using D2.Edge.Api.Bridges.Audit;
 using D2.Edge.Api.Grpc.KeyCustodian;
 using D2.Edge.Api.Routes.KeyCustodian;
 using D2.Shared.Auth.Abstractions;
@@ -23,9 +24,9 @@ public static class EdgeEndpointRouteBuilderExtensions
     {
         /// <summary>
         /// Maps Edge default health/metrics endpoints, production KeyCustodian
-        /// well-known routes (JWKS + OIDC), and the six KeyCustodian gRPC services
-        /// with <c>Scopes.Internal.Kc.*</c> scope constants. The Audit bridge Map
-        /// surface is not registered here.
+        /// well-known routes (JWKS + OIDC), the six KeyCustodian gRPC services
+        /// with <c>Scopes.Internal.Kc.*</c> scope constants, and the Audit
+        /// standalone HTTP→gRPC bridges.
         /// </summary>
         /// <returns>The same <paramref name="endpoints"/> for fluent chaining.</returns>
         /// <exception cref="ArgumentNullException">
@@ -60,6 +61,9 @@ public static class EdgeEndpointRouteBuilderExtensions
 
             endpoints.MapGrpcService<KeyCustodianOwnSealPrivateKeyService>()
                 .RequireAnyScope(Scopes.Internal.Kc.Seal.Open);
+
+            // Standalone Audit bridges (public HTTP → typed gRPC client hop).
+            endpoints.MapAllAuditBridges();
 
             return endpoints;
         }

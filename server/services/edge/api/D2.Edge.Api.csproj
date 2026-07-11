@@ -17,7 +17,10 @@ Copyright (c) DCSV. All rights reserved.
     <!-- KeyCustodian module-within-host composition. -->
     <ProjectReference Include="..\key-custodian\infra\D2.Edge.KeyCustodian.Infra.csproj" />
     <ProjectReference Include="..\key-custodian\client\D2.Edge.KeyCustodian.Client.csproj" />
+    <!-- Audit bridge client surface (DTOs + IAuditGrpcClient) — never Audit.Api. -->
+    <ProjectReference Include="..\..\audit\clients\dotnet\D2.Audit.Client.csproj" />
     <!-- Service-defaults aggregator (Auth / MutualTls / health / logging / telemetry). -->
+
     <ProjectReference Include="..\..\..\shared\dotnet\service-defaults\D2.Shared.ServiceDefaults.csproj" />
     <!-- Outbound dual-factor stack (workload leaf + forwarded JWT). -->
     <ProjectReference Include="..\..\..\shared\dotnet\auth\outbound\D2.Shared.Auth.Outbound.csproj" />

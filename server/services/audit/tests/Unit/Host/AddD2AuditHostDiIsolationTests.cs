@@ -1,0 +1,238 @@
+// -----------------------------------------------------------------------
+// <copyright file="AddD2AuditHostDiIsolationTests.cs" company="DCSV">
+// Copyright (c) DCSV. All rights reserved.
+// </copyright>
+// -----------------------------------------------------------------------
+
+namespace D2.Audit.Tests.Unit.Host;
+
+using D2.Audit.Api.Composition;
+using D2.Audit.Api.Kestrel;
+using D2.Audit.Api.Mtls;
+using D2.Audit.App.Application;
+using D2.Audit.App.Application.Handlers.Queries.PingAudit;
+using D2.Shared.AspNetCore.Mtls;
+using D2.Shared.Auth;
+using D2.Shared.Auth.Abstractions;
+using D2.Shared.Caching;
+using D2.Shared.Caching.Distributed.Redis;
+using D2.Shared.Caching.Tiered;
+using D2.Shared.Context.Abstractions;
+using D2.Shared.Handler;
+using D2.Shared.Utilities.Configuration;
+using D2.Shared.WorkloadIdentity;
+using Microsoft.AspNetCore.Server.Kestrel.Core;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
+
+/// <summary>
+/// DI isolation for <see cref="AuditHostServiceCollectionExtensions.AddD2AuditHost"/>:
+/// load-bearing seams resolve; JWT minter is structurally absent; Redis form
+/// is parsed; missing required config fails loud.
+/// </summary>
+[Trait("Category", "Unit")]
+public sealed class AddD2AuditHostDiIsolationTests : IDisposable
+{
+    private readonly AuditHostTestKit r_kit = new();
+
+    public void Dispose() => r_kit.Dispose();
+
+    [Fact]
+    public void AddD2AuditHost_ResolvesTieredCacheAndOriginInterceptor()
+    {
+        var descriptors = new ServiceCollection();
+        descriptors.AddD2AuditHost(r_kit.BuildConfiguration());
+
+        var tiered = descriptors.Single(d => d.ServiceType == typeof(ITieredCache));
+        tiered.ImplementationType.Should().Be<DefaultTieredCache>();
+        tiered.Lifetime.Should().Be(ServiceLifetime.Singleton);
+
+        // Establishment ServiceId is registered via WorkloadIdentity options.
+        using var sp = descriptors.BuildServiceProvider();
+        var serviceId = sp.GetRequiredService<IOptions<D2WorkloadIdentityOptions>>()
+            .Value.ServiceId;
+
+        serviceId.Should().Be(AuditHostIdentity.SERVICE_ID);
+        serviceId.Should().Be("audit");
+
+        var spiffe = SpiffeWorkloadIdentity.Create(AuditHostIdentity.SERVICE_ID);
+        spiffe.Success.Should().BeTrue();
+        spiffe.Data!.Uri.Should().Be("spiffe://d2.internal/workload/audit");
+    }
+
+    [Fact]
+    public void AddD2AuditHost_AuthConfigureOn_RegistersRedisTieredAndLiveness()
+    {
+        using var sp = BuildProvider();
+
+        sp.GetRequiredService<IOptions<AuthOptions>>().Value.Issuer
+            .Should().Be(new Uri(AuditHostTestKit.DEFAULT_ISSUER));
+
+        sp.GetRequiredService<IOptions<AuthOptions>>().Value.Audience
+            .Should().Be(WellKnownAudiences.D2_INTERNAL_AUDIENCE);
+
+        sp.GetRequiredService<IOptions<RedisCacheOptions>>().Value.ConnectionString
+            .Should().Be(
+                ConnectionStringHelper.ParseRedisUri(AuditHostTestKit.REDIS_URL));
+
+        sp.GetRequiredService<IOptions<RedisCacheOptions>>().Value.ConnectionString
+            .Should().NotStartWith("redis://");
+
+        var descriptors = new ServiceCollection();
+        descriptors.AddD2AuditHost(r_kit.BuildConfiguration());
+        descriptors.Any(d => d.ServiceType == typeof(ITieredCache)).Should().BeTrue();
+    }
+
+    [Fact]
+    public void AddD2AuditHost_AllowedWorkloads_ContainsEdge()
+    {
+        using var sp = BuildProvider();
+
+        sp.GetRequiredService<IOptions<D2MutualTlsOptions>>().Value.Enabled
+            .Should().BeTrue();
+
+        sp.GetRequiredService<IOptions<D2MutualTlsOptions>>().Value.AllowedWorkloads
+            .Should().ContainSingle().Which.Should().Be("edge");
+
+        sp.GetRequiredService<IOptions<D2MutualTlsOptions>>().Value.TrustAnchorsProvider
+            .Should().NotBeNull();
+    }
+
+    [Fact]
+    public void AddD2AuditHost_DoesNotRegisterIJwtSigningCapability()
+    {
+        using var sp = BuildProvider();
+
+        // Structural deny — no JWT minter type on the Audit host.
+        var descriptors = new ServiceCollection();
+        descriptors.AddD2AuditHost(r_kit.BuildConfiguration());
+
+        descriptors.Any(d =>
+                d.ServiceType.Name.Contains("JwtSigning", StringComparison.Ordinal)
+                || d.ImplementationType?.Name.Contains(
+                    "JwtSigning", StringComparison.Ordinal) == true)
+            .Should().BeFalse();
+    }
+
+    [Fact]
+    public void AddD2AuditHost_RegistersDualBindKestrelConfigure()
+    {
+        var descriptors = new ServiceCollection();
+        descriptors.AddD2AuditHost(r_kit.BuildConfiguration());
+
+        descriptors.Any(d =>
+                d.ServiceType == typeof(IConfigureOptions<KestrelServerOptions>)
+                && d.ImplementationType == typeof(AuditHttpsRoleKestrelConfigure))
+            .Should().BeTrue();
+    }
+
+    [Fact]
+    public void AddD2AuditHost_NullConfiguration_Throws()
+    {
+        var services = new ServiceCollection();
+        var act = () => services.AddD2AuditHost(null!);
+
+        act.Should().Throw<ArgumentNullException>();
+    }
+
+    [Fact]
+    public void AddD2AuditHost_MissingRedisUrl_Throws()
+    {
+        var services = new ServiceCollection();
+        var config = r_kit.BuildConfiguration(
+            new Dictionary<string, string?> { ["REDIS_URL"] = null });
+
+        var act = () => services.AddD2AuditHost(config);
+
+        act.Should().Throw<InvalidOperationException>()
+            .WithMessage("*REDIS_URL*");
+    }
+
+    [Fact]
+    public void AddD2AuditHost_MissingIssuer_Throws()
+    {
+        var services = new ServiceCollection();
+        var config = r_kit.BuildConfiguration(
+            new Dictionary<string, string?>
+            {
+                ["KEYCUSTODIAN_APP:IssuerBaseUrl"] = null,
+                ["KEYCUSTODIAN_APP:ISSUERBASEURL"] = null,
+            });
+
+        var act = () => services.AddD2AuditHost(config);
+
+        act.Should().Throw<InvalidOperationException>()
+            .WithMessage("*IssuerBaseUrl*");
+    }
+
+    [Fact]
+    public void AddD2AuditHost_IssuerMtlsPort_Throws()
+    {
+        var services = new ServiceCollection();
+        var config = r_kit.BuildConfiguration(
+            new Dictionary<string, string?>
+            {
+                ["KEYCUSTODIAN_APP:IssuerBaseUrl"] = "https://d2-edge:9443",
+            });
+
+        var act = () => services.AddD2AuditHost(config);
+
+        act.Should().Throw<InvalidOperationException>()
+            .WithMessage("*9443*");
+    }
+
+    [Fact]
+    public void AddD2AuditHost_MissingTrustAnchor_ThrowsWhenProviderBuilt()
+    {
+        // MutualTlsConfigure may defer TrustAnchorsProvider construction until
+        // options apply — pin the load path itself (same FromConfiguration used
+        // by AddD2AuditHost) fails loud without a path.
+        var config = r_kit.BuildConfiguration(
+            new Dictionary<string, string?>
+            {
+                [LoadPublicCaAnchors.TRUST_ANCHOR_PATH_KEY] = null,
+            });
+
+        var act = () => LoadPublicCaAnchors.FromConfiguration(config);
+
+        act.Should().Throw<InvalidOperationException>()
+            .WithMessage("*TrustAnchor*");
+    }
+
+    [Fact]
+    public void AddD2AuditApp_RegistersIPingAuditHandlerDescriptor()
+    {
+        var services = new ServiceCollection();
+        services.AddD2AuditApp();
+
+        services.Any(d => d.ServiceType == typeof(IPingAuditHandler))
+            .Should().BeTrue();
+        services.Single(d => d.ServiceType == typeof(IPingAuditHandler))
+            .ImplementationType.Should().Be<PingAuditHandler>();
+    }
+
+    [Fact]
+    public void AddD2AuditApp_ResolvesIPingAuditHandler()
+    {
+        // Descriptor presence ≠ resolvability (§1.3 / §1.31). Scaffold the
+        // seams HandlerContext needs, then GetRequiredService the App seam.
+        var services = new ServiceCollection();
+        services.AddLogging();
+        services.AddD2Handler();
+        services.AddSingleton<IRequestContext>(_ => new MutableRequestContext());
+        services.AddD2AuditApp();
+
+        using var sp = services.BuildServiceProvider();
+
+        sp.GetRequiredService<IPingAuditHandler>()
+            .Should().BeOfType<PingAuditHandler>();
+    }
+
+    private ServiceProvider BuildProvider()
+    {
+        var services = new ServiceCollection();
+        services.AddD2AuditHost(r_kit.BuildConfiguration());
+
+        return services.BuildServiceProvider();
+    }
+}

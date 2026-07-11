@@ -42,11 +42,14 @@ describe("emitBridgeRegistration — happy path", () => {
     expect(file.content).toContain("MapGet(");
     expect(file.content).toContain('"/internal/v1/audit/ping"');
     expect(file.content).toContain("IAuditGrpcClient client");
-    expect(file.content).toContain("client.PingAuditAsync(input, ct)");
+    expect(file.content).toContain("client.PingAuditAsync(input, ct: ct)");
     expect(file.content).toContain("AddD2AuditGrpcClients");
     expect(file.content).toContain("AuditGrpcClientOptions");
     expect(file.content).toContain("RequireAnyScope");
-    expect(file.content).toContain('"internal.audit.ping"');
+    // Free-string ban: Scopes.* constant, never wire literal at Map sites.
+    expect(file.content).toContain("Scopes.Internal.Audit.Ping");
+    expect(file.content).toContain("using D2.Shared.Auth.Abstractions;");
+    expect(file.content).not.toContain('RequireAnyScope("');
     // MAP-ii
     expect(file.content).toContain("var status = (int)result.StatusCode;");
     expect(file.content).toContain("if (status < 400)");
@@ -81,15 +84,16 @@ describe("emitBridgeRegistration — happy path", () => {
     expect(file.content).not.toContain("RequireAnyScope");
   });
 
-  it("requireAllScopes → RequireAllScopes", () => {
+  it("requireAllScopes → RequireAllScopes with Scopes.* constants", () => {
     const file = emitBridgeRegistration(
       makeBridgeInput({
         scopePolicy: { kind: "all", scopes: ["a.read", "a.write"] },
       }),
     );
     expect(file.content).toContain("RequireAllScopes");
-    expect(file.content).toContain('"a.read"');
-    expect(file.content).toContain('"a.write"');
+    expect(file.content).toContain("Scopes.A.Read");
+    expect(file.content).toContain("Scopes.A.Write");
+    expect(file.content).not.toContain('RequireAllScopes("');
   });
 
   it("rateTier + csrf markers present", () => {

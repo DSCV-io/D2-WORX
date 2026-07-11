@@ -6,28 +6,44 @@ Copyright (c) DCSV. All rights reserved.
 
 TypeSpec operation contracts — the hand-authored `.tsp` files that define service operations, models, and emitter test fixtures. The TypeSpec compiler + the D² emitter fleet transform these contracts into TypeScript client stubs, OpenAPI documents, gRPC service definitions, and protocol-buffer schemas.
 
-## Layout
+## Layout (per-module packages)
 
 ```
 contracts/typespec/
+├── README.md                              — this file
+├── tspconfig.yaml                         — RETIRED pointer (do not compile as primary)
 ├── common/
-│   └── temporal.tsp                    — shared temporal scalar types (Instant, LocalDate, etc.)
-├── fixtures/                           — emitter test fixtures (NOT live operations)
-│   ├── enum-shaped.tsp                 — enum wire-parity fixture
-│   ├── temporal-shaped.tsp             — temporal scalar fixture
-│   ├── sign-shaped.tsp                 — signing operation fixture (FixtureKeySigner namespace)
-│   ├── server-push-shaped.tsp          — SSE/server-push fixture
-│   ├── resilience-predicate-shaped.tsp — @d2Resilience decorator fixture
-│   └── openapi-shaped.tsp              — OpenAPI emitter fixture
-└── key-custodian/
-    └── key-custodian.tsp               — KeyCustodian live operation (GetJwks)
+│   └── temporal.tsp                       — shared temporal scalar types
+├── fixtures/                              — emitter test fixtures (NOT live product ops)
+│   ├── enum-shaped.tsp
+│   ├── temporal-shaped.tsp
+│   ├── sign-shaped.tsp
+│   ├── server-push-shaped.tsp
+│   ├── resilience-predicate-shaped.tsp
+│   └── openapi-shaped.tsp
+├── key-custodian/
+│   ├── key-custodian.tsp                  — KeyCustodian live operations
+│   └── tspconfig.yaml                     — KC emit options (edge-module) + co-fixtures
+└── audit/
+    ├── audit.tsp                          — Audit standalone multiproc stub (PingAudit)
+    └── tspconfig.yaml                     — Audit emit options (standalone)
 ```
+
+**Law:** one live module folder = one compile unit. Each module owns `tspconfig.yaml` beside its `.tsp`. Root `tspconfig.yaml` is **not** the KeyCustodian config and must not be used as the primary emit entry.
+
+## Regen
+
+```text
+pnpm --filter @d2/typespec-emitters regen
+# or
+node tools/scripts/regen-typespec-emitters.mjs
+```
+
+The runner executes **N× (tsp compile packageᵢ + COPY_MANIFEST subset for packageᵢ)** in order (KeyCustodian package, then Audit). It never batch-compiles into the shared `dist/generated` then runs one COPY (second compile would clobber the first). Nested `emitter-output-dir` values resolve to the **same** shared `server/shared/typescript/typespec-emitters/dist/generated` (extra `../` from module folders).
 
 ## Consumed by
 
-- **TypeScript / TypeSpec** — [`server/shared/typescript/typespec-emitters/`](../../server/shared/typescript/typespec-emitters/README.md) (the emitter fleet — processes `.tsp` files and emits TypeScript stubs, OpenAPI specs, proto definitions, and gRPC client code); the [`@d2Resilience`](../../server/shared/typescript/typespec-decorators/README.md) decorator library supplies the custom decorators these contracts use
-
-The regeneration runner is `tools/scripts/regen-typespec-emitters.mjs`, which drives the TypeSpec compiler + emitter fleet over all contracts in this directory.
+- **TypeScript / TypeSpec** — [`server/shared/typescript/typespec-emitters/`](../../server/shared/typescript/typespec-emitters/README.md) (the emitter fleet); the [`@d2Resilience`](../../server/shared/typescript/typespec-decorators/README.md) decorator library supplies custom decorators
 
 ## See also
 

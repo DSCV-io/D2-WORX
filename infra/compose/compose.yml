@@ -477,14 +477,93 @@ services:
     restart: unless-stopped
 
   # ==========================================================================
-  # Application Services — added as services come online
+  # Application Services
   #
-  # d2-edge          (.NET — Edge unified gateway: routing + auth + signalr + middleware)
-  # d2-audit         (.NET — append-only audit store, encrypted RMQ payloads)
-  # d2-courier       (.NET — outbound email + SMS delivery)
-  # d2-notifications (.NET — in-app feed)
-  # d2-files         (.NET — file management + processing + variants; SeaweedFS storage)
-  # d2-seaweedfs     (storage backend for user files)
-  # d2-web           (SvelteKit BFF using develop.watch + dotnet watch pattern)
-  # d2-dkron-mgr     (.NET — Dkron job sync; pending replacement decision)
+  # d2-edge / d2-audit — multiproc stub Audit + Edge bridge (JWT+mTLS dual-factor).
+  # Remaining: d2-courier, d2-notifications, d2-files, d2-seaweedfs, d2-web, …
+  # Healthchecks use wget installed in Dockerfiles — never assume curl on aspnet.
   # ==========================================================================
+
+  d2-audit:
+    build:
+      context: ../..
+      dockerfile: infra/docker/Dockerfile.audit
+      target: ${D2_DOTNET_IMAGE_TARGET:-prod}
+    container_name: ${AUDIT_NAME:-d2-audit}
+    env_file:
+      - ../../.env.local
+      - ../../.env.secrets
+    environment:
+      ASPNETCORE_URLS: ""
+      OTEL_SERVICE_NAME: d2-audit
+      KEYCUSTODIAN_APP__ISSUERBASEURL: ${KEYCUSTODIAN_APP__ISSUERBASEURL:-https://d2-edge:8443}
+      REDIS_URL: ${REDIS_URL:-redis://d2-redis:6379}
+      AUDIT_MTLS__TRUST_ANCHOR_PATH: ${AUDIT_MTLS__TRUST_ANCHOR_PATH:-/secrets/keycustodian/ca-root.crt}
+      # Kestrel listen cert (from gen-dev-keys.sh secrets/listen/)
+      Kestrel__Certificates__Default__Path: ${AUDIT_KESTREL_CERT_PATH:-/secrets/listen/audit-server.crt}
+      Kestrel__Certificates__Default__KeyPath: ${AUDIT_KESTREL_KEY_PATH:-/secrets/listen/audit-server.key}
+    volumes:
+      - ../../secrets/keycustodian/ca-root.crt:/secrets/keycustodian/ca-root.crt:ro
+      - ../../secrets/listen/audit-server.crt:/secrets/listen/audit-server.crt:ro
+      - ../../secrets/listen/audit-server.key:/secrets/listen/audit-server.key:ro
+    networks: [d2-network]
+    depends_on:
+      d2-redis:
+        condition: service_healthy
+    # wget installed in Dockerfile.audit — no curl assumption on aspnet base.
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:8080/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 40s
+    restart: unless-stopped
+
+  d2-edge:
+    build:
+      context: ../..
+      dockerfile: infra/docker/Dockerfile.edge
+      target: ${D2_DOTNET_IMAGE_TARGET:-prod}
+    container_name: ${EDGE_NAME:-d2-edge}
+    ports:
+      - "${EDGE_PORT:-8080}:8080"
+      - "${EDGE_HTTPS_PORT:-8443}:8443"
+      - "${EDGE_MTLS_PORT:-9443}:9443"
+    env_file:
+      - ../../.env.local
+      - ../../.env.secrets
+    environment:
+      ASPNETCORE_URLS: ""
+      OTEL_SERVICE_NAME: d2-edge
+      KEYCUSTODIAN_APP__ISSUERBASEURL: ${KEYCUSTODIAN_APP__ISSUERBASEURL:-https://d2-edge:8443}
+      REDIS_URL: ${REDIS_URL:-redis://d2-redis:6379}
+      RABBITMQ_URL: ${RABBITMQ_URL:-amqp://guest:guest@d2-rabbitmq:5672/}
+      KEYCUSTODIAN_DATABASE_URL: ${KEYCUSTODIAN_DATABASE_URL:-postgresql://d2:d2@d2-postgres:5432/d2-keycustodian}
+      EDGE_MTLS__TRUST_ANCHOR_PATH: ${EDGE_MTLS__TRUST_ANCHOR_PATH:-/secrets/keycustodian/ca-root.crt}
+      AUDIT_GRPC__ADDRESS: ${AUDIT_GRPC__ADDRESS:-https://d2-audit:8443}
+      Kestrel__Certificates__Default__Path: ${EDGE_KESTREL_CERT_PATH:-/secrets/listen/edge-server.crt}
+      Kestrel__Certificates__Default__KeyPath: ${EDGE_KESTREL_KEY_PATH:-/secrets/listen/edge-server.key}
+    volumes:
+      - ../../secrets/keycustodian/ca-root.crt:/secrets/keycustodian/ca-root.crt:ro
+      - ../../secrets/keycustodian/ca-intermediate.crt:/secrets/keycustodian/ca-intermediate.crt:ro
+      - ../../secrets/keycustodian/ca-intermediate.key:/secrets/keycustodian/ca-intermediate.key:ro
+      - ../../secrets/keycustodian/root.key:/secrets/keycustodian/root.key:ro
+      - ../../secrets/listen/edge-server.crt:/secrets/listen/edge-server.crt:ro
+      - ../../secrets/listen/edge-server.key:/secrets/listen/edge-server.key:ro
+    networks: [d2-network]
+    depends_on:
+      d2-postgres:
+        condition: service_healthy
+      d2-redis:
+        condition: service_healthy
+      d2-rabbitmq:
+        condition: service_healthy
+      d2-audit:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:8080/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 60s
+    restart: unless-stopped
