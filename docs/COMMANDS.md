@@ -12,6 +12,7 @@ Copyright (c) DCSV. All rights reserved.
 ## Contents
 
 - [Docker Compose (service lifecycle)](#docker-compose-service-lifecycle)
+  - [Application multiproc stubs (`d2-edge` / `d2-audit`)](#application-multiproc-stubs-d2-edge--d2-audit)
 - [Build](#build)
 - [Rider/ReSharper Inspections (.NET)](#riderresharper-inspections-net)
 - [Test](#test)
@@ -39,6 +40,21 @@ make up                                                                    # Sta
 make down                                                                  # Stop all services
 docker compose -f infra/compose/compose.yml --env-file .env.local --env-file .env.secrets up -d      # Direct invocation
 ```
+
+### Application multiproc stubs (`d2-edge` / `d2-audit`)
+
+Compose service names: **`d2-edge`** (Edge host + KC + Audit bridge) and **`d2-audit`** (standalone multiproc S2S stub).
+
+```bash
+# From repo root — start only the multiproc pair (infra deps via depends_on)
+docker compose -f infra/compose/compose.yml \
+  --env-file .env.local --env-file .env.secrets \
+  up -d d2-edge d2-audit
+```
+
+- Ports (host defaults): Edge HTTP `8080`, Issuer HTTPS `8443`, mTLS HTTPS `9443`; Audit dual-bind internal.
+- Operator dual-process JWT+mTLS smoke (not agent automated proof): see [`server/services/audit/README.md`](../server/services/audit/README.md).
+- **Never** long-lived `dotnet run` / Compose-up e2e from agent sessions as multiproc proof.
 
 ## Build
 

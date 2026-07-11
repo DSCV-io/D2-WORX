@@ -107,7 +107,15 @@ The keyring-domain authority policy binds from its own `KEYCUSTODIAN_KEYRING_AUT
 
 ### Run locally
 
-KeyCustodian runs as part of Edge via Docker Compose. Start the Edge host with `docker compose up d2-edge` from `infra/compose/` once the **0030** host service is landed (Compose service name **`d2-edge`**, not `edge`). Until then, exercise KC via the Edge unit/integration test projects.
+KeyCustodian runs as part of Edge via Docker Compose. From `infra/compose/`, start the Edge host:
+
+```bash
+docker compose -f infra/compose/compose.yml \
+  --env-file .env.local --env-file .env.secrets \
+  up -d d2-edge
+```
+
+Compose service name is **`d2-edge`** (not `edge`). Unit and integration tests under `server/services/edge/tests/` exercise KC without requiring a live host.
 
 ### Health check / debugging
 
@@ -128,7 +136,7 @@ Every cross-process call to KeyCustodian (and to any other mesh service) travels
 - **.NET** — inject `WorkloadLeafClient` (`server/shared/dotnet/auth/outbound/WorkloadCertificate/WorkloadLeafClient.cs`). It generates a FRESH ECDSA P-256 keypair locally, submits only a DER PKCS#10 certificate-signing request (`issueLeaf`, scope `internal.kc.issue`), and pairs the returned leaf with its local private key — the private key never leaves the process and never crosses any wire. `GetCurrentLeafAsync` serves the current leaf (refresh-ahead: a leaf inside its refresh margin is proactively reissued under a single-flight while the still-valid one keeps serving); `ForceReissueAsync` reissues on demand. A returned leaf whose public key does not equal the local key is rejected before any cache write (mismatch defense).
 - **Node** — use `@d2/key-custodian-client`'s `WorkloadLeafClient` (see [`client-ts/README.md`](client-ts/README.md)) — the behavioral twin: fresh P-256 keypair + PKCS#10 CSR via `@peculiar/x509`, `currentChannelCredentials()` assembles the `ChannelCredentials.createSsl(...)` presenting the leaf chain + key and pinning the fetched CA bundle.
 - **Trust anchor** — fetch the CA chain via `getCaCertificate` (scope `internal.kc.cacert`): the active root (the anchor a workload pins) + the active issuing intermediate, both public DER. KeyCustodian ignores the CSR's subject entirely — the leaf's SPIFFE SAN is ALWAYS KeyCustodian's authenticated view of the caller, so impersonation-by-subject is structurally unrepresentable.
-- **First-leaf bootstrap (open design)** — obtaining the leaf above requires already holding a leaf to mutual-TLS-call KeyCustodian; the chicken-and-egg first-leaf is a deployment-orchestrator concern. The `WorkloadLeafClient` and the KeyCustodian issuance path are complete and cross-runtime-proven; the live cross-process gRPC issuer stub is host-gated (wiring is the A1-phase step, not a gap in the client or issuance implementation). The first-leaf provisioning mechanism is a tracked open design item: a future ADR will settle the orchestrator-provisioned bootstrap approach. Tracked in [`docs/v2/PHASE_3.md`](../../../../docs/v2/PHASE_3.md) (build-order step 6 / open prerequisite: first-leaf bootstrap identity).
+- **First-leaf bootstrap (open design)** — obtaining the leaf above requires already holding a leaf to mutual-TLS-call KeyCustodian; the chicken-and-egg first-leaf is a deployment-orchestrator concern. The `WorkloadLeafClient` and the KeyCustodian issuance path are complete and cross-runtime-proven. Edge host maps the cross-process issuance surface (`MapGrpcService<KeyCustodianCertificateAuthorityService>` with scope `Scopes.Internal.Kc.Issue`) — live first-leaf provisioning remains the open residual (orchestrator-provisioned bootstrap identity; Map + issuance path are complete).
 
 ### Step 2 — symmetric payload encryption (shared keyring)
 

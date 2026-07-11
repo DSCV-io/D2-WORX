@@ -8,7 +8,7 @@ Copyright (c) DCSV. All rights reserved.
 
 **Who / what:** Operators and host integrators — the unified Edge gateway process for D²-WORX (composition root + co-hosted KeyCustodian + placeholder module homes).
 
-> **Status: partially shipped** — KeyCustodian module is in-tree with unit + integration CI; **host composition root** (`D2.Edge.Api`) ships `AddD2EdgeHost` / `UseD2EdgePipeline` / `MapD2EdgeEndpoints` / three-bind Kestrel / well-known Map / CSR outbound issuer. Placeholder modules remain stubs.
+> **Status: partially shipped** — KeyCustodian module is in-tree with unit + integration CI; **host composition root** (`D2.Edge.Api`) ships `AddD2EdgeHost` / `UseD2EdgePipeline` / `MapD2EdgeEndpoints` / three-bind Kestrel / well-known Map / six KC gRPC Maps / CSR outbound issuer / Audit HTTP→gRPC bridge + Compose multiproc stubs (`d2-edge` / `d2-audit`). Placeholder modules remain stubs.
 
 ## Purpose
 
@@ -42,24 +42,36 @@ Edge is intentionally "thick" — middleware, routing, auth, real-time push, Who
 
 **Shipped on Edge.Api:**
 
-- Health / alive / metrics via `MapD2DefaultEndpoints`
+- Health / alive / metrics via `MapD2DefaultEndpoints` (JWT-free health law)
 - `GET /.well-known/jwks.json` + `GET /.well-known/openid-configuration`
 - Six KeyCustodian gRPC `MapGrpcService` bindings with `Scopes.Internal.Kc.*`
 - Three-bind Kestrel: HTTP 8080 / Issuer HTTPS 8443 (no client cert) / mTLS HTTPS 9443 (require client cert)
+- Audit HTTP→gRPC bridge (`MapAllAuditBridges` / `GET /api/v1/audit/ping`) via `IAuditGrpcClient` dual-factor outbound (JWT + mTLS)
+- Compose services **`d2-edge`** + **`d2-audit`** (dual-target Docker; multiproc proof = operator local JWT+mTLS smoke — not dual-Kestrel CI)
 
-**Not registered:**
+**Not registered (product tails):**
 
-- Audit bridge client + multi-process Compose
+- Product Auth mint / JWT minter capability (structurally absent on general host)
+- YARP reverse proxy, rate-limit body, product Auth REST surface
 
 ## Composition pointers
 
 - DI: [api/Composition/README.md](api/Composition/README.md)
 - Pipeline 6A: [api/Pipeline/README.md](api/Pipeline/README.md)
 - Three-bind / dual-URL: [api/README.md](api/README.md)
+- Audit multiproc smoke: [../audit/README.md](../audit/README.md)
 
 ## Run locally
 
-Compose service name (when present in compose files): **`d2-edge`**. This tree's multi-process Compose host wiring is empty-shell; local operators use a Web-project profile or shell with the required env keys below — **do not** start long-lived `dotnet run` from agent sessions.
+Compose service name: **`d2-edge`**. From repo root:
+
+```bash
+docker compose -f infra/compose/compose.yml \
+  --env-file .env.local --env-file .env.secrets \
+  up -d d2-edge d2-audit
+```
+
+Agents must **not** start long-lived `dotnet run` / Compose-up e2e as automated proof. Operator multiproc JWT+mTLS smoke is documented in the Audit README.
 
 **Required configuration (container / env SoT):**
 

@@ -11,9 +11,12 @@ using D2.Audit.Api.Kestrel;
 using D2.Audit.Api.Mtls;
 using D2.Audit.App.Application;
 using D2.Audit.App.Application.Handlers.Queries.PingAudit;
+using D2.Edge.KeyCustodian.Client.Signing;
 using D2.Shared.AspNetCore.Mtls;
 using D2.Shared.Auth;
 using D2.Shared.Auth.Abstractions;
+using D2.Shared.Auth.Abstractions.Jwks;
+using D2.Shared.Auth.Abstractions.Sessions;
 using D2.Shared.Caching;
 using D2.Shared.Caching.Distributed.Redis;
 using D2.Shared.Caching.Tiered;
@@ -81,6 +84,26 @@ public sealed class AddD2AuditHostDiIsolationTests : IDisposable
         var descriptors = new ServiceCollection();
         descriptors.AddD2AuditHost(r_kit.BuildConfiguration());
         descriptors.Any(d => d.ServiceType == typeof(ITieredCache)).Should().BeTrue();
+
+        // Test bar B residual: session liveness + JWKS + JWT validation when auth on.
+        descriptors.Any(d => d.ServiceType == typeof(ISessionLivenessTracker))
+            .Should().BeTrue();
+        descriptors.Any(d => d.ServiceType == typeof(IJwksProvider))
+            .Should().BeTrue();
+
+        // JwtValidator is internal to D2.Shared.Auth — pin by type name (not public).
+        descriptors.Any(d =>
+                d.ServiceType.Name is "JwtValidator" or "ClaimsToContextMapper"
+                || d.ImplementationType?.Name is "JwtValidator" or "ClaimsToContextMapper")
+            .Should().BeTrue();
+
+        descriptors.Any(d => d.ServiceType == typeof(IDistributedCache))
+            .Should().BeTrue();
+
+        // Pure resolve of public auth seams (no Redis Connect).
+        sp.GetRequiredService<IJwksProvider>().Should().NotBeNull();
+        sp.GetRequiredService<IOptions<D2WorkloadIdentityOptions>>().Value.ServiceId
+            .Should().Be(AuditHostIdentity.SERVICE_ID);
     }
 
     [Fact]
@@ -103,14 +126,13 @@ public sealed class AddD2AuditHostDiIsolationTests : IDisposable
     {
         using var sp = BuildProvider();
 
-        // Structural deny — no JWT minter type on the Audit host.
+        // Structural deny — dual-pin mirrors Edge: GetService null + typeof absent.
+        sp.GetService<IJwtSigningCapability>().Should().BeNull();
+
         var descriptors = new ServiceCollection();
         descriptors.AddD2AuditHost(r_kit.BuildConfiguration());
 
-        descriptors.Any(d =>
-                d.ServiceType.Name.Contains("JwtSigning", StringComparison.Ordinal)
-                || d.ImplementationType?.Name.Contains(
-                    "JwtSigning", StringComparison.Ordinal) == true)
+        descriptors.Any(d => d.ServiceType == typeof(IJwtSigningCapability))
             .Should().BeFalse();
     }
 

@@ -36,5 +36,7 @@ Copyright (c) DCSV. All rights reserved.
     <ProjectReference Include="..\api\D2.Audit.Api.csproj" />
     <ProjectReference Include="..\app\D2.Audit.App.csproj" />
     <ProjectReference Include="..\clients\dotnet\D2.Audit.Client.csproj" />
+    <!-- typeof(IJwtSigningCapability) dual-pin for structural deny (never registered). -->
+    <ProjectReference Include="..\..\edge\key-custodian\client\D2.Edge.KeyCustodian.Client.csproj" />
   </ItemGroup>
 </Project>

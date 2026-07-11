@@ -14,9 +14,9 @@
 # Or directly:
 #   docker compose -f infra/compose/compose.yml --env-file .env.local --env-file .env.secrets up -d
 #
-# Application service blocks (d2-edge, d2-files, d2-courier, d2-notifications,
-# d2-audit, d2-web) are added as services come online.
-# This file currently declares only the infrastructure layer.
+# Application multiproc stubs live here: d2-edge + d2-audit (JWT+mTLS dual-factor
+# bridge). Remaining app services (d2-files, d2-courier, d2-notifications, d2-web, …)
+# are added as those services come online.
 
 name: d2-worx
 
@@ -209,8 +209,8 @@ services:
       MINIO_ROOT_PASSWORD: ${S3_PASSWORD}
       # Container names + endpoints for config.alloy env() references.
       CADVISOR_NAME: ${CADVISOR_NAME}
-      # Set EDGE_METRICS_ENDPOINT when d2-edge is added to the stack.
-      EDGE_METRICS_ENDPOINT: "${EDGE_SERVICE_NAME:-d2-edge}:${EDGE_PORT:-5000}"
+      # d2-edge multiproc stub scrapes on container metrics port 8080 (not host publish).
+      EDGE_METRICS_ENDPOINT: "${EDGE_SERVICE_NAME:-d2-edge}:8080"
       PG_EXPORTER_NAME: ${PG_EXPORTER_NAME}
       REDIS_EXPORTER_NAME: ${REDIS_EXPORTER_NAME}
       RABBITMQ_NAME: ${RABBITMQ_NAME}

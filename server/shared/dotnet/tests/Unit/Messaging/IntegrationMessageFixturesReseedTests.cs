@@ -7,7 +7,6 @@
 namespace D2.Shared.Tests.Unit.Messaging;
 
 using AwesomeAssertions;
-using D2.Shared.Messaging;
 using D2.Shared.Messaging.RabbitMq.Encryption;
 using D2.Shared.Tests.Integration.Messaging;
 using Xunit;

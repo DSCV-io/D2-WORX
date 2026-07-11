@@ -18,10 +18,13 @@ using D2.Edge.KeyCustodian.Infra.Configuration;
 using D2.Shared.AspNetCore.Mtls;
 using D2.Shared.Auth;
 using D2.Shared.Auth.Abstractions;
+using D2.Shared.Auth.Abstractions.Jwks;
+using D2.Shared.Auth.Abstractions.Sessions;
 using D2.Shared.Auth.Outbound.WorkloadCertificate;
 using D2.Shared.Caching;
 using D2.Shared.Caching.Distributed.Redis;
 using D2.Shared.Caching.Tiered;
+using D2.Shared.Messaging;
 using D2.Shared.Messaging.RabbitMq.Connection;
 using D2.Shared.Utilities.Configuration;
 using D2.Shared.WorkloadIdentity;
@@ -150,6 +153,72 @@ public sealed class AddD2EdgeHostDiIsolationTests : IDisposable
 
         descriptors.Any(d => d.ServiceType == typeof(IJwtSigningCapability))
             .Should().BeFalse();
+    }
+
+    [Fact]
+    public void AddD2EdgeHost_SeamInventory_RegistersAuthCacheOriginAndMessaging()
+    {
+        // Test bar B residual seams — descriptor + pure resolve where safe;
+        // Redis/RMQ first-use documented (no Connect in isolation).
+        var descriptors = new ServiceCollection();
+        descriptors.AddD2EdgeHost(r_kit.BuildConfiguration());
+
+        descriptors.Any(d => d.ServiceType == typeof(IMessageBus))
+            .Should().BeTrue("RMQ IMessageBus is registered; Connect is first-use");
+
+        descriptors.Any(d => d.ServiceType == typeof(ISessionLivenessTracker))
+            .Should().BeTrue("AuthConfigure ON registers session liveness");
+
+        descriptors.Any(d => d.ServiceType == typeof(IJwksProvider))
+            .Should().BeTrue("AuthConfigure ON registers JWKS provider");
+
+        // JwtValidator is internal to D2.Shared.Auth — pin by type name (not public).
+        descriptors.Any(d =>
+                d.ServiceType.Name is "JwtValidator" or "ClaimsToContextMapper"
+                || d.ImplementationType?.Name is "JwtValidator" or "ClaimsToContextMapper")
+            .Should().BeTrue("AuthConfigure ON registers JWT validation types");
+
+        descriptors.Any(d => d.ServiceType == typeof(IDistributedCache))
+            .Should().BeTrue("Redis distributed cache registration present");
+
+        // Pure resolve of public auth options + JWKS (no Redis Connect).
+        using var sp = BuildProvider();
+        sp.GetRequiredService<IJwksProvider>().Should().NotBeNull();
+        sp.GetRequiredService<IOptions<AuthOptions>>().Value.Issuer.Should().NotBeNull();
+
+        // RequestOrigin Edge + Grpc establishment ServiceId pin.
+        sp.GetRequiredService<IOptions<D2WorkloadIdentityOptions>>().Value.ServiceId
+            .Should().Be(EdgeHostIdentity.SERVICE_ID);
+
+        // Source pin: composition registers both establishment extensions.
+        var originPath = EdgeHostTestKit.ResolveEdgeApiSourceFile(
+            "Composition", "EdgeHostServiceCollectionExtensions.cs");
+        var originSource = File.ReadAllText(originPath);
+        originSource.Should().Contain("AddD2RequestOriginEdge");
+        originSource.Should().Contain("AddD2RequestOriginGrpc");
+    }
+
+    [Fact]
+    public void AddD2EdgeHost_OutboundDualFactor_IsRegistered()
+    {
+        // AuditBridge no-cert hop Evidence = outbound dual-factor DI + channel https
+        // (not MutualTlsSigner inbound harness).
+        var descriptors = new ServiceCollection();
+        descriptors.AddD2EdgeHost(r_kit.BuildConfiguration());
+
+        descriptors.Any(d =>
+                d.ServiceType == typeof(IWorkloadCertificateIssuer)
+                || d.ImplementationType == typeof(PoCCsrSigningWorkloadCertificateIssuer))
+            .Should().BeTrue();
+
+        // Source pin: composition calls both outbound dual-factor extensions.
+        var path = EdgeHostTestKit.ResolveEdgeApiSourceFile(
+            "Composition", "EdgeHostServiceCollectionExtensions.cs");
+        File.Exists(path).Should().BeTrue();
+        var source = File.ReadAllText(path);
+
+        source.Should().Contain("AddD2WorkloadCertificateOutbound()");
+        source.Should().Contain("AddD2ForwardedJwtOutbound()");
     }
 
     [Fact]

@@ -471,10 +471,11 @@ public sealed class DefaultLocalCacheUnitTests
     [InlineData("ReleaseLockAsync")]
     public async Task Dispose_EveryPublicOp_ThrowsObjectDisposedException(string opName)
     {
-        using var cache = NewCache();
+        var cache = NewCache();
         cache.Dispose();
 
-        var act = async () => await InvokePublicOpAsync(cache, opName);
+        // Do not capture a using-disposed local in the async lambda (inspectcode).
+        Func<Task> act = () => InvokePublicOpAsync(cache, opName);
         await act.Should().ThrowAsync<ObjectDisposedException>(because: opName);
     }
 
