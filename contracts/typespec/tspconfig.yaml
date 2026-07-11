@@ -59,10 +59,10 @@ options:
 
     # C# namespace for the generated gRPC service-impl class + transport mapper.
     # Distinct from proto-csharp-namespace so proto types and service impl do not collide.
-    # grpc-service-namespace remains the test-home ns while Edge.Api lacks Grpc.Tools
-    # ownership for thin-server scatter (production retarget + COPY_MANIFEST is a
-    # separate host-layout change).
-    grpc-service-namespace: "D2.Edge.Tests.TypeSpecGrpc.Generated"
+    # Production Edge.Api home (thin services + co-located transport mappers).
+    # Fixture SignFixture* services stay test-owned paths (COPY_MANIFEST-excluded)
+    # and fixture byte-parity hardcodes D2.Edge.Tests.TypeSpecGrpc.Generated.
+    grpc-service-namespace: "D2.Edge.Api.Grpc.KeyCustodian"
 
     # Process kind per @d2ServedBy module — closed set: edge-module | standalone.
     # edge-module: public HTTP Map* + gRPC server live on the Edge host (in-process façade).

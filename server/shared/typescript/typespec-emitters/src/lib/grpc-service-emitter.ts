@@ -243,8 +243,11 @@ function emitServiceClass(
   // D2.Shared.Result is needed only when the request mapper returns D2Result<Input>
   // (enum-bearing request) so the service can short-circuit a parse failure.
   if (requestHasEnums) lines.push("using D2.Shared.Result;");
-  lines.push("using D2.Shared.Result.Grpc;");
-  lines.push("using Grpc.Core;");
+  // global:: on Result.Grpc + Grpc.Core: serviceImplNs may contain a ".Grpc."
+  // segment (production Edge.Api.Grpc.KeyCustodian) that would otherwise shadow
+  // bare `using Grpc.Core` into D2.Edge.Api.Grpc.Core (CS0234).
+  lines.push("using global::D2.Shared.Result.Grpc;");
+  lines.push("using global::Grpc.Core;");
   // When delegating through a façade whose interface lives in a different namespace,
   // add a using for that namespace so the ctor parameter type resolves.
   if (
@@ -462,10 +465,12 @@ function emitTransportMappers(
   lines.push(
     `            var response = new ${protoResponseName} { Result = result.ToProto() };`,
   );
+  lines.push("");
   lines.push(`            if (result.IsOk && result.Data is not null)`);
   lines.push(
     `                response.Data = result.Data.ToProto${responseModelName}();`,
   );
+  lines.push("");
   lines.push("            return response;");
   lines.push("        }");
   lines.push("    }");

@@ -956,8 +956,11 @@ The byte-parity test suites pin the emitter output against committed fixture fil
 server/services/edge/key-custodian/client/                            ← GetJwks DTO fixtures + façade interface (Client namespace)
 server/services/edge/key-custodian/app/Application/                   ← façade impl + DI extension fixtures (app namespace)
 server/services/edge/key-custodian/app/Application/Handlers/…/GetJwks/ ← GetJwks handler interface (app CQRS namespace)
-server/services/edge/tests/Unit/KeyCustodian/TypeSpecGrpc/Generated/  ← gRPC service + mapper fixtures
-server/services/edge/tests/Unit/KeyCustodian/TypeSpecGrpc/Protos/     ← .proto fixture
+server/services/edge/api/Grpc/KeyCustodian/                           ← production KeyCustodian thin gRPC services (six `*Service.g.cs`)
+server/services/edge/api/Mappers/KeyCustodian/                        ← production KeyCustodian transport mappers (six `*TransportMappers.g.cs`)
+server/services/edge/api/Protos/KeyCustodian/                         ← production KeyCustodian `.g.proto` files (six; Grpc.Tools compile-once)
+server/services/edge/tests/Unit/KeyCustodian/TypeSpecGrpc/Generated/  ← fixture-only gRPC (SignFixture* services/mappers + WireVersion / wire-identity)
+server/services/edge/tests/Unit/KeyCustodian/TypeSpecGrpc/Protos/     ← fixture-only `.proto` (sign_fixture_*; production protos live under api/Protos)
 server/services/edge/tests/Unit/KeyCustodian/TypeSpecDto/Generated/   ← sign + temporal + enum fixture DTOs (TemporalFixtureInput/Output.g.cs + temporal-fixture-dto.g.ts; EnumsInput/Output.g.cs + enum-fixture-dto.g.ts)
 server/services/edge/tests/Unit/KeyCustodian/TypeSpecGrpcEnum/Generated/ ← enum gRPC fixtures (SignWithKind DTOs + service + transport/client mappers + client interface/impl/DI/keys; the proto string ↔ enum bridge)
 server/services/edge/tests/Unit/KeyCustodian/TypeSpecGrpcEnum/Protos/  ← enum gRPC fixture .proto (enum_fixtures_signer_sign_with_kind_fixture.g.proto)
@@ -1013,11 +1016,15 @@ The scatter script (`tools/scripts/regen-typespec-emitters.mjs`):
   `client/<Concern>/` homes (the concern comes from each op's `@d2Concern`)
 - `IKeyCustodianApi.g.cs` (client `Facade/`) + `KeyCustodianApi.g.cs` and
   `KeyCustodianClientGenerated.g.cs` (app `Application/Facade/`) — the façade layer
-- The real-KC gRPC service impls + transport mappers
-  (`KeyCustodianSignerService`, `KeyCustodianKeyringService`,
-  `KeyCustodianCertificateAuthorityService`, `KeyCustodianCaCertificateService` and
-  the four `<Op>TransportMappers`) — committed under the Edge tests
-  `TypeSpecGrpc/Generated/` fixture home
+- The real-KC gRPC thin services (all six: Signer / Keyring / CertificateAuthority /
+  CaCertificate / SealPublicKey / OwnSealPrivateKey) — scattered to
+  `server/services/edge/api/Grpc/KeyCustodian/`
+- The real-KC transport mappers (all six production `<Op>TransportMappers`) —
+  scattered to `server/services/edge/api/Mappers/KeyCustodian/`
+- The real-KC production `.g.proto` files (all six) — scattered to
+  `server/services/edge/api/Protos/KeyCustodian/` (Grpc.Tools compile-once:
+  Edge.Api owns sign/issue/cacert; Client owns keyring + two seal protos at
+  those paths)
 - `I<Op>Handler.g.cs` for the six exposed KC ops — per-op CQRS handler folders
 - `GetJwksRouteRegistration.g.cs` / `GetOidcConfigurationRouteRegistration.g.cs` —
   well-known route registrations (`server/services/edge/api/Routes/KeyCustodian/`)
@@ -1025,7 +1032,16 @@ The scatter script (`tools/scripts/regen-typespec-emitters.mjs`):
 - `enum-fixtures-grpc-client.g.ts` — enum gRPC TypeScript client
 - `place-order-fixture-dto.g.ts`, `place-order-fixture-resilience-predicates.g.ts`, `place-order-v2-fixture-dto.g.ts`, `place-order-v2-fixture-resilience-predicates.g.ts`, `deep-nest-fixture-dto.g.ts` — predicate TypeScript files
 
-> The sign-shaped fixture proto (`sign_fixture_signer_sign_fixture.g.proto`) is NO LONGER regen-covered: after its wire-identity rename to the synthetic per-fixture package `d2.signfixtures.v2alpha`, the GLOBAL `tspconfig.yaml` compile (proto-package `d2.keycustodian.v2alpha`, the REAL KC ops) no longer matches it because the FAMILY differs (`signfixtures` vs `keycustodian`), so — like the enum / predicate fixture protos — it is governed exclusively by the byte-gate test suites (`proto-grpc-byte-parity.test.ts`).
+> Fixture gRPC (SignFixture* services/mappers/protos, enum/predicate fixtures,
+> `WireVersion.g.cs`, `wire-identity.manifest.g.json`) stay under
+> `tests/.../TypeSpecGrpc{,Enum,Predicate}/` — **not** under Edge.Api production
+> homes. The sign-shaped fixture proto (`sign_fixture_signer_sign_fixture.g.proto`)
+> is NO LONGER regen-covered: after its wire-identity rename to the synthetic
+> per-fixture package `d2.signfixtures.v2alpha`, the GLOBAL `tspconfig.yaml` compile
+> (proto-package `d2.keycustodian.v2alpha`, the REAL KC ops) no longer matches it
+> because the FAMILY differs (`signfixtures` vs `keycustodian`), so — like the enum /
+> predicate fixture protos — it is governed exclusively by the byte-gate test suites
+> (`proto-grpc-byte-parity.test.ts`).
 
 **Which files are NOT covered (update via test suites instead):**
 
@@ -1033,7 +1049,8 @@ The scatter script (`tools/scripts/regen-typespec-emitters.mjs`):
   update by running the relevant byte-gate test suite (e.g. `byte-parity.test.ts`,
   `proto-grpc-byte-parity.test.ts`) and committing the output.
 - FIXTURE gRPC service / transport-mapper / C# client files: same (the real-KC
-  services + mappers ARE regen-covered — see above).
+  services + mappers + production protos ARE regen-covered under
+  `edge/api/{Grpc,Mappers,Protos}/KeyCustodian/` — see above).
 - FIXTURE route registration C# files: update via `route-emit.integration.test.ts`
   (the two real-KC well-known route registrations ARE regen-covered — see above).
 - OpenAPI / SSE committed fixtures: update via `openapi-byte-parity.test.ts` /

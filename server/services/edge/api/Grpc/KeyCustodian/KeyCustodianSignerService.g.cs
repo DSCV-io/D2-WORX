@@ -7,14 +7,14 @@
 // -----------------------------------------------------------------------
 #nullable enable
 
-namespace D2.Edge.Tests.TypeSpecGrpc.Generated;
+namespace D2.Edge.Api.Grpc.KeyCustodian;
 
 using SignRequest = global::D2.Services.Protos.KeyCustodian.V2Alpha.SignRequest;
 using SignResponse = global::D2.Services.Protos.KeyCustodian.V2Alpha.SignResponse;
 using SignInput = global::D2.Edge.KeyCustodian.Client.Signing.SignInput;
 using SignOutput = global::D2.Edge.KeyCustodian.Client.Signing.SignOutput;
-using D2.Shared.Result.Grpc;
-using Grpc.Core;
+using global::D2.Shared.Result.Grpc;
+using global::Grpc.Core;
 using D2.Edge.KeyCustodian.Client.Facade;
 
 /// <summary>Generated gRPC service for the <c>Sign</c> operation, delegating to <see cref="IKeyCustodianApi"/>.</summary>

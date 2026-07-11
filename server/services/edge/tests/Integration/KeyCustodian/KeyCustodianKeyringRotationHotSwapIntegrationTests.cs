@@ -7,6 +7,7 @@
 namespace D2.Edge.Tests.Integration.KeyCustodian;
 
 using System.Security.Cryptography;
+using D2.Edge.Api.Grpc.KeyCustodian;
 using D2.Edge.KeyCustodian.App.Application;
 using D2.Edge.KeyCustodian.App.Application.CertificateAuthority;
 using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.ActivateKey;
@@ -19,7 +20,6 @@ using D2.Edge.KeyCustodian.App.Infrastructure.Vault;
 using D2.Edge.KeyCustodian.Client.Keyring;
 using D2.Edge.KeyCustodian.Infra.Messaging.RabbitMq;
 using D2.Edge.KeyCustodian.Infra.Persistence.Postgres;
-using D2.Edge.Tests.TypeSpecGrpc.Generated;
 using D2.Edge.Tests.Unit.KeyCustodian.Client.Keyring;
 using D2.Shared.Auth.Events;
 using D2.Shared.Context.Abstractions;

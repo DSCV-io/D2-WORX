@@ -10,6 +10,7 @@ using System.Diagnostics;
 using System.Security.Cryptography.X509Certificates;
 using System.Text.Json;
 using System.Threading.Tasks;
+using D2.Edge.Api.Grpc.KeyCustodian;
 using D2.Edge.KeyCustodian.Client.Facade;
 using D2.Edge.Tests.TypeSpecGrpc.Generated;
 using D2.Edge.Tests.TypeSpecRoute.Generated.Facade;

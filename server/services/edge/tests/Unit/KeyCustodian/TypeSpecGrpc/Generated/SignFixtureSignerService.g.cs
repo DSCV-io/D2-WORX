@@ -13,8 +13,8 @@ using SignFixtureRequest = global::D2.Services.Protos.SignFixtures.V2Alpha.SignF
 using SignFixtureResponse = global::D2.Services.Protos.SignFixtures.V2Alpha.SignFixtureResponse;
 using SignFixtureInput = global::D2.Edge.Tests.TypeSpecDto.Generated.SignFixtureInput;
 using SignFixtureOutput = global::D2.Edge.Tests.TypeSpecDto.Generated.SignFixtureOutput;
-using D2.Shared.Result.Grpc;
-using Grpc.Core;
+using global::D2.Shared.Result.Grpc;
+using global::Grpc.Core;
 using D2.Edge.Tests.TypeSpecRoute.Generated.Facade;
 
 /// <summary>Generated gRPC service for the <c>SignFixture</c> operation, delegating to <see cref="ISignFixtureSignerFacade"/>.</summary>

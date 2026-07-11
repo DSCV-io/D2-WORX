@@ -20,7 +20,7 @@ Edge is intentionally "thick" — middleware, routing, auth, real-time push, Who
 
 | Project | Role |
 | --- | --- |
-| [api/](api/README.md) | **Composition root** (`D2.Edge.Api`) — Program, DI, pipeline, three-bind, well-known routes |
+| [api/](api/README.md) | **Composition root** (`D2.Edge.Api`) — Program, DI, pipeline, three-bind, well-known routes, six KC gRPC Maps |
 | [app/](app/README.md) | Thin host App shell (empty shell for host-module Application types) |
 | [domain/](domain/README.md) | Thin host Domain shell (empty shell for host-module pure domain) |
 | [infra/](infra/README.md) | Thin host Infra shell (empty shell for host-module adapters) |
@@ -44,11 +44,11 @@ Edge is intentionally "thick" — middleware, routing, auth, real-time push, Who
 
 - Health / alive / metrics via `MapD2DefaultEndpoints`
 - `GET /.well-known/jwks.json` + `GET /.well-known/openid-configuration`
+- Six KeyCustodian gRPC `MapGrpcService` bindings with `Scopes.Internal.Kc.*`
 - Three-bind Kestrel: HTTP 8080 / Issuer HTTPS 8443 (no client cert) / mTLS HTTPS 9443 (require client cert)
 
-**Out of scope for this host shell (not registered):**
+**Not registered:**
 
-- Six KeyCustodian gRPC `MapGrpcService` bindings
 - Audit bridge client + multi-process Compose
 
 ## Composition pointers

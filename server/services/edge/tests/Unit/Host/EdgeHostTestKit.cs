@@ -131,6 +131,20 @@ internal sealed class EdgeHostTestKit : IDisposable
         return Path.Combine(parts);
     }
 
+    /// <summary>
+    /// Absolute path to <c>server/services/edge/tests</c> (sibling of Edge.Api).
+    /// </summary>
+    /// <returns>The tests project source root.</returns>
+    public static string ResolveEdgeTestsSourceRoot()
+    {
+        var apiRoot = ResolveEdgeApiSourceRoot();
+        var edgeRoot = Path.GetDirectoryName(apiRoot)
+            ?? throw new InvalidOperationException(
+                "Edge service root not found from Edge.Api source root.");
+
+        return Path.Combine(edgeRoot, "tests");
+    }
+
     /// <inheritdoc />
     public void Dispose()
     {

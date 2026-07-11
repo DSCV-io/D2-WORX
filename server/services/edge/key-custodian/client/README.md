@@ -131,6 +131,14 @@ targets the fixed cluster-signing root. The implementation (`JwtSigningCapabilit
 and its isolated DI registration (`JwtSigningCapabilityServiceCollectionExtensions`)
 live in `app/Application/Signing/`.
 
+### gRPC wire stubs (compile-once)
+
+Physical `.g.proto` files live under `edge/api/Protos/KeyCustodian/`. This Client
+package is the sole Grpc.Tools owner for **keyring + seal public + own seal private**
+(`GrpcServices="Both"`). Sign / issue / cacert compile once on Edge.Api. Never dual
+`<Protobuf>` the same file (CS0433). Thin server services that extend the bases live
+under `edge/api/Grpc/KeyCustodian/`.
+
 ### Keyring consumer runtime (hand-authored, `Keyring/`)
 
 The rotation-aware KeyCustodian keyring consumer — the hand-authored runtime

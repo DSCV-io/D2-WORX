@@ -12,8 +12,8 @@ namespace D2.Edge.Tests.TypeSpecGrpcEnum.Generated;
 using SignWithKindFixtureRequest = global::D2.Services.Protos.EnumFixtures.V1.SignWithKindFixtureRequest;
 using SignWithKindFixtureResponse = global::D2.Services.Protos.EnumFixtures.V1.SignWithKindFixtureResponse;
 using D2.Shared.Result;
-using D2.Shared.Result.Grpc;
-using Grpc.Core;
+using global::D2.Shared.Result.Grpc;
+using global::Grpc.Core;
 
 /// <summary>Generated gRPC service for the <c>SignWithKindFixture</c> operation, delegating to <see cref="ISignWithKindFixtureHandler"/>.</summary>
 public sealed class EnumFixturesSignerService(ISignWithKindFixtureHandler handler)

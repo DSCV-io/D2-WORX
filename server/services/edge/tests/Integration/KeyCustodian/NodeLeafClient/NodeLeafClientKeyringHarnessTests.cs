@@ -9,6 +9,7 @@ namespace D2.Edge.Tests.Integration.KeyCustodian.NodeLeafClient;
 using System.Diagnostics;
 using System.Security.Cryptography.X509Certificates;
 using System.Text.Json;
+using D2.Edge.Api.Grpc.KeyCustodian;
 using D2.Edge.KeyCustodian.App.Application;
 using D2.Edge.KeyCustodian.App.Application.CertificateAuthority;
 using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.ActivateKey;

@@ -7,14 +7,14 @@
 // -----------------------------------------------------------------------
 #nullable enable
 
-namespace D2.Edge.Tests.TypeSpecGrpc.Generated;
+namespace D2.Edge.Api.Grpc.KeyCustodian;
 
 using GetOrLazyProvisionSealPublicKeyRequest = global::D2.Services.Protos.KeyCustodian.V2Alpha.GetOrLazyProvisionSealPublicKeyRequest;
 using GetOrLazyProvisionSealPublicKeyResponse = global::D2.Services.Protos.KeyCustodian.V2Alpha.GetOrLazyProvisionSealPublicKeyResponse;
 using GetOrLazyProvisionSealPublicKeyInput = global::D2.Edge.KeyCustodian.Client.Sealing.GetOrLazyProvisionSealPublicKeyInput;
 using GetOrLazyProvisionSealPublicKeyOutput = global::D2.Edge.KeyCustodian.Client.Sealing.GetOrLazyProvisionSealPublicKeyOutput;
-using D2.Shared.Result.Grpc;
-using Grpc.Core;
+using global::D2.Shared.Result.Grpc;
+using global::Grpc.Core;
 using D2.Edge.KeyCustodian.Client.Facade;
 
 /// <summary>Generated gRPC service for the <c>GetOrLazyProvisionSealPublicKey</c> operation, delegating to <see cref="IKeyCustodianApi"/>.</summary>

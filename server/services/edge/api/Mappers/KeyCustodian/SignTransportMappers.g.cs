@@ -7,7 +7,7 @@
 // -----------------------------------------------------------------------
 #nullable enable
 
-namespace D2.Edge.Tests.TypeSpecGrpc.Generated;
+namespace D2.Edge.Api.Grpc.KeyCustodian;
 
 using SignRequest = global::D2.Services.Protos.KeyCustodian.V2Alpha.SignRequest;
 using SignResponse = global::D2.Services.Protos.KeyCustodian.V2Alpha.SignResponse;
@@ -34,8 +34,10 @@ internal static class SignTransportMappers
         internal SignResponse ToProtoResponse()
         {
             var response = new SignResponse { Result = result.ToProto() };
+
             if (result.IsOk && result.Data is not null)
                 response.Data = result.Data.ToProtoSignOutput();
+
             return response;
         }
     }

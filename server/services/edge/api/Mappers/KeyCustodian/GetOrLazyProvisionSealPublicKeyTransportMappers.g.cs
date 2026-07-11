@@ -7,7 +7,7 @@
 // -----------------------------------------------------------------------
 #nullable enable
 
-namespace D2.Edge.Tests.TypeSpecGrpc.Generated;
+namespace D2.Edge.Api.Grpc.KeyCustodian;
 
 using GetOrLazyProvisionSealPublicKeyRequest = global::D2.Services.Protos.KeyCustodian.V2Alpha.GetOrLazyProvisionSealPublicKeyRequest;
 using GetOrLazyProvisionSealPublicKeyResponse = global::D2.Services.Protos.KeyCustodian.V2Alpha.GetOrLazyProvisionSealPublicKeyResponse;
@@ -37,8 +37,10 @@ internal static class GetOrLazyProvisionSealPublicKeyTransportMappers
         internal GetOrLazyProvisionSealPublicKeyResponse ToProtoResponse()
         {
             var response = new GetOrLazyProvisionSealPublicKeyResponse { Result = result.ToProto() };
+
             if (result.IsOk && result.Data is not null)
                 response.Data = result.Data.ToProtoGetOrLazyProvisionSealPublicKeyOutput();
+
             return response;
         }
     }

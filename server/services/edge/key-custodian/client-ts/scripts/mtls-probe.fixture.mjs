@@ -51,7 +51,13 @@ import {
 
 const SCRIPT_DIR = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = resolve(SCRIPT_DIR, "../../../../../..");
+/** Production KC protos (Edge.Api home) — sign/issue/cacert/keyring/seal. */
 const KC_PROTOS_DIR = join(
+  REPO_ROOT,
+  "server/services/edge/api/Protos/KeyCustodian",
+);
+/** Fixture protos (SignFixture*) stay under the tests tree. */
+const FIXTURE_PROTOS_DIR = join(
   REPO_ROOT,
   "server/services/edge/tests/Unit/KeyCustodian/TypeSpecGrpc/Protos",
 );
@@ -61,17 +67,19 @@ const LOADER_OPTIONS = {
   keepCase: false,
   defaults: true,
   longs: String,
-  includeDirs: [COMMON_PROTOS_DIR, KC_PROTOS_DIR],
+  includeDirs: [COMMON_PROTOS_DIR, KC_PROTOS_DIR, FIXTURE_PROTOS_DIR],
 };
 
 const [mode, resultPath, serverCertPemPath, mtlsTarget, ...rest] =
   process.argv.slice(2);
 
-function loadService(protoFile, packagePath, serviceName) {
-  const def = protoLoader.loadSync(
-    join(KC_PROTOS_DIR, protoFile),
-    LOADER_OPTIONS,
-  );
+function loadService(
+  protoFile,
+  packagePath,
+  serviceName,
+  protosDir = KC_PROTOS_DIR,
+) {
+  const def = protoLoader.loadSync(join(protosDir, protoFile), LOADER_OPTIONS);
   const pkg = grpc.loadPackageDefinition(def);
   let node = pkg;
   for (const segment of packagePath.split(".")) node = node[segment];
@@ -88,6 +96,7 @@ function callSignFixture(credentials) {
     "sign_fixture_signer_sign_fixture.g.proto",
     "d2.signfixtures.v2alpha",
     "SignFixtureSigner",
+    FIXTURE_PROTOS_DIR,
   );
   const client = new SignFixtureSigner(mtlsTarget, credentials);
 

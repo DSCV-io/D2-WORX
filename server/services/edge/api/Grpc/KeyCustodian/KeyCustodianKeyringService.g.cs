@@ -7,14 +7,14 @@
 // -----------------------------------------------------------------------
 #nullable enable
 
-namespace D2.Edge.Tests.TypeSpecGrpc.Generated;
+namespace D2.Edge.Api.Grpc.KeyCustodian;
 
 using GetKeyringRequest = global::D2.Services.Protos.KeyCustodian.V2Alpha.GetKeyringRequest;
 using GetKeyringResponse = global::D2.Services.Protos.KeyCustodian.V2Alpha.GetKeyringResponse;
 using GetKeyringInput = global::D2.Edge.KeyCustodian.Client.Keyring.GetKeyringInput;
 using GetKeyringOutput = global::D2.Edge.KeyCustodian.Client.Keyring.GetKeyringOutput;
-using D2.Shared.Result.Grpc;
-using Grpc.Core;
+using global::D2.Shared.Result.Grpc;
+using global::Grpc.Core;
 using D2.Edge.KeyCustodian.Client.Facade;
 
 /// <summary>Generated gRPC service for the <c>GetKeyring</c> operation, delegating to <see cref="IKeyCustodianApi"/>.</summary>

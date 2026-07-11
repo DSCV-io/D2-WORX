@@ -219,60 +219,93 @@ const COPY_MANIFEST = [
     to: "server/services/edge/key-custodian/app/Application/Facade/KeyCustodianClientGenerated.g.cs",
   },
 
-  // ---- KeyCustodian gRPC service impls + transport mappers. The global tsp
+  // ---- KeyCustodian gRPC service impls (production Edge.Api). The global tsp
   //      compile emits these into grpc-service-namespace
-  //      (D2.Edge.Tests.TypeSpecGrpc.Generated) — matching the committed home —
-  //      delegating to the facade IKeyCustodianApi (<clients-ns>.Facade) and
-  //      mapping the concern-qualified DTOs. Scattered here (closing the prior
-  //      pipeline-coverage gap); the fixture gRPC services stay excluded
-  //      (their committed namespaces differ from the global compile). ----
+  //      D2.Edge.Api.Grpc.KeyCustodian — matching the committed production home —
+  //      delegating to the facade IKeyCustodianApi (<clients-ns>.Facade).
+  //      Physical home: api/Grpc/KeyCustodian/ (ADR-0020 transport).
+  //      Fixture gRPC services (SignFixture*, enum, predicate) stay excluded
+  //      (COPY_MANIFEST allowlist + fixture byte-parity hardcodes test ns). ----
   {
     from: "KeyCustodianSignerService.g.cs",
-    to: "server/services/edge/tests/Unit/KeyCustodian/TypeSpecGrpc/Generated/KeyCustodianSignerService.g.cs",
+    to: "server/services/edge/api/Grpc/KeyCustodian/KeyCustodianSignerService.g.cs",
   },
   {
     from: "KeyCustodianKeyringService.g.cs",
-    to: "server/services/edge/tests/Unit/KeyCustodian/TypeSpecGrpc/Generated/KeyCustodianKeyringService.g.cs",
+    to: "server/services/edge/api/Grpc/KeyCustodian/KeyCustodianKeyringService.g.cs",
   },
   {
     from: "KeyCustodianCertificateAuthorityService.g.cs",
-    to: "server/services/edge/tests/Unit/KeyCustodian/TypeSpecGrpc/Generated/KeyCustodianCertificateAuthorityService.g.cs",
+    to: "server/services/edge/api/Grpc/KeyCustodian/KeyCustodianCertificateAuthorityService.g.cs",
   },
   {
     from: "KeyCustodianCaCertificateService.g.cs",
-    to: "server/services/edge/tests/Unit/KeyCustodian/TypeSpecGrpc/Generated/KeyCustodianCaCertificateService.g.cs",
-  },
-  {
-    from: "SignTransportMappers.g.cs",
-    to: "server/services/edge/tests/Unit/KeyCustodian/TypeSpecGrpc/Generated/SignTransportMappers.g.cs",
-  },
-  {
-    from: "GetKeyringTransportMappers.g.cs",
-    to: "server/services/edge/tests/Unit/KeyCustodian/TypeSpecGrpc/Generated/GetKeyringTransportMappers.g.cs",
-  },
-  {
-    from: "IssueLeafTransportMappers.g.cs",
-    to: "server/services/edge/tests/Unit/KeyCustodian/TypeSpecGrpc/Generated/IssueLeafTransportMappers.g.cs",
-  },
-  {
-    from: "GetCaCertificateTransportMappers.g.cs",
-    to: "server/services/edge/tests/Unit/KeyCustodian/TypeSpecGrpc/Generated/GetCaCertificateTransportMappers.g.cs",
+    to: "server/services/edge/api/Grpc/KeyCustodian/KeyCustodianCaCertificateService.g.cs",
   },
   {
     from: "KeyCustodianSealPublicKeyService.g.cs",
-    to: "server/services/edge/tests/Unit/KeyCustodian/TypeSpecGrpc/Generated/KeyCustodianSealPublicKeyService.g.cs",
+    to: "server/services/edge/api/Grpc/KeyCustodian/KeyCustodianSealPublicKeyService.g.cs",
   },
   {
     from: "KeyCustodianOwnSealPrivateKeyService.g.cs",
-    to: "server/services/edge/tests/Unit/KeyCustodian/TypeSpecGrpc/Generated/KeyCustodianOwnSealPrivateKeyService.g.cs",
+    to: "server/services/edge/api/Grpc/KeyCustodian/KeyCustodianOwnSealPrivateKeyService.g.cs",
+  },
+
+  // ---- KeyCustodian transport mappers (production Edge.Api Mappers/KeyCustodian).
+  //      Namespace co-located with service-impl (emitter single serviceImplNs);
+  //      physical folder = ADR-0020 transport mapper home. ----
+  {
+    from: "SignTransportMappers.g.cs",
+    to: "server/services/edge/api/Mappers/KeyCustodian/SignTransportMappers.g.cs",
+  },
+  {
+    from: "GetKeyringTransportMappers.g.cs",
+    to: "server/services/edge/api/Mappers/KeyCustodian/GetKeyringTransportMappers.g.cs",
+  },
+  {
+    from: "IssueLeafTransportMappers.g.cs",
+    to: "server/services/edge/api/Mappers/KeyCustodian/IssueLeafTransportMappers.g.cs",
+  },
+  {
+    from: "GetCaCertificateTransportMappers.g.cs",
+    to: "server/services/edge/api/Mappers/KeyCustodian/GetCaCertificateTransportMappers.g.cs",
   },
   {
     from: "GetOrLazyProvisionSealPublicKeyTransportMappers.g.cs",
-    to: "server/services/edge/tests/Unit/KeyCustodian/TypeSpecGrpc/Generated/GetOrLazyProvisionSealPublicKeyTransportMappers.g.cs",
+    to: "server/services/edge/api/Mappers/KeyCustodian/GetOrLazyProvisionSealPublicKeyTransportMappers.g.cs",
   },
   {
     from: "GetOrLazyProvisionOwnSealPrivateKeyTransportMappers.g.cs",
-    to: "server/services/edge/tests/Unit/KeyCustodian/TypeSpecGrpc/Generated/GetOrLazyProvisionOwnSealPrivateKeyTransportMappers.g.cs",
+    to: "server/services/edge/api/Mappers/KeyCustodian/GetOrLazyProvisionOwnSealPrivateKeyTransportMappers.g.cs",
+  },
+
+  // ---- KeyCustodian production .g.proto files (Edge.Api Protos/KeyCustodian).
+  //      Compile-once: Edge.Api Grpc.Tools Both owns sign/issue/cacert;
+  //      Client Grpc.Tools Both owns keyring + two seal protos (paths retarget
+  //      here). Fixture protos (sign_fixture_*, enum, predicate) stay under tests. ----
+  {
+    from: "key_custodian_signer_sign.g.proto",
+    to: "server/services/edge/api/Protos/KeyCustodian/key_custodian_signer_sign.g.proto",
+  },
+  {
+    from: "key_custodian_certificate_authority_issue_workload_certificate.g.proto",
+    to: "server/services/edge/api/Protos/KeyCustodian/key_custodian_certificate_authority_issue_workload_certificate.g.proto",
+  },
+  {
+    from: "key_custodian_ca_certificate_get_ca_certificate.g.proto",
+    to: "server/services/edge/api/Protos/KeyCustodian/key_custodian_ca_certificate_get_ca_certificate.g.proto",
+  },
+  {
+    from: "key_custodian_keyring_get_keyring.g.proto",
+    to: "server/services/edge/api/Protos/KeyCustodian/key_custodian_keyring_get_keyring.g.proto",
+  },
+  {
+    from: "key_custodian_seal_public_key_get_or_lazy_provision_seal_public_key.g.proto",
+    to: "server/services/edge/api/Protos/KeyCustodian/key_custodian_seal_public_key_get_or_lazy_provision_seal_public_key.g.proto",
+  },
+  {
+    from: "key_custodian_own_seal_private_key_get_or_lazy_provision_own_seal_private_key.g.proto",
+    to: "server/services/edge/api/Protos/KeyCustodian/key_custodian_own_seal_private_key_get_or_lazy_provision_own_seal_private_key.g.proto",
   },
 
   // ---- Handler interfaces (per-op CQRS folder) ----

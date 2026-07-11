@@ -6,12 +6,14 @@ Copyright (c) DCSV. All rights reserved.
 
 > Parent: [`../README.md`](../README.md)
 
+**Who / what:** Host integrators — Edge.Api DI + endpoint Map surface (`AddD2EdgeHost` / `MapD2EdgeEndpoints`).
+
 ## Surfaces
 
 | Extension | File | Role |
 | --- | --- | --- |
 | `AddD2EdgeHost` | `EdgeHostServiceCollectionExtensions.cs` | Full DI: defaults + MutualTls + three-bind + establishment + Redis + RMQ + KC + outbound CSR issuer |
-| `MapD2EdgeEndpoints` | `EdgeEndpointRouteBuilderExtensions.cs` | Health/metrics + well-known JWKS/OIDC; KeyCustodian gRPC Map not registered on this host shell |
+| `MapD2EdgeEndpoints` | `EdgeEndpointRouteBuilderExtensions.cs` | Health/metrics + well-known JWKS/OIDC + six KC gRPC Maps with `Scopes.Internal.Kc.*` |
 
 ## DI locks (KEEP)
 

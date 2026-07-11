@@ -7,7 +7,7 @@
 // -----------------------------------------------------------------------
 #nullable enable
 
-namespace D2.Edge.Tests.TypeSpecGrpc.Generated;
+namespace D2.Edge.Api.Grpc.KeyCustodian;
 
 using GetKeyringRequest = global::D2.Services.Protos.KeyCustodian.V2Alpha.GetKeyringRequest;
 using GetKeyringResponse = global::D2.Services.Protos.KeyCustodian.V2Alpha.GetKeyringResponse;
@@ -37,8 +37,10 @@ internal static class GetKeyringTransportMappers
         internal GetKeyringResponse ToProtoResponse()
         {
             var response = new GetKeyringResponse { Result = result.ToProto() };
+
             if (result.IsOk && result.Data is not null)
                 response.Data = result.Data.ToProtoGetKeyringOutput();
+
             return response;
         }
     }

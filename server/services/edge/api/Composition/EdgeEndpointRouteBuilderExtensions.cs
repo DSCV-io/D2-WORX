@@ -6,7 +6,10 @@
 
 namespace D2.Edge.Api.Composition;
 
+using D2.Edge.Api.Grpc.KeyCustodian;
 using D2.Edge.Api.Routes.KeyCustodian;
+using D2.Shared.Auth.Abstractions;
+using D2.Shared.Auth.Grpc.Endpoints;
 using D2.Shared.ServiceDefaults;
 using Microsoft.AspNetCore.Routing;
 
@@ -19,9 +22,10 @@ public static class EdgeEndpointRouteBuilderExtensions
     extension(IEndpointRouteBuilder endpoints)
     {
         /// <summary>
-        /// Maps Edge default health/metrics endpoints and production KeyCustodian
-        /// well-known routes (JWKS + OIDC). KeyCustodian gRPC MapGrpcService bindings
-        /// and the Audit bridge Map surface are out of scope for this host shell.
+        /// Maps Edge default health/metrics endpoints, production KeyCustodian
+        /// well-known routes (JWKS + OIDC), and the six KeyCustodian gRPC services
+        /// with <c>Scopes.Internal.Kc.*</c> scope constants. The Audit bridge Map
+        /// surface is not registered here.
         /// </summary>
         /// <returns>The same <paramref name="endpoints"/> for fluent chaining.</returns>
         /// <exception cref="ArgumentNullException">
@@ -38,7 +42,25 @@ public static class EdgeEndpointRouteBuilderExtensions
             endpoints.MapGetJwksRoute();
             endpoints.MapGetOidcConfigurationRoute();
 
-            // KeyCustodian gRPC service maps and Audit bridge maps are out of scope.
+            // Production KeyCustodian gRPC (edge-module) — scopes from Scopes.g.cs only.
+            endpoints.MapGrpcService<KeyCustodianSignerService>()
+                .RequireAnyScope(Scopes.Internal.Kc.Sign);
+
+            endpoints.MapGrpcService<KeyCustodianKeyringService>()
+                .RequireAnyScope(Scopes.Internal.Kc.Keyring);
+
+            endpoints.MapGrpcService<KeyCustodianCertificateAuthorityService>()
+                .RequireAnyScope(Scopes.Internal.Kc.Issue);
+
+            endpoints.MapGrpcService<KeyCustodianCaCertificateService>()
+                .RequireAnyScope(Scopes.Internal.Kc.Cacert);
+
+            endpoints.MapGrpcService<KeyCustodianSealPublicKeyService>()
+                .RequireAnyScope(Scopes.Internal.Kc.Seal.Encrypt);
+
+            endpoints.MapGrpcService<KeyCustodianOwnSealPrivateKeyService>()
+                .RequireAnyScope(Scopes.Internal.Kc.Seal.Open);
+
             return endpoints;
         }
     }

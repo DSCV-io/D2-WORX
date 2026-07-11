@@ -7,7 +7,7 @@
 // -----------------------------------------------------------------------
 #nullable enable
 
-namespace D2.Edge.Tests.TypeSpecGrpc.Generated;
+namespace D2.Edge.Api.Grpc.KeyCustodian;
 
 using IssueWorkloadCertificateRequest = global::D2.Services.Protos.KeyCustodian.V2Alpha.IssueWorkloadCertificateRequest;
 using IssueWorkloadCertificateResponse = global::D2.Services.Protos.KeyCustodian.V2Alpha.IssueWorkloadCertificateResponse;
@@ -34,8 +34,10 @@ internal static class IssueLeafTransportMappers
         internal IssueWorkloadCertificateResponse ToProtoResponse()
         {
             var response = new IssueWorkloadCertificateResponse { Result = result.ToProto() };
+
             if (result.IsOk && result.Data is not null)
                 response.Data = result.Data.ToProtoIssueLeafOutput();
+
             return response;
         }
     }

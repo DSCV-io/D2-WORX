@@ -38,8 +38,10 @@ internal static class SignWithKindFixtureTransportMappers
         internal SignWithKindFixtureResponse ToProtoResponse()
         {
             var response = new SignWithKindFixtureResponse { Result = result.ToProto() };
+
             if (result.IsOk && result.Data is not null)
                 response.Data = result.Data.ToProtoSignWithKindFixtureOutput();
+
             return response;
         }
     }

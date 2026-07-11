@@ -6,7 +6,7 @@ Copyright (c) DCSV. All rights reserved.
 
 > Parent: [`../README.md`](../README.md)
 
-**Who / what:** Host integrators and operators — Edge **composition root** (`Microsoft.NET.Sdk.Web`, assembly `D2.Edge.Api`): DI, HTTP pipeline, three-bind Kestrel, and production well-known Map.
+**Who / what:** Host integrators and operators — Edge **composition root** (`Microsoft.NET.Sdk.Web`, assembly `D2.Edge.Api`): DI, HTTP pipeline, three-bind Kestrel, production well-known Map, and production KeyCustodian gRPC Map.
 
 ## Surfaces
 
@@ -32,7 +32,22 @@ Exclusive `Listen*` via `EdgeHttpsRoleKestrelConfigure`. Server listen certs = s
 - `GET /.well-known/jwks.json` — `MapGetJwksRoute`
 - `GET /.well-known/openid-configuration` — `MapGetOidcConfigurationRoute`
 
-Home: `Routes/KeyCustodian/*.g.cs` (namespace `D2.Edge.Api.Routes.KeyCustodian`). KeyCustodian gRPC Map ×6 is **not** registered on this host shell.
+Home: `Routes/KeyCustodian/*.g.cs` (namespace `D2.Edge.Api.Routes.KeyCustodian`).
+
+## KeyCustodian gRPC (production)
+
+Six thin services under `Grpc/KeyCustodian/` (namespace `D2.Edge.Api.Grpc.KeyCustodian`), transport mappers under `Mappers/KeyCustodian/`, protos under `Protos/KeyCustodian/`. Mapped via `MapD2EdgeEndpoints` with `Scopes.Internal.Kc.*` only:
+
+| Service | Scope constant |
+| --- | --- |
+| `KeyCustodianSignerService` | `Scopes.Internal.Kc.Sign` |
+| `KeyCustodianKeyringService` | `Scopes.Internal.Kc.Keyring` |
+| `KeyCustodianCertificateAuthorityService` | `Scopes.Internal.Kc.Issue` |
+| `KeyCustodianCaCertificateService` | `Scopes.Internal.Kc.Cacert` |
+| `KeyCustodianSealPublicKeyService` | `Scopes.Internal.Kc.Seal.Encrypt` |
+| `KeyCustodianOwnSealPrivateKeyService` | `Scopes.Internal.Kc.Seal.Open` |
+
+**Compile-once:** Edge.Api Grpc.Tools Both owns sign / issue / cacert protos; Client owns keyring + seal protos (physical files still under `api/Protos/KeyCustodian/`). Regen: `pnpm --filter @d2/typespec-emitters regen`.
 
 ## Outbound hosted refresh
 

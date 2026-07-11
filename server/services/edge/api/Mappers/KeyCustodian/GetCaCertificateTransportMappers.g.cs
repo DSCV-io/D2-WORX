@@ -7,7 +7,7 @@
 // -----------------------------------------------------------------------
 #nullable enable
 
-namespace D2.Edge.Tests.TypeSpecGrpc.Generated;
+namespace D2.Edge.Api.Grpc.KeyCustodian;
 
 using GetCaCertificateRequest = global::D2.Services.Protos.KeyCustodian.V2Alpha.GetCaCertificateRequest;
 using GetCaCertificateResponse = global::D2.Services.Protos.KeyCustodian.V2Alpha.GetCaCertificateResponse;
@@ -34,8 +34,10 @@ internal static class GetCaCertificateTransportMappers
         internal GetCaCertificateResponse ToProtoResponse()
         {
             var response = new GetCaCertificateResponse { Result = result.ToProto() };
+
             if (result.IsOk && result.Data is not null)
                 response.Data = result.Data.ToProtoGetCaCertificateOutput();
+
             return response;
         }
     }

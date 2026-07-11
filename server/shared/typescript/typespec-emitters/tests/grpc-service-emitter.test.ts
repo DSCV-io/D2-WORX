@@ -288,7 +288,8 @@ describe("emitGrpcService_EnvelopePopulation_NoThrow", () => {
 
   it("service emits using D2.Shared.Result.Grpc for the ToProtoResponse extension", () => {
     const [svc] = emitSign();
-    expect(svc.content).toContain("using D2.Shared.Result.Grpc;");
+    // Prefer global:: so serviceImplNs containing ".Grpc." cannot shadow Result.Grpc / Grpc.Core.
+    expect(svc.content).toMatch(/using (global::)?D2\.Shared\.Result\.Grpc;/);
   });
 });
 

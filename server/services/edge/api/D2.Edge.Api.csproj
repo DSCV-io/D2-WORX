@@ -29,11 +29,43 @@ Copyright (c) DCSV. All rights reserved.
     <ProjectReference Include="..\..\..\shared\dotnet\messaging\rabbitmq\D2.Shared.Messaging.RabbitMq.csproj" />
     <!-- ConnectionStringHelper.ParseRedisUri / ParsePostgresUri. -->
     <ProjectReference Include="..\..\..\shared\dotnet\utilities\D2.Shared.Utilities.csproj" />
+    <!--
+      D2.Shared.Result.Grpc — sole source of D2ResultProto for Edge.Api-owned
+      KC protos (sign/issue/cacert). Import "common/v1/d2_result.proto" resolves
+      via AdditionalImportDirs; never a second Protobuf include of d2_result
+      (CS0433). Also feeds transport-mapper envelope extensions.
+    -->
+    <ProjectReference Include="..\..\..\shared\dotnet\result\grpc\D2.Shared.Result.Grpc.csproj" />
   </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="JetBrains.Annotations" />
     <PackageReference Include="Grpc.AspNetCore.Server" />
+    <PackageReference Include="Google.Protobuf" />
+    <PackageReference Include="Grpc.Tools">
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+  </ItemGroup>
+
+  <!--
+    Production KeyCustodian protos owned by Edge.Api (compile-once Both):
+    sign / issueLeaf / getCaCertificate. Keyring + seal protos compile once in
+    D2.Edge.KeyCustodian.Client (product client stubs); thin services here extend
+    Client-generated bases via ProjectReference — never dual Protobuf.
+  -->
+  <ItemGroup>
+    <Protobuf Include="$(MSBuildThisFileDirectory)Protos\KeyCustodian\key_custodian_signer_sign.g.proto"
+              GrpcServices="Both"
+              ProtoRoot="$(MSBuildThisFileDirectory)"
+              AdditionalImportDirs="$(D2ContractsRoot)protos" />
+    <Protobuf Include="$(MSBuildThisFileDirectory)Protos\KeyCustodian\key_custodian_certificate_authority_issue_workload_certificate.g.proto"
+              GrpcServices="Both"
+              ProtoRoot="$(MSBuildThisFileDirectory)"
+              AdditionalImportDirs="$(D2ContractsRoot)protos" />
+    <Protobuf Include="$(MSBuildThisFileDirectory)Protos\KeyCustodian\key_custodian_ca_certificate_get_ca_certificate.g.proto"
+              GrpcServices="Both"
+              ProtoRoot="$(MSBuildThisFileDirectory)"
+              AdditionalImportDirs="$(D2ContractsRoot)protos" />
   </ItemGroup>
 
   <ItemGroup>

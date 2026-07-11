@@ -8,6 +8,7 @@ namespace D2.Edge.Tests.Unit.KeyCustodian.TypeSpecGrpc;
 
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using D2.Edge.Api.Grpc.KeyCustodian;
 using D2.Edge.KeyCustodian.Client.CaCertificate;
 using D2.Edge.KeyCustodian.Client.Facade;
 using D2.Edge.KeyCustodian.Client.Issuance;
@@ -15,7 +16,6 @@ using D2.Edge.KeyCustodian.Client.Jwks;
 using D2.Edge.KeyCustodian.Client.Keyring;
 using D2.Edge.KeyCustodian.Client.OidcConfiguration;
 using D2.Edge.KeyCustodian.Client.Signing;
-using D2.Edge.Tests.TypeSpecGrpc.Generated;
 using D2.Edge.Tests.Unit.KeyCustodian.TypeSpecRoute.Fixtures;
 using D2.Services.Protos.KeyCustodian.V2Alpha;
 using D2.Shared.Auth;
