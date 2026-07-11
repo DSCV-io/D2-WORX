@@ -4,7 +4,7 @@ Copyright (c) DCSV. All rights reserved.
 
 # PHASE_3.md — Build Edge (v2 Phase 3)
 
-**Status**: 🔄 In progress — KeyCustodian (K1) shipped; **T1** (TS caching twin / 0028) **SHIPPED** on `n/ts-caching` (await REVIEW merge); A1 (Edge host shell) is next on the auth host spine.
+**Status**: 🔄 In progress — KeyCustodian (K1) shipped; **T1** (TS caching twin / 0028) **SHIPPED** on `n/ts-caching` (await REVIEW merge); **A1** (Edge host shell / deliverable **0030**) is **in progress** on `n/edge-host` (host composition tree on disk; code-audit loop active).
 
 **Purpose**: tracking doc for v2 Phase 3 — Edge service build. Contains the locked deliverable DAG, dependency graph, cross-cutting decisions, and per-deliverable status.
 
@@ -81,7 +81,7 @@ Phase 3 is too large for one deliverable. It is carved into a dependency-ordered
 
 | # | Deliverable | Scope | Size | Status |
 |---|---|---|---|---|
-| **A1** | **Edge host shell** | Edge ASP.NET host skeleton (`api/app/domain/infra` + `.slnx`), ServiceDefaults pipeline, health/OTel/config. The host the auth module lives in — no DB of its own. No upstream deps — parallel with K1. | M | ☐ Next |
+| **A1** | **Edge host shell** | Edge ASP.NET host skeleton (`api/app/domain/infra` + `.slnx`), ServiceDefaults pipeline, health/OTel/config. The host the auth module lives in — no DB of its own. No upstream deps — parallel with K1. Deliverable **0030** on `n/edge-host`. | M | 🔄 In progress (host shell composition + well-known Map + three-bind + CSR outbound issuer on disk; audit/fix loop) |
 | **A2** | **Token issuance + JWKS** | `d2-auth` foundation + EF (the auth module owns its own database, like KeyCustodian owns `d2-keycustodian`). `POST /oauth/token` mints the **one** internal transaction-token at the boundary (RFC 8693 retained for the boundary mint + exceptions per [ADR-0022](../adrs/0022-service-auth-mint-once-forward.md); the token is then forwarded unchanged downstream — no per-hop re-mint), JWKS publishing + OIDC discovery, OAuth client registry (`oauth_client`), `JsonWebTokenHandler` RS256, the ~15-min user-token TTL that bounds the whole forwarded chain, the 16-claim payload. Backend-to-backend workload identity is mTLS ([ADR-0023](../adrs/0023-mtls-workload-identity.md)), not a service-identity token. | M–L | ☐ Pending |
 | **A3** | **Sessions + credential auth core + anon-mint** | 3-tier sessions (cookie→Redis→PG + revocation backplane), sign-up + email-verification, sign-in (email+username), sign-out, get-session, password policy (HIBP k-anon + ~1k blocklist + pattern blocks), password reset/change, progressive sign-in throttle (known-good bypass), `sign_in_event` audit + `auth.whois-resolution` async enrich, fingerprint binding, anon-visitor Pattern A mint. | L | ☐ Pending |
 | **A4** | **Account self-management** | Name/username/locale/timezone (Geo/Contacts SAGAs), email-change + phone-change OTP flows (+ OTP rate-limit store), remove-phone, avatar file-callback, list/revoke/revoke-others sessions, sign-in-event history, self-service deletion (state machine + sole-owner guard + 30-day grace + cancel-on-signin + nightly anonymization + `auth.user-anonymize` fanout). | L | ☐ Pending |

@@ -250,6 +250,18 @@ Copyright (c) DCSV. All rights reserved.
   </Folder>
   <Folder Name="/services/" />
   <Folder Name="/services/edge/" />
+  <Folder Name="/services/edge/domain/">
+    <Project Path="services/edge/domain/D2.Edge.Domain.csproj" />
+  </Folder>
+  <Folder Name="/services/edge/app/">
+    <Project Path="services/edge/app/D2.Edge.App.csproj" />
+  </Folder>
+  <Folder Name="/services/edge/infra/">
+    <Project Path="services/edge/infra/D2.Edge.Infra.csproj" />
+  </Folder>
+  <Folder Name="/services/edge/api/">
+    <Project Path="services/edge/api/D2.Edge.Api.csproj" />
+  </Folder>
   <Folder Name="/services/edge/key-custodian/domain/">
     <Project Path="services/edge/key-custodian/domain/D2.Edge.KeyCustodian.Domain.csproj" />
   </Folder>

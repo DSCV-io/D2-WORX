@@ -6,7 +6,9 @@ Copyright (c) DCSV. All rights reserved.
 
 > Parent: [`server/services/`](../README.md)
 
-> **Status: partially shipped** — KeyCustodian module is in-tree with unit + integration CI (`.github/workflows/test.yml` Edge Unit/Integration jobs); see [key-custodian/](key-custodian/README.md) and [Tests](#tests). Host composition-root folders (`api/`, `app/`, `domain/`, `infra/`) are scaffolding only.
+**Who / what:** Operators and host integrators — the unified Edge gateway process for D²-WORX (composition root + co-hosted KeyCustodian + placeholder module homes).
+
+> **Status: partially shipped** — KeyCustodian module is in-tree with unit + integration CI; **host composition root** (`D2.Edge.Api`) ships `AddD2EdgeHost` / `UseD2EdgePipeline` / `MapD2EdgeEndpoints` / three-bind Kestrel / well-known Map / CSR outbound issuer. Placeholder modules remain stubs.
 
 ## Purpose
 
@@ -14,69 +16,90 @@ The unified gateway. Single public ingress for all of D²-WORX. Combines gateway
 
 Edge is intentionally "thick" — middleware, routing, auth, real-time push, WhoIs, OAuth token issuance — all in one process. Co-locating these along the request path avoids per-hop latency and keeps cross-cutting concerns strongly typed end-to-end.
 
+## Host projects
+
+| Project | Role |
+| --- | --- |
+| [api/](api/README.md) | **Composition root** (`D2.Edge.Api`) — Program, DI, pipeline, three-bind, well-known routes |
+| [app/](app/README.md) | Thin host App shell (empty shell for host-module Application types) |
+| [domain/](domain/README.md) | Thin host Domain shell (empty shell for host-module pure domain) |
+| [infra/](infra/README.md) | Thin host Infra shell (empty shell for host-module adapters) |
+| [tests/README.md](tests/README.md) | `D2.Edge.Tests` — KC + host isolation |
+
 ## Modules
 
-Status of each module must match on-disk code (host folders are scaffolding; see Status above).
+- **[KeyCustodian](key-custodian/README.md)** — **shipped (partial)** — module within Edge; co-hosted via `AddD2KeyCustodian` on the general host with CA leaf/root caps. **JWT minter capability is structurally absent** on the general host.
+- **[auth/](auth/README.md)** — **NOT IMPLEMENTED**
+- **[core/](core/README.md)** — **NOT IMPLEMENTED**
+- **[fingerprint/](fingerprint/README.md)** — **NOT IMPLEMENTED**
+- **[whois/](whois/README.md)** — **NOT IMPLEMENTED**
+- **[rate-limit/](rate-limit/README.md)** — **NOT IMPLEMENTED** (pipeline reserves a slot only)
+- **[idempotency/](idempotency/README.md)** — **NOT IMPLEMENTED**
+- **[realtime/](realtime/README.md)** — **NOT IMPLEMENTED**
+- **YARP routing** — **NOT IMPLEMENTED** (design only)
 
-- **[KeyCustodian](key-custodian/README.md)** — **shipped (partial)** — module within Edge; manages lifecycle of long-lived secrets (JWKS signing keys, message payload encryption keys, cookie signing secrets). Also the internal **mTLS certificate authority** ([ADR-0023](../../../docs/adrs/0023-mtls-workload-identity.md)): holds the CA key and issues per-workload leaf certificates on the same overlap-rotation lifecycle as the JWKS-signing and payload-encryption keys ([ADR-0016](../../../docs/adrs/0016-keycustodian-lifecycle-store.md)). State machine + JWKS-style overlap rotation. Owns `d2-keycustodian`. Unit + integration CI active (Edge Unit/Integration jobs).
-- **YARP routing** — **NOT IMPLEMENTED** (design only). Intended load-balanced reverse proxy to backend services; YARP is the planned load balancer. No YARP package/wiring in-tree.
-- **Auth module** — **NOT IMPLEMENTED** as a complete module (design + ADRs only). Intended internal trust boundary: validate cookie / edge-facing token and **mint the single internal transaction-token** (`aud=d2.internal`) forwarded unchanged across hops (per [ADR-0022](../../../docs/adrs/0022-service-auth-mint-once-forward.md)); mTLS workload identity ([ADR-0023](../../../docs/adrs/0023-mtls-workload-identity.md)); sessions, OAuth client registry, scope/impersonation/adaptive auth. Owns **`d2-auth`** when built (canonical `d2-{domain}`; not the retired name `auth_db`).
-- **SignalR hubs** — **NOT IMPLEMENTED** (design only). Planned handshake-only auth + targeted revocation + push-only hubs + gRPC push API. No SignalR hub code under `server/services/edge/`.
-- **WhoIs** — **NOT IMPLEMENTED** (design only). Planned in-process IPinfo client; Edge fetches once per request, passes downstream via `X-D2-WhoIs`.
-- **Cross-cutting middleware** — **NOT IMPLEMENTED** as a composed Edge pipeline (design only). Planned: rate limit, fingerprint binding, JWT validation, idempotency, CSRF, CORS, request enrichment, translation.
+## Public API surface (host)
 
-## Public API surface
+**Shipped on Edge.Api:**
 
-**Shipped today (KeyCustodian):**
+- Health / alive / metrics via `MapD2DefaultEndpoints`
+- `GET /.well-known/jwks.json` + `GET /.well-known/openid-configuration`
+- Three-bind Kestrel: HTTP 8080 / Issuer HTTPS 8443 (no client cert) / mTLS HTTPS 9443 (require client cert)
 
-- gRPC / HTTP distribution surface for KeyCustodian (`internal/keys/{domain}` and related KC ops — see [key-custodian/](key-custodian/README.md))
-- JWKS publication path as implemented by the KeyCustodian module
+**Out of scope for this host shell (not registered):**
 
-**Designed — NOT IMPLEMENTED on this host:**
+- Six KeyCustodian gRPC `MapGrpcService` bindings
+- Audit bridge client + multi-process Compose
 
-- HTTP / REST gateway surface with `Asp.Versioning.Http` URL path versioning (`/api/v{version:apiVersion}/...`)
-- SignalR hubs (browser-direct WebSocket) + gRPC push API for backend services
-- Full OIDC discovery (`/.well-known/openid-configuration`) beyond what KeyCustodian already exposes for JWKS
+## Composition pointers
 
-## Dependencies (.NET shared libs)
+- DI: [api/Composition/README.md](api/Composition/README.md)
+- Pipeline 6A: [api/Pipeline/README.md](api/Pipeline/README.md)
+- Three-bind / dual-URL: [api/README.md](api/README.md)
 
-All of `D2.Shared.*` per [server/shared/dotnet/README.md](../../shared/dotnet/README.md). Status of each dependency must match Modules honesty above (host folders are scaffolding).
+## Run locally
 
-**Shipped today (KeyCustodian):**
+Compose service name (when present in compose files): **`d2-edge`**. This tree's multi-process Compose host wiring is empty-shell; local operators use a Web-project profile or shell with the required env keys below — **do not** start long-lived `dotnet run` from agent sessions.
 
-- `D2.Shared.Encryption` — KeyCustodian generates / rotates keys; KC path self-encrypts as a publisher where that surface is live
+**Required configuration (container / env SoT):**
 
-**Designed — NOT IMPLEMENTED on this host** (Auth / sessions / rate-limit / WhoIs / middleware; see [Modules](#modules)):
+| Key | Example / notes |
+| --- | --- |
+| `KEYCUSTODIAN_APP__ISSUERBASEURL` | `https://d2-edge:8443` (https only; **never** mTLS `:9443`) |
+| `REDIS_URL` | `redis://…` — always parsed via `ParseRedisUri` |
+| `RABBITMQ_URL` | AMQP URI |
+| `KEYCUSTODIAN_DATABASE_URL` | `postgresql://…` — always parsed via `ParsePostgresUri` |
+| `EDGE_MTLS__TRUST_ANCHOR_PATH` | Public CA root PEM/DER only |
+| `KEYCUSTODIAN_INFRA__ROOTKEYPATH` | KC root-key directory |
 
-- `D2.Shared.Auth` — Edge implements the auth lib's server-side (Auth module)
-- `D2.Shared.Messaging` — publishes auth events to `d2.audit.events` (Auth event publishing)
-- `D2.Shared.Caching.Redis` — sessions, idempotency, rate-limit counters (middleware modules)
-- `D2.Shared.Contacts` — consumes via design DB **`d2-auth-contacts`** (Auth; legacy prose may have said `auth_contacts_db`)
-- `D2.Shared.Location`, `D2.Shared.Geo` — WhoIs lookups (WhoIs)
+**Three-bind ports:** HTTP `8080` · Issuer HTTPS `8443` · mTLS HTTPS `9443`. Prefer empty `ASPNETCORE_URLS` so exclusive `Listen*` owns binds.
 
-No service-to-service dependencies (Edge IS the dispatcher; it depends on nothing downstream).
+Host-operator smoke published URL is `https://localhost:${EDGE_HTTPS_PORT}` → container Issuer 8443 — **not** the container Issuer env value.
+
+## Health / ops / debug
+
+| Probe | Path | Notes |
+| --- | --- | --- |
+| Readiness | `GET /health` | Full health-check set (KC DB when registered) |
+| Liveness | `GET /alive` | Checks tagged `live` |
+| Metrics | `GET /metrics` | Prometheus; IP-restricted; honors `OTEL_SDK_DISABLED` |
+| JWKS | `GET /.well-known/jwks.json` | Empty signing-key store → **503** (fail-secure) |
+| OIDC | `GET /.well-known/openid-configuration` | Issuer base from config |
+
+**Outbound leaf refresh:** `WorkloadLeafRefreshHostedService` calls `IWorkloadCertificateIssuer.IssueAsync` at **host start**. Host-start failure usually means no active CA intermediate or CSR issuer DI mis-wire — check KC DB seed / trust-anchor path / start logs (Loki) and traces (Tempo).
 
 ## Database
 
 **Shipped today (KeyCustodian):**
 
-- `d2-keycustodian` — owned by the KeyCustodian module. Tables: `key_record`, `key_audit_record`, `leaf_issuance_audit_record`.
+- `d2-keycustodian` — owned by the KeyCustodian module.
 
-**Designed — NOT IMPLEMENTED** (Auth module; inventory below is design-only; tracking: [Modules](#modules)):
+**Designed — NOT IMPLEMENTED** (Auth module):
 
-- `d2-auth` — planned owner: Auth module. Designed tables: `user`, `org`, `member`, `invitation`, `account`, `session`, `oauth_client`, `impersonation_consent`, `sign_in_event`, `security_policy_org`, `security_policy_user`, `verification`. (Retired working name: `auth_db`.)
-- `d2-auth-contacts` — planned owner: `D2.Shared.Contacts` library, scoped to Auth module contacts (org contacts, user contacts). (Retired working name: `auth_contacts_db`.)
-
-All on the same PG server (one server, many DBs) when present.
-
-## References
-
-- Edge — Unified Gateway (architectural justification)
-- Auth & Security (KeyCustodian shipped partial; sessions / scopes / impersonation / adaptive auth / security policy designed with Auth — **NOT IMPLEMENTED**)
-- Real-Time (SignalR module — **NOT IMPLEMENTED**)
-- Storage (`d2-keycustodian` shipped; `d2-auth` + `d2-auth-contacts` designed with Auth — **NOT IMPLEMENTED**)
-- Messaging (designed: Edge publishes to `d2.audit.events` for Auth event publishing — **NOT IMPLEMENTED**; consumes nothing)
+- `d2-auth`, `d2-auth-contacts` — see Auth module status.
 
 ## Tests
 
-**Tracked deliverable (NOT IMPLEMENTED):** `integration-key-rotation` (KeyCustodian rotation flow — graceful + emergency + race conditions + archive decryption). No such CI job is present in the workflow (active or commented). See [docs/TESTS.md](../../../docs/TESTS.md) "Tracked CI gate — key-rotation integration (NOT IMPLEMENTED)" section.
+Host isolation + CSR issuer + three-bind role tests under `tests/Unit/Host/`. KeyCustodian unit + integration under `tests/Unit/KeyCustodian/` and `tests/Integration/KeyCustodian/`. See [tests/README.md](tests/README.md).
+
+**Tracked deliverable (NOT IMPLEMENTED):** `integration-key-rotation` CI gate — see [docs/TESTS.md](../../../docs/TESTS.md).

@@ -1,0 +1,21 @@
+<!--
+Copyright (c) DCSV. All rights reserved.
+-->
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>D2.Edge.Domain</RootNamespace>
+  </PropertyGroup>
+
+  <!--
+    Thin host Domain shell for Edge host-level domain types (not KeyCustodian).
+    Future host modules place pure domain logic here. No EF / Options / DI / vendor SDK.
+    ProjectReferences satisfy services/Directory.Build.targets Tier-1 global usings
+    (Result / Utilities / I18n) so the empty shell still compiles.
+  -->
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\shared\dotnet\result\core\D2.Shared.Result.csproj" />
+    <ProjectReference Include="..\..\..\shared\dotnet\utilities\D2.Shared.Utilities.csproj" />
+    <ProjectReference Include="..\..\..\shared\dotnet\i18n\core\D2.Shared.I18n.csproj" />
+  </ItemGroup>
+</Project>

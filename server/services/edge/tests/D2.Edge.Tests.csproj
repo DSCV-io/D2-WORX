@@ -161,6 +161,8 @@ Copyright (c) DCSV. All rights reserved.
   </ItemGroup>
 
   <ItemGroup>
+    <!-- Edge host composition root — production well-known routes + AddD2EdgeHost. -->
+    <ProjectReference Include="..\api\D2.Edge.Api.csproj" />
     <ProjectReference Include="..\key-custodian\domain\D2.Edge.KeyCustodian.Domain.csproj" />
     <ProjectReference Include="..\key-custodian\app\D2.Edge.KeyCustodian.App.csproj" />
     <ProjectReference Include="..\key-custodian\client\D2.Edge.KeyCustodian.Client.csproj" />

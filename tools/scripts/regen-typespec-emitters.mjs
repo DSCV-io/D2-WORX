@@ -309,24 +309,18 @@ const COPY_MANIFEST = [
     to: "server/services/edge/key-custodian/app/Application/Handlers/Commands/GetOrLazyProvisionOwnSealPrivateKey/IGetOrLazyProvisionOwnSealPrivateKeyHandler.g.cs",
   },
 
-  // ---- Well-known route registrations (production ns
-  //      D2.Edge.Api.Routes.KeyCustodian via csharp-routes-namespace +
+  // ---- Well-known route registrations (production home Edge.Api;
+  //      ns D2.Edge.Api.Routes.KeyCustodian via csharp-routes-namespace +
   //      process-kind-by-module KeyCustodian=edge-module; delegate to
-  //      IKeyCustodianApi, both @d2Harmless GET).
-  //
-  //      Physical path stays under the KC TEST project until Edge.Api scatter
-  //      (AspNetCore + D2.Shared.Auth.Http references; App stays
-  //      transport-agnostic per ADR-0020). Namespace is production-correct now
-  //      so hand-written TestServer consumers `using D2.Edge.Api.Routes.KeyCustodian`.
-  //      HOST wiring (MapGetJwksRoute / MapGetOidcConfigurationRoute on the Edge
-  //      composition root) lands with the host shell. ----
+  //      IKeyCustodianApi, both @d2Harmless GET). Tests ProjectReference
+  //      D2.Edge.Api — do NOT dual-home under tests/Generated (CS0433). ----
   {
     from: "GetJwksRouteRegistration.g.cs",
-    to: "server/services/edge/tests/Unit/KeyCustodian/WellKnown/Generated/GetJwksRouteRegistration.g.cs",
+    to: "server/services/edge/api/Routes/KeyCustodian/GetJwksRouteRegistration.g.cs",
   },
   {
     from: "GetOidcConfigurationRouteRegistration.g.cs",
-    to: "server/services/edge/tests/Unit/KeyCustodian/WellKnown/Generated/GetOidcConfigurationRouteRegistration.g.cs",
+    to: "server/services/edge/api/Routes/KeyCustodian/GetOidcConfigurationRouteRegistration.g.cs",
   },
 
   // ---- TypeScript DTOs — no namespace sensitivity, all match ----

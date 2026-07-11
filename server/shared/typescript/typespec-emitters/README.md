@@ -1016,11 +1016,11 @@ The scatter script (`tools/scripts/regen-typespec-emitters.mjs`):
 - The real-KC gRPC service impls + transport mappers
   (`KeyCustodianSignerService`, `KeyCustodianKeyringService`,
   `KeyCustodianCertificateAuthorityService`, `KeyCustodianCaCertificateService` and
-  the four `<Op>TransportMappers`) — committed under the Edge test tree's
-  `TypeSpecGrpc/Generated/`
+  the four `<Op>TransportMappers`) — committed under the Edge tests
+  `TypeSpecGrpc/Generated/` fixture home
 - `I<Op>Handler.g.cs` for the six exposed KC ops — per-op CQRS handler folders
 - `GetJwksRouteRegistration.g.cs` / `GetOidcConfigurationRouteRegistration.g.cs` —
-  well-known route registrations (Edge test tree)
+  well-known route registrations (`server/services/edge/api/Routes/KeyCustodian/`)
 - `enum-fixture-dto.g.ts`, `sign-fixture-grpc-client.g.ts`, `sign-fixture-rest-client.g.ts`, `temporal-fixture-dto.g.ts` — TypeScript DTOs
 - `enum-fixtures-grpc-client.g.ts` — enum gRPC TypeScript client
 - `place-order-fixture-dto.g.ts`, `place-order-fixture-resilience-predicates.g.ts`, `place-order-v2-fixture-dto.g.ts`, `place-order-v2-fixture-resilience-predicates.g.ts`, `deep-nest-fixture-dto.g.ts` — predicate TypeScript files
