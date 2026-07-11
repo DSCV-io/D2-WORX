@@ -62,6 +62,22 @@ import { createTypeSpecLibrary, paramMessage } from "@typespec/compiler";
 //                                         segment the op's transport DTOs live in
 //                                         (<clients-ns>.<Concern>); without it the emitter cannot
 //                                         place them by concern. Add @d2Concern("<Segment>") to the op.
+//   D2TSP014  missing-served-by-for-host-routing — real-module mode + @route op carries no
+//                                         @d2ServedBy; host routing (process-kind + routes/bridge
+//                                         namespace maps) is keyed by ServedBy and cannot hard-derive
+//                                         App….Routes for production Edge hosts.
+//   D2TSP015  missing-process-kind      — real-module mode + @route op has @d2ServedBy but the
+//                                         process-kind-by-module map has no entry (or the map is
+//                                         absent). Values must be "edge-module" | "standalone".
+//   D2TSP016  unknown-process-kind      — process-kind-by-module entry is not in the closed set
+//                                         "edge-module" | "standalone".
+//   D2TSP017  missing-routes-namespace  — edge-module op with @route needs csharp-routes-namespace
+//                                         map entry for its ServedBy (production host Map* ns).
+//   D2TSP018  missing-bridge-namespace  — standalone op with @route + @d2GrpcMethod needs
+//                                         csharp-bridge-namespace map entry for its ServedBy.
+//   D2TSP019  standalone-route-requires-grpc — standalone process-kind op has @route but no
+//                                         @d2GrpcMethod; public HTTP without a gRPC backend hop
+//                                         is invalid for the Edge bridge model.
 //   D2TSP012  RETIRED — nested-model redaction is now fully supported; the number
 //                                         is NOT reused. (Formerly nested-redact-unsupported:
 //                                         a @d2Redact on a nested-model property. The shared
@@ -249,6 +265,71 @@ export const $lib = createTypeSpecLibrary({
       severity: "error",
       messages: {
         default: paramMessage`client-exposed operation '${"op"}' has no @d2Concern — an exposed op's transport DTOs are placed by concern (<clients-ns>.<Concern>); add @d2Concern("<Segment>")`,
+      },
+    },
+
+    /**
+     * D2TSP014 — A real-module routed operation has no @d2ServedBy. Process-kind
+     * and routes/bridge namespace maps are keyed by ServedBy; without it the
+     * emitter would hard-derive App….Routes and lie that App owns AspNetCore.
+     * Add @d2ServedBy("<Module>") and a process-kind-by-module entry.
+     */
+    "missing-served-by-for-host-routing": {
+      severity: "error",
+      messages: {
+        default: paramMessage`routed operation '${"op"}' has no @d2ServedBy — real-module host routing requires @d2ServedBy plus process-kind-by-module and routes/bridge namespace map entries; hard-derived App….Routes is forbidden`,
+      },
+    },
+
+    /**
+     * D2TSP015 — A real-module routed operation has @d2ServedBy but no
+     * process-kind-by-module map entry. Values must be "edge-module" or
+     * "standalone". Add the ServedBy key to process-kind-by-module in tspconfig.
+     */
+    "missing-process-kind": {
+      severity: "error",
+      messages: {
+        default: paramMessage`routed operation '${"op"}' (servedBy '${"servedBy"}') has no process-kind-by-module entry — add '${"servedBy"}: edge-module|standalone' to tspconfig`,
+      },
+    },
+
+    /**
+     * D2TSP016 — process-kind-by-module value is outside the closed set.
+     */
+    "unknown-process-kind": {
+      severity: "error",
+      messages: {
+        default: paramMessage`process-kind-by-module['${"servedBy"}'] = '${"kind"}' is not a known process kind — expected "edge-module" or "standalone"`,
+      },
+    },
+
+    /**
+     * D2TSP017 — An edge-module routed op needs csharp-routes-namespace[ServedBy].
+     */
+    "missing-routes-namespace": {
+      severity: "error",
+      messages: {
+        default: paramMessage`edge-module routed operation '${"op"}' (servedBy '${"servedBy"}') has no csharp-routes-namespace entry — set the Edge.Api routes namespace for this module in tspconfig`,
+      },
+    },
+
+    /**
+     * D2TSP018 — A standalone bridge op needs csharp-bridge-namespace[ServedBy].
+     */
+    "missing-bridge-namespace": {
+      severity: "error",
+      messages: {
+        default: paramMessage`standalone bridge operation '${"op"}' (servedBy '${"servedBy"}') has no csharp-bridge-namespace entry — set the Edge.Api bridges namespace for this module in tspconfig`,
+      },
+    },
+
+    /**
+     * D2TSP019 — Standalone public HTTP requires a gRPC backend hop.
+     */
+    "standalone-route-requires-grpc": {
+      severity: "error",
+      messages: {
+        default: paramMessage`standalone operation '${"op"}' has @route but no @d2GrpcMethod — public HTTP for standalone services must bridge to a gRPC backend hop`,
       },
     },
   },

@@ -59,7 +59,35 @@ options:
 
     # C# namespace for the generated gRPC service-impl class + transport mapper.
     # Distinct from proto-csharp-namespace so proto types and service impl do not collide.
+    # grpc-service-namespace remains the test-home ns while Edge.Api lacks Grpc.Tools
+    # ownership for thin-server scatter (production retarget + COPY_MANIFEST is a
+    # separate host-layout change).
     grpc-service-namespace: "D2.Edge.Tests.TypeSpecGrpc.Generated"
+
+    # Process kind per @d2ServedBy module — closed set: edge-module | standalone.
+    # edge-module: public HTTP Map* + gRPC server live on the Edge host (in-process façade).
+    # standalone: public HTTP is an Edge→service gRPC bridge; gRPC server lives on service.Api.
+    # Real-module + @route requires @d2ServedBy + a map entry here (fail-loud otherwise).
+    process-kind-by-module:
+      KeyCustodian: edge-module
+      # Co-compiled fixture ops (sign-shaped) share this tspconfig real-module option set;
+      # they still need a process-kind entry (real-module + @route fail-loud).
+      SignFixture: edge-module
+    # Audit process-kind entry is omitted while Audit is not in imports: (standalone candidate).
+
+    # C# namespace for generated REST Map* route registrations, keyed by @d2ServedBy.
+    # Production Edge host surface — NOT derived from csharp-app-namespace-base (App must not
+    # own AspNetCore). Physical COPY_MANIFEST path remains under tests while Edge.Api does
+    # not own the artifact home; the namespace is production-correct now.
+    csharp-routes-namespace:
+      KeyCustodian: "D2.Edge.Api.Routes.KeyCustodian"
+      # Fixture routes stay under the fixture transport ns (not production Edge.Api).
+      SignFixture: "D2.Edge.Tests.TypeSpecRoute.Generated"
+
+    # C# namespace for generated Edge HTTP→gRPC bridge registrations (standalone modules).
+    # Required when process-kind is standalone and the op has @route + @d2GrpcMethod.
+    # csharp-bridge-namespace:
+    #   Audit: "D2.Edge.Api.Bridges.Audit"
 
     # TS-client production-emission target — per @d2ServedBy module → the package
     # `src` root (repo-relative). For each named module, the emitted TS SSR gRPC

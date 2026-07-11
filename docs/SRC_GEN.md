@@ -676,7 +676,9 @@ TypeSpec ops and models in `contracts/typespec/` are annotated with the `@d2*` d
 
 - C# and TypeScript DTOs
 - `.proto` file + generated gRPC service stubs and clients
-- REST route registrations (C# `Map*` calls)
+- REST route registrations (C# `Map*` calls) for **edge-module** process-kind (in-process façade / handler)
+- Edge HTTP→gRPC **bridge** registrations (C# `Map*Bridge` → `I{Module}GrpcClient`) for **standalone** process-kind public HTTP
+- Process-kind host routing from tspconfig (`process-kind-by-module`, `csharp-routes-namespace`, `csharp-bridge-namespace`) with fail-loud D2TSP014–019
 - The module façade and handler interfaces
 - OpenAPI extensions
 - Wire-identity constants (`WireVersion.g.cs`) and manifest (`wire-identity.manifest.g.json`)
@@ -709,6 +711,12 @@ IDs are allocated in `server/shared/typescript/typespec-emitters/src/lib.ts`. Al
 | `D2TSP011` | `duplicate-field-number`    | Two or more properties on the same proto-bound model carry the same `@d2Field(N)` pin. Duplicate field numbers produce invalid proto3; each property needs a unique number.                                                                  |
 | `D2TSP012` | _retired_                   | Formerly `nested-redact-unsupported`. Nested-model `@d2Redact` is now fully supported (the model walker threads the reason into nested fields at any depth); the number stays retired so historical build-failure reports remain traceable.   |
 | `D2TSP013` | `missing-concern`           | A client-exposed op (real-module mode — `csharp-clients-namespace` + `csharp-app-namespace-base` set, `@d2ServedBy` present, not `@d2Internal`) carries no `@d2Concern`. The concern names the folder + namespace segment the op's transport DTOs live in (`<clients-ns>.<Concern>`); without it the emitter cannot place them. Add `@d2Concern("<Segment>")` to the op. |
+| `D2TSP014` | `missing-served-by-for-host-routing` | Real-module mode + `@route` op has no `@d2ServedBy`. Host routing (process-kind + routes/bridge namespace maps) is keyed by ServedBy; hard-derived `App….Routes` is forbidden for production Edge hosts. |
+| `D2TSP015` | `missing-process-kind`      | Real-module mode + `@route` op has `@d2ServedBy` but `process-kind-by-module` has no entry (or the map is absent). Values must be `"edge-module"` \| `"standalone"`. |
+| `D2TSP016` | `unknown-process-kind`      | `process-kind-by-module` value is outside the closed set `"edge-module"` \| `"standalone"`. |
+| `D2TSP017` | `missing-routes-namespace`  | Edge-module op with `@route` needs a `csharp-routes-namespace` map entry for its ServedBy (production Edge.Api Map* namespace). |
+| `D2TSP018` | `missing-bridge-namespace`  | Standalone op with `@route` + `@d2GrpcMethod` needs a `csharp-bridge-namespace` map entry for its ServedBy. |
+| `D2TSP019` | `standalone-route-requires-grpc` | Standalone process-kind op has `@route` but no `@d2GrpcMethod` — public HTTP without a gRPC backend hop is invalid for the Edge bridge model. |
 
 ### Concern-based client namespace routing (`@d2Concern`)
 

@@ -68,6 +68,11 @@ import {
   emitBusinessRetrySignal,
 } from "./lib/result-predicate-emitter.js";
 import { emitRoutePolicy } from "./lib/route-policy-emitter.js";
+import {
+  emitBridgeRegistration,
+  emitMapAllBridges,
+} from "./lib/bridge-emitter.js";
+import type { BridgeModuleOp } from "./lib/bridge-emitter.js";
 import { emitOpenApiDocuments } from "./lib/openapi-emitter.js";
 import { emitIdempotencyStoreSeam } from "./lib/idempotency-gate-emitter.js";
 import {
@@ -168,6 +173,9 @@ import { emitWireIdentityManifest } from "./lib/wire-manifest-emitter.js";
 //   proto-package          — proto3 package declaration.
 //   proto-csharp-namespace — C# namespace for Grpc.Tools-generated proto types.
 //   grpc-service-namespace — C# namespace for the generated gRPC service-impl class.
+//   process-kind-by-module — ServedBy → "edge-module" | "standalone" (host routing).
+//   csharp-routes-namespace — ServedBy → Edge.Api routes C# namespace (edge-module Map*).
+//   csharp-bridge-namespace — ServedBy → Edge.Api bridges C# namespace (standalone Map*).
 
 /** Shape of one operation entry in the smoke manifest. */
 export interface ManifestOperation {
@@ -251,6 +259,24 @@ export async function $onEmit(context: EmitContext): Promise<void> {
       ? rawOptions["grpc-service-namespace"]
       : "D2.Generated.Grpc";
 
+  // Process-kind map (ServedBy → "edge-module" | "standalone"). Required for
+  // real-module host routing of any @route op; fixture mode tolerates absence.
+  const processKindByModule = resolveProcessKindByModule(
+    rawOptions["process-kind-by-module"],
+  );
+
+  // Routes namespace map (ServedBy → full C# ns). Production edge-module Map*
+  // land under Edge.Api.Routes.*; missing key is fail-loud in real-module mode.
+  const csharpRoutesNamespace = resolveStringMapOption(
+    rawOptions["csharp-routes-namespace"],
+  );
+
+  // Bridge namespace map (ServedBy → full C# ns). Standalone public HTTP bridges
+  // land under Edge.Api.Bridges.*; missing key is fail-loud for bridge ops.
+  const csharpBridgeNamespace = resolveStringMapOption(
+    rawOptions["csharp-bridge-namespace"],
+  );
+
   // TS-client production-emission target (per @d2ServedBy module). A config-only,
   // concern-driven mirror: for every module named in this map, the emitted TS SSR
   // gRPC client (<module>-grpc-client.g.ts) AND the TS DTOs of that module's
@@ -321,6 +347,14 @@ export async function $onEmit(context: EmitContext): Promise<void> {
   // the GrpcClientOp (with any parsed @d2Resilience predicate ASTs attached) with the op's output
   // Model so the per-module predicate emitter can do its gen-time data-path crawl.
   const grpcOpsByModule = new Map<string, CollectedGrpcOp[]>();
+
+  // Collect standalone bridge ops per module for MapAll{Module}Bridges emission after the walk.
+  // Keyed by @d2ServedBy; value carries the op names + the resolved bridge registration ns
+  // (same ns for all ops of a module — map is keyed by ServedBy).
+  const bridgeOpsByModule = new Map<
+    string,
+    { registrationNs: string; sourceSpec: string; ops: BridgeModuleOp[] }
+  >();
 
   // Per-module collection of emitted TS DTO files for @d2GrpcMethod ops whose
   // module has a configured ts-client-output-dir. Captured during the per-op walk
@@ -733,12 +767,16 @@ export async function $onEmit(context: EmitContext): Promise<void> {
           grpcServiceNs,
           csAppNamespaceBase,
           csClientsNamespace,
+          processKindByModule,
+          csharpRoutesNamespace,
+          csharpBridgeNamespace,
           specHint,
           inputModel,
           outputModel,
           idempotentNamespaces,
           idempotentNamespaceSpec,
           restOpsByModule,
+          bridgeOpsByModule,
         );
       }
     },
@@ -923,6 +961,20 @@ export async function $onEmit(context: EmitContext): Promise<void> {
     for (const f of restClientFiles) {
       const restClientPath = resolveOutputPath(context, f.fileName);
       void emitGeneratedFile(program, restClientPath, f.content);
+    }
+  }
+
+  // ---- Edge bridge MapAll{Module}Bridges — one per standalone module with ≥1 bridge ----
+  for (const [moduleName, collected] of bridgeOpsByModule) {
+    const mapAll = emitMapAllBridges(
+      moduleName,
+      collected.ops,
+      collected.registrationNs,
+      collected.sourceSpec,
+    );
+    if (mapAll !== undefined) {
+      const mapAllPath = resolveOutputPath(context, mapAll.fileName);
+      void emitGeneratedFile(program, mapAllPath, mapAll.content);
     }
   }
 
@@ -1571,12 +1623,19 @@ function emitRouteIfPresent(
   grpcServiceNs: string,
   csAppNamespaceBase: string | undefined,
   csClientsNamespace: string | undefined,
+  processKindByModule: ReadonlyMap<string, string>,
+  csharpRoutesNamespace: ReadonlyMap<string, string>,
+  csharpBridgeNamespace: ReadonlyMap<string, string>,
   specHint: string,
   inputModel: Model | undefined,
   outputModel: Model | undefined,
   idempotentNamespaces: Set<string>,
   idempotentNamespaceSpec: Map<string, string>,
   restOpsByModule: Map<string, TsRestClientOp[]>,
+  bridgeOpsByModule: Map<
+    string,
+    { registrationNs: string; sourceSpec: string; ops: BridgeModuleOp[] }
+  >,
 ): void {
   // Read the @d2Idempotent payload (if any) before the route check.
   // D2TSP006: if @d2Idempotent is present but no @route exists, fail loud.
@@ -1696,8 +1755,170 @@ function emitRouteIfPresent(
   const servedBy = program.stateMap(D2_SERVED_BY_KEY).get(op) as
     | string
     | undefined;
+  const hasGrpc = program.stateMap(D2_GRPC_METHOD_KEY).get(op) !== undefined;
   const pascalOp = toPascalFromCamel(op.name);
+  const isRealModule =
+    csAppNamespaceBase !== undefined && csClientsNamespace !== undefined;
 
+  // ---- Process-kind + host-routing fail-louds (real-module mode) ----
+  // needsHostRouting is true here (we only enter this function for @route ops).
+  // Fixture mode (no clients-ns + app-base) keeps today's optional ServedBy path.
+  let processKind: ProcessKind | undefined;
+  if (servedBy !== undefined && servedBy.length > 0) {
+    const rawKind = processKindByModule.get(servedBy);
+    if (rawKind !== undefined) {
+      if (rawKind !== "edge-module" && rawKind !== "standalone") {
+        $lib.reportDiagnostic(program, {
+          code: "unknown-process-kind",
+          format: { servedBy, kind: rawKind },
+          target: op,
+        });
+        return;
+      }
+      processKind = rawKind;
+    }
+  }
+
+  if (isRealModule) {
+    if (servedBy === undefined || servedBy.length === 0) {
+      $lib.reportDiagnostic(program, {
+        code: "missing-served-by-for-host-routing",
+        format: { op: op.name },
+        target: op,
+      });
+      return;
+    }
+    if (processKind === undefined) {
+      $lib.reportDiagnostic(program, {
+        code: "missing-process-kind",
+        format: { op: op.name, servedBy },
+        target: op,
+      });
+      return;
+    }
+  }
+
+  const inputTypeName =
+    (inputModel?.name?.length ?? 0) > 0 ? inputModel!.name : `${pascalOp}Input`;
+  const outputTypeName =
+    (outputModel?.name?.length ?? 0) > 0
+      ? outputModel!.name
+      : `${pascalOp}Output`;
+
+  void isExposed; // exposure is already validated by the caller
+
+  // Map the idempotency payload's lowerCamel field names to PascalCase C# property names.
+  let idempotencyConfig:
+    | {
+        keySource: "header" | "derived";
+        ttlSeconds: number;
+        fields: readonly string[];
+      }
+    | undefined;
+  if (idempotentPayload !== undefined) {
+    const pascalFields = idempotentPayload.fields.map((f) => {
+      /* v8 ignore start — defensive: @d2Idempotent guarantees non-empty field names, so this guard never fires */
+      if (f.length === 0) return f;
+      /* v8 ignore stop */
+      return f[0]!.toUpperCase() + f.slice(1);
+    });
+    idempotencyConfig = {
+      keySource: idempotentPayload.keySource as "header" | "derived",
+      ttlSeconds: idempotentPayload.ttlSeconds,
+      fields: pascalFields,
+    };
+  }
+
+  // ---- Standalone → Edge HTTP→gRPC bridge (skip in-process Map*) ----
+  if (processKind === "standalone") {
+    if (!hasGrpc) {
+      $lib.reportDiagnostic(program, {
+        code: "standalone-route-requires-grpc",
+        format: { op: op.name },
+        target: op,
+      });
+      return;
+    }
+
+    const bridgeNs =
+      servedBy !== undefined ? csharpBridgeNamespace.get(servedBy) : undefined;
+    if (
+      bridgeNs === undefined ||
+      bridgeNs.length === 0 ||
+      servedBy === undefined
+    ) {
+      $lib.reportDiagnostic(program, {
+        code: "missing-bridge-namespace",
+        format: {
+          op: op.name,
+          servedBy: servedBy ?? "",
+        },
+        target: op,
+      });
+      return;
+    }
+
+    // gRPC client interface lives in the clients package (real-module) or the
+    // fixture grpc service ns. Host wires AddD2{Module}GrpcClients separately.
+    const grpcClientNamespace =
+      csClientsNamespace !== undefined ? csClientsNamespace : grpcServiceNs;
+
+    if (idempotencyConfig !== undefined) {
+      // Track bridge registration ns so D2GeneratedIdempotencyStore seam emits
+      // (same as in-process Map* path).
+      idempotentNamespaces.add(bridgeNs);
+      idempotentNamespaceSpec.set(bridgeNs, specHint);
+    }
+
+    const bridgeFile = emitBridgeRegistration({
+      opName: op.name,
+      verb,
+      routePath,
+      moduleName: servedBy,
+      grpcClientNamespace,
+      inputTypeName,
+      outputTypeName,
+      dtoNamespace: dtoCsNamespace,
+      scopePolicy,
+      rateTier,
+      csrf,
+      idempotency: idempotencyConfig,
+      registrationNamespace: bridgeNs,
+      sourceSpec: specHint,
+    });
+    const bridgePath = resolveOutputPath(context, bridgeFile.fileName);
+    void emitGeneratedFile(program, bridgePath, bridgeFile.content);
+
+    const existingBridge = bridgeOpsByModule.get(servedBy);
+    if (existingBridge !== undefined) {
+      existingBridge.ops.push({ opName: op.name });
+    } else {
+      bridgeOpsByModule.set(servedBy, {
+        registrationNs: bridgeNs,
+        sourceSpec: specHint,
+        ops: [{ opName: op.name }],
+      });
+    }
+
+    // Public HTTP still exists on Edge — collect for the browser REST client.
+    collectRestClientOp(
+      program,
+      op,
+      servedBy,
+      verb,
+      routePath,
+      scopePolicy,
+      inputModel,
+      inputTypeName,
+      outputTypeName,
+      specHint,
+      idempotencyConfig,
+      restOpsByModule,
+    );
+    return;
+  }
+
+  // ---- edge-module (or fixture mode without process-kind) → in-process Map* ----
   let delegationTarget: DelegationTarget;
   let delegationTargetNamespace: string;
 
@@ -1736,46 +1957,36 @@ function emitRouteIfPresent(
         : grpcServiceNs;
   }
 
-  // Resolve the registration namespace — in fixture mode use the gRPC service ns
-  // (all transport output is fixture-validated per FLAG f / R7.10).
-  const registrationNs =
-    csAppNamespaceBase !== undefined
-      ? `${csAppNamespaceBase.replace(/\.Handlers$/, "")}.Routes`
-      : grpcServiceNs;
+  // Resolve the registration namespace.
+  // Production: csharp-routes-namespace[ServedBy] when set — never hard-derive
+  // App….Routes once process-kind is edge-module in real-module mode.
+  // Fixture / legacy: hard-derive from app-base or fall back to grpcServiceNs.
+  let registrationNs: string | undefined;
+  if (servedBy !== undefined && servedBy.length > 0) {
+    const mapped = csharpRoutesNamespace.get(servedBy);
+    if (mapped !== undefined && mapped.length > 0) registrationNs = mapped;
+  }
+  if (registrationNs === undefined) {
+    if (isRealModule && processKind === "edge-module") {
+      $lib.reportDiagnostic(program, {
+        code: "missing-routes-namespace",
+        format: {
+          op: op.name,
+          servedBy: servedBy ?? "",
+        },
+        target: op,
+      });
+      return;
+    }
+    // Fixture mode or real-module without process-kind (unreachable for real-module
+    // host routing after the fail-louds above): preserve hard-derive fallback.
+    registrationNs =
+      csAppNamespaceBase !== undefined
+        ? `${csAppNamespaceBase.replace(/\.Handlers$/, "")}.Routes`
+        : grpcServiceNs;
+  }
 
-  const inputTypeName =
-    (inputModel?.name?.length ?? 0) > 0 ? inputModel!.name : `${pascalOp}Input`;
-  const outputTypeName =
-    (outputModel?.name?.length ?? 0) > 0
-      ? outputModel!.name
-      : `${pascalOp}Output`;
-
-  void isExposed; // exposure is already validated by the caller
-
-  // Map the idempotency payload's lowerCamel field names to PascalCase C# property names.
-  // walkModel populates FieldInfo.csName as PascalCase; here we do a simple camel→Pascal
-  // conversion (matching the convention used everywhere in the emitter fleet) because
-  // the inputWalk isn't passed into emitRouteIfPresent. The decorator guarantees valid
-  // field names; we map defensively (empty string → would throw in buildIdempotencyGate).
-  let idempotencyConfig:
-    | {
-        keySource: "header" | "derived";
-        ttlSeconds: number;
-        fields: readonly string[];
-      }
-    | undefined;
-  if (idempotentPayload !== undefined) {
-    const pascalFields = idempotentPayload.fields.map((f) => {
-      /* v8 ignore start — defensive: @d2Idempotent guarantees non-empty field names, so this guard never fires */
-      if (f.length === 0) return f;
-      /* v8 ignore stop */
-      return f[0]!.toUpperCase() + f.slice(1);
-    });
-    idempotencyConfig = {
-      keySource: idempotentPayload.keySource as "header" | "derived",
-      ttlSeconds: idempotentPayload.ttlSeconds,
-      fields: pascalFields,
-    };
+  if (idempotencyConfig !== undefined) {
     // Track this namespace for seam emission.
     idempotentNamespaces.add(registrationNs);
     idempotentNamespaceSpec.set(registrationNs, specHint);
@@ -1802,43 +2013,107 @@ function emitRouteIfPresent(
   void emitGeneratedFile(program, routePath2, routeFile.content);
 
   // ---- Collect this routed op for the per-module TS browser REST client ----
-  // The REST client names off the PERMANENT @d2ServedBy module. An op with
-  // @route but no @d2ServedBy has no module to name the surface — skip the REST
-  // collection (the C# route above still emits; @d2ServedBy is not required there).
   if (servedBy !== undefined && servedBy.length > 0) {
-    // Auth intent: harmless-only → apiCallAnon; any/all scope → apiCall.
-    const authIntent: RestAuthIntent =
-      scopePolicy.kind === "harmless" ? "harmless" : "scoped";
-    // Idempotency keySource: header → client threads a key; derived → server-computed
-    // (no client key); absent → none.
-    const idempotencyKeySource: RestIdempotencyKeySource =
-      idempotencyConfig === undefined ? "none" : idempotencyConfig.keySource;
-    // Request fields for GET/DELETE query binding (the walk is pure/idempotent).
-    // emitRoutePolicy above validated the model first, so the error sink is inert
-    // (never called); a parameterless routed op has no input model → empty walk.
-    /* v8 ignore start — defensive: walk error sink never fires (model pre-validated) + the no-input-model empty-walk arm */
-    const restInputWalk =
-      inputModel !== undefined
-        ? walkModel(program, inputModel, () => undefined)
-        : { fields: [], nestedModels: [], nestedEnums: [] };
-    /* v8 ignore stop */
-
-    const restOp: TsRestClientOp = {
-      opName: op.name,
+    collectRestClientOp(
+      program,
+      op,
+      servedBy,
+      verb,
       routePath,
-      verb: verb.toUpperCase() as RestVerb,
-      authIntent,
-      sourceSpec: specHint,
-      requestModelName: inputTypeName,
-      requestFields: restInputWalk.fields,
-      responseModelName: outputTypeName,
-      idempotencyKeySource,
-    };
-
-    const existing = restOpsByModule.get(servedBy) ?? [];
-    existing.push(restOp);
-    restOpsByModule.set(servedBy, existing);
+      scopePolicy,
+      inputModel,
+      inputTypeName,
+      outputTypeName,
+      specHint,
+      idempotencyConfig,
+      restOpsByModule,
+    );
   }
+}
+
+/**
+ * Collect a routed op into the per-module TS browser REST client map.
+ * Shared by in-process Map* and standalone bridge paths (both are public HTTP).
+ */
+function collectRestClientOp(
+  program: Parameters<typeof walkModel>[0],
+  _op: Operation,
+  servedBy: string,
+  verb: HttpVerb,
+  routePath: string,
+  scopePolicy: ScopePolicy,
+  inputModel: Model | undefined,
+  inputTypeName: string,
+  outputTypeName: string,
+  specHint: string,
+  idempotencyConfig:
+    | {
+        keySource: "header" | "derived";
+        ttlSeconds: number;
+        fields: readonly string[];
+      }
+    | undefined,
+  restOpsByModule: Map<string, TsRestClientOp[]>,
+): void {
+  // Auth intent: harmless-only → apiCallAnon; any/all scope → apiCall.
+  const authIntent: RestAuthIntent =
+    scopePolicy.kind === "harmless" ? "harmless" : "scoped";
+  // Idempotency keySource: header → client threads a key; derived → server-computed
+  // (no client key); absent → none.
+  const idempotencyKeySource: RestIdempotencyKeySource =
+    idempotencyConfig === undefined ? "none" : idempotencyConfig.keySource;
+  // Request fields for GET/DELETE query binding (the walk is pure/idempotent).
+  /* v8 ignore start — defensive: walk error sink never fires (model pre-validated) + the no-input-model empty-walk arm */
+  const restInputWalk =
+    inputModel !== undefined
+      ? walkModel(program, inputModel, () => undefined)
+      : { fields: [], nestedModels: [], nestedEnums: [] };
+  /* v8 ignore stop */
+
+  const restOp: TsRestClientOp = {
+    opName: _op.name,
+    routePath,
+    verb: verb.toUpperCase() as RestVerb,
+    authIntent,
+    sourceSpec: specHint,
+    requestModelName: inputTypeName,
+    requestFields: restInputWalk.fields,
+    responseModelName: outputTypeName,
+    idempotencyKeySource,
+  };
+
+  const existing = restOpsByModule.get(servedBy) ?? [];
+  existing.push(restOp);
+  restOpsByModule.set(servedBy, existing);
+}
+
+/** Closed set of process-kind values (tspconfig process-kind-by-module). */
+export type ProcessKind = "edge-module" | "standalone";
+
+/**
+ * Resolve a ServedBy → string map option (e.g. csharp-routes-namespace,
+ * csharp-bridge-namespace, process-kind-by-module). Non-object / empty /
+ * non-string values yield an empty map.
+ */
+export function resolveStringMapOption(raw: unknown): Map<string, string> {
+  const result = new Map<string, string>();
+  if (raw === null || typeof raw !== "object" || Array.isArray(raw))
+    return result;
+
+  for (const [key, value] of Object.entries(raw as Record<string, unknown>)) {
+    if (typeof value !== "string" || value.length === 0) continue;
+    result.set(key, value);
+  }
+  return result;
+}
+
+/**
+ * Resolve `process-kind-by-module` into a ServedBy → raw kind string map.
+ * Closed-set validation happens at the op site (unknown-process-kind diagnostic)
+ * so authors see the op that triggered the bad value.
+ */
+export function resolveProcessKindByModule(raw: unknown): Map<string, string> {
+  return resolveStringMapOption(raw);
 }
 
 /**

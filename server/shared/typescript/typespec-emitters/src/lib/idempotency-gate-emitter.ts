@@ -21,7 +21,8 @@
 //     D2Result semantic factories, string.Empty, brace-free one-liner ifs.
 //   - No phase/step/deliverable/audit-round identifiers anywhere.
 //   - The seam name uses the D2Generated prefix to signal emitter ownership
-//     and to avoid colliding with the future real Edge IIdempotencyStore.
+//     and reserves a collision-free namespace vs Edge IIdempotencyStore
+//     under replace-trigger (VALIDATION.md).
 
 import { buildBanner } from "./banner.js";
 import type { EmittedFile } from "./csharp-dto-emitter.js";

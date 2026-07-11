@@ -251,6 +251,7 @@ C1–C16, C18 are ✅ done. Open rows:
 | # | Item | Status | Blocked on |
 | - | ---- | ------ | ---------- |
 | D1 | .NET `DefaultLocalCache` post-dispose lock ops (`AcquireLockAsync`/`ReleaseLockAsync`) previously kept working after `Dispose()` (cleared `r_locks` only; no `ObjectDisposedException`), contradicting the package README's documented fail-closed contract. | ✅ fixed on `n/ts-caching` (`3ef66497`) — `ThrowIfDisposed()` on every public op including locks; aligns with TS twin | — |
+| D2 | **Domain advisory-lock constants wrongly public on shared Postgres.** `AdvisoryLocks.D2Keycustodian.{MIGRATOR,ROTATION,CA_SEED}` (and future domain nests) ship from `D2.Shared.EntityFrameworkCore.Postgres` PublicAPI + central `contracts/advisory-locks/`. **Shared should own only the mechanism** (`PgAdvisoryLock`, migrator, generator tooling). **Domain key catalogs belong with the owning service/module** (KC → Edge.KeyCustodian.Infra or equivalent) so shared stays service-agnostic. Origin: 0016 NQ-1 “registry now, not at second consumer.” **Not** a pre-req for Edge host 0030. | 📐 specified-deferred | **Quick detour after 0030 Plan CLEAN / host landing wave** — small hygiene deliverable: keep shared primitive; move KC keys out of shared PublicAPI; optional multi-domain uniqueness CI; semver bump shared Postgres |
 
 ---
 

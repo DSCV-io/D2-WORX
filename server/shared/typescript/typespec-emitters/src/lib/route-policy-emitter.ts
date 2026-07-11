@@ -11,7 +11,7 @@
 //      ToProblemDetails (failure-only extension) for ≥400 statuses.
 //   2. D2GeneratedRoutePolicyMarkers.g.cs — small emitter-owned marker records
 //      (D2GeneratedRateLimitTier + D2GeneratedCsrfPosture) emitted once per
-//      registration namespace for use by future Edge middleware.
+//      registration namespace as reserved-slot metadata for Edge middleware.
 //
 // Conventions:
 //   - Auto-generated banner, #nullable enable, namespace BEFORE using.
@@ -29,7 +29,7 @@
 //     extension) serialized verbatim. Results.Json is used for both branches so
 //     the emitted status is always the real one from the D2Result.
 //   - Rate-tier / CSRF: faithful metadata markers (no enforcement — unbuilt
-//     consumer is future Edge middleware; ledgered in VALIDATION.md).
+//     consumer is Edge rate-limit/CSRF middleware; ledgered in VALIDATION.md).
 //   - No phase/step/deliverable/audit-round identifiers in emitted code or source.
 
 import { buildBanner } from "./banner.js";
@@ -291,9 +291,9 @@ export function emitRoutePolicy(input: RoutePolicyEmitInput): EmittedFile {
  * Pure function — no I/O. Returns an {@link EmittedFile}.
  *
  * These records carry no enforcement logic — they are faithful seam markers
- * the future Edge rate-limit and CSRF middleware will read from endpoint
- * metadata via GetMetadata<T>(). The unbuilt consumer is ledgered in
- * VALIDATION.md; replace-trigger is when the Edge middleware lands.
+ * Edge rate-limit and CSRF middleware read from endpoint metadata via
+ * GetMetadata<T>(). The unbuilt consumer is ledgered in VALIDATION.md;
+ * replace-trigger: Edge rate-limit/CSRF middleware landing.
  */
 export function emitRoutePolicyMarkers(
   registrationNamespace: string,
@@ -316,7 +316,7 @@ export function emitRoutePolicyMarkers(
     "/// Faithful seam marker for a generated route's rate-limit tier declaration.",
   );
   lines.push(
-    "/// Future Edge rate-limit middleware reads this from endpoint metadata.",
+    "/// Edge rate-limit middleware reads this from endpoint metadata.",
   );
   lines.push("/// No enforcement logic is present in this record.");
   lines.push("/// </summary>");
@@ -326,9 +326,7 @@ export function emitRoutePolicyMarkers(
   lines.push(
     "/// Faithful seam marker for a generated route's CSRF posture declaration.",
   );
-  lines.push(
-    "/// Future Edge CSRF middleware reads this from endpoint metadata.",
-  );
+  lines.push("/// Edge CSRF middleware reads this from endpoint metadata.");
   lines.push("/// No enforcement logic is present in this record.");
   lines.push("/// </summary>");
   lines.push("public sealed record D2GeneratedCsrfPosture(string Posture);");

@@ -8,10 +8,25 @@
 // emit-file utilities, model walker, DTO emitters) so all emitters in the
 // fleet import from the barrel.
 
-export { $onEmit } from "./emitter.js";
-export type { ManifestOperation, OperationsManifest } from "./emitter.js";
+export {
+  $onEmit,
+  resolveStringMapOption,
+  resolveProcessKindByModule,
+  resolveTsClientOutputDirs,
+} from "./emitter.js";
+export type {
+  ManifestOperation,
+  OperationsManifest,
+  ProcessKind,
+} from "./emitter.js";
 
 export { $lib } from "./lib.js";
+
+export {
+  emitBridgeRegistration,
+  emitMapAllBridges,
+} from "./lib/bridge-emitter.js";
+export type { BridgeEmitInput, BridgeModuleOp } from "./lib/bridge-emitter.js";
 
 export { resolveScalar, hasScalar } from "./lib/scalar-registry.js";
 export type { ScalarMapping } from "./lib/scalar-registry.js";

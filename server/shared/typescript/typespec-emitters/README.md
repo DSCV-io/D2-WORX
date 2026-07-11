@@ -26,12 +26,13 @@ route registrations / façades / TS clients) into service projects.
   - [TypeScript DTO emitter](#typescript-dto-emitter-srclibts-dto-emitterts)
   - [Proto emitter](#proto-emitter-srclibproto-emitterts)
   - [REST route+policy emitter](#rest-routepolicy-emitter-srclibroute-policy-emitterts)
+  - [Edge HTTP→gRPC bridge emitter](#edge-httpgrpc-bridge-emitter-srclibbridge-emitterts)
   - [gRPC service-impl emitter](#grpc-service-impl-emitter-srclibgrpc-service-emitterts)
   - [Handler-interface emitter](#handler-interface-emitter-srclibhandler-interface-emitterts)
   - [Façade emitter](#façade-emitter-srclibfacade-emitterts)
   - [OpenAPI x-d2-* extension emitter](#openapi-x-d2--extension-emitter-srclibopenapi-emitterts)
   - [Idempotency gate emitter](#idempotency-gate-emitter-srclibidempotency-gate-emitterts)
-  - [Emit-file wrapper](#emit-file-wrapper-srclibeemit-filets)
+  - [Emit-file wrapper](#emit-file-wrapper-srclibemit-filets)
   - [Wire identity + versioning](#wire-identity--versioning-srclibwire-channelts-wire-version-emitterts-wire-manifest-emitterts)
 - [Diagnostics](#diagnostics)
 - [Build](#build)
@@ -135,6 +136,20 @@ All supported `tspconfig.yaml` options are listed below.
 | `proto-package` | `string` | Optional | `d2.generated.v1` | proto3 `package` declaration written into the emitted `.proto` file. Use a service-specific value in real-module mode (e.g. `d2.signfixtures.v2alpha`). |
 | `proto-csharp-namespace` | `string` | Optional | `D2.Generated.Protos.V1` | C# namespace declared via `option csharp_namespace` in the emitted `.proto` file. Must match the namespace Grpc.Tools generates for message + service types. |
 | `grpc-service-namespace` | `string` | Optional | `D2.Generated.Grpc` | C# namespace for the generated gRPC service-impl class and its transport mapper. Distinct from `proto-csharp-namespace` so generated proto types and the service impl do not collide. |
+| `process-kind-by-module` | `object` (ServedBy → string) | Optional (required for real-module `@route`) | — | Closed set `"edge-module"` \| `"standalone"` keyed by `@d2ServedBy`. Controls public HTTP emit: edge-module → in-process Map* (façade/handler); standalone → Edge HTTP→gRPC bridge (`I{Module}GrpcClient.{Op}Async`). Real-module + `@route` without ServedBy/map entry → D2TSP014/015. |
+| `csharp-routes-namespace` | `object` (ServedBy → string) | Optional (required for edge-module `@route` in real-module mode) | — | Full C# namespace for generated REST Map* registrations (e.g. `KeyCustodian: "D2.Edge.Api.Routes.KeyCustodian"`). **Not** hard-derived from `csharp-app-namespace-base` when set — App must not own AspNetCore. Missing key for edge-module → D2TSP017. |
+| `csharp-bridge-namespace` | `object` (ServedBy → string) | Optional (required for standalone bridge ops) | — | Full C# namespace for Edge HTTP→gRPC bridge registrations (e.g. `Audit: "D2.Edge.Api.Bridges.Audit"`). Missing key for standalone bridge → D2TSP018. |
+
+**Process-kind emit matrix** (real-module mode = `csharp-clients-namespace` + `csharp-app-namespace-base` set):
+
+| Kind | `@route` | `@d2GrpcMethod` | Public HTTP artifact | gRPC server |
+| --- | --- | --- | --- | --- |
+| `edge-module` | yes | optional | In-process Map* under `csharp-routes-namespace` | Thin `*Service.g.cs` (ns via `grpc-service-namespace`) |
+| `standalone` | yes | **required** | Edge bridge Map* → `I{Module}GrpcClient` under `csharp-bridge-namespace` | Thin server on service.Api home |
+| `standalone` | yes | no | **D2TSP019** (fail-loud) | — |
+| either | no | yes | (none) | Thin server only |
+
+Bridge DI is host-owned: `AddD2{Module}GrpcClients` + `{Module}GrpcClientOptions.Address` — the bridge never hardcodes a channel address. ClientMappers stay in the gRPC-client emitter; bridges never use server `TransportMappers`.
 
 The emitter reads `@d2/typespec-decorators` state keys and writes its output
 to `emitter-output-dir`. Set `csharp-namespace` to the target C# namespace.
@@ -175,7 +190,7 @@ resolveScalar("unknownScalar");
 // throws: D2TSP001 — unmapped TypeSpec scalar 'unknownScalar'
 ```
 
-**R7 loud failure**: `resolveScalar` throws when a scalar is not in the
+**Loud failure**: `resolveScalar` throws when a scalar is not in the
 registry. There is no silent fallback. The emitter catches the throw and
 reports a `D2TSP001` diagnostic, causing `tsp compile` to exit non-zero.
 
@@ -419,6 +434,79 @@ This file is emitted once per module (not once per route).
 Route fixtures live in `server/services/edge/tests/Unit/KeyCustodian/TypeSpecRoute/Generated/`. They are
 byte-pinned by `tests/route-policy-emitter.test.ts` byte-parity describe blocks and validated by the
 `RoutePolicyEnforcementTests` + `RouteFacadeDelegationTests` TestServer suites in `D2.Edge.Tests`.
+
+### Edge HTTP→gRPC bridge emitter (`src/lib/bridge-emitter.ts`)
+
+> **Barrel-public** — also re-exported from `@d2/typespec-emitters` (`src/index.ts`).
+> Called from `$onEmit` for `process-kind-by-module` **`standalone`** ops that
+> carry both `@route` and `@d2GrpcMethod`.
+
+```typescript
+import {
+  emitBridgeRegistration,
+  emitMapAllBridges,
+} from "@d2/typespec-emitters";
+import type {
+  BridgeEmitInput,
+  BridgeModuleOp,
+} from "@d2/typespec-emitters";
+
+const bridgeFile = emitBridgeRegistration({
+  opName: "pingAudit",
+  verb: "get",
+  routePath: "/internal/v1/audit/ping",
+  moduleName: "Audit",
+  grpcClientNamespace: "D2.Services.Audit.Client",
+  inputTypeName: "PingAuditInput",
+  outputTypeName: "PingAuditOutput",
+  dtoNamespace: "D2.Services.Audit.Client.Ping",
+  scopePolicy: { kind: "any", scopes: ["internal.audit.ping"] },
+  registrationNamespace: "D2.Edge.Api.Bridges.Audit",
+  sourceSpec: "contracts/typespec/…",
+  // optional: idempotency: { keySource: "header", ttlSeconds: 86400, fields: [] },
+});
+// bridgeFile.fileName → "PingAuditBridgeRegistration.g.cs"
+
+const mapAll = emitMapAllBridges(
+  "Audit",
+  [{ opName: "pingAudit" }],
+  "D2.Edge.Api.Bridges.Audit",
+  "contracts/typespec/…",
+);
+// mapAll?.fileName → "AuditBridgeRegistrations.g.cs"
+```
+
+**Public surface**
+
+| Symbol | Role |
+| --- | --- |
+| `emitBridgeRegistration(input)` | One `<PascalOp>BridgeRegistration.g.cs` — `Map{Op}Bridge()` extension |
+| `emitMapAllBridges(module, ops, ns, spec)` | Optional `MapAll{Module}Bridges()` aggregator (undefined when `ops` empty) |
+| `BridgeEmitInput` / `BridgeModuleOp` | Input types |
+| `resolveProcessKindByModule` / `ProcessKind` | tspconfig map helpers (closed set `edge-module` \| `standalone`) |
+
+**Conventions (locked)**
+
+- Delegation is always `I{Module}GrpcClient.{PascalOp}Async` — never façade,
+  never server `TransportMappers`, never hardcoded channel `https://`.
+- Host DI: `AddD2{Module}GrpcClients` + `{Module}GrpcClientOptions.Address`
+  (remarks only; host-owned).
+- Auth / rate / CSRF fluents mirror in-process Map* (`RequireAnyScope` /
+  `RequireAllScopes` / `MarkAsD2HarmlessEndpoint` + marker records).
+- `@d2Idempotent` weaves the same `buildIdempotencyGate` store replay as Map*
+  and tracks the bridge registration namespace for `D2GeneratedIdempotencyStore`.
+- MAP-ii: `(int)result.StatusCode < 400` → `Results.Json`; else
+  `ToProblemDetails`.
+
+**Process-kind selection** (see Usage options): real-module `@route` requires
+`@d2ServedBy` + `process-kind-by-module` entry + the matching
+`csharp-routes-namespace` (edge-module) or `csharp-bridge-namespace`
+(standalone). Internal-only ops (`@d2GrpcMethod` without `@route`) emit gRPC
+server only — zero public `RouteRegistration` / `BridgeRegistration`.
+
+Compile/run validation lives in
+`server/services/edge/tests/Unit/KeyCustodian/TypeSpecBridge/`
+(`BridgeRegistrationValidationTests` + `FakeBridgeFixtureGrpcClient`).
 
 ### gRPC service-impl emitter (`src/lib/grpc-service-emitter.ts`)
 
@@ -706,8 +794,8 @@ await emitGeneratedFile(program, path, content);
 - `resolveOutputPath(context, ...segments)` — joins `context.emitterOutputDir`
   with path segments using the TypeSpec compiler's `resolvePath`.
 - `emitGeneratedFile(program, path, content)` — single choke-point wrapping
-  the compiler's `emitFile`. Future hooks (byte-parity, CRLF normalization)
-  live here in one place.
+  the compiler's `emitFile`. Byte-parity / CRLF-normalization hooks live
+  here in one place.
 
 ---
 
@@ -733,6 +821,15 @@ catalog entry in `src/lib.ts`.
 | D2TSP008 | `server-push-requires-payload` | A `@d2ServerPush` operation has an output model that emits no fields (void or empty record). A pure-push dispatcher must have a typed event payload to deliver to the sink. Add at least one field to the output model, or remove `@d2ServerPush` if the operation is not a server-push emitter. |
 | D2TSP009 | `unpinned-proto-field`         | A model property on a `@d2GrpcMethod`-bound model is missing its required `@d2Field(N)` pin. Every field on every proto-bound model must carry an explicit author-pinned field number; positional assignment is permanently disabled to prevent silent wire-format breaks on reorder/insert/delete. Add `@d2Field(N)` to the property. Fires only inside the proto emitter; DTO-only or in-process operations with unpinned fields compile clean. Severity: `error`. |
 | D2TSP010 | `channel-segment-mismatch`     | The wire-generation channel segment disagrees across emitted wire surfaces. `proto-package` declares the canonical channel (e.g. `v2alpha`); the trailing dotted segment of `proto-csharp-namespace` (e.g. `V2Alpha`) must be the PascalCase form of that channel; and — when `@versioned` is adopted on the service namespace — the active-version enum member VALUE must also agree. Fix the mismatched `tspconfig.yaml` option so every surface carries the same `V<N>(alpha|beta)?` generation. Severity: `error`. |
+| D2TSP011 | `duplicate-field-number`       | Two or more properties on the same proto-bound model carry the same `@d2Field(N)` pin. |
+| D2TSP012 | _retired_                      | Formerly nested-redact-unsupported; number not reused. |
+| D2TSP013 | `missing-concern`              | Client-exposed op in real-module mode lacks `@d2Concern`. |
+| D2TSP014 | `missing-served-by-for-host-routing` | Real-module `@route` op has no `@d2ServedBy` (hard-derived App.Routes forbidden). |
+| D2TSP015 | `missing-process-kind`         | Real-module `@route` op has ServedBy but no `process-kind-by-module` entry. |
+| D2TSP016 | `unknown-process-kind`         | `process-kind-by-module` value not in `"edge-module"` \| `"standalone"`. |
+| D2TSP017 | `missing-routes-namespace`     | Edge-module `@route` op missing `csharp-routes-namespace[ServedBy]`. |
+| D2TSP018 | `missing-bridge-namespace`     | Standalone bridge op missing `csharp-bridge-namespace[ServedBy]`. |
+| D2TSP019 | `standalone-route-requires-grpc` | Standalone `@route` without `@d2GrpcMethod`. |
 
 All diagnostics have `severity: "error"` — every violation fails `tsp compile`
 with a non-zero exit code.

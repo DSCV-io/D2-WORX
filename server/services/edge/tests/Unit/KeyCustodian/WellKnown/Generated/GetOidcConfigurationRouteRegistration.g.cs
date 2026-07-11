@@ -7,7 +7,7 @@
 // -----------------------------------------------------------------------
 #nullable enable
 
-namespace D2.Edge.KeyCustodian.App.Application.Routes;
+namespace D2.Edge.Api.Routes.KeyCustodian;
 
 using D2.Edge.KeyCustodian.Client.Facade;
 using D2.Edge.KeyCustodian.Client.OidcConfiguration;

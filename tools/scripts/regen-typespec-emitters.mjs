@@ -309,18 +309,17 @@ const COPY_MANIFEST = [
     to: "server/services/edge/key-custodian/app/Application/Handlers/Commands/GetOrLazyProvisionOwnSealPrivateKey/IGetOrLazyProvisionOwnSealPrivateKeyHandler.g.cs",
   },
 
-  // ---- Well-known route registrations (real-KC namespace
-  //      D2.Edge.KeyCustodian.App.Application.Routes — matches tsp compile;
-  //      delegate to IKeyCustodianApi, both @d2Harmless GET).
+  // ---- Well-known route registrations (production ns
+  //      D2.Edge.Api.Routes.KeyCustodian via csharp-routes-namespace +
+  //      process-kind-by-module KeyCustodian=edge-module; delegate to
+  //      IKeyCustodianApi, both @d2Harmless GET).
   //
-  //      Committed into the KC TEST project (which references AspNetCore +
-  //      D2.Shared.Auth.Http) rather than the transport-agnostic app project:
-  //      a route registration references IEndpointRouteBuilder / Map* /
-  //      MarkAsD2HarmlessEndpoint, which the app layer (ADR-0020 — App is
-  //      transport-agnostic, no AspNetCore) cannot reference. The production
-  //      HOST wiring (the Edge composition root calling MapGetJwksRoute /
-  //      MapGetOidcConfigurationRoute) is deferred until the Edge host exists; these files
-  //      are compiled + TestServer-proven in the test assembly now. ----
+  //      Physical path stays under the KC TEST project until Edge.Api scatter
+  //      (AspNetCore + D2.Shared.Auth.Http references; App stays
+  //      transport-agnostic per ADR-0020). Namespace is production-correct now
+  //      so hand-written TestServer consumers `using D2.Edge.Api.Routes.KeyCustodian`.
+  //      HOST wiring (MapGetJwksRoute / MapGetOidcConfigurationRoute on the Edge
+  //      composition root) lands with the host shell. ----
   {
     from: "GetJwksRouteRegistration.g.cs",
     to: "server/services/edge/tests/Unit/KeyCustodian/WellKnown/Generated/GetJwksRouteRegistration.g.cs",
