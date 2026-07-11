@@ -6,7 +6,7 @@ Copyright (c) DCSV. All rights reserved.
 
 > Parent: [`../README.md`](../README.md)
 
-## Locked 6A order (`UseD2EdgePipeline`)
+## Locked middleware order (`UseD2EdgePipeline`)
 
 Does **not** call `UseD2DefaultPipeline`. Individual `UseD2*` composition:
 

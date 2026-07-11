@@ -496,12 +496,18 @@ services:
     environment:
       ASPNETCORE_URLS: ""
       OTEL_SERVICE_NAME: d2-audit
-      KEYCUSTODIAN_APP__ISSUERBASEURL: ${KEYCUSTODIAN_APP__ISSUERBASEURL:-https://d2-edge:8443}
-      REDIS_URL: ${REDIS_URL:-redis://d2-redis:6379}
-      AUDIT_MTLS__TRUST_ANCHOR_PATH: ${AUDIT_MTLS__TRUST_ANCHOR_PATH:-/secrets/keycustodian/ca-root.crt}
+      # In-cluster Issuer — never host localhost, never mTLS 9443.
+      KEYCUSTODIAN_APP__ISSUERBASEURL: https://d2-edge:8443
+      # Docker DNS rewrite — do not pass host-side localhost REDIS_URL from secrets.
+      REDIS_URL: redis://:${CACHE_PASSWORD}@d2-redis:6379
+      # Prefer PascalCase after __ for IConfiguration / Options binding.
+      AUDIT_MTLS__TrustAnchorPath: /secrets/keycustodian/ca-root.crt
+      # CORS fail-closed — required by AddD2Cors / ServiceDefaults (not GATEWAY_* keys).
+      D2_CORS_ORIGINS__0: ${D2_CORS_ORIGINS__0:-http://localhost:5173}
+      D2_CORS_ORIGINS__1: ${D2_CORS_ORIGINS__1:-}
       # Kestrel listen cert (from gen-dev-keys.sh secrets/listen/)
-      Kestrel__Certificates__Default__Path: ${AUDIT_KESTREL_CERT_PATH:-/secrets/listen/audit-server.crt}
-      Kestrel__Certificates__Default__KeyPath: ${AUDIT_KESTREL_KEY_PATH:-/secrets/listen/audit-server.key}
+      Kestrel__Certificates__Default__Path: /secrets/listen/audit-server.crt
+      Kestrel__Certificates__Default__KeyPath: /secrets/listen/audit-server.key
     volumes:
       - ../../secrets/keycustodian/ca-root.crt:/secrets/keycustodian/ca-root.crt:ro
       - ../../secrets/listen/audit-server.crt:/secrets/listen/audit-server.crt:ro
@@ -528,23 +534,32 @@ services:
     ports:
       - "${EDGE_PORT:-8080}:8080"
       - "${EDGE_HTTPS_PORT:-8443}:8443"
-      - "${EDGE_MTLS_PORT:-9443}:9443"
+      # Host default 9444 avoids Portainer HTTPS on 9443; container still listens 9443.
+      - "${EDGE_MTLS_PORT:-9444}:9443"
     env_file:
       - ../../.env.local
       - ../../.env.secrets
     environment:
       ASPNETCORE_URLS: ""
       OTEL_SERVICE_NAME: d2-edge
-      KEYCUSTODIAN_APP__ISSUERBASEURL: ${KEYCUSTODIAN_APP__ISSUERBASEURL:-https://d2-edge:8443}
-      REDIS_URL: ${REDIS_URL:-redis://d2-redis:6379}
-      RABBITMQ_URL: ${RABBITMQ_URL:-amqp://guest:guest@d2-rabbitmq:5672/}
-      KEYCUSTODIAN_DATABASE_URL: ${KEYCUSTODIAN_DATABASE_URL:-postgresql://d2:d2@d2-postgres:5432/d2-keycustodian}
-      EDGE_MTLS__TRUST_ANCHOR_PATH: ${EDGE_MTLS__TRUST_ANCHOR_PATH:-/secrets/keycustodian/ca-root.crt}
-      AUDIT_GRPC__ADDRESS: ${AUDIT_GRPC__ADDRESS:-https://d2-audit:8443}
-      Kestrel__Certificates__Default__Path: ${EDGE_KESTREL_CERT_PATH:-/secrets/listen/edge-server.crt}
-      Kestrel__Certificates__Default__KeyPath: ${EDGE_KESTREL_KEY_PATH:-/secrets/listen/edge-server.key}
+      # In-cluster Issuer — never host localhost, never mTLS 9443.
+      KEYCUSTODIAN_APP__ISSUERBASEURL: https://d2-edge:8443
+      # Docker DNS rewrite from credential pieces in .env.secrets (host URLs stay host-only).
+      REDIS_URL: redis://:${CACHE_PASSWORD}@d2-redis:6379
+      RABBITMQ_URL: amqp://${MQ_USERNAME}:${MQ_PASSWORD}@d2-rabbitmq:5672/
+      KEYCUSTODIAN_DATABASE_URL: postgresql://${DB_USERNAME}:${DB_PASSWORD}@d2-postgres:5432/${KEYCUSTODIAN_DB_NAME:-d2-keycustodian}
+      KEYCUSTODIAN_INFRA__RootKeyPath: /secrets/keycustodian
+      EDGE_MTLS__TrustAnchorPath: /secrets/keycustodian/ca-root.crt
+      AUDIT_GRPC__Address: https://d2-audit:8443
+      D2_CORS_ORIGINS__0: ${D2_CORS_ORIGINS__0:-http://localhost:5173}
+      D2_CORS_ORIGINS__1: ${D2_CORS_ORIGINS__1:-}
+      Kestrel__Certificates__Default__Path: /secrets/listen/edge-server.crt
+      Kestrel__Certificates__Default__KeyPath: /secrets/listen/edge-server.key
     volumes:
+      # FileCaProvider needs the full PEM chain (public certs + private keys) to seed
+      # the mTLS CA into KeyCustodian. Trust-anchor consumers only need ca-root.crt.
       - ../../secrets/keycustodian/ca-root.crt:/secrets/keycustodian/ca-root.crt:ro
+      - ../../secrets/keycustodian/ca-root.key:/secrets/keycustodian/ca-root.key:ro
       - ../../secrets/keycustodian/ca-intermediate.crt:/secrets/keycustodian/ca-intermediate.crt:ro
       - ../../secrets/keycustodian/ca-intermediate.key:/secrets/keycustodian/ca-intermediate.key:ro
       - ../../secrets/keycustodian/root.key:/secrets/keycustodian/root.key:ro

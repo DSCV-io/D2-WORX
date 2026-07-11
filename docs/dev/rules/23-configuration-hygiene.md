@@ -6,9 +6,9 @@ Copyright (c) DCSV. All rights reserved.
 <a name="top"></a>
 _[← rules index](../rules.md) · §23 of the D2-WORX rules catalog._
 
-**Predicate index:** §23.1–§23.8 · 8 predicates.
+**Predicate index:** §23.1–§23.10 · 10 predicates.
 
-Secrets, env vars, defaults, and the `.env.local` / `.env.secrets` split.
+Secrets, env vars, defaults, the `.env.local` / `.env.secrets` split, and **env-only host product config** (no `appsettings` product surface).
 
 ### Predicates — §23 configuration hygiene
 
@@ -45,6 +45,21 @@ Secrets, env vars, defaults, and the `.env.local` / `.env.secrets` split.
   - **Why**: realistic placeholders signal intent (needs replacement, template finished) without looking like in-progress dev artifacts. An operator reading `.env.secrets.example` with `STRIPE_KEY=<TODO>` can't tell whether the template is complete or the author was mid-edit — the realistic-placeholder convention removes that ambiguity.
   - **How**: each `*.example` placeholder reads as a realistic shape that's obviously not a real credential — `tw_replace_me_with_real_value` (Twilio), `pk_test_replace_me` (Stripe), `https://your-tenant.auth0.com` (OAuth issuer). Pair with `tools/scripts/gen-dev-keys.sh` for locally-generated keys.
   - Evidence: per config-using service → startup validation.
+
+- **23.9** **Host / service product configuration is env-only** — operators and Compose configure via `.env.local` (non-secrets) + `.env.secrets` (credentials + embedded-cred URLs) + optional Compose `environment:` rewrites (Docker DNS, in-cluster Issuer, mount paths). **Not** via product keys in `appsettings.json` / `appsettings.*.json`.
+  - **Allowed in `appsettings*.json` (only):** framework noise that is not product SoT — e.g. `Logging:LogLevel`, `AllowedHosts` (if needed). Prefer **no** product sections over fake defaults.
+  - **Must live in env (non-exhaustive):** `*_DATABASE_URL`, `REDIS_URL`, `RABBITMQ_URL`, Issuer base URLs, `D2_CORS_ORIGINS__*`, mTLS trust-anchor paths, Kestrel certificate paths, `KEYCUSTODIAN_*` Options, gRPC bridge addresses, host wiring when env-driven.
+  - **Compose may hard-set** in-cluster values that differ from host-side localhost URLs (Redis/RMQ/PG host rewrite, Issuer `https://d2-edge:8443`) — those overrides still come from Compose env injection, not from shipping fake connection strings in appsettings.
+  - **Templates:** every product key an operator must set appears in `.env.local.example` and/or `.env.secrets.example` with a realistic placeholder or safe non-secret default (§23.8). Prefer PascalCase after each `__` for Options keys (`EDGE_MTLS__TrustAnchorPath`, `KEYCUSTODIAN_INFRA__RootKeyPath`) so Linux IConfiguration maps cleanly.
+  - **Evidence:** `rg -n 'DATABASE_URL|REDIS_URL|RABBITMQ|TrustAnchor|IssuerBaseUrl|RootKeyPath|Password=' server/services/**/appsettings*.json` (and any new host `appsettings*.json`) → **zero** product connection/credential/Options keys; product keys present only under env examples + Compose `environment:` / `env_file`. Spot-check host Options bind via `SECTION__Property` env form. Fail-loud at startup when required env is missing (§23.7).
+  - **Why:** appsettings product keys (especially empty strings or fake passwords) **shadow or fight** env on Linux containers, leak pseudo-secrets into images, and train operators to look in the wrong place. First multiproc smoke (0030) failed when empty `TrustAnchorPath` / missing `D2_CORS_ORIGINS` were not env-complete and appsettings carried junk DB URLs.
+  - **How:** strip host `appsettings.json` to Logging (+ AllowedHosts if required). Put all product knobs in `.env.local` / `.env.secrets` / Compose. Rebuild images when published `appsettings` still embeds old product keys.
+
+- **23.10** **FORBIDDEN in `appsettings*.json` (FINDING-HIGH):** connection strings, passwords, API keys, embedded-cred URLs, empty-string product Options that exist only to be "overridden later", or any value that duplicates a secret/non-secret env SoT with a fake dev password (e.g. `"KEYCUSTODIAN_DATABASE_URL": "Host=localhost;…Password=d2"`).
+  - **Also forbidden:** committing real secrets into appsettings under any environment name (`Development` included).
+  - **Evidence:** same appsettings grep as §23.9; any hit with a password-like segment, `Password=`, `User ID=`, `redis://:…@`, `amqp://…:…@`, or empty `""` for a required product path = FINDING-HIGH with delete-or-move-to-env fix.
+  - **Why:** baked-into-image config is not operator-editable without rebuild; fake passwords look "real enough" to ship; empty keys cause fail-closed ValidateOnStart / custom loaders to see blank before env is considered.
+  - **How:** delete the key from appsettings; add/ensure the env template + Compose wiring; never reintroduce "dev defaults" in JSON for production hosts.
 
 <sup>[↑ jump to top](#top)</sup>
 

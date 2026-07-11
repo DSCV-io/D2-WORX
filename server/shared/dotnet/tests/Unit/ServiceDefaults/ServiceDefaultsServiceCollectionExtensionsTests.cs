@@ -12,6 +12,7 @@ using D2.Shared.Auth.Startup;
 using D2.Shared.Auth.Validation;
 using D2.Shared.Caching;
 using D2.Shared.Caching.Local.Default;
+using D2.Shared.Context.Abstractions;
 using D2.Shared.Handler;
 using D2.Shared.Logging;
 using D2.Shared.ServiceDefaults;
@@ -177,6 +178,24 @@ public sealed class ServiceDefaultsServiceCollectionExtensionsTests
             opts => opts.SkipAuthAutoWiring = true);
 
         services.Any(d => d.ServiceType == typeof(HandlerContext<>))
+            .Should().BeTrue();
+    }
+
+    [Fact]
+    public void AddD2ServiceDefaults_AlwaysRegistersSystemWorkPlane()
+    {
+        var services = new ServiceCollection();
+        var configuration = new ConfigurationBuilder().Build();
+
+        services.AddD2ServiceDefaults(
+            configuration,
+            opts => opts.SkipAuthAutoWiring = true);
+
+        services.Any(d => d.ServiceType == typeof(ISystemWorkScopeFactory))
+            .Should().BeTrue();
+        services.Any(d => d.ServiceType == typeof(MutableRequestContext))
+            .Should().BeTrue();
+        services.Any(d => d.ServiceType == typeof(IRequestContext))
             .Should().BeTrue();
     }
 

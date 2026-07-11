@@ -276,6 +276,7 @@ _Canonical: [ADR-0020](docs/adrs/0020-service-project-structure.md) + [PATTERNS.
 - **NEVER reflexively defer / de-scope in-scope doable-now work — do-it-now is the default.** Deferral is legitimate ONLY for genuinely-blocked work (a missing build dependency) + surfacing + user permission + a committed tracker row; "no consumer yet / not wired in yet / pre-existing" is not a blocker. [rules.md §13.15]
 - **NEVER start services manually** (`dotnet run`, `pnpm dev`) — Docker Compose manages services. [rules.md §8.1]
 - **NEVER `Grep` `secrets/` or `.env.secrets` by name.** [rules.md §3.11]
+- **Host product config lives in env** (`.env.local` / `.env.secrets` / Compose) — not product keys in host `appsettings*.json`. [rules.md §23.9 / §23.10](docs/dev/rules/23-configuration-hygiene.md#23-configuration-hygiene)
 
 ### Sub-agent dispatch discipline
 
@@ -425,7 +426,7 @@ Key roots: `contracts/` (proto source of truth + i18n messages + fixtures) · `s
 
 ## §8. Local Secrets & multi-runtime deny map
 
-Environment configuration is split:
+Environment configuration is split (product SoT = env files + Compose; law → [rules.md §23.9 / §23.10](docs/dev/rules/23-configuration-hygiene.md#23-configuration-hygiene)):
 
 | File | Contents | Committed? | Agent read? | Agent edit? |
 |---|---|---|---|---|

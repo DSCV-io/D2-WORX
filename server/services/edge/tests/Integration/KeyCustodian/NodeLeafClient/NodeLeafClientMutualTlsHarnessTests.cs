@@ -24,7 +24,27 @@ using D2.Shared.Result.Grpc;
 using D2.Shared.Utilities.Extensions;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
+using CaCertIn = D2.Edge.KeyCustodian.Client.CaCertificate.GetCaCertificateInput;
+using CaCertOut = D2.Edge.KeyCustodian.Client.CaCertificate.GetCaCertificateOutput;
+using ClientGetJwksIn = D2.Edge.KeyCustodian.Client.Jwks.GetJwksInput;
+using ClientGetJwksOut = D2.Edge.KeyCustodian.Client.Jwks.GetJwksOutput;
+using ClientGetKeyringIn = D2.Edge.KeyCustodian.Client.Keyring.GetKeyringInput;
+using ClientGetKeyringOut = D2.Edge.KeyCustodian.Client.Keyring.GetKeyringOutput;
+using ClientSignIn = D2.Edge.KeyCustodian.Client.Signing.SignInput;
+using ClientSignOut = D2.Edge.KeyCustodian.Client.Signing.SignOutput;
 using DtoSignFixtureOutput = D2.Edge.Tests.TypeSpecDto.Generated.SignFixtureOutput;
+using IssueLeafIn = D2.Edge.KeyCustodian.Client.Issuance.IssueLeafInput;
+using IssueLeafOut = D2.Edge.KeyCustodian.Client.Issuance.IssueLeafOutput;
+using OidcConfigIn = D2.Edge.KeyCustodian.Client.OidcConfiguration.GetOidcConfigurationInput;
+using OidcConfigOut = D2.Edge.KeyCustodian.Client.OidcConfiguration.GetOidcConfigurationOutput;
+using OwnSealPrivIn =
+    D2.Edge.KeyCustodian.Client.Sealing.GetOrLazyProvisionOwnSealPrivateKeyInput;
+using OwnSealPrivOut =
+    D2.Edge.KeyCustodian.Client.Sealing.GetOrLazyProvisionOwnSealPrivateKeyOutput;
+using SealPubKeyIn =
+    D2.Edge.KeyCustodian.Client.Sealing.GetOrLazyProvisionSealPublicKeyInput;
+using SealPubKeyOut =
+    D2.Edge.KeyCustodian.Client.Sealing.GetOrLazyProvisionSealPublicKeyOutput;
 
 /// <summary>
 /// The LIVE loopback mutual-TLS handshake harness for the Node workload-leaf
@@ -423,7 +443,7 @@ public sealed class NodeLeafClientMutualTlsHarnessTests
         var nm = Path.Combine(packageRoot, "node_modules");
         var pathSep = OperatingSystem.IsWindows() ? ";" : ":";
         var existingNodePath = Environment.GetEnvironmentVariable("NODE_PATH") ?? string.Empty;
-        psi.Environment["NODE_PATH"] = string.IsNullOrEmpty(existingNodePath)
+        psi.Environment["NODE_PATH"] = existingNodePath.Falsey()
             ? nm
             : nm + pathSep + existingNodePath;
 
@@ -589,8 +609,8 @@ public sealed class NodeLeafClientMutualTlsHarnessTests
     private sealed class FakeCaBackedIssuanceFacade(RealCertAuthority ca, string serviceId)
         : IKeyCustodianApi
     {
-        public ValueTask<D2Result<D2.Edge.KeyCustodian.Client.Issuance.IssueLeafOutput?>> IssueLeafAsync(
-            D2.Edge.KeyCustodian.Client.Issuance.IssueLeafInput input,
+        public ValueTask<D2Result<IssueLeafOut?>> IssueLeafAsync(
+            IssueLeafIn input,
             CancellationToken ct = default)
         {
             var material = ca.IssueLeafMaterial(input.CsrDer, serviceId);
@@ -598,46 +618,46 @@ public sealed class NodeLeafClientMutualTlsHarnessTests
             using var leaf = X509CertificateLoader.LoadCertificate(material.CertificateDer);
 
             return ValueTask.FromResult(
-                D2Result<D2.Edge.KeyCustodian.Client.Issuance.IssueLeafOutput?>.Ok(
-                    new D2.Edge.KeyCustodian.Client.Issuance.IssueLeafOutput(
+                D2Result<IssueLeafOut?>.Ok(
+                    new IssueLeafOut(
                         material.CertificateDer,
                         material.IssuerCertificateDer,
                         new DateTimeOffset(leaf.NotBefore.ToUniversalTime()),
                         new DateTimeOffset(leaf.NotAfter.ToUniversalTime()))));
         }
 
-        public ValueTask<D2Result<D2.Edge.KeyCustodian.Client.CaCertificate.GetCaCertificateOutput?>> GetCaCertificateAsync(
-            D2.Edge.KeyCustodian.Client.CaCertificate.GetCaCertificateInput input,
+        public ValueTask<D2Result<CaCertOut?>> GetCaCertificateAsync(
+            CaCertIn input,
             CancellationToken ct = default)
             => ValueTask.FromResult(
-                D2Result<D2.Edge.KeyCustodian.Client.CaCertificate.GetCaCertificateOutput?>.Ok(
-                    new D2.Edge.KeyCustodian.Client.CaCertificate.GetCaCertificateOutput(
+                D2Result<CaCertOut?>.Ok(
+                    new CaCertOut(
                         ca.RootCertificate.RawData,
                         ca.IntermediateCertificate.RawData)));
 
-        public ValueTask<D2Result<D2.Edge.KeyCustodian.Client.Jwks.GetJwksOutput?>> GetJwksAsync(
-            D2.Edge.KeyCustodian.Client.Jwks.GetJwksInput input, CancellationToken ct = default)
-            => ValueTask.FromResult(D2Result<D2.Edge.KeyCustodian.Client.Jwks.GetJwksOutput?>.ServiceUnavailable());
+        public ValueTask<D2Result<ClientGetJwksOut?>> GetJwksAsync(
+            ClientGetJwksIn input, CancellationToken ct = default)
+            => ValueTask.FromResult(D2Result<ClientGetJwksOut?>.ServiceUnavailable());
 
-        public ValueTask<D2Result<D2.Edge.KeyCustodian.Client.OidcConfiguration.GetOidcConfigurationOutput?>> GetOidcConfigurationAsync(
-            D2.Edge.KeyCustodian.Client.OidcConfiguration.GetOidcConfigurationInput input, CancellationToken ct = default)
-            => ValueTask.FromResult(D2Result<D2.Edge.KeyCustodian.Client.OidcConfiguration.GetOidcConfigurationOutput?>.ServiceUnavailable());
+        public ValueTask<D2Result<OidcConfigOut?>> GetOidcConfigurationAsync(
+            OidcConfigIn input, CancellationToken ct = default)
+            => ValueTask.FromResult(D2Result<OidcConfigOut?>.ServiceUnavailable());
 
-        public ValueTask<D2Result<D2.Edge.KeyCustodian.Client.Signing.SignOutput?>> SignAsync(
-            D2.Edge.KeyCustodian.Client.Signing.SignInput input, CancellationToken ct = default)
-            => ValueTask.FromResult(D2Result<D2.Edge.KeyCustodian.Client.Signing.SignOutput?>.ServiceUnavailable());
+        public ValueTask<D2Result<ClientSignOut?>> SignAsync(
+            ClientSignIn input, CancellationToken ct = default)
+            => ValueTask.FromResult(D2Result<ClientSignOut?>.ServiceUnavailable());
 
-        public ValueTask<D2Result<D2.Edge.KeyCustodian.Client.Keyring.GetKeyringOutput?>> GetKeyringAsync(
-            D2.Edge.KeyCustodian.Client.Keyring.GetKeyringInput input, CancellationToken ct = default)
-            => ValueTask.FromResult(D2Result<D2.Edge.KeyCustodian.Client.Keyring.GetKeyringOutput?>.ServiceUnavailable());
+        public ValueTask<D2Result<ClientGetKeyringOut?>> GetKeyringAsync(
+            ClientGetKeyringIn input, CancellationToken ct = default)
+            => ValueTask.FromResult(D2Result<ClientGetKeyringOut?>.ServiceUnavailable());
 
-        public ValueTask<D2Result<D2.Edge.KeyCustodian.Client.Sealing.GetOrLazyProvisionSealPublicKeyOutput?>> GetOrLazyProvisionSealPublicKeyAsync(
-            D2.Edge.KeyCustodian.Client.Sealing.GetOrLazyProvisionSealPublicKeyInput input, CancellationToken ct = default)
-            => ValueTask.FromResult(D2Result<D2.Edge.KeyCustodian.Client.Sealing.GetOrLazyProvisionSealPublicKeyOutput?>.ServiceUnavailable());
+        public ValueTask<D2Result<SealPubKeyOut?>> GetOrLazyProvisionSealPublicKeyAsync(
+            SealPubKeyIn input, CancellationToken ct = default)
+            => ValueTask.FromResult(D2Result<SealPubKeyOut?>.ServiceUnavailable());
 
-        public ValueTask<D2Result<D2.Edge.KeyCustodian.Client.Sealing.GetOrLazyProvisionOwnSealPrivateKeyOutput?>> GetOrLazyProvisionOwnSealPrivateKeyAsync(
-            D2.Edge.KeyCustodian.Client.Sealing.GetOrLazyProvisionOwnSealPrivateKeyInput input, CancellationToken ct = default)
-            => ValueTask.FromResult(D2Result<D2.Edge.KeyCustodian.Client.Sealing.GetOrLazyProvisionOwnSealPrivateKeyOutput?>.ServiceUnavailable());
+        public ValueTask<D2Result<OwnSealPrivOut?>> GetOrLazyProvisionOwnSealPrivateKeyAsync(
+            OwnSealPrivIn input, CancellationToken ct = default)
+            => ValueTask.FromResult(D2Result<OwnSealPrivOut?>.ServiceUnavailable());
     }
 
     /// <summary>

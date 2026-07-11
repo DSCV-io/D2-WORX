@@ -9,18 +9,22 @@ namespace D2.Edge.Tests.Unit.KeyCustodian.Infra;
 using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.RunDueRotations;
 using D2.Edge.KeyCustodian.Infra.Configuration;
 using D2.Edge.KeyCustodian.Infra.Scheduling.Hosted;
+using D2.Shared.Auth.Abstractions;
 using D2.Shared.Context.Abstractions;
 using D2.Shared.Handler.Abstractions;
 using D2.Shared.Result;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.Extensions.Options;
+using NodaTime;
+using TestClock = D2.Shared.Time.TestClock;
 
 /// <summary>
 /// Unit tests for <see cref="KeyRotationService"/>: the bootstrap key-type
 /// mapping, CA-domain exclusion from auto-bootstrap, the skip-if-lock-not-held
 /// no-op behavior, the swallowed-tick-exception contract (host must not crash),
 /// the OCE re-propagation on a canceled WaitForNextTickAsync, and the System
-/// request-context establishment the worker performs on every resolution scope.
+/// work-plane establishment the worker performs on every resolution scope.
 /// </summary>
 public sealed class KeyRotationServiceTests
 {
@@ -134,7 +138,7 @@ public sealed class KeyRotationServiceTests
         // (WaitForNextTickAsync) returns false on the first timer check, or the
         // service exits before RunTickAsync can proceed. The host must not throw.
         var cts = new CancellationTokenSource();
-        var service = BuildService(new ThrowingOnRunScopeFactory());
+        var service = BuildService(new ThrowingSystemWorkScopeFactory());
 
         await cts.CancelAsync();
 
@@ -160,16 +164,16 @@ public sealed class KeyRotationServiceTests
     [Fact]
     public async Task ExecuteAsync_TickThrows_ExceptionSwallowed_HostSurvives()
     {
-        // A scope factory that throws on GetService is used to make the tick fail.
-        // The rotation service catches all non-OCE exceptions and logs them; it
-        // must NOT re-throw, so ExecuteAsync must complete without propagating.
-        var factory = new ThrowingOnRunScopeFactory();
+        // A system-work factory that throws on BeginAsync is used to make the tick
+        // fail. The rotation service catches all non-OCE exceptions and logs them;
+        // it must NOT re-throw, so ExecuteAsync must complete without propagating.
+        var factory = new ThrowingSystemWorkScopeFactory();
         var options = BuildOptions(TimeSpan.FromMilliseconds(1));
         using var cts = new CancellationTokenSource(TimeSpan.FromMilliseconds(150));
         var service = BuildService(factory, options);
 
         // Start the service and let it run until the token fires. The tick
-        // throws each time (invalid connection string) but must be swallowed.
+        // throws each time but must be swallowed.
         var executed = service.StartAsync(cts.Token);
 
         // Wait for it to complete (canceled by cts) — no uncaught exception.
@@ -188,7 +192,7 @@ public sealed class KeyRotationServiceTests
         // BackgroundService wraps ExecuteAsync: when the host cancels the
         // stoppingToken, WaitForNextTickAsync catches OCE and returns false —
         // the loop exits cleanly. StartAsync/StopAsync must not bubble an OCE.
-        var service = BuildService(new NeverRunsScopeFactory());
+        var service = BuildService(new NeverRunsSystemWorkScopeFactory());
         using var cts = new CancellationTokenSource();
 
         var startTask = service.StartAsync(cts.Token);
@@ -203,9 +207,8 @@ public sealed class KeyRotationServiceTests
     }
 
     // =========================================================================
-    // (e) System context establishment — the real worker establishes
-    // Origin=System + the host identity + a fresh call-path BEFORE resolving its
-    // handler, on the SAME scope, with the existing tick behavior unchanged.
+    // (e) System work plane — the worker establishes Origin=System via
+    // ISystemWorkScopeFactory BEFORE resolving its handler, on the SAME scope.
     // =========================================================================
 
     [Fact]
@@ -213,12 +216,9 @@ public sealed class KeyRotationServiceTests
     {
         var capture = new RequestContextCapture();
         var clock = new TestClock(Instant.FromUtc(2026, 6, 30, 12, 0, 0));
-        using var provider = BuildScopeProviderWithFakeHandler(capture);
+        using var provider = BuildScopeProviderWithFakeHandler(capture, clock, "key-custodian");
 
-        var service = BuildService(
-            provider.GetRequiredService<IServiceScopeFactory>(),
-            workloadIdentity: new D2WorkloadIdentityOptions { ServiceId = "key-custodian" },
-            clock: clock);
+        var service = BuildService(provider.GetRequiredService<ISystemWorkScopeFactory>());
 
         await service.ExecuteRotationAsync(CancellationToken.None);
 
@@ -241,7 +241,7 @@ public sealed class KeyRotationServiceTests
         // (it never resolves IJwtSigningCapability and never calls AuthorizeSigning).
         var capture = new RequestContextCapture();
         using var provider = BuildScopeProviderWithFakeHandler(capture);
-        var service = BuildService(provider.GetRequiredService<IServiceScopeFactory>());
+        var service = BuildService(provider.GetRequiredService<ISystemWorkScopeFactory>());
 
         await service.ExecuteRotationAsync(CancellationToken.None);
 
@@ -256,7 +256,7 @@ public sealed class KeyRotationServiceTests
         // resolve-handler-and-run-it path.
         var capture = new RequestContextCapture();
         using var provider = BuildScopeProviderWithFakeHandler(capture);
-        var service = BuildService(provider.GetRequiredService<IServiceScopeFactory>());
+        var service = BuildService(provider.GetRequiredService<ISystemWorkScopeFactory>());
 
         var act = () => service.ExecuteRotationAsync(CancellationToken.None);
 
@@ -279,34 +279,30 @@ public sealed class KeyRotationServiceTests
         };
 
     private static KeyRotationService BuildService(
-        IServiceScopeFactory scopeFactory,
-        KeyCustodianInfraOptions? options = null,
-        D2WorkloadIdentityOptions? workloadIdentity = null,
-        IClock? clock = null) =>
+        ISystemWorkScopeFactory systemWork,
+        KeyCustodianInfraOptions? options = null) =>
         new(
-            scopeFactory,
+            systemWork,
             Options.Create(options ?? BuildOptions()),
-            Options.Create(workloadIdentity ?? BuildWorkloadIdentity()),
-            clock ?? new D2.Shared.Time.SystemClock(),
             NullLogger<KeyRotationService>.Instance);
 
-    private static D2WorkloadIdentityOptions BuildWorkloadIdentity() =>
-        new() { ServiceId = "key-custodian" };
-
     /// <summary>
-    /// Builds a real (non-fake) DI container for the worker's own scope: the
-    /// module's scoped <c>MutableRequestContext</c>/<c>IRequestContext</c> resolver
-    /// (mirroring <c>AddD2KeyCustodian</c>'s registration) plus a
+    /// Builds a real DI container with the platform System work plane + a
     /// <see cref="FakeRunDueRotationsHandler"/> that records the
     /// <see cref="IRequestContext"/> it observed into <paramref name="capture"/>.
     /// </summary>
     private static ServiceProvider BuildScopeProviderWithFakeHandler(
-        RequestContextCapture capture)
+        RequestContextCapture capture,
+        D2.Shared.Time.IClock? clock = null,
+        string serviceId = "key-custodian")
     {
         var services = new ServiceCollection();
-        services.AddScoped<MutableRequestContext>();
-        services.AddScoped<IRequestContext>(
-            sp => sp.GetRequiredService<MutableRequestContext>());
+        services.Configure<D2WorkloadIdentityOptions>(o => o.ServiceId = serviceId);
+
+        if (clock is not null)
+            services.AddSingleton(clock);
+
+        services.AddD2SystemWorkPlane();
         services.AddSingleton(capture);
         services.AddScoped<IRunDueRotationsHandler, FakeRunDueRotationsHandler>();
 
@@ -356,30 +352,23 @@ public sealed class KeyRotationServiceTests
     }
 
     /// <summary>
-    /// Scope factory whose scopes throw when the rotation handler is requested —
-    /// simulates a tick failure (wrong connection, unavailable dependency, etc.).
+    /// System work factory whose BeginAsync throws — simulates a tick failure
+    /// (wrong connection, unavailable dependency, etc.).
     /// </summary>
-    private sealed class ThrowingOnRunScopeFactory : IServiceScopeFactory
+    private sealed class ThrowingSystemWorkScopeFactory : ISystemWorkScopeFactory
     {
-        public IServiceScope CreateScope() => new ThrowingScope();
-
-        private sealed class ThrowingScope : IServiceScope
-        {
-            public IServiceProvider ServiceProvider { get; } =
-                new ServiceCollection().BuildServiceProvider();
-
-            public void Dispose()
-            {
-            }
-        }
+        public ValueTask<ISystemWorkScope> BeginAsync(
+            CancellationToken cancellationToken = default) =>
+            throw new InvalidOperationException("simulated tick failure");
     }
 
     /// <summary>
-    /// Scope factory that should never be called — a bug if it is.
+    /// System work factory that should never be called — a bug if it is.
     /// </summary>
-    private sealed class NeverRunsScopeFactory : IServiceScopeFactory
+    private sealed class NeverRunsSystemWorkScopeFactory : ISystemWorkScopeFactory
     {
-        public IServiceScope CreateScope() =>
+        public ValueTask<ISystemWorkScope> BeginAsync(
+            CancellationToken cancellationToken = default) =>
             throw new InvalidOperationException("scope must not be created in this test path");
     }
 }

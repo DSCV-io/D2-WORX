@@ -15,7 +15,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 
 /// <summary>
-/// Edge HTTP pipeline — <see cref="UseD2EdgePipeline"/> (locked 6A order).
+/// Edge HTTP pipeline — <see cref="UseD2EdgePipeline"/> (locked middleware order).
 /// </summary>
 /// <remarks>
 /// Does <b>not</b> call <c>UseD2DefaultPipeline</c>. Composes individual
@@ -29,7 +29,7 @@ public static class EdgePipelineExtensions
     extension(IApplicationBuilder app)
     {
         /// <summary>
-        /// Installs the Edge middleware pipeline in locked 6A order:
+        /// Installs the Edge middleware pipeline in locked order:
         /// SecurityHeaders → RequestLogging → Cors → Routing → InfrastructureBypass
         /// → (reserved rate-limit slot) → Authentication → Auth → RequestOriginEdge
         /// → Authorization.

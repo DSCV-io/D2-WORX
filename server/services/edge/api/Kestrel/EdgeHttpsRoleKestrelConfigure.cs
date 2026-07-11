@@ -10,7 +10,7 @@ using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.Extensions.Options;
 
 /// <summary>
-/// M1-B exclusive three-bind Kestrel configuration for the Edge host:
+/// Exclusive three-bind Kestrel configuration for the Edge host:
 /// HTTP :8080, Issuer HTTPS :8443 (no client cert), mTLS HTTPS :9443
 /// (inherits MutualTls RequireCertificate + SPIFFE validator defaults).
 /// </summary>
@@ -29,12 +29,12 @@ public sealed class EdgeHttpsRoleKestrelConfigure : IConfigureOptions<KestrelSer
         ArgumentNullException.ThrowIfNull(options);
 
         // Cleartext health / public smoke.
-        options.ListenAnyIP(EdgeHttpsRolePolicies.HttpPort);
+        options.ListenAnyIP(EdgeHttpsRolePolicies.HTTP_PORT);
 
         // Issuer HTTPS — server cert only (OIDC / JWKS discovery must not require mTLS).
         // Per-listen callback runs after ConfigureHttpsDefaults and clears RequireCertificate.
         options.ListenAnyIP(
-            EdgeHttpsRolePolicies.IssuerHttpsPort,
+            EdgeHttpsRolePolicies.ISSUER_HTTPS_PORT,
             listen =>
             {
                 listen.UseHttps(EdgeHttpsRolePolicies.ApplyIssuerHttps);
@@ -43,7 +43,7 @@ public sealed class EdgeHttpsRoleKestrelConfigure : IConfigureOptions<KestrelSer
         // mTLS HTTPS — bare UseHttps() inherits MutualTls defaults
         // (RequireCertificate + SpiffeSanPeerValidator callback) when Enabled.
         options.ListenAnyIP(
-            EdgeHttpsRolePolicies.MtlsHttpsPort,
+            EdgeHttpsRolePolicies.MTLS_HTTPS_PORT,
             listen =>
             {
                 listen.UseHttps();

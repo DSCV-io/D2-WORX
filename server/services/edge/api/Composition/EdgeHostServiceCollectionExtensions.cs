@@ -75,11 +75,11 @@ public static class EdgeHostServiceCollectionExtensions
                     issuerUri.Scheme,
                     Uri.UriSchemeHttps,
                     StringComparison.OrdinalIgnoreCase)
-                || issuerUri.Port == EdgeHttpsRolePolicies.MtlsHttpsPort)
+                || issuerUri.Port == EdgeHttpsRolePolicies.MTLS_HTTPS_PORT)
             {
                 throw new InvalidOperationException(
                     "KEYCUSTODIAN_APP:IssuerBaseUrl must be https://… and must not use the "
-                    + $"mTLS port ({EdgeHttpsRolePolicies.MtlsHttpsPort}). "
+                    + $"mTLS port ({EdgeHttpsRolePolicies.MTLS_HTTPS_PORT}). "
                     + "In-cluster SoT: https://d2-edge:8443.");
             }
 
@@ -104,7 +104,7 @@ public static class EdgeHostServiceCollectionExtensions
 
             // NEVER services.AddD2MutualTls(...) again after defaults.
 
-            // M1-B exclusive three-bind after MutualTls registration.
+            // Exclusive three-bind after MutualTls registration.
             services.AddSingleton<
                 IConfigureOptions<KestrelServerOptions>,
                 EdgeHttpsRoleKestrelConfigure>();

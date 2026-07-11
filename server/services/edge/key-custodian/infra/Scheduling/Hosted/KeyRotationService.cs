@@ -9,10 +9,8 @@ namespace D2.Edge.KeyCustodian.Infra.Scheduling.Hosted;
 using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.RunDueRotations;
 using D2.Edge.KeyCustodian.Infra.Configuration;
 using D2.Edge.KeyCustodian.Infra.Observability;
-using D2.Shared.Auth.Abstractions;
 using D2.Shared.Context.Abstractions;
 using D2.Shared.EntityFrameworkCore.Postgres;
-using D2.Shared.Time;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -44,18 +42,19 @@ using Microsoft.Extensions.Options;
 /// land as a sibling <c>Scheduling/&lt;Provider&gt;/</c> adapter); rotation is rare
 /// and non-latency-sensitive, so a timer plus the advisory lock is sufficient.
 /// </para>
+/// <para>
+/// <b>System work plane.</b> Each tick opens work via platform
+/// <see cref="ISystemWorkScopeFactory"/> — never a hand-rolled
+/// <c>CreateAsyncScope</c> + <c>EstablishSystemContext</c> pair.
+/// </para>
 /// </remarks>
 public sealed class KeyRotationService(
-    IServiceScopeFactory scopeFactory,
+    ISystemWorkScopeFactory systemWork,
     IOptions<KeyCustodianInfraOptions> options,
-    IOptions<D2WorkloadIdentityOptions> workloadIdentity,
-    IClock clock,
     ILogger<KeyRotationService> logger)
     : BackgroundService
 {
     private readonly KeyCustodianInfraOptions r_options = options.Value;
-    private readonly string r_hostServiceId = workloadIdentity.Value.ServiceId;
-    private readonly IClock r_clock = clock;
 
     /// <summary>
     /// Builds the domain → <see cref="KeyType"/> map used to bootstrap domains that
@@ -101,8 +100,7 @@ public sealed class KeyRotationService(
         domain.KeyType == KeyType.X509CaCertificate;
 
     /// <summary>
-    /// Resolves a fresh DI scope, establishes the worker's
-    /// <see cref="RequestOrigin.System"/> request context on it, then runs
+    /// Opens a System work scope via <see cref="ISystemWorkScopeFactory"/>, then runs
     /// <see cref="IRunDueRotationsHandler"/> and logs the outcome. Internal so a unit
     /// test can drive it directly — the real advisory-lock acquire in
     /// <see cref="RunTickAsync"/> requires a live PostgreSQL connection.
@@ -110,9 +108,8 @@ public sealed class KeyRotationService(
     /// <param name="ct">Cancellation token.</param>
     internal async Task ExecuteRotationAsync(CancellationToken ct)
     {
-        await using var scope = scopeFactory.CreateAsyncScope();
-        scope.ServiceProvider.EstablishSystemContext(r_hostServiceId, r_clock);
-        var handler = scope.ServiceProvider.GetRequiredService<IRunDueRotationsHandler>();
+        await using var work = await systemWork.BeginAsync(ct).ConfigureAwait(false);
+        var handler = work.Services.GetRequiredService<IRunDueRotationsHandler>();
 
         var input = new RunDueRotationsInput(BuildBootstrapKeyTypes());
         var result = await handler.HandleAsync(input, ct).ConfigureAwait(false);

@@ -28,12 +28,12 @@ public sealed class AuditHttpsRoleKestrelConfigure : IConfigureOptions<KestrelSe
         ArgumentNullException.ThrowIfNull(options);
 
         // Cleartext health / infra smoke.
-        options.ListenAnyIP(AuditHttpsRolePolicies.HttpPort);
+        options.ListenAnyIP(AuditHttpsRolePolicies.HTTP_PORT);
 
         // mTLS HTTPS — bare UseHttps() inherits MutualTls defaults
         // (RequireCertificate + SpiffeSanPeerValidator callback) when Enabled.
         options.ListenAnyIP(
-            AuditHttpsRolePolicies.MtlsHttpsPort,
+            AuditHttpsRolePolicies.MTLS_HTTPS_PORT,
             listen =>
             {
                 listen.UseHttps();

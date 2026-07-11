@@ -56,11 +56,12 @@ Wires the canonical D² service-defaults stack in this exact order:
 3. `AddD2Telemetry(configuration, opts.TelemetryConfigure)` — OTel SDK (traces + metrics + logs) + OTLP exporters (when canonical env vars set) + AspNetCore + HttpClient + GrpcNetClient + Process + Runtime auto-instrumentations + Prometheus exporter (when enabled). Honors `OTEL_SDK_DISABLED`.
 4. `AddD2I18n(configuration)` — `SupportedLocales` + `ITranslator` singletons. Idempotent. Reads `PUBLIC_DEFAULT_LOCALE` + indexed `PUBLIC_ENABLED_LOCALES__*`. The lib has no `Action<T>` config callback, so `D2ServiceDefaultsOptions` does NOT carry an `I18nConfigure` field.
 5. `AddD2Handler()` — open-generic `HandlerContext<>` Transient registration. Idempotent.
-6. `AddD2Auth(opts.AuthConfigure).AddD2AuthHttp().AddD2AuthGrpc()` — JWKS provider, session liveness tracker, JWT validator, named OIDC discovery `HttpClient`, backplane subscribers, HTTP middleware, gRPC interceptor, scoped `IRequestContext` resolver. Skipped when `SkipAuthAutoWiring = true`. Also registers `AddD2AuthEndpointGuard()` (deny-by-default boot guard — see [`../auth/startup/README.md`](../auth/startup/README.md)) unless `SkipAuthEndpointGuard = true`.
-7. `AddD2LocalCache(opts.LocalCacheConfigure)` — `DefaultLocalCache` as `ILocalCache` singleton. Idempotent. Skipped when `SkipLocalCacheAutoWiring = true`.
-8. `AddD2HealthChecks()` — baseline `"self"` check tagged `"live"`. Idempotent.
-9. `AddD2ProblemDetails(opts.ProblemDetailsConfigure)` — RFC 7807 customizer (`traceId` + `correlationId` + `instance` enrichment).
-10. `AddD2Cors(configuration, opts.CorsConfigure)` — `D2_DEFAULT` policy + indexed `D2_CORS_ORIGINS__*` env-var binding. Fail-closed via `ValidateOnStart()`.
+6. `AddD2SystemWorkPlane()` — **always** (even when auth is skipped). Platform System work entry: scoped `MutableRequestContext`, default scoped `IRequestContext` → Mutable, singleton `ISystemWorkScopeFactory`. Hosted/background authority-bearing work enters only via `BeginAsync`. See [`../context/abstractions/README.md`](../context/abstractions/README.md).
+7. `AddD2Auth(opts.AuthConfigure).AddD2AuthHttp().AddD2AuthGrpc()` — JWKS provider, session liveness tracker, JWT validator, named OIDC discovery `HttpClient`, backplane subscribers, HTTP middleware, gRPC interceptor, dual-path scoped `IRequestContext` resolver (Items when established, else Mutable — replaces the plain SystemWorkPlane default). Skipped when `SkipAuthAutoWiring = true`. Also registers `AddD2AuthEndpointGuard()` (deny-by-default boot guard — see [`../auth/startup/README.md`](../auth/startup/README.md)) unless `SkipAuthEndpointGuard = true`.
+8. `AddD2LocalCache(opts.LocalCacheConfigure)` — `DefaultLocalCache` as `ILocalCache` singleton. Idempotent. Skipped when `SkipLocalCacheAutoWiring = true`.
+9. `AddD2HealthChecks()` — baseline `"self"` check tagged `"live"`. Idempotent.
+10. `AddD2ProblemDetails(opts.ProblemDetailsConfigure)` — RFC 7807 customizer (`traceId` + `correlationId` + `instance` enrichment).
+11. `AddD2Cors(configuration, opts.CorsConfigure)` — `D2_DEFAULT` policy + indexed `D2_CORS_ORIGINS__*` env-var binding. Fail-closed via `ValidateOnStart()`.
 
 **Auth wiring contract (fail-fast)**: when `SkipAuthAutoWiring = false` (the default), `AuthConfigure` MUST be non-null — the aggregator throws `InvalidOperationException` at host build with a remediation message otherwise. Setting `SkipAuthAutoWiring = true` opts out of auth wiring entirely (test hosts, anonymous-only admin endpoints).
 
@@ -77,7 +78,7 @@ app.UseD2Auth();
 app.UseAuthorization();
 ```
 
-No insertion points exposed — services that need bespoke ordering call the underlying lib extensions themselves and skip `UseD2DefaultPipeline`. The order rationale (companion Edge rate-limit design — not yet shipped; will be documented in the Edge lib README when rate-limiting ships):
+No insertion points exposed — services that need bespoke ordering call the underlying lib extensions themselves and skip `UseD2DefaultPipeline`. The order rationale:
 
 - **`UseD2SecurityHeaders` first** — OWASP headers apply on EVERY response, including responses produced by middleware that short-circuits the pipeline (CORS preflight, infrastructure bypass).
 - **`UseD2RequestLogging` early (before routing)** — even early-pipeline failures emit a structured request-completion line.
@@ -85,7 +86,7 @@ No insertion points exposed — services that need bespoke ordering call the und
 - **`UseRouting` then `UseD2InfrastructureBypass`** — bypass needs the routing-resolved endpoint on the context to invoke the matched `RequestDelegate` directly when short-circuiting.
 - **`UseAuthentication` → `UseD2Auth` → `UseAuthorization`** — JWT auth middleware (`UseD2Auth`) requires the AspNetCore authentication feature on the context (`UseAuthentication`) and runs BEFORE `UseAuthorization` so the authorization stage fires scope / policy gates against the populated `IRequestContext`.
 
-The rate-limit middleware (an Edge concern, owned outside this lib) slots BETWEEN `UseD2InfrastructureBypass` and `UseAuthentication` per the companion Edge rate-limit design (not yet shipped; will be documented in the Edge lib README when rate-limiting ships). The current LOCKED order matches that wiring.
+Edge rate-limit middleware (owned outside this lib) is reserved for the slot BETWEEN `UseD2InfrastructureBypass` and `UseAuthentication`. The LOCKED order leaves that slot empty until the Edge host wires it.
 
 ### `MapD2DefaultEndpoints()`
 
@@ -131,7 +132,7 @@ The aggregator owns ZERO field-level configuration knowledge. New options on any
 
 | Path                                            | Role                                                                                                                              |
 | ----------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
-| `D2.Shared.ServiceDefaults.csproj`              | csproj — `Microsoft.NET.Sdk.Web` + `OutputType=Library`. 11 `ProjectReference`s + `JetBrains.Annotations` package.               |
+| `D2.Shared.ServiceDefaults.csproj`              | csproj — `Microsoft.NET.Sdk.Web` + `OutputType=Library`. ProjectReferences (incl. `context/abstractions`) + `JetBrains.Annotations`. |
 | `ServiceDefaultsServiceCollectionExtensions.cs` | The `AddD2ServiceDefaults` extension. Body = ordered sequence of `services.AddD2X(...)` calls.                                    |
 | `WebApplicationServiceDefaultsExtensions.cs`    | The `UseD2DefaultPipeline` + `MapD2DefaultEndpoints` + `RunD2ServiceAsync` extensions.                                            |
 | `D2ServiceDefaultsOptions.cs`                   | Sealed options class — opt-out flags + per-component pass-through `Action<T>?` delegates.                                         |
@@ -146,6 +147,7 @@ The aggregator owns ZERO field-level configuration knowledge. New options on any
 | `D2.Shared.AspNetCore`            | `AddD2HealthChecks` + `AddD2ProblemDetails` + `AddD2Cors` + `MapD2HealthEndpoints` + `UseD2SecurityHeaders` + `UseD2Cors` + `UseD2InfrastructureBypass` + `RunD2ServiceAsync` |
 | `D2.Shared.I18n`                  | `AddD2I18n`                                                                                                                                                                   |
 | `D2.Shared.Handler`               | `AddD2Handler`                                                                                                                                                                |
+| `D2.Shared.Context.Abstractions`  | `AddD2SystemWorkPlane` — platform System work plane (`ISystemWorkScopeFactory`)                                                                                               |
 | `D2.Shared.Auth`                  | `AddD2Auth`                                                                                                                                                                   |
 | `D2.Shared.Auth.Http`             | `AddD2AuthHttp` + `UseD2Auth`                                                                                                                                                 |
 | `D2.Shared.Auth.Grpc`             | `AddD2AuthGrpc`                                                                                                                                                               |
@@ -162,7 +164,7 @@ The aggregator owns ZERO field-level configuration knowledge. New options on any
 - **`AuthConfigure` null + `SkipAuthAutoWiring = false` is fail-fast.** The aggregator throws `InvalidOperationException` at host build with a clear remediation message. The fail-fast prevents services from accidentally shipping without auth wiring; opt out of auth entirely by setting `SkipAuthAutoWiring = true` (test hosts, anonymous-only admin endpoints).
 - **`OTEL_SDK_DISABLED=true` short-circuits both `AddD2Telemetry` and `MapD2PrometheusEndpoint` symmetrically.** No OTel providers / exporters are registered AND the `/metrics` route is not mapped. Consumers MUST tolerate the absence of both surfaces under the kill-switch condition.
 - **`AddD2I18n` has no `Action<T>` overload.** The aggregator passes `IConfiguration` only. The lib defaults `messagesDirectory` to `{AppContext.BaseDirectory}/messages` populated at build time via the consuming csproj's `<Content Include="...contracts/messages/*.json" />` item group.
-- **`UseD2DefaultPipeline` middleware ordering is LOCKED — no insertion points.** Services that need bespoke ordering call the underlying lib extensions themselves and skip the aggregator's pipeline method entirely. The locked order accounts for the Edge rate-limit middleware slot (not yet shipped; will be documented in the Edge lib README when rate-limiting ships).
+- **`UseD2DefaultPipeline` middleware ordering is LOCKED — no insertion points.** Services that need bespoke ordering call the underlying lib extensions themselves and skip the aggregator's pipeline method entirely. The locked order reserves the Edge rate-limit middleware slot between infrastructure bypass and authentication.
 - **`MapD2DefaultEndpoints` MUST run exactly once per host.** `MapD2HealthEndpoints` raises a duplicate-route exception per the underlying ASP.NET Core endpoint-routing convention; `MapD2PrometheusEndpoint` similarly. The aggregator does not idempotency-guard the `Map*` calls.
 - **`SecurityHeadersConfigure` and `InfrastructureBypassConfigure` apply at pipeline-installation time.** Both underlying middleware extensions accept their `Action<T>?` at `Use*` time, not at service-registration time. The aggregator resolves `IOptions<D2ServiceDefaultsOptions>` from `app.ApplicationServices` to read these — when no options were registered (typical case; `AddD2ServiceDefaults` snapshots into a local but doesn't bind into DI), each underlying middleware uses its own defaults.
 - **`D2Env.Load` is idempotent.** Calling `AddD2ServiceDefaults` twice is safe — the second `D2Env.Load` no-ops via the `s_loaded` flag.

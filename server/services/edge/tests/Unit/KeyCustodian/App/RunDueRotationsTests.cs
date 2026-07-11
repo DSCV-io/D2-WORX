@@ -555,7 +555,7 @@ public sealed class RunDueRotationsTests
         var optionsAccessor = KcAppTestKit.BuildOptionsAccessor();
 
         // The orchestrator + its lifecycle sub-handlers all run on the System plane —
-        // mirroring the scheduler worker's EstablishSystemContext'd scope.
+        // mirroring the scheduler worker's ISystemWorkScopeFactory.BeginAsync scope.
         var generateCtx = KcAppTestKit.SystemContext<GenerateKeyHandler>();
         var activateCtx = KcAppTestKit.SystemContext<ActivateKeyHandler>();
         var rotateCtx = KcAppTestKit.SystemContext<RotateKeyHandler>();

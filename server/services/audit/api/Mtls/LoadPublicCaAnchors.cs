@@ -45,7 +45,10 @@ public static class LoadPublicCaAnchors
         // §5.1a carve-out: plain reference-type null-guard — no present-but-falsey.
         ArgumentNullException.ThrowIfNull(configuration);
 
-        var path = configuration[TRUST_ANCHOR_PATH_KEY];
+        // Resolve from IConfiguration only (host maps AUDIT_MTLS__* env → config).
+        // Dual key casings; no direct Environment.GetEnvironmentVariable (unit isolation).
+        var path = configuration[TRUST_ANCHOR_PATH_KEY]
+            ?? configuration["AUDIT_MTLS:TRUST_ANCHOR_PATH"];
 
         if (path.Falsey())
         {

@@ -218,7 +218,7 @@ public sealed class AddD2AuditHostDiIsolationTests : IDisposable
         var act = () => LoadPublicCaAnchors.FromConfiguration(config);
 
         act.Should().Throw<InvalidOperationException>()
-            .WithMessage("*TrustAnchor*");
+            .WithMessage($"*{LoadPublicCaAnchors.TRUST_ANCHOR_PATH_KEY}*");
     }
 
     [Fact]

@@ -22,7 +22,7 @@ Copyright (c) DCSV. All rights reserved.
 - **ServiceId:** `EdgeHostIdentity.SERVICE_ID` (`edge`) on `AddD2RequestOriginEdge` + `AddD2RequestOriginGrpc`.
 - **MutualTls:** only via `AddD2ServiceDefaults` → `MutualTlsConfigure` (never bare second `AddD2MutualTls`). AllowedWorkloads seed `["audit"]`. Trust anchors = public CA only (`EDGE_MTLS:TrustAnchorPath`), host-owned process-lifetime cache.
 - **Redis:** `ConnectionStringHelper.ParseRedisUri` on `REDIS_URL`.
-- **Postgres:** `ConnectionStringHelper.ParsePostgresUri` on `KEYCUSTODIAN_DATABASE_URL`.
+- **Postgres:** `ConnectionStringHelper.ParsePostgresUri` on `KEYCUSTODIAN_DATABASE_URL` (env).
 - **KC caps:** `AddD2CaLeafSigningCapability` + `AddD2CaRootSigningCapability`. **No** `AddD2JwtSigningCapability`.
 - **Outbound:** `AddD2WorkloadCertificateOutbound` (registers `WorkloadLeafRefreshHostedService` — issues at **host start**) + `AddD2ForwardedJwtOutbound` + singleton `PoCCsrSigningWorkloadCertificateIssuer` (per-call `IServiceScopeFactory`).
 

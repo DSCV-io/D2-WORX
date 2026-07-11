@@ -212,7 +212,7 @@ public sealed class AuthGrpcServiceCollectionExtensionsTests
     }
 
     [Fact]
-    public void RequestContextResolution_SlotHoldsWrongType_Throws()
+    public void RequestContextResolution_SlotHoldsWrongType_FallsThroughToMutable()
     {
         var sp = BuildProvider();
         using var scope = sp.CreateScope();
@@ -221,33 +221,39 @@ public sealed class AuthGrpcServiceCollectionExtensionsTests
         httpContext.Items[D2HttpContextItems.REQUEST_CONTEXT] = "not-a-request-context";
         accessor.HttpContext = httpContext;
 
-        var act = () => scope.ServiceProvider.GetRequiredService<IRequestContext>();
+        var resolved = scope.ServiceProvider.GetRequiredService<IRequestContext>();
+        var mutable = scope.ServiceProvider.GetRequiredService<MutableRequestContext>();
 
-        act.Should().Throw<InvalidOperationException>();
+        resolved.Should().BeSameAs(mutable);
     }
 
     [Fact]
-    public void RequestContextResolution_BeforeInterceptorRan_Throws()
+    public void RequestContextResolution_BeforeInterceptorRan_ReturnsUnestablishedMutable()
     {
         var sp = BuildProvider();
         using var scope = sp.CreateScope();
         var accessor = scope.ServiceProvider.GetRequiredService<IHttpContextAccessor>();
         accessor.HttpContext = new DefaultHttpContext();
 
-        var act = () => scope.ServiceProvider.GetRequiredService<IRequestContext>();
+        var resolved = scope.ServiceProvider.GetRequiredService<IRequestContext>();
+        var mutable = scope.ServiceProvider.GetRequiredService<MutableRequestContext>();
 
-        act.Should().Throw<InvalidOperationException>();
+        resolved.Should().BeSameAs(mutable);
+        resolved.Origin.Should().Be(RequestOrigin.Unestablished);
     }
 
     [Fact]
-    public void RequestContextResolution_NoActiveHttpContext_Throws()
+    public void RequestContextResolution_NoActiveHttpContext_ReturnsUnestablishedMutable()
     {
+        // Regression: throw-only path broke System workers on dual-transport hosts.
         var sp = BuildProvider();
         using var scope = sp.CreateScope();
 
-        var act = () => scope.ServiceProvider.GetRequiredService<IRequestContext>();
+        var resolved = scope.ServiceProvider.GetRequiredService<IRequestContext>();
+        var mutable = scope.ServiceProvider.GetRequiredService<MutableRequestContext>();
 
-        act.Should().Throw<InvalidOperationException>();
+        resolved.Should().BeSameAs(mutable);
+        resolved.Origin.Should().Be(RequestOrigin.Unestablished);
     }
 
     [Fact]

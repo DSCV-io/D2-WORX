@@ -57,7 +57,7 @@ Edge is intentionally "thick" — middleware, routing, auth, real-time push, Who
 ## Composition pointers
 
 - DI: [api/Composition/README.md](api/Composition/README.md)
-- Pipeline 6A: [api/Pipeline/README.md](api/Pipeline/README.md)
+- Pipeline (locked order): [api/Pipeline/README.md](api/Pipeline/README.md)
 - Three-bind / dual-URL: [api/README.md](api/README.md)
 - Audit multiproc smoke: [../audit/README.md](../audit/README.md)
 
@@ -84,7 +84,9 @@ Agents must **not** start long-lived `dotnet run` / Compose-up e2e as automated 
 | `EDGE_MTLS__TRUST_ANCHOR_PATH` | Public CA root PEM/DER only |
 | `KEYCUSTODIAN_INFRA__ROOTKEYPATH` | KC root-key directory |
 
-**Three-bind ports:** HTTP `8080` · Issuer HTTPS `8443` · mTLS HTTPS `9443`. Prefer empty `ASPNETCORE_URLS` so exclusive `Listen*` owns binds.
+**Three-bind ports (container listen):** HTTP `8080` · Issuer HTTPS `8443` · mTLS HTTPS `9443`. Prefer empty `ASPNETCORE_URLS` so exclusive `Listen*` owns binds.
+
+**Compose host publish defaults:** HTTP `${EDGE_PORT:-8080}` · Issuer `${EDGE_HTTPS_PORT:-8443}` · mTLS `${EDGE_MTLS_PORT:-9444}` → container `9443` (host **9444** avoids Portainer HTTPS on host **9443**).
 
 Host-operator smoke published URL is `https://localhost:${EDGE_HTTPS_PORT}` → container Issuer 8443 — **not** the container Issuer env value.
 

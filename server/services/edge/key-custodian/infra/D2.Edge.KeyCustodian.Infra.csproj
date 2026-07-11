@@ -64,10 +64,9 @@ Copyright (c) DCSV. All rights reserved.
     -->
     <ProjectReference Include="..\..\..\..\shared\dotnet\auth\abstractions\D2.Shared.Auth.Abstractions.csproj" />
     <!--
-      D2.Shared.Context.Abstractions — MutableRequestContext/IRequestContext (the
-      worker's own scoped resolver registration) + SystemRequestContextBootstrap's
-      EstablishSystemContext extension that KeyRotationService/CaSeedingService call
-      before resolving their handler on each scope.
+      D2.Shared.Context.Abstractions — ISystemWorkScopeFactory that
+      KeyRotationService/CaSeedingService use to open System-plane work scopes
+      (platform-owned; modules never re-register IRequestContext).
     -->
     <ProjectReference Include="..\..\..\..\shared\dotnet\context\abstractions\D2.Shared.Context.Abstractions.csproj" />
     <!--

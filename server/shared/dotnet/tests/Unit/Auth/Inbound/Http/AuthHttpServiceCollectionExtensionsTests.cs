@@ -51,33 +51,40 @@ public sealed class AuthHttpServiceCollectionExtensionsTests
     }
 
     [Fact]
-    public void RequestContextResolution_BeforeMiddlewareRan_Throws()
+    public void RequestContextResolution_BeforeMiddlewareRan_ReturnsUnestablishedMutable()
     {
-        // Fail-fast — better than returning null and letting downstream
-        // null-ref later with an unhelpful stack trace.
+        // Dual-path: missing Items slot falls through to scoped Mutable
+        // (Unestablished — authority rules fail-closed). No throw-only path
+        // that would also break System workers on the same host.
         var sp = BuildProvider();
         using var scope = sp.CreateScope();
         var accessor = scope.ServiceProvider.GetRequiredService<IHttpContextAccessor>();
         accessor.HttpContext = new DefaultHttpContext();
 
-        var act = () => scope.ServiceProvider.GetRequiredService<IRequestContext>();
+        var resolved = scope.ServiceProvider.GetRequiredService<IRequestContext>();
+        var mutable = scope.ServiceProvider.GetRequiredService<MutableRequestContext>();
 
-        act.Should().Throw<InvalidOperationException>();
+        resolved.Should().BeSameAs(mutable);
+        resolved.Origin.Should().Be(RequestOrigin.Unestablished);
     }
 
     [Fact]
-    public void RequestContextResolution_NoActiveHttpContext_Throws()
+    public void RequestContextResolution_NoActiveHttpContext_ReturnsUnestablishedMutable()
     {
+        // Regression: historical throw-only path broke multiproc System seed
+        // workers that resolve IRequestContext outside any HttpContext.
         var sp = BuildProvider();
         using var scope = sp.CreateScope();
 
-        var act = () => scope.ServiceProvider.GetRequiredService<IRequestContext>();
+        var resolved = scope.ServiceProvider.GetRequiredService<IRequestContext>();
+        var mutable = scope.ServiceProvider.GetRequiredService<MutableRequestContext>();
 
-        act.Should().Throw<InvalidOperationException>();
+        resolved.Should().BeSameAs(mutable);
+        resolved.Origin.Should().Be(RequestOrigin.Unestablished);
     }
 
     [Fact]
-    public void RequestContextResolution_SlotHoldsWrongType_Throws()
+    public void RequestContextResolution_SlotHoldsWrongType_FallsThroughToMutable()
     {
         var sp = BuildProvider();
         using var scope = sp.CreateScope();
@@ -86,9 +93,10 @@ public sealed class AuthHttpServiceCollectionExtensionsTests
         ctx.Items[D2HttpContextItems.REQUEST_CONTEXT] = "not-a-request-context";
         accessor.HttpContext = ctx;
 
-        var act = () => scope.ServiceProvider.GetRequiredService<IRequestContext>();
+        var resolved = scope.ServiceProvider.GetRequiredService<IRequestContext>();
+        var mutable = scope.ServiceProvider.GetRequiredService<MutableRequestContext>();
 
-        act.Should().Throw<InvalidOperationException>();
+        resolved.Should().BeSameAs(mutable);
     }
 
     [Fact]

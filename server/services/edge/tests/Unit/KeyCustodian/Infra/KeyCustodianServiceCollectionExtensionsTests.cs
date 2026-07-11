@@ -31,6 +31,7 @@ using D2.Shared.Context.Abstractions;
 using D2.Shared.EntityFrameworkCore.Postgres;
 using D2.Shared.Handler;
 using D2.Shared.Messaging;
+using D2.Shared.Result;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Hosting;
@@ -229,28 +230,48 @@ public sealed class KeyCustodianServiceCollectionExtensionsTests : IDisposable
     }
 
     [Fact]
-    public void AddD2KeyCustodian_RegistersScopedRequestContext_ForSystemWorkerScopes()
+    public void AddD2KeyCustodian_DoesNotRegisterIRequestContext_PlatformOwnsSystemWorkPlane()
     {
-        // A worker scope created via IServiceScopeFactory.CreateAsyncScope() (the
-        // KeyRotationService/CaSeedingService System workers) has no HttpContext, so
-        // the module registers its own plain scoped IRequestContext resolver rather
-        // than relying on a host's throwing-by-default one. Built WITHOUT pre-
-        // registering IRequestContext (unlike NewServices()) so this resolution
-        // proves AddD2KeyCustodian's OWN registration, not a test-setup stand-in.
+        // Modules must not re-register IRequestContext / MutableRequestContext —
+        // the platform System work plane (AddD2SystemWorkPlane) owns those seams.
         var services = new ServiceCollection();
         services.AddLogging();
         services.AddSingleton<IMessageBus, NoopMessageBus>();
         services.AddD2Handler();
+        services.Configure<D2WorkloadIdentityOptions>(o => o.ServiceId = "key-custodian");
         services.AddD2KeyCustodian(
             KcInfraTestKit.BuildConfiguration(r_rootKeyDir), KcInfraTestKit.FAKE_CONNECTION_STRING);
 
-        using var sp = services.BuildServiceProvider();
-        using var scope = sp.CreateScope();
+        services.Should().NotContain(
+            d => d.ServiceType == typeof(IRequestContext),
+            because: "KC must not re-register IRequestContext — platform owns it");
+        services.Should().NotContain(
+            d => d.ServiceType == typeof(MutableRequestContext),
+            because: "KC must not re-register MutableRequestContext — platform owns it");
+        services.Should().NotContain(
+            d => d.ServiceType == typeof(ISystemWorkScopeFactory),
+            because: "KC must not re-register ISystemWorkScopeFactory — platform owns it");
+    }
 
-        var mutable = scope.ServiceProvider.GetRequiredService<MutableRequestContext>();
-        var ctx = scope.ServiceProvider.GetRequiredService<IRequestContext>();
+    [Fact]
+    public async Task AddD2KeyCustodian_WithPlatformSystemWorkPlane_SystemWorkersResolveWithoutHttpContext()
+    {
+        // Composition regression: host wires AddD2SystemWorkPlane (+ dual-path-style
+        // Mutable fall-through) then KC; BeginAsync + resolve IRequestContext must
+        // not throw the historical "no HttpContext" multiproc-seed failure class.
+        var services = NewServices();
+        services.AddD2KeyCustodian(
+            KcInfraTestKit.BuildConfiguration(r_rootKeyDir), KcInfraTestKit.FAKE_CONNECTION_STRING);
+        services.AddD2CaRootSigningCapability();
 
-        ctx.Should().BeSameAs(mutable);
+        await using var sp = services.BuildServiceProvider();
+        var factory = sp.GetRequiredService<ISystemWorkScopeFactory>();
+
+        await using var work = await factory.BeginAsync();
+        var ctx = work.Services.GetRequiredService<IRequestContext>();
+
+        ctx.Origin.Should().Be(RequestOrigin.System);
+        ctx.ImmediateCaller.Should().Be("key-custodian");
     }
 
     private static ServiceCollection NewServices()
@@ -259,17 +280,16 @@ public sealed class KeyCustodianServiceCollectionExtensionsTests : IDisposable
         services.AddLogging();
 
         // The handler infrastructure (HandlerContext<T> open generic + IRequestContext)
-        // is a host responsibility — Edge registers it. The KC module assumes it is
-        // present. Register it here so the resolve-everything assertion exercises the
-        // real handler construction path.
+        // and System work plane are host responsibilities — Edge registers them.
+        // The KC module assumes they are present.
         services.AddD2Handler();
-        services.AddSingleton<IRequestContext>(_ => new MutableRequestContext());
+        services.Configure<D2WorkloadIdentityOptions>(o => o.ServiceId = "key-custodian");
+        services.AddD2SystemWorkPlane();
 
         // The host binds its own workload identity (ServiceId); AddD2KeyCustodian only
         // VALIDATES presence (fail-loud). Supply a valid id so the System-worker hosted
         // services construct + resolve under the presence gate. The unset-ServiceId reject
         // path is pinned by AddD2KeyCustodian_UnsetWorkloadIdentity_FailsOptionsValidation.
-        services.Configure<D2WorkloadIdentityOptions>(o => o.ServiceId = "key-custodian");
 
         services.AddSingleton<IMessageBus, NoopMessageBus>();
         return services;

@@ -576,9 +576,14 @@ services.AddD2RequestOriginGrpc();   // registers RequestOriginCrossProcessInter
 // leaf calls this before dispatching; sets Origin = InProcessModule.
 requestContext.EstablishInProcessModule(callingModuleId, targetModuleId, clock);
 
-// System worker (D2.Shared.Context.Abstractions) — a background service's per-iteration
-// scope calls this before resolving a handler; sets Origin = System.
-scopedServices.EstablishSystemContext(hostServiceId, clock);
+// System worker (D2.Shared.Context.Abstractions) — ONLY sanctioned module entry:
+// ISystemWorkScopeFactory.BeginAsync (wired by AddD2SystemWorkPlane via
+// AddD2ServiceDefaults). Opens a DI scope, establishes Origin = System, host
+// service id as ImmediateCaller, and a fresh System call-path entry.
+// Never hand-roll CreateAsyncScope + EstablishSystemContext (low-level bootstrap
+// reserved for the factory).
+await using var work = await systemWork.BeginAsync(ct);
+// resolve handlers from work.Services
 
 // Outbound gRPC (D2.Shared.Auth.Outbound) — writes x-d2-context (operational subset +
 // accumulated call-path) on every outbound call; auto-chained by the generated client.

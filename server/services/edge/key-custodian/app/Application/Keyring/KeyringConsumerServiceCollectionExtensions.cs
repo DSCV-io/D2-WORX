@@ -42,6 +42,7 @@ public static class KeyringConsumerServiceCollectionExtensions
         public IServiceCollection AddD2EncryptionFromKeyCustodian(
             string domain, string callingModuleId)
         {
+            // §5.1a carve-out: plain reference-type null-guard — no present-but-falsey.
             ArgumentNullException.ThrowIfNull(services);
             domain.ThrowIfFalsey();
             callingModuleId.ThrowIfFalsey();

@@ -60,8 +60,11 @@
 set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-SECRETS_DIR="${REPO_ROOT}/secrets"
-KEYCUSTODIAN_KEYS_DIR="${SECRETS_DIR}/keycustodian"
+# Stay in repo root and use *relative* paths for all openssl -out/-in files.
+# Git-Bash/MSYS + MinGW OpenSSL often fails "No such file" on absolute /c/... paths.
+cd "${REPO_ROOT}"
+SECRETS_DIR="secrets"
+KEYCUSTODIAN_KEYS_DIR="secrets/keycustodian"
 
 # Generate a 32-byte (256-bit) random key as hex.
 gen_key() {

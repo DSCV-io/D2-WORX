@@ -49,6 +49,11 @@ Copyright (c) DCSV. All rights reserved.
 
   <ItemGroup>
     <!--
+      JetBrains.Annotations — [MustDisposeResource] on ISystemWorkScopeFactory.BeginAsync
+      (caller-owned IAsyncDisposable scope; inspectcode leak detection).
+    -->
+    <PackageReference Include="JetBrains.Annotations" />
+    <!--
       Microsoft.Extensions.DependencyInjection.Abstractions — the System worker
       establishment bootstrap (SystemRequestContextBootstrap) resolves the scope's
       MutableRequestContext via GetRequiredService<T>(). Zero-runtime-cost abstractions
@@ -65,6 +70,12 @@ Copyright (c) DCSV. All rights reserved.
       above.
     -->
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
+    <!--
+      Microsoft.Extensions.Options — IOptions&lt;D2WorkloadIdentityOptions&gt; for
+      SystemWorkScopeFactory (host service id stamped onto RequestOrigin.System).
+      Plain Sdk lib; explicit package ref (no AspNetCore framework reference).
+    -->
+    <PackageReference Include="Microsoft.Extensions.Options" />
   </ItemGroup>
 
   <ItemGroup>

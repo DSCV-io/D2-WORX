@@ -12,3 +12,7 @@ Keep a Changelog, and this package adheres to Semantic Versioning.
 ### Added
 
 ### Fixed
+
+- Dual-path scoped `IRequestContext` resolver (Items when established, else
+  `MutableRequestContext`) replaces the throw-only path that broke hosted System
+  workers on the same host. Pairs with platform `AddD2SystemWorkPlane()`.

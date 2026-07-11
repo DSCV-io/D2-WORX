@@ -16,10 +16,10 @@ using Microsoft.AspNetCore.Server.Kestrel.Https;
 public static class AuditHttpsRolePolicies
 {
     /// <summary>Cleartext HTTP port (health / infra smoke).</summary>
-    public const int HttpPort = 8080;
+    public const int HTTP_PORT = 8080;
 
     /// <summary>mTLS HTTPS port (inbound gRPC from Edge) — client cert required.</summary>
-    public const int MtlsHttpsPort = 8443;
+    public const int MTLS_HTTPS_PORT = 8443;
 
     /// <summary>
     /// Gets the client-certificate mode for the mTLS HTTPS bind —

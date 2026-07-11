@@ -47,8 +47,8 @@ public sealed class EdgeHttpsRoleKestrelTests : IDisposable
             .NotBe(ClientCertificateMode.RequireCertificate);
 
         https.ClientCertificateValidation.Should().BeNull();
-        EdgeHttpsRolePolicies.IssuerHttpsPort.Should().Be(8443);
-        EdgeHttpsRolePolicies.HttpsIssuerEndpointName.Should().Be("HttpsIssuer");
+        EdgeHttpsRolePolicies.ISSUER_HTTPS_PORT.Should().Be(8443);
+        EdgeHttpsRolePolicies.HTTPS_ISSUER_ENDPOINT_NAME.Should().Be("HttpsIssuer");
     }
 
     [Fact]
@@ -65,8 +65,8 @@ public sealed class EdgeHttpsRoleKestrelTests : IDisposable
         EdgeHttpsRolePolicies.MtlsClientCertificateMode
             .Should().Be(ClientCertificateMode.RequireCertificate);
 
-        EdgeHttpsRolePolicies.MtlsHttpsPort.Should().Be(9443);
-        EdgeHttpsRolePolicies.HttpsMtlsEndpointName.Should().Be("HttpsMtls");
+        EdgeHttpsRolePolicies.MTLS_HTTPS_PORT.Should().Be(9443);
+        EdgeHttpsRolePolicies.HTTPS_MTLS_ENDPOINT_NAME.Should().Be("HttpsMtls");
 
         // EdgeHttpsRoleKestrelConfigure is registered alongside MutualTls's
         // IConfigureOptions — mTLS listen inherits defaults (RequireCertificate).
@@ -88,10 +88,10 @@ public sealed class EdgeHttpsRoleKestrelTests : IDisposable
             .OfType<EdgeHttpsRoleKestrelConfigure>()
             .Should().ContainSingle();
 
-        EdgeHttpsRolePolicies.HttpPort.Should().Be(8080);
+        EdgeHttpsRolePolicies.HTTP_PORT.Should().Be(8080);
 
-        EdgeHttpsRolePolicies.IssuerHttpsPort.Should()
-            .NotBe(EdgeHttpsRolePolicies.MtlsHttpsPort);
+        EdgeHttpsRolePolicies.ISSUER_HTTPS_PORT.Should()
+            .NotBe(EdgeHttpsRolePolicies.MTLS_HTTPS_PORT);
 
         EdgeHttpsRolePolicies.IssuerClientCertificateMode.Should()
             .NotBe(ClientCertificateMode.RequireCertificate);
@@ -126,9 +126,9 @@ public sealed class EdgeHttpsRoleKestrelTests : IDisposable
         var ports = GetListenPorts(options).OrderBy(p => p).ToArray();
 
         ports.Should().Equal(
-            EdgeHttpsRolePolicies.HttpPort,
-            EdgeHttpsRolePolicies.IssuerHttpsPort,
-            EdgeHttpsRolePolicies.MtlsHttpsPort);
+            EdgeHttpsRolePolicies.HTTP_PORT,
+            EdgeHttpsRolePolicies.ISSUER_HTTPS_PORT,
+            EdgeHttpsRolePolicies.MTLS_HTTPS_PORT);
 
         // Configure wires Issuer via ApplyIssuerHttps (NoCertificate).
         var configureSource = File.ReadAllText(
@@ -137,9 +137,9 @@ public sealed class EdgeHttpsRoleKestrelTests : IDisposable
 
         configureSource.Should().Contain("ListenAnyIP");
         configureSource.Should().Contain("ApplyIssuerHttps");
-        configureSource.Should().Contain("EdgeHttpsRolePolicies.HttpPort");
-        configureSource.Should().Contain("EdgeHttpsRolePolicies.IssuerHttpsPort");
-        configureSource.Should().Contain("EdgeHttpsRolePolicies.MtlsHttpsPort");
+        configureSource.Should().Contain("EdgeHttpsRolePolicies.HTTP_PORT");
+        configureSource.Should().Contain("EdgeHttpsRolePolicies.ISSUER_HTTPS_PORT");
+        configureSource.Should().Contain("EdgeHttpsRolePolicies.MTLS_HTTPS_PORT");
     }
 
     [Fact]

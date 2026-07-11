@@ -32,6 +32,7 @@ using D2.Shared.EntityFrameworkCore.Postgres;
 using D2.Shared.Handler;
 using D2.Shared.Handler.Repo.Postgres;
 using D2.Shared.Result;
+using D2.Shared.Utilities.Extensions;
 using Grpc.Core;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.EntityFrameworkCore;
@@ -423,7 +424,7 @@ public sealed class NodeLeafClientKeyringHarnessTests(KeyCustodianPostgresFixtur
         var nm = Path.Combine(packageRoot, "node_modules");
         var pathSep = OperatingSystem.IsWindows() ? ";" : ":";
         var existingNodePath = Environment.GetEnvironmentVariable("NODE_PATH") ?? string.Empty;
-        psi.Environment["NODE_PATH"] = string.IsNullOrEmpty(existingNodePath)
+        psi.Environment["NODE_PATH"] = existingNodePath.Falsey()
             ? nm
             : nm + pathSep + existingNodePath;
 

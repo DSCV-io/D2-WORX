@@ -228,8 +228,8 @@ public sealed class AddD2EdgeHostDiIsolationTests : IDisposable
 
         var issuer = sp.GetRequiredService<IOptions<AuthOptions>>().Value.Issuer!;
 
-        issuer.Port.Should().Be(EdgeHttpsRolePolicies.IssuerHttpsPort);
-        issuer.Port.Should().NotBe(EdgeHttpsRolePolicies.MtlsHttpsPort);
+        issuer.Port.Should().Be(EdgeHttpsRolePolicies.ISSUER_HTTPS_PORT);
+        issuer.Port.Should().NotBe(EdgeHttpsRolePolicies.MTLS_HTTPS_PORT);
         issuer.Scheme.Should().Be("https");
     }
 

@@ -311,14 +311,16 @@ From `grpcurl`, `-v` surfaces trailer metadata at the bottom of verbose output (
 
 For full per-code reference + remediation, see [`../core/README.md` § Debugging](../core/README.md#debugging) — the same `AUTH_*` taxonomy applies across HTTP and gRPC transports (single sink at `AuthTelemetry.SR_ProblemEmitted`). Two codes specific to gRPC bearer extraction: `AUTH_BEARER_MISSING` (no `authorization` metadata, wrong scheme, or empty after `Bearer ` — check `Metadata.Add("authorization", "Bearer " + token)` or `Grpc.Net.ClientFactory.ConfigureChannel` + `CallCredentials`); `AUTH_SCOPE_INSUFFICIENT` (bearer valid but `Scopes` set didn't satisfy method's scope requirement; `traceid` finds the matching span whose enriched logs show required-vs-presented).
 
-### `IRequestContext` resolution failures
+### `IRequestContext` dual-path resolution
 
-The cross-transport scoped `IRequestContext` resolver registered by `AddD2AuthGrpc()` (lambda byte-equivalent to `AddD2AuthHttp()`'s — both read `HttpContext.Items[D2HttpContextItems.REQUEST_CONTEXT]`) surfaces two distinct `InvalidOperationException` messages:
+The cross-transport scoped `IRequestContext` resolver registered by `AddD2AuthGrpc()` (identical contract to `AddD2AuthHttp()`) is dual-path:
 
-- **"resolved without an active HttpContext. Ensure the resolution site runs inside an AspNetCore request..."** — `IHttpContextAccessor` returned `null`. Background-service / hosted-service code that takes a constructor `IRequestContext` would surface this; resolution sites must be inside an inbound request.
-- **"resolved before the auth pipeline ran. Ensure UseD2Auth() (for HTTP) or AddD2AuthGrpc()'s interceptor (for gRPC) has run..."** — `HttpContext` is present but the slot is empty. Two common causes: (a) `[D2HarmlessEndpoint]` short-circuited the interceptor — see [Footguns → Harmless-endpoint methods + ctor-injected `IRequestContext`](#harmless-endpoint-methods--ctor-injected-irequestcontext) for the three workarounds; (b) resolution site sits upstream of the interceptor (middleware on the AspNetCore pipeline above gRPC trying to constructor-inject `IRequestContext`).
+1. Prefer `HttpContext.Items[D2HttpContextItems.REQUEST_CONTEXT]` when an established context is present (post-interceptor / post-middleware).
+2. Otherwise return the scope's `MutableRequestContext` (Unestablished until established — authority rules fail-closed on type-zero origin).
 
-`ServerCallContext.UserState` IS still written by the interceptor on successful auth (the typed accessor `ServerCallContext.GetD2RequestContext()` reads it for the gRPC-specific hot-path use case), but the cross-transport DI resolver does NOT read from `UserState` — it reads from `HttpContext.Items` so a single resolver lambda covers both transports.
+Pre-auth / missing-slot resolution returns Unestablished Mutable so hosted System workers on the same host can use `ISystemWorkScopeFactory` / `AddD2SystemWorkPlane` without a throw-only resolver. Background System work must enter via the factory, not a hand-rolled `CreateAsyncScope`. Harmless-endpoint resolution is the same Unestablished Mutable fall-through — see [Footguns → Harmless-endpoint methods + ctor-injected `IRequestContext`](#harmless-endpoint-methods--ctor-injected-irequestcontext).
+
+`ServerCallContext.UserState` IS still written by the interceptor on successful auth (the typed accessor `ServerCallContext.GetD2RequestContext()` reads it for the gRPC-specific hot-path use case), but the cross-transport DI resolver does NOT read from `UserState` — it reads from `HttpContext.Items` so a single resolver body covers both transports.
 
 ## References
 

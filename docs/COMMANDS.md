@@ -52,7 +52,7 @@ docker compose -f infra/compose/compose.yml \
   up -d d2-edge d2-audit
 ```
 
-- Ports (host defaults): Edge HTTP `8080`, Issuer HTTPS `8443`, mTLS HTTPS `9443`; Audit dual-bind internal.
+- Ports (host defaults): Edge HTTP `8080`, Issuer HTTPS `8443`, mTLS HTTPS `9444` (→ container `9443`; avoids Portainer host `9443`); Audit dual-bind internal.
 - Operator dual-process JWT+mTLS smoke (not agent automated proof): see [`server/services/audit/README.md`](../server/services/audit/README.md).
 - **Never** long-lived `dotnet run` / Compose-up e2e from agent sessions as multiproc proof.
 

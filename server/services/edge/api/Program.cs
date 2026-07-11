@@ -8,7 +8,7 @@ using D2.Edge.Api.Composition;
 using D2.Edge.Api.Pipeline;
 using D2.Shared.ServiceDefaults;
 
-// Edge composition root. M1-B exclusive Listen* owns 8080/8443/9443 —
+// Edge composition root. Exclusive Listen* owns 8080/8443/9443 —
 // clear inherited multi-URL binds so ASPNETCORE_URLS does not double-bind.
 var builder = WebApplication.CreateBuilder(args);
 

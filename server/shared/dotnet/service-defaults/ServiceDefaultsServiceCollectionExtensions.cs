@@ -13,6 +13,7 @@ using D2.Shared.Auth.Grpc;
 using D2.Shared.Auth.Http;
 using D2.Shared.Auth.Startup;
 using D2.Shared.Caching.Local.Default;
+using D2.Shared.Context.Abstractions;
 using D2.Shared.Handler;
 using D2.Shared.I18n;
 using D2.Shared.Logging;
@@ -39,6 +40,9 @@ public static class ServiceDefaultsServiceCollectionExtensions
         /// <c>AddD2Telemetry(configuration, options.TelemetryConfigure)</c>;
         /// <c>AddD2I18n(configuration)</c>;
         /// <c>AddD2Handler()</c>;
+        /// <c>AddD2SystemWorkPlane()</c> (always — platform System work entry +
+        /// default scoped <c>IRequestContext</c>; auth HTTP/gRPC dual-path
+        /// replaces the default when auth is wired);
         /// <c>AddD2Auth(options.AuthConfigure).AddD2AuthHttp().AddD2AuthGrpc()</c>
         /// (skipped when
         /// <see cref="D2ServiceDefaultsOptions.SkipAuthAutoWiring"/> is
@@ -109,6 +113,7 @@ public static class ServiceDefaultsServiceCollectionExtensions
             IConfiguration configuration,
             Action<D2ServiceDefaultsOptions>? configure = null)
         {
+            // §5.1a carve-out: plain reference-type null-guard — no present-but-falsey.
             ArgumentNullException.ThrowIfNull(services);
             ArgumentNullException.ThrowIfNull(configuration);
 
@@ -154,6 +159,12 @@ public static class ServiceDefaultsServiceCollectionExtensions
             services.AddD2Telemetry(configuration, options.TelemetryConfigure);
             services.AddD2I18n(configuration);
             services.AddD2Handler();
+
+            // Platform System work plane — always (auth-skipped hosts still run
+            // hosted System workers). Auth.Http / Auth.Grpc dual-path IRequestContext
+            // registration runs after and replaces the plain Mutable default when
+            // auth is wired.
+            services.AddD2SystemWorkPlane();
 
             if (options.SkipAuthAutoWiring is false)
             {

@@ -17,15 +17,15 @@ Copyright (c) DCSV. All rights reserved.
 | `MapD2EdgeEndpoints` | Composition endpoints |
 | `Program` | `AddD2EdgeHost` → `UseD2EdgePipeline` → `MapD2EdgeEndpoints` → `RunD2ServiceAsync(EdgeHostIdentity.SERVICE_ID)` |
 
-## Three-bind (Preferred A / M1-B)
+## Three-bind (exclusive `Listen*`)
 
 | Bind | Port | Client cert |
 | --- | --- | --- |
 | HTTP | 8080 | n/a |
 | HTTPS Issuer | 8443 | **No** RequireCertificate |
-| HTTPS mTLS | 9443 | **RequireCertificate** + SPIFFE validator |
+| HTTPS mTLS | 9443 (container; host default publish `9444`) | **RequireCertificate** + SPIFFE validator |
 
-Exclusive `Listen*` via `EdgeHttpsRoleKestrelConfigure`. Server listen certs = standard Kestrel / dev certs / mounts (≠ TrustAnchors private keys ≠ workload leaf PEMs).
+Exclusive `Listen*` via `EdgeHttpsRoleKestrelConfigure`. Server listen certs = standard Kestrel / dev certs / mounts (≠ TrustAnchors private keys ≠ workload leaf PEMs). Compose host mTLS default is **9444→9443** so Portainer keeps host **9443**.
 
 ## Well-known (production)
 

@@ -9,7 +9,7 @@ namespace D2.Edge.Api.Kestrel;
 using Microsoft.AspNetCore.Server.Kestrel.Https;
 
 /// <summary>
-/// Preferred A three-bind HTTPS role policy (M1-B exclusive <c>Listen*</c>).
+/// Three-bind HTTPS role policy (exclusive <c>Listen*</c> for HTTP / Issuer / mTLS).
 /// Issuer HTTPS does not require a client certificate; mTLS HTTPS inherits
 /// MutualTls <c>ConfigureHttpsDefaults(RequireCertificate + SPIFFE validator)</c>.
 /// </summary>
@@ -29,19 +29,19 @@ using Microsoft.AspNetCore.Server.Kestrel.Https;
 public static class EdgeHttpsRolePolicies
 {
     /// <summary>Cleartext HTTP port (health / public smoke).</summary>
-    public const int HttpPort = 8080;
+    public const int HTTP_PORT = 8080;
 
     /// <summary>Issuer HTTPS port (OIDC / JWKS / well-known) — no client cert required.</summary>
-    public const int IssuerHttpsPort = 8443;
+    public const int ISSUER_HTTPS_PORT = 8443;
 
     /// <summary>mTLS HTTPS port (inbound KC gRPC when mapped) — client cert required.</summary>
-    public const int MtlsHttpsPort = 9443;
+    public const int MTLS_HTTPS_PORT = 9443;
 
     /// <summary>Named endpoint cue for Issuer HTTPS (documentation / config alignment).</summary>
-    public const string HttpsIssuerEndpointName = "HttpsIssuer";
+    public const string HTTPS_ISSUER_ENDPOINT_NAME = "HttpsIssuer";
 
     /// <summary>Named endpoint cue for mTLS HTTPS (documentation / config alignment).</summary>
-    public const string HttpsMtlsEndpointName = "HttpsMtls";
+    public const string HTTPS_MTLS_ENDPOINT_NAME = "HttpsMtls";
 
     /// <summary>Gets the client-certificate mode for the Issuer HTTPS bind (:8443).</summary>
     public static ClientCertificateMode IssuerClientCertificateMode { get; } =

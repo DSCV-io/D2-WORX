@@ -31,8 +31,8 @@ public sealed class AuditHttpsRoleKestrelTests : IDisposable
     [Fact]
     public void AuditHttpsRolePolicies_PublicConstants_ArePinned()
     {
-        AuditHttpsRolePolicies.HttpPort.Should().Be(8080);
-        AuditHttpsRolePolicies.MtlsHttpsPort.Should().Be(8443);
+        AuditHttpsRolePolicies.HTTP_PORT.Should().Be(8080);
+        AuditHttpsRolePolicies.MTLS_HTTPS_PORT.Should().Be(8443);
         AuditHttpsRolePolicies.MtlsClientCertificateMode
             .Should().Be(ClientCertificateMode.RequireCertificate);
     }
@@ -63,16 +63,16 @@ public sealed class AuditHttpsRoleKestrelTests : IDisposable
         var ports = GetListenPorts(options).OrderBy(p => p).ToArray();
 
         ports.Should().Equal(
-            AuditHttpsRolePolicies.HttpPort,
-            AuditHttpsRolePolicies.MtlsHttpsPort);
+            AuditHttpsRolePolicies.HTTP_PORT,
+            AuditHttpsRolePolicies.MTLS_HTTPS_PORT);
 
         var configureSource = File.ReadAllText(
             AuditHostTestKit.ResolveAuditApiSourceFile(
                 "Kestrel", "AuditHttpsRoleKestrelConfigure.cs"));
 
         configureSource.Should().Contain("ListenAnyIP");
-        configureSource.Should().Contain("AuditHttpsRolePolicies.HttpPort");
-        configureSource.Should().Contain("AuditHttpsRolePolicies.MtlsHttpsPort");
+        configureSource.Should().Contain("AuditHttpsRolePolicies.HTTP_PORT");
+        configureSource.Should().Contain("AuditHttpsRolePolicies.MTLS_HTTPS_PORT");
         configureSource.Should().Contain("UseHttps()");
     }
 

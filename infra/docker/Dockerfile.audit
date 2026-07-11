@@ -10,7 +10,11 @@
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
 
-COPY server/Directory.Build.props server/Directory.Packages.props server/D2.slnx ./server/
+COPY server/Directory.Build.props server/Directory.Packages.props server/D2.slnx server/stylecop.json ./server/
+# Repo-root editorconfig — StyleCop / analyzers resolve from /src/server upward.
+COPY .editorconfig ./
+# Service-tree global usings (D2Result / RedactData / Utilities).
+COPY server/services/Directory.Build.targets ./server/services/
 COPY server/shared/dotnet ./server/shared/dotnet
 COPY server/services/audit ./server/services/audit
 COPY contracts ./contracts
@@ -53,7 +57,9 @@ ENV ASPNETCORE_URLS=
 ENV DOTNET_USE_POLLING_FILE_WATCHER=1
 ENV DOTNET_EnableDiagnostics=0
 
-COPY server/Directory.Build.props server/Directory.Packages.props server/D2.slnx ./server/
+COPY server/Directory.Build.props server/Directory.Packages.props server/D2.slnx server/stylecop.json ./server/
+COPY .editorconfig ./
+COPY server/services/Directory.Build.targets ./server/services/
 COPY server/shared/dotnet ./server/shared/dotnet
 COPY server/services/audit ./server/services/audit
 COPY contracts ./contracts
