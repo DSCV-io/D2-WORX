@@ -72,12 +72,26 @@ public static class AuditHostServiceCollectionExtensions
                     + "Edge mTLS port (9443). In-cluster SoT: https://d2-edge:8443.");
             }
 
+            // OIDC/JWKS HttpClient must trust the same public CA root as mTLS
+            // TrustAnchors (Issuer listen cert is intermediate-signed under the
+            // D2 Internal Root CA — not in the OS store).
+            var auditTrustAnchorPath = configuration[LoadPublicCaAnchors.TRUST_ANCHOR_PATH_KEY]
+                ?? configuration["AUDIT_MTLS:TRUST_ANCHOR_PATH"];
+
             services.AddD2ServiceDefaults(configuration, opts =>
             {
                 opts.AuthConfigure = auth =>
                 {
                     auth.Issuer = issuerUri;
                     auth.Audience = WellKnownAudiences.D2_INTERNAL_AUDIENCE;
+
+                    if (auditTrustAnchorPath.Truthy())
+                    {
+                        auth.Jwks = auth.Jwks with
+                        {
+                            TrustedRootCertificatePath = auditTrustAnchorPath,
+                        };
+                    }
                 };
 
                 opts.MutualTlsConfigure = mtls =>

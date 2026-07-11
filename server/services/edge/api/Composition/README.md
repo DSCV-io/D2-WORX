@@ -21,6 +21,8 @@ Copyright (c) DCSV. All rights reserved.
 - **Audience:** `WellKnownAudiences.D2_INTERNAL_AUDIENCE` (`d2.internal`).
 - **ServiceId:** `EdgeHostIdentity.SERVICE_ID` (`edge`) on `AddD2RequestOriginEdge` + `AddD2RequestOriginGrpc`.
 - **MutualTls:** only via `AddD2ServiceDefaults` → `MutualTlsConfigure` (never bare second `AddD2MutualTls`). AllowedWorkloads seed `["audit"]`. Trust anchors = public CA only (`EDGE_MTLS:TrustAnchorPath`), host-owned process-lifetime cache.
+- **Auth TrustedRoot wire:** when `EDGE_MTLS:TrustAnchorPath` is set, `AuthConfigure` copies it to `AuthOptions.Jwks.TrustedRootCertificatePath` so any residual OIDC HttpClient trusts the private mesh CA (CustomRootTrust + SAN; never accept-any).
+- **In-process JWKS (issuer only):** after `AddD2Auth` (via defaults) + KeyCustodian, call **`AddD2InProcessJwksProvider()`** — replaces `IJwksProvider` with `InProcessJwksProvider` (Active + Retiring `jwks-signing` from KC DB). Well-known HTTP routes stay for remote consumers. **No** `AddD2JwtSigningCapability`.
 - **Redis:** `ConnectionStringHelper.ParseRedisUri` on `REDIS_URL`.
 - **Postgres:** `ConnectionStringHelper.ParsePostgresUri` on `KEYCUSTODIAN_DATABASE_URL` (env).
 - **KC caps:** `AddD2CaLeafSigningCapability` + `AddD2CaRootSigningCapability`. **No** `AddD2JwtSigningCapability`.
@@ -34,6 +36,6 @@ Copyright (c) DCSV. All rights reserved.
 | `REDIS_URL` | Redis URI → `ParseRedisUri` |
 | `RABBITMQ_URL` | AMQP URI |
 | `KEYCUSTODIAN_DATABASE_URL` | PG URI → `ParsePostgresUri` |
-| `EDGE_MTLS:TrustAnchorPath` | Public CA root PEM/DER path |
+| `EDGE_MTLS:TrustAnchorPath` | Public CA root PEM/DER path (also → `AuthOptions.Jwks.TrustedRootCertificatePath`) |
 | `KEYCUSTODIAN_INFRA:RootKeyPath` | KC root-key directory |
 | `AUDIT_GRPC:Address` | Edge→Audit gRPC channel (`https://d2-audit:8443`); fail-loud if missing or non-https |

@@ -71,6 +71,11 @@ public static class AuthServiceCollectionExtensions
                 .Validate(
                     o => o.Validator.ValidAlgorithms.All(a => a.Truthy()),
                     "AuthOptions.Validator.ValidAlgorithms entries must not be empty / whitespace.")
+                .Validate(
+                    o => o.Jwks.TrustedRootCertificatePath.Falsey()
+                        || File.Exists(o.Jwks.TrustedRootCertificatePath),
+                    "AuthOptions.Jwks.TrustedRootCertificatePath must point to an existing "
+                    + "PUBLIC CA certificate file when set (or leave empty for system trust).")
                 .ValidateOnStart();
 
             services.TryAddSingleton(TimeProvider.System);
@@ -80,11 +85,20 @@ public static class AuthServiceCollectionExtensions
             // client (different naming so per-client policies can diverge).
             // Per-request timeout sourced from JwksProviderOptions; default 5s
             // — without this override the BCL default of 100s applies.
+            // Optional TrustedRootCertificatePath pins a private-PKI public CA
+            // (CustomRootTrust + hostname still validated; never accept-any).
             services.AddHttpClient(OIDC_DISCOVERY_HTTP_CLIENT_NAME, (sp, client) =>
-            {
-                var opts = sp.GetRequiredService<IOptions<AuthOptions>>().Value;
-                client.Timeout = opts.Jwks.HttpRequestTimeout;
-            });
+                {
+                    var opts = sp.GetRequiredService<IOptions<AuthOptions>>().Value;
+                    client.Timeout = opts.Jwks.HttpRequestTimeout;
+                })
+                .ConfigurePrimaryHttpMessageHandler(sp =>
+                {
+                    var opts = sp.GetRequiredService<IOptions<AuthOptions>>().Value;
+
+                    return OidcDiscoveryHttpMessageHandlerFactory.Create(
+                        opts.Jwks.TrustedRootCertificatePath);
+                });
 
             // OIDC discovery: one ConfigurationManager per process. TryAdd so
             // we're compat with auth-outbound's same registration when both

@@ -70,12 +70,17 @@ public sealed record JwksProviderOptions
     /// <c>"d2.security.key-rotated:jwks"</c>. Empty / whitespace strings are
     /// rejected at validation time (see <c>AddD2Auth</c>).
     /// </param>
+    /// <param name="trustedRootCertificatePath">
+    /// Override for <see cref="TrustedRootCertificatePath"/>; <c>null</c> = system
+    /// trust store only (public-CA deployments).
+    /// </param>
     public JwksProviderOptions(
         TimeSpan? refreshCooldown = null,
         TimeSpan? httpRequestTimeout = null,
         int? circuitBreakerFailureThreshold = null,
         TimeSpan? circuitBreakerCooldown = null,
-        string? backplaneChannelKey = null)
+        string? backplaneChannelKey = null,
+        string? trustedRootCertificatePath = null)
     {
         RefreshCooldown = refreshCooldown ?? SR_DefaultRefreshCooldown;
         HttpRequestTimeout = httpRequestTimeout ?? SR_DefaultHttpRequestTimeout;
@@ -83,6 +88,7 @@ public sealed record JwksProviderOptions
             circuitBreakerFailureThreshold ?? _DEFAULT_CIRCUIT_BREAKER_FAILURE_THRESHOLD;
         CircuitBreakerCooldown = circuitBreakerCooldown ?? SR_DefaultCircuitBreakerCooldown;
         BackplaneChannelKey = backplaneChannelKey ?? _DEFAULT_BACKPLANE_CHANNEL_KEY;
+        TrustedRootCertificatePath = trustedRootCertificatePath;
     }
 
     /// <summary>
@@ -135,4 +141,35 @@ public sealed record JwksProviderOptions
     /// ConfigurationManager's <c>AutomaticRefreshInterval</c> (default 24h).
     /// </remarks>
     public string BackplaneChannelKey { get; init; }
+
+    /// <summary>
+    /// Gets the optional filesystem path to a PUBLIC CA root certificate
+    /// (PEM or DER) used as a custom trust anchor for the named OIDC discovery
+    /// / JWKS <see cref="System.Net.Http.HttpClient"/>. Empty / null = use the
+    /// OS system trust store only (public-CA / internet deployments).
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Private-PKI environments (Compose/dev mesh and many prod meshes) sign the
+    /// Issuer listen certificate under an internal root (e.g.
+    /// <c>ca-root.crt</c> from <c>gen-dev-keys</c>). That root is already mounted
+    /// for mTLS TrustAnchors — host composition should point this property at the
+    /// <strong>same public PEM</strong> (path string only; Auth stays host-agnostic
+    /// and does not reference MutualTls types).
+    /// </para>
+    /// <para>
+    /// When set, chain building uses
+    /// <see cref="System.Security.Cryptography.X509Certificates.X509ChainTrustMode.CustomRootTrust"/>
+    /// against that root; hostname / SAN validation still runs. Never use
+    /// accept-any-cert or Development free-pass shortcuts.
+    /// </para>
+    /// <para>
+    /// Host wiring examples: set from the same path as
+    /// <c>EDGE_MTLS__TrustAnchorPath</c> / <c>AUDIT_MTLS__TrustAnchorPath</c>
+    /// inside <c>AuthConfigure</c>, or bind
+    /// <c>AUTH__JWKS__TrustedRootCertificatePath</c> when options are bound from
+    /// configuration. Empty is valid for public-CA Issuer deployments.
+    /// </para>
+    /// </remarks>
+    public string? TrustedRootCertificatePath { get; init; }
 }

@@ -122,9 +122,11 @@ public sealed class SystemWorkScopeFactoryTests
         using var cts = new CancellationTokenSource();
         await cts.CancelAsync();
 
+        // Capture token (struct) — not the disposable CTS — for the assertion lambda.
+        var canceled = cts.Token;
         var act = async () =>
         {
-            await using var work = await factory.BeginAsync(cts.Token);
+            await using var work = await factory.BeginAsync(canceled);
         };
 
         await act.Should().ThrowAsync<OperationCanceledException>();

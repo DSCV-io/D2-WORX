@@ -151,6 +151,9 @@ shared Redis lock surface.
 > denied `Forbidden` at the scope pre-check until the Edge boundary minter grants
 > `internal.kc.sign` to authorized sign callers. That mint-and-grant is the genuine build
 > dependency (no Edge minter host exists yet); the in-process gate ships fail-closed now.
+>
+> **Multiproc residual ledger (private-PKI OIDC trust, mint OUT, proof honesty):**
+> [PHASE_3_AUTH §15b](PHASE_3_AUTH.md#15b-multiproc--private-pki-residuals-keep-ledger--do-not-forget).
 
 ---
 

@@ -87,4 +87,39 @@ public sealed class AuthOptionsTests
 
         a.Should().NotBe(b);
     }
+
+    [Fact]
+    public void Jwks_TrustedRootCertificatePath_DefaultsToNull()
+    {
+        var options = new AuthOptions
+        {
+            Issuer = new Uri("https://edge.internal"),
+            Audience = "files",
+        };
+
+        options.Jwks.TrustedRootCertificatePath.Should().BeNull(
+            "public-CA deployments leave the path empty (system trust store only)");
+    }
+
+    [Fact]
+    public void Jwks_WithExpression_OverridesTrustedRootCertificatePath()
+    {
+        var baseline = new AuthOptions
+        {
+            Issuer = new Uri("https://edge.internal"),
+            Audience = "x",
+        };
+        var overridden = baseline with
+        {
+            Jwks = baseline.Jwks with
+            {
+                TrustedRootCertificatePath = "/secrets/keycustodian/ca-root.crt",
+            },
+        };
+
+        overridden.Jwks.TrustedRootCertificatePath
+            .Should().Be("/secrets/keycustodian/ca-root.crt");
+        baseline.Jwks.TrustedRootCertificatePath.Should().BeNull(
+            "with-expression must not mutate baseline");
+    }
 }

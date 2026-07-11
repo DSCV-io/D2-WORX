@@ -113,7 +113,7 @@ public sealed class CaSeedingServiceTests
     {
         var capture = new RequestContextCapture();
         var clock = new TestClock(Instant.FromUtc(2026, 6, 30, 12, 0, 0));
-        using var provider = BuildScopeProviderWithFakeHandler(capture, clock, "key-custodian");
+        using var provider = BuildScopeProviderWithFakeHandler(capture, clock);
 
         var service = BuildService(provider.GetRequiredService<ISystemWorkScopeFactory>());
 

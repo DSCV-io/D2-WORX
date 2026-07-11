@@ -32,9 +32,11 @@ D2.Shared.Auth.Jwks.JwksProviderOptions.CircuitBreakerFailureThreshold.init -> v
 D2.Shared.Auth.Jwks.JwksProviderOptions.Equals(D2.Shared.Auth.Jwks.JwksProviderOptions? other) -> bool
 D2.Shared.Auth.Jwks.JwksProviderOptions.HttpRequestTimeout.get -> System.TimeSpan
 D2.Shared.Auth.Jwks.JwksProviderOptions.HttpRequestTimeout.init -> void
-D2.Shared.Auth.Jwks.JwksProviderOptions.JwksProviderOptions(System.TimeSpan? refreshCooldown = null, System.TimeSpan? httpRequestTimeout = null, int? circuitBreakerFailureThreshold = null, System.TimeSpan? circuitBreakerCooldown = null, string? backplaneChannelKey = null) -> void
+D2.Shared.Auth.Jwks.JwksProviderOptions.JwksProviderOptions(System.TimeSpan? refreshCooldown = null, System.TimeSpan? httpRequestTimeout = null, int? circuitBreakerFailureThreshold = null, System.TimeSpan? circuitBreakerCooldown = null, string? backplaneChannelKey = null, string? trustedRootCertificatePath = null) -> void
 D2.Shared.Auth.Jwks.JwksProviderOptions.RefreshCooldown.get -> System.TimeSpan
 D2.Shared.Auth.Jwks.JwksProviderOptions.RefreshCooldown.init -> void
+D2.Shared.Auth.Jwks.JwksProviderOptions.TrustedRootCertificatePath.get -> string?
+D2.Shared.Auth.Jwks.JwksProviderOptions.TrustedRootCertificatePath.init -> void
 D2.Shared.Auth.Sessions.SessionLivenessOptions
 D2.Shared.Auth.Sessions.SessionLivenessOptions.<Clone>$() -> D2.Shared.Auth.Sessions.SessionLivenessOptions!
 D2.Shared.Auth.Sessions.SessionLivenessOptions.CacheKeyPrefix.get -> string!

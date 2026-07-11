@@ -542,6 +542,10 @@ Internal cross-process calls use three independent outbound factors from `D2.Sha
 
 3. **RFC 8693 token exchange (explicit exception cases only).** The boundary mint that produces the forwarded token, plus the narrow set of legitimate exceptions: cross-trust-domain calls, justified scope narrowing, asynchronous scope reduction, and `act` chain establishment/extension. Never the per-hop business default — the forward-unchanged rail covers the common case.
 
+**Private-PKI OIDC / JWKS trust (present tense):** remote JWT consumers pin the public mesh CA via `AuthOptions.Jwks.TrustedRootCertificatePath` (hosts usually copy mTLS `TrustAnchorPath` into AuthConfigure). The OIDC discovery HttpClient uses `X509ChainTrustMode.CustomRootTrust` + hostname/SAN — never accept-any or Development free pass. Canonical: [`server/shared/dotnet/auth/core/README.md`](../server/shared/dotnet/auth/core/README.md).
+
+**Issuer-host in-process JWKS (present tense):** Edge (issuer) calls `AddD2InProcessJwksProvider()` after `AddD2Auth` + KeyCustodian so `IJwksProvider` loads Active + Retiring `jwks-signing` keys from the KC DB — no HTTP self-fetch to its own well-known endpoints. Remote hosts keep `HttpJwksProvider`. Well-known publish routes stay for consumers. Canonical: [`server/services/edge/key-custodian/README.md`](../server/services/edge/key-custodian/README.md). JWT boundary mint remains out of scope on the general Edge host (`AddD2JwtSigningCapability` absent by design).
+
 ```csharp
 // Forwarded-JWT factor — wire in the composition root of each calling service.
 services.AddD2ForwardedJwtOutbound();

@@ -71,7 +71,9 @@ docker compose -f infra/compose/compose.yml \
   up -d d2-edge d2-audit
 ```
 
-Agents must **not** start long-lived `dotnet run` / Compose-up e2e as automated proof. Operator multiproc JWT+mTLS smoke is documented in the Audit README.
+Agents must **not** start long-lived `dotnet run` / Compose-up e2e as automated proof. Operator multiproc smoke is documented in the [Audit README](../audit/README.md).
+
+**Multiproc honesty (what is / is not proven):** health + Active KC keys + JWKS **publish** + auth **gate shapes** (e.g. 401 without Bearer) + mTLS wiring + Compose Watch hot-reload can be proven. Private-CA OIDC trust (`AuthOptions.Jwks.TrustedRootCertificatePath` from TrustAnchorPath) and **issuer-host in-process JWKS** (no HTTP self-fetch) are landed on Edge; remote consumers (Audit) use `HttpJwksProvider` + the same public CA pin. **Full dual-factor authenticated ping** is out of scope on this general host — JWT boundary mint is not registered (`AddD2JwtSigningCapability` absent by design). `GET /api/v1/audit/ping` is **not** Harmless — requires scope `internal.audit.ping`.
 
 **Required configuration (container / env SoT):**
 
@@ -81,8 +83,8 @@ Agents must **not** start long-lived `dotnet run` / Compose-up e2e as automated 
 | `REDIS_URL` | `redis://…` — always parsed via `ParseRedisUri` |
 | `RABBITMQ_URL` | AMQP URI |
 | `KEYCUSTODIAN_DATABASE_URL` | `postgresql://…` — always parsed via `ParsePostgresUri` |
-| `EDGE_MTLS__TRUST_ANCHOR_PATH` | Public CA root PEM/DER only |
-| `KEYCUSTODIAN_INFRA__ROOTKEYPATH` | KC root-key directory |
+| `EDGE_MTLS__TrustAnchorPath` | Public CA root PEM/DER only (also wired into `AuthOptions.Jwks.TrustedRootCertificatePath`) |
+| `KEYCUSTODIAN_INFRA__RootKeyPath` | KC root-key directory |
 
 **Three-bind ports (container listen):** HTTP `8080` · Issuer HTTPS `8443` · mTLS HTTPS `9443`. Prefer empty `ASPNETCORE_URLS` so exclusive `Listen*` owns binds.
 

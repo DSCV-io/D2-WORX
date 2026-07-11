@@ -14,7 +14,7 @@ Copyright (c) DCSV. All rights reserved.
 
 **Shipped here:** Edge public HTTP → Edge pipeline → generated bridge → `https://d2-audit:8443` gRPC with complete mTLS + establishment + honest Redis on **both** hosts. Handler returns typed `ServiceUnavailable` (NIE).
 
-> **OUT OF SCOPE — tracked at [docs/v2/V2.md](../../../docs/v2/V2.md) (product Audit / Phase roadmap):** append-only audit store, RMQ `d2.audit.events` consumer, INSERT-only DB role, compliance query API.
+> **OUT OF SCOPE (not this multiproc stub):** append-only audit store, RMQ `d2.audit.events` consumer, INSERT-only DB role, compliance query API.
 
 ## Layout (ADR-0020)
 
@@ -47,9 +47,11 @@ server/services/audit/
 1. Run `./tools/scripts/gen-dev-keys.sh` so `secrets/keycustodian/ca-root.crt` and `secrets/listen/{edge,audit}-server.{crt,key}` exist (agents never read `secrets/`).
 2. Infra up: postgres, redis, rabbitmq (Compose stack).
 3. `.env.local` / `.env.secrets` populated from examples.
-4. A **valid JWT / session** from the existing Edge-boundary auth path (sign-in / session cookie). PingAudit requires scope `internal.audit.ping` — **not** anonymous curl. JWT minter is still OUT on the Audit / general host.
+4. **Ping is not Harmless** — Edge bridge + Audit gRPC both require `Scopes.Internal.Audit.Ping` (`internal.audit.ping`). A successful dual-factor call needs a **valid Bearer** with that scope **and** mTLS Edge→Audit.
+5. **JWT boundary mint is OUT** on the general Edge host (`AddD2JwtSigningCapability` absent by design). Without a product Bearer, the full dual-factor authenticated ping cannot complete — gate-shape probes below still apply.
+6. **Private-CA OIDC trust:** Audit host sets `AuthOptions.Jwks.TrustedRootCertificatePath` from `AUDIT_MTLS__TrustAnchorPath` (same public `ca-root.crt`) so OIDC/JWKS fetch trusts the Issuer listen cert. Edge issuer validation uses in-process JWKS (no self-fetch).
 
-### Compose path
+### Compose path — gate-shape probes (available today)
 
 ```bash
 # From repo root
@@ -57,15 +59,23 @@ docker compose -f infra/compose/compose.yml \
   --env-file .env.local --env-file .env.secrets \
   up -d d2-audit d2-edge
 
-# Wait until both healthy, then (attach a valid Edge session / Bearer JWT):
-curl -sS -i -H "Authorization: Bearer <valid-jwt>" \
-  "http://localhost:${EDGE_PORT:-8080}/api/v1/audit/ping"
-# Or browser session cookie if that is how Edge-boundary auth is exercised locally.
+# Wait until both healthy, then:
+curl -sS -i "http://localhost:${EDGE_PORT:-8080}/alive"          # expect 200
+curl -sS -i "http://localhost:${EDGE_PORT:-8080}/health"         # expect 200 Healthy (KC Active keys)
+curl -sk -i "https://localhost:${EDGE_HTTPS_PORT:-8443}/.well-known/jwks.json"  # expect 200 + keys (Harmless)
+curl -sS -i "http://localhost:${EDGE_PORT:-8080}/api/v1/audit/ping"             # expect 401 AUTH_BEARER_MISSING
 ```
 
-**Expect:** HTTP response from **Edge** that maps Audit's NIE — typically **503 Service Unavailable** (ProblemDetails) or an equivalent typed not-implemented mapping. That proves the dual-factor call **reached Audit**. Connection refused / 502 / hang / **401 Unauthenticated** without a JWT = path failure (immediately obvious).
+### Full dual-factor ping (JWT mint not on general host)
 
-**Never claim:** "CI multiproc mTLS proven" or "dual-host real-socket multiproc proven in automated suite" from unit/DI green alone. Ship claim: **operator local dual-process JWT+mTLS path shippable; Compose/Docker wiring present; unit/DI gates green.**
+```bash
+curl -sS -i -H "Authorization: Bearer <valid-jwt-with-internal.audit.ping>" \
+  "http://localhost:${EDGE_PORT:-8080}/api/v1/audit/ping"
+```
+
+**Expect (with a valid product Bearer):** Edge maps Audit's NIE — typically **503 Service Unavailable** (ProblemDetails) after dual-factor success. That proves the call **reached Audit**. Today: JWT boundary mint is not registered on the general Edge host → no product Bearer for this smoke. Private-CA OIDC trust and Edge in-process JWKS are landed.
+
+**Never claim:** "CI multiproc mTLS proven" or "full dual-factor JWT multiproc proven" from unit/DI green or 401-only smoke alone. Honest ship claim: **Compose multiproc up; seed/health/JWKS publish; auth gate shapes; mTLS rails present; private-CA OIDC trust + issuer in-process JWKS landed; full authenticated ping out of scope until JWT boundary mint is on a dedicated Auth surface.**
 
 ### Dev hot-reload
 

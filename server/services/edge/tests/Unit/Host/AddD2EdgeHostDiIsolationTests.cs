@@ -183,19 +183,29 @@ public sealed class AddD2EdgeHostDiIsolationTests : IDisposable
 
         // Pure resolve of public auth options + JWKS (no Redis Connect).
         using var sp = BuildProvider();
-        sp.GetRequiredService<IJwksProvider>().Should().NotBeNull();
+        var jwks = sp.GetRequiredService<IJwksProvider>();
+        jwks.Should().NotBeNull();
+
+        // Issuer host must NOT use HTTP self-fetch for JWT validation —
+        // in-process provider replaces IJwksProvider after AddD2Auth.
+        jwks.GetType().Name.Should().Be("InProcessJwksProvider");
         sp.GetRequiredService<IOptions<AuthOptions>>().Value.Issuer.Should().NotBeNull();
+
+        // Edge still pins the public CA for any residual OIDC client use.
+        sp.GetRequiredService<IOptions<AuthOptions>>().Value.Jwks.TrustedRootCertificatePath
+            .Should().Be(r_kit.TrustAnchorPath);
 
         // RequestOrigin Edge + Grpc establishment ServiceId pin.
         sp.GetRequiredService<IOptions<D2WorkloadIdentityOptions>>().Value.ServiceId
             .Should().Be(EdgeHostIdentity.SERVICE_ID);
 
-        // Source pin: composition registers both establishment extensions.
+        // Source pin: composition registers both establishment extensions + in-process JWKS.
         var originPath = EdgeHostTestKit.ResolveEdgeApiSourceFile(
             "Composition", "EdgeHostServiceCollectionExtensions.cs");
         var originSource = File.ReadAllText(originPath);
         originSource.Should().Contain("AddD2RequestOriginEdge");
         originSource.Should().Contain("AddD2RequestOriginGrpc");
+        originSource.Should().Contain("AddD2InProcessJwksProvider");
     }
 
     [Fact]

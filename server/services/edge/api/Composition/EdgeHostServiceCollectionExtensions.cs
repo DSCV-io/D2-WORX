@@ -12,6 +12,7 @@ using D2.Edge.Api.Mtls;
 using D2.Edge.Api.Outbound;
 using D2.Edge.KeyCustodian.App.Application.CertificateAuthority;
 using D2.Edge.KeyCustodian.App.Application.Issuance;
+using D2.Edge.KeyCustodian.App.Application.Jwks;
 using D2.Edge.KeyCustodian.Infra.Configuration;
 using D2.Shared.Auth.Abstractions;
 using D2.Shared.Auth.Grpc;
@@ -83,12 +84,26 @@ public static class EdgeHostServiceCollectionExtensions
                     + "In-cluster SoT: https://d2-edge:8443.");
             }
 
+            // Public CA root path — same PEM as mTLS TrustAnchors. Optional for
+            // Edge's own JWT path once in-process JWKS is wired, but still applied
+            // so any residual OIDC HttpClient use trusts private PKI.
+            var edgeTrustAnchorPath = configuration[LoadPublicCaAnchors.TRUST_ANCHOR_PATH_KEY]
+                ?? configuration["EDGE_MTLS:TRUST_ANCHOR_PATH"];
+
             services.AddD2ServiceDefaults(configuration, opts =>
             {
                 opts.AuthConfigure = auth =>
                 {
                     auth.Issuer = issuerUri;
                     auth.Audience = WellKnownAudiences.D2_INTERNAL_AUDIENCE;
+
+                    if (edgeTrustAnchorPath.Truthy())
+                    {
+                        auth.Jwks = auth.Jwks with
+                        {
+                            TrustedRootCertificatePath = edgeTrustAnchorPath,
+                        };
+                    }
                 };
 
                 opts.MutualTlsConfigure = mtls =>
@@ -148,6 +163,11 @@ public static class EdgeHostServiceCollectionExtensions
             services.AddD2KeyCustodian(configuration, kcCs);
             services.AddD2CaLeafSigningCapability();
             services.AddD2CaRootSigningCapability();
+
+            // Issuer host: validate JWTs from KC DB (Active/Retiring jwks-signing)
+            // — no HTTP self-fetch to https://d2-edge:8443/.well-known/….
+            // Replaces IJwksProvider only; well-known routes stay for remote consumers.
+            services.AddD2InProcessJwksProvider();
 
             // Do NOT call AddD2JwtSigningCapability — structural deny on general host.
             services.AddGrpc();

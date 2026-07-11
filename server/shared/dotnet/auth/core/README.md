@@ -31,6 +31,8 @@ services.AddD2Auth(opts =>
 
 The named HTTP client is identified by `AuthServiceCollectionExtensions.OIDC_DISCOVERY_HTTP_CLIENT_NAME` (`"d2-auth-oidc-discovery"`).
 
+**Private PKI OIDC trust:** set `AuthOptions.Jwks.TrustedRootCertificatePath` to the filesystem path of the **public CA root** PEM/DER (same file class as mTLS TrustAnchors, e.g. `ca-root.crt`). Empty/null = OS system trust store only (public-CA Issuer deployments). When set, the OIDC client uses `X509ChainTrustMode.CustomRootTrust` against that root while still enforcing hostname/SAN — never accept-any-cert or Development free pass. Hosts typically wire the path from the same config key as MutualTls TrustAnchors (`EDGE_MTLS__TrustAnchorPath` / `AUDIT_MTLS__TrustAnchorPath`) inside `AuthConfigure`, or bind `AUTH__JWKS__TrustedRootCertificatePath`.
+
 ### Configuration — `AuthOptions`
 
 | Property    | Type                     | Default  | Notes                                                                                                                           |
@@ -51,6 +53,7 @@ The named HTTP client is identified by `AuthServiceCollectionExtensions.OIDC_DIS
 | `CircuitBreakerFailureThreshold` | `int`      | 5                                | Consecutive failures before the JWKS-fetch circuit breaker opens. While open, calls fail fast with `AuthFailures.JwksUnavailable` — avoids per-call HTTP roundtrip during sustained Edge outage.                                      |
 | `CircuitBreakerCooldown`         | `TimeSpan` | 30s                              | Duration the circuit breaker stays open before allowing a half-open probe.                                                                                                                                                            |
 | `BackplaneChannelKey`            | `string`   | `"d2.security.key-rotated:jwks"` | Cache backplane channel pattern for cluster-wide JWKS rotation events. **Cross-service contract** — Edge's `D2.Shared.KeyCustodian` MUST publish on the same string. Empty / whitespace rejected at host build via `ValidateOnStart`. |
+| `TrustedRootCertificatePath`     | `string?`  | `null`                           | Optional path to a PUBLIC CA root (PEM/DER) for private-PKI OIDC/JWKS TLS trust. Empty = system store only. When set, must exist at host build (`ValidateOnStart`). Same PEM class as mTLS TrustAnchors; Auth stays path-string only. |
 
 #### `SessionLivenessOptions` — session liveness sub-options
 
@@ -202,7 +205,7 @@ When a service starts emitting `AUTH_*` failures:
 - **`AUTH_JWT_SIGNATURE_INVALID` / `AUTH_JWT_KID_NOT_FOUND`** — JWKS drift. Check the `d2.auth.jwks.fetches{trigger=backplane_rotation}` counter — if it's flat after a known key rotation, the rotation backplane isn't reaching this service. Either the `ICacheInvalidationBackplane` isn't registered (check the `JwksBackplaneAbsent` warning at startup) or the configured `BackplaneChannelKey` doesn't match Edge's publish key.
 - **`AUTH_JWT_ISSUER_MISMATCH` / `AUTH_JWT_AUDIENCE_MISMATCH`** — service's `AuthOptions.Issuer` / `AuthOptions.Audience` doesn't match what Edge minted. Check the env-var binding.
 - **`AUTH_JWT_EXPIRED` / `AUTH_JWT_NOT_YET_VALID`** — clock drift between the issuer and this service. `ClockSkew` (default 30s) bounds tolerance.
-- **`AUTH_JWKS_UNAVAILABLE`** — OIDC issuer unreachable. Check the `d2.auth.jwks.fetches{outcome=failure}` counter and the `JwksFetchFailed` log line for the exception type. If the issuer URL is recently changed, check that `D2_AUTH_ISSUER` is pointing at the right host.
+- **`AUTH_JWKS_UNAVAILABLE`** — OIDC issuer unreachable **or** TLS trust failed against a private-CA Issuer cert. Check the `d2.auth.jwks.fetches{outcome=failure}` counter and the `JwksFetchFailed` log line for the exception type. If the Issuer listen cert is intermediate-signed under D2 Internal Root CA, set `AuthOptions.Jwks.TrustedRootCertificatePath` to that public root (same as mTLS TrustAnchors). If the issuer URL is recently changed, check that `AuthOptions.Issuer` / host IssuerBaseUrl is pointing at the right host.
 - **`AUTH_SESSION_REVOKED`** — session was revoked (sign-out, admin action, anomaly detection). User must re-authenticate.
 - **`AUTH_SESSION_LIVENESS_UNAVAILABLE`** — Redis liveness store unreachable. Check the cluster-wide cache backplane health; the consumer fails closed (returns 503, never treats unknown liveness as alive).
 

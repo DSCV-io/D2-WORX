@@ -144,6 +144,98 @@ public sealed class AuthServiceCollectionExtensionsTests
     }
 
     [Fact]
+    public void AddD2Auth_MissingTrustedRootPath_FailsValidationOnFirstResolve()
+    {
+        // When operators set a trusted-root path it must exist at host build —
+        // fail-loud rather than first-request TLS blow-up.
+        var services = BaseServices();
+        services.AddD2Auth(opts =>
+        {
+            opts.Issuer = new Uri("https://edge.internal");
+            opts.Audience = "files";
+            opts.Jwks = opts.Jwks with
+            {
+                TrustedRootCertificatePath = Path.Combine(
+                    Path.GetTempPath(),
+                    "d2-missing-oidc-root-" + Guid.NewGuid().ToString("N") + ".crt"),
+            };
+        });
+        var sp = services.BuildServiceProvider();
+
+        var act = () => _ = sp.GetRequiredService<IOptions<AuthOptions>>().Value;
+
+        act.Should().Throw<OptionsValidationException>();
+    }
+
+    [Fact]
+    public void AddD2Auth_EmptyTrustedRootPath_PassesValidation()
+    {
+        // Public-CA deployments leave TrustedRootCertificatePath empty —
+        // system store only.
+        var services = BaseServices();
+        services.AddD2Auth(opts =>
+        {
+            opts.Issuer = new Uri("https://edge.internal");
+            opts.Audience = "files";
+            opts.Jwks = opts.Jwks with { TrustedRootCertificatePath = null };
+        });
+        var sp = services.BuildServiceProvider();
+
+        var opts = sp.GetRequiredService<IOptions<AuthOptions>>().Value;
+
+        opts.Jwks.TrustedRootCertificatePath.Should().BeNull();
+        sp.GetRequiredService<IJwksProvider>().Should().BeOfType<HttpJwksProvider>();
+    }
+
+    [Fact]
+    public void AddD2Auth_ValidTrustedRootPath_PassesValidationAndRegistersHttpJwksProvider()
+    {
+        var tempDir = Path.Combine(
+            Path.GetTempPath(),
+            "d2-oidc-root-" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(tempDir);
+        var rootPath = Path.Combine(tempDir, "ca-root.crt");
+
+        try
+        {
+            using var key = System.Security.Cryptography.ECDsa.Create(
+                System.Security.Cryptography.ECCurve.NamedCurves.nistP256);
+            var request = new System.Security.Cryptography.X509Certificates.CertificateRequest(
+                "CN=D2 Auth Test Root",
+                key,
+                System.Security.Cryptography.HashAlgorithmName.SHA256);
+            using var cert = request.CreateSelfSigned(
+                DateTimeOffset.UtcNow.AddMinutes(-5),
+                DateTimeOffset.UtcNow.AddYears(1));
+            File.WriteAllBytes(
+                rootPath,
+                cert.Export(
+                    System.Security.Cryptography.X509Certificates.X509ContentType.Cert));
+
+            var services = BaseServices();
+            services.AddD2Auth(opts =>
+            {
+                opts.Issuer = new Uri("https://edge.internal");
+                opts.Audience = "files";
+                opts.Jwks = opts.Jwks with { TrustedRootCertificatePath = rootPath };
+            });
+            var sp = services.BuildServiceProvider();
+
+            var auth = sp.GetRequiredService<IOptions<AuthOptions>>().Value;
+            auth.Jwks.TrustedRootCertificatePath.Should().Be(rootPath);
+
+            // Non-issuer hosts keep HttpJwksProvider as the default IJwksProvider.
+            sp.GetRequiredService<IJwksProvider>().Should().BeOfType<HttpJwksProvider>();
+            sp.GetRequiredService<HttpJwksProvider>().Should().NotBeNull();
+        }
+        finally
+        {
+            if (Directory.Exists(tempDir))
+                Directory.Delete(tempDir, recursive: true);
+        }
+    }
+
+    [Fact]
     public void AddD2Auth_EmptyBackplaneChannelKey_FailsValidationOnFirstResolve()
     {
         // Empty / whitespace silently never matches a backplane invalidation

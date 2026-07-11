@@ -101,7 +101,16 @@ public sealed class AddD2AuditHostDiIsolationTests : IDisposable
             .Should().BeTrue();
 
         // Pure resolve of public auth seams (no Redis Connect).
-        sp.GetRequiredService<IJwksProvider>().Should().NotBeNull();
+        var jwks = sp.GetRequiredService<IJwksProvider>();
+        jwks.Should().NotBeNull();
+
+        // Audit is a remote consumer — keeps HttpJwksProvider (not Edge in-process).
+        jwks.GetType().Name.Should().Be("HttpJwksProvider");
+
+        // OIDC client trusts the same public CA as mTLS TrustAnchors.
+        sp.GetRequiredService<IOptions<AuthOptions>>().Value.Jwks.TrustedRootCertificatePath
+            .Should().Be(r_kit.TrustAnchorPath);
+
         sp.GetRequiredService<IOptions<D2WorkloadIdentityOptions>>().Value.ServiceId
             .Should().Be(AuditHostIdentity.SERVICE_ID);
     }

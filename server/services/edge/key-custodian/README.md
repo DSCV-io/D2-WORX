@@ -47,7 +47,7 @@ The contract (`contracts/typespec/key-custodian/key-custodian.tsp`) declares two
 | `/.well-known/jwks.json`            | `GetJwks`              | The RFC 7517 JWKS document (active signing key(s) first). Empty signing-key store → `503` (fail-secure).                                     |
 | `/.well-known/openid-configuration` | `GetOidcConfiguration` | Minimal OIDC discovery document — `issuer`, `jwks_uri`, `id_token_signing_alg_values_supported: ["RS256"]`, and the spec-required placeholders. |
 
-Any HTTP JWKS / OIDC client (including .NET's `ConfigurationManager<OpenIdConnectConfiguration>`, which the shared `HttpJwksProvider` wraps) auto-discovers `jwks_uri` from the discovery document and fetches the JWKS.
+Any HTTP JWKS / OIDC client (including .NET's `ConfigurationManager<OpenIdConnectConfiguration>`, which the shared `HttpJwksProvider` wraps) auto-discovers `jwks_uri` from the discovery document and fetches the JWKS. **Remote consumers** (Audit, etc.) use that path plus optional private-CA trust (`JwksProviderOptions.TrustedRootCertificatePath`). The **issuer host (Edge)** replaces `IJwksProvider` with `InProcessJwksProvider` after `AddD2Auth` — Active + Retiring `jwks-signing` public keys load from the KeyCustodian DB with the same filters as `GetJwksHandler`, so Edge JWT validation does not HTTP self-fetch its own well-known endpoints. Well-known routes remain for remote consumers.
 
 ### Internal signing (generated gRPC + in-process)
 

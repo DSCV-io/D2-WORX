@@ -11,4 +11,11 @@ Keep a Changelog, and this package adheres to Semantic Versioning.
 
 ### Added
 
+- `JwksProviderOptions.TrustedRootCertificatePath` (optional) — path to a PUBLIC
+  CA root PEM/DER used as `X509ChainTrustMode.CustomRootTrust` for the named
+  OIDC discovery / JWKS `HttpClient` (`d2-auth-oidc-discovery`). Empty = system
+  trust store only (public-CA deployments). Hosts in private-PKI meshes set this
+  to the same public root used for mTLS TrustAnchors. Chain + hostname
+  still validated; no accept-any-cert / Development free pass.
+
 ### Fixed
