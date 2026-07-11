@@ -69,10 +69,10 @@ doc names an outbound type whose name ends in `Client` — `ITokenExchangeClient
 
 - **Issue tokens.** Edge mints; this lib requests + caches.
 - **Run KeyCustodian.** KeyCustodian (state machine, rotation orchestration,
-  `keycustodian_db.key_record` storage) lives inside Edge as a peer module to
+  `d2-keycustodian.key_record` storage) lives inside Edge as a peer module to
   Auth — Phase 3.
 - **Serve `/oauth/token`** or `/.well-known/jwks.json` endpoints — Edge / Phase 3.
-- **Own session storage.** Sessions live in `auth_db.session` + Redis on Edge; this lib only
+- **Own session storage.** Sessions live in `d2-auth.session` + Redis on Edge; this lib only
   _tracks_ revocations and _checks_ liveness against cached state.
 - **Run the risk engine.** The sliding-window risk tracker (impossible travel, ASN diversity, OTP
   step-up triggers) lives in Edge — Phase 3. **Edge also computes the per-request `RiskScore`**
@@ -152,7 +152,7 @@ Citations inline.
 - **Standard OAuth/OIDC claims** (canonical names): `sub`, `aud`, `iat`, `exp`, `azp`, `scope`,
   `act`, `client_id`.
 - **D²-specific custom claims** (all `d2_`-prefixed):
-  - `d2_session_id` — the user's auth_db session row PK (also referenced from cookies)
+  - `d2_session_id` — the user's d2-auth session row PK (also referenced from cookies)
   - `d2_username` — display name / handle (lowercase unique)
   - `d2_org_id`, `d2_org_name`, `d2_org_type`, `d2_org_role` — operating org context
   - `d2_fp` — composite session fingerprint bound at mint time (10-slot `v1.c1...c5.s1...s5` format)
@@ -225,7 +225,7 @@ the `d2_` prefix (§3.1).
 | `act` | RFC 8693 §4.1 | **Present only when impersonating** (or after a deliberate exchange); recursive actor chain, outermost = current actor | yes (immutable in flight) | `ActorChain`; an ordinary internal hop does not exchange, so `act` is set at the boundary and forwarded. |
 | `client_id` | RFC 8693 §4.3 / RFC 9068 | The boundary-mint client; changes only at a deliberate exception exchange (e.g. impersonation), never the originating client | yes (set once at mint under forward-unchanged) | `RequestedByClientId`. |
 | `amr` | RFC 8176 | Auth-method refs (e.g. `pwd` / `mfa`); null for service-identity | yes | `AuthMethod`. |
-| `d2_session_id` | D²-custom | The user's `auth_db` session row id | yes | `SessionId`; drives the per-hop session-liveness check. |
+| `d2_session_id` | D²-custom | The user's `d2-auth` session row id | yes | `SessionId`; drives the per-hop session-liveness check. |
 | `d2_username` | D²-custom | Lowercase login handle | yes | `Username`. |
 | `d2_org_id` / `d2_org_name` / `d2_org_type` / `d2_org_role` | D²-custom | Operating-org context (the impersonated user's org under impersonation) | yes | `OrgId` / `OrgName` / `OrgType` / `OrgRole`. |
 | `d2_fp` | D²-custom | Composite 10-slot session fingerprint, bound at mint (`v1.c1…c5.s1…s5`) | yes (the binding is the point) | `IRequestContext.SessionFingerprint`; the at-mint fingerprint binding (§3.6). Surfaces on `IRequestContext` (operational subset), not on `IAuthContext`. |
@@ -260,7 +260,7 @@ locale, …) per ADR-0007 §2. No hop mutates the token to append itself.
 
 - **L1**: signed cookie cache, ~5min, contains compact session info.
 - **L2**: Redis (`session:{session_id}`), session lifetime up to 30 days.
-- **L3**: PostgreSQL `auth_db.session` (durable, dual-write on revocation).
+- **L3**: PostgreSQL `d2-auth.session` (durable, dual-write on revocation).
 - **Revocation**: delete Redis row → publish `d2.security.session-revoked` fanout → all instances
   drop L1 → worst-case 5min staleness (cookie cache).
 - **No sticky sessions** — any instance handles any request.
@@ -276,7 +276,7 @@ locale, …) per ADR-0007 §2. No hop mutates the token to append itself.
   certificate-authority key (`X509CaCertificate` — root + issuing intermediate, [ADR-0023](../adrs/0023-mtls-workload-identity.md)),
   cookie signing secret, OAuth `client_secret`s for genuinely-external boundary-token clients
   (the internal service-identity `client_credentials` surface was retired in 0023), root key.
-- **State machine** per `kid` in `keycustodian_db.key_record`: `pending → active → retiring → retired`
+- **State machine** per `kid` in `d2-keycustodian.key_record`: `pending → active → retiring → retired`
   (+ terminal `compromised`).
 - **Distribution**: pull-based via the keyring gRPC endpoint (design-era name `internal/keys/{domain}`;
   built op: `KeyCustodianKeyring/GetKeyring`); the consuming runtime holds the fetched keyring
@@ -488,7 +488,7 @@ is a new claim, not a redefinition); is a vocabulary addition in `D2.Shared.Auth
 
 **Returning visitor (cookie present):**
 
-1. Edge looks up cookie → 3-tier session (cookie cache 5min → Redis → PostgreSQL `auth_db`).
+1. Edge looks up cookie → 3-tier session (cookie cache 5min → Redis → PostgreSQL `d2-auth`).
 2. If the JWT mapped to that session is nearing expiry, Edge re-mints with the same `sub` and
    forwards.
 3. Forwards to backend; backend validates as above.
@@ -926,7 +926,7 @@ public interface ISessionLivenessTracker
 
 **Who writes to the cache**: Edge (the only writer). Backend services are read-only consumers; this
 lib only *checks* liveness and *drops* the sentinel on a revocation event — it never authoritatively
-decides a session is alive. Edge owns the durable row in `auth_db.session` and writes / invalidates
+decides a session is alive. Edge owns the durable row in `d2-auth.session` and writes / invalidates
 the sentinel on session create / revoke / role change / org switch (all mutations modeled as
 invalidate-then-repopulate-on-next-request).
 
@@ -1484,7 +1484,7 @@ T+7d+: Any stale token with old kid fails verification (correct — it's expired
 User clicks "Sign out" → POST /api/auth/sign-out
     ↓
 Edge handler:
-   1. Delete row from auth_db.session
+   1. Delete row from d2-auth.session
    2. Delete Redis key session:{session_id}
    3. Publish "session:{session_id}" on cache invalidation backplane
    4. Return 200 + clear cookie
@@ -2368,7 +2368,7 @@ From the v1 auth survey (BetterAuth-based; located in `/old/v1/D2-WORX/`):
 2. **No scopes / RBAC only** — v1 had no third-party app authorization story. v2's scope registry
    handles it.
 3. **Impersonation without explicit consent record** — v1 admin could impersonate without a consent
-   trail. v2 requires `auth_db.impersonation_consent` row for the Consent flavor.
+   trail. v2 requires `d2-auth.impersonation_consent` row for the Consent flavor.
 4. **3-tier session storage was operationally heavy** — v1 had cookie cache → Redis → PG dual-write.
    v2 keeps the model but the overhead is justified by instant revocation (the new backplane wasn't
    available in v1).
@@ -2487,14 +2487,14 @@ Each step buildable + testable + zero warnings before moving on.
 
 ## §15a. KeyCustodian compromise runbook — future deliverable
 
-The KeyCustodian state machine, key lifecycle, and `keycustodian_db` are shipped (see [KeyCustodian README](../../server/services/edge/key-custodian/README.md)). The following compromise-response runbooks — concrete detection criteria, executable CLI invocations, and recovery procedures — are tracked as a future deliverable. The scenario checklist this deliverable must cover:
+The KeyCustodian state machine, key lifecycle, and `d2-keycustodian` are shipped (see [KeyCustodian README](../../server/services/edge/key-custodian/README.md)). The following compromise-response runbooks — concrete detection criteria, executable CLI invocations, and recovery procedures — are tracked as a future deliverable. The scenario checklist this deliverable must cover:
 
 - **Message-payload key compromise** (audit / notifications / courier domain)
 - **JWT signing key compromise**
 - **Cookie signing secret compromise**
 - **Service-identity OAuth `client_secret` compromise**
 - **Root key compromise** (worst case — encrypts all keys at rest in
-  `keycustodian_db`)
+  `d2-keycustodian`)
 - **Third-party API key compromise** (Twilio, Resend, IPinfo — provider-side
   rotation steps)
 

@@ -53,7 +53,7 @@
       "constName": "SESSION_ID",
       "value": "d2_session_id",
       "kind": "d2-custom",
-      "description": "User session identifier — links the token to a session record in auth_db."
+      "description": "User session identifier — links the token to a session record in d2-auth."
     },
     {
       "constName": "USERNAME",

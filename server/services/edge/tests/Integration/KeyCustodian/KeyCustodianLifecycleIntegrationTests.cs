@@ -128,12 +128,12 @@ public sealed class KeyCustodianLifecycleIntegrationTests(KeyCustodianPostgresFi
             new Dictionary<string, KeyType>(StringComparer.Ordinal);
 
         await using var lockHandle = await PgAdvisoryLock.TryAcquireSessionAsync(
-            fixture.ConnectionString, AdvisoryLocks.KeycustodianDb.ROTATION);
+            fixture.ConnectionString, AdvisoryLocks.D2Keycustodian.ROTATION);
         lockHandle.IsHeld.Should().BeTrue();
 
         // While the lock is held, a competing tick's try-acquire fails (skip).
         await using var competitor = await PgAdvisoryLock.TryAcquireSessionAsync(
-            fixture.ConnectionString, AdvisoryLocks.KeycustodianDb.ROTATION);
+            fixture.ConnectionString, AdvisoryLocks.D2Keycustodian.ROTATION);
         competitor.IsHeld.Should().BeFalse();
 
         // The holder performs the rotation directly.

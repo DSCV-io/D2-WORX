@@ -73,7 +73,7 @@ public static class JwtClaimTypes
     public const string CLIENT_ID = "client_id";
 
     /// <summary>
-    /// User session identifier — links the token to a session record in auth_db.
+    /// User session identifier — links the token to a session record in d2-auth.
     /// </summary>
     /// <remarks>Kind: <c>d2-custom</c>.</remarks>
     public const string SESSION_ID = "d2_session_id";

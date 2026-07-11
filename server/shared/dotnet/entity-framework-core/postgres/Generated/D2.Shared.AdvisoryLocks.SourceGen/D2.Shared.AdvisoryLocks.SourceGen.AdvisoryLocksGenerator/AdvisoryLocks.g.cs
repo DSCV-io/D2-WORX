@@ -22,16 +22,16 @@ namespace D2.Shared.EntityFrameworkCore.Postgres;
 /// </remarks>
 public static class AdvisoryLocks
 {
-    /// <summary>Advisory locks owned by keycustodian_db.</summary>
-    public static class KeycustodianDb
+    /// <summary>Advisory locks owned by d2-keycustodian.</summary>
+    public static class D2Keycustodian
     {
-        /// <summary>Blocking startup-migration lock for keycustodian_db. Held by AdvisoryLockMigrator during ensure-db + MigrateAsync. Separate key from ROTATION so the migrator and the rotation timer never block each other.</summary>
+        /// <summary>Blocking startup-migration lock for d2-keycustodian. Held by AdvisoryLockMigrator during ensure-db + MigrateAsync. Separate key from ROTATION so the migrator and the rotation timer never block each other.</summary>
         public const long MIGRATOR = 1001001001L;
 
-        /// <summary>Try-lock guarding unattended rotation ticks for keycustodian_db. Held by KeyRotationService for the duration of one RunDueRotations invocation. Skip-if-held semantics prevent two instances from running simultaneous rotations.</summary>
+        /// <summary>Try-lock guarding unattended rotation ticks for d2-keycustodian. Held by KeyRotationService for the duration of one RunDueRotations invocation. Skip-if-held semantics prevent two instances from running simultaneous rotations.</summary>
         public const long ROTATION = 2002002002L;
 
-        /// <summary>Try-lock guarding startup certificate-authority seeding for keycustodian_db. Held by CaSeedingService while it seeds the root + intermediate from the CA provider. Separate key from MIGRATOR and ROTATION; skip-if-held semantics ensure exactly one instance seeds across a multi-instance deployment.</summary>
+        /// <summary>Try-lock guarding startup certificate-authority seeding for d2-keycustodian. Held by CaSeedingService while it seeds the root + intermediate from the CA provider. Separate key from MIGRATOR and ROTATION; skip-if-held semantics ensure exactly one instance seeds across a multi-instance deployment.</summary>
         public const long CA_SEED = 4004004004L;
     }
 }

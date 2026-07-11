@@ -15,7 +15,7 @@ using Xunit;
 /// <summary>
 /// Live-DB concurrency + timeout tests: the <c>xmin</c> token gives exactly-one-
 /// winner on a concurrent transition, the rotation advisory lock (the GENERATED
-/// <see cref="AdvisoryLocks.KeycustodianDb.ROTATION"/> key) is skip-if-held, and an
+/// <see cref="AdvisoryLocks.D2Keycustodian.ROTATION"/> key) is skip-if-held, and an
 /// over-long query is classified as a timeout rather than hanging. Run after the
 /// orchestrator generates the Initial migration.
 /// </summary>
@@ -67,12 +67,12 @@ public sealed class KeyCustodianConcurrencyIntegrationTests(KeyCustodianPostgres
         await fixture.EnsureMigratedAsync();
 
         await using var first = await PgAdvisoryLock.TryAcquireSessionAsync(
-            fixture.ConnectionString, AdvisoryLocks.KeycustodianDb.ROTATION);
+            fixture.ConnectionString, AdvisoryLocks.D2Keycustodian.ROTATION);
         first.IsHeld.Should().BeTrue();
 
         // A second attempt at the same rotation key on a different session is skipped.
         await using var second = await PgAdvisoryLock.TryAcquireSessionAsync(
-            fixture.ConnectionString, AdvisoryLocks.KeycustodianDb.ROTATION);
+            fixture.ConnectionString, AdvisoryLocks.D2Keycustodian.ROTATION);
         second.IsHeld.Should().BeFalse();
     }
 
@@ -82,13 +82,13 @@ public sealed class KeyCustodianConcurrencyIntegrationTests(KeyCustodianPostgres
         await fixture.EnsureMigratedAsync();
 
         await using (var first = await PgAdvisoryLock.TryAcquireSessionAsync(
-            fixture.ConnectionString, AdvisoryLocks.KeycustodianDb.ROTATION))
+            fixture.ConnectionString, AdvisoryLocks.D2Keycustodian.ROTATION))
         {
             first.IsHeld.Should().BeTrue();
         }
 
         await using var second = await PgAdvisoryLock.TryAcquireSessionAsync(
-            fixture.ConnectionString, AdvisoryLocks.KeycustodianDb.ROTATION);
+            fixture.ConnectionString, AdvisoryLocks.D2Keycustodian.ROTATION);
         second.IsHeld.Should().BeTrue();
     }
 

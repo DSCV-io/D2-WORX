@@ -12,14 +12,14 @@ The infrastructure layer for the KeyCustodian module — the concrete adapters b
 
 | Concern | Adapter | Notes |
 | --- | --- | --- |
-| `Persistence/Postgres/` | `KeyCustodianDbContext` + the two `IEntityTypeConfiguration<>`s + the design-time factory | Maps the flat `KeyRecord` / `KeyAuditRecord` rows to `keycustodian_db`. `Status` is a settable value column (not a discriminator); `xmin` is the optimistic-concurrency token; the audit FK is delete-restricted. Two per-domain lifecycle invariants are DB-enforced — at most one Pending and at most one Active key per domain (see [Per-domain key invariants](#per-domain-key-invariants)). |
+| `Persistence/Postgres/` | `KeyCustodianDbContext` + the two `IEntityTypeConfiguration<>`s + the design-time factory | Maps the flat `KeyRecord` / `KeyAuditRecord` rows to `d2-keycustodian`. `Status` is a settable value column (not a discriminator); `xmin` is the optimistic-concurrency token; the audit FK is delete-restricted. Two per-domain lifecycle invariants are DB-enforced — at most one Pending and at most one Active key per domain (see [Per-domain key invariants](#per-domain-key-invariants)). |
 | `Vault/File/` | `FileRootKeyProvider` | Builds the root keyring from a root-key directory (see below). |
 | `Messaging/RabbitMq/` | `RabbitMqKeyRotationAnnouncer` + `KeyRotatedEventMapper` | Publishes the `KeyRotatedEvent` after a committed transition. Fire-and-log — a failed publish never bubbles. |
 | `Scheduling/Hosted/` | `KeyRotationService` | In-process timer that drives `RunDueRotations` under a try-advisory-lock (skip-if-held). |
 | `Observability/` | `KeyCustodianInfraLog` + `KeyCustodianHealthCheck` | Log delegates (no `Exception` params) + the readiness probe. |
 | `Configuration/` | `KeyCustodianInfraOptions` + `AddD2KeyCustodian(...)` | The infra options shape + the composition seam. |
 
-The startup migrator (`AdvisoryLockMigrator<KeyCustodianDbContext>`), the advisory-lock helper (`PgAdvisoryLock`), the design-time factory base, and the Npgsql defaults applier come from the shared `D2.Shared.EntityFrameworkCore.Postgres` library — this project consumes them, it implements none of them. The two advisory-lock keys are spec-generated (`AdvisoryLocks.KeycustodianDb.MIGRATOR` / `.ROTATION`); there are no hand-written lock-key constants here.
+The startup migrator (`AdvisoryLockMigrator<KeyCustodianDbContext>`), the advisory-lock helper (`PgAdvisoryLock`), the design-time factory base, and the Npgsql defaults applier come from the shared `D2.Shared.EntityFrameworkCore.Postgres` library — this project consumes them, it implements none of them. The two advisory-lock keys are spec-generated (`AdvisoryLocks.D2Keycustodian.MIGRATOR` / `.ROTATION`); there are no hand-written lock-key constants here.
 
 ## Composition
 
@@ -56,9 +56,9 @@ In local dev, `tools/scripts/gen-dev-keys.sh` generates `root.key` by default; s
 
 ## Database lifecycle
 
-`keycustodian_db` is created on first boot by the migrator's ensure-database step (it connects to the `postgres` maintenance database and issues a `CREATE DATABASE` if absent), then the Initial migration is applied under the blocking migration advisory lock. The step is idempotent and multi-replica-safe: concurrent instances all attempt the lock, the first migrates, the rest block then find nothing pending. The connecting role needs `CREATEDB`. Migrations are generated (`dotnet ef migrations add`) and committed — never hand-edited.
+`d2-keycustodian` is created on first boot by the migrator's ensure-database step (it connects to the `postgres` maintenance database and issues a `CREATE DATABASE` if absent), then the Initial migration is applied under the blocking migration advisory lock. The step is idempotent and multi-replica-safe: concurrent instances all attempt the lock, the first migrates, the rest block then find nothing pending. The connecting role needs `CREATEDB`. Migrations are generated (`dotnet ef migrations add`) and committed — never hand-edited.
 
-One migration (`OnePendingIndexAndActiveExclusion`) installs the `btree_gist` extension (see below), so the connecting role also needs `CREATE` on `keycustodian_db`. `btree_gist` is a trusted extension (PostgreSQL 13+), so a non-superuser role with `CREATE` on the database can install it; the migration creates it idempotently (`CREATE EXTENSION IF NOT EXISTS`).
+One migration (`OnePendingIndexAndActiveExclusion`) installs the `btree_gist` extension (see below), so the connecting role also needs `CREATE` on `d2-keycustodian`. `btree_gist` is a trusted extension (PostgreSQL 13+), so a non-superuser role with `CREATE` on the database can install it; the migration creates it idempotently (`CREATE EXTENSION IF NOT EXISTS`).
 
 ## Per-domain key invariants
 

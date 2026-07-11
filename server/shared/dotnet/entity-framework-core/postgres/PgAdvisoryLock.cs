@@ -33,7 +33,7 @@ using Npgsql;
 /// </para>
 /// <para>
 /// Keys are caller-supplied <see cref="long"/> values. Use the spec-generated
-/// <c>AdvisoryLocks.KeycustodianDb.*</c> constants to avoid raw literals.
+/// <c>AdvisoryLocks.D2Keycustodian.*</c> constants to avoid raw literals.
 /// </para>
 /// </remarks>
 [MustDisposeResource]

@@ -160,7 +160,7 @@ shared Redis lock surface.
 | ---------------------- | --------- | -------------------------------------------------------- |
 | Cookie cache (5 min)   | In cookie | Travels with the request — any instance can decode       |
 | Redis                  | Shared    | Any instance queries the same Redis — instant revocation |
-| PostgreSQL (`auth_db`) | Shared    | Dual-write ensures durability + audit trail              |
+| PostgreSQL (`d2-auth`) | Shared    | Dual-write ensures durability + audit trail              |
 
 **No sticky sessions required.** Any instance can handle any request. Session
 revocation propagates instantly via Redis. The only lag is the cookie cache TTL

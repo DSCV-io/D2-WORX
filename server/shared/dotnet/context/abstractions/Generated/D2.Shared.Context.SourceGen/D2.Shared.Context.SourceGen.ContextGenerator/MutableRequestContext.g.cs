@@ -43,7 +43,7 @@ public sealed class MutableRequestContext : global::D2.Shared.Context.Abstractio
     public IReadOnlyList<string> Audience { get; set; } = [];
 
     /// <summary>
-    /// User's own session record identifier in auth_db. NOT the impersonation session id — see ImpersonationSessionId for that. Links the runtime context back to a specific session for forced-sign-out / session-revocation flows.
+    /// User's own session record identifier in d2-auth. NOT the impersonation session id — see ImpersonationSessionId for that. Links the runtime context back to a specific session for forced-sign-out / session-revocation flows.
     /// </summary>
     public Guid? SessionId { get; set; } = null;
 

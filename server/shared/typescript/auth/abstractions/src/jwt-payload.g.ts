@@ -58,7 +58,7 @@ export interface JwtPayload {
    */
   readonly client_id?: string;
   /**
-   * User session identifier — links the token to a session record in auth_db.
+   * User session identifier — links the token to a session record in d2-auth.
    * Claim wire name: d2_session_id (kind: d2-custom).
    */
   readonly d2_session_id?: string;

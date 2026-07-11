@@ -17,7 +17,7 @@ using Xunit;
 /// <summary>
 /// Proves the shared <see cref="AdvisoryLockMigrator{TContext}"/> composes with the
 /// real <see cref="KeyCustodianDbContext"/>: pointed at a not-yet-existent
-/// <c>keycustodian_db</c>, the migrator's ensure-db step CREATES the database and
+/// <c>d2-keycustodian</c>, the migrator's ensure-db step CREATES the database and
 /// applies the Initial migration (the generic exactly-one / auto-release mechanics
 /// are pinned in the shared-lib suite, not re-tested here). Run after the
 /// orchestrator generates the Initial migration.
@@ -31,7 +31,7 @@ public sealed class KeyCustodianMigratorCompositionIntegrationTests(
     public async Task Migrator_EnsureDb_CreatesKeycustodianDb_AndApplies()
     {
         // A fresh, container-unique target DB name the migrator must create.
-        var targetDb = "keycustodian_db_" + Guid.NewGuid().ToString("N")[..12];
+        var targetDb = "d2-keycustodian_" + Guid.NewGuid().ToString("N")[..12];
         var connectionString = WithDatabase(fixture.ConnectionString, targetDb);
 
         var services = new ServiceCollection();
@@ -45,7 +45,7 @@ public sealed class KeyCustodianMigratorCompositionIntegrationTests(
         var migrator = new AdvisoryLockMigrator<KeyCustodianDbContext>(
             provider.GetRequiredService<IServiceScopeFactory>(),
             connectionString,
-            AdvisoryLocks.KeycustodianDb.MIGRATOR,
+            AdvisoryLocks.D2Keycustodian.MIGRATOR,
             NullLogger<AdvisoryLockMigrator<KeyCustodianDbContext>>.Instance);
 
         try
@@ -67,7 +67,7 @@ public sealed class KeyCustodianMigratorCompositionIntegrationTests(
     [Fact]
     public async Task Migrator_SecondRun_IsIdempotent()
     {
-        var targetDb = "keycustodian_db_" + Guid.NewGuid().ToString("N")[..12];
+        var targetDb = "d2-keycustodian_" + Guid.NewGuid().ToString("N")[..12];
         var connectionString = WithDatabase(fixture.ConnectionString, targetDb);
 
         var services = new ServiceCollection();
@@ -81,7 +81,7 @@ public sealed class KeyCustodianMigratorCompositionIntegrationTests(
         var migrator = new AdvisoryLockMigrator<KeyCustodianDbContext>(
             provider.GetRequiredService<IServiceScopeFactory>(),
             connectionString,
-            AdvisoryLocks.KeycustodianDb.MIGRATOR,
+            AdvisoryLocks.D2Keycustodian.MIGRATOR,
             NullLogger<AdvisoryLockMigrator<KeyCustodianDbContext>>.Instance);
 
         try

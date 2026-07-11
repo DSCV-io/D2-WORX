@@ -34,7 +34,7 @@ public interface IAuthContext
     IReadOnlyList<string> Audience { get; }
 
     /// <summary>
-    /// User's own session record identifier in auth_db. NOT the impersonation session id — see ImpersonationSessionId for that. Links the runtime context back to a specific session for forced-sign-out / session-revocation flows.
+    /// User's own session record identifier in d2-auth. NOT the impersonation session id — see ImpersonationSessionId for that. Links the runtime context back to a specific session for forced-sign-out / session-revocation flows.
     /// </summary>
     Guid? SessionId { get; }
 

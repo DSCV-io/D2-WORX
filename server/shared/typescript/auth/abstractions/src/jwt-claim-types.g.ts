@@ -59,7 +59,7 @@ export const JwtClaimTypes = {
    */
   CLIENT_ID: "client_id",
   /**
-   * User session identifier — links the token to a session record in auth_db.
+   * User session identifier — links the token to a session record in d2-auth.
    * Kind: d2-custom.
    */
   SESSION_ID: "d2_session_id",

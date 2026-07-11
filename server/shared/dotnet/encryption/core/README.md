@@ -173,7 +173,7 @@ using var rootKeyring = new PayloadCryptoKeyring(
 
 var wrapper = new PayloadCrypto(rootKeyring);
 var encryptedKeyMaterial = wrapper.Encrypt(perDomainKeyBytes);
-// store encryptedKeyMaterial in auth_db.encryption_key.key_material_encrypted
+// store encryptedKeyMaterial in d2-keycustodian.key_record (root-wrapped material)
 ```
 
 ## Operational rules (DO and DON'T)

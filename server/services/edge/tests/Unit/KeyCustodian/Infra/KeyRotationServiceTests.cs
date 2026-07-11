@@ -275,7 +275,7 @@ public sealed class KeyRotationServiceTests
             RootKeyPath = "/test",
             RotationCheckInterval = rotationCheckInterval ?? TimeSpan.FromMinutes(5),
             ConnectionString =
-                "Host=localhost;Port=1;Database=keycustodian_db;Username=u;Password=p",
+                "Host=localhost;Port=1;Database=d2-keycustodian;Username=u;Password=p",
         };
 
     private static KeyRotationService BuildService(

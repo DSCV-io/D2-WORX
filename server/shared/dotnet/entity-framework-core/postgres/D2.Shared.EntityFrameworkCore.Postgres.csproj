@@ -36,7 +36,7 @@ Copyright (c) DCSV. All rights reserved.
     The AdvisoryLocks static class (the spec-driven lock-key registry) is emitted
     into THIS assembly by D2.Shared.AdvisoryLocks.SourceGen when the assembly name
     matches D2.Shared.EntityFrameworkCore.Postgres. Consumers reach lock keys as
-    AdvisoryLocks.KeycustodianDb.MIGRATOR etc. and pass them to PgAdvisoryLock.
+    AdvisoryLocks.D2Keycustodian.MIGRATOR etc. and pass them to PgAdvisoryLock.
   -->
 
   <ItemGroup>

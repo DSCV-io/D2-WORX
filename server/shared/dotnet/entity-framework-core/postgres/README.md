@@ -25,13 +25,13 @@ Session-scoped PostgreSQL advisory lock helper. Opens a **dedicated**
 ```csharp
 // Try-acquire (non-blocking — skip if held):
 await using var rotLock = await PgAdvisoryLock.TryAcquireSessionAsync(
-    connStr, AdvisoryLocks.KeycustodianDb.ROTATION, ct);
+    connStr, AdvisoryLocks.D2Keycustodian.ROTATION, ct);
 if (!rotLock.IsHeld)
     return; // another instance is rotating — skip this tick
 
 // Blocking acquire (migrator):
 await using var migLock = await PgAdvisoryLock.AcquireSessionBlockingAsync(
-    connStr, AdvisoryLocks.KeycustodianDb.MIGRATOR, ct);
+    connStr, AdvisoryLocks.D2Keycustodian.MIGRATOR, ct);
 // migLock.IsHeld is always true after this returns
 ```
 
@@ -108,8 +108,8 @@ The `AdvisoryLocks` static class is emitted by
 It provides `public const long` lock keys partitioned by database:
 
 ```csharp
-AdvisoryLocks.KeycustodianDb.MIGRATOR  // 1001001001L
-AdvisoryLocks.KeycustodianDb.ROTATION  // 2002002002L
+AdvisoryLocks.D2Keycustodian.MIGRATOR  // 1001001001L
+AdvisoryLocks.D2Keycustodian.ROTATION  // 2002002002L
 ```
 
 The source generator enforces per-database key uniqueness at build time — a duplicate key

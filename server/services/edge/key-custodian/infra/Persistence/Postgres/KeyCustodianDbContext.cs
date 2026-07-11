@@ -10,7 +10,7 @@ namespace D2.Edge.KeyCustodian.Infra.Persistence.Postgres;
 /// The concrete PostgreSQL <see cref="DbContext"/> backing
 /// <see cref="IKeyCustodianDbContext"/>. Maps the three flat persistence records
 /// (<see cref="KeyRecord"/> / <see cref="KeyAuditRecord"/> /
-/// <see cref="LeafIssuanceAuditRecord"/>) to the <c>keycustodian_db</c>
+/// <see cref="LeafIssuanceAuditRecord"/>) to the <c>d2-keycustodian</c>
 /// relational schema.
 /// </summary>
 /// <remarks>

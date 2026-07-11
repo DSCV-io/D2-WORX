@@ -21,7 +21,7 @@ internal static class KcInfraTestKit
 {
     /// <summary>A non-connecting placeholder connection string for registration tests.</summary>
     public const string FAKE_CONNECTION_STRING =
-        "Host=localhost;Port=1;Database=keycustodian_db;Username=u;Password=p";
+        "Host=localhost;Port=1;Database=d2-keycustodian;Username=u;Password=p";
 
     /// <summary>
     /// Creates a fresh temp directory containing a valid <c>root.key</c> (and

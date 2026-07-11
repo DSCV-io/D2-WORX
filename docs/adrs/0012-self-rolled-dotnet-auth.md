@@ -105,7 +105,7 @@ The `IStartupFilter` lifecycle was chosen over `IHostedService` because, in the 
 
 ## Alternatives considered
 
-**Off-the-shelf IdP product/SDK (OpenIddict, Duende IdentityServer).** These are authorization-server frameworks — they implement the OAuth/OIDC server side. Adopting one would put the Edge auth module on the framework's session/token-minting abstractions; the upside is a battle-tested server, the downside is opinionated data models (OpenIddict's EF Core schema; Duende's license + data model) that conflict with D²'s session three-tier architecture and intent to own `auth_db`. Neither addresses the scope/claim codegen requirement nor the gRPC interceptor gap. Deferred — revisiting OpenIddict for the *server-side token-minting* layer of the future Edge module is viable without disturbing this shared-lib surface.
+**Off-the-shelf IdP product/SDK (OpenIddict, Duende IdentityServer).** These are authorization-server frameworks — they implement the OAuth/OIDC server side. Adopting one would put the Edge auth module on the framework's session/token-minting abstractions; the upside is a battle-tested server, the downside is opinionated data models (OpenIddict's EF Core schema; Duende's license + data model) that conflict with D²'s session three-tier architecture and intent to own `d2-auth`. Neither addresses the scope/claim codegen requirement nor the gRPC interceptor gap. Deferred — revisiting OpenIddict for the *server-side token-minting* layer of the future Edge module is viable without disturbing this shared-lib surface.
 
 **HS256 shared secret.** Every validating service holds the same key; a compromise of any service exposes signing material for the whole cluster. Rejected unconditionally.
 

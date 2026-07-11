@@ -175,7 +175,7 @@ public sealed class CaSeedingServiceTests
         {
             RootKeyPath = "/test",
             ConnectionString =
-                "Host=localhost;Port=1;Database=keycustodian_db;Username=u;Password=p",
+                "Host=localhost;Port=1;Database=d2-keycustodian;Username=u;Password=p",
         });
 
         var identity = workloadIdentity ?? new D2WorkloadIdentityOptions { ServiceId = "key-custodian" };

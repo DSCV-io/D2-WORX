@@ -50,7 +50,7 @@ public sealed class KeyCustodianDbContextFactoryTests
         // Exercises the full CreateDbContext path (env-var read → options build →
         // CreateContext delegate). Uses a fake non-connecting string — no live DB
         // required (context is built but not opened).
-        const string fake = "Host=localhost;Port=1;Database=keycustodian_db;Username=u;Password=p";
+        const string fake = "Host=localhost;Port=1;Database=d2-keycustodian;Username=u;Password=p";
         var original = Environment.GetEnvironmentVariable("KEYCUSTODIAN_DATABASE_URL");
         try
         {
@@ -74,7 +74,7 @@ public sealed class KeyCustodianDbContextFactoryTests
         // The migrations-assembly name is baked into the DbContextOptions by
         // MigrationsAssembly(...). A wrong name would silently generate migrations
         // in another assembly. Retrieve via the service-provider on the built context.
-        const string fake = "Host=localhost;Port=1;Database=keycustodian_db;Username=u;Password=p";
+        const string fake = "Host=localhost;Port=1;Database=d2-keycustodian;Username=u;Password=p";
         var original = Environment.GetEnvironmentVariable("KEYCUSTODIAN_DATABASE_URL");
         try
         {

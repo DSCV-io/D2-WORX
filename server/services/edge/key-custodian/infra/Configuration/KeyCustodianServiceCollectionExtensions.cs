@@ -51,7 +51,7 @@ public static class KeyCustodianServiceCollectionExtensions
         /// </remarks>
         /// <param name="configuration">The configuration root to bind options from.</param>
         /// <param name="connectionString">
-        /// The <c>keycustodian_db</c> connection string (from
+        /// The <c>d2-keycustodian</c> connection string (from
         /// <c>KEYCUSTODIAN_DATABASE_URL</c>). Used by the DbContext and the
         /// rotation/migration advisory-lock connections.
         /// </param>
@@ -196,7 +196,7 @@ public static class KeyCustodianServiceCollectionExtensions
             services.AddHostedService(sp => new AdvisoryLockMigrator<KeyCustodianDbContext>(
                 sp.GetRequiredService<IServiceScopeFactory>(),
                 connectionString,
-                AdvisoryLocks.KeycustodianDb.MIGRATOR,
+                AdvisoryLocks.D2Keycustodian.MIGRATOR,
                 sp.GetRequiredService<ILogger<AdvisoryLockMigrator<KeyCustodianDbContext>>>()));
 
             services.AddHostedService<CaSeedingService>();

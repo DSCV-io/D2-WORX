@@ -45,7 +45,7 @@ The spec file is the single source of truth for every JWT claim D2 reads or writ
       "constName": "SESSION_ID",
       "value": "d2_session_id",
       "kind": "d2-custom",
-      "description": "User session identifier — links the token to a session record in auth_db."
+      "description": "User session identifier — links the token to a session record in d2-auth."
     },
     {
       "constName": "ACT_KIND",

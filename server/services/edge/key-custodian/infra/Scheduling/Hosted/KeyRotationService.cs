@@ -27,7 +27,7 @@ using Microsoft.Extensions.Options;
 /// <remarks>
 /// <para>
 /// <b>Leaderless coordination.</b> The tick attempts
-/// <see cref="AdvisoryLocks.KeycustodianDb.ROTATION"/> via
+/// <see cref="AdvisoryLocks.D2Keycustodian.ROTATION"/> via
 /// <see cref="PgAdvisoryLock.TryAcquireSessionAsync"/> (skip-if-held). The lock is
 /// a DIFFERENT key from the migrator's, so migration and rotation never block each
 /// other. The lock auto-releases on connection drop (and on dispose) so a crashed
@@ -172,7 +172,7 @@ public sealed class KeyRotationService(
             await using var rotationLock = await PgAdvisoryLock
                 .TryAcquireSessionAsync(
                     r_options.ConnectionString,
-                    AdvisoryLocks.KeycustodianDb.ROTATION,
+                    AdvisoryLocks.D2Keycustodian.ROTATION,
                     ct)
                 .ConfigureAwait(false);
 

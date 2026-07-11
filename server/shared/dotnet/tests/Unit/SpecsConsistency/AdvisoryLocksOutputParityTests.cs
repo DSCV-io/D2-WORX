@@ -78,13 +78,13 @@ public sealed class AdvisoryLocksOutputParityTests
               "locks": [
                 {
                   "constName": "MIGRATOR",
-                  "database": "keycustodian_db",
+                  "database": "d2-keycustodian",
                   "key": 1001001001,
                   "doc": "Migration lock."
                 },
                 {
                   "constName": "DRIFTED_ENTRY",
-                  "database": "keycustodian_db",
+                  "database": "d2-keycustodian",
                   "key": 3003003003,
                   "doc": "This entry is NOT in the real spec."
                 }

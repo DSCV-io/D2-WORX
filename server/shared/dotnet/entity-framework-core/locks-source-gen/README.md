@@ -24,8 +24,8 @@ each holding `public const long` members per declared lock.
 ```csharp
 public static class AdvisoryLocks
 {
-    /// <summary>Advisory locks owned by keycustodian_db.</summary>
-    public static class KeycustodianDb
+    /// <summary>Advisory locks owned by d2-keycustodian.</summary>
+    public static class D2Keycustodian
     {
         /// <summary>Blocking startup-migration lock …</summary>
         public const long MIGRATOR = 1001001001L;
@@ -36,7 +36,7 @@ public static class AdvisoryLocks
 }
 ```
 
-Consumers reach a lock key as `AdvisoryLocks.KeycustodianDb.MIGRATOR`, which makes the
+Consumers reach a lock key as `AdvisoryLocks.D2Keycustodian.MIGRATOR`, which makes the
 database affinity visible in the type system.
 
 ## Why spec-drive this

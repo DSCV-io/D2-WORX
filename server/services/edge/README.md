@@ -18,9 +18,9 @@ Edge is intentionally "thick" — middleware, routing, auth, real-time push, Who
 
 Status of each module must match on-disk code (host folders are scaffolding; see Status above).
 
-- **[KeyCustodian](key-custodian/README.md)** — **shipped (partial)** — module within Edge; manages lifecycle of long-lived secrets (JWKS signing keys, message payload encryption keys, cookie signing secrets). Also the internal **mTLS certificate authority** ([ADR-0023](../../../docs/adrs/0023-mtls-workload-identity.md)): holds the CA key and issues per-workload leaf certificates on the same overlap-rotation lifecycle as the JWKS-signing and payload-encryption keys ([ADR-0016](../../../docs/adrs/0016-keycustodian-lifecycle-store.md)). State machine + JWKS-style overlap rotation. Owns `keycustodian_db`. Unit + integration CI active (Edge Unit/Integration jobs).
+- **[KeyCustodian](key-custodian/README.md)** — **shipped (partial)** — module within Edge; manages lifecycle of long-lived secrets (JWKS signing keys, message payload encryption keys, cookie signing secrets). Also the internal **mTLS certificate authority** ([ADR-0023](../../../docs/adrs/0023-mtls-workload-identity.md)): holds the CA key and issues per-workload leaf certificates on the same overlap-rotation lifecycle as the JWKS-signing and payload-encryption keys ([ADR-0016](../../../docs/adrs/0016-keycustodian-lifecycle-store.md)). State machine + JWKS-style overlap rotation. Owns `d2-keycustodian`. Unit + integration CI active (Edge Unit/Integration jobs).
 - **YARP routing** — **NOT IMPLEMENTED** (design only). Intended load-balanced reverse proxy to backend services; YARP is the planned load balancer. No YARP package/wiring in-tree.
-- **Auth module** — **NOT IMPLEMENTED** as a complete module (design + ADRs only). Intended internal trust boundary: validate cookie / edge-facing token and **mint the single internal transaction-token** (`aud=d2.internal`) forwarded unchanged across hops (per [ADR-0022](../../../docs/adrs/0022-service-auth-mint-once-forward.md)); mTLS workload identity ([ADR-0023](../../../docs/adrs/0023-mtls-workload-identity.md)); sessions, OAuth client registry, scope/impersonation/adaptive auth. Owns `auth_db` when built.
+- **Auth module** — **NOT IMPLEMENTED** as a complete module (design + ADRs only). Intended internal trust boundary: validate cookie / edge-facing token and **mint the single internal transaction-token** (`aud=d2.internal`) forwarded unchanged across hops (per [ADR-0022](../../../docs/adrs/0022-service-auth-mint-once-forward.md)); mTLS workload identity ([ADR-0023](../../../docs/adrs/0023-mtls-workload-identity.md)); sessions, OAuth client registry, scope/impersonation/adaptive auth. Owns **`d2-auth`** when built (canonical `d2-{domain}`; not the retired name `auth_db`).
 - **SignalR hubs** — **NOT IMPLEMENTED** (design only). Planned handshake-only auth + targeted revocation + push-only hubs + gRPC push API. No SignalR hub code under `server/services/edge/`.
 - **WhoIs** — **NOT IMPLEMENTED** (design only). Planned in-process IPinfo client; Edge fetches once per request, passes downstream via `X-D2-WhoIs`.
 - **Cross-cutting middleware** — **NOT IMPLEMENTED** as a composed Edge pipeline (design only). Planned: rate limit, fingerprint binding, JWT validation, idempotency, CSRF, CORS, request enrichment, translation.
@@ -51,7 +51,7 @@ All of `D2.Shared.*` per [server/shared/dotnet/README.md](../../shared/dotnet/RE
 - `D2.Shared.Auth` — Edge implements the auth lib's server-side (Auth module)
 - `D2.Shared.Messaging` — publishes auth events to `d2.audit.events` (Auth event publishing)
 - `D2.Shared.Caching.Redis` — sessions, idempotency, rate-limit counters (middleware modules)
-- `D2.Shared.Contacts` — consumes via `auth_contacts_db` (Auth)
+- `D2.Shared.Contacts` — consumes via design DB **`d2-auth-contacts`** (Auth; legacy prose may have said `auth_contacts_db`)
 - `D2.Shared.Location`, `D2.Shared.Geo` — WhoIs lookups (WhoIs)
 
 No service-to-service dependencies (Edge IS the dispatcher; it depends on nothing downstream).
@@ -60,12 +60,12 @@ No service-to-service dependencies (Edge IS the dispatcher; it depends on nothin
 
 **Shipped today (KeyCustodian):**
 
-- `keycustodian_db` — owned by the KeyCustodian module. Tables: `key_record`, `key_audit_record`, `leaf_issuance_audit_record`.
+- `d2-keycustodian` — owned by the KeyCustodian module. Tables: `key_record`, `key_audit_record`, `leaf_issuance_audit_record`.
 
 **Designed — NOT IMPLEMENTED** (Auth module; inventory below is design-only; tracking: [Modules](#modules)):
 
-- `auth_db` — planned owner: Auth module. Designed tables: `user`, `org`, `member`, `invitation`, `account`, `session`, `oauth_client`, `impersonation_consent`, `sign_in_event`, `security_policy_org`, `security_policy_user`, `verification`.
-- `auth_contacts_db` — planned owner: `D2.Shared.Contacts` library, scoped to Auth module contacts (org contacts, user contacts).
+- `d2-auth` — planned owner: Auth module. Designed tables: `user`, `org`, `member`, `invitation`, `account`, `session`, `oauth_client`, `impersonation_consent`, `sign_in_event`, `security_policy_org`, `security_policy_user`, `verification`. (Retired working name: `auth_db`.)
+- `d2-auth-contacts` — planned owner: `D2.Shared.Contacts` library, scoped to Auth module contacts (org contacts, user contacts). (Retired working name: `auth_contacts_db`.)
 
 All on the same PG server (one server, many DBs) when present.
 
@@ -74,7 +74,7 @@ All on the same PG server (one server, many DBs) when present.
 - Edge — Unified Gateway (architectural justification)
 - Auth & Security (KeyCustodian shipped partial; sessions / scopes / impersonation / adaptive auth / security policy designed with Auth — **NOT IMPLEMENTED**)
 - Real-Time (SignalR module — **NOT IMPLEMENTED**)
-- Storage (`keycustodian_db` shipped; `auth_db` + `auth_contacts_db` designed with Auth — **NOT IMPLEMENTED**)
+- Storage (`d2-keycustodian` shipped; `d2-auth` + `d2-auth-contacts` designed with Auth — **NOT IMPLEMENTED**)
 - Messaging (designed: Edge publishes to `d2.audit.events` for Auth event publishing — **NOT IMPLEMENTED**; consumes nothing)
 
 ## Tests

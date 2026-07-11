@@ -29,13 +29,13 @@ public sealed class AdvisoryLocksSpecLoaderTests
               "locks": [
                 {
                   "constName": "MIGRATOR",
-                  "database": "keycustodian_db",
+                  "database": "d2-keycustodian",
                   "key": 1001001001,
                   "doc": "Migration lock."
                 },
                 {
                   "constName": "ROTATION",
-                  "database": "keycustodian_db",
+                  "database": "d2-keycustodian",
                   "key": 2002002002,
                   "doc": "Rotation lock."
                 }
@@ -49,7 +49,7 @@ public sealed class AdvisoryLocksSpecLoaderTests
         result.Spec.Should().NotBeNull();
         result.Spec!.Locks.Should().HaveCount(2);
         result.Spec.Locks[0].ConstName.Should().Be("MIGRATOR");
-        result.Spec.Locks[0].Database.Should().Be("keycustodian_db");
+        result.Spec.Locks[0].Database.Should().Be("d2-keycustodian");
         result.Spec.Locks[0].Key.Should().Be(1001001001L);
         result.Spec.Locks[1].ConstName.Should().Be("ROTATION");
         result.Spec.Locks[1].Key.Should().Be(2002002002L);

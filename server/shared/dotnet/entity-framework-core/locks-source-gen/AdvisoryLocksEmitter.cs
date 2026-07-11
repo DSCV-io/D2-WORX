@@ -92,22 +92,21 @@ internal static class AdvisoryLocksEmitter
     }
 
     /// <summary>
-    /// Converts a lowercase snake_case database name to PascalCase.
-    /// Each underscore-separated segment is title-cased.
-    /// Example: <c>keycustodian_db</c> → <c>KeycustodianDb</c>.
+    /// Converts a database name to PascalCase for the nested lock class.
+    /// Segments are split on <c>_</c> and <c>-</c> (canonical PG names use the
+    /// <c>d2-&#123;domain&#125;</c> form, e.g. <c>d2-keycustodian</c> →
+    /// <c>D2Keycustodian</c>).
     /// </summary>
-    /// <param name="snake">The snake_case database name to convert.</param>
-    internal static string SnakeToPascal(string snake)
+    /// <param name="databaseName">The database name to convert.</param>
+    internal static string SnakeToPascal(string databaseName)
     {
-        if (snake.Length == 0)
-            return snake;
+        if (databaseName.Length == 0)
+            return databaseName;
 
-        var parts = snake.Split('_');
+        var parts = databaseName.Split(['_', '-'], StringSplitOptions.RemoveEmptyEntries);
         var sb = new StringBuilder();
         foreach (var part in parts)
         {
-            if (part.Length == 0)
-                continue;
             sb.Append(char.ToUpperInvariant(part[0]));
             if (part.Length > 1)
                 sb.Append(part, 1, part.Length - 1);

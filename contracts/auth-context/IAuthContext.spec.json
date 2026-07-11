@@ -24,7 +24,7 @@
           "name": "SessionId",
           "type": "Guid?",
           "claim": "d2_session_id",
-          "doc": "User's own session record identifier in auth_db. NOT the impersonation session id — see ImpersonationSessionId for that. Links the runtime context back to a specific session for forced-sign-out / session-revocation flows."
+          "doc": "User's own session record identifier in d2-auth. NOT the impersonation session id — see ImpersonationSessionId for that. Links the runtime context back to a specific session for forced-sign-out / session-revocation flows."
         },
         {
           "name": "TokenIssuedAt",

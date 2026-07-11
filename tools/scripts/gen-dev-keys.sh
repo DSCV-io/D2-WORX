@@ -11,13 +11,13 @@
 #                                         managed key's material at rest. All other
 #                                         keys (JWKS signing, payload encryption,
 #                                         cookie, client secrets) are KeyCustodian-
-#                                         managed rows in keycustodian_db, fetched
+#                                         managed rows in d2-keycustodian, fetched
 #                                         at runtime via the keyring client — never
 #                                         files, never per-service key files.
 #   - secrets/keycustodian/ca-root.crt    The dev internal mTLS root CA certificate
 #     secrets/keycustodian/ca-root.key    + its PKCS#8 private key (ECDSA P-256,
 #                                         self-signed, CA pathlen 1). Seeded into
-#                                         keycustodian_db on startup as a managed
+#                                         d2-keycustodian on startup as a managed
 #                                         X509CaCertificate key by CaSeedingService.
 #   - secrets/keycustodian/ca-intermediate.crt  The dev issuing-intermediate CA
 #     secrets/keycustodian/ca-intermediate.key  certificate + PKCS#8 private key
@@ -144,7 +144,7 @@ if [[ "${1:-}" == "--force" ]] || [[ ! -f "${CA_ROOT_CRT}" ]] || [[ ! -f "${CA_R
   chmod 600 "${CA_ROOT_KEY}" "${CA_INT_KEY}"
   chmod 644 "${CA_ROOT_CRT}" "${CA_INT_CRT}"
   echo "✓ Generated dev mTLS CA chain: ca-root.{crt,key} + ca-intermediate.{crt,key}"
-  echo "  (CaSeedingService seeds these into keycustodian_db as managed CA keys on startup)"
+  echo "  (CaSeedingService seeds these into d2-keycustodian as managed CA keys on startup)"
 else
   echo "  Skipped dev mTLS CA chain (already exists)"
 fi

@@ -299,7 +299,7 @@ public sealed class FileCaProviderTests : IDisposable
         var options = Options.Create(new KeyCustodianInfraOptions
         {
             RootKeyPath = r_dir,
-            ConnectionString = "Host=localhost;Port=1;Database=keycustodian_db;Username=u;Password=p",
+            ConnectionString = "Host=localhost;Port=1;Database=d2-keycustodian;Username=u;Password=p",
         });
         return new FileCaProvider(
             options,

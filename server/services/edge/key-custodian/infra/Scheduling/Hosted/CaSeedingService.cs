@@ -27,7 +27,7 @@ using Microsoft.Extensions.Options;
 /// <remarks>
 /// <para>
 /// <b>Leaderless coordination.</b> The run acquires
-/// <see cref="AdvisoryLocks.KeycustodianDb.CA_SEED"/> via
+/// <see cref="AdvisoryLocks.D2Keycustodian.CA_SEED"/> via
 /// <see cref="PgAdvisoryLock.TryAcquireSessionAsync"/> (skip-if-held), a DIFFERENT
 /// key from the migrator's and the rotation timer's, so across a multi-instance
 /// deployment exactly one instance seeds; the others skip and rely on the
@@ -118,7 +118,7 @@ public sealed class CaSeedingService(
             await using var seedLock = await PgAdvisoryLock
                 .TryAcquireSessionAsync(
                     r_options.ConnectionString,
-                    AdvisoryLocks.KeycustodianDb.CA_SEED,
+                    AdvisoryLocks.D2Keycustodian.CA_SEED,
                     stoppingToken)
                 .ConfigureAwait(false);
 

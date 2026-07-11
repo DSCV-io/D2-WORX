@@ -92,7 +92,7 @@ Copyright (c) DCSV. All rights reserved.
     <!--
       D2.Shared.EntityFrameworkCore.Postgres — the shared PG/EF startup machinery:
       PgAdvisoryLock + AdvisoryLockMigrator<TContext> + DesignTimeDbContextFactoryBase
-      + the NpgsqlContextDefaults applier + the generated AdvisoryLocks.KeycustodianDb.*
+      + the NpgsqlContextDefaults applier + the generated AdvisoryLocks.D2Keycustodian.*
       lock-key registry. KC consumes these; it implements none of them.
     -->
     <ProjectReference Include="..\..\..\..\shared\dotnet\entity-framework-core\postgres\D2.Shared.EntityFrameworkCore.Postgres.csproj" />

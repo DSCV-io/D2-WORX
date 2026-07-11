@@ -30,7 +30,7 @@ public sealed class AdvisoryLocksGeneratorTests
           "locks": [
             {
               "constName": "MIGRATOR",
-              "database": "keycustodian_db",
+              "database": "d2-keycustodian",
               "key": 1001001001,
               "doc": "Migration lock."
             }

@@ -15,7 +15,7 @@ using D2.Shared.Result;
 /// </summary>
 /// <remarks>
 /// <para>
-/// Edge owns the durable session record (<c>auth_db.session</c>) and the
+/// Edge owns the durable session record in <c>d2-auth</c> (<c>session</c>) and the
 /// authoritative liveness state. Backend services consume the liveness
 /// signal via this contract; the implementation is typically backed by a
 /// tiered cache (L1 process-local + L2 Redis) populated and invalidated by

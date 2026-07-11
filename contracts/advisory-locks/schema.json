@@ -27,7 +27,7 @@
         "database": {
           "type": "string",
           "minLength": 1,
-          "description": "The owning database (lowercase snake_case, e.g. keycustodian_db). The same key value is legal in two different databases — lock keyspaces are per-database."
+          "description": "The owning PostgreSQL database name (canonical D2 form: d2-{domain}, e.g. d2-keycustodian, d2-auth). Segments may use hyphens or underscores; both are split when emitting the nested C# class name. The same key value is legal in two different databases — lock keyspaces are per-database."
         },
         "key": {
           "type": "integer",

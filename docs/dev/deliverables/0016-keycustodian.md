@@ -2,17 +2,28 @@
 
 # Deliverable 0016 — `D2.Edge.KeyCustodian` + EF-as-DDD persistence convention
 
-**Status:** ▶️ RESUMING (2026-06-09) — 0017 landed + squashed onto this branch (`9b17f069`); re-oriented against the shipped error-code/wire reality. **Step 2a** (KC error-code spec + domain retrofit) — code committed (`3534899d`); **per-step audit loop still owed** (journal artifacts empty, attestation PENDING). **✅ Persistence spike DONE** (`9656a4ac`) — the Testcontainers EF Core 10 + PG17 spike falsified the planned TPH delete+insert; locked replacement = flat `KeyRecord` + pure mapper + `xmin` (ADR-0016/0017 updated). Steps 2-3 unblocked on the new shape. · **Branch:** `n/keycustodian` (off nova `cd3dc30a`) · **Full plan:** `~/.claude/plans/refactored-roaming-feigenbaum.md`
+## Amendment (2026-07-10) — naming + host topology truth
+
+> Applied under **0030** Decision **D5** so future agents do not treat historical working names as current design.
+
+| Topic | Current truth |
+| --- | --- |
+| **KC PostgreSQL database** | **`d2-keycustodian`** (canonical `d2-{domain}`). Working name **`keycustodian_db` is retired** — see [ADR-0016](../../adrs/0016-keycustodian-lifecycle-store.md). |
+| **Auth design DB** | **`d2-auth`** (not `auth_db`). |
+| **Legacy survivors** | Env may still use `d2-services-*` for GEO/AUTH/COMMS/FILES until those services rebuild — intentional, not the design target. |
+| **Host / transport (0030)** | KC remains an **Edge module** (handlers in-process). Production HTTP Map* + gRPC server for KC land on **`D2.Edge.Api`** under deliverable **0030** (typed dual-emit / process-kind platform; public HTTP Edge-only; standalone services use generated Edge→gRPC bridges). This snapshot’s step journals remain historical; do not re-read `keycustodian_db` in Goal/Locked prose below as live catalog names. |
+
+**Status (snapshot header — historical):** ▶️ RESUMING (2026-06-09) — 0017 landed + squashed onto this branch (`9b17f069`); re-oriented against the shipped error-code/wire reality. **Step 2a** (KC error-code spec + domain retrofit) — code committed (`3534899d`); **per-step audit loop still owed** (journal artifacts empty, attestation PENDING). **✅ Persistence spike DONE** (`9656a4ac`) — the Testcontainers EF Core 10 + PG17 spike falsified the planned TPH delete+insert; locked replacement = flat `KeyRecord` + pure mapper + `xmin` (ADR-0016/0017 updated). Steps 2-3 unblocked on the new shape. · **Branch:** `n/keycustodian` (off nova `cd3dc30a`) · **Full plan:** `~/.claude/plans/refactored-roaming-feigenbaum.md`
 
 ## Goal
-The key-lifecycle authority for the Edge (Phase-3 dependency-graph root): generate / smoke-gate / rotate / retire / compromise of all long-lived keys, root-wrapped in a self-contained `keycustodian_db`, with an append-only audit. Builds on `D2.Shared.Encryption` (crypto reuse). Pilots two new conventions.
+The key-lifecycle authority for the Edge (Phase-3 dependency-graph root): generate / smoke-gate / rotate / retire / compromise of all long-lived keys, root-wrapped in a self-contained **`d2-keycustodian`** database (historical working name in this deliverable’s journals: `keycustodian_db` — **retired**), with an append-only audit. Builds on `D2.Shared.Encryption` (crypto reuse). Pilots two new conventions.
 
 ## Conventions this deliverable establishes (KeyCustodian is the pilot)
 1. **Rich sum-type state machine** — abstract `EncryptionKey` + sealed per-state types; illegal transitions uncompilable; `KeyStatus` enum kept only as the derived, state-machine-driven **TPH discriminator** (fast lookups, never directly mutable).
 2. **EF-as-DDD persistence** — retire per-op Repository handlers; CQRS command/query handlers use `IKeyCustodianDbContext` + aggregates + LINQ directly (`BaseHandler`/`BaseRepoHandler` keep cross-cutting; EF OTel for SQL spans). → ADR + rules.md/CLAUDE.md/PATTERNS.md.
 
 ## Locked decisions
-See the approved plan's "Locked cross-cutting decisions" (store = `keycustodian_db` PG leaderless + PG advisory-lock rotation; TPH mapping; transitions = delete+insert + audit-append; crypto reuse; all 3 generators; NodaTime/IClock; strict 3-way csprojs + `D2.Edge.Tests`; CPM add `Microsoft.EntityFrameworkCore.Design 10.0.7`; 2 ADRs).
+See the approved plan's "Locked cross-cutting decisions" (store = **`d2-keycustodian`** PG leaderless + PG advisory-lock rotation — historical plan text said `keycustodian_db`; TPH mapping later replaced by flat record per spike; transitions = delete+insert + audit-append then flat-record evolution; crypto reuse; all 3 generators; NodaTime/IClock; strict 3-way csprojs + `D2.Edge.Tests`; CPM add `Microsoft.EntityFrameworkCore.Design 10.0.7`; 2 ADRs).
 
 ## Steps + status (pause for user review after each)
 | # | Step | Status |

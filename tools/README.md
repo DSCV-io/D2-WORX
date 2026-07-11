@@ -49,7 +49,7 @@ Output structure under `secrets/`:
 ```
 secrets/
   auth/
-    root.key                        Root key — encrypts all KeyCustodian keys at rest in auth_db
+    root.key                        Root key — encrypts all KeyCustodian keys at rest in d2-auth
     audit-{yyyy}q{n}.key            Per-domain message-payload encryption keys
     notifications-{yyyy}q{n}.key
     courier-{yyyy}q{n}.key

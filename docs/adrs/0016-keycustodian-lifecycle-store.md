@@ -5,8 +5,12 @@ Copyright (c) DCSV. All rights reserved.
 # ADR-0016: KeyCustodian — key lifecycle state machine + dedicated leaderless store
 
 - **Status**: Accepted
-- **Date**: 2026-06-06 (store-mechanism revision: 2026-06-09)
+- **Date**: 2026-06-06 (store-mechanism revision: 2026-06-09; DB name: 2026-07-10)
 - **Deliverable**: `0016-keycustodian`
+
+### Amendment — 2026-07-10: database name `d2-keycustodian`
+
+The PostgreSQL database name is **`d2-keycustodian`** (canonical D2 form `d2-{domain}`). The earlier working name `keycustodian_db` is retired. The same scheme applies to future domain DBs (`d2-auth`, `d2-files`, …). Legacy v1 leftovers may still use `d2-services-*` until those services rebuild. Advisory-lock catalog + env templates use the new name; the connection string path segment is `…/d2-keycustodian`.
 
 ## Context
 
@@ -43,9 +47,9 @@ The `KeyStatus` enum is derived from the concrete sealed type at the domain leve
 - **In the domain**: a fast, read-only discriminator for lookups and audit stamping, always read off the sealed type.
 - **In persistence**: the `Status` **value** column of the flat `KeyRecord` (see §7) — a settable string/enum value, NOT a TPH type discriminator. The mapper sets it from `aggregate.Status` on write and switches on it on read. The persistence shape is settled in ADR-0017 (the aggregate is NOT the EF entity).
 
-### 3. Dedicated `keycustodian_db` — leaderless, PG advisory lock
+### 3. Dedicated `d2-keycustodian` — leaderless, PG advisory lock
 
-KeyCustodian persists to its own PostgreSQL database (`keycustodian_db`). This is independent of the auth DB and any other service DB, following the one-DB-per-domain topology.
+KeyCustodian persists to its own PostgreSQL database (`d2-keycustodian`). This is independent of the auth DB and any other service DB, following the one-DB-per-domain topology.
 
 Rotation coordination uses **PostgreSQL advisory locks** (`pg_try_advisory_lock`) instead of Redis. Rationale: (a) advisory locks are transactional — the lock is held for the duration of the rotation transaction, preventing a second rotation from interleaving; (b) PG is already provisioned for this service; (c) Redis is a hot-path dependency whose failure would block key rotation unnecessarily; (d) key rotation is a rare operation that does not require Redis's sub-millisecond locking overhead.
 
@@ -108,7 +112,7 @@ Because the `KeyRecord` CLR type never changes, every transition is an ordinary 
 
 **Negative / trade-offs:**
 - Two representations of the aggregate (the sealed domain shape + the flat `KeyRecord`), bridged by the pure mapper. The mapper's null-all-then-set discipline is load-bearing and must be tested per-state (round-trip + no-stale-column assertions). This is the cost of keeping the domain pure; it is mechanical and source-gen-able once the shape is proven across 2–3 aggregates (ADR-0017).
-- A new PostgreSQL database (`keycustodian_db`) must be provisioned.
+- A new PostgreSQL database (`d2-keycustodian`) must be provisioned.
 - The Redis-coordination sketch from that earlier design is superseded — operators following the old plan must switch to the PG advisory lock approach.
 
 ## Alternatives considered
