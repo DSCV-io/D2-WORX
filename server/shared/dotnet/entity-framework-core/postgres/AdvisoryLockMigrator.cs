@@ -55,7 +55,7 @@ public sealed partial class AdvisoryLockMigrator<TContext> : IHostedService
     /// <param name="connectionString">Target database connection string.</param>
     /// <param name="migratorLockKey">
     /// Advisory lock key used during migration. Must be unique within the database
-    /// (use the spec-generated <c>AdvisoryLocks.{Db}.MIGRATOR</c> constant).
+    /// (pass the domain-owned generated <c>AdvisoryLocks.{Db}.MIGRATOR</c> constant).
     /// </param>
     /// <param name="logger">Logger instance.</param>
     public AdvisoryLockMigrator(

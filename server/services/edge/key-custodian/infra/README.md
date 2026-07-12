@@ -19,7 +19,7 @@ The infrastructure layer for the KeyCustodian module — the concrete adapters b
 | `Observability/` | `KeyCustodianInfraLog` + `KeyCustodianHealthCheck` | Log delegates (no `Exception` params) + the readiness probe. |
 | `Configuration/` | `KeyCustodianInfraOptions` + `AddD2KeyCustodian(...)` | The infra options shape + the composition seam. |
 
-The startup migrator (`AdvisoryLockMigrator<KeyCustodianDbContext>`), the advisory-lock helper (`PgAdvisoryLock`), the design-time factory base, and the Npgsql defaults applier come from the shared `D2.Shared.EntityFrameworkCore.Postgres` library — this project consumes them, it implements none of them. The two advisory-lock keys are spec-generated (`AdvisoryLocks.D2Keycustodian.MIGRATOR` / `.ROTATION`); there are no hand-written lock-key constants here.
+The startup migrator (`AdvisoryLockMigrator<KeyCustodianDbContext>`), the advisory-lock helper (`PgAdvisoryLock`), the design-time factory base, and the Npgsql defaults applier come from the shared `D2.Shared.EntityFrameworkCore.Postgres` library — this project consumes the **mechanism**, it implements none of it. **This assembly owns the generated domain lock-key catalog** (`AdvisoryLocks.D2Keycustodian.{MIGRATOR,ROTATION,CA_SEED}`), emitted by `D2.Shared.AdvisoryLocks.SourceGen` from the central fleet catalog `contracts/advisory-locks/advisory-locks.spec.json`. There are no hand-written lock-key constants.
 
 ## Composition
 

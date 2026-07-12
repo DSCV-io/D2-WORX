@@ -4,7 +4,7 @@ Copyright (c) DCSV. All rights reserved.
 
 # PHASE_3.md — Build Edge (v2 Phase 3)
 
-**Status**: 🔄 In progress — KeyCustodian (K1) shipped; **T1** (TS caching twin / 0028) **SHIPPED** on `n/ts-caching` (await REVIEW merge); **A1** (Edge host platform slice / deliverable **0030**) is **in progress** on `n/edge-host` — host composition, KC gRPC transport home, well-known Map, three-bind Kestrel, Audit multiproc stub + Compose dual-target **on disk**; remaining open = product Auth mint / JWT minter / real Audit store (A2+) + FR_FULL.
+**Status**: 🔄 In progress — KeyCustodian (K1) shipped; **T1** (TS caching twin / 0028) **SHIPPED**; **A1** (Edge host platform slice / deliverable **0030**) **SHIPPED** (`docs/dev/deliverables/0030-edge-host.md`); **D2** (advisory-lock domain keys / deliverable **0031**) **SHIPPED** — shared Postgres mechanism only; KC owns `AdvisoryLocks.D2Keycustodian.*`. **Post-0030 product spine:** **D2 (0031) → A2 fat (token mint + multiproc) → A3+E1 fat (sessions/credentials/anon + WhoIs) → E2 (rate-limit + middleware)**.
 
 **Purpose**: tracking doc for v2 Phase 3 — Edge service build. Contains the locked deliverable DAG, dependency graph, cross-cutting decisions, and per-deliverable status.
 
@@ -81,7 +81,7 @@ Phase 3 is too large for one deliverable. It is carved into a dependency-ordered
 
 | # | Deliverable | Scope | Size | Status |
 |---|---|---|---|---|
-| **A1** | **Edge host shell** | Edge ASP.NET host (`api/app/domain/infra` + tests): `AddD2EdgeHost` / `UseD2EdgePipeline` / `MapD2EdgeEndpoints` (health + well-known + six KC gRPC Maps with `Scopes.Internal.Kc.*` + Audit bridges), three-bind Kestrel (8080/8443/9443), CSR outbound issuer, Compose `d2-edge`/`d2-audit` multiproc stubs. The host the auth module will live in — no Auth DB of its own. No upstream deps — parallel with K1. Deliverable **0030** on `n/edge-host`. | M | 🔄 Platform slice on disk (composition + KC transport + Audit multiproc stub + Compose dual-target); open tails = product Auth mint / JWT minter structural deny / real Audit store; FR_FULL pending |
+| **A1** | **Edge host shell** | Edge ASP.NET host (`api/app/domain/infra` + tests): `AddD2EdgeHost` / `UseD2EdgePipeline` / `MapD2EdgeEndpoints` (health + well-known + six KC gRPC Maps with `Scopes.Internal.Kc.*` + Audit bridges), three-bind Kestrel (8080/8443/9443), CSR outbound issuer, Compose `d2-edge`/`d2-audit` multiproc stubs. The host the auth module will live in — no Auth DB of its own. No upstream deps — parallel with K1. Deliverable **0030** on `n/edge-host`. | M | ✅ **SHIPPED 0030** (platform slice: composition + KC transport + Audit multiproc stub + Compose dual-target; FR_FULL closed — see `docs/dev/deliverables/0030-edge-host.md`). Residual product Auth mint / JWT minter / real Audit store → **A2+** |
 | **A2** | **Token issuance + JWKS** | `d2-auth` foundation + EF (the auth module owns its own database, like KeyCustodian owns `d2-keycustodian`). `POST /oauth/token` mints the **one** internal transaction-token at the boundary (RFC 8693 retained for the boundary mint + exceptions per [ADR-0022](../adrs/0022-service-auth-mint-once-forward.md); the token is then forwarded unchanged downstream — no per-hop re-mint), JWKS publishing + OIDC discovery, OAuth client registry (`oauth_client`), `JsonWebTokenHandler` RS256, the ~15-min user-token TTL that bounds the whole forwarded chain, the 16-claim payload. Backend-to-backend workload identity is mTLS ([ADR-0023](../adrs/0023-mtls-workload-identity.md)), not a service-identity token. | M–L | ☐ Pending |
 | **A3** | **Sessions + credential auth core + anon-mint** | 3-tier sessions (cookie→Redis→PG + revocation backplane), sign-up + email-verification, sign-in (email+username), sign-out, get-session, password policy (HIBP k-anon + ~1k blocklist + pattern blocks), password reset/change, progressive sign-in throttle (known-good bypass), `sign_in_event` audit + `auth.whois-resolution` async enrich, fingerprint binding, anon-visitor Pattern A mint. | L | ☐ Pending |
 | **A4** | **Account self-management** | Name/username/locale/timezone (Geo/Contacts SAGAs), email-change + phone-change OTP flows (+ OTP rate-limit store), remove-phone, avatar file-callback, list/revoke/revoke-others sessions, sign-in-event history, self-service deletion (state machine + sole-owner guard + 30-day grace + cancel-on-signin + nightly anonymization + `auth.user-anonymize` fanout). | L | ☐ Pending |
@@ -117,11 +117,14 @@ A3 ─┬─► A4 (account)
 (E3 YARP routing: independent; lands once there are backends to front)
 ```
 
-**Critical-path spine = (K1 ∥ A1) → A2 → A3**
+**Critical-path spine (post-0030 product order) = D2 (0031) → A2 fat (token mint + multiproc) → A3+E1 fat (sessions/credentials/anon + WhoIs) → E2 (rate-limit + middleware)**
 
-- K1 and A1 have no upstream deps — both start immediately, in parallel.
-- E1 must land alongside A3 (anon-mint depends on it; sets `d2_whois_id`).
-- Everything else layers on top. Interleaving is expected (e.g. K1 in flight while A1's shell lands, then converge on A2).
+- K1 and A1 had no upstream deps — both started in parallel; both are **shipped** (K1 + 0030).
+- **D2** (0031) is the hygiene detour: shared Postgres mechanism only; domain lock keys on KC Infra.
+- **A2 fat** = token mint + multiproc product work (consumes A1 host + K1 keys).
+- **A3+E1 fat** = sessions/credentials/anon paired with WhoIs (anon-mint depends on E1's `d2_whois_id`).
+- **E2** = rate-limit + cross-cutting middleware (needs A3 claim shape + E1 enrichment).
+- Foundational graph `(K1 ∥ A1) → A2 → A3` remains true as a dependency DAG; the **build-order spine** above is the durable execution order after 0030.
 
 ### Minimal "Edge stands up" milestone
 
@@ -153,15 +156,15 @@ Genuinely open items only — resolved or well-understood items removed.
 
 ## Build order (interleaved; real-not-stub; one wireup ledger)
 
-The critical-path spine `(K1 ∥ A1) → A2 → A3` from the dependency graph is correct. The interleaved order below bakes in the mTLS cross-process slice at the natural point and makes explicit that A1–E2 are ALL in-host / browser-facing — none blocked on mTLS or the first-leaf bootstrap.
+Durable post-0030 product spine: **D2 (0031) → A2 fat (token mint + multiproc) → A3+E1 fat (sessions/credentials/anon + WhoIs) → E2 (rate-limit + middleware)**. Foundational DAG `(K1 ∥ A1) → A2 → A3` still holds; the list below is the execution order after K1/A1/T1/D2 land. A1–E2 remain in-host / browser-facing — none blocked on mTLS or the first-leaf bootstrap.
 
-0. **T1** — TS full caching twin (0028 / `n/ts-caching`) — right after 0026, before/alongside A1 (no Edge-host dependency; BFF host wiring can trail package ship).
-1. **A1** — Edge host shell + compose the real KC (`getJwks` live) + stand up the deferred-work wireup ledger (§Deferred-work checklist below).
-2. **A2** — auth module issuance: token minting (locked 16-claim payload) + KC signing keys in-process + JWKS publish + OAuth client registry + `d2-auth` + EF migrations (auth module owns its DB, like KC owns `d2-keycustodian`).
-3. **E1** — WhoIs + fingerprint (module backing enrichment middleware; `IWhoIsProvider` port lands early; anon-mint at A3 depends on E1's `d2_whois_id`).
-4. **A3** — sessions + credential-auth core + anon-mint (needs A2 token shape + E1 port; adds 3 anon claims to the spec).
+0. **T1** — TS full caching twin (0028 / `n/ts-caching`) — ✅ SHIPPED.
+1. **A1** — Edge host shell + compose the real KC (`getJwks` live) + deferred-work wireup ledger — ✅ **SHIPPED 0030**.
+2. **D2** — Domain advisory-lock keys out of shared Postgres PublicAPI (mechanism stays shared; KC owns generated `AdvisoryLocks.D2Keycustodian.*`; central catalog retained) — ✅ **SHIPPED 0031**.
+3. **A2 fat** — auth module issuance: token minting (locked 16-claim payload) + multiproc product work + KC signing keys in-process + JWKS publish + OAuth client registry + `d2-auth` + EF migrations (auth module owns its DB, like KC owns `d2-keycustodian`).
+4. **A3+E1 fat** — sessions + credential-auth core + anon-mint **paired with** WhoIs + fingerprint (anon-mint needs E1's `d2_whois_id`; adds 3 anon claims to the spec).
 5. **E2** — net-new middleware: 18-bucket rate-limit + HTTP idempotency + CSRF enforcement + security headers + i18n (needs A3 claim shape + the generated markers from the deferred-work checklist §F).
-6. **mTLS cross-process residual (first-leaf bootstrap)** — Edge host already Maps `IssueWorkloadCertificate` over gRPC and wires server-side mTLS (A1 checklist A2/A4 ✅; G master CLOSED). Remaining open work is first-leaf bootstrap design only (deployment-orchestrator concern; open prerequisite #3 / A3).
+6. **mTLS cross-process residual (first-leaf bootstrap)** — Edge host already Maps `IssueWorkloadCertificate` over gRPC and wires server-side mTLS (A1 checklist A2/A4 ✅; G master CLOSED). Remaining open work is first-leaf bootstrap design only (deployment-orchestrator concern; open prerequisite #3).
 7+. **E4** (SSE), **A4/A5/A6** (account / orgs / impersonation), then **E3** (YARP routing) + **E5** (keyring) — as their first consumers arrive.
 
 Walk the **§Deferred-work checklist** §G master table top-to-bottom when the host + middleware land — it is the seam→consumer master list.
@@ -251,7 +254,7 @@ C1–C16, C18 are ✅ done. Open rows:
 | # | Item | Status | Blocked on |
 | - | ---- | ------ | ---------- |
 | D1 | .NET `DefaultLocalCache` post-dispose lock ops (`AcquireLockAsync`/`ReleaseLockAsync`) previously kept working after `Dispose()` (cleared `r_locks` only; no `ObjectDisposedException`), contradicting the package README's documented fail-closed contract. | ✅ fixed on `n/ts-caching` (`3ef66497`) — `ThrowIfDisposed()` on every public op including locks; aligns with TS twin | — |
-| D2 | **Domain advisory-lock constants wrongly public on shared Postgres.** `AdvisoryLocks.D2Keycustodian.{MIGRATOR,ROTATION,CA_SEED}` (and future domain nests) ship from `D2.Shared.EntityFrameworkCore.Postgres` PublicAPI + central `contracts/advisory-locks/`. **Shared should own only the mechanism** (`PgAdvisoryLock`, migrator, generator tooling). **Domain key catalogs belong with the owning service/module** (KC → Edge.KeyCustodian.Infra or equivalent) so shared stays service-agnostic. Origin: 0016 NQ-1 “registry now, not at second consumer.” **Not** a pre-req for Edge host 0030. | 📐 specified-deferred | **Quick detour after 0030 Plan CLEAN / host landing wave** — small hygiene deliverable: keep shared primitive; move KC keys out of shared PublicAPI; optional multi-domain uniqueness CI; semver bump shared Postgres |
+| D2 | **Domain advisory-lock constants wrongly public on shared Postgres.** Shared should own only the mechanism (`PgAdvisoryLock`, migrator, generator tooling); domain key catalogs belong with the owning module. Origin: 0016 NQ-1 “registry now, not at second consumer.” | ✅ **SHIPPED 0031** | Shared Postgres = mechanism only; `AdvisoryLocks.D2Keycustodian.*` emit into `D2.Edge.KeyCustodian.Infra`; central `contracts/advisory-locks/` retained; uniqueness at gen time; PublicAPI break + reseed. Snapshot: `docs/dev/deliverables/0031-advisory-locks-domain-keys.md` |
 
 ---
 

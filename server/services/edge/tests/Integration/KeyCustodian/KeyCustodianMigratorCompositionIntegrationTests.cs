@@ -6,6 +6,7 @@
 
 namespace D2.Edge.Tests.Integration.KeyCustodian;
 
+using D2.Edge.KeyCustodian.Infra;
 using D2.Edge.KeyCustodian.Infra.Persistence.Postgres;
 using D2.Shared.EntityFrameworkCore.Postgres;
 using Microsoft.EntityFrameworkCore;

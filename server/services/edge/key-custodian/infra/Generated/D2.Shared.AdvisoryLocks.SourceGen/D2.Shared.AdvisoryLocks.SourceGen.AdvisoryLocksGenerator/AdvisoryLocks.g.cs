@@ -8,7 +8,7 @@
 
 #nullable enable
 
-namespace D2.Shared.EntityFrameworkCore.Postgres;
+namespace D2.Edge.KeyCustodian.Infra;
 
 /// <summary>
 /// Spec-derived registry of PostgreSQL session advisory lock keys,

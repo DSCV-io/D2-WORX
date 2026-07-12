@@ -140,7 +140,7 @@ abbreviation, 3-digit number). Examples currently in use:
 | In-process keys         | `D2IPK`  | [`encryption/in-process-keys-source-gen`](../server/shared/dotnet/encryption/in-process-keys-source-gen/README.md)                                                       |
 | Geo catalogs            | `D2GEO`  | [`geo/source-gen`](../server/shared/dotnet/geo/source-gen/README.md)                                                                                                     |
 | Field constraints       | `D2FC`   | [`validation/source-gen`](../server/shared/dotnet/validation/source-gen/README.md)                                                                                       |
-| Advisory locks          | `D2LCK`  | [`entity-framework-core/locks-source-gen`](../server/shared/dotnet/entity-framework-core/locks-source-gen/README.md)                                                     |
+| Advisory locks          | `D2LCK`  | [`entity-framework-core/locks-source-gen`](../server/shared/dotnet/entity-framework-core/locks-source-gen/README.md) — emits `AdvisoryLocks` into owning-module assembly (currently `D2.Edge.KeyCustodian.Infra`); shared Postgres = mechanism only |
 | KC error codes          | `D2KEC`  | [`key-custodian/error-codes-source-gen`](../server/services/edge/key-custodian/error-codes-source-gen/README.md) (shell)                                                 |
 | TypeSpec emitters       | `D2TSP`  | [`server/shared/typescript/typespec-emitters`](../server/shared/typescript/typespec-emitters/README.md) — see [§2.7](#27-typespec-emitter-fleet--decorator-vocabulary--wire-channel-identity) for diagnostics |
 

@@ -15,15 +15,20 @@ using Microsoft.CodeAnalysis.Text;
 
 /// <summary>
 /// Roslyn incremental source generator that emits the <c>AdvisoryLocks</c>
-/// static class into <c>D2.Shared.EntityFrameworkCore.Postgres</c>.
-/// Single-target dispatch — gates emission on the consuming assembly name.
+/// static class into the owning-module assembly (currently
+/// <c>D2.Edge.KeyCustodian.Infra</c>). Single-target dispatch — gates emission
+/// on the consuming assembly name. Shared Postgres owns mechanism only
+/// (<c>PgAdvisoryLock</c> / migrator); domain lock-key catalogs live with the
+/// owning module. When a second database gains locks, upgrade to multi-target
+/// or a per-destination MSBuild filter so foreign nests never ship on the
+/// wrong assembly (uniqueness still validates the full central catalog).
 /// </summary>
 [Generator]
 public sealed class AdvisoryLocksGenerator : IIncrementalGenerator
 {
     private const string _SOURCE_NAME = "AdvisoryLocks.g.cs";
     private const string _SPEC_FILE_NAME = "advisory-locks.spec.json";
-    private const string _TARGET_ASSEMBLY_NAME = "D2.Shared.EntityFrameworkCore.Postgres";
+    private const string _TARGET_ASSEMBLY_NAME = "D2.Edge.KeyCustodian.Infra";
 
     /// <inheritdoc/>
     public void Initialize(IncrementalGeneratorInitializationContext context)

@@ -10,7 +10,7 @@ The **Consumed by** column links straight to each consumer's README (or the cons
 
 | Contract | Purpose | Consumed by |
 |---|---|---|
-| [`advisory-locks/`](advisory-locks/README.md) | PostgreSQL advisory-lock key catalog | **.NET** [`locks-source-gen`](../server/shared/dotnet/entity-framework-core/locks-source-gen/README.md) |
+| [`advisory-locks/`](advisory-locks/README.md) | PostgreSQL advisory-lock key catalog (fleet SoT; emit into owning-module assembly) | **.NET** [`locks-source-gen`](../server/shared/dotnet/entity-framework-core/locks-source-gen/README.md) → currently `D2.Edge.KeyCustodian.Infra` |
 | [`auth-audiences/`](auth-audiences/README.md) | Token-exchange target audience catalog | **.NET** [`audiences-source-gen`](../server/shared/dotnet/auth/audiences-source-gen/README.md) · **TypeSpec** [`typespec-decorators`](../server/shared/typescript/typespec-decorators/README.md) (`@d2Audience`) |
 | [`auth-context/`](auth-context/README.md) | `IAuthContext` interface fields (JWT-derived identity + authorization context) | **.NET** [`context/source-gen`](../server/shared/dotnet/context/source-gen/README.md) · **TS** [`auth-context-emit.ts`](../tools/ts-codegen/src/auth-context-emit.ts) |
 | [`auth-error-codes/`](auth-error-codes/README.md) | Auth error-code catalog (bearer missing, JWT expired, scope insufficient, etc.) | **.NET** [`auth/error-codes-source-gen`](../server/shared/dotnet/auth/error-codes-source-gen/README.md) · **TS** [`error-codes-emit.ts`](../tools/ts-codegen/src/error-codes-emit.ts) · **TypeSpec** [`typespec-decorators`](../server/shared/typescript/typespec-decorators/README.md) |

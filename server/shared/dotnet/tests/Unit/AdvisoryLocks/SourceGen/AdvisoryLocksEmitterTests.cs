@@ -31,7 +31,7 @@ public sealed class AdvisoryLocksEmitterTests
 
         result.Diagnostics.Should().BeEmpty();
         result.GeneratedSource.Should()
-            .Contain("namespace D2.Shared.EntityFrameworkCore.Postgres;");
+            .Contain("namespace D2.Edge.KeyCustodian.Infra;");
         result.GeneratedSource.Should()
             .Contain("public static class AdvisoryLocks");
         result.GeneratedSource.Should()
