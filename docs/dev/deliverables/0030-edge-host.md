@@ -110,11 +110,15 @@ Walked against rules.md Deliverable completeness checklist before attestation:
 | Residual Plan disposition | Skip vs Y for pure-meta residual | Residual pure-meta Plan-Audit Y (not Skip) when new public types |
 | Completeness pin lag | Registry count/lists after new AUTH code | Update hand catalogs + count pins in same change as spec code |
 
-## Proposed rule additions (for user approval — not auto-applied)
+## Rules added at SHIP (user-approved)
 
-1. **Internal service bind law:** HTTP = infra (health/metrics) only; product gRPC mTLS-only; Unestablished origin auto-deny on product gRPC after establishment (platform interceptor).
-2. **Issuer-host JWKS:** Edge (issuer) must not HTTP self-fetch own well-known for validation; in-process provider from KC DB.
-3. *(Optional)* Multi-bind MapWhen / port isolation predicate under §10 when a host has more than one listen role.
+| Predicate | Surface |
+| --- | --- |
+| **§10.23** | Multi-bind product gRPC → mTLS listen only; internal HTTP = infra only |
+| **§10.24** | Platform Unestablished deny on product gRPC after Origin establish |
+| **§9.47** | Issuer-host in-process JWKS (no HTTP self-fetch of own well-known) |
+
+Lockstep: `docs/dev/rules/09-…`, `docs/dev/rules/10-…`, `AGENTS.md` §5.
 
 ## Final report
 
