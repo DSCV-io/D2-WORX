@@ -9,6 +9,7 @@ namespace D2.Shared.Auth.Grpc.Interceptors;
 using D2.Shared.AspNetCore.Mtls;
 using D2.Shared.Auth.Abstractions;
 using D2.Shared.Auth.Abstractions.Http;
+using D2.Shared.Auth.Grpc.Endpoints;
 using D2.Shared.Auth.Grpc.Telemetry;
 using D2.Shared.Context.Abstractions;
 using D2.Shared.Headers.Grpc;
@@ -70,8 +71,6 @@ using Microsoft.Extensions.Options;
 /// </remarks>
 internal sealed class RequestOriginCrossProcessInterceptor : Interceptor
 {
-    private const string _HTTP_CONTEXT_USER_STATE_KEY = "__HttpContext__";
-
     private readonly string r_selfServiceId;
     private readonly IClock r_clock;
     private readonly ILogger<RequestOriginCrossProcessInterceptor> r_logger;
@@ -157,28 +156,6 @@ internal sealed class RequestOriginCrossProcessInterceptor : Interceptor
         await continuation(requestStream, responseStream, context).ConfigureAwait(false);
     }
 
-    private static HttpContext? ResolveHttpContext(ServerCallContext context)
-    {
-        HttpContext? httpContext;
-
-        try
-        {
-            httpContext = context.GetHttpContext();
-        }
-        catch (InvalidOperationException)
-        {
-            httpContext = null;
-
-            if (context.UserState.TryGetValue(_HTTP_CONTEXT_USER_STATE_KEY, out var raw)
-                && raw is HttpContext h)
-            {
-                httpContext = h;
-            }
-        }
-
-        return httpContext;
-    }
-
     private static string? ReadPropagatedHeader(ServerCallContext context)
     {
         foreach (var entry in context.RequestHeaders)
@@ -200,7 +177,7 @@ internal sealed class RequestOriginCrossProcessInterceptor : Interceptor
     /// <param name="context">The gRPC server call context.</param>
     private void Establish(ServerCallContext context)
     {
-        var httpContext = ResolveHttpContext(context);
+        var httpContext = MethodScopeMetadataResolver.TryResolveHttpContext(context);
 
         if (httpContext?.Items[D2HttpContextItems.REQUEST_CONTEXT] is MutableRequestContext ctx)
         {

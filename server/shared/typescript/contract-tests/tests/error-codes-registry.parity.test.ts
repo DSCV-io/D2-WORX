@@ -44,7 +44,7 @@ import { canonicalize, loadFixture } from "../src/index.js";
 //   - Case sensitivity: lowercase code does NOT resolve.
 // ---------------------------------------------------------------------------
 
-const _EXPECTED_COUNT = 59;
+const _EXPECTED_COUNT = 60;
 
 const _VALID_CATEGORIES = new Set<string>([
   "validation_failure",

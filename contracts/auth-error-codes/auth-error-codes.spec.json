@@ -126,6 +126,15 @@
       "factoryName": "ScopeInsufficient",
       "factoryShape": "standard",
       "doc": "Caller is authenticated but the per-endpoint scope requirement is not satisfied. Surfaces as 401 (not 403) - the auth boundary keeps a uniform shape regardless of whether the JWT was bad or scopes were insufficient, so attackers cannot deduce which check failed."
+    },
+    {
+      "code": "AUTH_REQUEST_ORIGIN_UNESTABLISHED",
+      "httpStatus": 401,
+      "category": "policy_denied",
+      "userMessageKey": "TK.Auth.Errors.UNAUTHORIZED",
+      "factoryName": "RequestOriginUnestablished",
+      "factoryShape": "standard",
+      "doc": "gRPC product call reached a host with RequestOrigin still Unestablished after the cross-process establishment interceptor (no validated mTLS peer identity). Platform fail-closed deny — not a per-handler check. Surfaces as 401 (not 403) so the auth boundary keeps a uniform shape with other policy-denied auth failures."
     }
   ]
 }

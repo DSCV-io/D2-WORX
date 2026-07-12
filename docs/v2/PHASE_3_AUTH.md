@@ -2520,6 +2520,14 @@ Each step buildable + testable + zero warnings before moving on.
 | **AUTH-R5** | Grant scopes such as `internal.kc.sign` / `internal.audit.ping` into real tokens | Mint-and-grant at boundary | Auth mint |
 | **AUTH-R6** | “System JWT” for background/S2S without user request | **Not the model** — System plane is in-process; S2S workload = mTLS; business hops need boundary-minted transaction-token | Do not invent; see ADR-0022 / 0025 |
 
+### Security residual — rate-limit + bind isolation (0030 Edge host FR)
+
+| ID | Issue | Disposition | When |
+| --- | --- | --- | --- |
+| **D-SEC-01** | Edge public binds serve JWKS / OIDC / health / Audit bridge with **no** rate-limit middleware body (pipeline reserves an empty slot after infrastructure bypass) | **Document + defer** — do **not** invent interim RL middleware. Full tiered rate-limit is the Phase 3 rate-limit deliverable ([PHASE_3_RATE_LIMITING.md](PHASE_3_RATE_LIMITING.md)); Edge `rate-limit/` remains a placeholder; pipeline slot stays empty intentionally until that ship | Phase 3 rate-limit deliverable |
+| **D-SEC-02** | KC gRPC was on the shared endpoint table (reachable on Issuer :8443 / cleartext :8080 with “right port luck”) | **Fixed** — `MapD2EdgeEndpoints` `MapWhen` isolates all six KC `MapGrpcService` to mTLS port **9443** only | Landed |
+| **D-SEC-03** | Internal product gRPC lacked platform Unestablished fail-closed; Audit Ping had no Origin deny | **Fixed** — Audit gRPC `MapWhen` to mTLS **8443** only (HTTP `:8080` = health/metrics only); `RequestOriginUnestablishedDenyInterceptor` folded into `AddD2RequestOriginGrpc` (order: Jwt → Origin establish → Unestablished deny); `AUTH_REQUEST_ORIGIN_UNESTABLISHED` | Landed |
+
 ### Planes reminder (avoid confusing “always JWT”)
 
 | Plane | Mechanism | JWT? |

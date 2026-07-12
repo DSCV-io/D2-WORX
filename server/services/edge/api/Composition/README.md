@@ -13,7 +13,7 @@ Copyright (c) DCSV. All rights reserved.
 | Extension | File | Role |
 | --- | --- | --- |
 | `AddD2EdgeHost` | `EdgeHostServiceCollectionExtensions.cs` | Full DI: defaults + MutualTls + three-bind + establishment + Redis + RMQ + KC + outbound CSR issuer + **`AddD2AuditGrpcClients`** (`AUDIT_GRPC:Address`, https-only) |
-| `MapD2EdgeEndpoints` | `EdgeEndpointRouteBuilderExtensions.cs` | Health/metrics + well-known JWKS/OIDC + six KC gRPC Maps with `Scopes.Internal.Kc.*` + **`MapAllAuditBridges()`** (`MapPingAuditBridge` under `D2.Edge.Api.Bridges.Audit`) |
+| `MapD2EdgeEndpoints` | `EdgeEndpointRouteBuilderExtensions.cs` | Health/metrics + well-known JWKS/OIDC + **`MapAllAuditBridges()`** on public binds; six KC gRPC Maps with `Scopes.Internal.Kc.*` **only on mTLS :9443** via `MapWhen(LocalPort == MTLS_HTTPS_PORT)` |
 
 ## DI locks (KEEP)
 

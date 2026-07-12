@@ -10,8 +10,8 @@ using Microsoft.Extensions.Logging;
 
 /// <summary>
 /// <see cref="LoggerMessage"/>-compiled log delegates for the cross-process
-/// establishment interceptor. Compiled once at type-load (no allocations / format-
-/// string parsing at the call site) per CA1848.
+/// establishment + Unestablished-origin deny interceptors. Compiled once at
+/// type-load (no allocations / format-string parsing at the call site) per CA1848.
 /// </summary>
 /// <remarks>
 /// <strong>PII discipline</strong>: NO delegate accepts an <see cref="Exception"/>
@@ -23,11 +23,12 @@ using Microsoft.Extensions.Logging;
 // is categorically inapplicable here; instance-extension style is correct.
 internal static partial class RequestOriginGrpcLog
 {
-    // EventId 4105: the request-context establishment group is 4102–4105
-    // (CallPathStarted 4102 / SystemContextEstablished 4103 /
-    // CrossProcessPeerIdentityAbsent 4104 / CallPathReceived 4105). 4101 is NOT part
-    // of this group — it belongs to AuthEndpointGuardStartupFilter.LogUndeclaredEndpoints
-    // (documented in auth/startup/README.md); this delegate previously collided on 4101.
+    // EventId 4104–4106: the request-context establishment / origin-deny group
+    // (CrossProcessPeerIdentityAbsent 4104 / CallPathReceived 4105 /
+    // RequestOriginUnestablishedDenied 4106). 4101 is NOT part of this group —
+    // it belongs to AuthEndpointGuardStartupFilter.LogUndeclaredEndpoints
+    // (documented in auth/startup/README.md). 4102–4103 live on sibling
+    // establishment surfaces (CallPathStarted / SystemContextEstablished).
     [LoggerMessage(
         EventId = 4105,
         Level = LogLevel.Debug,
@@ -47,4 +48,12 @@ internal static partial class RequestOriginGrpcLog
     public static partial void CrossProcessPeerIdentityAbsent(
         this ILogger logger,
         string selfServiceId);
+
+    [LoggerMessage(
+        EventId = 4106,
+        Level = LogLevel.Warning,
+        Message = "gRPC product call denied: RequestOrigin is Unestablished after "
+                + "cross-process establishment (no validated mTLS peer). Emitting "
+                + "AUTH_REQUEST_ORIGIN_UNESTABLISHED.")]
+    public static partial void RequestOriginUnestablishedDenied(this ILogger logger);
 }

@@ -80,7 +80,7 @@ Pre-built `D2Result` failures. Caller code (middleware, validator, interceptor) 
 
 `AuthErrorCodes` and `AuthFailures` are emitted by [`D2.Shared.Auth.ErrorCodes.SourceGen`](../error-codes-source-gen/README.md) from [`contracts/auth-error-codes/auth-error-codes.spec.json`](../../../../../contracts/auth-error-codes/auth-error-codes.spec.json) — single source of truth. Adding a new error code = editing the JSON spec; the constant + the factory + the cross-spec telemetry tag-value enumeration on `d2.auth.problem.emitted` all materialize automatically. The emitted `*.g.cs` files land in the tracked `Generated/` directory (committed for inspection, IDE navigation, and PR diff review; re-emitted on every `dotnet build`; do not hand-edit).
 
-> **Duplicated from [`contracts/auth-error-codes/auth-error-codes.spec.json`](../../../../../contracts/auth-error-codes/auth-error-codes.spec.json) — update both in lockstep.** The 14-row failure surface table below is a per-row at-a-glance projection of the spec. The spec is the single source of truth; the `auth/error-codes-source-gen` analyzer emits the constants + factories. Adding a row here without a corresponding spec entry will fail at codegen time; adding a spec entry without updating this table will drift the docs.
+> **Duplicated from [`contracts/auth-error-codes/auth-error-codes.spec.json`](../../../../../contracts/auth-error-codes/auth-error-codes.spec.json) — update both in lockstep.** The 15-row failure surface table below is a per-row at-a-glance projection of the spec. The spec is the single source of truth; the `auth/error-codes-source-gen` analyzer emits the constants + factories. Adding a row here without a corresponding spec entry will fail at codegen time; adding a spec entry without updating this table will drift the docs.
 
 | Helper                         | HTTP | Error code                          | TK key                    |
 | ------------------------------ | ---- | ----------------------------------- | ------------------------- |
@@ -98,6 +98,7 @@ Pre-built `D2Result` failures. Caller code (middleware, validator, interceptor) 
 | `JwksUnavailable()`            | 503  | `AUTH_JWKS_UNAVAILABLE`             | `TEMPORARILY_UNAVAILABLE` |
 | `SessionLivenessUnavailable()` | 503  | `AUTH_SESSION_LIVENESS_UNAVAILABLE` | `TEMPORARILY_UNAVAILABLE` |
 | `ScopeInsufficient()`          | 401  | `AUTH_SCOPE_INSUFFICIENT`           | `UNAUTHORIZED`            |
+| `RequestOriginUnestablished()` | 401  | `AUTH_REQUEST_ORIGIN_UNESTABLISHED` | `UNAUTHORIZED`            |
 
 ### Telemetry
 

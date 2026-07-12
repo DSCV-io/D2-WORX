@@ -19,32 +19,38 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 /// <see cref="RequestOriginCrossProcessInterceptor"/> that derives
 /// <see cref="RequestOrigin.CrossProcessHop"/> + the peer caller from the validated
 /// mutual-TLS certificate and applies/extends the propagated call-path on each inbound
-/// gRPC call.
+/// gRPC call — plus the platform fail-closed
+/// <see cref="RequestOriginUnestablishedDenyInterceptor"/> that denies product gRPC
+/// when Origin remains <see cref="RequestOrigin.Unestablished"/>.
 /// </summary>
 public static class RequestOriginGrpcServiceCollectionExtensions
 {
     extension(IServiceCollection services)
     {
         /// <summary>
-        /// Registers the <see cref="RequestOriginCrossProcessInterceptor"/> and attaches
-        /// it to the host's <see cref="GrpcServiceOptions.Interceptors"/> collection.
+        /// Registers the <see cref="RequestOriginCrossProcessInterceptor"/> and the
+        /// <see cref="RequestOriginUnestablishedDenyInterceptor"/>, attaching both
+        /// to the host's <see cref="GrpcServiceOptions.Interceptors"/> collection.
         /// </summary>
         /// <remarks>
         /// <para>
         /// <strong>Order after <c>AddD2AuthGrpc()</c></strong>: call this AFTER
-        /// <c>AddD2AuthGrpc()</c> so the establishment interceptor is appended to the
-        /// interceptor pipeline AFTER <c>JwtAuthInterceptor</c> — the auth interceptor
-        /// validates and populates the scoped request-context, then this interceptor
-        /// enriches that same context with the cross-process origin, peer caller, and
-        /// appended call-path. (Interceptors run inbound in registration order, so the
-        /// auth interceptor's establishment of the identity precedes this enrichment.)
+        /// <c>AddD2AuthGrpc()</c> so interceptors append AFTER
+        /// <c>JwtAuthInterceptor</c>. Inbound order is then: JWT auth → Origin
+        /// establish → Unestablished deny. (Interceptors run inbound in registration
+        /// order.)
+        /// </para>
+        /// <para>
+        /// Establish + deny are ONE registration path so every host that wires
+        /// Origin gRPC gets fail-closed Unestablished deny by default (§9.42) —
+        /// not a per-handler check.
         /// </para>
         /// <para>
         /// Binds <see cref="D2WorkloadIdentityOptions"/> with a required-<c>ServiceId</c>
         /// validation that runs at host startup, so a missing self-identity surfaces during
         /// composition rather than on the first call. <see cref="IClock"/> is registered
         /// as <see cref="SystemClock"/> when the host has not already bound one
-        /// (<c>TryAdd</c>). Idempotent — repeat calls do not double-register the interceptor.
+        /// (<c>TryAdd</c>). Idempotent — repeat calls do not double-register either interceptor.
         /// </para>
         /// </remarks>
         /// <param name="configure">
@@ -74,16 +80,30 @@ public static class RequestOriginGrpcServiceCollectionExtensions
 
             services.TryAddSingleton<IClock, SystemClock>();
             services.TryAddSingleton<RequestOriginCrossProcessInterceptor>();
+            services.TryAddSingleton<RequestOriginUnestablishedDenyInterceptor>();
 
+            // Establish first, then deny — append order = inbound run order.
             services.Configure<GrpcServiceOptions>(o =>
             {
+                var hasEstablish = false;
+                var hasDeny = false;
+
                 for (var i = 0; i < o.Interceptors.Count; i++)
                 {
-                    if (o.Interceptors[i].Type == typeof(RequestOriginCrossProcessInterceptor))
-                        return;
+                    var type = o.Interceptors[i].Type;
+
+                    if (type == typeof(RequestOriginCrossProcessInterceptor))
+                        hasEstablish = true;
+
+                    if (type == typeof(RequestOriginUnestablishedDenyInterceptor))
+                        hasDeny = true;
                 }
 
-                o.Interceptors.Add<RequestOriginCrossProcessInterceptor>();
+                if (!hasEstablish)
+                    o.Interceptors.Add<RequestOriginCrossProcessInterceptor>();
+
+                if (!hasDeny)
+                    o.Interceptors.Add<RequestOriginUnestablishedDenyInterceptor>();
             });
 
             return services;

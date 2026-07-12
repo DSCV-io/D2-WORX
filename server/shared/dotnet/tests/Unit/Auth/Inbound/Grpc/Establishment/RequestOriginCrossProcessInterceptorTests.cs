@@ -147,7 +147,10 @@ public sealed class RequestOriginCrossProcessInterceptorTests
         var inbound = new MutableRequestContext
         {
             RequestId = "req-from-A",
-            CallPath = [new CallPathEntry("service-a", CallPathKind.Edge, sr_now.ToDateTimeOffset())],
+            CallPath =
+            [
+                new CallPathEntry("service-a", CallPathKind.Edge, sr_now.ToDateTimeOffset()),
+            ],
         };
         var encoded = PropagatedContextSerializer.Encode(inbound.ToPropagatedContext());
         var ctx = new MutableRequestContext { IsAuthenticated = true };

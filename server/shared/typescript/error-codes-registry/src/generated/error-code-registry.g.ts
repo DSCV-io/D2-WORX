@@ -159,6 +159,16 @@ const _entries: readonly ErrorCodeInfo[] = [
     domain: "auth",
   },
   {
+    code: "AUTH_REQUEST_ORIGIN_UNESTABLISHED",
+    httpStatus: 401,
+    category: "policy_denied",
+    userMessageKey: TK.auth.errors.UNAUTHORIZED,
+    factoryName: "RequestOriginUnestablished",
+    factoryShape: "standard",
+    doc: "gRPC product call reached a host with RequestOrigin still Unestablished after the cross-process establishment interceptor (no validated mTLS peer identity). Platform fail-closed deny — not a per-handler check. Surfaces as 401 (not 403) so the auth boundary keeps a uniform shape with other policy-denied auth failures.",
+    domain: "auth",
+  },
+  {
     code: "NOT_FOUND",
     httpStatus: 404,
     category: "not_found",

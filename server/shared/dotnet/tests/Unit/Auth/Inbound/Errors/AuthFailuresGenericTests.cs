@@ -26,7 +26,7 @@ using Xunit;
 public sealed class AuthFailuresGenericTests
 {
     // ------------------------------------------------------------------ //
-    // Data-driven Theory covering ALL 14 AuthFailures<T> methods.         //
+    // Data-driven Theory covering ALL 15 AuthFailures<T> methods.         //
     // Asserts (StatusCode, ErrorCode, Messages[0]) triple matches the     //
     // non-generic sibling for every method — including the 9 that were    //
     // not covered by the original targeted facts below.                   //
@@ -91,6 +91,11 @@ public sealed class AuthFailuresGenericTests
     [InlineData(
         nameof(AuthFailures.ScopeInsufficient),
         AuthErrorCodes.AUTH_SCOPE_INSUFFICIENT,
+        (int)HttpStatusCode.Unauthorized,
+        false)]
+    [InlineData(
+        nameof(AuthFailures.RequestOriginUnestablished),
+        AuthErrorCodes.AUTH_REQUEST_ORIGIN_UNESTABLISHED,
         (int)HttpStatusCode.Unauthorized,
         false)]
     [InlineData(
@@ -213,7 +218,7 @@ public sealed class AuthFailuresGenericTests
     }
 
     // ------------------------------------------------------------------ //
-    // Category Theory — ALL 14 AuthFailures<T> methods stamp their own   //
+    // Category Theory — ALL 15 AuthFailures<T> methods stamp their own   //
     // code's category, overriding the base factory's default.             //
     // ------------------------------------------------------------------ //
 
@@ -242,6 +247,9 @@ public sealed class AuthFailuresGenericTests
         nameof(AuthFailures.SessionRevoked), ErrorCategory.PolicyDenied)]
     [InlineData(
         nameof(AuthFailures.ScopeInsufficient), ErrorCategory.PolicyDenied)]
+    [InlineData(
+        nameof(AuthFailures.RequestOriginUnestablished),
+        ErrorCategory.PolicyDenied)]
     [InlineData(
         nameof(AuthFailures.JwksUnavailable), ErrorCategory.InfrastructureUnavailable)]
     [InlineData(

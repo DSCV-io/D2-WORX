@@ -29,7 +29,6 @@ using D2.Shared.Handler;
 using D2.Shared.Resilience.Pipeline;
 using D2.Shared.Result;
 using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
@@ -230,9 +229,52 @@ public sealed class MapD2EdgeEndpointsTests
         source.Should().Contain("Scopes.Internal.Kc.Seal.Open");
         source.Should().Contain("MapAllAuditBridges()");
 
+        // KC gRPC structural isolation to mTLS port via MapWhen.
+        source.Should().Contain("MapWhen");
+        source.Should().Contain("EdgeHttpsRolePolicies.MTLS_HTTPS_PORT");
+        source.Should().Contain("Connection.LocalPort");
+
         source.Should().NotContain("Step 3");
         source.Should().NotContain("Step 2");
         source.Should().NotContain("Step 4");
+    }
+
+    [Fact]
+    public void MapD2EdgeEndpoints_Source_KcGrpcMapsAreInsideMtlsMapWhenBranch()
+    {
+        var path = EdgeHostTestKit.ResolveEdgeApiSourceFile(
+            "Composition", "EdgeEndpointRouteBuilderExtensions.cs");
+        var source = File.ReadAllText(path);
+
+        // Structural isolation: MapWhen on mTLS port is the only call path into
+        // MapKeyCustodianGrpcServices (where MapGrpcService×6 live). Public Map
+        // body calls MapKeyCustodianGrpcMtlsOnly → MapWhen → MapKeyCustodianGrpcServices.
+        source.Should().Contain("app.MapWhen(");
+        source.Should().Contain("MapKeyCustodianGrpcMtlsOnly");
+        source.Should().Contain("MapKeyCustodianGrpcServices(e)");
+
+        var helperMethodIdx = source.IndexOf(
+            "private static void MapKeyCustodianGrpcServices(", StringComparison.Ordinal);
+        helperMethodIdx.Should().BeGreaterThanOrEqualTo(0);
+
+        var firstKcMapIdx = source.IndexOf(
+            "MapGrpcService<KeyCustodianSignerService>", StringComparison.Ordinal);
+        firstKcMapIdx.Should().BeGreaterThan(
+            helperMethodIdx,
+            "KC MapGrpcService registrations live only in MapKeyCustodianGrpcServices");
+
+        // Public Map body must not MapGrpcService before the mTLS helper call.
+        var publicMapIdx = source.IndexOf(
+            "public IEndpointRouteBuilder MapD2EdgeEndpoints()", StringComparison.Ordinal);
+        var mtlsOnlyCallIdx = source.IndexOf(
+            "MapKeyCustodianGrpcMtlsOnly(endpoints)", StringComparison.Ordinal);
+        publicMapIdx.Should().BeGreaterThanOrEqualTo(0);
+        mtlsOnlyCallIdx.Should().BeGreaterThan(publicMapIdx);
+
+        var between = source[publicMapIdx..mtlsOnlyCallIdx];
+        between.Should().NotContain(
+            "MapGrpcService<",
+            "public Map must not register gRPC before mTLS isolation helper");
     }
 
     [Fact]
@@ -259,98 +301,92 @@ public sealed class MapD2EdgeEndpointsTests
     private static async Task<IHost> BuildMapHostAsync(
         KeyCustodianTestDbContext db, KeyCustodianOptions options)
     {
-        // Minimal TestServer host mapping production MapD2EdgeEndpoints (not only
-        // MapGet* bypass). Avoids full AddD2EdgeHost (Redis/RMQ/hosted refresh).
-        // AddGrpc is required once Map registers MapGrpcService×6.
+        // Minimal WebApplication + TestServer mapping production MapD2EdgeEndpoints
+        // (not only MapGet* bypass). Avoids full AddD2EdgeHost (Redis/RMQ/hosted
+        // refresh). WebApplication is required so MapWhen mTLS isolation works
+        // (IApplicationBuilder + IEndpointRouteBuilder). AddGrpc is required once
+        // Map registers MapGrpcService×6 on the mTLS branch.
         Environment.SetEnvironmentVariable("OTEL_SDK_DISABLED", "true");
 
-        return await new HostBuilder()
-            .ConfigureWebHost(webHost =>
-            {
-                webHost
-                    .UseTestServer()
-                    .ConfigureServices(services =>
-                    {
-                        services.AddLogging();
-                        services.AddRouting();
-                        services.AddHealthChecks();
-                        services.AddGrpc();
-                        services.AddD2Handler();
-                        services.AddScoped<IRequestContext, MutableRequestContext>();
+        var builder = WebApplication.CreateBuilder();
+        builder.WebHost.UseTestServer();
 
-                        services.AddSingleton<IKeyCustodianDbContext>(db);
-                        services.AddSingleton(Options.Create(options));
-                        services.AddTransient<IGetJwksHandler, GetJwksHandler>();
+        builder.Services.AddLogging();
+        builder.Services.AddRouting();
+        builder.Services.AddHealthChecks();
+        builder.Services.AddGrpc();
+        builder.Services.AddD2Handler();
+        builder.Services.AddScoped<IRequestContext, MutableRequestContext>();
 
-                        services.AddTransient<
-                            IGetOidcConfigurationHandler,
-                            GetOidcConfigurationHandler>();
+        builder.Services.AddSingleton<IKeyCustodianDbContext>(db);
+        builder.Services.AddSingleton(Options.Create(options));
+        builder.Services.AddTransient<IGetJwksHandler, GetJwksHandler>();
 
-                        services.AddTransient<ISignHandler, SignHandler>();
+        builder.Services.AddTransient<
+            IGetOidcConfigurationHandler,
+            GetOidcConfigurationHandler>();
 
-                        services.AddKeyedSingleton(
-                            KeyCustodianRootKey.ROOT_SERVICE_KEY,
-                            KcAppTestKit.BuildTestRootCrypto());
+        builder.Services.AddTransient<ISignHandler, SignHandler>();
 
-                        services.AddSingleton<ISigningDomainAuthorityPolicy>(
-                            new OptionsSigningDomainAuthorityPolicy(
-                                Options.Create(new SigningDomainAuthorityOptions())));
+        builder.Services.AddKeyedSingleton(
+            KeyCustodianRootKey.ROOT_SERVICE_KEY,
+            KcAppTestKit.BuildTestRootCrypto());
 
-                        services.AddTransient<IGetKeyringHandler, GetKeyringHandler>();
+        builder.Services.AddSingleton<ISigningDomainAuthorityPolicy>(
+            new OptionsSigningDomainAuthorityPolicy(
+                Options.Create(new SigningDomainAuthorityOptions())));
 
-                        services.AddSingleton<IKeyringDomainAuthorityPolicy>(
-                            new OptionsKeyringDomainAuthorityPolicy(
-                                Options.Create(new KeyringDomainAuthorityOptions())));
+        builder.Services.AddTransient<IGetKeyringHandler, GetKeyringHandler>();
 
-                        services.AddD2CaLeafSigningCapability();
+        builder.Services.AddSingleton<IKeyringDomainAuthorityPolicy>(
+            new OptionsKeyringDomainAuthorityPolicy(
+                Options.Create(new KeyringDomainAuthorityOptions())));
 
-                        services.AddSingleton<IClock>(
-                            new TestClock(KcAppTestKit.SR_BaseInstant));
+        builder.Services.AddD2CaLeafSigningCapability();
 
-                        services.AddSingleton(KcAppTestKit.NullClassifier());
+        builder.Services.AddSingleton<IClock>(
+            new TestClock(KcAppTestKit.SR_BaseInstant));
 
-                        services.AddTransient<
-                            IIssueWorkloadCertificateHandler,
-                            IssueWorkloadCertificateHandler>();
+        builder.Services.AddSingleton(KcAppTestKit.NullClassifier());
 
-                        services.AddTransient<IIssueLeafHandler, IssueLeafHandler>();
+        builder.Services.AddTransient<
+            IIssueWorkloadCertificateHandler,
+            IssueWorkloadCertificateHandler>();
 
-                        services.AddTransient<
-                            IGetCaCertificateHandler,
-                            GetCaCertificateHandler>();
+        builder.Services.AddTransient<IIssueLeafHandler, IssueLeafHandler>();
 
-                        services.AddSingleton<
-                            IRotationPolicyProvider,
-                            OptionsRotationPolicyProvider>();
+        builder.Services.AddTransient<
+            IGetCaCertificateHandler,
+            GetCaCertificateHandler>();
 
-                        services.AddTransient<
-                            IGetOrLazyProvisionSealPublicKeyHandler,
-                            GetOrLazyProvisionSealPublicKeyHandler>();
+        builder.Services.AddSingleton<
+            IRotationPolicyProvider,
+            OptionsRotationPolicyProvider>();
 
-                        services.AddTransient<
-                            IGetOrLazyProvisionOwnSealPrivateKeyHandler,
-                            GetOrLazyProvisionOwnSealPrivateKeyHandler>();
+        builder.Services.AddTransient<
+            IGetOrLazyProvisionSealPublicKeyHandler,
+            GetOrLazyProvisionSealPublicKeyHandler>();
 
-                        services.AddTransient<IKeyCustodianApi, KeyCustodianApi>();
+        builder.Services.AddTransient<
+            IGetOrLazyProvisionOwnSealPrivateKeyHandler,
+            GetOrLazyProvisionOwnSealPrivateKeyHandler>();
 
-                        // MapAllAuditBridges requires IAuditGrpcClient DI (else ASP.NET
-                        // treats the client param as a body on GET and fails Map).
-                        // §1.32: stub returns typed ServiceUnavailable; replace-trigger
-                        // is live AddD2AuditGrpcClients on the Edge host.
-                        services.AddSingleton<IAuditGrpcClient, MapHostStubAuditGrpcClient>();
-                    })
-                    .Configure(app =>
-                    {
-                        app.UseRouting();
+        builder.Services.AddTransient<IKeyCustodianApi, KeyCustodianApi>();
 
-                        app.UseEndpoints(endpoints =>
-                        {
-                            // Production Map (health/metrics + well-known + six KC gRPC + Audit bridges).
-                            endpoints.MapD2EdgeEndpoints();
-                        });
-                    });
-            })
-            .StartAsync();
+        // MapAllAuditBridges requires IAuditGrpcClient DI (else ASP.NET
+        // treats the client param as a body on GET and fails Map).
+        // §1.32: stub returns typed ServiceUnavailable; replace-trigger
+        // is live AddD2AuditGrpcClients on the Edge host.
+        builder.Services.AddSingleton<IAuditGrpcClient, MapHostStubAuditGrpcClient>();
+
+        var app = builder.Build();
+        app.UseRouting();
+
+        // Production Map (health/metrics + well-known + mTLS-only six KC gRPC + Audit bridges).
+        app.MapD2EdgeEndpoints();
+
+        await app.StartAsync();
+        return app;
     }
 
     /// <summary>

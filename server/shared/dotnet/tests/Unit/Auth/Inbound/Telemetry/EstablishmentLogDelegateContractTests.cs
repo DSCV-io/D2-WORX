@@ -21,7 +21,8 @@ using Xunit;
 /// <summary>
 /// PII-safety + emission contract for the request-context establishment
 /// <c>[LoggerMessage]</c> delegates — <c>RequestOriginGrpcLog.CallPathReceived</c>
-/// (EventId 4105) and <c>RequestOriginEdgeLog.CallPathStarted</c> (4102). Each
+/// (EventId 4105), <c>RequestOriginEdgeLog.CallPathStarted</c> (4102), and
+/// <c>RequestOriginGrpcLog.RequestOriginUnestablishedDenied</c> (4106). Each
 /// establishment boundary logs a hop-count summary at Debug; an Exception parameter
 /// on any of them could interpolate JWT bytes / request URIs / configured secrets
 /// into the log pipeline, so the no-Exception contract is pinned assembly-wide (also
@@ -117,6 +118,23 @@ public sealed class EstablishmentLogDelegateContractTests
         entry.Level.Should().Be(
             LogLevel.Warning, "a misconfigured non-mTLS hop is a Warning, not silent");
         entry.Message.Should().Contain("key-custodian");
+    }
+
+    [Fact]
+    public void RequestOriginUnestablishedDenied_EmitsAtEventId4106_AtWarning()
+    {
+        var logger = new CapturingLogger();
+
+        logger.RequestOriginUnestablishedDenied();
+
+        var entry = logger.Entries.Should().ContainSingle().Subject;
+        entry.EventId.Id.Should().Be(
+            4106,
+            "platform Unestablished product-gRPC deny logs at 4106");
+        entry.Level.Should().Be(
+            LogLevel.Warning,
+            "fail-closed origin deny is a Warning for operators");
+        entry.Message.Should().Contain("AUTH_REQUEST_ORIGIN_UNESTABLISHED");
     }
 
     private static IEnumerable<Type> SafeGetTypes(Assembly assembly)

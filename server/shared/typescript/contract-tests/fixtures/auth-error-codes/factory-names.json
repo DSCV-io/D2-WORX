@@ -12,6 +12,7 @@
     "AUTH_JWT_KID_NOT_FOUND": "jwtKidNotFound",
     "AUTH_JWT_NOT_YET_VALID": "jwtNotYetValid",
     "AUTH_JWT_SIGNATURE_INVALID": "jwtSignatureInvalid",
+    "AUTH_REQUEST_ORIGIN_UNESTABLISHED": "requestOriginUnestablished",
     "AUTH_SCOPE_INSUFFICIENT": "scopeInsufficient",
     "AUTH_SESSION_LIVENESS_UNAVAILABLE": "sessionLivenessUnavailable",
     "AUTH_SESSION_REVOKED": "sessionRevoked"

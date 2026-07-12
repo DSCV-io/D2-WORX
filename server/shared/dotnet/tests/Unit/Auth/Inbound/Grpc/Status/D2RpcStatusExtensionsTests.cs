@@ -64,6 +64,9 @@ public sealed class D2RpcStatusExtensionsTests
     [InlineData(nameof(AuthFailures.JwtKidNotFound), AuthErrorCodes.AUTH_JWT_KID_NOT_FOUND)]
     [InlineData(nameof(AuthFailures.SessionRevoked), AuthErrorCodes.AUTH_SESSION_REVOKED)]
     [InlineData(nameof(AuthFailures.ScopeInsufficient), AuthErrorCodes.AUTH_SCOPE_INSUFFICIENT)]
+    [InlineData(
+        nameof(AuthFailures.RequestOriginUnestablished),
+        AuthErrorCodes.AUTH_REQUEST_ORIGIN_UNESTABLISHED)]
     public void ToRpcException_Every401Failure_ProducesUnauthenticatedWithCorrectErrorCode(
         string methodName,
         string expectedErrorCode)
@@ -197,6 +200,9 @@ public sealed class D2RpcStatusExtensionsTests
         nameof(AuthFailures.SessionLivenessUnavailable),
         AuthErrorCodes.AUTH_SESSION_LIVENESS_UNAVAILABLE)]
     [InlineData(nameof(AuthFailures.ScopeInsufficient), AuthErrorCodes.AUTH_SCOPE_INSUFFICIENT)]
+    [InlineData(
+        nameof(AuthFailures.RequestOriginUnestablished),
+        AuthErrorCodes.AUTH_REQUEST_ORIGIN_UNESTABLISHED)]
     public void ToRpcException_IncrementsProblemEmittedCounter(
         string methodName,
         string expectedCode)

@@ -275,9 +275,9 @@ public sealed class ErrorCodeRegistryTests
     {
         // The merged registry globs every *-error-codes.spec.json surfaced to the
         // D2.Shared.ErrorCodes.Registry build (its csproj AdditionalFiles pattern
-        // is contracts/**/*-error-codes.spec.json): 15 generic + 14 auth +
-        // 30 keycustodian = 59 total. Update if new spec entries are added.
-        const int expected_count = 59;
+        // is contracts/**/*-error-codes.spec.json): 15 generic + 15 auth +
+        // 30 keycustodian = 60 total. Update if new spec entries are added.
+        const int expected_count = 60;
         ErrorCodeRegistry.All.Count.Should().Be(expected_count);
     }
 
@@ -320,6 +320,7 @@ public sealed class ErrorCodeRegistryTests
         codes.Should().Contain(i => i.Code == "AUTH_SESSION_REVOKED");
         codes.Should().Contain(i => i.Code == "AUTH_SESSION_LIVENESS_UNAVAILABLE");
         codes.Should().Contain(i => i.Code == "AUTH_SCOPE_INSUFFICIENT");
+        codes.Should().Contain(i => i.Code == "AUTH_REQUEST_ORIGIN_UNESTABLISHED");
     }
 
     [Fact]

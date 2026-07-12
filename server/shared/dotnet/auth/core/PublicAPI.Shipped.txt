@@ -80,6 +80,7 @@ const D2.Shared.Auth.Errors.AuthErrorCodes.AUTH_JWT_ISSUER_MISMATCH = "AUTH_JWT_
 const D2.Shared.Auth.Errors.AuthErrorCodes.AUTH_JWT_KID_NOT_FOUND = "AUTH_JWT_KID_NOT_FOUND" -> string!
 const D2.Shared.Auth.Errors.AuthErrorCodes.AUTH_JWT_NOT_YET_VALID = "AUTH_JWT_NOT_YET_VALID" -> string!
 const D2.Shared.Auth.Errors.AuthErrorCodes.AUTH_JWT_SIGNATURE_INVALID = "AUTH_JWT_SIGNATURE_INVALID" -> string!
+const D2.Shared.Auth.Errors.AuthErrorCodes.AUTH_REQUEST_ORIGIN_UNESTABLISHED = "AUTH_REQUEST_ORIGIN_UNESTABLISHED" -> string!
 const D2.Shared.Auth.Errors.AuthErrorCodes.AUTH_SCOPE_INSUFFICIENT = "AUTH_SCOPE_INSUFFICIENT" -> string!
 const D2.Shared.Auth.Errors.AuthErrorCodes.AUTH_SESSION_LIVENESS_UNAVAILABLE = "AUTH_SESSION_LIVENESS_UNAVAILABLE" -> string!
 const D2.Shared.Auth.Errors.AuthErrorCodes.AUTH_SESSION_REVOKED = "AUTH_SESSION_REVOKED" -> string!
@@ -170,6 +171,7 @@ static D2.Shared.Auth.Errors.AuthFailures.JwtIssuerMismatch(System.Collections.G
 static D2.Shared.Auth.Errors.AuthFailures.JwtKidNotFound(System.Collections.Generic.IReadOnlyList<D2.Shared.I18n.TKMessage!>? messages = null) -> D2.Shared.Result.D2Result!
 static D2.Shared.Auth.Errors.AuthFailures.JwtNotYetValid(System.Collections.Generic.IReadOnlyList<D2.Shared.I18n.TKMessage!>? messages = null) -> D2.Shared.Result.D2Result!
 static D2.Shared.Auth.Errors.AuthFailures.JwtSignatureInvalid(System.Collections.Generic.IReadOnlyList<D2.Shared.I18n.TKMessage!>? messages = null) -> D2.Shared.Result.D2Result!
+static D2.Shared.Auth.Errors.AuthFailures.RequestOriginUnestablished(System.Collections.Generic.IReadOnlyList<D2.Shared.I18n.TKMessage!>? messages = null) -> D2.Shared.Result.D2Result!
 static D2.Shared.Auth.Errors.AuthFailures.ScopeInsufficient(System.Collections.Generic.IReadOnlyList<D2.Shared.I18n.TKMessage!>? messages = null) -> D2.Shared.Result.D2Result!
 static D2.Shared.Auth.Errors.AuthFailures.SessionLivenessUnavailable(System.Collections.Generic.IReadOnlyList<D2.Shared.I18n.TKMessage!>? messages = null) -> D2.Shared.Result.D2Result!
 static D2.Shared.Auth.Errors.AuthFailures.SessionLivenessUnavailable<T>(System.Collections.Generic.IReadOnlyList<D2.Shared.I18n.TKMessage!>? messages = null) -> D2.Shared.Result.D2Result<T>!
@@ -185,6 +187,7 @@ static D2.Shared.Auth.Errors.AuthFailures<T>.JwtIssuerMismatch(System.Collection
 static D2.Shared.Auth.Errors.AuthFailures<T>.JwtKidNotFound(System.Collections.Generic.IReadOnlyList<D2.Shared.I18n.TKMessage!>? messages = null) -> D2.Shared.Result.D2Result<T>!
 static D2.Shared.Auth.Errors.AuthFailures<T>.JwtNotYetValid(System.Collections.Generic.IReadOnlyList<D2.Shared.I18n.TKMessage!>? messages = null) -> D2.Shared.Result.D2Result<T>!
 static D2.Shared.Auth.Errors.AuthFailures<T>.JwtSignatureInvalid(System.Collections.Generic.IReadOnlyList<D2.Shared.I18n.TKMessage!>? messages = null) -> D2.Shared.Result.D2Result<T>!
+static D2.Shared.Auth.Errors.AuthFailures<T>.RequestOriginUnestablished(System.Collections.Generic.IReadOnlyList<D2.Shared.I18n.TKMessage!>? messages = null) -> D2.Shared.Result.D2Result<T>!
 static D2.Shared.Auth.Errors.AuthFailures<T>.ScopeInsufficient(System.Collections.Generic.IReadOnlyList<D2.Shared.I18n.TKMessage!>? messages = null) -> D2.Shared.Result.D2Result<T>!
 static D2.Shared.Auth.Errors.AuthFailures<T>.SessionLivenessUnavailable(System.Collections.Generic.IReadOnlyList<D2.Shared.I18n.TKMessage!>? messages = null) -> D2.Shared.Result.D2Result<T>!
 static D2.Shared.Auth.Errors.AuthFailures<T>.SessionRevoked(System.Collections.Generic.IReadOnlyList<D2.Shared.I18n.TKMessage!>? messages = null) -> D2.Shared.Result.D2Result<T>!

@@ -34,8 +34,9 @@ server/services/audit/
 | --- | --- |
 | DI | `AddD2AuditHost` — AuthConfigure ON, MutualTls `AllowedWorkloads=["edge"]`, public TrustAnchors, `AddD2RequestOriginGrpc(ServiceId=audit)`, Redis ParseRedisUri + backplane + tiered |
 | Pipeline | `UseD2DefaultPipeline` |
-| Map | `MapD2AuditEndpoints` — health via `MapD2DefaultEndpoints` (JWT-free) + `MapGrpcService<AuditPingService>().RequireAnyScope(Scopes.Internal.Audit.Ping)` |
-| Binds | HTTP `:8080` + mTLS HTTPS `:8443` |
+| Map | `MapD2AuditEndpoints` — health via `MapD2DefaultEndpoints` (JWT-free) on all binds; `MapGrpcService<AuditPingService>().RequireAnyScope(Scopes.Internal.Audit.Ping)` **only on mTLS :8443** via `MapWhen` |
+| Binds | HTTP `:8080` (infra health/alive/metrics only) + mTLS HTTPS `:8443` (all product gRPC) |
+| Security law | Internal service: HTTP = infra only; **all gRPC behind mTLS**; platform `RequestOrigin.Unestablished` auto-deny on product gRPC (`AddD2RequestOriginGrpc`) |
 | Issuer discovery | `KEYCUSTODIAN_APP__ISSUERBASEURL=https://d2-edge:8443` |
 
 ## Operator dual-process smoke (multiproc proof)

@@ -113,18 +113,6 @@ internal sealed class JwtAuthInterceptor : Interceptor
     private const string _AUTHORIZATION_METADATA_KEY = "authorization";
     private const string _BEARER_PREFIX = "Bearer ";
 
-    // The string-typed key under which Grpc.AspNetCore.Server's
-    // The string-keyed UserState slot historically used by older
-    // Grpc.AspNetCore.Server versions to surface the per-call HttpContext.
-    // Newer versions (2.27+) expose the same access via the canonical
-    // Grpc.Core.ServerCallContext.GetHttpContext() extension method (which
-    // casts to IServerCallContextFeature). The lookup below tries the
-    // canonical extension FIRST, falling back to the UserState slot for
-    // back-compat with hand-rolled test ServerCallContext subtypes that
-    // pre-date the IServerCallContextFeature contract (e.g. unit-test stubs
-    // in this codebase that seed UserState directly).
-    private const string _HTTP_CONTEXT_USER_STATE_KEY = "__HttpContext__";
-
     private readonly JwtValidator r_validator;
     private readonly ISessionLivenessTracker r_livenessTracker;
     private readonly ILogger<JwtAuthInterceptor> r_logger;
@@ -208,113 +196,6 @@ internal sealed class JwtAuthInterceptor : Interceptor
 
         await RunAuthAsync(context).ConfigureAwait(false);
         await continuation(requestStream, responseStream, context).ConfigureAwait(false);
-    }
-
-    private static MethodScopeMetadata? ResolveMethodScopeMetadata(ServerCallContext context)
-    {
-        // gRPC-on-AspNetCore: the canonical access path is
-        // Grpc.Core.ServerCallContextExtensions.GetHttpContext() — it casts
-        // to IServerCallContextFeature (which the production
-        // Grpc.AspNetCore.Server.HttpContextServerCallContext implements)
-        // and returns the per-call HttpContext. We MUST use this path because
-        // the older UserState["__HttpContext__"] slot is no longer populated
-        // by current Grpc.AspNetCore.Server releases. Wrapped in try/catch
-        // because the canonical extension throws when the ServerCallContext
-        // subtype doesn't implement IServerCallContextFeature (legacy hand-
-        // rolled test contexts) — in that fallback case we read the historic
-        // UserState slot directly. The matched endpoint carries the metadata
-        // collection populated by both fluent extensions AND attribute
-        // pickup during MapGrpcService<T>().
-        HttpContext? httpContext = null;
-        try
-        {
-            httpContext = context.GetHttpContext();
-        }
-        catch (InvalidOperationException)
-        {
-            // Fallback path for legacy / hand-rolled test ServerCallContext
-            // subtypes that pre-date IServerCallContextFeature.
-            if (context.UserState.TryGetValue(_HTTP_CONTEXT_USER_STATE_KEY, out var raw)
-                && raw is HttpContext h)
-            {
-                httpContext = h;
-            }
-        }
-
-        var endpoint = httpContext?.GetEndpoint();
-        if (endpoint is null)
-            return null;
-
-        // Fluent path takes precedence over attribute path (deterministic
-        // precedence: fluent > attribute > deny-by-default).
-        var fluent = endpoint.Metadata.GetMetadata<MethodScopeMetadata>();
-        if (fluent is not null)
-            return fluent;
-
-        // Attribute precedence (matches BCL [Authorize] / [AllowAnonymous]
-        // semantics): a method-level attribute overrides any class-level
-        // attribute. ASP.NET routing pickup orders metadata: class-level
-        // first, then method-level — so the LAST among all three attribute
-        // types in collection order wins. This handles:
-        //   - class-level [D2RequireAnyScope] + method-level [D2HarmlessEndpoint]
-        //     → harmless wins (method-level is last)
-        //   - class-level [D2HarmlessEndpoint] + method-level [D2RequireAllScopes]
-        //     → all-scopes wins (method-level is last)
-        //   - class-level [D2RequireAnyScope] + method-level [D2RequireAllScopes]
-        //     → all-scopes wins (method-level is last)
-        // When only one attribute type is present, it wins unconditionally.
-        return ResolveFromAttributes(endpoint);
-    }
-
-    private static MethodScopeMetadata? ResolveFromAttributes(
-        Microsoft.AspNetCore.Http.Endpoint endpoint)
-    {
-        // Walk the full metadata collection once, tracking the last index at
-        // which each of the three attribute types appears. The one with the
-        // highest index is the effective declaration (last-declared-wins, which
-        // ASP.NET metadata ordering turns into method-level-over-class-level).
-        var lastHarmlessIdx = -1;
-        var lastAnyIdx = -1;
-        var lastAllIdx = -1;
-        D2RequireAnyScopeAttribute? lastAnyAttr = null;
-        D2RequireAllScopesAttribute? lastAllAttr = null;
-
-        var index = 0;
-        foreach (var item in endpoint.Metadata)
-        {
-            if (item is D2HarmlessEndpointAttribute)
-            {
-                lastHarmlessIdx = index;
-            }
-            else if (item is D2RequireAnyScopeAttribute anyAttr)
-            {
-                lastAnyIdx = index;
-                lastAnyAttr = anyAttr;
-            }
-            else if (item is D2RequireAllScopesAttribute allAttr)
-            {
-                lastAllIdx = index;
-                lastAllAttr = allAttr;
-            }
-
-            index++;
-        }
-
-        // Nothing declared — fall through to deny-by-default (no metadata).
-        if (lastHarmlessIdx < 0 && lastAnyIdx < 0 && lastAllIdx < 0)
-            return null;
-
-        // Find the highest (last-declared) index among the three types.
-        var maxIdx = Math.Max(lastHarmlessIdx, Math.Max(lastAnyIdx, lastAllIdx));
-
-        if (maxIdx == lastHarmlessIdx)
-            return MethodScopeMetadata.HarmlessEndpoint;
-
-        if (maxIdx == lastAllIdx)
-            return MethodScopeMetadata.ForScopes(lastAllAttr!.Scopes, ScopeMatch.All);
-
-        // maxIdx == lastAnyIdx
-        return MethodScopeMetadata.ForScopes(lastAnyAttr!.Scopes, ScopeMatch.Any);
     }
 
     private static bool RequestContextHasAnyScope(
@@ -424,7 +305,7 @@ internal sealed class JwtAuthInterceptor : Interceptor
     private async ValueTask RunAuthAsync(ServerCallContext context)
     {
         var ct = context.CancellationToken;
-        var metadata = ResolveMethodScopeMetadata(context);
+        var metadata = MethodScopeMetadataResolver.TryResolve(context);
 
         // Harmless-endpoint opt-in short-circuit: skip validator + liveness entirely.
         if (metadata is { IsHarmlessEndpoint: true })
@@ -506,23 +387,9 @@ internal sealed class JwtAuthInterceptor : Interceptor
         // registered by both AddD2AuthHttp() and AddD2AuthGrpc().
         context.UserState[D2GrpcUserStateKeys.REQUEST_CONTEXT] = requestContext;
 
-        // Resolve HttpContext via the canonical extension first; fall back to
-        // the historic UserState slot for legacy hand-rolled test
-        // ServerCallContext subtypes that pre-date IServerCallContextFeature
-        // (mirrors the lookup pattern in ResolveMethodScopeMetadata).
-        HttpContext? httpContext = null;
-        try
-        {
-            httpContext = context.GetHttpContext();
-        }
-        catch (InvalidOperationException)
-        {
-            if (context.UserState.TryGetValue(_HTTP_CONTEXT_USER_STATE_KEY, out var raw)
-                && raw is HttpContext h)
-            {
-                httpContext = h;
-            }
-        }
+        // Dual-write Items via the shared HttpContext resolver (canonical
+        // feature cast + legacy UserState fallback for hand-rolled tests).
+        var httpContext = MethodScopeMetadataResolver.TryResolveHttpContext(context);
 
         if (httpContext is not null)
         {

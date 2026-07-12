@@ -48,25 +48,30 @@ This is a deliberate tiny duplicate of the HTTP adapter, not a shared type: the 
 
 > See [`../core/README.md` § Composing with siblings](../core/README.md#composing-with-siblings) for the canonical dual-transport composition pattern (fluent chain, identical `IRequestContext` resolver across both transports, HTTP-only / gRPC-only carve-outs).
 
-### Cross-process establishment — `RequestOriginCrossProcessInterceptor` + `AddD2RequestOriginGrpc()`
+### Cross-process establishment + Unestablished deny — `AddD2RequestOriginGrpc()`
 
-A second gRPC server interceptor, registered AFTER `JwtAuthInterceptor`, establishes the [`RequestOrigin.CrossProcessHop`](../abstractions/README.md#requestorigin--callpath--local-establishment-facts-vs-propagated-telemetry) plane on the same scoped `IRequestContext` the auth interceptor populated ([ADR-0025](../../../../../docs/adrs/0025-request-context-establishment.md)):
+Two gRPC server interceptors, registered AFTER `JwtAuthInterceptor` (one registration path):
+
+1. **`RequestOriginCrossProcessInterceptor`** — establishes the [`RequestOrigin.CrossProcessHop`](../abstractions/README.md#requestorigin--callpath--local-establishment-facts-vs-propagated-telemetry) plane on the same scoped `IRequestContext` the auth interceptor populated ([ADR-0025](../../../../../docs/adrs/0025-request-context-establishment.md)).
+2. **`RequestOriginUnestablishedDenyInterceptor`** — platform fail-closed deny for product gRPC when Origin is still `Unestablished` after establish (no validated mTLS peer). Harmless methods skip. Surfaces `AUTH_REQUEST_ORIGIN_UNESTABLISHED` (401 → `Unauthenticated`). Not a per-handler check.
 
 ```csharp
 services
     .AddD2Auth(opts => { /* ... */ })
     .AddD2AuthGrpc()
-    .AddD2RequestOriginGrpc(opts => opts.ServiceId = "files"); // this host's own workload id
+    .AddD2RequestOriginGrpc(opts => opts.ServiceId = "files"); // establish + deny
 ```
+
+Inbound order: `JwtAuthInterceptor` → establish → Unestablished deny.
 
 Per inbound call, `RequestOriginCrossProcessInterceptor`:
 
 1. Applies the inbound `x-d2-context` header (the propagated operational subset PLUS the inherited call-path) via `ApplyPropagatedContext`.
-2. Derives `IRequestContext.Origin` and `ImmediateCaller` ATOMICALLY from the single unforgeable local fact — the validated mutual-TLS peer certificate (`GetD2PeerWorkloadIdentity()` — reads `Connection.ClientCertificate`, never a header/claim/payload). When a peer identity is present, BOTH are set together (`Origin = RequestOrigin.CrossProcessHop`, `ImmediateCaller` = the peer id); when absent, BOTH are left unset so `Origin` stays the fail-closed `RequestOrigin.Unestablished` (every downstream authority rule denies at its first arm) and a Warning is logged so a misconfigured non-mTLS hop is observable. The contradictory "cross-process plane with no authenticated caller" state is never produced. A wire-supplied `Origin` or caller is structurally impossible: neither field is ever serialized.
+2. Derives `IRequestContext.Origin` and `ImmediateCaller` ATOMICALLY from the single unforgeable local fact — the validated mutual-TLS peer certificate (`GetD2PeerWorkloadIdentity()` — reads `Connection.ClientCertificate`, never a header/claim/payload). When a peer identity is present, BOTH are set together (`Origin = RequestOrigin.CrossProcessHop`, `ImmediateCaller` = the peer id); when absent, BOTH are left unset so `Origin` stays the fail-closed `RequestOrigin.Unestablished` and a Warning is logged. The platform deny interceptor then rejects product paths with `AUTH_REQUEST_ORIGIN_UNESTABLISHED`. A wire-supplied `Origin` or caller is structurally impossible: neither field is ever serialized.
 3. Appends this hop's OWN identity (`D2WorkloadIdentityOptions.ServiceId`) to the call-path as a `CallPathKind.WorkloadHop` entry — unconditional telemetry, structurally excluded from authority, so it runs whether or not the peer identity established the origin.
 4. Logs the received call-path's entry count.
 
-All four gRPC server-handler shapes (unary, client-streaming, server-streaming, duplex) dispatch through the single shared establishment path, so a streaming method added later cannot silently bypass it. No-op-safe when no `MutableRequestContext` is on the resolved `HttpContext.Items` slot (e.g. a harmless endpoint the auth interceptor already short-circuited). `AddD2RequestOriginGrpc()` binds `D2WorkloadIdentityOptions` with a required-`ServiceId` startup validation and registers `IClock` as `SystemClock` when the host has not already bound one (`TryAdd`); idempotent — repeat calls do not double-register the interceptor.
+All four gRPC server-handler shapes dispatch through shared establish + deny paths. No-op-safe when no `MutableRequestContext` is on the resolved `HttpContext.Items` slot for establish (e.g. harmless short-circuit); deny also skips harmless. `AddD2RequestOriginGrpc()` binds `D2WorkloadIdentityOptions` with a required-`ServiceId` startup validation and registers `IClock` as `SystemClock` when the host has not already bound one (`TryAdd`); idempotent for both interceptors.
 
 ### Per-method scope declaration
 
@@ -236,7 +241,7 @@ Every streaming method dispatches through the same auth pipeline as unary, but p
 
 ## Failure surface
 
-> See [`../core/README.md` § Failure helpers — `AuthFailures`](../core/README.md#failure-helpers--authfailures) for the canonical 14-row failure-code table (single source: [`contracts/auth-error-codes/auth-error-codes.spec.json`](../../../../../contracts/auth-error-codes/auth-error-codes.spec.json)). The gRPC interceptor maps `D2Result.StatusCode` to `Status.StatusCode` per the transport rule documented at [`../core/README.md` § Failure surface — transport status mapping](../core/README.md#failure-surface--transport-status-mapping): 401 → `Unauthenticated`, 503 → `Unavailable`, other → `Internal`. NEVER `PermissionDenied` (7) — `AUTH_SCOPE_INSUFFICIENT` also maps to `Unauthenticated` so the wire never leaks which check failed.
+> See [`../core/README.md` § Failure helpers — `AuthFailures`](../core/README.md#failure-helpers--authfailures) for the canonical 15-row failure-code table (single source: [`contracts/auth-error-codes/auth-error-codes.spec.json`](../../../../../contracts/auth-error-codes/auth-error-codes.spec.json)). The gRPC interceptor maps `D2Result.StatusCode` to `Status.StatusCode` per the transport rule documented at [`../core/README.md` § Failure surface — transport status mapping](../core/README.md#failure-surface--transport-status-mapping): 401 → `Unauthenticated`, 503 → `Unavailable`, other → `Internal`. NEVER `PermissionDenied` (7) — `AUTH_SCOPE_INSUFFICIENT` and `AUTH_REQUEST_ORIGIN_UNESTABLISHED` also map to `Unauthenticated` so the wire never leaks which check failed.
 
 ## Bearer extraction edge cases (RFC 6750 §2.1)
 
@@ -288,9 +293,10 @@ All four server-side handler methods — `UnaryServerHandler`, `ClientStreamingS
 `server/shared/dotnet/tests/Unit/Auth/Inbound/Grpc/Establishment/`:
 
 - `RequestOriginCrossProcessInterceptorTests.cs` — all four RPC-kind dispatch shapes establish `Origin = CrossProcessHop`; `ImmediateCaller` sourced ONLY from `GetD2PeerWorkloadIdentity()` (null on no certificate); inbound `x-d2-context` applied before establishment; call-path append + received-count log; no-op when no `MutableRequestContext` is present.
-- `RequestOriginGrpcServiceCollectionExtensionsTests.cs` — `D2WorkloadIdentityOptions.ServiceId` required-startup-validation; `IClock` `TryAdd`; interceptor registered exactly once across repeat calls; appears in `GrpcServiceOptions.Interceptors`.
+- `RequestOriginUnestablishedDenyInterceptorTests.cs` — all four RPC kinds deny Unestablished with `AUTH_REQUEST_ORIGIN_UNESTABLISHED` / `Unauthenticated`; missing context fail-closed; CrossProcessHop continues; Harmless skips deny.
+- `RequestOriginGrpcServiceCollectionExtensionsTests.cs` — `D2WorkloadIdentityOptions.ServiceId` required-startup-validation; `IClock` `TryAdd`; establish + deny interceptors registered once across repeat calls; Jwt → establish → deny order in `GrpcServiceOptions.Interceptors`; both interceptors `GetRequiredService`-resolvable.
 
-`server/shared/dotnet/tests/Unit/Auth/Inbound/Grpc/RequestOriginPropagationA2BIntegrationTests.cs` — a real two-process `TestServer` harness (process A's outbound `PropagatedContextClientInterceptor` → process B's inbound `RequestOriginCrossProcessInterceptor`) proving `Origin` recomputes fresh on B while `CallPath` accumulates correctly across the hop.
+`server/shared/dotnet/tests/Unit/Auth/Inbound/Grpc/RequestOriginPropagationA2BIntegrationTests.cs` — a real two-process `TestServer` harness (process A's outbound `PropagatedContextClientInterceptor` → process B's inbound establish + Unestablished deny) proving `Origin` recomputes fresh on B while `CallPath` accumulates correctly across the hop; no peer cert surfaces `AUTH_REQUEST_ORIGIN_UNESTABLISHED`.
 
 Run: `dotnet test server/shared/dotnet/tests`.
 
@@ -309,7 +315,7 @@ catch (RpcException ex)
 
 From `grpcurl`, `-v` surfaces trailer metadata at the bottom of verbose output (`Code: Unauthenticated`, `Trailers received: ...`). `d2_messages` is the same JSON-array-of-TKMessage shape as the HTTP middleware's ProblemDetails extension (`[{"key":"UNAUTHORIZED","params":{}}]`); `key` is a TK constant translated client-side; `params` carries bounded scalar substitutions only (no PII). The `traceid` trailer is the lower-hex 32-char W3C trace-id of `Activity.Current` at failure time — correlate with the server-side span in your OTel backend; the `JwtAuthInterceptor` runs inside the gRPC server-call activity so its `AuthLog` delegates and `AuthTelemetry.SR_ProblemEmitted` counter sit on the same span.
 
-For full per-code reference + remediation, see [`../core/README.md` § Debugging](../core/README.md#debugging) — the same `AUTH_*` taxonomy applies across HTTP and gRPC transports (single sink at `AuthTelemetry.SR_ProblemEmitted`). Two codes specific to gRPC bearer extraction: `AUTH_BEARER_MISSING` (no `authorization` metadata, wrong scheme, or empty after `Bearer ` — check `Metadata.Add("authorization", "Bearer " + token)` or `Grpc.Net.ClientFactory.ConfigureChannel` + `CallCredentials`); `AUTH_SCOPE_INSUFFICIENT` (bearer valid but `Scopes` set didn't satisfy method's scope requirement; `traceid` finds the matching span whose enriched logs show required-vs-presented).
+For full per-code reference + remediation, see [`../core/README.md` § Debugging](../core/README.md#debugging) — the same `AUTH_*` taxonomy applies across HTTP and gRPC transports (single sink at `AuthTelemetry.SR_ProblemEmitted`). Codes that commonly surface on gRPC: `AUTH_BEARER_MISSING` (no `authorization` metadata, wrong scheme, or empty after `Bearer ` — check `Metadata.Add("authorization", "Bearer " + token)` or `Grpc.Net.ClientFactory.ConfigureChannel` + `CallCredentials`); `AUTH_SCOPE_INSUFFICIENT` (bearer valid but `Scopes` set didn't satisfy method's scope requirement; `traceid` finds the matching span whose enriched logs show required-vs-presented); `AUTH_REQUEST_ORIGIN_UNESTABLISHED` (product gRPC after `AddD2RequestOriginGrpc` with Origin still `Unestablished` — missing / unvalidated mTLS peer; check mTLS plane bind + peer cert SPIFFE SAN, not handler code).
 
 ### `IRequestContext` dual-path resolution
 

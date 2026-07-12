@@ -221,4 +221,16 @@ public static class AuthFailures
             category: ErrorCategory.PolicyDenied);
     }
 
+    /// <summary>gRPC product call reached a host with RequestOrigin still Unestablished after the cross-process establishment interceptor (no validated mTLS peer identity). Platform fail-closed deny — not a per-handler check. Surfaces as 401 (not 403) so the auth boundary keeps a uniform shape with other policy-denied auth failures.</summary>
+    /// <param name="messages">Optional translation messages; defaults to <c>[TK.Auth.Errors.UNAUTHORIZED]</c>. Pass a message bound via <c>TKMessage.With(...)</c> to name the offending argument.</param>
+    /// <returns>A pre-built <see cref="D2Result"/> failure.</returns>
+    public static D2Result RequestOriginUnestablished(IReadOnlyList<TKMessage>? messages = null)
+    {
+        messages ??= [TK.Auth.Errors.UNAUTHORIZED];
+        return D2Result.Unauthorized(
+            messages: messages,
+            errorCode: AuthErrorCodes.AUTH_REQUEST_ORIGIN_UNESTABLISHED,
+            category: ErrorCategory.PolicyDenied);
+    }
+
 }

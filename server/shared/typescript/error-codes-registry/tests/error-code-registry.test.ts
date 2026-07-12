@@ -162,8 +162,8 @@ describe("ErrorCodeFactoryShape type — 2 schema values", () => {
 // ---------------------------------------------------------------------------
 
 describe("errorCodeRegistry — generated merged registry", () => {
-  it("all: contains the expected total count (14 auth + 15 generic + 30 keycustodian = 59)", () => {
-    expect(errorCodeRegistry.all).toHaveLength(59);
+  it("all: contains the expected total count (15 auth + 15 generic + 30 keycustodian = 60)", () => {
+    expect(errorCodeRegistry.all).toHaveLength(60);
   });
 
   it("resolve: every generic code resolves with domain 'common'", () => {
@@ -207,6 +207,7 @@ describe("errorCodeRegistry — generated merged registry", () => {
       "AUTH_SESSION_REVOKED",
       "AUTH_SESSION_LIVENESS_UNAVAILABLE",
       "AUTH_SCOPE_INSUFFICIENT",
+      "AUTH_REQUEST_ORIGIN_UNESTABLISHED",
     ];
     for (const code of authCodes) {
       const info = errorCodeRegistry.resolve(code);

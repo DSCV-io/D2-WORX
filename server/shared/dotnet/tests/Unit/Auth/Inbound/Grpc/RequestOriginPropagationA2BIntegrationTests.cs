@@ -8,18 +8,22 @@ namespace D2.Shared.Tests.Unit.Auth.Inbound.Grpc;
 
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Cryptography.X509Certificates;
 using AwesomeAssertions;
 using D2.Shared.Auth;
 using D2.Shared.Auth.Abstractions;
 using D2.Shared.Auth.Abstractions.Sessions;
+using D2.Shared.Auth.Errors;
 using D2.Shared.Auth.Grpc;
 using D2.Shared.Auth.Grpc.Endpoints;
 using D2.Shared.Auth.Grpc.Interceptors;
+using D2.Shared.Auth.Grpc.Status;
 using D2.Shared.Auth.Outbound.Grpc;
 using D2.Shared.Auth.Validation;
 using D2.Shared.Context.Abstractions;
 using D2.Shared.Tests.Unit.Auth.Inbound.Grpc.Fixtures;
 using D2.Shared.Tests.Unit.Auth.Inbound.Grpc.Protos;
+using D2.Shared.Tests.Unit.Mtls;
 using global::Grpc.Core;
 using global::Grpc.Core.Interceptors;
 using global::Grpc.Net.Client;
@@ -60,7 +64,9 @@ public sealed class RequestOriginPropagationA2BIntegrationTests
     {
         var probe = new EstablishmentProbe();
         using var jwt = new TestJwtBuilder();
-        using var host = await BuildBHostAsync(jwt, probe);
+        using var ca = new TestCertificateAuthority();
+        using var peerLeaf = ca.IssueLeaf("edge");
+        using var host = await BuildBHostAsync(jwt, probe, peerLeaf);
 
         // A's request-scoped context: an operational field + a one-entry Edge call-path.
         var aContext = new MutableRequestContext
@@ -89,12 +95,10 @@ public sealed class RequestOriginPropagationA2BIntegrationTests
 
         // Origin is recomputed FRESH at B from the transport — never taken from the wire
         // (it is not a propagated field). B derives Origin + ImmediateCaller ATOMICALLY
-        // from the mTLS peer cert; over the in-memory TestServer there is no real mTLS
-        // peer, so the peer id is null and both are left Unestablished/null (the A8
-        // fail-closed strengthening). This is consistent with the null-caller assertion
-        // below — the CrossProcessHop-with-real-peer path is proven in the interceptor
-        // unit tests.
-        probe.Origin.Should().Be(RequestOrigin.Unestablished);
+        // from the mTLS peer cert (seeded on Connection.ClientCertificate in this harness
+        // so platform Unestablished deny does not fire — real mTLS is unit-tested).
+        probe.Origin.Should().Be(RequestOrigin.CrossProcessHop);
+        probe.ImmediateCaller.Should().Be("edge");
 
         // The operational propagation subset crossed A → B.
         probe.RequestId.Should().Be("req-from-A");
@@ -102,13 +106,50 @@ public sealed class RequestOriginPropagationA2BIntegrationTests
         // The call-path shows A's hop THEN B's appended hop, oldest-first.
         probe.CallPathIds.Should().Equal("service-a", _B_SERVICE_ID);
         probe.CallPathKinds.Should().Equal(CallPathKind.Edge, CallPathKind.WorkloadHop);
-
-        // No real mTLS over the in-memory TestServer ⇒ B derives a null peer caller
-        // (fail-closed); the cert-derived caller is proven in the interceptor unit tests.
-        probe.ImmediateCaller.Should().BeNull();
     }
 
-    private static async Task<IHost> BuildBHostAsync(TestJwtBuilder jwtBuilder, EstablishmentProbe probe)
+    [Fact]
+    public async Task NoPeerCert_PlatformDeny_EmitsAuthRequestOriginUnestablished()
+    {
+        // Without a peer cert, establish leaves Origin Unestablished and the
+        // platform deny interceptor (folded into AddD2RequestOriginGrpc) fails closed
+        // before the product handler runs.
+        var probe = new EstablishmentProbe();
+        using var jwt = new TestJwtBuilder();
+        using var host = await BuildBHostAsync(jwt, probe, peerLeaf: null);
+
+        var aContext = new MutableRequestContext
+        {
+            RequestId = "req-from-A",
+            CallPath = [new CallPathEntry("service-a", CallPathKind.Edge, sr_t0.ToDateTimeOffset())],
+        };
+        using var aScope = new ServiceCollection()
+            .AddSingleton<IRequestContext>(aContext)
+            .BuildServiceProvider();
+        var ambient = new StubAmbientScope(aScope);
+
+        using var channel = CreateChannel(host);
+        var invoker = channel.Intercept(new PropagatedContextClientInterceptor(ambient));
+        var client = new TestEcho.TestEchoClient(invoker);
+        var token = jwt.MintToken(
+            _ISSUER,
+            _AUDIENCE,
+            extraClaims: new Dictionary<string, object> { ["scope"] = _SCOPE });
+        var headers = new Metadata { { "authorization", "Bearer " + token } };
+
+        var act = async () => await client.EchoAsync(new EchoRequest { Payload = "a2b" }, headers);
+
+        var ex = await act.Should().ThrowAsync<RpcException>();
+        ex.Which.StatusCode.Should().Be(StatusCode.Unauthenticated);
+        ex.Which.Trailers.GetValue(D2GrpcTrailers.ERROR_CODE)
+            .Should().Be(AuthErrorCodes.AUTH_REQUEST_ORIGIN_UNESTABLISHED);
+        probe.Observed.Should().BeFalse("product handler must not run when Origin is Unestablished");
+    }
+
+    private static async Task<IHost> BuildBHostAsync(
+        TestJwtBuilder jwtBuilder,
+        EstablishmentProbe probe,
+        X509Certificate2? peerLeaf)
     {
         var hostBuilder = new HostBuilder()
             .ConfigureWebHost(webHost =>
@@ -149,6 +190,17 @@ public sealed class RequestOriginPropagationA2BIntegrationTests
                     })
                     .Configure(app =>
                     {
+                        // Seed Connection.ClientCertificate when the harness supplies a leaf
+                        // (mTLS-without-handshake pattern used across the codebase).
+                        if (peerLeaf is not null)
+                        {
+                            app.Use(async (httpContext, next) =>
+                            {
+                                httpContext.Connection.ClientCertificate = peerLeaf;
+                                await next().ConfigureAwait(false);
+                            });
+                        }
+
                         app.UseRouting();
                         app.UseEndpoints(endpoints =>
                         {

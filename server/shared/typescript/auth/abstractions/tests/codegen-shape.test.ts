@@ -28,6 +28,7 @@ describe("AuthErrorCodes — per-VALUE pin (mirrors .NET 1:1)", () => {
     "AUTH_SESSION_REVOKED",
     "AUTH_SESSION_LIVENESS_UNAVAILABLE",
     "AUTH_SCOPE_INSUFFICIENT",
+    "AUTH_REQUEST_ORIGIN_UNESTABLISHED",
   ])("AuthErrorCodes.%s = same string", (code) => {
     expect(AuthErrorCodes[code as keyof typeof AuthErrorCodes]).toBe(code);
     expect(ALL_AUTH_ERROR_CODES).toContain(code);
@@ -36,6 +37,9 @@ describe("AuthErrorCodes — per-VALUE pin (mirrors .NET 1:1)", () => {
   it("getAuthErrorHttpStatus returns 401 for validation/policy codes", () => {
     expect(getAuthErrorHttpStatus("AUTH_BEARER_MISSING")).toBe(401);
     expect(getAuthErrorHttpStatus("AUTH_SCOPE_INSUFFICIENT")).toBe(401);
+    expect(getAuthErrorHttpStatus("AUTH_REQUEST_ORIGIN_UNESTABLISHED")).toBe(
+      401,
+    );
   });
 
   it("getAuthErrorHttpStatus returns 503 for infra codes", () => {

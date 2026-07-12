@@ -131,7 +131,7 @@ Or better, constructor-inject `IRequestContext` directly — the scoped resolver
 
 ## Failure surface
 
-> See [`../core/README.md` § Failure helpers — `AuthFailures`](../core/README.md#failure-helpers--authfailures) for the canonical 14-row failure-code table (single source: [`contracts/auth-error-codes/auth-error-codes.spec.json`](../../../../../contracts/auth-error-codes/auth-error-codes.spec.json)). HTTP renders `D2Result.StatusCode` verbatim into the RFC 7807 `status` field — no remapping. Every failure terminates with 401 or 503 ProblemDetails (NEVER 403 — see [`../core/README.md` § Failure surface — transport status mapping](../core/README.md#failure-surface--transport-status-mapping) for the cross-transport rationale).
+> See [`../core/README.md` § Failure helpers — `AuthFailures`](../core/README.md#failure-helpers--authfailures) for the canonical 15-row failure-code table (single source: [`contracts/auth-error-codes/auth-error-codes.spec.json`](../../../../../contracts/auth-error-codes/auth-error-codes.spec.json)). HTTP renders `D2Result.StatusCode` verbatim into the RFC 7807 `status` field — no remapping. Every failure terminates with 401 or 503 ProblemDetails (NEVER 403 — see [`../core/README.md` § Failure surface — transport status mapping](../core/README.md#failure-surface--transport-status-mapping) for the cross-transport rationale).
 
 ## Bearer extraction edge cases (RFC 6750 §2.1)
 

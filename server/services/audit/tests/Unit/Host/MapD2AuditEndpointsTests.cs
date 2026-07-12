@@ -41,6 +41,50 @@ public sealed class MapD2AuditEndpointsTests
         source.Should().NotContain("MarkAsD2HarmlessEndpoint");
         source.Should().NotContain("RequireAnyScope(\"");
         source.Should().NotContain("RequireAllScopes(\"");
+
+        // Product gRPC structural isolation to mTLS port via MapWhen.
+        source.Should().Contain("MapWhen");
+        source.Should().Contain("AuditHttpsRolePolicies.MTLS_HTTPS_PORT");
+        source.Should().Contain("Connection.LocalPort");
+    }
+
+    [Fact]
+    public void MapD2AuditEndpoints_Source_GrpcMapsAreInsideMtlsMapWhenBranch()
+    {
+        var path = AuditHostTestKit.ResolveAuditApiSourceFile(
+            "Composition", "AuditEndpointRouteBuilderExtensions.cs");
+        var source = File.ReadAllText(path);
+
+        // Structural isolation: MapWhen on mTLS port is the only call path into
+        // MapAuditGrpcServices (where MapGrpcService lives).
+        source.Should().Contain("app.MapWhen(");
+        source.Should().Contain("MapAuditGrpcMtlsOnly");
+        source.Should().Contain("MapAuditGrpcServices(e)");
+
+        var helperMethodIdx = source.IndexOf(
+            "private static void MapAuditGrpcServices(", StringComparison.Ordinal);
+        helperMethodIdx.Should().BeGreaterThanOrEqualTo(0);
+
+        var pingMapIdx = source.IndexOf(
+            "MapGrpcService<AuditPingService>", StringComparison.Ordinal);
+        pingMapIdx.Should().BeGreaterThan(
+            helperMethodIdx,
+            "Audit Ping MapGrpcService lives only in MapAuditGrpcServices");
+
+        var publicMapIdx = source.IndexOf(
+            "public IEndpointRouteBuilder MapD2AuditEndpoints()", StringComparison.Ordinal);
+        var mtlsOnlyCallIdx = source.IndexOf(
+            "MapAuditGrpcMtlsOnly(endpoints)", StringComparison.Ordinal);
+        publicMapIdx.Should().BeGreaterThanOrEqualTo(0);
+        mtlsOnlyCallIdx.Should().BeGreaterThan(publicMapIdx);
+
+        var between = source[publicMapIdx..mtlsOnlyCallIdx];
+        between.Should().NotContain(
+            "MapGrpcService<",
+            "public Map must not register gRPC before mTLS isolation helper");
+        between.Should().Contain(
+            "MapD2DefaultEndpoints()",
+            "health stays on the main pipeline (not stolen into mTLS-only)");
     }
 
     [Fact]
