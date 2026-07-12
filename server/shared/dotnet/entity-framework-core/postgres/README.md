@@ -15,6 +15,14 @@ Each service that owns a per-domain database registers
 replicas, and calls `ApplyD2NpgsqlDefaults` from both the DI registration and the
 design-time factory so the two paths can never drift.
 
+**Mechanism only.** Domain advisory-lock key catalogs do **not** ship from this
+package. Callers pass domain-owned generated constants (e.g.
+`AdvisoryLocks.D2Keycustodian.MIGRATOR` from `D2.Edge.KeyCustodian.Infra`) into
+`PgAdvisoryLock` / `AdvisoryLockMigrator`. The fleet catalog SoT remains
+[`contracts/advisory-locks/`](../../../../../contracts/advisory-locks/README.md);
+[`locks-source-gen`](../locks-source-gen/README.md) emits into the owning-module
+assembly.
+
 ---
 
 ## `PgAdvisoryLock`
@@ -24,14 +32,15 @@ Session-scoped PostgreSQL advisory lock helper. Opens a **dedicated**
 
 ```csharp
 // Try-acquire (non-blocking — skip if held):
+// Pass a domain-owned generated constant (example: KC Infra).
 await using var rotLock = await PgAdvisoryLock.TryAcquireSessionAsync(
-    connStr, AdvisoryLocks.D2Keycustodian.ROTATION, ct);
+    connStr, migratorLockKey /* e.g. AdvisoryLocks.D2Keycustodian.ROTATION */, ct);
 if (!rotLock.IsHeld)
     return; // another instance is rotating — skip this tick
 
 // Blocking acquire (migrator):
 await using var migLock = await PgAdvisoryLock.AcquireSessionBlockingAsync(
-    connStr, AdvisoryLocks.D2Keycustodian.MIGRATOR, ct);
+    connStr, migratorLockKey /* e.g. AdvisoryLocks.D2Keycustodian.MIGRATOR */, ct);
 // migLock.IsHeld is always true after this returns
 ```
 
@@ -56,13 +65,10 @@ services.AddSingleton<AdvisoryLockMigrator<MyDbContext>>(sp =>
     new AdvisoryLockMigrator<MyDbContext>(
         sp.GetRequiredService<IServiceScopeFactory>(),
         connectionString,
-        AdvisoryLocks.MyDb.MIGRATOR,
+        migratorLockKey, // domain-owned generated AdvisoryLocks.{Db}.MIGRATOR
         sp.GetRequiredService<ILogger<AdvisoryLockMigrator<MyDbContext>>>()));
 services.AddHostedService<AdvisoryLockMigrator<MyDbContext>>();
 ```
-
-Alternatively, use `AddD2AdvisoryLockMigrator<TContext>` if available from a higher-level
-DI registration helper.
 
 The migrator is **fail-fast**: a bad migration throws, crash-looping the host so the
 problem surfaces immediately rather than starting with a corrupt schema.
@@ -100,31 +106,14 @@ runtime DI lambda AND the design-time factory so neither path can drift.
 
 ---
 
-## `AdvisoryLocks` (generated)
-
-The `AdvisoryLocks` static class is emitted by
-`D2.Shared.AdvisoryLocks.SourceGen` from
-`contracts/advisory-locks/advisory-locks.spec.json` into this assembly at build time.
-It provides `public const long` lock keys partitioned by database:
-
-```csharp
-AdvisoryLocks.D2Keycustodian.MIGRATOR  // 1001001001L
-AdvisoryLocks.D2Keycustodian.ROTATION  // 2002002002L
-```
-
-The source generator enforces per-database key uniqueness at build time — a duplicate key
-within the same database is a build error. See the
-[locks-source-gen README](../locks-source-gen/README.md) for the diagnostic table.
-
----
-
 ## Configuration
 
 No configuration of its own. Consumers supply:
 - `connectionString` — the Npgsql connection string (e.g. from `MY_DATABASE_URL`).
 - `commandTimeoutSeconds` — per-command timeout (seconds).
 - `migrationsAssemblyName` — assembly holding the EF Core migrations.
-- `migratorLockKey` — advisory lock bigint key for the migrator (from `AdvisoryLocks`).
+- `migratorLockKey` — advisory lock bigint key for the migrator (domain-owned
+  generated `AdvisoryLocks.*` constant from the owning module assembly).
 
 ---
 

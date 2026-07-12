@@ -28,6 +28,7 @@ using D2.Edge.KeyCustodian.App.Infrastructure.Vault;
 using D2.Edge.KeyCustodian.Client.CaCertificate;
 using D2.Edge.KeyCustodian.Client.Issuance;
 using D2.Edge.KeyCustodian.Client.Signing;
+using D2.Edge.KeyCustodian.Infra;
 using D2.Edge.KeyCustodian.Infra.Persistence.Postgres;
 using D2.Edge.Tests.Unit.KeyCustodian.App.Fixtures;
 using D2.Shared.Context.Abstractions;

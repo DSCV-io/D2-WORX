@@ -26,17 +26,17 @@ using Xunit;
 /// </summary>
 public sealed class AdvisoryLocksOutputParityTests
 {
-    private const string _ASSEMBLY = "D2.Shared.EntityFrameworkCore.Postgres";
+    private const string _ASSEMBLY = "D2.Edge.KeyCustodian.Infra";
     private const string _SPEC_FILE_NAME = "advisory-locks.spec.json";
 
     private static readonly string sr_generatedBase =
         Path.Combine(
             TestPaths.RepoRoot(),
             "server",
-            "shared",
-            "dotnet",
-            "entity-framework-core",
-            "postgres",
+            "services",
+            "edge",
+            "key-custodian",
+            "infra",
             "Generated",
             "D2.Shared.AdvisoryLocks.SourceGen",
             "D2.Shared.AdvisoryLocks.SourceGen.AdvisoryLocksGenerator");

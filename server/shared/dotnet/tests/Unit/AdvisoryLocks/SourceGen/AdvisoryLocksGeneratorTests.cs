@@ -46,7 +46,7 @@ public sealed class AdvisoryLocksGeneratorTests
     public void Generator_TargetAssemblyWithSpec_EmitsAdvisoryLocksGeneratedSource()
     {
         var driver = RunGenerator(
-            assemblyName: "D2.Shared.EntityFrameworkCore.Postgres",
+            assemblyName: "D2.Edge.KeyCustodian.Infra",
             specJson: _SAMPLE_SPEC);
 
         var result = driver.GetRunResult();
@@ -69,7 +69,7 @@ public sealed class AdvisoryLocksGeneratorTests
     public void Generator_TargetAssemblyButNoSpec_EmitsNothing()
     {
         var driver = RunGenerator(
-            assemblyName: "D2.Shared.EntityFrameworkCore.Postgres",
+            assemblyName: "D2.Edge.KeyCustodian.Infra",
             specJson: null);
 
         driver.GetRunResult().GeneratedTrees.Should().BeEmpty();
@@ -83,7 +83,7 @@ public sealed class AdvisoryLocksGeneratorTests
     public void Generator_MalformedSpec_EmitsMalformedSpecDiagnostic()
     {
         var driver = RunGenerator(
-            assemblyName: "D2.Shared.EntityFrameworkCore.Postgres",
+            assemblyName: "D2.Edge.KeyCustodian.Infra",
             specJson: "{bad json");
 
         var result = driver.GetRunResult();
@@ -104,7 +104,7 @@ public sealed class AdvisoryLocksGeneratorTests
             """;
 
         var driver = RunGenerator(
-            assemblyName: "D2.Shared.EntityFrameworkCore.Postgres",
+            assemblyName: "D2.Edge.KeyCustodian.Infra",
             specJson: spec);
 
         driver.GetRunResult().Diagnostics.Should()
@@ -119,7 +119,7 @@ public sealed class AdvisoryLocksGeneratorTests
     public void Generator_RunTwice_SameInputs_ProducesIdenticalOutput()
     {
         var first = RunGenerator(
-                assemblyName: "D2.Shared.EntityFrameworkCore.Postgres",
+                assemblyName: "D2.Edge.KeyCustodian.Infra",
                 specJson: _SAMPLE_SPEC)
             .GetRunResult().GeneratedTrees
             .OrderBy(t => t.FilePath)
@@ -127,7 +127,7 @@ public sealed class AdvisoryLocksGeneratorTests
             .ToList();
 
         var second = RunGenerator(
-                assemblyName: "D2.Shared.EntityFrameworkCore.Postgres",
+                assemblyName: "D2.Edge.KeyCustodian.Infra",
                 specJson: _SAMPLE_SPEC)
             .GetRunResult().GeneratedTrees
             .OrderBy(t => t.FilePath)

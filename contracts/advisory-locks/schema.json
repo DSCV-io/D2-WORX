@@ -1,7 +1,7 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "D2 advisory locks spec",
-  "description": "Schema for contracts/advisory-locks/advisory-locks.spec.json — the source-of-truth catalog of PostgreSQL session advisory lock keys. Each entry declares a named lock with an explicit bigint key and the database it belongs to. A Roslyn source generator emits AdvisoryLocks into D2.Shared.EntityFrameworkCore.Postgres and enforces per-database key uniqueness at build time.",
+  "description": "Schema for contracts/advisory-locks/advisory-locks.spec.json — the source-of-truth catalog of PostgreSQL session advisory lock keys. Each entry declares a named lock with an explicit bigint key and the database it belongs to. A Roslyn source generator (D2.Shared.AdvisoryLocks.SourceGen) emits AdvisoryLocks into the owning-module assembly (currently D2.Edge.KeyCustodian.Infra) and enforces per-database key uniqueness at build time. Shared Postgres owns mechanism only.",
   "type": "object",
   "required": ["locks"],
   "additionalProperties": false,

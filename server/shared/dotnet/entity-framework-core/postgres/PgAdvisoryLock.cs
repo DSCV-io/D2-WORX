@@ -32,8 +32,9 @@ using Npgsql;
 /// connection lifetime continuity — reconnect = lock lost.
 /// </para>
 /// <para>
-/// Keys are caller-supplied <see cref="long"/> values. Use the spec-generated
-/// <c>AdvisoryLocks.D2Keycustodian.*</c> constants to avoid raw literals.
+/// Keys are caller-supplied <see cref="long"/> values. Use domain-owned
+/// generated <c>AdvisoryLocks.*</c> constants (emitted into the owning module
+/// assembly from <c>contracts/advisory-locks/</c>) to avoid raw literals.
 /// </para>
 /// </remarks>
 [MustDisposeResource]

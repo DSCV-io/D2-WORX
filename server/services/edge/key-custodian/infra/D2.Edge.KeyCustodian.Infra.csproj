@@ -4,7 +4,25 @@ Copyright (c) DCSV. All rights reserved.
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <RootNamespace>D2.Edge.KeyCustodian.Infra</RootNamespace>
+
+    <!--
+      Emit the locks-source-gen AdvisoryLocks.g.cs (domain lock-key catalog) to
+      <project-dir>/Generated/. Tracked in git so PR reviewers see codegen diffs
+      without a local build. LoggerMessage.g.cs under the same tree is gitignored.
+    -->
+    <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
+    <CompilerGeneratedFilesOutputPath>Generated</CompilerGeneratedFilesOutputPath>
   </PropertyGroup>
+
+  <ItemGroup>
+    <!--
+      The SourceGen pipeline feeds the in-memory compiler with the same content
+      that lands on disk under Generated/. Without this Remove, the SDK-default
+      <Compile Include="**/*.cs" /> glob picks up the on-disk copy and the build
+      fails with duplicate-definition errors (CS0101 / CS0111).
+    -->
+    <Compile Remove="$(CompilerGeneratedFilesOutputPath)\**\*.cs" />
+  </ItemGroup>
 
   <!--
     Infrastructure — the concrete adapters for the App-owned ports.
@@ -17,9 +35,27 @@ Copyright (c) DCSV. All rights reserved.
     KeyRotatedEvent wire mapper. Scheduling/Hosted: KeyRotationService.
     Observability: KeyCustodianInfraLog + KeyCustodianHealthCheck. Configuration:
     KeyCustodianInfraOptions + the AddD2KeyCustodian(...) composition seam. The
-    shared startup migrator + advisory lock come from
-    D2.Shared.EntityFrameworkCore.Postgres.
+    shared startup migrator + advisory lock mechanism come from
+    D2.Shared.EntityFrameworkCore.Postgres; this assembly owns the generated
+    AdvisoryLocks.D2Keycustodian.* domain lock-key catalog (central fleet catalog
+    SoT: contracts/advisory-locks/).
   -->
+
+  <ItemGroup>
+    <!--
+      Domain advisory-lock key catalog — spec-driven source-gen. Emits
+      AdvisoryLocks.g.cs into THIS assembly only (single-target dispatch on
+      assembly name). Shared Postgres owns mechanism only.
+    -->
+    <ProjectReference
+      Include="..\..\..\..\shared\dotnet\entity-framework-core\locks-source-gen\D2.Shared.AdvisoryLocks.SourceGen.csproj"
+      OutputItemType="Analyzer"
+      ReferenceOutputAssembly="false" />
+    <!-- AdditionalFiles wiring: the central fleet catalog is loaded by the
+         generator. $(D2ContractsRoot) is set in server/Directory.Build.props. -->
+    <AdditionalFiles
+      Include="$(D2ContractsRoot)advisory-locks\advisory-locks.spec.json" />
+  </ItemGroup>
 
   <ItemGroup>
     <!--
@@ -91,8 +127,8 @@ Copyright (c) DCSV. All rights reserved.
     <!--
       D2.Shared.EntityFrameworkCore.Postgres — the shared PG/EF startup machinery:
       PgAdvisoryLock + AdvisoryLockMigrator<TContext> + DesignTimeDbContextFactoryBase
-      + the NpgsqlContextDefaults applier + the generated AdvisoryLocks.D2Keycustodian.*
-      lock-key registry. KC consumes these; it implements none of them.
+      + the NpgsqlContextDefaults applier. Mechanism only — domain lock keys are
+      emitted into THIS assembly by locks-source-gen (see Analyzer ref above).
     -->
     <ProjectReference Include="..\..\..\..\shared\dotnet\entity-framework-core\postgres\D2.Shared.EntityFrameworkCore.Postgres.csproj" />
   </ItemGroup>

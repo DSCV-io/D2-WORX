@@ -243,8 +243,8 @@ Copyright (c) DCSV. All rights reserved.
     <!--
       D2.Shared.EntityFrameworkCore.Postgres — PostgreSQL-specific EF Core startup
       machinery: PgAdvisoryLock, AdvisoryLockMigrator<TContext>,
-      DesignTimeDbContextFactoryBase<TContext>, NpgsqlContextDefaults. Also hosts
-      the spec-generated AdvisoryLocks key registry (emitted by locks-source-gen).
+      DesignTimeDbContextFactoryBase<TContext>, NpgsqlContextDefaults (mechanism
+      only). Domain AdvisoryLocks catalogs emit into owning-module assemblies.
       Integration tests live in Integration/SharedEntityFrameworkCorePostgres/.
     -->
     <ProjectReference Include="..\entity-framework-core\postgres\D2.Shared.EntityFrameworkCore.Postgres.csproj" />

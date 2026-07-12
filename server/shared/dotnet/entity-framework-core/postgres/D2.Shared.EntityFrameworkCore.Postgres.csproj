@@ -5,9 +5,9 @@ Copyright (c) DCSV. All rights reserved.
   <PropertyGroup>
     <RootNamespace>D2.Shared.EntityFrameworkCore.Postgres</RootNamespace>
 
-    <!-- Emit the SourceGen output (AdvisoryLocks.g.cs) to <project-dir>/Generated/.
-         The directory is tracked in git so PR reviewers see codegen diffs without a
-         local build. -->
+    <!-- Emit LoggerMessage generator output to <project-dir>/Generated/.
+         Domain lock-key catalog (AdvisoryLocks) no longer emits here — see
+         D2.Edge.KeyCustodian.Infra + locks-source-gen. -->
     <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
     <CompilerGeneratedFilesOutputPath>Generated</CompilerGeneratedFilesOutputPath>
   </PropertyGroup>
@@ -33,25 +33,12 @@ Copyright (c) DCSV. All rights reserved.
     AddD2NodaTime + CommandTimeout + MigrationsAssembly, deliberately NO
     EnableRetryOnFailure).
 
-    The AdvisoryLocks static class (the spec-driven lock-key registry) is emitted
-    into THIS assembly by D2.Shared.AdvisoryLocks.SourceGen when the assembly name
-    matches D2.Shared.EntityFrameworkCore.Postgres. Consumers reach lock keys as
-    AdvisoryLocks.D2Keycustodian.MIGRATOR etc. and pass them to PgAdvisoryLock.
+    Domain advisory-lock key catalogs do NOT ship from this package. Callers pass
+    domain-owned generated constants (e.g. AdvisoryLocks.D2Keycustodian.MIGRATOR
+    from D2.Edge.KeyCustodian.Infra) into PgAdvisoryLock / AdvisoryLockMigrator.
+    The fleet catalog SoT remains contracts/advisory-locks/; locks-source-gen
+    emits into the owning-module assembly.
   -->
-
-  <ItemGroup>
-    <!-- Advisory-lock key registry — spec-driven source-gen. Emits AdvisoryLocks.g.cs
-         into this assembly only (single-target dispatch on assembly name). -->
-    <ProjectReference
-      Include="..\locks-source-gen\D2.Shared.AdvisoryLocks.SourceGen.csproj"
-      OutputItemType="Analyzer"
-      ReferenceOutputAssembly="false" />
-    <!-- AdditionalFiles wiring: the spec is loaded by the generator above.
-         $(D2ContractsRoot) is set in server/Directory.Build.props so the path
-         never uses ../ walking. -->
-    <AdditionalFiles
-      Include="$(D2ContractsRoot)advisory-locks\advisory-locks.spec.json" />
-  </ItemGroup>
 
   <ItemGroup>
     <!-- D2.Shared.Time — AddD2NodaTime() lives in D2.Shared.Time.EfCore and is

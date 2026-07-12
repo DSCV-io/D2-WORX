@@ -17,11 +17,16 @@ the spec-driven registry of PostgreSQL session advisory lock keys — from
 
 ## What this emits
 
-When the consuming assembly is `D2.Shared.EntityFrameworkCore.Postgres`, the generator
-emits `AdvisoryLocks.g.cs` containing one nested `public static class` per database,
+**Current sole destination:** `D2.Edge.KeyCustodian.Infra` (single-target dispatch on
+assembly name). Shared Postgres owns the **mechanism** only (`PgAdvisoryLock`,
+migrator); domain lock-key catalogs live with the owning module.
+
+When the consuming assembly matches the target, the generator emits
+`AdvisoryLocks.g.cs` containing one nested `public static class` per database,
 each holding `public const long` members per declared lock.
 
 ```csharp
+// namespace D2.Edge.KeyCustodian.Infra;
 public static class AdvisoryLocks
 {
     /// <summary>Advisory locks owned by d2-keycustodian.</summary>
@@ -32,12 +37,21 @@ public static class AdvisoryLocks
 
         /// <summary>Try-lock guarding unattended rotation ticks …</summary>
         public const long ROTATION = 2002002002L;
+
+        /// <summary>Try-lock guarding startup CA seeding …</summary>
+        public const long CA_SEED = 4004004004L;
     }
 }
 ```
 
 Consumers reach a lock key as `AdvisoryLocks.D2Keycustodian.MIGRATOR`, which makes the
 database affinity visible in the type system.
+
+## Central catalog + uniqueness
+
+The fleet catalog SoT remains `contracts/advisory-locks/advisory-locks.spec.json`
+(not a per-module private list). Uniqueness diagnostics run against the **full**
+catalog whenever the target assembly builds.
 
 ## Why spec-drive this
 
@@ -55,6 +69,14 @@ The uniqueness check is scoped to each database:
 - Duplicate `constName` **within** the same `database` → `D2LCK002` (build error).
 - The **same `key` value** in **two different `database` entries** → **no diagnostic**
   (different keyspaces; each database's advisory lock namespace is independent).
+
+## Extension when a second domain gains locks
+
+Today only `d2-keycustodian` appears in the catalog, so a hard single-target retarget
+to KC Infra is sufficient. When a second database gains locks, upgrade the generator to
+multi-target (or a per-destination MSBuild filter via `AnalyzerConfigOptions` /
+`build_property`) so foreign nests never ship on the wrong owning assembly. Full-catalog
+uniqueness already covers fleet collisions on every gen of the current single target.
 
 ## No TypeScript emitter
 

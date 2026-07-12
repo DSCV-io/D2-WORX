@@ -21,7 +21,7 @@ using D2.Shared.SourceGen;
 internal static class AdvisoryLocksEmitter
 {
     /// <summary>The namespace the <c>AdvisoryLocks</c> static class lives in.</summary>
-    public const string ROOT_NAMESPACE = "D2.Shared.EntityFrameworkCore.Postgres";
+    public const string ROOT_NAMESPACE = "D2.Edge.KeyCustodian.Infra";
 
     /// <summary>The emitted top-level class name.</summary>
     public const string CLASS_NAME = "AdvisoryLocks";
