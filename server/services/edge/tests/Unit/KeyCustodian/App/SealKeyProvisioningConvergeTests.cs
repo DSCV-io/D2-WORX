@@ -292,8 +292,10 @@ public sealed class SealKeyProvisioningConvergeTests
             return await base.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         }
 
-        private async Task<string> SeedWinnerOnSiblingAsync(CancellationToken ct)
+        private async Task<string> SeedWinnerOnSiblingAsync(CancellationToken cancellationToken)
         {
+            // cancellationToken reserved for sibling seed path when SeedKeyAsync gains CT.
+            _ = cancellationToken;
             await using var sibling = CreateShared(r_dbName, r_root);
 
             return await KcAppTestKit.SeedKeyAsync(

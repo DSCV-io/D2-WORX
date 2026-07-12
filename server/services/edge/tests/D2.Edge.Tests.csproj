@@ -161,6 +161,8 @@ Copyright (c) DCSV. All rights reserved.
   </ItemGroup>
 
   <ItemGroup>
+    <!-- Edge host composition root — production well-known routes + AddD2EdgeHost. -->
+    <ProjectReference Include="..\api\D2.Edge.Api.csproj" />
     <ProjectReference Include="..\key-custodian\domain\D2.Edge.KeyCustodian.Domain.csproj" />
     <ProjectReference Include="..\key-custodian\app\D2.Edge.KeyCustodian.App.csproj" />
     <ProjectReference Include="..\key-custodian\client\D2.Edge.KeyCustodian.Client.csproj" />
@@ -257,85 +259,13 @@ Copyright (c) DCSV. All rights reserved.
               ProtoRoot="$(MSBuildThisFileDirectory)"
               AdditionalImportDirs="$(D2ContractsRoot)protos" />
     <!--
-      Real KeyCustodian sign proto — the FIRST real (non-fixture) gRPC wire surface
-      (key-custodian.tsp sign op; package d2.keycustodian.v2alpha, csharp_namespace
-      D2.Services.Protos.KeyCustodian.V2Alpha). Generates the KeyCustodianSigner service
-      base + SignRequest/SignResponse/SignOutput messages. The generated
-      KeyCustodianSignerService delegates to IKeyCustodianApi.SignAsync; hosted via
-      MapGrpcService<T>() + dialed via the generated stub in GrpcSignerServiceTests. The
-      live host wiring (the Edge composition root mapping + the cross-process client) is
-      deferred until the Edge host exists; the serving plane is TestServer-proven here. Compiled in Both mode; the
-      D2ResultProto type still comes solely from the D2.Shared.Result.Grpc ProjectReference
-      above (this proto's import "common/v1/d2_result.proto" resolves via the same
-      AdditionalImportDirs proto_path; no second d2_result.proto Protobuf include).
-    -->
-    <Protobuf Include="$(MSBuildThisFileDirectory)Unit/KeyCustodian/TypeSpecGrpc/Protos/key_custodian_signer_sign.g.proto"
-              GrpcServices="Both"
-              ProtoRoot="$(MSBuildThisFileDirectory)"
-              AdditionalImportDirs="$(D2ContractsRoot)protos" />
-    <!--
-      Real KeyCustodian keyring proto — PROMOTED: its <Protobuf> compilation now
-      lives in D2.Edge.KeyCustodian.Client (GrpcServices="Both"), which this test project
-      references. The keyring client stub, the wire messages
-      (D2.Services.Protos.KeyCustodian.V2Alpha.*), AND the server base its generated
-      KeyCustodianKeyringService extends all come from that project — so the messages
-      compile EXACTLY ONCE. Re-adding a keyring <Protobuf> item here would double-generate
-      the messages (CS0433). The .g.proto file itself still lives under
-      Unit/KeyCustodian/TypeSpecGrpc/Protos/ (the emitter's output location) — only the
-      compilation moved.
-    -->
-    <!--
-      Real KeyCustodian certificate-authority issuance proto — the workload leaf-issuance
-      wire surface (key-custodian.tsp issueLeaf op; wire method IssueWorkloadCertificate;
-      package d2.keycustodian.v2alpha, csharp_namespace
-      D2.Services.Protos.KeyCustodian.V2Alpha — a DISTINCT service
-      KeyCustodianCertificateAuthority). CSR bytes in, leaf + issuing-intermediate DER out —
-      all-public material (the leaf private key never crosses the wire). Generates the
-      KeyCustodianCertificateAuthority service base + IssueWorkloadCertificateRequest/
-      IssueWorkloadCertificateResponse/IssueLeafOutput messages. The generated
-      KeyCustodianCertificateAuthorityService delegates to IKeyCustodianApi.IssueLeafAsync;
-      hosted via MapGrpcService<T>() + dialed via the generated stub in
-      GrpcCertificateAuthorityServiceTests. The live host wiring is deferred until the Edge
-      host exists; the serving plane is TestServer-proven here. Compiled in Both mode; the
-      D2ResultProto type still comes solely from the D2.Shared.Result.Grpc ProjectReference
-      above (same AdditionalImportDirs proto_path resolution; no second d2_result.proto
-      Protobuf include).
-    -->
-    <Protobuf Include="$(MSBuildThisFileDirectory)Unit/KeyCustodian/TypeSpecGrpc/Protos/key_custodian_certificate_authority_issue_workload_certificate.g.proto"
-              GrpcServices="Both"
-              ProtoRoot="$(MSBuildThisFileDirectory)"
-              AdditionalImportDirs="$(D2ContractsRoot)protos" />
-    <!--
-      Real KeyCustodian CA-certificate proto — the trust-anchor distribution wire surface
-      (key-custodian.tsp getCaCertificate op; package d2.keycustodian.v2alpha,
-      csharp_namespace D2.Services.Protos.KeyCustodian.V2Alpha — a DISTINCT service
-      KeyCustodianCaCertificate; one gRPC service per op so each service carries its own
-      transport scope policy). Empty request in, root + issuing-intermediate DER out
-      (public trust material). Generates the KeyCustodianCaCertificate service base +
-      GetCaCertificateRequest/GetCaCertificateResponse/GetCaCertificateOutput messages.
-      The generated KeyCustodianCaCertificateService delegates to
-      IKeyCustodianApi.GetCaCertificateAsync; hosted via MapGrpcService<T>() + dialed via
-      the generated stub in GrpcCertificateAuthorityServiceTests. The live host wiring is
-      deferred until the Edge host exists; the serving plane is TestServer-proven here.
-      Compiled in Both mode; the D2ResultProto type still comes solely from the
-      D2.Shared.Result.Grpc ProjectReference above (same AdditionalImportDirs proto_path
-      resolution; no second d2_result.proto Protobuf include).
-    -->
-    <Protobuf Include="$(MSBuildThisFileDirectory)Unit/KeyCustodian/TypeSpecGrpc/Protos/key_custodian_ca_certificate_get_ca_certificate.g.proto"
-              GrpcServices="Both"
-              ProtoRoot="$(MSBuildThisFileDirectory)"
-              AdditionalImportDirs="$(D2ContractsRoot)protos" />
-    <!--
-      Real KeyCustodian sealing gRPC protos — getOrLazyProvisionSealPublicKey +
-      getOrLazyProvisionOwnSealPrivateKey — PROMOTED (like keyring): their <Protobuf>
-      compilation now lives in D2.Edge.KeyCustodian.Client (GrpcServices="Both"), which
-      this test project references, so the KC-backed sealer/opener consumer runtime can
-      dial them cross-process. The generated seal services in this tree
-      (KeyCustodianSealPublicKeyService / KeyCustodianOwnSealPrivateKeyService) extend the
-      server base compiled in the Client package; the seal client stubs + wire messages
-      (in D2.Services.Protos.KeyCustodian.V2Alpha) compile EXACTLY ONCE there. Re-adding a
-      seal <Protobuf> item here would double-generate the messages (CS0433). See the
-      keyring precedent above.
+      Production KeyCustodian protos — NOT compiled here (compile-once law):
+        Edge.Api Both: sign / issueLeaf / getCaCertificate (Protos/KeyCustodian/)
+        Client Both: keyring + seal public + own seal private (same physical protos)
+      Thin *Service.g.cs + *TransportMappers.g.cs live under Edge.Api
+      (Grpc/KeyCustodian + Mappers/KeyCustodian). Tests ProjectReference Edge.Api
+      (+ Client for keyring/seal stubs). Re-adding any production key_custodian_*
+      <Protobuf> item here would CS0433.
     -->
     <!--
       Second TypeSpec gRPC fixture proto — the enum-string-field bridge fixture

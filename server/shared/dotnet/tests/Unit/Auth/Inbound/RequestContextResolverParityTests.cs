@@ -8,6 +8,7 @@ namespace D2.Shared.Tests.Unit.Auth.Inbound;
 
 using AwesomeAssertions;
 using D2.Shared.Auth;
+using D2.Shared.Auth.Abstractions;
 using D2.Shared.Auth.Abstractions.Http;
 using D2.Shared.Auth.Grpc;
 using D2.Shared.Auth.Http;
@@ -48,35 +49,50 @@ public sealed class RequestContextResolverParityTests
     }
 
     [Fact]
-    public void HttpAndGrpc_EmptySlot_BothThrow()
+    public void HttpAndGrpc_EmptySlot_BothFallThroughToUnestablishedMutable()
     {
-        var httpAct = () => ResolveUnder(c => c.AddD2AuthHttp(), seedSlot: null);
-        var grpcAct = () => ResolveUnder(c => c.AddD2AuthGrpc(), seedSlot: null);
+        // Dual-path: missing Items slot → scoped Mutable (Unestablished).
+        // Both transports must stay parity-equivalent (no throw-only path).
+        var httpResolved = ResolveUnder(c => c.AddD2AuthHttp(), seedSlot: null);
+        var grpcResolved = ResolveUnder(c => c.AddD2AuthGrpc(), seedSlot: null);
 
-        httpAct.Should().Throw<InvalidOperationException>();
-        grpcAct.Should().Throw<InvalidOperationException>();
+        httpResolved.Should().BeOfType<MutableRequestContext>();
+        grpcResolved.Should().BeOfType<MutableRequestContext>();
+        httpResolved.Origin.Should().Be(RequestOrigin.Unestablished);
+        grpcResolved.Origin.Should().Be(RequestOrigin.Unestablished);
+        grpcResolved.Origin.Should().Be(httpResolved.Origin);
     }
 
     [Fact]
-    public void HttpAndGrpc_AbsentHttpContext_BothThrow()
+    public void HttpAndGrpc_AbsentHttpContext_BothFallThroughToUnestablishedMutable()
     {
-        var httpAct = () => ResolveWithoutHttpContext(c => c.AddD2AuthHttp());
-        var grpcAct = () => ResolveWithoutHttpContext(c => c.AddD2AuthGrpc());
+        // Dual-path: no HttpContext (System workers / pre-pipeline) → scoped
+        // Mutable. Both transports must stay parity-equivalent.
+        var httpResolved = ResolveWithoutHttpContext(c => c.AddD2AuthHttp());
+        var grpcResolved = ResolveWithoutHttpContext(c => c.AddD2AuthGrpc());
 
-        httpAct.Should().Throw<InvalidOperationException>();
-        grpcAct.Should().Throw<InvalidOperationException>();
+        httpResolved.Should().BeOfType<MutableRequestContext>();
+        grpcResolved.Should().BeOfType<MutableRequestContext>();
+        httpResolved.Origin.Should().Be(RequestOrigin.Unestablished);
+        grpcResolved.Origin.Should().Be(RequestOrigin.Unestablished);
+        grpcResolved.Origin.Should().Be(httpResolved.Origin);
     }
 
     [Fact]
-    public void HttpAndGrpc_WrongTypeInSlot_BothThrow()
+    public void HttpAndGrpc_WrongTypeInSlot_BothFallThroughToUnestablishedMutable()
     {
-        var httpAct = () => ResolveUnder(
+        // Dual-path: wrong type in Items slot is ignored → scoped Mutable.
+        // Both transports must stay parity-equivalent.
+        var httpResolved = ResolveUnder(
             c => c.AddD2AuthHttp(), seedSlot: "not-a-request-context");
-        var grpcAct = () => ResolveUnder(
+        var grpcResolved = ResolveUnder(
             c => c.AddD2AuthGrpc(), seedSlot: "not-a-request-context");
 
-        httpAct.Should().Throw<InvalidOperationException>();
-        grpcAct.Should().Throw<InvalidOperationException>();
+        httpResolved.Should().BeOfType<MutableRequestContext>();
+        grpcResolved.Should().BeOfType<MutableRequestContext>();
+        httpResolved.Origin.Should().Be(RequestOrigin.Unestablished);
+        grpcResolved.Origin.Should().Be(RequestOrigin.Unestablished);
+        grpcResolved.Origin.Should().Be(httpResolved.Origin);
     }
 
     private static IRequestContext ResolveUnder(

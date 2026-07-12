@@ -34,8 +34,10 @@ internal static class SignFixtureTransportMappers
         internal SignFixtureResponse ToProtoResponse()
         {
             var response = new SignFixtureResponse { Result = result.ToProto() };
+
             if (result.IsOk && result.Data is not null)
                 response.Data = result.Data.ToProtoSignFixtureOutput();
+
             return response;
         }
     }

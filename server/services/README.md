@@ -13,7 +13,7 @@ Copyright (c) DCSV. All rights reserved.
 | Service                                     | Purpose                                                                                                                                                                                                      |
 | ------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | [`edge/`](edge/README.md)                   | The unified gateway. YARP routing + self-rolled Auth module (the internal trust boundary — mints the one internal transaction-token forwarded unchanged downstream, with mTLS workload identity; RFC 8693 retained as the boundary-mint + exception tool) + KeyCustodian (long-lived-secret lifecycle + internal mTLS certificate authority) + SignalR hubs + in-process WhoIs (IPinfo) + all cross-cutting middleware. Single public ingress. |
-| [`audit/`](audit/README.md)                 | Append-only audit store. Consumes `d2.audit.events` from RabbitMQ (encrypted); writes to `audit_db` with INSERT-only role. Different retention + access control from operational data.                       |
+| [`audit/`](audit/README.md)                 | **Multiproc stub host** (standalone) — Edge gRPC bridge + NIE `PingAudit` path live; product append-only store / RMQ consumer / `d2-audit` INSERT role is OUT OF SCOPE (tracked on the product roadmap). See [`audit/README.md`](audit/README.md). |
 | [`courier/`](courier/README.md)             | Pure outbound delivery — email + SMS. Markdown content rendered to HTML via Markdig; brand chrome via Razor.                                                                                                 |
 | [`notifications/`](notifications/README.md) | In-app activity feed. Persistent feed entries with read/unread, pagination, aggregation. Consumes `d2.notifications.requests` events; calls Edge's SignalR push API for live delivery.                       |
 | [`files/`](files/README.md)                 | File management + processing + variants. SeaweedFS for storage. ClamAV virus scanning (fail-closed). Per-context-key config.                                                                                 |
@@ -35,7 +35,7 @@ server/services/{service}/
 ## Conventions
 
 - **Folder naming**: lowercase outer (`edge/`, `api/`, `app/`)
-- **Project naming**: PascalCase dot-separated (`D2.Edge.API.csproj` lives in `edge/api/`)
+- **Project naming**: PascalCase dot-separated (`D2.Edge.Api.csproj` lives in `edge/api/`)
 - **One per-op folder** under `Application/Handlers/{Commands,Queries}/<Op>/` per [ADR-0020](../../docs/adrs/0020-service-project-structure.md)
 - **Every service + project has a `README.md`**
 
@@ -43,7 +43,7 @@ server/services/{service}/
 
 ```bash
 dotnet build server/D2.slnx                                                        # full solution
-dotnet build server/services/edge/api/D2.Edge.API.csproj                           # single project
+dotnet build server/services/edge/api/D2.Edge.Api.csproj                           # single project
 dotnet test server/services/edge/tests --no-build --configuration Release          # service tests
 ```
 

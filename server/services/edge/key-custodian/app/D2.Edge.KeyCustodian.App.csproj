@@ -79,6 +79,16 @@ Copyright (c) DCSV. All rights reserved.
       explicitly ("declare what you use").
     -->
     <ProjectReference Include="..\..\..\..\shared\dotnet\context\abstractions\D2.Shared.Context.Abstractions.csproj" />
+    <!--
+      D2.Shared.Auth.Abstractions — IJwksProvider + JwksKeySetSnapshot for the
+      issuer-host in-process JWKS provider (replaces HttpJwksProvider on Edge only).
+    -->
+    <ProjectReference Include="..\..\..\..\shared\dotnet\auth\abstractions\D2.Shared.Auth.Abstractions.csproj" />
+    <!--
+      D2.Shared.Resilience — Singleflight dedupes concurrent in-process JWKS refreshes
+      (rotation backplane + reactive unknown-kid).
+    -->
+    <ProjectReference Include="..\..\..\..\shared\dotnet\resilience\D2.Shared.Resilience.csproj" />
   </ItemGroup>
 
   <ItemGroup>

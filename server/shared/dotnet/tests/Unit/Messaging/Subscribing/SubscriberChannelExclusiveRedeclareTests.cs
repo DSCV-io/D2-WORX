@@ -85,7 +85,13 @@ public sealed class SubscriberChannelExclusiveRedeclareTests
         autoDelete.Should().BeTrue();
 
         // Main exchange + DLX declared before primary queue (DefaultTopologyDeclarer order).
-        channel.ExchangeDeclares.Should().Contain(e => e.Exchange == exchange);
+        var mainExchange = channel.ExchangeDeclares.Should().Contain(
+            e => e.Exchange == exchange).Subject;
+
+        mainExchange.Type.Should().NotBeNullOrEmpty();
+        mainExchange.Durable.Should().BeTrue("main exchange is durable by DefaultTopologyDeclarer");
+        mainExchange.AutoDelete.Should().BeFalse();
+
         channel.ExchangeDeclares.Should().Contain(
             e => e.Exchange == DlqNaming.DlxFor(queue) && e.Type == ExchangeType.Fanout);
 
@@ -95,6 +101,7 @@ public sealed class SubscriberChannelExclusiveRedeclareTests
         primaryDeclare.Durable.Should().Be(durable);
         primaryDeclare.Exclusive.Should().Be(exclusive);
         primaryDeclare.AutoDelete.Should().Be(autoDelete);
+
         primaryDeclare.Arguments.Should().ContainKey("x-dead-letter-exchange")
             .WhoseValue.Should().Be(DlqNaming.DlxFor(queue));
 
@@ -464,10 +471,12 @@ public sealed class SubscriberChannelExclusiveRedeclareTests
         public Task CloseAsync(ShutdownEventArgs reason, bool abort) => Task.CompletedTask;
 
 #pragma warning disable CS0618 // obsolete CloseAsync overload still on IChannel
+        // Non-optional ct so this overload does not hide the two-arg form
+        // (inspectcode: method with optional parameter is hidden by overload).
         public Task CloseAsync(
             ShutdownEventArgs reason,
             bool abort,
-            CancellationToken cancellationToken = default)
+            CancellationToken cancellationToken)
             => Task.CompletedTask;
 #pragma warning restore CS0618
 

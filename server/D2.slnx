@@ -250,6 +250,18 @@ Copyright (c) DCSV. All rights reserved.
   </Folder>
   <Folder Name="/services/" />
   <Folder Name="/services/edge/" />
+  <Folder Name="/services/edge/domain/">
+    <Project Path="services/edge/domain/D2.Edge.Domain.csproj" />
+  </Folder>
+  <Folder Name="/services/edge/app/">
+    <Project Path="services/edge/app/D2.Edge.App.csproj" />
+  </Folder>
+  <Folder Name="/services/edge/infra/">
+    <Project Path="services/edge/infra/D2.Edge.Infra.csproj" />
+  </Folder>
+  <Folder Name="/services/edge/api/">
+    <Project Path="services/edge/api/D2.Edge.Api.csproj" />
+  </Folder>
   <Folder Name="/services/edge/key-custodian/domain/">
     <Project Path="services/edge/key-custodian/domain/D2.Edge.KeyCustodian.Domain.csproj" />
   </Folder>
@@ -268,4 +280,24 @@ Copyright (c) DCSV. All rights reserved.
   <Folder Name="/services/edge/tests/">
     <Project Path="services/edge/tests/D2.Edge.Tests.csproj" />
   </Folder>
+  <Folder Name="/services/audit/" />
+  <Folder Name="/services/audit/domain/">
+    <Project Path="services/audit/domain/D2.Audit.Domain.csproj" />
+  </Folder>
+  <Folder Name="/services/audit/app/">
+    <Project Path="services/audit/app/D2.Audit.App.csproj" />
+  </Folder>
+  <Folder Name="/services/audit/infra/">
+    <Project Path="services/audit/infra/D2.Audit.Infra.csproj" />
+  </Folder>
+  <Folder Name="/services/audit/api/">
+    <Project Path="services/audit/api/D2.Audit.Api.csproj" />
+  </Folder>
+  <Folder Name="/services/audit/clients/dotnet/">
+    <Project Path="services/audit/clients/dotnet/D2.Audit.Client.csproj" />
+  </Folder>
+  <Folder Name="/services/audit/tests/">
+    <Project Path="services/audit/tests/D2.Audit.Tests.csproj" />
+  </Folder>
 </Solution>
+

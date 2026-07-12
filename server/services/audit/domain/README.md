@@ -1,0 +1,11 @@
+<!--
+Copyright (c) DCSV. All rights reserved.
+-->
+
+# D2.Audit.Domain
+
+> **Status: NOT IMPLEMENTED — tracked at [docs/v2/V2.md](../../../../docs/v2/V2.md) (product Audit domain)**
+
+Thin Domain shell for the Audit standalone service (ADR-0020). Pure domain types only — no EF, Options, DI, logging, or vendor SDK.
+
+**Present multiproc stub:** empty shell. Product aggregates / sum-type audit events are OUT OF SCOPE on this host.

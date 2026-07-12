@@ -43,6 +43,7 @@ public static class SealingConsumerServiceCollectionExtensions
         public IServiceCollection AddD2SealedEncryptionFromKeyCustodian(
             string ownServiceId, string callingModuleId)
         {
+            // §5.1a carve-out: plain reference-type null-guard — no present-but-falsey.
             ArgumentNullException.ThrowIfNull(services);
             ownServiceId.ThrowIfFalsey();
             callingModuleId.ThrowIfFalsey();

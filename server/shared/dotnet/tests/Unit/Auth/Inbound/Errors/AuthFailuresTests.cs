@@ -44,6 +44,9 @@ public sealed class AuthFailuresTests
         AuthErrorCodes.AUTH_JWT_ACT_CHAIN_MALFORMED)]
     [InlineData(nameof(AuthFailures.JwtKidNotFound), AuthErrorCodes.AUTH_JWT_KID_NOT_FOUND)]
     [InlineData(nameof(AuthFailures.SessionRevoked), AuthErrorCodes.AUTH_SESSION_REVOKED)]
+    [InlineData(
+        nameof(AuthFailures.RequestOriginUnestablished),
+        AuthErrorCodes.AUTH_REQUEST_ORIGIN_UNESTABLISHED)]
     public void UnauthorizedHelpers_Have401AndExpectedErrorCodeAndUnauthorizedTkKey(
         string methodName,
         string expectedErrorCode)
@@ -108,6 +111,9 @@ public sealed class AuthFailuresTests
     [InlineData(nameof(AuthFailures.JwtKidNotFound), ErrorCategory.ValidationFailure)]
     [InlineData(nameof(AuthFailures.SessionRevoked), ErrorCategory.PolicyDenied)]
     [InlineData(nameof(AuthFailures.ScopeInsufficient), ErrorCategory.PolicyDenied)]
+    [InlineData(
+        nameof(AuthFailures.RequestOriginUnestablished),
+        ErrorCategory.PolicyDenied)]
     [InlineData(nameof(AuthFailures.JwksUnavailable), ErrorCategory.InfrastructureUnavailable)]
     [InlineData(
         nameof(AuthFailures.SessionLivenessUnavailable),
@@ -119,7 +125,7 @@ public sealed class AuthFailuresTests
         // The auth code's category OVERRIDES the base factory's default — e.g.
         // BearerMissing delegates to Unauthorized (whose own UNAUTHORIZED code
         // is policy_denied) but stamps validation_failure (its own category).
-        // Covers all 14 factories: 10 validation_failure, 2 policy_denied,
+        // Covers all 15 factories: 10 validation_failure, 3 policy_denied,
         // 2 infrastructure_unavailable.
         var method = typeof(AuthFailures)
             .GetMethods(BindingFlags.Public | BindingFlags.Static)

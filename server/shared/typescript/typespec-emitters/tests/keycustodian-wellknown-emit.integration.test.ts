@@ -55,6 +55,10 @@ const KC_OPTIONS = {
   "proto-package": "d2.keycustodian.v2alpha",
   "proto-csharp-namespace": "D2.Services.Protos.KeyCustodian.V2Alpha",
   "grpc-service-namespace": "D2.Edge.KeyCustodian.Client.Grpc",
+  "process-kind-by-module": { KeyCustodian: "edge-module" },
+  "csharp-routes-namespace": {
+    KeyCustodian: "D2.Edge.Api.Routes.KeyCustodian",
+  },
 };
 
 const _REPO = findRepoRoot(import.meta.url);
@@ -130,6 +134,7 @@ describe("keyCustodianWellKnown_RealTspCompile", () => {
   it("getJwks → harmless MapGet at /.well-known/jwks.json delegating to IKeyCustodianApi", () => {
     const route = getEmittedFile(host, "GetJwksRouteRegistration.g.cs");
     expect(route).toBeDefined();
+    expect(route).toContain("namespace D2.Edge.Api.Routes.KeyCustodian;");
     expect(route).toContain("MapGet(");
     expect(route).toContain('"/.well-known/jwks.json"');
     expect(route).toContain("MarkAsD2HarmlessEndpoint()");
@@ -236,11 +241,9 @@ describe("keyCustodianWellKnown_ByteGate_CommittedArtifactsIdentical", () => {
         "server",
         "services",
         "edge",
-        "tests",
-        "Unit",
+        "api",
+        "Routes",
         "KeyCustodian",
-        "WellKnown",
-        "Generated",
         "GetJwksRouteRegistration.g.cs",
       ],
     },
@@ -250,11 +253,9 @@ describe("keyCustodianWellKnown_ByteGate_CommittedArtifactsIdentical", () => {
         "server",
         "services",
         "edge",
-        "tests",
-        "Unit",
+        "api",
+        "Routes",
         "KeyCustodian",
-        "WellKnown",
-        "Generated",
         "GetOidcConfigurationRouteRegistration.g.cs",
       ],
     },
@@ -284,4 +285,56 @@ describe("keyCustodianWellKnown_ByteGate_CommittedArtifactsIdentical", () => {
       );
     });
   }
+
+  // Deliberate-drift non-vacuity: mutate committed route fixture by one token
+  // and prove the byte gate would fail (not a tautology comparing a buffer to itself).
+  // Fail-without-fix (§2.3): without these not.toBe(drifted) assertions the
+  // byte-identical cases alone can pass vacuously (buffer compared to itself);
+  // remove the drift negatives and the §1.20 non-vacuity pin is gone.
+  it("deliberate-drift: mutated GetJwksRouteRegistration does not match emitted", () => {
+    const emitted = getEmittedFile(host, "GetJwksRouteRegistration.g.cs");
+    expect(emitted).toBeDefined();
+    const committed = stripSpecBanner(
+      readCommitted(
+        "server",
+        "services",
+        "edge",
+        "api",
+        "Routes",
+        "KeyCustodian",
+        "GetJwksRouteRegistration.g.cs",
+      ),
+    );
+    const drifted = committed.replace(
+      "namespace D2.Edge.Api.Routes.KeyCustodian;",
+      "namespace D2.Edge.Api.Routes.Drifted;",
+    );
+    expect(drifted).not.toBe(committed);
+    expect(stripSpecBanner(emitted!)).not.toBe(drifted);
+  });
+
+  it("deliberate-drift: mutated GetOidcConfigurationRouteRegistration does not match emitted", () => {
+    const emitted = getEmittedFile(
+      host,
+      "GetOidcConfigurationRouteRegistration.g.cs",
+    );
+    expect(emitted).toBeDefined();
+    const committed = stripSpecBanner(
+      readCommitted(
+        "server",
+        "services",
+        "edge",
+        "api",
+        "Routes",
+        "KeyCustodian",
+        "GetOidcConfigurationRouteRegistration.g.cs",
+      ),
+    );
+    const drifted = committed.replace(
+      "MapGetOidcConfigurationRoute",
+      "MapGetOidcConfigurationRouteDrifted",
+    );
+    expect(drifted).not.toBe(committed);
+    expect(stripSpecBanner(emitted!)).not.toBe(drifted);
+  });
 });

@@ -80,5 +80,17 @@ namespace D2.Shared.Auth.Grpc.Telemetry
                 __CrossProcessPeerIdentityAbsentCallback(logger, selfServiceId, null);
             }
         }
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.Extensions.Logging.Generators", "10.0.14.21808")]
+        private static readonly global::System.Action<global::Microsoft.Extensions.Logging.ILogger, global::System.Exception?> __RequestOriginUnestablishedDeniedCallback =
+            global::Microsoft.Extensions.Logging.LoggerMessage.Define(global::Microsoft.Extensions.Logging.LogLevel.Warning, new global::Microsoft.Extensions.Logging.EventId(4106, nameof(RequestOriginUnestablishedDenied)), "gRPC product call denied: RequestOrigin is Unestablished after cross-process establishment (no validated mTLS peer). Emitting AUTH_REQUEST_ORIGIN_UNESTABLISHED.", new global::Microsoft.Extensions.Logging.LogDefineOptions() { SkipEnabledCheck = true }); 
+
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.Extensions.Logging.Generators", "10.0.14.21808")]
+        public static partial void RequestOriginUnestablishedDenied(this global::Microsoft.Extensions.Logging.ILogger logger)
+        {
+            if (logger.IsEnabled(global::Microsoft.Extensions.Logging.LogLevel.Warning))
+            {
+                __RequestOriginUnestablishedDeniedCallback(logger, null);
+            }
+        }
     }
 }

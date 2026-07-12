@@ -116,6 +116,7 @@ D2.Shared.Auth.Abstractions.Scopes.Auth.User.Impersonate
 D2.Shared.Auth.Abstractions.Scopes.Billing
 D2.Shared.Auth.Abstractions.Scopes.Billing.Payment
 D2.Shared.Auth.Abstractions.Scopes.Internal
+D2.Shared.Auth.Abstractions.Scopes.Internal.Audit
 D2.Shared.Auth.Abstractions.Scopes.Internal.Kc
 D2.Shared.Auth.Abstractions.Scopes.Internal.Kc.Seal
 D2.Shared.Auth.Abstractions.Scopes.Self
@@ -153,6 +154,7 @@ const D2.Shared.Auth.Abstractions.Scopes.Auth.Password.Change = "auth.password.c
 const D2.Shared.Auth.Abstractions.Scopes.Auth.User.Impersonate.Consent = "auth.user.impersonate.consent" -> string!
 const D2.Shared.Auth.Abstractions.Scopes.Auth.User.Impersonate.Force = "auth.user.impersonate.force" -> string!
 const D2.Shared.Auth.Abstractions.Scopes.Billing.Payment.Charge = "billing.payment.charge" -> string!
+const D2.Shared.Auth.Abstractions.Scopes.Internal.Audit.Ping = "internal.audit.ping" -> string!
 const D2.Shared.Auth.Abstractions.Scopes.Internal.Kc.Cacert = "internal.kc.cacert" -> string!
 const D2.Shared.Auth.Abstractions.Scopes.Internal.Kc.Issue = "internal.kc.issue" -> string!
 const D2.Shared.Auth.Abstractions.Scopes.Internal.Kc.Keyring = "internal.kc.keyring" -> string!

@@ -11,4 +11,8 @@ Keep a Changelog, and this package adheres to Semantic Versioning.
 
 ### Added
 
+- Always wires `AddD2SystemWorkPlane()` (platform System work entry + default
+  scoped `IRequestContext`) so hosted System workers work with or without auth
+  auto-wiring.
+
 ### Fixed

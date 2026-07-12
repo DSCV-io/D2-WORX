@@ -52,6 +52,7 @@ public sealed class DlqTests
     {
         TestCollector.Reset<AlwaysThrowsHandler>();
         var queue = "dlq.thr." + Guid.NewGuid().ToString("N")[..8];
+        var marker = "boom-" + Guid.NewGuid().ToString("N")[..8];
 
         using var host = await StartHostAsync(services =>
         {
@@ -60,16 +61,32 @@ public sealed class DlqTests
                 IntegrationSubscriptionFactory.ForAuditEvent(queue, prefetch: 5));
         });
 
+        // Re-seed after host start so a parallel unit ClearCache cannot leave
+        // fixture descriptors missing for this publish.
+        IntegrationMessageFixtures.EnsureRegistered();
+
         // Publish — handler throws — message gets nack'd to DLQ.
         await using (var scope = host.Services.CreateAsyncScope())
         {
             var bus = scope.ServiceProvider.GetRequiredService<IMessageBus>();
-            await bus.PublishAsync(new IntegrationAuditEvent { Marker = "boom" });
+            var publish = await bus.PublishAsync(
+                new IntegrationAuditEvent { Marker = marker });
+            publish.Failed.Should().BeFalse(
+                "publish must succeed before waiting for handler/DLQ delivery");
         }
 
-        // Wait for handler to be invoked (it threw).
+        // Wait for THIS test's delivery (marker-filtered; Count alone is racy
+        // against collector Reset and ConcurrentBag.Count approximation).
         await WaitFor(
-            () => TestCollector.Count<AlwaysThrowsHandler>() > 0);
+            () => TestCollector
+                .Captured<AlwaysThrowsHandler, IntegrationAuditEvent>()
+                .Any(m => m.Marker == marker),
+            detail: () =>
+                $"HandlerThrows marker={marker}; queue={queue}; "
+                + $"collectorCount={TestCollector.Count<AlwaysThrowsHandler>()}; "
+                + $"markers=[{string.Join(",", TestCollector
+                    .Captured<AlwaysThrowsHandler, IntegrationAuditEvent>()
+                    .Select(m => m.Marker ?? "<null>"))}]");
 
         // Wait for the message to surface in the DLQ. RabbitMQ's
         // dead-lettering is asynchronous from the consumer's NACK.
@@ -83,6 +100,7 @@ public sealed class DlqTests
     {
         TestCollector.Reset<AlwaysFailsHandler>();
         var queue = "dlq.fail." + Guid.NewGuid().ToString("N")[..8];
+        var marker = "fail-result-" + Guid.NewGuid().ToString("N")[..8];
 
         using var host = await StartHostAsync(services =>
         {
@@ -91,14 +109,32 @@ public sealed class DlqTests
                 IntegrationSubscriptionFactory.ForAuditEvent(queue, prefetch: 5));
         });
 
+        // Re-seed after host start so a parallel unit ClearCache cannot leave
+        // fixture descriptors missing for this publish (same race class as
+        // IntegrationMessageFixtures / PublishConsumeRoundTripTests).
+        IntegrationMessageFixtures.EnsureRegistered();
+
         await using (var scope = host.Services.CreateAsyncScope())
         {
             var bus = scope.ServiceProvider.GetRequiredService<IMessageBus>();
-            await bus.PublishAsync(new IntegrationAuditEvent { Marker = "fail-result" });
+            var publish = await bus.PublishAsync(
+                new IntegrationAuditEvent { Marker = marker });
+            publish.Failed.Should().BeFalse(
+                "publish must succeed before waiting for handler/DLQ delivery");
         }
 
+        // Marker-filtered wait: Count alone can race with collector Reset if a
+        // prior host's late delivery lands on AlwaysFailsHandler after Reset.
         await WaitFor(
-            () => TestCollector.Count<AlwaysFailsHandler>() > 0);
+            () => TestCollector
+                .Captured<AlwaysFailsHandler, IntegrationAuditEvent>()
+                .Any(m => m.Marker == marker),
+            detail: () =>
+                $"HandlerReturnsFailure marker={marker}; queue={queue}; "
+                + $"collectorCount={TestCollector.Count<AlwaysFailsHandler>()}; "
+                + $"markers=[{string.Join(",", TestCollector
+                    .Captured<AlwaysFailsHandler, IntegrationAuditEvent>()
+                    .Select(m => m.Marker ?? "<null>"))}]");
 
         var dlqName = DlqNaming.DlqFor(queue);
         await WaitForQueueCount(dlqName, expected: 1);
@@ -114,6 +150,7 @@ public sealed class DlqTests
         // → broker x-dead-letter-exchange routes a copy without our diagnostic header).
         TestCollector.Reset<AlwaysThrowsHandler>();
         var queue = "dlq.hdr." + Guid.NewGuid().ToString("N")[..8];
+        var marker = "header-test-" + Guid.NewGuid().ToString("N")[..8];
 
         using var host = await StartHostAsync(services =>
         {
@@ -122,14 +159,24 @@ public sealed class DlqTests
                 IntegrationSubscriptionFactory.ForAuditEvent(queue, prefetch: 5));
         });
 
+        IntegrationMessageFixtures.EnsureRegistered();
+
         await using (var scope = host.Services.CreateAsyncScope())
         {
             var bus = scope.ServiceProvider.GetRequiredService<IMessageBus>();
-            await bus.PublishAsync(new IntegrationAuditEvent { Marker = "header-test" });
+            var publish = await bus.PublishAsync(
+                new IntegrationAuditEvent { Marker = marker });
+            publish.Failed.Should().BeFalse(
+                "publish must succeed before waiting for handler/DLQ delivery");
         }
 
         await WaitFor(
-            () => TestCollector.Count<AlwaysThrowsHandler>() > 0);
+            () => TestCollector
+                .Captured<AlwaysThrowsHandler, IntegrationAuditEvent>()
+                .Any(m => m.Marker == marker),
+            detail: () =>
+                $"DlqHeader marker={marker}; queue={queue}; "
+                + $"collectorCount={TestCollector.Count<AlwaysThrowsHandler>()}");
 
         var dlqName = DlqNaming.DlqFor(queue);
         await WaitForQueueCount(dlqName, expected: 1);
@@ -194,7 +241,9 @@ public sealed class DlqTests
 
     // Attempt-budgeted stuck-guard — see _POLL_ATTEMPT_BUDGET; no wall-clock deadline.
     private static async Task WaitFor(
-        Func<bool> predicate, TimeSpan? pollInterval = null)
+        Func<bool> predicate,
+        TimeSpan? pollInterval = null,
+        Func<string>? detail = null)
     {
         pollInterval ??= TimeSpan.FromMilliseconds(50);
         for (var attempt = 0; attempt < _POLL_ATTEMPT_BUDGET; attempt++)
@@ -203,8 +252,10 @@ public sealed class DlqTests
             await Task.Delay(pollInterval.Value);
         }
 
+        var suffix = detail is null ? string.Empty : " " + detail();
         throw new TimeoutException(
-            $"Predicate did not become true within {_POLL_ATTEMPT_BUDGET} poll attempts.");
+            $"Predicate did not become true within {_POLL_ATTEMPT_BUDGET} poll attempts."
+            + suffix);
     }
 
     private async Task<IHost> StartHostAsync(Action<IServiceCollection> configure)

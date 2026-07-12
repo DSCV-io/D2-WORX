@@ -59,6 +59,12 @@
       "grantedTo": { "Customer": ["Owner"] }
     },
     {
+      "name": "internal.audit.ping",
+      "description": "Call the Audit multiproc S2S Ping surface (internal service-to-service). Gates Edge→Audit dual-factor JWT+mTLS hop for the standalone Audit host bridge.",
+      "actionSensitivity": "Routine",
+      "impersonationBlocked": true
+    },
+    {
       "name": "internal.kc.sign",
       "description": "Sign a payload with a KeyCustodian-managed signing key (internal service-to-service / in-process minter).",
       "actionSensitivity": "Critical",

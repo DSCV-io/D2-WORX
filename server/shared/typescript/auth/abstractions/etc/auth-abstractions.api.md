@@ -32,6 +32,7 @@ export const AuthErrorCodes: {
     readonly AUTH_JWT_KID_NOT_FOUND: "AUTH_JWT_KID_NOT_FOUND";
     readonly AUTH_JWT_NOT_YET_VALID: "AUTH_JWT_NOT_YET_VALID";
     readonly AUTH_JWT_SIGNATURE_INVALID: "AUTH_JWT_SIGNATURE_INVALID";
+    readonly AUTH_REQUEST_ORIGIN_UNESTABLISHED: "AUTH_REQUEST_ORIGIN_UNESTABLISHED";
     readonly AUTH_SCOPE_INSUFFICIENT: "AUTH_SCOPE_INSUFFICIENT";
     readonly AUTH_SESSION_LIVENESS_UNAVAILABLE: "AUTH_SESSION_LIVENESS_UNAVAILABLE";
     readonly AUTH_SESSION_REVOKED: "AUTH_SESSION_REVOKED";
@@ -80,6 +81,10 @@ export const AuthFailures: {
         traceId?: string;
     }) => D2Result<T>;
     readonly jwtSignatureInvalid: <T = void>(opts?: {
+        messages?: readonly TKMessage[];
+        traceId?: string;
+    }) => D2Result<T>;
+    readonly requestOriginUnestablished: <T = void>(opts?: {
         messages?: readonly TKMessage[];
         traceId?: string;
     }) => D2Result<T>;
@@ -186,6 +191,9 @@ export const Scopes: {
         };
     };
     readonly internal: {
+        readonly audit: {
+            readonly ping: "internal.audit.ping";
+        };
         readonly kc: {
             readonly cacert: "internal.kc.cacert";
             readonly issue: "internal.kc.issue";

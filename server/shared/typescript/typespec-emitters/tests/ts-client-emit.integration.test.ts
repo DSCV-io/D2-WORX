@@ -53,11 +53,22 @@ function getEmittedFile(
 
 // Real-module options — csClientsNamespace gates gRPC-client collection; the TS
 // gRPC client reuses that collection. The REST client collects unconditionally.
+// Routed ops also need process-kind-by-module + csharp-routes-namespace (or
+// csharp-bridge-namespace for standalone) keyed by the op's @d2ServedBy.
 const REAL_MODULE_OPTIONS = {
   "csharp-namespace": "D2.Test",
   "csharp-clients-namespace": "D2.Edge.KeyCustodian.Client",
   "csharp-app-namespace-base": "D2.Edge.KeyCustodian.App.Application.Handlers",
 };
+
+function edgeModuleRouting(servedBy: string): Record<string, unknown> {
+  return {
+    "process-kind-by-module": { [servedBy]: "edge-module" },
+    "csharp-routes-namespace": {
+      [servedBy]: `D2.Edge.Api.Routes.${servedBy}`,
+    },
+  };
+}
 
 describe("tsClientEmitIntegration_GrpcClient_DispatchedForGrpcOp", () => {
   let host: Awaited<ReturnType<typeof createTestHost>>;
@@ -100,7 +111,12 @@ describe("tsClientEmitIntegration_GrpcClient_DispatchedForGrpcOp", () => {
 
     await host.compile("main.tsp", {
       emit: ["@d2/typespec-emitters"],
-      options: { "@d2/typespec-emitters": REAL_MODULE_OPTIONS },
+      options: {
+        "@d2/typespec-emitters": {
+          ...REAL_MODULE_OPTIONS,
+          ...edgeModuleRouting("SignFixture"),
+        },
+      },
       outputDir: "testing:/out",
     });
 
@@ -297,6 +313,7 @@ describe("tsClientEmitIntegration_RestOnlyOp_NoGrpcClient", () => {
         "@d2/typespec-emitters": {
           ...REAL_MODULE_OPTIONS,
           "csharp-clients-namespace": "D2.Edge.Accounts.Clients",
+          ...edgeModuleRouting("Accounts"),
         },
       },
       outputDir: "testing:/out",

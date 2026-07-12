@@ -9,6 +9,7 @@ namespace D2.Edge.Tests.Unit.KeyCustodian.WellKnown;
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
+using D2.Edge.Api.Routes.KeyCustodian;
 using D2.Edge.KeyCustodian.App.Application.Facade;
 using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.GetOrLazyProvisionOwnSealPrivateKey;
 using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.GetOrLazyProvisionSealPublicKey;
@@ -18,7 +19,6 @@ using D2.Edge.KeyCustodian.App.Application.Handlers.Queries.GetCaCertificate;
 using D2.Edge.KeyCustodian.App.Application.Handlers.Queries.GetKeyring;
 using D2.Edge.KeyCustodian.App.Application.Handlers.Queries.Sign;
 using D2.Edge.KeyCustodian.App.Application.Issuance;
-using D2.Edge.KeyCustodian.App.Application.Routes;
 using D2.Edge.KeyCustodian.App.Infrastructure.Vault;
 using D2.Edge.KeyCustodian.Client.Facade;
 using D2.Edge.KeyCustodian.Client.Jwks;
@@ -64,6 +64,7 @@ public sealed class WellKnownRouteTests
             KeyStatus.Active,
             created,
             activatedAt: created + Duration.FromHours(2));
+
         var retiringKid = await KcAppTestKit.SeedKeyAsync(
             db,
             crypto,
@@ -262,6 +263,7 @@ public sealed class WellKnownRouteTests
                         services.AddKeyedSingleton(
                             KeyCustodianRootKey.ROOT_SERVICE_KEY,
                             KcAppTestKit.BuildTestRootCrypto());
+
                         services.AddSingleton<ISigningDomainAuthorityPolicy>(
                             new OptionsSigningDomainAuthorityPolicy(
                                 Options.Create(new SigningDomainAuthorityOptions())));
@@ -281,22 +283,31 @@ public sealed class WellKnownRouteTests
                         services.AddD2CaLeafSigningCapability();
                         services.AddSingleton<D2.Shared.Time.IClock>(
                             new TestClock(KcAppTestKit.SR_BaseInstant));
+
                         services.AddSingleton(KcAppTestKit.NullClassifier());
                         services.AddTransient<
-                            IIssueWorkloadCertificateHandler, IssueWorkloadCertificateHandler>();
+                            IIssueWorkloadCertificateHandler,
+                            IssueWorkloadCertificateHandler>();
+
                         services.AddTransient<IIssueLeafHandler, IssueLeafHandler>();
                         services.AddTransient<
-                            IGetCaCertificateHandler, GetCaCertificateHandler>();
+                            IGetCaCertificateHandler,
+                            GetCaCertificateHandler>();
 
                         // The façade ctor also requires the two seal handlers (never invoked
                         // by the well-known routes) plus their shared rotation-policy provider,
                         // so IKeyCustodianApi resolves.
                         services.AddSingleton<
-                            IRotationPolicyProvider, OptionsRotationPolicyProvider>();
+                            IRotationPolicyProvider,
+                            OptionsRotationPolicyProvider>();
+
                         services.AddTransient<
-                            IGetOrLazyProvisionSealPublicKeyHandler, GetOrLazyProvisionSealPublicKeyHandler>();
+                            IGetOrLazyProvisionSealPublicKeyHandler,
+                            GetOrLazyProvisionSealPublicKeyHandler>();
+
                         services.AddTransient<
-                            IGetOrLazyProvisionOwnSealPrivateKeyHandler, GetOrLazyProvisionOwnSealPrivateKeyHandler>();
+                            IGetOrLazyProvisionOwnSealPrivateKeyHandler,
+                            GetOrLazyProvisionOwnSealPrivateKeyHandler>();
 
                         services.AddTransient<IKeyCustodianApi, KeyCustodianApi>();
                     })

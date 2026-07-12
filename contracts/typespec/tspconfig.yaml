@@ -2,81 +2,29 @@
 # Copyright (c) DCSV. All rights reserved.
 # -----------------------------------------------------------------------
 #
-# Root TypeSpec compiler configuration for contracts/typespec/.
+# RETIRED as a live-module compile unit (pointer only — use per-module tspconfig).
 #
-# Invokes @d2/typespec-emitters for C# DTO + TS DTO emission.
+# Per-module packages own emit options beside their .tsp files:
+#   contracts/typespec/key-custodian/tspconfig.yaml  — KeyCustodian + co-fixtures
+#   contracts/typespec/audit/tspconfig.yaml          — Audit standalone multiproc stub
 #
-# Output placement:
-#   tsp compile writes all artifacts to dist/generated/ (inside the emitter
-#   package build output). Committed C# fixtures are independently byte-pinned
-#   snapshots; they are NOT written directly by tsp compile. After a content-
-#   changing emitter edit, run `pnpm --filter @d2/typespec-emitters regen` (or
-#   `node tools/scripts/regen-typespec-emitters.mjs` from the repo root) to
-#   scatter updated files to their committed homes. See:
-#   "Regenerating the committed fixtures" in
-#   server/shared/typescript/typespec-emitters/README.md.
+# Regen runs N× (tsp compile packageᵢ + COPY_MANIFEST subset for packageᵢ)
+# via tools/scripts/regen-typespec-emitters.mjs — never use this root file as
+# the primary compile entry (would re-introduce dual-pattern root-KC + nested
+# Audit and wrong namespace stamps).
 #
-# Namespace routing:
-#   Exposed ops (@d2InProcess / @d2GrpcMethod / @d2ServerPush):
-#     DTOs  → csharp-clients-namespace (Clients project).
-#     I<Op>Handler → csharp-app-namespace-base.<Category>.<PascalOp> (app, emitUsing=false).
-#   Fixture ops (signFixture — no csharp-app-namespace-base path):
-#     DTOs + I<Op>Handler → csharp-namespace + grpc-service-namespace (legacy fixture ns).
-#     Note: sign-shaped proto / WireVersion.g.cs / wire-identity.manifest.g.json are
-#     byte-gate-governed (committed, asserted byte-for-byte in tests), NOT regen-governed
-#     via COPY_MANIFEST — unlike enum/predicate fixtures, they are excluded from the
-#     regeneration-on-tsp-change flow.
+# This file remains only as a fail-loud pointer so accidental
+# `tsp compile contracts/typespec` is obvious. Prefer:
+#   pnpm --filter @d2/typespec-emitters regen
+#   node tools/scripts/regen-typespec-emitters.mjs
 
 emit:
   - "@d2/typespec-emitters"
 
 options:
   "@d2/typespec-emitters":
-    # Live emit goes to dist/generated/ (relative to the emitter package).
-    emitter-output-dir: "{project-root}/../../server/shared/typescript/typespec-emitters/dist/generated"
+    # Intentionally broken relative to historical root so misuse fails loud
+    # rather than silently emitting under KeyCustodian namespaces.
+    emitter-output-dir: "{project-root}/__RETIRED_USE_PER_MODULE_TSPCONFIG__/dist"
 
-    # C# namespace for fixture ops (signFixture) — retained for backward compatibility.
-    csharp-namespace: "D2.Edge.Tests.TypeSpecDto.Generated"
-
-    # Client project namespace: exposed-op DTOs (GetJwksInput, GetJwksOutput + nested
-    # Jwk) and the module façade interface land here.
-    csharp-clients-namespace: "D2.Edge.KeyCustodian.Client"
-
-    # App handler-namespace base: per-op CQRS path = <base>.<Category>.<PascalOp>.
-    # I<Op>Handler for getJwks lands at D2.Edge.KeyCustodian.App.Application.Handlers.Queries.GetJwks.
-    csharp-app-namespace-base: "D2.Edge.KeyCustodian.App.Application.Handlers"
-
-    # proto3 package declaration following the stability-channel scheme:
-    # d2.<svc>.v<N>(alpha|beta)? — "v2alpha" is the pre-stable channel for
-    # KeyCustodian. Graduates to "v2beta" then "v2" when stable.
-    # Fed to the proto emitter; the domain segment varies per service.
-    proto-package: "d2.keycustodian.v2alpha"
-
-    # C# namespace declared in the emitted proto's `option csharp_namespace`.
-    # Must match the Grpc.Tools output namespace for generated message + service types.
-    # Mirrors the channel suffix from proto-package (V2Alpha = v2alpha).
-    proto-csharp-namespace: "D2.Services.Protos.KeyCustodian.V2Alpha"
-
-    # C# namespace for the generated gRPC service-impl class + transport mapper.
-    # Distinct from proto-csharp-namespace so proto types and service impl do not collide.
-    grpc-service-namespace: "D2.Edge.Tests.TypeSpecGrpc.Generated"
-
-    # TS-client production-emission target — per @d2ServedBy module → the package
-    # `src` root (repo-relative). For each named module, the emitted TS SSR gRPC
-    # client + the TS DTOs of its @d2GrpcMethod ops are ALSO written here (in
-    # addition to dist/generated), co-located BY CONCERN under this root: the gRPC
-    # client lands in `facade/`, each op's DTO in its `<concern-kebab>/` folder
-    # (mirroring the .NET client). The service-owned TS client package imports the
-    # generated wire surface directly. Config-only + @d2Concern-driven — routing is
-    # by module membership + each op's @d2Concern, no per-op special cases. The
-    # generated surface is @ts-nocheck / .prettierignore'd (byte-gate-governed); the
-    # hand-written runtime wraps it.
-    ts-client-output-dirs:
-      KeyCustodian: "server/services/edge/key-custodian/client-ts/src"
-
-imports:
-  - "./key-custodian/key-custodian.tsp"
-  - "./fixtures/sign-shaped.tsp"
-  - "./fixtures/temporal-shaped.tsp"
-  - "./fixtures/enum-shaped.tsp"
-  - "./fixtures/resilience-predicate-shaped.tsp"
+imports: []

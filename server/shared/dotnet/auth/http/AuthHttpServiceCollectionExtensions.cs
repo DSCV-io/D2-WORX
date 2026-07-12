@@ -19,8 +19,8 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 /// DI registration entry point for the HTTP-transport binding of the inbound
 /// auth runtime. Companion to <c>D2.Shared.Auth.AddD2Auth</c> — that registers
 /// the validator + liveness tracker; this registers the
-/// <see cref="IHttpContextAccessor"/> + scoped <see cref="IRequestContext"/>
-/// adapter that downstream handlers / services constructor-inject.
+/// <see cref="IHttpContextAccessor"/> + dual-path scoped
+/// <see cref="IRequestContext"/> resolver that downstream handlers inject.
 /// </summary>
 public static class AuthHttpServiceCollectionExtensions
 {
@@ -28,11 +28,10 @@ public static class AuthHttpServiceCollectionExtensions
     {
         /// <summary>
         /// Registers the HTTP-transport auth surface: the
-        /// <see cref="IHttpContextAccessor"/> and a scoped <see cref="IRequestContext"/>
-        /// resolver that reads from
-        /// <see cref="HttpContext.Items"/> at
-        /// <see cref="D2HttpContextItems.REQUEST_CONTEXT"/> (populated by
-        /// <c>JwtAuthMiddleware</c> earlier in the request pipeline).
+        /// <see cref="IHttpContextAccessor"/>, a scoped dual-path
+        /// <see cref="IRequestContext"/> resolver (HTTP Items when established,
+        /// else scoped <see cref="MutableRequestContext"/>), and the forwarded-JWT
+        /// ambient seams.
         /// </summary>
         /// <remarks>
         /// <para>
@@ -42,20 +41,27 @@ public static class AuthHttpServiceCollectionExtensions
         /// remediation message.
         /// </para>
         /// <para>
-        /// The scoped <see cref="IRequestContext"/> resolver is REGISTRATION-
-        /// ORDER-INSENSITIVE: the sibling extension <c>AddD2AuthGrpc()</c>
-        /// registers an identical lambda reading from the SAME
-        /// <see cref="HttpContext.Items"/> slot. Hosts that call BOTH extensions
-        /// (dual-transport service: HTTP endpoints + gRPC services on the same
-        /// Kestrel host) get correct resolution under either transport because
-        /// both the HTTP middleware and the gRPC interceptor write the validated
-        /// <see cref="IRequestContext"/> to that slot. <c>TryAddScoped</c> means
-        /// first-wins is harmless — the lambdas behave identically given the same
-        /// <see cref="HttpContext"/> state.
+        /// The dual-path <see cref="IRequestContext"/> resolver is shared with
+        /// <c>AddD2AuthGrpc()</c> (identical lambda, same
+        /// <see cref="HttpContext.Items"/> slot). Hosts that call BOTH get
+        /// correct resolution under either transport. The resolver REPLACES any
+        /// prior plain Mutable-only registration from
+        /// <c>AddD2SystemWorkPlane()</c> so inbound HTTP still prefers the
+        /// middleware-populated Items slot while System workers (no
+        /// <see cref="HttpContext"/>) fall through to the scope's
+        /// <see cref="MutableRequestContext"/> after
+        /// <c>ISystemWorkScopeFactory.BeginAsync</c>.
         /// </para>
         /// <para>
-        /// Idempotent — safe to call from multiple composition roots that may
-        /// each defensively register the HTTP transport surface.
+        /// Pre-auth / missing-slot HTTP resolution returns an Unestablished
+        /// <see cref="MutableRequestContext"/> — authority rules fail-closed on
+        /// type-zero origin; this is intentional (no throw-only path that would
+        /// also break hosted System workers on the same host).
+        /// </para>
+        /// <para>
+        /// Idempotent for accessor / ambient seams via <c>TryAdd*</c>; the
+        /// dual-path <see cref="IRequestContext"/> registration is replace-on-
+        /// each-call (same lambda under dual-transport hosts).
         /// </para>
         /// </remarks>
         /// <returns>The same <paramref name="services"/> for fluent chaining.</returns>
@@ -67,6 +73,7 @@ public static class AuthHttpServiceCollectionExtensions
         /// </exception>
         public IServiceCollection AddD2AuthHttp()
         {
+            // §5.1a carve-out: plain reference-type null-guard — no present-but-falsey.
             ArgumentNullException.ThrowIfNull(services);
 
             // Fail-fast precondition check — surface a friendly error rather than
@@ -91,30 +98,18 @@ public static class AuthHttpServiceCollectionExtensions
 
             services.AddHttpContextAccessor();
 
-            // Cross-transport scoped IRequestContext resolver: reads from
-            // HttpContext.Items[D2HttpContextItems.REQUEST_CONTEXT]. The HTTP
-            // middleware writes to that slot on successful auth; the sibling
-            // gRPC interceptor writes the same slot for dual-transport hosts.
-            // Failing fast is strictly better than returning null — downstream
-            // code would null-ref later with an unhelpful stack trace.
-            services.TryAddScoped<IRequestContext>(static sp =>
-            {
-                var http = sp.GetRequiredService<IHttpContextAccessor>().HttpContext
-                    ?? throw new InvalidOperationException(
-                        "IRequestContext was resolved without an active HttpContext. "
-                            + "Ensure the resolution site runs inside an AspNetCore "
-                            + "request (UseD2Auth() for HTTP; AddD2AuthGrpc() for gRPC) "
-                            + "and that an HttpContext is on the execution context.");
+            // Ensure Mutable is present for the dual-path fall-through (System
+            // workers + pre-auth HTTP). TryAdd: AddD2SystemWorkPlane may already
+            // have registered it.
+            services.TryAddScoped<MutableRequestContext>();
 
-                return http.Items.TryGetValue(D2HttpContextItems.REQUEST_CONTEXT, out var raw)
-                    && raw is IRequestContext ctx
-                    ? ctx
-                    : throw new InvalidOperationException(
-                        "IRequestContext was resolved before the auth pipeline ran. "
-                            + "Ensure UseD2Auth() (for HTTP) or AddD2AuthGrpc()'s "
-                            + "interceptor (for gRPC) has run before resolving "
-                            + "IRequestContext.");
-            });
+            // Dual-path IRequestContext: prefer middleware/interceptor Items slot;
+            // else scoped Mutable (Unestablished until established). Replace any
+            // prior registration (including SystemWorkPlane's plain Mutable default
+            // and a prior dual-path from the sibling gRPC extension) so the unified
+            // resolver always wins on auth-wired hosts.
+            services.RemoveAll<IRequestContext>();
+            services.AddScoped<IRequestContext>(static sp => ResolveDualPathRequestContext(sp));
 
             // Request-scoped forwarded-JWT holder — structurally isolated from
             // IRequestContext (a different type with a different registration,
@@ -134,9 +129,33 @@ public static class AuthHttpServiceCollectionExtensions
             // the current architecture) gets it automatically; keeping the adapter
             // in this framework-referencing lib leaves D2.Shared.Auth.Outbound
             // free of any AspNetCore framework reference.
-            services.TryAddSingleton<IAmbientRequestScopeAccessor, HttpContextAmbientRequestScopeAccessor>();
+            services.TryAddSingleton<
+                IAmbientRequestScopeAccessor,
+                HttpContextAmbientRequestScopeAccessor>();
 
             return services;
         }
+    }
+
+    /// <summary>
+    /// Shared HTTP/gRPC dual-path resolver body: established context from
+    /// <see cref="HttpContext.Items"/> when present; otherwise the scope's
+    /// <see cref="MutableRequestContext"/>.
+    /// </summary>
+    /// <param name="sp">The request (or System work) scope's service provider.</param>
+    /// <returns>The established Items context, or the scope's Mutable fall-through.</returns>
+    internal static IRequestContext ResolveDualPathRequestContext(IServiceProvider sp)
+    {
+        var accessor = sp.GetService<IHttpContextAccessor>();
+        var http = accessor?.HttpContext;
+
+        if (http is not null
+            && http.Items.TryGetValue(D2HttpContextItems.REQUEST_CONTEXT, out var raw)
+            && raw is IRequestContext established)
+        {
+            return established;
+        }
+
+        return sp.GetRequiredService<MutableRequestContext>();
     }
 }

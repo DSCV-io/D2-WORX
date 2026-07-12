@@ -13,7 +13,6 @@ using D2.Edge.KeyCustodian.Infra.Persistence.Postgres;
 using D2.Edge.KeyCustodian.Infra.Scheduling.Hosted;
 using D2.Edge.KeyCustodian.Infra.Vault.File;
 using D2.Shared.Auth.Abstractions;
-using D2.Shared.Context.Abstractions;
 using D2.Shared.EntityFrameworkCore.Postgres;
 using D2.Shared.Handler.Repo.Postgres;
 using Microsoft.Extensions.Configuration;
@@ -41,13 +40,14 @@ public static class KeyCustodianServiceCollectionExtensions
         /// readiness health checks, and the chained App layer.
         /// </summary>
         /// <remarks>
-        /// <b>Host prerequisite:</b> the host MUST bind
+        /// <b>Host prerequisite:</b> the host MUST call
+        /// <c>AddD2SystemWorkPlane()</c> (via <c>AddD2ServiceDefaults</c>) and bind
         /// <see cref="D2WorkloadIdentityOptions"/> (its own workload
-        /// <c>ServiceId</c>) — the module's establishment-boundary registration owns
-        /// the bind. This method does not re-bind it; it registers a fail-loud
-        /// presence gate (an unset <c>ServiceId</c> fails <c>ValidateOnStart</c>)
-        /// because the CA-seeding and key-rotation System workers establish their
-        /// <c>RequestOrigin.System</c> request context from that self-id.
+        /// <c>ServiceId</c>). This method does not re-bind identity or re-register
+        /// <c>IRequestContext</c>; it registers a fail-loud presence gate (an unset
+        /// <c>ServiceId</c> fails <c>ValidateOnStart</c>) because the CA-seeding and
+        /// key-rotation System workers open work via
+        /// <c>ISystemWorkScopeFactory</c>, which stamps that self-id.
         /// </remarks>
         /// <param name="configuration">The configuration root to bind options from.</param>
         /// <param name="connectionString">
@@ -59,6 +59,7 @@ public static class KeyCustodianServiceCollectionExtensions
         public IServiceCollection AddD2KeyCustodian(
             IConfiguration configuration, string connectionString)
         {
+            // §5.1a carve-out: plain reference-type null-guard — no present-but-falsey.
             ArgumentNullException.ThrowIfNull(services);
             ArgumentNullException.ThrowIfNull(configuration);
             connectionString.ThrowIfFalsey();
@@ -175,18 +176,10 @@ public static class KeyCustodianServiceCollectionExtensions
             // --- Messaging: RabbitMQ rotation announcer --------------------------
             services.AddSingleton<IKeyRotationAnnouncer, RabbitMqKeyRotationAnnouncer>();
 
-            // --- Request context: scoped resolver for System-worker scopes -------
-            // IRequestContext is normally a HOST responsibility (Edge's
-            // AddD2AuthGrpc()/AddD2AuthHttp() register a throwing-by-default scoped
-            // resolver keyed off the inbound HttpContext). A System-worker scope
-            // created via IServiceScopeFactory.CreateAsyncScope() (CaSeedingService /
-            // KeyRotationService) has no HttpContext, so that throwing resolver is the
-            // WRONG one here — the module registers its own plain scoped resolver
-            // (TryAdd: a host-registered resolver, if present, wins) so the workers can
-            // establish + resolve a System request context on their own scope.
-            services.TryAddScoped<MutableRequestContext>();
-            services.TryAddScoped<IRequestContext>(
-                sp => sp.GetRequiredService<MutableRequestContext>());
+            // IRequestContext / MutableRequestContext / ISystemWorkScopeFactory are
+            // PLATFORM-owned (AddD2SystemWorkPlane via AddD2ServiceDefaults). This
+            // module MUST NOT re-register them — System workers consume
+            // ISystemWorkScopeFactory only.
 
             // --- Hosted services: migrator → seeder → rotation (order matters) ---
             // Same-host StartAsync ordering is registration order, pinned by a

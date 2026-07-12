@@ -14,9 +14,9 @@
 # Or directly:
 #   docker compose -f infra/compose/compose.yml --env-file .env.local --env-file .env.secrets up -d
 #
-# Application service blocks (d2-edge, d2-files, d2-courier, d2-notifications,
-# d2-audit, d2-web) are added as services come online.
-# This file currently declares only the infrastructure layer.
+# Application multiproc stubs live here: d2-edge + d2-audit (JWT+mTLS dual-factor
+# bridge). Remaining app services (d2-files, d2-courier, d2-notifications, d2-web, …)
+# are added as those services come online.
 
 name: d2-worx
 
@@ -209,8 +209,8 @@ services:
       MINIO_ROOT_PASSWORD: ${S3_PASSWORD}
       # Container names + endpoints for config.alloy env() references.
       CADVISOR_NAME: ${CADVISOR_NAME}
-      # Set EDGE_METRICS_ENDPOINT when d2-edge is added to the stack.
-      EDGE_METRICS_ENDPOINT: "${EDGE_SERVICE_NAME:-d2-edge}:${EDGE_PORT:-5000}"
+      # d2-edge multiproc stub scrapes on container metrics port 8080 (not host publish).
+      EDGE_METRICS_ENDPOINT: "${EDGE_SERVICE_NAME:-d2-edge}:8080"
       PG_EXPORTER_NAME: ${PG_EXPORTER_NAME}
       REDIS_EXPORTER_NAME: ${REDIS_EXPORTER_NAME}
       RABBITMQ_NAME: ${RABBITMQ_NAME}
@@ -477,14 +477,108 @@ services:
     restart: unless-stopped
 
   # ==========================================================================
-  # Application Services — added as services come online
+  # Application Services
   #
-  # d2-edge          (.NET — Edge unified gateway: routing + auth + signalr + middleware)
-  # d2-audit         (.NET — append-only audit store, encrypted RMQ payloads)
-  # d2-courier       (.NET — outbound email + SMS delivery)
-  # d2-notifications (.NET — in-app feed)
-  # d2-files         (.NET — file management + processing + variants; SeaweedFS storage)
-  # d2-seaweedfs     (storage backend for user files)
-  # d2-web           (SvelteKit BFF using develop.watch + dotnet watch pattern)
-  # d2-dkron-mgr     (.NET — Dkron job sync; pending replacement decision)
+  # d2-edge / d2-audit — multiproc stub Audit + Edge bridge (JWT+mTLS dual-factor).
+  # Remaining: d2-courier, d2-notifications, d2-files, d2-seaweedfs, d2-web, …
+  # Healthchecks use wget installed in Dockerfiles — never assume curl on aspnet.
   # ==========================================================================
+
+  d2-audit:
+    build:
+      context: ../..
+      dockerfile: infra/docker/Dockerfile.audit
+      target: ${D2_DOTNET_IMAGE_TARGET:-prod}
+    container_name: ${AUDIT_NAME:-d2-audit}
+    env_file:
+      - ../../.env.local
+      - ../../.env.secrets
+    environment:
+      ASPNETCORE_URLS: ""
+      OTEL_SERVICE_NAME: d2-audit
+      # In-cluster Issuer — never host localhost, never mTLS 9443.
+      KEYCUSTODIAN_APP__ISSUERBASEURL: https://d2-edge:8443
+      # Docker DNS rewrite — do not pass host-side localhost REDIS_URL from secrets.
+      REDIS_URL: redis://:${CACHE_PASSWORD}@d2-redis:6379
+      # Prefer PascalCase after __ for IConfiguration / Options binding.
+      AUDIT_MTLS__TrustAnchorPath: /secrets/keycustodian/ca-root.crt
+      # CORS fail-closed — required by AddD2Cors / ServiceDefaults (not GATEWAY_* keys).
+      D2_CORS_ORIGINS__0: ${D2_CORS_ORIGINS__0:-http://localhost:5173}
+      D2_CORS_ORIGINS__1: ${D2_CORS_ORIGINS__1:-}
+      # Kestrel listen cert (from gen-dev-keys.sh secrets/listen/)
+      Kestrel__Certificates__Default__Path: /secrets/listen/audit-server.crt
+      Kestrel__Certificates__Default__KeyPath: /secrets/listen/audit-server.key
+    volumes:
+      - ../../secrets/keycustodian/ca-root.crt:/secrets/keycustodian/ca-root.crt:ro
+      - ../../secrets/listen/audit-server.crt:/secrets/listen/audit-server.crt:ro
+      - ../../secrets/listen/audit-server.key:/secrets/listen/audit-server.key:ro
+    networks: [d2-network]
+    depends_on:
+      d2-redis:
+        condition: service_healthy
+    # wget installed in Dockerfile.audit — no curl assumption on aspnet base.
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:8080/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 40s
+    restart: unless-stopped
+
+  d2-edge:
+    build:
+      context: ../..
+      dockerfile: infra/docker/Dockerfile.edge
+      target: ${D2_DOTNET_IMAGE_TARGET:-prod}
+    container_name: ${EDGE_NAME:-d2-edge}
+    ports:
+      - "${EDGE_PORT:-8080}:8080"
+      - "${EDGE_HTTPS_PORT:-8443}:8443"
+      # Host default 9444 avoids Portainer HTTPS on 9443; container still listens 9443.
+      - "${EDGE_MTLS_PORT:-9444}:9443"
+    env_file:
+      - ../../.env.local
+      - ../../.env.secrets
+    environment:
+      ASPNETCORE_URLS: ""
+      OTEL_SERVICE_NAME: d2-edge
+      # In-cluster Issuer — never host localhost, never mTLS 9443.
+      KEYCUSTODIAN_APP__ISSUERBASEURL: https://d2-edge:8443
+      # Docker DNS rewrite from credential pieces in .env.secrets (host URLs stay host-only).
+      REDIS_URL: redis://:${CACHE_PASSWORD}@d2-redis:6379
+      RABBITMQ_URL: amqp://${MQ_USERNAME}:${MQ_PASSWORD}@d2-rabbitmq:5672/
+      KEYCUSTODIAN_DATABASE_URL: postgresql://${DB_USERNAME}:${DB_PASSWORD}@d2-postgres:5432/${KEYCUSTODIAN_DB_NAME:-d2-keycustodian}
+      KEYCUSTODIAN_INFRA__RootKeyPath: /secrets/keycustodian
+      EDGE_MTLS__TrustAnchorPath: /secrets/keycustodian/ca-root.crt
+      AUDIT_GRPC__Address: https://d2-audit:8443
+      D2_CORS_ORIGINS__0: ${D2_CORS_ORIGINS__0:-http://localhost:5173}
+      D2_CORS_ORIGINS__1: ${D2_CORS_ORIGINS__1:-}
+      Kestrel__Certificates__Default__Path: /secrets/listen/edge-server.crt
+      Kestrel__Certificates__Default__KeyPath: /secrets/listen/edge-server.key
+    volumes:
+      # FileCaProvider needs the full PEM chain (public certs + private keys) to seed
+      # the mTLS CA into KeyCustodian. Trust-anchor consumers only need ca-root.crt.
+      - ../../secrets/keycustodian/ca-root.crt:/secrets/keycustodian/ca-root.crt:ro
+      - ../../secrets/keycustodian/ca-root.key:/secrets/keycustodian/ca-root.key:ro
+      - ../../secrets/keycustodian/ca-intermediate.crt:/secrets/keycustodian/ca-intermediate.crt:ro
+      - ../../secrets/keycustodian/ca-intermediate.key:/secrets/keycustodian/ca-intermediate.key:ro
+      - ../../secrets/keycustodian/root.key:/secrets/keycustodian/root.key:ro
+      - ../../secrets/listen/edge-server.crt:/secrets/listen/edge-server.crt:ro
+      - ../../secrets/listen/edge-server.key:/secrets/listen/edge-server.key:ro
+    networks: [d2-network]
+    depends_on:
+      d2-postgres:
+        condition: service_healthy
+      d2-redis:
+        condition: service_healthy
+      d2-rabbitmq:
+        condition: service_healthy
+      d2-audit:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:8080/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 60s
+    restart: unless-stopped

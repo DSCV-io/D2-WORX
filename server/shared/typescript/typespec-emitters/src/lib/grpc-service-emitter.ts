@@ -61,8 +61,10 @@ export interface GrpcDelegationTarget {
   readonly methodName: string;
   /**
    * C# namespace where the delegation target interface lives.
-   * Only required when kind === "facade" (added as a using directive).
-   * When kind === "handler" the handler interface is already in the service namespace.
+   * Added as a using directive when present and different from serviceImplNs.
+   * Required for production handler delegation (App CQRS ns ≠ grpc-service ns)
+   * and for façade delegation (Clients.Facade ≠ serviceImplNs). Fixture mode may
+   * co-locate handler with the service namespace (no extra using).
    */
   readonly targetNamespace?: string;
 }
@@ -243,12 +245,14 @@ function emitServiceClass(
   // D2.Shared.Result is needed only when the request mapper returns D2Result<Input>
   // (enum-bearing request) so the service can short-circuit a parse failure.
   if (requestHasEnums) lines.push("using D2.Shared.Result;");
-  lines.push("using D2.Shared.Result.Grpc;");
-  lines.push("using Grpc.Core;");
-  // When delegating through a façade whose interface lives in a different namespace,
-  // add a using for that namespace so the ctor parameter type resolves.
+  // global:: on Result.Grpc + Grpc.Core: serviceImplNs may contain a ".Grpc."
+  // segment (production Edge.Api.Grpc.KeyCustodian) that would otherwise shadow
+  // bare `using Grpc.Core` into D2.Edge.Api.Grpc.Core (CS0234).
+  lines.push("using global::D2.Shared.Result.Grpc;");
+  lines.push("using global::Grpc.Core;");
+  // When the delegation target (façade or handler) lives in a different namespace,
+  // add a using so the ctor parameter type resolves.
   if (
-    target.kind === "facade" &&
     target.targetNamespace !== undefined &&
     target.targetNamespace !== serviceImplNs
   )
@@ -462,10 +466,12 @@ function emitTransportMappers(
   lines.push(
     `            var response = new ${protoResponseName} { Result = result.ToProto() };`,
   );
+  lines.push("");
   lines.push(`            if (result.IsOk && result.Data is not null)`);
   lines.push(
     `                response.Data = result.Data.ToProto${responseModelName}();`,
   );
+  lines.push("");
   lines.push("            return response;");
   lines.push("        }");
   lines.push("    }");

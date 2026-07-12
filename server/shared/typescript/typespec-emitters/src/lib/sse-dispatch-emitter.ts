@@ -39,7 +39,8 @@
 //     rule does not apply (there is no TK key for an event-type).
 //   - No phase/step/deliverable/audit-round identifiers anywhere.
 //   - The seam names use the D2Generated prefix to signal emitter ownership and
-//     to avoid colliding with the future real Edge channel-gateway vocabulary.
+//     reserve a collision-free namespace vs Edge channel-gateway vocabulary
+//     under replace-trigger (VALIDATION.md).
 
 import { buildBanner } from "./banner.js";
 import { toPascal } from "./name-transforms.js";

@@ -7,6 +7,35 @@ Copyright (c) DCSV. All rights reserved.
 Byte-parity and structural validation rows for the C# + TS DTO emitters.
 Each row maps a committed fixture to its regeneration guarantee.
 
+## Contents
+
+- [C# fixture parity table](#c-fixture-parity-table)
+- [Author-pin guarantee, D2TSP009, and `@d2Reserved` validation ledger](#author-pin-guarantee-d2tsp009-and-d2reserved-validation-ledger)
+- [C# structural validation table](#c-structural-validation-table)
+- [TS fixture parity table](#ts-fixture-parity-table)
+- [Cross-language parity](#cross-language-parity)
+- [Integration proof](#integration-proof)
+- [Temporal scalar + composite validation](#temporal-scalar--composite-validation-real-d2sharedtime--d2time-seams)
+- [Enum / string-literal-union validation](#enum--string-literal-union-validation-real-jsonstringenumconverter--serializeroptionssr_web--the-proto-string-bridge)
+- [REST route+policy emitter C# validation table](#rest-routepolicy-emitter-c-validation-table)
+- [Process-kind + routes/bridge namespace + Edge bridge emitter](#process-kind--routesbridge-namespace--edge-bridge-emitter)
+- [Idempotency gate emitter — seam ledger](#idempotency-gate-emitter--seam-ledger)
+- [Idempotency gate emitter — C# validation table](#idempotency-gate-emitter--c-validation-table-routeidempotencygatetests)
+- [Server-push dispatch emitter — seam ledger](#server-push-dispatch-emitter--seam-ledger)
+- [Server-push dispatch emitter — C# validation table](#server-push-dispatch-emitter--c-validation-table-ssedispatchertests)
+- [Server-push dispatch emitter — byte-parity table](#server-push-dispatch-emitter--byte-parity-table)
+- [REST route+policy emitter — byte-parity table](#rest-routepolicy-emitter--byte-parity-table)
+- [gRPC harness C# validation table](#grpc-harness-c-validation-table)
+- [gRPC CLIENT emitter — captured-envelope behavioral validation table](#grpc-client-emitter--captured-envelope-behavioral-validation-table-grpcclienttests)
+- [`@d2Resilience` predicate emitter](#d2resilience-predicate-emitter--cross-language-emission--sentinel-retry)
+- [Nested-model / array-of-model gRPC wire support](#nested-model--array-of-model-grpc-wire-support)
+- [TS client emitters — browser REST + server SSR gRPC](#ts-client-emitters--browser-rest--server-ssr-grpc)
+- [OpenAPI `x-d2-*` extension emitter](#openapi-x-d2--extension-emitter--real-getopenapi3--d2-statemap-seams)
+- [Wire identity — byte-parity table](#wire-identity--byte-parity-table)
+- [Byte-gate completeness sweep](#byte-gate-completeness-sweep)
+- [Coverage summary](#coverage-summary)
+- [Over-the-wire resilience + envelope integration](#over-the-wire-resilience--envelope-integration-real-kestrel-socket--overthewireresiliencetests)
+
 ---
 
 ## C# fixture parity table
@@ -236,15 +265,52 @@ The TestServer host in `D2.Edge.Tests` stands up the real `JwtAuthMiddleware` pi
 
 ---
 
+## Process-kind + routes/bridge namespace + Edge bridge emitter
+
+| What is validated | Against what | Test |
+| --- | --- | --- |
+| `process-kind-by-module` / string-map option parse (happy + empty/malformed) | `resolveProcessKindByModule` / `resolveStringMapOption` pure helpers | `tests/process-kind-emit.direct.test.ts` |
+| Real-module `@route` without `@d2ServedBy` → D2TSP014; **no** hard-derived App.Routes | mocked `$onEmit` → `missing-served-by-for-host-routing` + zero RouteRegistration | `tests/process-kind-emit.direct.test.ts` |
+| Real-module `@route` + ServedBy without process-kind map key → D2TSP015 | `missing-process-kind` | `tests/process-kind-emit.direct.test.ts` |
+| Unknown process-kind value → D2TSP016 | `unknown-process-kind` | `tests/process-kind-emit.direct.test.ts` |
+| `csharp-routes-namespace` key hit → `namespace D2.Edge.Api.Routes.KeyCustodian` (not App.Routes) | `$onEmit` route content | `tests/process-kind-emit.direct.test.ts` (`Emitter_RoutesNamespaceOption_EmitsD2EdgeApiRoutes`) + well-known integration |
+| Edge-module missing routes ns → D2TSP017 | `missing-routes-namespace` | `tests/process-kind-emit.direct.test.ts` |
+| Edge-module emits in-process Map*; no bridge file | route present; BridgeRegistration absent | `tests/process-kind-emit.direct.test.ts` + `keycustodian-wellknown-emit.integration.test.ts` |
+| Standalone + route + grpc → bridge Map* → `I{Module}GrpcClient.{Op}Async` + MAP-ii; **no** TransportMappers; MapAll helper; gRPC server still emitted; no in-process RouteRegistration | `$onEmit` content pins | `tests/process-kind-emit.direct.test.ts` + pure `tests/bridge-emitter.test.ts` |
+| Standalone + `@d2Idempotent` → gate weave + `D2GeneratedIdempotencyStore` seam on bridge ns | `$onEmit` bridge + seam content | `tests/process-kind-emit.direct.test.ts` + pure `tests/bridge-emitter.test.ts` |
+| Internal-only (`@d2GrpcMethod` without `@route`) → gRPC server present; zero Bridge/RouteRegistration | `$onEmit` for standalone + edge-module | `tests/process-kind-emit.direct.test.ts` |
+| Standalone missing bridge ns → D2TSP018 | `missing-bridge-namespace` | `tests/process-kind-emit.direct.test.ts` |
+| Standalone route without grpc → D2TSP019 | `standalone-route-requires-grpc` | `tests/process-kind-emit.direct.test.ts` |
+| Fixture mode without process-kind still emits routes | hard-derive / grpcServiceNs fallback | `tests/process-kind-emit.direct.test.ts` |
+| Pure bridge emit + MapAll zero-ops no empty trap | `emitBridgeRegistration` / `emitMapAllBridges` | `tests/bridge-emitter.test.ts` |
+| Bridge emit fixture-shaped names match C# compile suite | pure pin `IBridgeFixtureGrpcClient` / `MapPingBridgeFixtureBridge` | `tests/bridge-emitter.test.ts` |
+| D2TSP014–019 catalog + severity error | `$lib.diagnostics` | `tests/lib.test.ts` (`lib_HostRoutingDiagnosticsPresent`) |
+| Well-known committed fixtures match regen under production routes ns (`edge/api/Routes/KeyCustodian/`) | byte-gate + deliberate-drift negatives | `tests/keycustodian-wellknown-emit.integration.test.ts` |
+| **Audit production homes (all 13 `AUDIT_COPY` destinations)** — Client DTOs/DI, handler iface, gRPC service/mappers/proto, `edge/api/Bridges/Audit/*` | regenerate↔committed byte-gate + deliberate-drift non-vacuity; bridge pins `RequireAnyScope(Scopes.Internal.Audit.Ping)` | `tests/audit-production-homes-byte-parity.integration.test.ts` |
+| Hand-written WellKnown TestServer consumers `using D2.Edge.Api.Routes.KeyCustodian` | compile + unit tests | `WellKnownRouteTests.cs` / `OidcDiscoveryEndToEndTests.cs` |
+| Bridge Map* compile/run vs real Auth.Http + Result + Fake gRPC client (§1.32) | TestServer scope + MAP-ii 200/503 + auth reject | `BridgeRegistrationValidationTests.cs` under `TypeSpecBridge/` |
+
+| Ledger field | Bridge validation |
+| --- | --- |
+| **Validated against** | `D2.Shared.Auth.Http.Endpoints` (`RequireAnyScope`) + `D2.Shared.Auth.Http.ProblemDetails` (`ToProblemDetails`) + `D2.Shared.Result` MAP-ii branch; JWT stack via real `AddD2Auth` |
+| **Unbuilt collaborator** | Production `I{Module}GrpcClient` / `AddD2{Module}GrpcClients` for a real standalone module — replaced by `IBridgeFixtureGrpcClient` + `FakeBridgeFixtureGrpcClient` (§1.32 asserts input capture + canned `D2Result`) |
+| **Replace-trigger (double → real client)** | Real standalone module client package exists and host registers `AddD2{Module}GrpcClients`; swap Fake for that package type in the suite |
+| **Replace-trigger (fixture → regen `.g.cs`)** | Committed production/fixture `*BridgeRegistration.g.cs` from emitter regen; retire hand-authored shape fixture |
+| **Replace-trigger (host multi-process)** | Audit (or other standalone) process + host wiring in Edge.Api; multi-process integration tests land with that host |
+
+**§26.5**: never hand-edit committed `.g.cs` routes — change emitter/tspconfig → `pnpm --filter @d2/typespec-emitters regen`.
+
+---
+
 ## Idempotency gate emitter — seam ledger
 
-The HTTP result-replay idempotency store is an unbuilt Edge concern. The emitter owns a faithful seam interface so validation is not blocked on the unbuilt consumer. Deferred wiring is tracked in `docs/v2/PHASE_3.md` §G (deferred-work wire-up ledger); this seam ledger is the tracking artifact for the emitter side.
+The HTTP result-replay idempotency store is an unbuilt Edge concern. The emitter owns a faithful seam interface so validation is not blocked on the unbuilt consumer. Canonical tracking: **not yet shipped** as a product KEEP home; design tracker `docs/v2/PHASE_3.md` §G (deferred-work wire-up ledger, not a product-claim source); **shipped home when the Edge HTTP-idempotency middleware lib ships** → that lib's README + this ledger's Consumer column. This seam ledger is the tracking artifact for the emitter side.
 
 | Seam                                                                                                               | Kind                                                                                                                                                                      | Consumer                                                                   | Replace-trigger                                                        |
 | ------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
-| `D2GeneratedIdempotencyStore` (emitter-owned generated interface — `TryGetAsync<TStored>` + `StoreAsync<TStored>`) | **Faithful seam** — validates the real replay contract (store/lookup/TTL-expiry/result-replay) against an in-memory `FakeIdempotencyStore` with injectable `TimeProvider` | Unbuilt Edge `Idempotency.*` HTTP-idempotency middleware (tracked: `docs/v2/PHASE_3.md` §G) | That middleware lib ships and implements `D2GeneratedIdempotencyStore` |
+| `D2GeneratedIdempotencyStore` (emitter-owned generated interface — `TryGetAsync<TStored>` + `StoreAsync<TStored>`) | **Faithful seam** — validates the real replay contract (store/lookup/TTL-expiry/result-replay) against an in-memory `FakeIdempotencyStore` with injectable `TimeProvider` | Unbuilt Edge `Idempotency.*` HTTP-idempotency middleware (design tracker: `docs/v2/PHASE_3.md` §G — not yet shipped; shipped home = that middleware lib README when it implements `D2GeneratedIdempotencyStore`) | That middleware lib ships and implements `D2GeneratedIdempotencyStore` |
 
-The `D2GeneratedIdempotencyStore` prefix signals emitter ownership; the real Edge `IIdempotencyStore` carries the un-prefixed name when it ships (the `D2Generated` prefix reserves the collision-free namespace). The design mirrors the route emitter's `D2GeneratedRateLimitTier` / `D2GeneratedCsrfPosture` faithful-seam pattern.
+The `D2GeneratedIdempotencyStore` prefix signals emitter ownership and reserves a collision-free namespace relative to the un-prefixed Edge store name (`IIdempotencyStore`) under the replace-trigger above. The design mirrors the route emitter's `D2GeneratedRateLimitTier` / `D2GeneratedCsrfPosture` faithful-seam pattern.
 
 ---
 
@@ -279,7 +345,7 @@ The `text/event-stream` channel gateway is an unbuilt Edge concern (the SSE wire
 | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------- |
 | `D2GeneratedSseEmitSink` (emitter-owned generated interface — generic `EmitAsync<TPayload>` over `D2GeneratedSseChannelTarget` { `D2GeneratedSseChannelClass` Class, string Id } + an event-type + payload) | **Faithful seam** — validates the real dispatch contract (channel class + targetId + event-type + payload round-trip; sink-failure propagation) against an in-memory `FakeSseEmitSink` that records all four and returns a configurable `D2Result` (non-vacuous) | Unbuilt Edge SSE channel gateway (the `text/event-stream` wire binding — hand-written per ADR-0021) | The Edge channel-gateway ships and implements `D2GeneratedSseEmitSink` |
 
-The `D2GeneratedSseEmitSink` / `D2GeneratedSseChannelTarget` / `D2GeneratedSseChannelClass` prefix signals emitter ownership; the real Edge channel gateway carries the un-prefixed `ISseEmitSink` / channel vocabulary when it ships (the `D2Generated` prefix reserves the collision-free namespace). The design mirrors the idempotency emitter's `D2GeneratedIdempotencyStore` emitter-owned faithful-seam pattern.
+The `D2GeneratedSseEmitSink` / `D2GeneratedSseChannelTarget` / `D2GeneratedSseChannelClass` prefix signals emitter ownership and reserves a collision-free namespace relative to un-prefixed Edge channel vocabulary (`ISseEmitSink` tracked under the replace-trigger above). The design mirrors the idempotency emitter's `D2GeneratedIdempotencyStore` emitter-owned faithful-seam pattern.
 
 ---
 
@@ -378,7 +444,7 @@ The generated `sign` gRPC CLIENT (`SignFixtureGrpcClient.g.cs`) is validated aga
 | Per-call pipeline override                             | `SignAsync_WithPassThroughOverride_BypassesInjectedRetryPipeline`                                  | a per-call `pipelineOverride` bypasses the injected retry; `CallCount == 1`                                                                                                                                          |
 | **§1.3 DI resolution (every registered seam)**         | `AddD2SignFixtureGrpcClients_ResolvesClientAndKeyedPipeline`                                      | `GetRequiredService<ISignFixtureGrpcClient>()` resolves AS `SignFixtureGrpcClient` **and** `GetRequiredKeyedService<ResilientPipeline<…>>(SignClientKeys.PIPELINE)` resolves — descriptor-presence ≠ resolvability |
 
-**Replace-triggers (host-gated wiring — inert until a real Edge host exists)**: the generated DI ext takes a required host-supplied channel address and auto-chains the per-channel `.AddD2ForwardedJwt().AddD2WorkloadCertificate()`, but the channel-address supply and the one-time outbound-auth composition-root registrations are NOT wired by the test. Both are tracked in `docs/v2/PHASE_3.md` §G (deferred-work wire-up ledger).
+**Replace-triggers (host-gated wiring — inert until a real Edge host exists)**: the generated DI ext takes a required host-supplied channel address and auto-chains the per-channel `.AddD2ForwardedJwt().AddD2WorkloadCertificate()`, but the channel-address supply and the one-time outbound-auth composition-root registrations are NOT wired by the test. Canonical tracking: **not yet shipped** host composition; design tracker `docs/v2/PHASE_3.md` §G (deferred-work wire-up ledger, not a product-claim source); **shipped home when Edge host + outbound-auth composition root exist** → host README / composition docs + this ledger row.
 
 **Nested-model / array-of-model gRPC response fields**: the gRPC client + service transport mappers now recurse nested-model and array-of-model response fields to arbitrary depth — see the "Nested-model / array-of-model gRPC wire support" section below + roadmap §C row C18 (done).
 
@@ -542,7 +608,7 @@ Compiles inline `.tsp` through the TypeSpec test-host and asserts the in-memory 
 
 ### Host-gated BFF-wiring replace-triggers
 
-Both seams exist, so both emitters are BUILT + validated now; the ONLY deferrals are the host-gated BFF composition-root WIRING (BFF-rebuild-gated). The canonical tracking is this ledger; both rows are in `docs/v2/PHASE_3.md` §G (SSR-gRPC-client → BFF gRPC composition root + browser-REST-client → BFF browser integration).
+Both seams exist, so both emitters are BUILT + validated now; the ONLY deferrals are the host-gated BFF composition-root WIRING (BFF-rebuild-gated). The canonical tracking is this ledger. Design tracker (not a product-claim source): **not yet shipped** BFF composition; `docs/v2/PHASE_3.md` §G (SSR-gRPC-client → BFF gRPC composition root + browser-REST-client → BFF browser integration); **shipped home when BFF composition roots exist** → BFF README / composition docs + the replace-trigger table below.
 
 | Replace-trigger | Deferred wiring | Why deferred (genuine block) | Validated now against |
 | --------------- | --------------- | ---------------------------- | --------------------- |
@@ -617,7 +683,7 @@ hand-edited (fixes land at the emitter), byte-gated, and `.prettierignore`d
 **Replace-trigger**: N/A — the emitted OpenAPI document is a build artifact with
 no unbuilt runtime consumer (no Swagger UI / doc host wiring in scope). An Edge/BFF
 OpenAPI consumer reads the `x-d2-*` extension shapes pinned here; no emitter change
-is needed when that consumer ships.
+is required for that consumer to exist.
 
 ---
 

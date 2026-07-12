@@ -276,6 +276,7 @@ _Canonical: [ADR-0020](docs/adrs/0020-service-project-structure.md) + [PATTERNS.
 - **NEVER reflexively defer / de-scope in-scope doable-now work — do-it-now is the default.** Deferral is legitimate ONLY for genuinely-blocked work (a missing build dependency) + surfacing + user permission + a committed tracker row; "no consumer yet / not wired in yet / pre-existing" is not a blocker. [rules.md §13.15]
 - **NEVER start services manually** (`dotnet run`, `pnpm dev`) — Docker Compose manages services. [rules.md §8.1]
 - **NEVER `Grep` `secrets/` or `.env.secrets` by name.** [rules.md §3.11]
+- **Host product config lives in env** (`.env.local` / `.env.secrets` / Compose) — not product keys in host `appsettings*.json`. [rules.md §23.9 / §23.10](docs/dev/rules/23-configuration-hygiene.md#23-configuration-hygiene)
 
 ### Sub-agent dispatch discipline
 
@@ -338,6 +339,8 @@ _Canonical: [ADR-0020](docs/adrs/0020-service-project-structure.md) + [PATTERNS.
 - **Fail-closed — the establishment enum's type-zero (`RequestOrigin.Unestablished`) is an explicit FIRST-checked DENY in every authority rule.** [rules.md §9.42]
 - **Telemetry-only hop-trace fields (CallPath) stay a DIFFERENT TYPE than authority-grade fields and are NEVER a parameter to any authority rule** — structural exclusion. [rules.md §9.43]
 - **Authority over a cluster-root-grade secret routes through a DEDICATED capability seam in exactly ONE composition root + a structural deny on the general surface** — not a boolean guard; ship the DI-isolation test. [rules.md §9.44]
+- **Multi-bind hosts: product gRPC only on the mTLS listen; internal services use HTTP only for health/metrics** — never crown-jewel Maps on Issuer/cleartext binds. Platform Unestablished deny after Origin establish on product gRPC (not handler-only). [rules.md §10.23, §10.24]
+- **Issuer host: in-process JWKS for JWT validation** — do not HTTP self-fetch own well-known; remote consumers keep HttpJwks + private-CA trust when needed. [rules.md §9.47]
 - **Handlers validate input via `Domain.Create(input) → D2Result<Domain>` at the TOP of `ExecuteAsync`** — never let Redis / DB reject invalid data first. [rules.md §9.4]
 - **EF-as-DDD — CQRS handlers use `I<Service>DbContext` + aggregates + LINQ directly; the per-op Repository layer is retired.** [rules.md §9.37]
 - **Stateful aggregates use abstract base + sealed per-state types — illegal transitions uncompilable.** `Status` is a derived discriminator only; not-yet-migrated entities need an explicit valid-transitions table. [rules.md §9.31]
@@ -425,7 +428,7 @@ Key roots: `contracts/` (proto source of truth + i18n messages + fixtures) · `s
 
 ## §8. Local Secrets & multi-runtime deny map
 
-Environment configuration is split:
+Environment configuration is split (product SoT = env files + Compose; law → [rules.md §23.9 / §23.10](docs/dev/rules/23-configuration-hygiene.md#23-configuration-hygiene)):
 
 | File | Contents | Committed? | Agent read? | Agent edit? |
 |---|---|---|---|---|

@@ -119,6 +119,15 @@ export const AuthFailures = {
       traceId: opts.traceId,
     });
   },
+  /** gRPC product call reached a host with RequestOrigin still Unestablished after the cross-process establishment interceptor (no validated mTLS peer identity). Platform fail-closed deny — not a per-handler check. Surfaces as 401 (not 403) so the auth boundary keeps a uniform shape with other policy-denied auth failures. */
+  requestOriginUnestablished<T = void>(opts: { messages?: readonly TKMessage[]; traceId?: string } = {}): D2Result<T> {
+    return unauthorized<T>({
+      messages: opts.messages ?? [TK.auth.errors.UNAUTHORIZED],
+      errorCode: AuthErrorCodes.AUTH_REQUEST_ORIGIN_UNESTABLISHED,
+      category: ErrorCategoryWire.PolicyDenied,
+      traceId: opts.traceId,
+    });
+  },
   /** Caller is authenticated but the per-endpoint scope requirement is not satisfied. Surfaces as 401 (not 403) - the auth boundary keeps a uniform shape regardless of whether the JWT was bad or scopes were insufficient, so attackers cannot deduce which check failed. */
   scopeInsufficient<T = void>(opts: { messages?: readonly TKMessage[]; traceId?: string } = {}): D2Result<T> {
     return unauthorized<T>({

@@ -52,8 +52,25 @@ public static class TestCollector
 
     /// <summary>Returns the number of captured deliveries for a handler type.</summary>
     /// <typeparam name="THandler">The handler type.</typeparam>
+    /// <remarks>
+    /// Enumerates rather than reading <see cref="ConcurrentBag{T}.Count"/> —
+    /// bag.Count is documented as approximate under concurrent writers and has
+    /// produced false-empty WaitFor timeouts when a single delivery was already
+    /// present (handler log visible, poll still at 0).
+    /// </remarks>
     public static int Count<THandler>()
     {
-        return sr_byHandler.TryGetValue(typeof(THandler), out var bag) ? bag.Count : 0;
+        if (!sr_byHandler.TryGetValue(typeof(THandler), out var bag))
+            return 0;
+
+        // Snapshot count — ConcurrentBag.Count is approximate.
+        var n = 0;
+        foreach (var item in bag)
+        {
+            _ = item;
+            n++;
+        }
+
+        return n;
     }
 }

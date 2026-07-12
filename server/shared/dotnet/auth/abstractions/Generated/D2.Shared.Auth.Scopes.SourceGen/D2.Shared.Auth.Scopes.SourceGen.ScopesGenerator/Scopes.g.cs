@@ -122,6 +122,17 @@ public static partial class Scopes
     public static class Internal
     {
         /// <summary>
+        /// Scopes nested under <c>audit</c>.
+        /// </summary>
+        public static class Audit
+        {
+            /// <summary>
+            /// Call the Audit multiproc S2S Ping surface (internal service-to-service). Gates Edge→Audit dual-factor JWT+mTLS hop for the standalone Audit host bridge.
+            /// </summary>
+            public const string Ping = "internal.audit.ping";
+        }
+
+        /// <summary>
         /// Scopes nested under <c>kc</c>.
         /// </summary>
         public static class Kc
@@ -258,6 +269,7 @@ public static partial class Scopes
         "auth.user.impersonate.consent",
         "auth.user.impersonate.force",
         "billing.payment.charge",
+        "internal.audit.ping",
         "internal.kc.cacert",
         "internal.kc.issue",
         "internal.kc.keyring",
@@ -282,6 +294,7 @@ public static partial class Scopes
         "auth.user.impersonate.consent",
         "auth.user.impersonate.force",
         "billing.payment.charge",
+        "internal.audit.ping",
         "internal.kc.issue",
         "internal.kc.keyring",
         "internal.kc.seal.encrypt",
@@ -298,6 +311,7 @@ public static partial class Scopes
         ["auth.user.impersonate.consent"] = ActionSensitivity.Sensitive,
         ["auth.user.impersonate.force"] = ActionSensitivity.Critical,
         ["billing.payment.charge"] = ActionSensitivity.Critical,
+        ["internal.audit.ping"] = ActionSensitivity.Routine,
         ["internal.kc.cacert"] = ActionSensitivity.Sensitive,
         ["internal.kc.issue"] = ActionSensitivity.Critical,
         ["internal.kc.keyring"] = ActionSensitivity.Critical,

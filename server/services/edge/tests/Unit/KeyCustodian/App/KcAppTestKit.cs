@@ -127,7 +127,7 @@ internal static class KcAppTestKit
     /// <summary>
     /// Builds a handler context whose request carries the established
     /// <see cref="RequestOrigin.System"/> plane — what the in-host workers establish
-    /// via <c>EstablishSystemContext</c>, and the only plane the lifecycle authority
+    /// via <c>ISystemWorkScopeFactory.BeginAsync</c>, and the only plane the lifecycle authority
     /// admits. Every lifecycle-handler happy-path test drives through this.
     /// </summary>
     /// <typeparam name="THandler">The handler type.</typeparam>

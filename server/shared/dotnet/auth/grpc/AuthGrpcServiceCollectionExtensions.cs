@@ -20,11 +20,9 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 /// DI registration entry point for the gRPC-transport binding of the inbound
 /// auth runtime. Companion to <c>D2.Shared.Auth.AddD2Auth</c> — that registers
 /// the validator + liveness tracker; this registers the
-/// <see cref="JwtAuthInterceptor"/> + a scoped <see cref="IRequestContext"/>
-/// resolver that reads from <see cref="HttpContext.Items"/> (the gRPC
-/// interceptor writes the validated context to the same shared slot the HTTP
-/// middleware uses, so the resolver lambda is identical across both
-/// transports).
+/// <see cref="JwtAuthInterceptor"/> + dual-path scoped
+/// <see cref="IRequestContext"/> resolver (same Items||Mutable contract as
+/// <c>AddD2AuthHttp</c>).
 /// </summary>
 public static class AuthGrpcServiceCollectionExtensions
 {
@@ -32,10 +30,9 @@ public static class AuthGrpcServiceCollectionExtensions
     {
         /// <summary>
         /// Registers the gRPC-transport auth surface: the
-        /// <see cref="JwtAuthInterceptor"/> (singleton), a scoped
-        /// <see cref="IRequestContext"/> resolver that reads from
-        /// <see cref="HttpContext.Items"/> at
-        /// <see cref="D2HttpContextItems.REQUEST_CONTEXT"/>, and the configuration
+        /// <see cref="JwtAuthInterceptor"/> (singleton), a dual-path scoped
+        /// <see cref="IRequestContext"/> resolver (HTTP Items when established,
+        /// else scoped <see cref="MutableRequestContext"/>), and the configuration
         /// that attaches the interceptor to the host's
         /// <see cref="GrpcServiceOptions"/>.
         /// </summary>
@@ -47,22 +44,19 @@ public static class AuthGrpcServiceCollectionExtensions
         /// remediation message.
         /// </para>
         /// <para>
-        /// The scoped <see cref="IRequestContext"/> resolver is REGISTRATION-
-        /// ORDER-INSENSITIVE: the sibling extension <c>AddD2AuthHttp()</c>
-        /// registers an identical lambda reading from the SAME
-        /// <see cref="HttpContext.Items"/> slot. Hosts that call BOTH extensions
-        /// (dual-transport service: HTTP endpoints + gRPC services on the same
-        /// Kestrel host) get correct resolution under either transport because
-        /// both the HTTP middleware and the gRPC interceptor write the validated
-        /// <see cref="IRequestContext"/> to that slot. <c>TryAddScoped</c> means
-        /// first-wins is harmless — the lambdas behave identically given the same
-        /// <see cref="HttpContext"/> state. The interceptor ALSO writes the
-        /// context to <see cref="global::Grpc.Core.ServerCallContext.UserState"/>
+        /// The dual-path <see cref="IRequestContext"/> resolver matches
+        /// <c>AddD2AuthHttp()</c> (identical body, same
+        /// <see cref="HttpContext.Items"/> slot). Hosts that call BOTH get
+        /// correct resolution under either transport. The resolver REPLACES any
+        /// prior plain Mutable-only registration from
+        /// <c>AddD2SystemWorkPlane()</c> so inbound gRPC still prefers the
+        /// interceptor-populated Items slot while System workers (no
+        /// <see cref="HttpContext"/>) fall through to the scope's
+        /// <see cref="MutableRequestContext"/> after
+        /// <c>ISystemWorkScopeFactory.BeginAsync</c>. The interceptor ALSO writes
+        /// the context to <see cref="global::Grpc.Core.ServerCallContext.UserState"/>
         /// for the gRPC-specific hot-path accessor
-        /// <c>ServerCallContext.GetD2RequestContext()</c> used by gRPC service
-        /// code that already has a <see cref="global::Grpc.Core.ServerCallContext"/>
-        /// in hand and wants to skip the <see cref="IHttpContextAccessor"/>
-        /// allocation cost.
+        /// <c>ServerCallContext.GetD2RequestContext()</c>.
         /// </para>
         /// <para>
         /// Additive on top of the host's own <c>services.AddGrpc(...)</c> call
@@ -73,8 +67,9 @@ public static class AuthGrpcServiceCollectionExtensions
         /// <c>services.Configure&lt;GrpcServiceOptions&gt;(...)</c>.
         /// </para>
         /// <para>
-        /// Idempotent — multiple <c>AddD2AuthGrpc()</c> calls do not double-
-        /// register the interceptor (defensive presence check).
+        /// Idempotent for interceptor / ambient seams; the dual-path
+        /// <see cref="IRequestContext"/> registration is replace-on-each-call
+        /// (same lambda under dual-transport hosts).
         /// </para>
         /// </remarks>
         /// <returns>The same <paramref name="services"/> for fluent chaining.</returns>
@@ -86,6 +81,7 @@ public static class AuthGrpcServiceCollectionExtensions
         /// </exception>
         public IServiceCollection AddD2AuthGrpc()
         {
+            // §5.1a carve-out: plain reference-type null-guard — no present-but-falsey.
             ArgumentNullException.ThrowIfNull(services);
 
             // Fail-fast precondition check — surface a friendly error rather than
@@ -130,34 +126,15 @@ public static class AuthGrpcServiceCollectionExtensions
                 o.Interceptors.Add<JwtAuthInterceptor>();
             });
 
-            // Cross-transport scoped IRequestContext resolver: reads from
-            // HttpContext.Items[D2HttpContextItems.REQUEST_CONTEXT]. The gRPC
-            // interceptor writes to that slot on successful auth (alongside its
-            // ServerCallContext.UserState write); the sibling HTTP middleware
-            // writes the same slot for dual-transport hosts. The lambda body is
-            // IDENTICAL to the one registered by AddD2AuthHttp() — the parity
-            // guarantees TryAddScoped first-wins is harmless regardless of
-            // registration order. Failing fast is strictly better than returning
-            // null — downstream code would null-ref later with an unhelpful
-            // stack trace.
-            services.TryAddScoped<IRequestContext>(static sp =>
-            {
-                var http = sp.GetRequiredService<IHttpContextAccessor>().HttpContext
-                    ?? throw new InvalidOperationException(
-                        "IRequestContext was resolved without an active HttpContext. "
-                            + "Ensure the resolution site runs inside an AspNetCore "
-                            + "request (UseD2Auth() for HTTP; AddD2AuthGrpc() for gRPC) "
-                            + "and that an HttpContext is on the execution context.");
+            // Ensure Mutable is present for dual-path fall-through. TryAdd:
+            // AddD2SystemWorkPlane / AddD2AuthHttp may already have registered it.
+            services.TryAddScoped<MutableRequestContext>();
 
-                return http.Items.TryGetValue(D2HttpContextItems.REQUEST_CONTEXT, out var raw)
-                    && raw is IRequestContext ctx
-                    ? ctx
-                    : throw new InvalidOperationException(
-                        "IRequestContext was resolved before the auth pipeline ran. "
-                            + "Ensure UseD2Auth() (for HTTP) or AddD2AuthGrpc()'s "
-                            + "interceptor (for gRPC) has run before resolving "
-                            + "IRequestContext.");
-            });
+            // Dual-path IRequestContext — identical contract to AddD2AuthHttp.
+            // Replace any prior registration (SystemWorkPlane plain default or
+            // sibling HTTP dual-path) so System workers never hit a throw-only path.
+            services.RemoveAll<IRequestContext>();
+            services.AddScoped<IRequestContext>(static sp => ResolveDualPathRequestContext(sp));
 
             // Request-scoped forwarded-JWT holder — identical registration to
             // AddD2AuthHttp() (deliberate parity; a parity test pins both register
@@ -177,9 +154,35 @@ public static class AuthGrpcServiceCollectionExtensions
             // forwarding host gets it automatically, mirroring AddD2AuthHttp(). On a
             // dual-transport host (HTTP + gRPC on one Kestrel) TryAdd is first-wins,
             // harmless: this adapter and the HTTP sibling read the same door.
-            services.TryAddSingleton<IAmbientRequestScopeAccessor, GrpcHttpContextAmbientRequestScopeAccessor>();
+            services.TryAddSingleton<
+                IAmbientRequestScopeAccessor,
+                GrpcHttpContextAmbientRequestScopeAccessor>();
 
             return services;
         }
+    }
+
+    /// <summary>
+    /// Shared HTTP/gRPC dual-path resolver body: established context from
+    /// <see cref="HttpContext.Items"/> when present; otherwise the scope's
+    /// <see cref="MutableRequestContext"/>. Kept as a private twin of the HTTP
+    /// transport's internal helper (the two transport csprojs are siblings with
+    /// no inter-project dependency).
+    /// </summary>
+    /// <param name="sp">The request (or System work) scope's service provider.</param>
+    /// <returns>The established Items context, or the scope's Mutable fall-through.</returns>
+    private static IRequestContext ResolveDualPathRequestContext(IServiceProvider sp)
+    {
+        var accessor = sp.GetService<IHttpContextAccessor>();
+        var http = accessor?.HttpContext;
+
+        if (http is not null
+            && http.Items.TryGetValue(D2HttpContextItems.REQUEST_CONTEXT, out var raw)
+            && raw is IRequestContext established)
+        {
+            return established;
+        }
+
+        return sp.GetRequiredService<MutableRequestContext>();
     }
 }

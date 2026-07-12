@@ -37,8 +37,10 @@ Copyright (c) DCSV. All rights reserved.
       • D2.Shared.I18n                    — SupportedLocales + ITranslator
       • D2.Shared.Handler                 — HandlerContext open-generic registration
       • D2.Shared.Auth                    — JwtValidator, JWKS provider, sessions
-      • D2.Shared.Auth.Http               — JwtAuthMiddleware + scoped IRequestContext
-      • D2.Shared.Auth.Grpc               — JwtAuthInterceptor + scoped IRequestContext
+      • D2.Shared.Auth.Http               — JwtAuthMiddleware + dual-path IRequestContext
+      • D2.Shared.Auth.Grpc               — JwtAuthInterceptor + dual-path IRequestContext
+      • D2.Shared.Context.Abstractions    — AddD2SystemWorkPlane (via Auth.Http transitive;
+                                            declared-use for System work plane)
       • D2.Shared.Caching.Local.Default   — In-process L1 cache (DefaultLocalCache)
       • D2.Shared.Utilities               — D2Env.Load() + Falsey()/Truthy() extensions
 
@@ -60,6 +62,12 @@ Copyright (c) DCSV. All rights reserved.
     <ProjectReference Include="..\auth\core\D2.Shared.Auth.csproj" />
     <ProjectReference Include="..\auth\grpc\D2.Shared.Auth.Grpc.csproj" />
     <ProjectReference Include="..\auth\http\D2.Shared.Auth.Http.csproj" />
+    <!--
+      context/abstractions — AddD2SystemWorkPlane (platform System work entry +
+      default scoped IRequestContext). Declared-use: the aggregator calls it
+      directly (not only transitively via Auth.Http).
+    -->
+    <ProjectReference Include="..\context\abstractions\D2.Shared.Context.Abstractions.csproj" />
     <!--
       auth/startup — deny-by-default boot guard (AuthEndpointGuardStartupCheck +
       AddD2AuthEndpointGuard). Wired via AddD2AuthEndpointGuard() in the

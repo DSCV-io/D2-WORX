@@ -190,7 +190,7 @@ function makeMockProgram(
 
 function makeBaseContext(
   program: Program,
-  options: Record<string, string | undefined> = {},
+  options: Record<string, unknown> = {},
 ): EmitContext {
   return {
     program,
@@ -600,7 +600,7 @@ describe("$onEmit_routeEmitDirect_RealModuleFacade", () => {
       return new Map();
     });
 
-    // Real-module mode: provide csAppNamespaceBase + csClientsNamespace.
+    // Real-module mode: clients-ns + app-base + process-kind + routes-ns.
     const ctx = makeBaseContext(program, {
       "csharp-namespace": "D2.Test.Route",
       "csharp-app-namespace-base": "D2.Test.App.Handlers",
@@ -608,6 +608,10 @@ describe("$onEmit_routeEmitDirect_RealModuleFacade", () => {
       "grpc-service-namespace": "D2.Test.Grpc",
       "proto-package": "d2.test.v1",
       "proto-csharp-namespace": "D2.Test.Protos.V1",
+      "process-kind-by-module": { Sample: "edge-module" },
+      "csharp-routes-namespace": {
+        Sample: "D2.Edge.Api.Routes.Sample",
+      },
     });
     await $onEmit(ctx);
 
@@ -618,6 +622,9 @@ describe("$onEmit_routeEmitDirect_RealModuleFacade", () => {
     // In real-module mode, the façade type is I<ServedBy>Api.
     expect(routeFile!.content).toContain("ISampleApi");
     expect(routeFile!.content).not.toContain("SignerFacade");
+    expect(routeFile!.content).toContain(
+      "namespace D2.Edge.Api.Routes.Sample;",
+    );
   });
 });
 

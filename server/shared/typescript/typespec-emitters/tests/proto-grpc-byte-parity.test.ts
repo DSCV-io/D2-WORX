@@ -35,16 +35,41 @@ import { parseChannel } from "../src/lib/wire-channel.js";
 
 const REPO = findRepoRoot(import.meta.url);
 
-/** Committed home for gRPC service + mapper + client fixtures (TypeSpecGrpc/Generated/). */
+/**
+ * Fixture/test root for SignFixture* services + mappers + WireVersion under the
+ * tests tree. Production KC services/mappers live under Edge.Api three homes —
+ * never retarget this const to production (PA-S3-1 / S3-11).
+ */
 const GRPC_HOME = join(
   REPO,
   "server/services/edge/tests/Unit/KeyCustodian/TypeSpecGrpc/Generated",
 );
 
-/** Committed home for the gRPC .proto fixture (TypeSpecGrpc/Protos/). */
+/**
+ * Fixture/test proto root (sign_fixture_*.g.proto). Production KC protos live
+ * under Edge.Api/Protos/KeyCustodian — never retarget this const to production.
+ */
 const GRPC_PROTOS = join(
   REPO,
   "server/services/edge/tests/Unit/KeyCustodian/TypeSpecGrpc/Protos",
+);
+
+/** Production thin gRPC services (Edge.Api). */
+const KC_SERVICE_HOME = join(
+  REPO,
+  "server/services/edge/api/Grpc/KeyCustodian",
+);
+
+/** Production transport mappers (Edge.Api). */
+const KC_MAPPER_HOME = join(
+  REPO,
+  "server/services/edge/api/Mappers/KeyCustodian",
+);
+
+/** Production .g.proto files (Edge.Api). */
+const KC_PROTO_HOME = join(
+  REPO,
+  "server/services/edge/api/Protos/KeyCustodian",
 );
 
 /**
@@ -511,11 +536,14 @@ describe("byteParity_WireIdentityManifest_CommittedFixtureIdentical", () => {
 
 const KC_SOURCE = "contracts/typespec/key-custodian/key-custodian.tsp";
 const KC_PROTO_CS_NS = "D2.Services.Protos.KeyCustodian.V2Alpha";
-const KC_GRPC_NS = "D2.Edge.Tests.TypeSpecGrpc.Generated";
+/** Production thin-service + mapper namespace (tspconfig grpc-service-namespace). */
+const KC_GRPC_NS = "D2.Edge.Api.Grpc.KeyCustodian";
 const KC_SIGNING_NS = "D2.Edge.KeyCustodian.Client.Signing";
 const KC_KEYRING_NS = "D2.Edge.KeyCustodian.Client.Keyring";
 const KC_ISSUANCE_NS = "D2.Edge.KeyCustodian.Client.Issuance";
 const KC_CACERT_NS = "D2.Edge.KeyCustodian.Client.CaCertificate";
+const KC_SEALING_NS = "D2.Edge.KeyCustodian.Client.Sealing";
+/** WireVersion / wire-identity stay test parity homes (S3-8). */
 const KC_WIRE_HOME = join(GRPC_HOME, "KeyCustodian");
 
 function buildKcSignInputFields(): readonly FieldInfo[] {
@@ -605,13 +633,13 @@ describe("byteParity_KcSignProto_CommittedFixtureIdentical", () => {
     );
     expect(result).toBeDefined();
     expect(result!.content).toBe(
-      readFixture(join(GRPC_PROTOS, "key_custodian_signer_sign.g.proto")),
+      readFixture(join(KC_PROTO_HOME, "key_custodian_signer_sign.g.proto")),
     );
   });
 
   it("deliberate-drift detection: mutated fixture does NOT match re-emitted output", () => {
     const drifted = readFixture(
-      join(GRPC_PROTOS, "key_custodian_signer_sign.g.proto"),
+      join(KC_PROTO_HOME, "key_custodian_signer_sign.g.proto"),
     ).replace("D2ResultProto", "D2ResultProtoDRIFTED");
     const result = emitProto(
       "sign",
@@ -653,13 +681,13 @@ describe("byteParity_KeyCustodianSignerService_FacadeDelegation_CommittedFixture
       KC_SIGN_FACADE_TARGET,
     );
     expect(svc.content).toBe(
-      readFixture(join(GRPC_HOME, "KeyCustodianSignerService.g.cs")),
+      readFixture(join(KC_SERVICE_HOME, "KeyCustodianSignerService.g.cs")),
     );
   });
 
   it("deliberate-drift detection: handler delegation does NOT match façade fixture", () => {
     const drifted = readFixture(
-      join(GRPC_HOME, "KeyCustodianSignerService.g.cs"),
+      join(KC_SERVICE_HOME, "KeyCustodianSignerService.g.cs"),
     ).replace("facade.SignAsync", "handler.HandleAsync");
     const [svc] = emitGrpcService(
       "sign",
@@ -699,13 +727,13 @@ describe("byteParity_KcSignTransportMappers_CommittedFixtureIdentical", () => {
       buildKcSignOutputFields(),
     );
     expect(mapper.content).toBe(
-      readFixture(join(GRPC_HOME, "SignTransportMappers.g.cs")),
+      readFixture(join(KC_MAPPER_HOME, "SignTransportMappers.g.cs")),
     );
   });
 
   it("deliberate-drift detection: mutated fixture does NOT match re-emitted output", () => {
     const drifted = readFixture(
-      join(GRPC_HOME, "SignTransportMappers.g.cs"),
+      join(KC_MAPPER_HOME, "SignTransportMappers.g.cs"),
     ).replace("SignTransportMappers", "SignTransportMappersDRIFTED");
     const [, mapper] = emitGrpcService(
       "sign",
@@ -864,14 +892,14 @@ describe("byteParity_KcKeyringProto_CommittedFixtureIdentical", () => {
     expect(p).toContain("message KeyringEntry {");
     expect(p).toBe(
       readFixture(
-        join(GRPC_PROTOS, "key_custodian_keyring_get_keyring.g.proto"),
+        join(KC_PROTO_HOME, "key_custodian_keyring_get_keyring.g.proto"),
       ),
     );
   });
 
   it("deliberate-drift detection: mutated fixture does NOT match re-emitted output", () => {
     const drifted = readFixture(
-      join(GRPC_PROTOS, "key_custodian_keyring_get_keyring.g.proto"),
+      join(KC_PROTO_HOME, "key_custodian_keyring_get_keyring.g.proto"),
     ).replace("message KeyringEntry", "message KeyringEntryDRIFTED");
     expect(emit()).not.toBe(drifted);
   });
@@ -901,13 +929,13 @@ describe("byteParity_KeyCustodianKeyringService_FacadeDelegation_CommittedFixtur
 
   it("re-emitted real KC keyring service .g.cs (façade delegation) is byte-identical", () => {
     expect(emitService()).toBe(
-      readFixture(join(GRPC_HOME, "KeyCustodianKeyringService.g.cs")),
+      readFixture(join(KC_SERVICE_HOME, "KeyCustodianKeyringService.g.cs")),
     );
   });
 
   it("deliberate-drift detection: handler delegation does NOT match façade fixture", () => {
     const drifted = readFixture(
-      join(GRPC_HOME, "KeyCustodianKeyringService.g.cs"),
+      join(KC_SERVICE_HOME, "KeyCustodianKeyringService.g.cs"),
     ).replace("facade.GetKeyringAsync", "handler.HandleAsync");
     expect(emitService()).not.toBe(drifted);
   });
@@ -940,13 +968,13 @@ describe("byteParity_GetKeyringTransportMappers_CommittedFixtureIdentical", () =
     expect(m).toContain("ToProtoKeyringEntry()");
     expect(m).toContain("ToKeyringEntry()");
     expect(m).toBe(
-      readFixture(join(GRPC_HOME, "GetKeyringTransportMappers.g.cs")),
+      readFixture(join(KC_MAPPER_HOME, "GetKeyringTransportMappers.g.cs")),
     );
   });
 
   it("deliberate-drift detection: mutated fixture does NOT match re-emitted output", () => {
     const drifted = readFixture(
-      join(GRPC_HOME, "GetKeyringTransportMappers.g.cs"),
+      join(KC_MAPPER_HOME, "GetKeyringTransportMappers.g.cs"),
     ).replace(
       "GetKeyringTransportMappers",
       "GetKeyringTransportMappersDRIFTED",
@@ -1122,7 +1150,7 @@ describe("byteParity_KcIssueLeafProto_CommittedFixtureIdentical", () => {
     expect(p).toBe(
       readFixture(
         join(
-          GRPC_PROTOS,
+          KC_PROTO_HOME,
           "key_custodian_certificate_authority_issue_workload_certificate.g.proto",
         ),
       ),
@@ -1132,7 +1160,7 @@ describe("byteParity_KcIssueLeafProto_CommittedFixtureIdentical", () => {
   it("deliberate-drift detection: mutated fixture does NOT match re-emitted output", () => {
     const drifted = readFixture(
       join(
-        GRPC_PROTOS,
+        KC_PROTO_HOME,
         "key_custodian_certificate_authority_issue_workload_certificate.g.proto",
       ),
     ).replace("bytes csr_der", "bytes csr_der_drifted");
@@ -1165,14 +1193,14 @@ describe("byteParity_KeyCustodianCertificateAuthorityService_FacadeDelegation_Co
   it("re-emitted real KC issuance service .g.cs (façade delegation) is byte-identical", () => {
     expect(emitService()).toBe(
       readFixture(
-        join(GRPC_HOME, "KeyCustodianCertificateAuthorityService.g.cs"),
+        join(KC_SERVICE_HOME, "KeyCustodianCertificateAuthorityService.g.cs"),
       ),
     );
   });
 
   it("deliberate-drift detection: handler delegation does NOT match façade fixture", () => {
     const drifted = readFixture(
-      join(GRPC_HOME, "KeyCustodianCertificateAuthorityService.g.cs"),
+      join(KC_SERVICE_HOME, "KeyCustodianCertificateAuthorityService.g.cs"),
     ).replace("facade.IssueLeafAsync", "handler.HandleAsync");
     expect(emitService()).not.toBe(drifted);
   });
@@ -1205,13 +1233,13 @@ describe("byteParity_IssueLeafTransportMappers_CommittedFixtureIdentical", () =>
     expect(m).toContain('NotBefore = output.NotBefore.ToString("O"),');
     expect(m).toContain('NotAfter = output.NotAfter.ToString("O"),');
     expect(m).toBe(
-      readFixture(join(GRPC_HOME, "IssueLeafTransportMappers.g.cs")),
+      readFixture(join(KC_MAPPER_HOME, "IssueLeafTransportMappers.g.cs")),
     );
   });
 
   it("deliberate-drift detection: mutated fixture does NOT match re-emitted output", () => {
     const drifted = readFixture(
-      join(GRPC_HOME, "IssueLeafTransportMappers.g.cs"),
+      join(KC_MAPPER_HOME, "IssueLeafTransportMappers.g.cs"),
     ).replace("IssueLeafTransportMappers", "IssueLeafTransportMappersDRIFTED");
     expect(emitMapper()).not.toBe(drifted);
   });
@@ -1294,7 +1322,7 @@ describe("byteParity_KcCaCertificateProto_CommittedFixtureIdentical", () => {
     expect(p).toBe(
       readFixture(
         join(
-          GRPC_PROTOS,
+          KC_PROTO_HOME,
           "key_custodian_ca_certificate_get_ca_certificate.g.proto",
         ),
       ),
@@ -1304,7 +1332,7 @@ describe("byteParity_KcCaCertificateProto_CommittedFixtureIdentical", () => {
   it("deliberate-drift detection: mutated fixture does NOT match re-emitted output", () => {
     const drifted = readFixture(
       join(
-        GRPC_PROTOS,
+        KC_PROTO_HOME,
         "key_custodian_ca_certificate_get_ca_certificate.g.proto",
       ),
     ).replace("root_certificate_der", "root_certificate_der_drifted");
@@ -1336,13 +1364,15 @@ describe("byteParity_KeyCustodianCaCertificateService_FacadeDelegation_Committed
 
   it("re-emitted real KC CA-certificate service .g.cs (façade delegation) is byte-identical", () => {
     expect(emitService()).toBe(
-      readFixture(join(GRPC_HOME, "KeyCustodianCaCertificateService.g.cs")),
+      readFixture(
+        join(KC_SERVICE_HOME, "KeyCustodianCaCertificateService.g.cs"),
+      ),
     );
   });
 
   it("deliberate-drift detection: handler delegation does NOT match façade fixture", () => {
     const drifted = readFixture(
-      join(GRPC_HOME, "KeyCustodianCaCertificateService.g.cs"),
+      join(KC_SERVICE_HOME, "KeyCustodianCaCertificateService.g.cs"),
     ).replace("facade.GetCaCertificateAsync", "handler.HandleAsync");
     expect(emitService()).not.toBe(drifted);
   });
@@ -1374,16 +1404,460 @@ describe("byteParity_GetCaCertificateTransportMappers_CommittedFixtureIdentical"
     // Non-vacuity: the parameterless-request inbound arm constructs the empty DTO.
     expect(m).toContain("return new GetCaCertificateInput();");
     expect(m).toBe(
-      readFixture(join(GRPC_HOME, "GetCaCertificateTransportMappers.g.cs")),
+      readFixture(
+        join(KC_MAPPER_HOME, "GetCaCertificateTransportMappers.g.cs"),
+      ),
     );
   });
 
   it("deliberate-drift detection: mutated fixture does NOT match re-emitted output", () => {
     const drifted = readFixture(
-      join(GRPC_HOME, "GetCaCertificateTransportMappers.g.cs"),
+      join(KC_MAPPER_HOME, "GetCaCertificateTransportMappers.g.cs"),
     ).replace(
       "GetCaCertificateTransportMappers",
       "GetCaCertificateTransportMappersDRIFTED",
+    );
+    expect(emitMapper()).not.toBe(drifted);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Real KeyCustodian SEAL PUBLIC KEY gRPC surface — getOrLazyProvisionSealPublicKey.
+// Nested SealPublicEntry array; facade delegation. S3-6 / F-R2-2 gate.
+// ---------------------------------------------------------------------------
+
+const KC_SEAL_PUBLIC_ENTRY_MODEL: NestedModel = {
+  name: "SealPublicEntry",
+  fields: [
+    {
+      name: "kid",
+      csName: "Kid",
+      csType: "string",
+      tsName: "kid",
+      tsType: "string",
+      protoType: "string",
+      repeated: false,
+      optional: false,
+      redactReason: undefined,
+      fieldNumber: 1,
+    },
+    {
+      name: "publicSpki",
+      csName: "PublicSpki",
+      csType: "byte[]",
+      tsName: "publicSpki",
+      tsType: "Uint8Array",
+      protoType: "bytes",
+      repeated: false,
+      optional: false,
+      redactReason: undefined,
+      fieldNumber: 2,
+    },
+  ],
+};
+
+function buildKcSealPublicInputFields(): readonly FieldInfo[] {
+  return [
+    {
+      name: "serviceId",
+      csName: "ServiceId",
+      csType: "string",
+      tsName: "serviceId",
+      tsType: "string",
+      protoType: "string",
+      repeated: false,
+      optional: false,
+      redactReason: undefined,
+      fieldNumber: 1,
+    },
+  ];
+}
+
+function buildKcSealPublicOutputFields(): readonly FieldInfo[] {
+  return [
+    {
+      name: "activeKid",
+      csName: "ActiveKid",
+      csType: "string",
+      tsName: "activeKid",
+      tsType: "string",
+      protoType: "string",
+      repeated: false,
+      optional: false,
+      redactReason: undefined,
+      fieldNumber: 1,
+    },
+    {
+      name: "entries",
+      csName: "Entries",
+      csType: "IReadOnlyList<SealPublicEntry>",
+      tsName: "entries",
+      tsType: "readonly SealPublicEntry[]",
+      protoType: undefined,
+      repeated: true,
+      optional: false,
+      redactReason: undefined,
+      fieldNumber: 2,
+      nested: KC_SEAL_PUBLIC_ENTRY_MODEL,
+    },
+  ];
+}
+
+const KC_SEAL_PUBLIC_FACADE_TARGET: GrpcDelegationTarget = {
+  kind: "facade",
+  typeName: "IKeyCustodianApi",
+  methodName: "GetOrLazyProvisionSealPublicKeyAsync",
+  targetNamespace: "D2.Edge.KeyCustodian.Client.Facade",
+};
+
+describe("byteParity_KcSealPublicKeyProto_CommittedFixtureIdentical", () => {
+  function emit(): string {
+    return emitProto(
+      "getOrLazyProvisionSealPublicKey",
+      "KeyCustodianSealPublicKey",
+      "GetOrLazyProvisionSealPublicKey",
+      "unary",
+      "d2.keycustodian.v2alpha",
+      KC_PROTO_CS_NS,
+      KC_SOURCE,
+      "GetOrLazyProvisionSealPublicKeyRequest",
+      buildKcSealPublicInputFields(),
+      undefined,
+      "GetOrLazyProvisionSealPublicKeyOutput",
+      buildKcSealPublicOutputFields(),
+      undefined,
+      [{ model: KC_SEAL_PUBLIC_ENTRY_MODEL } as NestedMessageDescriptor],
+      (code, msg) => {
+        throw new Error(`${code}: ${msg}`);
+      },
+    )!.content;
+  }
+
+  it("re-emitted real KC seal-public .proto is byte-identical to the committed fixture", () => {
+    const p = emit();
+    expect(p).toContain("repeated SealPublicEntry entries = 2;");
+    expect(p).toContain("message SealPublicEntry {");
+    expect(p).toBe(
+      readFixture(
+        join(
+          KC_PROTO_HOME,
+          "key_custodian_seal_public_key_get_or_lazy_provision_seal_public_key.g.proto",
+        ),
+      ),
+    );
+  });
+
+  it("deliberate-drift detection: mutated fixture does NOT match re-emitted output", () => {
+    const drifted = readFixture(
+      join(
+        KC_PROTO_HOME,
+        "key_custodian_seal_public_key_get_or_lazy_provision_seal_public_key.g.proto",
+      ),
+    ).replace("message SealPublicEntry", "message SealPublicEntryDRIFTED");
+    expect(emit()).not.toBe(drifted);
+  });
+});
+
+describe("byteParity_KeyCustodianSealPublicKeyService_FacadeDelegation_CommittedFixtureIdentical", () => {
+  function emitService(): string {
+    const [svc] = emitGrpcService(
+      "getOrLazyProvisionSealPublicKey",
+      "KeyCustodianSealPublicKey",
+      "GetOrLazyProvisionSealPublicKey",
+      KC_PROTO_CS_NS,
+      KC_GRPC_NS,
+      KC_SEALING_NS,
+      KC_SOURCE,
+      "GetOrLazyProvisionSealPublicKeyRequest",
+      "GetOrLazyProvisionSealPublicKeyResponse",
+      "GetOrLazyProvisionSealPublicKeyInput",
+      buildKcSealPublicInputFields(),
+      "GetOrLazyProvisionSealPublicKeyOutput",
+      buildKcSealPublicOutputFields(),
+      KC_SEAL_PUBLIC_FACADE_TARGET,
+    );
+
+    return svc.content;
+  }
+
+  it("re-emitted real KC seal-public service .g.cs (facade delegation) is byte-identical", () => {
+    expect(emitService()).toBe(
+      readFixture(
+        join(KC_SERVICE_HOME, "KeyCustodianSealPublicKeyService.g.cs"),
+      ),
+    );
+  });
+
+  it("deliberate-drift detection: handler delegation does NOT match facade fixture", () => {
+    const drifted = readFixture(
+      join(KC_SERVICE_HOME, "KeyCustodianSealPublicKeyService.g.cs"),
+    ).replace(
+      "facade.GetOrLazyProvisionSealPublicKeyAsync",
+      "handler.HandleAsync",
+    );
+    expect(emitService()).not.toBe(drifted);
+  });
+});
+
+describe("byteParity_GetOrLazyProvisionSealPublicKeyTransportMappers_CommittedFixtureIdentical", () => {
+  function emitMapper(): string {
+    const [, mapper] = emitGrpcService(
+      "getOrLazyProvisionSealPublicKey",
+      "KeyCustodianSealPublicKey",
+      "GetOrLazyProvisionSealPublicKey",
+      KC_PROTO_CS_NS,
+      KC_GRPC_NS,
+      KC_SEALING_NS,
+      KC_SOURCE,
+      "GetOrLazyProvisionSealPublicKeyRequest",
+      "GetOrLazyProvisionSealPublicKeyResponse",
+      "GetOrLazyProvisionSealPublicKeyInput",
+      buildKcSealPublicInputFields(),
+      "GetOrLazyProvisionSealPublicKeyOutput",
+      buildKcSealPublicOutputFields(),
+    );
+
+    return mapper.content;
+  }
+
+  it("re-emitted real KC seal-public transport mappers .g.cs is byte-identical", () => {
+    const m = emitMapper();
+    expect(m).toContain("ToProtoSealPublicEntry()");
+    expect(m).toContain("ToSealPublicEntry()");
+    expect(m).toBe(
+      readFixture(
+        join(
+          KC_MAPPER_HOME,
+          "GetOrLazyProvisionSealPublicKeyTransportMappers.g.cs",
+        ),
+      ),
+    );
+  });
+
+  it("deliberate-drift detection: mutated fixture does NOT match re-emitted output", () => {
+    const drifted = readFixture(
+      join(
+        KC_MAPPER_HOME,
+        "GetOrLazyProvisionSealPublicKeyTransportMappers.g.cs",
+      ),
+    ).replace(
+      "GetOrLazyProvisionSealPublicKeyTransportMappers",
+      "GetOrLazyProvisionSealPublicKeyTransportMappersDRIFTED",
+    );
+    expect(emitMapper()).not.toBe(drifted);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Real KeyCustodian OWN SEAL PRIVATE KEY gRPC surface —
+// getOrLazyProvisionOwnSealPrivateKey. Empty request; nested SealPrivateEntry.
+// S3-6 / F-R2-2.
+// ---------------------------------------------------------------------------
+
+const KC_SEAL_PRIVATE_ENTRY_MODEL: NestedModel = {
+  name: "SealPrivateEntry",
+  fields: [
+    {
+      name: "kid",
+      csName: "Kid",
+      csType: "string",
+      tsName: "kid",
+      tsType: "string",
+      protoType: "string",
+      repeated: false,
+      optional: false,
+      redactReason: undefined,
+      fieldNumber: 1,
+    },
+    {
+      name: "privatePkcs8",
+      csName: "PrivatePkcs8",
+      csType: "byte[]",
+      tsName: "privatePkcs8",
+      tsType: "Uint8Array",
+      protoType: "bytes",
+      repeated: false,
+      optional: false,
+      redactReason: "SecretInformation",
+      fieldNumber: 2,
+    },
+  ],
+};
+
+function buildKcOwnSealOutputFields(): readonly FieldInfo[] {
+  return [
+    {
+      name: "activeKid",
+      csName: "ActiveKid",
+      csType: "string",
+      tsName: "activeKid",
+      tsType: "string",
+      protoType: "string",
+      repeated: false,
+      optional: false,
+      redactReason: undefined,
+      fieldNumber: 1,
+    },
+    {
+      name: "entries",
+      csName: "Entries",
+      csType: "IReadOnlyList<SealPrivateEntry>",
+      tsName: "entries",
+      tsType: "readonly SealPrivateEntry[]",
+      protoType: undefined,
+      repeated: true,
+      optional: false,
+      redactReason: undefined,
+      fieldNumber: 2,
+      nested: KC_SEAL_PRIVATE_ENTRY_MODEL,
+    },
+  ];
+}
+
+const KC_OWN_SEAL_FACADE_TARGET: GrpcDelegationTarget = {
+  kind: "facade",
+  typeName: "IKeyCustodianApi",
+  methodName: "GetOrLazyProvisionOwnSealPrivateKeyAsync",
+  targetNamespace: "D2.Edge.KeyCustodian.Client.Facade",
+};
+
+describe("byteParity_KcOwnSealPrivateKeyProto_CommittedFixtureIdentical", () => {
+  function emit(): string {
+    return emitProto(
+      "getOrLazyProvisionOwnSealPrivateKey",
+      "KeyCustodianOwnSealPrivateKey",
+      "GetOrLazyProvisionOwnSealPrivateKey",
+      "unary",
+      "d2.keycustodian.v2alpha",
+      KC_PROTO_CS_NS,
+      KC_SOURCE,
+      "GetOrLazyProvisionOwnSealPrivateKeyRequest",
+      [],
+      undefined,
+      "GetOrLazyProvisionOwnSealPrivateKeyOutput",
+      buildKcOwnSealOutputFields(),
+      undefined,
+      [{ model: KC_SEAL_PRIVATE_ENTRY_MODEL } as NestedMessageDescriptor],
+      (code, msg) => {
+        throw new Error(`${code}: ${msg}`);
+      },
+    )!.content;
+  }
+
+  it("re-emitted real KC own-seal .proto is byte-identical to the committed fixture", () => {
+    const p = emit();
+    expect(p).toContain(
+      "message GetOrLazyProvisionOwnSealPrivateKeyRequest {}",
+    );
+    expect(p).toContain("message SealPrivateEntry {");
+    expect(p).toBe(
+      readFixture(
+        join(
+          KC_PROTO_HOME,
+          "key_custodian_own_seal_private_key_get_or_lazy_provision_own_seal_private_key.g.proto",
+        ),
+      ),
+    );
+  });
+
+  it("deliberate-drift detection: mutated fixture does NOT match re-emitted output", () => {
+    const drifted = readFixture(
+      join(
+        KC_PROTO_HOME,
+        "key_custodian_own_seal_private_key_get_or_lazy_provision_own_seal_private_key.g.proto",
+      ),
+    ).replace("private_pkcs8", "private_pkcs8_drifted");
+    expect(emit()).not.toBe(drifted);
+  });
+});
+
+describe("byteParity_KeyCustodianOwnSealPrivateKeyService_FacadeDelegation_CommittedFixtureIdentical", () => {
+  function emitService(): string {
+    const [svc] = emitGrpcService(
+      "getOrLazyProvisionOwnSealPrivateKey",
+      "KeyCustodianOwnSealPrivateKey",
+      "GetOrLazyProvisionOwnSealPrivateKey",
+      KC_PROTO_CS_NS,
+      KC_GRPC_NS,
+      KC_SEALING_NS,
+      KC_SOURCE,
+      "GetOrLazyProvisionOwnSealPrivateKeyRequest",
+      "GetOrLazyProvisionOwnSealPrivateKeyResponse",
+      "GetOrLazyProvisionOwnSealPrivateKeyInput",
+      [],
+      "GetOrLazyProvisionOwnSealPrivateKeyOutput",
+      buildKcOwnSealOutputFields(),
+      KC_OWN_SEAL_FACADE_TARGET,
+    );
+
+    return svc.content;
+  }
+
+  it("re-emitted real KC own-seal service .g.cs (facade delegation) is byte-identical", () => {
+    expect(emitService()).toBe(
+      readFixture(
+        join(KC_SERVICE_HOME, "KeyCustodianOwnSealPrivateKeyService.g.cs"),
+      ),
+    );
+  });
+
+  it("deliberate-drift detection: handler delegation does NOT match facade fixture", () => {
+    const drifted = readFixture(
+      join(KC_SERVICE_HOME, "KeyCustodianOwnSealPrivateKeyService.g.cs"),
+    ).replace(
+      "facade.GetOrLazyProvisionOwnSealPrivateKeyAsync",
+      "handler.HandleAsync",
+    );
+    expect(emitService()).not.toBe(drifted);
+  });
+});
+
+describe("byteParity_GetOrLazyProvisionOwnSealPrivateKeyTransportMappers_CommittedFixtureIdentical", () => {
+  function emitMapper(): string {
+    const [, mapper] = emitGrpcService(
+      "getOrLazyProvisionOwnSealPrivateKey",
+      "KeyCustodianOwnSealPrivateKey",
+      "GetOrLazyProvisionOwnSealPrivateKey",
+      KC_PROTO_CS_NS,
+      KC_GRPC_NS,
+      KC_SEALING_NS,
+      KC_SOURCE,
+      "GetOrLazyProvisionOwnSealPrivateKeyRequest",
+      "GetOrLazyProvisionOwnSealPrivateKeyResponse",
+      "GetOrLazyProvisionOwnSealPrivateKeyInput",
+      [],
+      "GetOrLazyProvisionOwnSealPrivateKeyOutput",
+      buildKcOwnSealOutputFields(),
+    );
+
+    return mapper.content;
+  }
+
+  it("re-emitted real KC own-seal transport mappers .g.cs (empty-input arm) is byte-identical", () => {
+    const m = emitMapper();
+    expect(m).toContain(
+      "return new GetOrLazyProvisionOwnSealPrivateKeyInput();",
+    );
+    expect(m).toContain("ToProtoSealPrivateEntry()");
+    expect(m).toBe(
+      readFixture(
+        join(
+          KC_MAPPER_HOME,
+          "GetOrLazyProvisionOwnSealPrivateKeyTransportMappers.g.cs",
+        ),
+      ),
+    );
+  });
+
+  it("deliberate-drift detection: mutated fixture does NOT match re-emitted output", () => {
+    const drifted = readFixture(
+      join(
+        KC_MAPPER_HOME,
+        "GetOrLazyProvisionOwnSealPrivateKeyTransportMappers.g.cs",
+      ),
+    ).replace(
+      "GetOrLazyProvisionOwnSealPrivateKeyTransportMappers",
+      "GetOrLazyProvisionOwnSealPrivateKeyTransportMappersDRIFTED",
     );
     expect(emitMapper()).not.toBe(drifted);
   });

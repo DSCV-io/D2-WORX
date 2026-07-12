@@ -41,6 +41,9 @@ public sealed class AuthErrorCodesGeneratedTests
         nameof(AuthErrorCodes.AUTH_SESSION_LIVENESS_UNAVAILABLE),
         "AUTH_SESSION_LIVENESS_UNAVAILABLE")]
     [InlineData(nameof(AuthErrorCodes.AUTH_SCOPE_INSUFFICIENT), "AUTH_SCOPE_INSUFFICIENT")]
+    [InlineData(
+        nameof(AuthErrorCodes.AUTH_REQUEST_ORIGIN_UNESTABLISHED),
+        "AUTH_REQUEST_ORIGIN_UNESTABLISHED")]
     public void AuthErrorCode_ConstantValuesPinnedToWireFormat(
         string constantName, string expectedValue)
     {
@@ -67,6 +70,7 @@ public sealed class AuthErrorCodesGeneratedTests
     [InlineData("AUTH_JWKS_UNAVAILABLE", 503)]
     [InlineData("AUTH_SESSION_LIVENESS_UNAVAILABLE", 503)]
     [InlineData("AUTH_SCOPE_INSUFFICIENT", 401)]
+    [InlineData("AUTH_REQUEST_ORIGIN_UNESTABLISHED", 401)]
     [InlineData("UNKNOWN_NONSENSE_CODE", 500)]
     public void GetHttpStatus_ReturnsExpectedValue(string code, int expected)
     {

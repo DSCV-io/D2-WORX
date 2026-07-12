@@ -8,6 +8,7 @@ namespace D2.Edge.Tests.Unit.KeyCustodian.TypeSpecGrpc;
 
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using D2.Edge.Api.Grpc.KeyCustodian;
 using D2.Edge.KeyCustodian.Client.CaCertificate;
 using D2.Edge.KeyCustodian.Client.Facade;
 using D2.Edge.KeyCustodian.Client.Issuance;
@@ -15,7 +16,6 @@ using D2.Edge.KeyCustodian.Client.Jwks;
 using D2.Edge.KeyCustodian.Client.Keyring;
 using D2.Edge.KeyCustodian.Client.OidcConfiguration;
 using D2.Edge.KeyCustodian.Client.Signing;
-using D2.Edge.Tests.TypeSpecGrpc.Generated;
 using D2.Edge.Tests.Unit.KeyCustodian.TypeSpecRoute.Fixtures;
 using D2.Services.Protos.KeyCustodian.V2Alpha;
 using D2.Shared.Auth;
@@ -46,9 +46,10 @@ using GrpcStatusCode = Grpc.Core.StatusCode;
 /// <see cref="D2.Shared.Auth.Grpc"/> mechanism: the generated
 /// <c>KeyCustodianKeyringService</c> is mapped with the fluent
 /// <c>.RequireAnyScope("internal.kc.keyring")</c> and the real <c>JwtAuthInterceptor</c>
-/// (via <c>AddD2AuthGrpc</c>). A NEW test (the sign op's live gRPC wiring is deferred to
-/// the Edge host build, so there is no sign isolation test to mirror), backed by the local
-/// RS256 <see cref="TestJwtBuilder"/> + <see cref="FakeJwksProvider"/>. Proves: no bearer
+/// (via <c>AddD2AuthGrpc</c>). Isolation harness for keyring scope metadata only
+/// (production Map registers all six KC gRPC services with <c>Scopes.Internal.Kc.*</c>
+/// via <c>MapD2EdgeEndpoints</c>). Backed by the local RS256
+/// <see cref="TestJwtBuilder"/> + <see cref="FakeJwksProvider"/>. Proves: no bearer
 /// and wrong scope are rejected pre-dispatch; the correct scope reaches the service.
 /// </summary>
 [System.Diagnostics.CodeAnalysis.SuppressMessage(

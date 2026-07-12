@@ -68,7 +68,7 @@ This catalog is split into one file per category under [`rules/`](rules/). Read 
 | 20 | [Developer Experience (DX)](rules/20-developer-experience-dx.md) | Make the code easy for the next engineer. |
 | 21 | [Observability Completeness](rules/21-observability-completeness.md) | Complete metrics, traces, logs with the correct tags. |
 | 22 | [Idempotency & Exactly-Once Semantics](rules/22-idempotency-exactly-once-semantics.md) | Safe retries and exactly-once handling. |
-| 23 | [Configuration Hygiene](rules/23-configuration-hygiene.md) | Options-pattern config, indexed env vars, no manual env plumbing. |
+| 23 | [Configuration Hygiene](rules/23-configuration-hygiene.md) | Options-pattern config, indexed env vars, env-only host product config, no product/secrets in appsettings. |
 | 24 | [Audit Evidence Discipline (meta — how to audit)](rules/24-audit-evidence-discipline-meta-how-to-audit.md) | Three-artifact journal, sweep/round lifecycle, closure-by-absence. |
 | 25 | [Temporal Types (date / time / clock)](rules/25-temporal-types-date-time-clock.md) | NodaTime type selection, clock injection, DST, timestamps. |
 | 26 | [Codegen Discipline (spec / proto / schema-derived types)](rules/26-codegen-discipline-spec-proto-schema-derived-types.md) | Never hand-edit generated files; spec-driven codegen, per-package versioning. |

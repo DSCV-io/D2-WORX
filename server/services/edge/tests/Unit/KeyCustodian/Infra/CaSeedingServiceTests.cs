@@ -9,21 +9,24 @@ namespace D2.Edge.Tests.Unit.KeyCustodian.Infra;
 using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.SeedCertificateAuthority;
 using D2.Edge.KeyCustodian.Infra.Configuration;
 using D2.Edge.KeyCustodian.Infra.Scheduling.Hosted;
+using D2.Shared.Auth.Abstractions;
 using D2.Shared.Context.Abstractions;
 using D2.Shared.Handler.Abstractions;
 using D2.Shared.Result;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.Extensions.Options;
+using NodaTime;
+using TestClock = D2.Shared.Time.TestClock;
 
 /// <summary>
 /// Unit tests for <see cref="CaSeedingService"/>: a startup-seed failure (the
 /// advisory-lock connect fails against a non-connectable DB) is swallowed so the
 /// host survives; when another instance holds the advisory lock the seeder skips
 /// and exits cleanly without invoking the handler; a canceled token exits cleanly;
-/// and the worker establishes a System request context on its own scope before
-/// resolving the handler. The seeding LOGIC itself is covered by
-/// <c>SeedCertificateAuthorityTests</c>; this hosted service is the thin fail-safe
-/// trigger.
+/// and the worker opens a System work scope before resolving the handler. The
+/// seeding LOGIC itself is covered by <c>SeedCertificateAuthorityTests</c>; this
+/// hosted service is the thin fail-safe trigger.
 /// </summary>
 public sealed class CaSeedingServiceTests
 {
@@ -101,9 +104,8 @@ public sealed class CaSeedingServiceTests
     }
 
     // =========================================================================
-    // System context establishment — the real worker establishes Origin=System +
-    // the host identity + a fresh call-path BEFORE resolving its handler, on the
-    // SAME scope, with the existing seed behavior unchanged.
+    // System work plane — the worker opens Origin=System via ISystemWorkScopeFactory
+    // BEFORE resolving its handler, on the SAME scope.
     // =========================================================================
 
     [Fact]
@@ -111,12 +113,9 @@ public sealed class CaSeedingServiceTests
     {
         var capture = new RequestContextCapture();
         var clock = new TestClock(Instant.FromUtc(2026, 6, 30, 12, 0, 0));
-        using var provider = BuildScopeProviderWithFakeHandler(capture);
+        using var provider = BuildScopeProviderWithFakeHandler(capture, clock);
 
-        var service = BuildService(
-            provider.GetRequiredService<IServiceScopeFactory>(),
-            workloadIdentity: new D2WorkloadIdentityOptions { ServiceId = "key-custodian" },
-            clock: clock);
+        var service = BuildService(provider.GetRequiredService<ISystemWorkScopeFactory>());
 
         await service.SeedAsync(CancellationToken.None);
 
@@ -139,7 +138,7 @@ public sealed class CaSeedingServiceTests
         // IJwtSigningCapability and never calls AuthorizeSigning).
         var capture = new RequestContextCapture();
         using var provider = BuildScopeProviderWithFakeHandler(capture);
-        var service = BuildService(provider.GetRequiredService<IServiceScopeFactory>());
+        var service = BuildService(provider.GetRequiredService<ISystemWorkScopeFactory>());
 
         await service.SeedAsync(CancellationToken.None);
 
@@ -154,7 +153,7 @@ public sealed class CaSeedingServiceTests
         // resolve-handler-and-run-it path.
         var capture = new RequestContextCapture();
         using var provider = BuildScopeProviderWithFakeHandler(capture);
-        var service = BuildService(provider.GetRequiredService<IServiceScopeFactory>());
+        var service = BuildService(provider.GetRequiredService<ISystemWorkScopeFactory>());
 
         var act = () => service.SeedAsync(CancellationToken.None);
 
@@ -166,10 +165,7 @@ public sealed class CaSeedingServiceTests
     // Helpers.
     // =========================================================================
 
-    private static CaSeedingService BuildService(
-        IServiceScopeFactory? scopeFactory = null,
-        D2WorkloadIdentityOptions? workloadIdentity = null,
-        IClock? clock = null)
+    private static CaSeedingService BuildService(ISystemWorkScopeFactory? systemWork = null)
     {
         var options = Options.Create(new KeyCustodianInfraOptions
         {
@@ -178,33 +174,40 @@ public sealed class CaSeedingServiceTests
                 "Host=localhost;Port=1;Database=d2-keycustodian;Username=u;Password=p",
         });
 
-        var identity = workloadIdentity ?? new D2WorkloadIdentityOptions { ServiceId = "key-custodian" };
-
-        var resolvedScopeFactory = scopeFactory
-            ?? new ServiceCollection().BuildServiceProvider().GetRequiredService<IServiceScopeFactory>();
+        var resolvedSystemWork = systemWork
+            ?? BuildEmptySystemWorkProvider().GetRequiredService<ISystemWorkScopeFactory>();
 
         return new CaSeedingService(
-            resolvedScopeFactory,
+            resolvedSystemWork,
             options,
-            Options.Create(identity),
-            clock ?? new D2.Shared.Time.SystemClock(),
             NullLogger<CaSeedingService>.Instance);
     }
 
+    private static ServiceProvider BuildEmptySystemWorkProvider()
+    {
+        var services = new ServiceCollection();
+        services.Configure<D2WorkloadIdentityOptions>(o => o.ServiceId = "key-custodian");
+        services.AddD2SystemWorkPlane();
+        return services.BuildServiceProvider();
+    }
+
     /// <summary>
-    /// Builds a real (non-fake) DI container for the worker's own scope: the
-    /// module's scoped <c>MutableRequestContext</c>/<c>IRequestContext</c> resolver
-    /// (mirroring <c>AddD2KeyCustodian</c>'s registration) plus a
+    /// Builds a real DI container with the platform System work plane + a
     /// <see cref="FakeSeedCertificateAuthorityHandler"/> that records the
     /// <see cref="IRequestContext"/> it observed into <paramref name="capture"/>.
     /// </summary>
     private static ServiceProvider BuildScopeProviderWithFakeHandler(
-        RequestContextCapture capture)
+        RequestContextCapture capture,
+        D2.Shared.Time.IClock? clock = null,
+        string serviceId = "key-custodian")
     {
         var services = new ServiceCollection();
-        services.AddScoped<MutableRequestContext>();
-        services.AddScoped<IRequestContext>(
-            sp => sp.GetRequiredService<MutableRequestContext>());
+        services.Configure<D2WorkloadIdentityOptions>(o => o.ServiceId = serviceId);
+
+        if (clock is not null)
+            services.AddSingleton(clock);
+
+        services.AddD2SystemWorkPlane();
         services.AddSingleton(capture);
         services.AddScoped<ISeedCertificateAuthorityHandler, FakeSeedCertificateAuthorityHandler>();
 

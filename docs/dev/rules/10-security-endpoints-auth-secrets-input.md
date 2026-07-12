@@ -6,7 +6,7 @@ Copyright (c) DCSV. All rights reserved.
 <a name="top"></a>
 _[← rules index](../rules.md) · §10 of the D2-WORX rules catalog._
 
-**Predicate index:** §10.1–§10.22 · 22 predicates.
+**Predicate index:** §10.1–§10.24 · 24 predicates.
 
 Security predicates recur and need explicit checking. **D²-WORX is being built to ship to production with real users; security predicates are non-negotiable.**
 
@@ -74,6 +74,17 @@ Security predicates recur and need explicit checking. **D²-WORX is being built 
 
 - **10.22** Are admin / staff actions audit-logged with userId + targetId + action + timestamp + outcome?
   - Evidence: per admin/staff action → audit log entry.
+
+- **10.23** On multi-listen hosts, is product gRPC (and other crown-jewel / internal-only RPC) structurally isolated to the mTLS listen role — never registered on the shared endpoint table for cleartext HTTP or Issuer-HTTPS-without-client-cert binds?
+  - **The rule**: a host that binds more than one listen role (e.g. cleartext health, public Issuer HTTPS, mTLS internal gRPC) MUST Map product gRPC only on the mTLS port/role (`MapWhen` on `Connection.LocalPort` / equivalent). Internal services (Audit, later Files, …) use cleartext/HTTP **only** for infrastructure (health / alive / metrics); all product gRPC is mTLS-only. JWT scopes remain required; bind isolation is defense-in-depth so dual-factor is not “right port luck.”
+  - **Evidence**: per multi-bind host → product `MapGrpcService` / internal RPC Maps appear only under the mTLS branch; public binds carry health/well-known/bridges only. Edge KC gRPC → mTLS `:9443`; Audit Ping gRPC → mTLS only. A crown-jewel Map on Issuer `:8443` or cleartext `:8080` = FINDING-HIGH.
+  - **Why**: shared Maps on multi-bind Kestrel expose crown-jewel RPC to public/Issuer planes for probing and amplify any future authority regression. 0030 D-SEC-02/03.
+  - **How**: `MapWhen(LocalPort == MTLS_PORT)` (or separate app/pipeline) for product gRPC; keep well-known/health on public binds. Cross-ref §10.24, §9.42, §9.41.
+
+- **10.24** After request-origin establishment on product gRPC, does the platform fail-closed when `RequestOrigin` is still `Unestablished` — without relying on each handler to remember the check?
+  - **The rule**: non-Harmless gRPC product methods deny when Origin remains `Unestablished` after the cross-process establishment interceptor (order: JWT auth → Origin establish from mTLS peer → Unestablished deny). Harmless methods skip. Handler-level Origin checks are not the primary wall.
+  - **Evidence**: `RequestOriginUnestablishedDenyInterceptor` registered after `RequestOriginCrossProcessInterceptor` via `AddD2RequestOriginGrpc`; `AUTH_REQUEST_ORIGIN_UNESTABLISHED`; tests pin all four RPC shapes + A2B no-peer path. Missing platform deny with only handler checks = FINDING-HIGH for internal product surfaces.
+  - **Why**: establishment without deny leaves JWT-only single-factor on a wrong bind; platform deny is uniform. Cross-ref §9.42, §9.41, §10.23.
 
 <sup>[↑ jump to top](#top)</sup>
 

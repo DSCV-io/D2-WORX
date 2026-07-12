@@ -2485,6 +2485,61 @@ Each step buildable + testable + zero warnings before moving on.
 
 ---
 
+## §15b. Multiproc / private-PKI residuals (KEEP ledger — do not forget)
+
+**Context (0030 Edge host residual, tip after System work plane):** multiproc Compose proves containers, KC seed/Active keys, JWKS **publish**, auth **gate shapes**, mTLS wiring, hot-reload. It does **not** yet prove end-to-end dual-factor user JWT validation + forward. This section is the **durable residual ledger** (not a dirty patch list). Operator detail: gitignored wip multiproc findings under `docs/wip/0030-edge-host/` when present.
+
+### Already correct (do not re-open as gaps)
+
+| Item | Status |
+| --- | --- |
+| **System work plane** | `ISystemWorkScopeFactory` — in-host System origin for seed/rotate; **not** a system JWT |
+| **Dual-path `IRequestContext`** | HTTP/gRPC Items when established; else Unestablished Mutable (no throw-only path) |
+| **Host product config SoT** | Env / Compose — rules §23.9 / §23.10 |
+| **S2S law** | Mint-once JWT + forward + re-validate + **additive mTLS** ([ADR-0022](../adrs/0022-service-auth-mint-once-forward.md), [ADR-0023](../adrs/0023-mtls-workload-identity.md)); mTLS never replaces JWT on user business hops |
+| **PingAudit** | **Not** Harmless — requires `Scopes.Internal.Audit.Ping` on Edge bridge + Audit gRPC |
+| **JWKS/OIDC well-known** | `@d2Harmless` — public discovery (correct OIDC) |
+| **Health/alive/metrics** | JWT-free infrastructure |
+
+### Pre-SHIP / next residual — maximially correct (private PKI, not dev carve-outs)
+
+| ID | Issue | Correct fix (prod-shaped) | Forbidden | Status |
+| --- | --- | --- | --- | --- |
+| **AUTH-R1** | OIDC/JWKS `HttpClient` (`d2-auth-oidc-discovery`) uses OS default trust store. Dev Issuer listen cert is intermediate-signed under **D2 Internal Root CA** (`gen-dev-keys` / `ca-root.crt`); that CA is not in OS roots → TLS fail → any Bearer path can surface `AUTH_JWKS_UNAVAILABLE` even when JWKS endpoint is 200 and Active keys exist | Configure the OIDC discovery client with an **explicit trust store** that includes the **same public CA root** already used for mTLS TrustAnchors (path from config/env — e.g. same PEM as `EDGE_MTLS__TrustAnchorPath` / host MutualTls anchors). Chain + SAN still validated. Same setting in every private-PKI environment | `DangerousAcceptAnyServerCertificate`; Development-only “skip TLS”; HTTP Issuer | **Implemented** — `JwksProviderOptions.TrustedRootCertificatePath`; Edge/Audit hosts set it from TrustAnchorPath; unit tests pin trust/reject |
+| **AUTH-R1b** | Edge (issuer host) `HttpJwksProvider` → ConfigurationManager HTTP self-fetch to `https://d2-edge:8443/.well-known/…` — wrong for the issuer even after CA trust | In-process `IJwksProvider` loads Active + Retiring `jwks-signing` keys from KC DB (same filters as `GetJwksHandler`); Edge composition replaces `IJwksProvider` after `AddD2Auth`. Well-known HTTP routes stay for remote consumers (Audit) | Accept-any cert; deleting publish path; Auth depending on KC | **Implemented** — `InProcessJwksProvider` + `AddD2InProcessJwksProvider` on Edge only |
+| **AUTH-R2** | Smoke docs must not imply a full authenticated multiproc ping is possible without mint | Honest operator docs: gate-shape probes (401/JWKS/health) vs full dual-factor (blocked on mint + AUTH-R3) | Claiming “multiproc JWT proven” from 401-only smoke | **Implemented** — Edge/Audit READMEs multiproc honesty (gate-shape vs dual-factor; mint OUT; scopes required) |
+
+**AUTH-R1 design notes (landed):** Auth library stays host-agnostic — optional `JwksProviderOptions.TrustedRootCertificatePath` (string); empty = system store only (public-CA deployments). Edge/Audit Compose already mount public `ca-root.crt` for mTLS; host `AuthConfigure` reuses the same path. Unit test: client fails against untrusted cert; passes when trust store contains signing root. No `IsDevelopment` free pass.
+
+### Deferred until Auth module / boundary minter (cannot do correctly on general host today)
+
+| ID | Issue | Why blocked | When |
+| --- | --- | --- | --- |
+| **AUTH-R3** | **JWT boundary mint** — general Edge host must **not** register `AddD2JwtSigningCapability` (structural isolation) | Mint is Auth-module / minter composition only ([PATTERNS](../PATTERNS.md) JWT minter capability; Q1 0030) | Edge Auth deliverable (Phase 3 A*) |
+| **AUTH-R4** | Full dual-factor multiproc proof: valid Bearer (`internal.audit.ping`) + mTLS Edge→Audit → NIE 503 | Needs AUTH-R3 (real mint or user-approved smoke exception); AUTH-R1 + issuer in-process JWKS are landed | After Auth mint |
+| **AUTH-R5** | Grant scopes such as `internal.kc.sign` / `internal.audit.ping` into real tokens | Mint-and-grant at boundary | Auth mint |
+| **AUTH-R6** | “System JWT” for background/S2S without user request | **Not the model** — System plane is in-process; S2S workload = mTLS; business hops need boundary-minted transaction-token | Do not invent; see ADR-0022 / 0025 |
+
+### Security residual — rate-limit + bind isolation (0030 Edge host FR)
+
+| ID | Issue | Disposition | When |
+| --- | --- | --- | --- |
+| **D-SEC-01** | Edge public binds serve JWKS / OIDC / health / Audit bridge with **no** rate-limit middleware body (pipeline reserves an empty slot after infrastructure bypass) | **Document + defer** — do **not** invent interim RL middleware. Full tiered rate-limit is the Phase 3 rate-limit deliverable ([PHASE_3_RATE_LIMITING.md](PHASE_3_RATE_LIMITING.md)); Edge `rate-limit/` remains a placeholder; pipeline slot stays empty intentionally until that ship | Phase 3 rate-limit deliverable |
+| **D-SEC-02** | KC gRPC was on the shared endpoint table (reachable on Issuer :8443 / cleartext :8080 with “right port luck”) | **Fixed** — `MapD2EdgeEndpoints` `MapWhen` isolates all six KC `MapGrpcService` to mTLS port **9443** only | Landed |
+| **D-SEC-03** | Internal product gRPC lacked platform Unestablished fail-closed; Audit Ping had no Origin deny | **Fixed** — Audit gRPC `MapWhen` to mTLS **8443** only (HTTP `:8080` = health/metrics only); `RequestOriginUnestablishedDenyInterceptor` folded into `AddD2RequestOriginGrpc` (order: Jwt → Origin establish → Unestablished deny); `AUTH_REQUEST_ORIGIN_UNESTABLISHED` | Landed |
+
+### Planes reminder (avoid confusing “always JWT”)
+
+| Plane | Mechanism | JWT? |
+| --- | --- | --- |
+| User/visitor business hop | Boundary mint-once token, forward, re-validate + mTLS | Yes |
+| In-process module | Established `IRequestContext` | No wire JWT |
+| In-host System work | `ISystemWorkScopeFactory` | No JWT |
+| Workload identity | mTLS leaf | Not a service JWT |
+| Async messaging | Encrypted frame | No JWT |
+
+---
+
 ## §15a. KeyCustodian compromise runbook — future deliverable
 
 The KeyCustodian state machine, key lifecycle, and `d2-keycustodian` are shipped (see [KeyCustodian README](../../server/services/edge/key-custodian/README.md)). The following compromise-response runbooks — concrete detection criteria, executable CLI invocations, and recovery procedures — are tracked as a future deliverable. The scenario checklist this deliverable must cover:
@@ -2504,6 +2559,8 @@ The KeyCustodian state machine, key lifecycle, and `d2-keycustodian` are shipped
 
 - [V2.md §5.4](V2.md) — auth model, JWT shape, KeyCustodian, sessions, scopes, impersonation,
   fingerprints
+- [§15b above](#15b-multiproc--private-pki-residuals-keep-ledger--do-not-forget) —
+  multiproc / private-PKI residual ledger (AUTH-R1…R6)
 - [§15a above](#15a-keycustodian-compromise-runbook--future-deliverable) —
   KeyCustodian compromise runbook (future deliverable — scenario checklist at §15a)
 - [PHASE_3_RATE_LIMITING.md](PHASE_3_RATE_LIMITING.md) — auth-related fields + session

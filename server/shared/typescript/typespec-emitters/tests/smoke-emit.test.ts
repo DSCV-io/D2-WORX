@@ -16,6 +16,7 @@
 //   written and its contents match the fixture. Proves the real tsp compile →
 //   $onEmit → emitFile pipeline works end-to-end.
 
+import { join } from "node:path";
 import { describe, it, expect, vi, beforeAll, afterEach } from "vitest";
 import type {
   EmitContext,
@@ -79,7 +80,7 @@ vi.mock("@typespec/compiler", async (importOriginal) => {
 });
 
 // Import AFTER the mock registrations so the module under test uses mocked deps.
-const { $onEmit, resolveTsClientOutputDirs } =
+const { $onEmit, resolveRepoRootFromProjectRoot, resolveTsClientOutputDirs } =
   await import("../src/emitter.js");
 
 afterEach(() => {
@@ -1657,6 +1658,8 @@ describe("$onEmit_directUnit_NamespaceRouting", () => {
 
 describe("resolveTsClientOutputDirs_ConfigParsing", () => {
   const PROJECT_ROOT = "/repo/contracts/typespec";
+  const KC_PROJECT_ROOT = "/repo/contracts/typespec/key-custodian";
+  const AUDIT_PROJECT_ROOT = "/repo/contracts/typespec/audit";
 
   it("resolves relative dirs against the repo root; keeps absolute dirs verbatim; skips empty + non-string dirs", () => {
     const m = resolveTsClientOutputDirs(
@@ -1673,12 +1676,46 @@ describe("resolveTsClientOutputDirs_ConfigParsing", () => {
     expect(
       rel.endsWith("server/services/edge/mint/client-ts/src/generated"),
     ).toBe(true);
-    // repoRoot is the grandparent of PROJECT_ROOT — the trailing two segments
-    // (contracts/typespec) are stripped before joining the relative dir.
+    // repoRoot is resolved from PROJECT_ROOT (historical contracts/typespec) —
+    // the contracts/typespec segments are stripped before joining the relative dir.
     expect(rel).not.toContain("contracts/typespec");
     expect(m.get("AbsMod")).toBe("/abs/generated");
     expect(m.has("EmptyMod")).toBe(false);
     expect(m.has("NonStringMod")).toBe(false);
+  });
+
+  it("nested key-custodian projectRoot joins ts-client dirs under repo server/, not contracts/server/", () => {
+    const mapped = "server/services/edge/key-custodian/client-ts/src";
+    const m = resolveTsClientOutputDirs(
+      { KeyCustodian: mapped },
+      KC_PROJECT_ROOT,
+    );
+
+    const rel = m.get("KeyCustodian")!.replace(/\\/g, "/");
+    expect(rel.endsWith(mapped)).toBe(true);
+    // Hard-coded ../.. from nested projectRoot wrongly landed under contracts/.
+    expect(rel).not.toContain("contracts/server");
+    expect(rel).not.toContain("contracts/typespec");
+  });
+
+  it("nested audit projectRoot resolves to the same repo root as historical contracts/typespec", () => {
+    const mapped = "server/services/audit/clients/dotnet/src";
+    const nested = resolveTsClientOutputDirs(
+      { Audit: mapped },
+      AUDIT_PROJECT_ROOT,
+    )
+      .get("Audit")!
+      .replace(/\\/g, "/");
+    const historical = resolveTsClientOutputDirs(
+      { Audit: mapped },
+      PROJECT_ROOT,
+    )
+      .get("Audit")!
+      .replace(/\\/g, "/");
+
+    expect(nested).toBe(historical);
+    expect(nested.endsWith(mapped)).toBe(true);
+    expect(nested).not.toContain("contracts/server");
   });
 
   it("returns an empty map for null / array / non-object raw, or an undefined projectRoot", () => {
@@ -1690,6 +1727,43 @@ describe("resolveTsClientOutputDirs_ConfigParsing", () => {
     expect(
       resolveTsClientOutputDirs({ Mod: "server/x/generated" }, undefined).size,
     ).toBe(0);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// resolveRepoRootFromProjectRoot — nested tspconfig packages + historical root
+// must resolve to the same monorepo root (path-shape + on-disk markers).
+// ---------------------------------------------------------------------------
+
+describe("resolveRepoRootFromProjectRoot_NestedAndHistorical", () => {
+  const toPosix = (p: string) => p.replace(/\\/g, "/");
+
+  it("historical contracts/typespec and nested key-custodian/audit share one repo root", () => {
+    const historical = toPosix(
+      resolveRepoRootFromProjectRoot("/repo/contracts/typespec"),
+    );
+    const kc = toPosix(
+      resolveRepoRootFromProjectRoot("/repo/contracts/typespec/key-custodian"),
+    );
+    const audit = toPosix(
+      resolveRepoRootFromProjectRoot("/repo/contracts/typespec/audit"),
+    );
+
+    expect(historical.endsWith("/repo")).toBe(true);
+    expect(kc).toBe(historical);
+    expect(audit).toBe(historical);
+  });
+
+  it("on-disk nested projectRoot finds monorepo via server/D2.slnx + contracts/typespec", async () => {
+    const { findRepoRoot } = await import("./repo-root.js");
+    const realRepo = findRepoRoot(import.meta.url);
+    const nestedKc = join(realRepo, "contracts/typespec/key-custodian");
+    const nestedAudit = join(realRepo, "contracts/typespec/audit");
+    const historical = join(realRepo, "contracts/typespec");
+
+    expect(resolveRepoRootFromProjectRoot(nestedKc)).toBe(realRepo);
+    expect(resolveRepoRootFromProjectRoot(nestedAudit)).toBe(realRepo);
+    expect(resolveRepoRootFromProjectRoot(historical)).toBe(realRepo);
   });
 });
 

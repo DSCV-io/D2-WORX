@@ -61,6 +61,7 @@ public static class SealingServiceCollectionExtensions
         /// <returns>The same <paramref name="services"/> for chaining.</returns>
         public IServiceCollection AddD2SealedEncryptionViaKeyCustodian(string ownServiceId)
         {
+            // §5.1a carve-out: plain reference-type null-guard — no present-but-falsey.
             ArgumentNullException.ThrowIfNull(services);
             ValidateServiceIdGrammar(ownServiceId, nameof(ownServiceId));
 

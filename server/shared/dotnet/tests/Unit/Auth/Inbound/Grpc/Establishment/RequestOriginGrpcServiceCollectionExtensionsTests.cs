@@ -36,7 +36,7 @@ public sealed class RequestOriginGrpcServiceCollectionExtensionsTests
     }
 
     [Fact]
-    public void AddD2RequestOriginGrpc_AppendsInterceptorAfterJwtAuth()
+    public void AddD2RequestOriginGrpc_AppendsEstablishThenDenyAfterJwtAuth()
     {
         var services = new ServiceCollection();
         services.AddGrpc();
@@ -54,11 +54,17 @@ public sealed class RequestOriginGrpcServiceCollectionExtensionsTests
         var jwtIndex = interceptors.FindIndex(r => r.Type == typeof(JwtAuthInterceptor));
         var originIndex = interceptors.FindIndex(
             r => r.Type == typeof(RequestOriginCrossProcessInterceptor));
+        var denyIndex = interceptors.FindIndex(
+            r => r.Type == typeof(RequestOriginUnestablishedDenyInterceptor));
 
         jwtIndex.Should().BeGreaterThanOrEqualTo(0);
         originIndex.Should().BeGreaterThanOrEqualTo(0);
+        denyIndex.Should().BeGreaterThanOrEqualTo(0);
         originIndex.Should().BeGreaterThan(
             jwtIndex, "the establishment interceptor must run AFTER the auth interceptor");
+        denyIndex.Should().BeGreaterThan(
+            originIndex,
+            "Unestablished deny must run AFTER origin establishment");
     }
 
     [Fact]
@@ -71,6 +77,8 @@ public sealed class RequestOriginGrpcServiceCollectionExtensionsTests
         using var provider = services.BuildServiceProvider();
 
         provider.GetRequiredService<RequestOriginCrossProcessInterceptor>().Should().NotBeNull();
+        provider.GetRequiredService<RequestOriginUnestablishedDenyInterceptor>()
+            .Should().NotBeNull();
     }
 
     [Fact]
@@ -82,12 +90,16 @@ public sealed class RequestOriginGrpcServiceCollectionExtensionsTests
         services.AddD2RequestOriginGrpc(o => o.ServiceId = "key-custodian");
 
         using var provider = services.BuildServiceProvider();
-        var count = provider
+        var interceptors = provider
             .GetRequiredService<IOptions<GrpcServiceOptions>>()
-            .Value.Interceptors
+            .Value.Interceptors;
+        var establishCount = interceptors
             .Count(r => r.Type == typeof(RequestOriginCrossProcessInterceptor));
+        var denyCount = interceptors
+            .Count(r => r.Type == typeof(RequestOriginUnestablishedDenyInterceptor));
 
-        count.Should().Be(1, "repeat registrations are idempotent");
+        establishCount.Should().Be(1, "repeat registrations are idempotent");
+        denyCount.Should().Be(1, "repeat registrations are idempotent for deny");
     }
 
     [Fact]

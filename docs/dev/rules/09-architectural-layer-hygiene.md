@@ -6,7 +6,7 @@ Copyright (c) DCSV. All rights reserved.
 <a name="top"></a>
 _[← rules index](../rules.md) · §9 of the D2-WORX rules catalog._
 
-**Predicate index:** §9.1–§9.46 · 47 predicates · irregular sub-IDs: 9.36a.
+**Predicate index:** §9.1–§9.47 · 48 predicates · irregular sub-IDs: 9.36a.
 
 The most expensive class of failure — wrong layer chosen at design time, code already written, refactor cost is high. Catch it at the PLAN phase via "alternatives considered" notes; the audit catches what slipped through.
 
@@ -254,6 +254,12 @@ The most expensive class of failure — wrong layer chosen at design time, code 
   - **Evidence**: per boundary → the separation is keyed on domain / capability / identity (a named authority fact), not on "this domain happens to use a different algorithm." A sealed / self-only op exposes no target parameter anywhere; the key is selected purely from the mTLS peer identity. A boundary that would break the moment two domains share a primitive = FINDING-HIGH.
   - **Why**: a boundary that relies on key-type coincidence breaks silently the moment two domains share a primitive, and it invites the confused-deputy attacks the authority model was supposed to prevent. Domain-named authority makes the wall structural and algorithm-independent — the best crypto tool can be chosen per purpose without weakening separation (0026 Step 4.5 OD-1: sealed domains were REMOVED from the symmetric catalog so nonexistence is the primary wall, and `AuthorizeSealDecrypt` selects the key from the peer identity with no target parameter anywhere).
   - **How**: separate domains by named authority + op-shape (self-only op takes no target parameter; key selected from the authenticated peer; per-domain AAD binds the ciphertext); route a cluster-root-grade secret through a dedicated seam (§9.44). Cross-ref §9.44, §9.41, §9.42.
+
+- **9.47** On the JWT **issuer host** (the process that publishes OIDC discovery / JWKS and also validates its own tokens), does inbound JWT validation obtain signing keys from an **in-process** JWKS provider (same Active+Retiring filters as the public JWKS publish path) rather than HTTP self-fetching the host's own well-known endpoints?
+  - **The rule**: remote consumers keep `HttpJwksProvider` (+ optional private-CA trust for the Issuer cert). The issuer host **replaces** `IJwksProvider` with an in-process implementation after `AddD2Auth` so validation never depends on loopback HTTPS, private-CA trust of itself, or self-fetch availability. Well-known HTTP publish routes remain for remote consumers.
+  - **Evidence**: Edge `AddD2InProcessJwksProvider()` after `AddD2Auth` + KC; `InProcessJwksProvider` loads Active+Retiring `jwks-signing` public material; DI isolation resolves in-process type on Edge; Audit (remote) keeps HTTP provider. Issuer host still using `HttpJwksProvider` against its own Issuer URL = FINDING-HIGH.
+  - **Why**: self-fetch couples validation to TLS trust of the Issuer listen cert and to liveness of the publish path; wrong even after private-CA pin (0030 AUTH-R1b). Cross-ref §10.6, §10.18, private-CA trust via `JwksProviderOptions.TrustedRootCertificatePath` for remote hosts.
+  - **How**: implement/filter parity with `GetJwksHandler`; register replacement only on the issuer composition root; leave well-known Maps for consumers.
 
 <sup>[↑ jump to top](#top)</sup>
 

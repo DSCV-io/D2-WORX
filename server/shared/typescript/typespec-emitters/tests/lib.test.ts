@@ -71,3 +71,22 @@ describe("lib_ServerPushRequiresPayloadPresent", () => {
     expect(typeof descriptor.messages.default).toBe("function");
   });
 });
+
+describe("lib_HostRoutingDiagnosticsPresent", () => {
+  const codes = [
+    "missing-served-by-for-host-routing",
+    "missing-process-kind",
+    "unknown-process-kind",
+    "missing-routes-namespace",
+    "missing-bridge-namespace",
+    "standalone-route-requires-grpc",
+  ] as const;
+
+  for (const code of codes) {
+    it(`'${code}' is in the catalog with severity error`, () => {
+      expect($lib.diagnostics[code]).toBeDefined();
+      expect($lib.diagnostics[code].severity).toBe("error");
+      expect(typeof $lib.diagnostics[code].messages.default).toBe("function");
+    });
+  }
+});

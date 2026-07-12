@@ -81,17 +81,12 @@ Copyright (c) DCSV. All rights reserved.
   </ItemGroup>
 
   <!--
-    Promoted KeyCustodian keyring gRPC surface. The generated .g.proto lives in
-    the Edge test tree (the TypeSpec emitter's current output location); only its
-    <Protobuf> COMPILATION moves here so the consumer client stub + wire messages ship in
-    a product assembly. GrpcServices="Both" — NOT a bare "Client": the message types
-    (GetKeyringRequest/Response/Output/Entry in D2.Services.Protos.KeyCustodian.V2Alpha)
-    are generated for any GrpcServices value, so they must compile EXACTLY ONCE. The Edge
-    test project drops its own keyring <Protobuf> item and references these types (+ the
-    generated server base, which its generated KeyCustodianKeyringService extends) through
-    this project. Compiling only "Client" here would leave the test's server base
-    ungenerated; compiling "Server" there too would duplicate the messages (CS0433). "Both"
-    here is the single-message-compilation mechanism.
+    Promoted KeyCustodian keyring gRPC surface. Physical .g.proto lives under
+    Edge.Api/Protos/KeyCustodian/ (production home); this package is the sole
+    Grpc.Tools owner (compile-once Both) so the consumer client stub + wire
+    messages + server base ship in a product assembly. Edge.Api thin
+    KeyCustodianKeyringService extends the server base from this package —
+    never dual Protobuf on Edge.Api or Tests (CS0433).
   -->
   <ItemGroup>
     <PackageReference Include="Google.Protobuf" />
@@ -110,9 +105,9 @@ Copyright (c) DCSV. All rights reserved.
       project's folder-nesting depth can change without breaking the cross-tree reference
       (rules.md §9.34).
     -->
-    <Protobuf Include="$(D2RepoRoot)server\services\edge\tests\Unit\KeyCustodian\TypeSpecGrpc\Protos\key_custodian_keyring_get_keyring.g.proto"
+    <Protobuf Include="$(D2RepoRoot)server\services\edge\api\Protos\KeyCustodian\key_custodian_keyring_get_keyring.g.proto"
               GrpcServices="Both"
-              ProtoRoot="$(D2RepoRoot)server\services\edge\tests\"
+              ProtoRoot="$(D2RepoRoot)server\services\edge\api\"
               AdditionalImportDirs="$(D2ContractsRoot)protos" />
   </ItemGroup>
 
@@ -120,23 +115,20 @@ Copyright (c) DCSV. All rights reserved.
     Promoted KeyCustodian sealing gRPC surface (getOrLazyProvisionSealPublicKey +
     getOrLazyProvisionOwnSealPrivateKey). Same single-message-compilation mechanism
     as the keyring proto above: GrpcServices="Both" compiles the client stub + server
-    base + wire messages EXACTLY ONCE in this product assembly, so the KC-backed
-    sealer/opener consumer runtime (client/Sealing/) can dial the seal services over
-    the cross-process mTLS channel. The Edge test project drops its own two seal
-    <Protobuf> items and references these types (incl. the server base its generated
-    KeyCustodianSealPublicKeyService / KeyCustodianOwnSealPrivateKeyService extend)
-    through this project — compiling them there too would duplicate the messages
-    (CS0433). D2ResultProto resolves at protoc time via the D2.Shared.Result.Grpc
-    reference + the AdditionalImportDirs proto_path (never a second Protobuf include).
+    base + wire messages EXACTLY ONCE in this product assembly. Physical protos live
+    under Edge.Api/Protos/KeyCustodian/; Client remains the sole Grpc.Tools owner.
+    Edge.Api thin seal services extend the server bases from this package.
+    D2ResultProto resolves via D2.Shared.Result.Grpc + AdditionalImportDirs
+    (never a second Protobuf include).
   -->
   <ItemGroup>
-    <Protobuf Include="$(D2RepoRoot)server\services\edge\tests\Unit\KeyCustodian\TypeSpecGrpc\Protos\key_custodian_seal_public_key_get_or_lazy_provision_seal_public_key.g.proto"
+    <Protobuf Include="$(D2RepoRoot)server\services\edge\api\Protos\KeyCustodian\key_custodian_seal_public_key_get_or_lazy_provision_seal_public_key.g.proto"
               GrpcServices="Both"
-              ProtoRoot="$(D2RepoRoot)server\services\edge\tests\"
+              ProtoRoot="$(D2RepoRoot)server\services\edge\api\"
               AdditionalImportDirs="$(D2ContractsRoot)protos" />
-    <Protobuf Include="$(D2RepoRoot)server\services\edge\tests\Unit\KeyCustodian\TypeSpecGrpc\Protos\key_custodian_own_seal_private_key_get_or_lazy_provision_own_seal_private_key.g.proto"
+    <Protobuf Include="$(D2RepoRoot)server\services\edge\api\Protos\KeyCustodian\key_custodian_own_seal_private_key_get_or_lazy_provision_own_seal_private_key.g.proto"
               GrpcServices="Both"
-              ProtoRoot="$(D2RepoRoot)server\services\edge\tests\"
+              ProtoRoot="$(D2RepoRoot)server\services\edge\api\"
               AdditionalImportDirs="$(D2ContractsRoot)protos" />
   </ItemGroup>
 

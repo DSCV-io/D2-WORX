@@ -37,6 +37,10 @@ D2.Shared.Context.Abstractions.IRequestContext.SubdivisionIso31662Code.get -> st
 D2.Shared.Context.Abstractions.IRequestContext.TimezoneIanaName.get -> string?
 D2.Shared.Context.Abstractions.IRequestContext.TraceId.get -> string?
 D2.Shared.Context.Abstractions.IRequestContext.WhoIsHashId.get -> string?
+D2.Shared.Context.Abstractions.ISystemWorkScope
+D2.Shared.Context.Abstractions.ISystemWorkScope.Services.get -> System.IServiceProvider!
+D2.Shared.Context.Abstractions.ISystemWorkScopeFactory
+D2.Shared.Context.Abstractions.ISystemWorkScopeFactory.BeginAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<D2.Shared.Context.Abstractions.ISystemWorkScope!>
 D2.Shared.Context.Abstractions.InProcessModuleBoundary
 D2.Shared.Context.Abstractions.InProcessModuleBoundary.extension(D2.Shared.Context.Abstractions.IRequestContext!)
 D2.Shared.Context.Abstractions.InProcessModuleBoundary.extension(D2.Shared.Context.Abstractions.IRequestContext!).EstablishInProcessModule(string! callingModuleId, string! targetModuleId, D2.Shared.Time.IClock! clock) -> void
@@ -201,6 +205,9 @@ D2.Shared.Context.Abstractions.ScopeClaimParser
 D2.Shared.Context.Abstractions.SystemRequestContextBootstrap
 D2.Shared.Context.Abstractions.SystemRequestContextBootstrap.extension(System.IServiceProvider!)
 D2.Shared.Context.Abstractions.SystemRequestContextBootstrap.extension(System.IServiceProvider!).EstablishSystemContext(string! hostServiceId, D2.Shared.Time.IClock! clock) -> void
+D2.Shared.Context.Abstractions.SystemWorkPlaneServiceCollectionExtensions
+D2.Shared.Context.Abstractions.SystemWorkPlaneServiceCollectionExtensions.extension(Microsoft.Extensions.DependencyInjection.IServiceCollection!)
+D2.Shared.Context.Abstractions.SystemWorkPlaneServiceCollectionExtensions.extension(Microsoft.Extensions.DependencyInjection.IServiceCollection!).AddD2SystemWorkPlane() -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
 const D2.Shared.Context.Abstractions.ActorChainParser.MaxActDepth = 20 -> int
 const D2.Shared.Context.Abstractions.CallPathOps.MAX_CALL_PATH_DEPTH = 16 -> int
 const D2.Shared.Context.Abstractions.PropagatedContextSerializer.MAX_HEADER_LENGTH = 2048 -> int
@@ -222,3 +229,4 @@ static D2.Shared.Context.Abstractions.PropagatedContextSerializer.TryDecode(stri
 static D2.Shared.Context.Abstractions.ScopeClaimParser.Parse(System.Text.Json.JsonElement element) -> System.Collections.Generic.IReadOnlySet<string!>!
 static D2.Shared.Context.Abstractions.ScopeClaimParser.ParseString(string? value) -> System.Collections.Generic.IReadOnlySet<string!>!
 static D2.Shared.Context.Abstractions.SystemRequestContextBootstrap.EstablishSystemContext(this System.IServiceProvider! scopedServices, string! hostServiceId, D2.Shared.Time.IClock! clock) -> void
+static D2.Shared.Context.Abstractions.SystemWorkPlaneServiceCollectionExtensions.AddD2SystemWorkPlane(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!

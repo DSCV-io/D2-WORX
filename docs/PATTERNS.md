@@ -542,6 +542,10 @@ Internal cross-process calls use three independent outbound factors from `D2.Sha
 
 3. **RFC 8693 token exchange (explicit exception cases only).** The boundary mint that produces the forwarded token, plus the narrow set of legitimate exceptions: cross-trust-domain calls, justified scope narrowing, asynchronous scope reduction, and `act` chain establishment/extension. Never the per-hop business default — the forward-unchanged rail covers the common case.
 
+**Private-PKI OIDC / JWKS trust (present tense):** remote JWT consumers pin the public mesh CA via `AuthOptions.Jwks.TrustedRootCertificatePath` (hosts usually copy mTLS `TrustAnchorPath` into AuthConfigure). The OIDC discovery HttpClient uses `X509ChainTrustMode.CustomRootTrust` + hostname/SAN — never accept-any or Development free pass. Canonical: [`server/shared/dotnet/auth/core/README.md`](../server/shared/dotnet/auth/core/README.md).
+
+**Issuer-host in-process JWKS (present tense):** Edge (issuer) calls `AddD2InProcessJwksProvider()` after `AddD2Auth` + KeyCustodian so `IJwksProvider` loads Active + Retiring `jwks-signing` keys from the KC DB — no HTTP self-fetch to its own well-known endpoints. Remote hosts keep `HttpJwksProvider`. Well-known publish routes stay for consumers. Canonical: [`server/services/edge/key-custodian/README.md`](../server/services/edge/key-custodian/README.md). JWT boundary mint remains out of scope on the general Edge host (`AddD2JwtSigningCapability` absent by design).
+
 ```csharp
 // Forwarded-JWT factor — wire in the composition root of each calling service.
 services.AddD2ForwardedJwtOutbound();
@@ -576,9 +580,14 @@ services.AddD2RequestOriginGrpc();   // registers RequestOriginCrossProcessInter
 // leaf calls this before dispatching; sets Origin = InProcessModule.
 requestContext.EstablishInProcessModule(callingModuleId, targetModuleId, clock);
 
-// System worker (D2.Shared.Context.Abstractions) — a background service's per-iteration
-// scope calls this before resolving a handler; sets Origin = System.
-scopedServices.EstablishSystemContext(hostServiceId, clock);
+// System worker (D2.Shared.Context.Abstractions) — ONLY sanctioned module entry:
+// ISystemWorkScopeFactory.BeginAsync (wired by AddD2SystemWorkPlane via
+// AddD2ServiceDefaults). Opens a DI scope, establishes Origin = System, host
+// service id as ImmediateCaller, and a fresh System call-path entry.
+// Never hand-roll CreateAsyncScope + EstablishSystemContext (low-level bootstrap
+// reserved for the factory).
+await using var work = await systemWork.BeginAsync(ct);
+// resolve handlers from work.Services
 
 // Outbound gRPC (D2.Shared.Auth.Outbound) — writes x-d2-context (operational subset +
 // accumulated call-path) on every outbound call; auto-chained by the generated client.
