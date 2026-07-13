@@ -59,7 +59,7 @@ On disk in `docs/v2/PHASE_3.md`:
 
 1. **D2 row** → ✅ SHIPPED 0031  
 2. **A1 row** → ✅ SHIPPED 0030  
-3. **Durable spine:** **D2 (0031) → A2 fat (token mint + multiproc) → A3+E1 fat (sessions/credentials/anon + WhoIs) → E2 (rate-limit + middleware)**  
+3. **Durable spine (as locked in this ship):** **D2 (0031) → A2 fat (token mint + multiproc) → A3+E1 fat (sessions/credentials/anon + WhoIs) → E2** — **superseded post-ship** by living [PHASE_3.md](../../v2/PHASE_3.md): **D2 → A2 Auth Core → A3 Minting → Auth Extras + E1 → E2** (proper mint depends on Auth Core prims/storage; do not mint-first with fixtures)  
 4. Status header + critical-path + numbered build order updated  
 
 ### Doc parity (same change)
@@ -109,8 +109,9 @@ fix(shared)!: move advisory-lock domain keys out of Postgres PublicAPI
 
 PHASE_3 D2 / deliverable 0031: shared EntityFrameworkCore.Postgres keeps
 mechanism only; locks-source-gen emits AdvisoryLocks into KeyCustodian.Infra.
-Central contracts/advisory-locks catalog retained. KEEP spine locked:
-D2 → A2 fat → A3+E1 fat → E2.
+Central contracts/advisory-locks catalog retained. KEEP spine as locked **at ship** was
+D2 → A2 fat → A3+E1 fat → E2 — **living SoT supersession** in [PHASE_3.md](../../v2/PHASE_3.md):
+**D2 → Auth Core → Minting → Auth Extras + E1 → E2**.
 
 BREAKING CHANGE: D2.Shared.EntityFrameworkCore.Postgres no longer ships
 AdvisoryLocks.D2Keycustodian.*; consume constants from D2.Edge.KeyCustodian.Infra.

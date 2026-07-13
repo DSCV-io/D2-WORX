@@ -2515,9 +2515,9 @@ Each step buildable + testable + zero warnings before moving on.
 
 | ID | Issue | Why blocked | When |
 | --- | --- | --- | --- |
-| **AUTH-R3** | **JWT boundary mint** — general Edge host must **not** register `AddD2JwtSigningCapability` (structural isolation) | Mint is Auth-module / minter composition only ([PATTERNS](../PATTERNS.md) JWT minter capability; Q1 0030) | Edge Auth deliverable (Phase 3 A*) |
-| **AUTH-R4** | Full dual-factor multiproc proof: valid Bearer (`internal.audit.ping`) + mTLS Edge→Audit → NIE 503 | Needs AUTH-R3 (real mint or user-approved smoke exception); AUTH-R1 + issuer in-process JWKS are landed | After Auth mint |
-| **AUTH-R5** | Grant scopes such as `internal.kc.sign` / `internal.audit.ping` into real tokens | Mint-and-grant at boundary | Auth mint |
+| **AUTH-R3** | **JWT boundary mint** — general Edge host must **not** register `AddD2JwtSigningCapability` (structural isolation) | Mint is Auth-module / minter composition only ([PATTERNS](../PATTERNS.md) JWT minter capability; Q1 0030). **Order:** **A2 Auth Core** (domain/storage/prims) **before** **A3 Minting** (embosser + token endpoint) — see [PHASE_3.md](PHASE_3.md) spine | **A3 Minting** (after Auth Core) |
+| **AUTH-R4** | Full dual-factor multiproc proof: valid Bearer (`internal.audit.ping`) + mTLS Edge→Audit → NIE 503 | Needs AUTH-R3 with a **Core-backed** principal (not fixture-only cosplay); AUTH-R1 + issuer in-process JWKS are landed | After **A3 Minting** |
+| **AUTH-R5** | Grant scopes such as `internal.kc.sign` / `internal.audit.ping` into real tokens | Mint-and-grant at boundary from Core facts | **A3 Minting** |
 | **AUTH-R6** | “System JWT” for background/S2S without user request | **Not the model** — System plane is in-process; S2S workload = mTLS; business hops need boundary-minted transaction-token | Do not invent; see ADR-0022 / 0025 |
 
 ### Security residual — rate-limit + bind isolation (0030 Edge host FR)
