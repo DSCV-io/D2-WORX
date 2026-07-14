@@ -4,13 +4,13 @@ Copyright (c) DCSV. All rights reserved.
 
 # PHASE_3_AUTH_CORE.md — Auth Core domain design keep
 
-**Status**: Living design keep (not an implementation journal). Architecture locked through **L9–L163**. Hostile design findings **remediated** ([PHASE_3_AUTH_CORE_DESIGN_AUDIT.md](PHASE_3_AUTH_CORE_DESIGN_AUDIT.md)). Rate limiting + fingerprinting design locked in their annexes (below). Ready for **full-set Fable / design review** (§0). Product SKUs stay out of this public keep (§12.8).
+**Status**: Living design keep (not an implementation journal). Architecture locked through **L9–L186**. Hostile design findings **remediated**; post-Fable amends **L164–L186** (2026-07-14). Rate limiting + fingerprinting design locked in their annexes. Product packaging / onboarding UX stay **out of this public keep** (§12.8; private gitignored notes only).
 
 **Spine**: [PHASE_3.md](PHASE_3.md) — **Auth Core → Minting → Auth Extras** (A2 / A3 / Extras+E1).
 
 **Siblings**: [PHASE_3_AUTH.md](PHASE_3_AUTH.md) (JWT / Pattern A / KC), [PHASE_3_RATE_LIMITING.md](PHASE_3_RATE_LIMITING.md), [PHASE_3_FINGERPRINTING.md](PHASE_3_FINGERPRINTING.md), [V2.md §5.4](V2.md#54-auth--security).
 
-**Hostile design audit trail**: [PHASE_3_AUTH_CORE_DESIGN_AUDIT.md](PHASE_3_AUTH_CORE_DESIGN_AUDIT.md) — C/H/M + Qs RESOLVED into L78–L163 (evidence of how we got here; law lives in this keep + annexes).
+**Hostile design audit trail**: [PHASE_3_AUTH_CORE_DESIGN_AUDIT.md](PHASE_3_AUTH_CORE_DESIGN_AUDIT.md); research+audit report [PHASE_3_AUTH_CORE_FABLE_AUDIT.md](PHASE_3_AUTH_CORE_FABLE_AUDIT.md) (standalone; keep wins on conflict after amends).
 
 **Branch**: `n/auth-core`.
 
@@ -43,7 +43,7 @@ Copyright (c) DCSV. All rights reserved.
 | 7 | [V2.md §5.4](V2.md#54-auth--security) | Topology; where it conflicts, **this keep + rate-limit + fingerprint annexes win** |
 | 8 | [server/services/edge/auth/README.md](../../server/services/edge/auth/README.md) | Module stub pointers |
 
-Private (gitignored, not for public Fable unless operator provides): `docs/wip/auth-core/worx-platform-subscription-product.md` (product SKUs only).
+Private (gitignored — **not** committed framework law; operator-local only): `docs/wip/auth-core/` — product packaging, onboarding paywall/trial UX, seat-downgrade wizard chrome. Framework agents use **this keep** only unless the operator supplies wip.
 
 ### 0.2 Abuse pipeline (fingerprint + rate limit + risk) — picture only
 
@@ -81,7 +81,7 @@ Details only in the two annexes — not a third law file.
 
 ### 0.4 Explicit residuals (not silent holes)
 
-Numeric RL caps, exact client FP slot recipe, org-close grace days, Pending reclaim TTL, force-SSO grace, IPv6 /64, CAPTCHA after 429, product SKU table (private), A2 step DAG after review.
+Numeric RL caps, exact client FP slot recipe, org-close grace days, Pending reclaim TTL, force-SSO grace window (optional), multi-IdP-per-root (later), CAPTCHA **vendor** (valve locked C-4), mass-deprovision anomaly guard (optional), **product packaging / onboarding** (private wip only), A2 step DAG.
 
 ---
 
@@ -252,7 +252,7 @@ Deleted                              → terminal
 
 **Suspend while PendingDeletion:** abusers churn sign-up → delete. Staff suspend **holds** identity/email and **cancels** the anonymize grace (H8). Unsuspend does **not** resume PendingDeletion — staff picks re-verify or straight Active (H7).
 
-**Sign-in cancels PendingDeletion (v1):** successful sign-in while PendingDeletion → **Active** and **notify** the user that deletion was cancelled (H4). Not a silent no-op; not a separate confirm step (product chose v1 parity).
+**Sign-in cancels PendingDeletion (v1 / L133 / L167):** successful sign-in while PendingDeletion → **Active** and **notify** the user that deletion was cancelled. **Not** a separate explicit “cancel deletion” confirm step (product residual accepted: credential use in grace undoes deletion intent; notify is the mitigation).
 
 **Who suspends / unsuspends:** Support/Admin (and equivalents) via **scopes** (e.g. `auth.user.suspend`), not a hardcoded role ladder in domain. Never suspend **Deleted**. Unsuspend **default = + ForceReverify**; optional **straight to Active** for accidental suspend (heavy audit).
 
@@ -338,17 +338,17 @@ Optional parent → child tree (enterprise multi-brand). Flat org = trivial root
 | Create-child | **Root only** (`rootOnly` / operating org is root) |
 | Depth | Gated by **root package projection** (not Auth-invented SKUs) |
 
-### 6.2 Claims (names locked)
+### 6.2 Claims (names locked — **authz-load-bearing** L175)
 
-When an org is selected, JWT/session should carry:
+When an org is selected, JWT/session **must** carry (A3 mint claim freeze — not audit-only hints):
 
-| Claim | Value |
-| --- | --- |
-| `d2_org_id` / name / type / role | Operating org |
-| `d2_parent_org_id` | Null/omit if operating org is root |
-| `d2_root_org_id` | Self if root; else tree root |
+| Claim | Value | Why load-bearing |
+| --- | --- | --- |
+| `d2_org_id` / name / type / role | Operating org | L2 scopes / org context |
+| `d2_parent_org_id` | Null/omit if operating org is root | Tree position |
+| `d2_root_org_id` | Self if root; else tree root | **`rootOnly`**: operating org == root without a DB hop under mint-once-forward |
 
-Add to `contracts/jwt-claims` as design work; emit when mint exists.
+Without `d2_root_org_id` (and parent when needed), a downstream hop cannot evaluate `rootOnly` or verify proxy/tree context against the token alone. Add to `contracts/jwt-claims` before the claim set freezes; emit at mint.
 
 ### 6.3 Ownership invariant (sole / last owner) — **L123–L126**
 
@@ -414,12 +414,12 @@ Closed ── terminal ──
 
 #### Enforcement
 
-| State | Org select | Mint + L2 | Writes | Reads | Sessions |
+| State | Org select | Mint + L2 | Writes | Reads | Sessions (see §7.9 matrix) |
 | --- | --- | --- | --- | --- | --- |
 | **Active** | OK | OK | Per scopes/entitlements | OK | Normal |
-| **Frozen** | OK | Read-capable context | **Blocked** (polymorphic domain / authorize denylist of mutators) | **OK** (in-scope) | Prefer allow read sessions; block write APIs |
-| **Banned** | Fail / unavailable | **Fail** | **Blocked** | **Blocked** (or staff-only) | **Revoke** tree sessions on enter |
-| **PendingClosure** | OK (Owner/members see pending UX) | Read-capable | **Only cancel-closure** (Owner); all other writes blocked | **OK** | Like Frozen + closure UX |
+| **Frozen** | OK | **Read-capable only** (write scopes stripped) | **Blocked** (domain + authorize gates) | **OK** (in-scope) | **Soft re-mint** tree sessions on enter (new session id + cookie; stay signed in; no write scopes) |
+| **Banned** | Fail / unavailable | **Fail** | **Blocked** | **Blocked** (or staff-only) | **Hard yeet** all tree sessions on enter |
+| **PendingClosure** | OK (Owner/members see pending UX) | Read-capable | **Only cancel-closure** (Owner); all other writes blocked | **OK** | **Soft re-mint** like Frozen + closure UX |
 | **Closed** | Not in picker | N/A | N/A | N/A | None |
 
 Member-facing copy must name the **org** state (“organization is frozen / unavailable / scheduled to close”), **not** “your account is banned.”
@@ -469,19 +469,25 @@ Revocation: delete Redis → `d2.security.session-revoked` fanout → drop L1. N
 
 JWT is a **short-lived projection** of the session. Do not “edit JWT claims in place” on the client. Session row carries something like `auth_state` / kind so anon vs authed is never confused on cookie lookup.
 
-### 7.3 Continuity law (Pattern A — elevate / kill) — **L113–L116**
+### 7.3 Continuity law (Pattern A — elevate / kill) — **L113–L116, L164**
 
 | Event | Behavior |
 | --- | --- |
-| **Sign-in** with live **anonymous** session cookie | **Elevate in place**: same session id / cookie mapping; attach `userId`; kind → authenticated; replace anon JWT with user JWT on mint path |
+| **Sign-in** with live **anonymous** session cookie | **Elevate with session-id rotation**: revoke/invalidate the **old anon session id**; create **new authenticated session id**; re-map cookie to the new id; copy/re-attach visit continuity (**deviceKey / sticky `d2-did` / IP hashes**, risk baseline, invite landing crumbs — **not** the old session id); kind → authenticated; mint user JWT on mint path |
 | **Sign-in** with **no** visitor session | **Create** new authenticated session |
 | **After elevate / new authed session** | **`activeOrgId` null** — no org until picker (matches §5.2) |
 | **Sign-out** | **Kill** the authenticated session (revoke + fanout). Next response establishes a **new anonymous** session (new id) — do not demote the same id back to anon; do not leave a zombie authed row |
 | **Cookie present ≠ signed in** | Branch on kind / `IsAuthenticated`, never “has cookie” |
 
-**Why elevate (not always-new on sign-in):** one visit thread for pre-login → post-login (rate-limit / risk crumbs, invite landing, future anon product state). Session id is a **short-lived visit** axis, not a permanent device id.
+**Why elevate-with-rotation (not always-brand-new from zero, and not same-id):** one visit thread for pre-login → post-login crumbs (rate-limit / risk / invite landing). Continuity rides **deviceKey + sticky `d2-did` + IP**, not the session primary key. Session id is a **short-lived visit handle** that **must change** on privilege change.
 
-**Fixation note:** only elevate sessions the server issued; pair with O24 FP checks as designed. Privilege elevation is intentional product law (Pattern A), not “attacker-supplied cookie becomes user without server mint.”
+**Session fixation (L164 — PLAN-blocking fix):**  
+**Never** reuse the anonymous session id as the authenticated session id (same-id elevation is rejected — classic fixation / cookie-tossing class). Controls:
+
+1. **Regenerate session id** on anon→auth (and any privilege elevation that binds a principal).  
+2. **Only** elevate a session the server previously issued (still required; insufficient alone).  
+3. Session cookie: **`Secure` + `HttpOnly` + host-only**; prefer **`__Host-` prefix** (no `Domain=`, path `/`) so sibling-subdomain **cookie tossing** cannot plant a parent-domain session cookie.  
+4. Pair with O24 FP re-bind / risk on post-elevation mismatch (probabilistic backstop, **not** the primary fixation control).
 
 ### 7.4 Rate limiting + fingerprinting (design locked in annexes)
 
@@ -501,7 +507,9 @@ Auth progressive delay remains (§11.3); align keys with deviceKey / IP.
 
 ### 7.5 Session revocation model (cookie / Redis — **L127–L129, L134**)
 
-Clients primarily hold an **opaque session cookie**, not a long-lived JWT as the login credential. Revocation order (H2):
+**Browser credential shape:** clients primarily hold an **opaque session cookie** (mapped to `d2-auth.session`). Edge mints/attaches the **internal short-lived JWT** for mesh hops (mint-once-forward). Do **not** treat a long-lived browser JWT as the login credential. (PHASE_3_AUTH Pattern A scenarios that say “cookie + bearer user JWT” mean **after Edge mint**, not dual long-lived browser secrets.)
+
+Revocation order (H2):
 
 1. **Authoritative PG** — delete/mark revoked **first** (no zombie rehydrate source)  
 2. **Redis** — delete session key  
@@ -511,12 +519,13 @@ Clients primarily hold an **opaque session cookie**, not a long-lived JWT as the
 
 | Event | Sessions |
 | --- | --- |
-| **Suspend** | **Revoke all** of that user’s authenticated sessions (they cannot stay logged in) |
-| **ForceReverify** | **Revoke all** authed sessions |
-| **Password set/reset** (email pipeline) | **Revoke all** authed sessions |
+| **Suspend** | **Hard yeet** all of that user’s authenticated sessions; **cascade** to every **impersonation** session that user established as agent (L171) |
+| **ForceReverify** | Same as Suspend for session set (incl. impersonation cascade) |
+| **Password set/reset** (email pipeline) | **Hard yeet** all authed sessions |
 | **Unsuspend** | No special “unsuspend revoke” — Suspend already yeeted sessions; after unsuspend (re-verify **or** straight Active) user establishes a **new** session on next sign-in |
 | **Sign-out** | Kill this session; new anon (L114) |
 | **Kick / leave tree** | Revoke sessions with **active org in that tree** (not necessarily all devices / other trees) |
+| **Org lifecycle / plan** | See **§7.9** (hard yeet vs soft re-mint matrix) |
 
 There is no long-lived “suspended session” row kind — Suspend **closes** sessions.
 
@@ -543,13 +552,46 @@ If membership was removed and tree sessions were revoked, Redis miss / backplane
 
 Wiring: existing **session-revoked** fanout + tiered cookie cache subscribe pattern (Edge) — Core ensures revoke events fire on the tables above.
 
-**Soft “epoch re-mint” (M7 / L145) — plain English:** some systems keep you logged in and only refresh permissions after a role change without killing the session. **We do not freestyle that.** Privilege loss uses **session yeet + mint validity** (C8/C9). A future soft-refresh design needs an explicit decision; Extras must not invent a session epoch field silently.
+**Soft re-mint (L165 — locked, not freestyle):** for events in §7.9 marked **soft re-mint**, Auth **revokes the old session id** and issues a **new session id + cookie** for the same principal (device crumbs re-attached), then mints a JWT from **current** facts (org lifecycle, plan/entitlements, roles). The user stays signed in; privileges refresh immediately. This is **not** “edit JWT in place” and **not** same-id elevation. Hard-yeet events still force full re-auth (or new anon after sign-out paths).
 
 **`d2_fp` / deviceKey (L141):** full law in [PHASE_3_FINGERPRINTING.md](PHASE_3_FINGERPRINTING.md); claim shape before mint freeze; no dummy FP in production paths.
 
 ### 7.8 Impersonation consent (M4 / L143)
 
 **Consent storage** for impersonation (who may be impersonated / recorded consent) is **in Core schema now** — not deferred to a surprise migration. Product UX may trail; rows/API can be inert until impersonation alpha. Aligns with early invite/support flows needing the table present.
+
+### 7.9 Hard yeet vs soft re-mint matrix (L165)
+
+| Event | Disposition | Notes |
+| --- | --- | --- |
+| Org **Banned** | **Hard yeet** all sessions with active org in that tree | No product use |
+| Org **Frozen** | **Soft re-mint** tree-context sessions | Stay signed in; **read-only** scopes / write gates |
+| Org **PendingClosure** | **Soft re-mint** | Like Frozen + cancel-closure write only |
+| User **Suspended** / **ForceReverify** | **Hard yeet** that user’s authed sessions + **impersonation cascade** | Agent home + act-chain sessions they started |
+| **Password set/reset** | **Hard yeet** all that user’s authed sessions | |
+| **Force-SSO** enablement (`allowLocalPassword=false` / domain enforce on) | **Hard yeet** password-authenticated (and non-SSO consumer) sessions of **affected managed / domain-enforced** users (L176) | §13.7 — not “policy on, old password sessions live” |
+| **Plan / entitlement change** (RYW success) | **Soft re-mint** affected sessions | New scopes/features/`planVersion`; seat over-cap blocked **before** commit (§12.5) |
+| **Kick / leave tree** | **Hard yeet** sessions active **in that tree** | Other trees may remain |
+| **Sign-out** | **Hard yeet** this session; new anon id | L114 |
+
+**Soft re-mint algorithm (normative):** (1) revoke old session id (PG→Redis→backplane); (2) create new session row (same `userId`, re-attach deviceKey/`d2-did`/IP hashes + policy timers); (3) set new cookie (`__Host-` / host-only); (4) mint JWT from current authorize facts. Never leave the old id live.
+
+### 7.10 Session lifetime policy (idle + absolute — L166)
+
+All three mechanisms exist. **Defaults are generous** (SaaS, not banking) and **platform-configurable** (env/ops — floors themselves are not compile-time constants). Org and user security policy may only **tighten** (never loosen below the effective floor for that dimension).
+
+| Mechanism | Illustrative platform default | Meaning |
+| --- | --- | --- |
+| **Absolute timeout** | **30 days** from authentication / last full re-auth | Must sign in again; session dies even if active |
+| **Idle timeout** | **72 hours** without activity (`lastSeenAt` sliding) | Idle logout |
+| **Redis / storage TTL** | **≥ absolute + buffer** (e.g. **45 days**) | Storage safety net so product expiry is enforced by Auth policy, not surprise Redis eviction at day 30.0 |
+
+| Rule | |
+| --- | --- |
+| Either idle or absolute fires | Revoke **that** session id (hard yeet that handle) |
+| **Most strict wins** | platform floor (configurable) ∩ org tighten ∩ user tighten |
+| **Anon sessions** | Separate (usually shorter) visit caps; do not blindly apply 30d authed absolute to Pattern A visitors |
+| Policy home | §10 dimensions “session lifetime / idle timeout”; resolve always available |
 
 ---
 
@@ -592,9 +634,14 @@ V2 already uses this for sign-in: live data in auth **and** central trail.
 
 Operational growth tables (`sign_in_attempt`, `membership_history`, invite history, consumed challenges, expired sessions) need **documented retention + scheduled purge** in the deliverable plan (v1 parity). Exact TTLs product/compliance later; **mechanism is required**.
 
-### 8.6 Leave-system redaction fanout (M13 / L151)
+### 8.6 Leave-system redaction fanout (M13 / L151 / L182–L183)
 
-When a **user** is anonymized (or an **org** is closed/wiped from the platform), Auth publishes a **durable fanout** via outbox (v1: `auth.user-anonymize` with userId + scrub hints; org analogue when close-root ships). Downstream services (Geo, Comms, Files, …) **each** redact their own data. Auth does **not** synchronously wait for every domain wipe; publish must be **durable** (outbox/retry), not lossy fire-and-forget.
+When a **user** is anonymized (or an **org** is closed/wiped from the platform), Auth publishes a **durable fanout** via outbox. Downstream services (Geo, Comms, Files, …) **each** redact their own data by **stable id**. Auth does **not** synchronously wait for every domain wipe; publish must be **durable** (outbox/retry), not lossy fire-and-forget.
+
+| Rule | |
+| --- | --- |
+| **Payload PII-free (L182)** | Wire body = `{ userId \| rootOrgId, anonymizedAt \| closedAt, reason? }` + **non-PII scrub keys only**. **Never** original email, name, phone, or other PII in the fanout (v1 parity: `{userId, anonymizedAt}`). Downstream scrubs by FK / id, not by re-broadcasting secrets |
+| **Erasure-completion accounting (L183)** | Each erasure/close gets an **id**. Downstream consumers **ack scrub-complete** (or fail) per domain. Auth (or a compliance view) lists outstanding/failed erasures and **alerts past SLA**. At-least-once outbox + idempotent consumers remain; completion is the **controller proof** layer, not a sync distributed transaction |
 
 ---
 
@@ -654,9 +701,10 @@ Verify → Active → sign in → see pending invites
 1. Load pending invite by id (must still be pending; fail if expired/wiped/superseded)  
 2. Lifecycle: accepter **Active** only  
 3. Email normalize match (invite email ↔ principal email)  
-4. Unique membership: not already in tree; insert hot membership at snapshot role + target org  
-5. Wipe invite from hot pending (row lock / CAS on pending state)  
-6. History: accepted (+ membership_history)
+4. **Seat cap re-check** (L168): `hot_members + remaining_pending_after_this_accept ≤ effectiveSeatCap` under current plan snapshot — fail closed if plan shrank or reservation lost  
+5. Unique membership: not already in tree; insert hot membership at snapshot role + target org  
+6. Wipe invite from hot pending (row lock / CAS on pending state)  
+7. History: accepted (+ membership_history)
 
 Concurrent accepts / double-click: one winner; loser clean error — **no** dual seat, **no** half-applied state. **No email secret race.**
 
@@ -700,15 +748,15 @@ platform_floor     (hard minimum — product/platform owns; never weaker)
 
 | Dimension (illustrative) | Notes |
 | --- | --- |
-| Step-up / block thresholds | Risk consumers |
+| Step-up / block thresholds | Risk consumers — some prefs may loosen **to floor** (e.g. travel lifestyle) |
 | Impossible-travel limit | |
 | Country allowlist | |
 | ASN / Tor policy | |
-| MFA requirement | |
-| Session lifetime / idle timeout | |
+| MFA requirement | **Platform floor: required for staff/admin principals and for establishing impersonation** (L178). Tenant may require more broadly |
+| **Session absolute / idle timeouts** | §7.10 — platform defaults **env-configurable**; org/user may only **tighten** (never weaker than floor) |
 | Invite expiry | May be tightened by org above floor |
-| Platform-fixed / floor examples | Password min 12; email always required |
-| Risk step-up / block thresholds | Individuals may loosen some prefs to floor (e.g. frequent travel / VPN lifestyle); **hard** rules stay (Critical impersonation block, Restricted fail-closed, staff kill-switches) |
+| Platform-fixed / floor examples | Password **min 12** (kept; L8); email always required (floor values may still be ops-configured where product allows) |
+| Risk step-up / block thresholds | Individuals may loosen some prefs to floor; **hard** rules stay (Critical impersonation block, Restricted fail-closed, staff kill-switches) |
 
 **In Auth Core design:** tables (`security_policy_org` / `security_policy_user` or equivalent), resolve API, platform floor + defaults. **Admin UI may trail.** Risk engine inputs: [PHASE_3_FINGERPRINTING.md](PHASE_3_FINGERPRINTING.md); RL does not auto-shrink from risk ([PHASE_3_RATE_LIMITING.md](PHASE_3_RATE_LIMITING.md) §10).
 
@@ -736,33 +784,39 @@ User has **0..N methods** (not a single password column on user). Methods are **
 | `(provider, subject)` uniqueness | At most one user per provider subject among live credentials |
 | Provider trust catalog | Per-provider `trustEmailForSignup` (+ require verified claim) for **first-time create** only — not for link |
 
-**Password policy (v1 parity):** min 12 / max 128; numeric-only and date-like blocked; local common-password blocklist; **HIBP k-anonymity** (fail-open). Not optional fantasy.
+**Password policy (v1 parity / L8):** min **12** / max 128; numeric-only and date-like blocked; local common-password blocklist; **HIBP k-anonymity** (fail-open). Floor stays 12 (not raised to NIST-4’s 15); MFA assurance is the compensating control where enrolled (L179).
 
-#### Password set / reset — **email channel only** (L83, L131)
+#### Password set / reset — **email channel only** (L83, L131) + **reset assurance** (L179–L181)
 
 One **email** recovery / password establishment pipeline (same challenge store; branch on whether a password method exists):
 
 | Situation | Product meaning | Behavior |
 | --- | --- | --- |
-| Password method **exists** | **Reset password** | Replace secret; **revoke all** authed sessions (§7.5) |
-| **No** password (OAuth-only, etc.) | **Set password** | Create password method after email proof; **revoke all** authed sessions |
-| No account / ineligible lifecycle | Generic | “If an account exists, we sent instructions” (no enum) |
+| Password method **exists** | **Reset password** | Replace secret; **revoke all** authed sessions (§7.5); run **post-reset hygiene** (L181) |
+| **No** password (OAuth-only, etc.) | **Set password** | Create password method after email proof; **revoke all** authed sessions; same hygiene |
+| No account / ineligible lifecycle | Generic | “If an account exists, we sent instructions” (no enum); **timing parity** on responses (ASVS-class) |
 | Suspended / Deleted / disallowed | Deny recovery unlock | No mail that bypasses lifecycle (staff paths separate) |
 
 **Entry:** email link only (forgot-password / “change password” sends email — **not** an in-app form that sets a new password while already signed in without email proof). Security: inbox proof required for password mutation.
 
+**Reset assurance when a second factor is enrolled (L179):** email proof alone **must not** complete password/passkey mutation if the principal has an **enrolled MFA (or passkey-as-second-factor)**. Pipeline must either: (1) challenge the enrolled factor after email link, or (2) enter a **high-assurance recovery ceremony** (delay + owner notify + step-up / staff path). Password-only / no-MFA principals: email hub remains correct.
+
+**Staff / impersonation (L178):** platform floor requires MFA (phishing-resistant preferred when available) for **staff/admin** principals and for **establishing impersonation** (Consent or Force).
+
+**Post-reset / recovery hygiene (L181):** on successful password set/reset (and analogous high-assurance recovery): **invalidate any pending email-change**; **enumerate linked `(provider, subject)` methods** and force review / expire stale link challenges; notify owner. Closes pre-hijacking residuals (unexpired email-change, trojan identifiers).
+
 #### Recovery matrix (M9 / L147)
 
-While email is required, **email challenge** is the universal recovery hub. Every **Active** principal must keep a path:
+While email is required, **email challenge** is the universal recovery hub. Every **Active** principal must keep a path. Matrix = **availability**; **assurance** rows above apply when MFA is enrolled.
 
 | Methods present | Recovery / unlock path |
 | --- | --- |
-| Password | Email password **reset** |
+| Password | Email password **reset** (+ MFA if enrolled) |
 | OAuth only (no password) | Email password **set** (adds password); or sign-in with linked OAuth if still available |
-| Passkey/WebAuthn only | Email flow to **re-enroll** passkey and/or **set password** (same challenge family) |
+| Passkey/WebAuthn only | Email flow to **re-enroll** passkey and/or **set password** (same challenge family; MFA rules if dual factors) |
 | Magic-link only | Email **magic link** is both sign-in and recovery |
 | Enterprise SSO only (`allowLocalPassword=false`) | Company IdP / break-glass staff; email set-password **blocked** while force-SSO applies (L94) |
-| Password + OAuth / passkey | Any remaining method; password mutate still email-only |
+| Password + OAuth / passkey / MFA | Any remaining method; password mutate still email-only **+ enrolled MFA** |
 | Unlink last method | **Forbidden** while Active — prevents zero-recovery accounts |
 
 Adding a new method type later **must** extend this matrix before ship — no method without a recovery story.
@@ -800,6 +854,8 @@ Types include: email_verify, **password_set_or_reset**, phone_verify, magic_link
 
 Do not rely on “username login” as the primary path if username enum is allowed.
 
+**Timing parity (L180):** sensitive auth responses (register conflict, forgot-password, OAuth conflict) must not leak existence via **response time** as well as body shape — pad / constant-path work where practical (ASVS-class).
+
 ### 11.4 Two different “OAuth” ideas
 
 | Concept | Meaning |
@@ -807,9 +863,14 @@ Do not rely on “username login” as the primary path if username enum is allo
 | User credential `oidc:google` | Human signs in with Google |
 | Table **`oauth_client`** | Registry of **external machine clients** of Edge for boundary tokens; **not** the BFF (mesh/mTLS). Schema in Core; mint uses in A3 |
 
-### 11.5 Cookies
+### 11.5 Cookies (L164)
 
-HttpOnly + Secure + SameSite=Lax; map to session id. CSRF residual is E2.
+| Cookie | Flags / law |
+| --- | --- |
+| **Session** | Prefer **`__Host-`** name prefix + `Secure` + `HttpOnly` + `Path=/` + **no `Domain`** (host-only). If `__Host-` not viable in a deploy topology, still **host-only Secure HttpOnly** — never parent-domain session cookies that sibling subdomains can toss. `SameSite=Lax` default (Strict if product allows). Maps to session id only. |
+| **Sticky device (`d2-did`)** | Non-auth; HttpOnly Secure; long max-age — [PHASE_3_FINGERPRINTING.md](PHASE_3_FINGERPRINTING.md) |
+
+CSRF residual is E2.
 
 ### 11.6 Sign-in gate order (reference)
 
@@ -874,26 +935,32 @@ Authorize(op)  — local only
 | JWT | May carry scopes/features/`planVersion`; **live counters** (seats used) re-read from DB |
 | Metered / “scale with seats” packs | SaaS pushes **effective** seat cap (and feature set); Auth enforces the number — does **not** implement list-price math |
 
-### 12.4 No plan, past-due, and “growth” ops (**denylist** orientation)
+### 12.4 No plan, past-due, and mutative ops (**constrained tenant** — L169)
 
 | Rule | |
 | --- | --- |
-| Explicit plan choice | No auto-attach trial or paid pack at org create |
-| Default posture | Most day-to-day **reads** and many non-growth writes stay available; **growth / resource-creating** ops are what get blocked |
-| Mechanism | Prefer a **denylist of gated ops** (and plan-feature requirements) over a giant allowlist of everything permitted — op-by-op metadata on `Authorize` |
-| Examples of growth-class ops (illustrative, not exhaustive) | Add user / invite, create child org, enable SSO, create new billable domain resources (jobs, invoices, … — domain services use same entitlement idea) |
-| Past due | Configurable **grace days** (product); after grace, growth ops blocked; after cancel/inactive, same constrained posture as no plan (details product) |
-| Downgrade over limit | **Grandfather** existing tree/members; block **new** ops that would worsen the breach |
+| Explicit plan choice | No auto-attach trial or paid pack at org create (framework). **How** a product forces trial/sub pick, ribbons, and onboarding screens is **product UX** — private notes only (§12.8) |
+| **No active plan / trial assignment** | Tenant is **constrained**: **mutative / growth / resource-creating ops denied**; **reads OK** (same class of posture as Frozen for “can view, cannot change”) |
+| Escape hatches that must remain | Sign-out; leave org (where allowed); **start trial / attach subscription** for that root; staff/break-glass; pure self L1 that does not grow the tenant |
+| Mechanism | Op catalog metadata on `Authorize` (feature + denylist of mutators when assignment missing/inactive) — not a second framework |
+| Past due | Configurable **grace days** (product/SaaS); after grace, same constrained posture as no plan |
+| **Not unlimited** | Missing assignment never means full power (L106) |
 
-Exact which ops are growth-gated is **op catalog data** (evolves per product), not a second permission framework.
+Product-specific onboarding (forced picker after create-org, trial-once-per-user, “view without plan” link, banners) lives in **gitignored product notes**, not this keep.
 
-### 12.5 Seats and tree depth (generic enforcement)
+### 12.5 Seats and tree depth (generic enforcement — L168)
 
 | Rule | |
 | --- | --- |
-| **Seat** | Count **unique principals** with a **hot membership anywhere in the root’s tree**, **regardless of role** (Owner, Member, Auditor, … all count). **Pending invites count** toward the cap. No separate “guest seat” class for platform sub |
-| **Tree depth** | **0** = root only (no children). **1** = root + children (no grandchildren). **N** = N levels of child edges below root. Enforce on **create-child** (and equivalent) |
-| Cap source | Default limits from plan catalog; optional **effectiveSeatCap** (etc.) from SaaS override for flexible packs |
+| **Seat** | Count **unique principals** with a **hot membership anywhere in the root’s tree**, **regardless of role**. **Pending invites count** toward the cap (each pending row reserves one seat). No separate “guest seat” class for platform sub |
+| **Send-time reservation** | **Invite send** allowed only if `hot + pending < cap` **after** inserting the new pending row would still be ≤ cap. Reject send when full. Decline / expire / supersede / revoke pending → **frees** the reservation |
+| **Accept-time re-check** | Accept transaction **atomically** re-checks seat cap under **current** plan (§9.4). Covers plan shrink between send and accept |
+| **Downgrade / seat shrink** | Plan change that would leave `hot + pending > newCap` **must not commit** until the operator **explicitly selects** enough **hot members to remove** and/or **pending invites to cancel** so `hot + pending ≤ newCap`. **No silent auto-cancel of invites or auto-kick.** UI may present a selection wizard (product chrome — private notes); Auth enforces the invariant in the commit transaction |
+| **Sole / last Owner** | Reduce-to-cap cannot leave a root with zero direct Owners — transfer or fail closed (existing last-owner law) |
+| **Tree depth** | **0** = root only; **1** = root + children; **N** = N child levels. Enforce on **create-child** |
+| Cap source | Plan catalog defaults; optional **effectiveSeatCap** from SaaS |
+
+**Supersedes** older “grandfather existing members on seat downgrade; only block new growth” for **seat cardinality**. Feature flags may still soft-strip via re-mint without kicking people; **seat count must fit before a lower seat plan commits**.
 
 ### 12.6 Plan catalog shape (generic — no product SKUs here)
 
@@ -911,15 +978,19 @@ Gated operations declare metadata, e.g. `member.invite` → feature + scope `org
 | `org.child.create` | — | tree | structure scope | `tree_depth` |
 | `sso.configure` | UI roll-out | sso | IdP manage scope | — |
 
-### 12.8 Product-specific packaging (out of public keep)
+### 12.8 Product-specific packaging & onboarding (out of public keep)
 
-Framework law stops at: local snapshot, three layers, seats/depth rules, denylist growth ops, RYW, two money worlds.
+Framework law stops at: local snapshot, three layers, seats/depth (send reserve + accept re-check + explicit reduce-to-cap), constrained no-plan, RYW + soft re-mint, two money worlds.
 
-**Product SKUs / price points / which plan gets which depth** for a commercial product built on D²:
+**Out of committed public keeps** (packaging IP / product UX):
 
-- Must not be required reading for framework agents in this repo.  
-- Live in **private product notes** (gitignored `docs/wip/…` locally, or a future private product repo) — not committed keep / not source-available packaging IP.  
-- When D² splits framework vs product repos, product packaging follows the product repo.
+- Named commercial SKUs, prices, which plan gets which depth/features  
+- Onboarding: post-create-org trial/sub forced picker, trial-once-per-user rules, “view without plan” copy, plan-activation ribbons  
+- Seat-downgrade wizard chrome / copy (framework only requires **explicit selection** of members + invites)
+
+**Where that lives:** gitignored `docs/wip/auth-core/` (local operator notes) or a **future private product repo**. Path may be mentioned here; **contents must not be required for framework agents** and should not be committed to the source-available tree.
+
+When D² splits framework vs product repos, product packaging/onboarding follows the product repo.
 
 ### 12.9 Feature flags vs entitlements vs scopes
 
@@ -1003,12 +1074,17 @@ SCIM externalId  (IdP immutable user id — preferred bind key, unique per root)
 
 | SCIM-ish op | Domain effect | Notes |
 | --- | --- | --- |
-| Create User | Create or bind principal + optional membership | Respect email occupancy, catalog roles |
+| Create User | Create or bind principal + optional membership | Respect email occupancy, catalog roles; multi-home = **one principal** |
 | Update User | Profile / email / active flag | Field authority §13.8 |
-| active=false / deprovision | §13.5 package | Not platform Deleted by default |
-| Delete User | **Not** platform anonymize by default | Deprovision package; hard delete **illegal** from SCIM in v1 law |
+| **active=false** | **Tree deprovision package** (§13.5 / §13.9) | Primary deprovision signal (Okta often **only** sends this) |
+| **DELETE User** | **Same tree deprovision package** as active=false (L184) | **Idempotent** if already deprovisioned; **never** platform Suspend/Deleted/anonymize; hard-delete principal from SCIM **illegal** |
 | Group push | Membership add / **move** / remove / role | One seat per tree |
 | List/Get | Projection of users **in this root’s scope** | Multi-tree users: only this tree’s membership + allowed attrs |
+
+**DELETE vs active=false (L184 — locked):**  
+Vendor signal difference only. **Access effect in D² is identical:** run the **tree deprovision package**. IdPs that **never DELETE** (common Okta) are fully supported — soft disable is enough. IdPs that DELETE days later (common Entra) get a **no-op success** if already deprovisioned. Re-activate (`active=true` / re-create same externalId) → idempotent re-bind + membership per policy, not a second principal.
+
+**Hiccup / safety (not silent):** only **explicit** inbound SCIM writes deprovision — IdP **outage does not** mass-remove users. Fail-closed on bind ambiguity; last-owner reject; all-or-nothing txns; provisioning log + critical alerts. Optional later: anomaly guard if huge % of managed users deprovision in a short window (PLAN residual). Transient connector errors must not invent deletes.
 
 **Same-tree remaps:** if SCIM says Member@USA but user already Agent@INTL (same root), perform **atomic membership move** (or role change at new node) — **never** dual hot seats. If move would violate last-owner at old node without replacement → **reject** + alert.
 
@@ -1053,11 +1129,25 @@ Root **IdP + SCIM policy** (alongside §10 security policy):
 | --- | --- |
 | **Scope of force-SSO** | Applies to **managed users** under that root and/or emails in root **enforced domains** — not a global wipe of password for all principals |
 | **Sign-in** | If principal is SSO-required for root R: password / consumer OAuth **denied** with clear UX (“Use your organization sign-in”); must use R’s IdP |
-| **Credential rows** | Password method may **remain** stored (for policy relax, other orgs, break-glass) but is **not usable** while force-SSO applies |
-| **Recovery** | Forgot/set password **refuses** while force-SSO applies (“use company SSO”), except staff break-glass |
+| **Credential rows** | Password method may **remain** stored (for policy relax, other orgs, break-glass) but is **not usable** while force-SSO applies for non-exempt users |
+| **Recovery** | Forgot/set password **refuses** while force-SSO applies (“use company SSO”), except **break-glass** (§13.7a) / staff |
 | **Chicken-and-egg** | **Never** fully lock a user out of all methods. Force-SSO enforcement requires a viable path: existing IdP subject, SCIM-provisioned subject, or JIT on first IdP login. If password-only and not yet SSO-capable → allow password until first successful SSO link **or** admin activation path; then enforce |
-| **Policy turns on** | Notify affected users: org R now requires SSO; password sign-in disabled while managed / domain-enforced |
-| **Example (David)** | `david@acme.co` had consumer password. Acme root enables SCIM + SSO + `allowLocalPassword=false`. SCIM binds him + membership. Next password attempt → blocked with SSO redirect/message. He still could use another org’s paths only if not domain-enforced globally on that email — domain enforce is the usual enterprise choice for `@acme.co` |
+| **Validate before enforce (L185)** | Do **not** turn on force-SSO until the root IdP connection is **validated** (successful test auth / admin-confirmed healthy connector). Reduces brick risk |
+| **Policy turns on (L176)** | Notify affected users: org R now requires SSO; password sign-in disabled while managed / domain-enforced. **Hard yeet** existing password-authenticated (and non-SSO consumer) sessions of those users so force-SSO is **immediate**, not “next sign-in only.” Optional **grace window** before deny is a PLAN residual; default = enforce when SSO path is viable |
+| **Example (David)** | `david@acme.co` had consumer password. Acme root enables SCIM + SSO + `allowLocalPassword=false`. SCIM binds him + membership. Live password sessions **revoked**; next password attempt → blocked with SSO redirect/message. He still could use another org’s paths only if not domain-enforced globally on that email — domain enforce is the usual enterprise choice for `@acme.co` |
+
+### 13.7a Break-glass (L185–L186) — IdP must not permanently brick org admin
+
+**Purpose:** a **broken / misconfigured IdP** must not leave the **root unable to administer itself** (fix SSO, transfer owner). Not a daily bypass for all members.
+
+| Rule | |
+| --- | --- |
+| **Minimum (L186)** | Every root that enables **IdP and/or force-SSO** **must** have ≥1 **break-glass capable** principal (typically a **root Owner** or dedicated emergency Owner) |
+| **Break-glass capable** | Can authenticate **without depending on that root’s IdP** (password and/or other non-that-IdP method) **and** has power to fix IdP config / transfer ownership. **Explicitly exempt** from force-SSO for that root (Entra-style emergency accounts) — otherwise force-SSO contradicts break-glass |
+| **MFA** | Break-glass accounts: **require MFA** when factors available; at minimum **durable admin warning** if no MFA (align L178 spirit). Prefer hard-require at platform floor for break-glass |
+| **Platform staff** | Always last-resort break-glass via staff scopes (impersonation / config repair) with **critical audit** — does not replace tenant minimum |
+| **Not** | Every member is break-glass; break-glass is not the normal login path |
+| **Multi-IdP** | **Later** (C-8b) — single IdP config per root day-1; domain→directory routing is a separate product when M&A needs it |
 
 ### 13.8 Profile field authority + user UX
 
@@ -1072,11 +1162,12 @@ Root **IdP + SCIM policy** (alongside §10 security policy):
 
 | Event | Behavior |
 | --- | --- |
-| Deprovision (default) | Remove **tree** memberships for that root; revoke sessions with active org **in that tree**; disable **this** IdP SSO method; **not** platform Suspend/Deleted |
-| Other trees | Untouched |
+| Deprovision (default) — active=false **or** DELETE | Remove **tree** memberships for that root; revoke sessions with active org **in that tree**; disable **this** IdP SSO method for that root; **not** platform Suspend/Deleted/anonymize; principal row **kept** |
+| Other trees / global serve | **Untouched** — multi-org humans keep being served everywhere else |
+| Full platform delete | **Never** from SCIM deprovision; only separate user-lifecycle paths (self PendingDeletion, staff, legal) |
 | Last root owner | SCIM demote/remove **rejects** unless atomic replacement owner |
 | Staff Suspend | Global; SCIM cannot casually clear without rules |
-| Mint/resolve | Operating org must still be in effective membership (see audit C9 — couples here) |
+| Mint/resolve | Operating org must still be in effective membership |
 
 ### 13.10 Reject UX (avoid “fucked up state”)
 
@@ -1088,16 +1179,17 @@ Root **IdP + SCIM policy** (alongside §10 security policy):
 | **End user** | Human messages on SSO/sign-in failure (policy, deprovisioned, use company IdP) — not raw SCIM errors |
 | **Retries** | Same conflict → same error; critical alerts **deduped** |
 
-### 13.11 Decision package locked (Q3 / C2)
+### 13.11 Decision package locked (Q3 / C2 + Fable C-8)
 
 | # | Choice |
 | --- | --- |
-| Config home | Root only; children = membership targets + maps |
+| Config home | Root only; children = membership targets + maps; **single IdP per root day-1** (multi later) |
 | Membership SoT | Directory for managed (`externalId`); Auth for guests |
-| Deprovision | Memberships + tree sessions + disable SSO; no Suspend/delete default |
+| Deprovision | Tree memberships + tree sessions + disable this SSO; **no** platform Suspend/delete; DELETE ≡ active=false for access (L184) |
+| Multi-org | Deprovision **never** stops serving the principal in other trees |
 | Last owner | Hard reject without replacement |
 | Leave (managed) | Disabled under directory SoT |
-| Force local password off | Scoped enforce + notify; do not brick; do not global-delete password |
+| Force local password off | Scoped enforce + notify + session yeet; validate IdP first; break-glass exempt (L185–L186) |
 | Profile | Managed-field UX warning; fail closed on email steal |
 | Alerts | Critical + deduped on integrity rejects |
 
@@ -1167,7 +1259,7 @@ This keep is the **central SoT** for Auth Core domain decisions while iterating 
 | L64–L69 | Invite mechanisms; history events; tree-wide invite target; explicit accept; 7d+policy expiry; security policy BE |
 | L70 | Org↔org business rels not Auth-owned |
 | L71 | Package limits: external SoT + port + local projection; no per-request S2S |
-| L72 | Claims `d2_parent_org_id`, `d2_root_org_id` named now |
+| L72 | Claims `d2_parent_org_id`, `d2_root_org_id` named — **strengthened by L175** (authz-load-bearing at mint) |
 | L73 | rootOnly only (no extra metadata language yet) |
 | L74 | Org IdP + SCIM management **BE** in Core design; UI trails |
 | L75 | Security policy BE complete in design; UI trails |
@@ -1203,12 +1295,12 @@ This keep is the **central SoT** for Auth Core domain decisions while iterating 
 | L105 | Plan catalog = opaque planId → features + limits (not USD); **product SKUs/prices not in public keep** |
 | L106 | JWT may carry scopes/features/planVersion; seat usage live; never unlimited on missing assignment |
 | L107 | Op metadata drives gates (flag/feature/scope/limit) — single system; growth ops **denylist**/feature-gated |
-| L108 | Downgrade: grandfather existing; block new limit violations only |
+| L108 | **Superseded by L168** for seats — was “grandfather existing; block new only”; seat shrink now requires explicit reduce-to-cap before commit |
 | L109 | Seat = unique hot member **anywhere in tree** (any role) + **pending invites**; no guest-seat carve-out |
 | L110 | Tree depth: 0 = root only; N = N child levels; enforce on create-child |
-| L111 | No plan / after past-due grace: block **growth** ops (add user, create child, new domain resources, …); not whole-product 500 |
+| L111 | **Superseded/extended by L169** — no plan = mutative denied / reads OK (constrained), not only “growth denylist” soft language |
 | L112 | Flexible/scale packs: SaaS supplies **effective** caps; Auth enforces numbers only |
-| L113 | Sign-in **elevates** live anon session (same id); no anon session → create authed session |
+| L113 | Sign-in **elevates** live anon session with **new session id** (L164); no anon session → create authed; continuity via deviceKey/`d2-did`/IP not old session id |
 | L114 | Sign-out **kills** authed session; next traffic gets **new** anon session (not demote-same-id) |
 | L115 | Elevate/create authed → **no org** until picker |
 | L116 | Session continuity is auth/session only; **O23/O24** own RL + device identity (annexes); session is not sole Restricted key |
@@ -1240,7 +1332,7 @@ This keep is the **central SoT** for Auth Core domain decisions while iterating 
 | L142 | Invites: **in-app accept only**; notification email is not an accept secret (no dual challenge/secret path) |
 | L143 | Impersonation **consent storage built in Core schema now** (useful by invite/impersonation alpha; not deferred empty migration) |
 | L144 | HIBP **fail-open** if service down; min password policy still applies |
-| L145 | No soft “permission epoch re-mint without session discipline” freestyle — invalidate/re-mint via session + mint validity (C8/C9); epoch-only shortcuts need a later explicit design if ever |
+| L145 | **Superseded by L165** — soft re-mint is locked for Frozen/plan-change (new session id + cookie + current facts); still no freestyle “edit JWT only” epoch |
 | L146 | Every user has **username**: v1-style random friendly `AdjectiveNoun###` (global unique); display form + lowercase wire; **not** primary login id |
 | L147 | **Recovery matrix** (§11.x): every Active principal has a path; email is hub while email required |
 | L148 | Cross-tree multi-membership **allowed OOTB**; exclusive-home / SSO-only constraints via **existing policy/IdP config** that works when set |
@@ -1250,8 +1342,8 @@ This keep is the **central SoT** for Auth Core domain decisions while iterating 
 | L152 | **Implement step order / Extras vs Core cut** not frozen until full auth-related design is locked (this keep + related) — avoids premature spine |
 | L153 | Root/tree lifecycle states: **Active \| Frozen \| Banned \| PendingClosure \| Closed** — distinct names from user lifecycle |
 | L154 | State on **root**; **entire tree** inherits |
-| L155 | **Frozen** = read-only (domain polymorphism / write gates); staff freeze/unfreeze |
-| L156 | **Banned** = no tenant product use; data retained; staff ban/unban; revoke tree sessions on ban |
+| L155 | **Frozen** = read-only + **soft re-mint** tree sessions (L165); staff freeze/unfreeze |
+| L156 | **Banned** = no tenant product use; data retained; staff ban/unban; **hard yeet** tree sessions on ban |
 | L157 | **PendingClosure** = Owner-initiated close grace; read-only like Frozen; **only write** = Owner **cancel closure**; members see pending-close UX |
 | L158 | **Closed** = terminal; Auth cascade + org redaction fanout; **≠ Banned** |
 | L159 | Ban/freeze while PendingClosure **cancels** grace; unban/unfreeze → **Active** (not resume PendingClosure) |
@@ -1259,6 +1351,29 @@ This keep is the **central SoT** for Auth Core domain decisions while iterating 
 | L161 | Org lifecycle transitions → **durable fanout** (outbox); SaaS holds/cancels/resumes sub; Auth enforces locally |
 | L162 | Important lifecycle events generally use **fanout exchanges** for eventual consistency hooks |
 | L163 | Downward proxy = **full** same-role effective perms on descendants (incl. invite/kick/admin), not product-only; no child direct seat required (Q1) |
+| L164 | **Session fixation defense:** regenerate session id on anon→auth; `__Host-`/host-only session cookie; never same-id elevate; continuity via deviceKey/`d2-did`/IP |
+| L165 | **Hard yeet vs soft re-mint matrix** (§7.9): Banned/Suspend/password = hard yeet; Frozen/PendingClosure/plan change = soft re-mint (new id + current facts) |
+| L166 | Session **idle + absolute** timeouts required; illustrative defaults 72h idle / 30d absolute / Redis TTL ≥ abs+buffer (e.g. 45d); **floors env-configurable**; org/user **tighten only** |
+| L167 | PendingDeletion + sign-in → Active + **notify**; no mandatory explicit cancel step (accepted residual) |
+| L168 | Seats: **send-time reservation** + **accept re-check**; downgrade/seat shrink **blocks commit** until operator **explicitly** selects members and/or pending invites to release; no silent invite wipe |
+| L169 | No plan / inactive = **constrained** (mutative denied, reads OK); product onboarding paywall UX **not** in public keep |
+| L170 | Fingerprint/RL: Private Relay → **CGNAT/shared class** not dirty-hostile; popularity SET velocity/cardinality guards; device-class keys prefer **stable + server TLS** dims (C-5) |
+| L171 | Actor Suspend/ForceReverify **cascades** to impersonation sessions that actor established |
+| L172 | `d2-did` alone **never** confers High confidence (must co-verify with current FP vector) |
+| L173 | Browser holds **opaque session cookie**; Edge mints internal JWT — not dual long-lived browser JWT as login |
+| L174 | RL continuity owned by **deviceKey ∧ IP ∧ userId** — **not** anon JWT `sub` lifetime |
+| L175 | `d2_parent_org_id` / `d2_root_org_id` are **authz-load-bearing** mint claims (required when org selected) — C-6 |
+| L176 | Force-SSO enablement **hard-yeets** password/non-SSO sessions of affected managed users — C-8a |
+| L177 | IPv6 **prefix-normalized** (default `/64`) for all IP RL keys + popularity + new-device mint; IPv4 `/32` — C-3; see rate-limit annex |
+| L178 | Platform floor: **MFA required** for staff/admin and for establishing **impersonation** — C-2c |
+| L179 | Email-initiated credential mutation: if MFA enrolled, must satisfy MFA or high-assurance ceremony — C-2a; password floor stays **min 12** — C-2d |
+| L180 | Anti-enum: generic shape **and** timing parity on sensitive auth responses — C-2 |
+| L181 | On password set/reset: invalidate pending email-change; review/expire linked methods — C-2b |
+| L182 | Anonymize/org-close fanout payload **PII-free** (ids + timestamps only) — C-9a |
+| L183 | Erasure-completion accounting (per-domain ack + overdue alert) — C-9b |
+| L184 | SCIM **DELETE ≡ active=false** for tree deprovision; never platform delete; never-DELETE IdPs OK; multi-org other trees untouched — C-8c |
+| L185 | Force-SSO requires **validated IdP**; break-glass accounts **exempt** from force-SSO — C-8d |
+| L186 | Each IdP/force-SSO root **≥1 break-glass capable** principal; MFA required/warn for break-glass; staff last resort — C-8d |
 
 ---
 
@@ -1266,16 +1381,18 @@ This keep is the **central SoT** for Auth Core domain decisions while iterating 
 
 | ID | Topic | Notes |
 | --- | --- | --- |
-| **Design audit** | [PHASE_3_AUTH_CORE_DESIGN_AUDIT.md](PHASE_3_AUTH_CORE_DESIGN_AUDIT.md) | **C/H/M + org lifecycle + Q1–Q7 remediated**; re-audit / Fable next |
-| **O23 / O24** | Design annexes locked | Numeric caps / slot recipe detail at PLAN/E1/E2 |
-| **Fable adversarial** | **Full** auth design set on branch — start **§0** (Core + audit + JWT/Auth + fingerprinting + rate limiting + spine) | |
-| **A2 step DAG detail** | After Fable if any | L152 / H3 |
+| **Prior design audit** | [PHASE_3_AUTH_CORE_DESIGN_AUDIT.md](PHASE_3_AUTH_CORE_DESIGN_AUDIT.md) | C/H/M + Q → L78–L163 |
+| **Fable report** | [PHASE_3_AUTH_CORE_FABLE_AUDIT.md](PHASE_3_AUTH_CORE_FABLE_AUDIT.md) | Historical; keep wins. Post-Fable locks through **L186** |
+| **O23 / O24** | Annexes locked | Numeric caps; CAPTCHA vendor; mobile-ASN tables; IPv6 prefix **value** tunable |
+| **A2 step DAG detail** | After design stable | L152 / H3 |
 | **Org close grace TTL** | Numeric default days | PLAN |
-| **C3 product packaging** | Named SKUs / prices / per-plan depth table | **Out of public keep** — private/gitignored product notes only (§12.8) |
-| **Pending reclaim TTL** | Default days / eligibility for abandoned create-Pending | Law L81; numeric default at PLAN |
-| **Link step-up** | Whether Connect IdP always requires recent auth / MFA | Optional harden; baseline = signed-in + free subject |
-| **Force-SSO grace** | Optional time window after policy on before password denied | Default: enforce when SSO path viable; PLAN may add grace |
-| **IdP externalId reuse detection** | Heuristics beyond unique key | Alert + admin; exact signals at PLAN |
+| **Product packaging / onboarding** | SKUs, trial, wizard chrome | gitignored `docs/wip/auth-core/` only (§12.8) |
+| **Pending reclaim TTL** | Abandoned PendingVerification | L81; numeric at PLAN |
+| **Link step-up** | Connect IdP always recent auth/MFA? | Optional; baseline signed-in + free subject |
+| **Force-SSO grace** | Optional window before password denied | Default: enforce when SSO viable (L176) |
+| **Multi-IdP-per-root** | M&A / multi-domain directories | **Later** (C-8b); single IdP per root day-1 |
+| **Mass-deprovision anomaly guard** | Quarantine if huge % deprovisioned quickly | Optional PLAN |
+| **IdP externalId reuse detection** | Heuristics beyond unique key | Alert + admin; PLAN |
 
 ---
 

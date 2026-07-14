@@ -228,6 +228,8 @@ the `d2_` prefix (§3.1).
 | `d2_session_id` | D²-custom | The user's `d2-auth` session row id | yes | `SessionId`; drives the per-hop session-liveness check. |
 | `d2_username` | D²-custom | Lowercase login handle | yes | `Username`. |
 | `d2_org_id` / `d2_org_name` / `d2_org_type` / `d2_org_role` | D²-custom | Operating-org context (the impersonated user's org under impersonation) | yes | `OrgId` / `OrgName` / `OrgType` / `OrgRole`. |
+| `d2_parent_org_id` | D²-custom | Parent of operating org; omit/null if root | yes | **Authz-load-bearing** with tree proxy ([PHASE_3_AUTH_CORE.md §6.2](PHASE_3_AUTH_CORE.md) L175). Add to jwt-claims before freeze. |
+| `d2_root_org_id` | D²-custom | Tree root (self if operating org is root) | yes | **Authz-load-bearing** for `rootOnly` under mint-once-forward (L175). |
 | `d2_fp` | D²-custom | Composite 10-slot session fingerprint, bound at mint (`v1.c1…c5.s1…s5`) | yes (the binding is the point) | `IRequestContext.SessionFingerprint`; the at-mint fingerprint binding (§3.6). Surfaces on `IRequestContext` (operational subset), not on `IAuthContext`. |
 | `d2_step_up_at` | D²-custom | Last step-up completion (Unix seconds), when applicable | yes | `LastStepUpAt`. |
 | `act.d2_kind` (inside `act` only) | D²-custom | `consent` / `force` impersonation flavor — only on impersonation actor entries | yes (part of the immutable `act`) | Sourced into `ImpersonationKind`. |
@@ -258,11 +260,16 @@ locale, …) per ADR-0007 §2. No hop mutates the token to append itself.
 
 ### 3.4 Sessions (3-tier; Edge-owned, this lib reads)
 
+SoT for continuity, fixation, yeet/re-mint, and idle/absolute policy:
+[PHASE_3_AUTH_CORE.md §7](PHASE_3_AUTH_CORE.md) (L164–L166).
+
 - **L1**: signed cookie cache, ~5min, contains compact session info.
-- **L2**: Redis (`session:{session_id}`), session lifetime up to 30 days.
+- **L2**: Redis (`session:{session_id}`); storage TTL ≥ product absolute timeout + buffer
+  (illustrative **45d** Redis vs **30d** absolute — see Core §7.10). Not “30d Redis = only policy.”
 - **L3**: PostgreSQL `d2-auth.session` (durable, dual-write on revocation).
-- **Revocation**: delete Redis row → publish `d2.security.session-revoked` fanout → all instances
-  drop L1 → worst-case 5min staleness (cookie cache).
+- **Revocation**: PG first → delete Redis → publish `d2.security.session-revoked` fanout → all
+  instances drop L1 → worst-case ~5min staleness (cookie cache) without backplane.
+- **Elevate**: new session id on anon→auth (not same-id); cookie host-only / `__Host-` preferred.
 - **No sticky sessions** — any instance handles any request.
 
 ### 3.5 KeyCustodian (Edge-side; this lib's KeyringClient consumes)
@@ -435,12 +442,14 @@ enrichment (WhoIs, fingerprint, anon-cookie). Pushed enrichment-vs-claims branch
 consumer, made rate-limiting and audit accept three input shapes (WhoIs / fingerprint / cookie
 state) instead of one, and left no tamper-evident binding between enrichment and the request.
 
-**Why Pattern A wins**: matches mainstream production patterns (every request carries a token —
-auth0 anon tokens, Cloudflare Access bot tokens, etc.); reuses the JWT validation +
+**Why Pattern A wins**: matches mainstream **anonymous/guest identity** production patterns
+(every request carries a token) — correct precedents are **Supabase Anonymous Sign-ins**,
+**Firebase Anonymous Auth**, and **AWS Cognito guest identities** (not Auth0 “anon tokens” or
+Cloudflare Access service/bot tokens, which are different products). Reuses the JWT validation +
 KeyCustodian + 3-tier session machinery already specified for authed users; collapses the
 anon/authed split to a single claim (`d2_kind`) the consumer reads instead of three independent
-signals; gives rate-limiting / audit / risk a tamper-evident, signed enrichment binding via JWT
-claims (`d2_whois_id`, `d2_fingerprint_score`).
+signals; gives audit / risk a tamper-evident, signed enrichment binding via JWT claims
+(`d2_whois_id`; optional score hint — risk prefers context per fingerprinting annex).
 
 #### Anon JWT shape
 
@@ -466,7 +475,7 @@ mapper needs to consume them:
 | ---------------------- | --------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `d2_kind` (top-level)  | §3.1 says "only inside `act` chain entries"; `JwtClaimTypes.ACT_KIND` doc explicitly says "There is NO top-level `d2_kind` claim" | Add a top-level `d2_kind` claim carrying the anon/authed discriminator (values keyed off the `ActorKind` enum, plus a new `Anonymous` variant — see §6.4 below). The inside-`act` `d2_kind` (consent/force) stays as-is; lookup paths differ (`d2_kind` vs `act.d2_kind`).        |
 | `d2_whois_id`          | not defined                                                                                                                       | New top-level claim — opaque ID into the WhoIs lookup (Edge Singleflight + cache; geo/privacy binding). Tamper-evident via JWT signature. See [PHASE_3_FINGERPRINTING.md](PHASE_3_FINGERPRINTING.md) + Edge WhoIs. |
-| `d2_fingerprint_score` | not defined; `RiskScore` is on `IRequestContext` propagated via `x-d2-context` header                                             | Optional hint claim — **not** the rate-limit primary key. Prefer risk on context; FP match/device confidence per [PHASE_3_FINGERPRINTING.md](PHASE_3_FINGERPRINTING.md). Authed paths keep score via `IRequestContext` / header. |
+| `d2_fingerprint_score` | not defined; `RiskScore` is on `IRequestContext` propagated via `x-d2-context` header                                             | **Optional / prefer omit** on new mints — not the rate-limit primary key; not required for Pattern A. Prefer **RiskScore on context**; FP match/device confidence per [PHASE_3_FINGERPRINTING.md](PHASE_3_FINGERPRINTING.md). |
 
 **ActorKind enum** — Phase 3 needs a new `Anonymous` variant added alongside the existing
 `Service` / `Impersonation` values. Not a breaking change at the JWT layer (top-level `d2_kind`
@@ -499,13 +508,19 @@ is a new claim, not a redefinition); is a vocabulary addition in `D2.Shared.Auth
    forwards.
 3. Forwards to backend; backend validates as above.
 
-**Sign-in flow:**
+**Sign-in flow (Auth Core L164 — session-id rotation):**
 
-- Same cookie / same `d2_session_id`. Edge "elevates" the session: replaces the anon JWT with a
-  user JWT carrying real `sub` (`user:<uuid>`), real scopes, real `d2_org_*` claims.
-- Sign-out: revokes the session via `d2.security.session-revoked` (existing flow per §3.4); the
-  next request gets a fresh anon JWT with a fresh anon `sub` (continuity for rate-limit buckets
-  is OWNED by the anon `sub`'s 15-min lifetime, not by the cookie).
+- Edge **elevates with a new `d2_session_id`**: revoke the old anon session id; issue a **new**
+  authenticated session id; re-map the **opaque session cookie** (`__Host-` / host-only); re-attach
+  deviceKey / `d2-did` / IP continuity; mint a user JWT with real `sub` (`user:<uuid>`), scopes,
+  `d2_org_*` (usually null org until picker). **Never** keep the same session id across anon→auth
+  (session fixation / cookie-tossing defense).
+- **Browser** holds the session cookie; Edge attaches the short-lived **internal** JWT for mesh hops
+  (mint-once-forward) — not a second long-lived browser login secret.
+- Sign-out: revokes the authed session via `d2.security.session-revoked` (existing flow per §3.4);
+  the next request gets a fresh anon session id + anon JWT. **Rate-limit continuity** is owned by
+  **deviceKey ∧ IP ∧ userId** ([PHASE_3_RATE_LIMITING.md](PHASE_3_RATE_LIMITING.md)), **not** by
+  the anon JWT `sub` lifetime.
 
 #### Implications — load-bearing risks Phase 3 Edge implementers must address
 
@@ -530,10 +545,9 @@ is a new claim, not a redefinition); is a vocabulary addition in `D2.Shared.Auth
    `IRequestContext.IsAuthenticated` trinary already supports this (`true` / `false` / `null`);
    audit emitters propagate the resolved value.
 4. **Risk engine inputs.** The Phase 3 risk engine — already specified to compute the composite
-   `RiskScore` (see Q6 revision in §12) — must treat anon JWTs as their own
-   risk-scoring lane: anon `sub` has a fresh 15-min lifetime, so historical-pattern signals
-   (geo-velocity drift, sliding-window risk tracker) need a longer-lived anon-visitor identity
-   to key on (the cookie's session-id, NOT the anon `sub`).
+   `RiskScore` (see Q6 revision in §12) — must treat anon JWTs as their own risk-scoring lane.
+   Prefer longer-lived visitor keys: **deviceKey / sticky `d2-did` / IP** (and session id only as
+   visit glue). Do **not** key historical risk or RL solely on short-lived anon JWT `sub`.
 
 #### Implications for `D2.Shared.Auth` (this lib) — algorithm gap, Phase 3 followup
 

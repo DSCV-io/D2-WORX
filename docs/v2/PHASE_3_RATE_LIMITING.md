@@ -112,16 +112,20 @@ O24 defines regimes: **High / Common / Low-hostile / Authed**. See [PHASE_3_FING
 
 | Symbol | Meaning | Storage / keying note |
 | --- | --- | --- |
-| `deviceKey` | Server-issued opaque device id | **One-way** id; High only as **primary** |
-| `ip` | Resolved client IP | Key as **HMAC/hash of IP** (or salted hash) for bucket keys at rest where practical; display/geo stay structured WhoIs |
+| `deviceKey` | Server-issued opaque device id | **One-way** id; High only as **primary**; see Common fairness (L177/C-4) |
+| `ip` | Resolved client IP **after prefix normalization** | **IPv4 = /32**; **IPv6 = prefix** (default **/64**, env-tunable e.g. `/56`–`/48`). Apply **before** every IP-keyed token bucket, popularity `SADD`, and new-deviceKey mint cap (L177 / C-3). At rest: HMAC/hash of normalized form |
 | `userId` | Authenticated principal | Opaque id (already not a secret string dump) |
 | `geo` | city + region + country from WhoIs | Structured labels OK (not fingerprint raw) |
 | `country` | country only (whitelist-skippable) | Same |
 | Session (soft) | Visit continuity | May attach deviceKey/IP/userId **on the session row** for audit/risk; **not** sole Restricted RL key |
 
-**Dirty IP** (WhoIs): `IsVpn ‖ IsProxy ‖ IsTor ‖ IsHosting` (+ Relay/Anonymous when set) → stricter cap table + risk.
+**Dirty IP** (WhoIs): `IsVpn ‖ IsProxy ‖ IsTor ‖ IsHosting` (true abuse flags). **Apple Private Relay / CGNAT-class** → shared-egress fairness caps, **not** dirty-hostile tables ([PHASE_3_FINGERPRINTING.md §3.1](PHASE_3_FINGERPRINTING.md)).
 
-**NAT fairness (authed):** primary **userId**, not cookie-shortcut. Café residual when Common = shared **IP** budget (local), not global device-class.
+**NAT / Common fairness (C-4):**  
+- **Authed:** primary **userId**, not cookie-shortcut.  
+- **Anon Common (and Low when a sticky device exists):** if a **valid `d2-did` / deviceKey** is present, Identity may key on **deviceKey** (disaggregates café/CGNAT mates) even when FP popularity is Common — popularity still answers “is class common?” but must not force pure IP primary when the server already issued a device cookie.  
+- **Cookieless residue:** Identity → normalized **IP**; on **Restricted** surfaces, after token-bucket deny, offer a **friction valve** (Managed Challenge / CAPTCHA / PoW / step-up) before hard lockout forever — **valve existence locked**; vendor residual.  
+- Mobile/CGNAT ASN caps remain env-tunable.
 
 ---
 
@@ -201,8 +205,8 @@ Conceptual matrix remains “many buckets, few touches per request.”
 
 | Dimension | Key selection |
 | --- | --- |
-| **Identity** | High → `deviceKey`; Common/Low → `ip` (dirty → dirty table) |
-| **Egress** | `ip` (merge with Identity if same) |
+| **Identity** | **High** → `deviceKey`. **Common** → `deviceKey` if valid sticky `d2-did`/deviceKey present, else normalized `ip`. **Low/hostile** → normalized `ip` (dirty → dirty table); deviceKey may still AND when present for Restricted |
+| **Egress** | normalized `ip` (merge with Identity if same) |
 | **Geo** | `city:region:country` |
 | **Country** | `country` (skip if in whitelist env, e.g. US/CA/GB for *country* dim only) |
 
@@ -300,17 +304,17 @@ Effect on RL: switches Identity primary from `deviceKey` → `ip`; never disable
 
 ## §12. Session / JWT continuity (elevate vs RL keys)
 
-**Session elevate (Auth Core SoT):** same session row anon → authed; visit glue; progressive delay soft axis; risk baseline attachment. After elevate, session **carries** `userId` (and may store hashes of deviceKey/IP for audit).
+**Session elevate (Auth Core SoT L164):** anon→auth **rotates session id** (fixation defense); visit glue via **deviceKey / `d2-did` / IP** re-attach; progressive delay soft axis; risk baseline attachment. After elevate, new session **carries** `userId` (and may store hashes of deviceKey/IP for audit).
 
-**RL keys (this doc + O24):** always track **deviceKey + IP + userId** (when known) as dimensions under AND — **not** “session id alone.”
+**RL keys (this doc + O24):** always track **deviceKey + IP + userId** (when known) as dimensions under AND — **not** “session id alone,” and **not** “anon JWT `sub` lifetime owns RL continuity” (L174).
 
 | | Session elevate | deviceKey / IP / userId |
 | --- | --- | --- |
-| Job | Visit continuity | Abuse budgets |
+| Job | Visit continuity (new session id on elevate) | Abuse budgets |
 | User deletes cookie | New session | IP + deviceKey (sticky did) still bind |
-| After sign-in | Session gains userId | Authed tables use userId primary + AND IP (+ device if High) |
+| After sign-in | New session gains userId | Authed tables use userId primary + AND IP (+ device if High) |
 
-- Anon JWT `sub` may stay stable across re-mints for the same session cookie (Pattern A) for soft visit signals.  
+- Anon JWT `sub` is a **projection** of the current session; it changes when the session id rotates.  
 - **Default:** do not use anon `sub` as sole Restricted primary (session delete = free budget).  
 - Session-invalidation backplane (Redis + fanout) is **session liveness** — see Auth Core §7; not a substitute for RL keys.
 
@@ -378,15 +382,17 @@ Shared Redis; Lua atomicity; same as session/cache backplane discipline.
 | 1 | **AND of ceilings** — never OR of identities |
 | 2 | Request counter = **token bucket** (`rate` + `burst`), not fixed-window INCR as SoT |
 | 3 | Track **deviceKey + IP + userId** (when known); confidence picks **primary**, not “only one dim exists” |
-| 4 | Common FP → IP primary token bucket; **no** global common-FP request bucket |
-| 5 | Dirty IP → stricter tables; out of popularity (O24) |
+| 4 | Common FP → no global common-FP request bucket; Identity uses **deviceKey-when-did-present**, else IP (C-4) |
+| 5 | Dirty IP → stricter tables; out of popularity (O24); Relay = CGNAT-class not dirty |
 | 6 | Cookie-shortcut bypass **dead**; authed NAT fairness = userId primary |
 | 7 | Restricted Redis down → fail-**closed**; Standard/Elevated → fail-open |
-| 8 | Session elevate = visit glue; **not** sole Restricted key |
+| 8 | Session elevate = visit glue + **id rotation**; **not** sole Restricted key; RL ≠ anon `sub` |
 | 9 | Progressive delay stays Auth; aligned keys |
 | 10 | Risk step-up/block **orthogonal** to 429 (no mandatory risk↔bucket feedback loop) |
 | 11 | RateLimitTier + ActionSensitivity **op-declared** (TypeSpec / scopes codegen) |
 | 12 | Bucket keys prefer **one-way hashes** of identifiers (see fingerprinting storage law) |
+| 13 | **IPv6 prefix-norm** (default `/64`) on every IP key / popularity member / new-device mint (C-3) |
+| 14 | Restricted cookieless deny → **friction valve** exists (vendor residual) |
 
 ---
 
@@ -398,10 +404,11 @@ Shared Redis; Lua atomicity; same as session/cache backplane discipline.
 | Per-org commercial RL multipliers | Later (entitlements may inform) |
 | Multi-region single global counter | Single-region first |
 | Request cost > 1 | Residual |
-| CAPTCHA after deny | Product residual |
-| IPv6 /64 aggregation | Residual if mobile abuse needs it |
+| CAPTCHA / challenge **vendor** | Valve **locked** (C-4); pick product at PLAN |
+| IPv6 prefix length value | Default **/64 locked**; `/56`–`/48` tunable |
 | Adaptive ML caps | Out |
 | JA4 required day one | Optional server slot when available |
+| Mass-deprovision rate guard | Optional later (IdP ops) |
 
 ---
 

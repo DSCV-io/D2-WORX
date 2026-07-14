@@ -11,7 +11,7 @@ Copyright (c) DCSV. All rights reserved.
 > This file is **only** fingerprint / device confidence. Rate limits: [PHASE_3_RATE_LIMITING.md](PHASE_3_RATE_LIMITING.md) (read after this).  
 > **SoT with:** [PHASE_3_AUTH.md](PHASE_3_AUTH.md) (JWT `d2_fp`, Pattern A), Auth Core sessions / L141, WhoIs on `IRequestContext`.
 
-**Status (2026-07-13):** Strategy **locked for design**. Numeric tunables / exact client slot recipe remain env/PLAN/E1.
+**Status (2026-07-14):** Strategy **locked for design** (+ C-5 / C-15 amends). Numeric tunables / exact client slot recipe remain env/PLAN/E1.
 
 ---
 
@@ -95,7 +95,8 @@ Carry forward v1/v2 inventory (IPinfo-class). On context today: `IsVpn`, `IsProx
 
 | Classification | Default rule |
 | --- | --- |
-| **Dirty IP** | `IsVpn ‖ IsProxy ‖ IsTor ‖ IsHosting` (extend with Relay/Anonymous when set) |
+| **Dirty IP** | `IsVpn ‖ IsProxy ‖ IsTor ‖ IsHosting` (and true **Anonymous**/hosting-adjacent abuse flags when set). **Not** Apple Private Relay by default |
+| **Shared / CGNAT-class** | Carrier CGNAT, large café NAT, **Apple Private Relay (`Relay`)** — shared egress, mainstream users |
 | **Clean IP** | Not dirty; typical residential/ISP |
 
 **Dirty IP effects:**
@@ -104,6 +105,12 @@ Carry forward v1/v2 inventory (IPinfo-class). On context today: `IsVpn`, `IsProx
 - Uses **stricter** rate-limit cap tables (see O23).  
 - Raises baseline **risk score**.  
 - Org/user security policy may **block** Tor (or all dirty) entirely.
+
+**Shared / CGNAT-class (incl. Private Relay) effects (L170):**
+
+- **Not** treated as dirty-hostile for risk/RL tables.  
+- Fairness: mobile/CGNAT-aware IP caps; popularity may still exclude pure Relay if it would poison distinct-IP counts — but **do not** route Relay users into Low/hostile dirty tables.  
+- Aligns with vendor guidance: treat Private Relay egress like larger carrier-grade NAT pools.
 
 ASN / `AsnType` (isp / hosting / mobile / …): hosting-like ASN treated as dirty-adjacent for risk; ASN thrash (many ASNs in a short window) → risk bump.
 
@@ -146,11 +153,12 @@ Sessions and sign-in events may store: bound hash vector / `deviceKey`, match sc
 
 Optional companion: client may send attested material for slot computation (v1 `d2-cfp`-class); **server** hashes and issues durable id — client blob is not the long-term SoT.
 
-### 3.5 Forbidden as sole RL identity
+### 3.5 Forbidden as sole RL identity / confidence (L172)
 
 - Raw client-only hash / unvalidated client blob  
 - Session id alone on Restricted surfaces  
 - Attacker-chosen “I am unique” claim without server validation  
+- **`d2-did` alone** — sticky device cookie **never** confers **High** confidence or scopes; High requires sticky did **and** co-verification with the **current** FP component vector (incl. server/TLS slots). A replayed `d2-did` must not import a prior High tier without matching components  
 
 ---
 
@@ -158,28 +166,32 @@ Optional companion: client may send attested material for slot computation (v1 `
 
 | Regime | When (defaults) | RL primary identity |
 | --- | --- | --- |
-| **High** | Stable components + sticky did (or stable cluster) + **not** too-common + not hostile inconsistency | Opaque **`deviceKey`** |
-| **Common** | FP class popular across many **clean** IPs (mass-market phone class) | **IP** (or IP×transport-class); **not** global FP bucket |
-| **Low / hostile** | Missing client material, random FP every request, dirty IP, severe component/TLS inconsistency | **IP** with **stricter** caps + elevated risk |
+| **High** | Stable components + sticky did (co-verified) + **not** too-common + not hostile inconsistency | Opaque **`deviceKey`** |
+| **Common** | FP class popular across many **clean** IPs (mass-market phone class) | **IP** (or IP×transport-class) as primary residual; **not** global FP bucket — see O23 for deviceKey-when-present fairness |
+| **Low / hostile** | Missing client material, random FP every request, **dirty** IP, severe **stable-slot** inconsistency | **IP** with **stricter** caps + elevated risk |
 | **Authed** | Valid user principal | **userId** (+ AND IP / device on Restricted — O23) |
 
 ### 4.1 Too-common (hardened) — **sliding window for popularity only**
 
 This is **not** a request rate limit. It only answers “is this FP class popular?”
 
+**Class key material (L170):** build popularity / device-class keys primarily from **stable coarse client dims + server TLS/JA4-class slots** — not solely from privacy-browser-randomized client slots (Brave farbling, etc.). Randomized-only thrash must not auto-route mainstream privacy users to Low/hostile.
+
 ```text
 Per server-normalized FP class (sliding popularity window, e.g. 1h):
   Redis SET distinct_clean_ips:{fpClass}  + member TTLs / window TTL
   Members = CLEAN IPs only (never dirty)
+  Guards: max cardinality bound; velocity limit on new IP members per class/window
+          (stops residential-proxy inflation of SCARD)
   if SCARD > THRESHOLD (e.g. 50):
-    regime = Common  →  O23 must NOT use deviceKey as primary
-                        O23 uses IP (token bucket) + geo floors instead
+    regime = Common  →  O23 must NOT use deviceKey as sole global primary
+                        O23 uses IP (token bucket) + geo floors (+ deviceKey fairness rules)
   Dirty IPs: never SADD (stops proxy farms forcing “common”)
 ```
 
 Cold-start (unseen class): treat as unique → High path, subject to **new-device mint rate per IP/ASN**.
 
-**Never** put all Common traffic into one shared global FP **request** bucket (one attacker would punish everyone with that class). Common → **per-IP token buckets** (local residual unfairness only).
+**Never** put all Common traffic into one shared global FP **request** bucket (one attacker would punish everyone with that class). Common → **per-IP token buckets** (local residual unfairness only), with O23 fairness for sticky devices.
 
 ### 4.2 New-device mint rate
 
@@ -187,7 +199,7 @@ Cap how often a given **clean or dirty IP** (and optionally ASN) can establish a
 
 ### 4.3 Inconsistency
 
-If client slots thrash while server slots stable (or reverse), or UA/TLS class disagrees with claimed components → Low/hostile + risk, not endless High identities.
+If **stable server/TLS slots** thrash or disagree with claimed durable components → Low/hostile + risk. Client-slot-only thrash from known privacy farbling → prefer Common/fair path, not endless High identities and not automatic hostile.
 
 ---
 
@@ -200,7 +212,7 @@ On every request after mint:
 3. Match score → risk contribution.  
 4. Severe mismatch on sensitive actions → step-up or block + session revoke (policy thresholds).
 
-**Elevate (Auth Core):** same session id across anon→auth keeps visit binding continuity; re-bind userId on elevate; FP vector may refresh at elevate with audit.
+**Elevate (Auth Core L164):** anon→auth **regenerates session id** (fixation defense); re-attach **deviceKey / `d2-did` / IP** continuity and re-bind userId; FP vector may refresh at elevate with audit. Continuity is **not** “same session primary key.”
 
 ---
 
@@ -273,14 +285,15 @@ Impossible travel and large geo jumps on same session/device without step-up on 
 | --- | --- |
 | 1 | Two jobs: **binding** vs **RL identity** — do not conflate |
 | 2 | Server-issued **`deviceKey`**; never sole RL key = raw client hash |
-| 3 | Sticky non-auth **`d2-did`**; not login |
-| 4 | Sliding window = **popularity only** (clean IPs); not request budgets |
+| 3 | Sticky non-auth **`d2-did`**; not login; **never High alone** (L172) |
+| 4 | Sliding window = **popularity only** (clean IPs); velocity + cardinality guards; not request budgets |
 | 5 | Common → fall back to IP for RL primary; no global iPhone request bucket |
-| 6 | Dirty IP out of popularity SET; stricter RL + risk |
+| 6 | Dirty IP out of popularity SET; stricter RL + risk; **Relay → CGNAT-class, not dirty** (L170) |
 | 7 | New deviceKey mint rate capped per IP/ASN |
 | 8 | Risk: FP mismatch, impossible travel, dirty net → step-up / block / session yeet |
-| 9 | Session elevate = visit glue; may **carry** deviceKey/IP/userId — not replace them as RL dims |
+| 9 | Session elevate = visit glue with **id rotation**; may **carry** deviceKey/IP/userId — not replace them as RL dims |
 | 10 | Uniqueness via **one-way hashes**; UX via **device/browser/OS labels** + coarse WhoIs — not raw fingerprint dumps |
+| 11 | Popularity/class keys prefer **stable + server TLS** dims (privacy-browser fair path) |
 
 ---
 
