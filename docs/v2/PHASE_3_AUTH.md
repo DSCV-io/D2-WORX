@@ -392,6 +392,9 @@ locale, …) per ADR-0007 §2. No hop mutates the token to append itself.
 
 ### 3.6 Fingerprint binding (composite, 10-slot)
 
+> **Full device-confidence / RL-identity law:** [PHASE_3_FINGERPRINTING.md](PHASE_3_FINGERPRINTING.md)  
+> (deviceKey, too-common popularity, WhoIs dirty modulation, risk/step-up). This § is the **JWT/context binding shape** only.
+
 - Format `v{N}.c1.c2.c3.c4.c5.s1.s2.s3.s4.s5` — version + 5 client-side + 5 server-side hashes.
 - Server slots **unspoofable from JS** (TLS/HTTP fingerprints).
 - Locked slot order at v1; bumping breaks consumers (forward-compat via version token).
@@ -401,7 +404,8 @@ locale, …) per ADR-0007 §2. No hop mutates the token to append itself.
     it on sync hops).
   - `IRequestContext.CurrentFingerprint` — recomputed THIS request by middleware; per-request only.
 - **Match score** (0-100): weighted 60/40 server/client component-by-component match. ≥70 no risk;
-  60-70 +10 risk; <60 +50 risk.
+  60-70 +10 risk; <60 +50 risk. Feeds **risk / step-up**, not sole rate-limit identity
+  (see fingerprinting annex + [PHASE_3_RATE_LIMITING.md](PHASE_3_RATE_LIMITING.md)).
 
 ### 3.7 Scope enforcement
 
@@ -461,8 +465,8 @@ mapper needs to consume them:
 | Claim                  | Status today                                                                                                                      | Phase 3 add                                                                                                                                                                                                                                                                       |
 | ---------------------- | --------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `d2_kind` (top-level)  | §3.1 says "only inside `act` chain entries"; `JwtClaimTypes.ACT_KIND` doc explicitly says "There is NO top-level `d2_kind` claim" | Add a top-level `d2_kind` claim carrying the anon/authed discriminator (values keyed off the `ActorKind` enum, plus a new `Anonymous` variant — see §6.4 below). The inside-`act` `d2_kind` (consent/force) stays as-is; lookup paths differ (`d2_kind` vs `act.d2_kind`).        |
-| `d2_whois_id`          | not defined                                                                                                                       | New top-level claim — opaque ID into the WhoIs lookup (already cached per IPinfo Singleflight per [`PHASE_3_RATE_LIMITING.md`](PHASE_3_RATE_LIMITING.md) §4). Tamper-evident via JWT signature.                                                                                   |
-| `d2_fingerprint_score` | not defined; `RiskScore` is on `IRequestContext` propagated via `x-d2-context` header                                             | Optional top-level claim — Edge can elect to bake the `RiskScore` into the JWT (vs propagating only via header) when minting anon tokens, since anon visitors have no other identity binding. Authed JWTs continue to carry the score via `IRequestContext` / header propagation. |
+| `d2_whois_id`          | not defined                                                                                                                       | New top-level claim — opaque ID into the WhoIs lookup (Edge Singleflight + cache; geo/privacy binding). Tamper-evident via JWT signature. See [PHASE_3_FINGERPRINTING.md](PHASE_3_FINGERPRINTING.md) + Edge WhoIs. |
+| `d2_fingerprint_score` | not defined; `RiskScore` is on `IRequestContext` propagated via `x-d2-context` header                                             | Optional hint claim — **not** the rate-limit primary key. Prefer risk on context; FP match/device confidence per [PHASE_3_FINGERPRINTING.md](PHASE_3_FINGERPRINTING.md). Authed paths keep score via `IRequestContext` / header. |
 
 **ActorKind enum** — Phase 3 needs a new `Anonymous` variant added alongside the existing
 `Service` / `Impersonation` values. Not a breaking change at the JWT layer (top-level `d2_kind`
@@ -474,7 +478,9 @@ is a new claim, not a redefinition); is a vocabulary addition in `D2.Shared.Auth
 
 1. Edge receives request, no cookie present.
 2. WhoIs middleware resolves enrichment slot (IP → city / region / country / ASN / geohash /
-   VPN-proxy-Tor flags) — already specified per [`PHASE_3_RATE_LIMITING.md`](PHASE_3_RATE_LIMITING.md) §4.
+   VPN-proxy-Tor / hosting flags) — privacy flags + dirty classification per
+   [PHASE_3_FINGERPRINTING.md](PHASE_3_FINGERPRINTING.md); rate-limit consumption per
+   [PHASE_3_RATE_LIMITING.md](PHASE_3_RATE_LIMITING.md).
 3. Edge mints the anon JWT above.
 4. Edge sets the opaque session cookie (mapped to the JWT's `sub` via the 3-tier session store).
 5. Edge forwards the request to the backend with the JWT in the Authorization header.
@@ -581,8 +587,8 @@ the anon-JWT pattern lands in Edge.
 
 **Cross-references**:
 
-- Rate-limiting bucket-keying implications → [`docs/v2/PHASE_3_RATE_LIMITING.md`](PHASE_3_RATE_LIMITING.md)
-  §4 (middleware flow) and §11 (claims-driven keying — added in lockstep with this decision).
+- Rate limiting + device identity → [`PHASE_3_RATE_LIMITING.md`](PHASE_3_RATE_LIMITING.md) +
+  [`PHASE_3_FINGERPRINTING.md`](PHASE_3_FINGERPRINTING.md) (full design map: [`PHASE_3_AUTH_CORE.md` §0](PHASE_3_AUTH_CORE.md)).
 - Algorithm gap items above → §10 ("What we explicitly defer to Phase 3 (Edge)").
 - Decision rationale + date → §12 Q23.
 
@@ -2179,10 +2185,11 @@ the mTLS leaf to the channel under construction. Per-channel; explicit; safe-by-
 - Risk engine: anon visitors need a longer-lived identity for historical-pattern signals — the
   cookie's session-id, NOT the 15-min-rotating anon `sub`.
 
-**Implication for [`PHASE_3_RATE_LIMITING.md`](PHASE_3_RATE_LIMITING.md)**: bucket-keying is
-now claims-driven (every request has a validated JWT — anon or user). The "cookie-shortcut
-bypass" framing collapses into "JWT discriminator" framing — see PHASE_3_RATE_LIMITING.md §11
-(added in lockstep with this decision).
+**Implication for rate limiting / fingerprinting:** every normal request has a validated JWT
+(anon or user). Cookie-shortcut RL bypass is **dead**. Identity for RL is confidence-keyed
+(`deviceKey` / IP / userId) per [PHASE_3_FINGERPRINTING.md](PHASE_3_FINGERPRINTING.md) +
+[PHASE_3_RATE_LIMITING.md](PHASE_3_RATE_LIMITING.md) (token bucket, AND of ceilings). Session id
+is visit glue and risk baseline — not sole Restricted key.
 
 **Implication for `D2.Shared.Auth.Http` / `D2.Shared.Auth.Grpc` README footgun sections**: the
 documented anonymous-method ctor-injection failure becomes RARELY-RELEVANT in production once

@@ -4,13 +4,13 @@ Copyright (c) DCSV. All rights reserved.
 
 # PHASE_3_AUTH_CORE.md — Auth Core domain design keep
 
-**Status**: Living design keep (not an implementation journal). Architecture locked through **L9–L163**. Hostile design findings **remediated into this keep** ([PHASE_3_AUTH_CORE_DESIGN_AUDIT.md](PHASE_3_AUTH_CORE_DESIGN_AUDIT.md) — C/H/M + Q1–Q7). **Keep not closed** until **O23 rate limiting** + **O24 fingerprinting** are discussed (and optional re-audit / Fable). Product SKUs stay out of this public keep (§12.8).
+**Status**: Living design keep (not an implementation journal). Architecture locked through **L9–L163**. Hostile design findings **remediated** ([PHASE_3_AUTH_CORE_DESIGN_AUDIT.md](PHASE_3_AUTH_CORE_DESIGN_AUDIT.md)). Rate limiting + fingerprinting design locked in their annexes (below). Ready for **full-set Fable / design review** (§0). Product SKUs stay out of this public keep (§12.8).
 
 **Spine**: [PHASE_3.md](PHASE_3.md) — **Auth Core → Minting → Auth Extras** (A2 / A3 / Extras+E1).
 
-**Siblings**: [PHASE_3_AUTH.md](PHASE_3_AUTH.md) (JWT shape, KeyCustodian, anon Pattern A), [V2.md §5.4](V2.md#54-auth--security).
+**Siblings**: [PHASE_3_AUTH.md](PHASE_3_AUTH.md) (JWT / Pattern A / KC), [PHASE_3_RATE_LIMITING.md](PHASE_3_RATE_LIMITING.md), [PHASE_3_FINGERPRINTING.md](PHASE_3_FINGERPRINTING.md), [V2.md §5.4](V2.md#54-auth--security).
 
-**Hostile design audit**: [PHASE_3_AUTH_CORE_DESIGN_AUDIT.md](PHASE_3_AUTH_CORE_DESIGN_AUDIT.md) — findings RESOLVED into L78–L163; re-audit before PLAN; O23/O24 next.
+**Hostile design audit trail**: [PHASE_3_AUTH_CORE_DESIGN_AUDIT.md](PHASE_3_AUTH_CORE_DESIGN_AUDIT.md) — C/H/M + Qs RESOLVED into L78–L163 (evidence of how we got here; law lives in this keep + annexes).
 
 **Branch**: `n/auth-core`.
 
@@ -21,6 +21,67 @@ Copyright (c) DCSV. All rights reserved.
 - **Design-before-PLAN (L76):** lock shapes, transitions, ownership, and examples here first. Implementation may still ship in ordered slices; UI may trail. We do **not** “redesign when SSO/rate-limit/FP land.”
 - UI-only work may trail; **backend domain, storage, ports, and management APIs** for Core concerns are in scope of this design.
 - Audit residuals (if any) stay explicit in the findings file or §17 — not silent.
+
+---
+
+## 0. Design-review handoff (full set on this branch)
+
+**Audience:** Fable / adversarial design review of **all** auth-related design documented on `n/auth-core` — not only rate limiting / fingerprinting.
+
+**There is no separate “O23_O24 index” file.** Rate limiting lives only in [PHASE_3_RATE_LIMITING.md](PHASE_3_RATE_LIMITING.md); fingerprinting only in [PHASE_3_FINGERPRINTING.md](PHASE_3_FINGERPRINTING.md). This §0 is the single reading map for the whole set.
+
+### 0.1 Reading order (recommended)
+
+| # | Doc | What to verify |
+| --- | --- | --- |
+| 1 | **This keep** (body §§1–16, L-ids) | Principals, scopes, user lifecycle, email/OAuth, multi-org/trees/proxy, **org lifecycle**, membership, invites, security policy, credentials/recovery, package entitlements, IdP/SCIM, sessions elevate, dual audit, redaction fanout |
+| 2 | [PHASE_3_AUTH_CORE_DESIGN_AUDIT.md](PHASE_3_AUTH_CORE_DESIGN_AUDIT.md) | Trail of C/H/M/Q remediation — spot silent drift vs keep |
+| 3 | [PHASE_3_AUTH.md](PHASE_3_AUTH.md) | JWT claims, Pattern A anon, fingerprint binding claim shape, KeyCustodian notes |
+| 4 | [PHASE_3_FINGERPRINTING.md](PHASE_3_FINGERPRINTING.md) | Device confidence, deviceKey, too-common **popularity** (sliding window), WhoIs dirty, risk/step-up |
+| 5 | [PHASE_3_RATE_LIMITING.md](PHASE_3_RATE_LIMITING.md) | Token-bucket **request** RL, AND of ceilings, tiers, dirty tables, kill switches (**read after** fingerprinting) |
+| 6 | [PHASE_3.md](PHASE_3.md) Auth track | Spine A2→A3→Extras, E1/E2 placement |
+| 7 | [V2.md §5.4](V2.md#54-auth--security) | Topology; where it conflicts, **this keep + rate-limit + fingerprint annexes win** |
+| 8 | [server/services/edge/auth/README.md](../../server/services/edge/auth/README.md) | Module stub pointers |
+
+Private (gitignored, not for public Fable unless operator provides): `docs/wip/auth-core/worx-platform-subscription-product.md` (product SKUs only).
+
+### 0.2 Abuse pipeline (fingerprint + rate limit + risk) — picture only
+
+```text
+Request → Edge enrichment (IP, WhoIs dirty/geo, FP components, deviceKey, confidence)
+       → Auth session (live? elevate? userId?)  // may stamp hashed deviceKey/IP on session
+       → Risk (travel, FP mismatch, dirty net) → step-up / block / session yeet  // orthogonal to RL
+       → Rate limit (TOKEN BUCKET on deviceKey ∧ IP ∧ userId…, AND) → 429
+       → Auth progressive delay on credential paths (separate from Edge RL)
+```
+
+**Two algorithms (do not merge):**
+
+| Algorithm | Job |
+| --- | --- |
+| Sliding window SET (clean IPs per FP class) | “Is this FP **popular**?” → High vs Common confidence |
+| Token bucket on RL keys | “May this **request** spend a token?” → allow / 429 |
+
+**Storage:** uniqueness keys **hashed**; UX shows labels (device class, browser, OS, coarse location) — see fingerprinting annex §3.3.
+
+Details only in the two annexes — not a third law file.
+
+### 0.3 Review prompts (whole set)
+
+1. Identity / OAuth / email law (C1) — ATO, dual principal, link poison?  
+2. Org tree + full downward proxy (Q1) + role ladder on invite/kick?  
+3. Org lifecycle vs user lifecycle naming/behavior (ban ≠ suspend, closed ≠ banned)?  
+4. Invites in-app only, atomic accept, one pending per tree?  
+5. Session elevate/sign-out vs session-as-RL-identity abuse?  
+6. Entitlements flag→entitlement→scope vs chatty SaaS?  
+7. IdP/SCIM root-only + deprovision multi-tenant safe?  
+8. Fingerprint: free deviceKey mint? dirty IP inflation of too-common?  
+9. Rate limit: OR escape? session-only Restricted? global common-FP bucket?  
+10. Risk step-up vs RL 429 — gaps or double-bind?
+
+### 0.4 Explicit residuals (not silent holes)
+
+Numeric RL caps, exact client FP slot recipe, org-close grace days, Pending reclaim TTL, force-SSO grace, IPv6 /64, CAPTCHA after 429, product SKU table (private), A2 step DAG after review.
 
 ---
 
@@ -422,9 +483,21 @@ JWT is a **short-lived projection** of the session. Do not “edit JWT claims in
 
 **Fixation note:** only elevate sessions the server issued; pair with O24 FP checks as designed. Privilege elevation is intentional product law (Pattern A), not “attacker-supplied cookie becomes user without server mint.”
 
-### 7.4 Rate limiting (explicitly **not** locked here)
+### 7.4 Rate limiting + fingerprinting (design locked in annexes)
 
-Session elevate **can** help visit-scoped continuity for throttles later. **Identity axes, bucket math, device cookies, FP keys → O23 (+ O24).** Do not treat §7 as an RL design lock. **C6:** progressive throttle may exist as Auth concern; full interaction with Edge Restricted buckets / FP keys is **O23/O24 only** — do not freeze those storage designs in A2 PLAN until those discussions land.
+Session elevate helps **visit** continuity and may **stamp** deviceKey / IP / userId on the session for audit — it does **not** replace those dimensions as abuse keys.
+
+| Layer | Job |
+| --- | --- |
+| Session elevate | Visit glue; after sign-in session gains `userId` |
+| deviceKey + IP + userId | RL dimensions (AND); uniqueness via **hashes**; UX labels separate |
+
+Full law:
+
+- [PHASE_3_FINGERPRINTING.md](PHASE_3_FINGERPRINTING.md) — deviceKey, confidence, too-common, hashed storage + display labels, WhoIs dirty, risk/step-up  
+- [PHASE_3_RATE_LIMITING.md](PHASE_3_RATE_LIMITING.md) — token-bucket AND of ceilings; **RateLimitTier** + **ActionSensitivity** op-declared (TypeSpec / scopes)  
+
+Auth progressive delay remains (§11.3); align keys with deviceKey / IP.
 
 ### 7.5 Session revocation model (cookie / Redis — **L127–L129, L134**)
 
@@ -472,7 +545,7 @@ Wiring: existing **session-revoked** fanout + tiered cookie cache subscribe patt
 
 **Soft “epoch re-mint” (M7 / L145) — plain English:** some systems keep you logged in and only refresh permissions after a role change without killing the session. **We do not freestyle that.** Privilege loss uses **session yeet + mint validity** (C8/C9). A future soft-refresh design needs an explicit decision; Extras must not invent a session epoch field silently.
 
-**`d2_fp` (M2 / L141):** reserve mint/session **shape** (e.g. nullable fingerprint claim/slot) before mint freezes; **algorithm + binding rules = O24**; end-to-end proof when frontend exists. No dummy FP values in production paths.
+**`d2_fp` / deviceKey (L141):** full law in [PHASE_3_FINGERPRINTING.md](PHASE_3_FINGERPRINTING.md); claim shape before mint freeze; no dummy FP in production paths.
 
 ### 7.8 Impersonation consent (M4 / L143)
 
@@ -521,7 +594,7 @@ Operational growth tables (`sign_in_attempt`, `membership_history`, invite histo
 
 ### 8.6 Leave-system redaction fanout (M13 / L151)
 
-When a **user** is anonymized (or an **org** is closed/wiped from the platform), Auth publishes a **fanout** (v1: `auth.user-anonymize` with userId + needed scrub hints; org analogue when close-root ships). Downstream services (Geo, Comms, Files, …) **each** redact their own data. Auth does **not** synchronously orchestrate every domain wipe — fire-and-forget durable publish; consumers attach when ready.
+When a **user** is anonymized (or an **org** is closed/wiped from the platform), Auth publishes a **durable fanout** via outbox (v1: `auth.user-anonymize` with userId + scrub hints; org analogue when close-root ships). Downstream services (Geo, Comms, Files, …) **each** redact their own data. Auth does **not** synchronously wait for every domain wipe; publish must be **durable** (outbox/retry), not lossy fire-and-forget.
 
 ---
 
@@ -635,8 +708,9 @@ platform_floor     (hard minimum — product/platform owns; never weaker)
 | Session lifetime / idle timeout | |
 | Invite expiry | May be tightened by org above floor |
 | Platform-fixed / floor examples | Password min 12; email always required |
+| Risk step-up / block thresholds | Individuals may loosen some prefs to floor (e.g. frequent travel / VPN lifestyle); **hard** rules stay (Critical impersonation block, Restricted fail-closed, staff kill-switches) |
 
-**In Auth Core design:** tables (`security_policy_org` / `security_policy_user` or equivalent), resolve API, platform floor + defaults. **Admin UI may trail.** Risk **engine** needs fingerprint/WhoIs later; **policy storage/resolve is not a stub.**
+**In Auth Core design:** tables (`security_policy_org` / `security_policy_user` or equivalent), resolve API, platform floor + defaults. **Admin UI may trail.** Risk engine inputs: [PHASE_3_FINGERPRINTING.md](PHASE_3_FINGERPRINTING.md); RL does not auto-shrink from risk ([PHASE_3_RATE_LIMITING.md](PHASE_3_RATE_LIMITING.md) §10).
 
 ---
 
@@ -708,12 +782,12 @@ Types include: email_verify, **password_set_or_reset**, phone_verify, magic_link
 | Concern | Store | Behavior |
 | --- | --- | --- |
 | **Sign-in attempt audit** (`sign_in_attempt` — **canonical name**; V2 `sign_in_event` = same store, alias only — H6) | PG append-only | Every success and failure; **never wipe history on success**; retention purge later |
-| **Throttle delay** | Redis | Progressive delay (v1 curve). Key axes **O23** (not locked here) |
+| **Throttle delay** | Redis | Progressive delay (v1 curve). Keys align with O24 `deviceKey` / IP when present — [PHASE_3_RATE_LIMITING.md §9](PHASE_3_RATE_LIMITING.md) |
 
 - Not lifecycle Suspended.  
 - Sign-in: generic invalid credentials (no user enum on failure).  
 - Throttle delay may reset / mark-known-good after success; that is **not** clearing the audit log.  
-- Full fingerprint model: **O24**. Full rate-limit model: **O23**.
+- Full fingerprint + rate-limit models: [PHASE_3_FINGERPRINTING.md](PHASE_3_FINGERPRINTING.md) + [PHASE_3_RATE_LIMITING.md](PHASE_3_RATE_LIMITING.md). Progressive delay keys align with O24 `deviceKey` / IP when present.
 
 ### 11.3a Anti-enumeration & “account exists” notification (H5 / L137–L138)
 
@@ -1038,8 +1112,8 @@ Root **IdP + SCIM policy** (alongside §10 security policy):
 | Org↔org **business** relationships (coupon referral, third-party-of, affiliate commercial edges) | **Rel domain services** (e.g. Affiliate) |
 | Package SKU definitions and prices | **Billing / subscriptions** |
 | Class grant matrix edits at runtime | **Out** (spec deploy) |
-| Rate-limit bucket math | **O23** (Edge middleware design) |
-| Fingerprint slot recipe | **O24** |
+| Rate-limit bucket math | **O23** [PHASE_3_RATE_LIMITING.md](PHASE_3_RATE_LIMITING.md) |
+| Fingerprint / deviceKey | **O24** [PHASE_3_FINGERPRINTING.md](PHASE_3_FINGERPRINTING.md) |
 
 Signup may pass an opaque coupon token; Affiliate records the edge. Auth is not SoT for that graph. **No** general `org_relationship` table in `d2-auth`.
 
@@ -1058,7 +1132,7 @@ Module + `d2-auth` EF; user lifecycle SM; credential methods + challenges + pass
 | JWT embossing / `POST /oauth/token` (A3) | SSO admin screens |
 | Anon Pattern A product (Extras + E1) | Security-policy admin screens |
 | Full risk engine with live WhoIs/FP | Invite polish UX |
-| O23 rate limit, O24 fingerprint (discuss before keep close) | Org contacts, avatars, GDPR job UX |
+| O23/O24 design locked (annexes); numeric caps at PLAN | Org contacts, avatars, GDPR job UX |
 
 ### 15.3 Multi-step deliverable expectation (H3)
 
@@ -1098,7 +1172,7 @@ This keep is the **central SoT** for Auth Core domain decisions while iterating 
 | L74 | Org IdP + SCIM management **BE** in Core design; UI trails |
 | L75 | Security policy BE complete in design; UI trails |
 | L76 | Design-before-PLAN |
-| L77 | Keep not closed until O23 + O24 discussed |
+| L77 | Rate limiting + fingerprinting design locked in PHASE_3_RATE_LIMITING + PHASE_3_FINGERPRINTING; full-set review via §0 |
 | L78 | Principal email vs login methods **decoupled**: IdP email is signup hint / seed only; link binds `(provider, subject)`, not email equality |
 | L79 | Per-provider trust config (Google/MS trusted; others default untrusted); auto-Active only if trusted + IdP verified email + email free |
 | L80 | Email occupied → bind/challenge only; never second principal; never silent auto-link |
@@ -1137,7 +1211,7 @@ This keep is the **central SoT** for Auth Core domain decisions while iterating 
 | L113 | Sign-in **elevates** live anon session (same id); no anon session → create authed session |
 | L114 | Sign-out **kills** authed session; next traffic gets **new** anon session (not demote-same-id) |
 | L115 | Elevate/create authed → **no org** until picker |
-| L116 | Session continuity law is auth/session only; **rate-limit design deferred to O23** (session may feed it later — not locked here) |
+| L116 | Session continuity is auth/session only; **O23/O24** own RL + device identity (annexes); session is not sole Restricted key |
 | L117 | Invite **accept** = single DB transaction (consume + membership + history); no half state |
 | L118 | **Role ladder** on catalog: invite only **role ≤ inviter effective role** on target (proxy counts); same ladder basis for kick/demote |
 | L119 | Accept only when accepter **Active** and **signed in**; not PendingVerification |
@@ -1162,7 +1236,7 @@ This keep is the **central SoT** for Auth Core domain decisions while iterating 
 | L138 | Username “taken” OK if username is not primary login (email/OAuth/SSO are) |
 | L139 | Unsuspend: default **+ re-verify**; staff may **straight Active** (accident) with audit |
 | L140 | **No reparent / attach-existing** forever — only future ADR may add merge product |
-| L141 | `d2_fp` (and related) **claim/slot shape designed before A3 mint freeze**; full recipe + live validation with O24/frontend — nullable until then, not fake values |
+| L141 | `d2_fp` / deviceKey / confidence: **O24 annex**; claim shape before mint freeze; no dummy FP in prod |
 | L142 | Invites: **in-app accept only**; notification email is not an accept secret (no dual challenge/secret path) |
 | L143 | Impersonation **consent storage built in Core schema now** (useful by invite/impersonation alpha; not deferred empty migration) |
 | L144 | HIBP **fail-open** if service down; min password policy still applies |
@@ -1193,10 +1267,9 @@ This keep is the **central SoT** for Auth Core domain decisions while iterating 
 | ID | Topic | Notes |
 | --- | --- | --- |
 | **Design audit** | [PHASE_3_AUTH_CORE_DESIGN_AUDIT.md](PHASE_3_AUTH_CORE_DESIGN_AUDIT.md) | **C/H/M + org lifecycle + Q1–Q7 remediated**; re-audit / Fable next |
-| **O23** | Rate limiting full model | Separate discussion; C6 closed as dependency only |
-| **O24** | Fingerprinting full model + live FP | Shape reserved (L141); recipe when O24/frontend |
-| **Fable adversarial** | Deep pass after design iteration stabilizes | Then implement-order / thick PLAN shapes |
-| **A2 step DAG detail** | After full auth+related design locked | L152 / H3 |
+| **O23 / O24** | Design annexes locked | Numeric caps / slot recipe detail at PLAN/E1/E2 |
+| **Fable adversarial** | **Full** auth design set on branch — start **§0** (Core + audit + JWT/Auth + fingerprinting + rate limiting + spine) | |
+| **A2 step DAG detail** | After Fable if any | L152 / H3 |
 | **Org close grace TTL** | Numeric default days | PLAN |
 | **C3 product packaging** | Named SKUs / prices / per-plan depth table | **Out of public keep** — private/gitignored product notes only (§12.8) |
 | **Pending reclaim TTL** | Default days / eligibility for abandoned create-Pending | Law L81; numeric default at PLAN |

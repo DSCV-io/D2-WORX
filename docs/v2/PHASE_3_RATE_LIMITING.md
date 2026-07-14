@@ -2,567 +2,414 @@
 Copyright (c) DCSV. All rights reserved.
 -->
 
-# PHASE_3_RATE_LIMITING.md — Edge rate-limiting design
+# PHASE_3_RATE_LIMITING.md — Edge rate-limiting design (O23)
 
-> Design annex — holds the Edge rate-limiting design for the unbuilt Edge deliverables (E1, E2).
-> Folds into the deliverable ship doc(s) + ADRs when built, then pruned.
-> Not a tracker (see [PHASE_3.md](PHASE_3.md)) and not current-truth for what is already shipped
-> (see the relevant ADRs and per-lib READMEs).
+> Design annex — Edge rate limiting for E2 (and progressive-delay alignment with Auth).  
+> **Hand-in-hand with** [PHASE_3_FINGERPRINTING.md](PHASE_3_FINGERPRINTING.md) (O24).  
+> Folds into ship docs + ADRs when built. Not current runtime truth.
+>
+> **Full-branch design review** starts at [PHASE_3_AUTH_CORE.md §0](PHASE_3_AUTH_CORE.md).  
+> **Read [PHASE_3_FINGERPRINTING.md](PHASE_3_FINGERPRINTING.md) first** — this doc consumes confidence regimes; it does not invent device identity.  
+> Sister: [PHASE_3_EDGE.md](PHASE_3_EDGE.md). Auth progressive delay: [PHASE_3_AUTH_CORE.md](PHASE_3_AUTH_CORE.md) §11.3.
 
-Sister doc to [PHASE_3_EDGE.md](PHASE_3_EDGE.md). Module authors + operators
-preparing for Edge implementation will find here the single coherent design for the
-18-bucket model, claims-driven keying via JWT, FP-too-common detection, runtime
-kill-switches, per-tier failure modes, and the Operation Risk Tier classification
-the `RateLimitTier` projects from.
+**Status (2026-07-13):** Strategy **locked for design** with O24. Numeric caps/env remain tunable.
 
 ---
 
 ## Table of contents
 
-- [§1. Design goals (locked)](#1-design-goals-locked)
-- [§2. Two orthogonal axes — RateLimitTier vs ActionSensitivity](#2-two-orthogonal-axes--ratelimittier-vs-actionsensitivity)
-- [§3. The 18-bucket model](#3-the-18-bucket-model)
-- [§4. Middleware flow (claims-driven)](#4-middleware-flow-claims-driven)
-- [§5. FP-too-common detection](#5-fp-too-common-detection)
-- [§6. Session invalidation backplane (Edge session-cache only)](#6-session-invalidation-backplane-edge-session-cache-only)
-- [§7. Runtime kill-switch hierarchy](#7-runtime-kill-switch-hierarchy)
-- [§8. Failure modes per RateLimitTier](#8-failure-modes-per-ratelimittier)
-- [§9. Implementation guidance](#9-implementation-guidance)
-- [§10. Out of scope](#10-out-of-scope)
-- [§11. Anon-JWT TTL implication for bucket continuity](#11-anon-jwt-ttl-implication-for-bucket-continuity)
-- [§12. Operation Risk Tier (cross-cutting)](#12-operation-risk-tier-cross-cutting)
-- [Reference](#reference)
+- [§0. Two algorithms (critical)](#0-two-algorithms-critical)
+- [§1. Design goals](#1-design-goals)
+- [§2. RateLimitTier vs ActionSensitivity](#2-ratelimittier-vs-actionsensitivity)
+- [§3. Identity dimensions (consume O24)](#3-identity-dimensions-consume-o24)
+- [§4. AND of ceilings](#4-and-of-ceilings)
+- [§5. Counter primitive — token bucket (bursty)](#5-counter-primitive--token-bucket-bursty)
+- [§6. Bucket matrix](#6-bucket-matrix)
+- [§7. WhoIs dirty modulation](#7-whois-dirty-modulation)
+- [§8. Middleware flow](#8-middleware-flow)
+- [§9. Progressive delay (Auth) vs Edge RL](#9-progressive-delay-auth-vs-edge-rl)
+- [§10. Risk, step-up, block](#10-risk-step-up-block)
+- [§11. FP-too-common (pointer)](#11-fp-too-common-pointer)
+- [§12. Session / JWT continuity](#12-session--jwt-continuity)
+- [§13. Kill switches](#13-kill-switches)
+- [§14. Failure modes](#14-failure-modes)
+- [§15. Implementation guidance](#15-implementation-guidance)
+- [§16. Locked defaults](#16-locked-defaults-rate-limit)
+- [§17. Out of scope / residuals](#17-out-of-scope--residuals)
 
 ---
 
-## §1. Design goals (locked)
+## §0. Two algorithms (critical)
 
-Rate limiting at the Edge has to thread a needle between three pressures: protect
-against abuse, stay fair to legitimate users sharing infrastructure with bad
-actors, and stay correct when individual signals (FP, IP, geo) are unreliable.
+| Algorithm | Purpose | Example Redis shape |
+| --- | --- | --- |
+| **Sliding window popularity** (O24) | Aggregate **who has seen this FP class** (clean IPs only) → High vs Common | `SADD` + TTL / `SCARD` |
+| **Token bucket** (this doc) | **Allow or 429** each request on each RL dimension | `tokens` + `updated_at` (or GCRA TAT) |
 
-The design's load-bearing decisions:
+```text
+O24 sliding window  →  “is this FP popular?”  →  pick key (deviceKey vs IP)
+O23 token bucket    →  “spend 1 token on that key?” → allow / 429
+```
 
-- **Claims-driven keying** — every request reaching this middleware carries a
-  validated JWT (anon or user; the upstream Edge anon-visitor pattern in
-  [PHASE_3_AUTH.md §3.8](PHASE_3_AUTH.md) guarantees this). The middleware reads
-  the JWT's `d2_kind` claim as the anon/authed discriminator, `sub` as the bucket
-  key (`anon:<uuid>` or `user:<uuid>`), and `d2_whois_id` for the
-  signed-binding geographic enrichment. There is no cookie-shortcut branch or
-  on-the-fly WhoIs re-resolution in the rate-limit path.
-- **Bucket-key shift from FP → UserId once authenticated** —
-  fingerprint-collision unfairness (e.g. identical iPhones producing identical
-  FPs across many users) disappears once the user is known.
-- **FP-too-common detection** — fingerprints seen across many distinct
-  non-VPN/proxy/Tor IPs bypass per-FP rate limits and rely on geographic
-  dimensions instead. Legitimate "common device" populations don't get punished
-  by one bad actor sharing their FP.
-- **3 buckets per dimension** by `RateLimitTier` (the endpoint's resource-cost /
-  abuse-surface tier) — prevents one heavy endpoint exhausting the cap for
-  unrelated lightweight ones.
-- **Tamper-evident enrichment** — geographic + FP signals enter the rate-limit
-  middleware as signed JWT claims (`d2_whois_id`, `d2_fingerprint_score`), not
-  as raw header inputs. Defense-in-depth: Edge still recomputes the underlying
-  raw signals upstream of the JWT mint (see §5 + §11.4 below); the middleware
-  reads the signed claims as the authoritative facts.
-- **Runtime kill-switch hierarchy** — emergency bypass without redeploy.
+When Common: still **token-bucket the IP** — do **not** rate-limit via the popularity SET.
+
+Legacy drafts used fixed-window `INCR` sketches; **superseded** by token bucket for request RL (§5).
 
 ---
 
-## §2. Two orthogonal axes — RateLimitTier vs ActionSensitivity
+## §1. Design goals
 
-These look related but they're not the same concept:
+| # | Goal |
+| --- | --- |
+| G1 | Fair personal budgets when device confidence is **High** (home PC) |
+| G2 | When FP is **Common** (mass-market phone), residual unfairness is **local (IP)**, not global device-class |
+| G3 | Modular rotation (cookie wipe, client FP churn, cheap proxies) must not grant free full budgets |
+| G4 | Dirty network (VPN/proxy/Tor/hosting) → **stricter** logic, never looser |
+| G5 | Authed: **userId** primary; still AND IP (/ device) on Restricted |
+| G6 | Sketchy continuity → **step-up / block / session kill** (impossible travel, FP mismatch), not only 429 |
+| G7 | **Bursty legitimate traffic** allowed within a sustained average (token bucket), not harsh fixed-window cliffs only |
 
-|          | **`RateLimitTier`** (this doc)            | **`ActionSensitivity`** (auth concern, separate)            |
-| -------- | ----------------------------------------- | ----------------------------------------------------------- |
-| Captures | "How costly / abusable is this endpoint?" | "How dangerous is this action if it succeeds?"              |
-| Lives in | **Edge endpoint attribute ONLY**          | **Scope spec metadata** (claims-driven; auth concern)       |
-| Drives   | Per-bucket caps + fail-open / fail-closed | Audit verbosity + step-up triggers + impersonation defaults |
-| Values   | `Standard` / `Elevated` / `Restricted`    | `Routine` / `Sensitive` / `Critical`                        |
+**Cookie-shortcut** (anon cookie bypasses anon RL): **dead** as SoT. Claims + O24 confidence + session liveness replace it.
 
-**Distinct vocabulary on purpose** — you can't accidentally cross-wire them in
-code. A sign-in endpoint is `Routine` in action sensitivity (just an
-authentication attempt; nothing sensitive happens unless it succeeds) but
-`Restricted` in rate limit (brute-force surface). An admin destructive endpoint
-is `Critical` in sensitivity but `Standard` in rate limit (low call volume).
+---
 
-`ActionSensitivity` is documented in the auth design. This doc is rate-limiting
-only.
+## §2. RateLimitTier vs ActionSensitivity (two axes only)
 
-### `RateLimitTier` enum
+**No third mega-tier.** Do not collapse auth-required, RL, risk, and impersonation into one enum.
+
+| | **`RateLimitTier`** | **`ActionSensitivity`** |
+| --- | --- | --- |
+| Captures | How **costly / abusable** the endpoint is (traffic) | How **damaging** success is if a bad actor wins |
+| Lives | **TypeSpec / endpoint metadata** → generated attribute on the route | **Scope / op metadata** in the scopes catalog (and op contract) |
+| Drives | Token-bucket `rate`/`burst`, fail-open vs fail-closed | Step-up defaults, audit verbosity, impersonation defaults |
+| Values | `Standard` (most forgiving) → `Elevated` → `Restricted` (tightest / brute-force) | `Routine` / `Sensitive` / `Critical` |
+| Auth required? | **Not this axis** — separate route/auth policy (unauthenticated + Restricted is normal for sign-in) | Not this axis either |
+
+**Declaration law:** both axes are **baked into the op contract** (TypeSpec `@d2*` / equivalent → codegen). Middleware reads generated metadata; it does not invent tiers from path strings.
+
+Examples:
+
+- Sign-in: `RateLimitTier.Restricted` × `ActionSensitivity.Routine` (no auth required to call).  
+- Admin destroy: `RateLimitTier.Standard` × `ActionSensitivity.Critical`.  
+- Heavy search: `Elevated` × `Routine` or `Sensitive` as product chooses.
 
 ```csharp
 public enum RateLimitTier
 {
-    Standard,    // Default for endpoints that don't declare. Generous caps.
-    Elevated,    // Tighter caps — meaningful resource cost (uploads, complex search, batch ops)
-                 // OR meaningful enumeration-prone listing surface.
-    Restricted,  // Tightest caps — brute-force / DoS surface (sign-in, password reset, OTP).
-                 // Anonymous caps especially aggressive. Fail-CLOSED on Redis outage.
+    Standard,   // Most forgiving; fail-open on Redis outage
+    Elevated,   // Computationally expensive or enumeration-prone
+    Restricted, // Brute-force / OTP / reset surfaces; fail-CLOSED on Redis outage
 }
 ```
 
-Endpoints declare via attribute. Default = `Standard` if absent.
+---
 
-```csharp
-app.MapPost("/api/v1/auth/sign-in", SignInHandler)
-   .AllowAnonymous()
-   .WithMetadata(new RateLimitTierAttribute(RateLimitTier.Restricted));
+## §3. Identity dimensions (consume O24) — all tracked
+
+O24 defines regimes: **High / Common / Low-hostile / Authed**. See [PHASE_3_FINGERPRINTING.md](PHASE_3_FINGERPRINTING.md).
+
+**All of these dimensions are first-class for abuse tracking** (AND of ceilings when active). Session elevate does **not** replace them — elevation only continues the visit and attaches `userId` after sign-in.
+
+| Symbol | Meaning | Storage / keying note |
+| --- | --- | --- |
+| `deviceKey` | Server-issued opaque device id | **One-way** id; High only as **primary** |
+| `ip` | Resolved client IP | Key as **HMAC/hash of IP** (or salted hash) for bucket keys at rest where practical; display/geo stay structured WhoIs |
+| `userId` | Authenticated principal | Opaque id (already not a secret string dump) |
+| `geo` | city + region + country from WhoIs | Structured labels OK (not fingerprint raw) |
+| `country` | country only (whitelist-skippable) | Same |
+| Session (soft) | Visit continuity | May attach deviceKey/IP/userId **on the session row** for audit/risk; **not** sole Restricted RL key |
+
+**Dirty IP** (WhoIs): `IsVpn ‖ IsProxy ‖ IsTor ‖ IsHosting` (+ Relay/Anonymous when set) → stricter cap table + risk.
+
+**NAT fairness (authed):** primary **userId**, not cookie-shortcut. Café residual when Common = shared **IP** budget (local), not global device-class.
+
+---
+
+## §4. AND of ceilings
+
+A request is allowed only if **every** active dimension for its auth state and tier is under budget:
+
+```text
+allow ⇔ ∀ dimension d: tokens_available(d) ≥ cost(request)
+```
+
+**Not** OR (“any identity has budget”). Rotating IP does not reset `deviceKey` or `userId`. Clearing session does not reset IP/`deviceKey`.
+
+If two dimensions resolve to the **same Redis key** (e.g. Common regime: identity primary is IP and egress is IP), charge **once**.
+
+**Risk is separate** from token buckets: high risk → step-up / block / session yeet ([PHASE_3_FINGERPRINTING.md §7](PHASE_3_FINGERPRINTING.md)). Do **not** require “429 → +risk → automatically tighter burst” as design law (avoids death spirals). Optional analytics may observe 429s without coupling.
+---
+
+## §5. Counter primitive — token bucket (bursty)
+
+### 5.1 Why not fixed window / pure sliding log
+
+| Algorithm | Burst | Notes |
+| --- | --- | --- |
+| Fixed window + INCR | Boundary double-spend | Simple; harsh cliffs; old sketch in early drafts |
+| Sliding window log | Poor burst UX if strict | Memory-heavy |
+| Sliding window counter | Approx | OK for analytics |
+| **Token bucket** | **Explicit burst capacity** | Sustained rate + short legitimate spikes |
+| GCRA | Burst + rate | Redis-friendly equivalent family |
+
+**Locked default: token bucket per dimension key** (or GCRA with equivalent parameters).
+
+### 5.2 Parameters per key
+
+| Param | Meaning |
+| --- | --- |
+| `rate` | Tokens added per second (sustained throughput) |
+| `burst` | Max tokens (bucket capacity) — **allowed burst** |
+| `cost` | Tokens consumed per request (default 1; expensive ops may cost >1 later) |
+
+On allow: consume `cost`. On deny: 429 + `Retry-After` derived from time-to-next-token.
+
+**Restricted** tiers: smaller `burst` and lower `rate` than Standard.  
+**Dirty IP** tables: lower than clean.  
+**Authed userId** tables: higher than anon device/IP.
+
+### 5.3 Sliding window still used where? (not for request budgets)
+
+| Use | Algorithm | Doc |
+| --- | --- | --- |
+| FP class **popularity** (too-common) | Sliding window SET of **clean** IPs | O24 §4.1 |
+| Risk / attempt **velocity** | Short sliding counts | Risk engine |
+| **Request** allow/deny per dimension | **Token bucket only** | This §5 |
+
+Do **not** implement Edge request RL as “sliding window of request timestamps” unless equivalent to token bucket/GCRA parameters. Prefer one Lua token-bucket/GCRA primitive everywhere for request costs.
+
+### 5.4 Redis implementation notes
+
+- Single **Lua** (or Redis 7+ atomic) update per key: refill by elapsed time, clamp to burst, try consume.  
+- Batch all dimension keys in **one round-trip**.  
+- Key TTL ≥ time to full refill from empty (or fixed safety TTL) so idle keys expire.  
+- Obey project TTL discipline (do not naively reset TTL in a way that defeats the algorithm — see rules.md §22.6 spirit: document exact Lua carefully at impl).
+
+Illustrative key shape:
+
+```text
+rl:tb:{tier}:{dim}:{id}  →  { tokens, updated_at_ms }  or GCRA tat field
 ```
 
 ---
 
-## §3. The 18-bucket model
+## §6. Bucket matrix
 
-Three orthogonal dimensions × three `RateLimitTier` values × two auth states =
-18 conceptual buckets system-wide. **Each request only touches 3** (the
-dimensions for its current auth state, all at the endpoint's tier).
+Conceptual matrix remains “many buckets, few touches per request.”
 
-|                                               | Standard bucket | Elevated bucket | Restricted bucket |
-| --------------------------------------------- | --------------- | --------------- | ----------------- |
-| **Anon: Per-FP**                              | bucket A1       | bucket A2       | bucket A3         |
-| **Anon: Per-City+Region+Country**             | bucket A4       | bucket A5       | bucket A6         |
-| **Anon: Per-Country** (whitelist-skippable)   | bucket A7       | bucket A8       | bucket A9         |
-| **Authed: Per-UserId**                        | bucket B1       | bucket B2       | bucket B3         |
-| **Authed: Per-City+Region+Country**           | bucket B4       | bucket B5       | bucket B6         |
-| **Authed: Per-Country** (whitelist-skippable) | bucket B7       | bucket B8       | bucket B9         |
+### 6.1 Anonymous
 
-Authed caps are **more generous** than anon caps at every dimension — the user
-has proven they're real. Numerical caps tuned per environment via env vars;
-defaults ship in the implementation.
+| Dimension | Key selection |
+| --- | --- |
+| **Identity** | High → `deviceKey`; Common/Low → `ip` (dirty → dirty table) |
+| **Egress** | `ip` (merge with Identity if same) |
+| **Geo** | `city:region:country` |
+| **Country** | `country` (skip if in whitelist env, e.g. US/CA/GB for *country* dim only) |
 
-The country dimension is whitelist-skippable: US, CA, GB are exempt from
-country-level blocking to avoid false positives from CDN / proxy aggregation.
+Each at endpoint `RateLimitTier` → separate rate/burst params.
+
+### 6.2 Authenticated
+
+| Dimension | Key selection |
+| --- | --- |
+| **Identity** | `userId` |
+| **Egress** | `ip` |
+| **Geo** | `city:region:country` |
+| **Device** (Restricted default ON) | `deviceKey` if High; else skip dim |
+
+Authed caps **more generous** than anon at every tier.
+
+### 6.3 Cost
+
+Default `cost = 1`. Residual: weight expensive endpoints (`cost = N`) without new dimensions.
 
 ---
 
-## §4. Middleware flow (claims-driven)
+## §7. WhoIs dirty modulation
 
-Every request reaching this middleware carries a validated JWT (per Edge's
-anon-visitor pattern). The middleware reads the JWT's claims and applies the
-per-dimension buckets at the endpoint's `RateLimitTier`.
+| Condition | Effect |
+| --- | --- |
+| Dirty IP | Stricter token-bucket `rate`/`burst` on IP-keyed dims |
+| Dirty IP | Excluded from FP popularity (O24) |
+| Dirty IP | Risk score ↑; policy may hard-block Tor |
+| Hosting ASN | Treat as dirty-adjacent for risk / optional stricter table |
+| Mobile ASN | Prefer not to over-punish CGNAT: identity High still uses deviceKey; Common uses IP with mobile-aware caps if needed (tunable) |
 
-```
-Request enters Edge
+---
+
+## §8. Middleware flow
+
+```text
+Request → Edge
   │
-  ├─ [Auth middleware] — validates JWT signature + expiry + audience + scopes
-  │     • Anon JWT → d2_kind = "anonymous", sub = "anon:<uuid>"
-  │     • Authed JWT → d2_kind absent or matches ActorKind, sub = "user:<uuid>"
-  │     • Populates ctx.IsAuthenticated, ctx.UserId, ctx.WhoIs (via d2_whois_id)
+  ├─ Enrichment: IP, WhoIs, fingerprint components, deviceKey, confidence regime
+  ├─ Auth: validate JWT (anon or user); session liveness
+  ├─ Risk engine: RiskScore; may short-circuit to step-up/block before RL
   │
-  ├─ [Rate-limit middleware]
-  │   │
-  │   ├─ Read claims: d2_kind (discriminator), sub (bucket key),
-  │   │              d2_whois_id (signed geo binding), d2_fingerprint_score (FP hint).
-  │   │
-  │   └─ Per-dimension bucket check (3 dimensions × current tier — Lua-batched):
-  │       │
-  │       ├─ Per-FP / Per-UserId rate limit (sub-keyed)
-  │       │     • d2_kind == "anonymous" → key on anon sub (after FP-too-common §5)
-  │       │     • Otherwise → key on user sub (more generous caps)
-  │       │     • SADD distinct_ips:{fp} {ip} (only if IP is non-VPN/proxy/Tor),
-  │       │            then INCR rl:sub:{sub}:{tier} → check against cap → 429 if exceeded
-  │       │
-  │       ├─ Per-(City+Region+Country) rate limit
-  │       │     • Read city / region / country from d2_whois_id binding
-  │       │     • INCR rl:geo:{city}:{region}:{country}:{tier} → check → 429 if exceeded
-  │       │
-  │       └─ Per-Country rate limit (skipped if country in whitelist env var)
-  │             • INCR rl:country:{country}:{tier} → check → 429 if exceeded
+  ├─ Rate-limit middleware
+  │    Read: d2_kind, sub/userId, whois binding, confidence, deviceKey, tier
+  │    Select dimension keys (§6)
+  │    Lua batch token-bucket consume on all keys (AND)
+  │    Any fail → 429 + Retry-After
   │
-  ├─ [Authed-only middleware passes] — runs if d2_kind != "anonymous"
-  │
-  └─ Rest of middleware → handler
+  └─ Handler
 ```
 
-### Key flow notes
-
-- **One coherent flow, no anon/authed branching beyond claims**. The
-  cookie-shortcut branch from earlier design iterations is gone — the JWT's
-  `d2_kind` claim IS the anon/authed discriminator.
-- **WhoIs lookup still runs upstream of the JWT mint at Edge** — but it runs
-  ONCE per session (when the JWT is minted), not per request. The middleware
-  reads the resolved geographic facts from the JWT's signed binding via
-  `d2_whois_id` (the lookup itself is cached via Singleflight in Edge's
-  enrichment layer).
-- **Cookie-present + JWT-invalid → 401 at auth middleware**, not via
-  rate-limit. From the user's perspective this is indistinguishable from a
-  perma-rate-limit (they can't proceed); useful operational distinction (it's a
-  JWT-state issue, not a rate-limit issue).
+Claims-driven: prefer signed JWT facts for geo binding; live enrichment still runs for too-common aggregates and risk.
 
 ---
 
-## §5. FP-too-common detection
+## §9. Progressive delay (Auth) vs Edge RL
 
-**Problem**: identical devices (same iPhone model + iOS + Safari + locale)
-produce identical fingerprints across many users. Per-FP rate limiting unfairly
-punishes the entire population if one of them is bad. AND attackers can spoof
-"common-looking" FPs to bypass per-FP via proxy networks.
+| | Auth progressive delay | Edge rate limit |
+| --- | --- | --- |
+| Target | Stuffing a **credential identifier** | Endpoint / fleet abuse |
+| Keys | identifier × IP × (deviceKey?) × soft session | §6 dimensions |
+| Effect | Delay / slow | 429 |
+| Redis fail | Fail-open OK | Restricted fail-closed |
 
-**Solution**: Edge tracks distinct **non-VPN/proxy/Tor** IPs per FP upstream of
-the JWT mint. If the count exceeds a threshold, the FP is "too common" → bypass
-per-FP, rely on city/country dimensions.
-
-```
-Per FP (1-hour sliding window):
-  Redis SET → distinct_ips:{fp}
-  Members = IPs that have used this FP AND are NOT flagged VPN/proxy/Tor by WhoIs
-
-On each request at Edge (upstream of JWT mint):
-  count = SCARD distinct_ips:{fp}
-  if count > THRESHOLD (e.g., 50):
-      → "too common" → the d2_fingerprint_score claim signals "skip per-FP" to the middleware
-      → middleware falls through to per-City+Region+Country
-  else:
-      → if (clientIp NOT VPN/proxy/Tor): SADD distinct_ips:{fp} {clientIp}
-      → middleware applies per-FP / per-sub rate limit normally
-```
-
-**Why discount VPN/proxy/Tor IPs from the count**: an attacker with access to a
-proxy network could otherwise inflate the count of their own FP to get treated
-as "common" → bypass per-FP. Excluding suspicious IPs from the count keeps the
-heuristic honest (legitimate "common device" populations are dominated by
-residential/cellular IPs; attackers using proxy networks don't contribute to
-the count). The WhoIs flags Edge already computes give this discrimination for
-free.
-
-### Tunables (env vars)
-
-- `PUBLIC_RATELIMIT_FP_COMMON_THRESHOLD` — distinct-IP count above which FP is
-  flagged "too common". Default `50`.
-- `PUBLIC_RATELIMIT_FP_COMMON_WINDOW_SECONDS` — sliding window TTL. Default
-  `3600` (1 hour).
-
-### Storage cost
-
-- 1M active FPs × avg 10 distinct non-suspicious IPs = ~10M IPs stored.
-- ~16 bytes per IPv6 = ~160 MB Redis memory.
-- Bounded by TTL + the early-exit-once-threshold-hit optimization.
-- Acceptable.
-
-### Cold-start
-
-New / unseen FP → empty SET → count = 0 → treated as unique → per-FP rate limit
-applies. Safest default — never bypass for an unfamiliar FP.
-
-### Defense-in-depth — raw signals are NOT removed
-
-The WhoIs lookup and the raw fingerprint computation continue to run at Edge —
-they're INPUTS to the JWT minting (Edge populates `d2_whois_id` and
-`d2_fingerprint_score` from them). Downstream of Edge, in the rate-limit
-middleware, the JWT claims are the authoritative facts. But two cases STILL
-want the raw signals:
-
-1. **FP-too-common detection** (above): the `SADD distinct_ips` set is keyed
-   off raw FP, not the score. The score is the per-request hint; the count is
-   a sliding-window aggregate that needs raw IP + raw FP. This continues to
-   live in Edge upstream of the JWT mint.
-2. **Risk-engine inputs**: the composite `RiskScore` factors raw inputs
-   (FP-too-common detection, IP reputation, geo signals) Edge has access to.
-   Score lands in the JWT; computation stays at Edge.
-
-Even if a JWT claim were forged (it can't be — JWT signature gate), Edge's
-per-request enrichment recompute provides a second authoritative source.
+Clearing session weakens soft axis only. Keep both systems; align key vocabulary with O24.
 
 ---
 
-## §6. Session invalidation backplane (Edge session-cache only)
+## §10. Risk, step-up, block (orthogonal to RL)
 
-The Edge L1 session cache (per [PHASE_3_EDGE.md §4](PHASE_3_EDGE.md)) needs
-cluster-wide invalidation when a session is revoked. This is Edge-session-cache
-concern, **NOT** rate-limit middleware concern.
+Risk is **not** a substitute for RL and does **not** automatically shrink token buckets.
 
-**Design**: Redis pub/sub channel + short L1 TTL as belt-and-suspenders.
+| Concern | Mechanism |
+| --- | --- |
+| Traffic / brute volume | Token buckets (§5–§6) → 429 |
+| Semantic sketchiness | RiskScore → step-up / block / session yeet |
 
-```
-Each Edge replica at startup:
-  → SUBSCRIBE session:invalidated
+| Band | Action |
+| --- | --- |
+| < step-up threshold | Allow if RL passes |
+| ≥ step-up | Step-up on Sensitive/Critical ops (ActionSensitivity) |
+| ≥ block | Block + session revoke + audit |
 
-On session revocation event (sign-out, admin revoke, fingerprint mismatch detected,
-                              password change, role-change-requiring-fresh-token):
-  → DELETE session in Redis
-  → PUBLISH session:invalidated:{cookie_id}
-
-All replicas (subscribers):
-  → Receive message
-  → Evict cookie_id from local L1 cache
-  → Subsequent requests with that cookie miss L1, miss Redis → fall through →
-    401 at auth (no valid session → no valid JWT issued → request rejected at auth gate)
-```
-
-**Worst-case staleness**: 5 minutes (the L1 TTL) if a replica is partitioned
-from Redis pub/sub during a revocation event. Acceptable — not banking.
-Belt-and-suspenders covers the gap.
-
-**Cost**: one persistent Redis subscription per Edge replica + occasional
-invalidation messages on revocation events (rare). Negligible.
-
-**Why this lives in this doc**: the session-cache invalidation pattern was
-originally designed alongside the cookie-shortcut keying for rate-limit. Under
-the claims-driven design, rate-limit middleware does not consume the session
-cache — it consumes the JWT. The backplane still matters for the Edge auth /
-session machinery; preserved here for design completeness.
+Thresholds: platform **floor** + user/org policy ([PHASE_3_AUTH_CORE.md](PHASE_3_AUTH_CORE.md) §10 — individuals may loosen some prefs to floor; hard fail modes stay). Inputs: [PHASE_3_FINGERPRINTING.md §7](PHASE_3_FINGERPRINTING.md).
 
 ---
 
-## §7. Runtime kill-switch hierarchy
+## §11. FP-too-common (pointer)
 
-Operations needs the ability to bypass rate limits at runtime — without
-redeploy — for emergency scenarios (false positives, misconfigured threshold,
-unexpected legitimate traffic spike).
-
-**Design**: Redis-key-driven kill switches with short-TTL per-replica caching.
-
-| Switch                        | Redis key pattern               | TTL                    | Use case                                                                                                   |
-| ----------------------------- | ------------------------------- | ---------------------- | ---------------------------------------------------------------------------------------------------------- |
-| **Bypass specific FP**        | `ratelimit:bypass:fp:{fp}`      | 30 min default         | Unblock a specific known-good FP that got flagged                                                          |
-| **Bypass specific IP**        | `ratelimit:bypass:ip:{ip}`      | 30 min default         | Unblock a specific IP (penetration test, internal tooling, demo)                                           |
-| **Bypass specific sub**       | `ratelimit:bypass:sub:{sub}`    | 30 min default         | Unblock specific user / anon sub (false positive after upgrade — covers both `anon:` and `user:` variants) |
-| **Bypass dimension globally** | `ratelimit:bypass:dimension:fp` | Until manually deleted | Disable per-FP entirely (emergency — known bug in FP detection)                                            |
-| **Bypass everything**         | `ratelimit:bypass:all`          | Until manually deleted | Last-resort emergency                                                                                      |
-
-**Replica caching**: each Edge replica caches kill-switch lookups for ~10
-seconds. Worst-case 10s lag from "set switch" to "switch active." Acceptable
-for emergency ops.
-
-**TTL on per-entity bypasses** prevents accidentally-permanent unblocks.
-Permanent config changes go through env var / config commit + deploy.
-
-**Audit**: every bypass activation / deactivation is logged to
-`d2.audit.events`. An ops UI presents a "current active bypasses" view by
-scanning Redis keys.
+Full algorithm: [PHASE_3_FINGERPRINTING.md §4.1](PHASE_3_FINGERPRINTING.md).  
+Effect on RL: switches Identity primary from `deviceKey` → `ip`; never disables all limits; never global shared “common FP” request bucket. Popularity uses **hashed** class ids + clean IP set members (see fingerprinting storage law).
 
 ---
 
-## §8. Failure modes per RateLimitTier
+## §12. Session / JWT continuity (elevate vs RL keys)
 
-When Redis is unavailable, behavior depends on `RateLimitTier`:
+**Session elevate (Auth Core SoT):** same session row anon → authed; visit glue; progressive delay soft axis; risk baseline attachment. After elevate, session **carries** `userId` (and may store hashes of deviceKey/IP for audit).
 
-| Tier         | Behavior on Redis outage                                                                                                                                                                     |
-| ------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `Standard`   | **Fail open** — request passes through. Site usability prioritized over rate-limit precision.                                                                                                |
-| `Elevated`   | **Fail open** — same. The rest of the site is largely unusable without Redis anyway (sessions, caching, etc.); a brief rate-limit gap during Redis recovery is acceptable.                   |
-| `Restricted` | **Fail closed** — request rejected with 503. Brute-force surfaces (sign-in, password reset, OTP) MUST stay protected; better to reject all sign-ins for 30s than allow uncapped brute force. |
+**RL keys (this doc + O24):** always track **deviceKey + IP + userId** (when known) as dimensions under AND — **not** “session id alone.”
 
-WhoIs degradation at Edge falls back to `null` country / city / asn upstream of
-the JWT mint, which makes the JWT's `d2_whois_id` resolve to a no-op binding
-for geographic dimensions (can't bucket by null city). Single-sub dimensions
-still work, providing some protection.
+| | Session elevate | deviceKey / IP / userId |
+| --- | --- | --- |
+| Job | Visit continuity | Abuse budgets |
+| User deletes cookie | New session | IP + deviceKey (sticky did) still bind |
+| After sign-in | Session gains userId | Authed tables use userId primary + AND IP (+ device if High) |
+
+- Anon JWT `sub` may stay stable across re-mints for the same session cookie (Pattern A) for soft visit signals.  
+- **Default:** do not use anon `sub` as sole Restricted primary (session delete = free budget).  
+- Session-invalidation backplane (Redis + fanout) is **session liveness** — see Auth Core §7; not a substitute for RL keys.
 
 ---
 
-## §9. Implementation guidance
+## §13. Kill switches
 
-### Redis ops per request
+Runtime Redis flags (cached ~10s per replica). **Indicative key catalog** (exact prefix env-tunable):
 
-3 dimensions × 1 increment per dimension = 3 Redis ops minimum. **Lua
-scripting or Redis pipelining batches these into a single round-trip.** Without
-batching, rate-limit middleware becomes the dominant request latency.
+| Switch | Example key | Default TTL | Use |
+| --- | --- | --- | --- |
+| Bypass deviceKey | `ratelimit:bypass:device:{hash}` | 30 min | False positive / support |
+| Bypass IP | `ratelimit:bypass:ip:{hash}` | 30 min | Pen-test, demo |
+| Bypass userId | `ratelimit:bypass:user:{id}` | 30 min | Account unlock support |
+| Bypass dimension | `ratelimit:bypass:dim:geo` | Until deleted | Emergency |
+| Bypass all | `ratelimit:bypass:all` | Until deleted | Last resort |
 
-### Lua script shape (rough sketch)
+Audit every use. Bypasses do not grant auth scopes.
+---
 
-```lua
--- KEYS[1..3] = bucket keys for sub, geo, country dimensions
--- ARGV[1..3] = caps; ARGV[4..6] = window TTLs; ARGV[7] = current ts
--- Returns: array of {dimension_index, current_count, cap, exceeded?}
+## §14. Failure modes
 
--- For each dimension: INCR + PEXPIRE-IF-NO-TTL + comparison
---   (gate PEXPIRE on `redis.call('PTTL', KEYS[i]) < 0` per rules.md §22.6 —
---    re-applying EXPIRE on every call collapses the sliding window to "ever"
---    under sustained load, defeating the rate limit.)
--- Return early if any dimension exceeds (caller decides 429)
+| Tier | Redis down |
+| --- | --- |
+| Standard | Fail **open** |
+| Elevated | Fail **open** |
+| Restricted | Fail **closed** (503/429 family — prefer fail closed over uncapped brute force) |
+
+WhoIs null: geo dims no-op or fail soft; identity/IP dims still apply. Missing deviceKey → Low regime (IP primary).
+
+---
+
+## §15. Implementation guidance
+
+### Endpoint discovery
+
+`GetMetadata<RateLimitTierAttribute>()`; default Standard.
+
+### Response
+
+- **429** when token bucket denies  
+- **`Retry-After`** seconds (or HTTP-date) from refill estimate  
+- Stable problem+json / TK messages — no identity enum leak  
+
+### Config (indicative env)
+
+```text
+PUBLIC_RATELIMIT_*_RATE / *_BURST per tier × clean|dirty × anon|authed × dim
+PUBLIC_RATELIMIT_FP_COMMON_THRESHOLD=50
+PUBLIC_RATELIMIT_FP_COMMON_WINDOW_SECONDS=3600
+PUBLIC_RATELIMIT_NEW_DEVICE_PER_IP_PER_HOUR=...
+PUBLIC_RATELIMIT_COUNTRY_WHITELIST=US,CA,GB
 ```
 
-Per-tier caps + window TTLs come from `IConfiguration` at startup. See
-[`docs/dev/rules.md §22.6`](../dev/rules/22-idempotency-exactly-once-semantics.md#22-idempotency--exactly-once-semantics)
-for the TTL-set-on-first-INCR-only invariant this sketch obeys.
+### Multi-instance
 
-### Endpoint attribute discovery
-
-Rate-limit middleware reads endpoint metadata via
-`HttpContext.GetEndpoint()?.Metadata.GetMetadata<RateLimitTierAttribute>()`.
-Default `Standard` if absent. ASP.NET routing resolves endpoint metadata before
-middleware runs — no chicken-and-egg.
-
-### Bucket key conventions
-
-- Per-sub: `rl:sub:{tier}:{sub}` (sub is `anon:<uuid>` or `user:<uuid>`)
-- Per-(City+Region+Country): `rl:geo:{tier}:{city}:{region}:{country}`
-- Per-Country: `rl:country:{tier}:{country}`
-
-`{tier}` segment differentiates the 3 buckets per dimension. Window TTL set on
-key creation.
+Shared Redis; Lua atomicity; same as session/cache backplane discipline.
 
 ---
 
-## §10. Out of scope
+## §16. Locked defaults (rate limit)
 
-- **Adaptive cap tuning** — caps are static config. Dynamic adjustment based on
-  observed traffic patterns is out of scope for this design.
-- **Per-org overrides** — orgs may want per-org-policy rate-limit overrides
-  (e.g., enterprise plan = 10× standard caps). Out of scope until the
-  org-policy framework lands.
-- **Cross-region rate limiting** — buckets are per-replica-region.
-  Multi-region deployments would need a centralized rate-limit store.
-  Single-region only.
-- **Sliding-window-with-warmup** — current design uses fixed-window with TTL
-  set on first INCR and preserved across subsequent INCRs (per rules.md §22.6).
-- **JA3/JA4 TLS fingerprinting as additional FP signal** — requires moving TLS
-  termination from Cloudflare to Edge. Out of scope.
-
----
-
-## §11. Anon-JWT TTL implication for bucket continuity
-
-Anon JWTs have a ~15 min TTL. Edge's locked contract for the "Returning
-visitor" path: the same anon visitor (same cookie / same 3-tier session) gets
-the same `sub` across re-mints — treat the `sub` as stable for the cookie's
-session lifetime, NOT one per JWT. **Concrete rule**:
-
-- **For per-visitor bucket continuity** (rate limiting an anon visitor across
-  their full session): key on `sub` from the JWT. The bucket carries forward
-  across re-mints.
-- **For longer-lived historical-pattern signals** (FP-too-common counters,
-  sliding-window risk): key on `d2_session_id` (the cookie's 3-tier
-  session_id, stable across the visitor's full cookie lifetime, beyond any
-  single JWT's TTL).
-
-**If Edge rotates the anon `sub` mid-session** (e.g. operator rolls anon-cookie
-state, or a threshold-driven re-issuance), the per-visitor bucket starts fresh.
-Acceptable failure mode for the per-visitor bucket (worst case: 1× extra burst
-window of allowance per re-issuance); the historical-pattern signals on
-`d2_session_id` still hold the line.
-
-### Related concepts
-
-- **Anon-JWT shape** — Edge's anon JWT carries `sub=anon:<uuid>`,
-  `d2_kind="anonymous"`, `d2_session_id`, `d2_whois_id`,
-  `d2_fingerprint_score`. RS256-signed via the same Edge JWKS that signs
-  authed JWTs. ~15 min TTL with `sub`-stability across re-mints for the same
-  cookie / 3-tier session. Full anon-visitor authentication spec lives in
-  [PHASE_3_AUTH.md §3.8](PHASE_3_AUTH.md).
-- **Trinary `IsAuthenticated`** — the `IRequestContext.IsAuthenticated` field
-  carries three states (`null` = pre-Edge, `false` = anon JWT, `true` = authed
-  JWT). Audit / observability use the same claims-driven discriminator the
-  rate-limit middleware does.
+| # | Default |
+| --- | --- |
+| 1 | **AND of ceilings** — never OR of identities |
+| 2 | Request counter = **token bucket** (`rate` + `burst`), not fixed-window INCR as SoT |
+| 3 | Track **deviceKey + IP + userId** (when known); confidence picks **primary**, not “only one dim exists” |
+| 4 | Common FP → IP primary token bucket; **no** global common-FP request bucket |
+| 5 | Dirty IP → stricter tables; out of popularity (O24) |
+| 6 | Cookie-shortcut bypass **dead**; authed NAT fairness = userId primary |
+| 7 | Restricted Redis down → fail-**closed**; Standard/Elevated → fail-open |
+| 8 | Session elevate = visit glue; **not** sole Restricted key |
+| 9 | Progressive delay stays Auth; aligned keys |
+| 10 | Risk step-up/block **orthogonal** to 429 (no mandatory risk↔bucket feedback loop) |
+| 11 | RateLimitTier + ActionSensitivity **op-declared** (TypeSpec / scopes codegen) |
+| 12 | Bucket keys prefer **one-way hashes** of identifiers (see fingerprinting storage law) |
 
 ---
 
-## §12. Operation Risk Tier (cross-cutting)
+## §17. Out of scope / residuals
 
-A single attribute on every endpoint or RPC drives multiple subsystems: auth requirement,
-rate-limit cap, risk-score thresholds, impersonation default, audit verbosity, and
-fail-open vs fail-closed behavior. The `RateLimitTier` enum (§2) is the **rate-limit
-projection** of this classification. The full per-tier defaults table below is the source
-of truth for how `RateLimitTier` values map to per-FP caps, fail behavior, and risk
-thresholds — implementers of the rate-limit middleware should read this alongside §2–§8.
-
-The single question the developer answers when choosing a tier: **"What's the blast
-radius if this endpoint is abused?"** Auth-required is captured by the tier (Public = no
-auth; everything else = auth required); op type (read vs write) is captured by HTTP method
-or RPC name.
-
-### Four tiers, one axis
-
-| Tier         | Meaning — answer to "what's the blast radius if abused?"                                                                  | Example endpoints                                                                                                                                              |
-| ------------ | ------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Public**   | None or negligible. Reading public data, health checks. **Auth not required.**                                            | `GET /health`, `GET /api/v1/public/*`                                                                                                                          |
-| **Standard** | Low. Standard authenticated read/write of user's own data.                                                                | `GET /api/v1/users/me`, `GET /api/v1/files/{id}`, `POST /api/v1/files` (regular upload)                                                                        |
-| **Elevated** | Medium. Affects user account integrity, modifies auth-relevant state, or exposes PII beyond the user's own basic profile. | `POST /api/v1/account/email`, `POST /api/v1/account/password`, `GET /api/v1/billing/history`, `GET /api/v1/account/sessions`, `POST /api/v1/account/mfa/setup` |
-| **Critical** | Maximum. Irreversible, financial, or admin-org-only actions.                                                              | `POST /api/v1/billing/charge`, `DELETE /api/v1/orgs/{id}`, `POST /api/v1/admin/users/{id}/ban`, force-impersonation initiation                                 |
-
-### Per-tier defaults
-
-| Tier         | Auth required? | Rate-limit per-FP cap                                       | Risk thresholds (step-up / block) | Impersonation default                                                                  | Audit verbosity                          | Fail behavior on Redis outage |
-| ------------ | -------------- | ----------------------------------------------------------- | --------------------------------- | -------------------------------------------------------------------------------------- | ---------------------------------------- | ----------------------------- |
-| **Public**   | No             | None (relies on per-IP / per-city / per-country dimensions) | n/a (no session)                  | n/a                                                                                    | Low (sample 1%)                          | Fail open                     |
-| **Standard** | Yes            | 100/min                                                     | 50 / 80                           | Allow                                                                                  | Medium (every write)                     | Fail open                     |
-| **Elevated** | Yes            | 30/min                                                      | 30 / 60                           | **Block by default** (must explicitly opt in via `[ImpersonationAllowed]` to override) | High (every event)                       | **Fail closed**               |
-| **Critical** | Yes            | 10/min                                                      | 20 / 40                           | **Always blocked** (no opt-in)                                                         | Maximum (every event + payload metadata) | **Fail closed**               |
-
-Note that `Public` tier endpoints may still carry a per-IP override for brute-force surfaces
-(sign-in, password reset, OTP). The TIER says "no auth needed, low blast radius" and the
-OVERRIDE says "cap brute-force attempts at 5/min/IP" — two orthogonal attributes.
-
-### How per-endpoint declarations work
-
-**HTTP (Edge minimal API endpoints)**:
-
-```csharp
-app.MapPost("/api/v1/account/email", ChangeEmailHandler)
-   .RequireAuthorization()
-   .WithMetadata(new OperationRiskTierAttribute(OperationRiskTier.Elevated))
-   .WithMetadata(new RequireScopeAttribute("auth.user.email.change"));
-```
-
-The C0 IDL (`@d2*` decorators per ADR-0021) is the source-of-truth declaration at design
-time; the generated route registration carries the attribute. Middleware reads endpoint
-metadata via `HttpContext.GetEndpoint()?.Metadata.GetMetadata<OperationRiskTierAttribute>()`.
-
-**gRPC (proto file)**:
-
-```proto
-service FilesService {
-  rpc UploadFile(UploadFileRequest) returns (UploadFileResponse) {
-    option (d2.options.required_scope) = "files.upload.write";
-    option (d2.options.risk_tier) = "Standard";
-    option (d2.options.idempotent) = false;
-  }
-}
-```
-
-### Brute-force override pattern
-
-Dominant carve-out: **brute-force-targeted Public endpoints** (sign-in, password reset, OTP)
-are `Public` tier (must be callable without auth) but need a tighter per-IP rate limit
-than the default. Declare both attributes independently:
-
-```csharp
-app.MapPost("/api/v1/auth/sign-in", SignInHandler)
-   .WithMetadata(new OperationRiskTierAttribute(OperationRiskTier.Public))
-   .WithMetadata(new RateLimitOverrideAttribute(maxPerMinute: 5, dimension: RateLimitDimension.IP));
-```
-
-The rate-limit middleware reads the override when present; falls back to the per-tier default.
-
-### Security Policy interaction
-
-The user/org Security Policy framework (§5.4 of the auth design in [PHASE_3_AUTH.md](PHASE_3_AUTH.md))
-**monotonically tightens** the per-tier defaults. A user on a "Strict" personal policy might
-have step-up at 30 instead of 50 for `Standard` endpoints. Policies can **never loosen**
-per-tier defaults. A `Critical` endpoint always blocks impersonation; no policy can change
-that.
-
-### Relationship to RateLimitTier (§2)
-
-`OperationRiskTier` is the full four-tier cross-cutting classification; `RateLimitTier` (§2)
-is a three-value **rate-limit-only** projection of it. The mapping:
-
-| OperationRiskTier | Projects to RateLimitTier |
-| ----------------- | ------------------------- |
-| `Public`          | `Standard` (or overridden via `RateLimitOverrideAttribute`) |
-| `Standard`        | `Standard`                |
-| `Elevated`        | `Elevated`                |
-| `Critical`        | `Restricted`              |
-
-`RateLimitTier` is declared via `RateLimitTierAttribute` directly on endpoints that deviate
-from the default projection (e.g. a brute-force `Public` endpoint needing `Restricted`
-rate-limit behavior).
+| Item | Status |
+| --- | --- |
+| Exact numeric caps | Env / load-test tune |
+| Per-org commercial RL multipliers | Later (entitlements may inform) |
+| Multi-region single global counter | Single-region first |
+| Request cost > 1 | Residual |
+| CAPTCHA after deny | Product residual |
+| IPv6 /64 aggregation | Residual if mobile abuse needs it |
+| Adaptive ML caps | Out |
+| JA4 required day one | Optional server slot when available |
 
 ---
 
 ## Reference
 
-- [`server/shared/dotnet/auth-abstractions/ActionSensitivity.cs`](../../server/shared/dotnet/auth-abstractions/ActionSensitivity.cs)
-  — the orthogonal sensitivity enum (audit / step-up driver, distinct from
-  `RateLimitTier`)
-- [`contracts/auth-scopes/scopes.spec.json`](../../contracts/auth-scopes/scopes.spec.json)
-  — every scope declares its `actionSensitivity` (Routine / Sensitive /
-  Critical)
-- [PHASE_3_EDGE.md](PHASE_3_EDGE.md) — sister Edge-design doc (idempotency,
-  enrichment, sessions, scheduled jobs).
-- [PHASE_3_AUTH.md §3.8](PHASE_3_AUTH.md) — anon-visitor authentication
-  pattern (the upstream guarantee that every request reaching this
-  middleware carries a validated JWT).
-- [V2.md §5.2 Edge](V2.md#52-edge--unified-gateway) — top-level Phase 3
-  roadmap entry.
+- Full design-set map: [PHASE_3_AUTH_CORE.md §0](PHASE_3_AUTH_CORE.md)  
+- Fingerprint / device confidence: [PHASE_3_FINGERPRINTING.md](PHASE_3_FINGERPRINTING.md)  
+- Auth Core: [PHASE_3_AUTH_CORE.md](PHASE_3_AUTH_CORE.md)  
+- JWT / Pattern A: [PHASE_3_AUTH.md](PHASE_3_AUTH.md)  
+- Edge: [PHASE_3_EDGE.md](PHASE_3_EDGE.md)  
+- V2 topology: [V2.md §5.2 / §5.4](V2.md) (cookie-shortcut residual superseded by this doc + fingerprinting annex)  

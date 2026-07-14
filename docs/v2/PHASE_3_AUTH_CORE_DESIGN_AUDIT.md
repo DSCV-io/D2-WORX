@@ -4,18 +4,21 @@ Copyright (c) DCSV. All rights reserved.
 
 # PHASE_3_AUTH_CORE — hostile design audit findings
 
-**Status**: **REMEDIATION COMPLETE** (C/H/M + Q1–Q7 folded into keep L78–L163). **Re-audit / Fable** still recommended before PLAN. Keep **not closed** until **O23 + O24**.
+**Status**: **REMEDIATION COMPLETE** (C/H/M + Q1-Q7 folded into keep L78-L163). Rate limiting + fingerprinting design locked in PHASE_3_RATE_LIMITING + PHASE_3_FINGERPRINTING. **Fable:** full design set — start [PHASE_3_AUTH_CORE.md §0](PHASE_3_AUTH_CORE.md) (not annexes-only).
+
+
+**How to read this file:** Status column + **Resolved as** / remediation notes are authoritative. **Hole** / **Resolution direction** rows are the original finding text (historical). For current law, follow links into the keep and annexes. Full-branch Fable starts at [PHASE_3_AUTH_CORE.md §0](PHASE_3_AUTH_CORE.md).
 
 **Audit date**: 2026-07-12  
 **Branch**: `n/auth-core`  
 **Primary under review**: [PHASE_3_AUTH_CORE.md](PHASE_3_AUTH_CORE.md) (L9–L163)  
-**Secondary**: [PHASE_3.md](PHASE_3.md) Auth track, [V2.md](V2.md) §5.4, [PHASE_3_AUTH.md](PHASE_3_AUTH.md) Pattern A / residuals, [PHASE_3_RATE_LIMITING.md](PHASE_3_RATE_LIMITING.md) (interaction only)
+**Secondary**: [PHASE_3.md](PHASE_3.md), [V2.md](V2.md) §5.4, [PHASE_3_AUTH.md](PHASE_3_AUTH.md), [PHASE_3_FINGERPRINTING.md](PHASE_3_FINGERPRINTING.md), [PHASE_3_RATE_LIMITING.md](PHASE_3_RATE_LIMITING.md)
 
 **Kind of audit**: Hostile **logic / planning** review — not a rules.md §24 evidence catalog, not a Plan-Audit of an implementation journal.
 
 **Sources**: Main-thread pass + independent general-purpose critic (merged). Prefer depth over nits.
 
-**Process**: Document findings → address all (update keep with L78+ / section rewrites) → **re-audit** → then O23/O24 if still gated → commit when user authorizes.
+**Process**: Findings remediated. Full-set Fable → commit when authorized → PLAN. Law lives in keep + PHASE_3_RATE_LIMITING + PHASE_3_FINGERPRINTING.
 
 **Remediation progress**: **C/H/M** + org lifecycle + all product **Q*** through **L163** (2026-07-13). Product SKUs private/gitignored only.
 
@@ -370,8 +373,11 @@ Track answers here when product owner decides; then fold into keep L*.
 - Dual audit homes (Auth online vs D2.Audit)  
 - Platform sub entitlements: flag→entitlement→scope, local snapshot, RYW (C3 arch / L100–L108)  
 - Org↔org business rels not Auth-owned  
-- Keep open until O23/O24 (L77)  
+- Rate limiting + fingerprinting design locked (PHASE_3_RATE_LIMITING + PHASE_3_FINGERPRINTING; L77)  
 - IdP/SCIM full law root-only + managed vs guest SoT (C2 / L87–L99)  
+- Org root lifecycle Active/Frozen/Banned/PendingClosure/Closed (§6.5)  
+- Full downward proxy incl. people-admin (Q1 / L163)  
+- Full-branch Fable map: AUTH_CORE **§0** (no third O23 index file)  
 
 ---
 
@@ -379,24 +385,26 @@ Track answers here when product owner decides; then fold into keep L*.
 
 | Topic | Dependency |
 | --- | --- |
-| **O23 Rate limiting** | Must define Restricted vs progressive delay; pre-auth keys (no UserId); no-org buckets; supersede V2 cookie-shortcut; signup enum surfaces |
-| **O24 Fingerprinting** | Throttle key third axis; `d2_fp` mint binding; session elevate continuity; risk score inputs |
-| **Do not** freeze `sign_in_attempt` columns / Redis throttle key schema in A2 PLAN until O23/O24 laws exist |
+| **O23 Rate limiting** | **Locked** — [PHASE_3_RATE_LIMITING.md](PHASE_3_RATE_LIMITING.md): token bucket, AND ceilings, confidence dims, dirty IP, kill switches |
+| **O24 Fingerprinting** | **Locked** — [PHASE_3_FINGERPRINTING.md](PHASE_3_FINGERPRINTING.md): deviceKey, regimes, too-common, WhoIs, risk/step-up |
+| **A2 PLAN** | May freeze storage shapes against those annexes; numeric caps still env-tuned |
 
 ---
 
 ## Re-audit checklist
 
-Before declaring design ready for O23/O24 / PLAN:
+Before multi-step PLAN:
 
-- [x] All **CRITICAL** → RESOLVED (keep sections + L-ids)  
+- [x] All **CRITICAL** → RESOLVED  
 - [x] All **HIGH** → RESOLVED  
 - [x] All **MEDIUM** → RESOLVED  
 - [x] **Q1–Q7** answered and folded into keep  
-- [ ] Second hostile pass (re-audit / Fable) finds no new CRITICAL  
-- [ ] O23 → O24 discussed  
-- [ ] User-authorized commit of design docs (as authorized)  
-- [ ] Multi-step PLAN only after keep close criteria met  
+- [x] Rate limiting + fingerprinting design annexes locked  
+- [ ] **Fable** full design-set review (start [PHASE_3_AUTH_CORE.md §0](PHASE_3_AUTH_CORE.md))  
+- [ ] User-authorized commit of current doc pass  
+- [ ] Multi-step PLAN  
+
+**Fable scope:** entire auth-related design on `n/auth-core` (Core keep + audit trail + JWT/Auth + fingerprinting + rate limiting + spine pointers) — not annexes alone.
 
 ---
 
@@ -406,3 +414,7 @@ Before declaring design ready for O23/O24 / PLAN:
 | --- | --- |
 | 2026-07-12 | Initial merge of main-thread + independent hostile critic findings; OPEN tracking table established |
 | 2026-07-13 | Full remediation walk C1–C9, H1–H10, M1–M14, Q1–Q7, org lifecycle §6.5 → keep L78–L163; status REMEDIATION COMPLETE |
+| 2026-07-13 | O23+O24 strategy locked: PHASE_3_RATE_LIMITING rewrite + PHASE_3_FINGERPRINTING annex |
+| 2026-07-13 | O23/O24 annexes; algorithm split in those files; full-branch Fable map = AUTH_CORE §0 (no separate O23_O24 index file) |
+| 2026-07-13 | Pre-Fable doc sweep: kill O23_O24 index; AUTH_CORE §0 full-set map; stale cookie-shortcut / single-tier / RL section refs cleaned |
+| 2026-07-13 | Thin re-add: op-declared RateLimitTier+ActionSensitivity; all dims (deviceKey/IP/userId); hashed storage+display labels; kill-switch keys; risk orthogonal to RL; elevate vs RL keys clarified |
