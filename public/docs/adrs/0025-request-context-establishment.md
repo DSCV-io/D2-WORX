@@ -1,5 +1,5 @@
 <!--
-Copyright (c) DCSV. All rights reserved.
+Copyright (c) DCSV. Licensed under the Apache License, Version 2.0.
 -->
 
 
@@ -162,5 +162,5 @@ The one thing genuinely not built here is the **Edge host process** that compose
 - `public/contracts/request-context/IRequestContext.spec.json` — the `Establishment` section (`Origin` / `ImmediateCaller` / `CallPath`).
 - `public/packages/dotnet/auth/abstractions/RequestOrigin.cs`, `CallPathKind.cs`, `CallPathEntry.cs` — the hand-authored vocabulary trio.
 - `public/packages/dotnet/auth/http/Middleware/RequestOriginEdgeInboundMiddleware.cs`, `public/packages/dotnet/auth/grpc/Interceptors/RequestOriginCrossProcessInterceptor.cs`, `public/packages/dotnet/context/abstractions/InProcessModuleBoundary.cs`, `public/packages/dotnet/context/abstractions/ISystemWorkScopeFactory.cs` + `SystemWorkPlaneServiceCollectionExtensions.AddD2SystemWorkPlane` (module System entry) / `SystemRequestContextBootstrap.cs` (factory-internal bootstrap), `public/packages/dotnet/auth/outbound/Grpc/PropagatedContextClientInterceptor.cs` — the five establishment boundaries.
-- `private/services/edge/key-custodian/domain/Rules/WorkloadCapabilityAuthority.cs` — the refined `AuthorizeSigning` / new `AuthorizeMinterSigning` rules.
-- `private/services/edge/key-custodian/client/Signing/IJwtSigningCapability.cs`, `private/services/edge/key-custodian/app/Application/Signing/JwtSigningCapability.cs`, `private/services/edge/key-custodian/app/Application/Signing/JwtSigningCapabilityServiceCollectionExtensions.cs` — the minter capability seam, its implementation, and its isolated DI registration.
+- Workload capability authority rules (private monorepo illustration — not required for public clone): refined `AuthorizeSigning` / `AuthorizeMinterSigning`.
+- Minter capability seam + isolated DI registration (private monorepo illustration — not required for public clone).

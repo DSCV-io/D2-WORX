@@ -1,10 +1,10 @@
 <!--
-Copyright (c) DCSV. All rights reserved.
+Copyright (c) DCSV. Licensed under the Apache License, Version 2.0.
 -->
 
 # contract-gate
 
-Always-on PR-blocking breaking-change gate for D²-WORX contracts.
+Always-on PR-blocking breaking-change gate for D2 contracts.
 
 **Who this is for:** contributors running the gate locally before opening a PR,
 and PR authors interpreting CI contract-breaking job output.

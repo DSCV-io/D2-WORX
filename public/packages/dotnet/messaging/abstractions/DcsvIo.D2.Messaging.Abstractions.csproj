@@ -1,5 +1,5 @@
 <!--
-Copyright (c) DCSV. All rights reserved.
+Copyright (c) DCSV. Licensed under the Apache License, Version 2.0.
 -->
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
@@ -77,7 +77,7 @@ Copyright (c) DCSV. All rights reserved.
   <PropertyGroup>
     <Version>0.1.0</Version>
     <PackageId>DcsvIo.D2.Messaging.Abstractions</PackageId>
-    <Description>Transport-agnostic messaging abstractions for D2-WORX — the [MqPub] / [MqSub] vocabulary, the message-bus contract, and DLQ failure-metadata wire shapes.</Description>
+    <Description>Transport-agnostic messaging abstractions for D2 — the [MqPub] / [MqSub] vocabulary, the message-bus contract, and DLQ failure-metadata wire shapes.</Description>
     <IsPackable>true</IsPackable>
     <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>

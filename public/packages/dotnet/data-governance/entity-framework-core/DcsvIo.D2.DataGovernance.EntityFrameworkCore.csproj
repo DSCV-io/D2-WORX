@@ -1,5 +1,5 @@
 <!--
-Copyright (c) DCSV. All rights reserved.
+Copyright (c) DCSV. Licensed under the Apache License, Version 2.0.
 -->
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
@@ -86,7 +86,7 @@ Copyright (c) DCSV. All rights reserved.
   <PropertyGroup>
     <Version>0.1.0</Version>
     <PackageId>DcsvIo.D2.DataGovernance.EntityFrameworkCore</PackageId>
-    <Description>EF Core wiring for D2-WORX GDPR anonymization — the fluent .Anonymize* API, the engine registration, and the startup model guard.</Description>
+    <Description>EF Core wiring for D2 GDPR anonymization — the fluent .Anonymize* API, the engine registration, and the startup model guard.</Description>
     <IsPackable>true</IsPackable>
     <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>

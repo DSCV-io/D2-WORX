@@ -1,5 +1,5 @@
 <!--
-Copyright (c) DCSV. All rights reserved.
+Copyright (c) DCSV. Licensed under the Apache License, Version 2.0.
 -->
 
 
@@ -13,7 +13,7 @@ Copyright (c) DCSV. All rights reserved.
 
 ## Context
 
-Every handler in every D²-WORX service fails in a finite, well-understood set of ways, and each failure must travel a long path: a domain factory stamps an error code, a transport carries it (gRPC envelope / HTTP ProblemDetails), and a remote consumer — possibly in the other runtime — has to make sense of it. For that path to be sound, an error code is not just a string: it is a contract that binds together an HTTP status, a semantic class, and a user-facing translation key, and that binding must agree byte-for-byte across .NET and TypeScript.
+Every handler in every D2 service fails in a finite, well-understood set of ways, and each failure must travel a long path: a domain factory stamps an error code, a transport carries it (gRPC envelope / HTTP ProblemDetails), and a remote consumer — possibly in the other runtime — has to make sense of it. For that path to be sound, an error code is not just a string: it is a contract that binds together an HTTP status, a semantic class, and a user-facing translation key, and that binding must agree byte-for-byte across .NET and TypeScript.
 
 Before this deliverable the binding was fractured:
 

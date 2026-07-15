@@ -1,5 +1,5 @@
 <!--
-Copyright (c) DCSV. All rights reserved.
+Copyright (c) DCSV. Licensed under the Apache License, Version 2.0.
 -->
 
 
@@ -13,7 +13,7 @@ Copyright (c) DCSV. All rights reserved.
 
 ## Context
 
-D²-WORX already runs the spec-to-codegen pattern seven times — error codes, request context, headers, geo data, scopes, audiences, and JWT claims each derive a typed artifact in two languages from one declarative source. The context spec is the closest precedent: one `*.spec.json` produces `IRequestContext.g.cs` and `IRequestContext.g.ts`, so the C# and TypeScript runtimes can never disagree on the shape. That pattern stops at *types*. It has never reached *operations* — the endpoints, their per-hop transport bindings, and the security policy attached to each.
+D2 already runs the spec-to-codegen pattern seven times — error codes, request context, headers, geo data, scopes, audiences, and JWT claims each derive a typed artifact in two languages from one declarative source. The context spec is the closest precedent: one `*.spec.json` produces `IRequestContext.g.cs` and `IRequestContext.g.ts`, so the C# and TypeScript runtimes can never disagree on the shape. That pattern stops at *types*. It has never reached *operations* — the endpoints, their per-hop transport bindings, and the security policy attached to each.
 
 The next surface to build needs exactly that reach. An operation has to be authored once and produce every representation it touches: the C# and TypeScript DTOs (records with correct nullability and `[RedactData]` on PII; `T | undefined` on the TS side), the `.proto` messages and services, the per-version OpenAPI document, the public REST route registration with its policy applied, the internal gRPC service base and typed client, the SSE binding for server push, the in-process module leaf interface, the handler interface stub, the policy-metadata table, and the parity tests that keep all of those honest. The same operation definition has to serve **three transport planes**:
 

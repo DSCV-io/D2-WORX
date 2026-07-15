@@ -1,5 +1,5 @@
 <!--
-Copyright (c) DCSV. All rights reserved.
+Copyright (c) DCSV. Licensed under the Apache License, Version 2.0.
 -->
 <Project Sdk="Microsoft.NET.Sdk.Web">
   <PropertyGroup>
@@ -118,7 +118,7 @@ Copyright (c) DCSV. All rights reserved.
   <PropertyGroup>
     <Version>0.1.0</Version>
     <PackageId>DcsvIo.D2.AspNetCore</PackageId>
-    <Description>Cross-cutting ASP.NET Core middleware and endpoint primitives for D2-WORX service composition roots (security headers, CORS, health endpoints, ProblemDetails, mTLS, infrastructure-path matching).</Description>
+    <Description>Cross-cutting ASP.NET Core middleware and endpoint primitives for D2 service composition roots (security headers, CORS, health endpoints, ProblemDetails, mTLS, infrastructure-path matching).</Description>
     <IsPackable>true</IsPackable>
     <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>

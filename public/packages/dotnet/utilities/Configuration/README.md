@@ -1,5 +1,5 @@
 <!--
-Copyright (c) DCSV. All rights reserved.
+Copyright (c) DCSV. Licensed under the Apache License, Version 2.0.
 -->
 
 # DcsvIo.D2.Utilities — Configuration
@@ -73,4 +73,4 @@ If walk starts in C:\repo\subproj\bin\Debug:
 
 ### Caveat — case sensitivity
 
-Env-var key collision detection uses the platform comparer: case-INsensitive on Windows (`PATH` and `path` are the same key), case-SENSITIVE everywhere else. D²-WORX's convention is uppercase env-var names; this matters only at the rare cross-OS edge.
+Env-var key collision detection uses the platform comparer: case-INsensitive on Windows (`PATH` and `path` are the same key), case-SENSITIVE everywhere else. D2's convention is uppercase env-var names; this matters only at the rare cross-OS edge.

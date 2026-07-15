@@ -139,6 +139,7 @@ const genericFactories = resultFactories as unknown as Record<
 
 describe("factory capability parity (.NET base factories ↔ TS base factories)", () => {
   const genericSpec = loadSpec(
+    "public",
     "contracts",
     "error-codes",
     "error-codes.spec.json",
@@ -172,6 +173,7 @@ describe("factory capability parity (.NET base factories ↔ TS base factories)"
 // long describe label — cannot wrap
 describe("auth domain-failure capability parity (.NET AuthFailures + AuthFailures<T> ↔ TS generic method)", () => {
   const authSpec = loadSpec(
+    "public",
     "contracts",
     "auth-error-codes",
     "auth-error-codes.spec.json",

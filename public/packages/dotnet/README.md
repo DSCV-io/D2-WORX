@@ -1,12 +1,12 @@
 <!--
-Copyright (c) DCSV. All rights reserved.
+Copyright (c) DCSV. Licensed under the Apache License, Version 2.0.
 -->
 
 # public/packages/dotnet/ — Shared .NET Libraries
 
 > Parent: [`public/packages/`](../README.md)
 
-Foundational libraries consumed by every D²-WORX .NET service.
+Foundational libraries consumed by every D2 .NET service.
 
 Per project convention, every library has its own `README.md`. The list below points at each lib's local README. **Status** column indicates whether the lib is built (csproj + sources) or a placeholder shell (folder + README only — awaiting first consumer).
 

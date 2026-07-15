@@ -1,10 +1,10 @@
 <!--
-Copyright (c) DCSV. All rights reserved.
+Copyright (c) DCSV. Licensed under the Apache License, Version 2.0.
 -->
 
 # release-runner
 
-Artifact-diff-driven per-package semver and CHANGELOG automation for D²-WORX consumable
+Artifact-diff-driven per-package semver and CHANGELOG automation for D2 consumable
 libraries.
 
 > Parent: [`public/tools/`](../README.md)

@@ -1,5 +1,5 @@
 <!--
-Copyright (c) DCSV. All rights reserved.
+Copyright (c) DCSV. Licensed under the Apache License, Version 2.0.
 -->
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
@@ -59,7 +59,7 @@ Copyright (c) DCSV. All rights reserved.
   <PropertyGroup>
     <Version>0.1.0</Version>
     <PackageId>DcsvIo.D2.Time</PackageId>
-    <Description>Deterministic timestamp handling for D2-WORX — a dependency-injected clock seam, temporal storage types, and NodaTime to PostgreSQL EF Core wiring.</Description>
+    <Description>Deterministic timestamp handling for D2 — a dependency-injected clock seam, temporal storage types, and NodaTime to PostgreSQL EF Core wiring.</Description>
     <IsPackable>true</IsPackable>
     <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>

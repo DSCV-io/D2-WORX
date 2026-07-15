@@ -1,5 +1,5 @@
 <!--
-Copyright (c) DCSV. All rights reserved.
+Copyright (c) DCSV. Licensed under the Apache License, Version 2.0.
 -->
 
 
@@ -15,7 +15,7 @@ Copyright (c) DCSV. All rights reserved.
 
 Every handler, repository, and middleware needs answers to three questions about the in-flight request: *who is acting* (identity, impersonation, scopes), *what transport delivered it* (tracing, fingerprints, geo, entitlements), and *what did Edge observe that downstream services cannot recompute* (risk score, session fingerprint, idempotency key). Several forces shaped the design:
 
-- D²-WORX spans two runtimes — the .NET services (Edge, the public ingress, is itself .NET) and the SvelteKit (TypeScript) BFF. Context definitions must be authoritative in one place and derivable in both runtimes without hand-maintaining parallel types.
+- D2 spans two runtimes — the .NET services (Edge, the public ingress, is itself .NET) and the SvelteKit (TypeScript) BFF. Context definitions must be authoritative in one place and derivable in both runtimes without hand-maintaining parallel types.
 - Services communicate over HTTP, gRPC, and AMQP. Context encoding must be transport-agnostic.
 - Propagating full identity across hops via headers would put plaintext `UserId`/`OrgId`/`Scopes` in RabbitMQ header frames at-rest — the broker becomes a blind carrier of credential material. Unacceptable under the threat model.
 - Domain-layer code must read caller identity without pulling in ASP.NET Core or DI, so the domain assembly stays testable in isolation.

@@ -1,5 +1,5 @@
 <!--
-Copyright (c) DCSV. All rights reserved.
+Copyright (c) DCSV. Licensed under the Apache License, Version 2.0.
 -->
 
 
@@ -13,7 +13,7 @@ Copyright (c) DCSV. All rights reserved.
 
 ## Context
 
-D²-WORX spans two active language runtimes (.NET and TypeScript) that share a substantial common vocabulary: error codes, JWT claim names, auth scopes, wire-format field names, header constants, binary-frame byte offsets, OTel attribute names, translation keys, geo reference catalogs, and more. Each such catalog is a cross-language contract: a string literal written in .NET code must match byte-for-byte the string read by a TypeScript client (or vice versa), because the wire is between them.
+D2 spans two active language runtimes (.NET and TypeScript) that share a substantial common vocabulary: error codes, JWT claim names, auth scopes, wire-format field names, header constants, binary-frame byte offsets, OTel attribute names, translation keys, geo reference catalogs, and more. Each such catalog is a cross-language contract: a string literal written in .NET code must match byte-for-byte the string read by a TypeScript client (or vice versa), because the wire is between them.
 
 The naive resolution — write the constants by hand in each language — has a known failure mode: one runtime gets updated, the other drifts. The drift is silent at build time and surfaces either as a production incident (wrong field name deserialized as null, wrong error code matched by the wrong handler) or not at all until a cross-language integration test happens to catch it. With 20+ catalogs across two runtimes, the surface area is large enough that manual discipline is not a credible long-term guard.
 

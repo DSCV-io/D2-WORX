@@ -1,5 +1,5 @@
 <!--
-Copyright (c) DCSV. All rights reserved.
+Copyright (c) DCSV. Licensed under the Apache License, Version 2.0.
 -->
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
@@ -78,7 +78,7 @@ Copyright (c) DCSV. All rights reserved.
   <PropertyGroup>
     <Version>0.1.0</Version>
     <PackageId>DcsvIo.D2.Encryption</PackageId>
-    <Description>AES-256-GCM payload encryption with a JWKS-style multi-kid keyring for D2-WORX — a pure crypto primitive decoupled from key sources.</Description>
+    <Description>AES-256-GCM payload encryption with a JWKS-style multi-kid keyring for D2 — a pure crypto primitive decoupled from key sources.</Description>
     <IsPackable>true</IsPackable>
     <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>

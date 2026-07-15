@@ -1,9 +1,10 @@
 // -----------------------------------------------------------------------
 // Copyright (c) DCSV. All rights reserved.
 // -----------------------------------------------------------------------
-// Merge public∪private locale catalogs for Paraglide (web is private product
-// and needs open common_* keys + private product keys). Output is local-only
-// under messages-merged/ (gitignored) — not a second SoT.
+// Merge public∪private locale catalogs for Paraglide. Writes to
+// private/contracts/messages-merged/ (gitignored) so pathPattern can use the
+// same depth as the historical private contracts path (paraglide/inlang
+// resolves reliably under ../../contracts/…).
 
 import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
@@ -14,7 +15,7 @@ const webRoot = join(here, "..");
 const repoRoot = join(webRoot, "..", "..", "..");
 const publicMsg = join(repoRoot, "public", "contracts", "messages");
 const privateMsg = join(repoRoot, "private", "contracts", "messages");
-const outDir = join(webRoot, "messages-merged");
+const outDir = join(repoRoot, "private", "contracts", "messages-merged");
 
 mkdirSync(outDir, { recursive: true });
 
@@ -42,4 +43,6 @@ for (const file of [...locales].sort()) {
   writeFileSync(join(outDir, file), `${JSON.stringify(ordered, null, 2)}\n`, "utf8");
 }
 
-console.log(`[merge-i18n-messages] wrote ${locales.size} locale file(s) → messages-merged/`);
+console.log(
+  `[merge-i18n-messages] wrote ${locales.size} locale file(s) → private/contracts/messages-merged/`,
+);

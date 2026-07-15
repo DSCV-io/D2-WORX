@@ -6,7 +6,7 @@ Copyright (c) DCSV. All rights reserved.
 <a name="top"></a>
 _[← rules index](../rules.md) · §11 of the D2-WORX rules catalog._
 
-**Predicate index:** §11.1–§11.45 · 47 predicates · irregular sub-IDs: 11.30.1, 11.35.1.
+**Predicate index:** §11.1–§11.47 · 49 predicates · irregular sub-IDs: 11.30.1, 11.35.1.
 
 Doc drift is constant unless the doc edit ships in the SAME change as the code edit. This category covers BOTH keeping docs in sync with code (parity) AND writing docs that are useful (structure, style, accuracy, brevity, anti-pattern absence).
 
@@ -318,6 +318,16 @@ Doc drift is constant unless the doc edit ships in the SAME change as the code e
   - **CARVE-OUT**: tables where the table IS the law (naming tables §7.1, cluster / partition maps, the doc-update map) carry content, not decoration → keep. Rendered-for-humans docs OFF the agent read path (user-facing copy, marketing) are out of scope.
   - **Evidence**: per touched agent-facing doc → grep for Mermaid code fences + line-art glyphs (Unicode U+2500–U+257F) → expect zero; per human-only formatting element → justify it carries content (a law-bearing table) or cut it.
   - **Why**: AGENTS.md is injected into every dispatch + rule categories are read per audit round — every byte of human-only nicety is paid on every sub-agent, every round; rendered diagrams buy agents nothing and alignment-sensitive art wraps badly.
+
+- **11.46** **Docs dual-home.** Are framework ADRs under `public/docs/adrs/` with a **Visibility: PUBLIC** banner on every file? Are product/host ADRs under `private/docs/adrs/`? Does process / agent law stay under monorepo-root `docs/dev/`? Do monorepo KEEP reference defaults (`COMMANDS`, `PATTERNS`, `TESTS`, …) remain private root `docs/`? Do public docs avoid citing non-export operator paths as live SoT / clone requirements?
+  - **Evidence:** public ADR banners 100%; no live root `docs/adrs/` SoT; public README/ADRs free of `private/**` operator steps as required clone paths.
+  - **Why:** dual docs homes keep OSS export free of product runbooks while private monorepo KEEP stays complete for operators.
+  - **How:** place new framework ADRs under public; product ADRs under private; process under `docs/dev/`.
+
+- **11.47** **Brand surfaces.** Do public KEEP docs and public package surfaces use the **D2** framework brand (not product SaaS narrative)? Do private product tracking/docs use **D2-WORX** / product hosts where appropriate? Do public package IDs never contain `worx`?
+  - **Evidence:** residual greps `D2-WORX|D²-WORX` under `public/` (excl. `coverage/**`, `node_modules/**`, `**/Generated/**`, bin/obj/dist) → 0 outside narrow historical allowlist (e.g. `/old/v1/D2-WORX/` path cites); public package ids `DcsvIo.D2.*` / `@dcsv-io/d2-*`.
+  - **Why:** product brand on the export surface confuses OSS consumers and implies closed SaaS requirements for open libs.
+  - **How:** reframe public prose to D2; keep product brand on private monorepo docs; never mint `worx` package ids on the open surface.
 
 <sup>[↑ jump to top](#top)</sup>
 

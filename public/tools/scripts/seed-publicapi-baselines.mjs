@@ -2,7 +2,7 @@
 // Copyright (c) DCSV
 //
 // Seeding tool: generates the public-API surface baselines + the output
-// fingerprint baseline for every .NET CONSUMABLE in D2-WORX — the 54 total:
+// fingerprint baseline for every .NET CONSUMABLE in D2 — the 54 total:
 // 53 DcsvIo.D2.* libraries under public/packages/dotnet (excluding the source-gen
 // shells + the test project) plus the in-process KeyCustodian client.
 //

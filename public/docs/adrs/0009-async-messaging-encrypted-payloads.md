@@ -1,5 +1,5 @@
 <!--
-Copyright (c) DCSV. All rights reserved.
+Copyright (c) DCSV. Licensed under the Apache License, Version 2.0.
 -->
 
 
@@ -13,7 +13,7 @@ Copyright (c) DCSV. All rights reserved.
 
 ## Context
 
-D²-WORX needs durable async event delivery between services (audit recording, keyring-refresh broadcast, notification dispatch, courier delivery). Forces:
+D2 needs durable async event delivery between services (audit recording, keyring-refresh broadcast, notification dispatch, courier delivery). Forces:
 
 1. **Transport coupling risk.** Direct `RabbitMQ.Client` use in domain code hard-links business logic to AMQP; a transport swap or test isolation then requires surgery across every publisher and subscriber.
 2. **Silent misconfiguration.** Without a registry contract, a mistyped exchange name or unintended plaintext body compiles and surfaces only in production.

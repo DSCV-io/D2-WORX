@@ -1,5 +1,5 @@
 <!--
-Copyright (c) DCSV. All rights reserved.
+Copyright (c) DCSV. Licensed under the Apache License, Version 2.0.
 -->
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
@@ -141,7 +141,7 @@ Copyright (c) DCSV. All rights reserved.
   <PropertyGroup>
     <Version>0.1.0</Version>
     <PackageId>DcsvIo.D2.Auth</PackageId>
-    <Description>Inbound auth runtime for D2-WORX — JWT validation, JWKS snapshot management, session-liveness checking, and the DI composition root.</Description>
+    <Description>Inbound auth runtime for D2 — JWT validation, JWKS snapshot management, session-liveness checking, and the DI composition root.</Description>
     <IsPackable>true</IsPackable>
     <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>

@@ -6,7 +6,7 @@ Copyright (c) DCSV. All rights reserved.
 <a name="top"></a>
 _[← rules index](../rules.md) · §7 of the D2-WORX rules catalog._
 
-**Predicate index:** §7.1–§7.23 · 23 predicates.
+**Predicate index:** §7.1–§7.23 · 24 predicates · irregular sub-IDs: 7.7a.
 
 ### C# Naming
 
@@ -133,7 +133,15 @@ Evidence: per new/modified file → header line 1 confirmed (or shebang + line 2
 
 #### Adding a new language
 
-If you encounter a language not listed above and it supports comments, the header content stays `Copyright (c) DCSV. All rights reserved.` — only the comment delimiter changes.
+If you encounter a language not listed above and it supports comments, the header content stays `Copyright (c) DCSV. All rights reserved.` for **private / monorepo-root** surfaces — only the comment delimiter changes. For files under `public/**`, use the dual-header public form (§7.7a).
+
+- **7.7a** **Dual-header law (public Apache / private ARR).** Do files under `public/**` carry Apache-2.0 headers matching `public/stylecop.public.json` `copyrightText` (`Copyright (c) DCSV. Licensed under the Apache License, Version 2.0.`) with **no** “All rights reserved” — across residual surfaces (md/ts/tsx/csproj/props/targets/yaml/yml/proto/slnx + any other hand-authored public ARR surface), not extension-list-only? Do files under `private/**` and monorepo-root private KEEP use proprietary ARR headers (`Copyright (c) DCSV. All rights reserved.`)? Is public LICENSE packing `public/LICENSE` (Apache-2.0)? Do residual greps exclude `coverage/**`, `node_modules/**`, `**/Generated/**`, `bin/**`, `obj/**`, `dist/**`?
+  - **C# / StyleCop stamp:** public `.cs` headers must match StyleCop SA1633 AdditionalFiles form already used on public packages (`// <copyright file="…" company="DCSV">` + Apache `copyrightText`). Do **not** invent an SPDX-only banner that fails SA1633. Already-Apache public `.cs` is re-verify only — do not thrash clean headers.
+  - **Comment-family adaptation:** markdown / HTML / proto / YAML / TS / XML project files adapt comment syntax only; wording stays the StyleCop `copyrightText` (public) or ARR (private).
+  - **Generated:** never hand-edit `.g.*` or `**/Generated/**` — fix the generator or header template if public generators stamp ARR.
+  - **Evidence:** `All rights reserved` under `public/` (with excludes above) → 0 outside documented third-party/vendored allowlist; report residual counts by extension/surface including proto, slnx, cs (expect 0 ARR), and catch-all. Private ARR residual under `public/` = FINDING-HIGH.
+  - **Why:** export surface is Apache-2.0; ARR headers on public files misstate the license and fail OSS consumers / StyleCop dual configs. Dual-header prevents inventing a third SPDX-only form that conflicts with `stylecop.public.json`.
+  - **How:** bulk-rewrite residual public ARR headers to the locked StyleCop stamp; keep private monorepo on ARR; re-verify public `.cs` only.
 
 ### Translation key naming
 

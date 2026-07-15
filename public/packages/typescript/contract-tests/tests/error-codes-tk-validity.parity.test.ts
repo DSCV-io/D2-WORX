@@ -57,6 +57,7 @@ const authSpec = JSON.parse(
   readFileSync(
     join(
       repoRoot,
+      "public",
       "contracts",
       "auth-error-codes",
       "auth-error-codes.spec.json",
@@ -76,13 +77,22 @@ interface GenericSpec {
 
 const genericSpec = JSON.parse(
   readFileSync(
-    join(repoRoot, "contracts", "error-codes", "error-codes.spec.json"),
+    join(
+      repoRoot,
+      "public",
+      "contracts",
+      "error-codes",
+      "error-codes.spec.json",
+    ),
     "utf8",
   ),
 ) as GenericSpec;
 
 const enUsRaw = JSON.parse(
-  readFileSync(join(repoRoot, "contracts", "messages", "en-US.json"), "utf8"),
+  readFileSync(
+    join(repoRoot, "public", "contracts", "messages", "en-US.json"),
+    "utf8",
+  ),
 ) as Record<string, string>;
 const { $schema: _schema, ...enUsCatalog } = enUsRaw;
 

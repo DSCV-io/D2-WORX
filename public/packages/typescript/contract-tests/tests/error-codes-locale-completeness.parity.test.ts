@@ -63,7 +63,10 @@ const EXPECTED_LOCALE_COUNT = 10;
 // that the new catalog's keys are being exercised. If you added a new spec and
 // this assertion fires, just increment the number.
 // ---------------------------------------------------------------------------
-const EXPECTED_SPEC_COUNT = 3;
+// Public-tree only after dual-tree split (private product catalogs e.g.
+// keycustodian-error-codes live under private/contracts and are out of scope
+// for this public package test).
+const EXPECTED_SPEC_COUNT = 2;
 
 function findRepoRoot(startDir: string): string {
   let dir = startDir;
@@ -81,8 +84,10 @@ function findRepoRoot(startDir: string): string {
 }
 
 const repoRoot = findRepoRoot(dirname(fileURLToPath(import.meta.url)));
-const messagesDir = join(repoRoot, "contracts", "messages");
-const contractsDir = join(repoRoot, "contracts");
+// Public open package SoT: public/contracts only (private product catalogs
+// are exercised under private test projects).
+const messagesDir = join(repoRoot, "public", "contracts", "messages");
+const contractsDir = join(repoRoot, "public", "contracts");
 
 // Derive locale list from the actual directory contents so additions are
 // automatically covered.

@@ -10,6 +10,8 @@ The single source of truth for HOW work moves through D²-WORX — phase lifecyc
 
 Predicate-level enforcement lives in [rules.md](rules.md); pattern reference in [../PATTERNS.md](../PATTERNS.md); AGENTS.md condenses this doc + rules.md.
 
+> **Monorepo dual tree (layout law).** Export surface = `public/**` only (Apache-2.0). Monorepo root + `private/**` + `docs/dev/**` + `infra/**` are private (ARR). Dual suites = public-only (`public/D2.Public.slnx`) + combined umbrella (`D2.slnx`). Export is gated; public package publish ownership is on the open remote only. Dual-header: public Apache StyleCop form / private ARR (§7.7a). Pure-meta Plan-Audit defaults **Y=E+G**; expand to **Y=E+G+B** when dual-header / convention bulk is in scope. Human remote cutover (`d2-public` / `d2-private-worx`) is **not** an agent deliverable-complete gate — see [human-cutover-oss-public-private.md](human-cutover-oss-public-private.md). Layout ADR: [ADR-0026](../../public/docs/adrs/0026-public-private-monorepo-layout.md).
+
 > **Read [rules.md](rules.md) end-to-end at the start of every deliverable's PLAN phase.** It is the central requirements catalog (security, races, naming, disposal, D2Result, OOTB libs, logging, PII, degradation, UX, DX, observability, idempotency, config, and more). Knowing the rules upfront is what lets code pass audit round 1 instead of round 5. Designed for AGENT ergonomics first, human readability second.
 
 ## Table of contents

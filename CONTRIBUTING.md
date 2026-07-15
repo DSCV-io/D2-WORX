@@ -234,13 +234,15 @@ for the dry-run and release steps.
 
 ## Contributor Notice ⚠️
 
-At this stage, D²-WORX is **not actively seeking external contributions**.
-This repository exists primarily as a public reference implementation during its early development.
+At this stage, **D2-WORX** (this monorepo) is **not actively seeking external contributions**.
+Internal development continues under the monorepo process law (`AGENTS.md`, `docs/dev/`).
 
-That said, if you wish to contribute, please be aware:
+If you contribute:
 
-- The project may be **commercialized in the future**.
-- The repository may be **made private** or otherwise restricted at that point.
-- All contributions are accepted under the existing [PolyForm Strict License](LICENSE.md), which does **not permit commercial use**.
+- Contributions to the **monorepo outside `public/`** are accepted under proprietary
+  **All rights reserved** terms ([LICENSE.md](LICENSE.md)).
+- Contributions to the **open surface only** (`public/`) follow Apache-2.0 —
+  see [`public/CONTRIBUTING.md`](public/CONTRIBUTING.md) and [`public/LICENSE`](public/LICENSE).
 
-By submitting a contribution, you acknowledge and agree that it may become part of a future commercial product.
+By submitting a contribution outside `public/`, you acknowledge it remains under
+the monorepo proprietary terms unless explicitly dual-licensed in writing.

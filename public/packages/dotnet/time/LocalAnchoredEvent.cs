@@ -47,7 +47,7 @@ using NodaTime.TimeZones;
 /// <para>
 /// <b>JSON serialization</b>: the private constructor makes this type
 /// incompatible with default <c>System.Text.Json</c> deserialization. v2
-/// D²-WORX persists this type via Npgsql.NodaTime EF Core (column-based,
+/// D2 persists this type via Npgsql.NodaTime EF Core (column-based,
 /// not JSON), and no current consumer round-trips it through JSON. If a
 /// future consumer needs JSON support, that consumer writes a
 /// <c>JsonConverter&lt;LocalAnchoredEvent&gt;</c> that calls

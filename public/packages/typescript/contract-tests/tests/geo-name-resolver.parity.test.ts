@@ -71,6 +71,7 @@ function loadConfusablesFixture(): ConfusablesFixture {
   for (let i = 0; i < 12; i++) {
     const candidate = join(
       dir,
+      "public",
       "contracts",
       "geo",
       "fixtures",

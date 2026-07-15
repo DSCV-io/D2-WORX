@@ -1,5 +1,5 @@
 <!--
-Copyright (c) DCSV. All rights reserved.
+Copyright (c) DCSV. Licensed under the Apache License, Version 2.0.
 -->
 
 
@@ -13,7 +13,7 @@ Copyright (c) DCSV. All rights reserved.
 
 ## Context
 
-D²-WORX services log structured events using Serilog (.NET) and Pino (TypeScript). Both runtimes receive objects that frequently carry PII: email addresses, phone numbers, IP addresses, sub-country geographic precision, names, message bodies, file names, presigned URLs with credentials in query parameters, and AMQP/DB connection strings that embed passwords. Left unguarded, any of these can leak into log aggregation (Loki), operator dashboards, or off-cluster forwarding.
+D2 services log structured events using Serilog (.NET) and Pino (TypeScript). Both runtimes receive objects that frequently carry PII: email addresses, phone numbers, IP addresses, sub-country geographic precision, names, message bodies, file names, presigned URLs with credentials in query parameters, and AMQP/DB connection strings that embed passwords. Left unguarded, any of these can leak into log aggregation (Loki), operator dashboards, or off-cluster forwarding.
 
 Three concrete leak vectors drove the decisions below:
 

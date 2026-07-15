@@ -1,5 +1,5 @@
 <!--
-Copyright (c) DCSV. All rights reserved.
+Copyright (c) DCSV. Licensed under the Apache License, Version 2.0.
 -->
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
@@ -47,7 +47,7 @@ Copyright (c) DCSV. All rights reserved.
   <PropertyGroup>
     <Version>0.1.0</Version>
     <PackageId>DcsvIo.D2.Headers.Amqp</PackageId>
-    <Description>D2-WORX wire-protocol header constants applicable to the AMQP transport, code-generated from the shared headers spec.</Description>
+    <Description>D2 wire-protocol header constants applicable to the AMQP transport, code-generated from the shared headers spec.</Description>
     <IsPackable>true</IsPackable>
     <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>

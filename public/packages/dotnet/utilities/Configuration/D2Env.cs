@@ -9,7 +9,7 @@ namespace DcsvIo.D2.Utilities.Configuration;
 using dotenv.net;
 
 /// <summary>
-/// Convention-based <c>.env*</c> file loader for D²-WORX, intended for
+/// Convention-based <c>.env*</c> file loader for D2, intended for
 /// host-side scenarios (tests, IDE debug, ad-hoc <c>dotnet run</c>) where
 /// Docker Compose's native <c>env_file:</c> injection is not in play.
 /// </summary>

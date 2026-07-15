@@ -1,5 +1,5 @@
 <!--
-Copyright (c) DCSV. All rights reserved.
+Copyright (c) DCSV. Licensed under the Apache License, Version 2.0.
 -->
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
@@ -76,7 +76,7 @@ Copyright (c) DCSV. All rights reserved.
   <PropertyGroup>
     <Version>0.1.0</Version>
     <PackageId>DcsvIo.D2.ErrorCodes.Registry</PackageId>
-    <Description>Merged cross-catalog error-code registry for D2-WORX — a frozen code-to-metadata lookup aggregating every error-code spec.</Description>
+    <Description>Merged cross-catalog error-code registry for D2 — a frozen code-to-metadata lookup aggregating every error-code spec.</Description>
     <IsPackable>true</IsPackable>
     <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>

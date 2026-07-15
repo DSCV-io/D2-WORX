@@ -1,12 +1,12 @@
 <!--
-Copyright (c) DCSV. All rights reserved.
+Copyright (c) DCSV. Licensed under the Apache License, Version 2.0.
 -->
 
 # DcsvIo.D2.Spiffe
 
 > Parent: [`public/packages/dotnet/`](../README.md)
 
-The single home for the SPIFFE workload-identity grammar used by D2-WORX mutual TLS. Provides the `SpiffeWorkloadIdentity` value object — a strong-typed representation of the subject-alternative-name a leaf certificate carries and a peer validator checks: `spiffe://d2.internal/workload/<service>`.
+The single home for the SPIFFE workload-identity grammar used by D2 mutual TLS. Provides the `SpiffeWorkloadIdentity` value object — a strong-typed representation of the subject-alternative-name a leaf certificate carries and a peer validator checks: `spiffe://d2.internal/workload/<service>`.
 
 This is a leaf-tier value object: parse, validate, and emit the SPIFFE SAN string. It holds no X.509 handles, no network code, and no framework references — certificate extraction is the caller's responsibility.
 

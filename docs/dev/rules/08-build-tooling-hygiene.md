@@ -6,7 +6,7 @@ Copyright (c) DCSV. All rights reserved.
 <a name="top"></a>
 _[← rules index](../rules.md) · §8 of the D2-WORX rules catalog._
 
-**Predicate index:** §8.1–§8.7 · 7 predicates.
+**Predicate index:** §8.1–§8.10 · 10 predicates.
 
 ### Predicates — §8 build & tooling hygiene
 
@@ -33,6 +33,21 @@ _[← rules index](../rules.md) · §8 of the D2-WORX rules catalog._
 - **8.7** When verifying SvelteKit / Node code, was `pnpm build` (root) used (which runs `pnpm run format && pnpm run lint && pnpm -r run build` — auto-fixing formatting, linting, then building all packages) — NOT just `pnpm format:check` + `pnpm lint` + individual `tsc`?
   - **Why**: `pnpm format:check` only reports issues without fixing them. `pnpm build` is the canonical verification step.
   - Evidence: tool-call history shows `pnpm build` invocation.
+
+- **8.8** **Dual-suite commands.** Are both the **public-only** suite (`public/D2.Public.slnx` + public shared package tests) and the **combined umbrella** suite (root `D2.slnx` / monorepo CI) documented in `docs/COMMANDS.md` and wired in CI? Does the public-only lane require **no** private `ProjectReference` edges into `private/**`?
+  - **Evidence:** COMMANDS dual-suite section + CI workflow jobs for public-only vs combined; `public/D2.Public.slnx` project graph free of `private/**` ProjectReferences.
+  - **Why:** export parity — the open remote must run a suite identical to the public-only lane without private product sources.
+  - **How:** keep dual-suite docs + CI jobs in lockstep; never add private ProjectReferences to Public.slnx.
+
+- **8.9** **Export gate.** Is export of the open surface **gated** (dry-run / `workflow_dispatch` / checklist) — never a silent every-push mirror? Is the allowlist exactly `public/**` (+ any locked closed build-props extras from the dual-suites export step) and never expanded to `private/**` product trees?
+  - **Evidence:** export workflow / script is dispatch-or-checklist gated; allowlist paths exclude `private/**` and monorepo-root private KEEP.
+  - **Why:** accidental full-monorepo push would leak closed product IP onto the open remote.
+  - **How:** dry-run first; human gate for first real push; keep allowlist reviewed on every export-tool change.
+
+- **8.10** **Publish ownership.** Do real nuget.org / npmjs publishes **and** GitHub Releases of **public package IDs** (`DcsvIo.D2.*` open packages / `@dcsv-io/d2-*`) run only on the **`d2-public`** remote? Does the private monorepo hard-fail publish / GH-Release paths for those IDs and allow **pack + upload-artifact only**?
+  - **Evidence:** private CI / release workflows lack nuget.org/npmjs push secrets for public IDs (or hard-fail publish steps); public release path owns real Release + feeds.
+  - **Why:** dual-publish from private creates identity drift and leaks release authority for OSS packages.
+  - **How:** private = pack/artifact; public remote = Release + registry publish.
 
 <sup>[↑ jump to top](#top)</sup>
 

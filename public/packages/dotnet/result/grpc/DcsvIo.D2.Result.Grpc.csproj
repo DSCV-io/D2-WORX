@@ -1,5 +1,5 @@
 <!--
-Copyright (c) DCSV. All rights reserved.
+Copyright (c) DCSV. Licensed under the Apache License, Version 2.0.
 -->
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
@@ -55,7 +55,7 @@ Copyright (c) DCSV. All rights reserved.
   <PropertyGroup>
     <Version>0.1.0</Version>
     <PackageId>DcsvIo.D2.Result.Grpc</PackageId>
-    <Description>Faithful in-memory to wire to in-memory D2Result round-trip for D2-WORX over the gRPC D2ResultProto response envelope.</Description>
+    <Description>Faithful in-memory to wire to in-memory D2Result round-trip for D2 over the gRPC D2ResultProto response envelope.</Description>
     <IsPackable>true</IsPackable>
     <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>

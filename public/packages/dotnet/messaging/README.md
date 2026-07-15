@@ -1,12 +1,12 @@
 <!--
-Copyright (c) DCSV. All rights reserved.
+Copyright (c) DCSV. Licensed under the Apache License, Version 2.0.
 -->
 
 # messaging/
 
 > Parent: [`public/packages/dotnet/`](../README.md)
 
-The async messaging stack for D²-WORX services that publish or subscribe to RabbitMQ — the transport-agnostic abstractions, the default RabbitMQ implementation, and the spec-driven source generators that emit the message / subscription registries, the DLQ failure-metadata catalog, and the OTel messaging activity-tag catalog from `contracts/`. Domain code attaches `[MqPub]` / `[MqSub]` attributes and requests `IMessageBus` from the abstractions without dragging in `RabbitMQ.Client`. Sensitive payloads are encrypted in-frame via the `encryption/` cluster.
+The async messaging stack for D2 services that publish or subscribe to RabbitMQ — the transport-agnostic abstractions, the default RabbitMQ implementation, and the spec-driven source generators that emit the message / subscription registries, the DLQ failure-metadata catalog, and the OTel messaging activity-tag catalog from `contracts/`. Domain code attaches `[MqPub]` / `[MqSub]` attributes and requests `IMessageBus` from the abstractions without dragging in `RabbitMQ.Client`. Sensitive payloads are encrypted in-frame via the `encryption/` cluster.
 
 OTel sem-conv tag catalog for messaging lives at [`otel-messaging-tags-source-gen/`](otel-messaging-tags-source-gen/README.md) — observability concern owned by messaging for consumer-locality.
 

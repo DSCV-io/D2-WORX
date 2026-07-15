@@ -6,7 +6,7 @@ Copyright (c) DCSV. All rights reserved.
 
 **Who / problem:** Shared condensed project law for AI harnesses (Claude Code / Grok Build / Codex) and developers implementing D²-WORX — workflow gates, Doc Update Map, Critical Reminders, conventions — so agents do not invent process or drift from `rules.md` / `process.md`.
 
-**Product:** **D²-WORX** — Microservices SaaS framework. C# 14 / .NET 10 backend, SvelteKit BFF (TypeScript 5.9 / Svelte 5). Pre-Alpha. PolyForm Strict license (reference implementation, non-commercial).
+**Product:** **D2-WORX** — Microservices SaaS monorepo. C# 14 / .NET 10 backend, SvelteKit BFF (TypeScript 5.9 / Svelte 5). Pre-Alpha. **License:** proprietary All rights reserved outside `public/`; open **D2** surface under `public/` is Apache-2.0 (`public/LICENSE`).
 
 **TOC** — [MANDATORY 0](#mandatory-block-0-orchestrator-only-main-thread) · [MANDATORY 1](#mandatory-block-1-every-code-change) · [MANDATORY 2](#mandatory-block-2-audit-evidence--proof-discipline) · [MANDATORY 3](#mandatory-block-3-deliverable-completeness-checklist) · [§1 Workflow](#1-development-workflow) · [§2 Commands](#2-commands) · [§3 Doc map](#3-reference-documents) · [§4 Patterns](#4-patterns--architecture) · [§5 Critical Reminders](#5-critical-reminders-top-of-mind-for-every-change) · [§6 Conventions](#6-code-conventions) · [§7 Behavior](#7-behavioral-guidelines-dispositional--how-to-approach-work) · [§8 Secrets / deny](#8-local-secrets--multi-runtime-deny-map)
 
@@ -171,6 +171,11 @@ One table, two axes: **read** before touching the area, **update** after. A chan
 | **Active tracking doc** (header — currently [private/docs/v2/V2.md](private/docs/v2/V2.md)) | Before starting any task | Phase progression / wipe state / open questions / new tracked issue; decisions overriding a prior v2 plan (also add an ADR) |
 | Per-lib / per-service `README.md` | When working in that lib / service | Add / modify a public API on a lib or service |
 | [docs/README.md](docs/README.md) | How the doc set is organized (tiers + lifecycle) | New tier-level category or holding-pen lifecycle rule (pair with [§11.43](docs/dev/rules/11-documentation-parity-best-practices.md#11-documentation-parity--best-practices)) |
+| [public/README.md](public/README.md) + [public/CONTRIBUTING.md](public/CONTRIBUTING.md) + [public/LICENSE](public/LICENSE) | OSS entry / Apache contribution posture | Public root OSS docs change (pair with dual-header §7.7a + brand §11.47) |
+| [public/docs/adrs/](public/docs/adrs/README.md) vs [private/docs/adrs/](private/docs/adrs/README.md) | Framework vs product ADRs | ADR move/create; Visibility banner; dual-home law §11.46 |
+| [ADR-0026](public/docs/adrs/0026-public-private-monorepo-layout.md) | Public/private monorepo layout + dual-repo cutover | Layout / export / publish-ownership / dual-suite law changes |
+| [docs/dev/human-cutover-oss-public-private.md](docs/dev/human-cutover-oss-public-private.md) | Human remote cutover H0–H9 (agents do not create remotes) | Cutover steps / remote names / publish ownership operator changes |
+| [private/docs/v2/V2.md](private/docs/v2/V2.md) §2 layout | Dual-tree repository structure (product tracking) | Layout / tree / Auth Core branch coordination notes |
 
 Per-service / per-library `README.md` files appear in `private/services/{service}/` and `public/packages/dotnet/{lib}/`.
 
@@ -321,8 +326,21 @@ _Canonical: [ADR-0020](public/docs/adrs/0020-service-project-structure.md) + [PA
 ### Documentation parity
 
 - **Doc edits in the SAME change as code edits** (not a separate commit). [rules.md §11.1]
-- **File headers on every source file you create or modify.** [rules.md §7.7]
+- **File headers on every source file you create or modify** — dual-header law: `public/**` = Apache StyleCop form; `private/**` + monorepo-root private KEEP = ARR. [rules.md §7.7 / §7.7a]
+- **Docs dual-home** — framework ADRs `public/docs/adrs/` (Visibility: PUBLIC); product ADRs `private/docs/adrs/`; process `docs/dev/`. [rules.md §11.46]
+- **Brand surfaces** — public KEEP = **D2** framework; private product = **D2-WORX**; public package ids never contain `worx`. [rules.md §11.47]
 - **Agent-facing docs (AGENTS.md / rules / process.md / reference docs) are agent-first — human navigability NEVER at the cost of context bloat; densest faithful form wins (no Mermaid / box-drawing art).** [rules.md §11.45]
+
+### Public/private monorepo (IP + suites + publish)
+
+- **Public-tree IP fence** — no product hosts, product TypeSpec, KC catalogs, secrets tooling, private-only contracts, or product runbooks under `public/`. [rules.md §9.49]
+- **Dependency direction** — private → public allowed; **public never references private**. [rules.md §9.48]
+- **Dual-suite commands** — public-only (`public/D2.Public.slnx`) + combined umbrella; public-only must not require private ProjectReferences. [rules.md §8.8]
+- **Export gate** — gated dry-run / dispatch; allowlist `public/**` only. [rules.md §8.9]
+- **Publish ownership** — real nuget.org/npmjs + GH Release of public package IDs only on `d2-public`; private monorepo pack + artifact only. [rules.md §8.10]
+- **Codegen dual-root** — public packages generate only from `public/contracts`; private emit only into `private/**`. [rules.md §26.25]
+- **Schema hosts** — public `$id` / problem hosts under `*.d2.dcsv.io`; residual `d2-worx.dev` as schema `$id` is FINDING. [rules.md §26.26]
+- **Human remotes** — agents do not create `d2-public` / `d2-private-worx` remotes or org secrets; operator checklist [docs/dev/human-cutover-oss-public-private.md](docs/dev/human-cutover-oss-public-private.md).
 
 ### Convention slippage (memory of these = first-pass clean)
 

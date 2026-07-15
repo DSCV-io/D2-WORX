@@ -77,7 +77,15 @@ function findRepoRoot(startDir: string): string {
 export function contractFixtureUrl(area: string, name: string): URL {
   const thisDir = dirname(fileURLToPath(import.meta.url));
   const repoRoot = findRepoRoot(thisDir);
-  const absPath = join(repoRoot, "contracts", area, "fixtures", `${name}.json`);
+  // Dual-tree: public open corpora live under public/contracts/**.
+  const absPath = join(
+    repoRoot,
+    "public",
+    "contracts",
+    area,
+    "fixtures",
+    `${name}.json`,
+  );
   return new URL(`file:///${absPath.replaceAll("\\", "/")}`);
 }
 

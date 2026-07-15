@@ -6,7 +6,7 @@ Copyright (c) DCSV. All rights reserved.
 <a name="top"></a>
 _[← rules index](../rules.md) · §26 of the D2-WORX rules catalog._
 
-**Predicate index:** §26.1–§26.24 · 27 predicates · irregular sub-IDs: 26.3.1, 26.3.2, 26.5.1.
+**Predicate index:** §26.1–§26.26 · 29 predicates · irregular sub-IDs: 26.3.1, 26.3.2, 26.5.1.
 
 When a `.proto`, `.spec.json` + `.schema.json`, OpenAPI spec, GraphQL schema, or any multi-language type contract exists for a type, hand-written spec-mirror types in any DESTINATION assembly (one that ships to consumers) are FORBIDDEN — they create a third source of truth (schema + spec + DTO) where every drift is a silent-bug surface schema validation cannot catch (a DTO field absent from the schema gets silently dropped on parse; a schema-required field missing from the DTO gets silently un-required). Empirical: `SubdivisionSpec.cs` carried an `EndonymOfficialName` field NOT in the schema AND omitted `parentISO31662Code` from the schema's required-set — exactly this drift.
 
@@ -237,6 +237,17 @@ This category is its own conceptual surface because codegen discipline cuts acro
   - **Why**: both seeders once carried their own inline copy of `composeSourceFingerprint`, and four source comments claimed "pinned by a runner test" — but no seed↔provider byte-identity test existed (the `.NET` test only proved dump-determinism; the TS claim was fabricated). Duplicated composition can silently drift, and the false comments hid the gap — a consumer trusts a coverage claim that isn't real. Best remediation collapses the duplicate to a single shared module so drift is structurally impossible.
   - **How**: prefer a single shared module both delegates to; where a duplicate is unavoidable, ship a byte-identity unit test over identical synthetic inputs and cite it in the comment. Never write a "covered by test X" comment without verifying test X exists (§11.31). Cross-ref §11.31, §26.20, §1.32.
   - *Provenance: 0026 FINAL-REVIEW parity work (duplicated `composeSourceFingerprint` + four comments citing a non-existent byte-identity test; guarded by the shared `source-fingerprint-compose.mjs` + `seed-provider-fingerprint-identity.test.ts`).*
+
+- **26.25** **Codegen dual-root.** Do public packages generate **only** from `public/contracts`? Do private codegen emitters write **only** into `private/**`? Do public `AdditionalFiles` / analyzer inputs avoid globbing `$(D2PrivateContractsRoot)` or `private/**`?
+  - **Evidence:** public package csproj AdditionalFiles / generator inputs point at public contracts roots only; private emit hosts write under `private/**`.
+  - **Why:** public packages that pull private contracts re-introduce product catalogs into the export surface and break public-only builds.
+  - **How:** dual MSBuild roots (`D2PublicContractsRoot` / `D2PrivateContractsRoot`); public emit public-only; private emit private-only.
+
+- **26.26** **Schema host law.** Do public contract `$id` / problem-type hosts use **`*.d2.dcsv.io`** (e.g. `schemas.d2.dcsv.io`, `problems.d2.dcsv.io`)? Is residual `d2-worx.dev` as a schema `$id` a FINDING?
+  - **Boundary:** product site host strings (e.g. SEO tests using `https://d2-worx.dev`) outside schema `$id` / problem-type hosts are **not** this predicate — product brand host migration is separate.
+  - **Evidence:** grep `d2-worx.dev` under `public/contracts` (and public schema `$id` fields) → 0; public `$id` hosts match `*.d2.dcsv.io`.
+  - **Why:** product marketing host as schema `$id` couples open contracts to a closed product domain name.
+  - **How:** set schema hosts to `*.d2.dcsv.io` in public contracts; leave product site hosts in private web tests unless brand host migration is explicitly reopened.
 
 <sup>[↑ jump to top](#top)</sup>
 

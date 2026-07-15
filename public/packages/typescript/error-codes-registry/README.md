@@ -1,10 +1,10 @@
 <!--
-Copyright (c) DCSV. All rights reserved.
+Copyright (c) DCSV. Licensed under the Apache License, Version 2.0.
 -->
 
 # @dcsv-io/d2-error-codes-registry
 
-Merged cross-catalog error-code registry for D²-WORX. Aggregates every
+Merged cross-catalog error-code registry for D2. Aggregates every
 `*-error-codes.spec.json` catalog under `contracts/` into a single frozen
 `code → ErrorCodeInfo` lookup table — so any consuming service can resolve
 a wire error code to its full metadata (httpStatus, semantic category,

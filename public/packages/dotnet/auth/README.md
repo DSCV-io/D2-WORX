@@ -1,12 +1,12 @@
 <!--
-Copyright (c) DCSV. All rights reserved.
+Copyright (c) DCSV. Licensed under the Apache License, Version 2.0.
 -->
 
 # auth/
 
 > Parent: [`public/packages/dotnet/`](../README.md)
 
-Authentication and authorization building blocks for D²-WORX services that issue, validate, or act on D² bearer tokens. The cluster spans the domain-safe vocabulary slice (enums, scope / audience / claim catalogs, the read-only JWKS and session-liveness contracts), the inbound runtime that validates tokens and projects claims into the request context, the per-transport bindings (HTTP middleware, gRPC interceptor), the caller-side complement (the per-request forwarded-transaction-token credential, the workload-certificate mTLS leaf, and RFC 8693 token exchange for the Edge boundary mint plus the deliberate exception cases; cross-process workload identity is supplied by mTLS), and the spec-driven source generators that emit the scope / audience / claim / error-code catalogs from `contracts/`. Domain code references the abstractions; hosts wire the runtime plus the transport bindings they need.
+Authentication and authorization building blocks for D2 services that issue, validate, or act on D² bearer tokens. The cluster spans the domain-safe vocabulary slice (enums, scope / audience / claim catalogs, the read-only JWKS and session-liveness contracts), the inbound runtime that validates tokens and projects claims into the request context, the per-transport bindings (HTTP middleware, gRPC interceptor), the caller-side complement (the per-request forwarded-transaction-token credential, the workload-certificate mTLS leaf, and RFC 8693 token exchange for the Edge boundary mint plus the deliberate exception cases; cross-process workload identity is supplied by mTLS), and the spec-driven source generators that emit the scope / audience / claim / error-code catalogs from `contracts/`. Domain code references the abstractions; hosts wire the runtime plus the transport bindings they need.
 
 ## Packages
 

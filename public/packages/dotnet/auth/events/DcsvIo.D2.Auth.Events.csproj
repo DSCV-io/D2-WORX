@@ -1,5 +1,5 @@
 <!--
-Copyright (c) DCSV. All rights reserved.
+Copyright (c) DCSV. Licensed under the Apache License, Version 2.0.
 -->
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
@@ -41,7 +41,7 @@ Copyright (c) DCSV. All rights reserved.
   <PropertyGroup>
     <Version>0.1.0</Version>
     <PackageId>DcsvIo.D2.Auth.Events</PackageId>
-    <Description>Cross-service auth-lifecycle event DTOs for D2-WORX — the published message types one service emits and others consume to refresh in-process state.</Description>
+    <Description>Cross-service auth-lifecycle event DTOs for D2 — the published message types one service emits and others consume to refresh in-process state.</Description>
     <IsPackable>true</IsPackable>
     <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>

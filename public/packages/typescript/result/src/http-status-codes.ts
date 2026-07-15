@@ -5,7 +5,7 @@
 
 /**
  * HTTP status code numeric constants used by the result layer.
- * Mirrors the .NET `System.Net.HttpStatusCode` values D²-WORX actually
+ * Mirrors the .NET `System.Net.HttpStatusCode` values D2 actually
  * surfaces — not the full RFC catalog.
  */
 export const HttpStatusCode = {

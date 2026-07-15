@@ -1,5 +1,5 @@
 <!--
-Copyright (c) DCSV. All rights reserved.
+Copyright (c) DCSV. Licensed under the Apache License, Version 2.0.
 -->
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
@@ -48,7 +48,7 @@ Copyright (c) DCSV. All rights reserved.
   <PropertyGroup>
     <Version>0.1.0</Version>
     <PackageId>DcsvIo.D2.Spiffe</PackageId>
-    <Description>SPIFFE workload-identity value object and peer validator for D2-WORX mTLS — the subject-alternative-name a leaf certificate carries and the trust-domain grammar.</Description>
+    <Description>SPIFFE workload-identity value object and peer validator for D2 mTLS — the subject-alternative-name a leaf certificate carries and the trust-domain grammar.</Description>
     <IsPackable>true</IsPackable>
   </PropertyGroup>
 </Project>

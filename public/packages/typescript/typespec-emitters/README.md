@@ -1,5 +1,5 @@
 <!--
-Copyright (c) DCSV. All rights reserved.
+Copyright (c) DCSV. Licensed under the Apache License, Version 2.0.
 -->
 
 # @dcsv-io/d2-typespec-emitters
@@ -7,7 +7,7 @@ Copyright (c) DCSV. All rights reserved.
 TypeSpec emitter suite that reads the `@d2*` operation-contract vocabulary and
 emits C# transport and contract artifacts from TypeSpec specs.
 
-**Audience**: TypeSpec contract authors adding new operations to D²-WORX services,
+**Audience**: TypeSpec contract authors adding new operations to D2 services,
 and engineers integrating the emitted artifacts (C# DTOs / gRPC service impls /
 route registrations / façades / TS clients) into service projects.
 

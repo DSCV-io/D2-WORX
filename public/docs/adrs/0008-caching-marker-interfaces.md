@@ -1,5 +1,5 @@
 <!--
-Copyright (c) DCSV. All rights reserved.
+Copyright (c) DCSV. Licensed under the Apache License, Version 2.0.
 -->
 
 
@@ -13,7 +13,7 @@ Copyright (c) DCSV. All rights reserved.
 
 ## Context
 
-D²-WORX is a multi-instance cluster. At least three distinct caching behavioral profiles are needed simultaneously within a single process:
+D2 is a multi-instance cluster. At least three distinct caching behavioral profiles are needed simultaneously within a single process:
 
 - **Per-process hot data** (JWKS, token fingerprints, per-instance counters) — microsecond reads, dies with the process, no cross-instance coordination.
 - **Cluster-authoritative state** (rate-limit counters, distributed locks, ephemeral session data) — every read must hit the canonical remote store; freshness dominates read speed.

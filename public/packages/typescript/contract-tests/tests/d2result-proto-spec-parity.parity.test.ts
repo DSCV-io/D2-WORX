@@ -62,7 +62,9 @@ function readRepoFile(relPath: string): string {
 
 /** Read and parse a JSON spec file from contracts/. */
 function readSpec(contractDir: string, fileName: string): unknown {
-  return JSON.parse(readRepoFile(`contracts/${contractDir}/${fileName}`));
+  return JSON.parse(
+    readRepoFile(`public/contracts/${contractDir}/${fileName}`),
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -142,7 +144,9 @@ function extractPropertiesSpecWireValues(spec: PropertiesSpec): string[] {
 // Load source material
 // ---------------------------------------------------------------------------
 
-const protoSrc = readRepoFile("contracts/protos/common/v1/d2_result.proto");
+const protoSrc = readRepoFile(
+  "public/contracts/protos/common/v1/d2_result.proto",
+);
 
 const envelopeSpec = readSpec(
   "d2result-envelope",

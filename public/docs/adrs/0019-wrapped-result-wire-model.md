@@ -1,5 +1,5 @@
 <!--
-Copyright (c) DCSV. All rights reserved.
+Copyright (c) DCSV. Licensed under the Apache License, Version 2.0.
 -->
 
 
@@ -76,7 +76,7 @@ A `D2Result` crosses any transport faithfully and re-materializes cleanly, and t
 - `public/contracts/protos/common/v1/d2_result.proto` — the `D2ResultProto` envelope (with `category` field 4); `public/contracts/d2result-envelope/d2result-envelope.spec.json` — the JSON envelope field-name spec; `public/contracts/problem-details/problem-details.spec.json` — the ProblemDetails extension keys (incl. `d2_category`).
 - `public/packages/dotnet/result/grpc/ProtoExtensions.cs` — `ToProto` / `ToD2Result<T>` / `HandleAsync<T>` / `IsTransientGrpcException`, with `SanitizedExceptionRender` PII discipline; `public/packages/dotnet/result/grpc/README.md`.
 - `public/packages/typescript/grpc-client/src/` — `d2-result-to-proto.ts` / `d2-result-from-proto.ts` / `handle-grpc-call.ts` (`handleGrpcCall` / `isTransientGrpcError` / `unaryCall`).
-- `private/services/web/src/lib/shared/rest/gateway-response.ts` — `parseProblemDetailsResponse` + `executeFetch` (the HTTP codec + fault-wrapper); the .NET producers `public/packages/dotnet/auth/http/ProblemDetails/D2ProblemDetailsExtensions.cs` + `public/packages/dotnet/aspnetcore/Internal/D2ProblemDetailsCustomizer.cs`.
+- HTTP consumer codec (private monorepo illustration — not required for public clone): BFF `parseProblemDetailsResponse` + `executeFetch`; .NET producers under `public/packages/dotnet/auth/http/ProblemDetails/` + `public/packages/dotnet/aspnetcore/Internal/`.
 - `public/packages/dotnet/auth/grpc/Status/D2RpcStatusExtensions.cs` — the auth trailer writer (transport-reject only).
 - `public/packages/typescript/contract-tests/` — cross-runtime codec parity fixtures; round-trip + adversarial + PII-discipline regression tests.
 - [ADR-0003](0003-d2result-errors-as-values.md) — `D2Result` as the single in-memory outcome type this serializes faithfully. [ADR-0018](0018-spec-driven-error-codes.md) — the spec-driven codes + `ErrorCategory` the envelope carries. [ADR-0009](0009-async-messaging-encrypted-payloads.md) — the async-messaging boundary, where the `D2Result` rides the publisher / consumer return rather than the (encrypted) payload.

@@ -1,12 +1,12 @@
 <!--
-Copyright (c) DCSV. All rights reserved.
+Copyright (c) DCSV. Licensed under the Apache License, Version 2.0.
 -->
 
 # error-codes/
 
 > Parent: [`public/packages/dotnet/`](../README.md)
 
-Cross-catalog error-code classification and merged registry for D²-WORX. The cluster provides two runtime packages — a zero-dependency `ErrorCategory` enum leaf and a `FrozenDictionary`-backed merged `ErrorCodeRegistry` — backed by two source generators that emit them at build time from the spec files under `contracts/`.
+Cross-catalog error-code classification and merged registry for D2. The cluster provides two runtime packages — a zero-dependency `ErrorCategory` enum leaf and a `FrozenDictionary`-backed merged `ErrorCodeRegistry` — backed by two source generators that emit them at build time from the spec files under `contracts/`.
 
 ## Packages
 

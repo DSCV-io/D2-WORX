@@ -1,5 +1,5 @@
 <!--
-Copyright (c) DCSV. All rights reserved.
+Copyright (c) DCSV. Licensed under the Apache License, Version 2.0.
 -->
 
 
@@ -13,7 +13,7 @@ Copyright (c) DCSV. All rights reserved.
 
 ## Context
 
-D²-WORX is a multi-service .NET 10 / SvelteKit system. Every handler — CQRS, repository, messaging consumer, scheduled job — can fail in a finite set of well-understood ways: resource not found, caller unauthorized or forbidden, input invalid, downstream unavailable, rate-limited, duplicate conflict. These are **expected outcomes**, not programmer errors.
+D2 is a multi-service .NET 10 / SvelteKit system. Every handler — CQRS, repository, messaging consumer, scheduled job — can fail in a finite set of well-understood ways: resource not found, caller unauthorized or forbidden, input invalid, downstream unavailable, rate-limited, duplicate conflict. These are **expected outcomes**, not programmer errors.
 
 The mainstream .NET default is to model these expected outcomes as exceptions (`NotFoundException`, `ValidationException`, etc.) and filter/catch them at a middleware boundary. That model has consistent costs in a layered, multi-service codebase: the failure path is invisible in the method signature, intermediate callers can accidentally swallow or re-wrap exceptions, partial-success states (some-but-not-all of a batch resolved) are awkward to express, and cross-language wire parity requires an additional mapping layer between the exception hierarchy and the HTTP envelope the TypeScript client reads.
 

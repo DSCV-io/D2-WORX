@@ -1,5 +1,5 @@
 // -----------------------------------------------------------------------
-// Copyright (c) DCSV. All rights reserved.
+// Copyright (c) DCSV. Licensed under the Apache License, Version 2.0.
 // -----------------------------------------------------------------------
 
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";

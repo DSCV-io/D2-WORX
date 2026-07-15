@@ -1,5 +1,5 @@
 <!--
-Copyright (c) DCSV. All rights reserved.
+Copyright (c) DCSV. Licensed under the Apache License, Version 2.0.
 -->
 <Project Sdk="Microsoft.NET.Sdk.Web">
   <PropertyGroup>
@@ -92,7 +92,7 @@ Copyright (c) DCSV. All rights reserved.
   <PropertyGroup>
     <Version>0.1.0</Version>
     <PackageId>DcsvIo.D2.ServiceDefaults</PackageId>
-    <Description>Composition-root aggregator for D2-WORX — wires every shared library into AddD2ServiceDefaults / UseD2DefaultPipeline / MapD2DefaultEndpoints / RunD2ServiceAsync.</Description>
+    <Description>Composition-root aggregator for D2 — wires every shared library into AddD2ServiceDefaults / UseD2DefaultPipeline / MapD2DefaultEndpoints / RunD2ServiceAsync.</Description>
     <IsPackable>true</IsPackable>
     <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>

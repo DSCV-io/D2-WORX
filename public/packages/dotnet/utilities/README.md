@@ -1,12 +1,12 @@
 <!--
-Copyright (c) DCSV. All rights reserved.
+Copyright (c) DCSV. Licensed under the Apache License, Version 2.0.
 -->
 
 # DcsvIo.D2.Utilities
 
 > Parent: [`public/packages/dotnet/`](../README.md)
 
-Foundational helpers used at every boundary across D²-WORX. The "no value too small to centralize" library — preventing whole classes of bugs (empty-string-as-data, env-var collisions, JSON cycles) from ever entering domain code.
+Foundational helpers used at every boundary across D2. The "no value too small to centralize" library — preventing whole classes of bugs (empty-string-as-data, env-var collisions, JSON cycles) from ever entering domain code.
 
 Runtime dependencies are kept minimal so this lib stays domain-safe:
 

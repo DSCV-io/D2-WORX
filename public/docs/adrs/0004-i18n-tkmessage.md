@@ -1,5 +1,5 @@
 <!--
-Copyright (c) DCSV. All rights reserved.
+Copyright (c) DCSV. Licensed under the Apache License, Version 2.0.
 -->
 
 
@@ -13,7 +13,7 @@ Copyright (c) DCSV. All rights reserved.
 
 ## Context
 
-D²-WORX is a multi-locale SvelteKit + .NET system. Every handler and domain factory that can fail must communicate failure reasons to users, and many operations (email notifications, validation messages, not-found errors) carry user-visible text. The engineering problem: how does a domain layer produce a user-facing message without (a) baking in a locale, (b) coupling to a translation runtime, or (c) allowing a string literal to silently bypass the translation catalog?
+D2 is a multi-locale SvelteKit + .NET system. Every handler and domain factory that can fail must communicate failure reasons to users, and many operations (email notifications, validation messages, not-found errors) carry user-visible text. The engineering problem: how does a domain layer produce a user-facing message without (a) baking in a locale, (b) coupling to a translation runtime, or (c) allowing a string literal to silently bypass the translation catalog?
 
 Three forces drove the shape of this decision:
 

@@ -90,12 +90,25 @@
     "tieredSemantics": {
       "backplaneNotRegisteredMessagePrefix": "ICacheInvalidationBackplane is not registered",
       "dotnetBindingFields": {
-        "event1": ["Key", "ErrorCode"],
-        "event2": ["Operation", "KeyOrCount", "ErrorCode"]
+        "event1": [
+          "Key",
+          "ErrorCode"
+        ],
+        "event2": [
+          "Operation",
+          "KeyOrCount",
+          "ErrorCode"
+        ]
       },
       "errorCodeBindingPresent": true,
-      "eventIds": [1, 2],
-      "logLevels": ["Warning", "Warning"]
+      "eventIds": [
+        1,
+        2
+      ],
+      "logLevels": [
+        "Warning",
+        "Warning"
+      ]
     }
   },
   "scenario": "constants"

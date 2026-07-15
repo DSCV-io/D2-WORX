@@ -1,12 +1,12 @@
 <!--
-Copyright (c) DCSV. All rights reserved.
+Copyright (c) DCSV. Licensed under the Apache License, Version 2.0.
 -->
 
 # DcsvIo.D2.Result
 
 > Parent: [`public/packages/dotnet/`](../../README.md)
 
-`D2Result<T>` — errors-as-values pattern for D²-WORX. Replaces exception-based control flow throughout the backend. Every handler returns a `D2Result<T>`; callers branch on `result.Success` and propagate failures via `BubbleFail`.
+`D2Result<T>` — errors-as-values pattern for D2. Replaces exception-based control flow throughout the backend. Every handler returns a `D2Result<T>`; callers branch on `result.Success` and propagate failures via `BubbleFail`.
 
 Foundational lib. References only `DcsvIo.D2.I18n.Abstractions` (itself zero-runtime-dep) so `Messages` and `InputErrors` can be typed as `TKMessage` — a structural compile-time guarantee that every user-visible message is a translation key. Consumed by every other library and service.
 

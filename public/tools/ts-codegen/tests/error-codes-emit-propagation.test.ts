@@ -1,5 +1,5 @@
 // -----------------------------------------------------------------------
-// Copyright (c) DCSV. All rights reserved.
+// Copyright (c) DCSV. Licensed under the Apache License, Version 2.0.
 // -----------------------------------------------------------------------
 
 // This test file isolates malformed-spec error-propagation for the three

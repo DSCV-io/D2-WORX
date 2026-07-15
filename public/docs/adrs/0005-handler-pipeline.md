@@ -1,5 +1,5 @@
 <!--
-Copyright (c) DCSV. All rights reserved.
+Copyright (c) DCSV. Licensed under the Apache License, Version 2.0.
 -->
 
 
@@ -13,7 +13,7 @@ Copyright (c) DCSV. All rights reserved.
 
 ## Context
 
-Every operation unit in D²-WORX — CQRS handlers, repository handlers, RabbitMQ consumers, scheduled jobs — must satisfy the same cross-cutting requirements: structured telemetry correlated to the originating request, a uniform typed-failure envelope so callers never deal with raw exceptions (ADR-0003), and PII-safe logging. The options were to satisfy those requirements by hand in each handler (duplicating a try/catch + stopwatch + OTel calls dozens of times) or to introduce a framework intermediary (e.g. MediatR pipeline behaviors).
+Every operation unit in D2 — CQRS handlers, repository handlers, RabbitMQ consumers, scheduled jobs — must satisfy the same cross-cutting requirements: structured telemetry correlated to the originating request, a uniform typed-failure envelope so callers never deal with raw exceptions (ADR-0003), and PII-safe logging. The options were to satisfy those requirements by hand in each handler (duplicating a try/catch + stopwatch + OTel calls dozens of times) or to introduce a framework intermediary (e.g. MediatR pipeline behaviors).
 
 At the same time, repository handlers require a second concern: translating provider-specific database exceptions (`PostgresException`, `DbUpdateConcurrencyException`, `SocketException`) into the same typed `D2Result` failure vocabulary the rest of the platform speaks. That translation is inherently provider-specific — SQLSTATE `23505` is a PostgreSQL encoding — but the handler calling `SaveChangesAsync` should carry no reference to Npgsql.
 

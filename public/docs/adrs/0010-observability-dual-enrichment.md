@@ -1,5 +1,5 @@
 <!--
-Copyright (c) DCSV. All rights reserved.
+Copyright (c) DCSV. Licensed under the Apache License, Version 2.0.
 -->
 
 
@@ -52,7 +52,7 @@ The codebase spans multiple shared libraries (`Handler`, `Auth`, `Auth.Outbound`
 
 **Per-library telemetry registration (each lib calls `AddOpenTelemetry()` itself).** Removes the aggregation layer but takes an OTel SDK dependency into every library, lets whichever-registers-first own SDK init, and pushes export configuration into library authors who should not own it. Aggregation keeps SDK/export knowledge in one place and keeps libraries free of export concerns (consistent with ADR-0006).
 
-**Set span tags only; derive logs from span export.** Some stacks generate logs from spans, reducing dual-write. D²-WORX's Loki lines carry 42 LOG-OK `IRequestContext` fields a span carries only partly; a log-from-span transform for every field relies on infrastructure outside the application boundary. Explicit log scope is more predictable and self-contained.
+**Set span tags only; derive logs from span export.** Some stacks generate logs from spans, reducing dual-write. D2's Loki lines carry 42 LOG-OK `IRequestContext` fields a span carries only partly; a log-from-span transform for every field relies on infrastructure outside the application boundary. Explicit log scope is more predictable and self-contained.
 
 **Hand-written tag-name constants per library.** A plain `Tags` class is straightforward but creates two independent maintenance surfaces (the constant + the dashboard query referencing the wire value). Spec-driven codegen (ADR-0002) gives compile-time symbol safety *and* a literal-drift test; hand-written constants give only the former.
 

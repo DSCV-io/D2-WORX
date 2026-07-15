@@ -6,7 +6,7 @@ Copyright (c) DCSV. All rights reserved.
 <a name="top"></a>
 _[← rules index](../rules.md) · §9 of the D2-WORX rules catalog._
 
-**Predicate index:** §9.1–§9.47 · 48 predicates · irregular sub-IDs: 9.36a.
+**Predicate index:** §9.1–§9.49 · 50 predicates · irregular sub-IDs: 9.36a.
 
 The most expensive class of failure — wrong layer chosen at design time, code already written, refactor cost is high. Catch it at the PLAN phase via "alternatives considered" notes; the audit catches what slipped through.
 
@@ -260,6 +260,16 @@ The most expensive class of failure — wrong layer chosen at design time, code 
   - **Evidence**: Edge `AddD2InProcessJwksProvider()` after `AddD2Auth` + KC; `InProcessJwksProvider` loads Active+Retiring `jwks-signing` public material; DI isolation resolves in-process type on Edge; Audit (remote) keeps HTTP provider. Issuer host still using `HttpJwksProvider` against its own Issuer URL = FINDING-HIGH.
   - **Why**: self-fetch couples validation to TLS trust of the Issuer listen cert and to liveness of the publish path; wrong even after private-CA pin (0030 AUTH-R1b). Cross-ref §10.6, §10.18, private-CA trust via `JwksProviderOptions.TrustedRootCertificatePath` for remote hosts.
   - **How**: implement/filter parity with `GetJwksHandler`; register replacement only on the issuer composition root; leave well-known Maps for consumers.
+
+- **9.48** **Dependency direction (private → public only).** May private trees reference public packages (`ProjectReference` / package consume / pnpm workspace filter into `public/packages/**`)? Must **public never reference private** — no public csproj `ProjectReference` into `private/**`, no public pnpm dependency on private packages, no Docker `COPY` of product sources into public-only images, no public `AdditionalFiles` globs into `private/**`?
+  - **Evidence:** graph greps / solution filters: public → private edges = FINDING-HIGH; private → public edges allowed.
+  - **Why:** reverse edges make the export surface depend on closed product code and break public-only builds.
+  - **How:** only private hosts consume public libs; public packages stay product-free.
+
+- **9.49** **Public-tree IP fence.** Does `public/` stay free of product hosts, product TypeSpec, KeyCustodian / product error-codes catalogs, secrets tooling, private-only contracts, and product runbooks? Do CI / export dry-run / IP tests enforce the fence?
+  - **Evidence:** IP scan + export dry-run; greps for private-only catalogs / secrets scripts under `public/`; public docs free of non-export operator paths as clone requirements.
+  - **Why:** anything under `public/` is export-eligible — product IP there is a permanent leak once mirrored.
+  - **How:** place product material under `private/**`; keep framework ADRs and open contracts only under `public/`.
 
 <sup>[↑ jump to top](#top)</sup>
 

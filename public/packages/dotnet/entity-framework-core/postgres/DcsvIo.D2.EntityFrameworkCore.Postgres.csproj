@@ -1,5 +1,5 @@
 <!--
-Copyright (c) DCSV. All rights reserved.
+Copyright (c) DCSV. Licensed under the Apache License, Version 2.0.
 -->
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
@@ -81,7 +81,7 @@ Copyright (c) DCSV. All rights reserved.
   <PropertyGroup>
     <Version>0.1.0</Version>
     <PackageId>DcsvIo.D2.EntityFrameworkCore.Postgres</PackageId>
-    <Description>PostgreSQL-backed EF Core DbContext wiring for D2-WORX with advisory-lock-guarded migrations and startup validation.</Description>
+    <Description>PostgreSQL-backed EF Core DbContext wiring for D2 with advisory-lock-guarded migrations and startup validation.</Description>
     <IsPackable>true</IsPackable>
     <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>

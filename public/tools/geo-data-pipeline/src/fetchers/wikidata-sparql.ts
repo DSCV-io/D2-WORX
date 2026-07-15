@@ -12,8 +12,8 @@ const SOURCE_NAME = "wikidata";
 const SOURCE_LICENSE = "CC0-1.0 (Wikidata)";
 const ENDPOINT = "https://query.wikidata.org/sparql";
 const USER_AGENT =
-  "D2-WORX-geo-data-pipeline/0.1 " +
-  "(https://github.com/DCSV/D2-WORX; contact: ops@dcsv) Node/24 (Windows)";
+  "D2-geo-data-pipeline/0.1 " +
+  "(https://github.com/dcsv-io; contact: ops@dcsv) Node/24 (Windows)";
 
 const CACHE_DIR = resolve(
   REPO_ROOT_PATH,
