@@ -1,0 +1,147 @@
+#nullable enable
+DcsvIo.D2.Resilience.CircuitBreaker.CircuitBreaker<T>
+DcsvIo.D2.Resilience.CircuitBreaker.CircuitBreaker<T>.CircuitBreaker(System.Func<T, bool>! isFailure, DcsvIo.D2.Resilience.CircuitBreaker.CircuitBreakerOptions? options = null, System.Action<DcsvIo.D2.Resilience.CircuitBreaker.CircuitState, DcsvIo.D2.Resilience.CircuitBreaker.CircuitState>? onStateChange = null) -> void
+DcsvIo.D2.Resilience.CircuitBreaker.CircuitBreaker<T>.ExecuteAsync(System.Func<System.Threading.CancellationToken, System.Threading.Tasks.ValueTask<T>>! operation, System.Func<System.Threading.Tasks.ValueTask<T>>? fallback = null, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<T>
+DcsvIo.D2.Resilience.CircuitBreaker.CircuitBreaker<T>.FailureCount.get -> int
+DcsvIo.D2.Resilience.CircuitBreaker.CircuitBreaker<T>.Reset() -> void
+DcsvIo.D2.Resilience.CircuitBreaker.CircuitBreaker<T>.State.get -> DcsvIo.D2.Resilience.CircuitBreaker.CircuitState
+DcsvIo.D2.Resilience.CircuitBreaker.CircuitBreakerOptions
+DcsvIo.D2.Resilience.CircuitBreaker.CircuitBreakerOptions.<Clone>$() -> DcsvIo.D2.Resilience.CircuitBreaker.CircuitBreakerOptions!
+DcsvIo.D2.Resilience.CircuitBreaker.CircuitBreakerOptions.CircuitBreakerOptions() -> void
+DcsvIo.D2.Resilience.CircuitBreaker.CircuitBreakerOptions.CircuitBreakerOptions(int? failureThreshold = null, System.TimeSpan? cooldownDuration = null, System.Func<long>? nowFunc = null) -> void
+DcsvIo.D2.Resilience.CircuitBreaker.CircuitBreakerOptions.CooldownDuration.get -> System.TimeSpan
+DcsvIo.D2.Resilience.CircuitBreaker.CircuitBreakerOptions.CooldownDuration.init -> void
+DcsvIo.D2.Resilience.CircuitBreaker.CircuitBreakerOptions.Equals(DcsvIo.D2.Resilience.CircuitBreaker.CircuitBreakerOptions? other) -> bool
+DcsvIo.D2.Resilience.CircuitBreaker.CircuitBreakerOptions.FailureThreshold.get -> int
+DcsvIo.D2.Resilience.CircuitBreaker.CircuitBreakerOptions.FailureThreshold.init -> void
+DcsvIo.D2.Resilience.CircuitBreaker.CircuitBreakerOptions.NowFunc.get -> System.Func<long>!
+DcsvIo.D2.Resilience.CircuitBreaker.CircuitBreakerOptions.NowFunc.init -> void
+DcsvIo.D2.Resilience.CircuitBreaker.CircuitOpenException
+DcsvIo.D2.Resilience.CircuitBreaker.CircuitOpenException.CircuitOpenException() -> void
+DcsvIo.D2.Resilience.CircuitBreaker.CircuitOpenException.CircuitOpenException(string! message) -> void
+DcsvIo.D2.Resilience.CircuitBreaker.CircuitOpenException.CircuitOpenException(string! message, System.Exception! innerException) -> void
+DcsvIo.D2.Resilience.CircuitBreaker.CircuitState
+DcsvIo.D2.Resilience.CircuitBreaker.CircuitState.Closed = 0 -> DcsvIo.D2.Resilience.CircuitBreaker.CircuitState
+DcsvIo.D2.Resilience.CircuitBreaker.CircuitState.HalfOpen = 2 -> DcsvIo.D2.Resilience.CircuitBreaker.CircuitState
+DcsvIo.D2.Resilience.CircuitBreaker.CircuitState.Open = 1 -> DcsvIo.D2.Resilience.CircuitBreaker.CircuitState
+DcsvIo.D2.Resilience.Pipeline.CircuitBreakerLayer<TKey, TValue>
+DcsvIo.D2.Resilience.Pipeline.CircuitBreakerLayer<TKey, TValue>.CircuitBreakerLayer(DcsvIo.D2.Resilience.CircuitBreaker.CircuitBreaker<TValue>! circuitBreaker) -> void
+DcsvIo.D2.Resilience.Pipeline.CircuitBreakerLayer<TKey, TValue>.WrapAsync(TKey key, System.Func<System.Threading.CancellationToken, System.Threading.Tasks.ValueTask<TValue>>! next, System.Threading.CancellationToken ct) -> System.Threading.Tasks.ValueTask<TValue>
+DcsvIo.D2.Resilience.Pipeline.IResilientLayer<TKey, TValue>
+DcsvIo.D2.Resilience.Pipeline.IResilientLayer<TKey, TValue>.WrapAsync(TKey key, System.Func<System.Threading.CancellationToken, System.Threading.Tasks.ValueTask<TValue>>! next, System.Threading.CancellationToken ct) -> System.Threading.Tasks.ValueTask<TValue>
+DcsvIo.D2.Resilience.Pipeline.IResilientPipelineBuilder<TKey, TValue>
+DcsvIo.D2.Resilience.Pipeline.IResilientPipelineBuilder<TKey, TValue>.Build() -> DcsvIo.D2.Resilience.Pipeline.ResilientPipeline<TKey, TValue>!
+DcsvIo.D2.Resilience.Pipeline.IResilientPipelineBuilder<TKey, TValue>.UseCircuitBreaker(DcsvIo.D2.Resilience.CircuitBreaker.CircuitBreaker<TValue>! instance) -> DcsvIo.D2.Resilience.Pipeline.IResilientPipelineBuilder<TKey, TValue>!
+DcsvIo.D2.Resilience.Pipeline.IResilientPipelineBuilder<TKey, TValue>.UseCircuitBreaker(object! serviceKey) -> DcsvIo.D2.Resilience.Pipeline.IResilientPipelineBuilder<TKey, TValue>!
+DcsvIo.D2.Resilience.Pipeline.IResilientPipelineBuilder<TKey, TValue>.UseRateLimiter(DcsvIo.D2.Resilience.RateLimiting.RateLimiterOptions? options = null) -> DcsvIo.D2.Resilience.Pipeline.IResilientPipelineBuilder<TKey, TValue>!
+DcsvIo.D2.Resilience.Pipeline.IResilientPipelineBuilder<TKey, TValue>.UseRateLimiter(object! serviceKey) -> DcsvIo.D2.Resilience.Pipeline.IResilientPipelineBuilder<TKey, TValue>!
+DcsvIo.D2.Resilience.Pipeline.IResilientPipelineBuilder<TKey, TValue>.UseRetries(DcsvIo.D2.Resilience.Retry.RetryOptions<TValue>? options = null) -> DcsvIo.D2.Resilience.Pipeline.IResilientPipelineBuilder<TKey, TValue>!
+DcsvIo.D2.Resilience.Pipeline.IResilientPipelineBuilder<TKey, TValue>.UseSingleflight(DcsvIo.D2.Resilience.Singleflight.Singleflight<TKey, TValue>! instance) -> DcsvIo.D2.Resilience.Pipeline.IResilientPipelineBuilder<TKey, TValue>!
+DcsvIo.D2.Resilience.Pipeline.IResilientPipelineBuilder<TKey, TValue>.UseSingleflight(object! serviceKey) -> DcsvIo.D2.Resilience.Pipeline.IResilientPipelineBuilder<TKey, TValue>!
+DcsvIo.D2.Resilience.Pipeline.IResilientPipelineBuilder<TKey, TValue>.UseTimeout(DcsvIo.D2.Resilience.Timeout.TimeoutOptions? options = null) -> DcsvIo.D2.Resilience.Pipeline.IResilientPipelineBuilder<TKey, TValue>!
+DcsvIo.D2.Resilience.Pipeline.RateLimiterLayer<TKey, TValue>
+DcsvIo.D2.Resilience.Pipeline.RateLimiterLayer<TKey, TValue>.Dispose() -> void
+DcsvIo.D2.Resilience.Pipeline.RateLimiterLayer<TKey, TValue>.RateLimiterLayer(DcsvIo.D2.Resilience.RateLimiting.RateLimiter! limiter) -> void
+DcsvIo.D2.Resilience.Pipeline.RateLimiterLayer<TKey, TValue>.RateLimiterLayer(DcsvIo.D2.Resilience.RateLimiting.RateLimiterOptions? options = null) -> void
+DcsvIo.D2.Resilience.Pipeline.RateLimiterLayer<TKey, TValue>.WrapAsync(TKey key, System.Func<System.Threading.CancellationToken, System.Threading.Tasks.ValueTask<TValue>>! next, System.Threading.CancellationToken ct) -> System.Threading.Tasks.ValueTask<TValue>
+DcsvIo.D2.Resilience.Pipeline.ResilientPipeline<TKey, TValue>
+DcsvIo.D2.Resilience.Pipeline.ResilientPipeline<TKey, TValue>.Dispose() -> void
+DcsvIo.D2.Resilience.Pipeline.ResilientPipeline<TKey, TValue>.ExecuteAsync(TKey key, System.Func<System.Threading.CancellationToken, System.Threading.Tasks.ValueTask<TValue>>! operation, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<DcsvIo.D2.Result.D2Result<TValue>!>
+DcsvIo.D2.Resilience.Pipeline.ResilientPipeline<TKey, TValue>.ResilientPipeline(params DcsvIo.D2.Resilience.Pipeline.IResilientLayer<TKey, TValue>![]! layersOuterFirst) -> void
+DcsvIo.D2.Resilience.Pipeline.ResilientPipelineBuilder<TKey, TValue>
+DcsvIo.D2.Resilience.Pipeline.ResilientPipelineBuilder<TKey, TValue>.Build() -> DcsvIo.D2.Resilience.Pipeline.ResilientPipeline<TKey, TValue>!
+DcsvIo.D2.Resilience.Pipeline.ResilientPipelineBuilder<TKey, TValue>.ResilientPipelineBuilder(System.IServiceProvider! serviceProvider) -> void
+DcsvIo.D2.Resilience.Pipeline.ResilientPipelineBuilder<TKey, TValue>.UseCircuitBreaker(DcsvIo.D2.Resilience.CircuitBreaker.CircuitBreaker<TValue>! instance) -> DcsvIo.D2.Resilience.Pipeline.IResilientPipelineBuilder<TKey, TValue>!
+DcsvIo.D2.Resilience.Pipeline.ResilientPipelineBuilder<TKey, TValue>.UseCircuitBreaker(object! serviceKey) -> DcsvIo.D2.Resilience.Pipeline.IResilientPipelineBuilder<TKey, TValue>!
+DcsvIo.D2.Resilience.Pipeline.ResilientPipelineBuilder<TKey, TValue>.UseRateLimiter(DcsvIo.D2.Resilience.RateLimiting.RateLimiterOptions? options = null) -> DcsvIo.D2.Resilience.Pipeline.IResilientPipelineBuilder<TKey, TValue>!
+DcsvIo.D2.Resilience.Pipeline.ResilientPipelineBuilder<TKey, TValue>.UseRateLimiter(object! serviceKey) -> DcsvIo.D2.Resilience.Pipeline.IResilientPipelineBuilder<TKey, TValue>!
+DcsvIo.D2.Resilience.Pipeline.ResilientPipelineBuilder<TKey, TValue>.UseRetries(DcsvIo.D2.Resilience.Retry.RetryOptions<TValue>? options = null) -> DcsvIo.D2.Resilience.Pipeline.IResilientPipelineBuilder<TKey, TValue>!
+DcsvIo.D2.Resilience.Pipeline.ResilientPipelineBuilder<TKey, TValue>.UseSingleflight(DcsvIo.D2.Resilience.Singleflight.Singleflight<TKey, TValue>! instance) -> DcsvIo.D2.Resilience.Pipeline.IResilientPipelineBuilder<TKey, TValue>!
+DcsvIo.D2.Resilience.Pipeline.ResilientPipelineBuilder<TKey, TValue>.UseSingleflight(object! serviceKey) -> DcsvIo.D2.Resilience.Pipeline.IResilientPipelineBuilder<TKey, TValue>!
+DcsvIo.D2.Resilience.Pipeline.ResilientPipelineBuilder<TKey, TValue>.UseTimeout(DcsvIo.D2.Resilience.Timeout.TimeoutOptions? options = null) -> DcsvIo.D2.Resilience.Pipeline.IResilientPipelineBuilder<TKey, TValue>!
+DcsvIo.D2.Resilience.Pipeline.ResilientPipelineServiceCollectionExtensions
+DcsvIo.D2.Resilience.Pipeline.ResilientPipelineServiceCollectionExtensions.extension(Microsoft.Extensions.DependencyInjection.IServiceCollection!)
+DcsvIo.D2.Resilience.Pipeline.ResilientPipelineServiceCollectionExtensions.extension(Microsoft.Extensions.DependencyInjection.IServiceCollection!).AddResilientPipeline<TKey, TValue>(object! serviceKey, System.Action<DcsvIo.D2.Resilience.Pipeline.IResilientPipelineBuilder<TKey, TValue>!>! configure) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
+DcsvIo.D2.Resilience.Pipeline.RetryLayer<TKey, TValue>
+DcsvIo.D2.Resilience.Pipeline.RetryLayer<TKey, TValue>.RetryLayer(DcsvIo.D2.Resilience.Retry.RetryOptions<TValue>? options = null) -> void
+DcsvIo.D2.Resilience.Pipeline.RetryLayer<TKey, TValue>.WrapAsync(TKey key, System.Func<System.Threading.CancellationToken, System.Threading.Tasks.ValueTask<TValue>>! next, System.Threading.CancellationToken ct) -> System.Threading.Tasks.ValueTask<TValue>
+DcsvIo.D2.Resilience.Pipeline.SingleflightLayer<TKey, TValue>
+DcsvIo.D2.Resilience.Pipeline.SingleflightLayer<TKey, TValue>.SingleflightLayer(DcsvIo.D2.Resilience.Singleflight.Singleflight<TKey, TValue>! singleflight) -> void
+DcsvIo.D2.Resilience.Pipeline.SingleflightLayer<TKey, TValue>.WrapAsync(TKey key, System.Func<System.Threading.CancellationToken, System.Threading.Tasks.ValueTask<TValue>>! next, System.Threading.CancellationToken ct) -> System.Threading.Tasks.ValueTask<TValue>
+DcsvIo.D2.Resilience.Pipeline.TimeoutLayer<TKey, TValue>
+DcsvIo.D2.Resilience.Pipeline.TimeoutLayer<TKey, TValue>.TimeoutLayer(DcsvIo.D2.Resilience.Timeout.TimeoutOptions? options = null) -> void
+DcsvIo.D2.Resilience.Pipeline.TimeoutLayer<TKey, TValue>.WrapAsync(TKey key, System.Func<System.Threading.CancellationToken, System.Threading.Tasks.ValueTask<TValue>>! next, System.Threading.CancellationToken ct) -> System.Threading.Tasks.ValueTask<TValue>
+DcsvIo.D2.Resilience.RateLimiting.RateLimitRejectedException
+DcsvIo.D2.Resilience.RateLimiting.RateLimitRejectedException.RateLimitRejectedException() -> void
+DcsvIo.D2.Resilience.RateLimiting.RateLimitRejectedException.RateLimitRejectedException(string! message) -> void
+DcsvIo.D2.Resilience.RateLimiting.RateLimitRejectedException.RateLimitRejectedException(string! message, System.Exception! innerException) -> void
+DcsvIo.D2.Resilience.RateLimiting.RateLimiter
+DcsvIo.D2.Resilience.RateLimiting.RateLimiter.Dispose() -> void
+DcsvIo.D2.Resilience.RateLimiting.RateLimiter.ExecuteAsync<T>(System.Func<System.Threading.CancellationToken, System.Threading.Tasks.ValueTask<T>>! operation, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<T>
+DcsvIo.D2.Resilience.RateLimiting.RateLimiter.RateLimiter(DcsvIo.D2.Resilience.RateLimiting.RateLimiterOptions? options = null) -> void
+DcsvIo.D2.Resilience.RateLimiting.RateLimiterOptions
+DcsvIo.D2.Resilience.RateLimiting.RateLimiterOptions.<Clone>$() -> DcsvIo.D2.Resilience.RateLimiting.RateLimiterOptions!
+DcsvIo.D2.Resilience.RateLimiting.RateLimiterOptions.AcquisitionTimeout.get -> System.TimeSpan
+DcsvIo.D2.Resilience.RateLimiting.RateLimiterOptions.AcquisitionTimeout.init -> void
+DcsvIo.D2.Resilience.RateLimiting.RateLimiterOptions.Equals(DcsvIo.D2.Resilience.RateLimiting.RateLimiterOptions? other) -> bool
+DcsvIo.D2.Resilience.RateLimiting.RateLimiterOptions.MaxConcurrency.get -> int
+DcsvIo.D2.Resilience.RateLimiting.RateLimiterOptions.MaxConcurrency.init -> void
+DcsvIo.D2.Resilience.RateLimiting.RateLimiterOptions.RateLimiterOptions() -> void
+DcsvIo.D2.Resilience.RateLimiting.RateLimiterOptions.RateLimiterOptions(int? maxConcurrency = null, System.TimeSpan? acquisitionTimeout = null) -> void
+DcsvIo.D2.Resilience.Retry.RetryHelper
+DcsvIo.D2.Resilience.Retry.RetryOptions<T>
+DcsvIo.D2.Resilience.Retry.RetryOptions<T>.<Clone>$() -> DcsvIo.D2.Resilience.Retry.RetryOptions<T>!
+DcsvIo.D2.Resilience.Retry.RetryOptions<T>.BackoffMultiplier.get -> double
+DcsvIo.D2.Resilience.Retry.RetryOptions<T>.BackoffMultiplier.init -> void
+DcsvIo.D2.Resilience.Retry.RetryOptions<T>.BaseDelayMs.get -> int
+DcsvIo.D2.Resilience.Retry.RetryOptions<T>.BaseDelayMs.init -> void
+DcsvIo.D2.Resilience.Retry.RetryOptions<T>.DelayFunc.get -> System.Func<System.TimeSpan, System.Threading.CancellationToken, System.Threading.Tasks.Task!>!
+DcsvIo.D2.Resilience.Retry.RetryOptions<T>.DelayFunc.init -> void
+DcsvIo.D2.Resilience.Retry.RetryOptions<T>.Equals(DcsvIo.D2.Resilience.Retry.RetryOptions<T>? other) -> bool
+DcsvIo.D2.Resilience.Retry.RetryOptions<T>.IsTransient.get -> System.Func<System.Exception!, bool>!
+DcsvIo.D2.Resilience.Retry.RetryOptions<T>.IsTransient.init -> void
+DcsvIo.D2.Resilience.Retry.RetryOptions<T>.Jitter.get -> bool
+DcsvIo.D2.Resilience.Retry.RetryOptions<T>.Jitter.init -> void
+DcsvIo.D2.Resilience.Retry.RetryOptions<T>.MaxAttempts.get -> int
+DcsvIo.D2.Resilience.Retry.RetryOptions<T>.MaxAttempts.init -> void
+DcsvIo.D2.Resilience.Retry.RetryOptions<T>.MaxDelayMs.get -> int
+DcsvIo.D2.Resilience.Retry.RetryOptions<T>.MaxDelayMs.init -> void
+DcsvIo.D2.Resilience.Retry.RetryOptions<T>.RetryOptions() -> void
+DcsvIo.D2.Resilience.Retry.RetryOptions<T>.ShouldRetry.get -> System.Func<T, bool>!
+DcsvIo.D2.Resilience.Retry.RetryOptions<T>.ShouldRetry.init -> void
+DcsvIo.D2.Resilience.Singleflight.Singleflight<TKey, TValue>
+DcsvIo.D2.Resilience.Singleflight.Singleflight<TKey, TValue>.ExecuteAsync(TKey key, System.Func<System.Threading.CancellationToken, System.Threading.Tasks.ValueTask<TValue>>! operation, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<TValue>
+DcsvIo.D2.Resilience.Singleflight.Singleflight<TKey, TValue>.Singleflight() -> void
+DcsvIo.D2.Resilience.Singleflight.Singleflight<TKey, TValue>.Size.get -> int
+DcsvIo.D2.Resilience.Timeout.TimeoutOptions
+DcsvIo.D2.Resilience.Timeout.TimeoutOptions.<Clone>$() -> DcsvIo.D2.Resilience.Timeout.TimeoutOptions!
+DcsvIo.D2.Resilience.Timeout.TimeoutOptions.Duration.get -> System.TimeSpan
+DcsvIo.D2.Resilience.Timeout.TimeoutOptions.Duration.init -> void
+DcsvIo.D2.Resilience.Timeout.TimeoutOptions.Equals(DcsvIo.D2.Resilience.Timeout.TimeoutOptions? other) -> bool
+DcsvIo.D2.Resilience.Timeout.TimeoutOptions.TimeoutOptions() -> void
+DcsvIo.D2.Resilience.Timeout.TimeoutOptions.TimeoutOptions(System.TimeSpan? duration = null) -> void
+override DcsvIo.D2.Resilience.CircuitBreaker.CircuitBreakerOptions.Equals(object? obj) -> bool
+override DcsvIo.D2.Resilience.CircuitBreaker.CircuitBreakerOptions.GetHashCode() -> int
+override DcsvIo.D2.Resilience.CircuitBreaker.CircuitBreakerOptions.ToString() -> string!
+override DcsvIo.D2.Resilience.RateLimiting.RateLimiterOptions.Equals(object? obj) -> bool
+override DcsvIo.D2.Resilience.RateLimiting.RateLimiterOptions.GetHashCode() -> int
+override DcsvIo.D2.Resilience.RateLimiting.RateLimiterOptions.ToString() -> string!
+override DcsvIo.D2.Resilience.Retry.RetryOptions<T>.Equals(object? obj) -> bool
+override DcsvIo.D2.Resilience.Retry.RetryOptions<T>.GetHashCode() -> int
+override DcsvIo.D2.Resilience.Retry.RetryOptions<T>.ToString() -> string!
+override DcsvIo.D2.Resilience.Timeout.TimeoutOptions.Equals(object? obj) -> bool
+override DcsvIo.D2.Resilience.Timeout.TimeoutOptions.GetHashCode() -> int
+override DcsvIo.D2.Resilience.Timeout.TimeoutOptions.ToString() -> string!
+static DcsvIo.D2.Resilience.CircuitBreaker.CircuitBreakerOptions.operator !=(DcsvIo.D2.Resilience.CircuitBreaker.CircuitBreakerOptions? left, DcsvIo.D2.Resilience.CircuitBreaker.CircuitBreakerOptions? right) -> bool
+static DcsvIo.D2.Resilience.CircuitBreaker.CircuitBreakerOptions.operator ==(DcsvIo.D2.Resilience.CircuitBreaker.CircuitBreakerOptions? left, DcsvIo.D2.Resilience.CircuitBreaker.CircuitBreakerOptions? right) -> bool
+static DcsvIo.D2.Resilience.Pipeline.ResilientPipeline<TKey, TValue>.PassThrough.get -> DcsvIo.D2.Resilience.Pipeline.ResilientPipeline<TKey, TValue>!
+static DcsvIo.D2.Resilience.Pipeline.ResilientPipelineServiceCollectionExtensions.AddResilientPipeline<TKey, TValue>(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services, object! serviceKey, System.Action<DcsvIo.D2.Resilience.Pipeline.IResilientPipelineBuilder<TKey, TValue>!>! configure) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
+static DcsvIo.D2.Resilience.RateLimiting.RateLimiterOptions.operator !=(DcsvIo.D2.Resilience.RateLimiting.RateLimiterOptions? left, DcsvIo.D2.Resilience.RateLimiting.RateLimiterOptions? right) -> bool
+static DcsvIo.D2.Resilience.RateLimiting.RateLimiterOptions.operator ==(DcsvIo.D2.Resilience.RateLimiting.RateLimiterOptions? left, DcsvIo.D2.Resilience.RateLimiting.RateLimiterOptions? right) -> bool
+static DcsvIo.D2.Resilience.Retry.RetryHelper.IsTransientException(System.Exception! ex) -> bool
+static DcsvIo.D2.Resilience.Retry.RetryHelper.RetryAsync<T>(System.Func<int, System.Threading.CancellationToken, System.Threading.Tasks.ValueTask<T>>! operation, DcsvIo.D2.Resilience.Retry.RetryOptions<T>? options = null, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<T>
+static DcsvIo.D2.Resilience.Retry.RetryHelper.RetryD2ResultAsync<TData>(System.Func<int, System.Threading.CancellationToken, System.Threading.Tasks.ValueTask<DcsvIo.D2.Result.D2Result<TData>!>>! operation, DcsvIo.D2.Resilience.Retry.RetryOptions<DcsvIo.D2.Result.D2Result<TData>!>? options = null, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<DcsvIo.D2.Result.D2Result<TData>!>
+static DcsvIo.D2.Resilience.Retry.RetryOptions<T>.operator !=(DcsvIo.D2.Resilience.Retry.RetryOptions<T>? left, DcsvIo.D2.Resilience.Retry.RetryOptions<T>? right) -> bool
+static DcsvIo.D2.Resilience.Retry.RetryOptions<T>.operator ==(DcsvIo.D2.Resilience.Retry.RetryOptions<T>? left, DcsvIo.D2.Resilience.Retry.RetryOptions<T>? right) -> bool
+static DcsvIo.D2.Resilience.Timeout.TimeoutOptions.operator !=(DcsvIo.D2.Resilience.Timeout.TimeoutOptions? left, DcsvIo.D2.Resilience.Timeout.TimeoutOptions? right) -> bool
+static DcsvIo.D2.Resilience.Timeout.TimeoutOptions.operator ==(DcsvIo.D2.Resilience.Timeout.TimeoutOptions? left, DcsvIo.D2.Resilience.Timeout.TimeoutOptions? right) -> bool

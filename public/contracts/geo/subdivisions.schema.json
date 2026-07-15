@@ -1,0 +1,69 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.d2.dcsv.io/contracts/geo/subdivisions.schema.json",
+  "title": "Subdivision catalog (codegen-ready)",
+  "description": "Tier 2 codegen-ready Subdivision catalog. Matches the SubdivisionSpec record shape consumed by .NET SourceGen + TS emitter.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "$generated",
+    "$source",
+    "$schema",
+    "$note",
+    "catalogVersion",
+    "generatedAt",
+    "entries"
+  ],
+  "properties": {
+    "$generated": { "const": true },
+    "$source": { "const": "pipeline-derived" },
+    "$schema": { "type": "string" },
+    "$note": { "type": "string" },
+    "catalogVersion": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+(-[A-Za-z0-9.]+)?$"
+    },
+    "generatedAt": { "type": "string", "format": "date-time" },
+    "entries": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/Subdivision" }
+    }
+  },
+  "$defs": {
+    "Subdivision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "iso31662Code",
+        "shortCode",
+        "displayName",
+        "officialName",
+        "endonymDisplayName",
+        "countryISO31661Alpha2Code",
+        "parentISO31662Code",
+        "type",
+        "order"
+      ],
+      "properties": {
+        "iso31662Code": {
+          "type": "string",
+          "pattern": "^[A-Z]{2}-[A-Z0-9]{1,3}$"
+        },
+        "shortCode": { "type": "string", "minLength": 1 },
+        "displayName": { "type": "string", "minLength": 1 },
+        "officialName": { "type": "string", "minLength": 1 },
+        "endonymDisplayName": { "type": ["string", "null"] },
+        "countryISO31661Alpha2Code": {
+          "type": "string",
+          "pattern": "^[A-Z]{2}$"
+        },
+        "parentISO31662Code": {
+          "type": ["string", "null"],
+          "pattern": "^[A-Z]{2}-[A-Z0-9]{1,3}$"
+        },
+        "type": { "type": ["string", "null"] },
+        "order": { "type": ["integer", "null"], "minimum": 1, "maximum": 4 }
+      }
+    }
+  }
+}

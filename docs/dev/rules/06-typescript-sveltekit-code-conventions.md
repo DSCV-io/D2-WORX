@@ -27,13 +27,13 @@ _[← rules index](../rules.md) · §6 of the D2-WORX rules catalog._
   - **Why**: domain types use `?: T` (undefined), so Zod must match.
   - Evidence: per new Zod schema → `.optional()` form.
 
-- **6.6** Does `pnpm exec svelte-check` produce zero errors / warnings in `server/web/`?
+- **6.6** Does `pnpm exec svelte-check` produce zero errors / warnings in `private/services/web/`?
   - Evidence: command output.
 
-- **6.7** Does `pnpm exec eslint .` produce zero warnings in `server/web/`?
+- **6.7** Does `pnpm exec eslint .` produce zero warnings in `private/services/web/`?
   - Evidence: command output.
 
-- **6.8** Does `pnpm exec prettier --check .` produce zero formatting failures in `server/web/`?
+- **6.8** Does `pnpm exec prettier --check .` produce zero formatting failures in `private/services/web/`?
   - Evidence: command output.
 
 - **6.9** Were diagnostics checked via `mcp__cclsp__get_diagnostics` after every TS edit?
@@ -52,7 +52,7 @@ _[← rules index](../rules.md) · §6 of the D2-WORX rules catalog._
 - **6.13** Are query strings appended outside the typed pathname call? `` `${resolve("/path")}?key=value` `` (NOT inside `resolve(...)`).
   - Evidence: per query-string usage → form confirmed.
 
-- **6.14** Is the SvelteKit BFF pure SSR? (Browser → Edge directly for auth state mutations. Server-side route guards (`requireAuth`, `requireOrg`, etc.) at `server/web/src/lib/server/auth/`. Browser-side `authClient` at `server/web/src/lib/client/auth/`.)
+- **6.14** Is the SvelteKit BFF pure SSR? (Browser → Edge directly for auth state mutations. Server-side route guards (`requireAuth`, `requireOrg`, etc.) at `private/services/web/src/lib/server/auth/`. Browser-side `authClient` at `private/services/web/src/lib/client/auth/`.)
   - Evidence: per new auth surface → location confirmed.
 
 - **6.15** Are TypeScript optional fields declared with the shorthand `field?: T` rather than the explicit union `field: T | undefined`? Are `T | null` unions absent from all interface fields, function return types, and local variables?
@@ -61,7 +61,7 @@ _[← rules index](../rules.md) · §6 of the D2-WORX rules catalog._
   - **Allowed — `T | undefined` on function return types**: when the precise semantic is "this function explicitly returns `undefined` on failure / absent, NOT optional parameter omission," the explicit `T | undefined` union on a return type or local variable is acceptable. Example: `resolve(input: string): CountryCode | undefined` (clearly signals "caller must handle the undefined return path").
   - **`boolean | null` exception** (per §6.3): explicit three-state semantics for pre-auth flags only.
   - **Language-forced `T | null` exception**: a `T | null` type that is mandated by a built-in language/runtime API's return type is exempt — there is no idiomatic `undefined`-typed alternative. Canonical example: `RegExpExecArray | null` from `RegExp.prototype.exec()`, required by the `while ((m = re.exec(s)) !== null)` loop idiom. The §6.15 ban targets AUTHORED types, not language-forced return types.
-  - **Evidence**: `grep -rEn ": [A-Za-z][A-Za-z0-9<>, ]* \| undefined" server/shared/typescript/**/*.ts` on interface field lines → zero matches expected (interface fields must use `?:` form). `grep -rEn ": [A-Za-z][A-Za-z0-9<>, ]* \| null" server/shared/typescript/**/*.ts` → zero matches expected (excluding the `boolean | null` pre-auth exception and language-forced built-in return types).
+  - **Evidence**: `grep -rEn ": [A-Za-z][A-Za-z0-9<>, ]* \| undefined" public/packages/typescript/**/*.ts` on interface field lines → zero matches expected (interface fields must use `?:` form). `grep -rEn ": [A-Za-z][A-Za-z0-9<>, ]* \| null" public/packages/typescript/**/*.ts` → zero matches expected (excluding the `boolean | null` pre-auth exception and language-forced built-in return types).
   - **Why**: matches C#'s `T?` shorthand + call-site ergonomics — `field?: T` callers can omit the field in object literals, while `field: T | undefined` forces `field: undefined` everywhere. JSON-wire `null` from .NET nullable value types normalizes to `undefined` at the Zod boundary, so `T | null` in domain types creates a false three-state expectation.
   - **How to apply**: refactor `field: T | undefined` on interfaces → `field?: T` and audit call sites (they may simplify `{ field: undefined }` → `{}`). For JSDoc on optional fields use `{T} [field]` (not `{T|undefined}`).
 

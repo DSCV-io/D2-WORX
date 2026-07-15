@@ -1,0 +1,33 @@
+#nullable enable
+DcsvIo.D2.ErrorCodes.Registry.ErrorCodeInfo
+DcsvIo.D2.ErrorCodes.Registry.ErrorCodeInfo.Category.get -> DcsvIo.D2.ErrorCodes.Category.ErrorCategory
+DcsvIo.D2.ErrorCodes.Registry.ErrorCodeInfo.Category.init -> void
+DcsvIo.D2.ErrorCodes.Registry.ErrorCodeInfo.Code.get -> string!
+DcsvIo.D2.ErrorCodes.Registry.ErrorCodeInfo.Code.init -> void
+DcsvIo.D2.ErrorCodes.Registry.ErrorCodeInfo.Deconstruct(out string! Code, out int HttpStatus, out DcsvIo.D2.ErrorCodes.Category.ErrorCategory Category, out DcsvIo.D2.I18n.TKMessage! UserMessageKey, out string! FactoryName, out string! FactoryShape, out string! Doc, out string! Domain, out bool IsDeprecated) -> void
+DcsvIo.D2.ErrorCodes.Registry.ErrorCodeInfo.Doc.get -> string!
+DcsvIo.D2.ErrorCodes.Registry.ErrorCodeInfo.Doc.init -> void
+DcsvIo.D2.ErrorCodes.Registry.ErrorCodeInfo.Domain.get -> string!
+DcsvIo.D2.ErrorCodes.Registry.ErrorCodeInfo.Domain.init -> void
+DcsvIo.D2.ErrorCodes.Registry.ErrorCodeInfo.Equals(DcsvIo.D2.ErrorCodes.Registry.ErrorCodeInfo other) -> bool
+DcsvIo.D2.ErrorCodes.Registry.ErrorCodeInfo.ErrorCodeInfo() -> void
+DcsvIo.D2.ErrorCodes.Registry.ErrorCodeInfo.ErrorCodeInfo(string! Code, int HttpStatus, DcsvIo.D2.ErrorCodes.Category.ErrorCategory Category, DcsvIo.D2.I18n.TKMessage! UserMessageKey, string! FactoryName, string! FactoryShape, string! Doc, string! Domain, bool IsDeprecated) -> void
+DcsvIo.D2.ErrorCodes.Registry.ErrorCodeInfo.FactoryName.get -> string!
+DcsvIo.D2.ErrorCodes.Registry.ErrorCodeInfo.FactoryName.init -> void
+DcsvIo.D2.ErrorCodes.Registry.ErrorCodeInfo.FactoryShape.get -> string!
+DcsvIo.D2.ErrorCodes.Registry.ErrorCodeInfo.FactoryShape.init -> void
+DcsvIo.D2.ErrorCodes.Registry.ErrorCodeInfo.HttpStatus.get -> int
+DcsvIo.D2.ErrorCodes.Registry.ErrorCodeInfo.HttpStatus.init -> void
+DcsvIo.D2.ErrorCodes.Registry.ErrorCodeInfo.IsDeprecated.get -> bool
+DcsvIo.D2.ErrorCodes.Registry.ErrorCodeInfo.IsDeprecated.init -> void
+DcsvIo.D2.ErrorCodes.Registry.ErrorCodeInfo.UserMessageKey.get -> DcsvIo.D2.I18n.TKMessage!
+DcsvIo.D2.ErrorCodes.Registry.ErrorCodeInfo.UserMessageKey.init -> void
+DcsvIo.D2.ErrorCodes.Registry.ErrorCodeRegistry
+override DcsvIo.D2.ErrorCodes.Registry.ErrorCodeInfo.GetHashCode() -> int
+static DcsvIo.D2.ErrorCodes.Registry.ErrorCodeInfo.operator !=(DcsvIo.D2.ErrorCodes.Registry.ErrorCodeInfo left, DcsvIo.D2.ErrorCodes.Registry.ErrorCodeInfo right) -> bool
+static DcsvIo.D2.ErrorCodes.Registry.ErrorCodeInfo.operator ==(DcsvIo.D2.ErrorCodes.Registry.ErrorCodeInfo left, DcsvIo.D2.ErrorCodes.Registry.ErrorCodeInfo right) -> bool
+static DcsvIo.D2.ErrorCodes.Registry.ErrorCodeRegistry.All.get -> System.Collections.Generic.IReadOnlyCollection<DcsvIo.D2.ErrorCodes.Registry.ErrorCodeInfo>!
+static DcsvIo.D2.ErrorCodes.Registry.ErrorCodeRegistry.Resolve(string? code) -> DcsvIo.D2.ErrorCodes.Registry.ErrorCodeInfo?
+static DcsvIo.D2.ErrorCodes.Registry.ErrorCodeRegistry.TryResolve(string? code, out DcsvIo.D2.ErrorCodes.Registry.ErrorCodeInfo info) -> bool
+~override DcsvIo.D2.ErrorCodes.Registry.ErrorCodeInfo.Equals(object obj) -> bool
+~override DcsvIo.D2.ErrorCodes.Registry.ErrorCodeInfo.ToString() -> string

@@ -24,7 +24,7 @@ Production code MUST degrade gracefully. Identify every dependency, document its
   - **Why**: default infinite timeouts cause hung handlers, exhausted thread pools, eventual cascade.
   - Evidence: per network call → timeout value confirmed.
 
-- **18.4** Are circuit breakers in place for downstream services that can become unhealthy? (Use `D2.Shared.Resilience.CircuitBreaker`.)
+- **18.4** Are circuit breakers in place for downstream services that can become unhealthy? (Use `DcsvIo.D2.Resilience.CircuitBreaker`.)
   - Evidence: per cross-service call → circuit breaker state.
 
 - **18.5** Are fallback values correct when degradation kicks in? (Don't return wrong data; return `D2Result.ServiceUnavailable()` or stale-but-flagged data.)

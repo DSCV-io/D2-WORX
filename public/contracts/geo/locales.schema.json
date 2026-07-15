@@ -1,0 +1,89 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.d2.dcsv.io/contracts/geo/locales.schema.json",
+  "title": "Locale catalog (codegen-ready)",
+  "description": "Tier 2 codegen-ready Locale catalog. Matches the LocaleSpec record shape consumed by .NET SourceGen + TS emitter. Region-derived fields (firstDayOfWeek) are denormalized from Country at clean-pass time.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "$generated",
+    "$source",
+    "$schema",
+    "$note",
+    "catalogVersion",
+    "generatedAt",
+    "entries"
+  ],
+  "properties": {
+    "$generated": { "const": true },
+    "$source": { "const": "pipeline-derived" },
+    "$schema": { "type": "string" },
+    "$note": { "type": "string" },
+    "catalogVersion": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+(-[A-Za-z0-9.]+)?$"
+    },
+    "generatedAt": { "type": "string", "format": "date-time" },
+    "entries": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/Locale" }
+    }
+  },
+  "$defs": {
+    "DayOfWeek": {
+      "type": "string",
+      "enum": [
+        "Sunday",
+        "Monday",
+        "Tuesday",
+        "Wednesday",
+        "Thursday",
+        "Friday",
+        "Saturday"
+      ]
+    },
+    "DateFormatPattern": {
+      "type": "string",
+      "enum": ["DMY", "MDY", "YMD"]
+    },
+    "Locale": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "ietfBcp47Tag",
+        "name",
+        "endonym",
+        "languageISO6391Code",
+        "countryISO31661Alpha2Code",
+        "isSelectable",
+        "firstDayOfWeek",
+        "decimalSeparator",
+        "thousandsSeparator",
+        "dateFormatPattern"
+      ],
+      "properties": {
+        "ietfBcp47Tag": {
+          "type": "string",
+          "description": "IETF BCP 47 tag. Examples: en, en-US, zh-Hans-CN, en-001 (UN M49 numeric region for World English), be-tarask (Belarusian Taraškievica orthography variant), ca-ES-valencia (Catalan-Spain-Valencia variant), el-polyton (Greek polytonic variant). Permissive pattern — RFC 5646 grammar is too elaborate for inline regex; consumers performing strict validation should use Node ICU Intl.Locale or equivalent.",
+          "pattern": "^[a-z]{2,8}(-[A-Za-z0-9]{2,8})*$"
+        },
+        "name": { "type": "string", "minLength": 1 },
+        "endonym": { "type": ["string", "null"] },
+        "languageISO6391Code": { "type": "string", "pattern": "^[a-z]{2,3}$" },
+        "countryISO31661Alpha2Code": {
+          "type": ["string", "null"],
+          "pattern": "^[A-Z]{2}|\\d{3}$"
+        },
+        "isSelectable": { "type": "boolean" },
+        "firstDayOfWeek": { "$ref": "#/$defs/DayOfWeek" },
+        "decimalSeparator": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1
+        },
+        "thousandsSeparator": { "type": "string", "maxLength": 1 },
+        "dateFormatPattern": { "$ref": "#/$defs/DateFormatPattern" }
+      }
+    }
+  }
+}

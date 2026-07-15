@@ -1,0 +1,64 @@
+<!--
+Copyright (c) DCSV. Licensed under the Apache License, Version 2.0.
+-->
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>DcsvIo.D2.DataGovernance.Abstractions</RootNamespace>
+  </PropertyGroup>
+
+  <!--
+    PURE marker / attribute / seam library. Zero EF, zero DI.
+    Domain and host code reference the engine seam (IAnonymizationEngine) and
+    the ownership / trackable markers (IUserOwned, IOrgOwned,
+    IExemptFromAnonymization, IAnonymizationTrackable) without pulling EF Core.
+    Implementations — attribute-mapping convention, fluent API, anonymization
+    engine, startup guard, and DI registration — live in
+    DcsvIo.D2.DataGovernance.EntityFrameworkCore.
+    DcsvIo.D2.Utilities is referenced for Falsey() on template validation (§5.1);
+    no cycle exists: Utilities → Result + I18n.Abstractions; this lib → Result only.
+  -->
+
+  <ItemGroup>
+    <!--
+      DcsvIo.D2.Result — IAnonymizationEngine returns
+      Task<D2Result<AnonymizationOutcome>>.
+      DcsvIo.D2.Utilities — referenced for Falsey() on template validation
+      (§5.1); no cycle exists (Utilities → Result + I18n.Abstractions).
+      The purity mandate prohibits references to EF Core, DI, Geo, or any
+      other infrastructure lib.
+    -->
+    <ProjectReference Include="..\..\result\core\DcsvIo.D2.Result.csproj" />
+    <ProjectReference Include="..\..\utilities\DcsvIo.D2.Utilities.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!--
+      JetBrains.Annotations — [UsedImplicitly] on AnonymizableAttribute's
+      reflectively-consumed properties (Kind, ConstantValue, Template).
+      The EF Core model convention reads them via reflection; without
+      [UsedImplicitly] JetBrains inspectcode flags them as "never accessed".
+      JetBrains.Annotations does not flow transitively from DcsvIo.D2.Result
+      (result/core has no JetBrains dep), so an explicit reference is required.
+      Annotations-only package — acceptable for a pure abstractions lib;
+      mirrors the pattern in utilities/DcsvIo.D2.Utilities.csproj.
+    -->
+    <PackageReference Include="JetBrains.Annotations" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="DcsvIo.D2.Tests" />
+  </ItemGroup>
+
+  <!-- Publish metadata (per-package semver + NuGet identity). -->
+  <PropertyGroup>
+    <Version>0.1.0</Version>
+    <PackageId>DcsvIo.D2.DataGovernance.Abstractions</PackageId>
+    <Description>GDPR anonymization markers and the engine seam for D2 entity models — domain-safe, without EF Core or DI.</Description>
+    <IsPackable>true</IsPackable>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+</Project>

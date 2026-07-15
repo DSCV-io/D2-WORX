@@ -8,18 +8,18 @@ _[← rules index](../rules.md) · §25 of the D2-WORX rules catalog._
 
 **Predicate index:** §25.1–§25.12 · 12 predicates.
 
-Temporal bugs are silent until they fire — DST twice a year, leap days every four years, tzdb updates every few months; failure modes are scheduled jobs that don't fire, fire twice, fire at non-existent local times, or crash on tzdb update. This category enforces the temporal-design discipline codified at `D2.Shared.Time` (.NET) + `@d2/time` (TS) so the same disciplines carry to every consumer.
+Temporal bugs are silent until they fire — DST twice a year, leap days every four years, tzdb updates every few months; failure modes are scheduled jobs that don't fire, fire twice, fire at non-existent local times, or crash on tzdb update. This category enforces the temporal-design discipline codified at `DcsvIo.D2.Time` (.NET) + `@dcsv-io/d2-time` (TS) so the same disciplines carry to every consumer.
 
 **The catalog**: `IClock` is the single injection seam. `NodaTime` (.NET) / `Temporal` (TS) types are mandatory in production — never BCL `DateTime` / JS `Date`. Every temporal field is assigned one of three categories at design time (Cat 1 `ZonedInstant` / Cat 2 bare `Instant` / Cat 3 `LocalAnchoredEvent`). Cat 1 + Cat 3 records are constructed only via `Create(...)` smart-constructor factories returning `D2Result<T>`. DST resolution is encapsulated in `LocalAnchoredEvent.ComputeNextFire()`. Wire format is ISO 8601. Adversarial coverage at lib-introduction time is mandatory per `feedback_temporal_adversarial_test_required`.
 
-**Canonical references**: [`server/shared/dotnet/time/README.md`](../../server/shared/dotnet/time/README.md), [`server/shared/typescript/time/README.md`](../../server/shared/typescript/time/README.md), `feedback_temporal_adversarial_test_required` (codified adversarial scenarios memory).
+**Canonical references**: [`public/packages/dotnet/time/README.md`](../../public/packages/dotnet/time/README.md), [`public/packages/typescript/time/README.md`](../../public/packages/typescript/time/README.md), `feedback_temporal_adversarial_test_required` (codified adversarial scenarios memory).
 
 ### Predicates — §25 temporal types
 
 - **25.1** Does production code inject `IClock` and call `clock.GetCurrentInstant()` (.NET) / `clock.getInstant()` (TS) for "what time is it now?", rather than calling any system clock API directly?
   - **Forbidden tokens** (.NET, in non-test / non-composition-root paths): `SystemClock.Instance`, `NodaTime.SystemClock.Instance`, `DateTime.UtcNow`, `DateTime.Now`, `DateTimeOffset.UtcNow`, `DateTimeOffset.Now`.
   - **Forbidden tokens** (TS, in non-test / non-composition-root paths): `Temporal.Now.instant()`, `Temporal.Now.zonedDateTimeISO()`, `Temporal.Now.plainDateTimeISO()`, `Date.now()`, `new Date()`.
-  - **Exceptions**: composition roots binding `IClock → SystemClock` in production / `IClock → TestClock` in tests; `D2.Shared.Time.SystemClock` / `@d2/time` `SystemClock` internal delegation to the underlying platform API; `TestClock` infrastructure itself.
+  - **Exceptions**: composition roots binding `IClock → SystemClock` in production / `IClock → TestClock` in tests; `DcsvIo.D2.Time.SystemClock` / `@dcsv-io/d2-time` `SystemClock` internal delegation to the underlying platform API; `TestClock` infrastructure itself.
   - Evidence: grep the forbidden token set against production code with composition-root + test-infra exclusions → expect zero hits, OR per-hit "checked, justified at <file:line> because <reason>".
   - **Why**: determinism. Tests inject `TestClock` to make time programmable; direct system-clock calls hardcode "now", so wall-clock drift, tzdb policy changes, and DST transitions become unobservable to tests.
   - **How**: anything needing "now" takes `IClock` via constructor injection; when porting code that calls a system clock, wrap at the boundary.
@@ -40,7 +40,7 @@ Temporal bugs are silent until they fire — DST twice a year, leap days every f
   - **Cat 3 — future local-anchored event** (cron-like schedules, recurring appointments, scheduled jobs where the user's wall-clock intent must survive tzdb policy changes): use `LocalAnchoredEvent` (`scheduledLocal + ianaIdentifier + nextFireUtc?`). Storage: `<name>_scheduled_local TIMESTAMP NOT NULL` + `<name>_iana TEXT NOT NULL` + `<name>_next_fire_utc TIMESTAMPTZ NULL` (NULL only during the brief window between create and first `ComputeNextFire()` cache).
   - Evidence: PLAN-phase predicate — every new temporal field in the Plan / migration / entity definition has a category assignment in its xmldoc summary or docstring. Code review confirms storage shape matches the assigned category.
   - **Why**: each category encodes a different invariant — Cat 1 preserves the original wall-clock context for replay / forensics, Cat 2 is the simple UTC case, Cat 3 keeps local-time intent stable across tzdb updates (a recurring 9:00 AM meeting stays 9:00 AM even if the country changes DST policy). Wrong category = wrong storage = production bug under tzdb update or display.
-  - **How**: Plan reviewer matches each field to a category; new migrations cite the category in the migration comment. Canonical table: `server/shared/dotnet/time/README.md` ("Three timestamp categories").
+  - **How**: Plan reviewer matches each field to a category; new migrations cite the category in the migration comment. Canonical table: `public/packages/dotnet/time/README.md` ("Three timestamp categories").
 
 - **25.4** Are `ZonedInstant` and `LocalAnchoredEvent` instances constructed EXCLUSIVELY via the static `Create(...)` factory returning `D2Result<T>`?
   - Evidence: grep `new ZonedInstant\s*\(`, `new LocalAnchoredEvent\s*\(` (.NET) and `new ZonedInstant\s*\(`, `new LocalAnchoredEvent\s*\(` (TS) across the entire codebase outside the lib's own internals → expect zero hits. The type system already enforces this in .NET (private positional constructor) and TS (private constructor), but the predicate documents the discipline + catches a regression if anyone makes the constructor public.
@@ -57,11 +57,11 @@ Temporal bugs are silent until they fire — DST twice a year, leap days every f
 - **25.6** Is DST gap/overlap resolution (LenientResolver / `"compatible"` disambiguation) encapsulated EXCLUSIVELY inside `LocalAnchoredEvent.ComputeNextFire()` (.NET) / `localAnchoredEvent.computeNextFire()` (TS), never called directly from handler code?
   - **Forbidden patterns** (in code outside the Time lib): `Resolvers\.`, `\.AtLeniently\(`, `\.AtStrictly\(`, `Resolvers\.LenientResolver`, `disambiguation:\s*['""](?:compatible|earlier|later|reject)['""]`, `\.toZonedDateTimeISO\([^)]*disambiguation`.
   - Evidence: grep the forbidden token set across handlers / services / domain code outside the Time lib → expect zero hits.
-  - **Why**: single source of truth for DST strategy. The lib applies `LenientResolver` (.NET) / `disambiguation: "compatible"` (TS) — both deterministic, verified equivalent via the `contracts/temporal/temporal-adversarial.fixture.json` cross-language fixture. Changing strategy = ONE file change instead of N scattered call sites; hand-rolled resolver calls also bypass the parity guarantee.
+  - **Why**: single source of truth for DST strategy. The lib applies `LenientResolver` (.NET) / `disambiguation: "compatible"` (TS) — both deterministic, verified equivalent via the `public/contracts/temporal/temporal-adversarial.fixture.json` cross-language fixture. Changing strategy = ONE file change instead of N scattered call sites; hand-rolled resolver calls also bypass the parity guarantee.
   - **How**: call `evt.ComputeNextFire()` and consume the `D2Result<Instant>`. A genuinely different DST strategy = new Time-lib factory/method + cross-language parity test + ADR, never an inlined resolver call at the consumer.
 
 - **25.7** Do DB columns for temporal fields follow the per-category convention?
-  - **Cat 1** (`ZonedInstant`): `<name>_instant TIMESTAMPTZ NOT NULL` + `<name>_iana TEXT NOT NULL` (per [`time/README.md` "Three timestamp categories" table](../../server/shared/dotnet/time/README.md#three-timestamp-categories)).
+  - **Cat 1** (`ZonedInstant`): `<name>_instant TIMESTAMPTZ NOT NULL` + `<name>_iana TEXT NOT NULL` (per [`time/README.md` "Three timestamp categories" table](../../public/packages/dotnet/time/README.md#three-timestamp-categories)).
   - **Cat 2** (bare `Instant`): `<name> TIMESTAMPTZ NOT NULL` — single column, no IANA suffix.
   - **Cat 3** (`LocalAnchoredEvent`): `<name>_scheduled_local TIMESTAMP NOT NULL` + `<name>_iana TEXT NOT NULL` + `<name>_next_fire_utc TIMESTAMPTZ NULL`.
   - Evidence: migration review against the field's assigned category (per §25.3). EF entity property → column-name convention check. Per migration → each temporal column matches the expected shape for its category.
@@ -73,7 +73,7 @@ Temporal bugs are silent until they fire — DST twice a year, leap days every f
   - **`LocalDateTime`** / **`PlainDateTime`** → ISO 8601 without zone suffix (e.g. `"2026-03-10T14:30:00"`).
   - **`ZonedInstant`** → JSON object: `{"instant": "...Z", "ianaIdentifier": "..."}`.
   - **`LocalAnchoredEvent`** → JSON object: `{"scheduledLocal": "...", "ianaIdentifier": "...", "nextFireUtc": "...Z"}` — `nextFireUtc` MAY be absent on inbound payloads (the server recomputes via `ComputeNextFire()` before persistence); MUST be present on outbound payloads (clients depend on it for display + sort).
-  - Evidence: JSON converter contract tests (`CrossLanguageTemporalParityTests` in .NET, `cross-language.test.ts` in TS — both consume `contracts/temporal/temporal-adversarial.fixture.json`); API integration tests assert serialized shape; codegen emitter spec defines the shape per type.
+  - Evidence: JSON converter contract tests (`CrossLanguageTemporalParityTests` in .NET, `cross-language.test.ts` in TS — both consume `public/contracts/temporal/temporal-adversarial.fixture.json`); API integration tests assert serialized shape; codegen emitter spec defines the shape per type.
   - **Why**: ISO 8601 is the single wire format both languages agree on (native NodaTime / Temporal binary formats don't interop across .NET ↔ TS). Object-wrapping Cat 1 / Cat 3 keeps the IANA identifier addressable for receiver-side validation without string parsing.
   - **How**: JSON serializer config registered once per service in the composition root; codegen emitter shape defined once per type and applied everywhere it appears on the wire.
 

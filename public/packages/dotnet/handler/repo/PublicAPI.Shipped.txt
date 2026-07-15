@@ -1,0 +1,5 @@
+#nullable enable
+DcsvIo.D2.Handler.Repo.BaseRepoHandler<TSelf, TInput, TOutput>
+DcsvIo.D2.Handler.Repo.BaseRepoHandler<TSelf, TInput, TOutput>.BaseRepoHandler(DcsvIo.D2.Handler.HandlerContext<TSelf!>! context, DcsvIo.D2.Handler.Repo.Abstractions.IDbExceptionClassifier! classifier) -> void
+override DcsvIo.D2.Handler.Repo.BaseRepoHandler<TSelf, TInput, TOutput>.HandleAsync(TInput input, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken), DcsvIo.D2.Handler.Abstractions.HandlerOptions? options = null) -> System.Threading.Tasks.ValueTask<DcsvIo.D2.Result.D2Result<TOutput?>!>
+virtual DcsvIo.D2.Handler.Repo.BaseRepoHandler<TSelf, TInput, TOutput>.MapDbException(System.Exception! exception, DcsvIo.D2.Handler.Repo.Abstractions.DbFailureKind kind) -> DcsvIo.D2.Result.D2Result<TOutput?>?

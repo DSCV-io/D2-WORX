@@ -1,0 +1,76 @@
+#nullable enable
+DcsvIo.D2.Messaging.RabbitMq.Channels.ChannelLease
+DcsvIo.D2.Messaging.RabbitMq.Channels.ChannelLease.Channel.get -> RabbitMQ.Client.IChannel!
+DcsvIo.D2.Messaging.RabbitMq.Channels.ChannelLease.DisposeAsync() -> System.Threading.Tasks.ValueTask
+DcsvIo.D2.Messaging.RabbitMq.Channels.ChannelPoolOptions
+DcsvIo.D2.Messaging.RabbitMq.Channels.ChannelPoolOptions.AcquireTimeout.get -> System.TimeSpan
+DcsvIo.D2.Messaging.RabbitMq.Channels.ChannelPoolOptions.AcquireTimeout.set -> void
+DcsvIo.D2.Messaging.RabbitMq.Channels.ChannelPoolOptions.ChannelPoolOptions() -> void
+DcsvIo.D2.Messaging.RabbitMq.Channels.ChannelPoolOptions.IdleTtl.get -> System.TimeSpan
+DcsvIo.D2.Messaging.RabbitMq.Channels.ChannelPoolOptions.IdleTtl.set -> void
+DcsvIo.D2.Messaging.RabbitMq.Channels.ChannelPoolOptions.PublishPoolSize.get -> int
+DcsvIo.D2.Messaging.RabbitMq.Channels.ChannelPoolOptions.PublishPoolSize.set -> void
+DcsvIo.D2.Messaging.RabbitMq.Channels.ChannelPoolOptions.PublisherConfirmsEnabled.get -> bool
+DcsvIo.D2.Messaging.RabbitMq.Channels.ChannelPoolOptions.PublisherConfirmsEnabled.set -> void
+DcsvIo.D2.Messaging.RabbitMq.Connection.BrokerUnavailableException
+DcsvIo.D2.Messaging.RabbitMq.Connection.BrokerUnavailableException.BrokerUnavailableException() -> void
+DcsvIo.D2.Messaging.RabbitMq.Connection.BrokerUnavailableException.BrokerUnavailableException(string! message) -> void
+DcsvIo.D2.Messaging.RabbitMq.Connection.BrokerUnavailableException.BrokerUnavailableException(string! message, System.Exception! inner) -> void
+DcsvIo.D2.Messaging.RabbitMq.Connection.RabbitMqConnectionOptions
+DcsvIo.D2.Messaging.RabbitMq.Connection.RabbitMqConnectionOptions.ClientProvidedName.get -> string!
+DcsvIo.D2.Messaging.RabbitMq.Connection.RabbitMqConnectionOptions.ClientProvidedName.set -> void
+DcsvIo.D2.Messaging.RabbitMq.Connection.RabbitMqConnectionOptions.ConnectionUri.get -> string!
+DcsvIo.D2.Messaging.RabbitMq.Connection.RabbitMqConnectionOptions.ConnectionUri.set -> void
+DcsvIo.D2.Messaging.RabbitMq.Connection.RabbitMqConnectionOptions.ConsumerDispatchConcurrency.get -> ushort
+DcsvIo.D2.Messaging.RabbitMq.Connection.RabbitMqConnectionOptions.ConsumerDispatchConcurrency.set -> void
+DcsvIo.D2.Messaging.RabbitMq.Connection.RabbitMqConnectionOptions.HealthCheckInterval.get -> System.TimeSpan
+DcsvIo.D2.Messaging.RabbitMq.Connection.RabbitMqConnectionOptions.HealthCheckInterval.set -> void
+DcsvIo.D2.Messaging.RabbitMq.Connection.RabbitMqConnectionOptions.InitialReconnectDelay.get -> System.TimeSpan
+DcsvIo.D2.Messaging.RabbitMq.Connection.RabbitMqConnectionOptions.InitialReconnectDelay.set -> void
+DcsvIo.D2.Messaging.RabbitMq.Connection.RabbitMqConnectionOptions.MaxReconnectDelay.get -> System.TimeSpan
+DcsvIo.D2.Messaging.RabbitMq.Connection.RabbitMqConnectionOptions.MaxReconnectDelay.set -> void
+DcsvIo.D2.Messaging.RabbitMq.Connection.RabbitMqConnectionOptions.RabbitMqConnectionOptions() -> void
+DcsvIo.D2.Messaging.RabbitMq.MessagingActivityTags
+DcsvIo.D2.Messaging.RabbitMq.MessagingRabbitMqServiceCollectionExtensions
+DcsvIo.D2.Messaging.RabbitMq.MessagingRabbitMqServiceCollectionExtensions.extension(Microsoft.Extensions.DependencyInjection.IServiceCollection!)
+DcsvIo.D2.Messaging.RabbitMq.MessagingRabbitMqServiceCollectionExtensions.extension(Microsoft.Extensions.DependencyInjection.IServiceCollection!).AddD2MessagingRabbitMq(System.Action<DcsvIo.D2.Messaging.RabbitMq.Connection.RabbitMqConnectionOptions!>? configureConnection = null, System.Action<DcsvIo.D2.Messaging.RabbitMq.Channels.ChannelPoolOptions!>? configureChannelPool = null, System.Action<DcsvIo.D2.Messaging.RabbitMq.Publishing.RabbitMqPublisherOptions!>? configurePublisher = null) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
+DcsvIo.D2.Messaging.RabbitMq.Publishing.RabbitMqPublisherOptions
+DcsvIo.D2.Messaging.RabbitMq.Publishing.RabbitMqPublisherOptions.BaseRetryDelay.get -> System.TimeSpan
+DcsvIo.D2.Messaging.RabbitMq.Publishing.RabbitMqPublisherOptions.BaseRetryDelay.set -> void
+DcsvIo.D2.Messaging.RabbitMq.Publishing.RabbitMqPublisherOptions.ConfirmTimeout.get -> System.TimeSpan
+DcsvIo.D2.Messaging.RabbitMq.Publishing.RabbitMqPublisherOptions.ConfirmTimeout.set -> void
+DcsvIo.D2.Messaging.RabbitMq.Publishing.RabbitMqPublisherOptions.MaxAttempts.get -> int
+DcsvIo.D2.Messaging.RabbitMq.Publishing.RabbitMqPublisherOptions.MaxAttempts.set -> void
+DcsvIo.D2.Messaging.RabbitMq.Publishing.RabbitMqPublisherOptions.MaxRetryDelay.get -> System.TimeSpan
+DcsvIo.D2.Messaging.RabbitMq.Publishing.RabbitMqPublisherOptions.MaxRetryDelay.set -> void
+DcsvIo.D2.Messaging.RabbitMq.Publishing.RabbitMqPublisherOptions.RabbitMqPublisherOptions() -> void
+DcsvIo.D2.Messaging.RabbitMq.Publishing.RabbitMqPublisherOptions.WaitForConfirm.get -> bool
+DcsvIo.D2.Messaging.RabbitMq.Publishing.RabbitMqPublisherOptions.WaitForConfirm.set -> void
+DcsvIo.D2.Messaging.RabbitMq.Subscribing.DlqFailureCauses
+DcsvIo.D2.Messaging.RabbitMq.Telemetry.MessagingTelemetry
+const DcsvIo.D2.Messaging.RabbitMq.MessagingActivityTags.D2_ENCRYPTION_KID = "d2.encryption_kid" -> string!
+const DcsvIo.D2.Messaging.RabbitMq.MessagingActivityTags.D2_MESSAGE_TYPE = "d2.message_type" -> string!
+const DcsvIo.D2.Messaging.RabbitMq.MessagingActivityTags.MESSAGING_DESTINATION_NAME = "messaging.destination.name" -> string!
+const DcsvIo.D2.Messaging.RabbitMq.MessagingActivityTags.MESSAGING_MESSAGE_ID = "messaging.message.id" -> string!
+const DcsvIo.D2.Messaging.RabbitMq.MessagingActivityTags.MESSAGING_OPERATION_TYPE = "messaging.operation.type" -> string!
+const DcsvIo.D2.Messaging.RabbitMq.MessagingActivityTags.MESSAGING_RABBITMQ_DELIVERY_TAG = "messaging.rabbitmq.delivery_tag" -> string!
+const DcsvIo.D2.Messaging.RabbitMq.MessagingActivityTags.MESSAGING_RABBITMQ_REDELIVERED = "messaging.rabbitmq.redelivered" -> string!
+const DcsvIo.D2.Messaging.RabbitMq.MessagingActivityTags.MESSAGING_RABBITMQ_ROUTING_KEY = "messaging.rabbitmq.routing_key" -> string!
+const DcsvIo.D2.Messaging.RabbitMq.MessagingActivityTags.MESSAGING_SYSTEM = "messaging.system" -> string!
+const DcsvIo.D2.Messaging.RabbitMq.Subscribing.DlqFailureCauses.DECRYPT_FAILURE = "DECRYPT_FAILURE" -> string!
+const DcsvIo.D2.Messaging.RabbitMq.Subscribing.DlqFailureCauses.DESERIALIZE_FAILURE = "DESERIALIZE_FAILURE" -> string!
+const DcsvIo.D2.Messaging.RabbitMq.Subscribing.DlqFailureCauses.HANDLER_EXCEPTION = "HANDLER_EXCEPTION" -> string!
+const DcsvIo.D2.Messaging.RabbitMq.Subscribing.DlqFailureCauses.HANDLER_RESULT_FAILURE = "HANDLER_RESULT_FAILURE" -> string!
+const DcsvIo.D2.Messaging.RabbitMq.Subscribing.DlqFailureCauses.RETRIES_EXHAUSTED = "RETRIES_EXHAUSTED" -> string!
+const DcsvIo.D2.Messaging.RabbitMq.Telemetry.MessagingTelemetry.SOURCE_NAME = "DcsvIo.D2.Messaging.RabbitMq" -> string!
+static DcsvIo.D2.Messaging.RabbitMq.MessagingActivityTags.AllTags.get -> System.Collections.Generic.IReadOnlyList<string!>!
+static DcsvIo.D2.Messaging.RabbitMq.MessagingRabbitMqServiceCollectionExtensions.AddD2MessagingRabbitMq(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services, System.Action<DcsvIo.D2.Messaging.RabbitMq.Connection.RabbitMqConnectionOptions!>? configureConnection = null, System.Action<DcsvIo.D2.Messaging.RabbitMq.Channels.ChannelPoolOptions!>? configureChannelPool = null, System.Action<DcsvIo.D2.Messaging.RabbitMq.Publishing.RabbitMqPublisherOptions!>? configurePublisher = null) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
+static DcsvIo.D2.Messaging.RabbitMq.Subscribing.DlqFailureCauses.AllCauses.get -> System.Collections.Generic.IReadOnlyList<string!>!
+static readonly DcsvIo.D2.Messaging.RabbitMq.Telemetry.MessagingTelemetry.SR_AckFailuresCounter -> System.Diagnostics.Metrics.Counter<long>!
+static readonly DcsvIo.D2.Messaging.RabbitMq.Telemetry.MessagingTelemetry.SR_ActivitySource -> System.Diagnostics.ActivitySource!
+static readonly DcsvIo.D2.Messaging.RabbitMq.Telemetry.MessagingTelemetry.SR_DlqRepublishFailuresCounter -> System.Diagnostics.Metrics.Counter<long>!
+static readonly DcsvIo.D2.Messaging.RabbitMq.Telemetry.MessagingTelemetry.SR_Meter -> System.Diagnostics.Metrics.Meter!
+static readonly DcsvIo.D2.Messaging.RabbitMq.Telemetry.MessagingTelemetry.SR_PublishDurationHistogram -> System.Diagnostics.Metrics.Histogram<double>!
+static readonly DcsvIo.D2.Messaging.RabbitMq.Telemetry.MessagingTelemetry.SR_PublishFailuresCounter -> System.Diagnostics.Metrics.Counter<long>!
+static readonly DcsvIo.D2.Messaging.RabbitMq.Telemetry.MessagingTelemetry.SR_PublishRetriesCounter -> System.Diagnostics.Metrics.Counter<long>!
+static readonly DcsvIo.D2.Messaging.RabbitMq.Telemetry.MessagingTelemetry.SR_PublishesCounter -> System.Diagnostics.Metrics.Counter<long>!

@@ -1,0 +1,61 @@
+#nullable enable
+DcsvIo.D2.Validation.Abstractions.BiologicalSex
+DcsvIo.D2.Validation.Abstractions.BiologicalSex.Female = 1 -> DcsvIo.D2.Validation.Abstractions.BiologicalSex
+DcsvIo.D2.Validation.Abstractions.BiologicalSex.Intersex = 2 -> DcsvIo.D2.Validation.Abstractions.BiologicalSex
+DcsvIo.D2.Validation.Abstractions.BiologicalSex.Male = 0 -> DcsvIo.D2.Validation.Abstractions.BiologicalSex
+DcsvIo.D2.Validation.Abstractions.BiologicalSex.Unspecified = 3 -> DcsvIo.D2.Validation.Abstractions.BiologicalSex
+DcsvIo.D2.Validation.Abstractions.FieldConstraints
+DcsvIo.D2.Validation.Abstractions.IEmailValidator
+DcsvIo.D2.Validation.Abstractions.IEmailValidator.Validate(string? email) -> DcsvIo.D2.Result.D2Result<string!>!
+DcsvIo.D2.Validation.Abstractions.IPhoneValidator
+DcsvIo.D2.Validation.Abstractions.IPhoneValidator.Validate(string? phone, DcsvIo.D2.Geo.Abstractions.CountryCode? defaultRegion = null) -> DcsvIo.D2.Result.D2Result<string!>!
+DcsvIo.D2.Validation.Abstractions.IPostalCodeValidator
+DcsvIo.D2.Validation.Abstractions.IPostalCodeValidator.Validate(string? postalCode, DcsvIo.D2.Geo.Abstractions.CountryCode? countryCode = null) -> DcsvIo.D2.Result.D2Result<string!>!
+DcsvIo.D2.Validation.Abstractions.NamePrefix
+DcsvIo.D2.Validation.Abstractions.NamePrefix.Dr = 5 -> DcsvIo.D2.Validation.Abstractions.NamePrefix
+DcsvIo.D2.Validation.Abstractions.NamePrefix.Elder = 15 -> DcsvIo.D2.Validation.Abstractions.NamePrefix
+DcsvIo.D2.Validation.Abstractions.NamePrefix.Fr = 12 -> DcsvIo.D2.Validation.Abstractions.NamePrefix
+DcsvIo.D2.Validation.Abstractions.NamePrefix.Lady = 8 -> DcsvIo.D2.Validation.Abstractions.NamePrefix
+DcsvIo.D2.Validation.Abstractions.NamePrefix.Lord = 9 -> DcsvIo.D2.Validation.Abstractions.NamePrefix
+DcsvIo.D2.Validation.Abstractions.NamePrefix.Miss = 2 -> DcsvIo.D2.Validation.Abstractions.NamePrefix
+DcsvIo.D2.Validation.Abstractions.NamePrefix.Mr = 0 -> DcsvIo.D2.Validation.Abstractions.NamePrefix
+DcsvIo.D2.Validation.Abstractions.NamePrefix.Mrs = 3 -> DcsvIo.D2.Validation.Abstractions.NamePrefix
+DcsvIo.D2.Validation.Abstractions.NamePrefix.Ms = 1 -> DcsvIo.D2.Validation.Abstractions.NamePrefix
+DcsvIo.D2.Validation.Abstractions.NamePrefix.Mx = 4 -> DcsvIo.D2.Validation.Abstractions.NamePrefix
+DcsvIo.D2.Validation.Abstractions.NamePrefix.Other = 16 -> DcsvIo.D2.Validation.Abstractions.NamePrefix
+DcsvIo.D2.Validation.Abstractions.NamePrefix.Pr = 13 -> DcsvIo.D2.Validation.Abstractions.NamePrefix
+DcsvIo.D2.Validation.Abstractions.NamePrefix.Prof = 6 -> DcsvIo.D2.Validation.Abstractions.NamePrefix
+DcsvIo.D2.Validation.Abstractions.NamePrefix.Rev = 11 -> DcsvIo.D2.Validation.Abstractions.NamePrefix
+DcsvIo.D2.Validation.Abstractions.NamePrefix.RtHon = 10 -> DcsvIo.D2.Validation.Abstractions.NamePrefix
+DcsvIo.D2.Validation.Abstractions.NamePrefix.Sir = 7 -> DcsvIo.D2.Validation.Abstractions.NamePrefix
+DcsvIo.D2.Validation.Abstractions.NamePrefix.Sr = 14 -> DcsvIo.D2.Validation.Abstractions.NamePrefix
+DcsvIo.D2.Validation.Abstractions.NameSuffix
+DcsvIo.D2.Validation.Abstractions.NameSuffix.I = 2 -> DcsvIo.D2.Validation.Abstractions.NameSuffix
+DcsvIo.D2.Validation.Abstractions.NameSuffix.II = 3 -> DcsvIo.D2.Validation.Abstractions.NameSuffix
+DcsvIo.D2.Validation.Abstractions.NameSuffix.III = 4 -> DcsvIo.D2.Validation.Abstractions.NameSuffix
+DcsvIo.D2.Validation.Abstractions.NameSuffix.IV = 5 -> DcsvIo.D2.Validation.Abstractions.NameSuffix
+DcsvIo.D2.Validation.Abstractions.NameSuffix.IX = 10 -> DcsvIo.D2.Validation.Abstractions.NameSuffix
+DcsvIo.D2.Validation.Abstractions.NameSuffix.Jr = 0 -> DcsvIo.D2.Validation.Abstractions.NameSuffix
+DcsvIo.D2.Validation.Abstractions.NameSuffix.Other = 12 -> DcsvIo.D2.Validation.Abstractions.NameSuffix
+DcsvIo.D2.Validation.Abstractions.NameSuffix.Sr = 1 -> DcsvIo.D2.Validation.Abstractions.NameSuffix
+DcsvIo.D2.Validation.Abstractions.NameSuffix.V = 6 -> DcsvIo.D2.Validation.Abstractions.NameSuffix
+DcsvIo.D2.Validation.Abstractions.NameSuffix.VI = 7 -> DcsvIo.D2.Validation.Abstractions.NameSuffix
+DcsvIo.D2.Validation.Abstractions.NameSuffix.VII = 8 -> DcsvIo.D2.Validation.Abstractions.NameSuffix
+DcsvIo.D2.Validation.Abstractions.NameSuffix.VIII = 9 -> DcsvIo.D2.Validation.Abstractions.NameSuffix
+DcsvIo.D2.Validation.Abstractions.NameSuffix.X = 11 -> DcsvIo.D2.Validation.Abstractions.NameSuffix
+const DcsvIo.D2.Validation.Abstractions.FieldConstraints.AFFIX_CUSTOM_MAX = 64 -> int
+const DcsvIo.D2.Validation.Abstractions.FieldConstraints.CITY_MAX = 255 -> int
+const DcsvIo.D2.Validation.Abstractions.FieldConstraints.COMPANY_NAME_MAX = 255 -> int
+const DcsvIo.D2.Validation.Abstractions.FieldConstraints.COMPANY_WEBSITE_MAX = 2048 -> int
+const DcsvIo.D2.Validation.Abstractions.FieldConstraints.DEPARTMENT_MAX = 255 -> int
+const DcsvIo.D2.Validation.Abstractions.FieldConstraints.EMAIL_MAX = 254 -> int
+const DcsvIo.D2.Validation.Abstractions.FieldConstraints.FIRST_NAME_MAX = 255 -> int
+const DcsvIo.D2.Validation.Abstractions.FieldConstraints.JOB_TITLE_MAX = 255 -> int
+const DcsvIo.D2.Validation.Abstractions.FieldConstraints.LAST_NAME_MAX = 255 -> int
+const DcsvIo.D2.Validation.Abstractions.FieldConstraints.MIDDLE_NAME_MAX = 255 -> int
+const DcsvIo.D2.Validation.Abstractions.FieldConstraints.PHONE_E164_MAX = 32 -> int
+const DcsvIo.D2.Validation.Abstractions.FieldConstraints.PHONE_MAX_DIGITS = 15 -> int
+const DcsvIo.D2.Validation.Abstractions.FieldConstraints.PHONE_MIN_DIGITS = 7 -> int
+const DcsvIo.D2.Validation.Abstractions.FieldConstraints.POSTAL_CODE_MAX = 16 -> int
+const DcsvIo.D2.Validation.Abstractions.FieldConstraints.PREFERRED_NAME_MAX = 255 -> int
+const DcsvIo.D2.Validation.Abstractions.FieldConstraints.STREET_LINE_MAX = 255 -> int

@@ -10,6 +10,8 @@ The single source of truth for HOW work moves through D²-WORX — phase lifecyc
 
 Predicate-level enforcement lives in [rules.md](rules.md); pattern reference in [../PATTERNS.md](../PATTERNS.md); AGENTS.md condenses this doc + rules.md.
 
+> **Monorepo dual tree (layout law).** Export surface = `public/**` only (Apache-2.0). Monorepo root + `private/**` + `docs/dev/**` + `infra/**` are private (ARR). Dual suites = public-only (`public/D2.Public.slnx`) + combined umbrella (`D2.slnx`). Export is gated; public package publish ownership is on the open remote only. Dual-header: public Apache StyleCop form / private ARR (§7.7a). Pure-meta Plan-Audit defaults **Y=E+G**; expand to **Y=E+G+B** when dual-header / convention bulk is in scope. Human remote cutover (`d2-public` / `d2-private-worx`) is **not** an agent deliverable-complete gate — see [human-cutover-oss-public-private.md](human-cutover-oss-public-private.md). Layout ADR: [ADR-0026](../../public/docs/adrs/0026-public-private-monorepo-layout.md).
+
 > **Read [rules.md](rules.md) end-to-end at the start of every deliverable's PLAN phase.** It is the central requirements catalog (security, races, naming, disposal, D2Result, OOTB libs, logging, PII, degradation, UX, DX, observability, idempotency, config, and more). Knowing the rules upfront is what lets code pass audit round 1 instead of round 5. Designed for AGENT ergonomics first, human readability second.
 
 ## Table of contents
@@ -258,7 +260,7 @@ Scales across sizes. **Small deliverable** — one csproj, one feature: `01-<fea
 ### What this process does NOT do
 
 - **Doesn't replace AGENTS.md** — AGENTS.md is the shared agent-directive root + conventions references; this doc defines the _process_ ensuring conventions are followed.
-- **Doesn't replace `docs/v2/`** — phase / wave tracking lives there; this process is per-deliverable, `docs/v2/` is the long-arc roadmap.
+- **Doesn't replace `private/docs/v2/`** — phase / wave tracking lives there; this process is per-deliverable, `private/docs/v2/` is the long-arc roadmap.
 - **Doesn't replace per-lib READMEs** — each lib documents its own public API.
 - **Doesn't run scripts** — no pre-commit hook fires `rules.md` mechanically; the discipline is the agent walking the rules each round and producing journal-verifiable evidence.
 
@@ -601,7 +603,7 @@ Tier-override reason (if the pinned tier was overridden — e.g. an Implementer 
 **Shared-context reminders every Auditor / Final-reviewer brief carries** (predicate-of-record in parens):
 
 - Read every modified `.cs` / `.ts` for the three tool-invisible lenses neither `dotnet build` nor `jb inspectcode` enforces: line length ≤ 100 + SA1519/SA1516 cascades; a blank line after any multi-line statement before the next statement; `var` for locals where the type is evident. Gate-green does NOT imply convention-clean. (§24.20)
-- Gate-verify at FULL-solution scope: `dotnet build server/D2.slnx` (or the tests-csproj build) AND `jb inspectcode server/D2.slnx --severity=WARNING` — never a per-lib / per-project inspectcode (it hides test-file findings). (§24.21)
+- Gate-verify at FULL-solution scope: `dotnet build D2.slnx` (or the tests-csproj build) AND `jb inspectcode D2.slnx --severity=WARNING` — never a per-lib / per-project inspectcode (it hides test-file findings). (§24.21)
 - Scan modified source xmldocs + `//` / `/* */` comments + `.csproj` XML comments (not just READMEs) for deliverable-step / phase / SHIP / forward-ref / rules-§ / AGENTS.md-§ framing. (§24.22)
 - Read from the on-disk WORKING TREE, not `git diff HEAD` / `git show HEAD:` — the latest Implementer / Fixer output is uncommitted; a HEAD reader reports stale pre-change findings and misses post-change issues. (§24.19; omit once all step output is committed.)
 

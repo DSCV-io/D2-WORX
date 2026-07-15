@@ -1,0 +1,137 @@
+#nullable enable
+DcsvIo.D2.DataGovernance.EntityFrameworkCore.AnonymizationAnnotations
+DcsvIo.D2.DataGovernance.EntityFrameworkCore.AnonymizationClassification
+DcsvIo.D2.DataGovernance.EntityFrameworkCore.AnonymizationClassification.<Clone>$() -> DcsvIo.D2.DataGovernance.EntityFrameworkCore.AnonymizationClassification!
+DcsvIo.D2.DataGovernance.EntityFrameworkCore.AnonymizationClassification.AnonymizationClassification() -> void
+DcsvIo.D2.DataGovernance.EntityFrameworkCore.AnonymizationClassification.Columns.get -> System.Collections.Generic.IReadOnlyList<DcsvIo.D2.DataGovernance.EntityFrameworkCore.AnonymizationColumn!>!
+DcsvIo.D2.DataGovernance.EntityFrameworkCore.AnonymizationClassification.Columns.init -> void
+DcsvIo.D2.DataGovernance.EntityFrameworkCore.AnonymizationClassification.Equals(DcsvIo.D2.DataGovernance.EntityFrameworkCore.AnonymizationClassification? other) -> bool
+DcsvIo.D2.DataGovernance.EntityFrameworkCore.AnonymizationClassification.Tier.get -> DcsvIo.D2.DataGovernance.EntityFrameworkCore.AnonymizationTier
+DcsvIo.D2.DataGovernance.EntityFrameworkCore.AnonymizationClassification.Tier.init -> void
+DcsvIo.D2.DataGovernance.EntityFrameworkCore.AnonymizationClassification.TierCBlocker.get -> DcsvIo.D2.DataGovernance.EntityFrameworkCore.AnonymizationColumn?
+DcsvIo.D2.DataGovernance.EntityFrameworkCore.AnonymizationClassification.TierCBlocker.init -> void
+DcsvIo.D2.DataGovernance.EntityFrameworkCore.AnonymizationColumn
+DcsvIo.D2.DataGovernance.EntityFrameworkCore.AnonymizationColumn.<Clone>$() -> DcsvIo.D2.DataGovernance.EntityFrameworkCore.AnonymizationColumn!
+DcsvIo.D2.DataGovernance.EntityFrameworkCore.AnonymizationColumn.AnonymizationColumn() -> void
+DcsvIo.D2.DataGovernance.EntityFrameworkCore.AnonymizationColumn.ColumnName.get -> string!
+DcsvIo.D2.DataGovernance.EntityFrameworkCore.AnonymizationColumn.ColumnName.init -> void
+DcsvIo.D2.DataGovernance.EntityFrameworkCore.AnonymizationColumn.Equals(DcsvIo.D2.DataGovernance.EntityFrameworkCore.AnonymizationColumn? other) -> bool
+DcsvIo.D2.DataGovernance.EntityFrameworkCore.AnonymizationColumn.Property.get -> Microsoft.EntityFrameworkCore.Metadata.IProperty!
+DcsvIo.D2.DataGovernance.EntityFrameworkCore.AnonymizationColumn.Property.init -> void
+DcsvIo.D2.DataGovernance.EntityFrameworkCore.AnonymizationColumn.PropertyName.get -> string!
+DcsvIo.D2.DataGovernance.EntityFrameworkCore.AnonymizationColumn.PropertyName.init -> void
+DcsvIo.D2.DataGovernance.EntityFrameworkCore.AnonymizationColumn.Rule.get -> DcsvIo.D2.DataGovernance.Abstractions.AnonymizationRule!
+DcsvIo.D2.DataGovernance.EntityFrameworkCore.AnonymizationColumn.Rule.init -> void
+DcsvIo.D2.DataGovernance.EntityFrameworkCore.AnonymizationColumn.Shape.get -> DcsvIo.D2.DataGovernance.EntityFrameworkCore.AnonymizationColumnShape
+DcsvIo.D2.DataGovernance.EntityFrameworkCore.AnonymizationColumn.Shape.init -> void
+DcsvIo.D2.DataGovernance.EntityFrameworkCore.AnonymizationColumnShape
+DcsvIo.D2.DataGovernance.EntityFrameworkCore.AnonymizationColumnShape.Complex = 2 -> DcsvIo.D2.DataGovernance.EntityFrameworkCore.AnonymizationColumnShape
+DcsvIo.D2.DataGovernance.EntityFrameworkCore.AnonymizationColumnShape.OwnedJson = 3 -> DcsvIo.D2.DataGovernance.EntityFrameworkCore.AnonymizationColumnShape
+DcsvIo.D2.DataGovernance.EntityFrameworkCore.AnonymizationColumnShape.OwnsManyChild = 4 -> DcsvIo.D2.DataGovernance.EntityFrameworkCore.AnonymizationColumnShape
+DcsvIo.D2.DataGovernance.EntityFrameworkCore.AnonymizationColumnShape.Scalar = 0 -> DcsvIo.D2.DataGovernance.EntityFrameworkCore.AnonymizationColumnShape
+DcsvIo.D2.DataGovernance.EntityFrameworkCore.AnonymizationColumnShape.TableSplitOwned = 1 -> DcsvIo.D2.DataGovernance.EntityFrameworkCore.AnonymizationColumnShape
+DcsvIo.D2.DataGovernance.EntityFrameworkCore.AnonymizationEngineOptions
+DcsvIo.D2.DataGovernance.EntityFrameworkCore.AnonymizationEngineOptions.AnonymizationEngineOptions() -> void
+DcsvIo.D2.DataGovernance.EntityFrameworkCore.AnonymizationEngineOptions.BatchSize.get -> int
+DcsvIo.D2.DataGovernance.EntityFrameworkCore.AnonymizationEngineOptions.BatchSize.set -> void
+DcsvIo.D2.DataGovernance.EntityFrameworkCore.AnonymizationEngineOptions.MaxConcurrencyRetries.get -> int
+DcsvIo.D2.DataGovernance.EntityFrameworkCore.AnonymizationEngineOptions.MaxConcurrencyRetries.set -> void
+DcsvIo.D2.DataGovernance.EntityFrameworkCore.AnonymizationEngineOptions.SkipModelValidation.get -> bool
+DcsvIo.D2.DataGovernance.EntityFrameworkCore.AnonymizationEngineOptions.SkipModelValidation.set -> void
+DcsvIo.D2.DataGovernance.EntityFrameworkCore.AnonymizationModelBuilderExtensions
+DcsvIo.D2.DataGovernance.EntityFrameworkCore.AnonymizationModelBuilderExtensions.extension(Microsoft.EntityFrameworkCore.ModelConfigurationBuilder!)
+DcsvIo.D2.DataGovernance.EntityFrameworkCore.AnonymizationModelBuilderExtensions.extension(Microsoft.EntityFrameworkCore.ModelConfigurationBuilder!).ApplyAnonymizationConventions() -> void
+DcsvIo.D2.DataGovernance.EntityFrameworkCore.AnonymizationTemplatePlan
+DcsvIo.D2.DataGovernance.EntityFrameworkCore.AnonymizationTemplatePlan.<Clone>$() -> DcsvIo.D2.DataGovernance.EntityFrameworkCore.AnonymizationTemplatePlan!
+DcsvIo.D2.DataGovernance.EntityFrameworkCore.AnonymizationTemplatePlan.AnonymizationTemplatePlan() -> void
+DcsvIo.D2.DataGovernance.EntityFrameworkCore.AnonymizationTemplatePlan.Equals(DcsvIo.D2.DataGovernance.EntityFrameworkCore.AnonymizationTemplatePlan? other) -> bool
+DcsvIo.D2.DataGovernance.EntityFrameworkCore.AnonymizationTemplatePlan.RawTemplate.get -> string!
+DcsvIo.D2.DataGovernance.EntityFrameworkCore.AnonymizationTemplatePlan.RawTemplate.init -> void
+DcsvIo.D2.DataGovernance.EntityFrameworkCore.AnonymizationTemplatePlan.Segments.get -> System.Collections.Generic.IReadOnlyList<DcsvIo.D2.DataGovernance.EntityFrameworkCore.AnonymizationTemplateSegment!>!
+DcsvIo.D2.DataGovernance.EntityFrameworkCore.AnonymizationTemplatePlan.Segments.init -> void
+DcsvIo.D2.DataGovernance.EntityFrameworkCore.AnonymizationTemplatePlan.TokenNames.get -> System.Collections.Generic.IReadOnlyList<string!>!
+DcsvIo.D2.DataGovernance.EntityFrameworkCore.AnonymizationTemplatePlan.TokenNames.init -> void
+DcsvIo.D2.DataGovernance.EntityFrameworkCore.AnonymizationTemplateResolver
+DcsvIo.D2.DataGovernance.EntityFrameworkCore.AnonymizationTemplateSegment
+DcsvIo.D2.DataGovernance.EntityFrameworkCore.AnonymizationTemplateSegment.<Clone>$() -> DcsvIo.D2.DataGovernance.EntityFrameworkCore.AnonymizationTemplateSegment!
+DcsvIo.D2.DataGovernance.EntityFrameworkCore.AnonymizationTemplateSegment.AnonymizationTemplateSegment() -> void
+DcsvIo.D2.DataGovernance.EntityFrameworkCore.AnonymizationTemplateSegment.Equals(DcsvIo.D2.DataGovernance.EntityFrameworkCore.AnonymizationTemplateSegment? other) -> bool
+DcsvIo.D2.DataGovernance.EntityFrameworkCore.AnonymizationTemplateSegment.IsToken.get -> bool
+DcsvIo.D2.DataGovernance.EntityFrameworkCore.AnonymizationTemplateSegment.IsToken.init -> void
+DcsvIo.D2.DataGovernance.EntityFrameworkCore.AnonymizationTemplateSegment.Text.get -> string!
+DcsvIo.D2.DataGovernance.EntityFrameworkCore.AnonymizationTemplateSegment.Text.init -> void
+DcsvIo.D2.DataGovernance.EntityFrameworkCore.AnonymizationTier
+DcsvIo.D2.DataGovernance.EntityFrameworkCore.AnonymizationTier.TierA = 0 -> DcsvIo.D2.DataGovernance.EntityFrameworkCore.AnonymizationTier
+DcsvIo.D2.DataGovernance.EntityFrameworkCore.AnonymizationTier.TierB = 1 -> DcsvIo.D2.DataGovernance.EntityFrameworkCore.AnonymizationTier
+DcsvIo.D2.DataGovernance.EntityFrameworkCore.AnonymizationTier.TierC = 2 -> DcsvIo.D2.DataGovernance.EntityFrameworkCore.AnonymizationTier
+DcsvIo.D2.DataGovernance.EntityFrameworkCore.AnonymizationTierClassifier
+DcsvIo.D2.DataGovernance.EntityFrameworkCore.AnonymizeMappingExtensions
+DcsvIo.D2.DataGovernance.EntityFrameworkCore.AnonymizeMappingExtensions.extension<TComplex>(Microsoft.EntityFrameworkCore.Metadata.Builders.ComplexPropertyBuilder<TComplex>!)
+DcsvIo.D2.DataGovernance.EntityFrameworkCore.AnonymizeMappingExtensions.extension<TComplex>(Microsoft.EntityFrameworkCore.Metadata.Builders.ComplexPropertyBuilder<TComplex>!).Anonymize<TProp>(System.Linq.Expressions.Expression<System.Func<TComplex, TProp>!>! sub, string! constant) -> Microsoft.EntityFrameworkCore.Metadata.Builders.ComplexPropertyBuilder<TComplex>!
+DcsvIo.D2.DataGovernance.EntityFrameworkCore.AnonymizeMappingExtensions.extension<TComplex>(Microsoft.EntityFrameworkCore.Metadata.Builders.ComplexPropertyBuilder<TComplex>!).AnonymizeEmpty<TProp>(System.Linq.Expressions.Expression<System.Func<TComplex, TProp>!>! sub) -> Microsoft.EntityFrameworkCore.Metadata.Builders.ComplexPropertyBuilder<TComplex>!
+DcsvIo.D2.DataGovernance.EntityFrameworkCore.AnonymizeMappingExtensions.extension<TComplex>(Microsoft.EntityFrameworkCore.Metadata.Builders.ComplexPropertyBuilder<TComplex>!).AnonymizeNull<TProp>(System.Linq.Expressions.Expression<System.Func<TComplex, TProp>!>! sub) -> Microsoft.EntityFrameworkCore.Metadata.Builders.ComplexPropertyBuilder<TComplex>!
+DcsvIo.D2.DataGovernance.EntityFrameworkCore.AnonymizeMappingExtensions.extension<TComplex>(Microsoft.EntityFrameworkCore.Metadata.Builders.ComplexPropertyBuilder<TComplex>!).AnonymizeTemplate<TProp>(System.Linq.Expressions.Expression<System.Func<TComplex, TProp>!>! sub, string! template) -> Microsoft.EntityFrameworkCore.Metadata.Builders.ComplexPropertyBuilder<TComplex>!
+DcsvIo.D2.DataGovernance.EntityFrameworkCore.AnonymizeMappingExtensions.extension<TOwner, TDependent>(Microsoft.EntityFrameworkCore.Metadata.Builders.OwnedNavigationBuilder<TOwner!, TDependent!>!)
+DcsvIo.D2.DataGovernance.EntityFrameworkCore.AnonymizeMappingExtensions.extension<TOwner, TDependent>(Microsoft.EntityFrameworkCore.Metadata.Builders.OwnedNavigationBuilder<TOwner!, TDependent!>!).Anonymize<TProp>(System.Linq.Expressions.Expression<System.Func<TDependent!, TProp>!>! sub, string! constant) -> Microsoft.EntityFrameworkCore.Metadata.Builders.OwnedNavigationBuilder<TOwner!, TDependent!>!
+DcsvIo.D2.DataGovernance.EntityFrameworkCore.AnonymizeMappingExtensions.extension<TOwner, TDependent>(Microsoft.EntityFrameworkCore.Metadata.Builders.OwnedNavigationBuilder<TOwner!, TDependent!>!).AnonymizeEmpty<TProp>(System.Linq.Expressions.Expression<System.Func<TDependent!, TProp>!>! sub) -> Microsoft.EntityFrameworkCore.Metadata.Builders.OwnedNavigationBuilder<TOwner!, TDependent!>!
+DcsvIo.D2.DataGovernance.EntityFrameworkCore.AnonymizeMappingExtensions.extension<TOwner, TDependent>(Microsoft.EntityFrameworkCore.Metadata.Builders.OwnedNavigationBuilder<TOwner!, TDependent!>!).AnonymizeNull<TProp>(System.Linq.Expressions.Expression<System.Func<TDependent!, TProp>!>! sub) -> Microsoft.EntityFrameworkCore.Metadata.Builders.OwnedNavigationBuilder<TOwner!, TDependent!>!
+DcsvIo.D2.DataGovernance.EntityFrameworkCore.AnonymizeMappingExtensions.extension<TOwner, TDependent>(Microsoft.EntityFrameworkCore.Metadata.Builders.OwnedNavigationBuilder<TOwner!, TDependent!>!).AnonymizeTemplate<TProp>(System.Linq.Expressions.Expression<System.Func<TDependent!, TProp>!>! sub, string! template) -> Microsoft.EntityFrameworkCore.Metadata.Builders.OwnedNavigationBuilder<TOwner!, TDependent!>!
+DcsvIo.D2.DataGovernance.EntityFrameworkCore.AnonymizeMappingExtensions.extension<TProperty>(Microsoft.EntityFrameworkCore.Metadata.Builders.ComplexTypePropertyBuilder<TProperty>!)
+DcsvIo.D2.DataGovernance.EntityFrameworkCore.AnonymizeMappingExtensions.extension<TProperty>(Microsoft.EntityFrameworkCore.Metadata.Builders.ComplexTypePropertyBuilder<TProperty>!).Anonymize(string! constant) -> Microsoft.EntityFrameworkCore.Metadata.Builders.ComplexTypePropertyBuilder<TProperty>!
+DcsvIo.D2.DataGovernance.EntityFrameworkCore.AnonymizeMappingExtensions.extension<TProperty>(Microsoft.EntityFrameworkCore.Metadata.Builders.ComplexTypePropertyBuilder<TProperty>!).AnonymizeEmpty() -> Microsoft.EntityFrameworkCore.Metadata.Builders.ComplexTypePropertyBuilder<TProperty>!
+DcsvIo.D2.DataGovernance.EntityFrameworkCore.AnonymizeMappingExtensions.extension<TProperty>(Microsoft.EntityFrameworkCore.Metadata.Builders.ComplexTypePropertyBuilder<TProperty>!).AnonymizeNull() -> Microsoft.EntityFrameworkCore.Metadata.Builders.ComplexTypePropertyBuilder<TProperty>!
+DcsvIo.D2.DataGovernance.EntityFrameworkCore.AnonymizeMappingExtensions.extension<TProperty>(Microsoft.EntityFrameworkCore.Metadata.Builders.ComplexTypePropertyBuilder<TProperty>!).AnonymizeTemplate(string! template) -> Microsoft.EntityFrameworkCore.Metadata.Builders.ComplexTypePropertyBuilder<TProperty>!
+DcsvIo.D2.DataGovernance.EntityFrameworkCore.AnonymizeMappingExtensions.extension<TProperty>(Microsoft.EntityFrameworkCore.Metadata.Builders.PropertyBuilder<TProperty>!)
+DcsvIo.D2.DataGovernance.EntityFrameworkCore.AnonymizeMappingExtensions.extension<TProperty>(Microsoft.EntityFrameworkCore.Metadata.Builders.PropertyBuilder<TProperty>!).Anonymize(string! constant) -> Microsoft.EntityFrameworkCore.Metadata.Builders.PropertyBuilder<TProperty>!
+DcsvIo.D2.DataGovernance.EntityFrameworkCore.AnonymizeMappingExtensions.extension<TProperty>(Microsoft.EntityFrameworkCore.Metadata.Builders.PropertyBuilder<TProperty>!).AnonymizeEmpty() -> Microsoft.EntityFrameworkCore.Metadata.Builders.PropertyBuilder<TProperty>!
+DcsvIo.D2.DataGovernance.EntityFrameworkCore.AnonymizeMappingExtensions.extension<TProperty>(Microsoft.EntityFrameworkCore.Metadata.Builders.PropertyBuilder<TProperty>!).AnonymizeNull() -> Microsoft.EntityFrameworkCore.Metadata.Builders.PropertyBuilder<TProperty>!
+DcsvIo.D2.DataGovernance.EntityFrameworkCore.AnonymizeMappingExtensions.extension<TProperty>(Microsoft.EntityFrameworkCore.Metadata.Builders.PropertyBuilder<TProperty>!).AnonymizeTemplate(string! template) -> Microsoft.EntityFrameworkCore.Metadata.Builders.PropertyBuilder<TProperty>!
+DcsvIo.D2.DataGovernance.EntityFrameworkCore.DataGovernanceServiceCollectionExtensions
+DcsvIo.D2.DataGovernance.EntityFrameworkCore.DataGovernanceServiceCollectionExtensions.extension(Microsoft.Extensions.DependencyInjection.IServiceCollection!)
+DcsvIo.D2.DataGovernance.EntityFrameworkCore.DataGovernanceServiceCollectionExtensions.extension(Microsoft.Extensions.DependencyInjection.IServiceCollection!).AddD2DataGovernance(Microsoft.Extensions.Configuration.IConfiguration! configuration) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
+DcsvIo.D2.DataGovernance.EntityFrameworkCore.DataGovernanceServiceCollectionExtensions.extension(Microsoft.Extensions.DependencyInjection.IServiceCollection!).AddD2DataGovernance(Microsoft.Extensions.Configuration.IConfiguration! configuration, System.Action<DcsvIo.D2.DataGovernance.EntityFrameworkCore.AnonymizationEngineOptions!>! configure) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
+const DcsvIo.D2.DataGovernance.EntityFrameworkCore.AnonymizationAnnotations.ANONYMIZE = "D2:Anonymize" -> string!
+const DcsvIo.D2.DataGovernance.EntityFrameworkCore.AnonymizationEngineOptions.SECTION_NAME = "DATA_GOVERNANCE" -> string!
+override DcsvIo.D2.DataGovernance.EntityFrameworkCore.AnonymizationClassification.Equals(object? obj) -> bool
+override DcsvIo.D2.DataGovernance.EntityFrameworkCore.AnonymizationClassification.GetHashCode() -> int
+override DcsvIo.D2.DataGovernance.EntityFrameworkCore.AnonymizationClassification.ToString() -> string!
+override DcsvIo.D2.DataGovernance.EntityFrameworkCore.AnonymizationColumn.Equals(object? obj) -> bool
+override DcsvIo.D2.DataGovernance.EntityFrameworkCore.AnonymizationColumn.GetHashCode() -> int
+override DcsvIo.D2.DataGovernance.EntityFrameworkCore.AnonymizationColumn.ToString() -> string!
+override DcsvIo.D2.DataGovernance.EntityFrameworkCore.AnonymizationTemplatePlan.Equals(object? obj) -> bool
+override DcsvIo.D2.DataGovernance.EntityFrameworkCore.AnonymizationTemplatePlan.GetHashCode() -> int
+override DcsvIo.D2.DataGovernance.EntityFrameworkCore.AnonymizationTemplatePlan.ToString() -> string!
+override DcsvIo.D2.DataGovernance.EntityFrameworkCore.AnonymizationTemplateSegment.Equals(object? obj) -> bool
+override DcsvIo.D2.DataGovernance.EntityFrameworkCore.AnonymizationTemplateSegment.GetHashCode() -> int
+override DcsvIo.D2.DataGovernance.EntityFrameworkCore.AnonymizationTemplateSegment.ToString() -> string!
+static DcsvIo.D2.DataGovernance.EntityFrameworkCore.AnonymizationClassification.operator !=(DcsvIo.D2.DataGovernance.EntityFrameworkCore.AnonymizationClassification? left, DcsvIo.D2.DataGovernance.EntityFrameworkCore.AnonymizationClassification? right) -> bool
+static DcsvIo.D2.DataGovernance.EntityFrameworkCore.AnonymizationClassification.operator ==(DcsvIo.D2.DataGovernance.EntityFrameworkCore.AnonymizationClassification? left, DcsvIo.D2.DataGovernance.EntityFrameworkCore.AnonymizationClassification? right) -> bool
+static DcsvIo.D2.DataGovernance.EntityFrameworkCore.AnonymizationColumn.operator !=(DcsvIo.D2.DataGovernance.EntityFrameworkCore.AnonymizationColumn? left, DcsvIo.D2.DataGovernance.EntityFrameworkCore.AnonymizationColumn? right) -> bool
+static DcsvIo.D2.DataGovernance.EntityFrameworkCore.AnonymizationColumn.operator ==(DcsvIo.D2.DataGovernance.EntityFrameworkCore.AnonymizationColumn? left, DcsvIo.D2.DataGovernance.EntityFrameworkCore.AnonymizationColumn? right) -> bool
+static DcsvIo.D2.DataGovernance.EntityFrameworkCore.AnonymizationModelBuilderExtensions.ApplyAnonymizationConventions(this Microsoft.EntityFrameworkCore.ModelConfigurationBuilder! builder) -> void
+static DcsvIo.D2.DataGovernance.EntityFrameworkCore.AnonymizationTemplatePlan.operator !=(DcsvIo.D2.DataGovernance.EntityFrameworkCore.AnonymizationTemplatePlan? left, DcsvIo.D2.DataGovernance.EntityFrameworkCore.AnonymizationTemplatePlan? right) -> bool
+static DcsvIo.D2.DataGovernance.EntityFrameworkCore.AnonymizationTemplatePlan.operator ==(DcsvIo.D2.DataGovernance.EntityFrameworkCore.AnonymizationTemplatePlan? left, DcsvIo.D2.DataGovernance.EntityFrameworkCore.AnonymizationTemplatePlan? right) -> bool
+static DcsvIo.D2.DataGovernance.EntityFrameworkCore.AnonymizationTemplateResolver.Parse(string! template) -> DcsvIo.D2.DataGovernance.EntityFrameworkCore.AnonymizationTemplatePlan!
+static DcsvIo.D2.DataGovernance.EntityFrameworkCore.AnonymizationTemplateResolver.Resolve(DcsvIo.D2.DataGovernance.EntityFrameworkCore.AnonymizationTemplatePlan! plan, Microsoft.EntityFrameworkCore.Metadata.IEntityType! entityType, object! entityInstance) -> string!
+static DcsvIo.D2.DataGovernance.EntityFrameworkCore.AnonymizationTemplateResolver.ValidateTokens(DcsvIo.D2.DataGovernance.EntityFrameworkCore.AnonymizationTemplatePlan! plan, Microsoft.EntityFrameworkCore.Metadata.IEntityType! entityType) -> System.Collections.Generic.IReadOnlyList<string!>!
+static DcsvIo.D2.DataGovernance.EntityFrameworkCore.AnonymizationTemplateSegment.operator !=(DcsvIo.D2.DataGovernance.EntityFrameworkCore.AnonymizationTemplateSegment? left, DcsvIo.D2.DataGovernance.EntityFrameworkCore.AnonymizationTemplateSegment? right) -> bool
+static DcsvIo.D2.DataGovernance.EntityFrameworkCore.AnonymizationTemplateSegment.operator ==(DcsvIo.D2.DataGovernance.EntityFrameworkCore.AnonymizationTemplateSegment? left, DcsvIo.D2.DataGovernance.EntityFrameworkCore.AnonymizationTemplateSegment? right) -> bool
+static DcsvIo.D2.DataGovernance.EntityFrameworkCore.AnonymizationTierClassifier.Classify(Microsoft.EntityFrameworkCore.Metadata.IEntityType! entityType) -> DcsvIo.D2.DataGovernance.EntityFrameworkCore.AnonymizationClassification!
+static DcsvIo.D2.DataGovernance.EntityFrameworkCore.AnonymizeMappingExtensions.Anonymize<TComplex, TProp>(this Microsoft.EntityFrameworkCore.Metadata.Builders.ComplexPropertyBuilder<TComplex>! builder, System.Linq.Expressions.Expression<System.Func<TComplex, TProp>!>! sub, string! constant) -> Microsoft.EntityFrameworkCore.Metadata.Builders.ComplexPropertyBuilder<TComplex>!
+static DcsvIo.D2.DataGovernance.EntityFrameworkCore.AnonymizeMappingExtensions.Anonymize<TOwner, TDependent, TProp>(this Microsoft.EntityFrameworkCore.Metadata.Builders.OwnedNavigationBuilder<TOwner!, TDependent!>! builder, System.Linq.Expressions.Expression<System.Func<TDependent!, TProp>!>! sub, string! constant) -> Microsoft.EntityFrameworkCore.Metadata.Builders.OwnedNavigationBuilder<TOwner!, TDependent!>!
+static DcsvIo.D2.DataGovernance.EntityFrameworkCore.AnonymizeMappingExtensions.Anonymize<TProperty>(this Microsoft.EntityFrameworkCore.Metadata.Builders.ComplexTypePropertyBuilder<TProperty>! builder, string! constant) -> Microsoft.EntityFrameworkCore.Metadata.Builders.ComplexTypePropertyBuilder<TProperty>!
+static DcsvIo.D2.DataGovernance.EntityFrameworkCore.AnonymizeMappingExtensions.Anonymize<TProperty>(this Microsoft.EntityFrameworkCore.Metadata.Builders.PropertyBuilder<TProperty>! builder, string! constant) -> Microsoft.EntityFrameworkCore.Metadata.Builders.PropertyBuilder<TProperty>!
+static DcsvIo.D2.DataGovernance.EntityFrameworkCore.AnonymizeMappingExtensions.AnonymizeEmpty<TComplex, TProp>(this Microsoft.EntityFrameworkCore.Metadata.Builders.ComplexPropertyBuilder<TComplex>! builder, System.Linq.Expressions.Expression<System.Func<TComplex, TProp>!>! sub) -> Microsoft.EntityFrameworkCore.Metadata.Builders.ComplexPropertyBuilder<TComplex>!
+static DcsvIo.D2.DataGovernance.EntityFrameworkCore.AnonymizeMappingExtensions.AnonymizeEmpty<TOwner, TDependent, TProp>(this Microsoft.EntityFrameworkCore.Metadata.Builders.OwnedNavigationBuilder<TOwner!, TDependent!>! builder, System.Linq.Expressions.Expression<System.Func<TDependent!, TProp>!>! sub) -> Microsoft.EntityFrameworkCore.Metadata.Builders.OwnedNavigationBuilder<TOwner!, TDependent!>!
+static DcsvIo.D2.DataGovernance.EntityFrameworkCore.AnonymizeMappingExtensions.AnonymizeEmpty<TProperty>(this Microsoft.EntityFrameworkCore.Metadata.Builders.ComplexTypePropertyBuilder<TProperty>! builder) -> Microsoft.EntityFrameworkCore.Metadata.Builders.ComplexTypePropertyBuilder<TProperty>!
+static DcsvIo.D2.DataGovernance.EntityFrameworkCore.AnonymizeMappingExtensions.AnonymizeEmpty<TProperty>(this Microsoft.EntityFrameworkCore.Metadata.Builders.PropertyBuilder<TProperty>! builder) -> Microsoft.EntityFrameworkCore.Metadata.Builders.PropertyBuilder<TProperty>!
+static DcsvIo.D2.DataGovernance.EntityFrameworkCore.AnonymizeMappingExtensions.AnonymizeNull<TComplex, TProp>(this Microsoft.EntityFrameworkCore.Metadata.Builders.ComplexPropertyBuilder<TComplex>! builder, System.Linq.Expressions.Expression<System.Func<TComplex, TProp>!>! sub) -> Microsoft.EntityFrameworkCore.Metadata.Builders.ComplexPropertyBuilder<TComplex>!
+static DcsvIo.D2.DataGovernance.EntityFrameworkCore.AnonymizeMappingExtensions.AnonymizeNull<TOwner, TDependent, TProp>(this Microsoft.EntityFrameworkCore.Metadata.Builders.OwnedNavigationBuilder<TOwner!, TDependent!>! builder, System.Linq.Expressions.Expression<System.Func<TDependent!, TProp>!>! sub) -> Microsoft.EntityFrameworkCore.Metadata.Builders.OwnedNavigationBuilder<TOwner!, TDependent!>!
+static DcsvIo.D2.DataGovernance.EntityFrameworkCore.AnonymizeMappingExtensions.AnonymizeNull<TProperty>(this Microsoft.EntityFrameworkCore.Metadata.Builders.ComplexTypePropertyBuilder<TProperty>! builder) -> Microsoft.EntityFrameworkCore.Metadata.Builders.ComplexTypePropertyBuilder<TProperty>!
+static DcsvIo.D2.DataGovernance.EntityFrameworkCore.AnonymizeMappingExtensions.AnonymizeNull<TProperty>(this Microsoft.EntityFrameworkCore.Metadata.Builders.PropertyBuilder<TProperty>! builder) -> Microsoft.EntityFrameworkCore.Metadata.Builders.PropertyBuilder<TProperty>!
+static DcsvIo.D2.DataGovernance.EntityFrameworkCore.AnonymizeMappingExtensions.AnonymizeTemplate<TComplex, TProp>(this Microsoft.EntityFrameworkCore.Metadata.Builders.ComplexPropertyBuilder<TComplex>! builder, System.Linq.Expressions.Expression<System.Func<TComplex, TProp>!>! sub, string! template) -> Microsoft.EntityFrameworkCore.Metadata.Builders.ComplexPropertyBuilder<TComplex>!
+static DcsvIo.D2.DataGovernance.EntityFrameworkCore.AnonymizeMappingExtensions.AnonymizeTemplate<TOwner, TDependent, TProp>(this Microsoft.EntityFrameworkCore.Metadata.Builders.OwnedNavigationBuilder<TOwner!, TDependent!>! builder, System.Linq.Expressions.Expression<System.Func<TDependent!, TProp>!>! sub, string! template) -> Microsoft.EntityFrameworkCore.Metadata.Builders.OwnedNavigationBuilder<TOwner!, TDependent!>!
+static DcsvIo.D2.DataGovernance.EntityFrameworkCore.AnonymizeMappingExtensions.AnonymizeTemplate<TProperty>(this Microsoft.EntityFrameworkCore.Metadata.Builders.ComplexTypePropertyBuilder<TProperty>! builder, string! template) -> Microsoft.EntityFrameworkCore.Metadata.Builders.ComplexTypePropertyBuilder<TProperty>!
+static DcsvIo.D2.DataGovernance.EntityFrameworkCore.AnonymizeMappingExtensions.AnonymizeTemplate<TProperty>(this Microsoft.EntityFrameworkCore.Metadata.Builders.PropertyBuilder<TProperty>! builder, string! template) -> Microsoft.EntityFrameworkCore.Metadata.Builders.PropertyBuilder<TProperty>!
+static DcsvIo.D2.DataGovernance.EntityFrameworkCore.DataGovernanceServiceCollectionExtensions.AddD2DataGovernance(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services, Microsoft.Extensions.Configuration.IConfiguration! configuration) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
+static DcsvIo.D2.DataGovernance.EntityFrameworkCore.DataGovernanceServiceCollectionExtensions.AddD2DataGovernance(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services, Microsoft.Extensions.Configuration.IConfiguration! configuration, System.Action<DcsvIo.D2.DataGovernance.EntityFrameworkCore.AnonymizationEngineOptions!>! configure) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!

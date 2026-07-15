@@ -1,0 +1,71 @@
+<!--
+Copyright (c) DCSV. Licensed under the Apache License, Version 2.0.
+-->
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>DcsvIo.D2.ProblemDetails</RootNamespace>
+
+    <!--
+      Emit SrcGen-emitted D2ProblemDetailsKeys.g.cs (driven by the
+      problem-details/source-gen analyzer wired below) to <project-dir>/Generated/.
+      The directory is tracked in git so PR reviewers see codegen diffs without
+      a local build.
+    -->
+    <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
+    <CompilerGeneratedFilesOutputPath>Generated</CompilerGeneratedFilesOutputPath>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!--
+      The SourceGen pipeline feeds the in-memory compiler with the same content
+      that lands on disk under Generated/. Without this Remove, the SDK-default
+      <Compile Include="**/*.cs" /> glob picks up the on-disk copy and the build
+      fails with duplicate-definition errors (CS0101 / CS0111). See:
+      https://learn.microsoft.com/dotnet/core/project-sdk/msbuild-props#compilergeneratedfilesoutputpath
+    -->
+    <Compile Remove="$(CompilerGeneratedFilesOutputPath)\**\*.cs" />
+  </ItemGroup>
+
+  <!--
+    DcsvIo.D2.ProblemDetails.Abstractions — the single home for the RFC 7807
+    ProblemDetails wire-format catalog consumed by every .NET emit path:
+
+      - DcsvIo.D2.Auth.Http      → D2ProblemDetailsExtensions.ToProblemDetails
+                                   (auth-middleware-emitted Shape A bodies)
+      - DcsvIo.D2.AspNetCore     → D2ProblemDetailsCustomizer
+                                   (ASP.NET IProblemDetailsService Shape A bodies)
+
+    Zero runtime dependencies — declares only spec-derived constants. The
+    SourceGen analyzer is wired with PrivateAssets="all" so consuming csprojs
+    pull the constants via ProjectReference WITHOUT also pulling the generator.
+
+    Cross-language parity: the SAME spec drives the TS-side @dcsv-io/d2-problem-details-abstractions
+    catalog (re-exported from @dcsv-io/d2-headers for compat) via tools/ts-codegen/src/problem-details-emit.ts,
+    so .NET and TS consumers share byte-equal wire values for the URI prefix, MIME type,
+    extension keys, and per-status titles.
+  -->
+
+  <ItemGroup>
+    <ProjectReference Include="..\source-gen\DcsvIo.D2.ProblemDetails.SourceGen.csproj"
+                      OutputItemType="Analyzer"
+                      ReferenceOutputAssembly="false" />
+    <AdditionalFiles Include="$(D2PublicContractsRoot)problem-details\problem-details.spec.json" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="DcsvIo.D2.Tests" />
+  </ItemGroup>
+
+  <!-- Publish metadata (per-package semver + NuGet identity). -->
+  <PropertyGroup>
+    <Version>0.1.0</Version>
+    <PackageId>DcsvIo.D2.ProblemDetails.Abstractions</PackageId>
+    <Description>RFC 7807 ProblemDetails wire-format catalog for D2 — type-URI prefix, extension keys, per-status titles, and the TitleFor helper.</Description>
+    <IsPackable>true</IsPackable>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+</Project>

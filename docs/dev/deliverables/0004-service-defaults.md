@@ -1,6 +1,6 @@
 <!-- Copyright (c) DCSV. All rights reserved. -->
 
-# Deliverable 0004 — D2.Shared.ServiceDefaults
+# Deliverable 0004 — DcsvIo.D2.ServiceDefaults
 
 **Status**: ✅ SHIPPED 2026-05-12
 **Branch**: `n/service-defaults` (from `nova` @ `9d027cf8`) → squash-merged to `nova` as `b3a05f1c`
@@ -21,9 +21,9 @@ This deliverable's process integrity was verified against the Deliverable Comple
 
 ## Context
 
-`D2.Shared.ServiceDefaults` is the composition-root convenience csproj that wires every prior Phase 0 shared lib into a single `AddD2ServiceDefaults()` + `UseD2DefaultPipeline()` + `MapD2DefaultEndpoints()` extension surface, so per-service `Program.cs` shrinks from v1's ~60-150 lines of duplicated boilerplate to ~10-15 lines of service-specific declarations.
+`DcsvIo.D2.ServiceDefaults` is the composition-root convenience csproj that wires every prior Phase 0 shared lib into a single `AddD2ServiceDefaults()` + `UseD2DefaultPipeline()` + `MapD2DefaultEndpoints()` extension surface, so per-service `Program.cs` shrinks from v1's ~60-150 lines of duplicated boilerplate to ~10-15 lines of service-specific declarations.
 
-Architectural constraint: **ServiceDefaults itself owns ZERO logic** — it's a thin aggregator that calls into other shared libs' builder extensions. All cross-cutting logic that would have lived inline in v1's `ServiceDefaults` (Serilog setup, OTel SDK setup, security headers, CORS, infrastructure-bypass middleware, ProblemDetails customization) is extracted into three new logic-bearing supporting libs that ship as part of this deliverable: `D2.Shared.Logging`, `D2.Shared.Telemetry`, `D2.Shared.AspNetCore`.
+Architectural constraint: **ServiceDefaults itself owns ZERO logic** — it's a thin aggregator that calls into other shared libs' builder extensions. All cross-cutting logic that would have lived inline in v1's `ServiceDefaults` (Serilog setup, OTel SDK setup, security headers, CORS, infrastructure-bypass middleware, ProblemDetails customization) is extracted into three new logic-bearing supporting libs that ship as part of this deliverable: `DcsvIo.D2.Logging`, `DcsvIo.D2.Telemetry`, `DcsvIo.D2.AspNetCore`.
 
 Pattern parity inspiration: `Microsoft.Extensions.ServiceDefaults` from .NET Aspire, adapted for the v2 shared-lib stack + locked middleware ordering + Serilog-based PII discipline (`[RedactData]` + `RedactDataDestructuringPolicy`).
 
@@ -44,7 +44,7 @@ Pattern parity inspiration: `Microsoft.Extensions.ServiceDefaults` from .NET Asp
 - **3 cross-step consolidations**:
   - InfrastructurePathMatcher (Step 3): 2 internal duplicates → 1 canonical in AspNetCore
   - 3 telemetry-class visibility promotions (MessagingTelemetry + RedisCacheTelemetry + LocalCacheTelemetry: internal → public for Telemetry auto-aggregation)
-  - SanitizedExceptionRender (Step 7): 4 internal copies → 1 canonical at `D2.Shared.Utilities.Diagnostics`
+  - SanitizedExceptionRender (Step 7): 4 internal copies → 1 canonical at `DcsvIo.D2.Utilities.Diagnostics`
 - **IRequestContext spec hygiene** (Step 1A):
   - Renamed `FingerprintRiskScore` → `RiskScore` (doc body rewritten to honestly enumerate inputs)
   - Dropped `IsSyntheticEnvelope` (pivot orphan from retired `ContextEnvelope` mechanism)
@@ -57,13 +57,13 @@ Pattern parity inspiration: `Microsoft.Extensions.ServiceDefaults` from .NET Asp
 | #   | Step                                                                                        | Csproj path                                                                                 | Rounds                       |
 | --- | ------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- | ---------------------------- |
 | 0   | Branch checkout                                                                             | —                                                                                           | —                            |
-| 1   | `D2.Shared.Logging` (initial)                                                               | `server/shared/dotnet/logging/`                                                             | 2                            |
+| 1   | `DcsvIo.D2.Logging` (initial)                                                               | `server/shared/dotnet/logging/`                                                             | 2                            |
 | 1A  | IRequestContext spec hygiene (rename + drop + nameof sweep)                                 | spec + cross-cutting cleanup                                                                | 1                            |
 | 1B  | Logging LOG-OK enricher expansion (42 LOG-OK / 8 NOT-LOGGED)                                | `server/shared/dotnet/logging/`                                                             | 1                            |
 | 1C  | Early rules.md adoption (5 predicates) + Logging KEEP doc phase-framing sweep               | rules.md + logging KEEP docs                                                                | 2                            |
-| 2   | `D2.Shared.Telemetry`                                                                       | `server/shared/dotnet/telemetry/`                                                           | 2                            |
-| 3   | `D2.Shared.AspNetCore`                                                                      | `server/shared/dotnet/aspnetcore/`                                                          | 2                            |
-| 4   | `D2.Shared.ServiceDefaults`                                                                 | `server/shared/dotnet/service-defaults/`                                                    | 2                            |
+| 2   | `DcsvIo.D2.Telemetry`                                                                       | `server/shared/dotnet/telemetry/`                                                           | 2                            |
+| 3   | `DcsvIo.D2.AspNetCore`                                                                      | `server/shared/dotnet/aspnetcore/`                                                          | 2                            |
+| 4   | `DcsvIo.D2.ServiceDefaults`                                                                 | `server/shared/dotnet/service-defaults/`                                                    | 2                            |
 | 5   | Synthetic-host integration tests                                                            | `server/shared/dotnet/tests/`                                                               | 2                            |
 | 6   | Doc updates                                                                                 | `docs/PATTERNS.md`, `docs/v2/PHASE_0.md`, `docs/v2/V2.md`, `server/shared/dotnet/README.md` | 1                            |
 | 7   | Rules adoption (§24.13.1 + tracking-doc allowlist) + SanitizedExceptionRender consolidation | rules.md + cross-deliverable Utilities/Auth/Auth.Outbound/Messaging.RabbitMq/AspNetCore     | 1                            |
@@ -94,7 +94,7 @@ Convergence map: 1 (2) → 1A (1) → 1B (1) → 1C (2) → 2 (2) → 3 (2) → 
 
 ## Kinds-of-misses log (per-step distillation)
 
-### Step 1 — D2.Shared.Logging (2 rounds)
+### Step 1 — DcsvIo.D2.Logging (2 rounds)
 
 3 R1 findings, all mechanical-hygiene, closed by Fixer R1, R2 clean:
 
@@ -119,7 +119,7 @@ Zero R1 findings. 42 LOG-OK / 8 NOT-LOGGED contract shipped clean. Implementer H
 
 §13.13 (Plan-vs-reality reconciliation) practiced TWICE within the step itself — empirical proof the predicate works as intended.
 
-### Step 2 — D2.Shared.Telemetry (2 rounds)
+### Step 2 — DcsvIo.D2.Telemetry (2 rounds)
 
 4 R1 findings (2 MEDIUM + 2 LOW), all closed by Fixer R1, R2 clean:
 
@@ -130,17 +130,17 @@ Zero R1 findings. 42 LOG-OK / 8 NOT-LOGGED contract shipped clean. Implementer H
 
 **Pattern**: 2nd consecutive instance of self-correcting regex-driven predicate evolution. §14.1 + §11.28 augmented; propagated to all subsequent steps + future deliverables.
 
-### Step 3 — D2.Shared.AspNetCore (2 rounds)
+### Step 3 — DcsvIo.D2.AspNetCore (2 rounds)
 
 1 R1 LOW finding (§11.28 × 2 — `"future cross-cutting middleware"`), closed by Fixer R1, R2 clean.
 
 **Pattern**: 3rd consecutive self-correcting cycle on §11.28. Root cause was EXECUTION-FIDELITY gap in Implementer's pre-flight grep (claimed 0 hits; original Step-2 regex actually DID match — `cross-cutting` is hyphenated single token). Step 3 R1 augmentation added `\b` word-boundary + 0-3 adjective tokens.
 
-**Cross-step consolidation completed**: InfrastructurePathMatcher promoted to public in D2.Shared.AspNetCore; both Logging + Telemetry internal duplicates DELETED; both consumers swapped; both per-lib path-matcher test files deleted (re-homed to AspNetCore tests). 12 cross-step file touches; per-step audit scope per §24.7 included them all; 0 consolidation-related findings.
+**Cross-step consolidation completed**: InfrastructurePathMatcher promoted to public in DcsvIo.D2.AspNetCore; both Logging + Telemetry internal duplicates DELETED; both consumers swapped; both per-lib path-matcher test files deleted (re-homed to AspNetCore tests). 12 cross-step file touches; per-step audit scope per §24.7 included them all; 0 consolidation-related findings.
 
 **8 §13.13 reconciliations** (highest count yet): SanitizedExceptionRender duplication (later resolved in Step 7), init→set on options, slnx alphabetical placement, per-lib test deletion, bypass middleware needing `GetEndpoint().RequestDelegate`, AddD2HealthChecks idempotency marker, SELF_CHECK_NAME hoist for SA1201, Kestrel ephemeral port for test stability.
 
-### Step 4 — D2.Shared.ServiceDefaults (2 rounds) — DELIVERABLE NAMESAKE SHIPPED
+### Step 4 — DcsvIo.D2.ServiceDefaults (2 rounds) — DELIVERABLE NAMESAKE SHIPPED
 
 1 R1 MEDIUM finding (§11.9 — README cited `docs/v2/PHASE_0.md` from KEEP doc), closed by Fixer R1, R2 clean.
 
@@ -168,7 +168,7 @@ DOCS-ONLY scope + thorough Plan modify-table + tracking-doc allowlist explicitly
 
 Zero R1 findings. **§24.13.1 self-validated immediately** — Implementer's pre-flight grep set surfaced 2 §7.14 violations on first walk; both closed pre-handoff.
 
-**Architectural-debt closure**: SanitizedExceptionRender drift had already happened (3-of-4 majority shape vs 1 divergent in messaging-rabbitmq). Consolidated to canonical at `D2.Shared.Utilities.Diagnostics` (public). Cross-deliverable touches: 5 deliverables affected (Utilities + Auth + Auth.Outbound + Messaging.RabbitMq + AspNetCore). Per §24.7 cross-step audit scope, all in scope; clean R1.
+**Architectural-debt closure**: SanitizedExceptionRender drift had already happened (3-of-4 majority shape vs 1 divergent in messaging-rabbitmq). Consolidated to canonical at `DcsvIo.D2.Utilities.Diagnostics` (public). Cross-deliverable touches: 5 deliverables affected (Utilities + Auth + Auth.Outbound + Messaging.RabbitMq + AspNetCore). Per §24.7 cross-step audit scope, all in scope; clean R1.
 
 3 §13.13 reconciliations: xmldoc cref FQN required by Roslyn; messaging consumer needed ZERO null-handling adjustments due to `string?`-typed `[LoggerMessage]` parameter backward-compat; utilities/README.md exceeds §11.21 300-line heuristic (pre-existing baseline + reconciliation deferral for future Utilities README split).
 

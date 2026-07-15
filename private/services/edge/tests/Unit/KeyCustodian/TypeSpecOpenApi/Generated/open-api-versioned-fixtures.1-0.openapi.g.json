@@ -1,0 +1,109 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "OpenApi Versioned Fixtures",
+    "version": "1.0"
+  },
+  "tags": [],
+  "paths": {
+    "/v1/openapi/report": {
+      "get": {
+        "operationId": "openApiReportFixture",
+        "description": "Fetch a report — present from v1; carries a tier so x-d2-tier is exercised per version.",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "The request has succeeded.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OpenApiReportFixtureOutput"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "input": {
+                    "$ref": "#/components/schemas/OpenApiReportFixtureInput"
+                  }
+                },
+                "required": [
+                  "input"
+                ]
+              }
+            }
+          }
+        },
+        "x-d2-scope": {
+          "mode": "any",
+          "scopes": [
+            "self.read"
+          ]
+        },
+        "x-d2-tier": "Standard"
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "OpenApiReportFixtureOutput": {
+        "type": "object",
+        "required": [
+          "body"
+        ],
+        "properties": {
+          "body": {
+            "type": "string",
+            "description": "The rendered report body."
+          }
+        },
+        "description": "Output of a report fixture fetch: the report body."
+      },
+      "OpenApiReportFixtureInput": {
+        "type": "object",
+        "required": [
+          "reportId"
+        ],
+        "properties": {
+          "reportId": {
+            "type": "string",
+            "description": "The report identifier."
+          }
+        },
+        "description": "Input for a report fixture fetch: the report identifier."
+      },
+      "OpenApiExportFixtureOutput": {
+        "type": "object",
+        "required": [
+          "location"
+        ],
+        "properties": {
+          "location": {
+            "type": "string",
+            "description": "The location of the exported report artifact."
+          }
+        },
+        "description": "Output of a report fixture export: the export location."
+      },
+      "OpenApiFixtureVersions": {
+        "type": "string",
+        "enum": [
+          "1.0",
+          "2.0"
+        ],
+        "description": "Versions enum driving the"
+      }
+    }
+  },
+  "x-d2-generated-by": {
+    "emitter": "@dcsv-io/d2-typespec-emitters",
+    "note": "x-d2-* policy extensions layered on the stock @typespec/openapi3 document. Manual edits will be lost on rebuild."
+  }
+}

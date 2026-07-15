@@ -1,0 +1,24 @@
+#nullable enable
+DcsvIo.D2.Handler.BaseHandler<TSelf, TInput, TOutput>
+DcsvIo.D2.Handler.BaseHandler<TSelf, TInput, TOutput>.BaseHandler(DcsvIo.D2.Handler.HandlerContext<TSelf!>! context) -> void
+DcsvIo.D2.Handler.BaseHandler<TSelf, TInput, TOutput>.Context.get -> DcsvIo.D2.Handler.Abstractions.IHandlerContext!
+DcsvIo.D2.Handler.BaseHandler<TSelf, TInput, TOutput>.RunCorePipelineAsync(TInput input, System.Threading.CancellationToken ct, DcsvIo.D2.Handler.Abstractions.HandlerOptions? options) -> System.Threading.Tasks.ValueTask<(DcsvIo.D2.Result.D2Result<TOutput?>! Result, System.Exception? CapturedException)>
+DcsvIo.D2.Handler.HandlerContext<T>
+DcsvIo.D2.Handler.HandlerContext<T>.HandlerContext(DcsvIo.D2.Context.Abstractions.IRequestContext! request, Microsoft.Extensions.Logging.ILogger<T>! logger) -> void
+DcsvIo.D2.Handler.HandlerContext<T>.Logger.get -> Microsoft.Extensions.Logging.ILogger!
+DcsvIo.D2.Handler.HandlerContext<T>.Request.get -> DcsvIo.D2.Context.Abstractions.IRequestContext!
+DcsvIo.D2.Handler.HandlerServiceCollectionExtensions
+DcsvIo.D2.Handler.HandlerServiceCollectionExtensions.extension(Microsoft.Extensions.DependencyInjection.IServiceCollection!)
+DcsvIo.D2.Handler.HandlerServiceCollectionExtensions.extension(Microsoft.Extensions.DependencyInjection.IServiceCollection!).AddD2Handler() -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
+DcsvIo.D2.Handler.HandlerTelemetry
+abstract DcsvIo.D2.Handler.BaseHandler<TSelf, TInput, TOutput>.ExecuteAsync(TInput input, System.Threading.CancellationToken ct) -> System.Threading.Tasks.ValueTask<DcsvIo.D2.Result.D2Result<TOutput?>!>
+const DcsvIo.D2.Handler.HandlerTelemetry.SourceName = "DcsvIo.D2.Handler" -> string!
+static DcsvIo.D2.Handler.HandlerServiceCollectionExtensions.AddD2Handler(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
+static readonly DcsvIo.D2.Handler.HandlerTelemetry.SR_ActivitySource -> System.Diagnostics.ActivitySource!
+static readonly DcsvIo.D2.Handler.HandlerTelemetry.SR_Duration -> System.Diagnostics.Metrics.Histogram<double>!
+static readonly DcsvIo.D2.Handler.HandlerTelemetry.SR_Failed -> System.Diagnostics.Metrics.Counter<long>!
+static readonly DcsvIo.D2.Handler.HandlerTelemetry.SR_Invoked -> System.Diagnostics.Metrics.Counter<long>!
+static readonly DcsvIo.D2.Handler.HandlerTelemetry.SR_Meter -> System.Diagnostics.Metrics.Meter!
+static readonly DcsvIo.D2.Handler.HandlerTelemetry.SR_Succeeded -> System.Diagnostics.Metrics.Counter<long>!
+virtual DcsvIo.D2.Handler.BaseHandler<TSelf, TInput, TOutput>.DefaultOptions.get -> DcsvIo.D2.Handler.Abstractions.HandlerOptions!
+virtual DcsvIo.D2.Handler.BaseHandler<TSelf, TInput, TOutput>.HandleAsync(TInput input, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken), DcsvIo.D2.Handler.Abstractions.HandlerOptions? options = null) -> System.Threading.Tasks.ValueTask<DcsvIo.D2.Result.D2Result<TOutput?>!>

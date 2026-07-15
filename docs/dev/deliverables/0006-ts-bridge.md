@@ -18,12 +18,12 @@ Second of two pre-Phase-1 deliverables locked in by commit `0eeb8e81` (per `docs
 **Architectural shape locked by V2.md §5.8**:
 
 - BFF zero-privilege boundary (BFF→Edge only; internal token; propagated context envelope)
-- 13 Tier-1 packages (drops `cache-redis` / `messaging-rabbitmq` / `cache-memory` / per-service backend gRPC clients / all v1 middleware packages / `@d2/handler` / `@d2/di` / `@d2/result-extensions` / all `@d2/repo-*-pg`)
+- 13 Tier-1 packages (drops `cache-redis` / `messaging-rabbitmq` / `cache-memory` / per-service backend gRPC clients / all v1 middleware packages / `@dcsv-io/d2-handler` / `@dcsv-io/d2-di` / `@dcsv-io/d2-result-extensions` / all `@dcsv-io/d2-repo-*-pg`)
 - Sibling Node scripts at `tools/ts-codegen/` (NOT extending Roslyn)
 - Vitest fixture-driven cross-language parity tests
 - Paraglide for i18n (no TS-side TK constants — Paraglide IS that)
 
-**Important constraint**: `server/web/` is broken-by-design and stays that way past 0006 — its `package.json` declares 16 `@d2/*` `workspace:*` deps that don't resolve, and `pnpm-workspace.yaml` deliberately omits `server/web` (per Step 1 §13.13 reconciliation #1) so workspace-level installs succeed. The BFF rewire that restores `server/web` is deferred to a future SvelteKit-focused deliverable per the scope reframe section below.
+**Important constraint**: `server/web/` is broken-by-design and stays that way past 0006 — its `package.json` declares 16 `@dcsv-io/d2-*` `workspace:*` deps that don't resolve, and `pnpm-workspace.yaml` deliberately omits `server/web` (per Step 1 §13.13 reconciliation #1) so workspace-level installs succeed. The BFF rewire that restores `server/web` is deferred to a future SvelteKit-focused deliverable per the scope reframe section below.
 
 ## Step plan
 
@@ -46,10 +46,10 @@ All 8 substantive steps converged. Deliverable substantively complete; Final-rev
 
 **Shipped surface**:
 
-- 13 of 13 Tier-1 TS packages (`@d2/{result,utilities,resilience,i18n,logging,telemetry,service-defaults,protos,auth-context-abstractions,request-context-abstractions,auth-abstractions,headers,grpc-client}`)
-- 4 cross-transport TS header catalogs (`@d2/headers-{common,http,amqp,grpc}`)
-- 1 cross-language parity test package (`@d2/contract-tests` — private; 6 catalogs / 21 fixtures / 726 assertions)
-- All 4 .NET catalog csprojs (`D2.Shared.Headers.{Common,Http,Amqp,Grpc}`)
+- 13 of 13 Tier-1 TS packages (`@dcsv-io/d2-{result,utilities,resilience,i18n,logging,telemetry,service-defaults,protos,auth-context-abstractions,request-context-abstractions,auth-abstractions,headers,grpc-client}`)
+- 4 cross-transport TS header catalogs (`@dcsv-io/d2-headers-{common,http,amqp,grpc}`)
+- 1 cross-language parity test package (`@dcsv-io/d2-contract-tests` — private; 6 catalogs / 21 fixtures / 726 assertions)
+- All 4 .NET catalog csprojs (`DcsvIo.D2.Headers.{Common,Http,Amqp,Grpc}`)
 - All 10 .NET source-gens deduplicated via `source-gen-shared/` shared dir + Compile Include (5 shared files: 2 polyfills + EmitDiagnostic + LoadResult + SpecFile)
 - 3 NEW spec catalogs added by Step 3 NEW (`contracts/{headers,jwt-claims,in-process-keys}/`)
 - All .NET SourceGen output now committed to `<csproj-dir>/Generated/` (DX consistency with TS `.g.ts` committed surface)
@@ -90,11 +90,11 @@ The original 0006 plan included a Sub-concern E "BFF rewire" — replace 16 brok
 
 - `server/web/` stays broken-by-design (16 `workspace:*` deps unmatched + missing 4 new headers catalogs)
 - `pnpm-workspace.yaml` stays WITHOUT `server/web` (Step 1 §13.13 reconciliation #1 carryover task carries forward)
-- 5 server-side guards from `@d2/headers` not yet wired into hooks.server.ts
+- 5 server-side guards from `@dcsv-io/d2-headers` not yet wired into hooks.server.ts
 - Browser-side `authClient` not yet built (`src/lib/client/auth/`)
 - Paraglide-translation-pattern decision (v1 had a gateway-translation middleware; v2 needs to pick: replicate v1, pass-through-key + browser translates, or codegen-emit-switch-table from spec)
 - Faro init verification at `src/lib/client/telemetry/faro.ts` post-Step-1-cleanup (pending)
-- `@d2/grpc-client` wiring into hooks.server.ts for SSR loaders calling Edge
+- `@dcsv-io/d2-grpc-client` wiring into hooks.server.ts for SSR loaders calling Edge
 - gRPC channel teardown signal (`process.on('SIGTERM', closeChannel)` or SvelteKit hook)
 
 **Sequence trigger**: future BFF rewire deliverable should be sequenced AFTER (a) Edge exists, (b) Paraglide-translation-pattern decision is made, (c) we're focused on SvelteKit DX.
@@ -137,21 +137,21 @@ The original 0006 plan included a Sub-concern E "BFF rewire" — replace 16 brok
 **Foundation packages** (8 of 13 — zero/low external dep):
 | Package | Mirrors | Notes |
 |---|---|---|
-| `@d2/result` | `D2.Shared.Result` | D2Result port + Combine overloads |
-| `@d2/utilities` | `D2.Shared.Utilities` | Falsey/Truthy + TryParseTruthyNull-style helpers |
-| `@d2/resilience` | `D2.Shared.Resilience` | Polly-equivalent retry/breaker (thin wrapper acceptable) |
-| `@d2/i18n` | `D2.Shared.I18n` | Paraglide consumer surface; reads `contracts/messages/{locale}.json` |
-| `@d2/logging` | `D2.Shared.Logging` | Pino + ILogger interface mirroring .NET shape |
-| `@d2/telemetry` | `D2.Shared.Telemetry` | OTLP setup helper |
-| `@d2/service-defaults` | `D2.Shared.ServiceDefaults` | One-call bootstrap |
-| `@d2/protos` | `D2.Shared.Protos` | Buf-generated proto types + gRPC stubs (own `pnpm generate` workflow) |
+| `@dcsv-io/d2-result` | `DcsvIo.D2.Result` | D2Result port + Combine overloads |
+| `@dcsv-io/d2-utilities` | `DcsvIo.D2.Utilities` | Falsey/Truthy + TryParseTruthyNull-style helpers |
+| `@dcsv-io/d2-resilience` | `DcsvIo.D2.Resilience` | Polly-equivalent retry/breaker (thin wrapper acceptable) |
+| `@dcsv-io/d2-i18n` | `DcsvIo.D2.I18n` | Paraglide consumer surface; reads `contracts/messages/{locale}.json` |
+| `@dcsv-io/d2-logging` | `DcsvIo.D2.Logging` | Pino + ILogger interface mirroring .NET shape |
+| `@dcsv-io/d2-telemetry` | `DcsvIo.D2.Telemetry` | OTLP setup helper |
+| `@dcsv-io/d2-service-defaults` | `DcsvIo.D2.ServiceDefaults` | One-call bootstrap |
+| `@dcsv-io/d2-protos` | `DcsvIo.D2.Protos` | Buf-generated proto types + gRPC stubs (own `pnpm generate` workflow) |
 
 **Codegen-emitted abstractions** (3 of 13):
 | Package | Emitted from | Mirrors |
 |---|---|---|
-| `@d2/auth-context-abstractions` | `contracts/auth-context/IAuthContext.spec.json` | `D2.Shared.AuthContext.Abstractions` |
-| `@d2/request-context-abstractions` | `contracts/request-context/IRequestContext.spec.json` | `D2.Shared.RequestContext.Abstractions` (extends IAuthContext) — includes 1:1 `PropagatedContextSerializer` class with `Serialize`/`Deserialize` |
-| `@d2/auth-abstractions` | `contracts/auth-scopes/scopes.spec.json` + `contracts/auth-error-codes/auth-error-codes.spec.json` | `D2.Shared.Auth.Abstractions` + `D2.Shared.Auth.Errors.{AuthErrorCodes,AuthFailures}` consolidated (matches .NET assembly placement) |
+| `@dcsv-io/d2-auth-context-abstractions` | `contracts/auth-context/IAuthContext.spec.json` | `DcsvIo.D2.AuthContext.Abstractions` |
+| `@dcsv-io/d2-request-context-abstractions` | `contracts/request-context/IRequestContext.spec.json` | `DcsvIo.D2.RequestContext.Abstractions` (extends IAuthContext) — includes 1:1 `PropagatedContextSerializer` class with `Serialize`/`Deserialize` |
+| `@dcsv-io/d2-auth-abstractions` | `contracts/auth-scopes/scopes.spec.json` + `contracts/auth-error-codes/auth-error-codes.spec.json` | `DcsvIo.D2.Auth.Abstractions` + `DcsvIo.D2.Auth.Errors.{AuthErrorCodes,AuthFailures}` consolidated (matches .NET assembly placement) |
 
 **Codegen runner** (`tools/ts-codegen/`):
 
@@ -163,7 +163,7 @@ The original 0006 plan included a Sub-concern E "BFF rewire" — replace 16 brok
   - `auth-failures-emit.ts`
 - Each script reads spec.json, emits target `.g.ts` file with same diagnostic discipline as .NET SourceGens (validation + error reporting)
 - Top-level `pnpm codegen` invokes all scripts; per-package `pnpm generate` invokes only its own
-- `@d2/protos` codegen via Buf — separate from `tools/ts-codegen/` per #9 decision
+- `@dcsv-io/d2-protos` codegen via Buf — separate from `tools/ts-codegen/` per #9 decision
 
 ### Step 5 — Edge boundary packages (final 2 of 13 Tier-1)
 
@@ -171,8 +171,8 @@ The original 0006 plan included a Sub-concern E "BFF rewire" — replace 16 brok
 
 | Package           | Surface                                                                                                                                                                                                                                                                                                           |
 | ----------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `@d2/headers`     | `X-D2-*` constants (mirrors `D2.Shared.Auth.Abstractions.RequestHeaders`) + 5 server-side guards: `requireAuth` / `requireOrg` / `requireRole` / `requireScope` / `redirectIfAuthenticated`. Strict-mode rejections (missing `X-D2-Trace-Id` etc.) return RFC 7807 ProblemDetails (matches Edge's response shape) |
-| `@d2/grpc-client` | Singleton-per-process channel to Edge via `getChannel()` accessor (matches .NET `services.AddGrpcClient<T>()` pattern). Internal-token interceptor: KeyCustodian-issued JWT, audience `d2.edge`, 15-min TTL, module-singleton cache, refresh-on-401                                                               |
+| `@dcsv-io/d2-headers`     | `X-D2-*` constants (mirrors `DcsvIo.D2.Auth.Abstractions.RequestHeaders`) + 5 server-side guards: `requireAuth` / `requireOrg` / `requireRole` / `requireScope` / `redirectIfAuthenticated`. Strict-mode rejections (missing `X-D2-Trace-Id` etc.) return RFC 7807 ProblemDetails (matches Edge's response shape) |
+| `@dcsv-io/d2-grpc-client` | Singleton-per-process channel to Edge via `getChannel()` accessor (matches .NET `services.AddGrpcClient<T>()` pattern). Internal-token interceptor: KeyCustodian-issued JWT, audience `d2.edge`, 15-min TTL, module-singleton cache, refresh-on-401                                                               |
 
 **Test coverage required** (per §1.1): every public path on first pass — guards (happy + each rejection branch), channel accessor, interceptor (happy + 401-refresh + propagation).
 
@@ -190,8 +190,8 @@ The original 0006 plan included a Sub-concern E "BFF rewire" — replace 16 brok
 
 **BFF rewire** (`server/web/`):
 
-- `src/hooks.server.ts` — thin handle composing `@d2/headers`-based session reader (no proxying, no privileged calls)
-- `src/lib/server/auth/` — install 5 server-side guards (re-exported from `@d2/headers`)
+- `src/hooks.server.ts` — thin handle composing `@dcsv-io/d2-headers`-based session reader (no proxying, no privileged calls)
+- `src/lib/server/auth/` — install 5 server-side guards (re-exported from `@dcsv-io/d2-headers`)
 - `src/lib/client/auth/` — install browser-side `authClient` for direct Edge calls (auth state mutations bypass BFF entirely per V2.md §5.8)
 - `src/lib/client/telemetry/faro.ts` — verify Faro init survives Step 1 cleanup; test against running Alloy
 - `package.json` — replace 16 broken `workspace:*` deps with the 13 actually-shipped packages (drops `auth-bff-client`, `cache-memory`, `cache-redis`, `di`, `geo-client`, `handler`, `idempotency`, `interfaces`, `ratelimit`, `request-enrichment` per V2.md §5.8 drops list)
@@ -208,16 +208,16 @@ The original 0006 plan included a Sub-concern E "BFF rewire" — replace 16 brok
 | Branch                                   | `n/ts-bridge` from `nova` @ `6115584e`                                                                                                                                                       |
 | Internal token                           | KeyCustodian-issued JWT, audience `d2.edge`, 15-min TTL, BFF module-singleton cache, refresh-on-401                                                                                          |
 | `PropagatedContextSerializer` shape      | 1:1 type-named class with `Serialize`/`Deserialize` methods                                                                                                                                  |
-| Codegen runner                           | Per-topic `tsx` scripts at `tools/ts-codegen/`; `@d2/protos` separate Buf workflow                                                                                                           |
-| `@d2/grpc-client` channel model          | Singleton-per-process via `getChannel()` accessor (matches .NET)                                                                                                                             |
-| `@d2/headers` strict-mode failure        | RFC 7807 ProblemDetails (matches Edge)                                                                                                                                                       |
+| Codegen runner                           | Per-topic `tsx` scripts at `tools/ts-codegen/`; `@dcsv-io/d2-protos` separate Buf workflow                                                                                                           |
+| `@dcsv-io/d2-grpc-client` channel model          | Singleton-per-process via `getChannel()` accessor (matches .NET)                                                                                                                             |
+| `@dcsv-io/d2-headers` strict-mode failure        | RFC 7807 ProblemDetails (matches Edge)                                                                                                                                                       |
 | Toolchain pinning                        | v1 versions verbatim (table below); `packageManager: "pnpm@10.15.0"` for Corepack auto-pin; pnpm `onlyBuiltDependencies: ["@bufbuild/buf"]`                                                  |
 | `tsconfig.base.json` location            | `server/shared/typescript/tsconfig.base.json`; `server/web/` does NOT extend it (keeps SvelteKit's `.svelte-kit/tsconfig.json` extends-chain clean)                                          |
 | Publish posture                          | 100% internal `private: true`; broader OSS discussion deferred — revisit per-package if/when individual libs graduate                                                                        |
-| `@d2/protos` codegen                     | Own `pnpm generate` script via Buf (separate from `tools/ts-codegen/`)                                                                                                                       |
-| AuthErrorCodes/AuthFailures organization | Both emitted into `@d2/auth-abstractions` (matches .NET `D2.Shared.Auth.Errors` placement)                                                                                                   |
-| `@d2/contract-tests` packaging           | `private: true` workspace package (NOT exported); not part of 13 Tier-1 count                                                                                                                |
-| `@d2/faro-browser` packaging             | DEFERRED — stays inline in `server/web/src/lib/client/telemetry/`; revisit if 2nd Node frontend appears                                                                                      |
+| `@dcsv-io/d2-protos` codegen                     | Own `pnpm generate` script via Buf (separate from `tools/ts-codegen/`)                                                                                                                       |
+| AuthErrorCodes/AuthFailures organization | Both emitted into `@dcsv-io/d2-auth-abstractions` (matches .NET `DcsvIo.D2.Auth.Errors` placement)                                                                                                   |
+| `@dcsv-io/d2-contract-tests` packaging           | `private: true` workspace package (NOT exported); not part of 13 Tier-1 count                                                                                                                |
+| `@dcsv-io/d2-faro-browser` packaging             | DEFERRED — stays inline in `server/web/src/lib/client/telemetry/`; revisit if 2nd Node frontend appears                                                                                      |
 | LGTM coupling                            | None — .NET emits OTLP to Alloy gateway; Faro emits OTLP-over-HTTP; vendor-swap-able                                                                                                         |
 | Cross-language parity testing            | Vitest fixture-driven; `dotnet test --filter Category=ContractFixtures` emits JSON; JSON-RPC child process for round-trip                                                                    |
 | i18n                                     | Paraglide 2.x — no TS-side TK constants; both .NET TK SourceGen + Paraglide consume `contracts/messages/{locale}.json`                                                                       |

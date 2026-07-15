@@ -25,23 +25,25 @@ mkdir -p "$LOGDIR"
 echo "gates: logs -> $LOGDIR"
 rc=0
 
-echo "gates: [build] dotnet build server/D2.slnx"
-dotnet build server/D2.slnx > "$LOGDIR/build.log" 2>&1 || rc=1
+echo "gates: [build] dotnet build D2.slnx"
+dotnet build D2.slnx > "$LOGDIR/build.log" 2>&1 || rc=1
 WARN=$(grep -cE ': warning ' "$LOGDIR/build.log" || true)
 ERR=$(grep -cE ': error ' "$LOGDIR/build.log" || true)
 echo "gates:   build warnings=$WARN errors=$ERR (log: $LOGDIR/build.log)"
 { [ "$WARN" != 0 ] || [ "$ERR" != 0 ]; } && rc=1
 
-echo "gates: [inspect] jb inspectcode server/D2.slnx --settings=server/D2.sln.DotSettings --severity=WARNING --no-build"
-jb inspectcode server/D2.slnx --settings=server/D2.sln.DotSettings \
+# Requires JetBrains.ReSharper.GlobalTools ≥ 2026.1.x for net10 BCL resolution
+# (2025.3.x emits mass false "Cannot resolve Int128/Exception" noise).
+echo "gates: [inspect] jb inspectcode D2.slnx --settings=D2.sln.DotSettings --severity=WARNING --no-build"
+jb inspectcode D2.slnx --settings=D2.sln.DotSettings \
    --severity=WARNING --format=Text --no-build \
    --output="$LOGDIR/inspect.log" > "$LOGDIR/inspect.stdout" 2>&1 || rc=1
 
-# Single source of truth: tools/scripts/count-inspectcode-findings.sh
+# Single source of truth: private/tools/scripts/count-inspectcode-findings.sh
 # (local zero-warning gate; docs/COMMANDS.md cites the same script;
-# identity pin: tools/scripts/tests/count-inspectcode-findings.test.mjs).
+# identity pin: private/tools/scripts/tests/count-inspectcode-findings.test.mjs).
 # Not a PR CI job — inspectcode stays local-only by design.
-ICOUNT=$(bash "$ROOT/tools/scripts/count-inspectcode-findings.sh" "$LOGDIR/inspect.log")
+ICOUNT=$(bash "$ROOT/private/tools/scripts/count-inspectcode-findings.sh" "$LOGDIR/inspect.log")
 echo "gates:   inspectcode finding-lines=$ICOUNT (log: $LOGDIR/inspect.log)"
 if [ "$ICOUNT" != 0 ]; then
   # Dump findings on non-zero so the failure is diagnosable (shared script --fail
@@ -70,8 +72,8 @@ run_tests() {
   fi
 }
 
-run_tests server/services/edge/tests/D2.Edge.Tests.csproj D2.Edge.Tests
-run_tests server/shared/dotnet/tests/D2.Shared.Tests.csproj D2.Shared.Tests
+run_tests private/services/edge/tests/DcsvIo.D2.Private.Edge.Tests.csproj DcsvIo.D2.Private.Edge.Tests
+run_tests public/packages/dotnet/tests/DcsvIo.D2.Tests.csproj DcsvIo.D2.Tests
 
 if [ "$RUN_TS" = 1 ]; then
   echo "gates: [test-ts] TS package suites (pnpm -r test)"

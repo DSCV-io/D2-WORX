@@ -1,7 +1,13 @@
 # =============================================================================
-# Dockerfile.sveltekit — SvelteKit Web Client (adapter-node)
-# Build context: repo root (../)
+# Dockerfile.web — SvelteKit Web Client (adapter-node)
+# Build context: repo root
 # Targets: dev (Vite dev server), prod (adapter-node build)
+#
+# Dual package roots:
+#   public/packages/typescript — shared @dcsv-io/d2-* workspace packages
+#   private/services/web       — SvelteKit BFF app (package name: d2-sveltekit)
+# Dual contracts (Paraglide / i18n message catalogs):
+#   public/contracts + private/contracts
 # =============================================================================
 
 # --- Base: Node.js with pnpm enabled via corepack ---
@@ -14,26 +20,25 @@ RUN corepack enable && corepack prepare pnpm@10.30.3 --activate
 FROM base AS deps
 WORKDIR /app
 
-# Copy workspace root config files
+# Workspace root config
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc ./
 
-# Copy all Node.js packages (SvelteKit depends on @d2/* workspace packages)
-COPY backends/node/ backends/node/
+# Public TS packages + private web service (workspace globs)
+COPY public/packages/typescript/ public/packages/typescript/
+COPY private/services/web/ private/services/web/
 
-# Copy SvelteKit app (full source — Vite needs everything for build)
-COPY clients/web/ clients/web/
-
-# Copy contracts (Paraglide message translations compiled into the app)
-COPY contracts/ contracts/
+# Dual contracts (Paraglide message translations compiled into the app)
+COPY public/contracts/ public/contracts/
+COPY private/contracts/ private/contracts/
 
 # Install all dependencies (devDeps needed for Vite build)
 RUN pnpm install --frozen-lockfile
 
-# --- Build: compile @d2/* deps then build SvelteKit with adapter-node ---
+# --- Build: compile @dcsv-io/d2-* deps then build SvelteKit with adapter-node ---
 FROM deps AS build
 WORKDIR /app
 
-# Build all workspace dependencies that SvelteKit imports, then build the app itself
+# Build workspace dependencies the web app imports, then the app itself
 RUN pnpm --filter d2-sveltekit... run build
 
 # --- Dev stage: Vite dev server with HMR ---
@@ -66,11 +71,11 @@ ENV PORT=${SVELTEKIT_PORT}
 EXPOSE ${SVELTEKIT_PORT}
 
 # Copy adapter-node build output (self-contained server bundle)
-COPY --from=build /app/clients/web/build ./build
+COPY --from=build /app/private/services/web/build ./build
 
 # Copy package.json for metadata and node_modules for server-side runtime deps
 # (adapter-node externalizes some deps — they must be resolvable at runtime)
-COPY --from=build /app/clients/web/package.json .
+COPY --from=build /app/private/services/web/package.json .
 COPY --from=build /app/node_modules ./node_modules
 
 USER node

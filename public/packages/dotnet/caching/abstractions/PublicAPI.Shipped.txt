@@ -1,0 +1,49 @@
+#nullable enable
+DcsvIo.D2.Caching.ICacheAtomic
+DcsvIo.D2.Caching.ICacheAtomic.AcquireLockAsync(string! key, string! lockId, System.TimeSpan expiration, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<DcsvIo.D2.Result.D2Result<bool>!>
+DcsvIo.D2.Caching.ICacheAtomic.IncrementAsync(string! key, long amount = 1, System.TimeSpan? expiration = null, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<DcsvIo.D2.Result.D2Result<long>!>
+DcsvIo.D2.Caching.ICacheAtomic.ReleaseLockAsync(string! key, string! lockId, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<DcsvIo.D2.Result.D2Result!>
+DcsvIo.D2.Caching.ICacheAtomic.SetNxAsync<T>(string! key, T value, System.TimeSpan? expiration = null, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<DcsvIo.D2.Result.D2Result<bool>!>
+DcsvIo.D2.Caching.ICacheBasic
+DcsvIo.D2.Caching.ICacheBasic.ExistsAsync(string! key, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<DcsvIo.D2.Result.D2Result<bool>!>
+DcsvIo.D2.Caching.ICacheBasic.GetAsync<T>(string! key, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<DcsvIo.D2.Result.D2Result<T?>!>
+DcsvIo.D2.Caching.ICacheBasic.GetManyAsync<T>(System.Collections.Generic.IReadOnlyCollection<string!>! keys, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<DcsvIo.D2.Result.D2Result<System.Collections.Generic.IReadOnlyDictionary<string!, T?>!>!>
+DcsvIo.D2.Caching.ICacheBasic.GetTtlAsync(string! key, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<DcsvIo.D2.Result.D2Result<System.TimeSpan?>!>
+DcsvIo.D2.Caching.ICacheBasic.RemoveAsync(string! key, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<DcsvIo.D2.Result.D2Result!>
+DcsvIo.D2.Caching.ICacheBasic.RemoveManyAsync(System.Collections.Generic.IReadOnlyCollection<string!>! keys, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<DcsvIo.D2.Result.D2Result!>
+DcsvIo.D2.Caching.ICacheBasic.SetAsync<T>(string! key, T value, System.TimeSpan? expiration = null, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<DcsvIo.D2.Result.D2Result!>
+DcsvIo.D2.Caching.ICacheBasic.SetManyAsync<T>(System.Collections.Generic.IReadOnlyDictionary<string!, T>! entries, System.TimeSpan? expiration = null, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<DcsvIo.D2.Result.D2Result!>
+DcsvIo.D2.Caching.ICacheBroadcast
+DcsvIo.D2.Caching.ICacheBroadcast.RemoveAndBroadcastAsync(string! key, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<DcsvIo.D2.Result.D2Result!>
+DcsvIo.D2.Caching.ICacheBroadcast.RemoveManyAndBroadcastAsync(System.Collections.Generic.IReadOnlyCollection<string!>! keys, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<DcsvIo.D2.Result.D2Result!>
+DcsvIo.D2.Caching.ICacheBroadcast.SetAndBroadcastAsync<T>(string! key, T value, System.TimeSpan? expiration = null, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<DcsvIo.D2.Result.D2Result!>
+DcsvIo.D2.Caching.ICacheBroadcast.SetManyAndBroadcastAsync<T>(System.Collections.Generic.IReadOnlyDictionary<string!, T>! entries, System.TimeSpan? expiration = null, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<DcsvIo.D2.Result.D2Result!>
+DcsvIo.D2.Caching.ICacheInvalidationBackplane
+DcsvIo.D2.Caching.ICacheInvalidationBackplane.PublishInvalidationAsync(string! key, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<DcsvIo.D2.Result.D2Result!>
+DcsvIo.D2.Caching.ICacheInvalidationBackplane.PublishInvalidationManyAsync(System.Collections.Generic.IReadOnlyCollection<string!>! keys, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<DcsvIo.D2.Result.D2Result!>
+DcsvIo.D2.Caching.ICacheInvalidationBackplane.Subscribe(System.Func<string!, System.Threading.CancellationToken, System.Threading.Tasks.ValueTask>! handler) -> System.IAsyncDisposable!
+DcsvIo.D2.Caching.ICacheSerializer
+DcsvIo.D2.Caching.ICacheSerializer.ContentType.get -> string!
+DcsvIo.D2.Caching.ICacheSerializer.Deserialize<T>(byte[]! bytes) -> DcsvIo.D2.Result.D2Result<T>!
+DcsvIo.D2.Caching.ICacheSerializer.Serialize<T>(T value) -> DcsvIo.D2.Result.D2Result<byte[]!>!
+DcsvIo.D2.Caching.ICacheSet
+DcsvIo.D2.Caching.ICacheSet.SetAddAsync(string! key, string! member, System.TimeSpan? expiration = null, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<DcsvIo.D2.Result.D2Result<bool>!>
+DcsvIo.D2.Caching.ICacheSet.SetCardinalityAsync(string! key, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<DcsvIo.D2.Result.D2Result<long>!>
+DcsvIo.D2.Caching.ICacheSet.SetContainsAsync(string! key, string! member, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<DcsvIo.D2.Result.D2Result<bool>!>
+DcsvIo.D2.Caching.ICacheSet.SetRemoveAsync(string! key, string! member, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<DcsvIo.D2.Result.D2Result<bool>!>
+DcsvIo.D2.Caching.IDistributedCache
+DcsvIo.D2.Caching.ILocalCache
+DcsvIo.D2.Caching.ITieredCache
+DcsvIo.D2.Caching.InputFailures
+DcsvIo.D2.Caching.LocalCacheOptions
+DcsvIo.D2.Caching.LocalCacheOptions.DefaultExpiration.get -> System.TimeSpan
+DcsvIo.D2.Caching.LocalCacheOptions.DefaultExpiration.set -> void
+DcsvIo.D2.Caching.LocalCacheOptions.KeyPrefix.get -> string!
+DcsvIo.D2.Caching.LocalCacheOptions.KeyPrefix.set -> void
+DcsvIo.D2.Caching.LocalCacheOptions.LocalCacheOptions() -> void
+DcsvIo.D2.Caching.LocalCacheOptions.MaxEntries.get -> int
+DcsvIo.D2.Caching.LocalCacheOptions.MaxEntries.set -> void
+static DcsvIo.D2.Caching.InputFailures.Invalid(string! paramName) -> DcsvIo.D2.Result.D2Result!
+static DcsvIo.D2.Caching.InputFailures.Invalid<T>(string! paramName) -> DcsvIo.D2.Result.D2Result<T>!
+static DcsvIo.D2.Caching.InputFailures.Required(string! paramName) -> DcsvIo.D2.Result.D2Result!
+static DcsvIo.D2.Caching.InputFailures.Required<T>(string! paramName) -> DcsvIo.D2.Result.D2Result<T>!

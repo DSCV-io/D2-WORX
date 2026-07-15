@@ -1,0 +1,87 @@
+<!--
+Copyright (c) DCSV. Licensed under the Apache License, Version 2.0.
+-->
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>DcsvIo.D2.ErrorCodes.Registry</RootNamespace>
+
+    <!-- Emit the generator's output (ErrorCodeRegistry.g.cs) to
+         <project-dir>/Generated/. The directory is tracked in git so PR
+         reviewers see codegen diffs without a local build. -->
+    <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
+    <CompilerGeneratedFilesOutputPath>Generated</CompilerGeneratedFilesOutputPath>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!--
+      The SourceGen pipeline feeds the in-memory compiler with the same
+      content that lands on disk under Generated/. Without this Remove, the
+      SDK-default <Compile Include="**/*.cs" /> glob picks up the on-disk
+      copy and the build fails with duplicate-definition errors (CS0101 /
+      CS0111).
+    -->
+    <Compile Remove="$(CompilerGeneratedFilesOutputPath)\**\*.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!--
+      DcsvIo.D2.I18n.Abstractions provides TKMessage — the type of the
+      UserMessageKey field on ErrorCodeInfo. The TKMessage constructor is
+      internal; the Abstractions csproj grants this assembly access via
+      InternalsVisibleTo (same pattern as DcsvIo.D2.I18n.Keys).
+    -->
+    <ProjectReference Include="..\..\i18n\keys\DcsvIo.D2.I18n.Keys.csproj" />
+    <!--
+      DcsvIo.D2.ErrorCodes.Category provides the relocated ErrorCategory enum
+      (+ ErrorCategoryWire + ErrorCategoryJsonConverter). The generated
+      ErrorCodeRegistry.g.cs references ErrorCategory for the Category field on
+      ErrorCodeInfo via a `using DcsvIo.D2.ErrorCodes.Category;` — this is a
+      runtime reference so the enum flows transitively to registry consumers.
+    -->
+    <ProjectReference Include="..\category\DcsvIo.D2.ErrorCodes.Category.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!--
+      The registry generator reads all *-error-codes.spec.json files and
+      emits the merged ErrorCodeRegistry.g.cs into this assembly. Referenced
+      as a Roslyn analyzer (no runtime dll dependency).
+    -->
+    <ProjectReference
+      Include="..\registry-source-gen\DcsvIo.D2.ErrorCodes.Registry.SourceGen.csproj"
+      OutputItemType="Analyzer"
+      ReferenceOutputAssembly="false" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!--
+      Surface ALL error-code specs to the generator: the generic spec plus
+      every per-domain spec. The glob pattern matches both
+      contracts/error-codes/error-codes.spec.json and
+      contracts/<domain>-error-codes/<domain>-error-codes.spec.json.
+    -->
+    <AdditionalFiles Include="$(D2PublicContractsRoot)error-codes\error-codes.spec.json" />
+    <AdditionalFiles Include="$(D2PublicContractsRoot)**\*-error-codes.spec.json" />
+    <!--
+      The error-category spec defines the closed ErrorCategory set. The
+      registry generator cross-checks every code's `category` against this set
+      (D2ERC007) — a code referencing a category that is not a member of the
+      relocated enum would otherwise emit a reference to a non-existent enum
+      member and fail to compile with an opaque error.
+    -->
+    <AdditionalFiles Include="$(D2PublicContractsRoot)error-category\error-category.spec.json" />
+  </ItemGroup>
+
+  <!-- Publish metadata (per-package semver + NuGet identity). -->
+  <PropertyGroup>
+    <Version>0.1.0</Version>
+    <PackageId>DcsvIo.D2.ErrorCodes.Registry</PackageId>
+    <Description>Merged cross-catalog error-code registry for D2 — a frozen code-to-metadata lookup aggregating every error-code spec.</Description>
+    <IsPackable>true</IsPackable>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+</Project>

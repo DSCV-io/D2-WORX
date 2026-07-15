@@ -1,0 +1,21 @@
+#nullable enable
+DcsvIo.D2.EntityFrameworkCore.Postgres.AdvisoryLockMigrator<TContext>
+DcsvIo.D2.EntityFrameworkCore.Postgres.AdvisoryLockMigrator<TContext>.AdvisoryLockMigrator(Microsoft.Extensions.DependencyInjection.IServiceScopeFactory! scopeFactory, string! connectionString, long migratorLockKey, Microsoft.Extensions.Logging.ILogger<DcsvIo.D2.EntityFrameworkCore.Postgres.AdvisoryLockMigrator<TContext!>!>! logger) -> void
+DcsvIo.D2.EntityFrameworkCore.Postgres.AdvisoryLockMigrator<TContext>.StartAsync(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task!
+DcsvIo.D2.EntityFrameworkCore.Postgres.AdvisoryLockMigrator<TContext>.StopAsync(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task!
+DcsvIo.D2.EntityFrameworkCore.Postgres.DesignTimeDbContextFactoryBase<TContext>
+DcsvIo.D2.EntityFrameworkCore.Postgres.DesignTimeDbContextFactoryBase<TContext>.CreateDbContext(string![]! args) -> TContext!
+DcsvIo.D2.EntityFrameworkCore.Postgres.DesignTimeDbContextFactoryBase<TContext>.DesignTimeDbContextFactoryBase() -> void
+DcsvIo.D2.EntityFrameworkCore.Postgres.NpgsqlContextDefaults
+DcsvIo.D2.EntityFrameworkCore.Postgres.NpgsqlContextDefaults.extension(Microsoft.EntityFrameworkCore.DbContextOptionsBuilder!)
+DcsvIo.D2.EntityFrameworkCore.Postgres.NpgsqlContextDefaults.extension(Microsoft.EntityFrameworkCore.DbContextOptionsBuilder!).ApplyD2NpgsqlDefaults(string! connectionString, int commandTimeoutSeconds, string! migrationsAssemblyName) -> Microsoft.EntityFrameworkCore.DbContextOptionsBuilder!
+DcsvIo.D2.EntityFrameworkCore.Postgres.PgAdvisoryLock
+DcsvIo.D2.EntityFrameworkCore.Postgres.PgAdvisoryLock.DisposeAsync() -> System.Threading.Tasks.ValueTask
+DcsvIo.D2.EntityFrameworkCore.Postgres.PgAdvisoryLock.IsHeld.get -> bool
+abstract DcsvIo.D2.EntityFrameworkCore.Postgres.DesignTimeDbContextFactoryBase<TContext>.ConnectionStringEnvVar.get -> string!
+abstract DcsvIo.D2.EntityFrameworkCore.Postgres.DesignTimeDbContextFactoryBase<TContext>.CreateContext(Microsoft.EntityFrameworkCore.DbContextOptions<TContext!>! options) -> TContext!
+abstract DcsvIo.D2.EntityFrameworkCore.Postgres.DesignTimeDbContextFactoryBase<TContext>.MigrationsAssemblyName.get -> string!
+static DcsvIo.D2.EntityFrameworkCore.Postgres.NpgsqlContextDefaults.ApplyD2NpgsqlDefaults(this Microsoft.EntityFrameworkCore.DbContextOptionsBuilder! builder, string! connectionString, int commandTimeoutSeconds, string! migrationsAssemblyName) -> Microsoft.EntityFrameworkCore.DbContextOptionsBuilder!
+static DcsvIo.D2.EntityFrameworkCore.Postgres.PgAdvisoryLock.AcquireSessionBlockingAsync(string! connectionString, long key, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<DcsvIo.D2.EntityFrameworkCore.Postgres.PgAdvisoryLock!>!
+static DcsvIo.D2.EntityFrameworkCore.Postgres.PgAdvisoryLock.TryAcquireSessionAsync(string! connectionString, long key, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<DcsvIo.D2.EntityFrameworkCore.Postgres.PgAdvisoryLock!>!
+virtual DcsvIo.D2.EntityFrameworkCore.Postgres.DesignTimeDbContextFactoryBase<TContext>.CommandTimeoutSeconds.get -> int

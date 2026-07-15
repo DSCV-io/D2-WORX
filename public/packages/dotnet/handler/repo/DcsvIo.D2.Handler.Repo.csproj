@@ -1,0 +1,44 @@
+<!--
+Copyright (c) DCSV. Licensed under the Apache License, Version 2.0.
+-->
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>DcsvIo.D2.Handler.Repo</RootNamespace>
+  </PropertyGroup>
+
+  <!--
+    EF-flavored handler base. Sits on top of DcsvIo.D2.Handler's BaseHandler
+    and converts captured exceptions into typed D2Result failures via an
+    injected IDbExceptionClassifier. Provider-specific knowledge lives in
+    sibling packages (e.g. DcsvIo.D2.Handler.Repo.Postgres) — this csproj
+    intentionally has zero provider deps.
+  -->
+
+  <ItemGroup>
+    <ProjectReference Include="..\core\DcsvIo.D2.Handler.csproj" />
+    <ProjectReference Include="..\abstractions\DcsvIo.D2.Handler.Abstractions.csproj" />
+    <ProjectReference Include="..\repo-abstractions\DcsvIo.D2.Handler.Repo.Abstractions.csproj" />
+    <ProjectReference Include="..\..\result\core\DcsvIo.D2.Result.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="DcsvIo.D2.Tests" />
+  </ItemGroup>
+
+  <!-- Publish metadata (per-package semver + NuGet identity). -->
+  <PropertyGroup>
+    <Version>0.1.0</Version>
+    <PackageId>DcsvIo.D2.Handler.Repo</PackageId>
+    <Description>EF-flavored BaseRepoHandler for D2 — converts database exceptions captured during execution into typed D2Result failures.</Description>
+    <IsPackable>true</IsPackable>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+</Project>

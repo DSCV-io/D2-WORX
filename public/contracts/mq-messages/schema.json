@@ -1,0 +1,82 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "D² messaging — messages spec",
+  "description": "Schema for contracts/mq-messages/mq-messages.spec.json — the source-of-truth catalog of every message type D² publishes. DcsvIo.D2.Mq.SourceGen reads this to emit the MqMessages static class (string constants) + the runtime registry (constant → MqMessageDescriptor) into DcsvIo.D2.Messaging.Abstractions. Each entry pairs one message type with its publisher contract: target exchange, exchange type, encryption domain, default routing key. The producing service owns its entries.",
+  "type": "object",
+  "required": ["messages"],
+  "additionalProperties": false,
+  "properties": {
+    "$schema": { "type": "string" },
+    "messages": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/definitions/message" }
+    }
+  },
+  "definitions": {
+    "message": {
+      "type": "object",
+      "required": [
+        "constant",
+        "messageType",
+        "exchange",
+        "exchangeType",
+        "encryption"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "constant": {
+          "type": "string",
+          "pattern": "^[A-Z][A-Za-z0-9]*$",
+          "description": "PascalCase identifier emitted as a const string under MqMessages. Must be unique across all entries (D2MQ003)."
+        },
+        "messageType": {
+          "type": "string",
+          "pattern": "^[A-Za-z_][A-Za-z0-9_]*(\\.[A-Za-z_][A-Za-z0-9_]*)+$",
+          "description": "Fully-qualified .NET type name of the message class. Runtime resolver verifies the type carries [MqPub] referencing this entry's constant."
+        },
+        "exchange": {
+          "type": "string",
+          "pattern": "^d2(\\.[a-z0-9-]+)+$",
+          "description": "AMQP exchange name. Convention: d2.{producer}.{purpose} (lowercase, hyphen-separated within segments). Validated by the regex above."
+        },
+        "exchangeType": {
+          "type": "string",
+          "enum": ["fanout", "topic", "direct"],
+          "description": "AMQP exchange type. fanout = broadcast (every binding receives every message); topic = routing-key-pattern matching; direct = exact-routing-key matching. headers + x-* exchange types intentionally excluded — not used by D² conventions."
+        },
+        "encryption": {
+          "type": "string",
+          "description": "Either an EncryptionDomains constant value (e.g. 'audit', 'comms', 'files') OR the literal string 'plaintext'. Default-deny: a missing or unknown value fails the build (D2MQ004)."
+        },
+        "encryptionReason": {
+          "type": "string",
+          "minLength": 10,
+          "description": "REQUIRED when encryption == 'plaintext'. Free-form rationale shipped into audit logs / code review. Forces the dev to make a conscious decision per plaintext message type."
+        },
+        "defaultRoutingKey": {
+          "type": "string",
+          "description": "Routing key used by publishers when no per-publish override is supplied. Empty for fanout. For topic exchanges, may include placeholder tokens like {channel} for runtime substitution (template support deferred — currently treated as literal)."
+        },
+        "deprecated": {
+          "type": "boolean",
+          "description": "When true, the entry is deprecated: the generated C# constant + factory carry [Obsolete] and the TS constant + factory carry @deprecated. Additive — the entry is NEVER deleted. Deleting a deprecated (or non-deprecated) entry is a breaking change the JSON-diff gate fails."
+        },
+        "deprecatedReason": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Plain dev-facing English explaining why the code is deprecated; rendered into the [Obsolete(\"...\")] message, the @deprecated JSDoc, and the changelog entry. NOT a TK key (developer-facing, not user-facing)."
+        },
+        "replacedBy": {
+          "type": "string",
+          "description": "Wire code of the successor entry (e.g. RESOURCE_NOT_FOUND). Must reference a real, non-deprecated entry in the merged registry. Omit for pure retirement with no replacement."
+        },
+        "sunset": {
+          "type": "string",
+          "format": "date",
+          "description": "ISO-8601 date for the future RFC 8594 Sunset response header. Edge-runtime-deferred: carried on the contract now, consumed by the Edge response middleware when it exists. Inert until then."
+        }
+      }
+    }
+  }
+}

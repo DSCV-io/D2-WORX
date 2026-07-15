@@ -133,7 +133,7 @@ no OTHER ADR frames the old model as current; survivor clusters (messaging/conte
 inbound-stack/`x-d2-context`) reinforce the new model. Per-user direction 2026-06-18: handle ALL three
 buckets here; bucket 3 via in-doc "to-be-done-on-removal" notes, not an external follow-up list.
 
-**Correction (load-bearing — drove the bucket-3 reframing):** `D2.Shared.Auth.Outbound` is NOT removed
+**Correction (load-bearing — drove the bucket-3 reframing):** `DcsvIo.D2.Auth.Outbound` is NOT removed
 wholesale. Token-exchange (`ITokenExchangeClient`) is RETAINED/repurposed (D7); only service-identity
 (`IServiceIdentityClient` / `ServiceIdentityCallCredentials` / `AddD2ServiceIdentity`, `client_credentials`)
 is SUPERSEDED by mTLS (the half we "yeet"; code removal = a later deliverable). The lib persists → its

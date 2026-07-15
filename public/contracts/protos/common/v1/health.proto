@@ -1,0 +1,26 @@
+// -----------------------------------------------------------------------
+// Copyright (c) DCSV. Licensed under the Apache License, Version 2.0.
+// -----------------------------------------------------------------------
+
+syntax = "proto3";
+
+package d2.common.v1;
+
+option csharp_namespace = "D2.Services.Protos.Common.V1";
+
+// Shared health check messages used by all services via their
+// own service-level CheckHealth RPC.
+
+message CheckHealthRequest {}
+
+message CheckHealthResponse {
+  string status = 1;
+  string timestamp = 2;
+  map<string, ComponentHealth> components = 3;
+}
+
+message ComponentHealth {
+  string status = 1;
+  int64 latency_ms = 2;
+  optional string error = 3;
+}

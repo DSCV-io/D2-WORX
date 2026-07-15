@@ -1,0 +1,72 @@
+<!--
+Copyright (c) DCSV. Licensed under the Apache License, Version 2.0.
+-->
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>DcsvIo.D2.I18n</RootNamespace>
+
+    <!-- Emit the generator's output (TK.g.cs) to <project-dir>/Generated/.
+         The directory is tracked in git so PR reviewers see codegen diffs
+         without a local build. -->
+    <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
+    <CompilerGeneratedFilesOutputPath>Generated</CompilerGeneratedFilesOutputPath>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!--
+      The SourceGen pipeline feeds the in-memory compiler with the same content
+      that lands on disk under Generated/. Without this Remove, the SDK-default
+      <Compile Include="**/*.cs" /> glob picks up the on-disk copy and the build
+      fails with duplicate-definition errors (CS0101 / CS0111). See:
+      https://learn.microsoft.com/dotnet/core/project-sdk/msbuild-props#compilergeneratedfilesoutputpath
+    -->
+    <Compile Remove="$(CompilerGeneratedFilesOutputPath)\**\*.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!--
+      DcsvIo.D2.I18n.Abstractions provides the TKMessage type. Each generated
+      TK constant is a TKMessage instance (new("<key>")), so this assembly needs
+      TKMessage reachable at compile time. The constructor is internal; the
+      Abstractions csproj grants this assembly access via InternalsVisibleTo.
+      This is a runtime reference (not an analyzer) — the Abstractions dll
+      propagates to consumers so TKMessage flows transitively alongside TK.
+    -->
+    <ProjectReference Include="..\abstractions\DcsvIo.D2.I18n.Abstractions.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!--
+      The TK generator emits the TK.* constants from contracts/messages/en-US.json
+      (surfaced via AdditionalFiles below) into this assembly. Referenced as a
+      Roslyn analyzer (no runtime dll dependency). The generator is
+      assembly-agnostic — TKEmitter hard-codes the DcsvIo.D2.I18n namespace, so
+      TK.g.cs is byte-identical regardless of which assembly hosts the generator.
+    -->
+    <ProjectReference Include="..\source-gen\DcsvIo.D2.I18n.SourceGen.csproj"
+                      OutputItemType="Analyzer"
+                      ReferenceOutputAssembly="false" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!--
+      Surface the contracts/messages JSON files to the source generator.
+      The generator reads en-US.json (source of truth) to emit the TK class
+      and reads the rest for per-locale coverage diagnostics.
+    -->
+    <AdditionalFiles Include="$(D2PublicContractsRoot)messages\*.json" />
+  </ItemGroup>
+
+  <!-- Publish metadata (per-package semver + NuGet identity). -->
+  <PropertyGroup>
+    <Version>0.1.0</Version>
+    <PackageId>DcsvIo.D2.I18n.Keys</PackageId>
+    <Description>Type-safe TK constants catalog for D2 — one TKMessage per translation key, code-generated from the message catalog.</Description>
+    <IsPackable>true</IsPackable>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,20 @@
+<!--
+Copyright (c) DCSV. All rights reserved.
+-->
+<Project>
+
+  <!-- Tier-1 global usings (ADR-0020 / rules.md §5.26) — SERVICE projects only. Service
+       projects reliably reference the full D2 runtime stack, so every Tier-1 namespace
+       resolves with no per-project opt-out. Shared libs are excluded (their split I18n
+       namespace + Tier-1 dependency chain make a blanket runtime-wide global brittle) and
+       keep explicit usings. The netstandard2.0 condition excludes any source-gen shell
+       under a service (e.g. a key-custodian error-codes generator). -->
+  <ItemGroup Condition="'$(TargetFramework)' != 'netstandard2.0'">
+    <Using Include="DcsvIo.D2.Result" />
+    <Using Include="DcsvIo.D2.Utilities.Extensions" />
+    <Using Include="DcsvIo.D2.Utilities.Attributes" />
+    <Using Include="DcsvIo.D2.Utilities.Enums" />
+    <Using Include="DcsvIo.D2.I18n" />
+  </ItemGroup>
+
+</Project>

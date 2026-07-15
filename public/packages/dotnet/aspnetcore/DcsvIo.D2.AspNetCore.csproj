@@ -1,0 +1,129 @@
+<!--
+Copyright (c) DCSV. Licensed under the Apache License, Version 2.0.
+-->
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <PropertyGroup>
+    <RootNamespace>DcsvIo.D2.AspNetCore</RootNamespace>
+    <!--
+      Sdk.Web defaults OutputType to Exe (intended for runnable web apps);
+      explicit Library override since this is a shared library, NOT an app
+      entry point. Sdk.Web is preferred over plain Sdk because it brings the
+      AspNetCore framework reference automatically — every public surface in
+      this lib touches AspNetCore types (IApplicationBuilder for the
+      middleware extensions, IEndpointRouteBuilder for the health-endpoint
+      mapper, IServiceCollection + ProblemDetailsOptions for the
+      ProblemDetails configurer). Plain Sdk + a manual FrameworkReference
+      would be functionally equivalent but not the modern convention
+      (matches sibling DcsvIo.D2.Logging + DcsvIo.D2.Telemetry csproj).
+    -->
+    <OutputType>Library</OutputType>
+  </PropertyGroup>
+
+  <!--
+    DcsvIo.D2.AspNetCore — the canonical home for cross-cutting ASP.NET Core
+    middleware + endpoint primitives that every D² service composition root
+    needs but that don't belong on a single domain lib. Seven public surfaces:
+    UseD2SecurityHeaders, UseD2Cors, UseD2InfrastructureBypass,
+    AddD2ProblemDetails, MapD2HealthEndpoints, RunD2ServiceAsync, AddD2MutualTls.
+    Plus the canonical InfrastructurePathMatcher (consumed by DcsvIo.D2.Logging's
+    request-logging middleware + DcsvIo.D2.Telemetry's AspNetCore-instrumentation
+    Filter callback so all three libs share one source of truth for
+    /health, /alive, /metrics, /.well-known matching).
+
+    Foundation tier — depends on DcsvIo.D2.Utilities (Falsey/Truthy/ToNullIfEmpty),
+    DcsvIo.D2.Result (the mTLS peer validator returns a D2Result),
+    DcsvIo.D2.Spiffe (the SPIFFE grammar the mTLS validator parses a
+    presented SAN with), DcsvIo.D2.ProblemDetails.Abstractions + DcsvIo.D2.Headers.Http
+    (the ProblemDetails customizer), and Serilog (the RunD2ServiceAsync startup
+    wrapper's Log.Fatal + CloseAndFlushAsync).
+
+    Does NOT own:
+      • Authentication / Authorization      — DcsvIo.D2.Auth + auth-http own
+                                              JWT validation, scope checks,
+                                              identity extraction.
+      • OpenTelemetry SDK setup             — DcsvIo.D2.Telemetry owns it.
+      • Serilog configuration / sinks       — DcsvIo.D2.Logging owns them.
+
+    The request-pipeline middleware logs via the host's standard ILogger<T>
+    rather than [LoggerMessage] delegates. The one [LoggerMessage] surface is
+    MtlsLog — a peer-certificate rejection at the TLS handshake is a security
+    event worth a structured, allocation-free record; no delegate accepts an
+    Exception (type name rendered PII-safely via SanitizedExceptionRender.TypeName).
+  -->
+
+  <ItemGroup>
+    <PackageReference Include="JetBrains.Annotations" />
+    <!--
+      Serilog.AspNetCore — provides the static Log facade used by
+      RunD2ServiceAsync (Log.Information / Log.Fatal / Log.CloseAndFlushAsync).
+      Already pinned (DcsvIo.D2.Logging consumes it transitively).
+    -->
+    <PackageReference Include="Serilog.AspNetCore" />
+    <!--
+      Microsoft.Extensions.{DependencyInjection,Options,Configuration,Logging,Hosting}.Abstractions
+      and Microsoft.AspNetCore.* are NOT listed — Microsoft.NET.Sdk.Web's
+      framework reference (Microsoft.AspNetCore.App) ships them, and adding
+      explicit PackageReferences triggers NU1510. Versions are still pinned
+      via Directory.Packages.props.
+    -->
+  </ItemGroup>
+
+  <ItemGroup>
+    <!--
+      utilities — Falsey() / Truthy() / ToNullIfEmpty() string + collection
+      extensions consumed throughout: options validation, env-var resolution,
+      ToNullIfEmpty() on serviceName arg in RunD2ServiceAsync, Falsey() on
+      header-override values + per-entry path / origin lists.
+    -->
+    <ProjectReference Include="..\utilities\DcsvIo.D2.Utilities.csproj" />
+    <!--
+      result — D2Result types consumed by the ProblemDetails customizer when
+      a handler / middleware stashes a D2Result in HttpContext.Items so the
+      customizer can populate Type+Title+Status+d2_error_code+d2_messages+
+      d2_input_errors from spec-derived constants rather than guessing.
+      (Instance, traceId, and correlationId are populated unconditionally
+      regardless of whether a D2Result is stashed.)
+    -->
+    <ProjectReference Include="..\result\core\DcsvIo.D2.Result.csproj" />
+    <!--
+      problem-details/abstractions — codegen-emitted D2ProblemDetailsKeys
+      (TYPE_URI_PREFIX, CONTENT_TYPE, EXTENSION_*, TITLE_*, TitleFor switch)
+      consumed by D2ProblemDetailsCustomizer. Cross-language parity with the
+      TS-side @dcsv-io/d2-problem-details-abstractions catalog (re-exported from
+      @dcsv-io/d2-headers for compat) is structurally guaranteed (single spec).
+    -->
+    <ProjectReference Include="..\problem-details\abstractions\DcsvIo.D2.ProblemDetails.Abstractions.csproj" />
+    <!--
+      headers-http — HttpHeaders.IDEMPOTENCY_KEY consumed by D2CorsOptions
+      to populate the default allowed-headers set with the single spec-driven
+      constant (Stripe-style "Idempotency-Key", per the headers spec). Single
+      wire value for one concept.
+    -->
+    <ProjectReference Include="..\headers\http\DcsvIo.D2.Headers.Http.csproj" />
+    <!--
+      workload-identity — the shared SPIFFE grammar (SpiffeWorkloadIdentity)
+      consumed by the mTLS SpiffeSanPeerValidator to parse + validate a presented
+      certificate's URI SAN. Leaf-tier (refs result + utilities only) — keeps the
+      SPIFFE format single-source across the server validator + KeyCustodian's
+      issuance path, never referencing a service domain.
+    -->
+    <ProjectReference Include="..\workload-identity\DcsvIo.D2.Spiffe.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="DcsvIo.D2.Tests" />
+  </ItemGroup>
+
+  <!-- Publish metadata (per-package semver + NuGet identity). -->
+  <PropertyGroup>
+    <Version>0.1.0</Version>
+    <PackageId>DcsvIo.D2.AspNetCore</PackageId>
+    <Description>Cross-cutting ASP.NET Core middleware and endpoint primitives for D2 service composition roots (security headers, CORS, health endpoints, ProblemDetails, mTLS, infrastructure-path matching).</Description>
+    <IsPackable>true</IsPackable>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+</Project>

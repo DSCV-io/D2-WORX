@@ -1,0 +1,22 @@
+#nullable enable
+DcsvIo.D2.Caching.Local.Default.DefaultLocalCache
+DcsvIo.D2.Caching.Local.Default.DefaultLocalCache.AcquireLockAsync(string! key, string! lockId, System.TimeSpan expiration, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<DcsvIo.D2.Result.D2Result<bool>!>
+DcsvIo.D2.Caching.Local.Default.DefaultLocalCache.DefaultLocalCache(Microsoft.Extensions.Options.IOptions<DcsvIo.D2.Caching.LocalCacheOptions!>! options, System.TimeProvider? clock = null) -> void
+DcsvIo.D2.Caching.Local.Default.DefaultLocalCache.Dispose() -> void
+DcsvIo.D2.Caching.Local.Default.DefaultLocalCache.ExistsAsync(string! key, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<DcsvIo.D2.Result.D2Result<bool>!>
+DcsvIo.D2.Caching.Local.Default.DefaultLocalCache.GetAsync<T>(string! key, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<DcsvIo.D2.Result.D2Result<T?>!>
+DcsvIo.D2.Caching.Local.Default.DefaultLocalCache.GetManyAsync<T>(System.Collections.Generic.IReadOnlyCollection<string!>! keys, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<DcsvIo.D2.Result.D2Result<System.Collections.Generic.IReadOnlyDictionary<string!, T?>!>!>
+DcsvIo.D2.Caching.Local.Default.DefaultLocalCache.GetTtlAsync(string! key, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<DcsvIo.D2.Result.D2Result<System.TimeSpan?>!>
+DcsvIo.D2.Caching.Local.Default.DefaultLocalCache.IncrementAsync(string! key, long amount = 1, System.TimeSpan? expiration = null, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<DcsvIo.D2.Result.D2Result<long>!>
+DcsvIo.D2.Caching.Local.Default.DefaultLocalCache.ReleaseLockAsync(string! key, string! lockId, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<DcsvIo.D2.Result.D2Result!>
+DcsvIo.D2.Caching.Local.Default.DefaultLocalCache.RemoveAsync(string! key, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<DcsvIo.D2.Result.D2Result!>
+DcsvIo.D2.Caching.Local.Default.DefaultLocalCache.RemoveManyAsync(System.Collections.Generic.IReadOnlyCollection<string!>! keys, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<DcsvIo.D2.Result.D2Result!>
+DcsvIo.D2.Caching.Local.Default.DefaultLocalCache.SetAsync<T>(string! key, T value, System.TimeSpan? expiration = null, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<DcsvIo.D2.Result.D2Result!>
+DcsvIo.D2.Caching.Local.Default.DefaultLocalCache.SetManyAsync<T>(System.Collections.Generic.IReadOnlyDictionary<string!, T>! entries, System.TimeSpan? expiration = null, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<DcsvIo.D2.Result.D2Result!>
+DcsvIo.D2.Caching.Local.Default.DefaultLocalCache.SetNxAsync<T>(string! key, T value, System.TimeSpan? expiration = null, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<DcsvIo.D2.Result.D2Result<bool>!>
+DcsvIo.D2.Caching.Local.Default.LocalCacheServiceCollectionExtensions
+DcsvIo.D2.Caching.Local.Default.LocalCacheServiceCollectionExtensions.extension(Microsoft.Extensions.DependencyInjection.IServiceCollection!)
+DcsvIo.D2.Caching.Local.Default.LocalCacheServiceCollectionExtensions.extension(Microsoft.Extensions.DependencyInjection.IServiceCollection!).AddD2LocalCache(System.Action<DcsvIo.D2.Caching.LocalCacheOptions!>? configure = null) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
+DcsvIo.D2.Caching.Local.Default.LocalCacheTelemetry
+const DcsvIo.D2.Caching.Local.Default.LocalCacheTelemetry.METER_NAME = "DcsvIo.D2.Caching.Local" -> string!
+static DcsvIo.D2.Caching.Local.Default.LocalCacheServiceCollectionExtensions.AddD2LocalCache(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services, System.Action<DcsvIo.D2.Caching.LocalCacheOptions!>? configure = null) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!

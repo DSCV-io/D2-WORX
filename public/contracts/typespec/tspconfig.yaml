@@ -1,0 +1,30 @@
+# -----------------------------------------------------------------------
+# Copyright (c) DCSV. Licensed under the Apache License, Version 2.0.
+# -----------------------------------------------------------------------
+#
+# RETIRED as a live-module compile unit (pointer only — use per-module tspconfig).
+#
+# Per-module packages own emit options beside their .tsp files:
+#   contracts/typespec/key-custodian/tspconfig.yaml  — KeyCustodian + co-fixtures
+#   contracts/typespec/audit/tspconfig.yaml          — Audit standalone multiproc stub
+#
+# Regen runs N× (tsp compile packageᵢ + COPY_MANIFEST subset for packageᵢ)
+# via private/tools/scripts/regen-typespec-emitters.mjs — never use this root file as
+# the primary compile entry (would re-introduce dual-pattern root-KC + nested
+# Audit and wrong namespace stamps).
+#
+# This file remains only as a fail-loud pointer so accidental
+# `tsp compile contracts/typespec` is obvious. Prefer:
+#   pnpm --filter @dcsv-io/d2-typespec-emitters regen
+#   node private/tools/scripts/regen-typespec-emitters.mjs
+
+emit:
+  - "@dcsv-io/d2-typespec-emitters"
+
+options:
+  "@dcsv-io/d2-typespec-emitters":
+    # Intentionally broken relative to historical root so misuse fails loud
+    # rather than silently emitting under KeyCustodian namespaces.
+    emitter-output-dir: "{project-root}/__RETIRED_USE_PER_MODULE_TSPCONFIG__/dist"
+
+imports: []

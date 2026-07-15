@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <!-- Spike A test: acts as SERVICE A. Spins up the Edge host (via the SAME
+       generated wiring) on a dynamic localhost h2c port, constructs the
+       Grpc.Tools-generated PushClient, fires ONE NotificationCreated, and
+       asserts it reached the stub sink with identical data + that the SAME
+       generated DTO type is used end to end (A3). Self-manages its host
+       lifecycle (start/stop) — allowed for E2E-style tests. Web SDK so the
+       generated WebApplication wiring resolves. -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <IsPackable>false</IsPackable>
+    <OutputType>Library</OutputType>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
+    <PackageReference Include="xunit" Version="2.9.0" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.5.3" PrivateAssets="all" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../Spike.Contracts/Spike.Contracts.csproj" />
+    <ProjectReference Include="../Spike.Sse/Spike.Sse.csproj" />
+    <ProjectReference Include="../Spike.Edge/Spike.Edge.csproj" />
+  </ItemGroup>
+
+</Project>

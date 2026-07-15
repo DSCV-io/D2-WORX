@@ -1,0 +1,212 @@
+<!--
+Copyright (c) DCSV. All rights reserved.
+-->
+<Project>
+  <!--
+    Central Package Management — single source of truth for every NuGet
+    version across every .csproj in the solution.
+
+    Every PackageReference in any .csproj omits Version="..." and inherits from here.
+    Add new entries below as packages are introduced per phase.
+  -->
+  <PropertyGroup>
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+    <CentralPackageTransitivePinningEnabled>true</CentralPackageTransitivePinningEnabled>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Analyzers (pulled in via Directory.Build.props) -->
+    <PackageVersion Include="StyleCop.Analyzers" Version="1.2.0-beta.556" />
+    <!-- PublicApiAnalyzers — enforces public API surface tracking via PublicAPI.Shipped.txt
+         + PublicAPI.Unshipped.txt. Wired centrally for every consumable (IsPackable=true)
+         in public/packages/dotnet/Directory.Build.props, and inline in the KeyCustodian
+         client (which sits outside that tree); NOT enabled globally — the source-gen shells
+         and test projects are excluded. RS0016 flags new API absent from both files;
+         RS0017 flags removed API still in Shipped. -->
+    <PackageVersion Include="Microsoft.CodeAnalysis.PublicApiAnalyzers" Version="4.14.0" />
+
+    <!-- JetBrains annotations ([MustDisposeResource], [Pure], etc.) — used across libs + tests -->
+    <PackageVersion Include="JetBrains.Annotations" Version="2025.2.4" />
+
+    <PackageVersion Include="dotenv.net" Version="4.0.2" />
+    <PackageVersion Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.7" />
+    <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="10.0.7" />
+    <PackageVersion Include="Microsoft.Extensions.Configuration.Abstractions" Version="10.0.7" />
+    <PackageVersion Include="Microsoft.Extensions.Configuration" Version="10.0.7" />
+    <PackageVersion Include="Microsoft.Extensions.Configuration.Binder" Version="10.0.7" />
+    <PackageVersion Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="10.0.7" />
+    <PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.7" />
+    <PackageVersion Include="Microsoft.Extensions.Logging" Version="10.0.7" />
+    <PackageVersion Include="Microsoft.Extensions.Hosting" Version="10.0.7" />
+    <PackageVersion Include="Microsoft.Extensions.Hosting.Abstractions" Version="10.0.7" />
+    <!-- Microsoft.Extensions.Diagnostics.HealthChecks{,.Abstractions,.EntityFrameworkCore}
+         — IHealthCheck + AddHealthChecks/AddCheck + AddDbContextCheck<TContext> for the
+         KeyCustodian readiness probes (DB connectivity via the framework CanConnectAsync
+         path + the active-key-per-domain semantic check). The module-within-host infra is
+         a plain Sdk lib (no Sdk.Web framework reference), so these are explicit refs. -->
+    <PackageVersion Include="Microsoft.Extensions.Diagnostics.HealthChecks" Version="10.0.7" />
+    <PackageVersion Include="Microsoft.Extensions.Diagnostics.HealthChecks.Abstractions" Version="10.0.7" />
+    <PackageVersion Include="Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore" Version="10.0.7" />
+    <PackageVersion Include="Microsoft.Extensions.Http" Version="10.0.7" />
+    <PackageVersion Include="Microsoft.Extensions.Caching.Memory" Version="10.0.7" />
+    <PackageVersion Include="Microsoft.Extensions.Caching.Abstractions" Version="10.0.7" />
+    <PackageVersion Include="Microsoft.Extensions.Options" Version="10.0.7" />
+    <!-- Microsoft.Extensions.Options.ConfigurationExtensions — OptionsBuilder<T>.Bind(section)
+         for the KeyCustodian options-binding pipeline. Microsoft.Extensions.Options.DataAnnotations
+         — OptionsBuilder<T>.ValidateDataAnnotations() for the [Range]/[Required] start-validation.
+         Plain-Sdk module-within-host infra has no Sdk.Web framework reference that would supply
+         these transitively. -->
+    <PackageVersion Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="10.0.7" />
+    <PackageVersion Include="Microsoft.Extensions.Options.DataAnnotations" Version="10.0.7" />
+
+    <!-- Microsoft.IdentityModel — OIDC discovery doc handling for DcsvIo.D2.Auth.Outbound
+         (ConfigurationManager<OpenIdConnectConfiguration> auto-fetches /.well-known/openid-configuration
+         and exposes token_endpoint / jwks_uri).
+         Tokens is the base — provides SecurityKey type used on JwksKeySetSnapshot
+         (DcsvIo.D2.Auth.Abstractions). OpenIdConnect transitively depends on Tokens
+         but we list both explicitly so each csproj declares what it actually uses. -->
+    <PackageVersion Include="Microsoft.IdentityModel.Tokens" Version="8.16.0" />
+    <PackageVersion Include="Microsoft.IdentityModel.JsonWebTokens" Version="8.16.0" />
+    <PackageVersion Include="Microsoft.IdentityModel.Protocols.OpenIdConnect" Version="8.16.0" />
+
+    <!-- Grpc.Net.ClientFactory — gRPC client typed-builder + ConfigureChannel for the
+         DcsvIo.D2.Auth.Outbound .AddD2ForwardedJwt() / .AddD2WorkloadCertificate()
+         per-channel opt-in extensions. -->
+    <PackageVersion Include="Grpc.Net.ClientFactory" Version="2.71.0" />
+    <!-- Grpc.AspNetCore.Server — server-side gRPC binding for DcsvIo.D2.Auth.Grpc
+         (the JwtAuthInterceptor + per-method scope metadata on ServerCallContext).
+         Same release train (2.71.0) as the client-only sibling above. -->
+    <PackageVersion Include="Grpc.AspNetCore.Server" Version="2.71.0" />
+    <PackageVersion Include="StackExchange.Redis" Version="2.8.31" />
+    <PackageVersion Include="Testcontainers.Redis" Version="4.0.0" />
+
+    <!-- RabbitMQ.Client 7.x — DcsvIo.D2.Messaging.RabbitMq's transport client.
+         v7 brings full async APIs (BasicPublishAsync, IAsyncBasicConsumer,
+         publisher confirms) + topology auto-recovery. Major version bump from
+         v6; don't downgrade. -->
+    <PackageVersion Include="RabbitMQ.Client" Version="7.2.1" />
+    <PackageVersion Include="Testcontainers.RabbitMq" Version="4.0.0" />
+    <!-- Testcontainers.PostgreSql — for Integration/DataGovernance adversarial integration
+         tests (AnonymizationEngine end-to-end: real PG container, EnsureCreated schema,
+         Tier-A ExecuteUpdate + Tier-B materialize-mutate-SaveChanges paths). Same
+         Testcontainers 4.x release train as the Redis + RabbitMq pins above. -->
+    <PackageVersion Include="Testcontainers.PostgreSql" Version="4.0.0" />
+
+    <!-- EF Core + Npgsql — for DcsvIo.D2.Handler.Repo (PG error code → D2Result mapping) -->
+    <PackageVersion Include="Microsoft.EntityFrameworkCore" Version="10.0.7" />
+    <!-- Microsoft.EntityFrameworkCore.Relational 10.0.7 — required by
+         DcsvIo.D2.DataGovernance.EntityFrameworkCore for IProperty.GetColumnName(),
+         IReadOnlyEntityType.IsMappedToJson(), and GetTableName() (RelationalPropertyExtensions
+         / RelationalEntityTypeExtensions — these APIs live in the Relational assembly, not
+         the base EF Core package). Same release train (10.0.7). -->
+    <PackageVersion Include="Microsoft.EntityFrameworkCore.Relational" Version="10.0.7" />
+    <!-- Microsoft.EntityFrameworkCore.InMemory — provider-free in-memory database used
+         in DcsvIo.D2.DataGovernance.EntityFrameworkCore unit tests (model-build-only
+         assertions against IProperty annotations; no real DB provider needed). -->
+    <PackageVersion Include="Microsoft.EntityFrameworkCore.InMemory" Version="10.0.7" />
+    <!-- Microsoft.EntityFrameworkCore.Design — design-time services for
+         `dotnet ef migrations add` (the first KeyCustodian migration in
+         DcsvIo.D2.Private.Edge.KeyCustodian.Infra). Referenced PrivateAssets="all" so the
+         design-time assets never flow to runtime consumers. Same 10.0.7
+         release train as the EF Core base + Relational pins above. -->
+    <PackageVersion Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.7" />
+    <PackageVersion Include="Npgsql" Version="10.0.2" />
+    <PackageVersion Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.1" />
+    <!-- Npgsql.EntityFrameworkCore.PostgreSQL.NodaTime — NodaTime EF Core value-
+         converter plugin (Instant ↔ timestamptz, LocalDateTime ↔ timestamp, ...).
+         Used by DcsvIo.D2.Time. Same 10.x release train as the Npgsql.EFCore.PG
+         pin above. -->
+    <PackageVersion Include="Npgsql.EntityFrameworkCore.PostgreSQL.NodaTime" Version="10.0.1" />
+
+    <!-- NodaTime — canonical date/time library replacing BCL DateTime /
+         DateTimeOffset across the D2 codebase. Used by DcsvIo.D2.Time and
+         every downstream consumer that needs Instant / LocalDateTime / etc. -->
+    <PackageVersion Include="NodaTime" Version="3.2.2" />
+
+    <!-- Serilog — for DcsvIo.D2.Logging. The umbrella Serilog.AspNetCore package
+         transitively pulls Serilog, Serilog.Extensions.Logging, Serilog.Sinks.Console,
+         and Microsoft.Extensions.Logging.Abstractions; UseSerilogRequestLogging
+         lives there. Serilog.Formatting.Compact is listed explicitly so the
+         CompactJsonFormatter dep is visible (prevents transitive removal silently
+         dropping the formatter). Serilog.Enrichers.Environment provides the
+         WithMachineName() enricher. The OTLP log-exporter sink lives in
+         DcsvIo.D2.Telemetry, not here. -->
+    <PackageVersion Include="Serilog.AspNetCore" Version="10.0.0" />
+    <PackageVersion Include="Serilog.Formatting.Compact" Version="3.0.0" />
+    <PackageVersion Include="Serilog.Enrichers.Environment" Version="3.0.1" />
+
+    <!-- OpenTelemetry — for DcsvIo.D2.Telemetry. Surgical 1.15.3 overrides on
+         OpenTelemetry.Api + OpenTelemetry.Exporter.OpenTelemetryProtocol per the
+         GHSA-g94r-2vxg-569j / GHSA-mr8r-92fq-pj8p / GHSA-q834-8qmm-v933 advisories
+         on the 1.15.0 line. Direct ref on OpenTelemetry.Api is required to override
+         the transitive 1.15.0 pulled by the Instrumentation.* packages.
+
+         Three packages remain pinned at 1.15.0-beta.1:
+         • OpenTelemetry.Exporter.Prometheus.AspNetCore
+         • OpenTelemetry.Instrumentation.GrpcNetClient
+         • OpenTelemetry.Instrumentation.Process
+         These have been on beta for >18 months but are stable in v1 production.
+         Re-evaluate when stable releases ship. -->
+    <PackageVersion Include="OpenTelemetry.Api" Version="1.15.3" />
+    <PackageVersion Include="OpenTelemetry" Version="1.15.3" />
+    <PackageVersion Include="OpenTelemetry.Extensions.Hosting" Version="1.15.0" />
+    <PackageVersion Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="1.15.3" />
+    <PackageVersion Include="OpenTelemetry.Exporter.Prometheus.AspNetCore" Version="1.15.0-beta.1" />
+    <PackageVersion Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.15.0" />
+    <PackageVersion Include="OpenTelemetry.Instrumentation.GrpcNetClient" Version="1.15.0-beta.1" />
+    <PackageVersion Include="OpenTelemetry.Instrumentation.Http" Version="1.15.0" />
+    <PackageVersion Include="OpenTelemetry.Instrumentation.Process" Version="1.15.0-beta.1" />
+    <PackageVersion Include="OpenTelemetry.Instrumentation.Runtime" Version="1.15.0" />
+
+    <!-- libphonenumber-csharp — Apache-2.0. Phone-number parsing, validation, and
+         E.164 formatting for DcsvIo.D2.Validation's DefaultPhoneValidator.
+         Backed by the same Google libphonenumber data as libphonenumber-js on the TS side. -->
+    <PackageVersion Include="libphonenumber-csharp" Version="9.0.31" />
+
+    <!-- Roslyn — for DcsvIo.D2.I18n.SourceGen (TK constants generator) and
+         Microsoft.EntityFrameworkCore.Design 10.0.7 (requires >= 5.0.0). -->
+    <PackageVersion Include="Microsoft.CodeAnalysis.CSharp" Version="5.0.0" />
+    <PackageVersion Include="Microsoft.CodeAnalysis.Analyzers" Version="5.3.0" />
+    <!-- System.Text.Json — for the SrcGen's catalog parsing (netstandard2.0
+         doesn't ship S.T.Json in-box; pinned version avoids host conflicts). -->
+    <PackageVersion Include="System.Text.Json" Version="10.0.7" />
+  </ItemGroup>
+
+  <!-- Test infrastructure — referenced by DcsvIo.D2.Tests + per-service test csprojs -->
+  <ItemGroup>
+    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.5.1" />
+    <PackageVersion Include="xunit.v3" Version="3.2.2" />
+    <PackageVersion Include="xunit.runner.visualstudio" Version="3.1.5" />
+    <PackageVersion Include="AwesomeAssertions" Version="9.4.0" />
+
+    <!-- coverlet.msbuild: code coverage via MSBuild props (independent of MTP version
+         coupling that bites Microsoft.Testing.Extensions.CodeCoverage on xunit.v3). -->
+    <PackageVersion Include="coverlet.msbuild" Version="10.0.0" />
+
+    <!-- FakeTimeProvider — canonical TimeProvider stub used in tests of code that
+         takes a TimeProvider for scheduled / time-based behavior. Required for
+         deterministic tests of Task.Delay-on-TimeProvider, refresh hosted services,
+         expiry-window-driven caches, etc. -->
+    <PackageVersion Include="Microsoft.Extensions.TimeProvider.Testing" Version="9.10.0" />
+
+    <!-- Microsoft.AspNetCore.TestHost — in-memory test server for end-to-end
+         middleware-pipeline tests of DcsvIo.D2.Auth.AspNetCore. -->
+    <PackageVersion Include="Microsoft.AspNetCore.TestHost" Version="10.0.7" />
+
+    <!-- Grpc.Tools — protoc + plugin invocation for the test-only minimal
+         .proto files used by DcsvIo.D2.Auth.Grpc end-to-end integration tests
+         (exercises the full MapGrpcService<T>() pipeline through TestServer
+         + an in-process Grpc.Net.Client channel). Build-only PackageReference
+         in test csprojs (PrivateAssets="all"). Same release train (2.71.0) as
+         the runtime gRPC packages above. -->
+    <PackageVersion Include="Grpc.Tools" Version="2.71.0" />
+    <!-- Grpc.Net.Client — client-side gRPC channel for the same integration
+         tests; constructs a GrpcChannel over the TestServer's HttpClient to
+         dispatch real gRPC calls in-process. -->
+    <PackageVersion Include="Grpc.Net.Client" Version="2.71.0" />
+    <!-- Google.Protobuf — runtime types (IMessage, IBufferMessage, etc.)
+         emitted by Grpc.Tools' generated code. Required by the test-only
+         generated proto code; not used in production. -->
+    <PackageVersion Include="Google.Protobuf" Version="3.30.2" />
+  </ItemGroup>
+</Project>

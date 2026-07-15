@@ -1,0 +1,20 @@
+#nullable enable
+DcsvIo.D2.Handler.Repo.Postgres.PgErrorCodes
+DcsvIo.D2.Handler.Repo.Postgres.PostgresDbExceptionClassifier
+DcsvIo.D2.Handler.Repo.Postgres.PostgresDbExceptionClassifier.Classify(System.Exception! exception) -> DcsvIo.D2.Handler.Repo.Abstractions.DbFailureKind?
+DcsvIo.D2.Handler.Repo.Postgres.PostgresDbExceptionClassifier.PostgresDbExceptionClassifier() -> void
+DcsvIo.D2.Handler.Repo.Postgres.PostgresServiceCollectionExtensions
+DcsvIo.D2.Handler.Repo.Postgres.PostgresServiceCollectionExtensions.extension(Microsoft.Extensions.DependencyInjection.IServiceCollection!)
+DcsvIo.D2.Handler.Repo.Postgres.PostgresServiceCollectionExtensions.extension(Microsoft.Extensions.DependencyInjection.IServiceCollection!).AddD2Postgres() -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
+const DcsvIo.D2.Handler.Repo.Postgres.PgErrorCodes.CANNOT_CONNECT_NOW = "57P03" -> string!
+const DcsvIo.D2.Handler.Repo.Postgres.PgErrorCodes.CHECK_VIOLATION = "23514" -> string!
+const DcsvIo.D2.Handler.Repo.Postgres.PgErrorCodes.CONNECTION_EXCEPTION_CLASS = "08" -> string!
+const DcsvIo.D2.Handler.Repo.Postgres.PgErrorCodes.DEADLOCK_DETECTED = "40P01" -> string!
+const DcsvIo.D2.Handler.Repo.Postgres.PgErrorCodes.FOREIGN_KEY_VIOLATION = "23503" -> string!
+const DcsvIo.D2.Handler.Repo.Postgres.PgErrorCodes.NOT_NULL_VIOLATION = "23502" -> string!
+const DcsvIo.D2.Handler.Repo.Postgres.PgErrorCodes.QUERY_CANCELED = "57014" -> string!
+const DcsvIo.D2.Handler.Repo.Postgres.PgErrorCodes.SERIALIZATION_FAILURE = "40001" -> string!
+const DcsvIo.D2.Handler.Repo.Postgres.PgErrorCodes.TOO_MANY_CONNECTIONS = "53300" -> string!
+const DcsvIo.D2.Handler.Repo.Postgres.PgErrorCodes.UNIQUE_VIOLATION = "23505" -> string!
+static DcsvIo.D2.Handler.Repo.Postgres.PgErrorCodes.TryGetPgException(System.Exception! ex) -> Npgsql.PostgresException?
+static DcsvIo.D2.Handler.Repo.Postgres.PostgresServiceCollectionExtensions.AddD2Postgres(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!

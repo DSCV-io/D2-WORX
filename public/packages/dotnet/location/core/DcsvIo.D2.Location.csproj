@@ -1,0 +1,69 @@
+<!--
+Copyright (c) DCSV. Licensed under the Apache License, Version 2.0.
+-->
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>DcsvIo.D2.Location</RootNamespace>
+  </PropertyGroup>
+
+  <!--
+    Pure-domain location value objects (Coordinates, StreetAddress, AdminLocation),
+    hash composer, and postal-code validator interface + default implementation.
+    Depends on DcsvIo.D2.Geo.Abstractions (typed code enums + wrapper structs),
+    DcsvIo.D2.Result (D2Result<T> factories), DcsvIo.D2.Utilities (Falsey/Truthy
+    + string cleaning + NormalizeForHash helpers), and DcsvIo.D2.Validation.Abstractions
+    (FieldConstraints length caps consumed by VO Create gates).
+    NO DcsvIo.D2.Geo.Default, NO NodaTime — keeps Location pure-domain without
+    dragging the ~200KB catalog or any temporal-runtime cost.
+  -->
+  <ItemGroup>
+    <!--
+      Microsoft.Extensions.DependencyInjection.Abstractions — IServiceCollection
+      receiver for the AddD2Location registration extension.
+    -->
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!--
+      DcsvIo.D2.Geo.Abstractions — typed CountryCode enum + SubdivisionCode wrapper
+      struct (including SubdivisionCode.ParentCountry) that AdminLocation references.
+    -->
+    <ProjectReference Include="..\..\geo\abstractions\DcsvIo.D2.Geo.Abstractions.csproj" />
+    <!--
+      DcsvIo.D2.Result — D2Result<T> semantic factories (Ok, ValidationFailed, etc.)
+      used by all three VO smart-constructors and IPostalCodeValidator.
+    -->
+    <ProjectReference Include="..\..\result\core\DcsvIo.D2.Result.csproj" />
+    <!--
+      DcsvIo.D2.Utilities — Falsey()/Truthy() guards + CleanStr() string helpers
+      used in VO validation and normalization pipelines.
+    -->
+    <ProjectReference Include="..\..\utilities\DcsvIo.D2.Utilities.csproj" />
+    <!--
+      DcsvIo.D2.Validation.Abstractions — FieldConstraints length caps
+      (STREET_LINE_MAX, CITY_MAX, POSTAL_CODE_MAX) consumed by the VO
+      Create gates. Cycle-free: Validation.Abstractions depends only on
+      DcsvIo.D2.Result + DcsvIo.D2.Geo.Abstractions — it does NOT depend
+      on DcsvIo.D2.Location.
+    -->
+    <ProjectReference Include="..\..\validation\abstractions\DcsvIo.D2.Validation.Abstractions.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="DcsvIo.D2.Tests" />
+  </ItemGroup>
+
+  <!-- Publish metadata (per-package semver + NuGet identity). -->
+  <PropertyGroup>
+    <Version>0.1.0</Version>
+    <PackageId>DcsvIo.D2.Location</PackageId>
+    <Description>Hash-deduplicatable geographic value objects for D2 — coordinates, street and admin addresses, deterministic identity hashes, and the postal-code validator contract.</Description>
+    <IsPackable>true</IsPackable>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+</Project>

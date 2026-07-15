@@ -1,0 +1,39 @@
+<!--
+Copyright (c) DCSV. Licensed under the Apache License, Version 2.0.
+-->
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>DcsvIo.D2.Handler.Repo.Abstractions</RootNamespace>
+  </PropertyGroup>
+
+  <!--
+    Vocabulary for repo-flavored handlers — the seam app code touches when it
+    needs to discriminate database-specific failures (unique violation, FK
+    violation, deadlock, concurrency conflict, connection failure, etc.).
+
+    Pure abstractions: no EF Core, no Npgsql, no provider deps. Carries the
+    DbFailureKind enum + IDbExceptionClassifier interface (provider-impls live
+    in sibling packages like DcsvIo.D2.Handler.Repo.Postgres) plus extension
+    factories on D2Result so handlers can emit and callers can discriminate
+    typed DB failures via D2Result.UniqueViolation() / result.IsDeadlock /
+    etc., parallel to the built-in semantic factories on the result lib.
+  -->
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\result\core\DcsvIo.D2.Result.csproj" />
+    <ProjectReference Include="..\..\i18n\core\DcsvIo.D2.I18n.csproj" />
+  </ItemGroup>
+
+  <!-- Publish metadata (per-package semver + NuGet identity). -->
+  <PropertyGroup>
+    <Version>0.1.0</Version>
+    <PackageId>DcsvIo.D2.Handler.Repo.Abstractions</PackageId>
+    <Description>Vocabulary for repo-flavored D2 handlers — the database-failure discrimination contract (unique, FK, deadlock, concurrency, connection), zero infrastructure dependencies.</Description>
+    <IsPackable>true</IsPackable>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+</Project>

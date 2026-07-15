@@ -13,7 +13,7 @@
     "format": "prettier --write \"**/*.{ts,js,mjs,cjs,json,svelte,html,css,yaml,yml}\"",
     "format:check": "prettier --check \"**/*.{ts,js,mjs,cjs,json,svelte,html,css,yaml,yml}\"",
     "test": "vitest run",
-    "test:contracts": "pnpm --filter @d2/contract-tests test",
+    "test:contracts": "pnpm --filter @dcsv-io/d2-contract-tests test",
     "type-check:test": "pnpm -r run type-check:test",
     "codegen": "pnpm --filter ts-codegen exec tsx src/orchestrator.ts"
   },

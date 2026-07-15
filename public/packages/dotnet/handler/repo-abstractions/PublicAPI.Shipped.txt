@@ -1,0 +1,77 @@
+#nullable enable
+DcsvIo.D2.Handler.Repo.Abstractions.D2ResultDbBooleans
+DcsvIo.D2.Handler.Repo.Abstractions.D2ResultDbBooleans.extension(DcsvIo.D2.Result.D2Result!)
+DcsvIo.D2.Handler.Repo.Abstractions.D2ResultDbBooleans.extension(DcsvIo.D2.Result.D2Result!).IsCheckViolation.get -> bool
+DcsvIo.D2.Handler.Repo.Abstractions.D2ResultDbBooleans.extension(DcsvIo.D2.Result.D2Result!).IsConcurrencyConflict.get -> bool
+DcsvIo.D2.Handler.Repo.Abstractions.D2ResultDbBooleans.extension(DcsvIo.D2.Result.D2Result!).IsDbConnectionFailure.get -> bool
+DcsvIo.D2.Handler.Repo.Abstractions.D2ResultDbBooleans.extension(DcsvIo.D2.Result.D2Result!).IsDbDeadlock.get -> bool
+DcsvIo.D2.Handler.Repo.Abstractions.D2ResultDbBooleans.extension(DcsvIo.D2.Result.D2Result!).IsDbTimeout.get -> bool
+DcsvIo.D2.Handler.Repo.Abstractions.D2ResultDbBooleans.extension(DcsvIo.D2.Result.D2Result!).IsForeignKeyViolation.get -> bool
+DcsvIo.D2.Handler.Repo.Abstractions.D2ResultDbBooleans.extension(DcsvIo.D2.Result.D2Result!).IsNotNullViolation.get -> bool
+DcsvIo.D2.Handler.Repo.Abstractions.D2ResultDbBooleans.extension(DcsvIo.D2.Result.D2Result!).IsTransientDbFailure.get -> bool
+DcsvIo.D2.Handler.Repo.Abstractions.D2ResultDbBooleans.extension(DcsvIo.D2.Result.D2Result!).IsUniqueViolation.get -> bool
+DcsvIo.D2.Handler.Repo.Abstractions.D2ResultDbFactories
+DcsvIo.D2.Handler.Repo.Abstractions.D2ResultDbFactories.extension(DcsvIo.D2.Result.D2Result!)
+DcsvIo.D2.Handler.Repo.Abstractions.D2ResultDbGenericFactories
+DcsvIo.D2.Handler.Repo.Abstractions.D2ResultDbGenericFactories.extension<TData>(DcsvIo.D2.Result.D2Result<TData>!)
+DcsvIo.D2.Handler.Repo.Abstractions.DbErrorCodes
+DcsvIo.D2.Handler.Repo.Abstractions.DbFailureKind
+DcsvIo.D2.Handler.Repo.Abstractions.DbFailureKind.CheckViolation = 4 -> DcsvIo.D2.Handler.Repo.Abstractions.DbFailureKind
+DcsvIo.D2.Handler.Repo.Abstractions.DbFailureKind.ConcurrencyConflict = 0 -> DcsvIo.D2.Handler.Repo.Abstractions.DbFailureKind
+DcsvIo.D2.Handler.Repo.Abstractions.DbFailureKind.ConnectionFailure = 7 -> DcsvIo.D2.Handler.Repo.Abstractions.DbFailureKind
+DcsvIo.D2.Handler.Repo.Abstractions.DbFailureKind.Deadlock = 6 -> DcsvIo.D2.Handler.Repo.Abstractions.DbFailureKind
+DcsvIo.D2.Handler.Repo.Abstractions.DbFailureKind.ForeignKeyViolation = 2 -> DcsvIo.D2.Handler.Repo.Abstractions.DbFailureKind
+DcsvIo.D2.Handler.Repo.Abstractions.DbFailureKind.NotNullViolation = 3 -> DcsvIo.D2.Handler.Repo.Abstractions.DbFailureKind
+DcsvIo.D2.Handler.Repo.Abstractions.DbFailureKind.Timeout = 5 -> DcsvIo.D2.Handler.Repo.Abstractions.DbFailureKind
+DcsvIo.D2.Handler.Repo.Abstractions.DbFailureKind.UniqueViolation = 1 -> DcsvIo.D2.Handler.Repo.Abstractions.DbFailureKind
+DcsvIo.D2.Handler.Repo.Abstractions.IDbExceptionClassifier
+DcsvIo.D2.Handler.Repo.Abstractions.IDbExceptionClassifier.Classify(System.Exception! exception) -> DcsvIo.D2.Handler.Repo.Abstractions.DbFailureKind?
+const DcsvIo.D2.Handler.Repo.Abstractions.DbErrorCodes.CHECK_VIOLATION = "CHECK_VIOLATION" -> string!
+const DcsvIo.D2.Handler.Repo.Abstractions.DbErrorCodes.CONCURRENCY_CONFLICT = "CONCURRENCY_CONFLICT" -> string!
+const DcsvIo.D2.Handler.Repo.Abstractions.DbErrorCodes.DB_CONNECTION_FAILURE = "DB_CONNECTION_FAILURE" -> string!
+const DcsvIo.D2.Handler.Repo.Abstractions.DbErrorCodes.DB_DEADLOCK = "DB_DEADLOCK" -> string!
+const DcsvIo.D2.Handler.Repo.Abstractions.DbErrorCodes.DB_TIMEOUT = "DB_TIMEOUT" -> string!
+const DcsvIo.D2.Handler.Repo.Abstractions.DbErrorCodes.FOREIGN_KEY_VIOLATION = "FOREIGN_KEY_VIOLATION" -> string!
+const DcsvIo.D2.Handler.Repo.Abstractions.DbErrorCodes.NOT_NULL_VIOLATION = "NOT_NULL_VIOLATION" -> string!
+const DcsvIo.D2.Handler.Repo.Abstractions.DbErrorCodes.UNIQUE_VIOLATION = "UNIQUE_VIOLATION" -> string!
+static DcsvIo.D2.Handler.Repo.Abstractions.D2ResultDbBooleans.get_IsCheckViolation(DcsvIo.D2.Result.D2Result! result) -> bool
+static DcsvIo.D2.Handler.Repo.Abstractions.D2ResultDbBooleans.get_IsConcurrencyConflict(DcsvIo.D2.Result.D2Result! result) -> bool
+static DcsvIo.D2.Handler.Repo.Abstractions.D2ResultDbBooleans.get_IsDbConnectionFailure(DcsvIo.D2.Result.D2Result! result) -> bool
+static DcsvIo.D2.Handler.Repo.Abstractions.D2ResultDbBooleans.get_IsDbDeadlock(DcsvIo.D2.Result.D2Result! result) -> bool
+static DcsvIo.D2.Handler.Repo.Abstractions.D2ResultDbBooleans.get_IsDbTimeout(DcsvIo.D2.Result.D2Result! result) -> bool
+static DcsvIo.D2.Handler.Repo.Abstractions.D2ResultDbBooleans.get_IsForeignKeyViolation(DcsvIo.D2.Result.D2Result! result) -> bool
+static DcsvIo.D2.Handler.Repo.Abstractions.D2ResultDbBooleans.get_IsNotNullViolation(DcsvIo.D2.Result.D2Result! result) -> bool
+static DcsvIo.D2.Handler.Repo.Abstractions.D2ResultDbBooleans.get_IsTransientDbFailure(DcsvIo.D2.Result.D2Result! result) -> bool
+static DcsvIo.D2.Handler.Repo.Abstractions.D2ResultDbBooleans.get_IsUniqueViolation(DcsvIo.D2.Result.D2Result! result) -> bool
+static DcsvIo.D2.Handler.Repo.Abstractions.D2ResultDbFactories.CheckViolation(System.Collections.Generic.IReadOnlyList<DcsvIo.D2.I18n.TKMessage!>? messages = null, System.Collections.Generic.IReadOnlyList<DcsvIo.D2.Result.InputError!>? inputErrors = null, string? traceId = null) -> DcsvIo.D2.Result.D2Result!
+static DcsvIo.D2.Handler.Repo.Abstractions.D2ResultDbFactories.ConcurrencyConflict(System.Collections.Generic.IReadOnlyList<DcsvIo.D2.I18n.TKMessage!>? messages = null, string? traceId = null) -> DcsvIo.D2.Result.D2Result!
+static DcsvIo.D2.Handler.Repo.Abstractions.D2ResultDbFactories.DbConnectionFailure(System.Collections.Generic.IReadOnlyList<DcsvIo.D2.I18n.TKMessage!>? messages = null, string? traceId = null) -> DcsvIo.D2.Result.D2Result!
+static DcsvIo.D2.Handler.Repo.Abstractions.D2ResultDbFactories.DbDeadlock(System.Collections.Generic.IReadOnlyList<DcsvIo.D2.I18n.TKMessage!>? messages = null, string? traceId = null) -> DcsvIo.D2.Result.D2Result!
+static DcsvIo.D2.Handler.Repo.Abstractions.D2ResultDbFactories.DbTimeout(System.Collections.Generic.IReadOnlyList<DcsvIo.D2.I18n.TKMessage!>? messages = null, string? traceId = null) -> DcsvIo.D2.Result.D2Result!
+static DcsvIo.D2.Handler.Repo.Abstractions.D2ResultDbFactories.ForeignKeyViolation(System.Collections.Generic.IReadOnlyList<DcsvIo.D2.I18n.TKMessage!>? messages = null, System.Collections.Generic.IReadOnlyList<DcsvIo.D2.Result.InputError!>? inputErrors = null, string? traceId = null) -> DcsvIo.D2.Result.D2Result!
+static DcsvIo.D2.Handler.Repo.Abstractions.D2ResultDbFactories.NotNullViolation(System.Collections.Generic.IReadOnlyList<DcsvIo.D2.I18n.TKMessage!>? messages = null, System.Collections.Generic.IReadOnlyList<DcsvIo.D2.Result.InputError!>? inputErrors = null, string? traceId = null) -> DcsvIo.D2.Result.D2Result!
+static DcsvIo.D2.Handler.Repo.Abstractions.D2ResultDbFactories.UniqueViolation(System.Collections.Generic.IReadOnlyList<DcsvIo.D2.I18n.TKMessage!>? messages = null, System.Collections.Generic.IReadOnlyList<DcsvIo.D2.Result.InputError!>? inputErrors = null, string? traceId = null) -> DcsvIo.D2.Result.D2Result!
+static DcsvIo.D2.Handler.Repo.Abstractions.D2ResultDbFactories.extension(DcsvIo.D2.Result.D2Result!).CheckViolation(System.Collections.Generic.IReadOnlyList<DcsvIo.D2.I18n.TKMessage!>? messages = null, System.Collections.Generic.IReadOnlyList<DcsvIo.D2.Result.InputError!>? inputErrors = null, string? traceId = null) -> DcsvIo.D2.Result.D2Result!
+static DcsvIo.D2.Handler.Repo.Abstractions.D2ResultDbFactories.extension(DcsvIo.D2.Result.D2Result!).ConcurrencyConflict(System.Collections.Generic.IReadOnlyList<DcsvIo.D2.I18n.TKMessage!>? messages = null, string? traceId = null) -> DcsvIo.D2.Result.D2Result!
+static DcsvIo.D2.Handler.Repo.Abstractions.D2ResultDbFactories.extension(DcsvIo.D2.Result.D2Result!).DbConnectionFailure(System.Collections.Generic.IReadOnlyList<DcsvIo.D2.I18n.TKMessage!>? messages = null, string? traceId = null) -> DcsvIo.D2.Result.D2Result!
+static DcsvIo.D2.Handler.Repo.Abstractions.D2ResultDbFactories.extension(DcsvIo.D2.Result.D2Result!).DbDeadlock(System.Collections.Generic.IReadOnlyList<DcsvIo.D2.I18n.TKMessage!>? messages = null, string? traceId = null) -> DcsvIo.D2.Result.D2Result!
+static DcsvIo.D2.Handler.Repo.Abstractions.D2ResultDbFactories.extension(DcsvIo.D2.Result.D2Result!).DbTimeout(System.Collections.Generic.IReadOnlyList<DcsvIo.D2.I18n.TKMessage!>? messages = null, string? traceId = null) -> DcsvIo.D2.Result.D2Result!
+static DcsvIo.D2.Handler.Repo.Abstractions.D2ResultDbFactories.extension(DcsvIo.D2.Result.D2Result!).ForeignKeyViolation(System.Collections.Generic.IReadOnlyList<DcsvIo.D2.I18n.TKMessage!>? messages = null, System.Collections.Generic.IReadOnlyList<DcsvIo.D2.Result.InputError!>? inputErrors = null, string? traceId = null) -> DcsvIo.D2.Result.D2Result!
+static DcsvIo.D2.Handler.Repo.Abstractions.D2ResultDbFactories.extension(DcsvIo.D2.Result.D2Result!).NotNullViolation(System.Collections.Generic.IReadOnlyList<DcsvIo.D2.I18n.TKMessage!>? messages = null, System.Collections.Generic.IReadOnlyList<DcsvIo.D2.Result.InputError!>? inputErrors = null, string? traceId = null) -> DcsvIo.D2.Result.D2Result!
+static DcsvIo.D2.Handler.Repo.Abstractions.D2ResultDbFactories.extension(DcsvIo.D2.Result.D2Result!).UniqueViolation(System.Collections.Generic.IReadOnlyList<DcsvIo.D2.I18n.TKMessage!>? messages = null, System.Collections.Generic.IReadOnlyList<DcsvIo.D2.Result.InputError!>? inputErrors = null, string? traceId = null) -> DcsvIo.D2.Result.D2Result!
+static DcsvIo.D2.Handler.Repo.Abstractions.D2ResultDbGenericFactories.CheckViolation<TData>(System.Collections.Generic.IReadOnlyList<DcsvIo.D2.I18n.TKMessage!>? messages = null, System.Collections.Generic.IReadOnlyList<DcsvIo.D2.Result.InputError!>? inputErrors = null, string? traceId = null) -> DcsvIo.D2.Result.D2Result<TData>!
+static DcsvIo.D2.Handler.Repo.Abstractions.D2ResultDbGenericFactories.ConcurrencyConflict<TData>(System.Collections.Generic.IReadOnlyList<DcsvIo.D2.I18n.TKMessage!>? messages = null, string? traceId = null) -> DcsvIo.D2.Result.D2Result<TData>!
+static DcsvIo.D2.Handler.Repo.Abstractions.D2ResultDbGenericFactories.DbConnectionFailure<TData>(System.Collections.Generic.IReadOnlyList<DcsvIo.D2.I18n.TKMessage!>? messages = null, string? traceId = null) -> DcsvIo.D2.Result.D2Result<TData>!
+static DcsvIo.D2.Handler.Repo.Abstractions.D2ResultDbGenericFactories.DbDeadlock<TData>(System.Collections.Generic.IReadOnlyList<DcsvIo.D2.I18n.TKMessage!>? messages = null, string? traceId = null) -> DcsvIo.D2.Result.D2Result<TData>!
+static DcsvIo.D2.Handler.Repo.Abstractions.D2ResultDbGenericFactories.DbTimeout<TData>(System.Collections.Generic.IReadOnlyList<DcsvIo.D2.I18n.TKMessage!>? messages = null, string? traceId = null) -> DcsvIo.D2.Result.D2Result<TData>!
+static DcsvIo.D2.Handler.Repo.Abstractions.D2ResultDbGenericFactories.ForeignKeyViolation<TData>(System.Collections.Generic.IReadOnlyList<DcsvIo.D2.I18n.TKMessage!>? messages = null, System.Collections.Generic.IReadOnlyList<DcsvIo.D2.Result.InputError!>? inputErrors = null, string? traceId = null) -> DcsvIo.D2.Result.D2Result<TData>!
+static DcsvIo.D2.Handler.Repo.Abstractions.D2ResultDbGenericFactories.NotNullViolation<TData>(System.Collections.Generic.IReadOnlyList<DcsvIo.D2.I18n.TKMessage!>? messages = null, System.Collections.Generic.IReadOnlyList<DcsvIo.D2.Result.InputError!>? inputErrors = null, string? traceId = null) -> DcsvIo.D2.Result.D2Result<TData>!
+static DcsvIo.D2.Handler.Repo.Abstractions.D2ResultDbGenericFactories.UniqueViolation<TData>(System.Collections.Generic.IReadOnlyList<DcsvIo.D2.I18n.TKMessage!>? messages = null, System.Collections.Generic.IReadOnlyList<DcsvIo.D2.Result.InputError!>? inputErrors = null, string? traceId = null) -> DcsvIo.D2.Result.D2Result<TData>!
+static DcsvIo.D2.Handler.Repo.Abstractions.D2ResultDbGenericFactories.extension<TData>(DcsvIo.D2.Result.D2Result<TData>!).CheckViolation(System.Collections.Generic.IReadOnlyList<DcsvIo.D2.I18n.TKMessage!>? messages = null, System.Collections.Generic.IReadOnlyList<DcsvIo.D2.Result.InputError!>? inputErrors = null, string? traceId = null) -> DcsvIo.D2.Result.D2Result<TData>!
+static DcsvIo.D2.Handler.Repo.Abstractions.D2ResultDbGenericFactories.extension<TData>(DcsvIo.D2.Result.D2Result<TData>!).ConcurrencyConflict(System.Collections.Generic.IReadOnlyList<DcsvIo.D2.I18n.TKMessage!>? messages = null, string? traceId = null) -> DcsvIo.D2.Result.D2Result<TData>!
+static DcsvIo.D2.Handler.Repo.Abstractions.D2ResultDbGenericFactories.extension<TData>(DcsvIo.D2.Result.D2Result<TData>!).DbConnectionFailure(System.Collections.Generic.IReadOnlyList<DcsvIo.D2.I18n.TKMessage!>? messages = null, string? traceId = null) -> DcsvIo.D2.Result.D2Result<TData>!
+static DcsvIo.D2.Handler.Repo.Abstractions.D2ResultDbGenericFactories.extension<TData>(DcsvIo.D2.Result.D2Result<TData>!).DbDeadlock(System.Collections.Generic.IReadOnlyList<DcsvIo.D2.I18n.TKMessage!>? messages = null, string? traceId = null) -> DcsvIo.D2.Result.D2Result<TData>!
+static DcsvIo.D2.Handler.Repo.Abstractions.D2ResultDbGenericFactories.extension<TData>(DcsvIo.D2.Result.D2Result<TData>!).DbTimeout(System.Collections.Generic.IReadOnlyList<DcsvIo.D2.I18n.TKMessage!>? messages = null, string? traceId = null) -> DcsvIo.D2.Result.D2Result<TData>!
+static DcsvIo.D2.Handler.Repo.Abstractions.D2ResultDbGenericFactories.extension<TData>(DcsvIo.D2.Result.D2Result<TData>!).ForeignKeyViolation(System.Collections.Generic.IReadOnlyList<DcsvIo.D2.I18n.TKMessage!>? messages = null, System.Collections.Generic.IReadOnlyList<DcsvIo.D2.Result.InputError!>? inputErrors = null, string? traceId = null) -> DcsvIo.D2.Result.D2Result<TData>!
+static DcsvIo.D2.Handler.Repo.Abstractions.D2ResultDbGenericFactories.extension<TData>(DcsvIo.D2.Result.D2Result<TData>!).NotNullViolation(System.Collections.Generic.IReadOnlyList<DcsvIo.D2.I18n.TKMessage!>? messages = null, System.Collections.Generic.IReadOnlyList<DcsvIo.D2.Result.InputError!>? inputErrors = null, string? traceId = null) -> DcsvIo.D2.Result.D2Result<TData>!
+static DcsvIo.D2.Handler.Repo.Abstractions.D2ResultDbGenericFactories.extension<TData>(DcsvIo.D2.Result.D2Result<TData>!).UniqueViolation(System.Collections.Generic.IReadOnlyList<DcsvIo.D2.I18n.TKMessage!>? messages = null, System.Collections.Generic.IReadOnlyList<DcsvIo.D2.Result.InputError!>? inputErrors = null, string? traceId = null) -> DcsvIo.D2.Result.D2Result<TData>!

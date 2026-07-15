@@ -1,0 +1,61 @@
+<!--
+Copyright (c) DCSV. Licensed under the Apache License, Version 2.0.
+-->
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>DcsvIo.D2.EntityFrameworkCore</RootNamespace>
+  </PropertyGroup>
+
+  <!--
+    Generic, VO-agnostic EF Core migration helpers. Currently ships one public helper:
+    CreateD2Index<TEntity> — a MigrationBuilder extension that derives the
+    {ComplexProp}_{Member} column name from a typed member-selector expression and emits
+    a raw CreateIndexOperation. Exists because EF Core 10 cannot declare model-aware
+    indexes on ComplexProperty member columns (silently discarded at finalization);
+    see the README for the limitation details and the EF Core 11 upgrade path.
+    No contacts, no location, no data-governance dependency — pure EF migration plumbing.
+    PackageReference: Microsoft.EntityFrameworkCore.Relational (supplies MigrationBuilder,
+    CreateIndexOperation, OperationBuilder<T> from Migrations.Operations and
+    Migrations.Operations.Builders). Base EF Core flows transitively; do NOT add a
+    separate base Microsoft.EntityFrameworkCore ref to avoid NU1510.
+    ProjectReference: DcsvIo.D2.Utilities — uses ThrowIfFalsey for combined
+    null/empty/whitespace guards; no cycle (Utilities does not reference EF or this lib).
+  -->
+
+  <ItemGroup>
+    <!--
+      Microsoft.EntityFrameworkCore.Relational — CPM-pinned in Directory.Packages.props.
+      Provides MigrationBuilder, CreateIndexOperation, and OperationBuilder<CreateIndexOperation>
+      from Microsoft.EntityFrameworkCore.Migrations.Operations and
+      Microsoft.EntityFrameworkCore.Migrations.Operations.Builders. Base EF Core flows
+      transitively via Relational; the explicit base PackageReference is removed to avoid
+      NU1510 on transitive pruning.
+    -->
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!--
+      DcsvIo.D2.Utilities — uses ThrowIfFalsey for a combined null/empty/whitespace guard
+      on required string parameters. Cycle-free: Utilities does not reference EF or this lib.
+    -->
+    <ProjectReference Include="..\..\utilities\DcsvIo.D2.Utilities.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="DcsvIo.D2.Tests" />
+  </ItemGroup>
+
+  <!-- Publish metadata (per-package semver + NuGet identity). -->
+  <PropertyGroup>
+    <Version>0.1.0</Version>
+    <PackageId>DcsvIo.D2.EntityFrameworkCore</PackageId>
+    <Description>EF Core migration helpers for D2 — declaring indexes on ComplexProperty member columns.</Description>
+    <IsPackable>true</IsPackable>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+</Project>

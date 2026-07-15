@@ -1,0 +1,29 @@
+#nullable enable
+DcsvIo.D2.Logging.D2LoggingConstants
+DcsvIo.D2.Logging.D2LoggingOptions
+DcsvIo.D2.Logging.D2LoggingOptions.<Clone>$() -> DcsvIo.D2.Logging.D2LoggingOptions!
+DcsvIo.D2.Logging.D2LoggingOptions.D2LoggingOptions() -> void
+DcsvIo.D2.Logging.D2LoggingOptions.D2LoggingOptions(string? serviceName, string? environment, Serilog.Events.LogEventLevel? minimumLevel, System.Collections.Generic.IReadOnlyList<string!>? infrastructurePaths) -> void
+DcsvIo.D2.Logging.D2LoggingOptions.Environment.get -> string?
+DcsvIo.D2.Logging.D2LoggingOptions.Environment.set -> void
+DcsvIo.D2.Logging.D2LoggingOptions.Equals(DcsvIo.D2.Logging.D2LoggingOptions? other) -> bool
+DcsvIo.D2.Logging.D2LoggingOptions.InfrastructurePaths.get -> System.Collections.Generic.IReadOnlyList<string!>!
+DcsvIo.D2.Logging.D2LoggingOptions.InfrastructurePaths.init -> void
+DcsvIo.D2.Logging.D2LoggingOptions.MinimumLevel.get -> Serilog.Events.LogEventLevel
+DcsvIo.D2.Logging.D2LoggingOptions.MinimumLevel.init -> void
+DcsvIo.D2.Logging.D2LoggingOptions.ServiceName.get -> string?
+DcsvIo.D2.Logging.D2LoggingOptions.ServiceName.set -> void
+DcsvIo.D2.Logging.LoggingServiceCollectionExtensions
+DcsvIo.D2.Logging.LoggingServiceCollectionExtensions.extension(Microsoft.Extensions.DependencyInjection.IServiceCollection!)
+DcsvIo.D2.Logging.LoggingServiceCollectionExtensions.extension(Microsoft.Extensions.DependencyInjection.IServiceCollection!).AddD2Logging(Microsoft.Extensions.Configuration.IConfiguration! configuration, System.Action<DcsvIo.D2.Logging.D2LoggingOptions!>? configure = null) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
+DcsvIo.D2.Logging.WebApplicationLoggingExtensions
+DcsvIo.D2.Logging.WebApplicationLoggingExtensions.extension(Microsoft.AspNetCore.Builder.IApplicationBuilder!)
+DcsvIo.D2.Logging.WebApplicationLoggingExtensions.extension(Microsoft.AspNetCore.Builder.IApplicationBuilder!).UseD2RequestLogging(System.Action<Serilog.AspNetCore.RequestLoggingOptions!>? configure = null) -> Microsoft.AspNetCore.Builder.IApplicationBuilder!
+const DcsvIo.D2.Logging.D2LoggingConstants.OTEL_SERVICE_NAME_CONFIG_KEY = "OTEL_SERVICE_NAME" -> string!
+override DcsvIo.D2.Logging.D2LoggingOptions.Equals(object? obj) -> bool
+override DcsvIo.D2.Logging.D2LoggingOptions.GetHashCode() -> int
+override DcsvIo.D2.Logging.D2LoggingOptions.ToString() -> string!
+static DcsvIo.D2.Logging.D2LoggingOptions.operator !=(DcsvIo.D2.Logging.D2LoggingOptions? left, DcsvIo.D2.Logging.D2LoggingOptions? right) -> bool
+static DcsvIo.D2.Logging.D2LoggingOptions.operator ==(DcsvIo.D2.Logging.D2LoggingOptions? left, DcsvIo.D2.Logging.D2LoggingOptions? right) -> bool
+static DcsvIo.D2.Logging.LoggingServiceCollectionExtensions.AddD2Logging(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services, Microsoft.Extensions.Configuration.IConfiguration! configuration, System.Action<DcsvIo.D2.Logging.D2LoggingOptions!>? configure = null) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
+static DcsvIo.D2.Logging.WebApplicationLoggingExtensions.UseD2RequestLogging(this Microsoft.AspNetCore.Builder.IApplicationBuilder! app, System.Action<Serilog.AspNetCore.RequestLoggingOptions!>? configure = null) -> Microsoft.AspNetCore.Builder.IApplicationBuilder!

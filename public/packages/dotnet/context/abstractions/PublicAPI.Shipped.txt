@@ -1,0 +1,232 @@
+#nullable enable
+DcsvIo.D2.Context.Abstractions.ActorChainParser
+DcsvIo.D2.Context.Abstractions.CallPathOps
+DcsvIo.D2.Context.Abstractions.IRequestContext
+DcsvIo.D2.Context.Abstractions.IRequestContext.AdminLocationHashId.get -> string?
+DcsvIo.D2.Context.Abstractions.IRequestContext.Asn.get -> int?
+DcsvIo.D2.Context.Abstractions.IRequestContext.AsnName.get -> string?
+DcsvIo.D2.Context.Abstractions.IRequestContext.AsnType.get -> string?
+DcsvIo.D2.Context.Abstractions.IRequestContext.CallPath.get -> System.Collections.Generic.IReadOnlyList<DcsvIo.D2.Auth.Abstractions.CallPathEntry!>!
+DcsvIo.D2.Context.Abstractions.IRequestContext.City.get -> string?
+DcsvIo.D2.Context.Abstractions.IRequestContext.ClientIp.get -> string?
+DcsvIo.D2.Context.Abstractions.IRequestContext.CountryIso31661Alpha2Code.get -> string?
+DcsvIo.D2.Context.Abstractions.IRequestContext.CurrencyIso4217Code.get -> string?
+DcsvIo.D2.Context.Abstractions.IRequestContext.CurrentFingerprint.get -> string?
+DcsvIo.D2.Context.Abstractions.IRequestContext.EdgeNodeId.get -> string?
+DcsvIo.D2.Context.Abstractions.IRequestContext.FeatureFlagsCsv.get -> string?
+DcsvIo.D2.Context.Abstractions.IRequestContext.Geohash.get -> string?
+DcsvIo.D2.Context.Abstractions.IRequestContext.HttpMethod.get -> string?
+DcsvIo.D2.Context.Abstractions.IRequestContext.IdempotencyKey.get -> string?
+DcsvIo.D2.Context.Abstractions.IRequestContext.ImmediateCaller.get -> string?
+DcsvIo.D2.Context.Abstractions.IRequestContext.IsHosting.get -> bool?
+DcsvIo.D2.Context.Abstractions.IRequestContext.IsProxy.get -> bool?
+DcsvIo.D2.Context.Abstractions.IRequestContext.IsTor.get -> bool?
+DcsvIo.D2.Context.Abstractions.IRequestContext.IsVpn.get -> bool?
+DcsvIo.D2.Context.Abstractions.IRequestContext.Latitude.get -> double?
+DcsvIo.D2.Context.Abstractions.IRequestContext.LocaleIetfBcp47Tag.get -> string?
+DcsvIo.D2.Context.Abstractions.IRequestContext.Longitude.get -> double?
+DcsvIo.D2.Context.Abstractions.IRequestContext.OrgPlanTier.get -> string?
+DcsvIo.D2.Context.Abstractions.IRequestContext.Origin.get -> DcsvIo.D2.Auth.Abstractions.RequestOrigin
+DcsvIo.D2.Context.Abstractions.IRequestContext.PostalCode.get -> string?
+DcsvIo.D2.Context.Abstractions.IRequestContext.RequestId.get -> string?
+DcsvIo.D2.Context.Abstractions.IRequestContext.RequestPath.get -> string?
+DcsvIo.D2.Context.Abstractions.IRequestContext.RequestStartedAt.get -> System.DateTimeOffset?
+DcsvIo.D2.Context.Abstractions.IRequestContext.RiskScore.get -> int?
+DcsvIo.D2.Context.Abstractions.IRequestContext.SessionFingerprint.get -> string?
+DcsvIo.D2.Context.Abstractions.IRequestContext.SubdivisionIso31662Code.get -> string?
+DcsvIo.D2.Context.Abstractions.IRequestContext.TimezoneIanaName.get -> string?
+DcsvIo.D2.Context.Abstractions.IRequestContext.TraceId.get -> string?
+DcsvIo.D2.Context.Abstractions.IRequestContext.WhoIsHashId.get -> string?
+DcsvIo.D2.Context.Abstractions.ISystemWorkScope
+DcsvIo.D2.Context.Abstractions.ISystemWorkScope.Services.get -> System.IServiceProvider!
+DcsvIo.D2.Context.Abstractions.ISystemWorkScopeFactory
+DcsvIo.D2.Context.Abstractions.ISystemWorkScopeFactory.BeginAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<DcsvIo.D2.Context.Abstractions.ISystemWorkScope!>
+DcsvIo.D2.Context.Abstractions.InProcessModuleBoundary
+DcsvIo.D2.Context.Abstractions.InProcessModuleBoundary.extension(DcsvIo.D2.Context.Abstractions.IRequestContext!)
+DcsvIo.D2.Context.Abstractions.InProcessModuleBoundary.extension(DcsvIo.D2.Context.Abstractions.IRequestContext!).EstablishInProcessModule(string! callingModuleId, string! targetModuleId, DcsvIo.D2.Time.IClock! clock) -> void
+DcsvIo.D2.Context.Abstractions.MalformedActorChainException
+DcsvIo.D2.Context.Abstractions.MalformedActorChainException.MalformedActorChainException(string! message) -> void
+DcsvIo.D2.Context.Abstractions.MalformedActorChainException.MalformedActorChainException(string! message, System.Exception! innerException) -> void
+DcsvIo.D2.Context.Abstractions.MutableRequestContext
+DcsvIo.D2.Context.Abstractions.MutableRequestContext.ActorChain.get -> System.Collections.Generic.IReadOnlyList<DcsvIo.D2.Auth.Abstractions.ActorEntry!>!
+DcsvIo.D2.Context.Abstractions.MutableRequestContext.ActorChain.set -> void
+DcsvIo.D2.Context.Abstractions.MutableRequestContext.AdminLocationHashId.get -> string?
+DcsvIo.D2.Context.Abstractions.MutableRequestContext.AdminLocationHashId.set -> void
+DcsvIo.D2.Context.Abstractions.MutableRequestContext.Asn.get -> int?
+DcsvIo.D2.Context.Abstractions.MutableRequestContext.Asn.set -> void
+DcsvIo.D2.Context.Abstractions.MutableRequestContext.AsnName.get -> string?
+DcsvIo.D2.Context.Abstractions.MutableRequestContext.AsnName.set -> void
+DcsvIo.D2.Context.Abstractions.MutableRequestContext.AsnType.get -> string?
+DcsvIo.D2.Context.Abstractions.MutableRequestContext.AsnType.set -> void
+DcsvIo.D2.Context.Abstractions.MutableRequestContext.Audience.get -> System.Collections.Generic.IReadOnlyList<string!>!
+DcsvIo.D2.Context.Abstractions.MutableRequestContext.Audience.set -> void
+DcsvIo.D2.Context.Abstractions.MutableRequestContext.AuthMethod.get -> string?
+DcsvIo.D2.Context.Abstractions.MutableRequestContext.AuthMethod.set -> void
+DcsvIo.D2.Context.Abstractions.MutableRequestContext.CallPath.get -> System.Collections.Generic.IReadOnlyList<DcsvIo.D2.Auth.Abstractions.CallPathEntry!>!
+DcsvIo.D2.Context.Abstractions.MutableRequestContext.CallPath.set -> void
+DcsvIo.D2.Context.Abstractions.MutableRequestContext.City.get -> string?
+DcsvIo.D2.Context.Abstractions.MutableRequestContext.City.set -> void
+DcsvIo.D2.Context.Abstractions.MutableRequestContext.ClientIp.get -> string?
+DcsvIo.D2.Context.Abstractions.MutableRequestContext.ClientIp.set -> void
+DcsvIo.D2.Context.Abstractions.MutableRequestContext.CountryIso31661Alpha2Code.get -> string?
+DcsvIo.D2.Context.Abstractions.MutableRequestContext.CountryIso31661Alpha2Code.set -> void
+DcsvIo.D2.Context.Abstractions.MutableRequestContext.CurrencyIso4217Code.get -> string?
+DcsvIo.D2.Context.Abstractions.MutableRequestContext.CurrencyIso4217Code.set -> void
+DcsvIo.D2.Context.Abstractions.MutableRequestContext.CurrentFingerprint.get -> string?
+DcsvIo.D2.Context.Abstractions.MutableRequestContext.CurrentFingerprint.set -> void
+DcsvIo.D2.Context.Abstractions.MutableRequestContext.EdgeNodeId.get -> string?
+DcsvIo.D2.Context.Abstractions.MutableRequestContext.EdgeNodeId.set -> void
+DcsvIo.D2.Context.Abstractions.MutableRequestContext.FeatureFlagsCsv.get -> string?
+DcsvIo.D2.Context.Abstractions.MutableRequestContext.FeatureFlagsCsv.set -> void
+DcsvIo.D2.Context.Abstractions.MutableRequestContext.Geohash.get -> string?
+DcsvIo.D2.Context.Abstractions.MutableRequestContext.Geohash.set -> void
+DcsvIo.D2.Context.Abstractions.MutableRequestContext.HttpMethod.get -> string?
+DcsvIo.D2.Context.Abstractions.MutableRequestContext.HttpMethod.set -> void
+DcsvIo.D2.Context.Abstractions.MutableRequestContext.IdempotencyKey.get -> string?
+DcsvIo.D2.Context.Abstractions.MutableRequestContext.IdempotencyKey.set -> void
+DcsvIo.D2.Context.Abstractions.MutableRequestContext.ImmediateCaller.get -> string?
+DcsvIo.D2.Context.Abstractions.MutableRequestContext.ImmediateCaller.set -> void
+DcsvIo.D2.Context.Abstractions.MutableRequestContext.ImmediateCallerClientId.get -> string?
+DcsvIo.D2.Context.Abstractions.MutableRequestContext.ImpersonatedBy.get -> System.Guid?
+DcsvIo.D2.Context.Abstractions.MutableRequestContext.ImpersonationKind.get -> DcsvIo.D2.Auth.Abstractions.ImpersonationKind?
+DcsvIo.D2.Context.Abstractions.MutableRequestContext.ImpersonationSessionId.get -> System.Guid?
+DcsvIo.D2.Context.Abstractions.MutableRequestContext.ImpersonatorOrgId.get -> System.Guid?
+DcsvIo.D2.Context.Abstractions.MutableRequestContext.ImpersonatorOrgName.get -> string?
+DcsvIo.D2.Context.Abstractions.MutableRequestContext.ImpersonatorOrgRole.get -> DcsvIo.D2.Auth.Abstractions.Role?
+DcsvIo.D2.Context.Abstractions.MutableRequestContext.ImpersonatorOrgType.get -> DcsvIo.D2.Auth.Abstractions.OrgType?
+DcsvIo.D2.Context.Abstractions.MutableRequestContext.IsAuthenticated.get -> bool?
+DcsvIo.D2.Context.Abstractions.MutableRequestContext.IsAuthenticated.set -> void
+DcsvIo.D2.Context.Abstractions.MutableRequestContext.IsHosting.get -> bool?
+DcsvIo.D2.Context.Abstractions.MutableRequestContext.IsHosting.set -> void
+DcsvIo.D2.Context.Abstractions.MutableRequestContext.IsImpersonating.get -> bool?
+DcsvIo.D2.Context.Abstractions.MutableRequestContext.IsProxy.get -> bool?
+DcsvIo.D2.Context.Abstractions.MutableRequestContext.IsProxy.set -> void
+DcsvIo.D2.Context.Abstractions.MutableRequestContext.IsServiceIdentity.get -> bool?
+DcsvIo.D2.Context.Abstractions.MutableRequestContext.IsTor.get -> bool?
+DcsvIo.D2.Context.Abstractions.MutableRequestContext.IsTor.set -> void
+DcsvIo.D2.Context.Abstractions.MutableRequestContext.IsVpn.get -> bool?
+DcsvIo.D2.Context.Abstractions.MutableRequestContext.IsVpn.set -> void
+DcsvIo.D2.Context.Abstractions.MutableRequestContext.LastStepUpAt.get -> System.DateTimeOffset?
+DcsvIo.D2.Context.Abstractions.MutableRequestContext.LastStepUpAt.set -> void
+DcsvIo.D2.Context.Abstractions.MutableRequestContext.Latitude.get -> double?
+DcsvIo.D2.Context.Abstractions.MutableRequestContext.Latitude.set -> void
+DcsvIo.D2.Context.Abstractions.MutableRequestContext.LocaleIetfBcp47Tag.get -> string?
+DcsvIo.D2.Context.Abstractions.MutableRequestContext.LocaleIetfBcp47Tag.set -> void
+DcsvIo.D2.Context.Abstractions.MutableRequestContext.Longitude.get -> double?
+DcsvIo.D2.Context.Abstractions.MutableRequestContext.Longitude.set -> void
+DcsvIo.D2.Context.Abstractions.MutableRequestContext.MutableRequestContext() -> void
+DcsvIo.D2.Context.Abstractions.MutableRequestContext.OrgId.get -> System.Guid?
+DcsvIo.D2.Context.Abstractions.MutableRequestContext.OrgId.set -> void
+DcsvIo.D2.Context.Abstractions.MutableRequestContext.OrgName.get -> string?
+DcsvIo.D2.Context.Abstractions.MutableRequestContext.OrgName.set -> void
+DcsvIo.D2.Context.Abstractions.MutableRequestContext.OrgPlanTier.get -> string?
+DcsvIo.D2.Context.Abstractions.MutableRequestContext.OrgPlanTier.set -> void
+DcsvIo.D2.Context.Abstractions.MutableRequestContext.OrgRole.get -> DcsvIo.D2.Auth.Abstractions.Role?
+DcsvIo.D2.Context.Abstractions.MutableRequestContext.OrgRole.set -> void
+DcsvIo.D2.Context.Abstractions.MutableRequestContext.OrgType.get -> DcsvIo.D2.Auth.Abstractions.OrgType?
+DcsvIo.D2.Context.Abstractions.MutableRequestContext.OrgType.set -> void
+DcsvIo.D2.Context.Abstractions.MutableRequestContext.Origin.get -> DcsvIo.D2.Auth.Abstractions.RequestOrigin
+DcsvIo.D2.Context.Abstractions.MutableRequestContext.Origin.set -> void
+DcsvIo.D2.Context.Abstractions.MutableRequestContext.OriginatingClientId.get -> string?
+DcsvIo.D2.Context.Abstractions.MutableRequestContext.PostalCode.get -> string?
+DcsvIo.D2.Context.Abstractions.MutableRequestContext.PostalCode.set -> void
+DcsvIo.D2.Context.Abstractions.MutableRequestContext.RequestId.get -> string?
+DcsvIo.D2.Context.Abstractions.MutableRequestContext.RequestId.set -> void
+DcsvIo.D2.Context.Abstractions.MutableRequestContext.RequestPath.get -> string?
+DcsvIo.D2.Context.Abstractions.MutableRequestContext.RequestPath.set -> void
+DcsvIo.D2.Context.Abstractions.MutableRequestContext.RequestStartedAt.get -> System.DateTimeOffset?
+DcsvIo.D2.Context.Abstractions.MutableRequestContext.RequestStartedAt.set -> void
+DcsvIo.D2.Context.Abstractions.MutableRequestContext.RequestedByClientId.get -> string?
+DcsvIo.D2.Context.Abstractions.MutableRequestContext.RequestedByClientId.set -> void
+DcsvIo.D2.Context.Abstractions.MutableRequestContext.RiskScore.get -> int?
+DcsvIo.D2.Context.Abstractions.MutableRequestContext.RiskScore.set -> void
+DcsvIo.D2.Context.Abstractions.MutableRequestContext.Scopes.get -> System.Collections.Generic.IReadOnlySet<string!>!
+DcsvIo.D2.Context.Abstractions.MutableRequestContext.Scopes.set -> void
+DcsvIo.D2.Context.Abstractions.MutableRequestContext.SessionFingerprint.get -> string?
+DcsvIo.D2.Context.Abstractions.MutableRequestContext.SessionFingerprint.set -> void
+DcsvIo.D2.Context.Abstractions.MutableRequestContext.SessionId.get -> System.Guid?
+DcsvIo.D2.Context.Abstractions.MutableRequestContext.SessionId.set -> void
+DcsvIo.D2.Context.Abstractions.MutableRequestContext.SubdivisionIso31662Code.get -> string?
+DcsvIo.D2.Context.Abstractions.MutableRequestContext.SubdivisionIso31662Code.set -> void
+DcsvIo.D2.Context.Abstractions.MutableRequestContext.Subject.get -> string?
+DcsvIo.D2.Context.Abstractions.MutableRequestContext.Subject.set -> void
+DcsvIo.D2.Context.Abstractions.MutableRequestContext.TimezoneIanaName.get -> string?
+DcsvIo.D2.Context.Abstractions.MutableRequestContext.TimezoneIanaName.set -> void
+DcsvIo.D2.Context.Abstractions.MutableRequestContext.TokenExpiresAt.get -> System.DateTimeOffset?
+DcsvIo.D2.Context.Abstractions.MutableRequestContext.TokenExpiresAt.set -> void
+DcsvIo.D2.Context.Abstractions.MutableRequestContext.TokenIssuedAt.get -> System.DateTimeOffset?
+DcsvIo.D2.Context.Abstractions.MutableRequestContext.TokenIssuedAt.set -> void
+DcsvIo.D2.Context.Abstractions.MutableRequestContext.TraceId.get -> string?
+DcsvIo.D2.Context.Abstractions.MutableRequestContext.TraceId.set -> void
+DcsvIo.D2.Context.Abstractions.MutableRequestContext.UserId.get -> System.Guid?
+DcsvIo.D2.Context.Abstractions.MutableRequestContext.UserId.set -> void
+DcsvIo.D2.Context.Abstractions.MutableRequestContext.Username.get -> string?
+DcsvIo.D2.Context.Abstractions.MutableRequestContext.Username.set -> void
+DcsvIo.D2.Context.Abstractions.MutableRequestContext.WhoIsHashId.get -> string?
+DcsvIo.D2.Context.Abstractions.MutableRequestContext.WhoIsHashId.set -> void
+DcsvIo.D2.Context.Abstractions.PropagatedContext
+DcsvIo.D2.Context.Abstractions.PropagatedContext.<Clone>$() -> DcsvIo.D2.Context.Abstractions.PropagatedContext!
+DcsvIo.D2.Context.Abstractions.PropagatedContext.CallPath.get -> System.Collections.Generic.IReadOnlyList<DcsvIo.D2.Auth.Abstractions.CallPathEntry!>?
+DcsvIo.D2.Context.Abstractions.PropagatedContext.CallPath.init -> void
+DcsvIo.D2.Context.Abstractions.PropagatedContext.CurrencyIso4217Code.get -> string?
+DcsvIo.D2.Context.Abstractions.PropagatedContext.CurrencyIso4217Code.init -> void
+DcsvIo.D2.Context.Abstractions.PropagatedContext.CurrentFingerprint.get -> string?
+DcsvIo.D2.Context.Abstractions.PropagatedContext.CurrentFingerprint.init -> void
+DcsvIo.D2.Context.Abstractions.PropagatedContext.EdgeNodeId.get -> string?
+DcsvIo.D2.Context.Abstractions.PropagatedContext.EdgeNodeId.init -> void
+DcsvIo.D2.Context.Abstractions.PropagatedContext.Equals(DcsvIo.D2.Context.Abstractions.PropagatedContext? other) -> bool
+DcsvIo.D2.Context.Abstractions.PropagatedContext.FeatureFlagsCsv.get -> string?
+DcsvIo.D2.Context.Abstractions.PropagatedContext.FeatureFlagsCsv.init -> void
+DcsvIo.D2.Context.Abstractions.PropagatedContext.HasAnyField.get -> bool
+DcsvIo.D2.Context.Abstractions.PropagatedContext.IdempotencyKey.get -> string?
+DcsvIo.D2.Context.Abstractions.PropagatedContext.IdempotencyKey.init -> void
+DcsvIo.D2.Context.Abstractions.PropagatedContext.LocaleIetfBcp47Tag.get -> string?
+DcsvIo.D2.Context.Abstractions.PropagatedContext.LocaleIetfBcp47Tag.init -> void
+DcsvIo.D2.Context.Abstractions.PropagatedContext.OrgPlanTier.get -> string?
+DcsvIo.D2.Context.Abstractions.PropagatedContext.OrgPlanTier.init -> void
+DcsvIo.D2.Context.Abstractions.PropagatedContext.PropagatedContext() -> void
+DcsvIo.D2.Context.Abstractions.PropagatedContext.RequestId.get -> string?
+DcsvIo.D2.Context.Abstractions.PropagatedContext.RequestId.init -> void
+DcsvIo.D2.Context.Abstractions.PropagatedContext.RequestPath.get -> string?
+DcsvIo.D2.Context.Abstractions.PropagatedContext.RequestPath.init -> void
+DcsvIo.D2.Context.Abstractions.PropagatedContext.RequestStartedAt.get -> System.DateTimeOffset?
+DcsvIo.D2.Context.Abstractions.PropagatedContext.RequestStartedAt.init -> void
+DcsvIo.D2.Context.Abstractions.PropagatedContext.RiskScore.get -> int?
+DcsvIo.D2.Context.Abstractions.PropagatedContext.RiskScore.init -> void
+DcsvIo.D2.Context.Abstractions.PropagatedContext.SessionFingerprint.get -> string?
+DcsvIo.D2.Context.Abstractions.PropagatedContext.SessionFingerprint.init -> void
+DcsvIo.D2.Context.Abstractions.PropagatedContext.TimezoneIanaName.get -> string?
+DcsvIo.D2.Context.Abstractions.PropagatedContext.TimezoneIanaName.init -> void
+DcsvIo.D2.Context.Abstractions.PropagatedContext.WhoIsHashId.get -> string?
+DcsvIo.D2.Context.Abstractions.PropagatedContext.WhoIsHashId.init -> void
+DcsvIo.D2.Context.Abstractions.PropagatedContextExtensions
+DcsvIo.D2.Context.Abstractions.PropagatedContextSerializer
+DcsvIo.D2.Context.Abstractions.ScopeClaimParser
+DcsvIo.D2.Context.Abstractions.SystemRequestContextBootstrap
+DcsvIo.D2.Context.Abstractions.SystemRequestContextBootstrap.extension(System.IServiceProvider!)
+DcsvIo.D2.Context.Abstractions.SystemRequestContextBootstrap.extension(System.IServiceProvider!).EstablishSystemContext(string! hostServiceId, DcsvIo.D2.Time.IClock! clock) -> void
+DcsvIo.D2.Context.Abstractions.SystemWorkPlaneServiceCollectionExtensions
+DcsvIo.D2.Context.Abstractions.SystemWorkPlaneServiceCollectionExtensions.extension(Microsoft.Extensions.DependencyInjection.IServiceCollection!)
+DcsvIo.D2.Context.Abstractions.SystemWorkPlaneServiceCollectionExtensions.extension(Microsoft.Extensions.DependencyInjection.IServiceCollection!).AddD2SystemWorkPlane() -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
+const DcsvIo.D2.Context.Abstractions.ActorChainParser.MaxActDepth = 20 -> int
+const DcsvIo.D2.Context.Abstractions.CallPathOps.MAX_CALL_PATH_DEPTH = 16 -> int
+const DcsvIo.D2.Context.Abstractions.PropagatedContextSerializer.MAX_HEADER_LENGTH = 2048 -> int
+override DcsvIo.D2.Context.Abstractions.PropagatedContext.Equals(object? obj) -> bool
+override DcsvIo.D2.Context.Abstractions.PropagatedContext.GetHashCode() -> int
+override DcsvIo.D2.Context.Abstractions.PropagatedContext.ToString() -> string!
+static DcsvIo.D2.Context.Abstractions.ActorChainParser.ParseFromJson(System.Text.Json.JsonElement actElement) -> System.Collections.Generic.IReadOnlyList<DcsvIo.D2.Auth.Abstractions.ActorEntry!>!
+static DcsvIo.D2.Context.Abstractions.ActorChainParser.ParseFromJsonString(string? json) -> System.Collections.Generic.IReadOnlyList<DcsvIo.D2.Auth.Abstractions.ActorEntry!>!
+static DcsvIo.D2.Context.Abstractions.CallPathOps.Append(System.Collections.Generic.IReadOnlyList<DcsvIo.D2.Auth.Abstractions.CallPathEntry!>? existing, string! id, DcsvIo.D2.Auth.Abstractions.CallPathKind kind, System.DateTimeOffset timestamp) -> System.Collections.Generic.IReadOnlyList<DcsvIo.D2.Auth.Abstractions.CallPathEntry!>!
+static DcsvIo.D2.Context.Abstractions.InProcessModuleBoundary.EstablishInProcessModule(this DcsvIo.D2.Context.Abstractions.IRequestContext! context, string! callingModuleId, string! targetModuleId, DcsvIo.D2.Time.IClock! clock) -> void
+static DcsvIo.D2.Context.Abstractions.MutableRequestContext.FromClaims(System.Security.Claims.ClaimsPrincipal! principal) -> DcsvIo.D2.Context.Abstractions.MutableRequestContext!
+static DcsvIo.D2.Context.Abstractions.MutableRequestContext.FromJwtPayloadNoValidation(System.Text.Json.JsonElement payload) -> DcsvIo.D2.Context.Abstractions.MutableRequestContext!
+static DcsvIo.D2.Context.Abstractions.PropagatedContext.operator !=(DcsvIo.D2.Context.Abstractions.PropagatedContext? left, DcsvIo.D2.Context.Abstractions.PropagatedContext? right) -> bool
+static DcsvIo.D2.Context.Abstractions.PropagatedContext.operator ==(DcsvIo.D2.Context.Abstractions.PropagatedContext? left, DcsvIo.D2.Context.Abstractions.PropagatedContext? right) -> bool
+static DcsvIo.D2.Context.Abstractions.PropagatedContextExtensions.ApplyPropagatedContext(this DcsvIo.D2.Context.Abstractions.MutableRequestContext! context, DcsvIo.D2.Context.Abstractions.PropagatedContext? propagated) -> void
+static DcsvIo.D2.Context.Abstractions.PropagatedContextExtensions.ToPropagatedContext(this DcsvIo.D2.Context.Abstractions.IRequestContext! context) -> DcsvIo.D2.Context.Abstractions.PropagatedContext!
+static DcsvIo.D2.Context.Abstractions.PropagatedContextSerializer.Encode(DcsvIo.D2.Context.Abstractions.PropagatedContext! context) -> string!
+static DcsvIo.D2.Context.Abstractions.PropagatedContextSerializer.TryDecode(string? encoded) -> DcsvIo.D2.Context.Abstractions.PropagatedContext?
+static DcsvIo.D2.Context.Abstractions.ScopeClaimParser.Parse(System.Text.Json.JsonElement element) -> System.Collections.Generic.IReadOnlySet<string!>!
+static DcsvIo.D2.Context.Abstractions.ScopeClaimParser.ParseString(string? value) -> System.Collections.Generic.IReadOnlySet<string!>!
+static DcsvIo.D2.Context.Abstractions.SystemRequestContextBootstrap.EstablishSystemContext(this System.IServiceProvider! scopedServices, string! hostServiceId, DcsvIo.D2.Time.IClock! clock) -> void
+static DcsvIo.D2.Context.Abstractions.SystemWorkPlaneServiceCollectionExtensions.AddD2SystemWorkPlane(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!

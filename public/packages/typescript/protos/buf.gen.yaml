@@ -1,0 +1,17 @@
+# -----------------------------------------------------------------------
+# Copyright (c) DCSV. Licensed under the Apache License, Version 2.0.
+# -----------------------------------------------------------------------
+# Buf generation config for the @dcsv-io/d2-protos TS package.
+# Output is committed to git so consumer packages can import without
+# triggering a separate generation step on first build.
+
+version: v2
+plugins:
+  - local: ["pnpm", "exec", "protoc-gen-ts_proto"]
+    out: src/generated
+    opt:
+      - esModuleInterop=true
+      - outputServices=grpc-js
+      - useExactTypes=false
+      - oneof=unions
+      - useOptionals=messages

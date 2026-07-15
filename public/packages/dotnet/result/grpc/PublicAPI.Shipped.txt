@@ -1,0 +1,94 @@
+#nullable enable
+D2.Services.Protos.Common.V1.D2ResultProto
+D2.Services.Protos.Common.V1.D2ResultProto.CalculateSize() -> int
+D2.Services.Protos.Common.V1.D2ResultProto.ClearCategory() -> void
+D2.Services.Protos.Common.V1.D2ResultProto.ClearErrorCode() -> void
+D2.Services.Protos.Common.V1.D2ResultProto.ClearTraceId() -> void
+D2.Services.Protos.Common.V1.D2ResultProto.D2ResultProto() -> void
+D2.Services.Protos.Common.V1.D2ResultProto.HasCategory.get -> bool
+D2.Services.Protos.Common.V1.D2ResultProto.HasErrorCode.get -> bool
+D2.Services.Protos.Common.V1.D2ResultProto.HasTraceId.get -> bool
+D2.Services.Protos.Common.V1.D2ResultProto.StatusCode.get -> int
+D2.Services.Protos.Common.V1.D2ResultProto.StatusCode.set -> void
+D2.Services.Protos.Common.V1.D2ResultProto.Success.get -> bool
+D2.Services.Protos.Common.V1.D2ResultProto.Success.set -> void
+D2.Services.Protos.Common.V1.D2ResultReflection
+D2.Services.Protos.Common.V1.InputErrorProto
+D2.Services.Protos.Common.V1.InputErrorProto.CalculateSize() -> int
+D2.Services.Protos.Common.V1.InputErrorProto.InputErrorProto() -> void
+D2.Services.Protos.Common.V1.TKMessageProto
+D2.Services.Protos.Common.V1.TKMessageProto.CalculateSize() -> int
+D2.Services.Protos.Common.V1.TKMessageProto.TKMessageProto() -> void
+DcsvIo.D2.Result.Grpc.ProtoExtensions
+DcsvIo.D2.Result.Grpc.ProtoExtensions.extension(D2.Services.Protos.Common.V1.D2ResultProto!)
+DcsvIo.D2.Result.Grpc.ProtoExtensions.extension(D2.Services.Protos.Common.V1.D2ResultProto!).ToD2Result<TData>(TData? data = default(TData?)) -> DcsvIo.D2.Result.D2Result<TData>!
+DcsvIo.D2.Result.Grpc.ProtoExtensions.extension(DcsvIo.D2.Result.D2Result!)
+DcsvIo.D2.Result.Grpc.ProtoExtensions.extension(DcsvIo.D2.Result.D2Result!).ToProto() -> D2.Services.Protos.Common.V1.D2ResultProto!
+DcsvIo.D2.Result.Grpc.ProtoExtensions.extension(Grpc.Core.RpcException!)
+DcsvIo.D2.Result.Grpc.ProtoExtensions.extension(Grpc.Core.RpcException!).ToTransportFaultResult<TData>(Microsoft.Extensions.Logging.ILogger? logger = null, string? traceId = null) -> DcsvIo.D2.Result.D2Result<TData>!
+DcsvIo.D2.Result.Grpc.ProtoExtensions.extension<TProto>(Grpc.Core.AsyncUnaryCall<TProto>!)
+DcsvIo.D2.Result.Grpc.ProtoExtensions.extension<TProto>(Grpc.Core.AsyncUnaryCall<TProto>!).HandleAsync<TData>(System.Func<TProto, D2.Services.Protos.Common.V1.D2ResultProto!>! resultSelector, System.Func<TProto, TData?>! dataSelector, Microsoft.Extensions.Logging.ILogger? logger = null, string? traceId = null) -> System.Threading.Tasks.Task<DcsvIo.D2.Result.D2Result<TData>!>!
+const D2.Services.Protos.Common.V1.D2ResultProto.CategoryFieldNumber = 4 -> int
+const D2.Services.Protos.Common.V1.D2ResultProto.ErrorCodeFieldNumber = 3 -> int
+const D2.Services.Protos.Common.V1.D2ResultProto.InputErrorsFieldNumber = 7 -> int
+const D2.Services.Protos.Common.V1.D2ResultProto.MessagesFieldNumber = 6 -> int
+const D2.Services.Protos.Common.V1.D2ResultProto.StatusCodeFieldNumber = 2 -> int
+const D2.Services.Protos.Common.V1.D2ResultProto.SuccessFieldNumber = 1 -> int
+const D2.Services.Protos.Common.V1.D2ResultProto.TraceIdFieldNumber = 5 -> int
+const D2.Services.Protos.Common.V1.InputErrorProto.ErrorsFieldNumber = 2 -> int
+const D2.Services.Protos.Common.V1.InputErrorProto.FieldFieldNumber = 1 -> int
+const D2.Services.Protos.Common.V1.TKMessageProto.KeyFieldNumber = 1 -> int
+const D2.Services.Protos.Common.V1.TKMessageProto.ParamsFieldNumber = 2 -> int
+override D2.Services.Protos.Common.V1.D2ResultProto.GetHashCode() -> int
+override D2.Services.Protos.Common.V1.InputErrorProto.GetHashCode() -> int
+override D2.Services.Protos.Common.V1.TKMessageProto.GetHashCode() -> int
+static DcsvIo.D2.Result.Grpc.ProtoExtensions.HandleAsync<TProto, TData>(this Grpc.Core.AsyncUnaryCall<TProto>! call, System.Func<TProto, D2.Services.Protos.Common.V1.D2ResultProto!>! resultSelector, System.Func<TProto, TData?>! dataSelector, Microsoft.Extensions.Logging.ILogger? logger = null, string? traceId = null) -> System.Threading.Tasks.Task<DcsvIo.D2.Result.D2Result<TData>!>!
+static DcsvIo.D2.Result.Grpc.ProtoExtensions.IsTransientGrpcException(Grpc.Core.RpcException! ex) -> bool
+static DcsvIo.D2.Result.Grpc.ProtoExtensions.ToD2Result<TData>(this D2.Services.Protos.Common.V1.D2ResultProto! proto, TData? data = default(TData?)) -> DcsvIo.D2.Result.D2Result<TData>!
+static DcsvIo.D2.Result.Grpc.ProtoExtensions.ToProto(this DcsvIo.D2.Result.D2Result! result) -> D2.Services.Protos.Common.V1.D2ResultProto!
+static DcsvIo.D2.Result.Grpc.ProtoExtensions.ToTransportFaultResult<TData>(this Grpc.Core.RpcException! ex, Microsoft.Extensions.Logging.ILogger? logger = null, string? traceId = null) -> DcsvIo.D2.Result.D2Result<TData>!
+~D2.Services.Protos.Common.V1.D2ResultProto.Category.get -> string
+~D2.Services.Protos.Common.V1.D2ResultProto.Category.set -> void
+~D2.Services.Protos.Common.V1.D2ResultProto.Clone() -> D2.Services.Protos.Common.V1.D2ResultProto
+~D2.Services.Protos.Common.V1.D2ResultProto.D2ResultProto(D2.Services.Protos.Common.V1.D2ResultProto other) -> void
+~D2.Services.Protos.Common.V1.D2ResultProto.Equals(D2.Services.Protos.Common.V1.D2ResultProto other) -> bool
+~D2.Services.Protos.Common.V1.D2ResultProto.ErrorCode.get -> string
+~D2.Services.Protos.Common.V1.D2ResultProto.ErrorCode.set -> void
+~D2.Services.Protos.Common.V1.D2ResultProto.InputErrors.get -> Google.Protobuf.Collections.RepeatedField<D2.Services.Protos.Common.V1.InputErrorProto>
+~D2.Services.Protos.Common.V1.D2ResultProto.MergeFrom(D2.Services.Protos.Common.V1.D2ResultProto other) -> void
+~D2.Services.Protos.Common.V1.D2ResultProto.MergeFrom(Google.Protobuf.CodedInputStream input) -> void
+~D2.Services.Protos.Common.V1.D2ResultProto.Messages.get -> Google.Protobuf.Collections.RepeatedField<D2.Services.Protos.Common.V1.TKMessageProto>
+~D2.Services.Protos.Common.V1.D2ResultProto.TraceId.get -> string
+~D2.Services.Protos.Common.V1.D2ResultProto.TraceId.set -> void
+~D2.Services.Protos.Common.V1.D2ResultProto.WriteTo(Google.Protobuf.CodedOutputStream output) -> void
+~D2.Services.Protos.Common.V1.InputErrorProto.Clone() -> D2.Services.Protos.Common.V1.InputErrorProto
+~D2.Services.Protos.Common.V1.InputErrorProto.Equals(D2.Services.Protos.Common.V1.InputErrorProto other) -> bool
+~D2.Services.Protos.Common.V1.InputErrorProto.Errors.get -> Google.Protobuf.Collections.RepeatedField<D2.Services.Protos.Common.V1.TKMessageProto>
+~D2.Services.Protos.Common.V1.InputErrorProto.Field.get -> string
+~D2.Services.Protos.Common.V1.InputErrorProto.Field.set -> void
+~D2.Services.Protos.Common.V1.InputErrorProto.InputErrorProto(D2.Services.Protos.Common.V1.InputErrorProto other) -> void
+~D2.Services.Protos.Common.V1.InputErrorProto.MergeFrom(D2.Services.Protos.Common.V1.InputErrorProto other) -> void
+~D2.Services.Protos.Common.V1.InputErrorProto.MergeFrom(Google.Protobuf.CodedInputStream input) -> void
+~D2.Services.Protos.Common.V1.InputErrorProto.WriteTo(Google.Protobuf.CodedOutputStream output) -> void
+~D2.Services.Protos.Common.V1.TKMessageProto.Clone() -> D2.Services.Protos.Common.V1.TKMessageProto
+~D2.Services.Protos.Common.V1.TKMessageProto.Equals(D2.Services.Protos.Common.V1.TKMessageProto other) -> bool
+~D2.Services.Protos.Common.V1.TKMessageProto.Key.get -> string
+~D2.Services.Protos.Common.V1.TKMessageProto.Key.set -> void
+~D2.Services.Protos.Common.V1.TKMessageProto.MergeFrom(D2.Services.Protos.Common.V1.TKMessageProto other) -> void
+~D2.Services.Protos.Common.V1.TKMessageProto.MergeFrom(Google.Protobuf.CodedInputStream input) -> void
+~D2.Services.Protos.Common.V1.TKMessageProto.Params.get -> Google.Protobuf.Collections.MapField<string, string>
+~D2.Services.Protos.Common.V1.TKMessageProto.TKMessageProto(D2.Services.Protos.Common.V1.TKMessageProto other) -> void
+~D2.Services.Protos.Common.V1.TKMessageProto.WriteTo(Google.Protobuf.CodedOutputStream output) -> void
+~override D2.Services.Protos.Common.V1.D2ResultProto.Equals(object other) -> bool
+~override D2.Services.Protos.Common.V1.D2ResultProto.ToString() -> string
+~override D2.Services.Protos.Common.V1.InputErrorProto.Equals(object other) -> bool
+~override D2.Services.Protos.Common.V1.InputErrorProto.ToString() -> string
+~override D2.Services.Protos.Common.V1.TKMessageProto.Equals(object other) -> bool
+~override D2.Services.Protos.Common.V1.TKMessageProto.ToString() -> string
+~static D2.Services.Protos.Common.V1.D2ResultProto.Descriptor.get -> Google.Protobuf.Reflection.MessageDescriptor
+~static D2.Services.Protos.Common.V1.D2ResultProto.Parser.get -> Google.Protobuf.MessageParser<D2.Services.Protos.Common.V1.D2ResultProto>
+~static D2.Services.Protos.Common.V1.D2ResultReflection.Descriptor.get -> Google.Protobuf.Reflection.FileDescriptor
+~static D2.Services.Protos.Common.V1.InputErrorProto.Descriptor.get -> Google.Protobuf.Reflection.MessageDescriptor
+~static D2.Services.Protos.Common.V1.InputErrorProto.Parser.get -> Google.Protobuf.MessageParser<D2.Services.Protos.Common.V1.InputErrorProto>
+~static D2.Services.Protos.Common.V1.TKMessageProto.Descriptor.get -> Google.Protobuf.Reflection.MessageDescriptor
+~static D2.Services.Protos.Common.V1.TKMessageProto.Parser.get -> Google.Protobuf.MessageParser<D2.Services.Protos.Common.V1.TKMessageProto>

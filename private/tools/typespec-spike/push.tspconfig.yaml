@@ -1,0 +1,7 @@
+# Spike A — multi-hop push pipeline. Runs the custom @dcsv-io/d2-spike-emitter against
+# push.tsp. Output root is `generated/` (matching the existing SC1 layout); the
+# emitter itself resolves up from its per-emitter output dir to the spike root
+# and writes the .NET artifacts into the Spike.* project folders.
+output-dir: "{project-root}/generated"
+emit:
+  - "@dcsv-io/d2-spike-emitter"

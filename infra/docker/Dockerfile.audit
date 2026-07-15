@@ -1,34 +1,36 @@
 # =============================================================================
-# Dockerfile.audit — D2.Audit.Api (standalone stub host)
+# Dockerfile.audit — DcsvIo.D2.Private.Audit.Api (standalone stub host)
 # Build context: repo root
 # Targets:
 #   prod — published bits on aspnet runtime (no source mount, no watch)
 #   dev  — SDK + dotnet watch (Compose Watch sync; see compose.dev.yml)
+#
+# Monorepo dual-root layout under /src (see Dockerfile.edge).
 # =============================================================================
 
 # --- Build (prod) ---
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
 
-COPY server/Directory.Build.props server/Directory.Packages.props server/D2.slnx server/stylecop.json ./server/
-# Repo-root editorconfig — StyleCop / analyzers resolve from /src/server upward.
+COPY Directory.Build.props Directory.Packages.props D2.slnx stylecop.json global.json NuGet.config ./
 COPY .editorconfig ./
-# Service-tree global usings (D2Result / RedactData / Utilities).
-COPY server/services/Directory.Build.targets ./server/services/
-COPY server/shared/dotnet ./server/shared/dotnet
-COPY server/services/audit ./server/services/audit
-COPY contracts ./contracts
-COPY tools/loggermessage-splitter ./tools/loggermessage-splitter
+COPY public/stylecop.public.json ./public/
+COPY private/services/Directory.Build.targets ./private/services/
+COPY public/packages/dotnet ./public/packages/dotnet
+COPY private/packages/dotnet ./private/packages/dotnet
+COPY private/services/audit ./private/services/audit
+COPY public/contracts ./public/contracts
+COPY private/contracts ./private/contracts
+COPY public/tools/loggermessage-splitter ./public/tools/loggermessage-splitter
 
-RUN dotnet restore server/services/audit/api/D2.Audit.Api.csproj
-RUN dotnet publish server/services/audit/api/D2.Audit.Api.csproj \
+RUN dotnet restore private/services/audit/api/DcsvIo.D2.Private.Audit.Api.csproj
+RUN dotnet publish private/services/audit/api/DcsvIo.D2.Private.Audit.Api.csproj \
     -c Release -o /app/publish --no-restore
 
 # --- Prod runtime ---
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS prod
 WORKDIR /app
 
-# Explicit health probe — aspnet base has no curl; install wget for compose healthcheck.
 RUN apt-get update \
     && apt-get install -y --no-install-recommends wget \
     && rm -rf /var/lib/apt/lists/*
@@ -43,7 +45,7 @@ EXPOSE 8080 8443
 HEALTHCHECK --interval=10s --timeout=5s --retries=5 --start-period=30s \
   CMD wget -qO- http://127.0.0.1:8080/health || exit 1
 
-ENTRYPOINT ["dotnet", "D2.Audit.Api.dll"]
+ENTRYPOINT ["dotnet", "DcsvIo.D2.Private.Audit.Api.dll"]
 
 # --- Dev: SDK + watch ---
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS dev
@@ -57,19 +59,22 @@ ENV ASPNETCORE_URLS=
 ENV DOTNET_USE_POLLING_FILE_WATCHER=1
 ENV DOTNET_EnableDiagnostics=0
 
-COPY server/Directory.Build.props server/Directory.Packages.props server/D2.slnx server/stylecop.json ./server/
+COPY Directory.Build.props Directory.Packages.props D2.slnx stylecop.json global.json NuGet.config ./
 COPY .editorconfig ./
-COPY server/services/Directory.Build.targets ./server/services/
-COPY server/shared/dotnet ./server/shared/dotnet
-COPY server/services/audit ./server/services/audit
-COPY contracts ./contracts
-COPY tools/loggermessage-splitter ./tools/loggermessage-splitter
+COPY public/stylecop.public.json ./public/
+COPY private/services/Directory.Build.targets ./private/services/
+COPY public/packages/dotnet ./public/packages/dotnet
+COPY private/packages/dotnet ./private/packages/dotnet
+COPY private/services/audit ./private/services/audit
+COPY public/contracts ./public/contracts
+COPY private/contracts ./private/contracts
+COPY public/tools/loggermessage-splitter ./public/tools/loggermessage-splitter
 
-RUN dotnet restore server/services/audit/api/D2.Audit.Api.csproj
+RUN dotnet restore private/services/audit/api/DcsvIo.D2.Private.Audit.Api.csproj
 
 EXPOSE 8080 8443
 
 HEALTHCHECK --interval=10s --timeout=5s --retries=5 --start-period=60s \
   CMD wget -qO- http://127.0.0.1:8080/health || exit 1
 
-ENTRYPOINT ["dotnet", "watch", "run", "--project", "server/services/audit/api/D2.Audit.Api.csproj", "--no-launch-profile"]
+ENTRYPOINT ["dotnet", "watch", "run", "--project", "private/services/audit/api/DcsvIo.D2.Private.Audit.Api.csproj", "--no-launch-profile"]

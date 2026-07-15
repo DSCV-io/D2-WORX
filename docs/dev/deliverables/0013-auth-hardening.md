@@ -10,7 +10,7 @@ Copyright (c) DCSV. All rights reserved.
 
 ## Goal
 
-Close two footguns in the shipped `D2.Shared.Auth` per-endpoint authorization:
+Close two footguns in the shipped `DcsvIo.D2.Auth` per-endpoint authorization:
 
 1. **Silent under-protection** — a business endpoint mapped without a scope or a harmless marker was not rejected: the JWT was validated and then any authenticated caller passed with no scope check. "Forgot to annotate" === "reachable by every logged-in user," with no error.
 2. **Confusing scope semantics** — "required scopes" silently meant *any-of* at the endpoint but *all-of* at the handler, under the same name; the HTTP README documented it wrong.
@@ -21,10 +21,10 @@ Close two footguns in the shipped `D2.Shared.Auth` per-endpoint authorization:
 |---|---|
 | S1 | **HTTP transport** — `ScopeMatch {Any,All}`; `EndpointScopeMetadata` carries `Scopes` + `Match`; `RequireAnyScope`/`RequireAllScopes` replace `RequireD2Scope`; match-aware `JwtAuthMiddleware`. |
 | S2 | **gRPC transport** — `MethodScopeMetadata` (Scopes+Match); `RequireAnyScope`/`RequireAllScopes` fluent (constrained to `GrpcServiceEndpointConventionBuilder`); `[D2RequireScope]` split into `[D2RequireAnyScope]`/`[D2RequireAllScopes]`; match-aware interceptor with a single-pass last-declared-wins 3-attribute precedence; gRPC `grpcunimplemented` catch-all skip. |
-| S3 | **`ThrowIfFalsey` guard utility** — `D2.Shared.Utilities.GuardExtensions` (4 overloads: `string?`/`IEnumerable<T>?`/`Guid?`/`Guid`; C#14 block form; BCL-split — `ArgumentNullException` for null, `ArgumentException` for present-but-falsey; `[CallerArgumentExpression]` + `[NotNull]`). Plain-object null-guards stay on BCL `ThrowIfNull`. |
+| S3 | **`ThrowIfFalsey` guard utility** — `DcsvIo.D2.Utilities.GuardExtensions` (4 overloads: `string?`/`IEnumerable<T>?`/`Guid?`/`Guid`; C#14 block form; BCL-split — `ArgumentNullException` for null, `ArgumentException` for present-but-falsey; `[CallerArgumentExpression]` + `[NotNull]`). Plain-object null-guards stay on BCL `ThrowIfNull`. |
 | S4 | **Codebase sweep** — 20 string-guard sites converted to `ThrowIfFalsey` across auth/messaging/i18n/encryption; Encryption gained a Utilities reference (+ §9.8 dep-graph edge); ~15 test-flips (null → `ArgumentNullException`). |
 | S5 | **Handler layer** — `HandlerScopeMatch` + `ScopeRequirement(Match, Scopes)` (parallel enum keeps the handler layer auth-free); match-aware `BaseHandler` pre-check. |
-| S6 | **Deny-by-default boot guard** — new `D2.Shared.Auth.Startup` project + `AuthEndpointGuardStartupFilter` (`IStartupFilter`) that walks the populated `EndpointDataSource` before traffic and throws if any endpoint lacks a declared intent (scope-match or harmless); infra paths + gRPC catch-alls exempt; ServiceDefaults wiring + `SkipAuthEndpointGuard` (default off ⇒ guard on). |
+| S6 | **Deny-by-default boot guard** — new `DcsvIo.D2.Auth.Startup` project + `AuthEndpointGuardStartupFilter` (`IStartupFilter`) that walks the populated `EndpointDataSource` before traffic and throws if any endpoint lacks a declared intent (scope-match or harmless); infra paths + gRPC catch-alls exempt; ServiceDefaults wiring + `SkipAuthEndpointGuard` (default off ⇒ guard on). |
 | — | **Runtime integration tests** — real-host (real RS256 JWT + real validator) proofs of gRPC-attribute scope enforcement, HTTP-middleware scope enforcement, and the handler `ScopeRequirement` defense-in-depth. |
 | S7 | **Docs** — auth/grpc + auth/http + new auth/startup + service-defaults READMEs; ADR-0012 §5 (+§4); ADR-0005; PATTERNS.md deny-by-default boot-guard section. |
 | S8 | **Final review** — K=12 sweep → fixes → clean-confirmation → certification gates. |

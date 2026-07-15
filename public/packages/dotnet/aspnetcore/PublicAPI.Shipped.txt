@@ -1,0 +1,148 @@
+#nullable enable
+DcsvIo.D2.AspNetCore.CorsApplicationBuilderExtensions
+DcsvIo.D2.AspNetCore.CorsApplicationBuilderExtensions.extension(Microsoft.AspNetCore.Builder.IApplicationBuilder!)
+DcsvIo.D2.AspNetCore.CorsApplicationBuilderExtensions.extension(Microsoft.AspNetCore.Builder.IApplicationBuilder!).UseD2Cors() -> Microsoft.AspNetCore.Builder.IApplicationBuilder!
+DcsvIo.D2.AspNetCore.CorsServiceCollectionExtensions
+DcsvIo.D2.AspNetCore.CorsServiceCollectionExtensions.extension(Microsoft.Extensions.DependencyInjection.IServiceCollection!)
+DcsvIo.D2.AspNetCore.CorsServiceCollectionExtensions.extension(Microsoft.Extensions.DependencyInjection.IServiceCollection!).AddD2Cors(Microsoft.Extensions.Configuration.IConfiguration! configuration, System.Action<DcsvIo.D2.AspNetCore.D2CorsOptions!>? configure = null) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
+DcsvIo.D2.AspNetCore.D2AspNetCoreConstants
+DcsvIo.D2.AspNetCore.D2CorsOptions
+DcsvIo.D2.AspNetCore.D2CorsOptions.<Clone>$() -> DcsvIo.D2.AspNetCore.D2CorsOptions!
+DcsvIo.D2.AspNetCore.D2CorsOptions.AllowCredentials.get -> bool
+DcsvIo.D2.AspNetCore.D2CorsOptions.AllowCredentials.set -> void
+DcsvIo.D2.AspNetCore.D2CorsOptions.AllowedHeaders.get -> System.Collections.Generic.IReadOnlyList<string!>!
+DcsvIo.D2.AspNetCore.D2CorsOptions.AllowedHeaders.set -> void
+DcsvIo.D2.AspNetCore.D2CorsOptions.AllowedMethods.get -> System.Collections.Generic.IReadOnlyList<string!>!
+DcsvIo.D2.AspNetCore.D2CorsOptions.AllowedMethods.set -> void
+DcsvIo.D2.AspNetCore.D2CorsOptions.D2CorsOptions() -> void
+DcsvIo.D2.AspNetCore.D2CorsOptions.Equals(DcsvIo.D2.AspNetCore.D2CorsOptions? other) -> bool
+DcsvIo.D2.AspNetCore.D2CorsOptions.Origins.get -> System.Collections.Generic.IReadOnlyList<string!>!
+DcsvIo.D2.AspNetCore.D2CorsOptions.Origins.set -> void
+DcsvIo.D2.AspNetCore.D2CorsOptions.PreflightMaxAgeSeconds.get -> int
+DcsvIo.D2.AspNetCore.D2CorsOptions.PreflightMaxAgeSeconds.set -> void
+DcsvIo.D2.AspNetCore.D2InfrastructureBypassOptions
+DcsvIo.D2.AspNetCore.D2InfrastructureBypassOptions.<Clone>$() -> DcsvIo.D2.AspNetCore.D2InfrastructureBypassOptions!
+DcsvIo.D2.AspNetCore.D2InfrastructureBypassOptions.D2InfrastructureBypassOptions() -> void
+DcsvIo.D2.AspNetCore.D2InfrastructureBypassOptions.Equals(DcsvIo.D2.AspNetCore.D2InfrastructureBypassOptions? other) -> bool
+DcsvIo.D2.AspNetCore.D2InfrastructureBypassOptions.InfrastructurePaths.get -> System.Collections.Generic.IReadOnlyList<string!>!
+DcsvIo.D2.AspNetCore.D2InfrastructureBypassOptions.InfrastructurePaths.set -> void
+DcsvIo.D2.AspNetCore.D2InfrastructureBypassOptions.TagOnly.get -> bool
+DcsvIo.D2.AspNetCore.D2InfrastructureBypassOptions.TagOnly.set -> void
+DcsvIo.D2.AspNetCore.D2ProblemDetailsContextItems
+DcsvIo.D2.AspNetCore.D2ProblemDetailsOptions
+DcsvIo.D2.AspNetCore.D2ProblemDetailsOptions.<Clone>$() -> DcsvIo.D2.AspNetCore.D2ProblemDetailsOptions!
+DcsvIo.D2.AspNetCore.D2ProblemDetailsOptions.CorrelationIdHeaderName.get -> string!
+DcsvIo.D2.AspNetCore.D2ProblemDetailsOptions.CorrelationIdHeaderName.set -> void
+DcsvIo.D2.AspNetCore.D2ProblemDetailsOptions.D2ProblemDetailsOptions() -> void
+DcsvIo.D2.AspNetCore.D2ProblemDetailsOptions.EchoCorrelationIdInResponse.get -> bool
+DcsvIo.D2.AspNetCore.D2ProblemDetailsOptions.EchoCorrelationIdInResponse.set -> void
+DcsvIo.D2.AspNetCore.D2ProblemDetailsOptions.Equals(DcsvIo.D2.AspNetCore.D2ProblemDetailsOptions? other) -> bool
+DcsvIo.D2.AspNetCore.D2ProblemDetailsOptions.IncludeRequestPath.get -> bool
+DcsvIo.D2.AspNetCore.D2ProblemDetailsOptions.IncludeRequestPath.set -> void
+DcsvIo.D2.AspNetCore.D2SecurityHeadersOptions
+DcsvIo.D2.AspNetCore.D2SecurityHeadersOptions.<Clone>$() -> DcsvIo.D2.AspNetCore.D2SecurityHeadersOptions!
+DcsvIo.D2.AspNetCore.D2SecurityHeadersOptions.CrossOriginOpenerPolicy.get -> string?
+DcsvIo.D2.AspNetCore.D2SecurityHeadersOptions.CrossOriginOpenerPolicy.set -> void
+DcsvIo.D2.AspNetCore.D2SecurityHeadersOptions.CrossOriginResourcePolicy.get -> string?
+DcsvIo.D2.AspNetCore.D2SecurityHeadersOptions.CrossOriginResourcePolicy.set -> void
+DcsvIo.D2.AspNetCore.D2SecurityHeadersOptions.D2SecurityHeadersOptions() -> void
+DcsvIo.D2.AspNetCore.D2SecurityHeadersOptions.Equals(DcsvIo.D2.AspNetCore.D2SecurityHeadersOptions? other) -> bool
+DcsvIo.D2.AspNetCore.D2SecurityHeadersOptions.ReferrerPolicy.get -> string?
+DcsvIo.D2.AspNetCore.D2SecurityHeadersOptions.ReferrerPolicy.set -> void
+DcsvIo.D2.AspNetCore.D2SecurityHeadersOptions.StrictTransportSecurity.get -> string?
+DcsvIo.D2.AspNetCore.D2SecurityHeadersOptions.StrictTransportSecurity.set -> void
+DcsvIo.D2.AspNetCore.D2SecurityHeadersOptions.XContentTypeOptions.get -> string?
+DcsvIo.D2.AspNetCore.D2SecurityHeadersOptions.XContentTypeOptions.set -> void
+DcsvIo.D2.AspNetCore.D2SecurityHeadersOptions.XFrameOptions.get -> string?
+DcsvIo.D2.AspNetCore.D2SecurityHeadersOptions.XFrameOptions.set -> void
+DcsvIo.D2.AspNetCore.D2SecurityHeadersOptions.XPermittedCrossDomainPolicies.get -> string?
+DcsvIo.D2.AspNetCore.D2SecurityHeadersOptions.XPermittedCrossDomainPolicies.set -> void
+DcsvIo.D2.AspNetCore.HealthEndpointsRouteBuilderExtensions
+DcsvIo.D2.AspNetCore.HealthEndpointsRouteBuilderExtensions.extension(Microsoft.AspNetCore.Routing.IEndpointRouteBuilder!)
+DcsvIo.D2.AspNetCore.HealthEndpointsRouteBuilderExtensions.extension(Microsoft.AspNetCore.Routing.IEndpointRouteBuilder!).MapD2HealthEndpoints() -> Microsoft.AspNetCore.Routing.IEndpointRouteBuilder!
+DcsvIo.D2.AspNetCore.HealthEndpointsServiceCollectionExtensions
+DcsvIo.D2.AspNetCore.HealthEndpointsServiceCollectionExtensions.extension(Microsoft.Extensions.DependencyInjection.IServiceCollection!)
+DcsvIo.D2.AspNetCore.HealthEndpointsServiceCollectionExtensions.extension(Microsoft.Extensions.DependencyInjection.IServiceCollection!).AddD2HealthChecks() -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
+DcsvIo.D2.AspNetCore.HttpContextD2ResultExtensions
+DcsvIo.D2.AspNetCore.HttpContextD2ResultExtensions.extension(Microsoft.AspNetCore.Http.HttpContext!)
+DcsvIo.D2.AspNetCore.HttpContextD2ResultExtensions.extension(Microsoft.AspNetCore.Http.HttpContext!).GetD2Result() -> DcsvIo.D2.Result.D2Result?
+DcsvIo.D2.AspNetCore.HttpContextD2ResultExtensions.extension(Microsoft.AspNetCore.Http.HttpContext!).SetD2Result(DcsvIo.D2.Result.D2Result! result) -> void
+DcsvIo.D2.AspNetCore.InfrastructureBypassApplicationBuilderExtensions
+DcsvIo.D2.AspNetCore.InfrastructureBypassApplicationBuilderExtensions.extension(Microsoft.AspNetCore.Builder.IApplicationBuilder!)
+DcsvIo.D2.AspNetCore.InfrastructureBypassApplicationBuilderExtensions.extension(Microsoft.AspNetCore.Builder.IApplicationBuilder!).UseD2InfrastructureBypass(System.Action<DcsvIo.D2.AspNetCore.D2InfrastructureBypassOptions!>? configure = null) -> Microsoft.AspNetCore.Builder.IApplicationBuilder!
+DcsvIo.D2.AspNetCore.InfrastructurePathMatcher
+DcsvIo.D2.AspNetCore.Mtls.D2MutualTlsOptions
+DcsvIo.D2.AspNetCore.Mtls.D2MutualTlsOptions.AllowedWorkloads.get -> System.Collections.Generic.IReadOnlyList<string!>!
+DcsvIo.D2.AspNetCore.Mtls.D2MutualTlsOptions.AllowedWorkloads.set -> void
+DcsvIo.D2.AspNetCore.Mtls.D2MutualTlsOptions.D2MutualTlsOptions() -> void
+DcsvIo.D2.AspNetCore.Mtls.D2MutualTlsOptions.Enabled.get -> bool
+DcsvIo.D2.AspNetCore.Mtls.D2MutualTlsOptions.Enabled.set -> void
+DcsvIo.D2.AspNetCore.Mtls.D2MutualTlsOptions.TrustAnchorsProvider.get -> System.Func<System.Security.Cryptography.X509Certificates.X509Certificate2Collection!>?
+DcsvIo.D2.AspNetCore.Mtls.D2MutualTlsOptions.TrustAnchorsProvider.set -> void
+DcsvIo.D2.AspNetCore.Mtls.MutualTlsHostExtensions
+DcsvIo.D2.AspNetCore.Mtls.MutualTlsHostExtensions.extension(Microsoft.Extensions.DependencyInjection.IServiceCollection!)
+DcsvIo.D2.AspNetCore.Mtls.MutualTlsHostExtensions.extension(Microsoft.Extensions.DependencyInjection.IServiceCollection!).AddD2MutualTls(System.Action<DcsvIo.D2.AspNetCore.Mtls.D2MutualTlsOptions!>! configure) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
+DcsvIo.D2.AspNetCore.Mtls.PeerWorkloadIdentityAccessor
+DcsvIo.D2.AspNetCore.Mtls.PeerWorkloadIdentityAccessor.extension(Microsoft.AspNetCore.Http.HttpContext!)
+DcsvIo.D2.AspNetCore.Mtls.PeerWorkloadIdentityAccessor.extension(Microsoft.AspNetCore.Http.HttpContext!).GetD2PeerWorkloadIdentity() -> string?
+DcsvIo.D2.AspNetCore.ProblemDetailsServiceCollectionExtensions
+DcsvIo.D2.AspNetCore.ProblemDetailsServiceCollectionExtensions.extension(Microsoft.Extensions.DependencyInjection.IServiceCollection!)
+DcsvIo.D2.AspNetCore.ProblemDetailsServiceCollectionExtensions.extension(Microsoft.Extensions.DependencyInjection.IServiceCollection!).AddD2ProblemDetails(System.Action<DcsvIo.D2.AspNetCore.D2ProblemDetailsOptions!>? configure = null) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
+DcsvIo.D2.AspNetCore.RunD2ServiceWebApplicationExtensions
+DcsvIo.D2.AspNetCore.RunD2ServiceWebApplicationExtensions.extension(Microsoft.AspNetCore.Builder.WebApplication!)
+DcsvIo.D2.AspNetCore.RunD2ServiceWebApplicationExtensions.extension(Microsoft.AspNetCore.Builder.WebApplication!).RunD2ServiceAsync(string? serviceName = null) -> System.Threading.Tasks.Task!
+DcsvIo.D2.AspNetCore.SecurityHeadersApplicationBuilderExtensions
+DcsvIo.D2.AspNetCore.SecurityHeadersApplicationBuilderExtensions.extension(Microsoft.AspNetCore.Builder.IApplicationBuilder!)
+DcsvIo.D2.AspNetCore.SecurityHeadersApplicationBuilderExtensions.extension(Microsoft.AspNetCore.Builder.IApplicationBuilder!).UseD2SecurityHeaders(System.Action<DcsvIo.D2.AspNetCore.D2SecurityHeadersOptions!>? configure = null) -> Microsoft.AspNetCore.Builder.IApplicationBuilder!
+const DcsvIo.D2.AspNetCore.D2AspNetCoreConstants.ALIVE_ENDPOINT_PATH = "/alive" -> string!
+const DcsvIo.D2.AspNetCore.D2AspNetCoreConstants.CORS_ORIGINS_CONFIG_KEY = "D2_CORS_ORIGINS" -> string!
+const DcsvIo.D2.AspNetCore.D2AspNetCoreConstants.DEFAULT_CORS_POLICY_NAME = "D2_DEFAULT" -> string!
+const DcsvIo.D2.AspNetCore.D2AspNetCoreConstants.HEALTH_ENDPOINT_PATH = "/health" -> string!
+const DcsvIo.D2.AspNetCore.D2AspNetCoreConstants.INFRASTRUCTURE_HTTP_CONTEXT_ITEM_KEY = "D2.IsInfrastructure" -> string!
+const DcsvIo.D2.AspNetCore.D2AspNetCoreConstants.LIVE_HEALTH_TAG = "live" -> string!
+const DcsvIo.D2.AspNetCore.D2AspNetCoreConstants.MAX_CORRELATION_ID_LENGTH = 128 -> int
+const DcsvIo.D2.AspNetCore.D2AspNetCoreConstants.METRICS_ENDPOINT_PATH = "/metrics" -> string!
+const DcsvIo.D2.AspNetCore.D2AspNetCoreConstants.SELF_HEALTH_CHECK_NAME = "self" -> string!
+const DcsvIo.D2.AspNetCore.D2AspNetCoreConstants.WELL_KNOWN_ENDPOINT_PATH = "/.well-known" -> string!
+const DcsvIo.D2.AspNetCore.D2ProblemDetailsContextItems.D2_RESULT = "__d2_result" -> string!
+const DcsvIo.D2.AspNetCore.D2SecurityHeadersOptions.DEFAULT_CROSS_ORIGIN_OPENER_POLICY = "same-origin" -> string!
+const DcsvIo.D2.AspNetCore.D2SecurityHeadersOptions.DEFAULT_CROSS_ORIGIN_RESOURCE_POLICY = "same-origin" -> string!
+const DcsvIo.D2.AspNetCore.D2SecurityHeadersOptions.DEFAULT_REFERRER_POLICY = "strict-origin-when-cross-origin" -> string!
+const DcsvIo.D2.AspNetCore.D2SecurityHeadersOptions.DEFAULT_STRICT_TRANSPORT_SECURITY = "max-age=31536000; includeSubDomains" -> string!
+const DcsvIo.D2.AspNetCore.D2SecurityHeadersOptions.DEFAULT_X_CONTENT_TYPE_OPTIONS = "nosniff" -> string!
+const DcsvIo.D2.AspNetCore.D2SecurityHeadersOptions.DEFAULT_X_FRAME_OPTIONS = "DENY" -> string!
+const DcsvIo.D2.AspNetCore.D2SecurityHeadersOptions.DEFAULT_X_PERMITTED_CROSS_DOMAIN_POLICIES = "none" -> string!
+override DcsvIo.D2.AspNetCore.D2CorsOptions.Equals(object? obj) -> bool
+override DcsvIo.D2.AspNetCore.D2CorsOptions.GetHashCode() -> int
+override DcsvIo.D2.AspNetCore.D2CorsOptions.ToString() -> string!
+override DcsvIo.D2.AspNetCore.D2InfrastructureBypassOptions.Equals(object? obj) -> bool
+override DcsvIo.D2.AspNetCore.D2InfrastructureBypassOptions.GetHashCode() -> int
+override DcsvIo.D2.AspNetCore.D2InfrastructureBypassOptions.ToString() -> string!
+override DcsvIo.D2.AspNetCore.D2ProblemDetailsOptions.Equals(object? obj) -> bool
+override DcsvIo.D2.AspNetCore.D2ProblemDetailsOptions.GetHashCode() -> int
+override DcsvIo.D2.AspNetCore.D2ProblemDetailsOptions.ToString() -> string!
+override DcsvIo.D2.AspNetCore.D2SecurityHeadersOptions.Equals(object? obj) -> bool
+override DcsvIo.D2.AspNetCore.D2SecurityHeadersOptions.GetHashCode() -> int
+override DcsvIo.D2.AspNetCore.D2SecurityHeadersOptions.ToString() -> string!
+static DcsvIo.D2.AspNetCore.CorsApplicationBuilderExtensions.UseD2Cors(this Microsoft.AspNetCore.Builder.IApplicationBuilder! app) -> Microsoft.AspNetCore.Builder.IApplicationBuilder!
+static DcsvIo.D2.AspNetCore.CorsServiceCollectionExtensions.AddD2Cors(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services, Microsoft.Extensions.Configuration.IConfiguration! configuration, System.Action<DcsvIo.D2.AspNetCore.D2CorsOptions!>? configure = null) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
+static DcsvIo.D2.AspNetCore.D2CorsOptions.operator !=(DcsvIo.D2.AspNetCore.D2CorsOptions? left, DcsvIo.D2.AspNetCore.D2CorsOptions? right) -> bool
+static DcsvIo.D2.AspNetCore.D2CorsOptions.operator ==(DcsvIo.D2.AspNetCore.D2CorsOptions? left, DcsvIo.D2.AspNetCore.D2CorsOptions? right) -> bool
+static DcsvIo.D2.AspNetCore.D2InfrastructureBypassOptions.operator !=(DcsvIo.D2.AspNetCore.D2InfrastructureBypassOptions? left, DcsvIo.D2.AspNetCore.D2InfrastructureBypassOptions? right) -> bool
+static DcsvIo.D2.AspNetCore.D2InfrastructureBypassOptions.operator ==(DcsvIo.D2.AspNetCore.D2InfrastructureBypassOptions? left, DcsvIo.D2.AspNetCore.D2InfrastructureBypassOptions? right) -> bool
+static DcsvIo.D2.AspNetCore.D2ProblemDetailsOptions.operator !=(DcsvIo.D2.AspNetCore.D2ProblemDetailsOptions? left, DcsvIo.D2.AspNetCore.D2ProblemDetailsOptions? right) -> bool
+static DcsvIo.D2.AspNetCore.D2ProblemDetailsOptions.operator ==(DcsvIo.D2.AspNetCore.D2ProblemDetailsOptions? left, DcsvIo.D2.AspNetCore.D2ProblemDetailsOptions? right) -> bool
+static DcsvIo.D2.AspNetCore.D2SecurityHeadersOptions.operator !=(DcsvIo.D2.AspNetCore.D2SecurityHeadersOptions? left, DcsvIo.D2.AspNetCore.D2SecurityHeadersOptions? right) -> bool
+static DcsvIo.D2.AspNetCore.D2SecurityHeadersOptions.operator ==(DcsvIo.D2.AspNetCore.D2SecurityHeadersOptions? left, DcsvIo.D2.AspNetCore.D2SecurityHeadersOptions? right) -> bool
+static DcsvIo.D2.AspNetCore.HealthEndpointsRouteBuilderExtensions.MapD2HealthEndpoints(this Microsoft.AspNetCore.Routing.IEndpointRouteBuilder! endpoints) -> Microsoft.AspNetCore.Routing.IEndpointRouteBuilder!
+static DcsvIo.D2.AspNetCore.HealthEndpointsServiceCollectionExtensions.AddD2HealthChecks(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
+static DcsvIo.D2.AspNetCore.HttpContextD2ResultExtensions.GetD2Result(this Microsoft.AspNetCore.Http.HttpContext! context) -> DcsvIo.D2.Result.D2Result?
+static DcsvIo.D2.AspNetCore.HttpContextD2ResultExtensions.SetD2Result(this Microsoft.AspNetCore.Http.HttpContext! context, DcsvIo.D2.Result.D2Result! result) -> void
+static DcsvIo.D2.AspNetCore.InfrastructureBypassApplicationBuilderExtensions.UseD2InfrastructureBypass(this Microsoft.AspNetCore.Builder.IApplicationBuilder! app, System.Action<DcsvIo.D2.AspNetCore.D2InfrastructureBypassOptions!>? configure = null) -> Microsoft.AspNetCore.Builder.IApplicationBuilder!
+static DcsvIo.D2.AspNetCore.InfrastructurePathMatcher.IsInfrastructurePath(Microsoft.AspNetCore.Http.PathString path, System.Collections.Generic.IReadOnlyList<string!>? infrastructurePaths) -> bool
+static DcsvIo.D2.AspNetCore.Mtls.MutualTlsHostExtensions.AddD2MutualTls(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services, System.Action<DcsvIo.D2.AspNetCore.Mtls.D2MutualTlsOptions!>! configure) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
+static DcsvIo.D2.AspNetCore.Mtls.PeerWorkloadIdentityAccessor.GetD2PeerWorkloadIdentity(this Microsoft.AspNetCore.Http.HttpContext! httpContext) -> string?
+static DcsvIo.D2.AspNetCore.ProblemDetailsServiceCollectionExtensions.AddD2ProblemDetails(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services, System.Action<DcsvIo.D2.AspNetCore.D2ProblemDetailsOptions!>? configure = null) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
+static DcsvIo.D2.AspNetCore.RunD2ServiceWebApplicationExtensions.RunD2ServiceAsync(this Microsoft.AspNetCore.Builder.WebApplication! app, string? serviceName = null) -> System.Threading.Tasks.Task!
+static DcsvIo.D2.AspNetCore.SecurityHeadersApplicationBuilderExtensions.UseD2SecurityHeaders(this Microsoft.AspNetCore.Builder.IApplicationBuilder! app, System.Action<DcsvIo.D2.AspNetCore.D2SecurityHeadersOptions!>? configure = null) -> Microsoft.AspNetCore.Builder.IApplicationBuilder!
+static readonly DcsvIo.D2.AspNetCore.D2AspNetCoreConstants.DEFAULT_INFRASTRUCTURE_PATHS -> System.Collections.Generic.IReadOnlyList<string!>!

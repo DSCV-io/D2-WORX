@@ -1,0 +1,35 @@
+{
+  "name": "@dcsv-io/d2-geo-abstractions",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -b",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "type-check:test": "tsc -p tsconfig.test.json"
+  },
+  "peerDependencies": {
+    "zod": "4.3.6"
+  },
+  "dependencies": {
+    "@dcsv-io/d2-result": "workspace:*",
+    "@dcsv-io/d2-utilities": "workspace:*"
+  },
+  "devDependencies": {
+    "@vitest/coverage-v8": "4.0.18",
+    "typescript": "5.9.3",
+    "vitest": "4.0.18"
+  }
+}

@@ -1,0 +1,92 @@
+<!--
+Copyright (c) DCSV. Licensed under the Apache License, Version 2.0.
+-->
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>DcsvIo.D2.EntityFrameworkCore.Postgres</RootNamespace>
+
+    <!-- Emit LoggerMessage generator output to <project-dir>/Generated/.
+         Domain lock-key catalog (AdvisoryLocks) no longer emits here — see
+         DcsvIo.D2.Private.Edge.KeyCustodian.Infra + locks-source-gen. -->
+    <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
+    <CompilerGeneratedFilesOutputPath>Generated</CompilerGeneratedFilesOutputPath>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!--
+      The SourceGen pipeline feeds the in-memory compiler with the same content
+      that lands on disk under Generated/. Without this Remove, the SDK-default
+      <Compile Include="**/*.cs" /> glob picks up the on-disk copy and the build
+      fails with duplicate-definition errors (CS0101 / CS0111).
+    -->
+    <Compile Remove="$(CompilerGeneratedFilesOutputPath)\**\*.cs" />
+  </ItemGroup>
+
+  <!--
+    PostgreSQL-specific EF Core startup machinery shared across every D2 service.
+    Ships: PgAdvisoryLock (session-scoped pg_advisory_lock / pg_try_advisory_lock
+    helper on a dedicated NpgsqlConnection, [MustDisposeResource]),
+    AdvisoryLockMigrator<TContext> (IHostedService: ensure-db + blocking lock +
+    MigrateAsync), DesignTimeDbContextFactoryBase<TContext> (design-time factory
+    base for module-within-host services that have no Sdk.Web startup project),
+    and NpgsqlContextDefaults (the canonical UseNpgsql defaults applier:
+    AddD2NodaTime + CommandTimeout + MigrationsAssembly, deliberately NO
+    EnableRetryOnFailure).
+
+    Domain advisory-lock key catalogs do NOT ship from this package. Callers pass
+    domain-owned generated constants (e.g. AdvisoryLocks.D2Keycustodian.MIGRATOR
+    from DcsvIo.D2.Private.Edge.KeyCustodian.Infra) into PgAdvisoryLock / AdvisoryLockMigrator.
+    The fleet catalog SoT remains contracts/advisory-locks/; locks-source-gen
+    emits into the owning-module assembly.
+  -->
+
+  <ItemGroup>
+    <!-- DcsvIo.D2.Time — AddD2NodaTime() lives in DcsvIo.D2.Time.EfCore and is
+         folded into the NpgsqlContextDefaults applier. -->
+    <ProjectReference Include="..\..\time\DcsvIo.D2.Time.csproj" />
+    <!-- DcsvIo.D2.Utilities — ThrowIfFalsey / Falsey guards. -->
+    <ProjectReference Include="..\..\utilities\DcsvIo.D2.Utilities.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Microsoft.EntityFrameworkCore — DbContext / Database.MigrateAsync /
+         IDesignTimeDbContextFactory design-time base. -->
+    <PackageReference Include="Microsoft.EntityFrameworkCore" />
+    <!-- Npgsql.EntityFrameworkCore.PostgreSQL — UseNpgsql + NpgsqlDbContextOptionsBuilder.
+         Pulls Npgsql transitively; listed explicitly per "declare what you use". -->
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
+    <!-- Npgsql — raw NpgsqlConnection for the advisory lock + ensure-db
+         maintenance-connection logic. -->
+    <PackageReference Include="Npgsql" />
+    <!-- Microsoft.Extensions.DependencyInjection.Abstractions — IServiceProvider
+         scope creation in AdvisoryLockMigrator + DI helper extension. -->
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
+    <!-- Microsoft.Extensions.Hosting.Abstractions — IHostedService on
+         AdvisoryLockMigrator. -->
+    <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" />
+    <!-- Microsoft.Extensions.Options — optional IOptions<> if callers use it;
+         CommandTimeout binding. -->
+    <PackageReference Include="Microsoft.Extensions.Options" />
+    <!-- Microsoft.Extensions.Logging.Abstractions — ILogger<> in migrator. -->
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
+    <!-- JetBrains.Annotations — [MustDisposeResource] on PgAdvisoryLock. -->
+    <PackageReference Include="JetBrains.Annotations" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="DcsvIo.D2.Tests" />
+  </ItemGroup>
+
+  <!-- Publish metadata (per-package semver + NuGet identity). -->
+  <PropertyGroup>
+    <Version>0.1.0</Version>
+    <PackageId>DcsvIo.D2.EntityFrameworkCore.Postgres</PackageId>
+    <Description>PostgreSQL-backed EF Core DbContext wiring for D2 with advisory-lock-guarded migrations and startup validation.</Description>
+    <IsPackable>true</IsPackable>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+</Project>

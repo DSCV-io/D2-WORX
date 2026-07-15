@@ -1,0 +1,93 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.d2.dcsv.io/contracts/geo/geopolitical-entities.schema.json",
+  "title": "GeopoliticalEntity catalog (hand-rolled)",
+  "description": "Hand-rolled catalog of supranational groupings (continents, sub-continents, regions, economic / political / military unions and agreements). No upstream source — humans maintain. Lives alongside the pipeline-generated Tier 2 spec files at contracts/geo/ root and is consumed identically by codegen. Distinguished only by $generated: false / $source: manual.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "$generated",
+    "$source",
+    "$schema",
+    "$note",
+    "catalogVersion",
+    "lastEditedAt",
+    "entries"
+  ],
+  "properties": {
+    "$generated": { "const": false },
+    "$source": { "const": "manual" },
+    "$schema": { "type": "string" },
+    "$note": { "type": "string" },
+    "catalogVersion": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+(-[A-Za-z0-9.]+)?$"
+    },
+    "lastEditedAt": {
+      "type": "string",
+      "description": "Date of last human edit (YYYY-MM-DD). Different from generatedAt on pipeline-derived specs since this catalog has no regen step.",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+    },
+    "entries": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/GeopoliticalEntity" }
+    }
+  },
+  "$defs": {
+    "GeopoliticalEntityType": {
+      "type": "string",
+      "description": "23 values across 4 region-tagged categories: General Geopolitical (3), Economic (8), Political (6), Military (6).",
+      "enum": [
+        "Continent",
+        "SubContinent",
+        "GeopoliticalRegion",
+        "FreeTradeAgreement",
+        "CustomsUnion",
+        "CommonMarket",
+        "EconomicUnion",
+        "MonetaryUnion",
+        "BilateralInvestmentTreaty",
+        "DevelopmentAgreement",
+        "ResourceSharingAgreement",
+        "PoliticalUnion",
+        "HumanRightsAgreement",
+        "EnvironmentalAgreement",
+        "GovernanceAndCooperationAgreement",
+        "PeaceTreaty",
+        "DemocracyPromotionAgreement",
+        "MilitaryAlliance",
+        "ArmsControlAgreement",
+        "StatusOfForcesAgreement",
+        "PeacekeepingAgreement",
+        "SecurityCooperationAgreement",
+        "NonAggressionPact"
+      ]
+    },
+    "GeopoliticalEntity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["shortCode", "name", "type", "countryISO31661Alpha2Codes"],
+      "properties": {
+        "shortCode": {
+          "type": "string",
+          "description": "Identifier — typically the entity's well-known abbreviation (NATO, EU, ASEAN, USMCA, etc.). Continents use the ISO continent two-letter codes (AF, AN, AS, EU, NA, OC, SA).",
+          "minLength": 2,
+          "maxLength": 16,
+          "pattern": "^[A-Z][A-Z0-9]*$"
+        },
+        "name": { "type": "string", "minLength": 1 },
+        "type": { "$ref": "#/$defs/GeopoliticalEntityType" },
+        "countryISO31661Alpha2Codes": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "description": "ISO 3166-1 alpha-2 country code. May reference disputed entities (e.g. XK Kosovo) not present in the countries catalog — known-orphan exemptions documented in parity tests.",
+            "pattern": "^[A-Z]{2}$"
+          },
+          "minItems": 1,
+          "uniqueItems": true
+        }
+      }
+    }
+  }
+}

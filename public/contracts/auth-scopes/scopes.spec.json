@@ -1,0 +1,29 @@
+{
+  "$schema": "./schema.json",
+  "scopes": [
+    {
+      "name": "anon.public.health",
+      "description": "Public health-check endpoint. Liveness signal â€” no auth.",
+      "actionSensitivity": "Routine",
+      "impersonationBlocked": false
+    },
+    {
+      "name": "self.read",
+      "description": "Read the caller\u0027s own user data (profile, preferences, contact details).",
+      "actionSensitivity": "Routine",
+      "impersonationBlocked": false,
+      "grantedTo": {
+        "*": ["*"]
+      }
+    },
+    {
+      "name": "self.write",
+      "description": "Write the caller\u0027s own non-auth-relevant data (display name, avatar, preferences). Auth-relevant changes (email, password) require sensitive scopes.",
+      "actionSensitivity": "Routine",
+      "impersonationBlocked": false,
+      "grantedTo": {
+        "*": ["*"]
+      }
+    }
+  ]
+}

@@ -1,0 +1,34 @@
+// -----------------------------------------------------------------------
+// Copyright (c) DCSV. Licensed under the Apache License, Version 2.0.
+// -----------------------------------------------------------------------
+
+syntax = "proto3";
+
+package d2.common.v1;
+
+option csharp_namespace = "D2.Services.Protos.Common.V1";
+
+// A translatable message: a translation key plus an optional dictionary of
+// substitution parameters. Mirrors TKMessage (DcsvIo.D2.I18n / @dcsv-io/d2-result).
+// params values are always strings on both runtimes.
+message TKMessageProto {
+  string key = 1;
+  map<string, string> params = 2;
+}
+
+message D2ResultProto {
+  bool success = 1;
+  int32 status_code = 2;
+  optional string error_code = 3;
+  // snake_case ErrorCategory wire string (e.g. "not_found", "conflict").
+  // Absent (proto3 optional) when the result has no category.
+  optional string category = 4;
+  optional string trace_id = 5;
+  repeated TKMessageProto messages = 6;
+  repeated InputErrorProto input_errors = 7;
+}
+
+message InputErrorProto {
+  string field = 1;
+  repeated TKMessageProto errors = 2;
+}

@@ -1,0 +1,75 @@
+{
+  "name": "@dcsv-io/d2-geo-default",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./countries": {
+      "types": "./dist/countries.d.ts",
+      "import": "./dist/countries.js"
+    },
+    "./subdivisions": {
+      "types": "./dist/subdivisions.d.ts",
+      "import": "./dist/subdivisions.js"
+    },
+    "./currencies": {
+      "types": "./dist/currencies.d.ts",
+      "import": "./dist/currencies.js"
+    },
+    "./languages": {
+      "types": "./dist/languages.d.ts",
+      "import": "./dist/languages.js"
+    },
+    "./locales": {
+      "types": "./dist/locales.d.ts",
+      "import": "./dist/locales.js"
+    },
+    "./timezones": {
+      "types": "./dist/timezones.d.ts",
+      "import": "./dist/timezones.js"
+    },
+    "./geopolitical-entities": {
+      "types": "./dist/geopolitical-entities.d.ts",
+      "import": "./dist/geopolitical-entities.js"
+    },
+    "./name-resolution": {
+      "types": "./dist/name-resolution/default-geo-name-resolver.d.ts",
+      "import": "./dist/name-resolution/default-geo-name-resolver.js"
+    },
+    "./extensions": {
+      "types": "./dist/extensions/i-request-context-geo-extensions.d.ts",
+      "import": "./dist/extensions/i-request-context-geo-extensions.js"
+    },
+    "./_records-meta.g": {
+      "types": "./dist/generated/_records-meta.g.d.ts",
+      "import": "./dist/generated/_records-meta.g.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -b",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "type-check:test": "tsc -p tsconfig.test.json"
+  },
+  "dependencies": {
+    "@dcsv-io/d2-geo-abstractions": "workspace:*",
+    "@dcsv-io/d2-i18n-keys": "workspace:*",
+    "@dcsv-io/d2-request-context-abstractions": "workspace:*",
+    "@dcsv-io/d2-result": "workspace:*",
+    "@dcsv-io/d2-utilities": "workspace:*"
+  },
+  "devDependencies": {
+    "@vitest/coverage-v8": "4.0.18",
+    "typescript": "5.9.3",
+    "vitest": "4.0.18"
+  }
+}

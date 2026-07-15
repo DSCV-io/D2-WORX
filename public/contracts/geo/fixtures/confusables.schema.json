@@ -1,0 +1,62 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.d2.dcsv.io/contracts/geo/fixtures/confusables.schema.json",
+  "title": "Geo name-resolver confusables parity fixture",
+  "description": "Cross-language adversarial fixture for DefaultGeoNameResolver. Each entry pins a free-form name input + expected outcome (matched alpha-2 / iso-3166-2 code, or null for ambiguous / not-found). Both runtimes (.NET DefaultGeoNameResolver + TS @dcsv-io/d2-geo-default tryResolveCountryByName / tryResolveSubdivisionByName) consume this file via the parity test suite. Same input MUST produce the same outcome on both sides.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["$comment", "version", "countryCases", "subdivisionCases"],
+  "properties": {
+    "$comment": { "type": "string" },
+    "version": { "type": "string" },
+    "countryCases": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/CountryCase" }
+    },
+    "subdivisionCases": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/SubdivisionCase" }
+    }
+  },
+  "$defs": {
+    "CountryCase": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["input", "expectedIso31661Alpha2Code", "comment"],
+      "properties": {
+        "input": { "type": "string", "maxLength": 256 },
+        "expectedIso31661Alpha2Code": {
+          "oneOf": [
+            { "type": "string", "pattern": "^[A-Z]{2}$" },
+            { "type": "null" }
+          ]
+        },
+        "comment": { "type": "string" }
+      }
+    },
+    "SubdivisionCase": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "input",
+        "parentCountryIso31661Alpha2Code",
+        "expectedIso31662Code",
+        "comment"
+      ],
+      "properties": {
+        "input": { "type": "string", "maxLength": 256 },
+        "parentCountryIso31661Alpha2Code": {
+          "type": "string",
+          "pattern": "^[A-Z]{2}$"
+        },
+        "expectedIso31662Code": {
+          "oneOf": [
+            { "type": "string", "pattern": "^[A-Z]{2}-[A-Z0-9]{1,3}$" },
+            { "type": "null" }
+          ]
+        },
+        "comment": { "type": "string" }
+      }
+    }
+  }
+}

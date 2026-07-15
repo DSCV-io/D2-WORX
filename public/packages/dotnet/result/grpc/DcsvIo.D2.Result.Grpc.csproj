@@ -1,0 +1,66 @@
+<!--
+Copyright (c) DCSV. Licensed under the Apache License, Version 2.0.
+-->
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>DcsvIo.D2.Result.Grpc</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!--
+      Grpc.Tools drives protoc + the C# plugin to generate D2ResultProto /
+      TKMessageProto / InputErrorProto into namespace D2.Services.Protos.Common.V1
+      (the csharp_namespace declared in d2_result.proto).
+      GrpcServices="None" = message-only (no service stub / base class generated).
+      PrivateAssets="all" so the build targets do not flow to consumers.
+    -->
+    <PackageReference Include="Grpc.Tools">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <!-- Google.Protobuf — runtime types (IMessage, ByteString, etc.) for the
+         generated proto code. -->
+    <PackageReference Include="Google.Protobuf" />
+    <!-- Grpc.Net.Client — AsyncUnaryCall<T> type for the HandleAsync wrapper.
+         Grpc.Net.Client transitively exposes Grpc.Core.Api (RpcException,
+         StatusCode, etc.) which is all the gRPC runtime this lib needs. -->
+    <PackageReference Include="Grpc.Net.Client" />
+    <!-- Microsoft.Extensions.Logging.Abstractions — ILogger for HandleAsync. -->
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!--
+      The shared d2_result.proto lives in contracts/ at repo root. D2ContractsRoot
+      is defined in Directory.Build.props as the repo-root contracts\
+      directory so the path resolves from any nesting depth under server/.
+    -->
+    <Protobuf Include="$(D2PublicContractsRoot)protos\common\v1\d2_result.proto" GrpcServices="None" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- result-core — D2Result / D2Result<T> / InputError / TKMessage source types. -->
+    <ProjectReference Include="..\core\DcsvIo.D2.Result.csproj" />
+    <!-- ErrorCodes.Category — ErrorCategory enum + ErrorCategoryWire.ToWire /
+         TryFromWire for the category proto field. -->
+    <ProjectReference Include="..\..\error-codes\category\DcsvIo.D2.ErrorCodes.Category.csproj" />
+    <!-- Utilities — Falsey() / Truthy() for optional-string null-guard on rehydrate. -->
+    <ProjectReference Include="..\..\utilities\DcsvIo.D2.Utilities.csproj" />
+    <!-- I18n.Abstractions — TKMessage (already transitively exposed via result-core,
+         but listed explicitly for static analysis clarity). -->
+    <ProjectReference Include="..\..\i18n\abstractions\DcsvIo.D2.I18n.Abstractions.csproj" />
+  </ItemGroup>
+
+  <!-- Publish metadata (per-package semver + NuGet identity). -->
+  <PropertyGroup>
+    <Version>0.1.0</Version>
+    <PackageId>DcsvIo.D2.Result.Grpc</PackageId>
+    <Description>Faithful in-memory to wire to in-memory D2Result round-trip for D2 over the gRPC D2ResultProto response envelope.</Description>
+    <IsPackable>true</IsPackable>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+</Project>

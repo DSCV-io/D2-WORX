@@ -1,0 +1,18 @@
+{
+  "$comment": "Synthetic fixture-only key material; no real PII. TS-produced symmetric frames decrypted by the .NET TsCryptoInterop suite.",
+  "emittedBy": "public/packages/typescript/encryption/scripts/emit-symmetric-frames.fixture.ts",
+  "regenerate": "pnpm --filter @dcsv-io/d2-encryption emit-crypto-fixtures",
+  "kid": "ts-sym-kid",
+  "keyBase64": "I11WiSZHSLmD3hmr8qE8+X3etzMPfB7Z/Kkjvocmbjo=",
+  "aadContextBase64": "ZDIvYXVkaXQtcGF5bG9hZA==",
+  "frames": [
+    {
+      "plaintextUtf8": "ts-symmetric-known-answer",
+      "frameHex": "010A74732D73796D2D6B69641DB3FA8E9D0636D69DD85C98DB2B383C200CFAA5368FA2895D40EEA7C59F0BE7D4302AF4AE535A03D17003438AD3CD9473B1AB55DA"
+    },
+    {
+      "plaintextUtf8": "a second symmetric payload — longer, with punctuation & digits 0123456789",
+      "frameHex": "010A74732D73796D2D6B69645A8E62EC5A3536BDAC2714FC4316B4B3E2C70C00392C89E0D0C25E44F2FA60A198215C008C698BC56E2BA0146439B52AF24C0DB21E2AC366DEBF9E1016CAC57DFDC62C5C7537FE23C4AF27B51C9D630A7178A4651F68E0FDD5F154B0D76198DCB253C6B6006B11"
+    }
+  ]
+}

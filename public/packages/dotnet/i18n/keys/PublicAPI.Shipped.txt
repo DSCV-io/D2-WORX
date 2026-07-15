@@ -1,0 +1,148 @@
+#nullable enable
+DcsvIo.D2.I18n.TK
+DcsvIo.D2.I18n.TK.Auth
+DcsvIo.D2.I18n.TK.Auth.Errors
+DcsvIo.D2.I18n.TK.Common
+DcsvIo.D2.I18n.TK.Common.Errors
+DcsvIo.D2.I18n.TK.Common.Time
+DcsvIo.D2.I18n.TK.Common.Ui
+DcsvIo.D2.I18n.TK.Common.Validation
+DcsvIo.D2.I18n.TK.Contacts
+DcsvIo.D2.I18n.TK.Contacts.Validation
+DcsvIo.D2.I18n.TK.Geo
+DcsvIo.D2.I18n.TK.Geo.Errors
+DcsvIo.D2.I18n.TK.Geo.Validation
+static readonly DcsvIo.D2.I18n.TK.Auth.Errors.TEMPORARILY_UNAVAILABLE -> DcsvIo.D2.I18n.TKMessage!
+static readonly DcsvIo.D2.I18n.TK.Auth.Errors.UNAUTHORIZED -> DcsvIo.D2.I18n.TKMessage!
+static readonly DcsvIo.D2.I18n.TK.Common.Errors.BAD_REQUEST -> DcsvIo.D2.I18n.TKMessage!
+static readonly DcsvIo.D2.I18n.TK.Common.Errors.CANCELED -> DcsvIo.D2.I18n.TKMessage!
+static readonly DcsvIo.D2.I18n.TK.Common.Errors.CHECK_VIOLATION -> DcsvIo.D2.I18n.TKMessage!
+static readonly DcsvIo.D2.I18n.TK.Common.Errors.CONCURRENCY_CONFLICT -> DcsvIo.D2.I18n.TKMessage!
+static readonly DcsvIo.D2.I18n.TK.Common.Errors.CONFLICT -> DcsvIo.D2.I18n.TKMessage!
+static readonly DcsvIo.D2.I18n.TK.Common.Errors.COULD_NOT_BE_DESERIALIZED -> DcsvIo.D2.I18n.TKMessage!
+static readonly DcsvIo.D2.I18n.TK.Common.Errors.COULD_NOT_BE_SERIALIZED -> DcsvIo.D2.I18n.TKMessage!
+static readonly DcsvIo.D2.I18n.TK.Common.Errors.DB_CONNECTION_FAILURE -> DcsvIo.D2.I18n.TKMessage!
+static readonly DcsvIo.D2.I18n.TK.Common.Errors.DB_DEADLOCK -> DcsvIo.D2.I18n.TKMessage!
+static readonly DcsvIo.D2.I18n.TK.Common.Errors.DB_TIMEOUT -> DcsvIo.D2.I18n.TKMessage!
+static readonly DcsvIo.D2.I18n.TK.Common.Errors.FORBIDDEN -> DcsvIo.D2.I18n.TKMessage!
+static readonly DcsvIo.D2.I18n.TK.Common.Errors.FOREIGN_KEY_VIOLATION -> DcsvIo.D2.I18n.TKMessage!
+static readonly DcsvIo.D2.I18n.TK.Common.Errors.GEO_REF_UNAVAILABLE -> DcsvIo.D2.I18n.TKMessage!
+static readonly DcsvIo.D2.I18n.TK.Common.Errors.IDEMPOTENCY_IN_FLIGHT -> DcsvIo.D2.I18n.TKMessage!
+static readonly DcsvIo.D2.I18n.TK.Common.Errors.NOT_AUTHENTICATED -> DcsvIo.D2.I18n.TKMessage!
+static readonly DcsvIo.D2.I18n.TK.Common.Errors.NOT_FOUND -> DcsvIo.D2.I18n.TKMessage!
+static readonly DcsvIo.D2.I18n.TK.Common.Errors.NOT_NULL_VIOLATION -> DcsvIo.D2.I18n.TKMessage!
+static readonly DcsvIo.D2.I18n.TK.Common.Errors.PARTIAL_SUCCESS -> DcsvIo.D2.I18n.TKMessage!
+static readonly DcsvIo.D2.I18n.TK.Common.Errors.PAYLOAD_TOO_LARGE -> DcsvIo.D2.I18n.TKMessage!
+static readonly DcsvIo.D2.I18n.TK.Common.Errors.REQUEST_FAILED -> DcsvIo.D2.I18n.TKMessage!
+static readonly DcsvIo.D2.I18n.TK.Common.Errors.SAVE_FAILED -> DcsvIo.D2.I18n.TKMessage!
+static readonly DcsvIo.D2.I18n.TK.Common.Errors.SERVICE_UNAVAILABLE -> DcsvIo.D2.I18n.TKMessage!
+static readonly DcsvIo.D2.I18n.TK.Common.Errors.SOME_FOUND -> DcsvIo.D2.I18n.TKMessage!
+static readonly DcsvIo.D2.I18n.TK.Common.Errors.TOO_LONG -> DcsvIo.D2.I18n.TKMessage!
+static readonly DcsvIo.D2.I18n.TK.Common.Errors.TOO_MANY_REQUESTS -> DcsvIo.D2.I18n.TKMessage!
+static readonly DcsvIo.D2.I18n.TK.Common.Errors.UNAUTHORIZED -> DcsvIo.D2.I18n.TKMessage!
+static readonly DcsvIo.D2.I18n.TK.Common.Errors.UNIQUE_VIOLATION -> DcsvIo.D2.I18n.TKMessage!
+static readonly DcsvIo.D2.I18n.TK.Common.Errors.UNKNOWN -> DcsvIo.D2.I18n.TKMessage!
+static readonly DcsvIo.D2.I18n.TK.Common.Errors.VALIDATION_FAILED -> DcsvIo.D2.I18n.TKMessage!
+static readonly DcsvIo.D2.I18n.TK.Common.Time.INVALID_DURATION -> DcsvIo.D2.I18n.TKMessage!
+static readonly DcsvIo.D2.I18n.TK.Common.Time.INVALID_IANA_IDENTIFIER -> DcsvIo.D2.I18n.TKMessage!
+static readonly DcsvIo.D2.I18n.TK.Common.Time.INVALID_LOCAL_DATE_TIME -> DcsvIo.D2.I18n.TKMessage!
+static readonly DcsvIo.D2.I18n.TK.Common.Ui.ACCOUNT -> DcsvIo.D2.I18n.TKMessage!
+static readonly DcsvIo.D2.I18n.TK.Common.Ui.BACK -> DcsvIo.D2.I18n.TKMessage!
+static readonly DcsvIo.D2.I18n.TK.Common.Ui.CANCEL -> DcsvIo.D2.I18n.TKMessage!
+static readonly DcsvIo.D2.I18n.TK.Common.Ui.CHANGES_SAVED -> DcsvIo.D2.I18n.TKMessage!
+static readonly DcsvIo.D2.I18n.TK.Common.Ui.CHANGE_LANGUAGE_CONFIRM -> DcsvIo.D2.I18n.TKMessage!
+static readonly DcsvIo.D2.I18n.TK.Common.Ui.CHANGE_LANGUAGE_DESCRIPTION -> DcsvIo.D2.I18n.TKMessage!
+static readonly DcsvIo.D2.I18n.TK.Common.Ui.CHANGE_LANGUAGE_TITLE -> DcsvIo.D2.I18n.TKMessage!
+static readonly DcsvIo.D2.I18n.TK.Common.Ui.CHOOSE_LANGUAGE -> DcsvIo.D2.I18n.TKMessage!
+static readonly DcsvIo.D2.I18n.TK.Common.Ui.CLICK_TO_COPY -> DcsvIo.D2.I18n.TKMessage!
+static readonly DcsvIo.D2.I18n.TK.Common.Ui.CLOSE -> DcsvIo.D2.I18n.TKMessage!
+static readonly DcsvIo.D2.I18n.TK.Common.Ui.CONFIRM -> DcsvIo.D2.I18n.TKMessage!
+static readonly DcsvIo.D2.I18n.TK.Common.Ui.COPIED -> DcsvIo.D2.I18n.TKMessage!
+static readonly DcsvIo.D2.I18n.TK.Common.Ui.COUNTRY_FLAG_ALT -> DcsvIo.D2.I18n.TKMessage!
+static readonly DcsvIo.D2.I18n.TK.Common.Ui.DASHBOARD -> DcsvIo.D2.I18n.TKMessage!
+static readonly DcsvIo.D2.I18n.TK.Common.Ui.DESIGN_SYSTEM -> DcsvIo.D2.I18n.TKMessage!
+static readonly DcsvIo.D2.I18n.TK.Common.Ui.DISCARD -> DcsvIo.D2.I18n.TKMessage!
+static readonly DcsvIo.D2.I18n.TK.Common.Ui.GET_STARTED -> DcsvIo.D2.I18n.TKMessage!
+static readonly DcsvIo.D2.I18n.TK.Common.Ui.JUST_NOW -> DcsvIo.D2.I18n.TKMessage!
+static readonly DcsvIo.D2.I18n.TK.Common.Ui.LANGUAGE -> DcsvIo.D2.I18n.TKMessage!
+static readonly DcsvIo.D2.I18n.TK.Common.Ui.LOADING -> DcsvIo.D2.I18n.TKMessage!
+static readonly DcsvIo.D2.I18n.TK.Common.Ui.LOADING_PAGE -> DcsvIo.D2.I18n.TKMessage!
+static readonly DcsvIo.D2.I18n.TK.Common.Ui.MODE -> DcsvIo.D2.I18n.TKMessage!
+static readonly DcsvIo.D2.I18n.TK.Common.Ui.MODE_DARK -> DcsvIo.D2.I18n.TKMessage!
+static readonly DcsvIo.D2.I18n.TK.Common.Ui.MODE_LIGHT -> DcsvIo.D2.I18n.TKMessage!
+static readonly DcsvIo.D2.I18n.TK.Common.Ui.MODE_SYSTEM -> DcsvIo.D2.I18n.TKMessage!
+static readonly DcsvIo.D2.I18n.TK.Common.Ui.MORE -> DcsvIo.D2.I18n.TKMessage!
+static readonly DcsvIo.D2.I18n.TK.Common.Ui.NEXT -> DcsvIo.D2.I18n.TKMessage!
+static readonly DcsvIo.D2.I18n.TK.Common.Ui.NO_RESULTS -> DcsvIo.D2.I18n.TKMessage!
+static readonly DcsvIo.D2.I18n.TK.Common.Ui.OPEN_MENU -> DcsvIo.D2.I18n.TKMessage!
+static readonly DcsvIo.D2.I18n.TK.Common.Ui.PAGINATION_NEXT -> DcsvIo.D2.I18n.TKMessage!
+static readonly DcsvIo.D2.I18n.TK.Common.Ui.PAGINATION_PREVIOUS -> DcsvIo.D2.I18n.TKMessage!
+static readonly DcsvIo.D2.I18n.TK.Common.Ui.PREFERENCES -> DcsvIo.D2.I18n.TKMessage!
+static readonly DcsvIo.D2.I18n.TK.Common.Ui.PREVIOUS -> DcsvIo.D2.I18n.TKMessage!
+static readonly DcsvIo.D2.I18n.TK.Common.Ui.PROFILE -> DcsvIo.D2.I18n.TKMessage!
+static readonly DcsvIo.D2.I18n.TK.Common.Ui.REFRESH -> DcsvIo.D2.I18n.TKMessage!
+static readonly DcsvIo.D2.I18n.TK.Common.Ui.RESET -> DcsvIo.D2.I18n.TKMessage!
+static readonly DcsvIo.D2.I18n.TK.Common.Ui.REVERT -> DcsvIo.D2.I18n.TKMessage!
+static readonly DcsvIo.D2.I18n.TK.Common.Ui.SAVE -> DcsvIo.D2.I18n.TKMessage!
+static readonly DcsvIo.D2.I18n.TK.Common.Ui.SEARCH_PLACEHOLDER -> DcsvIo.D2.I18n.TKMessage!
+static readonly DcsvIo.D2.I18n.TK.Common.Ui.SELECT_THEME -> DcsvIo.D2.I18n.TKMessage!
+static readonly DcsvIo.D2.I18n.TK.Common.Ui.SET_LANGUAGE -> DcsvIo.D2.I18n.TKMessage!
+static readonly DcsvIo.D2.I18n.TK.Common.Ui.SIGN_IN -> DcsvIo.D2.I18n.TKMessage!
+static readonly DcsvIo.D2.I18n.TK.Common.Ui.SIGN_OUT -> DcsvIo.D2.I18n.TKMessage!
+static readonly DcsvIo.D2.I18n.TK.Common.Ui.SIGN_UP -> DcsvIo.D2.I18n.TKMessage!
+static readonly DcsvIo.D2.I18n.TK.Common.Ui.SUBMIT -> DcsvIo.D2.I18n.TKMessage!
+static readonly DcsvIo.D2.I18n.TK.Common.Ui.THEME -> DcsvIo.D2.I18n.TKMessage!
+static readonly DcsvIo.D2.I18n.TK.Common.Ui.TOGGLE_MODE -> DcsvIo.D2.I18n.TKMessage!
+static readonly DcsvIo.D2.I18n.TK.Common.Ui.TOGGLE_SIDEBAR -> DcsvIo.D2.I18n.TKMessage!
+static readonly DcsvIo.D2.I18n.TK.Common.Ui.UNKNOWN -> DcsvIo.D2.I18n.TKMessage!
+static readonly DcsvIo.D2.I18n.TK.Common.Ui.UNSAVED_CHANGES -> DcsvIo.D2.I18n.TKMessage!
+static readonly DcsvIo.D2.I18n.TK.Common.Ui.USER_AVATAR_ALT -> DcsvIo.D2.I18n.TKMessage!
+static readonly DcsvIo.D2.I18n.TK.Common.Ui.USER_FALLBACK -> DcsvIo.D2.I18n.TKMessage!
+static readonly DcsvIo.D2.I18n.TK.Common.Validation.CONTEXT_KEY_NOT_ALLOWED -> DcsvIo.D2.I18n.TKMessage!
+static readonly DcsvIo.D2.I18n.TK.Common.Validation.EMAIL_INVALID -> DcsvIo.D2.I18n.TKMessage!
+static readonly DcsvIo.D2.I18n.TK.Common.Validation.HASH_ID_INVALID -> DcsvIo.D2.I18n.TKMessage!
+static readonly DcsvIo.D2.I18n.TK.Common.Validation.ID_INVALID -> DcsvIo.D2.I18n.TKMessage!
+static readonly DcsvIo.D2.I18n.TK.Common.Validation.IP_INVALID -> DcsvIo.D2.I18n.TKMessage!
+static readonly DcsvIo.D2.I18n.TK.Common.Validation.NON_EMPTY_LIST -> DcsvIo.D2.I18n.TKMessage!
+static readonly DcsvIo.D2.I18n.TK.Common.Validation.PHONE_INVALID -> DcsvIo.D2.I18n.TKMessage!
+static readonly DcsvIo.D2.I18n.TK.Common.Validation.POSTAL_CODE_INVALID -> DcsvIo.D2.I18n.TKMessage!
+static readonly DcsvIo.D2.I18n.TK.Contacts.Validation.AFFIXES_EMPTY_RECORD -> DcsvIo.D2.I18n.TKMessage!
+static readonly DcsvIo.D2.I18n.TK.Contacts.Validation.COMPANY_NAME_REQUIRED -> DcsvIo.D2.I18n.TKMessage!
+static readonly DcsvIo.D2.I18n.TK.Contacts.Validation.COMPANY_NAME_TOO_LONG -> DcsvIo.D2.I18n.TKMessage!
+static readonly DcsvIo.D2.I18n.TK.Contacts.Validation.DEMOGRAPHICS_EMPTY_RECORD -> DcsvIo.D2.I18n.TKMessage!
+static readonly DcsvIo.D2.I18n.TK.Contacts.Validation.DEPARTMENT_TOO_LONG -> DcsvIo.D2.I18n.TKMessage!
+static readonly DcsvIo.D2.I18n.TK.Contacts.Validation.DOB_FUTURE -> DcsvIo.D2.I18n.TKMessage!
+static readonly DcsvIo.D2.I18n.TK.Contacts.Validation.DOB_TOO_OLD -> DcsvIo.D2.I18n.TKMessage!
+static readonly DcsvIo.D2.I18n.TK.Contacts.Validation.EMAIL_TOO_LONG -> DcsvIo.D2.I18n.TKMessage!
+static readonly DcsvIo.D2.I18n.TK.Contacts.Validation.FIRST_NAME_REQUIRED -> DcsvIo.D2.I18n.TKMessage!
+static readonly DcsvIo.D2.I18n.TK.Contacts.Validation.FIRST_NAME_TOO_LONG -> DcsvIo.D2.I18n.TKMessage!
+static readonly DcsvIo.D2.I18n.TK.Contacts.Validation.JOB_TITLE_TOO_LONG -> DcsvIo.D2.I18n.TKMessage!
+static readonly DcsvIo.D2.I18n.TK.Contacts.Validation.LAST_NAME_TOO_LONG -> DcsvIo.D2.I18n.TKMessage!
+static readonly DcsvIo.D2.I18n.TK.Contacts.Validation.MIDDLE_NAME_TOO_LONG -> DcsvIo.D2.I18n.TKMessage!
+static readonly DcsvIo.D2.I18n.TK.Contacts.Validation.PHONE_TOO_LONG -> DcsvIo.D2.I18n.TKMessage!
+static readonly DcsvIo.D2.I18n.TK.Contacts.Validation.PREFERRED_NAME_TOO_LONG -> DcsvIo.D2.I18n.TKMessage!
+static readonly DcsvIo.D2.I18n.TK.Contacts.Validation.PREFIX_CUSTOM_NOT_ALLOWED -> DcsvIo.D2.I18n.TKMessage!
+static readonly DcsvIo.D2.I18n.TK.Contacts.Validation.PREFIX_CUSTOM_REQUIRED -> DcsvIo.D2.I18n.TKMessage!
+static readonly DcsvIo.D2.I18n.TK.Contacts.Validation.PREFIX_CUSTOM_TOO_LONG -> DcsvIo.D2.I18n.TKMessage!
+static readonly DcsvIo.D2.I18n.TK.Contacts.Validation.SUFFIX_CUSTOM_NOT_ALLOWED -> DcsvIo.D2.I18n.TKMessage!
+static readonly DcsvIo.D2.I18n.TK.Contacts.Validation.SUFFIX_CUSTOM_REQUIRED -> DcsvIo.D2.I18n.TKMessage!
+static readonly DcsvIo.D2.I18n.TK.Contacts.Validation.SUFFIX_CUSTOM_TOO_LONG -> DcsvIo.D2.I18n.TKMessage!
+static readonly DcsvIo.D2.I18n.TK.Contacts.Validation.WEBSITE_INVALID -> DcsvIo.D2.I18n.TKMessage!
+static readonly DcsvIo.D2.I18n.TK.Geo.Errors.CORRUPTED_DATA_ON_DISK -> DcsvIo.D2.I18n.TKMessage!
+static readonly DcsvIo.D2.I18n.TK.Geo.Errors.DISK_READ_FAILED -> DcsvIo.D2.I18n.TKMessage!
+static readonly DcsvIo.D2.I18n.TK.Geo.Errors.DISK_WRITE_FAILED -> DcsvIo.D2.I18n.TKMessage!
+static readonly DcsvIo.D2.I18n.TK.Geo.Errors.NAME_RESOLUTION_AMBIGUOUS -> DcsvIo.D2.I18n.TKMessage!
+static readonly DcsvIo.D2.I18n.TK.Geo.Errors.NAME_RESOLUTION_NOT_FOUND -> DcsvIo.D2.I18n.TKMessage!
+static readonly DcsvIo.D2.I18n.TK.Geo.Validation.ADDRESS_LINE1_REQUIRED -> DcsvIo.D2.I18n.TKMessage!
+static readonly DcsvIo.D2.I18n.TK.Geo.Validation.ADMIN_COUNTRY_SUBDIVISION_MISMATCH -> DcsvIo.D2.I18n.TKMessage!
+static readonly DcsvIo.D2.I18n.TK.Geo.Validation.ADMIN_EMPTY_RECORD -> DcsvIo.D2.I18n.TKMessage!
+static readonly DcsvIo.D2.I18n.TK.Geo.Validation.CITY_TOO_LONG -> DcsvIo.D2.I18n.TKMessage!
+static readonly DcsvIo.D2.I18n.TK.Geo.Validation.COORDINATES_FINITE_REQUIRED -> DcsvIo.D2.I18n.TKMessage!
+static readonly DcsvIo.D2.I18n.TK.Geo.Validation.COORDINATES_GEOHASH_INVALID -> DcsvIo.D2.I18n.TKMessage!
+static readonly DcsvIo.D2.I18n.TK.Geo.Validation.COORDINATES_PLUSCODE_INVALID -> DcsvIo.D2.I18n.TKMessage!
+static readonly DcsvIo.D2.I18n.TK.Geo.Validation.IP_REQUIRED -> DcsvIo.D2.I18n.TKMessage!
+static readonly DcsvIo.D2.I18n.TK.Geo.Validation.LATITUDE_RANGE -> DcsvIo.D2.I18n.TKMessage!
+static readonly DcsvIo.D2.I18n.TK.Geo.Validation.LONGITUDE_RANGE -> DcsvIo.D2.I18n.TKMessage!
+static readonly DcsvIo.D2.I18n.TK.Geo.Validation.POSTAL_CODE_INVALID -> DcsvIo.D2.I18n.TKMessage!
+static readonly DcsvIo.D2.I18n.TK.Geo.Validation.POSTAL_CODE_TOO_LONG -> DcsvIo.D2.I18n.TKMessage!
+static readonly DcsvIo.D2.I18n.TK.Geo.Validation.STREET_LINE_TOO_LONG -> DcsvIo.D2.I18n.TKMessage!

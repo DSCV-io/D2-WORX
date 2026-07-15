@@ -1,0 +1,364 @@
+{
+  "$schema": "./schema.json",
+  "meters": [
+    {
+      "meter": "DcsvIo.D2.Auth",
+      "consumingAssembly": "DcsvIo.D2.Auth",
+      "tagsNamespace": "DcsvIo.D2.Auth.Telemetry",
+      "tagsClassName": "AuthTelemetryTags",
+      "instruments": [
+        {
+          "name": "d2.auth.jwt.validations",
+          "constName": "JwtValidations",
+          "kind": "counter",
+          "description": "Total inbound JWT validations.",
+          "tags": [
+            {
+              "name": "outcome",
+              "values": [
+                "success",
+                "bearer_missing",
+                "bearer_malformed",
+                "signature_invalid",
+                "expired",
+                "not_yet_valid",
+                "issuer_mismatch",
+                "audience_mismatch",
+                "claim_missing",
+                "act_chain_malformed",
+                "kid_not_found",
+                "jwks_unavailable"
+              ]
+            }
+          ]
+        },
+        {
+          "name": "d2.auth.session.liveness.checks",
+          "constName": "SessionLivenessChecks",
+          "kind": "counter",
+          "description": "Total session liveness checks.",
+          "tags": [
+            {
+              "name": "outcome",
+              "values": [
+                "alive",
+                "revoked",
+                "unavailable",
+                "invalid_input",
+                "backplane_revoked"
+              ]
+            }
+          ]
+        },
+        {
+          "name": "d2.auth.jwks.fetches",
+          "constName": "JwksFetches",
+          "kind": "counter",
+          "description": "Total JWKS fetches from the upstream OIDC issuer.",
+          "tags": [
+            {
+              "name": "trigger",
+              "values": [
+                "implicit",
+                "reactive",
+                "cooldown_skipped",
+                "backplane_rotation"
+              ]
+            },
+            {
+              "name": "outcome",
+              "values": [
+                "success",
+                "failure",
+                "parse_error",
+                "circuit_open",
+                "received"
+              ]
+            }
+          ]
+        },
+        {
+          "name": "d2.auth.problem.emitted",
+          "constName": "ProblemEmitted",
+          "kind": "counter",
+          "description": "Total auth-failure responses emitted by the transport-binding libraries (HTTP ProblemDetails + gRPC RpcException trailers).",
+          "tags": [
+            {
+              "name": "d2_error_code",
+              "valuesFromSpec": "auth-error-codes"
+            }
+          ]
+        },
+        {
+          "name": "d2.auth.jwt.validation.duration",
+          "constName": "JwtValidationDurationMs",
+          "kind": "histogram",
+          "unit": "ms",
+          "description": "Wall-clock duration of the JWT validation pipeline.",
+          "tags": [
+            {
+              "name": "outcome",
+              "values": [
+                "success",
+                "bearer_missing",
+                "bearer_malformed",
+                "signature_invalid",
+                "expired",
+                "not_yet_valid",
+                "issuer_mismatch",
+                "audience_mismatch",
+                "claim_missing",
+                "act_chain_malformed",
+                "kid_not_found",
+                "jwks_unavailable"
+              ]
+            }
+          ]
+        },
+        {
+          "name": "d2.auth.session.liveness.lookup.duration",
+          "constName": "SessionLivenessLookupDurationMs",
+          "kind": "histogram",
+          "unit": "ms",
+          "description": "Wall-clock duration of a session liveness lookup."
+        },
+        {
+          "name": "d2.auth.jwks.fetch.duration",
+          "constName": "JwksFetchDurationMs",
+          "kind": "histogram",
+          "unit": "ms",
+          "description": "Wall-clock duration of a JWKS fetch from the upstream issuer.",
+          "tags": [
+            {
+              "name": "trigger",
+              "values": [
+                "implicit",
+                "reactive",
+                "cooldown_skipped",
+                "backplane_rotation"
+              ]
+            },
+            {
+              "name": "outcome",
+              "values": [
+                "success",
+                "failure",
+                "parse_error",
+                "circuit_open",
+                "received"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "meter": "DcsvIo.D2.Auth.Outbound",
+      "consumingAssembly": "DcsvIo.D2.Auth.Outbound",
+      "tagsNamespace": "DcsvIo.D2.Auth.Outbound.Telemetry",
+      "tagsClassName": "OutboundTelemetryTags",
+      "instruments": [
+        {
+          "name": "d2.auth.outbound.token_exchange.requests",
+          "constName": "TokenExchangeRequests",
+          "kind": "counter",
+          "description": "Total token-exchange requests.",
+          "tags": [
+            {
+              "name": "outcome",
+              "values": [
+                "cache_hit",
+                "cache_hit_after_singleflight",
+                "fetch_success",
+                "fetch_failure",
+                "http_failure",
+                "discovery_failure"
+              ]
+            }
+          ]
+        },
+        {
+          "name": "d2.auth.outbound.token_exchange.revoked_purges",
+          "constName": "TokenExchangeRevokedPurges",
+          "kind": "counter",
+          "description": "Total token-exchange cache entries purged on session-revoked."
+        },
+        {
+          "name": "d2.auth.outbound.workload_leaf.reissue_failures",
+          "constName": "LeafReissueFailures",
+          "kind": "counter",
+          "unit": "{failure}",
+          "description": "Total workload leaf reissue failures."
+        }
+      ]
+    },
+    {
+      "meter": "DcsvIo.D2.Handler",
+      "consumingAssembly": "DcsvIo.D2.Handler",
+      "tagsNamespace": "DcsvIo.D2.Handler",
+      "tagsClassName": "HandlerTelemetryTags",
+      "instruments": [
+        {
+          "name": "d2.handler.invoked",
+          "constName": "Invoked",
+          "kind": "counter",
+          "unit": "{calls}",
+          "description": "Handler invocations attempted."
+        },
+        {
+          "name": "d2.handler.succeeded",
+          "constName": "Succeeded",
+          "kind": "counter",
+          "unit": "{calls}",
+          "description": "Handler invocations that returned a successful D2Result."
+        },
+        {
+          "name": "d2.handler.failed",
+          "constName": "Failed",
+          "kind": "counter",
+          "unit": "{calls}",
+          "description": "Handler invocations that returned a failed D2Result or threw."
+        },
+        {
+          "name": "d2.handler.duration",
+          "constName": "Duration",
+          "kind": "histogram",
+          "unit": "ms",
+          "description": "Handler invocation wall-clock duration in milliseconds."
+        }
+      ]
+    },
+    {
+      "meter": "DcsvIo.D2.Messaging.RabbitMq",
+      "consumingAssembly": "DcsvIo.D2.Messaging.RabbitMq",
+      "tagsNamespace": "DcsvIo.D2.Messaging.RabbitMq.Telemetry",
+      "tagsClassName": "MessagingTelemetryTags",
+      "instruments": [
+        {
+          "name": "d2.messaging.rabbitmq.publishes",
+          "constName": "Publishes",
+          "kind": "counter",
+          "unit": "{publish}",
+          "description": "Total publish attempts (including retries)."
+        },
+        {
+          "name": "d2.messaging.rabbitmq.publish_failures",
+          "constName": "PublishFailures",
+          "kind": "counter",
+          "unit": "{publish}",
+          "description": "Terminal publish failures (after retries exhausted)."
+        },
+        {
+          "name": "d2.messaging.rabbitmq.publish_duration",
+          "constName": "PublishDuration",
+          "kind": "histogram",
+          "unit": "ms",
+          "description": "Wall-clock duration of a publish operation, end-to-end (including retries)."
+        },
+        {
+          "name": "d2.messaging.rabbitmq.publish_retries",
+          "constName": "PublishRetries",
+          "kind": "counter",
+          "unit": "{retry}",
+          "description": "Publish retry attempts (transient failure -> backoff -> re-attempt)."
+        },
+        {
+          "name": "d2.messaging.rabbitmq.dlq_republish_failures",
+          "constName": "DlqRepublishFailures",
+          "kind": "counter",
+          "unit": "{republish}",
+          "description": "Consumer-side republish-to-DLX failures (failure-header lost; fell back to BasicNack-no-requeue)."
+        },
+        {
+          "name": "d2.messaging.rabbitmq.ack_failures",
+          "constName": "AckFailures",
+          "kind": "counter",
+          "unit": "{ack}",
+          "description": "Consumer-side BasicAck failures (handler succeeded but ack could not be sent - broker will redeliver)."
+        }
+      ]
+    },
+    {
+      "meter": "DcsvIo.D2.Caching.Distributed.Redis",
+      "consumingAssembly": "DcsvIo.D2.Caching.Distributed.Redis",
+      "tagsNamespace": "DcsvIo.D2.Caching.Distributed.Redis",
+      "tagsClassName": "RedisCacheTelemetryTags",
+      "instruments": [
+        {
+          "name": "d2.cache.redis.hits",
+          "constName": "Hits",
+          "kind": "counter",
+          "description": "Redis cache hits."
+        },
+        {
+          "name": "d2.cache.redis.misses",
+          "constName": "Misses",
+          "kind": "counter",
+          "description": "Redis cache misses."
+        },
+        {
+          "name": "d2.cache.redis.sets",
+          "constName": "Sets",
+          "kind": "counter",
+          "description": "Redis cache writes."
+        },
+        {
+          "name": "d2.cache.redis.removes",
+          "constName": "Removes",
+          "kind": "counter",
+          "description": "Redis cache removals."
+        },
+        {
+          "name": "d2.cache.redis.broadcasts",
+          "constName": "Broadcasts",
+          "kind": "counter",
+          "description": "Invalidation messages published to backplane."
+        },
+        {
+          "name": "d2.cache.redis.errors",
+          "constName": "Errors",
+          "kind": "counter",
+          "description": "Redis-side failures."
+        }
+      ]
+    },
+    {
+      "meter": "DcsvIo.D2.Caching.Local",
+      "consumingAssembly": "DcsvIo.D2.Caching.Local.Default",
+      "tagsNamespace": "DcsvIo.D2.Caching.Local.Default",
+      "tagsClassName": "LocalCacheTelemetryTags",
+      "instruments": [
+        {
+          "name": "d2.cache.local.hits",
+          "constName": "Hits",
+          "kind": "counter",
+          "description": "Local cache hits."
+        },
+        {
+          "name": "d2.cache.local.misses",
+          "constName": "Misses",
+          "kind": "counter",
+          "description": "Local cache misses."
+        },
+        {
+          "name": "d2.cache.local.sets",
+          "constName": "Sets",
+          "kind": "counter",
+          "description": "Local cache writes."
+        },
+        {
+          "name": "d2.cache.local.removes",
+          "constName": "Removes",
+          "kind": "counter",
+          "description": "Local cache removals (explicit)."
+        },
+        {
+          "name": "d2.cache.local.evictions",
+          "constName": "Evictions",
+          "kind": "counter",
+          "description": "Entries evicted by capacity / expiration."
+        }
+      ]
+    }
+  ]
+}

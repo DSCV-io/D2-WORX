@@ -1,0 +1,157 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "D² context interface specification",
+  "description": "Schema for IAuthContext.spec.json and IRequestContext.spec.json — the source-of-truth shape that DcsvIo.D2.Context.SourceGen reads to emit interfaces + MutableRequestContext. Duplicated from contracts/auth-context/schema.json so each spec directory can stand alone without symlinks (Windows-friendly); the two copies must stay byte-identical apart from this opening description.",
+  "type": "object",
+  "required": ["name", "namespace", "sections"],
+  "additionalProperties": false,
+  "properties": {
+    "$schema": { "type": "string" },
+    "name": {
+      "type": "string",
+      "pattern": "^I[A-Z][A-Za-z0-9]+$",
+      "description": "Interface name. Conventionally starts with 'I' (e.g. IAuthContext)."
+    },
+    "namespace": {
+      "type": "string",
+      "pattern": "^[A-Z][A-Za-z0-9]+(\\.[A-Z][A-Za-z0-9]+)*$",
+      "description": "Target .NET namespace (e.g. DcsvIo.D2.AuthContext.Abstractions)."
+    },
+    "description": { "type": "string" },
+    "extends": {
+      "type": ["string", "null"],
+      "description": "Fully-qualified base interface name (e.g. DcsvIo.D2.AuthContext.Abstractions.IAuthContext) or null."
+    },
+    "sections": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/definitions/section" }
+    }
+  },
+  "definitions": {
+    "section": {
+      "type": "object",
+      "required": ["name", "properties"],
+      "additionalProperties": false,
+      "properties": {
+        "name": { "type": "string" },
+        "properties": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/definitions/property" }
+        },
+        "deprecated": {
+          "type": "boolean",
+          "description": "When true, the entry is deprecated: the generated C# constant + factory carry [Obsolete] and the TS constant + factory carry @deprecated. Additive — the entry is NEVER deleted. Deleting a deprecated (or non-deprecated) entry is a breaking change the JSON-diff gate fails."
+        },
+        "deprecatedReason": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Plain dev-facing English explaining why the code is deprecated; rendered into the [Obsolete(\"...\")] message, the @deprecated JSDoc, and the changelog entry. NOT a TK key (developer-facing, not user-facing)."
+        },
+        "replacedBy": {
+          "type": "string",
+          "description": "Wire code of the successor entry (e.g. RESOURCE_NOT_FOUND). Must reference a real, non-deprecated entry in the merged registry. Omit for pure retirement with no replacement."
+        },
+        "sunset": {
+          "type": "string",
+          "format": "date",
+          "description": "ISO-8601 date for the future RFC 8594 Sunset response header. Edge-runtime-deferred: carried on the contract now, consumed by the Edge response middleware when it exists. Inert until then."
+        }
+      }
+    },
+    "property": {
+      "type": "object",
+      "required": ["name", "type"],
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "pattern": "^[A-Z][A-Za-z0-9]+$",
+          "description": "Property name in PascalCase."
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "string?",
+            "bool?",
+            "int?",
+            "double?",
+            "Guid?",
+            "DateTimeOffset?",
+            "OrgType?",
+            "Role?",
+            "ActorKind?",
+            "ImpersonationKind?",
+            "RequestOrigin",
+            "IReadOnlyList<ActorEntry>",
+            "IReadOnlyList<CallPathEntry>",
+            "IReadOnlyList<string>",
+            "IReadOnlySet<string>"
+          ],
+          "description": "Closed type vocabulary recognized by the generator. New types require schema + emitter updates in lockstep."
+        },
+        "claim": {
+          "type": "string",
+          "description": "JWT claim name this property maps to (used by FromClaims / FromJwtPayload factories)."
+        },
+        "trinaryAuth": {
+          "type": "boolean",
+          "default": false,
+          "description": "True for `bool?` properties whose null vs false distinction is meaningful (pre-auth vs confirmed-not). Defaults the property to null instead of falling back to default(bool?)."
+        },
+        "derived": {
+          "type": "string",
+          "enum": ["actorChain"],
+          "description": "Marks this property as computed from other properties at read-time. The named rule is implemented by the generator's MutableEmitter."
+        },
+        "default": {
+          "type": "string",
+          "description": "Default value expression (C# literal). Examples: '[]' for empty collections, 'null' for explicit null."
+        },
+        "doc": {
+          "type": "string",
+          "description": "XML doc <summary> text rendered on the generated property."
+        },
+        "propagate": {
+          "type": "boolean",
+          "default": false,
+          "description": "When true, this property is included in the codegen-emitted PropagatedContext record (the cross-hop subset that ships in the x-d2-context AMQP / gRPC / HTTP header). Identity fields (UserId / OrgId / Scopes / ActorChain) MUST NOT be propagated — they rebuild from the JWT at every sync hop."
+        },
+        "maxLength": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Wire-level per-field cap, enforced by the codegen-emitted PropagatedContextSerializer.TryDecode. A forged x-d2-context header with any propagatable field exceeding its cap is dropped wholesale (propagation is opportunistic, never required). On a string-typed field this is the max character length; on a propagated list-of-records field (e.g. CallPath) it is reinterpreted as the max entry count (the call-path depth bound). Only meaningful when propagate=true."
+        },
+        "entryIdMaxLength": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Per-entry id length cap for a propagated list-of-records field (e.g. CallPath). Bounds a single forged entry id so it cannot bloat log scope keys / audit columns even when the entry count is within maxLength. Single source of the cap: both the .NET and TypeScript PropagatedContextSerializer.TryDecode derive it from this value (neither hard-codes the number). Only meaningful on a propagated list-of-records field."
+        },
+        "redact": {
+          "type": "boolean",
+          "default": false,
+          "description": "When true, this property is PII-bearing and must be redacted from logs / telemetry. Codegen emits a `<TypeName>RedactPaths` constant alongside the interface, listing every redact-marked property as a Pino-redact path. The .NET side consumes the matching `[RedactData]` attribute placement; the cross-spec parity gate (RedactDataVsSpecRedactConsistencyTests) asserts the two sides agree."
+        },
+        "deprecated": {
+          "type": "boolean",
+          "description": "When true, the entry is deprecated: the generated C# constant + factory carry [Obsolete] and the TS constant + factory carry @deprecated. Additive — the entry is NEVER deleted. Deleting a deprecated (or non-deprecated) entry is a breaking change the JSON-diff gate fails."
+        },
+        "deprecatedReason": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Plain dev-facing English explaining why the code is deprecated; rendered into the [Obsolete(\"...\")] message, the @deprecated JSDoc, and the changelog entry. NOT a TK key (developer-facing, not user-facing)."
+        },
+        "replacedBy": {
+          "type": "string",
+          "description": "Wire code of the successor entry (e.g. RESOURCE_NOT_FOUND). Must reference a real, non-deprecated entry in the merged registry. Omit for pure retirement with no replacement."
+        },
+        "sunset": {
+          "type": "string",
+          "format": "date",
+          "description": "ISO-8601 date for the future RFC 8594 Sunset response header. Edge-runtime-deferred: carried on the contract now, consumed by the Edge response middleware when it exists. Inert until then."
+        }
+      }
+    }
+  }
+}

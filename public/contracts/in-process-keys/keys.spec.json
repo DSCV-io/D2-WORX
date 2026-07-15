@@ -1,0 +1,11 @@
+{
+  "$schema": "./schema.json",
+  "keys": [
+    {
+      "constName": "REQUEST_CONTEXT",
+      "value": "D2.RequestContext",
+      "purpose": "Slot under which the inbound auth runtime writes the populated DcsvIo.D2.Context.Abstractions.IRequestContext on successful auth. HTTP middleware writes to HttpContext.Items[REQUEST_CONTEXT]; gRPC interceptor mirrors the write to ServerCallContext.UserState[REQUEST_CONTEXT] AND HttpContext.Items[REQUEST_CONTEXT] (gRPC-on-AspNetCore-Kestrel always has an HttpContext). Cross-binding identical value is what makes the cross-transport scoped IRequestContext resolver lambda work.",
+      "bindings": ["http", "grpc"]
+    }
+  ]
+}

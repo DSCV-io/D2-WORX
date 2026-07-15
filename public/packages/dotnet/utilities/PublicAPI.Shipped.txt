@@ -1,0 +1,101 @@
+#nullable enable
+DcsvIo.D2.Utilities.Attributes.RedactDataAttribute
+DcsvIo.D2.Utilities.Attributes.RedactDataAttribute.CustomReason.get -> string?
+DcsvIo.D2.Utilities.Attributes.RedactDataAttribute.CustomReason.init -> void
+DcsvIo.D2.Utilities.Attributes.RedactDataAttribute.Reason.get -> DcsvIo.D2.Utilities.Enums.RedactReason
+DcsvIo.D2.Utilities.Attributes.RedactDataAttribute.Reason.init -> void
+DcsvIo.D2.Utilities.Attributes.RedactDataAttribute.RedactDataAttribute() -> void
+DcsvIo.D2.Utilities.Configuration.ConnectionStringHelper
+DcsvIo.D2.Utilities.Configuration.D2Env
+DcsvIo.D2.Utilities.Diagnostics.SanitizedExceptionRender
+DcsvIo.D2.Utilities.Enums.IsolationLevel
+DcsvIo.D2.Utilities.Enums.IsolationLevel.ReadCommitted = 0 -> DcsvIo.D2.Utilities.Enums.IsolationLevel
+DcsvIo.D2.Utilities.Enums.IsolationLevel.ReadUncommitted = 1 -> DcsvIo.D2.Utilities.Enums.IsolationLevel
+DcsvIo.D2.Utilities.Enums.IsolationLevel.RepeatableRead = 2 -> DcsvIo.D2.Utilities.Enums.IsolationLevel
+DcsvIo.D2.Utilities.Enums.IsolationLevel.Serializable = 3 -> DcsvIo.D2.Utilities.Enums.IsolationLevel
+DcsvIo.D2.Utilities.Enums.RedactReason
+DcsvIo.D2.Utilities.Enums.RedactReason.FinancialInformation = 2 -> DcsvIo.D2.Utilities.Enums.RedactReason
+DcsvIo.D2.Utilities.Enums.RedactReason.Other = 5 -> DcsvIo.D2.Utilities.Enums.RedactReason
+DcsvIo.D2.Utilities.Enums.RedactReason.PersonalInformation = 1 -> DcsvIo.D2.Utilities.Enums.RedactReason
+DcsvIo.D2.Utilities.Enums.RedactReason.SecretInformation = 3 -> DcsvIo.D2.Utilities.Enums.RedactReason
+DcsvIo.D2.Utilities.Enums.RedactReason.Unspecified = 0 -> DcsvIo.D2.Utilities.Enums.RedactReason
+DcsvIo.D2.Utilities.Enums.RedactReason.VerboseContent = 4 -> DcsvIo.D2.Utilities.Enums.RedactReason
+DcsvIo.D2.Utilities.Extensions.CleanEnumEmptyBehavior
+DcsvIo.D2.Utilities.Extensions.CleanEnumEmptyBehavior.ReturnEmpty = 0 -> DcsvIo.D2.Utilities.Extensions.CleanEnumEmptyBehavior
+DcsvIo.D2.Utilities.Extensions.CleanEnumEmptyBehavior.ReturnNull = 1 -> DcsvIo.D2.Utilities.Extensions.CleanEnumEmptyBehavior
+DcsvIo.D2.Utilities.Extensions.CleanEnumEmptyBehavior.Throw = 2 -> DcsvIo.D2.Utilities.Extensions.CleanEnumEmptyBehavior
+DcsvIo.D2.Utilities.Extensions.CleanValueNullBehavior
+DcsvIo.D2.Utilities.Extensions.CleanValueNullBehavior.RemoveNulls = 0 -> DcsvIo.D2.Utilities.Extensions.CleanValueNullBehavior
+DcsvIo.D2.Utilities.Extensions.CleanValueNullBehavior.ThrowOnNull = 1 -> DcsvIo.D2.Utilities.Extensions.CleanValueNullBehavior
+DcsvIo.D2.Utilities.Extensions.EnumExtensions
+DcsvIo.D2.Utilities.Extensions.EnumExtensions.extension(string?)
+DcsvIo.D2.Utilities.Extensions.EnumExtensions.extension(string?).TryParseTruthyNull<TEnum>(out TEnum? value) -> bool
+DcsvIo.D2.Utilities.Extensions.EnumerableExtensions
+DcsvIo.D2.Utilities.Extensions.EnumerableExtensions.extension<T>(System.Collections.Generic.IEnumerable<T>?)
+DcsvIo.D2.Utilities.Extensions.EnumerableExtensions.extension<T>(System.Collections.Generic.IEnumerable<T>?).Clean(System.Func<T, T?>! cleaner, DcsvIo.D2.Utilities.Extensions.CleanEnumEmptyBehavior enumEmptyBehavior = DcsvIo.D2.Utilities.Extensions.CleanEnumEmptyBehavior.ReturnNull, DcsvIo.D2.Utilities.Extensions.CleanValueNullBehavior valueNullBehavior = DcsvIo.D2.Utilities.Extensions.CleanValueNullBehavior.RemoveNulls) -> System.Collections.Generic.IEnumerable<T>?
+DcsvIo.D2.Utilities.Extensions.EnumerableExtensions.extension<T>(System.Collections.Generic.IEnumerable<T>?).Falsey() -> bool
+DcsvIo.D2.Utilities.Extensions.EnumerableExtensions.extension<T>(System.Collections.Generic.IEnumerable<T>?).Truthy() -> bool
+DcsvIo.D2.Utilities.Extensions.GuardExtensions
+DcsvIo.D2.Utilities.Extensions.GuardExtensions.extension(System.Guid)
+DcsvIo.D2.Utilities.Extensions.GuardExtensions.extension(System.Guid).ThrowIfFalsey(string? paramName = null) -> void
+DcsvIo.D2.Utilities.Extensions.GuardExtensions.extension(System.Guid?)
+DcsvIo.D2.Utilities.Extensions.GuardExtensions.extension(System.Guid?).ThrowIfFalsey(string? paramName = null) -> void
+DcsvIo.D2.Utilities.Extensions.GuardExtensions.extension(string?)
+DcsvIo.D2.Utilities.Extensions.GuardExtensions.extension(string?).ThrowIfFalsey(string? paramName = null) -> void
+DcsvIo.D2.Utilities.Extensions.GuardExtensions.extension<T>(System.Collections.Generic.IEnumerable<T>?)
+DcsvIo.D2.Utilities.Extensions.GuardExtensions.extension<T>(System.Collections.Generic.IEnumerable<T>?).ThrowIfFalsey(string? paramName = null) -> void
+DcsvIo.D2.Utilities.Extensions.GuidExtensions
+DcsvIo.D2.Utilities.Extensions.GuidExtensions.extension(System.Guid)
+DcsvIo.D2.Utilities.Extensions.GuidExtensions.extension(System.Guid).Falsey() -> bool
+DcsvIo.D2.Utilities.Extensions.GuidExtensions.extension(System.Guid).Truthy() -> bool
+DcsvIo.D2.Utilities.Extensions.GuidExtensions.extension(System.Guid?)
+DcsvIo.D2.Utilities.Extensions.GuidExtensions.extension(System.Guid?).Falsey() -> bool
+DcsvIo.D2.Utilities.Extensions.GuidExtensions.extension(System.Guid?).Truthy() -> bool
+DcsvIo.D2.Utilities.Extensions.GuidExtensions.extension(string?)
+DcsvIo.D2.Utilities.Extensions.GuidExtensions.extension(string?).TryParseTruthyNull(out System.Guid? result) -> bool
+DcsvIo.D2.Utilities.Extensions.StringExtensions
+DcsvIo.D2.Utilities.Extensions.StringExtensions.extension(string?)
+DcsvIo.D2.Utilities.Extensions.StringExtensions.extension(string?).CleanDisplayStr() -> string?
+DcsvIo.D2.Utilities.Extensions.StringExtensions.extension(string?).CleanStr() -> string?
+DcsvIo.D2.Utilities.Extensions.StringExtensions.extension(string?).Falsey() -> bool
+DcsvIo.D2.Utilities.Extensions.StringExtensions.extension(string?).NormalizeForHash() -> string!
+DcsvIo.D2.Utilities.Extensions.StringExtensions.extension(string?).ToNullIfEmpty() -> string?
+DcsvIo.D2.Utilities.Extensions.StringExtensions.extension(string?).Truthy() -> bool
+DcsvIo.D2.Utilities.Extensions.StringExtensions.extension(string?).TryParseEmail() -> DcsvIo.D2.Result.D2Result<string!>!
+DcsvIo.D2.Utilities.Extensions.StringExtensions.extension(string?).TryParsePhoneNumber() -> DcsvIo.D2.Result.D2Result<string!>!
+DcsvIo.D2.Utilities.Extensions.StringExtensions.extension(string?[]!)
+DcsvIo.D2.Utilities.Extensions.StringExtensions.extension(string?[]!).GetNormalizedStrForHashing() -> string!
+DcsvIo.D2.Utilities.Serialization.SerializerOptions
+static DcsvIo.D2.Utilities.Configuration.ConnectionStringHelper.GetPostgres(string! envVar) -> string!
+static DcsvIo.D2.Utilities.Configuration.ConnectionStringHelper.GetRabbitMq() -> string!
+static DcsvIo.D2.Utilities.Configuration.ConnectionStringHelper.GetRedis() -> string!
+static DcsvIo.D2.Utilities.Configuration.ConnectionStringHelper.ParsePostgresUri(string! value) -> string!
+static DcsvIo.D2.Utilities.Configuration.ConnectionStringHelper.ParseRedisUri(string! value) -> string!
+static DcsvIo.D2.Utilities.Configuration.D2Env.Load(params string![]! fileNames) -> void
+static DcsvIo.D2.Utilities.Diagnostics.SanitizedExceptionRender.FirstFrame(System.Exception! ex) -> string!
+static DcsvIo.D2.Utilities.Diagnostics.SanitizedExceptionRender.TypeName(System.Exception! ex) -> string!
+static DcsvIo.D2.Utilities.Extensions.EnumExtensions.TryParseTruthyNull<TEnum>(this string? input, out TEnum? value) -> bool
+static DcsvIo.D2.Utilities.Extensions.EnumerableExtensions.Clean<T>(this System.Collections.Generic.IEnumerable<T>? enumerable, System.Func<T, T?>! cleaner, DcsvIo.D2.Utilities.Extensions.CleanEnumEmptyBehavior enumEmptyBehavior = DcsvIo.D2.Utilities.Extensions.CleanEnumEmptyBehavior.ReturnNull, DcsvIo.D2.Utilities.Extensions.CleanValueNullBehavior valueNullBehavior = DcsvIo.D2.Utilities.Extensions.CleanValueNullBehavior.RemoveNulls) -> System.Collections.Generic.IEnumerable<T>?
+static DcsvIo.D2.Utilities.Extensions.EnumerableExtensions.Falsey<T>(this System.Collections.Generic.IEnumerable<T>? enumerable) -> bool
+static DcsvIo.D2.Utilities.Extensions.EnumerableExtensions.Truthy<T>(this System.Collections.Generic.IEnumerable<T>? enumerable) -> bool
+static DcsvIo.D2.Utilities.Extensions.GuardExtensions.ThrowIfFalsey(this System.Guid value, string? paramName = null) -> void
+static DcsvIo.D2.Utilities.Extensions.GuardExtensions.ThrowIfFalsey(this System.Guid? value, string? paramName = null) -> void
+static DcsvIo.D2.Utilities.Extensions.GuardExtensions.ThrowIfFalsey(this string? value, string? paramName = null) -> void
+static DcsvIo.D2.Utilities.Extensions.GuardExtensions.ThrowIfFalsey<T>(this System.Collections.Generic.IEnumerable<T>? value, string? paramName = null) -> void
+static DcsvIo.D2.Utilities.Extensions.GuidExtensions.Falsey(this System.Guid guid) -> bool
+static DcsvIo.D2.Utilities.Extensions.GuidExtensions.Falsey(this System.Guid? guid) -> bool
+static DcsvIo.D2.Utilities.Extensions.GuidExtensions.Truthy(this System.Guid guid) -> bool
+static DcsvIo.D2.Utilities.Extensions.GuidExtensions.Truthy(this System.Guid? guid) -> bool
+static DcsvIo.D2.Utilities.Extensions.GuidExtensions.TryParseTruthyNull(this string? input, out System.Guid? result) -> bool
+static DcsvIo.D2.Utilities.Extensions.StringExtensions.CleanDisplayStr(this string? str) -> string?
+static DcsvIo.D2.Utilities.Extensions.StringExtensions.CleanStr(this string? str) -> string?
+static DcsvIo.D2.Utilities.Extensions.StringExtensions.Falsey(this string? str) -> bool
+static DcsvIo.D2.Utilities.Extensions.StringExtensions.GetNormalizedStrForHashing(this string?[]! parts) -> string!
+static DcsvIo.D2.Utilities.Extensions.StringExtensions.NormalizeForHash(this string? str) -> string!
+static DcsvIo.D2.Utilities.Extensions.StringExtensions.ToNullIfEmpty(this string? str) -> string?
+static DcsvIo.D2.Utilities.Extensions.StringExtensions.Truthy(this string? str) -> bool
+static DcsvIo.D2.Utilities.Extensions.StringExtensions.TryParseEmail(this string? email) -> DcsvIo.D2.Result.D2Result<string!>!
+static DcsvIo.D2.Utilities.Extensions.StringExtensions.TryParsePhoneNumber(this string? phoneNumber) -> DcsvIo.D2.Result.D2Result<string!>!
+static readonly DcsvIo.D2.Utilities.Serialization.SerializerOptions.SR_IgnoreCycles -> System.Text.Json.JsonSerializerOptions!
+static readonly DcsvIo.D2.Utilities.Serialization.SerializerOptions.SR_Web -> System.Text.Json.JsonSerializerOptions!
+static readonly DcsvIo.D2.Utilities.Serialization.SerializerOptions.SR_WebIgnoreNull -> System.Text.Json.JsonSerializerOptions!

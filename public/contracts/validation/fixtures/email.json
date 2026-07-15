@@ -1,0 +1,169 @@
+{
+  "$comment": "Hand-authored cross-language parity corpus for email validation — the SOURCE OF TRUTH for expected behavior. Both runtimes (.NET DcsvIo.D2.Validation.DefaultEmailValidator and TS @dcsv-io/d2-validation DefaultEmailValidator) READ this file and ASSERT each row; neither runtime emits it. All addresses are synthetic — no real PII. Rows exercise happy-path plus adversarial input (null / empty / whitespace / oversized / malformed / unicode / format-edge). 'valid' rows carry the expected 'normalized' (trim + lowercase) form; '!valid' rows carry 'errorKey'. Inputs are either a literal 'input' string or synthesized from 'inputKind' (null | whitespace | oversized) with optional 'char' + 'inputRepeat' (oversized => char.repeat(inputRepeat)) and optional 'suffix' (appended after the repeated block, e.g. oversized char='a' inputRepeat=250 suffix='@b.co' => 250 'a's + '@b.co' = a structurally-well-formed 255-char address that exceeds the 254 limit). Both runtimes synthesize identically. NOTE on local-part dots: the shared EMAIL_PATTERN is a practical structural check (RFC 5321/5322 practical limits) whose local-part class permits dots in any position, so leading / trailing / consecutive dots in the LOCAL part (e.g. '.a@b.com', 'a.@b.com', 'a..b@c.com') are accepted on BOTH runtimes — these rows assert that agreed permissive behavior rather than rejection. Domain-side structure is stricter (a trailing dot or missing TLD on the DOMAIN is rejected).",
+  "version": "1.0",
+  "validator": "email",
+  "rows": [
+    {
+      "name": "valid-simple",
+      "input": "a@b.co",
+      "valid": true,
+      "normalized": "a@b.co"
+    },
+    {
+      "name": "valid-uppercase-lowered",
+      "input": "User@Example.COM",
+      "valid": true,
+      "normalized": "user@example.com"
+    },
+    {
+      "name": "valid-surrounding-whitespace-trimmed",
+      "input": " user@example.com ",
+      "valid": true,
+      "normalized": "user@example.com"
+    },
+    {
+      "name": "valid-plus-addressing",
+      "input": "user+tag@example.com",
+      "valid": true,
+      "normalized": "user+tag@example.com"
+    },
+    {
+      "name": "valid-subdomain",
+      "input": "user@mail.corp.example.com",
+      "valid": true,
+      "normalized": "user@mail.corp.example.com"
+    },
+    {
+      "name": "valid-digit-hyphen-domain",
+      "input": "u@ex-ample1.com",
+      "valid": true,
+      "normalized": "u@ex-ample1.com"
+    },
+    {
+      "name": "valid-long-tld",
+      "input": "user@example.technology",
+      "valid": true,
+      "normalized": "user@example.technology"
+    },
+    {
+      "name": "valid-max-length-254",
+      "inputKind": "oversized",
+      "char": "a",
+      "inputRepeat": 64,
+      "suffix": "@bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb.bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb.ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+      "valid": true,
+      "normalized": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa@bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb.bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb.ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+    },
+    {
+      "name": "invalid-no-at",
+      "input": "userexample.com",
+      "valid": false,
+      "errorKey": "common_validation_EMAIL_INVALID"
+    },
+    {
+      "name": "invalid-double-at",
+      "input": "a@@b.com",
+      "valid": false,
+      "errorKey": "common_validation_EMAIL_INVALID"
+    },
+    {
+      "name": "valid-leading-dot-local-permitted",
+      "input": ".a@b.com",
+      "valid": true,
+      "normalized": ".a@b.com"
+    },
+    {
+      "name": "valid-trailing-dot-local-permitted",
+      "input": "a.@b.com",
+      "valid": true,
+      "normalized": "a.@b.com"
+    },
+    {
+      "name": "valid-consecutive-dots-local-permitted",
+      "input": "a..b@c.com",
+      "valid": true,
+      "normalized": "a..b@c.com"
+    },
+    {
+      "name": "invalid-internal-space",
+      "input": "a b@c.com",
+      "valid": false,
+      "errorKey": "common_validation_EMAIL_INVALID"
+    },
+    {
+      "name": "invalid-missing-tld",
+      "input": "a@b",
+      "valid": false,
+      "errorKey": "common_validation_EMAIL_INVALID"
+    },
+    {
+      "name": "invalid-trailing-dot-domain",
+      "input": "a@b.com.",
+      "valid": false,
+      "errorKey": "common_validation_EMAIL_INVALID"
+    },
+    {
+      "name": "invalid-newline-injection",
+      "input": "a@b.co\nfoo@bar.com",
+      "valid": false,
+      "errorKey": "common_validation_EMAIL_INVALID"
+    },
+    {
+      "name": "invalid-empty",
+      "inputKind": "null",
+      "valid": false,
+      "errorKey": "common_validation_EMAIL_INVALID"
+    },
+    {
+      "name": "invalid-whitespace-only",
+      "inputKind": "whitespace",
+      "valid": false,
+      "errorKey": "common_validation_EMAIL_INVALID"
+    },
+    {
+      "name": "invalid-over-254",
+      "inputKind": "oversized",
+      "char": "a",
+      "inputRepeat": 250,
+      "suffix": "@b.co",
+      "valid": false,
+      "errorKey": "common_validation_EMAIL_INVALID"
+    },
+    {
+      "name": "invalid-unicode-local",
+      "input": "münchen@example.com",
+      "valid": false,
+      "errorKey": "common_validation_EMAIL_INVALID"
+    },
+    {
+      "name": "invalid-idn-domain",
+      "input": "user@exämple.com",
+      "valid": false,
+      "errorKey": "common_validation_EMAIL_INVALID"
+    },
+    {
+      "name": "invalid-unicode-zero-width-space-in-local",
+      "input": "a​b@c.com",
+      "valid": false,
+      "errorKey": "common_validation_EMAIL_INVALID"
+    },
+    {
+      "name": "invalid-unicode-rtl-mark-prefix",
+      "input": "‏a@b.com",
+      "valid": false,
+      "errorKey": "common_validation_EMAIL_INVALID"
+    },
+    {
+      "name": "invalid-unicode-nfd-combining-mark",
+      "input": "á@b.com",
+      "valid": false,
+      "errorKey": "common_validation_EMAIL_INVALID"
+    },
+    {
+      "name": "invalid-unicode-mathematical-bold-local",
+      "input": "𝐚@b.com",
+      "valid": false,
+      "errorKey": "common_validation_EMAIL_INVALID"
+    }
+  ]
+}

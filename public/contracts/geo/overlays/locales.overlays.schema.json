@@ -1,0 +1,122 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.d2.dcsv.io/contracts/geo/overlays/locales.overlays.schema.json",
+  "title": "Locale catalog overlays (trackable manual patches)",
+  "description": "Hand-rolled overlay file applied at Tier 2 build time on top of Tier 1 src-data. Used to inject locale tags that CLDR availableLocales does not ship but the platform needs (e.g., fr-TF — French Southern Territories has French as administrative primary locale; CLDR's availableLocales has no fr-TF entry) AND to override / remove specific entries when upstream is wrong. Each entry carries a `reason` + `addedAt` so the policy decision is audit-trail visible. The Tier 2 builder loads overlays after Tier 1 src-data and merges them in before running cross-catalog M:M backfill.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "$generated",
+    "$source",
+    "$schema",
+    "$note",
+    "catalogVersion",
+    "lastEditedAt",
+    "additions",
+    "overrides",
+    "removals"
+  ],
+  "properties": {
+    "$generated": { "const": false },
+    "$source": { "const": "manual-overlay" },
+    "$schema": { "type": "string" },
+    "$note": { "type": "string" },
+    "catalogVersion": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+(-[A-Za-z0-9.]+)?$"
+    },
+    "lastEditedAt": { "type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}$" },
+    "additions": {
+      "type": "array",
+      "description": "Locale tags to ADD that CLDR availableLocales does not ship but the platform needs (e.g., fr-TF). Each entry's `data` must match the Tier 1 SrcDataLocale shape (the Tier 2 builder handles cross-catalog M:M backfill + denormalization).",
+      "items": { "$ref": "#/$defs/AdditionEntry" }
+    },
+    "overrides": {
+      "type": "array",
+      "description": "Field-level patches to existing Tier 1 entries. Use sparingly — prefer fixing upstream when possible.",
+      "items": { "$ref": "#/$defs/OverrideEntry" }
+    },
+    "removals": {
+      "type": "array",
+      "description": "Tier 1 entries to drop from the Tier 2 output. Use rarely — usually a sign the upstream source has a wrong entry we don't want to ship.",
+      "items": { "$ref": "#/$defs/RemovalEntry" }
+    }
+  },
+  "$defs": {
+    "AdditionEntry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "addedAt", "reason", "data"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Primary key — the IETF BCP 47 tag (e.g., 'fr-TF', 'en-XK'). Matches `data.ietfBcp47Tag` exactly.",
+          "minLength": 2
+        },
+        "addedAt": { "type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}$" },
+        "reason": { "type": "string", "minLength": 20 },
+        "addedBy": { "type": "string" },
+        "data": {
+          "type": "object",
+          "description": "Full Tier 1 SrcDataLocale shape. The Tier 2 builder ingests this exactly as if it had come from Tier 1 src-data, then runs the standard cross-catalog M:M backfill + denormalization pipeline.",
+          "additionalProperties": false,
+          "required": [
+            "ietfBcp47Tag",
+            "languageSubtag",
+            "displayName",
+            "decimalSeparator",
+            "thousandsSeparator",
+            "dateFormatPattern"
+          ],
+          "properties": {
+            "ietfBcp47Tag": { "type": "string", "minLength": 2 },
+            "languageSubtag": {
+              "type": "string",
+              "pattern": "^[a-z]{2,3}$"
+            },
+            "regionSubtag": {
+              "type": ["string", "null"],
+              "description": "ISO 3166-1 alpha-2 (UPPERCASE) OR UN M49 numeric (3 digits), OR null when the tag is bare-language. Matches Tier 1 SrcDataLocale.regionSubtag shape."
+            },
+            "displayName": { "type": "string", "minLength": 1 },
+            "endonymDisplayName": { "type": ["string", "null"] },
+            "decimalSeparator": { "type": "string", "minLength": 1 },
+            "thousandsSeparator": { "type": "string" },
+            "dateFormatPattern": {
+              "type": "string",
+              "enum": ["DMY", "MDY", "YMD"]
+            }
+          }
+        }
+      }
+    },
+    "OverrideEntry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "addedAt", "reason", "fields"],
+      "properties": {
+        "id": { "type": "string", "minLength": 2 },
+        "addedAt": { "type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}$" },
+        "reason": { "type": "string", "minLength": 20 },
+        "addedBy": { "type": "string" },
+        "fields": {
+          "type": "object",
+          "description": "Partial Tier 1 SrcDataLocale — only the fields being patched. Missing fields stay as-is from Tier 1.",
+          "additionalProperties": true,
+          "minProperties": 1
+        }
+      }
+    },
+    "RemovalEntry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "addedAt", "reason"],
+      "properties": {
+        "id": { "type": "string", "minLength": 2 },
+        "addedAt": { "type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}$" },
+        "reason": { "type": "string", "minLength": 20 },
+        "addedBy": { "type": "string" }
+      }
+    }
+  }
+}

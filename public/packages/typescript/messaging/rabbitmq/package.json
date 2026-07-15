@@ -1,0 +1,44 @@
+{
+  "name": "@dcsv-io/d2-messaging-rabbitmq",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -b",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "test:integration": "vitest run --config vitest.integration.config.ts",
+    "type-check:test": "tsc -p tsconfig.test.json"
+  },
+  "dependencies": {
+    "@dcsv-io/d2-encryption": "workspace:*",
+    "@dcsv-io/d2-encryption-abstractions": "workspace:*",
+    "@dcsv-io/d2-headers-amqp": "workspace:*",
+    "@dcsv-io/d2-logging": "workspace:*",
+    "@dcsv-io/d2-messaging-abstractions": "workspace:*",
+    "@dcsv-io/d2-request-context-abstractions": "workspace:*",
+    "@dcsv-io/d2-result": "workspace:*",
+    "@dcsv-io/d2-telemetry": "workspace:*",
+    "@dcsv-io/d2-utilities": "workspace:*",
+    "@opentelemetry/api": "1.9.0",
+    "rabbitmq-client": "5.0.8"
+  },
+  "devDependencies": {
+    "@testcontainers/rabbitmq": "11.14.0",
+    "@vitest/coverage-v8": "4.0.18",
+    "testcontainers": "11.14.0",
+    "typescript": "5.9.3",
+    "vitest": "4.0.18"
+  }
+}

@@ -1,0 +1,71 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "D² scope spec",
+  "description": "Schema for contracts/auth-scopes/scopes.spec.json — the source-of-truth catalog that DcsvIo.D2.Auth.Scopes.SourceGen reads to emit the Scopes static class into DcsvIo.D2.Auth.Abstractions.",
+  "type": "object",
+  "required": ["scopes"],
+  "additionalProperties": false,
+  "properties": {
+    "$schema": { "type": "string" },
+    "scopes": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/definitions/scope" }
+    }
+  },
+  "definitions": {
+    "scope": {
+      "type": "object",
+      "required": ["name", "actionSensitivity", "impersonationBlocked"],
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9]*(\\.[a-z][a-z0-9]*)+$",
+          "description": "Dot-separated lowercase scope name. Each segment must start with a letter and contain only lowercase letters and digits. At least 2 segments. Anonymous scopes use the 'anon.*' namespace."
+        },
+        "description": {
+          "type": "string",
+          "description": "Free-form description rendered as XML doc on the emitted constant."
+        },
+        "actionSensitivity": {
+          "type": "string",
+          "enum": ["Routine", "Sensitive", "Critical"],
+          "description": "Drives audit verbosity, OTP step-up triggers, and impersonation defaults. See ActionSensitivity enum docs."
+        },
+        "impersonationBlocked": {
+          "type": "boolean",
+          "description": "When true, scope is stripped from impersonated tokens at Edge mint time (defense in depth). Meaningless on anonymous scopes — D2SCP005 warning fires."
+        },
+        "grantedTo": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "array",
+            "minItems": 1,
+            "items": { "type": "string" },
+            "description": "Role names or '*' wildcard. minItems: 1 — empty arrays are invalid config (use no entry instead)."
+          },
+          "description": "Per-(OrgType, Role) grant matrix. Keys: OrgType name (Admin / Support / Customer / ThirdParty / Affiliate) or '*'. Values: array of Role names (Auditor / Agent / Officer / Owner) or ['*']. Required for non-anonymous scopes (D2SCP008); omitted on anonymous scopes (universal pre-auth grant by namespace convention)."
+        },
+        "deprecated": {
+          "type": "boolean",
+          "description": "When true, the entry is deprecated: the generated C# constant + factory carry [Obsolete] and the TS constant + factory carry @deprecated. Additive — the entry is NEVER deleted. Deleting a deprecated (or non-deprecated) entry is a breaking change the JSON-diff gate fails."
+        },
+        "deprecatedReason": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Plain dev-facing English explaining why the code is deprecated; rendered into the [Obsolete(\"...\")] message, the @deprecated JSDoc, and the changelog entry. NOT a TK key (developer-facing, not user-facing)."
+        },
+        "replacedBy": {
+          "type": "string",
+          "description": "Wire code of the successor entry (e.g. RESOURCE_NOT_FOUND). Must reference a real, non-deprecated entry in the merged registry. Omit for pure retirement with no replacement."
+        },
+        "sunset": {
+          "type": "string",
+          "format": "date",
+          "description": "ISO-8601 date for the future RFC 8594 Sunset response header. Edge-runtime-deferred: carried on the contract now, consumed by the Edge response middleware when it exists. Inert until then."
+        }
+      }
+    }
+  }
+}

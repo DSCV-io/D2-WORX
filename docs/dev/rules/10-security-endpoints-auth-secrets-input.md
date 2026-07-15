@@ -45,7 +45,7 @@ Security predicates recur and need explicit checking. **D²-WORX is being built 
 - **10.12** Are CSRF protections in place for state-mutating browser forms? (Built-in to SvelteKit form actions when used correctly; bypassed if you call mutating APIs directly via fetch with credentials but no CSRF token.)
   - Evidence: per state-mutating endpoint → CSRF strategy.
 
-- **10.13** Does rate limiting protect every public endpoint (per the rate-limit tier system in [`docs/v2/PHASE_3_RATE_LIMITING.md`](../v2/PHASE_3_RATE_LIMITING.md))?
+- **10.13** Does rate limiting protect every public endpoint (per the rate-limit tier system in [`private/docs/v2/PHASE_3_RATE_LIMITING.md`](../v2/PHASE_3_RATE_LIMITING.md))?
   - Evidence: per new endpoint → rate-limit tier assignment.
 
 - **10.14** Are session cookies `HttpOnly` + `Secure` + `SameSite=Strict` (or `Lax` if cross-site links needed)?

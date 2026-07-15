@@ -57,7 +57,8 @@ Merge commits (`Merge …`), revert commits (`Revert "…"`), and rebase autosqu
 ## Breaking changes
 
 D²-WORX enforces an always-on, PR-blocking breaking-change gate over its wire contracts:
-proto files, spec catalogs (`contracts/**/*.spec.json`), i18n keys (`contracts/messages/*.json`),
+proto files, spec catalogs (`public/contracts/**/*.spec.json` + `private/contracts/**/*.spec.json`),
+i18n keys (`public/contracts/messages/*.json` + `private/contracts/messages/*.json`),
 and committed OpenAPI documents. Test trees (`tests/` directories) and package/build directories
 are never contract surface.
 
@@ -96,7 +97,7 @@ for local invocation.
 
 ## Per-package versioning
 
-Every consumable library (`D2.Shared.*` for .NET, `@d2/*` for npm) carries its own
+Every consumable library (`DcsvIo.D2.*` for .NET, `@dcsv-io/d2-*` for npm) carries its own
 `MAJOR.MINOR.PATCH` version and its own `CHANGELOG.md`. Services version as deployables
 and are not covered here.
 
@@ -163,7 +164,7 @@ library API surface the runner diffs.
 
 ### Release runner
 
-The release runner (`tools/release-runner`) reads the commit range since the baseline
+The release runner (`public/tools/release-runner`) reads the commit range since the baseline
 branch, maps each commit to the packages it touched (by file-path containment), applies
 the semver table above per package, and writes the version slot + prepends a `CHANGELOG.md`
 block.
@@ -178,7 +179,7 @@ pnpm --filter release-runner exec tsx src/cli.ts --against <baseline>
 **Restrict to one package:**
 
 ```bash
-pnpm --filter release-runner exec tsx src/cli.ts --against <baseline> --package D2.Shared.Result
+pnpm --filter release-runner exec tsx src/cli.ts --against <baseline> --package DcsvIo.D2.Result
 ```
 
 **Apply bumps and write changelogs:**
@@ -233,13 +234,15 @@ for the dry-run and release steps.
 
 ## Contributor Notice ⚠️
 
-At this stage, D²-WORX is **not actively seeking external contributions**.
-This repository exists primarily as a public reference implementation during its early development.
+At this stage, **D2-WORX** (this monorepo) is **not actively seeking external contributions**.
+Internal development continues under the monorepo process law (`AGENTS.md`, `docs/dev/`).
 
-That said, if you wish to contribute, please be aware:
+If you contribute:
 
-- The project may be **commercialized in the future**.
-- The repository may be **made private** or otherwise restricted at that point.
-- All contributions are accepted under the existing [PolyForm Strict License](LICENSE.md), which does **not permit commercial use**.
+- Contributions to the **monorepo outside `public/`** are accepted under proprietary
+  **All rights reserved** terms ([LICENSE.md](LICENSE.md)).
+- Contributions to the **open surface only** (`public/`) follow Apache-2.0 —
+  see [`public/CONTRIBUTING.md`](public/CONTRIBUTING.md) and [`public/LICENSE`](public/LICENSE).
 
-By submitting a contribution, you acknowledge and agree that it may become part of a future commercial product.
+By submitting a contribution outside `public/`, you acknowledge it remains under
+the monorepo proprietary terms unless explicitly dual-licensed in writing.

@@ -12,12 +12,12 @@ The set of in-language rules that show up everywhere. Memory of these is the dif
 
 ### Null / empty / parse helpers (highest-frequency)
 
-- **5.1** Are all null / empty / whitespace / `Guid.Empty` checks using `Falsey()` / `Truthy()` extensions from `D2.Shared.Utilities.Extensions`?
+- **5.1** Are all null / empty / whitespace / `Guid.Empty` checks using `Falsey()` / `Truthy()` extensions from `DcsvIo.D2.Utilities.Extensions`?
   - **Forbidden**: `string.IsNullOrEmpty(s)`, `string.IsNullOrWhiteSpace(s)`, `coll is null || coll.Count == 0`, `coll?.Any() != true`, `guid == Guid.Empty`, `s != null && s != ""`.
   - **Required**: `s.Falsey()`, `coll.Falsey()`, `guid.Falsey()` (and `Truthy()` inverses) — they handle null themselves so never combine with `is null` checks. After early return on `Falsey()`, use `value!` (one of the few valid `!` uses).
   - **Also forbidden**: redundant size check after `.Falsey()` (`coll.Falsey()` already covers null + empty; a follow-up `coll.Count == 0` is dead code).
   - Evidence: `grep -rEn 'IsNullOrEmpty\|IsNullOrWhiteSpace\|== Guid\.Empty' <scope>` → expect zero (or justify each).
-  - **Where defined**: `D2.Shared.Utilities.Extensions` — `StringExtensions.cs`, `GuidExtensions.cs`, `EnumerableExtensions.cs`.
+  - **Where defined**: `DcsvIo.D2.Utilities.Extensions` — `StringExtensions.cs`, `GuidExtensions.cs`, `EnumerableExtensions.cs`.
 
 - **5.1a** Do required-argument guards on string / collection / Guid values use `x.ThrowIfFalsey()` instead of raw BCL guards or hand-rolled throws?
   - **Forbidden** (for string / collection / Guid args): `ArgumentException.ThrowIfNullOrWhiteSpace(s)`; `ArgumentNullException.ThrowIfNull(coll)` paired with a manual empty-check; hand-rolled `if (s.Falsey()) throw new ArgumentException(...)`.
@@ -25,13 +25,13 @@ The set of in-language rules that show up everywhere. Memory of these is the dif
   - **Carve-outs** — at each carve-out site, add a one-line comment citing this predicate:
     - **Plain reference-type null-guards**: DI services / loggers / options where there is no present-but-falsey concept — use BCL `ThrowIfNull`.
     - **Generated files + codegen emitter-output strings** (§26): never hand-edit generated output.
-    - **Projects that do not reference `D2.Shared.Utilities` due to a GENUINE DEPENDENCY CYCLE**: e.g. the `I18n.Abstractions ← Utilities` cycle. This carve-out is for genuine cycles ONLY — do NOT decline a `D2.Shared.Utilities` reference for "purity" when no cycle exists; if the project CAN reference Utilities without a cycle, it MUST, and hand-rolled `== Guid.Empty` / `IsNullOrEmpty` / `Count == 0` guards there are a §5.1 / §5.1a violation.
+    - **Projects that do not reference `DcsvIo.D2.Utilities` due to a GENUINE DEPENDENCY CYCLE**: e.g. the `I18n.Abstractions ← Utilities` cycle. This carve-out is for genuine cycles ONLY — do NOT decline a `DcsvIo.D2.Utilities` reference for "purity" when no cycle exists; if the project CAN reference Utilities without a cycle, it MUST, and hand-rolled `== Guid.Empty` / `IsNullOrEmpty` / `Count == 0` guards there are a §5.1 / §5.1a violation.
     - **Bespoke-message guards**: `ThrowIfFalsey` has no custom-message overload; when the message must carry domain-specific guidance (e.g. the `ForScopes` "use `HarmlessEndpoint`" hint), keep the explicit `throw new ArgumentException(...)` and comment the carve-out.
-  - **Where defined**: `D2.Shared.Utilities.Extensions.GuardExtensions`.
+  - **Where defined**: `DcsvIo.D2.Utilities.Extensions.GuardExtensions`.
   - **Why**: extends §5.1's Falsey/Truthy unification to guard clauses — one call covers null + empty + whitespace + empty-collection + `Guid.Empty` with the idiomatic BCL exception split, eliminating fragmented two-step guards.
   - Evidence: `grep -rEn 'ArgumentException\.ThrowIfNullOrWhiteSpace\|ArgumentNullException\.ThrowIfNull' <scope>` → per hit, confirm carve-out applies or convert.
 
-- **5.2** Are all `TryParse` patterns using `D2.Shared.Utilities.Extensions` (`str.TryParseTruthyNull(out Guid? r)` / `str.TryParseTruthyNull<TEnum>(out var r)`)?
+- **5.2** Are all `TryParse` patterns using `DcsvIo.D2.Utilities.Extensions` (`str.TryParseTruthyNull(out Guid? r)` / `str.TryParseTruthyNull<TEnum>(out var r)`)?
   - **Forbidden**: hand-rolled `if (str is not null && Guid.TryParse(...))` / `Enum.TryParse<T>(...)`.
   - **Required**: the extension that collapses null/empty/whitespace/Guid.Empty/unparseable → `null` in one call.
   - Evidence: `grep -rEn 'Guid\.TryParse\|Enum\.TryParse' <scope>` → for each, justify or convert.
@@ -42,7 +42,7 @@ The set of in-language rules that show up everywhere. Memory of these is the dif
   - **Allowed**: raw `Fail` ONLY when no factory matches (e.g. re-mapping arbitrary upstream status codes).
   - Evidence: `grep -rEn '\.Fail\(' <scope>` → per hit, justify or convert.
   - **Partial-success pattern**: `NOT_FOUND` (none found) → `SOME_FOUND` (partial, data returned) → `OK` (all found).
-  - **If a typed/generic semantic factory is missing** that should exist (e.g. `D2Result<T>.ServiceUnavailable()`): that's a bug in `D2.Shared.Result`, not a justification for raw `Fail`. Add the factory.
+  - **If a typed/generic semantic factory is missing** that should exist (e.g. `D2Result<T>.ServiceUnavailable()`): that's a bug in `DcsvIo.D2.Result`, not a justification for raw `Fail`. Add the factory.
 
 - **5.4** Does code at boundaries (proto/DB/external) use `.ToNullIfEmpty()` instead of letting `""` survive into domain types?
   - Evidence: per boundary → `ToNullIfEmpty` confirmed.
@@ -54,7 +54,7 @@ The set of in-language rules that show up everywhere. Memory of these is the dif
 ### Syntax and structure
 
 - **5.6** Are extension methods using C# 14 extension-members syntax (`extension(T target) { ... }`) instead of the old `this T` parameter style?
-  - **Carve-out**: extension methods on nested generic async receivers (e.g. `ValueTask<D2Result<T>>`) and fluent async chains may use the old `this T target` style when the C# 14 block form fails to resolve (CS1061 on the nested-generic receiver) or triggers spurious CA2012 "ValueTask awaited multiple times" warnings on fluent intermediates. Document the carve-out with a one-line comment at the file head citing this predicate — a permitted exception to §7.16's "default to no comments" rule because the compiler-bug rationale is exactly the "WHY non-obvious" §7.16 carve-out criterion. Reference instance: `server/shared/dotnet/result/core/D2ResultAsyncExtensions.cs`.
+  - **Carve-out**: extension methods on nested generic async receivers (e.g. `ValueTask<D2Result<T>>`) and fluent async chains may use the old `this T target` style when the C# 14 block form fails to resolve (CS1061 on the nested-generic receiver) or triggers spurious CA2012 "ValueTask awaited multiple times" warnings on fluent intermediates. Document the carve-out with a one-line comment at the file head citing this predicate — a permitted exception to §7.16's "default to no comments" rule because the compiler-bug rationale is exactly the "WHY non-obvious" §7.16 carve-out criterion. Reference instance: `public/packages/dotnet/result/core/D2ResultAsyncExtensions.cs`.
   - **Carve-out application criterion** (mechanical, not "I tried it once"): the carve-out applies ONLY when BOTH (a) the C# 14 block form was attempted in the same file AND (b) the build surfaced CS1061 OR CA2012 specifically against the block-form extension's receiver. Generic CS1061s from unrelated bugs (missing using, wrong receiver, typo) do NOT trigger the carve-out. The comment cites the specific error code seen.
   - Evidence: per new extension → syntax confirmed, or carve-out documented at file head with reference to this predicate + the specific compiler error code that justified the carve-out.
 
@@ -124,7 +124,7 @@ The set of in-language rules that show up everywhere. Memory of these is the dif
   - **Scope / carve-out**: applies to concrete handler implementation files. The interface file `I<Op>Handler.cs` does NOT take the triad. A module-within-host's handlers (KeyCustodian, the auth module) are in scope.
   - **Why**: a handler's type args, implemented interface, and `ExecuteAsync` signature repeat the input/output/interface FQNs up to five times (dominating the declaration for generated transport DTOs); the three-letter triad makes the signature scan as "this is the H for I→O." Established v1 shape reinstated.
   - **Evidence**: per concrete handler file → confirm the three aliases are present AND used in all five slots; confirm TSelf is spelled out (not aliased); confirm the aliases are file-scoped (absent from `GlobalUsings.cs`). A handler spelling out the FQNs instead of the aliases, missing one alias, or aliasing TSelf = FINDING.
-  - **How**: place the file-scoped `namespace …;` first (§5.10), then the using block ending with the three aliases; declare `public sealed class <Op>Handler(…) : BaseHandler<<Op>Handler, I, O>(ctx), H`; write `ExecuteAsync(I input, CancellationToken ct)` returning `ValueTask<D2Result<O?>>`. Reference: every `server/services/edge/key-custodian/app/Application/Handlers/**/<Op>Handler.cs`.
+  - **How**: place the file-scoped `namespace …;` first (§5.10), then the using block ending with the three aliases; declare `public sealed class <Op>Handler(…) : BaseHandler<<Op>Handler, I, O>(ctx), H`; write `ExecuteAsync(I input, CancellationToken ct)` returning `ValueTask<D2Result<O?>>`. Reference: every `private/services/edge/key-custodian/app/Application/Handlers/**/<Op>Handler.cs`.
   - *Provenance: deliverable 0026 sub-step 4a — the v1 `H`/`I`/`O` alias convention reinstated + retrofit across the 11 KeyCustodian handlers.*
 
 ### Records, collections, options patterns
@@ -138,7 +138,7 @@ The set of in-language rules that show up everywhere. Memory of these is the dif
   - **Hot-spots**: defaults for `IReadOnlyList<T>` parameters, fallback values in ternaries (`x ? values : [defaultValue]`), single-item array args.
   - Evidence: per collection literal → expression form.
 
-- **5.13** Do small Options records (≤4 properties) use the nullable-param ctor + `?? default` body pattern? Canonical: `D2.Shared.Resilience.CircuitBreaker.CircuitBreakerOptions`.
+- **5.13** Do small Options records (≤4 properties) use the nullable-param ctor + `?? default` body pattern? Canonical: `DcsvIo.D2.Resilience.CircuitBreaker.CircuitBreakerOptions`.
   - **Shape**: parameterized ctor with EVERY param nullable + `?? default` body assignment, plus a parameterless ctor chaining `: this(null, null, ...)`. Yields `new(failureThreshold: 3)` / `new()` / `new(3, TimeSpan.FromSeconds(5))` call sites.
   - **For 5+ properties**: stay on init-only properties + object initializer (positional ordering becomes hard to read).
   - **Sentinel-free**: explicit non-null values (including `0` / `TimeSpan.Zero`) pass through unchanged.
@@ -179,11 +179,11 @@ The set of in-language rules that show up everywhere. Memory of these is the dif
 
 ### Build cleanliness (zero tolerance)
 
-- **5.21** Does `dotnet build server/D2.slnx` produce zero StyleCop (SA\***\*), CS\*\*** warnings, null-ref warnings? Never suppress with `#pragma warning disable`, `!` (for silencing), or analogous.
-  - **Container coordination (cross-ref §8.2)**: host `dotnet build server/D2.slnx` collides with `dotnet watch` containers via the shared `obj/` mount and crashes geo/gateway/signalr. Before running this gate while Compose is up, EITHER stop the active .NET containers (`docker compose stop <containers>`) OR run the build INSIDE a container. Re-start after the gate passes.
+- **5.21** Does `dotnet build D2.slnx` produce zero StyleCop (SA\***\*), CS\*\*** warnings, null-ref warnings? Never suppress with `#pragma warning disable`, `!` (for silencing), or analogous.
+  - **Container coordination (cross-ref §8.2)**: host `dotnet build D2.slnx` collides with `dotnet watch` containers via the shared `obj/` mount and crashes geo/gateway/signalr. Before running this gate while Compose is up, EITHER stop the active .NET containers (`docker compose stop <containers>`) OR run the build INSIDE a container. Re-start after the gate passes.
   - Evidence: build output, plus `docker compose ps` snapshot showing .NET containers stopped (or build-in-container trace) when Compose was active.
 
-- **5.22** Does `jb inspectcode server/D2.slnx --severity=WARNING` produce zero JetBrains/Rider warnings? (Catches `[MustDisposeResource]` misuse, captured variable/closure issues, `AccessToModifiedClosure`, `AccessToDisposedClosure` — invisible to `dotnet build`.)
+- **5.22** Does `jb inspectcode D2.slnx --severity=WARNING` produce zero JetBrains/Rider warnings? (Catches `[MustDisposeResource]` misuse, captured variable/closure issues, `AccessToModifiedClosure`, `AccessToDisposedClosure` — invisible to `dotnet build`.)
   - Evidence: inspectcode output.
 
 - **5.23** Are ALL warnings/errors encountered ANYWHERE in the project fixed (zero-tolerance, not just branch-modified files)? Never dismiss as "pre-existing." (Canonical home for the branch-hygiene zero-warnings gate; §13.7 is the §13 cross-pointer.)
@@ -206,11 +206,11 @@ The set of in-language rules that show up everywhere. Memory of these is the dif
 
 ### Global usings (the two-tier frequency-driven policy)
 
-- **5.26** Does the global-usings set follow the two-tier frequency-driven policy — no duplicates of SDK ImplicitUsings or Tier-1 entries, no unused globals flagged by inspectcode? (Canonical: [ADR-0020](../adrs/0020-service-project-structure.md) "the global-usings policy".)
-  - **Tier-1 — service-project scope** (central `<Using>` items in `server/services/Directory.Build.targets`): `D2.Shared.Result` · `D2.Shared.Utilities.Extensions` + `.Attributes` + `.Enums` · `D2.Shared.I18n`. Service projects (`server/services/`) reliably reference the full D2 runtime stack; the `netstandard2.0` condition excludes source-gen shells. **Shared libs (`server/shared/dotnet/`) are excluded** — `D2.Shared.I18n` is split across three assemblies and the Tier-1 libs form a dependency chain; a blanket runtime-wide global produces hard CS0246 in libs below the full stack. Shared libs keep explicit usings.
+- **5.26** Does the global-usings set follow the two-tier frequency-driven policy — no duplicates of SDK ImplicitUsings or Tier-1 entries, no unused globals flagged by inspectcode? (Canonical: [ADR-0020](../../public/docs/adrs/0020-service-project-structure.md) "the global-usings policy".)
+  - **Tier-1 — service-project scope** (central `<Using>` items in `private/services/Directory.Build.targets`): `DcsvIo.D2.Result` · `DcsvIo.D2.Utilities.Extensions` + `.Attributes` + `.Enums` · `DcsvIo.D2.I18n`. Service projects (`private/services/`) reliably reference the full D2 runtime stack; the `netstandard2.0` condition excludes source-gen shells. **Shared libs (`public/packages/dotnet/`) are excluded** — `DcsvIo.D2.I18n` is split across three assemblies and the Tier-1 libs form a dependency chain; a blanket runtime-wide global produces hard CS0246 in libs below the full stack. Shared libs keep explicit usings.
   - **Tier-2 — per project** (`GlobalUsings.cs`, frequency-driven): a project MAY globalize ANY namespace it legitimately references — `Microsoft.EntityFrameworkCore`, `Microsoft.Extensions.DependencyInjection`, `Microsoft.Extensions.Options`, `System.Security.Cryptography`, any vendor SDK — when repeated across roughly ≥3 files. The dependency law is enforced by `<ProjectReference>` edges (compile-time), not per-file using visibility; a global using is per-project and cannot leak the namespace across a layer boundary. Per-file usings remain for low-frequency (1–2 file) namespaces. Reference: KeyCustodian `domain/GlobalUsings.cs` + `app/GlobalUsings.cs` + Edge `tests/GlobalUsings.cs`. (`NodaTime` is Tier-2 not Tier-1 — the domain's #1 import but absent from pure-DTO projects.) **SA1200 exemption**: `GlobalUsings.cs` files are exempt from SA1200 (inside-namespace placement) via a `[**/GlobalUsings.cs]` `.editorconfig` section — `global using` directives are top-level by C# language rule.
-  - **Global aliases are permitted** — the established `global using IClock = D2.Shared.Time.IClock;` in every project using both NodaTime and `D2.Shared.Time` resolves the `NodaTime.IClock` vs `D2.Shared.Time.IClock` CS0104 ambiguity project-wide.
-  - **Hard constraints** (regardless of frequency): (a) never duplicate a namespace already covered by SDK ImplicitUsings (`System`, `System.Collections.Generic`, `System.Threading`, `System.Threading.Tasks`, etc.); (b) never duplicate a Tier-1 entry; (c) never globalize in a shared lib (`server/shared/dotnet/`).
+  - **Global aliases are permitted** — the established `global using IClock = DcsvIo.D2.Time.IClock;` in every project using both NodaTime and `DcsvIo.D2.Time` resolves the `NodaTime.IClock` vs `DcsvIo.D2.Time.IClock` CS0104 ambiguity project-wide.
+  - **Hard constraints** (regardless of frequency): (a) never duplicate a namespace already covered by SDK ImplicitUsings (`System`, `System.Collections.Generic`, `System.Threading`, `System.Threading.Tasks`, etc.); (b) never duplicate a Tier-1 entry; (c) never globalize in a shared lib (`public/packages/dotnet/`).
   - **Why**: the dependency law is enforced at the `<ProjectReference>` boundary, not using-directive visibility — a domain project not referencing `Microsoft.EntityFrameworkCore.dll` cannot compile any EF type regardless of a global using. Frequency-driven globals eliminate the highest-repetition usings; low-frequency usings stay explicit as a readability cue.
   - **Cleanup that rides along**: keep `<ImplicitUsings>enable` (already on); delete redundant central `<Using>` items the ImplicitUsings default set already covers (`System`, `System.Collections.Generic`, `System.Threading`, `System.Threading.Tasks`).
   - Evidence: per `GlobalUsings.cs` → (a) compare each entry against the SDK ImplicitUsings default set + Tier-1 entries — any overlap = FINDING (duplicate); (b) `jb inspectcode` → zero "using directive is not required" warnings on `GlobalUsings.cs` (an entry never resolved = unused global = FINDING); (c) per reference graph → confirm `<ProjectReference>` edges respect the one-direction law (§9.36) — a global using in a domain project for `Microsoft.EntityFrameworkCore` with no EF csproj reference is a §9.36 csproj violation, not a global-using one. Cross-ref §9.36.
@@ -219,7 +219,7 @@ The set of in-language rules that show up everywhere. Memory of these is the dif
   - **Forbidden**: `[Required]` on a value-type property (`[Required] public TimeSpan Cadence`, `[Required] public int Size`) — a value type is never "missing," so `ValidateDataAnnotations` never fires; the annotation LOOKS like validation but validates nothing.
   - **Required**: a real range validator (`[Range(typeof(TimeSpan), "00:00:01", "365.00:00:00")]`) or a custom `.Validate(o => …, "…")` predicate on the options pipeline, AND the domain VO's smart constructor as the second floor (it rejects the invalid value on every path — config, future API, test).
   - **Why**: belt-and-suspenders — the options validator catches config errors at boot; the domain VO catches every path. `[Required]` on a struct is the trap that passes review because it *reads* as validation. Origin: an as-built `RotationPolicyOptions` carried `[Required] public TimeSpan Cadence` — a silent no-op.
-  - Evidence: `grep -rEn '\[Required\]' <options scope>` → per hit, confirm the property is a reference type (nullable struct or class); a non-nullable struct property carrying `[Required]` = FINDING. Cross-ref §23 (configuration hygiene), [ADR-0020](../adrs/0020-service-project-structure.md) (options pipeline).
+  - Evidence: `grep -rEn '\[Required\]' <options scope>` → per hit, confirm the property is a reference type (nullable struct or class); a non-nullable struct property carrying `[Required]` = FINDING. Cross-ref §23 (configuration hygiene), [ADR-0020](../../public/docs/adrs/0020-service-project-structure.md) (options pipeline).
 
 - **5.28** (Prettier-clean commits — CODE files; Markdown is EXCLUDED) Are all of a commit's touched Prettier-handled CODE files Prettier-clean? The Prettier scope is `.ts` / `.js` / `.mjs` / `.cjs` / `.json` / `.svelte` / `.html` / `.css` / `.yaml` / `.yml`. The `.husky/pre-commit` hook runs `prettier --check` on the staged subset of that glob and BLOCKS a commit whose staged code files are not clean.
   - **Required**: before committing, the touched code files pass `prettier --check` (respecting `.prettierignore`). Run `pnpm format` (write) or `pnpm format:check` first. Never `--no-verify` past the hook. Generated output (`**/*.g.ts`, `Generated/`, machine-emitted fixtures) is `.prettierignore`d — formatting is the emitter's responsibility.

@@ -1,0 +1,164 @@
+{
+  "$comment": "Hand-authored cross-language parity corpus for postal-code validation — the SOURCE OF TRUTH for expected behavior. Both runtimes (.NET DcsvIo.D2.Validation.DefaultPostalCodeValidator and TS @dcsv-io/d2-validation DefaultPostalCodeValidator) compile the SAME per-country regex map from the single shared dataset contracts/validation/postal-code-regexes.json, then READ this corpus and ASSERT each row; neither runtime emits either file. The shared dataset is ported from postcode-validator 3.10.9 with one deliberate correction ('[A-z]' -> '[A-Za-z]' in the UK/GB patterns, an upstream bug); the 'invalid-gb-caret-in-letter-position' row pins that fix (a caret in a letter position — accepted by the buggy '[A-z]', rejected by the corrected '[A-Za-z]'). All codes are synthetic / well-known — no real PII. Both validators normalize (trim + uppercase) before matching; an unknown OR absent country FAILS CLOSED (ValidationFailed, never a permissive fallback) on both runtimes. 'valid' rows carry the expected 'normalized' (trim + uppercase) form and a 'country' (ISO alpha-2); '!valid' rows carry 'errorKey'. Inputs are either a literal 'input' string or synthesized from 'inputKind' (null | whitespace | oversized) with optional 'char' + 'inputRepeat' (oversized => char.repeat(inputRepeat)). Both runtimes synthesize identically.",
+  "version": "1.0",
+  "validator": "postcode",
+  "dataset": "contracts/validation/postal-code-regexes.json",
+  "postcodeValidator": "3.10.9 (ported, with [A-z]->[A-Za-z] UK/GB correction)",
+  "rows": [
+    {
+      "name": "valid-us-zip5",
+      "input": "90210",
+      "country": "US",
+      "valid": true,
+      "normalized": "90210"
+    },
+    {
+      "name": "valid-us-zip-plus4",
+      "input": "90210-1234",
+      "country": "US",
+      "valid": true,
+      "normalized": "90210-1234"
+    },
+    {
+      "name": "valid-ca-lowercase-normalized",
+      "input": "k1a 0b1",
+      "country": "CA",
+      "valid": true,
+      "normalized": "K1A 0B1"
+    },
+    {
+      "name": "valid-gb-lowercase-normalized",
+      "input": "sw1a 1aa",
+      "country": "GB",
+      "valid": true,
+      "normalized": "SW1A 1AA"
+    },
+    {
+      "name": "valid-de",
+      "input": "10115",
+      "country": "DE",
+      "valid": true,
+      "normalized": "10115"
+    },
+    {
+      "name": "valid-fr",
+      "input": "75008",
+      "country": "FR",
+      "valid": true,
+      "normalized": "75008"
+    },
+    {
+      "name": "valid-jp",
+      "input": "100-0001",
+      "country": "JP",
+      "valid": true,
+      "normalized": "100-0001"
+    },
+    {
+      "name": "valid-nl-lowercase-normalized",
+      "input": "1011 ab",
+      "country": "NL",
+      "valid": true,
+      "normalized": "1011 AB"
+    },
+    {
+      "name": "valid-br",
+      "input": "01310-100",
+      "country": "BR",
+      "valid": true,
+      "normalized": "01310-100"
+    },
+    {
+      "name": "valid-in",
+      "input": "110001",
+      "country": "IN",
+      "valid": true,
+      "normalized": "110001"
+    },
+    {
+      "name": "valid-au",
+      "input": "2000",
+      "country": "AU",
+      "valid": true,
+      "normalized": "2000"
+    },
+    {
+      "name": "invalid-us-too-short",
+      "input": "902",
+      "country": "US",
+      "valid": false,
+      "errorKey": "common_validation_POSTAL_CODE_INVALID"
+    },
+    {
+      "name": "invalid-us-letters",
+      "input": "ABCDE",
+      "country": "US",
+      "valid": false,
+      "errorKey": "common_validation_POSTAL_CODE_INVALID"
+    },
+    {
+      "name": "invalid-gb-malformed",
+      "input": "XYZ",
+      "country": "GB",
+      "valid": false,
+      "errorKey": "common_validation_POSTAL_CODE_INVALID"
+    },
+    {
+      "name": "invalid-gb-caret-in-letter-position",
+      "input": "EC1A 1^B",
+      "country": "GB",
+      "valid": false,
+      "errorKey": "common_validation_POSTAL_CODE_INVALID"
+    },
+    {
+      "name": "invalid-format-mismatch-gb-code-us-country",
+      "input": "SW1A 1AA",
+      "country": "US",
+      "valid": false,
+      "errorKey": "common_validation_POSTAL_CODE_INVALID"
+    },
+    {
+      "name": "invalid-empty",
+      "inputKind": "null",
+      "country": "US",
+      "valid": false,
+      "errorKey": "common_validation_POSTAL_CODE_INVALID"
+    },
+    {
+      "name": "invalid-whitespace-only",
+      "inputKind": "whitespace",
+      "country": "US",
+      "valid": false,
+      "errorKey": "common_validation_POSTAL_CODE_INVALID"
+    },
+    {
+      "name": "invalid-oversized",
+      "inputKind": "oversized",
+      "char": "9",
+      "inputRepeat": 40,
+      "country": "US",
+      "valid": false,
+      "errorKey": "common_validation_POSTAL_CODE_INVALID"
+    },
+    {
+      "name": "invalid-unknown-country-zz",
+      "input": "90210",
+      "country": "ZZ",
+      "valid": false,
+      "errorKey": "common_validation_POSTAL_CODE_INVALID"
+    },
+    {
+      "name": "invalid-no-country-fail-closed",
+      "input": "90210",
+      "valid": false,
+      "errorKey": "common_validation_POSTAL_CODE_INVALID"
+    },
+    {
+      "name": "invalid-unicode-fullwidth-digits",
+      "input": "１２３４５",
+      "country": "US",
+      "valid": false,
+      "errorKey": "common_validation_POSTAL_CODE_INVALID"
+    }
+  ]
+}

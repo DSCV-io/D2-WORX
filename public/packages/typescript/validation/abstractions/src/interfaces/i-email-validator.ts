@@ -1,0 +1,29 @@
+// -----------------------------------------------------------------------
+// SPDX-License-Identifier: Apache-2.0
+// Copyright (c) DCSV
+// -----------------------------------------------------------------------
+
+import type { D2Result } from "@dcsv-io/d2-result";
+
+/**
+ * Mirror of .NET `DcsvIo.D2.Validation.Abstractions.IEmailValidator` —
+ * validates an email address and returns a normalized form on success.
+ *
+ * Implementations live in `@dcsv-io/d2-validation` backed by the default
+ * normalization rules; tests can supply ad-hoc fixtures by implementing
+ * this interface directly.
+ */
+export interface IEmailValidator {
+  /**
+   * Validates the supplied email and returns the normalized address on
+   * success.
+   *
+   * @param email - The email address to validate (may be `undefined`,
+   *   empty, or whitespace).
+   * @returns An `ok` `D2Result` wrapping the normalized (trimmed and
+   *   lowercased) email address on success; a `validationFailed`
+   *   `D2Result` with a per-field `InputError` keyed `"email"` on
+   *   `undefined`, empty, whitespace, or structurally invalid input.
+   */
+  validate(email: string | undefined): D2Result<string>;
+}

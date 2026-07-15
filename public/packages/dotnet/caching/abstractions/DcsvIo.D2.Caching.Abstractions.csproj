@@ -1,0 +1,34 @@
+<!--
+Copyright (c) DCSV. Licensed under the Apache License, Version 2.0.
+-->
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>DcsvIo.D2.Caching</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!--
+      Result + I18n.Abstractions are zero-runtime-dep / domain-safe so this
+      abstractions slice stays the same. Every cache op returns D2Result<T>
+      so callers compose with the rest of the codebase's errors-as-values
+      pattern; tier failures land as PartialSuccess (writes) or NotFound /
+      SomeFound (reads).
+    -->
+    <ProjectReference Include="..\..\result\core\DcsvIo.D2.Result.csproj" />
+    <ProjectReference Include="..\..\i18n\abstractions\DcsvIo.D2.I18n.Abstractions.csproj" />
+    <ProjectReference Include="..\..\i18n\keys\DcsvIo.D2.I18n.Keys.csproj" />
+  </ItemGroup>
+
+  <!-- Publish metadata (per-package semver + NuGet identity). -->
+  <PropertyGroup>
+    <Version>0.1.0</Version>
+    <PackageId>DcsvIo.D2.Caching.Abstractions</PackageId>
+    <Description>Shared abstractions for the D2 cache stack — the ILocalCache / IDistributedCache / ITieredCache marker interfaces and the invalidation backplane contract.</Description>
+    <IsPackable>true</IsPackable>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+</Project>

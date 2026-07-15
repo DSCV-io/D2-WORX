@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Spike A — A4 location-transparency variant. Contains ONLY the GENERATED
+       in-process files (Payload + SseEmit + InProcessInvoker + wiring). It
+       compiles standalone with ZERO hand-written code, proving that flipping
+       the single @d2InProcess spec knob re-targets the inbound leg from a remote
+       gRPC hop to an in-process invoker — same downstream SSE hop, same payload
+       shape. (Microsoft.Extensions.DependencyInjection.Abstractions for the
+       generated AddGeneratedInProcSpike extension.) -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="9.0.0" />
+  </ItemGroup>
+
+</Project>

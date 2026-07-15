@@ -1,0 +1,97 @@
+<!--
+Copyright (c) DCSV. Licensed under the Apache License, Version 2.0.
+-->
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>DcsvIo.D2.Validation</RootNamespace>
+  </PropertyGroup>
+
+  <!--
+    Default validator implementations for the three DcsvIo.D2.Validation.Abstractions
+    contracts: email (regex), phone (libphonenumber-csharp), and postal code
+    (per-country regex map loaded from an embedded JSON dataset ported from
+    postcode-validator@3.10.9). All three validators are stateless and singleton-safe.
+
+    Pull in Microsoft.Extensions.DependencyInjection.Abstractions for the
+    AddValidation() DI extension, and libphonenumber-csharp for phone-number
+    parsing + E.164 formatting.
+  -->
+  <ItemGroup>
+    <!--
+      Microsoft.Extensions.DependencyInjection.Abstractions — IServiceCollection
+      receiver for the AddValidation() registration extension.
+    -->
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
+    <!--
+      libphonenumber-csharp — Apache-2.0. PhoneNumberUtil.GetInstance() parses
+      and validates international + national-format numbers, then formats to E.164.
+    -->
+    <PackageReference Include="libphonenumber-csharp" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!--
+      DcsvIo.D2.Validation.Abstractions — the three validator contracts this
+      project implements (IEmailValidator, IPhoneValidator, IPostalCodeValidator).
+    -->
+    <ProjectReference Include="..\abstractions\DcsvIo.D2.Validation.Abstractions.csproj" />
+    <!--
+      DcsvIo.D2.Result — D2Result<string> semantic factories (Ok, ValidationFailed)
+      returned by every Validate() method.
+    -->
+    <ProjectReference Include="..\..\result\core\DcsvIo.D2.Result.csproj" />
+    <!--
+      DcsvIo.D2.Geo.Abstractions — CountryCode enum (alpha-2 backed) used by
+      IPhoneValidator (defaultRegion) and IPostalCodeValidator (countryCode).
+    -->
+    <ProjectReference Include="..\..\geo\abstractions\DcsvIo.D2.Geo.Abstractions.csproj" />
+    <!--
+      DcsvIo.D2.Utilities — Falsey()/Truthy() null+empty+whitespace guards
+      used by all three validators on their input parameters.
+    -->
+    <ProjectReference Include="..\..\utilities\DcsvIo.D2.Utilities.csproj" />
+    <!--
+      DcsvIo.D2.I18n.Abstractions — the TKMessage type the TK.* constants are
+      instances of, carried in the per-field InputError.Errors lists on
+      validation failures.
+    -->
+    <ProjectReference Include="..\..\i18n\abstractions\DcsvIo.D2.I18n.Abstractions.csproj" />
+    <!--
+      DcsvIo.D2.I18n.Keys — the TK.Common.Validation.* translation-key
+      constants the three validators emit on failure.
+    -->
+    <ProjectReference Include="..\..\i18n\keys\DcsvIo.D2.I18n.Keys.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!--
+      Postal-code regex map — the single cross-runtime source of truth at
+      contracts/validation/postal-code-regexes.json (also read by the TS
+      @dcsv-io/d2-validation package). Embedded so the data travels with the assembly
+      without a file-system dependency at runtime. The <Link> keeps the logical
+      manifest-resource name PostalCodeRegexData.json, so the
+      DcsvIo.D2.Validation.PostalCodeRegexData.json lookup in PostalCodeRegexData.cs
+      resolves unchanged regardless of the on-disk source path.
+    -->
+    <EmbeddedResource Include="$(D2PublicContractsRoot)validation\postal-code-regexes.json">
+      <Link>PostalCodeRegexData.json</Link>
+    </EmbeddedResource>
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="DcsvIo.D2.Tests" />
+  </ItemGroup>
+
+  <!-- Publish metadata (per-package semver + NuGet identity). -->
+  <PropertyGroup>
+    <Version>0.1.0</Version>
+    <PackageId>DcsvIo.D2.Validation</PackageId>
+    <Description>Default validators for D2 — email, phone, and postal-code validation backed by libphonenumber-csharp and a ported postcode dataset.</Description>
+    <IsPackable>true</IsPackable>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+</Project>

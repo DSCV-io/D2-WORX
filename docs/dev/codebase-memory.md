@@ -76,7 +76,7 @@ MCP tool names are host-qualified (e.g. `codebase-memory-mcp__search_graph`). Di
 
 ## Known D2-WORX caveats (from smoke)
 
-- Broad BM25 can **prefer tests** over production types — add `file_pattern`, `label` (`Class`/`Method`/`Function`), or path under `server/shared/...` production trees.
+- Broad BM25 can **prefer tests** over production types — add `file_pattern`, `label` (`Class`/`Method`/`Function`), or path under `public/packages/...` production trees.
 - C# 14 extension members: graph finds definitions Grep patterns like `public static bool X` can miss.
 - `get_code_snippet` end lines can over-read adjacent members — verify short methods on disk.
 - Package labels in architecture overview are coarse (`shared` / `services`); use path filters for precision.

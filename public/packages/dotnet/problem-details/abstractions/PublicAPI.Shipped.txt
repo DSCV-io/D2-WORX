@@ -1,0 +1,21 @@
+#nullable enable
+DcsvIo.D2.ProblemDetails.D2ProblemDetailsKeys
+const DcsvIo.D2.ProblemDetails.D2ProblemDetailsKeys.CONTENT_TYPE = "application/problem+json" -> string!
+const DcsvIo.D2.ProblemDetails.D2ProblemDetailsKeys.EXTENSION_CATEGORY = "d2_category" -> string!
+const DcsvIo.D2.ProblemDetails.D2ProblemDetailsKeys.EXTENSION_CORRELATION_ID = "correlationId" -> string!
+const DcsvIo.D2.ProblemDetails.D2ProblemDetailsKeys.EXTENSION_ERROR_CODE = "d2_error_code" -> string!
+const DcsvIo.D2.ProblemDetails.D2ProblemDetailsKeys.EXTENSION_INPUT_ERRORS = "d2_input_errors" -> string!
+const DcsvIo.D2.ProblemDetails.D2ProblemDetailsKeys.EXTENSION_MESSAGES = "d2_messages" -> string!
+const DcsvIo.D2.ProblemDetails.D2ProblemDetailsKeys.EXTENSION_TRACE_ID = "traceId" -> string!
+const DcsvIo.D2.ProblemDetails.D2ProblemDetailsKeys.TITLE_BAD_REQUEST = "Bad Request" -> string!
+const DcsvIo.D2.ProblemDetails.D2ProblemDetailsKeys.TITLE_CONFLICT = "Conflict" -> string!
+const DcsvIo.D2.ProblemDetails.D2ProblemDetailsKeys.TITLE_FORBIDDEN = "Forbidden" -> string!
+const DcsvIo.D2.ProblemDetails.D2ProblemDetailsKeys.TITLE_INTERNAL_SERVER_ERROR = "Internal Server Error" -> string!
+const DcsvIo.D2.ProblemDetails.D2ProblemDetailsKeys.TITLE_NOT_FOUND = "Not Found" -> string!
+const DcsvIo.D2.ProblemDetails.D2ProblemDetailsKeys.TITLE_PAYLOAD_TOO_LARGE = "Payload Too Large" -> string!
+const DcsvIo.D2.ProblemDetails.D2ProblemDetailsKeys.TITLE_REQUEST_FAILED = "Request Failed" -> string!
+const DcsvIo.D2.ProblemDetails.D2ProblemDetailsKeys.TITLE_SERVICE_UNAVAILABLE = "Service Unavailable" -> string!
+const DcsvIo.D2.ProblemDetails.D2ProblemDetailsKeys.TITLE_TOO_MANY_REQUESTS = "Too Many Requests" -> string!
+const DcsvIo.D2.ProblemDetails.D2ProblemDetailsKeys.TITLE_UNAUTHORIZED = "Unauthorized" -> string!
+const DcsvIo.D2.ProblemDetails.D2ProblemDetailsKeys.TYPE_URI_PREFIX = "https://problems.d2.dcsv.io/" -> string!
+static DcsvIo.D2.ProblemDetails.D2ProblemDetailsKeys.TitleFor(System.Net.HttpStatusCode statusCode) -> string!

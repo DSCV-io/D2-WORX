@@ -1,0 +1,19 @@
+#nullable enable
+DcsvIo.D2.Spiffe.SpiffeWorkloadIdentity
+DcsvIo.D2.Spiffe.SpiffeWorkloadIdentity.<Clone>$() -> DcsvIo.D2.Spiffe.SpiffeWorkloadIdentity!
+DcsvIo.D2.Spiffe.SpiffeWorkloadIdentity.Equals(DcsvIo.D2.Spiffe.SpiffeWorkloadIdentity? other) -> bool
+DcsvIo.D2.Spiffe.SpiffeWorkloadIdentity.ServiceId.get -> string!
+DcsvIo.D2.Spiffe.SpiffeWorkloadIdentity.ServiceId.init -> void
+DcsvIo.D2.Spiffe.SpiffeWorkloadIdentity.SpiffeWorkloadIdentity() -> void
+DcsvIo.D2.Spiffe.SpiffeWorkloadIdentity.Uri.get -> string!
+const DcsvIo.D2.Spiffe.SpiffeWorkloadIdentity.SCHEME = "spiffe" -> string!
+const DcsvIo.D2.Spiffe.SpiffeWorkloadIdentity.TRUST_DOMAIN = "d2.internal" -> string!
+const DcsvIo.D2.Spiffe.SpiffeWorkloadIdentity.WORKLOAD_PATH_PREFIX = "/workload/" -> string!
+override DcsvIo.D2.Spiffe.SpiffeWorkloadIdentity.Equals(object? obj) -> bool
+override DcsvIo.D2.Spiffe.SpiffeWorkloadIdentity.GetHashCode() -> int
+override DcsvIo.D2.Spiffe.SpiffeWorkloadIdentity.ToString() -> string!
+static DcsvIo.D2.Spiffe.SpiffeWorkloadIdentity.Create(string? serviceId) -> DcsvIo.D2.Result.D2Result<DcsvIo.D2.Spiffe.SpiffeWorkloadIdentity!>!
+static DcsvIo.D2.Spiffe.SpiffeWorkloadIdentity.FromTrusted(string! serviceId) -> DcsvIo.D2.Spiffe.SpiffeWorkloadIdentity!
+static DcsvIo.D2.Spiffe.SpiffeWorkloadIdentity.Parse(string? uri) -> DcsvIo.D2.Result.D2Result<DcsvIo.D2.Spiffe.SpiffeWorkloadIdentity!>!
+static DcsvIo.D2.Spiffe.SpiffeWorkloadIdentity.operator !=(DcsvIo.D2.Spiffe.SpiffeWorkloadIdentity? left, DcsvIo.D2.Spiffe.SpiffeWorkloadIdentity? right) -> bool
+static DcsvIo.D2.Spiffe.SpiffeWorkloadIdentity.operator ==(DcsvIo.D2.Spiffe.SpiffeWorkloadIdentity? left, DcsvIo.D2.Spiffe.SpiffeWorkloadIdentity? right) -> bool

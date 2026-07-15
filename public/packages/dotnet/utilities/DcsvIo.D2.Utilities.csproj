@@ -1,0 +1,48 @@
+<!--
+Copyright (c) DCSV. Licensed under the Apache License, Version 2.0.
+-->
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>DcsvIo.D2.Utilities</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="dotenv.net" />
+    <PackageReference Include="JetBrains.Annotations" />
+    <!--
+      Public-API surface tracking (Microsoft.CodeAnalysis.PublicApiAnalyzers +
+      the PublicAPI.Shipped.txt / PublicAPI.Unshipped.txt AdditionalFiles) is
+      wired centrally for every consumable in public/packages/dotnet/Directory.Build.props,
+      scoped to IsPackable=true. No per-project analyzer wiring is needed here.
+    -->
+  </ItemGroup>
+
+  <ItemGroup>
+    <!--
+      DcsvIo.D2.Result + DcsvIo.D2.I18n.Abstractions enable Utilities to expose
+      D2Result-returning validators (TryParseEmail / TryParsePhoneNumber) that
+      domain layers can chain into smart-constructor factories. Both deps are
+      zero-runtime-dep / domain-safe — Utilities stays so too.
+    -->
+    <ProjectReference Include="..\result\core\DcsvIo.D2.Result.csproj" />
+    <ProjectReference Include="..\i18n\abstractions\DcsvIo.D2.I18n.Abstractions.csproj" />
+    <ProjectReference Include="..\i18n\keys\DcsvIo.D2.I18n.Keys.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="DcsvIo.D2.Tests" />
+  </ItemGroup>
+
+  <!-- Publish metadata (per-package semver + NuGet identity). -->
+  <PropertyGroup>
+    <Version>0.1.0</Version>
+    <PackageId>DcsvIo.D2.Utilities</PackageId>
+    <Description>Foundational boundary helpers for D2 — Falsey/Truthy semantics, string cleaning, parse-or-default extensions, indexed env-var parsing, and JSON-cycle-safe serialization.</Description>
+    <IsPackable>true</IsPackable>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+</Project>

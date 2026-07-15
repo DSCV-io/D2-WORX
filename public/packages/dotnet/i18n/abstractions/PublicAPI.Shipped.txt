@@ -1,0 +1,23 @@
+#nullable enable
+DcsvIo.D2.I18n.ITranslator
+DcsvIo.D2.I18n.ITranslator.HasKey(string! key) -> bool
+DcsvIo.D2.I18n.ITranslator.T(string! locale, DcsvIo.D2.I18n.TKMessage! message) -> string!
+DcsvIo.D2.I18n.TKMessage
+DcsvIo.D2.I18n.TKMessage.<Clone>$() -> DcsvIo.D2.I18n.TKMessage!
+DcsvIo.D2.I18n.TKMessage.Equals(DcsvIo.D2.I18n.TKMessage? other) -> bool
+DcsvIo.D2.I18n.TKMessage.Key.get -> string!
+DcsvIo.D2.I18n.TKMessage.Parameters.get -> System.Collections.Generic.IReadOnlyDictionary<string!, string!>?
+DcsvIo.D2.I18n.TKMessage.With(System.Collections.Generic.IReadOnlyDictionary<string!, string!>! parameters) -> DcsvIo.D2.I18n.TKMessage!
+DcsvIo.D2.I18n.TKMessage.With(string! name, string! value) -> DcsvIo.D2.I18n.TKMessage!
+DcsvIo.D2.I18n.TKMessageJsonConverter
+DcsvIo.D2.I18n.TKMessageJsonConverter.TKMessageJsonConverter() -> void
+DcsvIo.D2.I18n.TkMessageWireShape
+const DcsvIo.D2.I18n.TkMessageWireShape.KEY = "key" -> string!
+const DcsvIo.D2.I18n.TkMessageWireShape.PARAMS = "params" -> string!
+override DcsvIo.D2.I18n.TKMessage.Equals(object? obj) -> bool
+override DcsvIo.D2.I18n.TKMessage.GetHashCode() -> int
+override DcsvIo.D2.I18n.TKMessage.ToString() -> string!
+override DcsvIo.D2.I18n.TKMessageJsonConverter.Read(ref System.Text.Json.Utf8JsonReader reader, System.Type! typeToConvert, System.Text.Json.JsonSerializerOptions! options) -> DcsvIo.D2.I18n.TKMessage?
+override DcsvIo.D2.I18n.TKMessageJsonConverter.Write(System.Text.Json.Utf8JsonWriter! writer, DcsvIo.D2.I18n.TKMessage! value, System.Text.Json.JsonSerializerOptions! options) -> void
+static DcsvIo.D2.I18n.TKMessage.operator !=(DcsvIo.D2.I18n.TKMessage? left, DcsvIo.D2.I18n.TKMessage? right) -> bool
+static DcsvIo.D2.I18n.TKMessage.operator ==(DcsvIo.D2.I18n.TKMessage? left, DcsvIo.D2.I18n.TKMessage? right) -> bool

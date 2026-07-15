@@ -25,7 +25,7 @@ The rename to `[D2HarmlessEndpoint]` is deliberately odd-sounding so it is HARDE
 
 **IN — surfaces renamed**:
 
-1. **Attribute** — `[D2AllowAnonymous]` (gRPC, `D2.Shared.Auth.Grpc.Endpoints`) → `[D2HarmlessEndpoint]`. HTTP has no parallel attribute (HTTP-side opt-in is fluent-only).
+1. **Attribute** — `[D2AllowAnonymous]` (gRPC, `DcsvIo.D2.Auth.Grpc.Endpoints`) → `[D2HarmlessEndpoint]`. HTTP has no parallel attribute (HTTP-side opt-in is fluent-only).
 2. **Fluent extensions** — `.AllowD2Anonymous<TBuilder>()` on both `RequireD2ScopeExtensions` (HTTP) + `RequireD2GrpcScopeExtensions` (gRPC) → `.MarkAsD2HarmlessEndpoint<TBuilder>()`.
 3. **Metadata-record factory + boolean property** — `EndpointScopeMetadata.Anonymous` + `IsAnonymous` (HTTP), `MethodScopeMetadata.Anonymous` + `IsAnonymous` (gRPC) → `.HarmlessEndpoint` + `IsHarmlessEndpoint` on both.
 4. **Interceptor + middleware internals** — private helper `IsAnonymousLastDeclaration` → `IsHarmlessEndpointLastDeclaration`; locals `anon` / `lastAnon` → `harmlessEndpoint` / `lastHarmless`; pattern-match `metadata is { IsAnonymous: true }` → `metadata is { IsHarmlessEndpoint: true }`.
@@ -39,7 +39,7 @@ The rename to `[D2HarmlessEndpoint]` is deliberately odd-sounding so it is HARDE
 
 - The `Anonymous` namespace identifier in the `Scopes.Auth.Anon` codegen family — that's a different concept (scope-string classification per `Scopes.IsAnonymous`), not the auth-bypass attribute.
 - The `TestHealth` / `TestEcho` proto service identifiers — they describe what the test SERVICE does, not how it's wired. Only the wiring comment was updated.
-- Versioning — the rename is a BREAKING change to two shipped libs (`D2.Shared.Auth.Grpc` + `D2.Shared.Auth.Http`), but no separate release lands before the surrounding `n/handler` stack's own breaking changes do, so the major version bump applies to the combined SHIP.
+- Versioning — the rename is a BREAKING change to two shipped libs (`DcsvIo.D2.Auth.Grpc` + `DcsvIo.D2.Auth.Http`), but no separate release lands before the surrounding `n/handler` stack's own breaking changes do, so the major version bump applies to the combined SHIP.
 - Node-side mirror of `D2HarmlessEndpoint` — the Node auth runtime is not yet built; gap documented, not in scope.
 
 ## Decisions resolved during PLAN

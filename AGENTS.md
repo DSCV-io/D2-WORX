@@ -6,7 +6,7 @@ Copyright (c) DCSV. All rights reserved.
 
 **Who / problem:** Shared condensed project law for AI harnesses (Claude Code / Grok Build / Codex) and developers implementing D²-WORX — workflow gates, Doc Update Map, Critical Reminders, conventions — so agents do not invent process or drift from `rules.md` / `process.md`.
 
-**Product:** **D²-WORX** — Microservices SaaS framework. C# 14 / .NET 10 backend, SvelteKit BFF (TypeScript 5.9 / Svelte 5). Pre-Alpha. PolyForm Strict license (reference implementation, non-commercial).
+**Product:** **D2-WORX** — Microservices SaaS monorepo. C# 14 / .NET 10 backend, SvelteKit BFF (TypeScript 5.9 / Svelte 5). Pre-Alpha. **License:** proprietary All rights reserved outside `public/`; open **D2** surface under `public/` is Apache-2.0 (`public/LICENSE`).
 
 **TOC** — [MANDATORY 0](#mandatory-block-0-orchestrator-only-main-thread) · [MANDATORY 1](#mandatory-block-1-every-code-change) · [MANDATORY 2](#mandatory-block-2-audit-evidence--proof-discipline) · [MANDATORY 3](#mandatory-block-3-deliverable-completeness-checklist) · [§1 Workflow](#1-development-workflow) · [§2 Commands](#2-commands) · [§3 Doc map](#3-reference-documents) · [§4 Patterns](#4-patterns--architecture) · [§5 Critical Reminders](#5-critical-reminders-top-of-mind-for-every-change) · [§6 Conventions](#6-code-conventions) · [§7 Behavior](#7-behavioral-guidelines-dispositional--how-to-approach-work) · [§8 Secrets / deny](#8-local-secrets--multi-runtime-deny-map)
 
@@ -18,7 +18,7 @@ Copyright (c) DCSV. All rights reserved.
 >
 > **One primary harness at a time** unless the user explicitly authorizes multi-harness experiments. Spawn only the active host's prefix (`claude-d2-*` / `grok-d2-*` / `codex-d2-*`). Multi-runtime pin trees in-repo are inventory, not concurrent-use permission. Map → [docs/dev/harness-runtimes.md](docs/dev/harness-runtimes.md).
 
-> **📍 PROJECT STATE**: Active tracking doc = **[docs/v2/V2.md](docs/v2/V2.md)** (current scope + per-phase docs) — the single source for "what's the project doing now"; when it archives, this pointer updates to its successor. Frozen v1 snapshot at `/old/v1/D2-WORX/` (read-only reference).
+> **📍 PROJECT STATE**: Active tracking doc = **[private/docs/v2/V2.md](private/docs/v2/V2.md)** (current scope + per-phase docs) — the single source for "what's the project doing now"; when it archives, this pointer updates to its successor. Frozen v1 snapshot at `/old/v1/D2-WORX/` (read-only reference).
 
 <a name="mandatory-block-0-orchestrator-only-main-thread"></a>
 
@@ -133,10 +133,10 @@ _Canonical: [process.md §1](docs/dev/process.md#1-phase-lifecycle) (lifecycle) 
 
 **Most-cited** (full catalog — Compose lifecycle, single-project builds, test filters, lint, versioning — in [docs/COMMANDS.md](docs/COMMANDS.md)):
 
-- **Build .NET solution**: `dotnet build server/D2.slnx` — zero warnings (StyleCop / CS / null-ref).
-- **JetBrains inspections**: `jb inspectcode server/D2.slnx --severity=WARNING --format=Text --no-build --output=inspectcode.log && cat inspectcode.log` — zero warnings; catches what `dotnet build` does not (`[MustDisposeResource]`, captured-closure).
-- **Run .NET tests**: `dotnet test server/D2.slnx` (full) or `... -- --filter-trait "Category=Unit"` (unit only).
-- **SvelteKit type check**: `cd server/web && pnpm exec svelte-check`.
+- **Build .NET solution**: `dotnet build D2.slnx` — zero warnings (StyleCop / CS / null-ref).
+- **JetBrains inspections**: `jb inspectcode D2.slnx --settings=D2.sln.DotSettings --severity=WARNING --format=Text --no-build --output=inspectcode.log` then `bash private/tools/scripts/count-inspectcode-findings.sh inspectcode.log` must print **0**. Requires **JetBrains.ReSharper.GlobalTools ≥ 2026.1.x** (2025.3.x false-positives on net10 BCL). Catches what `dotnet build` does not (`[MustDisposeResource]`, captured-closure).
+- **Run .NET tests**: `dotnet test D2.slnx` (full) or `... -- --filter-trait "Category=Unit"` (unit only).
+- **SvelteKit type check**: `cd private/services/web && pnpm exec svelte-check`.
 
 ---
 
@@ -154,23 +154,30 @@ One table, two axes: **read** before touching the area, **update** after. A chan
 | [docs/dev/rules.md](docs/dev/rules.md) index + per-category files under [docs/dev/rules/](docs/dev/rules/) | End-to-end at PLAN; walked each audit round (each seat reads only its category files — K=7 concern bundles A–G) | New predicate / category change — edit the category file under `docs/dev/rules/` (codegen row also touches [§26](docs/dev/rules/26-codegen-discipline-spec-proto-schema-derived-types.md#26-codegen-discipline-spec--proto--schema-derived-types)) |
 | [docs/dev/deliverables/](docs/dev/deliverables/README.md) | Researching a past deliverable | At SHIP — the root README snapshot lands here |
 | [docs/COMMANDS.md](docs/COMMANDS.md) | Build / test / lint / versioning commands | A command, flag, or service-lifecycle invocation changes |
-| [CONTRIBUTING.md](CONTRIBUTING.md) + [docs/COMMANDS.md](docs/COMMANDS.md) (versioning) | PR prep; releasing / versioning a consumable package | Branch / commit / PR conventions; per-package versioning, `tools/release-runner`, breaking-change gate, `release-libs.yml` (pair with [§26.19](docs/dev/rules/26-codegen-discipline-spec-proto-schema-derived-types.md#26-codegen-discipline-spec--proto--schema-derived-types)) |
+| [CONTRIBUTING.md](CONTRIBUTING.md) + [docs/COMMANDS.md](docs/COMMANDS.md) (versioning) | PR prep; releasing / versioning a consumable package | Branch / commit / PR conventions; per-package versioning, `public/tools/release-runner`, breaking-change gate, `release-libs.yml` (pair with [§26.19](docs/dev/rules/26-codegen-discipline-spec-proto-schema-derived-types.md#26-codegen-discipline-spec--proto--schema-derived-types)) |
 | [docs/PATTERNS.md](docs/PATTERNS.md) | Any handler / DI / repo / cache / middleware / service-structure work | A handler / service-structure / DI / `D2Result` factory / RedactionSpec / mapper / repo pattern change |
 | [docs/TESTS.md](docs/TESTS.md) | Adding / modifying tests | Test category, custom matcher, adversarial-coverage rule, fixture pattern change |
 | [docs/PARITY.md](docs/PARITY.md) | Adding cross-language components | Anything cross-language (.NET ↔ SvelteKit ↔ future) |
 | [docs/SRC_GEN.md](docs/SRC_GEN.md) | Any source-gen / spec-driven codegen | New generator, spec-format change, new emitter |
 | [docs/TIMESTAMPS.md](docs/TIMESTAMPS.md) | Any timestamp / temporal work | Timestamp categories, NodaTime type selection, DST rules, PG column mapping, wire `DateTimeOffset?` conversion |
-| [ADRs](docs/adrs/README.md) | Researching / proposing an architectural decision | An ADR overrides a prior v2 plan (pair with a V2.md entry) |
-| [ADR-0020](docs/adrs/0020-service-project-structure.md) | Any service-project layout work | Service-structure convention changes — layer set, two-section app split, per-op folders, Commands/Queries rule, five-surface mapper rule, concern vocabulary, global-usings (pair with PATTERNS.md + rules §5/§7/§9 + §4 here) |
-| [messaging/rabbitmq/README.md](server/shared/dotnet/messaging/rabbitmq/README.md) | Any async messaging work | Async messaging — wire format, exchange / queue topology, AMQP headers, encryption frame, DLQ behavior |
-| [docs/v2/PHASE_3_EDGE.md](docs/v2/PHASE_3_EDGE.md) | Any Edge operational-guarantee work | Edge guarantees — HTTP idempotency, request enrichment, session 3-tier, scheduled-jobs receiver, multi-instance scaling |
-| [docs/v2/PHASE_3_RATE_LIMITING.md](docs/v2/PHASE_3_RATE_LIMITING.md) | Any rate-limit middleware work | Rate-limit design / bucket math / kill-switch / FP-too-common detection / cookie shortcut |
-| [docs/v2/PHASE_3_AUTH.md](docs/v2/PHASE_3_AUTH.md) | Any KeyCustodian / key rotation / secret handling | KeyCustodian, key rotation, secret handling, compromise runbook |
-| **Active tracking doc** (header — currently [docs/v2/V2.md](docs/v2/V2.md)) | Before starting any task | Phase progression / wipe state / open questions / new tracked issue; decisions overriding a prior v2 plan (also add an ADR) |
+| [ADRs](public/docs/adrs/README.md) | Researching / proposing an architectural decision | An ADR overrides a prior v2 plan (pair with a V2.md entry) |
+| [ADR-0020](public/docs/adrs/0020-service-project-structure.md) | Any service-project layout work | Service-structure convention changes — layer set, two-section app split, per-op folders, Commands/Queries rule, five-surface mapper rule, concern vocabulary, global-usings (pair with PATTERNS.md + rules §5/§7/§9 + §4 here) |
+| [messaging/rabbitmq/README.md](public/packages/dotnet/messaging/rabbitmq/README.md) | Any async messaging work | Async messaging — wire format, exchange / queue topology, AMQP headers, encryption frame, DLQ behavior |
+| [private/docs/v2/PHASE_3_EDGE.md](private/docs/v2/PHASE_3_EDGE.md) | Any Edge operational-guarantee work | Edge guarantees — HTTP idempotency, request enrichment, session 3-tier, scheduled-jobs receiver, multi-instance scaling |
+| [private/docs/v2/PHASE_3_AUTH_CORE.md](private/docs/v2/PHASE_3_AUTH_CORE.md) | Auth Core domain / sessions / orgs / invites / lifecycle; **§0** = full design-set review map for Fable | Auth Core decisions (L-ids); keep annex pointers |
+| [private/docs/v2/PHASE_3_RATE_LIMITING.md](private/docs/v2/PHASE_3_RATE_LIMITING.md) | Any rate-limit middleware work | Token-bucket RL, AND ceilings, dirty-IP tables, kill-switch |
+| [private/docs/v2/PHASE_3_FINGERPRINTING.md](private/docs/v2/PHASE_3_FINGERPRINTING.md) | Fingerprint / deviceKey / risk inputs | Device confidence, too-common popularity, session binding, WhoIs modulation |
+| [private/docs/v2/PHASE_3_AUTH.md](private/docs/v2/PHASE_3_AUTH.md) | JWT mint shape, Pattern A, KeyCustodian / key rotation | JWT claims, anon Pattern A, KC lifecycle, compromise runbook |
+| **Active tracking doc** (header — currently [private/docs/v2/V2.md](private/docs/v2/V2.md)) | Before starting any task | Phase progression / wipe state / open questions / new tracked issue; decisions overriding a prior v2 plan (also add an ADR) |
 | Per-lib / per-service `README.md` | When working in that lib / service | Add / modify a public API on a lib or service |
 | [docs/README.md](docs/README.md) | How the doc set is organized (tiers + lifecycle) | New tier-level category or holding-pen lifecycle rule (pair with [§11.43](docs/dev/rules/11-documentation-parity-best-practices.md#11-documentation-parity--best-practices)) |
+| [public/README.md](public/README.md) + [public/CONTRIBUTING.md](public/CONTRIBUTING.md) + [public/LICENSE](public/LICENSE) | OSS entry / Apache contribution posture | Public root OSS docs change (pair with dual-header §7.7a + brand §11.47) |
+| [public/docs/adrs/](public/docs/adrs/README.md) vs [private/docs/adrs/](private/docs/adrs/README.md) | Framework vs product ADRs | ADR move/create; Visibility banner; dual-home law §11.46 |
+| [ADR-0026](public/docs/adrs/0026-public-private-monorepo-layout.md) | Public/private monorepo layout + dual-repo cutover | Layout / export / publish-ownership / dual-suite law changes |
+| [docs/dev/human-cutover-oss-public-private.md](docs/dev/human-cutover-oss-public-private.md) | Human remote cutover H0–H9 (agents do not create remotes) | Cutover steps / remote names / publish ownership operator changes |
+| [private/docs/v2/V2.md](private/docs/v2/V2.md) §2 layout | Dual-tree repository structure (product tracking) | Layout / tree / Auth Core branch coordination notes |
 
-Per-service / per-library `README.md` files appear in `server/services/{service}/` and `server/shared/dotnet/{lib}/`.
+Per-service / per-library `README.md` files appear in `private/services/{service}/` and `public/packages/dotnet/{lib}/`.
 
 ---
 
@@ -180,9 +187,9 @@ Per-service / per-library `README.md` files appear in `server/services/{service}
 
 ### Service project structure
 
-Canonical: [ADR-0020](docs/adrs/0020-service-project-structure.md); daily-driver: [PATTERNS.md](docs/PATTERNS.md#service-project-structure).
+Canonical: [ADR-0020](public/docs/adrs/0020-service-project-structure.md); daily-driver: [PATTERNS.md](docs/PATTERNS.md#service-project-structure).
 
-**Five projects + the dependency law.** Standalone service = `domain/` + `app/` + `infra/` + `api/` + `tests/` (+ a consumer-facing `client/` package — SINGULAR, matching its `.Client` assembly — + a `netstandard2.0` source-gen shell when it owns error codes). Service-client RUNTIME code lives in the service's `client/`, never `server/shared/` (shared = service-agnostic abstractions only).
+**Five projects + the dependency law.** Standalone service = `domain/` + `app/` + `infra/` + `api/` + `tests/` (+ a consumer-facing `client/` package — SINGULAR, matching its `.Client` assembly — + a `netstandard2.0` source-gen shell when it owns error codes). Service-client RUNTIME code lives in the service's `client/`, never `public/packages/` (shared = service-agnostic abstractions only).
 
 ```
 Domain  ←  App  ←  Infra  ←  Api      (Tests reference what they test; Clients reference contracts + shared libs only)
@@ -192,7 +199,7 @@ Domain references shared primitives only (NO EF / Options / DI / logging / vendo
 
 **Domain** = `Entities/` + `ValueObjects/` + `Enums/` + `Rules/` (pure no-port no-IO logic — a tunable is a method param, not `IOptions<>`; pure logic lives here, NOT in app handlers). **App = two sections**: `app/Application/` (per-op handlers + `Observability/` + `AddD2<Service>App()`) and `app/Infrastructure/` (ports + shapes by concern + `Configuration/`); `infra/` mirrors the concern folders with adapters.
 
-**Op-noun concern folders + `Facade/`.** App-layer support types live in op-noun concern folders SIBLING to `Handlers/` (namespace = folder), NOT nested in `Handlers/<Op>/`; the `Application/` root keeps ONLY the composition-root extension. The `client/` package mirrors this (`Facade/` = `I<Module>Api.g.cs`; each concern folder = its ops' `.g.cs` DTOs + hand-written runtime). Concern→folder is spec-driven via `@d2Concern("<Segment>")` (fail-loud `D2TSP013` if a client-exposed op omits it). Canonical: [ADR-0020](docs/adrs/0020-service-project-structure.md) + [SRC_GEN.md](docs/SRC_GEN.md).
+**Op-noun concern folders + `Facade/`.** App-layer support types live in op-noun concern folders SIBLING to `Handlers/` (namespace = folder), NOT nested in `Handlers/<Op>/`; the `Application/` root keeps ONLY the composition-root extension. The `client/` package mirrors this (`Facade/` = `I<Module>Api.g.cs`; each concern folder = its ops' `.g.cs` DTOs + hand-written runtime). Concern→folder is spec-driven via `@d2Concern("<Segment>")` (fail-loud `D2TSP013` if a client-exposed op omits it). Canonical: [ADR-0020](public/docs/adrs/0020-service-project-structure.md) + [SRC_GEN.md](docs/SRC_GEN.md).
 
 **Per-operation handler folders.** `Application/Handlers/{Commands,Queries}/<Op>/{I<Op>Handler.cs, <Op>Handler.cs, <Op>Input.cs, <Op>Output.cs}`; file name = type name. NO `Models/` bucket; NO `Interfaces/`/`Implementations/` mirror.
 
@@ -245,7 +252,7 @@ One handler interface per file, co-located with its impl in the per-op folder. C
 
 ### EF-as-DDD + rich sum-type domains
 
-CQRS handlers compose queries against `I<Service>DbContext` + domain aggregates + LINQ directly — the per-op Repository handler is retired ([ADR-0017](docs/adrs/0017-ef-as-ddd-persistence.md)); `BaseHandler`/`BaseRepoHandler` retain all cross-cutting. New stateful aggregates use **abstract base + sealed per-state types** (illegal transitions uncompilable); `Status` is a persistence discriminator derived from the type, not the transition authority. EF persistence = **flat `<Entity>Record`** (never TPH) + pure `ToDomain()`/`ProjectOnto()` mappers + `xmin` token + same-transaction audit (all in `app/Infrastructure/Persistence/`; concrete `DbContext` / EF config / `Migrations/` in `infra/Persistence/Postgres/`). Canonical: [ADR-0017](docs/adrs/0017-ef-as-ddd-persistence.md) + [ADR-0016](docs/adrs/0016-keycustodian-lifecycle-store.md); operational: [PATTERNS.md §Repository](docs/PATTERNS.md#repository).
+CQRS handlers compose queries against `I<Service>DbContext` + domain aggregates + LINQ directly — the per-op Repository handler is retired ([ADR-0017](public/docs/adrs/0017-ef-as-ddd-persistence.md)); `BaseHandler`/`BaseRepoHandler` retain all cross-cutting. New stateful aggregates use **abstract base + sealed per-state types** (illegal transitions uncompilable); `Status` is a persistence discriminator derived from the type, not the transition authority. EF persistence = **flat `<Entity>Record`** (never TPH) + pure `ToDomain()`/`ProjectOnto()` mappers + `xmin` token + same-transaction audit (all in `app/Infrastructure/Persistence/`; concrete `DbContext` / EF config / `Migrations/` in `infra/Persistence/Postgres/`). Canonical: [ADR-0017](public/docs/adrs/0017-ef-as-ddd-persistence.md) + [ADR-0016](public/docs/adrs/0016-keycustodian-lifecycle-store.md); operational: [PATTERNS.md §Repository](docs/PATTERNS.md#repository).
 
 ### Other Established Patterns
 
@@ -253,9 +260,9 @@ Options pattern, caching marker interfaces (`ILocalCache` / `IDistributedCache` 
 
 ### Key Architecture Decisions
 
-Auth (self-rolled .NET module within Edge, JWKS at OIDC-canonical path; service-to-service = mint one internal transaction-token at the Edge boundary + forward unchanged + re-validate each hop, mTLS authenticating the workload — RFC 8693 token-exchange is the boundary-mint + exception tool, NOT a per-hop default — [ADR-0022](docs/adrs/0022-service-auth-mint-once-forward.md) + [ADR-0023](docs/adrs/0023-mtls-workload-identity.md)); JWT (RS256, 15min expiry, `d2_`-prefixed snake_case claims); KeyCustodian (lifecycle of all long-lived secrets incl. the mTLS CA, state machine + overlap rotation); SvelteKit BFF (pure SSR, browser → Edge direct for auth mutations, `@d2/headers` route guards); sync gRPC / async RabbitMQ split (sensitive payloads encrypted via `D2.Shared.Encryption`); notifications via D2.Courier only; sessions 3-tier (cookie cache 5min → Redis → PostgreSQL dual-write); DB topology (one PG server, per-domain DBs, PG advisory-lock migration safety); object storage (SeaweedFS user files, MinIO LGTM blocks); deployment (eventually Swarm + Portainer; pre-launch Compose on VPS) — see [PATTERNS.md](docs/PATTERNS.md) + [V2.md](docs/v2/V2.md). Why the specifics (RS256, 15min, `d2_` snake_case, 3-tier sessions) → [PATTERNS.md](docs/PATTERNS.md).
+Auth (self-rolled .NET module within Edge, JWKS at OIDC-canonical path; service-to-service = mint one internal transaction-token at the Edge boundary + forward unchanged + re-validate each hop, mTLS authenticating the workload — RFC 8693 token-exchange is the boundary-mint + exception tool, NOT a per-hop default — [ADR-0022](public/docs/adrs/0022-service-auth-mint-once-forward.md) + [ADR-0023](public/docs/adrs/0023-mtls-workload-identity.md)); JWT (RS256, 15min expiry, `d2_`-prefixed snake_case claims); KeyCustodian (lifecycle of all long-lived secrets incl. the mTLS CA, state machine + overlap rotation); SvelteKit BFF (pure SSR, browser → Edge direct for auth mutations, `@d2/headers` route guards); sync gRPC / async RabbitMQ split (sensitive payloads encrypted via `D2.Shared.Encryption`); notifications via D2.Courier only; sessions 3-tier (cookie cache 5min → Redis → PostgreSQL dual-write); DB topology (one PG server, per-domain DBs, PG advisory-lock migration safety); object storage (SeaweedFS user files, MinIO LGTM blocks); deployment (eventually Swarm + Portainer; pre-launch Compose on VPS) — see [PATTERNS.md](docs/PATTERNS.md) + [V2.md](private/docs/v2/V2.md). Why the specifics (RS256, 15min, `d2_` snake_case, 3-tier sessions) → [PATTERNS.md](docs/PATTERNS.md).
 
-_Canonical: [ADR-0020](docs/adrs/0020-service-project-structure.md) + [PATTERNS.md §service-project-structure](docs/PATTERNS.md#service-project-structure). Update all three in lockstep per §11.32._
+_Canonical: [ADR-0020](public/docs/adrs/0020-service-project-structure.md) + [PATTERNS.md §service-project-structure](docs/PATTERNS.md#service-project-structure). Update all three in lockstep per §11.32._
 
 ---
 
@@ -313,14 +320,27 @@ _Canonical: [ADR-0020](docs/adrs/0020-service-project-structure.md) + [PATTERNS.
 
 ### Code quality (zero tolerance)
 
-- **Zero warnings, BOTH tools** — `dotnet build server/D2.slnx` AND `jb inspectcode server/D2.slnx --severity=WARNING` (they catch different issues). Never suppress; fix ALL, never dismiss as "pre-existing." [rules.md §5.21, §5.22, §5.23]
+- **Zero warnings, BOTH tools** — `dotnet build D2.slnx` AND `jb inspectcode D2.slnx --severity=WARNING` (they catch different issues). Never suppress; fix ALL, never dismiss as "pre-existing." [rules.md §5.21, §5.22, §5.23]
 - **Prettier-clean CODE commits** (`.husky/pre-commit`) — touched `.ts`/`.js`/`.json`/`.svelte`/`.css`/`.yaml` pass `prettier --check` (`pnpm format`). **Markdown EXCLUDED** (`.md` in `.prettierignore`, NEVER `prettier --write`). [rules.md §5.28]
 
 ### Documentation parity
 
 - **Doc edits in the SAME change as code edits** (not a separate commit). [rules.md §11.1]
-- **File headers on every source file you create or modify.** [rules.md §7.7]
+- **File headers on every source file you create or modify** — dual-header law: `public/**` = Apache StyleCop form; `private/**` + monorepo-root private KEEP = ARR. [rules.md §7.7 / §7.7a]
+- **Docs dual-home** — framework ADRs `public/docs/adrs/` (Visibility: PUBLIC); product ADRs `private/docs/adrs/`; process `docs/dev/`. [rules.md §11.46]
+- **Brand surfaces** — public KEEP = **D2** framework; private product = **D2-WORX**; public package ids never contain `worx`. [rules.md §11.47]
 - **Agent-facing docs (AGENTS.md / rules / process.md / reference docs) are agent-first — human navigability NEVER at the cost of context bloat; densest faithful form wins (no Mermaid / box-drawing art).** [rules.md §11.45]
+
+### Public/private monorepo (IP + suites + publish)
+
+- **Public-tree IP fence** — no product hosts, product TypeSpec, KC catalogs, secrets tooling, private-only contracts, or product runbooks under `public/`. [rules.md §9.49]
+- **Dependency direction** — private → public allowed; **public never references private**. [rules.md §9.48]
+- **Dual-suite commands** — public-only (`public/D2.Public.slnx`) + combined umbrella; public-only must not require private ProjectReferences. [rules.md §8.8]
+- **Export gate** — gated dry-run / dispatch; allowlist `public/**` only. [rules.md §8.9]
+- **Publish ownership** — real nuget.org/npmjs + GH Release of public package IDs only on `d2-public`; private monorepo pack + artifact only. [rules.md §8.10]
+- **Codegen dual-root** — public packages generate only from `public/contracts`; private emit only into `private/**`. [rules.md §26.25]
+- **Schema hosts** — public `$id` / problem hosts under `*.d2.dcsv.io`; residual `d2-worx.dev` as schema `$id` is FINDING. [rules.md §26.26]
+- **Human remotes** — agents do not create `d2-public` / `d2-private-worx` remotes or org secrets; operator checklist [docs/dev/human-cutover-oss-public-private.md](docs/dev/human-cutover-oss-public-private.md).
 
 ### Convention slippage (memory of these = first-pass clean)
 
@@ -355,7 +375,7 @@ _Canonical: [ADR-0020](docs/adrs/0020-service-project-structure.md) + [PATTERNS.
 
 ### Codegen discipline (generated files are reproducible — keep them that way)
 
-- **NEVER hand-edit generated files** — fix the GENERATOR, the INPUT, or EXTEND the pipeline. "Generated" = `*.g.<ext>`, anything under `Generated/`, any documented-pipeline output (Roslyn source-gen, `tools/ts-codegen`, proto-derived, Drizzle migrations, Paraglide locales, Tier-2 specs like `contracts/geo/*.spec.json`), anything banner-marked. [rules.md §26.5]
+- **NEVER hand-edit generated files** — fix the GENERATOR, the INPUT, or EXTEND the pipeline. "Generated" = `*.g.<ext>`, anything under `Generated/`, any documented-pipeline output (Roslyn source-gen, `public/tools/ts-codegen`, proto-derived, Drizzle migrations, Paraglide locales, Tier-2 specs like `public/contracts/geo/*.spec.json`), anything banner-marked. [rules.md §26.5]
 - **Spec-mirror DTO types FORBIDDEN in destination assemblies** — autogen from the schema, OR move into source-gen internals under §26.2's conditions. [rules.md §26.1]
 - **Hand-writing a DTO that mirrors a `.proto` / `.spec.json` / `.openapi.yaml` / `.graphql` shape in a published package = process-integrity failure.** [rules.md §26.1]
 - **Error codes are SPEC-DECLARED** — every code in a `*-error-codes.spec.json` with `httpStatus` + `category` + a valid `userMessageKey`; constants, typed `D2Result` factories, and the merged registry are GENERATED. No free-text literals, no hand-mapped `Fail(statusCode, message)`, no hand-written `<Domain>Failures`. [rules.md §26.6]
@@ -363,7 +383,7 @@ _Canonical: [ADR-0020](docs/adrs/0020-service-project-structure.md) + [PATTERNS.
 - **Generators validated independently — never "pending a consumer"** — integration tests drive the artifact against real shared libs + faithful §1.32 doubles; a committed ledger names each emitter's validation + each double's replace-trigger. [rules.md §26.15, §26.16]
 - **Conversation/decision IDs banned across ALL generator surfaces** — the §14 / §14.3 sweep covers emitter source + emitted output + runtime messages + docs. [rules.md §26.17]
 - **Hand-authored files MUST NOT carry a generated banner or `.g.*` extension** — normal header + plain extension + a ledger note. [rules.md §26.18]
-- **Consumable shared packages versioned per-package** — semver + CHANGELOG from the build-free artifact diff (`tools/release-runner`); footers escalate but never lower the bump; wire/contract breaks auto-gated by `tools/contract-gate`; registry publishing never automatic. [rules.md §26.19]
+- **Consumable shared packages versioned per-package** — semver + CHANGELOG from the build-free artifact diff (`public/tools/release-runner`); footers escalate but never lower the bump; wire/contract breaks auto-gated by `public/tools/contract-gate`; registry publishing never automatic. [rules.md §26.19]
 - **After touching any consumable source, re-seed `.release-fingerprint` before committing** — `pnpm --filter release-runner check-baselines`; for `.NET` also promote `PublicAPI.Unshipped.txt`. Stale baseline = FINDING-HIGH. [rules.md §26.20]
 - **Compare against emitted constants, never raw spec-emitted literals** — a `switch`/`==`/`is` over an error code references `KeyCustodianErrorCodes.KEYCUSTODIAN_*` (or `ErrorCodes.*`), never a hand-typed string; wire-value assertions exempt. [rules.md §26.21]
 - **Closed-set telemetry tag keys / values / reason codes = named constants** — one source of truth at every emit / switch / `==` site. [rules.md §21.11]
@@ -422,7 +442,7 @@ TypeScript via `mcp__cclsp__*` (`get_hover`, `find_definition`, `find_references
 
 ### Project Structure
 
-Key roots: `contracts/` (proto source of truth + i18n messages + fixtures) · `server/` (all trusted code — .NET services + SvelteKit BFF + .NET shared libs) · `infra/` (deployment + observability) · `tools/` (dev tooling) · `docs/` (project documentation) · `secrets/` (gitignored + Claude-deny-ruled key material; populated by `tools/scripts/gen-dev-keys.sh`) · `.claude/` (project-level Claude Code settings with deny rules).
+Key roots: `public/contracts/` + `private/contracts/` (proto/i18n dual homes) · `public/packages/` (shared libs) · `private/services/` (.NET services + SvelteKit BFF) · `infra/` (deployment + observability) · `public/tools/` + `private/tools/` (dev tooling) · `docs/` (project documentation) · `secrets/` (gitignored + Claude-deny-ruled key material; populated by `private/tools/scripts/gen-dev-keys.sh`) · `.claude/` (project-level Claude Code settings with deny rules).
 
 ---
 
@@ -436,7 +456,7 @@ Environment configuration is split (product SoT = env files + Compose; law → [
 | `.env.local.example` | Template with safe defaults | **Yes** | Yes | Yes |
 | `.env.secrets` | Real third-party creds — Twilio, Resend, IPinfo, OAuth client secrets, prod-like DB passwords | No (gitignored) | **No (deny-ruled)** | **No (deny-ruled)** |
 | `.env.secrets.example` | Template with placeholders (`TWILIO_AUTH_TOKEN=replace_with_real_value`) | **Yes** | Yes | Yes |
-| `secrets/` | Key material — root key, dev encryption keys, dev TLS certs | No (gitignored; populated by `tools/scripts/gen-dev-keys.sh`) | **No (deny-ruled)** | **No (deny-ruled)** |
+| `secrets/` | Key material — root key, dev encryption keys, dev TLS certs | No (gitignored; populated by `private/tools/scripts/gen-dev-keys.sh`) | **No (deny-ruled)** | **No (deny-ruled)** |
 
 Compose loads both env files (`.env.local` first, `.env.secrets` second so secrets override placeholders on any collision):
 
@@ -448,7 +468,7 @@ services:
       - .env.secrets
 ```
 
-**Adding a new secret**: (1) add `NEW_THING_API_KEY=replace_with_real_value` to `.env.secrets.example`; (2) wire it into the right service in `infra/compose/compose.yml`; (3) tell the operator to copy it into `.env.secrets`, set the real value, and restart the service. Agents cannot edit `.env.secrets` (deny rule). Same pattern for encryption keys: update `tools/scripts/gen-dev-keys.sh`; operator runs it; output lands in `secrets/`.
+**Adding a new secret**: (1) add `NEW_THING_API_KEY=replace_with_real_value` to `.env.secrets.example`; (2) wire it into the right service in `infra/compose/compose.yml`; (3) tell the operator to copy it into `.env.secrets`, set the real value, and restart the service. Agents cannot edit `.env.secrets` (deny rule). Same pattern for encryption keys: update `private/tools/scripts/gen-dev-keys.sh`; operator runs it; output lands in `secrets/`.
 
 **Deny / structural map (multi-runtime):**
 

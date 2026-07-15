@@ -1,0 +1,14 @@
+{
+  "$schema": "./schema.json",
+  "subscriptions": [
+    {
+      "constant": "KeyringRefresh",
+      "messageType": "DcsvIo.D2.Auth.Events.KeyRotatedEvent",
+      "queueName": "keyring-refresher",
+      "pattern": "FanoutExclusiveAutoDelete",
+      "routingKeyBinding": "",
+      "prefetch": 10,
+      "idempotency": false
+    }
+  ]
+}

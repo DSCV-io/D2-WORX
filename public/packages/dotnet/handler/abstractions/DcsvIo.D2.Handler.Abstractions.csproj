@@ -1,0 +1,43 @@
+<!--
+Copyright (c) DCSV. Licensed under the Apache License, Version 2.0.
+-->
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>DcsvIo.D2.Handler.Abstractions</RootNamespace>
+  </PropertyGroup>
+
+  <!--
+    Domain-safe slice of the handler stack — interfaces + the HandlerOptions
+    record. Domain code references this for typed handler contracts without
+    pulling DI / OpenTelemetry / AspNetCore.
+
+    The runtime piece (BaseHandler + HandlerContext + HandlerTelemetry +
+    AddD2Handler) lives in the sibling DcsvIo.D2.Handler project.
+  -->
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\result\core\DcsvIo.D2.Result.csproj" />
+    <ProjectReference Include="..\..\context\abstractions\DcsvIo.D2.Context.Abstractions.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="DcsvIo.D2.Tests" />
+  </ItemGroup>
+
+  <!-- Publish metadata (per-package semver + NuGet identity). -->
+  <PropertyGroup>
+    <Version>0.1.0</Version>
+    <PackageId>DcsvIo.D2.Handler.Abstractions</PackageId>
+    <Description>Domain-safe slice of the D2 handler stack — IHandler, IHandlerContext, and HandlerOptions.</Description>
+    <IsPackable>true</IsPackable>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,499 @@
+// -----------------------------------------------------------------------
+// SPDX-License-Identifier: Apache-2.0
+// Copyright (c) DCSV
+// -----------------------------------------------------------------------
+
+// Unit + byte-parity tests for the server-push dispatch emitter.
+//
+// Coverage:
+//   emitSseEmitSinkSeam       — seam family shape (enum + record struct +
+//     generic-payload interface), namespace, banner, usings, empty-ns throw.
+//   emitSseDispatcher         — per-op interface + impl shape, channel-class
+//     baking (User vs Session), event-type literal, payload type, empty throws.
+//   emitSseDispatchersDiExtension — per-module Transient DI ext shape, method
+//     name, one AddTransient per op, empty-input throws.
+//   Byte-parity              — EVERY committed .g.cs in TypeSpecSse/Generated is
+//     re-emitted via the pure fns and asserted byte-identical to the committed
+//     fixture, each with a deliberate-drift negative (the channel-class drift +
+//     the AddTransient→AddScoped drift are the load-bearing per-op data). The
+//     fixture push ops are PURE-push (param-less), so NO I<Op>Handler is emitted
+//     (gated out by isPurePush) and NO <Op>Input is emitted (pure-push ops
+//     emit only the output payload DTO — no input DTO).
+
+import { describe as vitestDescribe, it, expect } from "vitest";
+import { shouldRunPrivateProductParity } from "./private-tree.js";
+
+/** Product-home parity � skipped under PUBLIC_ONLY or without private/** tree. */
+const describe = shouldRunPrivateProductParity(import.meta.url)
+  ? vitestDescribe
+  : vitestDescribe.skip;
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
+import { findRepoRoot } from "./repo-root.js";
+import {
+  emitSseEmitSinkSeam,
+  emitSseDispatcher,
+  emitSseDispatchersDiExtension,
+} from "../src/lib/sse-dispatch-emitter.js";
+import type { SseDispatchOp } from "../src/lib/sse-dispatch-emitter.js";
+import { emitCsharpDtos } from "../src/lib/csharp-dto-emitter.js";
+import type { FieldInfo } from "../src/lib/model-walk.js";
+
+// ---------------------------------------------------------------------------
+// Shared fixtures
+// ---------------------------------------------------------------------------
+
+const NS = "DcsvIo.D2.Private.Edge.Tests.TypeSpecSse.Generated";
+const SOURCE = "public/contracts/typespec/fixtures/server-push-shaped.tsp";
+
+const genDir = join(
+  findRepoRoot(import.meta.url),
+  "private/services/edge/tests/Unit/KeyCustodian/TypeSpecSse/Generated",
+);
+
+function committed(fileName: string): string {
+  return readFileSync(join(genDir, fileName), "utf8");
+}
+
+/** A scalar FieldInfo helper (mirrors the byte-parity.test.ts builder shape). */
+function scalarField(
+  name: string,
+  cs: string,
+  ts: string,
+  proto: string,
+): FieldInfo {
+  const csName = name[0]!.toUpperCase() + name.slice(1);
+  return {
+    name,
+    csName,
+    csType: cs,
+    tsName: name,
+    tsType: ts,
+    protoType: proto,
+    repeated: false,
+    optional: false,
+    redactReason: undefined,
+  };
+}
+
+// The OrderFixtureLine nested model (sku: string, quantity: int32).
+const ORDER_LINE_FIELDS: FieldInfo[] = [
+  scalarField("sku", "string", "string", "string"),
+  scalarField("quantity", "int", "number", "int32"),
+];
+
+// OrderShippedFixtureOutput { orderId: string; shippedAt: utcDateTime; lines: OrderFixtureLine[] }
+const ORDER_SHIPPED_OUTPUT_FIELDS: FieldInfo[] = [
+  scalarField("orderId", "string", "string", "string"),
+  scalarField(
+    "shippedAt",
+    "DateTimeOffset",
+    "string",
+    "google.protobuf.Timestamp",
+  ),
+  {
+    name: "lines",
+    csName: "Lines",
+    csType: "IReadOnlyList<OrderFixtureLine>",
+    tsName: "lines",
+    tsType: "readonly OrderFixtureLine[]",
+    protoType: undefined,
+    repeated: true,
+    optional: false,
+    redactReason: undefined,
+    nested: { name: "OrderFixtureLine", fields: ORDER_LINE_FIELDS },
+  },
+];
+
+// SessionExpiringFixtureOutput { sessionId: string; expiresAt: utcDateTime }
+const SESSION_EXPIRING_OUTPUT_FIELDS: FieldInfo[] = [
+  scalarField("sessionId", "string", "string", "string"),
+  scalarField(
+    "expiresAt",
+    "DateTimeOffset",
+    "string",
+    "google.protobuf.Timestamp",
+  ),
+];
+
+const ORDER_SHIPPED_OP: SseDispatchOp = {
+  opName: "orderShippedFixture",
+  channelClass: "User",
+  outputTypeName: "OrderShippedFixtureOutput",
+  dtoNamespace: NS,
+  sourceSpec: SOURCE,
+};
+
+const SESSION_EXPIRING_OP: SseDispatchOp = {
+  opName: "sessionExpiringFixture",
+  channelClass: "Session",
+  outputTypeName: "SessionExpiringFixtureOutput",
+  dtoNamespace: NS,
+  sourceSpec: SOURCE,
+};
+
+// ---------------------------------------------------------------------------
+// emitSseEmitSinkSeam — shape
+// ---------------------------------------------------------------------------
+
+describe("emitSseEmitSinkSeam — file shape", () => {
+  it("returns fileName D2GeneratedSseEmitSink.g.cs", () => {
+    expect(emitSseEmitSinkSeam(NS, SOURCE).fileName).toBe(
+      "D2GeneratedSseEmitSink.g.cs",
+    );
+  });
+
+  it("emits auto-generated banner + #nullable enable", () => {
+    const file = emitSseEmitSinkSeam(NS, SOURCE);
+    expect(file.content).toContain("<auto-generated>");
+    expect(file.content).toContain("Manual edits will be lost on rebuild.");
+    expect(file.content).toContain("#nullable enable");
+  });
+
+  it("namespace appears before using directives", () => {
+    const file = emitSseEmitSinkSeam(NS, SOURCE);
+    const nsIdx = file.content.indexOf("namespace ");
+    const usingIdx = file.content.indexOf("using ");
+    expect(nsIdx).toBeGreaterThan(-1);
+    expect(usingIdx).toBeGreaterThan(-1);
+    expect(nsIdx).toBeLessThan(usingIdx);
+  });
+
+  it("emits the channel-class enum with User + Session members", () => {
+    const file = emitSseEmitSinkSeam(NS, SOURCE);
+    expect(file.content).toContain("public enum D2GeneratedSseChannelClass");
+    expect(file.content).toContain("    User,");
+    expect(file.content).toContain("    Session,");
+  });
+
+  it("emits the channel-target record struct", () => {
+    const file = emitSseEmitSinkSeam(NS, SOURCE);
+    expect(file.content).toContain(
+      "public readonly record struct D2GeneratedSseChannelTarget(",
+    );
+    expect(file.content).toContain(
+      "D2GeneratedSseChannelClass Class, string Id);",
+    );
+  });
+
+  it("emits the generic-payload sink interface returning ValueTask<D2Result>", () => {
+    const file = emitSseEmitSinkSeam(NS, SOURCE);
+    expect(file.content).toContain("public interface D2GeneratedSseEmitSink");
+    expect(file.content).toContain("ValueTask<D2Result> EmitAsync<TPayload>(");
+    expect(file.content).toContain(
+      "D2GeneratedSseChannelTarget target, string eventType, TPayload payload,",
+    );
+    expect(file.content).toContain("CancellationToken ct = default);");
+  });
+
+  it("emits using DcsvIo.D2.Result", () => {
+    expect(emitSseEmitSinkSeam(NS, SOURCE).content).toContain(
+      "using DcsvIo.D2.Result;",
+    );
+  });
+
+  it("throws on empty registrationNamespace", () => {
+    expect(() => emitSseEmitSinkSeam("", SOURCE)).toThrow(
+      "registrationNamespace must not be empty",
+    );
+  });
+
+  it("content contains no phase/step sequencing labels", () => {
+    const file = emitSseEmitSinkSeam(NS, SOURCE);
+    expect(file.content).not.toMatch(/Step\s+\d+/i);
+    expect(file.content).not.toMatch(/Phase\s+\d+/i);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// emitSseDispatcher — interface + impl shape, channel-class baking
+// ---------------------------------------------------------------------------
+
+describe("emitSseDispatcher — interface + impl shape", () => {
+  it("returns [interface, impl] with the per-op file names", () => {
+    const [iface, impl] = emitSseDispatcher(ORDER_SHIPPED_OP);
+    expect(iface!.fileName).toBe("IOrderShippedFixtureDispatcher.g.cs");
+    expect(impl!.fileName).toBe("OrderShippedFixtureDispatcher.g.cs");
+  });
+
+  it("interface declares DispatchAsync(string targetId, <Op>Output payload, ...)", () => {
+    const [iface] = emitSseDispatcher(ORDER_SHIPPED_OP);
+    expect(iface!.content).toContain(
+      "public interface IOrderShippedFixtureDispatcher",
+    );
+    expect(iface!.content).toContain("ValueTask<D2Result> DispatchAsync(");
+    expect(iface!.content).toContain(
+      "string targetId, OrderShippedFixtureOutput payload, CancellationToken ct = default);",
+    );
+  });
+
+  it("impl is a sealed class with a primary-ctor sink param (no r_ prefix)", () => {
+    const [, impl] = emitSseDispatcher(ORDER_SHIPPED_OP);
+    expect(impl!.content).toContain(
+      "public sealed class OrderShippedFixtureDispatcher(D2GeneratedSseEmitSink sink) : IOrderShippedFixtureDispatcher",
+    );
+    expect(impl!.content).not.toContain("r_sink");
+  });
+
+  it("impl bakes the User channel class + emits the op-name event-type literal", () => {
+    const [, impl] = emitSseDispatcher(ORDER_SHIPPED_OP);
+    expect(impl!.content).toContain(
+      "new D2GeneratedSseChannelTarget(D2GeneratedSseChannelClass.User, targetId),",
+    );
+    expect(impl!.content).toContain('"orderShippedFixture", payload, ct);');
+  });
+
+  it("impl bakes the Session channel class for a session-target op (non-vacuous)", () => {
+    const [, impl] = emitSseDispatcher(SESSION_EXPIRING_OP);
+    expect(impl!.content).toContain(
+      "new D2GeneratedSseChannelTarget(D2GeneratedSseChannelClass.Session, targetId),",
+    );
+    expect(impl!.content).toContain('"sessionExpiringFixture", payload, ct);');
+    expect(impl!.content).not.toContain("ChannelClass.User");
+  });
+
+  it("impl delegates to the sink and returns its result (no Ok wrapper)", () => {
+    const [, impl] = emitSseDispatcher(ORDER_SHIPPED_OP);
+    expect(impl!.content).toContain("=> sink.EmitAsync(");
+    // The dispatcher must NOT swallow the sink result into an unconditional Ok().
+    expect(impl!.content).not.toContain("D2Result.Ok()");
+  });
+
+  it("throws on empty opName", () => {
+    expect(() =>
+      emitSseDispatcher({ ...ORDER_SHIPPED_OP, opName: "" }),
+    ).toThrow("opName must not be empty");
+  });
+
+  it("throws on empty outputTypeName", () => {
+    expect(() =>
+      emitSseDispatcher({ ...ORDER_SHIPPED_OP, outputTypeName: "" }),
+    ).toThrow("outputTypeName must not be empty");
+  });
+
+  it("content contains no phase/step sequencing labels", () => {
+    for (const f of emitSseDispatcher(ORDER_SHIPPED_OP)) {
+      expect(f.content).not.toMatch(/Step\s+\d+/i);
+      expect(f.content).not.toMatch(/Phase\s+\d+/i);
+    }
+  });
+});
+
+// ---------------------------------------------------------------------------
+// emitSseDispatchersDiExtension — Transient DI ext
+// ---------------------------------------------------------------------------
+
+describe("emitSseDispatchersDiExtension — Transient DI ext", () => {
+  const ops = [ORDER_SHIPPED_OP, SESSION_EXPIRING_OP];
+
+  it("returns fileName <Module>SseDispatchersGenerated.g.cs", () => {
+    expect(
+      emitSseDispatchersDiExtension("PushFixtures", ops, NS, SOURCE).fileName,
+    ).toBe("PushFixturesSseDispatchersGenerated.g.cs");
+  });
+
+  it("emits the AddD2<Module>SseDispatchers extension method", () => {
+    const file = emitSseDispatchersDiExtension("PushFixtures", ops, NS, SOURCE);
+    expect(file.content).toContain(
+      "public IServiceCollection AddD2PushFixturesSseDispatchers()",
+    );
+  });
+
+  it("emits one AddTransient per push op (interface → impl)", () => {
+    const file = emitSseDispatchersDiExtension("PushFixtures", ops, NS, SOURCE);
+    expect(file.content).toContain(
+      "services.AddTransient<IOrderShippedFixtureDispatcher, OrderShippedFixtureDispatcher>();",
+    );
+    expect(file.content).toContain(
+      "services.AddTransient<ISessionExpiringFixtureDispatcher, SessionExpiringFixtureDispatcher>();",
+    );
+  });
+
+  it("uses the C# 14 extension(IServiceCollection) block form", () => {
+    const file = emitSseDispatchersDiExtension("PushFixtures", ops, NS, SOURCE);
+    expect(file.content).toContain("extension(IServiceCollection services)");
+    expect(file.content).toContain(
+      "using Microsoft.Extensions.DependencyInjection;",
+    );
+  });
+
+  it("throws on empty moduleName", () => {
+    expect(() => emitSseDispatchersDiExtension("", ops, NS, SOURCE)).toThrow(
+      "moduleName must not be empty",
+    );
+  });
+
+  it("throws on empty namespace", () => {
+    expect(() =>
+      emitSseDispatchersDiExtension("PushFixtures", ops, "", SOURCE),
+    ).toThrow("namespace must not be empty");
+  });
+
+  it("throws on empty ops list", () => {
+    expect(() =>
+      emitSseDispatchersDiExtension("PushFixtures", [], NS, SOURCE),
+    ).toThrow("ops must not be empty");
+  });
+
+  it("content contains no phase/step sequencing labels", () => {
+    const file = emitSseDispatchersDiExtension("PushFixtures", ops, NS, SOURCE);
+    expect(file.content).not.toMatch(/Step\s+\d+/i);
+    expect(file.content).not.toMatch(/Phase\s+\d+/i);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Byte-parity — every committed .g.cs in TypeSpecSse/Generated
+// ---------------------------------------------------------------------------
+
+describe("byteParity_SseEmitSinkSeam_CommittedFixtureIdentical", () => {
+  it("regenerated D2GeneratedSseEmitSink.g.cs is byte-identical to the committed fixture", () => {
+    const file = emitSseEmitSinkSeam(NS, SOURCE);
+    expect(file.content).toBe(committed("D2GeneratedSseEmitSink.g.cs"));
+  });
+
+  it("deliberate-drift detection: mutated method name does NOT match", () => {
+    const drifted = committed("D2GeneratedSseEmitSink.g.cs").replace(
+      "EmitAsync",
+      "EmitAsyncDRIFTED",
+    );
+    expect(emitSseEmitSinkSeam(NS, SOURCE).content).not.toBe(drifted);
+  });
+});
+
+describe("byteParity_OrderShippedFixtureDispatcher_CommittedFixturesIdentical", () => {
+  it("regenerated IOrderShippedFixtureDispatcher.g.cs is byte-identical to the committed fixture", () => {
+    const [iface] = emitSseDispatcher(ORDER_SHIPPED_OP);
+    expect(iface!.content).toBe(
+      committed("IOrderShippedFixtureDispatcher.g.cs"),
+    );
+  });
+
+  it("interface deliberate-drift: mutated method name does NOT match", () => {
+    const drifted = committed("IOrderShippedFixtureDispatcher.g.cs").replace(
+      "DispatchAsync",
+      "DispatchAsyncDRIFTED",
+    );
+    const [iface] = emitSseDispatcher(ORDER_SHIPPED_OP);
+    expect(iface!.content).not.toBe(drifted);
+  });
+
+  it("regenerated OrderShippedFixtureDispatcher.g.cs is byte-identical to the committed fixture", () => {
+    const [, impl] = emitSseDispatcher(ORDER_SHIPPED_OP);
+    expect(impl!.content).toBe(committed("OrderShippedFixtureDispatcher.g.cs"));
+  });
+
+  it("impl deliberate-drift: User→Session channel-class mutation does NOT match (the baked datum)", () => {
+    const drifted = committed("OrderShippedFixtureDispatcher.g.cs").replace(
+      "D2GeneratedSseChannelClass.User",
+      "D2GeneratedSseChannelClass.Session",
+    );
+    const [, impl] = emitSseDispatcher(ORDER_SHIPPED_OP);
+    expect(impl!.content).not.toBe(drifted);
+  });
+});
+
+describe("byteParity_SessionExpiringFixtureDispatcher_CommittedFixturesIdentical", () => {
+  it("regenerated ISessionExpiringFixtureDispatcher.g.cs is byte-identical to the committed fixture", () => {
+    const [iface] = emitSseDispatcher(SESSION_EXPIRING_OP);
+    expect(iface!.content).toBe(
+      committed("ISessionExpiringFixtureDispatcher.g.cs"),
+    );
+  });
+
+  it("regenerated SessionExpiringFixtureDispatcher.g.cs is byte-identical to the committed fixture", () => {
+    const [, impl] = emitSseDispatcher(SESSION_EXPIRING_OP);
+    expect(impl!.content).toBe(
+      committed("SessionExpiringFixtureDispatcher.g.cs"),
+    );
+  });
+
+  it("impl deliberate-drift: Session→User channel-class mutation does NOT match (non-vacuous Session arm)", () => {
+    const drifted = committed("SessionExpiringFixtureDispatcher.g.cs").replace(
+      "D2GeneratedSseChannelClass.Session",
+      "D2GeneratedSseChannelClass.User",
+    );
+    const [, impl] = emitSseDispatcher(SESSION_EXPIRING_OP);
+    expect(impl!.content).not.toBe(drifted);
+  });
+});
+
+describe("byteParity_PushFixturesDiExtension_CommittedFixtureIdentical", () => {
+  const ops = [ORDER_SHIPPED_OP, SESSION_EXPIRING_OP];
+
+  it("regenerated PushFixturesSseDispatchersGenerated.g.cs is byte-identical to the committed fixture", () => {
+    const file = emitSseDispatchersDiExtension("PushFixtures", ops, NS, SOURCE);
+    expect(file.content).toBe(
+      committed("PushFixturesSseDispatchersGenerated.g.cs"),
+    );
+  });
+
+  it("deliberate-drift: AddTransient→AddScoped mutation does NOT match (the Transient lifetime is load-bearing)", () => {
+    const drifted = committed(
+      "PushFixturesSseDispatchersGenerated.g.cs",
+    ).replaceAll("AddTransient", "AddScoped");
+    const file = emitSseDispatchersDiExtension("PushFixtures", ops, NS, SOURCE);
+    expect(file.content).not.toBe(drifted);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Byte-parity — output-DTO .g.cs in the subtree (no silent uncovered generated
+// file). The push ops are PURE-push (param-less), so NO I<Op>Handler is emitted
+// (suppressed by isPurePush) and NO <Op>Input is emitted (pure-push ops emit
+// only the output payload DTO — the input side is suppressed so no orphan
+// parameterless input record lands in the committed set). The <Op>Output is the
+// dispatcher payload.
+// ---------------------------------------------------------------------------
+
+describe("byteParity_SsePushDtos_CommittedFixturesIdentical", () => {
+  it("OrderShippedFixtureOutput (with nested OrderFixtureLine + temporal) is byte-identical to the committed fixture", () => {
+    const [, output] = emitCsharpDtos(
+      "orderShippedFixture",
+      NS,
+      SOURCE,
+      [],
+      ORDER_SHIPPED_OUTPUT_FIELDS,
+      [{ name: "OrderFixtureLine", fields: ORDER_LINE_FIELDS }],
+    );
+    expect(output!.content).toBe(committed("OrderShippedFixtureOutput.g.cs"));
+  });
+
+  it("SessionExpiringFixtureOutput (with temporal) is byte-identical to the committed fixture", () => {
+    const [, output] = emitCsharpDtos(
+      "sessionExpiringFixture",
+      NS,
+      SOURCE,
+      [],
+      SESSION_EXPIRING_OUTPUT_FIELDS,
+      [],
+    );
+    expect(output!.content).toBe(
+      committed("SessionExpiringFixtureOutput.g.cs"),
+    );
+  });
+
+  it("no <Op>Input.g.cs in the committed set (pure-push ops emit only the output payload DTO)", () => {
+    // A pure-push op emits ONLY the output payload. The input DTO is suppressed
+    // at the emitter level (dtoInputModel = undefined for isPurePush ops), so no
+    // orphan parameterless <Op>Input record lands in the committed fixture set.
+    expect(() => committed("OrderShippedInput.g.cs")).toThrow();
+    expect(() => committed("SessionExpiringInput.g.cs")).toThrow();
+  });
+
+  it("DTO deliberate-drift: temporal field mutation does NOT match (temporal flows through the payload)", () => {
+    const drifted = committed("OrderShippedFixtureOutput.g.cs").replace(
+      "DateTimeOffset ShippedAt",
+      "DateTimeOffset ShippedAtDRIFTED",
+    );
+    const [, output] = emitCsharpDtos(
+      "orderShippedFixture",
+      NS,
+      SOURCE,
+      [],
+      ORDER_SHIPPED_OUTPUT_FIELDS,
+      [{ name: "OrderFixtureLine", fields: ORDER_LINE_FIELDS }],
+    );
+    expect(output!.content).not.toBe(drifted);
+  });
+});

@@ -1,0 +1,271 @@
+{
+  "$schema": "./schema.json",
+  "name": "IRequestContext",
+  "namespace": "DcsvIo.D2.Context.Abstractions",
+  "description": "Per-request runtime context. Extends IAuthContext with transport-level (tracing) and network/enrichment information. Populated by transport-specific middleware (aspnetcore for HTTP, messaging-rabbitmq for RabbitMQ, etc.) into a MutableRequestContext concrete instance; downstream consumers see only the read-only IRequestContext interface.",
+  "extends": "DcsvIo.D2.AuthContext.Abstractions.IAuthContext",
+  "sections": [
+    {
+      "name": "Tracing",
+      "properties": [
+        {
+          "name": "TraceId",
+          "type": "string?",
+          "doc": "Trace identifier for this request. Sourced from Activity.Current?.TraceId (HTTP) or AMQP traceparent header (messaging). Auto-injected into D2Result by BaseHandler so cross-service correlation works."
+        },
+        {
+          "name": "RequestId",
+          "type": "string?",
+          "propagate": true,
+          "maxLength": 256,
+          "doc": "Per-request unique identifier (HttpContext.TraceIdentifier for HTTP; message-id property for AMQP)."
+        },
+        {
+          "name": "RequestPath",
+          "type": "string?",
+          "propagate": true,
+          "maxLength": 2048,
+          "doc": "Request path (HTTP) or routing key (AMQP) — descriptive context for logs."
+        },
+        {
+          "name": "HttpMethod",
+          "type": "string?",
+          "doc": "HTTP verb captured by Edge middleware (e.g. 'GET', 'POST', 'PUT'). Only meaningful at the HTTP edge — downstream gRPC and AMQP consumers do not carry the originating HTTP verb, so this field does NOT propagate. Null on non-HTTP transports."
+        },
+        {
+          "name": "RequestStartedAt",
+          "type": "DateTimeOffset?",
+          "propagate": true,
+          "doc": "Timestamp when Edge began processing the originating request (Category 2 — past UTC instant). Propagates so async consumers (Audit, Courier) can report end-to-end SLA latency. Domain consumers MUST convert to NodaTime.Instant at the consumption boundary before any temporal arithmetic: dto.Value.ToInstant(). Wire form is DateTimeOffset? for JSON-serialization interop."
+        },
+        {
+          "name": "IdempotencyKey",
+          "type": "string?",
+          "propagate": true,
+          "maxLength": 255,
+          "redact": true,
+          "doc": "Parsed value of the Idempotency-Key request header. Propagates so downstream consumers correlate idempotent retries across the call chain. Max 255 chars; values exceeding cap are rejected by Edge middleware with 400 Bad Request. Treat as opaque — do NOT log the raw value; structured logs may emit a SHA-256 prefix for correlation but never the literal value."
+        }
+      ]
+    },
+    {
+      "name": "Network",
+      "properties": [
+        {
+          "name": "ClientIp",
+          "type": "string?",
+          "redact": true,
+          "doc": "Resolved client IP — precedence CF-Connecting-IP > X-Real-IP > X-Forwarded-For (last entry) > Connection.RemoteIpAddress. Null for non-HTTP transports."
+        }
+      ]
+    },
+    {
+      "name": "Fingerprints",
+      "properties": [
+        {
+          "name": "SessionFingerprint",
+          "type": "string?",
+          "claim": "d2_fp",
+          "propagate": true,
+          "maxLength": 512,
+          "doc": "The fingerprint that was bound to this session at JWT mint time (the d2_fp claim). Format: 'v{N}.c1.c2.c3.c4.c5.s1.s2.s3.s4.s5' — leading version token then 10 component hashes (5 client-side: FingerprintJS-OSS, WebGL renderer, speech voices, media devices, extended fonts; 5 server-side: HTTP/2 SETTINGS frame, header order, Sec-CH-UA, Accept-Encoding, Accept-Language). Each component hash is the first 16 hex chars of SHA-256. Stable across all requests in a session. Propagated to async consumers (Audit, Courier) via the cross-hop x-d2-context header — never as plaintext caller identity (broker stays blind to identity)."
+        },
+        {
+          "name": "CurrentFingerprint",
+          "type": "string?",
+          "propagate": true,
+          "maxLength": 512,
+          "doc": "The fingerprint recomputed for THIS request by Edge fingerprint middleware, in the same dot-separated format as SessionFingerprint. Captures the actual device fingerprint of the originating request (vs the session-bound one). Propagated via x-d2-context so audit rows for async-triggered actions record the originating request's actual fingerprint — not just what the session was bound to."
+        },
+        {
+          "name": "RiskScore",
+          "type": "int?",
+          "propagate": true,
+          "doc": "Composite request-risk score (0-100; higher = more risky) computed by Edge's risk engine for THIS request. Inputs include geo-velocity drift from the sign-in baseline, ASN reputation, Tor / proxy / hosting flags, per-org and per-user policy contributions, and fingerprint-mismatch components (SessionFingerprint vs CurrentFingerprint). 0 = no risk; ≥ user/org step-up threshold = OTP step-up; ≥ user/org block threshold = block + invalidate session. Null on internal services and pre-risk-engine paths. Propagated via x-d2-context so audit rows record Edge's verdict at the moment of the originating request. Edge owns the contribution math + thresholds; consumer-side libs (DcsvIo.D2.Auth) only read this field, never compute it."
+        }
+      ]
+    },
+    {
+      "name": "Infrastructure",
+      "properties": [
+        {
+          "name": "EdgeNodeId",
+          "type": "string?",
+          "propagate": true,
+          "doc": "Edge process identifier (e.g. Kubernetes pod name, EC2 instance id, or region+node tuple). Captured once at Edge process boot by startup middleware. Propagates via x-d2-context so downstream audit and telemetry know which edge node originated the request — important for hot-spot diagnosis and capacity attribution."
+        }
+      ]
+    },
+    {
+      "name": "User Preferences",
+      "properties": [
+        {
+          "name": "LocaleIetfBcp47Tag",
+          "type": "string?",
+          "propagate": true,
+          "doc": "Resolved user locale as an IETF BCP 47 tag (e.g. 'en-US', 'zh-Hans-SG'). Populated by Edge auth middleware via the locale cascade: user profile preference > org default preference > X-D2-Locale header > Accept-Language header > fallback 'en-US'. Propagates so async consumers (Courier, Notifications) render locale-aware content. Validation of the BCP 47 tag is performed by the LocaleCode typed wrapper at the consumption site."
+        },
+        {
+          "name": "TimezoneIanaName",
+          "type": "string?",
+          "propagate": true,
+          "doc": "Resolved user timezone as an IANA timezone database name (e.g. 'America/New_York', 'Europe/Berlin'). Populated by Edge auth middleware via the timezone cascade: user profile preference > org default preference > X-D2-Timezone header > WhoIs-derived (CountryIso31661Alpha2Code + SubdivisionIso31662Code mapped via DcsvIo.D2.Geo.Default) > fallback 'UTC'. Propagates so async consumers render timezone-aware timestamps."
+        },
+        {
+          "name": "CurrencyIso4217Code",
+          "type": "string?",
+          "propagate": true,
+          "doc": "Resolved user currency as an ISO 4217 code (e.g. 'USD', 'EUR', 'GBP'). Populated by Edge auth middleware via the currency cascade: user profile preference > org default preference > X-D2-Currency header > CountryIso31661Alpha2Code-derived (ISO 3166 to ISO 4217 primary legal-tender mapping via DcsvIo.D2.Geo.Default) > fallback NULL (no sensible universal default; consumers surface a validation error when null and a currency is required)."
+        }
+      ]
+    },
+    {
+      "name": "Entitlements",
+      "properties": [
+        {
+          "name": "OrgPlanTier",
+          "type": "string?",
+          "propagate": true,
+          "doc": "Operating organization plan tier label (e.g. 'Free', 'Starter', 'Pro', 'Enterprise'). Used by handlers gating premium operations. Stored as a free-form string (not an enum) to allow tier names to evolve without a source-gen rebuild cycle — validate at the consumption site. Propagates so async consumers can apply plan-gated logic."
+        },
+        {
+          "name": "FeatureFlagsCsv",
+          "type": "string?",
+          "propagate": true,
+          "doc": "Comma-separated list of active feature flag names for the operating org (e.g. 'new-billing,risk-v2'). Callers split on comma to enumerate active flags. Flag names MUST NOT contain commas — enforced at flag-creation time. CSV form chosen because source-gen does not currently support IReadOnlySet<string> for propagated context fields. Propagates so async consumers can apply flag-gated logic."
+        }
+      ]
+    },
+    {
+      "name": "WhoIs — Admin Location",
+      "properties": [
+        {
+          "name": "WhoIsHashId",
+          "type": "string?",
+          "propagate": true,
+          "maxLength": 128,
+          "doc": "Content-addressable hash identifier of the full WhoIs record (admin-location + coordinates). Stable across calls for the same client signal."
+        },
+        {
+          "name": "AdminLocationHashId",
+          "type": "string?",
+          "doc": "Hash of the admin-location component only (city + region + country + postal). Matches DcsvIo.D2.Location.AdminLocation.HashId for content-addressable lookup."
+        },
+        {
+          "name": "City",
+          "type": "string?",
+          "redact": true,
+          "doc": "City name from WhoIs lookup."
+        },
+        {
+          "name": "SubdivisionIso31662Code",
+          "type": "string?",
+          "redact": true,
+          "doc": "ISO 3166-2 subdivision code from WhoIs lookup (e.g. 'US-CA', 'DE-BY'). Standards-explicit name per the §7.Z naming convention: the name describes exactly what data IS. Consumers wanting the typed SubdivisionCode wrapper use IRequestContextGeoExtensions.Subdivision()."
+        },
+        {
+          "name": "CountryIso31661Alpha2Code",
+          "type": "string?",
+          "doc": "ISO 3166-1 alpha-2 country code from WhoIs lookup (e.g. 'US', 'DE'). Standards-explicit name per the §7.Z naming convention: the name describes exactly what data IS. Consumers wanting the typed CountryCode enum use IRequestContextGeoExtensions.Country()."
+        },
+        {
+          "name": "PostalCode",
+          "type": "string?",
+          "redact": true,
+          "doc": "Postal / zip code from WhoIs lookup. Useful for granular locality risk-scoring."
+        }
+      ]
+    },
+    {
+      "name": "WhoIs — Coordinates",
+      "properties": [
+        {
+          "name": "Latitude",
+          "type": "double?",
+          "redact": true,
+          "doc": "Latitude in decimal degrees from WhoIs lookup. Component of the Coordinates value object per DcsvIo.D2.Location."
+        },
+        {
+          "name": "Longitude",
+          "type": "double?",
+          "redact": true,
+          "doc": "Longitude in decimal degrees from WhoIs lookup. Component of the Coordinates value object."
+        },
+        {
+          "name": "Geohash",
+          "type": "string?",
+          "redact": true,
+          "doc": "Geohash form of the (Latitude, Longitude) pair. Content-addressable — also serves as Coordinates.HashId. Useful for proximity queries and cache keying."
+        }
+      ]
+    },
+    {
+      "name": "WhoIs — Network Privacy",
+      "properties": [
+        {
+          "name": "IsVpn",
+          "type": "bool?",
+          "doc": "True when the IP is from a VPN."
+        },
+        {
+          "name": "IsProxy",
+          "type": "bool?",
+          "doc": "True when the IP is from a proxy."
+        },
+        {
+          "name": "IsTor",
+          "type": "bool?",
+          "doc": "True when the IP is from a Tor exit node."
+        },
+        {
+          "name": "IsHosting",
+          "type": "bool?",
+          "doc": "True when the IP is from a hosting / cloud provider."
+        }
+      ]
+    },
+    {
+      "name": "WhoIs — ASN",
+      "properties": [
+        {
+          "name": "Asn",
+          "type": "int?",
+          "doc": "Autonomous System Number. Risk-scoring input — e.g. '>5 different ASNs in last 2min → +15 risk'."
+        },
+        {
+          "name": "AsnName",
+          "type": "string?",
+          "doc": "AS organization name (e.g. 'AT&T Internet Services')."
+        },
+        {
+          "name": "AsnType",
+          "type": "string?",
+          "doc": "ASN type — typically one of: business / isp / hosting / mobile / education / government. Datacenter/Tor policies key on this. Free-form string for now (no enum) — promote to enum if a real handler benefits from typed dispatch."
+        }
+      ]
+    },
+    {
+      "name": "Establishment",
+      "properties": [
+        {
+          "name": "Origin",
+          "type": "RequestOrigin",
+          "doc": "What KIND of trust boundary produced THIS hop's context, recomputed LOCALLY by the receiving boundary from its own unforgeable transport facts (HTTP edge inbound / cross-process mTLS gRPC / in-process module call / in-host system worker). NEVER propagated: a wire-supplied Origin is ignored — every boundary derives it fresh. The default RequestOrigin.Unestablished is fail-closed: a capability authority that has not had its Origin positively established by a boundary DENIES, never assumes a plane. Authority-grade BECAUSE it is local and unforgeable."
+        },
+        {
+          "name": "ImmediateCaller",
+          "type": "string?",
+          "doc": "The id of the workload or module that called THIS hop. Cross-process: the authenticated mutual-TLS peer workload service id from the validated client certificate SPIFFE SAN (unforgeable, fail-closed null on no cert). In-process: the calling module/host id (trusted because the whole process is trusted — telemetry-grade, not a spoofing surface). Edge inbound / System: null (no upstream internal workload). NEVER propagated and NEVER request-controlled."
+        },
+        {
+          "name": "CallPath",
+          "type": "IReadOnlyList<CallPathEntry>",
+          "propagate": true,
+          "maxLength": 16,
+          "entryIdMaxLength": 128,
+          "doc": "Ordered sequence of the workloads/modules that have handled this request, oldest-first. Each boundary appends its OWN identity + a timestamp on receipt and logs the field; the chain reconstructs 'entered at Edge, went through A, then B, reached me' even when a trace span is dropped. Operational TELEMETRY ONLY — authority NEVER reads it. Propagated on x-d2-context alongside the other operational subset (it is the first propagated list-of-records field); depth-bounded (maxLength = max entry count) so a request cannot grow it without limit. Distinct from the impersonation act chain (which records on-whose-behalf and is signed identity)."
+        }
+      ]
+    }
+  ]
+}

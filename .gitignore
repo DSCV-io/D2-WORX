@@ -102,9 +102,9 @@ publish/
 *.pubxml
 *.azurePubxml
 
-# NuGet Packages Directory
-packages/
-!packages/repositories.config
+# NuGet Packages Directory (repo-root only — must NOT match public/packages or private/packages)
+/packages/
+!/packages/repositories.config
 
 # Windows Azure Build Output
 csx/
@@ -178,8 +178,8 @@ secrets/*
 !secrets/.gitkeep
 
 # Operator-local upstream-rejection memory written by `pnpm geo:approve`.
-# Canonical path is contracts/geo/.upstream-rejections.json.
-contracts/geo/.upstream-rejections.json
+# Canonical path is public/contracts/geo/.upstream-rejections.json.
+public/contracts/geo/.upstream-rejections.json
 
 # Per-deliverable workflow journals — append-only working memory for the
 # audit-loop process. Lives locally during a deliverable. At SHIP time the
@@ -210,8 +210,8 @@ nul
 # Microsoft.Extensions.Logging.Generators emits all [LoggerMessage] partial
 # classes into a single LoggerMessage.g.cs file with non-deterministic
 # cross-class ordering (same source, every build = different blob hash).
-# The splitter tool (tools/loggermessage-splitter, wired via
-# server/shared/dotnet/Directory.Build.targets) parses this single file into
+# The splitter tool (public/tools/loggermessage-splitter, wired via
+# public/packages/dotnet/Directory.Build.targets) parses this single file into
 # per-class deterministic LoggerMessage.{Ns}.{Class}.g.cs files — those ARE
 # tracked so PR reviewers still see codegen diffs.
 **/Generated/Microsoft.Extensions.Logging.Generators/Microsoft.Extensions.Logging.Generators.LoggerMessageGenerator/LoggerMessage.g.cs
@@ -231,13 +231,13 @@ mcps/**
 # NEVER committed: the whole dir is ignored so new spike artifacts (the .NET
 # projects, generated wiring, extra .tsp/.mjs the spikes add) can't be staged by
 # accident. Durable record = the design-pass doc + the productionized package.
-tools/typespec-spike/
+private/tools/typespec-spike/
 # C# in-memory test-host spike for the TypeSpec emitter harness de-risk.
 # Throwaway proof-of-concept; the committed harness is built in a later step.
-server/shared/typescript/typespec-emitters/spike-csharp/
+public/packages/typescript/typespec-emitters/spike-csharp/
 
 # api-extractor transient working copy: the versioning engine commits each
 # package's API report under etc/<pkg>.api.md (the baseline) and lets
 # api-extractor write its freshly-generated report to temp/ for the diff.
 # The temp/ copy is regenerated every run — keep it untracked.
-server/shared/typescript/**/temp/
+public/packages/typescript/**/temp/
